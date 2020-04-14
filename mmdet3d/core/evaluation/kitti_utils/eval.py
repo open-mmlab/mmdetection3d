@@ -687,21 +687,18 @@ def kitti_eval(gt_annos,
             result += ('{} AP@{:.2f}, {:.2f}, {:.2f}:\n'.format(
                 curcls_name, *min_overlaps[i, :, j]))
             if mAPbbox is not None:
-                result += (
-                    'bbox AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbbox[j, :,
-                                                                       i]))
+                result += 'bbox AP:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                    *mAPbbox[j, :, i])
             if mAPbev is not None:
-                result += (
-                    'bev  AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbev[j, :,
-                                                                      i]))
+                result += 'bev  AP:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                    *mAPbev[j, :, i])
             if mAP3d is not None:
-                result += (
-                    '3d   AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP3d[j, :, i]))
+                result += '3d   AP:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                    *mAP3d[j, :, i])
 
             if compute_aos:
-                result += (
-                    'aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(*mAPaos[j, :,
-                                                                      i]))
+                result += 'aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(
+                    *mAPaos[j, :, i])
 
             # prepare results for logger
             for idx in range(3):
