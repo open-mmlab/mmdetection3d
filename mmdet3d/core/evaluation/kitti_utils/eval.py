@@ -724,19 +724,16 @@ def kitti_eval(gt_annos,
         result += ('\nOverall AP@{}, {}, {}:\n'.format(*difficulty))
         if mAPbbox is not None:
             mAPbbox = mAPbbox.mean(axis=0)
-            result += ('bbox AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbbox[:,
-                                                                          0]))
+            result += 'bbox AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbbox[:, 0])
         if mAPbev is not None:
             mAPbev = mAPbev.mean(axis=0)
-            result += ('bev  AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbev[:,
-                                                                         0]))
+            result += 'bev  AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbev[:, 0])
         if mAP3d is not None:
             mAP3d = mAP3d.mean(axis=0)
-            result += ('3d   AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP3d[:, 0]))
+            result += '3d   AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP3d[:, 0])
         if compute_aos:
             mAPaos = mAPaos.mean(axis=0)
-            result += ('aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(*mAPaos[:,
-                                                                         0]))
+            result += 'aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(*mAPaos[:, 0])
 
         # prepare results for logger
         ret_dict['Overall'] = dict()
