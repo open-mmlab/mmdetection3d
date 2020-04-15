@@ -99,7 +99,7 @@ def make_cuda_ext(name,
     if torch.cuda.is_available() or os.getenv('FORCE_CUDA', '0') == '1':
         define_macros += [('WITH_CUDA', None)]
         extension = CUDAExtension
-        extra_compile_args['nvcc'] = [
+        extra_compile_args['nvcc'] = extra_args + [
             '-D__CUDA_NO_HALF_OPERATORS__',
             '-D__CUDA_NO_HALF_CONVERSIONS__',
             '-D__CUDA_NO_HALF2_OPERATORS__',
@@ -247,13 +247,6 @@ if __name__ == '__main__':
                 sources=[
                     'src/iou3d.cpp',
                     'src/iou3d_kernel.cu',
-                ]),
-            make_cuda_ext(
-                name='sigmoid_focal_loss_cuda',
-                module='mmdet3d.ops.sigmoid_focal_loss',
-                sources=[
-                    'src/sigmoid_focal_loss.cpp',
-                    'src/sigmoid_focal_loss_cuda.cu'
                 ]),
             make_cuda_ext(
                 name='voxel_layer',

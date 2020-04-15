@@ -1,3 +1,3 @@
-from mmdet3d.utils import Registry
+from mmdet.utils import Registry
 
-OBJECTSAMPLERS = Registry('object_sampler')
+OBJECTSAMPLERS = Registry('Object sampler')

@@ -1,8 +1,8 @@
 import torch.nn as nn
 
 import mmdet3d.ops.spconv as spconv
+from mmdet.ops import build_norm_layer
 from ..registry import MIDDLE_ENCODERS
-from ..utils import build_norm_layer
 
 
 @MIDDLE_ENCODERS.register_module

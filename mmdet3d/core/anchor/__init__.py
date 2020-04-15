@@ -2,8 +2,7 @@ from .anchor_generator import (AlignedAnchorGeneratorRange, AnchorGenerator,
                                AnchorGeneratorRange)
 
 __all__ = [
-    'AnchorGenerator', 'anchor_inside_flags', 'images_to_levels', 'unmap',
-    'AlignedAnchorGeneratorRange', 'AnchorGeneratorRange',
+    'AnchorGenerator', 'AlignedAnchorGeneratorRange', 'AnchorGeneratorRange',
     'build_anchor_generator'
 ]
 

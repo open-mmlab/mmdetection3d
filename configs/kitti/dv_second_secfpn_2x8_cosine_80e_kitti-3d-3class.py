@@ -69,21 +69,21 @@ train_cfg = dict(
     assigner=[
         dict(  # for Pedestrian
             type='MaxIoUAssigner',
-            iou_type='nearest_3d',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
             pos_iou_thr=0.35,
             neg_iou_thr=0.2,
             min_pos_iou=0.2,
             ignore_iof_thr=-1),
         dict(  # for Cyclist
             type='MaxIoUAssigner',
-            iou_type='nearest_3d',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
             pos_iou_thr=0.35,
             neg_iou_thr=0.2,
             min_pos_iou=0.2,
             ignore_iof_thr=-1),
         dict(  # for Car
             type='MaxIoUAssigner',
-            iou_type='nearest_3d',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
             pos_iou_thr=0.6,
             neg_iou_thr=0.45,
             min_pos_iou=0.45,

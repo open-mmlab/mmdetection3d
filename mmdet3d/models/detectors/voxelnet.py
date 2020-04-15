@@ -2,9 +2,8 @@ import torch
 import torch.nn.functional as F
 
 from mmdet3d.ops import Voxelization
-from mmdet.models.registry import DETECTORS
+from mmdet.models import DETECTORS, SingleStageDetector
 from .. import builder
-from .single_stage import SingleStageDetector
 
 
 @DETECTORS.register_module

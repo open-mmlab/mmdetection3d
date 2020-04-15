@@ -1,9 +1,8 @@
 import copy
 
-from mmdet.datasets import ConcatDataset, RepeatDataset
+from mmdet.datasets import DATASETS, ConcatDataset, RepeatDataset
 from mmdet.utils import build_from_cfg
 from .dataset_wrappers import RepeatFactorDataset
-from .registry import DATASETS
 
 
 def _concat_dataset(cfg, default_args=None):

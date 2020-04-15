@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 
-from mmdet3d.ops import DynamicScatter, build_norm_layer
+from mmdet3d.ops import DynamicScatter
+from mmdet.ops import build_norm_layer
 from ..registry import VOXEL_ENCODERS
 from .utils import PFNLayer, get_paddings_indicator
 

@@ -2,17 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mmdet3d.core import (bbox2result_coco, bbox2roi, build_assigner,
-                          build_sampler)
 from mmdet3d.ops import Voxelization
-from mmdet.models.registry import DETECTORS
+from mmdet.models import DETECTORS
 from .. import builder
 from .base import BaseDetector
-from .test_mixins import BBoxTestMixin, RPNTestMixin
 
 
 @DETECTORS.register_module
-class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
+class MVXTwoStageDetector(BaseDetector):
 
     def __init__(self,
                  pts_voxel_layer=None,
@@ -24,10 +21,8 @@ class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
                  img_neck=None,
                  pts_neck=None,
                  pts_bbox_head=None,
-                 img_bbox_head=None,
-                 img_shared_head=None,
+                 img_roi_head=None,
                  img_rpn_head=None,
-                 img_bbox_roi_extractor=None,
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
@@ -59,14 +54,10 @@ class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
             self.img_backbone = builder.build_backbone(img_backbone)
         if img_neck is not None:
             self.img_neck = builder.build_neck(img_neck)
-        if img_shared_head is not None:
-            self.img_shared_head = builder.build_shared_head(img_shared_head)
         if img_rpn_head is not None:
             self.img_rpn_head = builder.build_head(img_rpn_head)
-        if img_bbox_head is not None:
-            self.img_bbox_roi_extractor = builder.build_roi_extractor(
-                img_bbox_roi_extractor)
-            self.img_bbox_head = builder.build_head(img_bbox_head)
+        if img_roi_head is not None:
+            self.img_roi_head = builder.build_head(img_roi_head)
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -140,9 +131,6 @@ class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
             return None
         if self.with_img_neck:
             img_feats = self.img_neck(img_feats)
-        if torch.isnan(img_feats[0]).any():
-            import pdb
-            pdb.set_trace()
         return img_feats
 
     def extract_pts_feat(self, pts, img_feats, img_meta):
@@ -227,7 +215,8 @@ class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
                           gt_bboxes,
                           gt_labels,
                           gt_bboxes_ignore=None,
-                          proposals=None):
+                          proposals=None,
+                          **kwargs):
         losses = dict()
         # RPN forward and loss
         if self.with_img_rpn:
@@ -245,45 +234,14 @@ class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
         else:
             proposal_list = proposals
 
-        # assign gts and sample proposals
-        if self.with_img_bbox:
-            bbox_assigner = build_assigner(self.train_cfg.img_rcnn.assigner)
-            bbox_sampler = build_sampler(
-                self.train_cfg.img_rcnn.sampler, context=self)
-            num_imgs = len(img_meta)
-            if gt_bboxes_ignore is None:
-                gt_bboxes_ignore = [None for _ in range(num_imgs)]
-            sampling_results = []
-            for i in range(num_imgs):
-                assign_result = bbox_assigner.assign(proposal_list[i],
-                                                     gt_bboxes[i],
-                                                     gt_bboxes_ignore[i],
-                                                     gt_labels[i])
-                sampling_result = bbox_sampler.sample(
-                    assign_result,
-                    proposal_list[i],
-                    gt_bboxes[i],
-                    gt_labels[i],
-                    feats=[lvl_feat[i][None] for lvl_feat in x])
-                sampling_results.append(sampling_result)
-
         # bbox head forward and loss
-        if self.with_img_bbox:
-            rois = bbox2roi([res.bboxes for res in sampling_results])
-            # TODO: a more flexible way to decide which feature maps to use
-            bbox_feats = self.img_bbox_roi_extractor(
-                x[:self.img_bbox_roi_extractor.num_inputs], rois)
-            if self.with_shared_head:
-                bbox_feats = self.img_shared_head(bbox_feats)
-            cls_score, bbox_pred = self.img_bbox_head(bbox_feats)
+        img_roi_losses = self.roi_head.forward_train(x, img_meta,
+                                                     proposal_list, gt_bboxes,
+                                                     gt_labels,
+                                                     gt_bboxes_ignore,
+                                                     **kwargs)
 
-            bbox_targets = self.img_bbox_head.get_target(
-                sampling_results, gt_bboxes, gt_labels,
-                self.train_cfg.img_rcnn)
-            loss_bbox = self.img_bbox_head.loss(cls_score, bbox_pred,
-                                                *bbox_targets)
-            losses.update(loss_bbox)
-
+        losses.update(img_roi_losses)
         return losses
 
     def forward_test(self, **kwargs):
@@ -303,42 +261,8 @@ class MVXTwoStageDetector(BaseDetector, RPNTestMixin, BBoxTestMixin):
         else:
             proposal_list = proposals
 
-        det_bboxes, det_labels = self.simple_test_bboxes(
-            x,
-            img_meta,
-            proposal_list,
-            self.test_cfg.img_rcnn,
-            rescale=rescale)
-        bbox_results = bbox2result_coco(det_bboxes, det_labels,
-                                        self.img_bbox_head.num_classes)
-
-        return bbox_results
-
-    def simple_test_bboxes(self,
-                           x,
-                           img_meta,
-                           proposals,
-                           rcnn_test_cfg,
-                           rescale=False):
-        """Test only det bboxes without augmentation."""
-        rois = bbox2roi(proposals)
-        roi_feats = self.img_bbox_roi_extractor(
-            x[:len(self.img_bbox_roi_extractor.featmap_strides)], rois)
-        if self.with_img_shared_head:
-            roi_feats = self.img_shared_head(roi_feats)
-        cls_score, bbox_pred = self.img_bbox_head(roi_feats)
-
-        img_shape = img_meta[0]['img_shape']
-        scale_factor = img_meta[0]['scale_factor']
-        det_bboxes, det_labels = self.img_bbox_head.get_det_bboxes(
-            rois,
-            cls_score,
-            bbox_pred,
-            img_shape,
-            scale_factor,
-            rescale=rescale,
-            cfg=rcnn_test_cfg)
-        return det_bboxes, det_labels
+        return self.img_roi_head.simple_test(
+            x, proposal_list, img_meta, rescale=rescale)
 
     def simple_test_rpn(self, x, img_meta, rpn_test_cfg):
         rpn_outs = self.img_rpn_head(x)

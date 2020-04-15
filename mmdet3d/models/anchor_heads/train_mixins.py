@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 
-from mmdet3d.core import box_torch_ops, images_to_levels, multi_apply
+from mmdet3d.core import box_torch_ops, multi_apply
+from mmdet.core import images_to_levels
 
 
 class AnchorTrainMixin(object):

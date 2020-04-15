@@ -4,7 +4,7 @@ from mmcv.cnn import normal_init
 
 from mmdet3d.core import box_torch_ops, boxes3d_to_bev_torch_lidar
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
-from ..registry import HEADS
+from mmdet.models import HEADS
 from ..utils import bias_init_with_prob
 from .second_head import SECONDHead
 

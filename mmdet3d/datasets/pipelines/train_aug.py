@@ -2,10 +2,10 @@ import numpy as np
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.utils import build_from_cfg
+from mmdet.datasets.pipelines import RandomFlip
 from mmdet.datasets.registry import PIPELINES
 from ..registry import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
-from .transforms import RandomFlip
 
 
 @PIPELINES.register_module

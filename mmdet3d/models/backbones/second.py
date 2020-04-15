@@ -3,8 +3,8 @@ from functools import partial
 import torch.nn as nn
 from mmcv.runner import load_checkpoint
 
-from ..registry import BACKBONES
-from ..utils import build_norm_layer
+from mmdet.models import BACKBONES
+from mmdet.ops import build_norm_layer
 
 
 class Empty(nn.Module):

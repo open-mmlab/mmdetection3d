@@ -3,9 +3,9 @@ from torch import nn
 from torch.nn import functional as F
 
 from mmdet3d.ops import DynamicScatter
+from mmdet.ops import build_norm_layer
 from .. import builder
 from ..registry import VOXEL_ENCODERS
-from ..utils import build_norm_layer
 from .utils import Empty, VFELayer, get_paddings_indicator
 
 

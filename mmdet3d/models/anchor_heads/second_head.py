@@ -10,8 +10,8 @@ from mmdet3d.core import (PseudoSampler, box_torch_ops,
                           build_assigner, build_bbox_coder, build_sampler,
                           multi_apply)
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
+from mmdet.models import HEADS
 from ..builder import build_loss
-from ..registry import HEADS
 from ..utils import bias_init_with_prob
 from .train_mixins import AnchorTrainMixin
 

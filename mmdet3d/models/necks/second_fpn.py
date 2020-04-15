@@ -1,29 +1,14 @@
-import logging
 from functools import partial
 
 import torch
 import torch.nn as nn
 from mmcv.cnn import constant_init, kaiming_init
-from mmcv.runner import load_checkpoint
 from torch.nn import Sequential
 from torch.nn.modules.batchnorm import _BatchNorm
 
+from mmdet.models import NECKS
+from mmdet.ops import build_norm_layer
 from .. import builder
-from ..registry import NECKS
-from ..utils import build_norm_layer
-
-
-class Empty(nn.Module):
-
-    def __init__(self, *args, **kwargs):
-        super(Empty, self).__init__()
-
-    def forward(self, *args, **kwargs):
-        if len(args) == 1:
-            return args[0]
-        elif len(args) == 0:
-            return None
-        return args
 
 
 @NECKS.register_module
@@ -43,17 +28,12 @@ class SECONDFPN(nn.Module):
         assert len(num_upsample_filters) == len(upsample_strides)
         self.in_channels = in_channels
 
-        if norm_cfg is not None:
-            ConvTranspose2d = partial(nn.ConvTranspose2d, bias=False)
-        else:
-            ConvTranspose2d = partial(nn.ConvTranspose2d, bias=True)
+        ConvTranspose2d = partial(nn.ConvTranspose2d, bias=False)
 
         deblocks = []
 
         for i, num_upsample_filter in enumerate(num_upsample_filters):
-            norm_layer = (
-                build_norm_layer(norm_cfg, num_upsample_filter)[1]
-                if norm_cfg is not None else Empty)
+            norm_layer = build_norm_layer(norm_cfg, num_upsample_filter)[1]
             deblock = Sequential(
                 ConvTranspose2d(
                     in_channels[i],
@@ -66,30 +46,22 @@ class SECONDFPN(nn.Module):
             deblocks.append(deblock)
         self.deblocks = nn.ModuleList(deblocks)
 
-    def init_weights(self, pretrained=None):
-        if isinstance(pretrained, str):
-            logger = logging.getLogger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
-        elif pretrained is None:
-            # keeping the initiation yields better results
-            for m in self.modules():
-                if isinstance(m, nn.Conv2d):
-                    kaiming_init(m)
-                elif isinstance(m, (_BatchNorm, nn.GroupNorm)):
-                    constant_init(m, 1)
-        else:
-            raise TypeError('pretrained must be a str or None')
-        return
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                kaiming_init(m)
+            elif isinstance(m, (_BatchNorm, nn.GroupNorm)):
+                constant_init(m, 1)
 
-    def forward(self, inputs):
-        assert len(inputs) == len(self.in_channels)
-        ups = [deblock(inputs[i]) for i, deblock in enumerate(self.deblocks)]
+    def forward(self, x):
+        assert len(x) == len(self.in_channels)
+        ups = [deblock(x[i]) for i, deblock in enumerate(self.deblocks)]
 
         if len(ups) > 1:
-            x = torch.cat(ups, dim=1)
+            out = torch.cat(ups, dim=1)
         else:
-            x = ups[0]
-        return [x]
+            out = ups[0]
+        return [out]
 
 
 @NECKS.register_module
@@ -120,18 +92,18 @@ class SECONDFusionFPN(SECONDFPN):
         self.down_sample_rate = down_sample_rate
 
     def forward(self,
-                inputs,
+                x,
                 coors=None,
                 points=None,
                 img_feats=None,
                 img_meta=None):
-        assert len(inputs) == len(self.in_channels)
-        ups = [deblock(inputs[i]) for i, deblock in enumerate(self.deblocks)]
+        assert len(x) == len(self.in_channels)
+        ups = [deblock(x[i]) for i, deblock in enumerate(self.deblocks)]
 
         if len(ups) > 1:
-            x = torch.cat(ups, dim=1)
+            out = torch.cat(ups, dim=1)
         else:
-            x = ups[0]
+            out = ups[0]
         if (self.fusion_layer is not None and img_feats is not None):
             downsample_pts_coors = torch.zeros_like(coors)
             downsample_pts_coors[:, 0] = coors[:, 0]
@@ -142,6 +114,6 @@ class SECONDFusionFPN(SECONDFPN):
             downsample_pts_coors[:, 3] = (
                 coors[:, 3] / self.down_sample_rate[2])
             # fusion for each point
-            x = self.fusion_layer(img_feats, points, x, downsample_pts_coors,
-                                  img_meta)
-        return [x]
+            out = self.fusion_layer(img_feats, points, out,
+                                    downsample_pts_coors, img_meta)
+        return [out]

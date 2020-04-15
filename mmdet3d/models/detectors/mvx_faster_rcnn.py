@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from mmdet.models.registry import DETECTORS
+from mmdet.models import DETECTORS
 from .mvx_two_stage import MVXTwoStageDetector
 
 

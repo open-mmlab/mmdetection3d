@@ -25,7 +25,6 @@ before_script:
   stage: test
   script:
     - echo "Start building..."
-    - conda install av -c conda-forge -y
     - pip install git+https://github.com/open-mmlab/mmdetection.git@v2.0
     - python -c "import mmdet; print(mmdet.__version__)"
     - pip install -v -e .[all]

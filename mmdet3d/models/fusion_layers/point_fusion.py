@@ -3,8 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import xavier_init
 
-from mmdet3d.models.utils import ConvModule
-from ..plugins import NonLocal2D
+from mmdet.ops import ConvModule
 from ..registry import FUSION_LAYERS
 
 
@@ -110,10 +109,9 @@ class PointFusion(nn.Module):
                  img_levels=3,
                  conv_cfg=None,
                  norm_cfg=None,
-                 activation=None,
+                 act_cfg=None,
                  activate_out=True,
                  fuse_out=False,
-                 refine_type=None,
                  dropout_ratio=0,
                  aligned=True,
                  align_corners=True,
@@ -129,10 +127,9 @@ class PointFusion(nn.Module):
         assert len(img_channels) == len(img_levels)
 
         self.img_levels = img_levels
-        self.activation = activation
+        self.act_cfg = act_cfg
         self.activate_out = activate_out
         self.fuse_out = fuse_out
-        self.refine_type = refine_type
         self.dropout_ratio = dropout_ratio
         self.img_channels = img_channels
         self.aligned = aligned
@@ -150,7 +147,7 @@ class PointFusion(nn.Module):
                     padding=1,
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
-                    activation=self.activation,
+                    act_cfg=self.act_cfg,
                     inplace=False)
                 self.lateral_convs.append(l_conv)
             self.img_transform = nn.Sequential(
@@ -175,13 +172,6 @@ class PointFusion(nn.Module):
                 nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01),
                 nn.ReLU(inplace=False))
 
-        if self.refine_type == 'non_local':
-            self.refine = NonLocal2D(
-                out_channels,
-                reduction=1,
-                use_scale=False,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg)
         self.init_weights()
 
     # default init_weights for conv(msra) and norm in ConvModule
@@ -210,16 +200,6 @@ class PointFusion(nn.Module):
         if self.fuse_out:
             fuse_out = self.fuse_conv(fuse_out)
 
-        if self.refine_type is not None:
-            fuse_out_T = fuse_out.t()[None, ..., None]  # NxC -> 1xCxNx1
-            batch_idx = 0
-            attentive = []
-            for i in range(len(pts)):
-                end_idx = batch_idx + len(pts[i])
-                attentive.append(
-                    self.refine(fuse_out_T[:, :, batch_idx:end_idx]))
-                batch_idx = end_idx
-            fuse_out = torch.cat(attentive, dim=-2).squeeze().t()
         return fuse_out
 
     def obtain_mlvl_feats(self, img_feats, pts, img_meta):

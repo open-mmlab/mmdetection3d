@@ -94,7 +94,7 @@ train_cfg = dict(
     pts=dict(
         assigner=dict(  # for Car
             type='MaxIoUAssigner',
-            iou_type='nearest_3d',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
             pos_iou_thr=0.6,
             neg_iou_thr=0.3,
             min_pos_iou=0.3,

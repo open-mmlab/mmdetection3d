@@ -1,7 +1,8 @@
 import numpy as np
 from mmcv.parallel import DataContainer as DC
 
-from mmdet.datasets.pipelines import PIPELINES, to_tensor
+from mmdet.datasets.pipelines import to_tensor
+from mmdet.datasets.registry import PIPELINES
 
 PIPELINES._module_dict.pop('DefaultFormatBundle')
 

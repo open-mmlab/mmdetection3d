@@ -9,8 +9,8 @@ import torch.utils.data as torch_data
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet.datasets import DATASETS
+from mmdet.datasets.pipelines import Compose
 from ..core.bbox import box_np_ops
-from .pipelines import Compose
 
 
 @DATASETS.register_module
@@ -91,8 +91,9 @@ class NuScenesDataset(torch_data.Dataset):
 
         self.ann_file = ann_file
         data = mmcv.load(ann_file)
-        self.infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
-        self.infos = self.infos[::load_interval]
+        self.data_infos = list(
+            sorted(data['infos'], key=lambda e: e['timestamp']))
+        self.data_infos = self.data_infos[::load_interval]
         self.metadata = data['metadata']
         self.version = self.metadata['version']
         self.with_velocity = with_velocity
@@ -146,7 +147,7 @@ class NuScenesDataset(torch_data.Dataset):
         return np.random.choice(pool)
 
     def __len__(self):
-        return len(self.infos)
+        return len(self.data_infos)
 
     def prepare_train_data(self, index):
         input_dict = self.get_sensor_data(index)
@@ -175,7 +176,7 @@ class NuScenesDataset(torch_data.Dataset):
         return input_dict
 
     def get_sensor_data(self, index):
-        info = self.infos[index]
+        info = self.data_infos[index]
         points = np.fromfile(
             info['lidar_path'], dtype=np.float32, count=-1).reshape([-1, 5])
         # standard protocal modified from SECOND.Pytorch
@@ -246,7 +247,7 @@ class NuScenesDataset(torch_data.Dataset):
         return input_dict
 
     def get_ann_info(self, index):
-        info = self.infos[index]
+        info = self.data_infos[index]
         # filter out bbox containing no points
         mask = info['num_lidar_pts'] > 0
         gt_bboxes_3d = info['gt_boxes'][mask]
@@ -275,7 +276,7 @@ class NuScenesDataset(torch_data.Dataset):
         nusc_annos = {}
         mapped_class_names = self.class_names
         token2info = {}
-        for info in self.infos:
+        for info in self.data_infos:
             token2info[info['token']] = info
         print('Start to convert detection format...')
         for det in mmcv.track_iter_progress(results):

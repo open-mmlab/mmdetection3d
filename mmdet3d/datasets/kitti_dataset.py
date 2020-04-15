@@ -7,9 +7,9 @@ import numpy as np
 import torch
 import torch.utils.data as torch_data
 
-from mmdet.datasets.registry import DATASETS
+from mmdet.datasets import DATASETS
+from mmdet.datasets.pipelines import Compose
 from ..core.bbox import box_np_ops
-from .pipelines import Compose
 from .utils import remove_dontcare
 
 
@@ -28,10 +28,6 @@ class KittiDataset(torch_data.Dataset):
                  modality=None,
                  with_label=True,
                  test_mode=False):
-        """
-        :param root_path: KITTI data path
-        :param split:
-        """
         super().__init__()
         self.root_path = root_path
         self.root_split_path = os.path.join(
