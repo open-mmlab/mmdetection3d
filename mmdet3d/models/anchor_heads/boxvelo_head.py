@@ -49,7 +49,7 @@ class Anchor3DVeloHead(SECONDHead):
                  dir_limit_offset=1,
                  target_means=(.0, .0, .0, .0),
                  target_stds=(1.0, 1.0, 1.0, 1.0),
-                 bbox_coder=dict(type='ResidualCoder', ),
+                 bbox_coder=dict(type='Residual3DBoxCoder', ),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
                      use_sigmoid=True,

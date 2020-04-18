@@ -1,5 +1,4 @@
-from .builder import build_optimizer
-from .mix_optimizer import MixedOptimizer
-from .registry import OPTIMIZERS
+from .cocktail_constructor import CocktailOptimizerConstructor
+from .cocktail_optimizer import CocktailOptimizer
 
-__all__ = ['OPTIMIZERS', 'build_optimizer', 'MixedOptimizer']
+__all__ = ['CocktailOptimizerConstructor', 'CocktailOptimizer']

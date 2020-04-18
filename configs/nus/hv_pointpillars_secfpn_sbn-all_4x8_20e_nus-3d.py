@@ -77,7 +77,7 @@ model = dict(
         diff_rad_by_sin=True,
         dir_offset=0.7854,  # pi/4
         dir_limit_offset=0,
-        bbox_coder=dict(type='ResidualCoder', ),
+        bbox_coder=dict(type='Residual3DBoxCoder', ),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,

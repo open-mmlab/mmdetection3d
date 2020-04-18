@@ -11,19 +11,18 @@ from mmcv import Config
 from mmcv.runner import init_dist
 
 from mmdet3d import __version__
-from mmdet3d.apis import train_detector
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_detector
 from mmdet3d.utils import collect_env
-from mmdet.apis import get_root_logger, set_random_seed
+from mmdet.apis import get_root_logger, set_random_seed, train_detector
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('config', help='train config file path')
-    parser.add_argument('--work_dir', help='the dir to save logs and models')
+    parser.add_argument('--work-dir', help='the dir to save logs and models')
     parser.add_argument(
-        '--resume_from', help='the checkpoint file to resume from')
+        '--resume-from', help='the checkpoint file to resume from')
     parser.add_argument(
         '--validate',
         action='store_true',

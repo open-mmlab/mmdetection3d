@@ -1,11 +1,11 @@
 from torch.optim import Optimizer
 
-from .registry import OPTIMIZERS
+from mmdet.core.optimizer import OPTIMIZERS
 
 
 @OPTIMIZERS.register_module
-class MixedOptimizer(Optimizer):
-    """Mixed Optimizer that contains multiple optimizers
+class CocktailOptimizer(Optimizer):
+    """Cocktail Optimizer that contains multiple optimizers
 
     This optimizer applies the cocktail optimzation for multi-modality models.
 
@@ -36,8 +36,9 @@ class MixedOptimizer(Optimizer):
 
     def __repr__(self):
         format_string = self.__class__.__name__ + ' (\n'
-        for optimizer in self.optimizers:
-            format_string += '\t' + optimizer.__repr__ + ',\n'
+        for optimizer, interval in zip(self.optimizers, self.step_intervals):
+            format_string += 'Update interval: {}\n'.format(interval)
+            format_string += optimizer.__repr__().replace('\n', '\n  ') + ',\n'
         format_string += ')'
         return format_string
 

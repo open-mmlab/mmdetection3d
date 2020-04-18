@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-class ResidualCoder(object):
+class Residual3DBoxCoder(object):
 
     def __init__(self, code_size=7, mean=None, std=None):
         super().__init__()

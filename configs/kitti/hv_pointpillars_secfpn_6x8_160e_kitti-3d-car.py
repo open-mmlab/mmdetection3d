@@ -47,7 +47,7 @@ model = dict(
         anchor_sizes=[[1.6, 3.9, 1.56]],
         anchor_rotations=[0, 1.57],
         diff_rad_by_sin=True,
-        bbox_coder=dict(type='ResidualCoder', ),
+        bbox_coder=dict(type='Residual3DBoxCoder', ),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,

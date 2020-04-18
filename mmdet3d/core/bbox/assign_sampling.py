@@ -14,7 +14,7 @@ def build_assigner(cfg, **kwargs):
 
 
 def build_bbox_coder(cfg, **kwargs):
-    if isinstance(cfg, coders.ResidualCoder):
+    if isinstance(cfg, coders.Residual3DBoxCoder):
         return cfg
     elif isinstance(cfg, dict):
         return mmcv.runner.obj_from_dict(cfg, coders, default_args=kwargs)

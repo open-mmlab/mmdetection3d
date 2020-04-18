@@ -1,3 +1,3 @@
-from .box_coder import ResidualCoder
+from .box_coder import Residual3DBoxCoder
 
-__all__ = ['ResidualCoder']
+__all__ = ['Residual3DBoxCoder']

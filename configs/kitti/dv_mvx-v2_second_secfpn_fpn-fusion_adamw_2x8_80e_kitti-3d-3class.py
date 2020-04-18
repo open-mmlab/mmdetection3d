@@ -83,7 +83,7 @@ model = dict(
         anchor_rotations=[0, 1.57],
         diff_rad_by_sin=True,
         assign_per_class=True,
-        bbox_coder=dict(type='ResidualCoder', ),
+        bbox_coder=dict(type='Residual3DBoxCoder', ),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
