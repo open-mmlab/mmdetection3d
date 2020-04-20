@@ -7,28 +7,22 @@ from .cocktail_optimizer import CocktailOptimizer
 
 @OPTIMIZER_BUILDERS.register_module
 class CocktailOptimizerConstructor(object):
-    """Default constructor for optimizers.
+    """Special constructor for cocktail optimizers.
+
+    This constructor constructs cocktail optimizer for multi-modality
+    detectors. It builds separate optimizers for separate branchs for
+    different modalities. More details can be found in the ECCV submission
+    (to be release).
 
     Attributes:
         model (:obj:`nn.Module`): The model with parameters to be optimized.
-        optimizer_cfg (dict): The config dict of the optimizer.
-            Positional fields are:
-                - type: class name of the optimizer.
-                - lr: base learning rate.
-            Optional fields are:
-                - any arguments of the corresponding optimizer type, e.g.,
-                  weight_decay, momentum, etc.
-        paramwise_cfg (dict, optional): Parameter-wise options. Accepted fields
-            are:
-            - bias_lr_mult: It will be multiplied to the learning rate for
-              all bias parameters (except for those in normalization layers).
-            - bias_decay_mult: It will be multiplied to the weight decay for
-              all bias parameters (except for those in normalization layers and
-              depthwise conv layers).
-            - norm_decay_mult: will be multiplied to the weight decay
-              for all weight and bias parameters of normalization layers.
-            - dwconv_decay_mult: will be multiplied to the weight decay
-              for all weight and bias parameters of depthwise conv layers.
+        optimizer_cfg (dict): The config dict of the optimizer. The keys of
+            the dict are used to search for the corresponding keys in the
+            model, and the value if a dict that really defines the optimizer.
+            See example below for the usage.
+        paramwise_cfg (dict): The dict for paramwise options. This is not
+            supported in the current version. But it should be supported in
+            the future release.
 
     Example:
         >>> import torch
