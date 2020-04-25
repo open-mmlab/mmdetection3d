@@ -1,3 +1,4 @@
+import os
 import pickle
 from pathlib import Path
 
@@ -5,16 +6,18 @@ from tools.data_converter.sunrgbd_data_utils import SUNRGBDObject
 
 
 def create_sunrgbd_info_file(data_path,
-                             pkl_prefix='sunrgbd_',
+                             pkl_prefix='sunrgbd',
                              save_path=None,
-                             relative_path=True):
+                             use_v1=False):
+    assert os.path.exists(data_path)
     if save_path is None:
         save_path = Path(data_path)
     else:
         save_path = Path(save_path)
+    assert os.path.exists(save_path)
     train_filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     val_filename = save_path / f'{pkl_prefix}_infos_val.pkl'
-    dataset = SUNRGBDObject(root_path=data_path, split='train')
+    dataset = SUNRGBDObject(root_path=data_path, split='train', use_v1=use_v1)
     train_split, val_split = 'train', 'val'
 
     dataset.set_split(train_split)

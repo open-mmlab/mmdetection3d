@@ -141,10 +141,12 @@ class SUNRGBDObject(object):
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
-
+            img_name = os.path.join(self.image_dir, '%06d.jpg' % (sample_idx))
+            img_path = os.path.join(self.image_dir, img_name)
             image_info = {
                 'image_idx': sample_idx,
-                'image_shape': self.get_image_shape(sample_idx)
+                'image_shape': self.get_image_shape(sample_idx),
+                'image_path': img_path
             }
             info['image'] = image_info
 

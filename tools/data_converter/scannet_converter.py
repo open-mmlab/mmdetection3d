@@ -1,17 +1,17 @@
+import os
 import pickle
 from pathlib import Path
 
 from tools.data_converter.scannet_data_utils import ScannetObject
 
 
-def create_scannet_info_file(data_path,
-                             pkl_prefix='scannet_',
-                             save_path=None,
-                             relative_path=True):
+def create_scannet_info_file(data_path, pkl_prefix='scannet', save_path=None):
+    assert os.path.exists(data_path)
     if save_path is None:
         save_path = Path(data_path)
     else:
         save_path = Path(save_path)
+    assert os.path.exists(save_path)
     train_filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     val_filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     dataset = ScannetObject(root_path=data_path, split='train')
