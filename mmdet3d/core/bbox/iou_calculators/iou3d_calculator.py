@@ -1,6 +1,6 @@
 from mmdet3d.ops.iou3d import boxes_iou3d_gpu
 from mmdet.core.bbox import bbox_overlaps
-from mmdet.core.bbox.iou_calculators.registry import IOU_CALCULATORS
+from mmdet.core.bbox.iou_calculators.builder import IOU_CALCULATORS
 from .. import box_torch_ops
 
 

@@ -2,8 +2,7 @@
 norm_cfg = dict(type='BN', requires_grad=False)
 model = dict(
     type='FasterRCNN',
-    pretrained=('./pretrain_detectron/'
-                'ImageNetPretrained/MSRA/resnet50_msra.pth'),
+    pretrained=('open-mmlab://resnet50_caffe_bgr'),
     backbone=dict(
         type='ResNet',
         depth=50,
@@ -22,11 +21,15 @@ model = dict(
         type='RPNHead',
         in_channels=256,
         feat_channels=256,
-        anchor_scales=[8],
-        anchor_ratios=[0.5, 1.0, 2.0],
-        anchor_strides=[4, 8, 16, 32, 64],
-        target_means=[.0, .0, .0, .0],
-        target_stds=[1.0, 1.0, 1.0, 1.0],
+        anchor_generator=dict(
+            type='AnchorGenerator',
+            scales=[8],
+            ratios=[0.5, 1.0, 2.0],
+            strides=[4, 8, 16, 32, 64]),
+        bbox_coder=dict(
+            type='DeltaXYWHBBoxCoder',
+            target_means=[.0, .0, .0, .0],
+            target_stds=[1.0, 1.0, 1.0, 1.0]),
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         loss_bbox=dict(type='L1Loss', loss_weight=1.0)),
@@ -42,9 +45,11 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=80,
-            target_means=[0., 0., 0., 0.],
-            target_stds=[0.1, 0.1, 0.2, 0.2],
+            num_classes=10,
+            bbox_coder=dict(
+                type='DeltaXYWHBBoxCoder',
+                target_means=[0., 0., 0., 0.],
+                target_stds=[0.1, 0.1, 0.2, 0.2]),
             reg_class_agnostic=False,
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
@@ -105,12 +110,14 @@ test_cfg = dict(
     # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
 )
 # dataset settings
-dataset_type = 'NuScenes2DDataset'
+dataset_type = 'CocoDataset'
 data_root = 'data/nuscenes/'
 # Values to be used for image normalization (BGR order)
 # Default mean pixel values are from ImageNet: [103.53, 116.28, 123.675]
 # When using pre-trained models in Detectron1 or any MSRA models,
 # std has been absorbed into its conv1 weights, so the std needs to be set 1.
+classes = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
+           'motorcycle', 'pedestrian', 'traffic_cone', 'barrier')
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 train_pipeline = [
@@ -147,14 +154,17 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
+        classes=classes,
         ann_file=data_root + 'nuscenes_infos_train.coco.json',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
+        classes=classes,
         ann_file=data_root + 'nuscenes_infos_val.coco.json',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
+        classes=classes,
         ann_file=data_root + 'nuscenes_infos_val.coco.json',
         pipeline=test_pipeline))
 # optimizer

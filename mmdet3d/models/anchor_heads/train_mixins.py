@@ -197,9 +197,8 @@ class AnchorTrainMixin(object):
         if gt_labels is not None:
             labels += num_classes
         if len(pos_inds) > 0:
-            pos_bbox_targets = self.bbox_coder.encode_torch(
-                sampling_result.pos_bboxes, sampling_result.pos_gt_bboxes,
-                target_means, target_stds)
+            pos_bbox_targets = self.bbox_coder.encode(
+                sampling_result.pos_bboxes, sampling_result.pos_gt_bboxes)
             pos_dir_targets = get_direction_target(
                 sampling_result.pos_bboxes,
                 pos_bbox_targets,
