@@ -10,32 +10,19 @@ class ScannetObject(object):
         self.root_dir = root_path
         self.split = split
         self.split_dir = os.path.join(root_path)
-        self.type2class = {
-            'cabinet': 0,
-            'bed': 1,
-            'chair': 2,
-            'sofa': 3,
-            'table': 4,
-            'door': 5,
-            'window': 6,
-            'bookshelf': 7,
-            'picture': 8,
-            'counter': 9,
-            'desk': 10,
-            'curtain': 11,
-            'refrigerator': 12,
-            'showercurtrain': 13,
-            'toilet': 14,
-            'sink': 15,
-            'bathtub': 16,
-            'garbagebin': 17
-        }
-        self.class2type = {self.type2class[t]: t for t in self.type2class}
-        self.nyu40ids = np.array(
+        self.classes = [
+            'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+            'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+            'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+            'garbagebin'
+        ]
+        self.cat2label = {cat: self.classes.index(cat) for cat in self.classes}
+        self.label2cat = {self.cat2label[t]: t for t in self.cat2label}
+        self.cat_ids = np.array(
             [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
-        self.nyu40id2class = {
+        self.cat_ids2class = {
             nyu40id: i
-            for i, nyu40id in enumerate(list(self.nyu40ids))
+            for i, nyu40id in enumerate(list(self.cat_ids))
         }
         assert split in ['train', 'val', 'test']
         split_dir = os.path.join(self.root_dir, 'meta_data',
@@ -45,9 +32,6 @@ class ScannetObject(object):
 
     def __len__(self):
         return len(self.sample_id_list)
-
-    def set_split(self, split):
-        self.__init__(self.root_dir, split)
 
     def get_box_label(self, idx):
         box_file = os.path.join(self.root_dir, 'scannet_train_instance_data',
@@ -76,7 +60,7 @@ class ScannetObject(object):
                     minmax_boxes3d = boxes_with_classes[:, :-1]  # k, 6
                     classes = boxes_with_classes[:, -1]  # k, 1
                     annotations['name'] = np.array([
-                        self.class2type[self.nyu40id2class[classes[i]]]
+                        self.label2cat[self.cat_ids2class[classes[i]]]
                         for i in range(annotations['gt_num'])
                     ])
                     annotations['location'] = minmax_boxes3d[:, :3]
@@ -85,7 +69,7 @@ class ScannetObject(object):
                     annotations['index'] = np.arange(
                         annotations['gt_num'], dtype=np.int32)
                     annotations['class'] = np.array([
-                        self.nyu40id2class[classes[i]]
+                        self.cat_ids2class[classes[i]]
                         for i in range(annotations['gt_num'])
                     ])
                 info['annos'] = annotations

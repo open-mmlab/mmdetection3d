@@ -50,29 +50,14 @@ class SUNRGBDObject(object):
         self.root_dir = root_path
         self.split = split
         self.split_dir = os.path.join(root_path)
-        self.type2class = {
-            'bed': 0,
-            'table': 1,
-            'sofa': 2,
-            'chair': 3,
-            'toilet': 4,
-            'desk': 5,
-            'dresser': 6,
-            'night_stand': 7,
-            'bookshelf': 8,
-            'bathtub': 9
-        }
-        self.class2type = {
-            0: 'bed',
-            1: 'table',
-            2: 'sofa',
-            3: 'chair',
-            4: 'toilet',
-            5: 'desk',
-            6: 'dresser',
-            7: 'night_stand',
-            8: 'bookshelf',
-            9: 'bathtub'
+        self.classes = [
+            'bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
+            'night_stand', 'bookshelf', 'bathtub'
+        ]
+        self.cat2label = {cat: self.classes.index(cat) for cat in self.classes}
+        self.label2cat = {
+            label: self.classes[label]
+            for label in len(self.classes)
         }
         assert split in ['train', 'val', 'test']
         split_dir = os.path.join(self.root_dir, '%s_data_idx.txt' % split)
@@ -90,9 +75,6 @@ class SUNRGBDObject(object):
 
     def __len__(self):
         return len(self.sample_id_list)
-
-    def set_split(self, split):
-        self.__init__(self.root_dir, split)
 
     def get_image(self, idx):
         img_filename = os.path.join(self.image_dir, '%06d.jpg' % (idx))
@@ -132,6 +114,7 @@ class SUNRGBDObject(object):
             # convert depth to points
             SAMPLE_NUM = 50000
             pc_upright_depth = self.get_depth(sample_idx)
+            # TODO : sample points in loading process and test
             pc_upright_depth_subsampled = random_sampling(
                 pc_upright_depth, SAMPLE_NUM)
             np.savez_compressed(
@@ -159,41 +142,41 @@ class SUNRGBDObject(object):
                 annotations = {}
                 annotations['gt_num'] = len([
                     obj.classname for obj in obj_list
-                    if obj.classname in self.type2class.keys()
+                    if obj.classname in self.cat2label.keys()
                 ])
                 if annotations['gt_num'] != 0:
                     annotations['name'] = np.array([
                         obj.classname for obj in obj_list
-                        if obj.classname in self.type2class.keys()
+                        if obj.classname in self.cat2label.keys()
                     ])
                     annotations['bbox'] = np.concatenate([
                         obj.box2d.reshape(1, 4) for obj in obj_list
-                        if obj.classname in self.type2class.keys()
+                        if obj.classname in self.cat2label.keys()
                     ],
                                                          axis=0)
                     annotations['location'] = np.concatenate([
                         obj.centroid.reshape(1, 3) for obj in obj_list
-                        if obj.classname in self.type2class.keys()
+                        if obj.classname in self.cat2label.keys()
                     ],
                                                              axis=0)
                     annotations['dimensions'] = 2 * np.array([
                         [obj.l, obj.h, obj.w] for obj in obj_list
-                        if obj.classname in self.type2class.keys()
+                        if obj.classname in self.cat2label.keys()
                     ])  # lhw(depth) format
                     annotations['rotation_y'] = np.array([
                         obj.heading_angle for obj in obj_list
-                        if obj.classname in self.type2class.keys()
+                        if obj.classname in self.cat2label.keys()
                     ])
                     annotations['index'] = np.arange(
                         len(obj_list), dtype=np.int32)
                     annotations['class'] = np.array([
-                        self.type2class[obj.classname] for obj in obj_list
-                        if obj.classname in self.type2class.keys()
+                        self.cat2label[obj.classname] for obj in obj_list
+                        if obj.classname in self.cat2label.keys()
                     ])
                     annotations['gt_boxes_upright_depth'] = np.stack(
                         [
                             obj.box3d for obj in obj_list
-                            if obj.classname in self.type2class.keys()
+                            if obj.classname in self.cat2label.keys()
                         ],
                         axis=0)  # (K,8)
                 info['annos'] = annotations
