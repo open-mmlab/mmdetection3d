@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 
-class ScannetObject(object):
+class ScanNetData(object):
     ''' Load and parse object data '''
 
     def __init__(self, root_path, split='train'):
@@ -79,7 +79,4 @@ class ScannetObject(object):
             else self.sample_id_list
         with futures.ThreadPoolExecutor(num_workers) as executor:
             infos = executor.map(process_single_scene, sample_id_list)
-        # infos = list()
-        # for sample in sample_id_list:
-        #     infos.append(process_single_scene(sample))
         return list(infos)

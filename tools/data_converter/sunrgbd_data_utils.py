@@ -17,7 +17,7 @@ def random_sampling(pc, num_sample, replace=None, return_choices=False):
         return pc[choices]
 
 
-class SUNObject3d(object):
+class SUNRGBDInstance(object):
 
     def __init__(self, line):
         data = line.split(' ')
@@ -43,7 +43,7 @@ class SUNObject3d(object):
         ])
 
 
-class SUNRGBDObject(object):
+class SUNRGBDData(object):
     ''' Load and parse object data '''
 
     def __init__(self, root_path, split='train', use_v1=False):
@@ -57,7 +57,7 @@ class SUNRGBDObject(object):
         self.cat2label = {cat: self.classes.index(cat) for cat in self.classes}
         self.label2cat = {
             label: self.classes[label]
-            for label in len(self.classes)
+            for label in range(len(self.classes))
         }
         assert split in ['train', 'val', 'test']
         split_dir = os.path.join(self.root_dir, '%s_data_idx.txt' % split)
@@ -100,7 +100,7 @@ class SUNRGBDObject(object):
     def get_label_objects(self, idx):
         label_filename = os.path.join(self.label_dir, '%06d.txt' % (idx))
         lines = [line.rstrip() for line in open(label_filename)]
-        objects = [SUNObject3d(line) for line in lines]
+        objects = [SUNRGBDInstance(line) for line in lines]
         return objects
 
     def get_sunrgbd_infos(self,
