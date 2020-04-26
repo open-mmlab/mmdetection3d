@@ -19,12 +19,6 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
     Args:
         in_channels (int): Number of channels in the input feature map.
         feat_channels (int): Number of channels of the feature map.
-        anchor_scales (Iterable): Anchor scales.
-        anchor_ratios (Iterable): Anchor aspect ratios.
-        anchor_strides (Iterable): Anchor strides.
-        anchor_base_sizes (Iterable): Anchor base sizes.
-        target_means (Iterable): Mean values of regression targets.
-        target_stds (Iterable): Std values of regression targets.
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
     """  # noqa: W605
@@ -216,8 +210,6 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
             anchor_list,
             gt_bboxes,
             input_metas,
-            self.target_means,
-            self.target_stds,
             gt_bboxes_ignore_list=gt_bboxes_ignore,
             gt_labels_list=gt_labels,
             num_classes=self.num_classes,

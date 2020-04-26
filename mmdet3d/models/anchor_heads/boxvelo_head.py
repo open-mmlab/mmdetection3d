@@ -14,12 +14,6 @@ class Anchor3DVeloHead(SECONDHead):
     Args:
         in_channels (int): Number of channels in the input feature map.
         feat_channels (int): Number of channels of the feature map.
-        anchor_scales (Iterable): Anchor scales.
-        anchor_ratios (Iterable): Anchor aspect ratios.
-        anchor_strides (Iterable): Anchor strides.
-        anchor_base_sizes (Iterable): Anchor base sizes.
-        target_means (Iterable): Mean values of regression targets.
-        target_stds (Iterable): Std values of regression targets.
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
     """  # noqa: W605
@@ -127,9 +121,7 @@ class Anchor3DVeloHead(SECONDHead):
                 scores = scores[topk_inds, :]
                 dir_cls_score = dir_cls_score[topk_inds]
 
-            bboxes = self.bbox_coder.decode(anchors, bbox_pred,
-                                            self.target_means,
-                                            self.target_stds)
+            bboxes = self.bbox_coder.decode(anchors, bbox_pred)
             mlvl_bboxes.append(bboxes)
             mlvl_scores.append(scores)
             mlvl_dir_scores.append(dir_cls_score)

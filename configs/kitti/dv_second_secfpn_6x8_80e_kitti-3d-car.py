@@ -94,7 +94,7 @@ input_modality = dict(
     use_lidar=True,
     use_depth=False,
     use_lidar_intensity=True,
-    use_camera=False,
+    use_camera=True,
 )
 db_sampler = dict(
     root_path=data_root,
@@ -125,7 +125,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes', 'gt_labels']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
@@ -133,7 +133,7 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d']),
 ]
 
 data = dict(
@@ -173,13 +173,13 @@ optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(
     policy='cyclic',
-    target_ratio=[10, 1e-4],
+    target_ratio=(10, 1e-4),
     cyclic_times=1,
     step_ratio_up=0.4,
 )
 momentum_config = dict(
     policy='cyclic',
-    target_ratio=[0.85 / 0.95, 1],
+    target_ratio=(0.85 / 0.95, 1),
     cyclic_times=1,
     step_ratio_up=0.4,
 )

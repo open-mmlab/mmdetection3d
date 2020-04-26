@@ -11,8 +11,6 @@ class AnchorTrainMixin(object):
                          anchor_list,
                          gt_bboxes_list,
                          input_metas,
-                         target_means,
-                         target_stds,
                          gt_bboxes_ignore_list=None,
                          gt_labels_list=None,
                          label_channels=1,
@@ -24,8 +22,6 @@ class AnchorTrainMixin(object):
             anchor_list (list[list]): Multi level anchors of each image.
             gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image.
             img_metas (list[dict]): Meta info of each image.
-            target_means (Iterable): Mean value of regression targets.
-            target_stds (Iterable): Std value of regression targets.
 
         Returns:
             tuple
@@ -57,8 +53,6 @@ class AnchorTrainMixin(object):
              gt_bboxes_ignore_list,
              gt_labels_list,
              input_metas,
-             target_means=target_means,
-             target_stds=target_stds,
              label_channels=label_channels,
              num_classes=num_classes,
              sampling=sampling)
@@ -89,8 +83,6 @@ class AnchorTrainMixin(object):
                                 gt_bboxes_ignore,
                                 gt_labels,
                                 input_meta,
-                                target_means,
-                                target_stds,
                                 label_channels=1,
                                 num_classes=1,
                                 sampling=True):
@@ -111,13 +103,12 @@ class AnchorTrainMixin(object):
                     anchor_targets = self.anchor_target_single_assigner(
                         assigner, current_anchors, gt_bboxes[gt_per_cls, :],
                         gt_bboxes_ignore, gt_labels[gt_per_cls], input_meta,
-                        target_means, target_stds, label_channels, num_classes,
-                        sampling)
+                        label_channels, num_classes, sampling)
                 else:
                     anchor_targets = self.anchor_target_single_assigner(
                         assigner, current_anchors, gt_bboxes, gt_bboxes_ignore,
-                        gt_labels, input_meta, target_means, target_stds,
-                        label_channels, num_classes, sampling)
+                        gt_labels, input_meta, label_channels, num_classes,
+                        sampling)
 
                 (labels, label_weights, bbox_targets, bbox_weights,
                  dir_targets, dir_weights, pos_inds, neg_inds) = anchor_targets
@@ -156,8 +147,7 @@ class AnchorTrainMixin(object):
         else:
             return self.anchor_target_single_assigner(
                 self.bbox_assigner, anchors, gt_bboxes, gt_bboxes_ignore,
-                gt_labels, input_meta, target_means, target_stds,
-                label_channels, num_classes, sampling)
+                gt_labels, input_meta, label_channels, num_classes, sampling)
 
     def anchor_target_single_assigner(self,
                                       bbox_assigner,
@@ -166,8 +156,6 @@ class AnchorTrainMixin(object):
                                       gt_bboxes_ignore,
                                       gt_labels,
                                       input_meta,
-                                      target_means,
-                                      target_stds,
                                       label_channels=1,
                                       num_classes=1,
                                       sampling=True):
