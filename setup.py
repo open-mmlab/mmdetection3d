@@ -258,6 +258,17 @@ if __name__ == '__main__':
                     'src/voxelization_cpu.cpp',
                     'src/voxelization_cuda.cu',
                 ]),
+            make_cuda_ext(
+                name='roiaware_pool3d_ext',
+                module='mmdet3d.ops.roiaware_pool3d',
+                sources=[
+                    'src/roiaware_pool3d.cpp',
+                    'src/points_in_boxes_cpu.cpp',
+                ],
+                sources_cuda=[
+                    'src/roiaware_pool3d_kernel.cu',
+                    'src/points_in_boxes_cuda.cu',
+                ]),
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
