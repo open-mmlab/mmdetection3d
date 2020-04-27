@@ -1,11 +1,10 @@
 import numpy as np
 import torch
-from mmcv.cnn import normal_init
+from mmcv.cnn import bias_init_with_prob, normal_init
 
 from mmdet3d.core import box_torch_ops, boxes3d_to_bev_torch_lidar
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.models import HEADS
-from ..utils import bias_init_with_prob
 from .second_head import SECONDHead
 
 
@@ -15,12 +14,6 @@ class Anchor3DVeloHead(SECONDHead):
     Args:
         in_channels (int): Number of channels in the input feature map.
         feat_channels (int): Number of channels of the feature map.
-        anchor_scales (Iterable): Anchor scales.
-        anchor_ratios (Iterable): Anchor aspect ratios.
-        anchor_strides (Iterable): Anchor strides.
-        anchor_base_sizes (Iterable): Anchor base sizes.
-        target_means (Iterable): Mean values of regression targets.
-        target_stds (Iterable): Std values of regression targets.
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
     """  # noqa: W605
@@ -31,25 +24,25 @@ class Anchor3DVeloHead(SECONDHead):
                  in_channels,
                  train_cfg,
                  test_cfg,
-                 cache_anchor=False,
                  feat_channels=256,
                  use_direction_classifier=True,
                  encode_bg_as_zeros=False,
                  box_code_size=9,
-                 anchor_generator=dict(type='AnchorGeneratorRange', ),
-                 anchor_range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
-                 anchor_strides=[2],
-                 anchor_sizes=[[1.6, 3.9, 1.56]],
-                 anchor_rotations=[0, 1.57],
-                 anchor_custom_values=[0, 0],
+                 anchor_generator=dict(
+                     type='Anchor3DRangeGenerator',
+                     range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
+                     strides=[2],
+                     sizes=[[1.6, 3.9, 1.56]],
+                     rotations=[0, 1.57],
+                     custom_values=[0, 0],
+                     reshape_out=True,
+                 ),
                  assigner_per_size=False,
                  assign_per_class=False,
                  diff_rad_by_sin=True,
                  dir_offset=0,
                  dir_limit_offset=1,
-                 target_means=(.0, .0, .0, .0),
-                 target_stds=(1.0, 1.0, 1.0, 1.0),
-                 bbox_coder=dict(type='Residual3DBoxCoder', ),
+                 bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
@@ -58,14 +51,11 @@ class Anchor3DVeloHead(SECONDHead):
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
                  loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2)):
         super().__init__(class_names, in_channels, train_cfg, test_cfg,
-                         cache_anchor, feat_channels, use_direction_classifier,
+                         feat_channels, use_direction_classifier,
                          encode_bg_as_zeros, box_code_size, anchor_generator,
-                         anchor_range, anchor_strides, anchor_sizes,
-                         anchor_rotations, anchor_custom_values,
                          assigner_per_size, assign_per_class, diff_rad_by_sin,
-                         dir_offset, dir_limit_offset, target_means,
-                         target_stds, bbox_coder, loss_cls, loss_bbox,
-                         loss_dir)
+                         dir_offset, dir_limit_offset, bbox_coder, loss_cls,
+                         loss_bbox, loss_dir)
         self.num_classes = num_classes
         # build head layers & losses
         if not self.use_sigmoid_cls:
@@ -131,9 +121,7 @@ class Anchor3DVeloHead(SECONDHead):
                 scores = scores[topk_inds, :]
                 dir_cls_score = dir_cls_score[topk_inds]
 
-            bboxes = self.bbox_coder.decode_torch(anchors, bbox_pred,
-                                                  self.target_means,
-                                                  self.target_stds)
+            bboxes = self.bbox_coder.decode(anchors, bbox_pred)
             mlvl_bboxes.append(bboxes)
             mlvl_scores.append(scores)
             mlvl_dir_scores.append(dir_cls_score)

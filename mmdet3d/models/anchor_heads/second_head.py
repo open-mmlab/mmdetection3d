@@ -1,9 +1,7 @@
-from __future__ import division
-
 import numpy as np
 import torch
 import torch.nn as nn
-from mmcv.cnn import normal_init
+from mmcv.cnn import bias_init_with_prob, normal_init
 
 from mmdet3d.core import (PseudoSampler, box_torch_ops,
                           boxes3d_to_bev_torch_lidar, build_anchor_generator,
@@ -12,24 +10,37 @@ from mmdet3d.core import (PseudoSampler, box_torch_ops,
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.models import HEADS
 from ..builder import build_loss
-from ..utils import bias_init_with_prob
 from .train_mixins import AnchorTrainMixin
 
 
 @HEADS.register_module
 class SECONDHead(nn.Module, AnchorTrainMixin):
-    """Anchor-based head (RPN, RetinaNet, SSD, etc.).
+    """Anchor-based head for VoxelNet detectors.
+
     Args:
+        class_name (list[str]): name of classes (TODO: to be removed)
         in_channels (int): Number of channels in the input feature map.
+        train_cfg (dict): train configs
+        test_cfg (dict): test configs
         feat_channels (int): Number of channels of the feature map.
-        anchor_scales (Iterable): Anchor scales.
-        anchor_ratios (Iterable): Anchor aspect ratios.
-        anchor_strides (Iterable): Anchor strides.
-        anchor_base_sizes (Iterable): Anchor base sizes.
-        target_means (Iterable): Mean values of regression targets.
-        target_stds (Iterable): Std values of regression targets.
+        use_direction_classifier (bool): Whether to add a direction classifier.
+        encode_bg_as_zeros (bool): Whether to use sigmoid of softmax
+            (TODO: to be removed)
+        box_code_size (int): The size of box code.
+        anchor_generator(dict): Config dict of anchor generator.
+        assigner_per_size (bool): Whether to do assignment for each separate
+            anchor size.
+        assign_per_class (bool): Whether to do assignment for each class.
+        diff_rad_by_sin (bool): Whether to change the difference into sin
+            difference for box regression loss.
+        dir_offset (float | int): The offset of BEV rotation angles
+            (TODO: may be moved into box coder)
+        dirlimit_offset (float | int): The limited range of BEV rotation angles
+            (TODO: may be moved into box coder)
+        box_coder (dict): Config dict of box coders.
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
+        loss_dir (dict): Config of direction classifier loss.
     """  # noqa: W605
 
     def __init__(self,
@@ -37,25 +48,24 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                  in_channels,
                  train_cfg,
                  test_cfg,
-                 cache_anchor=False,
                  feat_channels=256,
                  use_direction_classifier=True,
                  encode_bg_as_zeros=False,
                  box_code_size=7,
-                 anchor_generator=dict(type='AnchorGeneratorRange'),
-                 anchor_range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
-                 anchor_strides=[2],
-                 anchor_sizes=[[1.6, 3.9, 1.56]],
-                 anchor_rotations=[0, 1.57],
-                 anchor_custom_values=[],
+                 anchor_generator=dict(
+                     type='Anchor3DRangeGenerator',
+                     range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
+                     strides=[2],
+                     sizes=[[1.6, 3.9, 1.56]],
+                     rotations=[0, 1.57],
+                     custom_values=[],
+                     reshape_out=False),
                  assigner_per_size=False,
                  assign_per_class=False,
                  diff_rad_by_sin=True,
                  dir_offset=0,
                  dir_limit_offset=1,
-                 target_means=(.0, .0, .0, .0),
-                 target_stds=(1.0, 1.0, 1.0, 1.0),
-                 bbox_coder=dict(type='Residual3DBoxCoder'),
+                 bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
@@ -94,29 +104,9 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                 ]
 
         # build anchor generator
-        self.anchor_range = anchor_range
-        self.anchor_rotations = anchor_rotations
-        self.anchor_strides = anchor_strides
-        self.anchor_sizes = anchor_sizes
-        self.target_means = target_means
-        self.target_stds = target_stds
-        self.anchor_generators = []
+        self.anchor_generator = build_anchor_generator(anchor_generator)
         # In 3D detection, the anchor stride is connected with anchor size
-        self.num_anchors = (
-            len(self.anchor_rotations) * len(self.anchor_sizes))
-        # if len(self.anchor_sizes) != self.anchor_strides:
-        #     # this means different anchor in the same anchor strides
-        #     anchor_sizes = [self.anchor_sizes]
-        for anchor_stride in self.anchor_strides:
-            anchor_generator.update(
-                anchor_ranges=anchor_range,
-                sizes=self.anchor_sizes,
-                stride=anchor_stride,
-                rotations=anchor_rotations,
-                custom_values=anchor_custom_values,
-                cache_anchor=cache_anchor)
-            self.anchor_generators.append(
-                build_anchor_generator(anchor_generator))
+        self.num_anchors = self.anchor_generator.num_base_anchors
 
         self._init_layers()
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
@@ -152,7 +142,7 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
     def forward(self, feats):
         return multi_apply(self.forward_single, feats)
 
-    def get_anchors(self, featmap_sizes, input_metas):
+    def get_anchors(self, featmap_sizes, input_metas, device='cuda'):
         """Get anchors according to feature map sizes.
         Args:
             featmap_sizes (list[tuple]): Multi-level feature map sizes.
@@ -161,16 +151,10 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
             tuple: anchors of each image, valid flags of each image
         """
         num_imgs = len(input_metas)
-        num_levels = len(featmap_sizes)
-
         # since feature map sizes of all images are the same, we only compute
         # anchors for one time
-        multi_level_anchors = []
-        for i in range(num_levels):
-            anchors = self.anchor_generators[i].grid_anchors(featmap_sizes[i])
-            if not self.assigner_per_size:
-                anchors = anchors.reshape(-1, anchors.size(-1))
-            multi_level_anchors.append(anchors)
+        multi_level_anchors = self.anchor_generator.grid_anchors(
+            featmap_sizes, device=device)
         anchor_list = [multi_level_anchors for _ in range(num_imgs)]
         return anchor_list
 
@@ -237,16 +221,15 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
              input_metas,
              gt_bboxes_ignore=None):
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
-        assert len(featmap_sizes) == len(self.anchor_generators)
-
-        anchor_list = self.get_anchors(featmap_sizes, input_metas)
+        assert len(featmap_sizes) == self.anchor_generator.num_levels
+        device = cls_scores[0].device
+        anchor_list = self.get_anchors(
+            featmap_sizes, input_metas, device=device)
         label_channels = self.cls_out_channels if self.use_sigmoid_cls else 1
         cls_reg_targets = self.anchor_target_3d(
             anchor_list,
             gt_bboxes,
             input_metas,
-            self.target_means,
-            self.target_stds,
             gt_bboxes_ignore_list=gt_bboxes_ignore,
             gt_labels_list=gt_labels,
             num_classes=self.num_classes,
@@ -288,12 +271,14 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
         assert len(cls_scores) == len(bbox_preds)
         assert len(cls_scores) == len(dir_cls_preds)
         num_levels = len(cls_scores)
-
+        featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
+        device = cls_scores[0].device
+        mlvl_anchors = self.anchor_generator.grid_anchors(
+            featmap_sizes, device=device)
         mlvl_anchors = [
-            self.anchor_generators[i].grid_anchors(
-                cls_scores[i].size()[-2:]).reshape(-1, self.box_code_size)
-            for i in range(num_levels)
+            anchor.reshape(-1, self.box_code_size) for anchor in mlvl_anchors
         ]
+
         result_list = []
         for img_id in range(len(input_metas)):
             cls_score_list = [
@@ -353,9 +338,7 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                 bbox_pred = bbox_pred[thr_inds]
                 scores = scores[thr_inds]
                 dir_cls_scores = dir_cls_score[thr_inds]
-            bboxes = self.bbox_coder.decode_torch(anchors, bbox_pred,
-                                                  self.target_means,
-                                                  self.target_stds)
+            bboxes = self.bbox_coder.decode(anchors, bbox_pred)
             bboxes_for_nms = boxes3d_to_bev_torch_lidar(bboxes)
             mlvl_bboxes_for_nms.append(bboxes_for_nms)
             mlvl_bboxes.append(bboxes)
@@ -383,6 +366,7 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
             selected_scores = mlvl_scores[selected]
             selected_label_preds = mlvl_label_preds[selected]
             selected_dir_scores = mlvl_dir_scores[selected]
+            # TODO: move dir_offset to box coder
             dir_rot = box_torch_ops.limit_period(
                 selected_bboxes[..., -1] - self.dir_offset,
                 self.dir_limit_offset, np.pi)

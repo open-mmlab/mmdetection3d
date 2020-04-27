@@ -41,12 +41,15 @@ model = dict(
         feat_channels=512,
         use_direction_classifier=True,
         encode_bg_as_zeros=True,
-        anchor_range=[0, -40.0, -1.78, 70.4, 40.0, -1.78],
-        anchor_strides=[2],
-        anchor_sizes=[[1.6, 3.9, 1.56]],
-        anchor_rotations=[0, 1.57],
+        anchor_generator=dict(
+            type='Anchor3DRangeGenerator',
+            ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
+            strides=[2],
+            sizes=[[1.6, 3.9, 1.56]],
+            rotations=[0, 1.57],
+            reshape_out=True),
         diff_rad_by_sin=True,
-        bbox_coder=dict(type='Residual3DBoxCoder', ),
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -91,7 +94,7 @@ input_modality = dict(
     use_lidar=True,
     use_depth=False,
     use_lidar_intensity=True,
-    use_camera=False,
+    use_camera=True,
 )
 db_sampler = dict(
     root_path=data_root,
@@ -113,7 +116,7 @@ train_pipeline = [
         loc_noise_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
         rot_uniform_noise=[-0.78539816, 0.78539816]),
-    dict(type='PointsRandomFlip', flip_ratio=0.5),
+    dict(type='RandomFlip3D', flip_ratio=0.5),
     dict(
         type='GlobalRotScale',
         rot_uniform_noise=[-0.78539816, 0.78539816],
@@ -122,7 +125,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes', 'gt_labels']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
@@ -130,7 +133,7 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d']),
 ]
 
 data = dict(
@@ -170,13 +173,13 @@ optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(
     policy='cyclic',
-    target_ratio=[10, 1e-4],
+    target_ratio=(10, 1e-4),
     cyclic_times=1,
     step_ratio_up=0.4,
 )
 momentum_config = dict(
     policy='cyclic',
-    target_ratio=[0.85 / 0.95, 1],
+    target_ratio=(0.85 / 0.95, 1),
     cyclic_times=1,
     step_ratio_up=0.4,
 )

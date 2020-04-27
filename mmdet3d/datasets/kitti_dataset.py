@@ -8,8 +8,8 @@ import torch
 import torch.utils.data as torch_data
 
 from mmdet.datasets import DATASETS
-from mmdet.datasets.pipelines import Compose
 from ..core.bbox import box_np_ops
+from .pipelines import Compose
 from .utils import remove_dontcare
 
 
@@ -274,7 +274,7 @@ class KittiDataset(torch_data.Dataset):
                                                   out)
         return result_files
 
-    def evaluate(self, result_files, eval_types=None):
+    def evaluate(self, result_files, logger=None, eval_types=None):
         from mmdet3d.core.evaluation import kitti_eval
         gt_annos = [info['annos'] for info in self.kitti_infos]
         if eval_types == 'img_bbox':
@@ -283,7 +283,7 @@ class KittiDataset(torch_data.Dataset):
         else:
             ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
                                                 self.class_names)
-        return ap_result_str, ap_dict
+        return ap_dict
 
     def bbox2result_kitti(self, net_outputs, class_names, out=None):
         if out:

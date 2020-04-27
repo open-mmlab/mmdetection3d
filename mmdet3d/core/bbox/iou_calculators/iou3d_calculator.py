@@ -1,6 +1,8 @@
+import torch
+
 from mmdet3d.ops.iou3d import boxes_iou3d_gpu
 from mmdet.core.bbox import bbox_overlaps
-from mmdet.core.bbox.iou_calculators.registry import IOU_CALCULATORS
+from mmdet.core.bbox.iou_calculators.builder import IOU_CALCULATORS
 from .. import box_torch_ops
 
 
@@ -33,18 +35,21 @@ class BboxOverlaps3D(object):
 
 
 def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
-    '''
-    :param bboxes1: Tensor, shape (N, 7) [x, y, z, h, w, l, ry]?
-    :param bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]?
-    :param mode: mode (str): "iou" (intersection over union) or iof
+    """Calculate nearest 3D IoU
+
+    Args:
+        bboxes1: Tensor, shape (N, 7) [x, y, z, h, w, l, ry]?
+        bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]?
+        mode: mode (str): "iou" (intersection over union) or iof
             (intersection over foreground).
-    :return: iou: (M, N) not support aligned mode currently
-    rbboxes: [N, 5(x, y, xdim, ydim, rad)] rotated bboxes
-    '''
-    rbboxes1_bev = bboxes1.index_select(
-        dim=-1, index=bboxes1.new_tensor([0, 1, 3, 4, 6]).long())
-    rbboxes2_bev = bboxes2.index_select(
-        dim=-1, index=bboxes1.new_tensor([0, 1, 3, 4, 6]).long())
+
+    Return:
+        iou: (M, N) not support aligned mode currently
+    """
+    assert bboxes1.size(-1) == bboxes2.size(-1) == 7
+    column_index1 = bboxes1.new_tensor([0, 1, 3, 4, 6], dtype=torch.long)
+    rbboxes1_bev = bboxes1.index_select(dim=-1, index=column_index1)
+    rbboxes2_bev = bboxes2.index_select(dim=-1, index=column_index1)
 
     # Change the bboxes to bev
     # box conversion and iou calculation in torch version on CUDA
@@ -57,14 +62,18 @@ def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
 
 
 def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou'):
-    '''
+    """Calculate 3D IoU using cuda implementation
 
-    :param bboxes1: Tensor, shape (N, 7) [x, y, z, h, w, l, ry]
-    :param bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]
-    :param mode: mode (str): "iou" (intersection over union) or
+    Args:
+        bboxes1: Tensor, shape (N, 7) [x, y, z, h, w, l, ry]
+        bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]
+        mode: mode (str): "iou" (intersection over union) or
             iof (intersection over foreground).
-    :return: iou: (M, N) not support aligned mode currently
-    '''
+
+    Return:
+        iou: (M, N) not support aligned mode currently
+    """
     # TODO: check the input dimension meanings,
     #  this is inconsistent with that in bbox_overlaps_nearest_3d
+    assert bboxes1.size(-1) == bboxes2.size(-1) == 7
     return boxes_iou3d_gpu(bboxes1, bboxes2, mode)
