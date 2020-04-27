@@ -21,9 +21,9 @@ def corners_nd(dims, origin=0.5):
             where x0 < x1, y0 < y1, z0 < z1
     """
     ndim = int(dims.shape[1])
-    corners_norm = np.stack(
-        np.unravel_index(np.arange(2**ndim), [2] * ndim),
-        axis=1).astype(dims.dtype)
+    corners_norm = torch.from_numpy(
+        np.stack(np.unravel_index(np.arange(2**ndim), [2] * ndim), axis=1)).to(
+            device=dims.device, dtype=dims.dtype)
     # now corners_norm has format: (2d) x0y0, x0y1, x1y0, x1y1
     # (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
     # so need to convert to a format which is convenient to do other computing.
@@ -34,7 +34,7 @@ def corners_nd(dims, origin=0.5):
         corners_norm = corners_norm[[0, 1, 3, 2]]
     elif ndim == 3:
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-    corners_norm = corners_norm - np.array(origin, dtype=dims.dtype)
+    corners_norm = corners_norm - dims.new_tensor(origin)
     corners = dims.reshape([-1, 1, ndim]) * corners_norm.reshape(
         [1, 2**ndim, ndim])
     return corners
