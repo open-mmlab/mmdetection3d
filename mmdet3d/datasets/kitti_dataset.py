@@ -9,6 +9,7 @@ import torch
 import torch.utils.data as torch_data
 
 from mmdet.datasets import DATASETS
+from mmdet.utils import print_log
 from ..core.bbox import box_np_ops
 from .pipelines import Compose
 from .utils import remove_dontcare
@@ -317,10 +318,10 @@ class KittiDataset(torch_data.Dataset):
         else:
             ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
                                                 self.class_names)
-
+        print_log('\n' + ap_result_str, logger=logger)
         if tmp_dir is not None:
             tmp_dir.cleanup()
-        return ap_dict, tmp_dir
+        return ap_dict
 
     def bbox2result_kitti(self,
                           net_outputs,
