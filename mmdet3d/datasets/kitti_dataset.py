@@ -318,7 +318,7 @@ class KittiDataset(torch_data.Dataset):
         else:
             ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
                                                 self.class_names)
-        print_log(ap_result_str, logger=logger)
+        print_log('\n' + ap_result_str, logger=logger)
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return ap_dict
