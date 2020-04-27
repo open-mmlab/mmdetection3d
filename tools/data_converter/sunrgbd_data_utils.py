@@ -1,13 +1,13 @@
 import concurrent.futures as futures
 import os
 
-import cv2
+import mmcv
 import numpy as np
 import scipy.io as sio
 
 
 def random_sampling(pc, num_samples, replace=None, return_choices=False):
-    '''
+    """
     Random Sampling.
 
     Sampling point cloud to num_samples points.
@@ -20,7 +20,8 @@ def random_sampling(pc, num_samples, replace=None, return_choices=False):
 
     Returns:
         pc (ndarray): Point cloud after sampling.
-    '''
+    """
+
     if replace is None:
         replace = (pc.shape[0] < num_samples)
     choices = np.random.choice(pc.shape[0], num_samples, replace=replace)
@@ -57,7 +58,7 @@ class SUNRGBDInstance(object):
 
 
 class SUNRGBDData(object):
-    '''
+    """
     SUNRGBD Data
 
     Generate scannet infos for sunrgbd_converter
@@ -66,7 +67,7 @@ class SUNRGBDData(object):
         root_path (str): Root path of the raw data.
         split (str): Set split type of the data. Default: 'train'.
         use_v1 (bool): Whether to use v1. Default: False.
-    '''
+    """
 
     def __init__(self, root_path, split='train', use_v1=False):
         self.root_dir = root_path
@@ -100,7 +101,7 @@ class SUNRGBDData(object):
 
     def get_image(self, idx):
         img_filename = os.path.join(self.image_dir, f'{idx:06d}.jpg')
-        return cv2.imread(img_filename)
+        return mmcv.imread(img_filename)
 
     def get_image_shape(self, idx):
         image = self.get_image(idx)
@@ -125,23 +126,21 @@ class SUNRGBDData(object):
         objects = [SUNRGBDInstance(line) for line in lines]
         return objects
 
-    def get_sunrgbd_infos(self,
-                          num_workers=4,
-                          has_label=True,
-                          sample_id_list=None):
-        '''
-        Get sunrgbd infos.
+    def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
+        """
+        Get data infos.
 
         This method gets information from the raw data.
 
         Args:
             num_workers (int): Number of threads to be used. Default: 4.
             has_label (bool): Whether the data has label. Default: True.
-            sample_id_list (List[int]): Index list of the sample. Default: None. # noqa: E501
+            sample_id_list (List[int]): Index list of the sample.
+                Default: None.
 
         Returns:
             infos (List[dict]): Information of the raw data.
-        '''
+        """
 
         def process_single_scene(sample_idx):
             print(f'{self.split} sample_idx: {sample_idx}')

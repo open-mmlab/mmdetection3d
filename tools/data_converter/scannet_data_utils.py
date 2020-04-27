@@ -5,7 +5,7 @@ import numpy as np
 
 
 class ScanNetData(object):
-    '''
+    """
     ScanNet Data
 
     Generate scannet infos for scannet_converter
@@ -13,7 +13,7 @@ class ScanNetData(object):
     Args:
         root_path (str): Root path of the raw data
         split (str): Set split type of the data. Default: 'train'.
-    '''
+    """
 
     def __init__(self, root_path, split='train'):
         self.root_dir = root_path
@@ -48,23 +48,21 @@ class ScanNetData(object):
         assert os.path.exists(box_file)
         return np.load(box_file)
 
-    def get_scannet_infos(self,
-                          num_workers=4,
-                          has_label=True,
-                          sample_id_list=None):
-        '''
-        Get scannet infos.
+    def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
+        """
+        Get data infos.
 
         This method gets information from the raw data.
 
         Args:
             num_workers (int): Number of threads to be used. Default: 4.
             has_label (bool): Whether the data has label. Default: True.
-            sample_id_list (List[int]): Index list of the sample. Default: None. # noqa: E501
+            sample_id_list (List[int]): Index list of the sample.
+                Default: None.
 
         Returns:
             infos (List[dict]): Information of the raw data.
-        '''
+        """
 
         def process_single_scene(sample_idx):
             print(f'{self.split} sample_idx: {sample_idx}')
