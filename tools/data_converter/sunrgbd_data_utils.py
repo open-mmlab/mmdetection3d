@@ -7,8 +7,7 @@ import scipy.io as sio
 
 
 def random_sampling(pc, num_samples, replace=None, return_choices=False):
-    """
-    Random Sampling.
+    """Random Sampling.
 
     Sampling point cloud to num_samples points.
 
@@ -58,8 +57,7 @@ class SUNRGBDInstance(object):
 
 
 class SUNRGBDData(object):
-    """
-    SUNRGBD Data
+    """SUNRGBD Data
 
     Generate scannet infos for sunrgbd_converter
 
@@ -127,8 +125,7 @@ class SUNRGBDData(object):
         return objects
 
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
-        """
-        Get data infos.
+        """Get data infos.
 
         This method gets information from the raw data.
 

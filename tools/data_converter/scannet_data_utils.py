@@ -5,8 +5,7 @@ import numpy as np
 
 
 class ScanNetData(object):
-    """
-    ScanNet Data
+    """ScanNet Data
 
     Generate scannet infos for scannet_converter
 
@@ -49,8 +48,7 @@ class ScanNetData(object):
         return np.load(box_file)
 
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
-        """
-        Get data infos.
+        """Get data infos.
 
         This method gets information from the raw data.
 

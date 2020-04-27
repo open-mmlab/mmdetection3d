@@ -9,8 +9,7 @@ def create_indoor_info_file(data_path,
                             pkl_prefix='sunrgbd',
                             save_path=None,
                             use_v1=False):
-    """
-    Create indoor  information file.
+    """Create indoor  information file.
 
     Get information of the raw data and save it to the pkl file.
 
@@ -19,10 +18,6 @@ def create_indoor_info_file(data_path,
         pkl_prefix (str): Prefix of the pkl to be saved. Default: 'sunrgbd'.
         save_path (str): Path of the pkl to be saved. Default: None.
         use_v1 (bool): Whether to use v1. Default: False.
-
-    Returns:
-        None
-
     """
     assert os.path.exists(data_path)
     assert pkl_prefix in ['sunrgbd', 'scannet']
