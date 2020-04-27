@@ -191,7 +191,7 @@ log_config = dict(
 # yapf:enable
 # runtime settings
 total_epochs = 80
-dist_params = dict(backend='nccl')
+dist_params = dict(backend='nccl', port=29511)
 log_level = 'INFO'
 work_dir = './work_dirs/sec_secfpn_80e'
 load_from = None
