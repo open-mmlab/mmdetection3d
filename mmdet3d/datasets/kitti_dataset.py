@@ -44,8 +44,7 @@ class KittiDataset(torch_data.Dataset):
         self.pcd_limit_range = [0, -40, -3, 70.4, 40, 0.0]
 
         self.ann_file = ann_file
-        with open(ann_file, 'rb') as f:
-            self.kitti_infos = mmcv.load(f)
+        self.kitti_infos = mmcv.load(ann_file)
 
         # set group flag for the sampler
         if not self.test_mode:
@@ -284,7 +283,7 @@ class KittiDataset(torch_data.Dataset):
             result_files = self.bbox2result_kitti(outputs, self.class_names,
                                                   pklfile_prefix,
                                                   submission_prefix)
-        return result_files
+        return result_files, tmp_dir
 
     def evaluate(self,
                  results,
@@ -321,7 +320,7 @@ class KittiDataset(torch_data.Dataset):
 
         if tmp_dir is not None:
             tmp_dir.cleanup()
-        return ap_dict
+        return ap_dict, tmp_dir
 
     def bbox2result_kitti(self,
                           net_outputs,
@@ -332,7 +331,7 @@ class KittiDataset(torch_data.Dataset):
             mmcv.mkdir_or_exist(submission_prefix)
 
         det_annos = []
-        print('Converting prediction to KITTI format')
+        print('\nConverting prediction to KITTI format')
         for idx, pred_dicts in enumerate(
                 mmcv.track_iter_progress(net_outputs)):
             annos = []
