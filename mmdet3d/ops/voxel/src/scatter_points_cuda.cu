@@ -6,7 +6,7 @@
 #include <ATen/cuda/CUDAApplyUtils.cuh>
 
 #define CHECK_CUDA(x) \
-  TORCH_CHECK(x.type().is_cuda(), #x " must be a CUDA tensor")
+  TORCH_CHECK(x.device().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) \
   TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) \
@@ -177,7 +177,7 @@ std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
   dim3 threads(threadsPerBlock);
   cudaStream_t map_stream = at::cuda::getCurrentCUDAStream();
   AT_DISPATCH_ALL_TYPES(
-      voxel_mapping.type(), "determin_duplicate", ([&] {
+      voxel_mapping.scalar_type(), "determin_duplicate", ([&] {
         point_to_voxelidx_kernel<int><<<blocks, threads, 0, map_stream>>>(
             voxel_mapping.data_ptr<int>(), point_to_voxelidx.data_ptr<int>(),
             point_to_pointidx.data_ptr<int>(), num_points, NDim);
@@ -203,7 +203,7 @@ std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
       voxel_mapping.options());  // must be zero from the begining
   cudaStream_t logic_stream = at::cuda::getCurrentCUDAStream();
   AT_DISPATCH_ALL_TYPES(
-      voxel_mapping.type(), "determin_duplicate", ([&] {
+      voxel_mapping.scalar_type(), "determin_duplicate", ([&] {
         determin_voxel_num<int><<<1, 1, 0, logic_stream>>>(
             voxel_mapping.data_ptr<int>(), num_points_per_voxel.data_ptr<int>(),
             point_to_voxelidx.data_ptr<int>(),
@@ -228,7 +228,7 @@ std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
   dim3 cp_threads(threadsPerBlock, 4);
   cudaStream_t cp_stream = at::cuda::getCurrentCUDAStream();
   AT_DISPATCH_ALL_TYPES(
-      points.type(), "scatter_point_to_voxel", ([&] {
+      points.scalar_type(), "scatter_point_to_voxel", ([&] {
         scatter_point_to_voxel_kernel<float, int>
             <<<blocks, cp_threads, 0, cp_stream>>>(
                 points.data_ptr<float>(), voxel_mapping.data_ptr<int>(),
@@ -265,8 +265,8 @@ void dynamic_point_to_voxel_backward_gpu(at::Tensor& grad_input_points,
   dim3 blocks(col_blocks);
   dim3 cp_threads(threadsPerBlock, 4);
   cudaStream_t cp_stream = at::cuda::getCurrentCUDAStream();
-  AT_DISPATCH_ALL_TYPES(grad_input_points.type(), "scatter_point_to_voxel",
-                        ([&] {
+  AT_DISPATCH_ALL_TYPES(grad_input_points.scalar_type(),
+                        "scatter_point_to_voxel", ([&] {
                           map_voxel_to_point_kernel<float, int>
                               <<<blocks, cp_threads, 0, cp_stream>>>(
                                   grad_input_points.data_ptr<float>(),

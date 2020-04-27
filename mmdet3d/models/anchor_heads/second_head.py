@@ -15,12 +15,32 @@ from .train_mixins import AnchorTrainMixin
 
 @HEADS.register_module
 class SECONDHead(nn.Module, AnchorTrainMixin):
-    """Anchor-based head (RPN, RetinaNet, SSD, etc.).
+    """Anchor-based head for VoxelNet detectors.
+
     Args:
+        class_name (list[str]): name of classes (TODO: to be removed)
         in_channels (int): Number of channels in the input feature map.
+        train_cfg (dict): train configs
+        test_cfg (dict): test configs
         feat_channels (int): Number of channels of the feature map.
+        use_direction_classifier (bool): Whether to add a direction classifier.
+        encode_bg_as_zeros (bool): Whether to use sigmoid of softmax
+            (TODO: to be removed)
+        box_code_size (int): The size of box code.
+        anchor_generator(dict): Config dict of anchor generator.
+        assigner_per_size (bool): Whether to do assignment for each separate
+            anchor size.
+        assign_per_class (bool): Whether to do assignment for each class.
+        diff_rad_by_sin (bool): Whether to change the difference into sin
+            difference for box regression loss.
+        dir_offset (float | int): The offset of BEV rotation angles
+            (TODO: may be moved into box coder)
+        dirlimit_offset (float | int): The limited range of BEV rotation angles
+            (TODO: may be moved into box coder)
+        box_coder (dict): Config dict of box coders.
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
+        loss_dir (dict): Config of direction classifier loss.
     """  # noqa: W605
 
     def __init__(self,
@@ -253,7 +273,7 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
         num_levels = len(cls_scores)
         featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
         device = cls_scores[0].device
-        mlvl_anchors = self.anchor_generators.grid_anchors(
+        mlvl_anchors = self.anchor_generator.grid_anchors(
             featmap_sizes, device=device)
         mlvl_anchors = [
             anchor.reshape(-1, self.box_code_size) for anchor in mlvl_anchors
