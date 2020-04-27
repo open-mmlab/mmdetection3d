@@ -1,6 +1,7 @@
 from __future__ import division
 import argparse
 import copy
+import logging
 import os
 import os.path as osp
 import time
@@ -102,6 +103,10 @@ def main():
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
     log_file = osp.join(cfg.work_dir, '{}.log'.format(timestamp))
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
+
+    # add a logging filter
+    logging_filter = logging.Filter('mmdet')
+    logging_filter.filter = lambda record: record.find('mmdet') != -1
 
     # init the meta dict to record some important information such as
     # environment info and seed, which will be logged
