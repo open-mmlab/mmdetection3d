@@ -1,3 +1,4 @@
+import concurrent.futures as futures
 import os
 
 import cv2
@@ -5,12 +6,24 @@ import numpy as np
 import scipy.io as sio
 
 
-def random_sampling(pc, num_sample, replace=None, return_choices=False):
-    """ Input is NxC, output is num_samplexC
-    """
+def random_sampling(pc, num_samples, replace=None, return_choices=False):
+    '''
+    Random Sampling.
+
+    Sampling point cloud to num_samples points.
+
+    Args:
+        pc (ndarray): Point cloud.
+        num_samples (int): The number of samples.
+        replace (bool): Whether the sample is with or without replacement.
+        return_choices (bool): Whether to return choices.
+
+    Returns:
+        pc (ndarray): Point cloud after sampling.
+    '''
     if replace is None:
-        replace = (pc.shape[0] < num_sample)
-    choices = np.random.choice(pc.shape[0], num_sample, replace=replace)
+        replace = (pc.shape[0] < num_samples)
+    choices = np.random.choice(pc.shape[0], num_samples, replace=replace)
     if return_choices:
         return pc[choices], choices
     else:
@@ -44,7 +57,16 @@ class SUNRGBDInstance(object):
 
 
 class SUNRGBDData(object):
-    ''' Load and parse object data '''
+    '''
+    SUNRGBD Data
+
+    Generate scannet infos for sunrgbd_converter
+
+    Args:
+        root_path (str): Root path of the raw data.
+        split (str): Set split type of the data. Default: 'train'.
+        use_v1 (bool): Whether to use v1. Default: False.
+    '''
 
     def __init__(self, root_path, split='train', use_v1=False):
         self.root_dir = root_path
@@ -60,7 +82,7 @@ class SUNRGBDData(object):
             for label in range(len(self.classes))
         }
         assert split in ['train', 'val', 'test']
-        split_dir = os.path.join(self.root_dir, '%s_data_idx.txt' % split)
+        split_dir = os.path.join(self.root_dir, f'{split}_data_idx.txt')
         self.sample_id_list = [
             int(x.strip()) for x in open(split_dir).readlines()
         ] if os.path.exists(split_dir) else None
@@ -77,7 +99,7 @@ class SUNRGBDData(object):
         return len(self.sample_id_list)
 
     def get_image(self, idx):
-        img_filename = os.path.join(self.image_dir, '%06d.jpg' % (idx))
+        img_filename = os.path.join(self.image_dir, f'{idx:06d}.jpg')
         return cv2.imread(img_filename)
 
     def get_image_shape(self, idx):
@@ -85,12 +107,12 @@ class SUNRGBDData(object):
         return np.array(image.shape[:2], dtype=np.int32)
 
     def get_depth(self, idx):
-        depth_filename = os.path.join(self.depth_dir, '%06d.mat' % (idx))
+        depth_filename = os.path.join(self.depth_dir, f'{idx:06d}.mat')
         depth = sio.loadmat(depth_filename)['instance']
         return depth
 
     def get_calibration(self, idx):
-        calib_filepath = os.path.join(self.calib_dir, '%06d.txt' % (idx))
+        calib_filepath = os.path.join(self.calib_dir, f'{idx:06d}.txt')
         lines = [line.rstrip() for line in open(calib_filepath)]
         Rt = np.array([float(x) for x in lines[0].split(' ')])
         Rt = np.reshape(Rt, (3, 3), order='F')
@@ -98,7 +120,7 @@ class SUNRGBDData(object):
         return K, Rt
 
     def get_label_objects(self, idx):
-        label_filename = os.path.join(self.label_dir, '%06d.txt' % (idx))
+        label_filename = os.path.join(self.label_dir, f'{idx:06d}.txt')
         lines = [line.rstrip() for line in open(label_filename)]
         objects = [SUNRGBDInstance(line) for line in lines]
         return objects
@@ -107,10 +129,22 @@ class SUNRGBDData(object):
                           num_workers=4,
                           has_label=True,
                           sample_id_list=None):
-        import concurrent.futures as futures
+        '''
+        Get sunrgbd infos.
+
+        This method gets information from the raw data.
+
+        Args:
+            num_workers (int): Number of threads to be used. Default: 4.
+            has_label (bool): Whether the data has label. Default: True.
+            sample_id_list (List[int]): Index list of the sample. Default: None. # noqa: E501
+
+        Returns:
+            infos (List[dict]): Information of the raw data.
+        '''
 
         def process_single_scene(sample_idx):
-            print('%s sample_idx: %s' % (self.split, sample_idx))
+            print(f'{self.split} sample_idx: {sample_idx}')
             # convert depth to points
             SAMPLE_NUM = 50000
             pc_upright_depth = self.get_depth(sample_idx)
@@ -118,13 +152,13 @@ class SUNRGBDData(object):
             pc_upright_depth_subsampled = random_sampling(
                 pc_upright_depth, SAMPLE_NUM)
             np.savez_compressed(
-                os.path.join(self.root_dir, 'lidar', '%06d.npz' % sample_idx),
+                os.path.join(self.root_dir, 'lidar', f'{sample_idx:06d}.npz'),
                 pc=pc_upright_depth_subsampled)
 
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
-            img_name = os.path.join(self.image_dir, '%06d.jpg' % (sample_idx))
+            img_name = os.path.join(self.image_dir, f'{sample_idx:06d}')
             img_path = os.path.join(self.image_dir, img_name)
             image_info = {
                 'image_idx': sample_idx,

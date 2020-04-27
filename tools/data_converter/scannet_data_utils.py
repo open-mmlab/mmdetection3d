@@ -1,10 +1,19 @@
+import concurrent.futures as futures
 import os
 
 import numpy as np
 
 
 class ScanNetData(object):
-    ''' Load and parse object data '''
+    '''
+    ScanNet Data
+
+    Generate scannet infos for scannet_converter
+
+    Args:
+        root_path (str): Root path of the raw data
+        split (str): Set split type of the data. Default: 'train'.
+    '''
 
     def __init__(self, root_path, split='train'):
         self.root_dir = root_path
@@ -26,7 +35,7 @@ class ScanNetData(object):
         }
         assert split in ['train', 'val', 'test']
         split_dir = os.path.join(self.root_dir, 'meta_data',
-                                 'scannetv2_%s.txt' % split)
+                                 f'scannetv2_{split}.txt')
         self.sample_id_list = [x.strip() for x in open(split_dir).readlines()
                                ] if os.path.exists(split_dir) else None
 
@@ -35,7 +44,7 @@ class ScanNetData(object):
 
     def get_box_label(self, idx):
         box_file = os.path.join(self.root_dir, 'scannet_train_instance_data',
-                                '%s_bbox.npy' % idx)
+                                f'{idx}_bbox.npy')
         assert os.path.exists(box_file)
         return np.load(box_file)
 
@@ -43,10 +52,22 @@ class ScanNetData(object):
                           num_workers=4,
                           has_label=True,
                           sample_id_list=None):
-        import concurrent.futures as futures
+        '''
+        Get scannet infos.
+
+        This method gets information from the raw data.
+
+        Args:
+            num_workers (int): Number of threads to be used. Default: 4.
+            has_label (bool): Whether the data has label. Default: True.
+            sample_id_list (List[int]): Index list of the sample. Default: None. # noqa: E501
+
+        Returns:
+            infos (List[dict]): Information of the raw data.
+        '''
 
         def process_single_scene(sample_idx):
-            print('%s sample_idx: %s' % (self.split, sample_idx))
+            print(f'{self.split} sample_idx: {sample_idx}')
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
