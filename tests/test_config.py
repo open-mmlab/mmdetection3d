@@ -80,10 +80,10 @@ def test_config_build_pipeline():
     config_dpath = _get_config_directory()
     print('Found config_dpath = {!r}'.format(config_dpath))
 
-    import glob
-    config_fpaths = list(glob.glob(join(config_dpath, '**', '*.py')))
-    config_fpaths = [p for p in config_fpaths if p.find('_base_') == -1]
-    config_names = [relpath(p, config_dpath) for p in config_fpaths]
+    # Other configs needs database sampler.
+    config_names = [
+        'nus/hv_pointpillars_secfpn_sbn-all_4x8_20e_nus-3d.py',
+    ]
 
     print('Using {} config files'.format(len(config_names)))
 
