@@ -235,9 +235,8 @@ class PointFusion(nn.Module):
             pts.new_tensor(img_meta['pcd_trans'])
             if 'pcd_trans' in img_meta.keys() else 0)
         pcd_rotate_mat = (
-            pts.new_tensor(img_meta['pcd_rotation'])
-            if 'pcd_rotation' in img_meta.keys() else
-            torch.eye(3).type_as(pts).to(pts.device))
+            pts.new_tensor(img_meta['pcd_rotation']) if 'pcd_rotation'
+            in img_meta.keys() else torch.eye(3).type_as(pts).to(pts.device))
         img_scale_factor = (
             img_meta['scale_factor']
             if 'scale_factor' in img_meta.keys() else 1)

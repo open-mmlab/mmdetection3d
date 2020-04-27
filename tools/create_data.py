@@ -3,6 +3,8 @@ import os.path as osp
 
 import tools.data_converter.kitti_converter as kitti
 import tools.data_converter.nuscenes_converter as nuscenes_converter
+import tools.data_converter.scannet_converter as scannet
+import tools.data_converter.sunrgbd_converter as sunrgbd
 from tools.data_converter.create_gt_database import create_groundtruth_database
 
 
@@ -41,6 +43,14 @@ def nuscenes_data_prep(root_path,
     create_groundtruth_database(
         dataset_name, root_path, info_prefix,
         '{}/{}_infos_train.pkl'.format(out_dir, info_prefix))
+
+
+def scannet_data_prep(root_path, info_prefix, out_dir):
+    scannet.create_scannet_info_file(root_path, info_prefix, out_dir)
+
+
+def sunrgbd_data_prep(root_path, info_prefix, out_dir):
+    sunrgbd.create_sunrgbd_info_file(root_path, info_prefix, out_dir)
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
@@ -104,3 +114,13 @@ if __name__ == '__main__':
             dataset_name='NuScenesDataset',
             out_dir=args.out_dir,
             max_sweeps=args.max_sweeps)
+    elif args.dataset == 'scannet':
+        scannet_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            out_dir=args.out_dir)
+    elif args.dataset == 'sunrgbd':
+        sunrgbd_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            out_dir=args.out_dir)

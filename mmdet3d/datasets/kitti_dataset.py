@@ -9,8 +9,8 @@ import torch
 import torch.utils.data as torch_data
 
 from mmdet.datasets import DATASETS
-from mmdet.datasets.pipelines import Compose
 from ..core.bbox import box_np_ops
+from .pipelines import Compose
 from .utils import remove_dontcare
 
 

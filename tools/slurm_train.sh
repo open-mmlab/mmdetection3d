@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -x
-export PYTHONPATH=`pwd`:$PYTHONPATH
 
 PARTITION=$1
 JOB_NAME=$2
@@ -20,4 +19,4 @@ srun -p ${PARTITION} \
     --ntasks-per-node=${GPUS_PER_NODE} \
     --kill-on-bad-exit=1 \
     ${SRUN_ARGS} \
-    python -u tools/train.py ${CONFIG} --work_dir=${WORK_DIR} --launcher="slurm" ${PY_ARGS}
+    python -u tools/train.py ${CONFIG} --work-dir=${WORK_DIR} --launcher="slurm" ${PY_ARGS}
