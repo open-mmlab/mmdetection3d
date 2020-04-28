@@ -70,6 +70,10 @@ class IndoorLoadData(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
+        repr_str += '(dataset_name={})'.format(self.name)
+        repr_str += '(use_height={})'.format(self.use_height)
+        repr_str += '(use_color={}'.format(self.use_color)
+        repr_str += '(mean_color={})'.format(self.mean_color)
         return repr_str
 
     def _get_lidar(self, scan_name, data_path):
