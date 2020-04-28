@@ -1,10 +1,9 @@
 import argparse
 import os.path as osp
 
+import tools.data_converter.indoor_converter as indoor
 import tools.data_converter.kitti_converter as kitti
 import tools.data_converter.nuscenes_converter as nuscenes_converter
-import tools.data_converter.scannet_converter as scannet
-import tools.data_converter.sunrgbd_converter as sunrgbd
 from tools.data_converter.create_gt_database import create_groundtruth_database
 
 
@@ -46,11 +45,11 @@ def nuscenes_data_prep(root_path,
 
 
 def scannet_data_prep(root_path, info_prefix, out_dir):
-    scannet.create_scannet_info_file(root_path, info_prefix, out_dir)
+    indoor.create_indoor_info_file(root_path, info_prefix, out_dir)
 
 
 def sunrgbd_data_prep(root_path, info_prefix, out_dir):
-    sunrgbd.create_sunrgbd_info_file(root_path, info_prefix, out_dir)
+    indoor.create_indoor_info_file(root_path, info_prefix, out_dir)
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
