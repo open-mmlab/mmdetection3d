@@ -130,7 +130,7 @@ input_modality = dict(
     use_lidar=True,
     use_depth=False,
     use_lidar_intensity=True,
-    use_camera=True,
+    use_camera=False,
 )
 db_sampler = dict(
     root_path=data_root,
@@ -156,23 +156,12 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(
-        type='Resize',
-        img_scale=[
-            (1280, 720),
-        ],
-        multiscale_mode='value',
-        keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio=0),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
@@ -216,7 +205,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=1000,
     warmup_ratio=1.0 / 1000,
-    step=[16, 19])
+    step=[20, 23])
 momentum_config = None
 checkpoint_config = dict(interval=1)
 # yapf:disable
@@ -229,10 +218,10 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 20
+total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/pp_secfpn_80e'
+work_dir = './work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

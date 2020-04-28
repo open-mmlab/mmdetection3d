@@ -38,15 +38,16 @@ def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
     """Calculate nearest 3D IoU
 
     Args:
-        bboxes1: Tensor, shape (N, 7) [x, y, z, h, w, l, ry]?
-        bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]?
+        bboxes1: Tensor, shape (N, 7+N) [x, y, z, h, w, l, ry, v]
+        bboxes2: Tensor, shape (M, 7+N) [x, y, z, h, w, l, ry, v]
         mode: mode (str): "iou" (intersection over union) or iof
             (intersection over foreground).
 
     Return:
         iou: (M, N) not support aligned mode currently
     """
-    assert bboxes1.size(-1) == bboxes2.size(-1) == 7
+    assert bboxes1.size(-1) >= 7
+    assert bboxes2.size(-1) >= 7
     column_index1 = bboxes1.new_tensor([0, 1, 3, 4, 6], dtype=torch.long)
     rbboxes1_bev = bboxes1.index_select(dim=-1, index=column_index1)
     rbboxes2_bev = bboxes2.index_select(dim=-1, index=column_index1)
