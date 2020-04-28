@@ -28,6 +28,7 @@ class IndoorLoadData(object):
     def __call__(self, results):
         data_path = results.get('data_path', None)
         info = results.get('info', None)
+
         if info['annos']['gt_num'] != 0:
             gt_boxes = info['annos']['gt_boxes_upright_depth']
             gt_classes = info['annos']['class'].reshape(-1, 1)
@@ -36,6 +37,7 @@ class IndoorLoadData(object):
             gt_boxes = np.zeros((1, 6), dtype=np.float32)
             gt_classes = np.zeros((1, 1))
             gt_boxes_mask = np.zeros((1, 1))
+
         if self.name == 'scannet':
             scan_name = info['points']['lidar_idx']
             points = self._get_lidar(scan_name, data_path)
@@ -45,6 +47,7 @@ class IndoorLoadData(object):
             points = np.load(
                 osp.join(data_path, 'lidar',
                          '%06d.npz' % info['points']['lidar_idx']))['pc']
+
         if not self.use_color:
             points = points[:, 0:3]  # do not use color for now
             pcl_color = points[:, 3:6]
@@ -52,11 +55,13 @@ class IndoorLoadData(object):
             points = points[:, 0:6]
             pcl_color = points[:, 3:6]
             points[:, 3:] = (points[:, 3:] - np.array(self.mean_color)) / 256.0
+
         if self.use_height:
             floor_height = np.percentile(points[:, 2], 0.99)
             height = points[:, 2] - floor_height
             points = np.concatenate([points, np.expand_dims(height, 1)], 1)
         results['points'] = points
+
         if self.name == 'scannet':
             results['pcl_color'] = pcl_color
             results['instance_labels'] = instance_labels

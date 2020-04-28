@@ -24,6 +24,7 @@ def test_indoor_flip_data():
     sunrgbd_gt_boxes = sunrgbd_results.get('gt_boxes', None)
     assert sunrgbd_points.shape == (2, 4)
     assert sunrgbd_gt_boxes.shape == (2, 7)
+
     scannet_flip_data = IndoorFlipData('scannet')
     scannet_results = dict()
     scannet_results['points'] = np.array(
@@ -43,7 +44,7 @@ def test_indoor_flip_data():
 
 def test_indoor_rotate_data():
     sunrgbd_indoor_rotate_data = IndoorRotateData('sunrgbd')
-    scannet_indoor_rotate_data = IndoorRotateData('scannet')
+
     sunrgbd_results = dict()
     sunrgbd_results['points'] = np.array(
         [[1.02828765e+00, 3.65790772e+00, 1.97294697e-01, 1.61959505e+00],
@@ -61,6 +62,8 @@ def test_indoor_rotate_data():
     sunrgbd_gt_boxes = sunrgbd_results.get('gt_boxes', None)
     assert sunrgbd_points.shape == (2, 4)
     assert sunrgbd_gt_boxes.shape == (2, 7)
+
+    scannet_indoor_rotate_data = IndoorRotateData('scannet')
     scannet_results = dict()
     scannet_results['points'] = np.array(
         [[1.6110241e+00, -1.6903955e-01, 5.8115810e-01, 5.9897250e-01],

@@ -60,6 +60,7 @@ class IndoorFlipData(object):
     def __call__(self, results):
         points = results.get('points', None)
         gt_boxes = results.get('gt_boxes', None)
+
         if np.random.random() > 0.5:
             # Flipping along the YZ plane
             points[:, 0] = -1 * points[:, 0]
@@ -67,6 +68,7 @@ class IndoorFlipData(object):
             if self.name == 'sunrgbd':
                 gt_boxes[:, 6] = np.pi - gt_boxes[:, 6]
             results['gt_boxes'] = gt_boxes
+
         if self.name == 'scannet' and np.random.random() > 0.5:
             # Flipping along the XZ plane
             points[:, 1] = -1 * points[:, 1]
@@ -103,11 +105,13 @@ class IndoorRotateData(object):
                      3) - np.pi / 6  # -30 ~ +30 degree
         rot_mat = _rotz(rot_angle)
         points[:, 0:3] = np.dot(points[:, 0:3], np.transpose(rot_mat))
+
         if self.name == 'scannet':
             gt_boxes = _rotate_aligned_boxes(gt_boxes, rot_mat)
         else:
             gt_boxes[:, 0:3] = np.dot(gt_boxes[:, 0:3], np.transpose(rot_mat))
             gt_boxes[:, 6] -= rot_angle
+
         results['points'] = points
         results['gt_boxes'] = gt_boxes
         return results
