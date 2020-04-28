@@ -6,14 +6,14 @@ import numpy as np
 import scipy.io as sio
 
 
-def random_sampling(pc, num_samples, replace=None, return_choices=False):
+def random_sampling(pc, num_points, replace=None, return_choices=False):
     """Random Sampling.
 
-    Sampling point cloud to num_samples points.
+    Sampling point cloud to a certain number of points.
 
     Args:
         pc (ndarray): Point cloud.
-        num_samples (int): The number of samples.
+        num_points (int): The number of samples.
         replace (bool): Whether the sample is with or without replacement.
         return_choices (bool): Whether to return choices.
 
@@ -22,8 +22,8 @@ def random_sampling(pc, num_samples, replace=None, return_choices=False):
     """
 
     if replace is None:
-        replace = (pc.shape[0] < num_samples)
-    choices = np.random.choice(pc.shape[0], num_samples, replace=replace)
+        replace = (pc.shape[0] < num_points)
+    choices = np.random.choice(pc.shape[0], num_points, replace=replace)
     if return_choices:
         return pc[choices], choices
     else:
@@ -81,11 +81,9 @@ class SUNRGBDData(object):
             for label in range(len(self.classes))
         }
         assert split in ['train', 'val', 'test']
-        split_dir = os.path.join(self.root_dir, f'{split}_data_idx.txt')
-        self.sample_id_list = [
-            int(x.strip()) for x in open(split_dir).readlines()
-        ] if os.path.exists(split_dir) else None
-
+        split_file = os.path.join(self.root_dir, f'{split}_data_idx.txt')
+        mmcv.check_file_exist(split_file)
+        self.sample_id_list = map(int, mmcv.list_from_file(split_file))
         self.image_dir = os.path.join(self.split_dir, 'image')
         self.calib_dir = os.path.join(self.split_dir, 'calib')
         self.depth_dir = os.path.join(self.split_dir, 'depth')
@@ -143,8 +141,9 @@ class SUNRGBDData(object):
             print(f'{self.split} sample_idx: {sample_idx}')
             # convert depth to points
             SAMPLE_NUM = 50000
+            # TODO: Check whether can move the point
+            #  sampling process during training.
             pc_upright_depth = self.get_depth(sample_idx)
-            # TODO : sample points in loading process and test
             pc_upright_depth_subsampled = random_sampling(
                 pc_upright_depth, SAMPLE_NUM)
             np.savez_compressed(
@@ -213,8 +212,7 @@ class SUNRGBDData(object):
             return info
 
         lidar_save_dir = os.path.join(self.root_dir, 'lidar')
-        if not os.path.exists(lidar_save_dir):
-            os.mkdir(lidar_save_dir)
+        mmcv.mkdir_or_exist(lidar_save_dir)
         sample_id_list = sample_id_list if \
             sample_id_list is not None else self.sample_id_list
         with futures.ThreadPoolExecutor(num_workers) as executor:

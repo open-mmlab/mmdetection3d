@@ -1,6 +1,7 @@
 import concurrent.futures as futures
 import os
 
+import mmcv
 import numpy as np
 
 
@@ -33,10 +34,10 @@ class ScanNetData(object):
             for i, nyu40id in enumerate(list(self.cat_ids))
         }
         assert split in ['train', 'val', 'test']
-        split_dir = os.path.join(self.root_dir, 'meta_data',
-                                 f'scannetv2_{split}.txt')
-        self.sample_id_list = [x.strip() for x in open(split_dir).readlines()
-                               ] if os.path.exists(split_dir) else None
+        split_file = os.path.join(self.root_dir, 'meta_data',
+                                  f'scannetv2_{split}.txt')
+        mmcv.check_file_exist(split_file)
+        self.sample_id_list = mmcv.list_from_file(split_file)
 
     def __len__(self):
         return len(self.sample_id_list)
