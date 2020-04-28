@@ -21,10 +21,10 @@ def create_indoor_info_file(data_path,
     """
     assert os.path.exists(data_path)
     assert pkl_prefix in ['sunrgbd', 'scannet']
-    if save_path is None:
-        save_path = data_path
+    save_path = data_path if save_path is None else save_path
     assert os.path.exists(save_path)
     train_filename = os.path.join(save_path, f'{pkl_prefix}_infos_train.pkl')
+
     val_filename = os.path.join(save_path, f'{pkl_prefix}_infos_val.pkl')
     if pkl_prefix == 'sunrgbd':
         train_dataset = SUNRGBDData(
@@ -35,10 +35,21 @@ def create_indoor_info_file(data_path,
         train_dataset = ScanNetData(root_path=data_path, split='train')
         val_dataset = ScanNetData(root_path=data_path, split='val')
     infos_train = train_dataset.get_infos(has_label=True)
-    with open(train_filename, 'wb') as f:
-        mmcv.dump(infos_train, f, 'pkl')
+
+    mmcv.dump(infos_train, train_filename, 'pkl')
     print(f'{pkl_prefix} info train file is saved to {train_filename}')
     infos_val = val_dataset.get_infos(has_label=True)
-    with open(val_filename, 'wb') as f:
-        mmcv.dump(infos_val, f, 'pkl')
+
+    mmcv.dump(infos_val, val_filename, 'pkl')
     print(f'{pkl_prefix} info val file is saved to {val_filename}')
+
+
+if __name__ == '__main__':
+    create_indoor_info_file(
+        data_path='./data/scannet',
+        pkl_prefix='scannet',
+        save_path='./data/scannet')
+    create_indoor_info_file(
+        data_path='./data/sunrgbd/sunrgbd_trainval',
+        pkl_prefix='sunrgbd',
+        save_path='./data/sunrgbd')

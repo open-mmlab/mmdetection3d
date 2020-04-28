@@ -6,28 +6,28 @@ import numpy as np
 import scipy.io as sio
 
 
-def random_sampling(pc, num_points, replace=None, return_choices=False):
+def random_sampling(points, num_points, replace=None, return_choices=False):
     """Random Sampling.
 
     Sampling point cloud to a certain number of points.
 
     Args:
-        pc (ndarray): Point cloud.
+        points (ndarray): Point cloud.
         num_points (int): The number of samples.
         replace (bool): Whether the sample is with or without replacement.
         return_choices (bool): Whether to return choices.
 
     Returns:
-        pc (ndarray): Point cloud after sampling.
+        points (ndarray): Point cloud after sampling.
     """
 
     if replace is None:
-        replace = (pc.shape[0] < num_points)
-    choices = np.random.choice(pc.shape[0], num_points, replace=replace)
+        replace = (points.shape[0] < num_points)
+    choices = np.random.choice(points.shape[0], num_points, replace=replace)
     if return_choices:
-        return pc[choices], choices
+        return points[choices], choices
     else:
-        return pc[choices]
+        return points[choices]
 
 
 class SUNRGBDInstance(object):
