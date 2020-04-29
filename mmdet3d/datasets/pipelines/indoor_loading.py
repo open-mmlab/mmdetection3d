@@ -49,11 +49,13 @@ class IndoorLoadData(object):
                          '%06d.npz' % info['point_cloud']['lidar_idx']))['pc']
 
         if not self.use_color:
+            if self.name == 'scannet':
+                pcl_color = point_cloud[:, 3:6]
             point_cloud = point_cloud[:, 0:3]  # do not use color for now
-            pcl_color = point_cloud[:, 3:6]
         else:
+            if self.name == 'scannet':
+                pcl_color = point_cloud[:, 3:6]
             point_cloud = point_cloud[:, 0:6]
-            pcl_color = point_cloud[:, 3:6]
             point_cloud[:, 3:] = (point_cloud[:, 3:] -
                                   np.array(self.mean_color)) / 256.0
 
