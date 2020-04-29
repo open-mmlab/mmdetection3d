@@ -7,13 +7,19 @@ def points_random_sampling(points,
                            num_samples,
                            replace=None,
                            return_choices=False):
-    """Points Random Sampling
+    """Points Random Sampling.
 
     Sample points to a certain number.
 
     Args:
         points (ndarray): 3D Points.
         num_samples (int): Number of samples to be sampled.
+        replace (bool): Whether the sample is with or without replacement.
+        return_choices (bool): Whether return choice.
+
+    Returns:
+        points (ndarray): 3D Points.
+        choices (ndarray): The generated random samples
     """
     if replace is None:
         replace = (points.shape[0] < num_samples)
@@ -25,8 +31,8 @@ def points_random_sampling(points,
 
 
 @PIPELINES.register_module
-class IndoorSamplePoints(object):
-    """Indoor Sample Points
+class PointSample(object):
+    """Point Sample.
 
     Sampling data to a certain number.
 
@@ -61,5 +67,6 @@ class IndoorSamplePoints(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
+        repr_str += '(dataset_name={})'.format(self.name)
         repr_str += '(num_points={})'.format(self.num_points)
         return repr_str
