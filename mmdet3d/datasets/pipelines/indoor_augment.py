@@ -47,7 +47,7 @@ def _rotate_aligned_boxes(input_boxes, rot_mat):
 class IndoorFlipData(object):
     """Indoor Flip Data
 
-    Flip points and groundtruth boxes.
+    Flip point_cloud and groundtruth boxes.
 
     Args:
         name (str): name of the dataset.
@@ -58,12 +58,12 @@ class IndoorFlipData(object):
         self.name = name
 
     def __call__(self, results):
-        points = results.get('points', None)
+        point_cloud = results.get('point_cloud', None)
         gt_boxes = results.get('gt_boxes', None)
 
         if np.random.random() > 0.5:
             # Flipping along the YZ plane
-            points[:, 0] = -1 * points[:, 0]
+            point_cloud[:, 0] = -1 * point_cloud[:, 0]
             gt_boxes[:, 0] = -1 * gt_boxes[:, 0]
             if self.name == 'sunrgbd':
                 gt_boxes[:, 6] = np.pi - gt_boxes[:, 6]
@@ -71,10 +71,10 @@ class IndoorFlipData(object):
 
         if self.name == 'scannet' and np.random.random() > 0.5:
             # Flipping along the XZ plane
-            points[:, 1] = -1 * points[:, 1]
+            point_cloud[:, 1] = -1 * point_cloud[:, 1]
             gt_boxes[:, 1] = -1 * gt_boxes[:, 1]
             results['gt_boxes'] = gt_boxes
-        results['points'] = points
+        results['point_cloud'] = point_cloud
 
         return results
 
@@ -88,7 +88,7 @@ class IndoorFlipData(object):
 class IndoorRotateData(object):
     """Indoor Rotate Data
 
-    Rotate points and groundtruth boxes.
+    Rotate point_cloud and groundtruth boxes.
 
     Args:
         name (str): name of the dataset.
@@ -99,12 +99,13 @@ class IndoorRotateData(object):
         self.name = name
 
     def __call__(self, results):
-        points = results.get('points', None)
+        point_cloud = results.get('point_cloud', None)
         gt_boxes = results.get('gt_boxes', None)
         rot_angle = (np.random.random() * np.pi /
                      3) - np.pi / 6  # -30 ~ +30 degree
         rot_mat = _rotz(rot_angle)
-        points[:, 0:3] = np.dot(points[:, 0:3], np.transpose(rot_mat))
+        point_cloud[:, 0:3] = np.dot(point_cloud[:, 0:3],
+                                     np.transpose(rot_mat))
 
         if self.name == 'scannet':
             gt_boxes = _rotate_aligned_boxes(gt_boxes, rot_mat)
@@ -112,32 +113,11 @@ class IndoorRotateData(object):
             gt_boxes[:, 0:3] = np.dot(gt_boxes[:, 0:3], np.transpose(rot_mat))
             gt_boxes[:, 6] -= rot_angle
 
-        results['points'] = points
+        results['point_cloud'] = point_cloud
         results['gt_boxes'] = gt_boxes
         return results
 
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += '(dataset_name={})'.format(self.name)
-        return repr_str
-
-
-@PIPELINES.register_module()
-class PointShuffle(object):
-    """Point Shuffle.
-
-    Shuffle points.
-    """
-
-    def __init__(self):
-        pass
-
-    def __call__(self, results):
-        points = results.get('points')
-        np.random.shuffle(points)
-        results['points'] = points
-        return results
-
-    def __repr__(self):
-        repr_str = self.__class__.__name__
         return repr_str
