@@ -123,8 +123,8 @@ class IndoorRotateData(object):
 
 
 @PIPELINES.register_module()
-class IndoorShuffleData(object):
-    """Indoor Shuffle Data
+class PointShuffle(object):
+    """Point Shuffle.
 
     Shuffle points.
     """

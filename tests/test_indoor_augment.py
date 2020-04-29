@@ -2,7 +2,7 @@ import numpy as np
 
 from mmdet3d.datasets.pipelines.indoor_augment import (IndoorFlipData,
                                                        IndoorRotateData,
-                                                       IndoorShuffleData)
+                                                       PointShuffle)
 
 
 def test_indoor_flip_data():
@@ -80,12 +80,12 @@ def test_indoor_rotate_data():
     assert scannet_gt_boxes.shape == (2, 6)
 
 
-def test_indoor_shuffle_data():
-    indoor_shuffle_data = IndoorShuffleData()
+def test_point_shuffle():
+    point_shuffle = PointShuffle()
     results = dict()
     results['points'] = np.array(
         [[1.02828765e+00, 3.65790772e+00, 1.97294697e-01, 1.61959505e+00],
          [-3.95979017e-01, 1.05465031e+00, -7.49204338e-01, 6.73096001e-01]])
-    results = indoor_shuffle_data(results)
+    results = point_shuffle(results)
     points = results.get('points')
     assert points.shape == (2, 4)

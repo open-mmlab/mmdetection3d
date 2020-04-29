@@ -39,28 +39,30 @@ class IndoorLoadData(object):
             gt_boxes_mask = np.zeros((1, 1))
 
         if self.name == 'scannet':
-            scan_name = info['points']['lidar_idx']
-            points = self._get_lidar(scan_name, data_path)
+            scan_name = info['point_cloud']['lidar_idx']
+            point_cloud = self._get_lidar(scan_name, data_path)
             instance_labels = self._get_instance_label(scan_name, data_path)
             semantic_labels = self._get_semantic_label(scan_name, data_path)
         else:
-            points = np.load(
+            point_cloud = np.load(
                 osp.join(data_path, 'lidar',
-                         '%06d.npz' % info['points']['lidar_idx']))['pc']
+                         '%06d.npz' % info['point_cloud']['lidar_idx']))['pc']
 
         if not self.use_color:
-            points = points[:, 0:3]  # do not use color for now
-            pcl_color = points[:, 3:6]
+            point_cloud = point_cloud[:, 0:3]  # do not use color for now
+            pcl_color = point_cloud[:, 3:6]
         else:
-            points = points[:, 0:6]
-            pcl_color = points[:, 3:6]
-            points[:, 3:] = (points[:, 3:] - np.array(self.mean_color)) / 256.0
+            point_cloud = point_cloud[:, 0:6]
+            pcl_color = point_cloud[:, 3:6]
+            point_cloud[:, 3:] = (point_cloud[:, 3:] -
+                                  np.array(self.mean_color)) / 256.0
 
         if self.use_height:
-            floor_height = np.percentile(points[:, 2], 0.99)
-            height = points[:, 2] - floor_height
-            points = np.concatenate([points, np.expand_dims(height, 1)], 1)
-        results['points'] = points
+            floor_height = np.percentile(point_cloud[:, 2], 0.99)
+            height = point_cloud[:, 2] - floor_height
+            point_cloud = np.concatenate(
+                [point_cloud, np.expand_dims(height, 1)], 1)
+        results['point_cloud'] = point_cloud
 
         if self.name == 'scannet':
             results['pcl_color'] = pcl_color
