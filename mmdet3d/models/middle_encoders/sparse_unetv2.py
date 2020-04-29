@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 import mmdet3d.ops.spconv as spconv
+from mmdet3d.ops import SparseBasicBlock
 from mmdet.ops import build_norm_layer
 from ..registry import MIDDLE_ENCODERS
-from .sparse_block_utils import SparseBasicBlock
 
 
 @MIDDLE_ENCODERS.register_module
@@ -122,7 +122,10 @@ class SparseUnetV2(nn.Module):
         # decoder
         # [400, 352, 11] <- [200, 176, 5]
         self.conv_up_t4 = SparseBasicBlock(
-            64, 64, indice_key='subm4', norm_cfg=norm_cfg)
+            64,
+            64,
+            conv_cfg=dict(type='SubMConv3d', indice_key='subm4'),
+            norm_cfg=norm_cfg)
         self.conv_up_m4 = block(
             128, 64, 3, norm_cfg=norm_cfg, padding=1, indice_key='subm4')
         self.inv_conv4 = block(
@@ -135,7 +138,10 @@ class SparseUnetV2(nn.Module):
 
         # [800, 704, 21] <- [400, 352, 11]
         self.conv_up_t3 = SparseBasicBlock(
-            64, 64, indice_key='subm3', norm_cfg=norm_cfg)
+            64,
+            64,
+            conv_cfg=dict(type='SubMConv3d', indice_key='subm3'),
+            norm_cfg=norm_cfg)
         self.conv_up_m3 = block(
             128, 64, 3, norm_cfg=norm_cfg, padding=1, indice_key='subm3')
         self.inv_conv3 = block(
@@ -148,7 +154,10 @@ class SparseUnetV2(nn.Module):
 
         # [1600, 1408, 41] <- [800, 704, 21]
         self.conv_up_t2 = SparseBasicBlock(
-            32, 32, indice_key='subm2', norm_cfg=norm_cfg)
+            32,
+            32,
+            conv_cfg=dict(type='SubMConv3d', indice_key='subm2'),
+            norm_cfg=norm_cfg)
         self.conv_up_m2 = block(
             64, 32, 3, norm_cfg=norm_cfg, indice_key='subm2')
         self.inv_conv2 = block(
@@ -161,7 +170,10 @@ class SparseUnetV2(nn.Module):
 
         # [1600, 1408, 41] <- [1600, 1408, 41]
         self.conv_up_t1 = SparseBasicBlock(
-            16, 16, indice_key='subm1', norm_cfg=norm_cfg)
+            16,
+            16,
+            conv_cfg=dict(type='SubMConv3d', indice_key='subm1'),
+            norm_cfg=norm_cfg)
         self.conv_up_m1 = block(
             32, 16, 3, norm_cfg=norm_cfg, indice_key='subm1')
 
