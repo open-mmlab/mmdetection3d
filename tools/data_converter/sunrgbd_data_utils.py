@@ -112,7 +112,7 @@ class SUNRGBDData(object):
         def process_single_scene(sample_idx):
             print('%s sample_idx: %s' % (self.split, sample_idx))
             # convert depth to points
-            SAMPLE_NUM = 50000
+            SAMPLE_NUM = 1000
             pc_upright_depth = self.get_depth(sample_idx)
             # TODO : sample points in loading process and test
             pc_upright_depth_subsampled = random_sampling(
