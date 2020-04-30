@@ -116,9 +116,8 @@ class SparseUnet(nn.Module):
         x = self.conv_input(input_sp_tensor)
 
         encode_features = []
-        for i, stage_name in enumerate(self.encoder):
-            stage = getattr(self, stage_name)
-            x = stage(x)
+        for encoder_layer in self.encoder_layers:
+            x = encoder_layer(x)
             encode_features.append(x)
 
         # for detection head
@@ -154,32 +153,32 @@ class SparseUnet(nn.Module):
 
         return ret
 
-    def decoder_layer_forward(self, x_lateral, x_bottom, conv_t, conv_m,
-                              conv_inv):
+    def decoder_layer_forward(self, x_lateral, x_bottom, lateral_layer,
+                              merge_layer, upsample_layer):
         """Forward of upsample and residual block.
 
         Args:
             x_lateral (SparseConvTensor): lateral tensor
             x_bottom (SparseConvTensor): tensor from bottom layer
-            conv_t (SparseBasicBlock): convolution for lateral tensor
-            conv_m (SparseSequential): convolution for merging features
-            conv_inv (SparseSequential): convolution for upsampling
+            lateral_layer (SparseBasicBlock): convolution for lateral tensor
+            merge_layer (SparseSequential): convolution for merging features
+            upsample_layer (SparseSequential): convolution for upsampling
 
         Returns:
             SparseConvTensor: upsampled feature
         """
-        x_trans = conv_t(x_lateral)
+        x_trans = lateral_layer(x_lateral)
         x = x_trans
         x.features = torch.cat((x_bottom.features, x_trans.features), dim=1)
-        x_m = conv_m(x)
-        x = self.channel_reduction(x, x_m.features.shape[1])
+        x_m = merge_layer(x)
+        x = self.reduce_channel(x, x_m.features.shape[1])
         x.features = x_m.features + x.features
-        x = conv_inv(x)
+        x = upsample_layer(x)
         return x
 
     @staticmethod
-    def channel_reduction(x, out_channels):
-        """Channel reduction for element-wise addition.
+    def reduce_channel(x, out_channels):
+        """reduce channel for element-wise addition.
 
         Args:
             x (SparseConvTensor): x.features (N, C1)
@@ -340,7 +339,7 @@ class SparseUnet(nn.Module):
         Returns:
             int: the number of encoder output channels
         """
-        self.encoder = []
+        self.encoder_layers = spconv.SparseSequential()
         for i, blocks in enumerate(self.encoder_channels):
             blocks_list = []
             for j, out_channels in enumerate(tuple(blocks)):
@@ -370,8 +369,7 @@ class SparseUnet(nn.Module):
                 in_channels = out_channels
             stage_name = f'encoder_layer{i + 1}'
             stage_layers = spconv.SparseSequential(*blocks_list)
-            self.add_module(stage_name, stage_layers)
-            self.encoder.append(stage_name)
+            self.encoder_layers.add_module(stage_name, stage_layers)
         return out_channels
 
     def make_decoder_layers(self, make_block, norm_cfg, in_channels):
@@ -405,19 +403,28 @@ class SparseUnet(nn.Module):
                     norm_cfg=norm_cfg,
                     padding=paddings[0],
                     indice_key=f'subm{block_num - i}'))
-            setattr(
-                self,
-                f'upsample_layer{block_num - i}',
-                make_block(
-                    in_channels,
-                    block_channels[2],
-                    3,
-                    norm_cfg=norm_cfg,
-                    padding=paddings[1],
-                    indice_key=f'spconv{block_num - i}'
-                    if block_num - i != 1 else 'subm1',
-                    conv_type='inverseconv' if block_num - i != 1 else
-                    'subm')  # use submanifold conv instead of inverse conv
+            if block_num - i != 1:
+                setattr(
+                    self, f'upsample_layer{block_num - i}',
+                    make_block(
+                        in_channels,
+                        block_channels[2],
+                        3,
+                        norm_cfg=norm_cfg,
+                        padding=paddings[1],
+                        indice_key=f'spconv{block_num - i}',
+                        conv_type='inverseconv'))
+            else:
+                # use submanifold conv instead of inverse conv
                 # in the last block
-            )
+                setattr(
+                    self, f'upsample_layer{block_num - i}',
+                    make_block(
+                        in_channels,
+                        block_channels[2],
+                        3,
+                        norm_cfg=norm_cfg,
+                        padding=paddings[1],
+                        indice_key='subm1',
+                        conv_type='subm'))
             in_channels = block_channels[2]
