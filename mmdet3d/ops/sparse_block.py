@@ -22,7 +22,7 @@ def conv3x3(in_planes, out_planes, stride=1, indice_key=None):
     Returns:
         spconv.conv.SubMConv3d: 3x3 submanifold sparse convolution ops
     """
-    # TODO: duplicate this class
+    # TODO: deprecate this class
     return spconv.SubMConv3d(
         in_planes,
         out_planes,
@@ -45,7 +45,7 @@ def conv1x1(in_planes, out_planes, stride=1, indice_key=None):
     Returns:
         spconv.conv.SubMConv3d: 1x1 submanifold sparse convolution ops
     """
-    # TODO: duplicate this class
+    # TODO: deprecate this class
     return spconv.SubMConv3d(
         in_planes,
         out_planes,
@@ -70,7 +70,7 @@ class SparseBasicBlockV0(spconv.SparseModule):
 
         Sparse basic block implemented with submanifold sparse convolution.
         """
-        # TODO: duplicate this class
+        # TODO: deprecate this class
         super().__init__()
         self.conv1 = conv3x3(inplanes, planes, stride, indice_key=indice_key)
         norm_name1, norm_layer1 = build_norm_layer(norm_cfg, planes)
@@ -85,7 +85,7 @@ class SparseBasicBlockV0(spconv.SparseModule):
     def forward(self, x):
         identity = x.features
 
-        assert x.features.dim() == 2, 'x.features.dim()=%d' % x.features.dim()
+        assert x.features.dim() == 2, f'x.features.dim()={x.features.dim()}'
 
         out = self.conv1(x)
         out.features = self.bn1(out.features)
@@ -117,7 +117,7 @@ class SparseBottleneckV0(spconv.SparseModule):
 
         Bottleneck block implemented with submanifold sparse convolution.
         """
-        # TODO: duplicate this class
+        # TODO: deprecate this class
         super().__init__()
         self.conv1 = conv1x1(inplanes, planes, indice_key=indice_key)
         self.bn1 = norm_fn(planes)
@@ -227,7 +227,7 @@ class SparseBasicBlock(BasicBlock, spconv.SparseModule):
     def forward(self, x):
         identity = x.features
 
-        assert x.features.dim() == 2, 'x.features.dim()=%d' % x.features.dim()
+        assert x.features.dim() == 2, f'x.features.dim()={x.features.dim()}'
 
         out = self.conv1(x)
         out.features = self.norm1(out.features)
