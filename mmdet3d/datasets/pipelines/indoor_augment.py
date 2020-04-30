@@ -97,12 +97,13 @@ class IndoorRotateData(object):
     def __init__(self, name):
         assert name in ['scannet', 'sunrgbd']
         self.name = name
+        self.rot_range = np.pi / 3
 
     def __call__(self, results):
         point_cloud = results.get('point_cloud', None)
         gt_boxes = results.get('gt_boxes', None)
-        rot_angle = (np.random.random() * np.pi /
-                     3) - np.pi / 6  # -30 ~ +30 degree
+        rot_angle = (np.random.random() *
+                     self.rot_range) - self.rot_range / 2  # -30 ~ +30 degree
         rot_mat = _rotz(rot_angle)
         point_cloud[:, 0:3] = np.dot(point_cloud[:, 0:3],
                                      np.transpose(rot_mat))

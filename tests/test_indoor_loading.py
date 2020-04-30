@@ -4,7 +4,7 @@ from mmdet3d.datasets.pipelines.indoor_loading import IndoorLoadData
 
 
 def test_indoor_load_data():
-    sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos_train.pkl')
+    sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
     sunrgbd_load_data = IndoorLoadData('sunrgbd', False, True, [0.5, 0.5, 0.5])
     sunrgbd_results = dict()
     sunrgbd_results['data_path'] = './tests/data/sunrgbd/sunrgbd_trainval'
@@ -19,7 +19,7 @@ def test_indoor_load_data():
     assert sunrgbd_gt_classes.shape == (3, 1)
     assert sunrgbd_gt_boxes_mask.shape == (3, 1)
 
-    scannet_info = mmcv.load('./tests/data/scannet/scannet_infos_train.pkl')
+    scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
     scannet_load_data = IndoorLoadData('scannet', False, True, [0.5, 0.5, 0.5])
     scannet_results = dict()
     scannet_results[
