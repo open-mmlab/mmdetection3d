@@ -8,14 +8,16 @@ from ..registry import MIDDLE_ENCODERS
 
 
 @MIDDLE_ENCODERS.register_module
-class SparseUnetV2(nn.Module):
+class SparseUnet(nn.Module):
 
     def __init__(self,
                  in_channels,
                  output_shape,
-                 pre_act,
+                 pre_act=False,
                  norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01)):
         """SparseUnet for PartA^2
+
+        See https://arxiv.org/abs/1907.03670 for more detials.
 
         Args:
             in_channels (int): the number of input channels
@@ -32,6 +34,7 @@ class SparseUnetV2(nn.Module):
         # TODO: make the network could be modified
 
         if pre_act:
+            # TODO: use ConvModule to encapsulate
             self.conv_input = spconv.SparseSequential(
                 spconv.SubMConv3d(
                     in_channels,
@@ -180,11 +183,8 @@ class SparseUnetV2(nn.Module):
         self.conv5 = spconv.SparseSequential(
             block(16, 16, 3, norm_cfg=norm_cfg, padding=1, indice_key='subm1'))
 
-        self.seg_cls_layer = nn.Linear(16, 1, bias=True)
-        self.seg_reg_layer = nn.Linear(16, 3, bias=True)
-
     def forward(self, voxel_features, coors, batch_size):
-        """Forward of SparseUnetV2
+        """Forward of SparseUnet
 
         Args:
             voxel_features (torch.float32): shape [N, C]
@@ -231,14 +231,7 @@ class SparseUnetV2(nn.Module):
 
         seg_features = x_up1.features
 
-        seg_cls_preds = self.seg_cls_layer(seg_features)  # (N, 1)
-        seg_reg_preds = self.seg_reg_layer(seg_features)  # (N, 3)
-
-        ret.update({
-            'u_seg_preds': seg_cls_preds,
-            'u_reg_preds': seg_reg_preds,
-            'seg_features': seg_features
-        })
+        ret.update({'seg_features': seg_features})
 
         return ret
 
@@ -307,6 +300,7 @@ class SparseUnetV2(nn.Module):
         Returns:
             spconv.SparseSequential: pre activate sparse convolution block.
         """
+        # TODO: use ConvModule to encapsulate
         assert conv_type in ['subm', 'spconv', 'inverseconv']
 
         norm_name, norm_layer = build_norm_layer(norm_cfg, in_channels)
@@ -374,6 +368,7 @@ class SparseUnetV2(nn.Module):
         Returns:
             spconv.SparseSequential: post activate sparse convolution block.
         """
+        # TODO: use ConvModule to encapsulate
         assert conv_type in ['subm', 'spconv', 'inverseconv']
 
         norm_name, norm_layer = build_norm_layer(norm_cfg, out_channels)
