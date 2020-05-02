@@ -65,7 +65,7 @@ class SparseUNet(nn.Module):
                     3,
                     padding=1,
                     bias=False,
-                    indice_key='subm1'), )
+                    indice_key='subm1'))
             make_block = self.pre_act_block
         else:
             self.conv_input = spconv.SparseSequential(
@@ -76,9 +76,7 @@ class SparseUNet(nn.Module):
                     padding=1,
                     bias=False,
                     indice_key='subm1'),
-                build_norm_layer(norm_cfg, self.base_channels)[1],
-                nn.ReLU(),
-            )
+                build_norm_layer(norm_cfg, self.base_channels)[1], nn.ReLU())
             make_block = self.post_act_block
 
         encoder_out_channels = self.make_encoder_layers(
@@ -95,8 +93,7 @@ class SparseUNet(nn.Module):
                 bias=False,
                 indice_key='spconv_down2'),
             build_norm_layer(norm_cfg, self.output_channels)[1],
-            nn.ReLU(),
-        )
+            nn.ReLU())
 
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseUNet
@@ -136,13 +133,10 @@ class SparseUNet(nn.Module):
         decode_features = []
         x = encode_features[-1]
         for i in range(self.stage_num, 0, -1):
-            x = self.decoder_layer_forward(
-                encode_features[i - 1],
-                x,
-                getattr(self, f'lateral_layer{i}'),
-                getattr(self, f'merge_layer{i}'),
-                getattr(self, f'upsample_layer{i}'),
-            )
+            x = self.decoder_layer_forward(encode_features[i - 1], x,
+                                           getattr(self, f'lateral_layer{i}'),
+                                           getattr(self, f'merge_layer{i}'),
+                                           getattr(self, f'upsample_layer{i}'))
             decode_features.append(x)
 
         seg_features = decode_features[-1].features
@@ -320,8 +314,7 @@ class SparseUNet(nn.Module):
                     bias=False,
                     indice_key=indice_key),
                 build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True),
-            )
+                nn.ReLU(inplace=True))
         else:
             raise NotImplementedError
         return m
