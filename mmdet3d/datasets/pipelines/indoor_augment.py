@@ -20,18 +20,57 @@ def _rotz(t):
     return rot_mat
 
 
-# TODO: merge outdoor indoor transform
 @PIPELINES.register_module()
-class IndoorAugment(object):
-    """Indoor Augment.
+class IndoorFlipData(object):
+    """Indoor Flip Data
 
-    Augment sunrgbd and scannet data.
+    Flip point_cloud and groundtruth boxes.
 
     Args:
         seed (int): Numpy random seed.
-        use_flip (bool): Whether to use flip.
+    """
+
+    def __init__(self, seed=None):
+        if seed is not None:
+            np.random.seed(seed)
+
+    def __call__(self, results):
+        point_cloud = results.get('point_cloud', None)
+        gt_boxes = results.get('gt_boxes', None)
+        name = 'scannet' if gt_boxes.shape[1] == 6 else 'sunrgbd'
+        if np.random.random() > 0.5:
+            # Flipping along the YZ plane
+            point_cloud[:, 0] = -1 * point_cloud[:, 0]
+            gt_boxes[:, 0] = -1 * gt_boxes[:, 0]
+            if name == 'sunrgbd':
+                gt_boxes[:, 6] = np.pi - gt_boxes[:, 6]
+            results['gt_boxes'] = gt_boxes
+
+        if name == 'scannet' and np.random.random() > 0.5:
+            # Flipping along the XZ plane
+            point_cloud[:, 1] = -1 * point_cloud[:, 1]
+            gt_boxes[:, 1] = -1 * gt_boxes[:, 1]
+            results['gt_boxes'] = gt_boxes
+        results['point_cloud'] = point_cloud
+
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        return repr_str
+
+
+# TODO: merge outdoor indoor transform.
+# TODO: try transform noise.
+@PIPELINES.register_module()
+class IndoorGlobalRotScale(object):
+    """Indoor Global Rotate Scale.
+
+    Augment sunrgbd and scannet data with global rotating and scaling.
+
+    Args:
+        seed (int): Numpy random seed.
         use_rotate (bool): Whether to use rotate.
-        use_shuffle (bool): Whether to use shuffle.
         use_color (bool): Whether to use color.
         use_height (bool): Whether to use height.
         rot_range (float): Range of rotation.
@@ -41,27 +80,23 @@ class IndoorAugment(object):
 
     def __init__(self,
                  seed=None,
-                 use_flip=True,
                  use_rotate=True,
-                 use_shuffle=True,
                  use_color=False,
                  use_scale=True,
                  use_height=True,
                  rot_range=1 / 3,
                  scale_range=0.3,
-                 mean_color=[0.5, 0.5, 0.5]):
+                 color_mean=[0.5, 0.5, 0.5]):
         if seed is not None:
             np.random.seed(seed)
 
-        self.use_flip = use_flip
         self.use_rotate = use_rotate
-        self.use_shuffle = use_shuffle
         self.use_color = use_color
         self.use_scale = use_scale
         self.use_height = use_height
         self.rot_range = rot_range
         self.scale_range = scale_range
-        self.mean_color = mean_color
+        self.color_mean = color_mean
 
     def _rotate_aligned_boxes(self, input_boxes, rot_mat):
         """Rotate Aligned Boxes.
@@ -101,19 +136,6 @@ class IndoorAugment(object):
         gt_boxes = results.get('gt_boxes', None)
         name = 'scannet' if gt_boxes.shape[1] == 6 else 'sunrgbd'
 
-        if self.use_flip:
-            if np.random.random() > 0.5:
-                # Flipping along the YZ plane
-                point_cloud[:, 0] = -1 * point_cloud[:, 0]
-                gt_boxes[:, 0] = -1 * gt_boxes[:, 0]
-                if name == 'sunrgbd':
-                    gt_boxes[:, 6] = np.pi - gt_boxes[:, 6]
-
-            if name == 'scannet' and np.random.random() > 0.5:
-                # Flipping along the XZ plane
-                point_cloud[:, 1] = -1 * point_cloud[:, 1]
-                gt_boxes[:, 1] = -1 * gt_boxes[:, 1]
-
         if self.use_rotate:
             rot_angle = (np.random.random() * self.rot_range * np.pi
                          ) - np.pi * self.rot_range / 2  # -30 ~ +30 degree
@@ -128,12 +150,9 @@ class IndoorAugment(object):
                                           np.transpose(rot_mat))
                 gt_boxes[:, 6] -= rot_angle
 
-        if self.use_shuffle:
-            np.random.shuffle(point_cloud)
-
         # Augment RGB color
         if self.use_color:
-            rgb_color = point_cloud[:, 3:6] + self.mean_color
+            rgb_color = point_cloud[:, 3:6] + self.color_mean
             rgb_color *= (1 + 0.4 * np.random.random(3) - 0.2
                           )  # brightness change for each channel
             rgb_color += (0.1 * np.random.random(3) - 0.05
@@ -145,7 +164,7 @@ class IndoorAugment(object):
             # randomly drop out 30% of the points' colors
             rgb_color *= np.expand_dims(
                 np.random.random(point_cloud.shape[0]) > 0.3, -1)
-            point_cloud[:, 3:6] = rgb_color - self.mean_color
+            point_cloud[:, 3:6] = rgb_color - self.color_mean
 
         if self.use_scale:
             # Augment point cloud scale: 0.85x-1.15x
@@ -165,8 +184,6 @@ class IndoorAugment(object):
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += '(use_rotate={})'.format(self.use_rotate)
-        repr_str += '(use_flip={})'.format(self.use_flip)
-        repr_str += '(use_rotate={})'.format(self.use_shuffle)
         repr_str += '(use_color={})'.format(self.use_color)
         repr_str += '(use_scale={})'.format(self.use_scale)
         repr_str += '(use_height={})'.format(self.use_height)
