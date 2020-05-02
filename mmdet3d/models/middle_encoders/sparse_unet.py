@@ -181,8 +181,8 @@ class SparseUNet(nn.Module):
         """
         features = x.features
         n, in_channels = features.shape
-        assert (in_channels %
-                out_channels == 0) and (in_channels >= out_channels)
+        assert (in_channels % out_channels
+                == 0) and (in_channels >= out_channels)
 
         x.features = features.view(n, out_channels, -1).sum(dim=2)
         return x
