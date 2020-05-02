@@ -224,8 +224,7 @@ class SparseUNet(nn.Module):
                     kernel_size,
                     padding=padding,
                     bias=False,
-                    indice_key=indice_key),
-            )
+                    indice_key=indice_key))
         elif conv_type == 'spconv':
             m = spconv.SparseSequential(
                 build_norm_layer(norm_cfg, in_channels)[1],
@@ -237,8 +236,7 @@ class SparseUNet(nn.Module):
                     stride=stride,
                     padding=padding,
                     bias=False,
-                    indice_key=indice_key),
-            )
+                    indice_key=indice_key))
         elif conv_type == 'inverseconv':
             m = spconv.SparseSequential(
                 build_norm_layer(norm_cfg, in_channels)[1],
@@ -248,8 +246,7 @@ class SparseUNet(nn.Module):
                     out_channels,
                     kernel_size,
                     bias=False,
-                    indice_key=indice_key),
-            )
+                    indice_key=indice_key))
         else:
             raise NotImplementedError
         return m
@@ -290,8 +287,7 @@ class SparseUNet(nn.Module):
                     bias=False,
                     indice_key=indice_key),
                 build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True),
-            )
+                nn.ReLU(inplace=True))
         elif conv_type == 'spconv':
             m = spconv.SparseSequential(
                 spconv.SparseConv3d(
@@ -303,8 +299,7 @@ class SparseUNet(nn.Module):
                     bias=False,
                     indice_key=indice_key),
                 build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True),
-            )
+                nn.ReLU(inplace=True))
         elif conv_type == 'inverseconv':
             m = spconv.SparseSequential(
                 spconv.SparseInverseConv3d(

@@ -19,23 +19,10 @@ def test_RoIAwarePool3d():
         dtype=torch.float32).cuda(
         )  # boxes (m, 7) with bottom center in lidar coordinate
     pts = torch.tensor(
-        [
-            [1, 2, 3.3],
-            [1.2, 2.5, 3.0],
-            [0.8, 2.1, 3.5],
-            [1.6, 2.6, 3.6],
-            [0.8, 1.2, 3.9],
-            [-9.2, 21.0, 18.2],
-            [3.8, 7.9, 6.3],
-            [4.7, 3.5, -12.2],
-            [3.8, 7.6, -2],
-            [-10.6, -12.9, -20],
-            [-16, -18, 9],
-            [-21.3, -52, -5],
-            [0, 0, 0],
-            [6, 7, 8],
-            [-2, -3, -4],
-        ],
+        [[1, 2, 3.3], [1.2, 2.5, 3.0], [0.8, 2.1, 3.5], [1.6, 2.6, 3.6],
+         [0.8, 1.2, 3.9], [-9.2, 21.0, 18.2], [3.8, 7.9, 6.3],
+         [4.7, 3.5, -12.2], [3.8, 7.6, -2], [-10.6, -12.9, -20], [-16, -18, 9],
+         [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4]],
         dtype=torch.float32).cuda()  # points (n, 3) in lidar coordinate
     pts_feature = pts.clone()
 
@@ -83,23 +70,10 @@ def test_points_in_boxes_cpu():
         dtype=torch.float32
     )  # boxes (m, 7) with bottom center in lidar coordinate
     pts = torch.tensor(
-        [
-            [1, 2, 3.3],
-            [1.2, 2.5, 3.0],
-            [0.8, 2.1, 3.5],
-            [1.6, 2.6, 3.6],
-            [0.8, 1.2, 3.9],
-            [-9.2, 21.0, 18.2],
-            [3.8, 7.9, 6.3],
-            [4.7, 3.5, -12.2],
-            [3.8, 7.6, -2],
-            [-10.6, -12.9, -20],
-            [-16, -18, 9],
-            [-21.3, -52, -5],
-            [0, 0, 0],
-            [6, 7, 8],
-            [-2, -3, -4],
-        ],
+        [[1, 2, 3.3], [1.2, 2.5, 3.0], [0.8, 2.1, 3.5], [1.6, 2.6, 3.6],
+         [0.8, 1.2, 3.9], [-9.2, 21.0, 18.2], [3.8, 7.9, 6.3],
+         [4.7, 3.5, -12.2], [3.8, 7.6, -2], [-10.6, -12.9, -20], [-16, -18, 9],
+         [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4]],
         dtype=torch.float32)  # points (n, 3) in lidar coordinate
 
     point_indices = points_in_boxes_cpu(points=pts, boxes=boxes)
@@ -109,9 +83,3 @@ def test_points_in_boxes_cpu():
         dtype=torch.int32)
     assert point_indices.shape == torch.Size([2, 15])
     assert (point_indices == expected_point_indices).all()
-
-
-if __name__ == '__main__':
-    test_points_in_boxes_cpu()
-    test_points_in_boxes_gpu()
-    test_RoIAwarePool3d()
