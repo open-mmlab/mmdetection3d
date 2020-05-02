@@ -4,9 +4,9 @@ import mmdet3d.ops.spconv as spconv
 from mmdet3d.ops import SparseBasicBlock, SparseBasicBlockV0
 
 
-def test_SparseUnet():
-    from mmdet3d.models.middle_encoders.sparse_unet import SparseUnet
-    self = SparseUnet(
+def test_SparseUNet():
+    from mmdet3d.models.middle_encoders.sparse_unet import SparseUNet
+    self = SparseUNet(
         in_channels=4, output_shape=[41, 1600, 1408], pre_act=False)
 
     # test encoder layers
