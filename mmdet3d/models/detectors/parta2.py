@@ -6,7 +6,7 @@ from mmdet.models import DETECTORS, TwoStageDetector
 from .. import builder
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class PartA2(TwoStageDetector):
 
     def __init__(self,

@@ -13,7 +13,6 @@ __all__ = [
     'roi_align',
     'get_compiler_version',
     'get_compiling_cuda_version',
-    'build_conv_layer',
     'NaiveSyncBatchNorm1d',
     'NaiveSyncBatchNorm2d',
     'batched_nms',

@@ -52,7 +52,7 @@ class BatchSampler:
         return [self._sampled_list[i] for i in indices]
 
 
-@OBJECTSAMPLERS.register_module
+@OBJECTSAMPLERS.register_module()
 class DataBaseSampler(object):
 
     def __init__(self, info_path, root_path, rate, prepare, object_rot_range,
@@ -255,7 +255,7 @@ class DataBaseSampler(object):
         return valid_samples
 
 
-@OBJECTSAMPLERS.register_module
+@OBJECTSAMPLERS.register_module()
 class MMDataBaseSampler(DataBaseSampler):
 
     def __init__(self,

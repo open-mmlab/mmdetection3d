@@ -1,10 +1,10 @@
 from functools import partial
 
 import torch.nn as nn
+from mmcv.cnn import build_norm_layer
 from mmcv.runner import load_checkpoint
 
 from mmdet.models import BACKBONES
-from mmdet.ops import build_norm_layer
 
 
 class Empty(nn.Module):
@@ -20,7 +20,7 @@ class Empty(nn.Module):
         return args
 
 
-@BACKBONES.register_module
+@BACKBONES.register_module()
 class SECOND(nn.Module):
     """Compare with RPN, RPNV2 support arbitrary number of stage.
     """

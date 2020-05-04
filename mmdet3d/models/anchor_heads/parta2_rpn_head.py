@@ -9,7 +9,7 @@ from mmdet.models import HEADS
 from .second_head import SECONDHead
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class PartA2RPNHead(SECONDHead):
     """rpn head for PartA2
 

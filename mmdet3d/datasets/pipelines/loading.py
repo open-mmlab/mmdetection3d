@@ -6,7 +6,7 @@ import numpy as np
 from mmdet.datasets.builder import PIPELINES
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class LoadPointsFromFile(object):
 
     def __init__(self, points_dim=4, with_reflectivity=True):
@@ -31,7 +31,7 @@ class LoadPointsFromFile(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
     """ Load multi channel images from a list of separate channel files.
     Expects results['filename'] to be a list of filenames
