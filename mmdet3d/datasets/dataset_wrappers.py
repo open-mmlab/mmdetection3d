@@ -7,7 +7,7 @@ from mmdet.datasets import DATASETS
 
 
 # Modified from https://github.com/facebookresearch/detectron2/blob/41d475b75a230221e21d9cac5d69655e3415e3a4/detectron2/data/samplers/distributed_sampler.py#L57 # noqa
-@DATASETS.register_module
+@DATASETS.register_module()
 class RepeatFactorDataset(object):
     """A wrapper of repeated dataset with repeat factor.
 

@@ -4,7 +4,7 @@ from torch import nn
 from ..registry import MIDDLE_ENCODERS
 
 
-@MIDDLE_ENCODERS.register_module
+@MIDDLE_ENCODERS.register_module()
 class PointPillarsScatter(nn.Module):
 
     def __init__(self, in_channels, output_shape):

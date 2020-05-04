@@ -1,11 +1,8 @@
+from mmcv.cnn import build_norm_layer
 from torch import nn
 
 import mmdet3d.ops.spconv as spconv
 from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
-from mmdet.ops import build_norm_layer
-from mmdet.ops.conv import conv_cfg
-
-conv_cfg.update({'SubMConv3d': spconv.SubMConv3d})
 
 
 def conv3x3(in_planes, out_planes, stride=1, indice_key=None):

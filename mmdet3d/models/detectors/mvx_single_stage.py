@@ -8,7 +8,7 @@ from .. import builder
 from .base import BaseDetector
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class MVXSingleStageDetector(BaseDetector):
 
     def __init__(self,
@@ -162,7 +162,7 @@ class MVXSingleStageDetector(BaseDetector):
         raise NotImplementedError
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicMVXNet(MVXSingleStageDetector):
 
     def __init__(self,
@@ -230,7 +230,7 @@ class DynamicMVXNet(MVXSingleStageDetector):
         return points, coors_batch
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicMVXNetV2(DynamicMVXNet):
 
     def __init__(self,
@@ -281,7 +281,7 @@ class DynamicMVXNetV2(DynamicMVXNet):
         return x
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicMVXNetV3(DynamicMVXNet):
 
     def __init__(self,

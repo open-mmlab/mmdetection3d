@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmcv.cnn import xavier_init
+from mmcv.cnn import ConvModule, xavier_init
 
-from mmdet.ops import ConvModule
 from ..registry import FUSION_LAYERS
 
 
@@ -96,7 +95,7 @@ def point_sample(
     return point_features.squeeze().t()
 
 
-@FUSION_LAYERS.register_module
+@FUSION_LAYERS.register_module()
 class PointFusion(nn.Module):
     """Fuse image features from fused single scale features
     """

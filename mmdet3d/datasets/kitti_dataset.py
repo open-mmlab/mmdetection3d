@@ -15,7 +15,7 @@ from .pipelines import Compose
 from .utils import remove_dontcare
 
 
-@DATASETS.register_module
+@DATASETS.register_module()
 class KittiDataset(torch_data.Dataset):
 
     CLASSES = ('car', 'pedestrian', 'cyclist')
