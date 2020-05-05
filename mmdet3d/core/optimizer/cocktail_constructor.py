@@ -5,7 +5,7 @@ from mmdet.utils import get_root_logger
 from .cocktail_optimizer import CocktailOptimizer
 
 
-@OPTIMIZER_BUILDERS.register_module
+@OPTIMIZER_BUILDERS.register_module()
 class CocktailOptimizerConstructor(object):
     """Special constructor for cocktail optimizers.
 

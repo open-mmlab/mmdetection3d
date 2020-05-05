@@ -7,7 +7,7 @@ from mmdet.datasets.pipelines import to_tensor
 PIPELINES._module_dict.pop('DefaultFormatBundle')
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class DefaultFormatBundle(object):
     """Default formatting bundle.
 
@@ -59,7 +59,7 @@ class DefaultFormatBundle(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class Collect3D(object):
 
     def __init__(self,
@@ -90,7 +90,7 @@ class Collect3D(object):
             self.keys, self.meta_keys)
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class DefaultFormatBundle3D(DefaultFormatBundle):
     """Default formatting bundle.
 

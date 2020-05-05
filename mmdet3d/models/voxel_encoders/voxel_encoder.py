@@ -1,15 +1,15 @@
 import torch
+from mmcv.cnn import build_norm_layer
 from torch import nn
 from torch.nn import functional as F
 
 from mmdet3d.ops import DynamicScatter
-from mmdet.ops import build_norm_layer
 from .. import builder
 from ..registry import VOXEL_ENCODERS
 from .utils import Empty, VFELayer, get_paddings_indicator
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class VoxelFeatureExtractor(nn.Module):
 
     def __init__(self,
@@ -71,7 +71,7 @@ class VoxelFeatureExtractor(nn.Module):
         return voxelwise
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class VoxelFeatureExtractorV2(nn.Module):
 
     def __init__(self,
@@ -132,7 +132,7 @@ class VoxelFeatureExtractorV2(nn.Module):
         return voxelwise
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class VoxelFeatureExtractorV3(nn.Module):
 
     def __init__(self,
@@ -152,7 +152,7 @@ class VoxelFeatureExtractorV3(nn.Module):
         return points_mean.contiguous()
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class DynamicVFEV3(nn.Module):
 
     def __init__(self,
@@ -170,7 +170,7 @@ class DynamicVFEV3(nn.Module):
         return features, features_coors
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class DynamicVFE(nn.Module):
 
     def __init__(self,
@@ -318,7 +318,7 @@ class DynamicVFE(nn.Module):
         return voxel_feats, voxel_coors
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class HardVFE(nn.Module):
 
     def __init__(self,

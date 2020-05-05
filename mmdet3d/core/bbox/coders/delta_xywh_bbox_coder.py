@@ -4,7 +4,7 @@ from mmdet.core.bbox import BaseBBoxCoder
 from mmdet.core.bbox.builder import BBOX_CODERS
 
 
-@BBOX_CODERS.register_module
+@BBOX_CODERS.register_module()
 class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
 
     def __init__(self, code_size=7):

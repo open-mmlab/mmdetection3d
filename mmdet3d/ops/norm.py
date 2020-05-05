@@ -1,9 +1,8 @@
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from mmcv.cnn import NORM_LAYERS
 from torch.autograd.function import Function
-
-from mmdet.ops.norm import norm_cfg
 
 
 class AllReduce(Function):
@@ -24,6 +23,7 @@ class AllReduce(Function):
         return grad_output
 
 
+@NORM_LAYERS.register_module('naiveSyncBN1d')
 class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
     """Syncronized Batch Normalization for 3D Tensors
 
@@ -68,6 +68,7 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         return input * scale + bias
 
 
+@NORM_LAYERS.register_module('naiveSyncBN2d')
 class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
     """Syncronized Batch Normalization for 4D Tensors
 
@@ -110,10 +111,3 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
         scale = scale.reshape(1, -1, 1, 1)
         bias = bias.reshape(1, -1, 1, 1)
         return input * scale + bias
-
-
-norm_cfg.update({
-    'BN1d': ('bn', nn.BatchNorm1d),
-    'naiveSyncBN2d': ('bn', NaiveSyncBatchNorm2d),
-    'naiveSyncBN1d': ('bn', NaiveSyncBatchNorm1d),
-})

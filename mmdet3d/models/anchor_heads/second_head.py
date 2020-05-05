@@ -13,7 +13,7 @@ from ..builder import build_loss
 from .train_mixins import AnchorTrainMixin
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class SECONDHead(nn.Module, AnchorTrainMixin):
     """Anchor-based head for VoxelNet detectors.
 

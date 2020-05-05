@@ -5,7 +5,7 @@ from mmdet.models import DETECTORS
 from .mvx_two_stage import MVXTwoStageDetector
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicMVXFasterRCNN(MVXTwoStageDetector):
 
     def __init__(self, **kwargs):
@@ -42,7 +42,7 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
         return points, coors_batch
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicMVXFasterRCNNV2(DynamicMVXFasterRCNN):
 
     def __init__(self, **kwargs):
@@ -62,7 +62,7 @@ class DynamicMVXFasterRCNNV2(DynamicMVXFasterRCNN):
         return x
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class MVXFasterRCNNV2(MVXTwoStageDetector):
 
     def __init__(self, **kwargs):
@@ -84,7 +84,7 @@ class MVXFasterRCNNV2(MVXTwoStageDetector):
         return x
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicMVXFasterRCNNV3(DynamicMVXFasterRCNN):
 
     def __init__(self, **kwargs):

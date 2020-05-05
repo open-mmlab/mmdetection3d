@@ -6,7 +6,7 @@ from mmdet.core.bbox.iou_calculators.builder import IOU_CALCULATORS
 from .. import box_torch_ops
 
 
-@IOU_CALCULATORS.register_module
+@IOU_CALCULATORS.register_module()
 class BboxOverlapsNearest3D(object):
     """Nearest 3D IoU Calculator"""
 
@@ -20,7 +20,7 @@ class BboxOverlapsNearest3D(object):
         return repr_str
 
 
-@IOU_CALCULATORS.register_module
+@IOU_CALCULATORS.register_module()
 class BboxOverlaps3D(object):
     """3D IoU Calculator"""
 

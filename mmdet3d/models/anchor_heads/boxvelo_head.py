@@ -8,7 +8,7 @@ from mmdet.models import HEADS
 from .second_head import SECONDHead
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class Anchor3DVeloHead(SECONDHead):
     """Anchor-based head for 3D anchor with velocity
     Args:

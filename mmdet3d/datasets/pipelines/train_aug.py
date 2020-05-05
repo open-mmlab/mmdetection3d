@@ -9,7 +9,7 @@ from ..registry import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
@@ -91,7 +91,7 @@ class RandomFlip3D(RandomFlip):
             self.flip_ratio, self.sync_2d)
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class ObjectSample(object):
 
     def __init__(self, db_sampler, sample_2d=False):
@@ -168,7 +168,7 @@ class ObjectSample(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class ObjectNoise(object):
 
     def __init__(self,
@@ -207,7 +207,7 @@ class ObjectNoise(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class GlobalRotScale(object):
 
     def __init__(self,
@@ -281,7 +281,7 @@ class GlobalRotScale(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class PointShuffle(object):
 
     def __call__(self, input_dict):
@@ -292,7 +292,7 @@ class PointShuffle(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class ObjectRangeFilter(object):
 
     def __init__(self, point_cloud_range):
@@ -344,7 +344,7 @@ class ObjectRangeFilter(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class PointsRangeFilter(object):
 
     def __init__(self, point_cloud_range):
