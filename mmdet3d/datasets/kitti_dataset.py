@@ -7,9 +7,9 @@ import mmcv
 import numpy as np
 import torch
 import torch.utils.data as torch_data
+from mmcv.utils import print_log
 
 from mmdet.datasets import DATASETS
-from mmdet.utils import print_log
 from ..core.bbox import box_np_ops
 from .pipelines import Compose
 from .utils import remove_dontcare
