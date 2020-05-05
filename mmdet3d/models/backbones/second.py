@@ -72,7 +72,7 @@ class SECOND(nn.Module):
 
     def init_weights(self, pretrained=None):
         if isinstance(pretrained, str):
-            from mmdet3d.apis import get_root_logger
+            from mmdet3d.utils import get_root_logger
             logger = get_root_logger()
             load_checkpoint(self, pretrained, strict=False, logger=logger)
 

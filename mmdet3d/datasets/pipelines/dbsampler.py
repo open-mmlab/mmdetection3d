@@ -68,7 +68,7 @@ class DataBaseSampler(object):
             db_infos = pickle.load(f)
 
         # filter database infos
-        from mmdet.apis import get_root_logger
+        from mmdet3d.utils import get_root_logger
         logger = get_root_logger()
         for k, v in db_infos.items():
             logger.info(f'load {len(v)} {k} database infos')
