@@ -12,7 +12,7 @@ def test_load_points_from_file():
     sunrgbd_results['data_path'] = './tests/data/sunrgbd/sunrgbd_trainval'
     sunrgbd_results['info'] = sunrgbd_info[0]
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
-    sunrgbd_point_cloud = sunrgbd_results.get('point_cloud', None)
+    sunrgbd_point_cloud = sunrgbd_results.get('points', None)
     assert sunrgbd_point_cloud.shape == (1000, 4)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
@@ -22,8 +22,8 @@ def test_load_points_from_file():
         'data_path'] = './tests/data/scannet/scannet_train_instance_data'
     scannet_results['info'] = scannet_info[0]
     scannet_results = scannet_load_data(scannet_results)
-    scannet_point_cloud = scannet_results.get('point_cloud', None)
-    scannet_pcl_color = scannet_results.get('pcl_color', None)
+    scannet_point_cloud = scannet_results.get('points', None)
+    scannet_pcl_color = scannet_results.get('pts_color', None)
     assert scannet_point_cloud.shape == (1000, 4)
     assert scannet_pcl_color.shape == (1000, 3)
 
@@ -35,9 +35,9 @@ def test_load_annotations3D():
     sunrgbd_results['data_path'] = './tests/data/sunrgbd/sunrgbd_trainval'
     sunrgbd_results['info'] = sunrgbd_info[0]
     sunrgbd_results = sunrgbd_load_annotations3D(sunrgbd_results)
-    sunrgbd_gt_boxes = sunrgbd_results.get('gt_boxes', None)
+    sunrgbd_gt_boxes = sunrgbd_results.get('gt_bboxes_3d', None)
     sunrgbd_gt_classes = sunrgbd_results.get('gt_classes', None)
-    sunrgbd_gt_boxes_mask = sunrgbd_results.get('gt_boxes_mask', None)
+    sunrgbd_gt_boxes_mask = sunrgbd_results.get('gt_bboxes_3d_mask', None)
     assert sunrgbd_gt_boxes.shape == (3, 7)
     assert sunrgbd_gt_classes.shape == (3, 1)
     assert sunrgbd_gt_boxes_mask.shape == (3, 1)
@@ -49,9 +49,9 @@ def test_load_annotations3D():
         'data_path'] = './tests/data/scannet/scannet_train_instance_data'
     scannet_results['info'] = scannet_info[0]
     scannet_results = scannet_load_annotations3D(scannet_results)
-    scannet_gt_boxes = scannet_results.get('gt_boxes', None)
+    scannet_gt_boxes = scannet_results.get('gt_bboxes_3d', None)
     scannet_gt_classes = scannet_results.get('gt_classes', None)
-    scannet_gt_boxes_mask = scannet_results.get('gt_boxes_mask', None)
+    scannet_gt_boxes_mask = scannet_results.get('gt_bboxes_3d_mask', None)
     scannet_instance_labels = scannet_results.get('instance_labels', None)
     scannet_semantic_labels = scannet_results.get('semantic_labels', None)
     assert scannet_gt_boxes.shape == (27, 6)
