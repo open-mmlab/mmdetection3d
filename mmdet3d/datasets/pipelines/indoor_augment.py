@@ -22,7 +22,7 @@ def _rotz(t):
 
 @PIPELINES.register_module()
 class IndoorFlipData(object):
-    """Indoor Flip Data
+    """Indoor Flip Data.
 
     Flip point_cloud and groundtruth boxes.
 
@@ -30,28 +30,27 @@ class IndoorFlipData(object):
         seed (int): Numpy random seed.
     """
 
-    def __init__(self, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
+    def __init__(self):
+        pass
 
     def __call__(self, results):
-        point_cloud = results.get('point_cloud', None)
-        gt_boxes = results.get('gt_boxes', None)
-        name = 'scannet' if gt_boxes.shape[1] == 6 else 'sunrgbd'
+        points = results.get('points', None)
+        gt_bboxes_3d = results.get('gt_bboxes_3d', None)
+        name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
         if np.random.random() > 0.5:
             # Flipping along the YZ plane
-            point_cloud[:, 0] = -1 * point_cloud[:, 0]
-            gt_boxes[:, 0] = -1 * gt_boxes[:, 0]
+            points[:, 0] = -1 * points[:, 0]
+            gt_bboxes_3d[:, 0] = -1 * gt_bboxes_3d[:, 0]
             if name == 'sunrgbd':
-                gt_boxes[:, 6] = np.pi - gt_boxes[:, 6]
-            results['gt_boxes'] = gt_boxes
+                gt_bboxes_3d[:, 6] = np.pi - gt_bboxes_3d[:, 6]
+            results['gt_boxes'] = gt_bboxes_3d
 
         if name == 'scannet' and np.random.random() > 0.5:
             # Flipping along the XZ plane
-            point_cloud[:, 1] = -1 * point_cloud[:, 1]
-            gt_boxes[:, 1] = -1 * gt_boxes[:, 1]
-            results['gt_boxes'] = gt_boxes
-        results['point_cloud'] = point_cloud
+            points[:, 1] = -1 * points[:, 1]
+            gt_bboxes_3d[:, 1] = -1 * gt_bboxes_3d[:, 1]
+            results['gt_bboxes_3d'] = gt_bboxes_3d
+        results['points'] = points
 
         return results
 
@@ -79,17 +78,13 @@ class IndoorGlobalRotScale(object):
     """
 
     def __init__(self,
-                 seed=None,
                  use_rotate=True,
                  use_color=False,
                  use_scale=True,
                  use_height=True,
-                 rot_range=1 / 3,
-                 scale_range=0.3,
+                 rot_range=[-np.pi / 6, np.pi / 6],
+                 scale_range=[0.85, 1.15],
                  color_mean=[0.5, 0.5, 0.5]):
-        if seed is not None:
-            np.random.seed(seed)
-
         self.use_rotate = use_rotate
         self.use_color = use_color
         self.use_scale = use_scale
@@ -132,53 +127,54 @@ class IndoorGlobalRotScale(object):
         return np.concatenate([new_centers, new_lengths], axis=1)
 
     def __call__(self, results):
-        point_cloud = results.get('point_cloud', None)
-        gt_boxes = results.get('gt_boxes', None)
-        name = 'scannet' if gt_boxes.shape[1] == 6 else 'sunrgbd'
+        points = results.get('points', None)
+        gt_bboxes_3d = results.get('gt_bboxes_3d', None)
+        name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
 
         if self.use_rotate:
-            rot_angle = (np.random.random() * self.rot_range * np.pi
-                         ) - np.pi * self.rot_range / 2  # -30 ~ +30 degree
+            rot_angle = np.random.random() * (
+                self.rot_range[1] - self.rot_range[0]) + self.rot_range[0]
             rot_mat = _rotz(rot_angle)
-            point_cloud[:, 0:3] = np.dot(point_cloud[:, 0:3],
-                                         np.transpose(rot_mat))
+            points[:, 0:3] = np.dot(points[:, 0:3], np.transpose(rot_mat))
 
             if name == 'scannet':
-                gt_boxes = self._rotate_aligned_boxes(gt_boxes, rot_mat)
+                gt_bboxes_3d = self._rotate_aligned_boxes(
+                    gt_bboxes_3d, rot_mat)
             else:
-                gt_boxes[:, 0:3] = np.dot(gt_boxes[:, 0:3],
-                                          np.transpose(rot_mat))
-                gt_boxes[:, 6] -= rot_angle
+                gt_bboxes_3d[:, 0:3] = np.dot(gt_bboxes_3d[:, 0:3],
+                                              np.transpose(rot_mat))
+                gt_bboxes_3d[:, 6] -= rot_angle
 
         # Augment RGB color
         if self.use_color:
-            rgb_color = point_cloud[:, 3:6] + self.color_mean
-            rgb_color *= (1 + 0.4 * np.random.random(3) - 0.2
-                          )  # brightness change for each channel
-            rgb_color += (0.1 * np.random.random(3) - 0.05
-                          )  # color shift for each channel
+            rgb_color = points[:, 3:6] + self.color_mean
+            # brightness change for each channel
+            rgb_color *= (1 + 0.4 * np.random.random(3) - 0.2)
+            # color shift for each channel
+            rgb_color += (0.1 * np.random.random(3) - 0.05)
+            # jittering on each pixel
             rgb_color += np.expand_dims(
-                (0.05 * np.random.random(point_cloud.shape[0]) - 0.025),
-                -1)  # jittering on each pixel
+                (0.05 * np.random.random(points.shape[0]) - 0.025), -1)
             rgb_color = np.clip(rgb_color, 0, 1)
             # randomly drop out 30% of the points' colors
             rgb_color *= np.expand_dims(
-                np.random.random(point_cloud.shape[0]) > 0.3, -1)
-            point_cloud[:, 3:6] = rgb_color - self.color_mean
+                np.random.random(points.shape[0]) > 0.3, -1)
+            points[:, 3:6] = rgb_color - self.color_mean
 
         if self.use_scale:
-            # Augment point cloud scale: 0.85x-1.15x
-            scale_ratio = np.random.random(
-            ) * self.scale_range + 1 - self.scale_range / 2
-            scale_ratio = np.expand_dims(np.tile(scale_ratio, 3), 0)
-            point_cloud[:, 0:3] *= scale_ratio
-            gt_boxes[:, 0:3] *= scale_ratio
-            gt_boxes[:, 3:6] *= scale_ratio
+            # Augment point cloud scale
+            scale_ratio = np.random.random() * (
+                self.scale_range[1] -
+                self.scale_range[0]) + self.scale_range[0]
+            scale_ratio = np.tile(scale_ratio, 3)[None, ...]
+            points[:, 0:3] *= scale_ratio
+            gt_bboxes_3d[:, 0:3] *= scale_ratio
+            gt_bboxes_3d[:, 3:6] *= scale_ratio
             if self.use_height:
-                point_cloud[:, -1] *= scale_ratio[0, 0]
+                points[:, -1] *= scale_ratio[0, 0]
 
-        results['point_cloud'] = point_cloud
-        results['gt_boxes'] = gt_boxes
+        results['points'] = points
+        results['gt_bboxes_3d'] = gt_bboxes_3d
         return results
 
     def __repr__(self):
