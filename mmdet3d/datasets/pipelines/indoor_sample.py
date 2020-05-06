@@ -21,8 +21,7 @@ class PointSample(object):
                                points,
                                num_samples,
                                replace=None,
-                               return_choices=False,
-                               seed=None):
+                               return_choices=False):
         """Points Random Sampling.
 
         Sample points to a certain number.
@@ -37,8 +36,6 @@ class PointSample(object):
             points (ndarray): 3D Points.
             choices (ndarray): The generated random samples
         """
-        if seed is not None:
-            np.random.seed(seed)
         if replace is None:
             replace = (points.shape[0] < num_samples)
         choices = np.random.choice(
@@ -49,21 +46,21 @@ class PointSample(object):
             return points[choices]
 
     def __call__(self, results, seed=None):
-        point_cloud = results.get('point_cloud', None)
-        pcl_color = results.get('pcl_color', None)
-        point_cloud, choices = self.points_random_sampling(
-            point_cloud, self.num_points, return_choices=True, seed=seed)
-        results['point_cloud'] = point_cloud
+        points = results.get('points', None)
+        pts_color = results.get('pts_color', None)
+        points, choices = self.points_random_sampling(
+            points, self.num_points, return_choices=True)
+        results['points'] = points
 
-        if pcl_color is not None:
-            pcl_color = pcl_color[choices]
+        if pts_color is not None:
+            pts_color = pts_color[choices]
             instance_labels = results.get('instance_labels', None)
             semantic_labels = results.get('semantic_labels', None)
             instance_labels = instance_labels[choices]
             semantic_labels = semantic_labels[choices]
             results['instance_labels'] = instance_labels
             results['semantic_labels'] = semantic_labels
-            results['pcl_color'] = pcl_color
+            results['pts_color'] = pts_color
 
         return results
 
