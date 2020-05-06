@@ -45,22 +45,19 @@ class PointSample(object):
         else:
             return points[choices]
 
-    def __call__(self, results, seed=None):
+    def __call__(self, results):
         points = results.get('points', None)
-        pts_color = results.get('pts_color', None)
         points, choices = self.points_random_sampling(
             points, self.num_points, return_choices=True)
+        pts_instance_mask = results.get('pts_instance_mask', None)
+        pts_semantic_mask = results.get('pts_semantic_mask', None)
         results['points'] = points
 
-        if pts_color is not None:
-            pts_color = pts_color[choices]
-            instance_labels = results.get('instance_labels', None)
-            semantic_labels = results.get('semantic_labels', None)
-            instance_labels = instance_labels[choices]
-            semantic_labels = semantic_labels[choices]
-            results['instance_labels'] = instance_labels
-            results['semantic_labels'] = semantic_labels
-            results['pts_color'] = pts_color
+        if pts_instance_mask is not None and pts_semantic_mask is not None:
+            pts_instance_mask = pts_instance_mask[choices]
+            pts_semantic_mask = pts_semantic_mask[choices]
+            results['pts_instance_mask'] = pts_instance_mask
+            results['pts_semantic_mask'] = pts_semantic_mask
 
         return results
 

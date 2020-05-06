@@ -18,31 +18,22 @@ def test_indoor_sample():
                                [-0.9186557, -1.7041215, 2.0562649, 2.1351335],
                                [-1.0128691, -1.3394243, 0.040936, 0.1198047]])
     scannet_results['points'] = scannet_points
-    scannet_instance_labels = np.array([15, 12, 11, 38, 0, 18, 17, 12, 17, 0])
-    scannet_results['instance_labels'] = scannet_instance_labels
-    scannet_pts_color = np.array([[77., 74., 63.], [176., 166., 156.],
-                                  [178., 164., 153.], [240., 235., 237.],
-                                  [58., 58., 59.], [245., 236., 229.],
-                                  [158., 148., 141.], [195., 184., 178.],
-                                  [193., 181., 174.], [105., 102., 97.]])
-    scannet_results['pts_color'] = scannet_pts_color
-    scannet_semantic_labels = np.array([38, 1, 1, 40, 0, 40, 1, 1, 1, 0])
-    scannet_results['semantic_labels'] = scannet_semantic_labels
-    scannet_results = scannet_sample_points(scannet_results, 0)
-    scannet_point_cloud_result = scannet_results.get('points', None)
-    scannet_pcl_color_result = scannet_results.get('pts_color', None)
+    scannet_pts_instance_mask = np.array(
+        [15, 12, 11, 38, 0, 18, 17, 12, 17, 0])
+    scannet_results['pts_instance_mask'] = scannet_pts_instance_mask
+    scannet_pts_semantic_mask = np.array([38, 1, 1, 40, 0, 40, 1, 1, 1, 0])
+    scannet_results['pts_semantic_mask'] = scannet_pts_semantic_mask
+    scannet_results = scannet_sample_points(scannet_results)
+    scannet_points_result = scannet_results.get('points', None)
     scannet_instance_labels_result = scannet_results.get(
-        'instance_labels', None)
+        'pts_instance_mask', None)
     scannet_semantic_labels_result = scannet_results.get(
-        'semantic_labels', None)
+        'pts_semantic_mask', None)
     scannet_choices = np.array([2, 8, 4, 9, 1])
-    assert np.allclose(scannet_points[scannet_choices],
-                       scannet_point_cloud_result)
-    assert np.allclose(scannet_pts_color[scannet_choices],
-                       scannet_pcl_color_result)
-    assert np.all(scannet_instance_labels[scannet_choices] ==
+    assert np.allclose(scannet_points[scannet_choices], scannet_points_result)
+    assert np.all(scannet_pts_instance_mask[scannet_choices] ==
                   scannet_instance_labels_result)
-    assert np.all(scannet_semantic_labels[scannet_choices] ==
+    assert np.all(scannet_pts_semantic_mask[scannet_choices] ==
                   scannet_semantic_labels_result)
 
     np.random.seed(0)
@@ -60,7 +51,7 @@ def test_indoor_sample():
          [0.56485355, 1.5747732, -0.804522, 0.4814307],
          [-0.0913099, 1.3673826, -1.2800645, 0.00588822]])
     sunrgbd_results['points'] = sunrgbd_point_cloud
-    sunrgbd_results = sunrgbd_sample_points(sunrgbd_results, 0)
+    sunrgbd_results = sunrgbd_sample_points(sunrgbd_results)
     sunrgbd_choices = np.array([2, 8, 4, 9, 1])
     sunrgbd_points_result = sunrgbd_results.get('points', None)
     assert np.allclose(sunrgbd_point_cloud[sunrgbd_choices],
