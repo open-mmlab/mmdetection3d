@@ -37,7 +37,8 @@ class LoadPointsFromFile(object):
         else:
             points = np.load(pts_filename)['pc']
         points = points.reshape(-1, self.load_dim)
-        points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
+        if self.load_dim >= 6:
+            points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
         points = points[:, self.use_dim]
 
         if self.use_height:
@@ -78,9 +79,8 @@ class LoadAnnotations3D(object):
             gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
             gt_labels = np.zeros((1, 1))
             gt_bboxes_3d_mask = np.zeros((1, 1))
-        name = 'scannet' if info.get('image', None) is None else 'sunrgbd'
 
-        if name == 'scannet':
+        if ins_labelname is not None and sem_labelname is not None:
             assert osp.exists(ins_labelname)
             assert osp.exists(sem_labelname)
             pts_instance_mask = np.load(ins_labelname)
