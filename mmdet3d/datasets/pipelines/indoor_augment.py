@@ -3,23 +3,6 @@ import numpy as np
 from mmdet.datasets.registry import PIPELINES
 
 
-def _rotz(t):
-    """Rotate About Z.
-
-    Rotation about the z-axis.
-
-    Args:
-        t (float): Angle of rotation.
-
-    Returns:
-        rot_mat (ndarray): Matrix of rotation.
-    """
-    c = np.cos(t)
-    s = np.sin(t)
-    rot_mat = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
-    return rot_mat
-
-
 @PIPELINES.register_module()
 class IndoorFlipData(object):
     """Indoor Flip Data.
@@ -57,12 +40,13 @@ class IndoorFlipData(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
+        repr_str += '(flip_ratio={})'.format(self.flip_ratio)
         return repr_str
 
 
 @PIPELINES.register_module()
-class IndoorAugmentColor(object):
-    """Indoor Augment Color.
+class IndoorPointsColorJitter(object):
+    """Indoor Points Color Jitter.
 
     Augment the color of points.
 
@@ -143,6 +127,22 @@ class IndoorGlobalRotScale(object):
         self.rot_range = rot_range
         self.scale_range = scale_range
 
+    def _rotz(self, t):
+        """Rotate About Z.
+
+        Rotation about the z-axis.
+
+        Args:
+            t (float): Angle of rotation.
+
+        Returns:
+            rot_mat (ndarray): Matrix of rotation.
+        """
+        c = np.cos(t)
+        s = np.sin(t)
+        rot_mat = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+        return rot_mat
+
     def _rotate_aligned_boxes(self, input_boxes, rot_mat):
         """Rotate Aligned Boxes.
 
@@ -183,15 +183,13 @@ class IndoorGlobalRotScale(object):
 
         if self.rot_range is not None:
             rot_angle = np.random.uniform(self.rot_range[0], self.rot_range[1])
-            rot_mat = _rotz(rot_angle)
-            points[:, 0:3] = np.dot(points[:, 0:3], rot_mat.T)
-
+            rot_mat = self._rotz(rot_angle)
+            points[:, :3] = np.dot(points[:, :3], rot_mat.T)
             if name == 'scannet':
                 gt_bboxes_3d = self._rotate_aligned_boxes(
                     gt_bboxes_3d, rot_mat)
             else:
-                gt_bboxes_3d[:, 0:3] = np.dot(gt_bboxes_3d[:, 0:3],
-                                              np.transpose(rot_mat))
+                gt_bboxes_3d[:, :3] = np.dot(gt_bboxes_3d[:, :3], rot_mat.T)
                 gt_bboxes_3d[:, 6] -= rot_angle
 
         if self.scale_range is not None:
@@ -199,8 +197,8 @@ class IndoorGlobalRotScale(object):
             scale_ratio = np.random.uniform(self.scale_range[0],
                                             self.scale_range[1])
             scale_ratio = np.tile(scale_ratio, 3)[None, ...]
-            points[:, 0:3] *= scale_ratio
-            gt_bboxes_3d[:, 0:3] *= scale_ratio
+            points[:, :3] *= scale_ratio
+            gt_bboxes_3d[:, :3] *= scale_ratio
             gt_bboxes_3d[:, 3:6] *= scale_ratio
             if self.use_height:
                 points[:, -1] *= scale_ratio[0, 0]
