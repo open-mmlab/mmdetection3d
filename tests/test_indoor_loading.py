@@ -12,7 +12,6 @@ def test_load_points_from_file():
                                                        6)
     sunrgbd_results = dict()
     data_path = './tests/data/sunrgbd/sunrgbd_trainval'
-    sunrgbd_results['data_path'] = data_path
     sunrgbd_info = sunrgbd_info[0]
     scan_name = sunrgbd_info['point_cloud']['lidar_idx']
     sunrgbd_results['info'] = sunrgbd_info
@@ -41,7 +40,6 @@ def test_load_annotations3D():
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
     sunrgbd_load_annotations3D = LoadAnnotations3D()
     sunrgbd_results = dict()
-    sunrgbd_results['data_path'] = './tests/data/sunrgbd/sunrgbd_trainval'
     sunrgbd_results['info'] = sunrgbd_info[0]
     sunrgbd_results = sunrgbd_load_annotations3D(sunrgbd_results)
     sunrgbd_gt_boxes = sunrgbd_results.get('gt_bboxes_3d', None)
@@ -55,7 +53,6 @@ def test_load_annotations3D():
     scannet_load_annotations3D = LoadAnnotations3D()
     scannet_results = dict()
     data_path = './tests/data/scannet/scannet_train_instance_data'
-    scannet_results['data_path'] = data_path
     scannet_info = scannet_info[0]
     scan_name = scannet_info['point_cloud']['lidar_idx']
     scannet_results['ins_labelname'] = osp.join(data_path,
