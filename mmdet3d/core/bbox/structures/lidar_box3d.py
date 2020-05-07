@@ -6,8 +6,10 @@ from .utils import limit_period, rotation_3d_in_axis
 
 
 class LiDARInstance3DBoxes(BaseInstance3DBoxes):
-    """
-    This structure stores a list of boxes as a Nx7 torch.Tensor.
+    """3D boxes of instances in LIDAR coordinates
+
+    This structure stores a list of boxes as a NxM torch.Tensor,
+    where M >= 7.
     It supports some common methods about boxes
     (`area`, `clip`, `nonempty`, etc),
     and also behaves like a Tensor
@@ -20,6 +22,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
     """
 
+    @property
     def gravity_center(self):
         """Calculate the gravity center of all the boxes.
 
@@ -32,16 +35,12 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         gravity_center[:, 2] = bottom_center[:, 2] + bottom_center[:, 5] * 0.5
         return gravity_center
 
-    def corners(self, origin=[0.5, 1.0, 0.5], axis=1):
+    @property
+    def corners(self):
         """Calculate the coordinates of corners of all the boxes.
 
         Convert the boxes to the form of
         (x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
-
-        Args:
-            origin (list[float]): origin point relate to smallest point.
-                use [0.5, 1.0, 0.5] in camera and [0.5, 0.5, 0] in lidar.
-            axis (int): rotation axis. 1 for camera and 2 for lidar.
 
         Returns:
             torch.Tensor: corners of each box with size (N, 8, 3)
@@ -52,13 +51,14 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 device=dims.device, dtype=dims.dtype)
 
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-        corners_norm = corners_norm - dims.new_tensor(origin)
+        corners_norm = corners_norm - dims.new_tensor([0.5, 1.0, 0.5])
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 2**3, 3])
 
-        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=axis)
+        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=1)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
+    @property
     def nearset_bev(self):
         """Calculate the 2D bounding boxes in BEV without rotation
 

@@ -6,15 +6,13 @@ import torch
 class BaseInstance3DBoxes(object):
     """Base class for 3D Boxes
 
+    Args:
+        tensor (torch.Tensor | np.ndarray): a Nxbox_dim matrix.
+        box_dim (int): number of the dimension of a box
+        Each row is (x, y, z, x_size, y_size, z_size, yaw).
     """
 
     def __init__(self, tensor, box_dim=7):
-        """
-        Args:
-            tensor (torch.Tensor | np.ndarray): a Nxbox_dim matrix.
-            box_dim (int): number of the dimension of a box
-            Each row is (x, y, z, x_size, y_size, z_size, yaw).
-        """
         if isinstance(tensor, torch.Tensor):
             device = tensor.device
         else:
@@ -29,7 +27,7 @@ class BaseInstance3DBoxes(object):
         self.box_dim = box_dim
         self.tensor = tensor
 
-    @abstractmethod
+    @property
     def volume(self):
         """Computes the volume of all the boxes.
 
@@ -38,7 +36,7 @@ class BaseInstance3DBoxes(object):
         """
         return self.tensor[:, 3] * self.tensor[:, 4] * self.tensor[:, 5]
 
-    @abstractmethod
+    @property
     def bottom_center(self):
         """Calculate the bottom center of all the boxes.
 
@@ -47,7 +45,7 @@ class BaseInstance3DBoxes(object):
         """
         return self.tensor[..., :3]
 
-    @abstractmethod
+    @property
     def gravity_center(self):
         """Calculate the gravity center of all the boxes.
 
@@ -56,7 +54,7 @@ class BaseInstance3DBoxes(object):
         """
         pass
 
-    @abstractmethod
+    @property
     def corners(self):
         """Calculate the coordinates of corners of all the boxes.
 
@@ -104,6 +102,16 @@ class BaseInstance3DBoxes(object):
         """
         pass
 
+    @abstractmethod
+    def scale(self, scale_factors):
+        """Scale the box with horizontal and vertical scaling factors
+
+        Args:
+            scale_factors (float | torch.Tensor | list[float]):
+                scale factors to scale the boxes.
+        """
+        pass
+
     def nonempty(self, threshold: float = 0.0):
         """Find boxes that are non-empty.
 
@@ -122,15 +130,6 @@ class BaseInstance3DBoxes(object):
         keep = ((size_x > threshold)
                 & (size_y > threshold) & (size_z > threshold))
         return keep
-
-    def scale(self, scale_factors):
-        """Scale the box with horizontal and vertical scaling factors
-
-        Args:
-            scale_factors (float | torch.Tensor | list[float]):
-                scale factors to scale the boxes.
-        """
-        pass
 
     def __getitem__(self, item):
         """
