@@ -190,3 +190,23 @@ def rotation_2d(points, angles):
     rot_cos = torch.cos(angles)
     rot_mat_T = torch.stack([[rot_cos, -rot_sin], [rot_sin, rot_cos]])
     return torch.einsum('aij,jka->aik', points, rot_mat_T)
+
+
+def enlarge_box3d_lidar(boxes3d, extra_width):
+    """Enlarge the length, width and height of input boxes
+
+    Args:
+        boxes3d (torch.float32 or numpy.float32): bottom_center with
+            shape [N, 7], (x, y, z, w, l, h, ry) in LiDAR coords
+        extra_width (float): a fix number to add
+
+    Returns:
+        torch.float32 or numpy.float32: enlarged boxes
+    """
+    if isinstance(boxes3d, np.ndarray):
+        large_boxes3d = boxes3d.copy()
+    else:
+        large_boxes3d = boxes3d.clone()
+    large_boxes3d[:, 3:6] += extra_width * 2
+    large_boxes3d[:, 2] -= extra_width  # bottom center z minus extra_width
+    return large_boxes3d
