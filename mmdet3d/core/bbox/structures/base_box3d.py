@@ -89,12 +89,26 @@ class BaseInstance3DBoxes(object):
         pass
 
     @abstractmethod
-    def in_range(self, box_range):
+    def in_range_3d(self, box_range):
         """Check whether the boxes are in the given range
 
         Args:
             box_range (list | torch.Tensor): the range of box
                 (x_min, y_min, z_min, x_max, y_max, z_max)
+
+        Returns:
+            a binary vector, indicating whether each box is inside
+            the reference range.
+        """
+        pass
+
+    @abstractmethod
+    def in_range_bev(self, box_range):
+        """Check whether the boxes are in the given range
+
+        Args:
+            box_range (list | torch.Tensor): the range of box
+                (x_min, y_min, x_max, y_max)
 
         Returns:
             a binary vector, indicating whether each box is inside

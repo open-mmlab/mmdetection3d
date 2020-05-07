@@ -29,10 +29,10 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         Returns:
             torch.Tensor: a tensor with center of each box.
         """
-        bottom_center = self.bottom_center()
+        bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, :2] = bottom_center[:, :2]
-        gravity_center[:, 2] = bottom_center[:, 2] + bottom_center[:, 5] * 0.5
+        gravity_center[:, 2] = bottom_center[:, 2] + self.tensor[:, 5] * 0.5
         return gravity_center
 
     @property
@@ -40,23 +40,43 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the coordinates of corners of all the boxes.
 
         Convert the boxes to the form of
-        (x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
+        (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
+
+        .. code-block:: none
+               (x0, y0, z1) + -----------  + (x1, y1, z1)
+                           /|            / |
+                          / |           /  |
+            (x0, y0, z1) + ----------- +   + (x1, y1, z0)
+                         |  /      .   |  /
+                         | / oriign    | /
+            (x0, y0, z0) + ----------- + (x1, y0, z0)
 
         Returns:
             torch.Tensor: corners of each box with size (N, 8, 3)
         """
-        dims = self.tensor[:, 3:6]
+        dims = self.dims
         corners_norm = torch.from_numpy(
-            np.stack(np.unravel_index(np.arange(2**3), [2] * 3), axis=1)).to(
+            np.stack(np.unravel_index(np.arange(8), [2] * 3), axis=1)).to(
                 device=dims.device, dtype=dims.dtype)
 
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-        corners_norm = corners_norm - dims.new_tensor([0.5, 1.0, 0.5])
-        corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 2**3, 3])
+        corners_norm = corners_norm - dims.new_tensor([0.5, 0.5, 0])
+        corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
-        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=1)
+        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=2)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
+
+    @property
+    def dims(self):
+        """Calculate the length in each dimension of all the boxes.
+
+        Convert the boxes to the form of (x_size, y_size, z_size)
+
+        Returns:
+            torch.Tensor: corners of each box with size (N, 8, 3)
+        """
+        return self.tensor[:, 3:6]
 
     @property
     def nearset_bev(self):

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mmdet3d.core.bbox import LiDARInstance3DBoxes
+from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
 
 
 def test_lidar_boxes3d():
@@ -128,6 +128,11 @@ def test_lidar_boxes3d():
     mask = boxes.nonempty()
     assert (mask == expected_tensor).all()
 
+    # test bbox in_range
+    expected_tensor = torch.tensor([1, 1, 0, 0, 0], dtype=torch.bool)
+    mask = boxes.in_range_3d([0, -20, -2, 22, 2, 5])
+    assert (mask == expected_tensor).all()
+
     # test bbox indexing
     index_boxes = boxes[2:5]
     expected_tensor = torch.tensor([[
@@ -171,3 +176,77 @@ def test_lidar_boxes3d():
     # test iteration
     for i, box in enumerate(index_boxes):
         torch.allclose(box, expected_tensor[i])
+
+    # test properties
+    assert torch.allclose(boxes.bottom_center, boxes.tensor[:, :3])
+    expected_tensor = (
+        boxes.tensor[:, :3] - boxes.tensor[:, 3:6] *
+        (torch.tensor([0.5, 0.5, 0]) - torch.tensor([0.5, 0.5, 0.5])))
+    assert torch.allclose(boxes.gravity_center, expected_tensor)
+
+    boxes.limit_yaw()
+    assert (boxes.tensor[:, 6] <= np.pi / 2).all()
+    assert (boxes.tensor[:, 6] >= -np.pi / 2).all()
+
+    Box3DMode.convert(boxes, Box3DMode.LIDAR, Box3DMode.LIDAR)
+    expected_tesor = boxes.tensor.clone()
+    assert torch.allclose(expected_tesor, boxes.tensor)
+
+    boxes.flip()
+    boxes.flip()
+    boxes.limit_yaw()
+    assert torch.allclose(expected_tesor, boxes.tensor)
+
+    # test nearest_bev
+    expected_tensor = torch.tensor([[-0.5763, -3.9307, 2.8326, -2.1709],
+                                    [6.0819, -5.7075, 10.1143, -4.1589],
+                                    [26.5212, -7.9800, 28.7637, -6.5018],
+                                    [18.2686, -29.2617, 21.7681, -27.6929],
+                                    [27.3398, -18.3976, 29.0896, -14.6065]])
+    # the pytorch print loses some precision
+    assert torch.allclose(
+        boxes.nearset_bev, expected_tensor, rtol=1e-4, atol=1e-7)
+
+    # obtained by the print of the original implementation
+    expected_tensor = torch.tensor([[[2.4093e+00, -4.4784e+00, -1.9169e+00],
+                                     [2.4093e+00, -4.4784e+00, -2.5769e-01],
+                                     [-7.7767e-01, -3.2684e+00, -2.5769e-01],
+                                     [-7.7767e-01, -3.2684e+00, -1.9169e+00],
+                                     [3.0340e+00, -2.8332e+00, -1.9169e+00],
+                                     [3.0340e+00, -2.8332e+00, -2.5769e-01],
+                                     [-1.5301e-01, -1.6232e+00, -2.5769e-01],
+                                     [-1.5301e-01, -1.6232e+00, -1.9169e+00]],
+                                    [[9.8933e+00, -6.1340e+00, -1.8019e+00],
+                                     [9.8933e+00, -6.1340e+00, -2.2310e-01],
+                                     [5.9606e+00, -5.2427e+00, -2.2310e-01],
+                                     [5.9606e+00, -5.2427e+00, -1.8019e+00],
+                                     [1.0236e+01, -4.6237e+00, -1.8019e+00],
+                                     [1.0236e+01, -4.6237e+00, -2.2310e-01],
+                                     [6.3029e+00, -3.7324e+00, -2.2310e-01],
+                                     [6.3029e+00, -3.7324e+00, -1.8019e+00]],
+                                    [[2.8525e+01, -8.2534e+00, -1.4676e+00],
+                                     [2.8525e+01, -8.2534e+00, 2.0648e-02],
+                                     [2.6364e+01, -7.6525e+00, 2.0648e-02],
+                                     [2.6364e+01, -7.6525e+00, -1.4676e+00],
+                                     [2.8921e+01, -6.8292e+00, -1.4676e+00],
+                                     [2.8921e+01, -6.8292e+00, 2.0648e-02],
+                                     [2.6760e+01, -6.2283e+00, 2.0648e-02],
+                                     [2.6760e+01, -6.2283e+00, -1.4676e+00]],
+                                    [[2.1337e+01, -2.9870e+01, -1.9028e+00],
+                                     [2.1337e+01, -2.9870e+01, -4.9495e-01],
+                                     [1.8102e+01, -2.8535e+01, -4.9495e-01],
+                                     [1.8102e+01, -2.8535e+01, -1.9028e+00],
+                                     [2.1935e+01, -2.8420e+01, -1.9028e+00],
+                                     [2.1935e+01, -2.8420e+01, -4.9495e-01],
+                                     [1.8700e+01, -2.7085e+01, -4.9495e-01],
+                                     [1.8700e+01, -2.7085e+01, -1.9028e+00]],
+                                    [[2.6398e+01, -1.7530e+01, -1.7879e+00],
+                                     [2.6398e+01, -1.7530e+01, -2.9959e-01],
+                                     [2.8612e+01, -1.4452e+01, -2.9959e-01],
+                                     [2.8612e+01, -1.4452e+01, -1.7879e+00],
+                                     [2.7818e+01, -1.8552e+01, -1.7879e+00],
+                                     [2.7818e+01, -1.8552e+01, -2.9959e-01],
+                                     [3.0032e+01, -1.5474e+01, -2.9959e-01],
+                                     [3.0032e+01, -1.5474e+01, -1.7879e+00]]])
+    # the pytorch print loses some precision
+    assert torch.allclose(boxes.corners, expected_tensor, rtol=1e-4, atol=1e-7)
