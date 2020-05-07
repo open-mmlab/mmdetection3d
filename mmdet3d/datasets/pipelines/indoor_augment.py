@@ -147,6 +147,7 @@ class IndoorGlobalRotScale(object):
 
         # Augment RGB color
         if self.use_color:
+            assert points.shape[1] >= 6
             rgb_color = points[:, 3:6] + self.color_mean
             # brightness change for each channel
             rgb_color *= (1 + 0.4 * np.random.random(3) - 0.2)
