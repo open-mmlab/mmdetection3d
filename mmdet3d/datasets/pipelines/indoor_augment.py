@@ -27,17 +27,18 @@ class IndoorFlipData(object):
     Flip point_cloud and groundtruth boxes.
 
     Args:
-        seed (int): Numpy random seed.
+        flip_ratio (float): Probability of being flipped.
+            Default: 0.5.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, flip_ratio=0.5):
+        self.flip_ratio = flip_ratio
 
     def __call__(self, results):
         points = results.get('points', None)
         gt_bboxes_3d = results.get('gt_bboxes_3d', None)
         name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
-        if np.random.random() > 0.5:
+        if np.random.random() > self.flip_ratio:
             # Flipping along the YZ plane
             points[:, 0] = -1 * points[:, 0]
             gt_bboxes_3d[:, 0] = -1 * gt_bboxes_3d[:, 0]
@@ -59,6 +60,67 @@ class IndoorFlipData(object):
         return repr_str
 
 
+@PIPELINES.register_module()
+class IndoorAugmentColor(object):
+    """Indoor Augment Color.
+
+    Augment the color of points.
+
+    Args:
+        color_mean (List[float]): Mean color of the point cloud.
+            Default: [0.5, 0.5, 0.5].
+        bright_range (List[float]): Range of brightness.
+            Default: [0.8, 1.2].
+        color_shift_range (List[float]): Range of color shift.
+            Default: [0.95, 1.05].
+        jitter_range (List[float]): Range of jittering.
+            Default: [-0.025, 0.025].
+        prob_drop (float): Probability to drop out points' color.
+            Default: 0.3
+    """
+
+    def __init__(self,
+                 color_mean=[0.5, 0.5, 0.5],
+                 bright_range=[0.8, 1.2],
+                 color_shift_range=[0.95, 1.05],
+                 jitter_range=[-0.025, 0.025],
+                 prob_drop=0.3):
+        self.color_mean = color_mean
+        self.bright_range = bright_range
+        self.color_shift_range = color_shift_range
+        self.jitter_range = jitter_range
+        self.prob_drop = prob_drop
+
+    def __call__(self, results):
+        points = results.get('points', None)
+        assert points.shape[1] >= 6
+        rgb_color = points[:, 3:6] + self.color_mean
+        # brightness change for each channel
+        rgb_color *= np.random.uniform(self.bright_range[0],
+                                       self.bright_range[1], 3)
+        # color shift for each channel
+        rgb_color += np.random.uniform(self.color_shift_range[0],
+                                       self.color_shift_range[1], 3)
+        # jittering on each pixel
+        rgb_color += np.expand_dims(
+            np.random.uniform(self.jitter_range[0], self.jitter_range[1]), -1)
+        rgb_color = np.clip(rgb_color, 0, 1)
+        # randomly drop out points' colors
+        rgb_color *= np.expand_dims(
+            np.random.random(points.shape[0]) > self.prob_drop, -1)
+        points[:, 3:6] = rgb_color - self.color_mean
+        results['points'] = points
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += '(color_mean={})'.format(self.color_mean)
+        repr_str += '(bright_range={})'.format(self.bright_range)
+        repr_str += '(color_shift_range={})'.format(self.color_shift_range)
+        repr_str += '(jitter_range={})'.format(self.jitter_range)
+        repr_str += '(prob_drop={})'.format(self.prob_drop)
+
+
 # TODO: merge outdoor indoor transform.
 # TODO: try transform noise.
 @PIPELINES.register_module()
@@ -68,30 +130,18 @@ class IndoorGlobalRotScale(object):
     Augment sunrgbd and scannet data with global rotating and scaling.
 
     Args:
-        seed (int): Numpy random seed.
-        use_rotate (bool): Whether to use rotate.
-        use_color (bool): Whether to use color.
         use_height (bool): Whether to use height.
-        rot_range (float): Range of rotation.
-        scale_range (float): Range of scale.
-        (List[float]): Mean color of the point cloud.
+            Default: True.
+        rot_range (List[float]): Range of rotation.
+            Default: None.
+        scale_range (List[float]): Range of scale.
+            Default: None.
     """
 
-    def __init__(self,
-                 use_rotate=True,
-                 use_color=False,
-                 use_scale=True,
-                 use_height=True,
-                 rot_range=[-np.pi / 6, np.pi / 6],
-                 scale_range=[0.85, 1.15],
-                 color_mean=[0.5, 0.5, 0.5]):
-        self.use_rotate = use_rotate
-        self.use_color = use_color
-        self.use_scale = use_scale
+    def __init__(self, use_height=True, rot_range=None, scale_range=None):
         self.use_height = use_height
         self.rot_range = rot_range
         self.scale_range = scale_range
-        self.color_mean = color_mean
 
     def _rotate_aligned_boxes(self, input_boxes, rot_mat):
         """Rotate Aligned Boxes.
@@ -131,11 +181,10 @@ class IndoorGlobalRotScale(object):
         gt_bboxes_3d = results.get('gt_bboxes_3d', None)
         name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
 
-        if self.use_rotate:
-            rot_angle = np.random.random() * (
-                self.rot_range[1] - self.rot_range[0]) + self.rot_range[0]
+        if self.rot_range is not None:
+            rot_angle = np.random.uniform(self.rot_range[0], self.rot_range[1])
             rot_mat = _rotz(rot_angle)
-            points[:, 0:3] = np.dot(points[:, 0:3], np.transpose(rot_mat))
+            points[:, 0:3] = np.dot(points[:, 0:3], rot_mat.T)
 
             if name == 'scannet':
                 gt_bboxes_3d = self._rotate_aligned_boxes(
@@ -145,28 +194,10 @@ class IndoorGlobalRotScale(object):
                                               np.transpose(rot_mat))
                 gt_bboxes_3d[:, 6] -= rot_angle
 
-        # Augment RGB color
-        if self.use_color:
-            assert points.shape[1] >= 6
-            rgb_color = points[:, 3:6] + self.color_mean
-            # brightness change for each channel
-            rgb_color *= (1 + 0.4 * np.random.random(3) - 0.2)
-            # color shift for each channel
-            rgb_color += (0.1 * np.random.random(3) - 0.05)
-            # jittering on each pixel
-            rgb_color += np.expand_dims(
-                (0.05 * np.random.random(points.shape[0]) - 0.025), -1)
-            rgb_color = np.clip(rgb_color, 0, 1)
-            # randomly drop out 30% of the points' colors
-            rgb_color *= np.expand_dims(
-                np.random.random(points.shape[0]) > 0.3, -1)
-            points[:, 3:6] = rgb_color - self.color_mean
-
-        if self.use_scale:
+        if self.scale_range is not None:
             # Augment point cloud scale
-            scale_ratio = np.random.random() * (
-                self.scale_range[1] -
-                self.scale_range[0]) + self.scale_range[0]
+            scale_ratio = np.random.uniform(self.scale_range[0],
+                                            self.scale_range[1])
             scale_ratio = np.tile(scale_ratio, 3)[None, ...]
             points[:, 0:3] *= scale_ratio
             gt_bboxes_3d[:, 0:3] *= scale_ratio
@@ -180,8 +211,7 @@ class IndoorGlobalRotScale(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += '(use_rotate={})'.format(self.use_rotate)
-        repr_str += '(use_color={})'.format(self.use_color)
-        repr_str += '(use_scale={})'.format(self.use_scale)
         repr_str += '(use_height={})'.format(self.use_height)
+        repr_str += '(rot_range={})'.format(self.rot_range)
+        repr_str += '(scale_range={})'.format(self.scale_range)
         return repr_str
