@@ -9,7 +9,7 @@ from mmdet3d.ops.roiaware_pool3d import points_in_boxes_gpu
 from mmdet.models import HEADS
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class PointwiseSemanticHead(nn.Module):
     """Semantic segmentation head for point-wise segmentation.
 

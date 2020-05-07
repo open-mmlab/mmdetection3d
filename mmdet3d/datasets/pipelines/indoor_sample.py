@@ -1,9 +1,9 @@
 import numpy as np
 
-from mmdet.datasets.registry import PIPELINES
+from mmdet.datasets.builder import PIPELINES
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class PointSample(object):
     """Point Sample.
 
