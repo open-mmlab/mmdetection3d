@@ -6,8 +6,8 @@ from mmdet3d.ops.roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_cpu,
 
 
 def test_RoIAwarePool3d():
-    if not torch.cuda.is_available(
-    ):  # RoIAwarePool3d only support gpu version currently.
+    # RoIAwarePool3d only support gpu version currently.
+    if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     roiaware_pool3d_max = RoIAwarePool3d(
         out_size=4, max_pts_per_voxel=128, mode='max')
