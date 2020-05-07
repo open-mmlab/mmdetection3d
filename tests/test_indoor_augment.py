@@ -63,7 +63,8 @@ def test_indoor_flip_data():
 
 def test_global_rot_scale():
     np.random.seed(0)
-    sunrgbd_augment = IndoorGlobalRotScale(True, False, True, True)
+    sunrgbd_augment = IndoorGlobalRotScale(
+        True, rot_range=[-np.pi / 6, np.pi / 6], scale_range=[0.85, 1.15])
     sunrgbd_results = dict()
     sunrgbd_results['points'] = np.array(
         [[1.02828765e+00, 3.65790772e+00, 1.97294697e-01, 1.61959505e+00],
@@ -99,7 +100,7 @@ def test_global_rot_scale():
 
     np.random.seed(0)
     scannet_augment = IndoorGlobalRotScale(
-        True, False, False, True, rot_range=[-np.pi * 1 / 36, np.pi * 1 / 36])
+        True, rot_range=[-np.pi * 1 / 36, np.pi * 1 / 36], scale_range=None)
     scannet_results = dict()
     scannet_results['points'] = np.array(
         [[1.6110241e+00, -1.6903955e-01, 5.8115810e-01, 5.9897250e-01],
