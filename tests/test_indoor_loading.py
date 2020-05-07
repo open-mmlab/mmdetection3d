@@ -19,7 +19,7 @@ def test_load_points_from_file():
                                                '%06d.npz' % scan_name)
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
     sunrgbd_point_cloud = sunrgbd_results.get('points', None)
-    assert sunrgbd_point_cloud.shape == (1000, 4)
+    assert sunrgbd_point_cloud.shape == (100, 4)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
     scannet_load_data = LoadPointsFromFile(True, [0.5, 0.5, 0.5])
@@ -33,7 +33,7 @@ def test_load_points_from_file():
                                                scan_name + '_vert.npy')
     scannet_results = scannet_load_data(scannet_results)
     scannet_point_cloud = scannet_results.get('points', None)
-    assert scannet_point_cloud.shape == (1000, 4)
+    assert scannet_point_cloud.shape == (100, 4)
 
 
 def test_load_annotations3D():
@@ -69,5 +69,5 @@ def test_load_annotations3D():
     assert scannet_gt_boxes.shape == (27, 6)
     assert scannet_gt_lbaels.shape == (27, 1)
     assert scannet_gt_boxes_mask.shape == (27, 1)
-    assert scannet_pts_instance_mask.shape == (1000, )
-    assert scannet_pts_semantic_mask.shape == (1000, )
+    assert scannet_pts_instance_mask.shape == (100, )
+    assert scannet_pts_semantic_mask.shape == (100, )
