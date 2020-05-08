@@ -59,7 +59,7 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
 
     def init_weights(self, pretrained=None):
         if pretrained is not None:
-            from mmdet3d.apis import get_root_logger
+            from mmdet3d.utils import get_root_logger
             logger = get_root_logger()
             logger.info('load model from: {}'.format(pretrained))
 

@@ -374,7 +374,7 @@ from .coco import CocoDataset
 from .registry import DATASETS
 
 
-@DATASETS.register_module
+@DATASETS.register_module()
 class MyDataset(CocoDataset):
 
     CLASSES = ('a', 'b', 'c', 'd', 'e')
@@ -444,7 +444,7 @@ from .registry import OPTIMIZERS
 from torch.optim import Optimizer
 
 
-@OPTIMIZERS.register_module
+@OPTIMIZERS.register_module()
 class MyOptimizer(Optimizer):
 
 ```
@@ -476,7 +476,7 @@ import torch.nn as nn
 from ..registry import BACKBONES
 
 
-@BACKBONES.register_module
+@BACKBONES.register_module()
 class MobileNet(nn.Module):
 
     def __init__(self, arg1, arg2):

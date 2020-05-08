@@ -70,6 +70,34 @@ def test_config_build_detector():
         #     _check_bbox_head(head_config, detector.bbox_head)
 
 
+def test_config_build_pipeline():
+    """
+    Test that all detection models defined in the configs can be initialized.
+    """
+    from mmcv import Config
+    from mmdet3d.datasets.pipelines import Compose
+
+    config_dpath = _get_config_directory()
+    print('Found config_dpath = {!r}'.format(config_dpath))
+
+    # Other configs needs database sampler.
+    config_names = [
+        'nus/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py',
+    ]
+
+    print('Using {} config files'.format(len(config_names)))
+
+    for config_fname in config_names:
+        config_fpath = join(config_dpath, config_fname)
+        config_mod = Config.fromfile(config_fpath)
+
+        # build train_pipeline
+        train_pipeline = Compose(config_mod.train_pipeline)
+        test_pipeline = Compose(config_mod.test_pipeline)
+        assert train_pipeline is not None
+        assert test_pipeline is not None
+
+
 def test_config_data_pipeline():
     """
     Test whether the data pipeline is valid and can process corner cases.
@@ -77,7 +105,7 @@ def test_config_data_pipeline():
         xdoctest -m tests/test_config.py test_config_build_data_pipeline
     """
     from mmcv import Config
-    from mmdet.datasets.pipelines import Compose
+    from mmdet3d.datasets.pipelines import Compose
     import numpy as np
 
     config_dpath = _get_config_directory()

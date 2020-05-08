@@ -51,33 +51,35 @@ model = dict(
         feat_channels=384,
         use_direction_classifier=True,
         encode_bg_as_zeros=True,
-        anchor_range=[
-            [-49.6, -49.6, -1.80032795, 49.6, 49.6, -1.80032795],  # car
-            [-49.6, -49.6, -1.74440365, 49.6, 49.6, -1.74440365],  # truck
-            [-49.6, -49.6, -1.68526504, 49.6, 49.6, -1.68526504],  # trailer
-            [-49.6, -49.6, -1.67339111, 49.6, 49.6, -1.67339111],  # bicycle
-            [-49.6, -49.6, -1.61785072, 49.6, 49.6, -1.61785072],  # pedestrian
-            [-49.6, -49.6, -1.80984986, 49.6, 49.6,
-             -1.80984986],  # traffic_cone
-            [-49.6, -49.6, -1.763965, 49.6, 49.6, -1.763965],  # barrier
-        ],
-        anchor_strides=[2],
-        anchor_sizes=[
-            [1.95017717, 4.60718145, 1.72270761],  # car
-            [2.4560939, 6.73778078, 2.73004906],  # truck
-            [2.87427237, 12.01320693, 3.81509561],  # trailer
-            [0.60058911, 1.68452161, 1.27192197],  # bicycle
-            [0.66344886, 0.7256437, 1.75748069],  # pedestrian
-            [0.39694519, 0.40359262, 1.06232151],  # traffic_cone
-            [2.49008838, 0.48578221, 0.98297065],  # barrier
-        ],
-        anchor_custom_values=[0, 0],
-        anchor_rotations=[0, 1.57],
+        anchor_generator=dict(
+            type='Anchor3DRangeGenerator',
+            ranges=[
+                [-49.6, -49.6, -1.80032795, 49.6, 49.6, -1.80032795],
+                [-49.6, -49.6, -1.74440365, 49.6, 49.6, -1.74440365],
+                [-49.6, -49.6, -1.68526504, 49.6, 49.6, -1.68526504],
+                [-49.6, -49.6, -1.67339111, 49.6, 49.6, -1.67339111],
+                [-49.6, -49.6, -1.61785072, 49.6, 49.6, -1.61785072],
+                [-49.6, -49.6, -1.80984986, 49.6, 49.6, -1.80984986],
+                [-49.6, -49.6, -1.763965, 49.6, 49.6, -1.763965],
+            ],
+            strides=[2],
+            sizes=[
+                [1.95017717, 4.60718145, 1.72270761],  # car
+                [2.4560939, 6.73778078, 2.73004906],  # truck
+                [2.87427237, 12.01320693, 3.81509561],  # trailer
+                [0.60058911, 1.68452161, 1.27192197],  # bicycle
+                [0.66344886, 0.7256437, 1.75748069],  # pedestrian
+                [0.39694519, 0.40359262, 1.06232151],  # traffic_cone
+                [2.49008838, 0.48578221, 0.98297065],  # barrier
+            ],
+            custom_values=[0, 0],
+            rotations=[0, 1.57],
+            reshape_out=True),
         assigner_per_size=False,
         diff_rad_by_sin=True,
         dir_offset=0.7854,  # pi/4
         dir_limit_offset=0,
-        bbox_coder=dict(type='Residual3DBoxCoder', ),
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', ),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -128,7 +130,7 @@ input_modality = dict(
     use_lidar=True,
     use_depth=False,
     use_lidar_intensity=True,
-    use_camera=True,
+    use_camera=False,
 )
 db_sampler = dict(
     root_path=data_root,
@@ -154,23 +156,12 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(
-        type='Resize',
-        img_scale=[
-            (1280, 720),
-        ],
-        multiscale_mode='value',
-        keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio=0),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
@@ -214,7 +205,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=1000,
     warmup_ratio=1.0 / 1000,
-    step=[16, 19])
+    step=[20, 23])
 momentum_config = None
 checkpoint_config = dict(interval=1)
 # yapf:disable
@@ -227,10 +218,10 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 20
+total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/pp_secfpn_80e'
+work_dir = './work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

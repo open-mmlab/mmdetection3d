@@ -3,7 +3,7 @@ from torch.optim import Optimizer
 from mmdet.core.optimizer import OPTIMIZERS
 
 
-@OPTIMIZERS.register_module
+@OPTIMIZERS.register_module()
 class CocktailOptimizer(Optimizer):
     """Cocktail Optimizer that contains multiple optimizers
 

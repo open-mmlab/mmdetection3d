@@ -1,14 +1,15 @@
+import mmcv
 import numpy as np
+from mmcv.utils import build_from_cfg
 
 from mmdet3d.core.bbox import box_np_ops
-from mmdet3d.utils import build_from_cfg
+from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
-from mmdet.datasets.registry import PIPELINES
 from ..registry import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
@@ -34,7 +35,42 @@ class RandomFlip3D(RandomFlip):
         return gt_bboxes_3d, points
 
     def __call__(self, input_dict):
-        super(RandomFlip3D, self).__call__(input_dict)
+        # filp 2D image and its annotations
+        if 'flip' not in input_dict:
+            flip = True if np.random.rand() < self.flip_ratio else False
+            input_dict['flip'] = flip
+        if 'flip_direction' not in input_dict:
+            input_dict['flip_direction'] = self.direction
+        if input_dict['flip']:
+            # flip image
+            if 'img' in input_dict:
+                if isinstance(input_dict['img'], list):
+                    input_dict['img'] = [
+                        mmcv.imflip(
+                            img, direction=input_dict['flip_direction'])
+                        for img in input_dict['img']
+                    ]
+                else:
+                    input_dict['img'] = mmcv.imflip(
+                        input_dict['img'],
+                        direction=input_dict['flip_direction'])
+            # flip bboxes
+            for key in input_dict.get('bbox_fields', []):
+                input_dict[key] = self.bbox_flip(input_dict[key],
+                                                 input_dict['img_shape'],
+                                                 input_dict['flip_direction'])
+            # flip masks
+            for key in input_dict.get('mask_fields', []):
+                input_dict[key] = [
+                    mmcv.imflip(mask, direction=input_dict['flip_direction'])
+                    for mask in input_dict[key]
+                ]
+
+            # flip segs
+            for key in input_dict.get('seg_fields', []):
+                input_dict[key] = mmcv.imflip(
+                    input_dict[key], direction=input_dict['flip_direction'])
+
         if self.sync_2d:
             input_dict['pcd_flip'] = input_dict['flip']
         else:
@@ -50,8 +86,12 @@ class RandomFlip3D(RandomFlip):
             input_dict['points'] = points
         return input_dict
 
+    def __repr__(self):
+        return self.__class__.__name__ + '(flip_ratio={}, sync_2d={})'.format(
+            self.flip_ratio, self.sync_2d)
 
-@PIPELINES.register_module
+
+@PIPELINES.register_module()
 class ObjectSample(object):
 
     def __init__(self, db_sampler, sample_2d=False):
@@ -128,7 +168,7 @@ class ObjectSample(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class ObjectNoise(object):
 
     def __init__(self,
@@ -167,7 +207,7 @@ class ObjectNoise(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class GlobalRotScale(object):
 
     def __init__(self,
@@ -241,7 +281,7 @@ class GlobalRotScale(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class PointShuffle(object):
 
     def __call__(self, input_dict):
@@ -252,7 +292,7 @@ class PointShuffle(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class ObjectRangeFilter(object):
 
     def __init__(self, point_cloud_range):
@@ -304,7 +344,7 @@ class ObjectRangeFilter(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class PointsRangeFilter(object):
 
     def __init__(self, point_cloud_range):

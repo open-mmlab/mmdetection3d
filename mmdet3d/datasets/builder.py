@@ -1,7 +1,8 @@
 import copy
 
+from mmcv.utils import build_from_cfg
+
 from mmdet.datasets import DATASETS, ConcatDataset, RepeatDataset
-from mmdet.utils import build_from_cfg
 from .dataset_wrappers import RepeatFactorDataset
 
 

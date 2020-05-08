@@ -1,11 +1,11 @@
 from mmcv.utils import build_from_cfg
 
+from mmdet3d.utils import get_root_logger
 from mmdet.core.optimizer import OPTIMIZER_BUILDERS, OPTIMIZERS
-from mmdet.utils import get_root_logger
 from .cocktail_optimizer import CocktailOptimizer
 
 
-@OPTIMIZER_BUILDERS.register_module
+@OPTIMIZER_BUILDERS.register_module()
 class CocktailOptimizerConstructor(object):
     """Special constructor for cocktail optimizers.
 
