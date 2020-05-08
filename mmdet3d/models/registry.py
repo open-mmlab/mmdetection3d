@@ -1,4 +1,4 @@
-from mmdet.utils import Registry
+from mmcv.utils import Registry
 
 VOXEL_ENCODERS = Registry('voxel_encoder')
 MIDDLE_ENCODERS = Registry('middle_encoder')

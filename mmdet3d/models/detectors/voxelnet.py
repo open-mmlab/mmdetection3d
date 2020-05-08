@@ -6,7 +6,7 @@ from mmdet.models import DETECTORS, SingleStageDetector
 from .. import builder
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class VoxelNet(SingleStageDetector):
 
     def __init__(self,
@@ -88,7 +88,7 @@ class VoxelNet(SingleStageDetector):
         return bbox_list
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class DynamicVoxelNet(VoxelNet):
 
     def __init__(self,

@@ -1,13 +1,13 @@
 import torch
+from mmcv.cnn import build_norm_layer
 from torch import nn
 
 from mmdet3d.ops import DynamicScatter
-from mmdet.ops import build_norm_layer
 from ..registry import VOXEL_ENCODERS
 from .utils import PFNLayer, get_paddings_indicator
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class PillarFeatureNet(nn.Module):
 
     def __init__(self,
@@ -118,7 +118,7 @@ class PillarFeatureNet(nn.Module):
         return features.squeeze()
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class DynamicPillarFeatureNet(PillarFeatureNet):
 
     def __init__(self,
@@ -237,7 +237,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         return voxel_feats, voxel_coors
 
 
-@VOXEL_ENCODERS.register_module
+@VOXEL_ENCODERS.register_module()
 class AlignedPillarFeatureNet(nn.Module):
 
     def __init__(self,

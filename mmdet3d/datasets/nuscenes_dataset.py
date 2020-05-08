@@ -9,11 +9,11 @@ import torch.utils.data as torch_data
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet.datasets import DATASETS
-from mmdet.datasets.pipelines import Compose
 from ..core.bbox import box_np_ops
+from .pipelines import Compose
 
 
-@DATASETS.register_module
+@DATASETS.register_module()
 class NuScenesDataset(torch_data.Dataset):
     NumPointFeatures = 4  # xyz, timestamp. set 4 to use kitti pretrain
     NameMapping = {

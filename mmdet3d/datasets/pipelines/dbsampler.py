@@ -52,7 +52,7 @@ class BatchSampler:
         return [self._sampled_list[i] for i in indices]
 
 
-@OBJECTSAMPLERS.register_module
+@OBJECTSAMPLERS.register_module()
 class DataBaseSampler(object):
 
     def __init__(self, info_path, root_path, rate, prepare, object_rot_range,
@@ -68,7 +68,7 @@ class DataBaseSampler(object):
             db_infos = pickle.load(f)
 
         # filter database infos
-        from mmdet3d.apis import get_root_logger
+        from mmdet3d.utils import get_root_logger
         logger = get_root_logger()
         for k, v in db_infos.items():
             logger.info(f'load {len(v)} {k} database infos')
@@ -255,7 +255,7 @@ class DataBaseSampler(object):
         return valid_samples
 
 
-@OBJECTSAMPLERS.register_module
+@OBJECTSAMPLERS.register_module()
 class MMDataBaseSampler(DataBaseSampler):
 
     def __init__(self,

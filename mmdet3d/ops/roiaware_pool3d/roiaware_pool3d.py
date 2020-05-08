@@ -10,7 +10,8 @@ class RoIAwarePool3d(nn.Module):
 
     def __init__(self, out_size, max_pts_per_voxel=128, mode='max'):
         super().__init__()
-        """
+        """RoIAwarePool3d module
+
         Args:
             out_size (int or tuple): n or [n1, n2, n3]
             max_pts_per_voxel (int): m
@@ -23,12 +24,14 @@ class RoIAwarePool3d(nn.Module):
         self.mode = pool_method_map[mode]
 
     def forward(self, rois, pts, pts_feature):
-        """
+        """RoIAwarePool3d module forward
+
         Args:
             rois (torch.Tensor): [N, 7],in LiDAR coordinate,
                 (x, y, z) is the bottom center of rois
             pts (torch.Tensor): [npoints, 3]
             pts_feature (torch.Tensor): [npoints, C]
+
         Returns:
             pooled_features (torch.Tensor): [N, out_x, out_y, out_z, C]
         """
@@ -43,7 +46,8 @@ class RoIAwarePool3dFunction(Function):
     @staticmethod
     def forward(ctx, rois, pts, pts_feature, out_size, max_pts_per_voxel,
                 mode):
-        """
+        """RoIAwarePool3d function forward
+
         Args:
             rois (torch.Tensor): [N, 7], in LiDAR coordinate,
                 (x, y, z) is the bottom center of rois
@@ -52,6 +56,7 @@ class RoIAwarePool3dFunction(Function):
             out_size (int or tuple): n or [n1, n2, n3]
             max_pts_per_voxel (int): m
             mode (int): 0 (max pool) or 1 (average pool)
+
         Returns:
             pooled_features (torch.Tensor): [N, out_x, out_y, out_z, C]
         """
@@ -84,11 +89,12 @@ class RoIAwarePool3dFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_out):
-        """
+        """RoIAwarePool3d function forward
+
         Args:
-            grad_out: [N, out_x, out_y, out_z, C]
+            grad_out (torch.Tensor): [N, out_x, out_y, out_z, C]
         Returns:
-            grad_in: [npoints, C]
+            grad_in (torch.Tensor): [npoints, C]
         """
         ret = ctx.roiaware_pool3d_for_backward
         pts_idx_of_voxels, argmax, mode, num_pts, num_channels = ret

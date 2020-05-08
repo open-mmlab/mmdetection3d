@@ -24,7 +24,7 @@
 namespace spconv {
 template <typename T>
 torch::Tensor indiceMaxPool(torch::Tensor features, torch::Tensor indicePairs,
-                          torch::Tensor indiceNum, int64_t numAct) {
+                            torch::Tensor indiceNum, int64_t numAct) {
   auto device = features.device().type();
   auto kernelVolume = indicePairs.size(0);
   auto numInPlanes = features.size(1);
@@ -34,7 +34,7 @@ torch::Tensor indiceMaxPool(torch::Tensor features, torch::Tensor indicePairs,
   torch::Tensor output = torch::zeros({numAct, numInPlanes}, options);
   double totalTime = 0;
   for (int i = 0; i < kernelVolume; ++i) {
-    auto nHot = indicePairNumCpu.data<int>()[i];
+    auto nHot = indicePairNumCpu.data_ptr<int>()[i];
     if (nHot <= 0) {
       continue;
     }
@@ -59,18 +59,19 @@ torch::Tensor indiceMaxPool(torch::Tensor features, torch::Tensor indicePairs,
 
 template <typename T>
 torch::Tensor indiceMaxPoolBackward(torch::Tensor features,
-                                  torch::Tensor outFeatures,
-                                  torch::Tensor outGrad, torch::Tensor indicePairs,
-                                  torch::Tensor indiceNum) {
+                                    torch::Tensor outFeatures,
+                                    torch::Tensor outGrad,
+                                    torch::Tensor indicePairs,
+                                    torch::Tensor indiceNum) {
   auto device = features.device().type();
   auto numInPlanes = features.size(1);
   auto indicePairNumCpu = indiceNum.to({torch::kCPU});
   auto options =
       torch::TensorOptions().dtype(features.dtype()).device(features.device());
   torch::Tensor inputGrad = torch::zeros(features.sizes(), options);
-    auto kernelVolume = indicePairs.size(0);
+  auto kernelVolume = indicePairs.size(0);
   for (int i = 0; i < kernelVolume; ++i) {
-    auto nHot = indicePairNumCpu.data<int>()[i];
+    auto nHot = indicePairNumCpu.data_ptr<int>()[i];
     if (nHot <= 0) {
       continue;
     }
@@ -92,6 +93,6 @@ torch::Tensor indiceMaxPoolBackward(torch::Tensor features,
   return inputGrad;
 }
 
-} // namespace spconv
+}  // namespace spconv
 
 #endif
