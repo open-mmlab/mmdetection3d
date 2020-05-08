@@ -186,6 +186,9 @@ class BaseInstance3DBoxes(object):
         A box is considered empty,
         if either of its side is no larger than threshold.
 
+        Args:
+            threshold (float): the threshold of minimal sizes
+
         Returns:
             Tensor:
                 a binary vector which represents whether each box is empty
@@ -236,6 +239,7 @@ class BaseInstance3DBoxes(object):
 
         Arguments:
             boxes_list (list[Boxes])
+
         Returns:
             Boxes: the concatenated Boxes
         """
