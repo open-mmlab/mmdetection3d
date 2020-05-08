@@ -21,8 +21,8 @@ def test_indoor_flip_data():
                                                     -1.58242359
                                                 ]])
     sunrgbd_results = sunrgbd_indoor_flip_data(sunrgbd_results)
-    sunrgbd_points = sunrgbd_results.get('points', None)
-    sunrgbd_gt_bboxes_3d = sunrgbd_results.get('gt_bboxes_3d', None)
+    sunrgbd_points = sunrgbd_results['points']
+    sunrgbd_gt_bboxes_3d = sunrgbd_results['gt_bboxes_3d']
 
     expected_sunrgbd_points = np.array(
         [[-1.02828765, 3.65790772, 0.1972947, 1.61959505],
@@ -47,8 +47,8 @@ def test_indoor_flip_data():
         -0.03226406, 1.70392646, 0.60348618, 0.65165804, 0.72084366, 0.64667457
     ]])
     scannet_results = scannet_indoor_flip_data(scannet_results)
-    scannet_points = scannet_results.get('points', None)
-    scannet_gt_bboxes_3d = scannet_results.get('gt_bboxes_3d', None)
+    scannet_points = scannet_results['points']
+    scannet_gt_bboxes_3d = scannet_results['gt_bboxes_3d']
 
     expected_scannet_points = np.array(
         [[-1.6110241, 0.16903955, 0.5811581, 0.5989725],
@@ -81,8 +81,8 @@ def test_global_rot_scale():
                                                 ]])
 
     sunrgbd_results = sunrgbd_augment(sunrgbd_results)
-    sunrgbd_points = sunrgbd_results.get('points', None)
-    sunrgbd_gt_bboxes_3d = sunrgbd_results.get('gt_bboxes_3d', None)
+    sunrgbd_points = sunrgbd_results['points']
+    sunrgbd_gt_bboxes_3d = sunrgbd_results['gt_bboxes_3d']
 
     expected_sunrgbd_points = np.array(
         [[0.89427376, 3.94489646, 0.21003141, 1.72415094],
@@ -113,8 +113,8 @@ def test_global_rot_scale():
         -0.03226406, 1.70392646, 0.60348618, 0.65165804, 0.72084366, 0.64667457
     ]])
     scannet_results = scannet_augment(scannet_results)
-    scannet_points = scannet_results.get('points', None)
-    scannet_gt_bboxes_3d = scannet_results.get('gt_bboxes_3d', None)
+    scannet_points = scannet_results['points']
+    scannet_gt_bboxes_3d = scannet_results['gt_bboxes_3d']
 
     expected_scannet_points = np.array(
         [[1.61240576, -0.15530836, 0.5811581, 0.5989725],
