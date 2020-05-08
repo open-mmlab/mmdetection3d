@@ -5,7 +5,7 @@ from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
 
-class CAMInstance3DBoxes(BaseInstance3DBoxes):
+class CameraInstance3DBoxes(BaseInstance3DBoxes):
     """3D boxes of instances in CAM coordinates
 
     Coordinates in camera:

@@ -1,7 +1,9 @@
 import numpy as np
+import pytest
 import torch
 
-from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
+from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
+                               LiDARInstance3DBoxes)
 
 
 def test_lidar_boxes3d():
@@ -250,3 +252,95 @@ def test_lidar_boxes3d():
                                      [3.0032e+01, -1.5474e+01, -1.7879e+00]]])
     # the pytorch print loses some precision
     assert torch.allclose(boxes.corners, expected_tensor, rtol=1e-4, atol=1e-7)
+
+
+def test_boxes_conversion():
+    """Test the conversion of boxes between different modes.
+
+    ComandLine:
+        xdoctest tests/test_box3d.py::test_boxes_conversion zero
+    """
+    lidar_boxes = LiDARInstance3DBoxes(
+        [[1.7802081, 2.516249, -1.7501148, 1.75, 3.39, 1.65, 1.48],
+         [8.959413, 2.4567227, -1.6357126, 1.54, 4.01, 1.57, 1.62],
+         [28.2967, -0.5557558, -1.303325, 1.47, 2.23, 1.48, -1.57],
+         [26.66902, 21.82302, -1.736057, 1.56, 3.48, 1.4, -1.69],
+         [31.31978, 8.162144, -1.6217787, 1.74, 3.77, 1.48, 2.79]])
+    cam_box_tensor = Box3DMode.convert(lidar_boxes.tensor, Box3DMode.LIDAR,
+                                       Box3DMode.CAM)
+    lidar_box_tensor = Box3DMode.convert(cam_box_tensor, Box3DMode.CAM,
+                                         Box3DMode.LIDAR)
+    expected_tensor = torch.tensor(
+        [[1.7802081, 2.516249, -1.7501148, 1.75, 3.39, 1.65, 1.48],
+         [8.959413, 2.4567227, -1.6357126, 1.54, 4.01, 1.57, 1.62],
+         [28.2967, -0.5557558, -1.303325, 1.47, 2.23, 1.48, -1.57],
+         [26.66902, 21.82302, -1.736057, 1.56, 3.48, 1.4, -1.69],
+         [31.31978, 8.162144, -1.6217787, 1.74, 3.77, 1.48, 2.79]])
+
+    assert torch.allclose(expected_tensor, lidar_box_tensor)
+    assert torch.allclose(lidar_boxes.tensor, lidar_box_tensor)
+
+    depth_box_tensor = Box3DMode.convert(cam_box_tensor, Box3DMode.CAM,
+                                         Box3DMode.DEPTH)
+    depth_to_cam_box_tensor = Box3DMode.convert(depth_box_tensor,
+                                                Box3DMode.DEPTH, Box3DMode.CAM)
+    assert torch.allclose(cam_box_tensor, depth_to_cam_box_tensor)
+
+    # test error raise with not supported conversion
+    with pytest.raises(NotImplementedError):
+        Box3DMode.convert(lidar_box_tensor, Box3DMode.LIDAR, Box3DMode.DEPTH)
+    with pytest.raises(NotImplementedError):
+        Box3DMode.convert(depth_box_tensor, Box3DMode.DEPTH, Box3DMode.LIDAR)
+
+    # test conversion with a given rt_mat
+    camera_boxes = CameraInstance3DBoxes(
+        [[0.06, 1.77, 21.4, 3.2, 1.61, 1.66, -1.54],
+         [6.59, 1.53, 6.76, 12.78, 3.66, 2.28, 1.55],
+         [6.71, 1.59, 22.18, 14.73, 3.64, 2.32, 1.59],
+         [7.11, 1.58, 34.54, 10.04, 3.61, 2.32, 1.61],
+         [7.78, 1.65, 45.95, 12.83, 3.63, 2.34, 1.64]])
+
+    rect = torch.tensor(
+        [[0.9999239, 0.00983776, -0.00744505, 0.],
+         [-0.0098698, 0.9999421, -0.00427846, 0.],
+         [0.00740253, 0.00435161, 0.9999631, 0.], [0., 0., 0., 1.]],
+        dtype=torch.float32)
+
+    Trv2c = torch.tensor(
+        [[7.533745e-03, -9.999714e-01, -6.166020e-04, -4.069766e-03],
+         [1.480249e-02, 7.280733e-04, -9.998902e-01, -7.631618e-02],
+         [9.998621e-01, 7.523790e-03, 1.480755e-02, -2.717806e-01],
+         [0.000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00]],
+        dtype=torch.float32)
+
+    expected_tensor = torch.tensor(
+        [[
+            2.16902434e+01, -4.06038554e-02, -1.61906639e+00, 1.65999997e+00,
+            3.20000005e+00, 1.61000001e+00, -1.53999996e+00
+        ],
+         [
+             7.05006905e+00, -6.57459601e+00, -1.60107949e+00, 2.27999997e+00,
+             1.27799997e+01, 3.66000009e+00, 1.54999995e+00
+         ],
+         [
+             2.24698818e+01, -6.69203759e+00, -1.50118145e+00, 2.31999993e+00,
+             1.47299995e+01, 3.64000010e+00, 1.59000003e+00
+         ],
+         [
+             3.48291965e+01, -7.09058388e+00, -1.36622983e+00, 2.31999993e+00,
+             1.00400000e+01, 3.60999990e+00, 1.61000001e+00
+         ],
+         [
+             4.62394617e+01, -7.75838800e+00, -1.32405020e+00, 2.33999991e+00,
+             1.28299999e+01, 3.63000011e+00, 1.63999999e+00
+         ]],
+        dtype=torch.float32)
+
+    rt_mat = rect @ Trv2c
+    cam_to_lidar_box = Box3DMode.convert(camera_boxes.tensor, Box3DMode.CAM,
+                                         Box3DMode.LIDAR, rt_mat.inverse())
+    assert torch.allclose(cam_to_lidar_box, expected_tensor)
+
+    lidar_to_cam_box = Box3DMode.convert(cam_to_lidar_box, Box3DMode.LIDAR,
+                                         Box3DMode.CAM, rt_mat)
+    assert torch.allclose(lidar_to_cam_box, camera_boxes.tensor)
