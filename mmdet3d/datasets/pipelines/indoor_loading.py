@@ -5,7 +5,28 @@ import numpy as np
 from mmdet.datasets.registry import PIPELINES
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
+class PointsColorNormalize(object):
+    """Points Color Normalize
+
+    Normalize color of the points.
+
+    Args:
+        color_mean (List[float]): Mean color of the point cloud.
+    """
+
+    def __init__(self, color_mean):
+        self.color_mean = color_mean
+
+    def __call__(self, results):
+        points = results.get('results', None)
+        assert points.shape[1] >= 6
+        points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
+        results['points'] = points
+        return results
+
+
+@PIPELINES.register_module()
 class LoadPointsFromFile(object):
     """Load Points From File.
 
@@ -13,32 +34,23 @@ class LoadPointsFromFile(object):
 
     Args:
         use_height (bool): Whether to use height.
-        color_mean (List[float]): Mean color of the point cloud.
         load_dim (int): The dimension of the loaded points.
             Default: 6.
         use_dim (List[int]): Which dimensions of the points to be used.
             Default: [0, 1, 2].
     """
 
-    def __init__(self, use_height, color_mean, load_dim=6, use_dim=[0, 1, 2]):
+    def __init__(self, use_height, load_dim=6, use_dim=[0, 1, 2]):
         self.use_height = use_height
-        self.color_mean = color_mean
         assert max(use_dim) < load_dim
         self.load_dim = load_dim
         self.use_dim = use_dim
 
     def __call__(self, results):
         pts_filename = results.get('pts_filename', None)
-        info = results.get('info', None)
-        name = 'scannet' if info.get('image', None) is None else 'sunrgbd'
         assert osp.exists(pts_filename)
-        if name == 'scannet':
-            points = np.load(pts_filename)
-        else:
-            points = np.load(pts_filename)['pc']
+        points = np.load(pts_filename)
         points = points.reshape(-1, self.load_dim)
-        if self.load_dim >= 6:
-            points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
         points = points[:, self.use_dim]
 
         if self.use_height:
