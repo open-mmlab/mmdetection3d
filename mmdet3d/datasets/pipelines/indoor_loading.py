@@ -19,8 +19,8 @@ class PointsColorNormalize(object):
         self.color_mean = color_mean
 
     def __call__(self, results):
-        points = results.get('results', None)
-        assert points.shape[1] >= 6
+        points = results['points']
+        assert points.shape[1] >= 6, 'Incomplete color channel.'
         points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
         results['points'] = points
         return results
@@ -47,13 +47,13 @@ class LoadPointsFromFile(object):
 
     def __init__(self, use_height, load_dim=6, use_dim=[0, 1, 2]):
         self.use_height = use_height
-        assert max(use_dim) < load_dim
+        assert max(use_dim) < load_dim, 'Wrong dimension is used.'
         self.load_dim = load_dim
         self.use_dim = use_dim
 
     def __call__(self, results):
-        pts_filename = results.get('pts_filename', None)
-        assert osp.exists(pts_filename)
+        pts_filename = results['pts_filename']
+        assert osp.exists(pts_filename), f'{pts_filename} does not exist.'
         points = np.load(pts_filename)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
@@ -85,16 +85,17 @@ class LoadAnnotations3D(object):
         pass
 
     def __call__(self, results):
-        ins_labelname = results.get('ins_labelname', None)
-        sem_labelname = results.get('sem_labelname', None)
+        pts_instance_mask_path = results['pts_instance_mask_path']
+        pts_semantic_mask_path = results['pts_semantic_mask_path']
 
-        if ins_labelname is not None and sem_labelname is not None:
-            assert osp.exists(ins_labelname)
-            assert osp.exists(sem_labelname)
-            pts_instance_mask = np.load(ins_labelname)
-            pts_semantic_mask = np.load(sem_labelname)
-            results['pts_instance_mask'] = pts_instance_mask
-            results['pts_semantic_mask'] = pts_semantic_mask
+        assert osp.exists(pts_instance_mask_path
+                          ), f'{pts_instance_mask_path} does not exist.'
+        assert osp.exists(pts_semantic_mask_path
+                          ), f'{pts_semantic_mask_path} does not exist.'
+        pts_instance_mask = np.load(pts_instance_mask_path)
+        pts_semantic_mask = np.load(pts_semantic_mask_path)
+        results['pts_instance_mask'] = pts_instance_mask
+        results['pts_semantic_mask'] = pts_semantic_mask
 
         return results
 
