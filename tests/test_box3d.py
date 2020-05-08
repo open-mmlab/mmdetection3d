@@ -7,6 +7,12 @@ from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
 
 
 def test_lidar_boxes3d():
+    # test empty initialization
+    empty_boxes = []
+    boxes = LiDARInstance3DBoxes(empty_boxes)
+    assert boxes.tensor.shape[0] == 0
+    assert boxes.tensor.shape[1] == 7
+
     # Test init with numpy array
     np_boxes = np.array(
         [[1.7802081, 2.516249, -1.7501148, 1.75, 3.39, 1.65, 1.48],
@@ -14,6 +20,12 @@ def test_lidar_boxes3d():
         dtype=np.float32)
     boxes_1 = LiDARInstance3DBoxes(np_boxes)
     assert torch.allclose(boxes_1.tensor, torch.from_numpy(np_boxes))
+
+    # test properties
+    assert boxes_1.volume.size(0) == 2
+    assert (boxes_1.center == boxes_1.bottom_center).all()
+    assert repr(boxes) == (
+        'LiDARInstance3DBoxes(\n    tensor([], size=(0, 7)))')
 
     # test init with torch.Tensor
     th_boxes = torch.tensor(
@@ -46,6 +58,10 @@ def test_lidar_boxes3d():
          [31.31978, 8.162144, -1.6217787, 1.74, 3.77, 1.48, 2.79]])
     boxes = LiDARInstance3DBoxes.cat([boxes_1, boxes_2])
     assert torch.allclose(boxes.tensor, expected_tensor)
+    # concatenate empty list
+    empty_boxes = LiDARInstance3DBoxes.cat([])
+    assert empty_boxes.tensor.shape[0] == 0
+    assert empty_boxes.tensor.shape[-1] == 7
 
     # test box flip
     expected_tensor = torch.tensor(
@@ -437,7 +453,7 @@ def test_camera_boxes3d():
              [19.823532, -28.187025, -1.736057, 1.56, 3.48, 1.4, 5.1036663],
              [27.974297, -16.27845, -1.6217787, 1.74, 3.77, 1.48, 0.6236664]]),
         Box3DMode.LIDAR, Box3DMode.CAM)
-    boxes.rotate(0.27207362796436096)
+    boxes.rotate(torch.tensor(0.27207362796436096))
     assert torch.allclose(boxes.tensor, expected_tensor)
 
     # test box scaling
@@ -487,7 +503,7 @@ def test_camera_boxes3d():
                           28.21472, -16.502048, -1.7878747, 1.7497417,
                           3.791107, 1.488286, 0.6236664
                       ]]), Box3DMode.LIDAR, Box3DMode.CAM)
-    boxes.translate([0.13246193, 0.15701613, 0.0838056])
+    boxes.translate(torch.tensor([0.13246193, 0.15701613, 0.0838056]))
     assert torch.allclose(boxes.tensor, expected_tensor)
 
     # test bbox in_range_bev
