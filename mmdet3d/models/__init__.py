@@ -1,6 +1,5 @@
 from .anchor_heads import *  # noqa: F401,F403
 from .backbones import *  # noqa: F401,F403
-from .bbox_heads import *  # noqa: F401,F403
 from .builder import (build_backbone, build_detector, build_fusion_layer,
                       build_head, build_loss, build_middle_encoder, build_neck,
                       build_roi_extractor, build_shared_head,
@@ -11,7 +10,7 @@ from .losses import *  # noqa: F401,F403
 from .middle_encoders import *  # noqa: F401,F403
 from .necks import *  # noqa: F401,F403
 from .registry import FUSION_LAYERS, MIDDLE_ENCODERS, VOXEL_ENCODERS
-from .roi_extractors import *  # noqa: F401,F403
+from .roi_heads import *  # noqa: F401,F403
 from .voxel_encoders import *  # noqa: F401,F403
 
 __all__ = [

@@ -4,7 +4,7 @@ import numpy as np
 from mmdet.datasets import DATASETS, CustomDataset
 
 
-@DATASETS.register_module
+@DATASETS.register_module()
 class Kitti2DDataset(CustomDataset):
 
     CLASSES = ('car', 'pedestrian', 'cyclist')
