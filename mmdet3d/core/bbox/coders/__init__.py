@@ -1,3 +1,4 @@
-from .box_coder import Residual3DBoxCoder
+from mmdet.core.bbox import build_bbox_coder
+from .delta_xywh_bbox_coder import DeltaXYZWLHRBBoxCoder
 
-__all__ = ['Residual3DBoxCoder']
+__all__ = ['build_bbox_coder', 'DeltaXYZWLHRBBoxCoder']

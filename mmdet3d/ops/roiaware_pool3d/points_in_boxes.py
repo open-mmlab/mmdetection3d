@@ -4,12 +4,14 @@ from . import roiaware_pool3d_ext
 
 
 def points_in_boxes_gpu(points, boxes):
-    """
+    """Find points that are in boxes (CUDA)
+
     Args:
         points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR coordinate
         boxes (torch.Tensor): [B, T, 7],
             num_valid_boxes <= T, [x, y, z, w, l, h, ry] in LiDAR coordinate,
             (x, y, z) is the bottom center
+
     Returns:
         box_idxs_of_pts (torch.Tensor): (B, M), default background = -1
     """
@@ -27,14 +29,20 @@ def points_in_boxes_gpu(points, boxes):
 
 
 def points_in_boxes_cpu(points, boxes):
-    """
+    """Find points that are in boxes (CPU)
+
+    Note: Currently, the output of this function is different from that of
+        points_in_boxes_gpu.
+
     Args:
         points (torch.Tensor): [npoints, 3]
         boxes (torch.Tensor): [N, 7], in LiDAR coordinate,
             (x, y, z) is the bottom center
+
     Returns:
         point_indices (torch.Tensor): (N, npoints)
     """
+    # TODO: Refactor this function as a CPU version of points_in_boxes_gpu
     assert boxes.shape[1] == 7
     assert points.shape[1] == 3
 

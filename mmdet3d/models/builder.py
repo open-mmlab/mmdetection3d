@@ -1,6 +1,5 @@
-from mmdet.models.builder import build
-from mmdet.models.registry import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
-                                   ROI_EXTRACTORS, SHARED_HEADS)
+from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
+                                  ROI_EXTRACTORS, SHARED_HEADS, build)
 from .registry import FUSION_LAYERS, MIDDLE_ENCODERS, VOXEL_ENCODERS
 
 

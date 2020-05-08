@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmcv.cnn import xavier_init
+from mmcv.cnn import ConvModule, xavier_init
 
-from mmdet.ops import ConvModule
 from ..registry import FUSION_LAYERS
 
 
@@ -96,7 +95,7 @@ def point_sample(
     return point_features.squeeze().t()
 
 
-@FUSION_LAYERS.register_module
+@FUSION_LAYERS.register_module()
 class PointFusion(nn.Module):
     """Fuse image features from fused single scale features
     """
@@ -235,9 +234,8 @@ class PointFusion(nn.Module):
             pts.new_tensor(img_meta['pcd_trans'])
             if 'pcd_trans' in img_meta.keys() else 0)
         pcd_rotate_mat = (
-            pts.new_tensor(img_meta['pcd_rotation'])
-            if 'pcd_rotation' in img_meta.keys() else
-            torch.eye(3).type_as(pts).to(pts.device))
+            pts.new_tensor(img_meta['pcd_rotation']) if 'pcd_rotation'
+            in img_meta.keys() else torch.eye(3).type_as(pts).to(pts.device))
         img_scale_factor = (
             img_meta['scale_factor']
             if 'scale_factor' in img_meta.keys() else 1)

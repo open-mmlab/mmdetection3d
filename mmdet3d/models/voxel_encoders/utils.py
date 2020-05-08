@@ -1,8 +1,7 @@
 import torch
+from mmcv.cnn import build_norm_layer
 from torch import nn
 from torch.nn import functional as F
-
-from mmdet.ops import build_norm_layer
 
 
 class Empty(nn.Module):

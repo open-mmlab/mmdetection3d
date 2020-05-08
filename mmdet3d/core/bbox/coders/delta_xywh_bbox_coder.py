@@ -1,63 +1,18 @@
-import numpy as np
 import torch
 
+from mmdet.core.bbox import BaseBBoxCoder
+from mmdet.core.bbox.builder import BBOX_CODERS
 
-class Residual3DBoxCoder(object):
 
-    def __init__(self, code_size=7, mean=None, std=None):
-        super().__init__()
+@BBOX_CODERS.register_module()
+class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
+
+    def __init__(self, code_size=7):
+        super(DeltaXYZWLHRBBoxCoder, self).__init__()
         self.code_size = code_size
-        self.mean = mean
-        self.std = std
 
     @staticmethod
-    def encode_np(boxes, anchors):
-        """
-        :param boxes: (N, 7) x, y, z, w, l, h, r
-        :param anchors: (N, 7)
-        :return:
-        """
-        # need to convert boxes to z-center format
-        xa, ya, za, wa, la, ha, ra = np.split(anchors, 7, axis=-1)
-        xg, yg, zg, wg, lg, hg, rg = np.split(boxes, 7, axis=-1)
-        zg = zg + hg / 2
-        za = za + ha / 2
-        diagonal = np.sqrt(la**2 + wa**2)  # 4.3
-        xt = (xg - xa) / diagonal
-        yt = (yg - ya) / diagonal
-        zt = (zg - za) / ha  # 1.6
-        lt = np.log(lg / la)
-        wt = np.log(wg / wa)
-        ht = np.log(hg / ha)
-        rt = rg - ra
-        return np.concatenate([xt, yt, zt, wt, lt, ht, rt], axis=-1)
-
-    @staticmethod
-    def decode_np(box_encodings, anchors):
-        """
-        :param box_encodings: (N, 7) x, y, z, w, l, h, r
-        :param anchors: (N, 7)
-        :return:
-        """
-        # need to convert box_encodings to z-bottom format
-        xa, ya, za, wa, la, ha, ra = np.split(anchors, 7, axis=-1)
-        xt, yt, zt, wt, lt, ht, rt = np.split(box_encodings, 7, axis=-1)
-
-        za = za + ha / 2
-        diagonal = np.sqrt(la**2 + wa**2)
-        xg = xt * diagonal + xa
-        yg = yt * diagonal + ya
-        zg = zt * ha + za
-
-        lg = np.exp(lt) * la
-        wg = np.exp(wt) * wa
-        hg = np.exp(ht) * ha
-        rg = rt + ra
-        zg = zg - hg / 2
-        return np.concatenate([xg, yg, zg, wg, lg, hg, rg], axis=-1)
-
-    @staticmethod
-    def encode_torch(anchors, boxes, means, stds):
+    def encode(anchors, boxes):
         """
         :param boxes: (N, 7+n) x, y, z, w, l, h, r, velo*
         :param anchors: (N, 7+n)
@@ -85,7 +40,7 @@ class Residual3DBoxCoder(object):
         return torch.cat([xt, yt, zt, wt, lt, ht, rt, *cts], dim=-1)
 
     @staticmethod
-    def decode_torch(anchors, box_encodings, means, stds):
+    def decode(anchors, box_encodings):
         """
         :param box_encodings: (N, 7 + n) x, y, z, w, l, h, r
         :param anchors: (N, 7)

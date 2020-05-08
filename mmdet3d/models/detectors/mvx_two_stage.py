@@ -8,7 +8,7 @@ from .. import builder
 from .base import BaseDetector
 
 
-@DETECTORS.register_module
+@DETECTORS.register_module()
 class MVXTwoStageDetector(BaseDetector):
 
     def __init__(self,

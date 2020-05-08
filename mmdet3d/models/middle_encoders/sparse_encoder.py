@@ -1,11 +1,11 @@
 import torch.nn as nn
+from mmcv.cnn import build_norm_layer
 
 import mmdet3d.ops.spconv as spconv
-from mmdet.ops import build_norm_layer
 from ..registry import MIDDLE_ENCODERS
 
 
-@MIDDLE_ENCODERS.register_module
+@MIDDLE_ENCODERS.register_module()
 class SparseEncoder(nn.Module):
 
     def __init__(self,

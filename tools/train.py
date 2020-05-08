@@ -1,6 +1,7 @@
 from __future__ import division
 import argparse
 import copy
+import logging
 import os
 import os.path as osp
 import time
@@ -11,10 +12,11 @@ from mmcv import Config
 from mmcv.runner import init_dist
 
 from mmdet3d import __version__
+from mmdet3d.apis import train_detector
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_detector
-from mmdet3d.utils import collect_env
-from mmdet.apis import get_root_logger, set_random_seed, train_detector
+from mmdet3d.utils import collect_env, get_root_logger
+from mmdet.apis import set_random_seed
 
 
 def parse_args():
@@ -27,11 +29,17 @@ def parse_args():
         '--validate',
         action='store_true',
         help='whether to evaluate the checkpoint during training')
-    parser.add_argument(
+    group_gpus = parser.add_mutually_exclusive_group()
+    group_gpus.add_argument(
         '--gpus',
         type=int,
-        default=1,
         help='number of gpus to use '
+        '(only applicable to non-distributed training)')
+    group_gpus.add_argument(
+        '--gpu-ids',
+        type=int,
+        nargs='+',
+        help='ids of gpus to use '
         '(only applicable to non-distributed training)')
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument(
@@ -73,11 +81,14 @@ def main():
                                 osp.splitext(osp.basename(args.config))[0])
     if args.resume_from is not None:
         cfg.resume_from = args.resume_from
-    cfg.gpus = args.gpus
+    if args.gpu_ids is not None:
+        cfg.gpu_ids = args.gpu_ids
+    else:
+        cfg.gpu_ids = range(1) if args.gpus is None else range(args.gpus)
 
     if args.autoscale_lr:
         # apply the linear scaling rule (https://arxiv.org/abs/1706.02677)
-        cfg.optimizer['lr'] = cfg.optimizer['lr'] * cfg.gpus / 8
+        cfg.optimizer['lr'] = cfg.optimizer['lr'] * len(cfg.gpu_ids) / 8
 
     # init distributed env first, since logger depends on the dist info.
     if args.launcher == 'none':
@@ -92,6 +103,10 @@ def main():
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
     log_file = osp.join(cfg.work_dir, '{}.log'.format(timestamp))
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
+
+    # add a logging filter
+    logging_filter = logging.Filter('mmdet')
+    logging_filter.filter = lambda record: record.find('mmdet') != -1
 
     # init the meta dict to record some important information such as
     # environment info and seed, which will be logged

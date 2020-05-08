@@ -681,7 +681,6 @@ def kitti_eval(gt_annos,
         # mAP threshold array: [num_minoverlap, metric, class]
         # mAP result: [num_class, num_diff, num_minoverlap]
         curcls_name = class_to_name[curcls]
-        ret_dict[curcls_name] = {}
         for i in range(min_overlaps.shape[0]):
             # prepare results for print
             result += ('{} AP@{:.2f}, {:.2f}, {:.2f}:\n'.format(
@@ -702,18 +701,17 @@ def kitti_eval(gt_annos,
 
             # prepare results for logger
             for idx in range(3):
-                postfix = '{}_{}'.format(difficulty[idx], min_overlaps[i, idx,
-                                                                       j])
+                if i == 0:
+                    postfix = f'{difficulty[idx]}_strict'
+                else:
+                    postfix = f'{difficulty[idx]}_loose'
+                prefix = f'KITTI/{curcls_name}'
                 if mAP3d is not None:
-                    ret_dict[curcls_name]['3D_{}'.format(postfix)] = mAP3d[j,
-                                                                           idx,
-                                                                           i]
+                    ret_dict[f'{prefix}_3D_{postfix}'] = mAP3d[j, idx, i]
                 if mAPbev is not None:
-                    ret_dict[curcls_name]['BEV_{}'.format(postfix)] = mAPbev[
-                        j, idx, i]
+                    ret_dict[f'{prefix}_BEV_{postfix}'] = mAPbev[j, idx, i]
                 if mAPbbox is not None:
-                    ret_dict[curcls_name]['2D_{}'.format(postfix)] = mAPbbox[
-                        j, idx, i]
+                    ret_dict[f'{prefix}_2D_{postfix}'] = mAPbbox[j, idx, i]
 
     # calculate mAP over all classes if there are multiple classes
     if len(current_classes) > 1:
@@ -735,14 +733,14 @@ def kitti_eval(gt_annos,
         # prepare results for logger
         ret_dict['Overall'] = dict()
         for idx in range(3):
-            postfix = '{}'.format(difficulty[idx])
+            postfix = f'{difficulty[idx]}'
             if mAP3d is not None:
-                ret_dict['Overall']['3D_{}'.format(postfix)] = mAP3d[idx, 0]
+                ret_dict[f'KITTI/Overall_3D_{postfix}'] = mAP3d[idx, 0]
             if mAPbev is not None:
-                ret_dict['Overall']['BEV_{}'.format(postfix)] = mAPbev[idx, 0]
+                ret_dict[f'KITTI/Overall_BEV_{postfix}'] = mAPbev[idx, 0]
             if mAPbbox is not None:
-                ret_dict['Overall']['2D_{}'.format(postfix)] = mAPbbox[idx, 0]
-    print(result)
+                ret_dict[f'KITTI/Overall_2D_{postfix}'] = mAPbbox[idx, 0]
+
     return result, ret_dict
 
 
