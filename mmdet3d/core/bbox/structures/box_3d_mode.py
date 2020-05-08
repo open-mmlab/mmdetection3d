@@ -3,6 +3,10 @@ from enum import IntEnum, unique
 import numpy as np
 import torch
 
+from .base_box3d import BaseInstance3DBoxes
+from .cam_box3d import CameraInstance3DBoxes
+from .lidar_box3d import LiDARInstance3DBoxes
+
 
 @unique
 class Box3DMode(IntEnum):
@@ -16,6 +20,7 @@ class Box3DMode(IntEnum):
                        |  /
                        | /
         left y <------ 0
+
     The relative coordinate of bottom center in a LiDAR box is [0.5, 0.5, 0],
     and the yaw is around the z axis, thus the rotation axis=2.
 
@@ -30,6 +35,7 @@ class Box3DMode(IntEnum):
              |
              v
         down y
+
     The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
     and the yaw is around the y axis, thus the rotation axis=1.
 
@@ -41,6 +47,7 @@ class Box3DMode(IntEnum):
            |  /
            | /
            0 ------> x right
+
     The relative coordinate of bottom center in a DEPTH box is [0.5, 0.5, 0],
     and the yaw is around the z axis, thus the rotation axis=2.
     """
@@ -72,6 +79,7 @@ class Box3DMode(IntEnum):
             return box
 
         is_numpy = isinstance(box, np.ndarray)
+        is_Instance3DBoxes = isinstance(box, BaseInstance3DBoxes)
         single_box = isinstance(box, (list, tuple))
         if single_box:
             assert len(box) >= 7, (
@@ -82,6 +90,8 @@ class Box3DMode(IntEnum):
             # avoid modifying the input box
             if is_numpy:
                 arr = torch.from_numpy(np.asarray(box)).clone()
+            elif is_Instance3DBoxes:
+                arr = box.tensor.clone()
             else:
                 arr = box.clone()
 
@@ -126,5 +136,15 @@ class Box3DMode(IntEnum):
             return original_type(arr.flatten().tolist())
         if is_numpy:
             return arr.numpy()
+        elif is_Instance3DBoxes:
+            if dst == Box3DMode.CAM:
+                target_type = CameraInstance3DBoxes
+            elif dst == Box3DMode.LIDAR:
+                target_type = LiDARInstance3DBoxes
+            else:
+                raise NotImplementedError(
+                    f'Conversion to {dst} through {original_type}'
+                    ' is not supported yet')
+            return target_type(arr, box_dim=arr.size(-1))
         else:
             return arr

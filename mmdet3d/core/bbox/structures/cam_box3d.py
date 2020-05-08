@@ -11,14 +11,14 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     Coordinates in camera:
     .. code-block:: none
 
-                           x right
-                          /
-                         /
-        front z <------ 0
-                        |
-                        |
-                        v
-                   down y
+                z front
+               /
+              /
+             0 ------> x right
+             |
+             |
+             v
+        down y
 
     The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
     and the yaw is around the y axis, thus the rotation axis=1.
@@ -39,7 +39,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, [0, 2]] = bottom_center[:, [0, 2]]
-        gravity_center[:, 1] = bottom_center[:, 1] - self.tensor[:, 5] * 0.5
+        gravity_center[:, 1] = bottom_center[:, 1] - self.tensor[:, 4] * 0.5
         return gravity_center
 
     @property

@@ -117,7 +117,6 @@ class BaseInstance3DBoxes(object):
 
         Args:
             trans_vector (torch.Tensor): translation vector of size 1x3
-
         """
         if not isinstance(trans_vector, torch.Tensor):
             trans_vector = self.tensor.new_tensor(trans_vector)
