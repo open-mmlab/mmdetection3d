@@ -49,6 +49,7 @@ def test_indoor_flip_data():
     scannet_results = scannet_indoor_flip_data(scannet_results)
     scannet_points = scannet_results.get('points', None)
     scannet_gt_bboxes_3d = scannet_results.get('gt_bboxes_3d', None)
+
     expected_scannet_points = np.array(
         [[-1.6110241, 0.16903955, 0.5811581, 0.5989725],
          [-1.3978075, -0.42035791, 0.38729519, 0.40510958]])
@@ -82,6 +83,7 @@ def test_global_rot_scale():
     sunrgbd_results = sunrgbd_augment(sunrgbd_results)
     sunrgbd_points = sunrgbd_results.get('points', None)
     sunrgbd_gt_bboxes_3d = sunrgbd_results.get('gt_bboxes_3d', None)
+
     expected_sunrgbd_points = np.array(
         [[0.89427376, 3.94489646, 0.21003141, 1.72415094],
          [-0.47835783, 1.09972989, -0.79757058, 0.71654893]])
@@ -113,6 +115,7 @@ def test_global_rot_scale():
     scannet_results = scannet_augment(scannet_results)
     scannet_points = scannet_results.get('points', None)
     scannet_gt_bboxes_3d = scannet_results.get('gt_bboxes_3d', None)
+
     expected_scannet_points = np.array(
         [[1.61240576, -0.15530836, 0.5811581, 0.5989725],
          [1.39417555, 0.43225122, 0.38729519, 0.40510958]])

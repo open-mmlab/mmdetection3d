@@ -182,6 +182,7 @@ class IndoorGlobalRotScale(object):
         name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
 
         if self.rot_range is not None:
+            assert len(self.rot_range) == 2
             rot_angle = np.random.uniform(self.rot_range[0], self.rot_range[1])
             rot_mat = self._rotz(rot_angle)
             points[:, :3] = np.dot(points[:, :3], rot_mat.T)
@@ -193,15 +194,16 @@ class IndoorGlobalRotScale(object):
                 gt_bboxes_3d[:, 6] -= rot_angle
 
         if self.scale_range is not None:
+            assert len(self.scale_range) == 2
             # Augment point cloud scale
             scale_ratio = np.random.uniform(self.scale_range[0],
                                             self.scale_range[1])
-            scale_ratio = np.tile(scale_ratio, 3)[None, ...]
+
             points[:, :3] *= scale_ratio
             gt_bboxes_3d[:, :3] *= scale_ratio
             gt_bboxes_3d[:, 3:6] *= scale_ratio
             if self.use_height:
-                points[:, -1] *= scale_ratio[0, 0]
+                points[:, -1] *= scale_ratio
 
         results['points'] = points
         results['gt_bboxes_3d'] = gt_bboxes_3d
