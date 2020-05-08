@@ -10,6 +10,7 @@ class CAMInstance3DBoxes(BaseInstance3DBoxes):
 
     Coordinates in camera:
     .. code-block:: none
+
                            x right
                           /
                          /
@@ -18,6 +19,7 @@ class CAMInstance3DBoxes(BaseInstance3DBoxes):
                         |
                         v
                    down y
+
     The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
     and the yaw is around the y axis, thus the rotation axis=1.
 
@@ -48,6 +50,7 @@ class CAMInstance3DBoxes(BaseInstance3DBoxes):
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
 
         .. code-block:: none
+
                          front z
                               /
                              /

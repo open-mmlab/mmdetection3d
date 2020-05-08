@@ -10,6 +10,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     Coordinates in LiDAR:
     .. code-block:: none
+
                     up z    x front
                        ^   ^
                        |  /
@@ -45,6 +46,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
 
         .. code-block:: none
+
                                            up z
                             front x           ^
                                  /            |
@@ -57,6 +59,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                             | / oriign    | /
             left y<-------- + ----------- + (x0, y1, z0)
                 (x0, y0, z0)
+
         Returns:
             torch.Tensor: corners of each box with size (N, 8, 3)
         """

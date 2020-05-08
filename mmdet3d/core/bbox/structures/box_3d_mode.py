@@ -10,6 +10,7 @@ class Box3DMode(IntEnum):
 
     Coordinates in LiDAR:
     .. code-block:: none
+
                     up z    x front
                        ^   ^
                        |  /
@@ -20,6 +21,7 @@ class Box3DMode(IntEnum):
 
     Coordinates in camera:
     .. code-block:: none
+
                            x right
                           /
                          /
@@ -33,6 +35,7 @@ class Box3DMode(IntEnum):
 
     Coordinates in Depth mode:
     .. code-block:: none
+
                      up z   x right
                         ^   ^
                         |  /
@@ -57,7 +60,8 @@ class Box3DMode(IntEnum):
             dst (BoxMode): the target Box mode
 
         Returns:
-            The converted box of the same type.
+            (tuple | list | np.ndarray | torch.Tensor):
+                The converted box of the same type.
         """
         if src == dst:
             return box
