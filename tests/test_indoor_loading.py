@@ -8,21 +8,20 @@ from mmdet3d.datasets.pipelines.indoor_loading import (LoadAnnotations3D,
 
 def test_load_points_from_file():
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
-    sunrgbd_load_points_from_file = LoadPointsFromFile(True, [0.5, 0.5, 0.5],
-                                                       6)
+    sunrgbd_load_points_from_file = LoadPointsFromFile(True, 6)
     sunrgbd_results = dict()
     data_path = './tests/data/sunrgbd/sunrgbd_trainval'
     sunrgbd_info = sunrgbd_info[0]
     scan_name = sunrgbd_info['point_cloud']['lidar_idx']
     sunrgbd_results['info'] = sunrgbd_info
     sunrgbd_results['pts_filename'] = osp.join(data_path, 'lidar',
-                                               '%06d.npz' % scan_name)
+                                               '%06d.npy' % scan_name)
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
     sunrgbd_point_cloud = sunrgbd_results.get('points', None)
     assert sunrgbd_point_cloud.shape == (100, 4)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
-    scannet_load_data = LoadPointsFromFile(True, [0.5, 0.5, 0.5])
+    scannet_load_data = LoadPointsFromFile(True)
     scannet_results = dict()
     data_path = './tests/data/scannet/scannet_train_instance_data'
     scannet_results['data_path'] = data_path
