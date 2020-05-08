@@ -25,6 +25,11 @@ class PointsColorNormalize(object):
         results['points'] = points
         return results
 
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += '(color_mean={})'.format(self.color_mean)
+        return repr_str
+
 
 @PIPELINES.register_module()
 class LoadPointsFromFile(object):
@@ -82,15 +87,6 @@ class LoadAnnotations3D(object):
     def __call__(self, results):
         ins_labelname = results.get('ins_labelname', None)
         sem_labelname = results.get('sem_labelname', None)
-        info = results.get('info', None)
-        if info['annos']['gt_num'] != 0:
-            gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-            gt_labels = info['annos']['class'].reshape(-1, 1)
-            gt_bboxes_3d_mask = np.ones_like(gt_labels)
-        else:
-            gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-            gt_labels = np.zeros((1, 1))
-            gt_bboxes_3d_mask = np.zeros((1, 1))
 
         if ins_labelname is not None and sem_labelname is not None:
             assert osp.exists(ins_labelname)
@@ -100,9 +96,6 @@ class LoadAnnotations3D(object):
             results['pts_instance_mask'] = pts_instance_mask
             results['pts_semantic_mask'] = pts_semantic_mask
 
-        results['gt_bboxes_3d'] = gt_bboxes_3d
-        results['gt_labels'] = gt_labels
-        results['gt_bboxes_3d_mask'] = gt_bboxes_3d_mask
         return results
 
     def __repr__(self):
