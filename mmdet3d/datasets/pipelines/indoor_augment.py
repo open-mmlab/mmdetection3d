@@ -7,32 +7,40 @@ from mmdet.datasets.builder import PIPELINES
 class IndoorFlipData(object):
     """Indoor Flip Data.
 
-    Flip point_cloud and groundtruth boxes.
+    Flip point cloud and ground truth boxes.
+    The point cloud will ve flipped along the yz plane
+    and the xz plane with a certain probability.
 
     Args:
-        flip_ratio (float): Probability of being flipped.
+        flip_ratio_yz (float): Probability of being flipped along yz plane.
+            Default: 0.5.
+        flip_ratio_xz (float): Probability of being flipped along xz plane.
             Default: 0.5.
     """
 
-    def __init__(self, flip_ratio=0.5):
-        self.flip_ratio = flip_ratio
+    def __init__(self, flip_ratio_yz=0.5, flip_ratio_xz=0.5):
+        self.flip_ratio_yz = flip_ratio_yz
+        self.flip_ratio_xz = flip_ratio_xz
 
     def __call__(self, results):
         points = results['points']
         gt_bboxes_3d = results['gt_bboxes_3d']
-        name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
-        if np.random.random() > self.flip_ratio:
+        aligned = True if gt_bboxes_3d.shape[1] == 6 else False
+        if np.random.random() > self.flip_ratio_yz:
             # Flipping along the YZ plane
             points[:, 0] = -1 * points[:, 0]
             gt_bboxes_3d[:, 0] = -1 * gt_bboxes_3d[:, 0]
-            if name == 'sunrgbd':
+            if not aligned:
                 gt_bboxes_3d[:, 6] = np.pi - gt_bboxes_3d[:, 6]
+
+            results['flip'] = True
             results['gt_boxes'] = gt_bboxes_3d
 
-        if name == 'scannet' and np.random.random() > 0.5:
+        if aligned and np.random.random() > self.flip_ratio_xz:
             # Flipping along the XZ plane
             points[:, 1] = -1 * points[:, 1]
             gt_bboxes_3d[:, 1] = -1 * gt_bboxes_3d[:, 1]
+            results['flip'] = True
             results['gt_bboxes_3d'] = gt_bboxes_3d
         results['points'] = points
 
@@ -40,7 +48,8 @@ class IndoorFlipData(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += '(flip_ratio={})'.format(self.flip_ratio)
+        repr_str += '(flip_ratio_yz={})'.format(self.flip_ratio_yz)
+        repr_str += '(flip_ratio_xz={})'.format(self.flip_ratio_xz)
         return repr_str
 
 
@@ -48,7 +57,8 @@ class IndoorFlipData(object):
 class IndoorPointsColorJitter(object):
     """Indoor Points Color Jitter.
 
-    Augment the color of points.
+    Randomly change the brightness and color of the point cloud, and
+    drop out the points' colors with a certain range and probability.
 
     Args:
         color_mean (List[float]): Mean color of the point cloud.
