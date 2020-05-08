@@ -2,7 +2,7 @@ import os.path as osp
 
 import numpy as np
 
-from mmdet.datasets.registry import PIPELINES
+from mmdet.datasets.builder import PIPELINES
 
 
 @PIPELINES.register_module()

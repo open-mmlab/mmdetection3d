@@ -17,7 +17,7 @@ def test_load_points_from_file():
     sunrgbd_results['pts_filename'] = osp.join(data_path, 'lidar',
                                                '%06d.npy' % scan_name)
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
-    sunrgbd_point_cloud = sunrgbd_results.get('points', None)
+    sunrgbd_point_cloud = sunrgbd_results['points']
     assert sunrgbd_point_cloud.shape == (100, 4)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
@@ -31,7 +31,7 @@ def test_load_points_from_file():
     scannet_results['pts_filename'] = osp.join(data_path,
                                                scan_name + '_vert.npy')
     scannet_results = scannet_load_data(scannet_results)
-    scannet_point_cloud = scannet_results.get('points', None)
+    scannet_point_cloud = scannet_results['points']
     assert scannet_point_cloud.shape == (100, 4)
 
 
@@ -71,11 +71,11 @@ def test_load_annotations3D():
     scannet_results['gt_labels'] = scannet_gt_labels
     scannet_results['gt_bboxes_3d_mask'] = scannet_gt_bboxes_3d_mask
     scannet_results = scannet_load_annotations3D(scannet_results)
-    scannet_gt_boxes = scannet_results.get('gt_bboxes_3d', None)
-    scannet_gt_lbaels = scannet_results.get('gt_labels', None)
-    scannet_gt_boxes_mask = scannet_results.get('gt_bboxes_3d_mask', None)
-    scannet_pts_instance_mask = scannet_results.get('pts_instance_mask', None)
-    scannet_pts_semantic_mask = scannet_results.get('pts_semantic_mask', None)
+    scannet_gt_boxes = scannet_results['gt_bboxes_3d']
+    scannet_gt_lbaels = scannet_results['gt_labels']
+    scannet_gt_boxes_mask = scannet_results['gt_bboxes_3d_mask']
+    scannet_pts_instance_mask = scannet_results['pts_instance_mask']
+    scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
     assert scannet_gt_boxes.shape == (27, 6)
     assert scannet_gt_lbaels.shape == (27, 1)
     assert scannet_gt_boxes_mask.shape == (27, 1)
