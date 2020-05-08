@@ -242,7 +242,7 @@ def rotation_points_single_angle(points, angle, axis=0):
     else:
         raise ValueError('axis should in range')
 
-    return points @ rot_mat_T.T, rot_mat_T
+    return points @ rot_mat_T, rot_mat_T
 
 
 def project_to_image(points_3d, proj_mat):
