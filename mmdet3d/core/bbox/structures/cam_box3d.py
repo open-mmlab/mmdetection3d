@@ -5,18 +5,21 @@ from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
 
-class LiDARInstance3DBoxes(BaseInstance3DBoxes):
-    """3D boxes of instances in LIDAR coordinates
+class CAMInstance3DBoxes(BaseInstance3DBoxes):
+    """3D boxes of instances in CAM coordinates
 
-    Coordinates in LiDAR:
+    Coordinates in camera:
     .. code-block:: none
-                    up z    x front
-                       ^   ^
-                       |  /
-                       | /
-        left y <------ 0
-    The relative coordinate of bottom center in a LiDAR box is [0.5, 0.5, 0],
-    and the yaw is around the z axis, thus the rotation axis=2.
+                           x right
+                          /
+                         /
+        front z <------ 0
+                        |
+                        |
+                        v
+                   down y
+    The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
+    and the yaw is around the y axis, thus the rotation axis=1.
 
     Attributes:
         tensor (torch.Tensor): float matrix of N x box_dim.
@@ -33,30 +36,33 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
-        gravity_center[:, :2] = bottom_center[:, :2]
-        gravity_center[:, 2] = bottom_center[:, 2] + self.tensor[:, 5] * 0.5
+        gravity_center[:, [0, 2]] = bottom_center[:, [0, 2]]
+        gravity_center[:, 1] = bottom_center[:, 1] - self.tensor[:, 5] * 0.5
         return gravity_center
 
     @property
     def corners(self):
         """Calculate the coordinates of corners of all the boxes.
 
-        Convert the boxes to corners in clockwise order, in form of
+        Convert the boxes to  in clockwise order, in the form of
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
 
         .. code-block:: none
-                                           up z
-                            front x           ^
-                                 /            |
-                                /             |
-                  (x1, y0, z1) + -----------  + (x1, y1, z1)
-                              /|            / |
-                             / |           /  |
-               (x0, y0, z1) + ----------- +   + (x1, y1, z0)
-                            |  /      .   |  /
-                            | / oriign    | /
-            left y<-------- + ----------- + (x0, y1, z0)
-                (x0, y0, z0)
+                         front z
+                              /
+                             /
+               (x0, y0, z1) + -----------  + (x1, y0, z1)
+                           /|            / |
+                          / |           /  |
+            (x0, y0, z0) + ----------- +   + (x1, y1, z0)
+                         |  /      .   |  /
+                         | / oriign    | /
+            (x0, y1, z0) + ----------- + -------> x right
+                         |             (x1, y1, z0)
+                         |
+                         v
+                    down y
+
         Returns:
             torch.Tensor: corners of each box with size (N, 8, 3)
         """
@@ -66,12 +72,12 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 device=dims.device, dtype=dims.dtype)
 
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-        # use relative origin [0.5, 0.5, 0]
-        corners_norm = corners_norm - dims.new_tensor([0.5, 0.5, 0])
+        # use relative origin [0.5, 1, 0.5]
+        corners_norm = corners_norm - dims.new_tensor([0.5, 1, 0.5])
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
-        # rotate around z axis
-        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=2)
+        # rotate around y axis
+        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=1)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
@@ -82,8 +88,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         Returns:
             torch.Tensor: a tensor of 2D BEV box of each box.
         """
-        # Obtain BEV boxes with rotation in XYWHR format
-        bev_rotated_boxes = self.tensor[:, [0, 1, 3, 4, 6]]
+        # Obtain BEV boxes with rotation in XZWHR format
+        bev_rotated_boxes = self.tensor[:, [0, 2, 3, 5, 6]]
         # convert the rotation to a valid range
         rotations = bev_rotated_boxes[:, -1]
         normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
@@ -113,8 +119,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             angle = self.tensor.new_tensor(angle)
         rot_sin = torch.sin(angle)
         rot_cos = torch.cos(angle)
-        rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
-                                            [rot_sin, rot_cos, 0], [0, 0, 1]])
+        rot_mat_T = self.tensor.new_tensor([[rot_cos, 0, -rot_sin], [0, 1, 0],
+                                            [rot_sin, 0, rot_cos]])
 
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
         self.tensor[:, 6] += angle
@@ -122,9 +128,9 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
     def flip(self):
         """Flip the boxes in horizontal direction
 
-        In LIDAR coordinates, it flips the y axis.
+        In CAM coordinates, it flips the x axis.
         """
-        self.tensor[:, 1::7] = -self.tensor[:, 1::7]
+        self.tensor[:, 0::7] = -self.tensor[:, 0::7]
         self.tensor[:, 6] = -self.tensor[:, 6] + np.pi
 
     def in_range_bev(self, box_range):
@@ -132,7 +138,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             box_range (list | torch.Tensor): the range of box
-                (x_min, y_min, x_max, y_max)
+                (x_min, z_min, x_max, z_max)
 
         Note:
             In the original implementation of SECOND, checking whether
@@ -145,7 +151,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
-                          & (self.tensor[:, 1] > box_range[1])
+                          & (self.tensor[:, 2] > box_range[1])
                           & (self.tensor[:, 0] < box_range[2])
-                          & (self.tensor[:, 1] < box_range[3]))
+                          & (self.tensor[:, 2] < box_range[3]))
         return in_range_flags

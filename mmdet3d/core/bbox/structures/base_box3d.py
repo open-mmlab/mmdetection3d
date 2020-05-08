@@ -1,6 +1,9 @@
 from abc import abstractmethod
 
+import numpy as np
 import torch
+
+from .utils import limit_period
 
 
 class BaseInstance3DBoxes(object):
@@ -37,13 +40,43 @@ class BaseInstance3DBoxes(object):
         return self.tensor[:, 3] * self.tensor[:, 4] * self.tensor[:, 5]
 
     @property
+    def dims(self):
+        """Calculate the length in each dimension of all the boxes.
+
+        Convert the boxes to the form of (x_size, y_size, z_size)
+
+        Returns:
+            torch.Tensor: corners of each box with size (N, 8, 3)
+        """
+        return self.tensor[:, 3:6]
+
+    @property
+    def center(self):
+        """Calculate the center of all the boxes.
+
+        Note:
+            In the MMDetection.3D's convention, the bottom center is
+            usually taken as the default center.
+
+            The relative position of the centers in different kinds of
+            boxes are different, e.g., the relative center of a boxes is
+            [0.5, 1.0, 0.5] in camera and [0.5, 0.5, 0] in lidar.
+            It is recommended to use `bottom_center` or `gravity_center`
+            for more clear usage.
+
+        Returns:
+            torch.Tensor: a tensor with center of each box.
+        """
+        return self.bottom_center
+
+    @property
     def bottom_center(self):
         """Calculate the bottom center of all the boxes.
 
         Returns:
             torch.Tensor: a tensor with center of each box.
         """
-        return self.tensor[..., :3]
+        return self.tensor[:, :3]
 
     @property
     def gravity_center(self):
@@ -79,16 +112,17 @@ class BaseInstance3DBoxes(object):
         """
         pass
 
-    @abstractmethod
     def translate(self, trans_vector):
         """Calculate whether the points is in any of the boxes
 
         Args:
             trans_vector (torch.Tensor): translation vector of size 1x3
-        """
-        pass
 
-    @abstractmethod
+        """
+        if not isinstance(trans_vector, torch.Tensor):
+            trans_vector = self.tensor.new_tensor(trans_vector)
+        self.tensor[:, :3] += trans_vector
+
     def in_range_3d(self, box_range):
         """Check whether the boxes are in the given range
 
@@ -96,11 +130,23 @@ class BaseInstance3DBoxes(object):
             box_range (list | torch.Tensor): the range of box
                 (x_min, y_min, z_min, x_max, y_max, z_max)
 
+        Note:
+            In the original implementation of SECOND, checking whether
+            a box in the range checks whether the points are in a convex
+            polygon, we try to reduce the burdun for simpler cases.
+            TODO: check whether this will effect the performance
+
         Returns:
             a binary vector, indicating whether each box is inside
             the reference range.
         """
-        pass
+        in_range_flags = ((self.tensor[:, 0] > box_range[0])
+                          & (self.tensor[:, 1] > box_range[1])
+                          & (self.tensor[:, 2] > box_range[2])
+                          & (self.tensor[:, 0] < box_range[3])
+                          & (self.tensor[:, 1] < box_range[4])
+                          & (self.tensor[:, 2] < box_range[5]))
+        return in_range_flags
 
     @abstractmethod
     def in_range_bev(self, box_range):
@@ -116,15 +162,24 @@ class BaseInstance3DBoxes(object):
         """
         pass
 
-    @abstractmethod
-    def scale(self, scale_factors):
+    def scale(self, scale_factor):
         """Scale the box with horizontal and vertical scaling factors
 
         Args:
-            scale_factors (float | torch.Tensor | list[float]):
+            scale_factors (float):
                 scale factors to scale the boxes.
         """
-        pass
+        self.tensor[:, :6] *= scale_factor
+        self.tensor[:, 7:] *= scale_factor
+
+    def limit_yaw(self, offset=0.5, period=np.pi):
+        """Limit the yaw to a given period and offset
+
+        Args:
+            offset (float): the offset of the yaw
+            period (float): the expected period
+        """
+        self.tensor[:, 6] = limit_period(self.tensor[:, 6], offset, period)
 
     def nonempty(self, threshold: float = 0.0):
         """Find boxes that are non-empty.
