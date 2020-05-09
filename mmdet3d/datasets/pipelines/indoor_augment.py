@@ -34,7 +34,7 @@ class IndoorFlipData(object):
                 gt_bboxes_3d[:, 6] = np.pi - gt_bboxes_3d[:, 6]
 
             results['flip_yz'] = True
-            results['gt_boxes'] = gt_bboxes_3d
+            results['gt_boxes_3d'] = gt_bboxes_3d
 
         if aligned and np.random.random() < self.flip_ratio_xz:
             # Flipping along the XZ plane
