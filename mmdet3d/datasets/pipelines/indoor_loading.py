@@ -47,10 +47,9 @@ class IndoorLoadPointsFromFile(object):
 
     def __init__(self, use_height, load_dim=6, use_dim=[0, 1, 2]):
         self.use_height = use_height
-        assert max(
-            use_dim
-        ) < load_dim, f'Expect all used dimensions < {load_dim}, ' \
-                      f'got {use_dim}'
+        assert max(use_dim) < load_dim, \
+            f'Expect all used dimensions < {load_dim}, got {use_dim}'
+
         self.load_dim = load_dim
         self.use_dim = use_dim
 
