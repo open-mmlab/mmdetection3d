@@ -19,8 +19,8 @@ class IndoorPointsColorNormalize(object):
 
     def __call__(self, results):
         points = results['points']
-        assert points.shape[
-            1] >= 6, f'Expect points have channel >=6, got {points.shape[1]}'
+        assert points.shape[1] >= 6,\
+            f'Expect points have channel >=6, got {points.shape[1]}'
         points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
         results['points'] = points
         return results
