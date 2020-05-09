@@ -3,8 +3,8 @@ import os.path as osp
 import mmcv
 import numpy as np
 
-from mmdet3d.datasets.pipelines.indoor_loading import (  # yapf: enable
-    IndoorLoadAnnotations3D, IndoorLoadPointsFromFile)
+from mmdet3d.datasets.pipelines import (IndoorLoadAnnotations3D,
+                                        IndoorLoadPointsFromFile)
 
 
 def test_indoor_load_points_from_file():
