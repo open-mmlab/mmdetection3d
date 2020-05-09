@@ -433,9 +433,9 @@ class MMDataBaseSampler(DataBaseSampler):
             elif blending_op == 'box':
                 obj_mask = cv2.blur(obj_mask.astype(np.float32), (3, 3))
             paste_mask = 1 - obj_mask
-            img[y1:y1 + h, x1:x1 +
-                w] = (img[y1:y1 + h, x1:x1 + w].astype(np.float32) *
-                      paste_mask[..., None]).astype(np.uint8)
+            img[y1:y1 + h,
+                x1:x1 + w] = (img[y1:y1 + h, x1:x1 + w].astype(np.float32) *
+                              paste_mask[..., None]).astype(np.uint8)
             img[y1:y1 + h, x1:x1 + w] += (obj_img.astype(np.float32) *
                                           obj_mask[..., None]).astype(np.uint8)
         return img
