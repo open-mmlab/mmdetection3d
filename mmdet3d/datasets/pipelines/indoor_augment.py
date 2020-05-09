@@ -167,19 +167,19 @@ class IndoorGlobalRotScale(object):
             rotated_boxes (ndarry): 3D boxes after rotation.
         """
         centers, lengths = input_boxes[:, 0:3], input_boxes[:, 3:6]
-        new_centers = np.dot(centers, np.transpose(rot_mat))
+        new_centers = np.dot(centers, rot_mat.T)
 
         dx, dy = lengths[:, 0] / 2.0, lengths[:, 1] / 2.0
         new_x = np.zeros((dx.shape[0], 4))
         new_y = np.zeros((dx.shape[0], 4))
 
-        for i, crnr in enumerate([(-1, -1), (1, -1), (1, 1), (-1, 1)]):
-            crnrs = np.zeros((dx.shape[0], 3))
-            crnrs[:, 0] = crnr[0] * dx
-            crnrs[:, 1] = crnr[1] * dy
-            crnrs = np.dot(crnrs, np.transpose(rot_mat))
-            new_x[:, i] = crnrs[:, 0]
-            new_y[:, i] = crnrs[:, 1]
+        for i, corner in enumerate([(-1, -1), (1, -1), (1, 1), (-1, 1)]):
+            corners = np.zeros((dx.shape[0], 3))
+            corners[:, 0] = corner[0] * dx
+            corners[:, 1] = corner[1] * dy
+            corners = np.dot(corners, rot_mat.T)
+            new_x[:, i] = corners[:, 0]
+            new_y[:, i] = corners[:, 1]
 
         new_dx = 2.0 * np.max(new_x, 1)
         new_dy = 2.0 * np.max(new_y, 1)
