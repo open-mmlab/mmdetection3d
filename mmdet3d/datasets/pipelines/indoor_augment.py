@@ -26,21 +26,21 @@ class IndoorFlipData(object):
         points = results['points']
         gt_bboxes_3d = results['gt_bboxes_3d']
         aligned = True if gt_bboxes_3d.shape[1] == 6 else False
-        if np.random.random() > self.flip_ratio_yz:
+        if np.random.random() < self.flip_ratio_yz:
             # Flipping along the YZ plane
             points[:, 0] = -1 * points[:, 0]
             gt_bboxes_3d[:, 0] = -1 * gt_bboxes_3d[:, 0]
             if not aligned:
                 gt_bboxes_3d[:, 6] = np.pi - gt_bboxes_3d[:, 6]
 
-            results['flip'] = True
+            results['flip_yz'] = True
             results['gt_boxes'] = gt_bboxes_3d
 
-        if aligned and np.random.random() > self.flip_ratio_xz:
+        if aligned and np.random.random() < self.flip_ratio_xz:
             # Flipping along the XZ plane
             points[:, 1] = -1 * points[:, 1]
             gt_bboxes_3d[:, 1] = -1 * gt_bboxes_3d[:, 1]
-            results['flip'] = True
+            results['flip_xz'] = True
             results['gt_bboxes_3d'] = gt_bboxes_3d
         results['points'] = points
 
@@ -189,14 +189,14 @@ class IndoorGlobalRotScale(object):
     def __call__(self, results):
         points = results['points']
         gt_bboxes_3d = results['gt_bboxes_3d']
-        name = 'scannet' if gt_bboxes_3d.shape[1] == 6 else 'sunrgbd'
+        aligned = True if gt_bboxes_3d.shape[1] == 6 else False
 
         if self.rot_range is not None:
             assert len(self.rot_range) == 2
             rot_angle = np.random.uniform(self.rot_range[0], self.rot_range[1])
             rot_mat = self._rotz(rot_angle)
             points[:, :3] = np.dot(points[:, :3], rot_mat.T)
-            if name == 'scannet':
+            if aligned:
                 gt_bboxes_3d = self._rotate_aligned_boxes(
                     gt_bboxes_3d, rot_mat)
             else:
