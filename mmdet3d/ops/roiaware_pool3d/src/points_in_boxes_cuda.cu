@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
-#include <torch/extension.h>
 #include <torch/serialize/tensor.h>
+#include <torch/types.h>
 
 #define THREADS_PER_BLOCK 256
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
