@@ -15,7 +15,7 @@ def test_indoor_load_points_from_file():
     sunrgbd_info = sunrgbd_info[0]
     scan_name = sunrgbd_info['point_cloud']['lidar_idx']
     sunrgbd_results['pts_filename'] = osp.join(data_path, 'lidar',
-                                               '%06d.npy' % scan_name)
+                                               f'{scan_name:06d}.npy')
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
     sunrgbd_point_cloud = sunrgbd_results['points']
     assert sunrgbd_point_cloud.shape == (100, 4)
@@ -29,7 +29,7 @@ def test_indoor_load_points_from_file():
     scan_name = scannet_info['point_cloud']['lidar_idx']
 
     scannet_results['pts_filename'] = osp.join(data_path,
-                                               scan_name + '_vert.npy')
+                                               f'{scan_name}_vert.npy')
     scannet_results = scannet_load_data(scannet_results)
     scannet_point_cloud = scannet_results['points']
     assert scannet_point_cloud.shape == (100, 4)
@@ -63,7 +63,7 @@ def test_load_annotations3D():
         scannet_gt_bboxes_3d_mask = np.zeros((1, 1))
     scan_name = scannet_info['point_cloud']['lidar_idx']
     scannet_results['pts_instance_mask_path'] = osp.join(
-        data_path, scan_name + '_ins_label.npy')
+        data_path, f'{scan_name}_ins_label.npy')
     scannet_results['pts_semantic_mask_path'] = osp.join(
         data_path, scan_name + '_sem_label.npy')
     scannet_results['info'] = scannet_info
