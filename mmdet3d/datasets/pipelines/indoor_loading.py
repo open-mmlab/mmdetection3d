@@ -50,14 +50,13 @@ class IndoorLoadPointsFromFile(object):
         assert max(
             use_dim
         ) < load_dim, f'Expect all used dimensions < {load_dim}, ' \
-                      f'got {[dim for dim in use_dim if dim >= load_dim]}'
+                      f'got {use_dim}'
         self.load_dim = load_dim
         self.use_dim = use_dim
 
     def __call__(self, results):
         pts_filename = results['pts_filename']
-        mmcv.check_file_exist(
-            pts_filename, msg_tmpl=f'{pts_filename} does not exist.')
+        mmcv.check_file_exist(pts_filename)
         points = np.load(pts_filename)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
@@ -92,12 +91,8 @@ class IndoorLoadAnnotations3D(object):
         pts_instance_mask_path = results['pts_instance_mask_path']
         pts_semantic_mask_path = results['pts_semantic_mask_path']
 
-        mmcv.check_file_exist(
-            pts_instance_mask_path,
-            msg_tmpl=f'{pts_instance_mask_path} does not exist.')
-        mmcv.check_file_exist(
-            pts_semantic_mask_path,
-            msg_tmpl=f'{pts_semantic_mask_path} does not exist.')
+        mmcv.check_file_exist(pts_instance_mask_path)
+        mmcv.check_file_exist(pts_semantic_mask_path)
         pts_instance_mask = np.load(pts_instance_mask_path)
         pts_semantic_mask = np.load(pts_semantic_mask_path)
         results['pts_instance_mask'] = pts_instance_mask
