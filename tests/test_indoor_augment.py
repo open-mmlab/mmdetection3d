@@ -1,12 +1,11 @@
 import numpy as np
 
-from mmdet3d.datasets.pipelines.indoor_augment import (IndoorFlipData,
-                                                       IndoorGlobalRotScale)
+from mmdet3d.datasets.pipelines import IndoorFlipData, IndoorGlobalRotScale
 
 
 def test_indoor_flip_data():
     np.random.seed(0)
-    sunrgbd_indoor_flip_data = IndoorFlipData()
+    sunrgbd_indoor_flip_data = IndoorFlipData(1, 1)
     sunrgbd_results = dict()
     sunrgbd_results['points'] = np.array(
         [[1.02828765e+00, 3.65790772e+00, 1.97294697e-01, 1.61959505e+00],
@@ -36,7 +35,7 @@ def test_indoor_flip_data():
     assert np.allclose(sunrgbd_gt_bboxes_3d, expected_sunrgbd_gt_bboxes_3d)
 
     np.random.seed(0)
-    scannet_indoor_flip_data = IndoorFlipData()
+    scannet_indoor_flip_data = IndoorFlipData(1, 1)
     scannet_results = dict()
     scannet_results['points'] = np.array(
         [[1.6110241e+00, -1.6903955e-01, 5.8115810e-01, 5.9897250e-01],
