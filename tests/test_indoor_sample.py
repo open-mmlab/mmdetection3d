@@ -1,6 +1,6 @@
 import numpy as np
 
-from mmdet3d.datasets.pipelines.indoor_sample import PointSample
+from mmdet3d.datasets.pipelines import PointSample
 
 
 def test_indoor_sample():
