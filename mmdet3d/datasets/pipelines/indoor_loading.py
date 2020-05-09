@@ -1,13 +1,12 @@
-import os.path as osp
-
+import mmcv
 import numpy as np
 
 from mmdet.datasets.builder import PIPELINES
 
 
 @PIPELINES.register_module()
-class PointsColorNormalize(object):
-    """Points Color Normalize
+class IndoorPointsColorNormalize(object):
+    """Indoor Points Color Normalize
 
     Normalize color of the points.
 
@@ -20,7 +19,8 @@ class PointsColorNormalize(object):
 
     def __call__(self, results):
         points = results['points']
-        assert points.shape[1] >= 6, 'Incomplete color channel.'
+        assert points.shape[
+            1] >= 6, f'Expect points have channel >=6, got {points.shape[1]}'
         points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
         results['points'] = points
         return results
@@ -32,8 +32,8 @@ class PointsColorNormalize(object):
 
 
 @PIPELINES.register_module()
-class LoadPointsFromFile(object):
-    """Load Points From File.
+class IndoorLoadPointsFromFile(object):
+    """Indoor Load Points From File.
 
     Load sunrgbd and scannet points from file.
 
@@ -47,13 +47,17 @@ class LoadPointsFromFile(object):
 
     def __init__(self, use_height, load_dim=6, use_dim=[0, 1, 2]):
         self.use_height = use_height
-        assert max(use_dim) < load_dim, 'Wrong dimension is used.'
+        assert max(
+            use_dim
+        ) < load_dim, f'Expect all used dimensions < {load_dim}, ' \
+                      f'got {[dim for dim in use_dim if dim >= load_dim]}'
         self.load_dim = load_dim
         self.use_dim = use_dim
 
     def __call__(self, results):
         pts_filename = results['pts_filename']
-        assert osp.exists(pts_filename), f'{pts_filename} does not exist.'
+        mmcv.check_file_exist(
+            pts_filename, msg_tmpl=f'{pts_filename} does not exist.')
         points = np.load(pts_filename)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
@@ -75,10 +79,10 @@ class LoadPointsFromFile(object):
 
 
 @PIPELINES.register_module
-class LoadAnnotations3D(object):
-    """Load Annotations3D.
+class IndoorLoadAnnotations3D(object):
+    """Indoor Load Annotations3D.
 
-    Load sunrgbd and scannet annotations.
+    Load instance mask and semantic mask of points.
     """
 
     def __init__(self):
@@ -88,10 +92,12 @@ class LoadAnnotations3D(object):
         pts_instance_mask_path = results['pts_instance_mask_path']
         pts_semantic_mask_path = results['pts_semantic_mask_path']
 
-        assert osp.exists(pts_instance_mask_path
-                          ), f'{pts_instance_mask_path} does not exist.'
-        assert osp.exists(pts_semantic_mask_path
-                          ), f'{pts_semantic_mask_path} does not exist.'
+        mmcv.check_file_exist(
+            pts_instance_mask_path,
+            msg_tmpl=f'{pts_instance_mask_path} does not exist.')
+        mmcv.check_file_exist(
+            pts_semantic_mask_path,
+            msg_tmpl=f'{pts_semantic_mask_path} does not exist.')
         pts_instance_mask = np.load(pts_instance_mask_path)
         pts_semantic_mask = np.load(pts_semantic_mask_path)
         results['pts_instance_mask'] = pts_instance_mask

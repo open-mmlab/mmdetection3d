@@ -3,13 +3,13 @@ import os.path as osp
 import mmcv
 import numpy as np
 
-from mmdet3d.datasets.pipelines.indoor_loading import (LoadAnnotations3D,
-                                                       LoadPointsFromFile)
+from mmdet3d.datasets.pipelines.indoor_loading import (  # yapf: enable
+    IndoorLoadAnnotations3D, IndoorLoadPointsFromFile)
 
 
-def test_load_points_from_file():
+def test_indoor_load_points_from_file():
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
-    sunrgbd_load_points_from_file = LoadPointsFromFile(True, 6)
+    sunrgbd_load_points_from_file = IndoorLoadPointsFromFile(True, 6)
     sunrgbd_results = dict()
     data_path = './tests/data/sunrgbd/sunrgbd_trainval'
     sunrgbd_info = sunrgbd_info[0]
@@ -21,7 +21,7 @@ def test_load_points_from_file():
     assert sunrgbd_point_cloud.shape == (100, 4)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
-    scannet_load_data = LoadPointsFromFile(True)
+    scannet_load_data = IndoorLoadPointsFromFile(True)
     scannet_results = dict()
     data_path = './tests/data/scannet/scannet_train_instance_data'
     scannet_results['data_path'] = data_path
@@ -50,7 +50,7 @@ def test_load_annotations3D():
     assert sunrgbd_gt_bboxes_3d_mask.shape == (3, 1)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
-    scannet_load_annotations3D = LoadAnnotations3D()
+    scannet_load_annotations3D = IndoorLoadAnnotations3D()
     scannet_results = dict()
     data_path = './tests/data/scannet/scannet_train_instance_data'
     if scannet_info['annos']['gt_num'] != 0:
