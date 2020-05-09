@@ -87,7 +87,8 @@ class IndoorPointsColorJitter(object):
 
     def __call__(self, results):
         points = results['points']
-        assert points.shape[1] >= 6
+        assert points.shape[1] >= 6, \
+            f'Expect points have channel >=6, got {points.shape[1]}.'
         rgb_color = points[:, 3:6] + self.color_mean
         # brightness change for each channel
         rgb_color *= np.random.uniform(self.bright_range[0],
@@ -192,7 +193,9 @@ class IndoorGlobalRotScale(object):
         aligned = True if gt_bboxes_3d.shape[1] == 6 else False
 
         if self.rot_range is not None:
-            assert len(self.rot_range) == 2
+            assert len(self.rot_range) == 2, \
+                f'Except length of rot range =2, ' \
+                f'got {len(self.rot_range)}.'
             rot_angle = np.random.uniform(self.rot_range[0], self.rot_range[1])
             rot_mat = self._rotz(rot_angle)
             points[:, :3] = np.dot(points[:, :3], rot_mat.T)
@@ -204,7 +207,9 @@ class IndoorGlobalRotScale(object):
                 gt_bboxes_3d[:, 6] -= rot_angle
 
         if self.scale_range is not None:
-            assert len(self.scale_range) == 2
+            assert len(self.scale_range) == 2, \
+                f'Except length of scale range =2, ' \
+                f'got {len(self.scale_range)}.'
             # Augment point cloud scale
             scale_ratio = np.random.uniform(self.scale_range[0],
                                             self.scale_range[1])
