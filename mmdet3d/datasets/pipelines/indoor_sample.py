@@ -4,7 +4,7 @@ from mmdet.datasets.builder import PIPELINES
 
 
 @PIPELINES.register_module()
-class PointSample(object):
+class IndoorPointSample(object):
     """Point Sample.
 
     Sampling data to a certain number.
@@ -46,7 +46,7 @@ class PointSample(object):
             return points[choices]
 
     def __call__(self, results):
-        points = results.get('points', None)
+        points = results['points']
         points, choices = self.points_random_sampling(
             points, self.num_points, return_choices=True)
         pts_instance_mask = results.get('pts_instance_mask', None)
