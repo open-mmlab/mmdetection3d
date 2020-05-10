@@ -240,8 +240,6 @@ class KittiDataset(torch_data.Dataset):
                                       axis=1).astype(np.float32)
         difficulty = annos['difficulty']
         # this change gt_bboxes_3d to velodyne coordinates
-        import pdb
-        pdb.set_trace()
         gt_bboxes_3d = box_np_ops.box_camera_to_lidar(gt_bboxes_3d, rect,
                                                       Trv2c)
         # only center format is allowed. so we need to convert
