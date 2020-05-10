@@ -7,10 +7,10 @@ from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
 from .nuscenes_dataset import NuScenesDataset
 from .pipelines import (GlobalRotScale, IndoorFlipData, IndoorGlobalRotScale,
                         IndoorLoadAnnotations3D, IndoorLoadPointsFromFile,
-                        IndoorPointsColorJitter, IndoorPointsColorNormalize,
-                        ObjectNoise, ObjectRangeFilter, ObjectSample,
-                        PointSample, PointShuffle, PointsRangeFilter,
-                        RandomFlip3D)
+                        IndoorPointSample, IndoorPointsColorJitter,
+                        IndoorPointsColorNormalize, ObjectNoise,
+                        ObjectRangeFilter, ObjectSample, PointShuffle,
+                        PointsRangeFilter, RandomFlip3D)
 
 __all__ = [
     'KittiDataset', 'GroupSampler', 'DistributedGroupSampler',
@@ -18,7 +18,7 @@ __all__ = [
     'CocoDataset', 'Kitti2DDataset', 'NuScenesDataset', 'ObjectSample',
     'RandomFlip3D', 'ObjectNoise', 'GlobalRotScale', 'PointShuffle',
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
-    'IndoorLoadPointsFromFile', 'IndoorPointsColorNormalize', 'PointSample',
-    'IndoorLoadAnnotations3D', 'IndoorPointsColorJitter',
+    'IndoorLoadPointsFromFile', 'IndoorPointsColorNormalize',
+    'IndoorPointSample', 'IndoorLoadAnnotations3D', 'IndoorPointsColorJitter',
     'IndoorGlobalRotScale', 'IndoorFlipData'
 ]
