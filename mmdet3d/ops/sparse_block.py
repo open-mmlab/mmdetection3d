@@ -1,7 +1,7 @@
 from mmcv.cnn import build_norm_layer
 from torch import nn
 
-import mmdet3d.ops.spconv as spconv
+from . import spconv
 from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 
 

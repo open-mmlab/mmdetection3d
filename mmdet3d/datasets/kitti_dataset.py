@@ -184,6 +184,8 @@ class KittiDataset(torch_data.Dataset):
         if self.modality['use_depth'] and self.modality['use_lidar']:
             points = self.get_lidar_depth_reduced(sample_idx)
         elif self.modality['use_lidar']:
+            points = self.get_lidar(sample_idx)
+        elif self.modality['use_lidar_reduced']:
             points = self.get_lidar_reduced(sample_idx)
         elif self.modality['use_depth']:
             points = self.get_pure_depth_reduced(sample_idx)
