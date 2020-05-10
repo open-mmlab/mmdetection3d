@@ -110,7 +110,11 @@ mmdetection
 │   ├── VOCdevkit
 │   │   ├── VOC2007
 │   │   ├── VOC2012
-
+│   ├── ScanNet
+│   │   ├── meta_data
+│   │   ├── scannet_train_instance_data
+│   ├── SUNRGBD
+│   │   ├── sunrgbd_trainval
 ```
 The cityscapes annotations have to be converted into the coco format using `tools/convert_datasets/cityscapes.py`:
 ```shell

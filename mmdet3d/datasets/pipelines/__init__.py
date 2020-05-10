@@ -3,6 +3,9 @@ from .dbsampler import DataBaseSampler, MMDataBaseSampler
 from .formating import DefaultFormatBundle, DefaultFormatBundle3D
 from .indoor_augment import (IndoorFlipData, IndoorGlobalRotScale,
                              IndoorPointsColorJitter)
+from .indoor_loading import (IndoorLoadAnnotations3D, IndoorLoadPointsFromFile,
+                             IndoorPointsColorNormalize)
+from .indoor_sample import PointSample
 from .loading import LoadMultiViewImageFromFiles, LoadPointsFromFile
 from .train_aug import (GlobalRotScale, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointShuffle, PointsRangeFilter,
@@ -14,5 +17,6 @@ __all__ = [
     'Compose', 'LoadMultiViewImageFromFiles', 'LoadPointsFromFile',
     'DefaultFormatBundle', 'DefaultFormatBundle3D', 'DataBaseSampler',
     'IndoorGlobalRotScale', 'IndoorPointsColorJitter', 'IndoorFlipData',
-    'MMDataBaseSampler'
+    'MMDataBaseSampler', 'IndoorLoadPointsFromFile',
+    'IndoorPointsColorNormalize', 'IndoorLoadAnnotations3D', 'PointSample'
 ]
