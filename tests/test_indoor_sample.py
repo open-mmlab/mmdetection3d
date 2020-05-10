@@ -1,11 +1,11 @@
 import numpy as np
 
-from mmdet3d.datasets.pipelines import PointSample
+from mmdet3d.datasets.pipelines import IndoorPointSample
 
 
 def test_indoor_sample():
     np.random.seed(0)
-    scannet_sample_points = PointSample(5)
+    scannet_sample_points = IndoorPointSample(5)
     scannet_results = dict()
     scannet_points = np.array([[1.0719866, -0.7870435, 0.8408122, 0.9196809],
                                [1.103661, 0.81065744, 2.6616862, 2.7405548],
@@ -24,11 +24,9 @@ def test_indoor_sample():
     scannet_pts_semantic_mask = np.array([38, 1, 1, 40, 0, 40, 1, 1, 1, 0])
     scannet_results['pts_semantic_mask'] = scannet_pts_semantic_mask
     scannet_results = scannet_sample_points(scannet_results)
-    scannet_points_result = scannet_results.get('points', None)
-    scannet_instance_labels_result = scannet_results.get(
-        'pts_instance_mask', None)
-    scannet_semantic_labels_result = scannet_results.get(
-        'pts_semantic_mask', None)
+    scannet_points_result = scannet_results['points']
+    scannet_instance_labels_result = scannet_results['pts_instance_mask']
+    scannet_semantic_labels_result = scannet_results['pts_semantic_mask']
     scannet_choices = np.array([2, 8, 4, 9, 1])
     assert np.allclose(scannet_points[scannet_choices], scannet_points_result)
     assert np.all(scannet_pts_instance_mask[scannet_choices] ==
@@ -37,7 +35,7 @@ def test_indoor_sample():
                   scannet_semantic_labels_result)
 
     np.random.seed(0)
-    sunrgbd_sample_points = PointSample(5)
+    sunrgbd_sample_points = IndoorPointSample(5)
     sunrgbd_results = dict()
     sunrgbd_point_cloud = np.array(
         [[-1.8135729e-01, 1.4695230e+00, -1.2780589e+00, 7.8938007e-03],
@@ -53,6 +51,6 @@ def test_indoor_sample():
     sunrgbd_results['points'] = sunrgbd_point_cloud
     sunrgbd_results = sunrgbd_sample_points(sunrgbd_results)
     sunrgbd_choices = np.array([2, 8, 4, 9, 1])
-    sunrgbd_points_result = sunrgbd_results.get('points', None)
+    sunrgbd_points_result = sunrgbd_results['points']
     assert np.allclose(sunrgbd_point_cloud[sunrgbd_choices],
                        sunrgbd_points_result)
