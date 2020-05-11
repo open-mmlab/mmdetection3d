@@ -66,7 +66,6 @@ def test_load_annotations3D():
         data_path, f'{scan_name}_ins_label.npy')
     scannet_results['pts_semantic_mask_path'] = osp.join(
         data_path, f'{scan_name}_sem_label.npy')
-    scannet_results['info'] = scannet_info
     scannet_results['gt_bboxes_3d'] = scannet_gt_bboxes_3d
     scannet_results['gt_labels'] = scannet_gt_labels
     scannet_results['gt_bboxes_3d_mask'] = scannet_gt_bboxes_3d_mask
