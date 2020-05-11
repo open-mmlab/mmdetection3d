@@ -1,8 +1,8 @@
 from mmcv.cnn import build_norm_layer
 from torch import nn
 
-import mmdet3d.ops.spconv as spconv
 from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
+from . import spconv
 
 
 def conv3x3(in_planes, out_planes, stride=1, indice_key=None):
