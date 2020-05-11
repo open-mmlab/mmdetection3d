@@ -1,5 +1,3 @@
-import copy
-
 import torch
 import torch.nn as nn
 from mmcv.cnn import (build_norm_layer, build_upsample_layer, constant_init,
@@ -36,19 +34,15 @@ class SECONDFPN(nn.Module):
 
         deblocks = []
         for i, out_channel in enumerate(out_channels):
-            norm_layer = build_norm_layer(norm_cfg, out_channel)[1]
-            upsample_cfg_ = copy.deepcopy(upsample_cfg)
-            upsample_cfg_.update(
+            upsample_layer = build_upsample_layer(
+                upsample_cfg,
                 in_channels=in_channels[i],
                 out_channels=out_channel,
-                padding=upsample_strides[i],
+                kernel_size=upsample_strides[i],
                 stride=upsample_strides[i])
-            upsample_layer = build_upsample_layer(upsample_cfg_)
-            deblock = nn.Sequential(
-                upsample_layer,
-                norm_layer,
-                nn.ReLU(inplace=True),
-            )
+            deblock = nn.Sequential(upsample_layer,
+                                    build_norm_layer(norm_cfg, out_channel)[1],
+                                    nn.ReLU(inplace=True))
             deblocks.append(deblock)
         self.deblocks = nn.ModuleList(deblocks)
 
