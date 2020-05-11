@@ -28,7 +28,7 @@ model = dict(
         in_channels=64,
         layer_nums=[3, 5, 5],
         layer_strides=[2, 2, 2],
-        num_filters=[64, 128, 256],
+        out_channels=[64, 128, 256],
     ),
     neck=dict(
         type='SECONDFPN',
