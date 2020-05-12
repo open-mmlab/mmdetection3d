@@ -41,7 +41,7 @@ model = dict(
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         in_channels=[64, 128, 256],
         upsample_strides=[1, 2, 4],
-        out_channels=[128, 128, 128],
+        num_upsample_filters=[128, 128, 128],
     ),
     pts_bbox_head=dict(
         type='Anchor3DVeloHead',
