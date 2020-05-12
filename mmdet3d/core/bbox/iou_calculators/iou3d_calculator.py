@@ -1,6 +1,6 @@
 import torch
 
-from mmdet3d.ops.iou3d import boxes_iou3d_gpu
+from mmdet3d.ops.iou3d import boxes_iou3d_gpu_camera, boxes_iou3d_gpu_lidar
 from mmdet.core.bbox import bbox_overlaps
 from mmdet.core.bbox.iou_calculators.builder import IOU_CALCULATORS
 from .. import box_torch_ops
@@ -22,10 +22,18 @@ class BboxOverlapsNearest3D(object):
 
 @IOU_CALCULATORS.register_module()
 class BboxOverlaps3D(object):
-    """3D IoU Calculator"""
+    """3D IoU Calculator
 
-    def __call__(self, bboxes1, bboxes2, mode='iou', is_aligned=False):
-        return bbox_overlaps_3d(bboxes1, bboxes2, mode, is_aligned)
+    Args:
+        coordinate (str): 'camera' or 'lidar' coordinate system
+    """
+
+    def __init__(self, coordinate):
+        assert coordinate in ['camera', 'lidar']
+        self.coordinate = coordinate
+
+    def __call__(self, bboxes1, bboxes2, mode='iou'):
+        return bbox_overlaps_3d(bboxes1, bboxes2, mode, self.coordinate)
 
     def __repr__(self):
         repr_str = self.__class__.__name__
@@ -62,7 +70,7 @@ def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
     return ret
 
 
-def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou'):
+def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     """Calculate 3D IoU using cuda implementation
 
     Args:
@@ -70,6 +78,7 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou'):
         bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]
         mode: mode (str): "iou" (intersection over union) or
             iof (intersection over foreground).
+        coordinate (str): 'camera' or 'lidar' coordinate system
 
     Return:
         iou: (M, N) not support aligned mode currently
@@ -77,4 +86,11 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou'):
     # TODO: check the input dimension meanings,
     #  this is inconsistent with that in bbox_overlaps_nearest_3d
     assert bboxes1.size(-1) == bboxes2.size(-1) == 7
-    return boxes_iou3d_gpu(bboxes1, bboxes2, mode)
+    assert coordinate in ['camera', 'lidar']
+
+    if coordinate == 'camera':
+        return boxes_iou3d_gpu_camera(bboxes1, bboxes2, mode)
+    elif coordinate == 'lidar':
+        return boxes_iou3d_gpu_lidar(bboxes1, bboxes2, mode)
+    else:
+        raise NotImplementedError
