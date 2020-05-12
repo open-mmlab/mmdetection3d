@@ -63,7 +63,7 @@ model = dict(
         type='SECONDFPN',
         in_channels=[128, 256],
         upsample_strides=[1, 2],
-        num_upsample_filters=[256, 256],
+        out_channels=[256, 256],
     ),
     pts_bbox_head=dict(
         type='SECONDHead',

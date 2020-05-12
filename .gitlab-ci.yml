@@ -26,6 +26,7 @@ before_script:
   script:
     - echo "Start building..."
     - pip install "git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI"
+    - pip install git+https://github.com/open-mmlab/mmcv.git
     - pip install git+https://github.com/open-mmlab/mmdetection.git
     - python -c "import mmdet; print(mmdet.__version__)"
     - pip install -v -e .[all]
