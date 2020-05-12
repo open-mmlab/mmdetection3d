@@ -16,7 +16,7 @@ before_script:
 .linting_template: &linting_template_def
   stage: linting
   script:
-    - pip install flake8 yapf isort
+    - pip install flake8==3.7.9 yapf isort
     - flake8 .
     - isort -rc --check-only --diff mmdet3d/ tools/ tests/
     - yapf -r -d mmdet3d/ tools/ tests/ configs/
