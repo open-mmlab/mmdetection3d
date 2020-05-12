@@ -11,7 +11,7 @@ from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class ScannetDataset(torch_data.dataset):
+class ScannetDataset(torch_data.Dataset):
     type2class = {
         'cabinet': 0,
         'bed': 1,
@@ -60,25 +60,20 @@ class ScannetDataset(torch_data.dataset):
     def __init__(self,
                  root_path,
                  ann_file,
-                 split,
                  pipeline=None,
                  training=False,
                  class_names=None,
-                 test_mode=False):
+                 test_mode=False,
+                 with_label=True):
         super().__init__()
         self.root_path = root_path
         self.class_names = class_names if class_names else self.CLASSES
-        self.split = split
 
         self.data_path = os.path.join(root_path, 'scannet_train_instance_data')
         self.test_mode = test_mode
         self.training = training
         self.mode = 'TRAIN' if self.training else 'TEST'
         self.ann_file = ann_file
-
-        # set group flag for the sampler
-        if not self.test_mode:
-            self._set_group_flag()
 
         self.scannet_infos = mmcv.load(ann_file)
 
@@ -93,25 +88,26 @@ class ScannetDataset(torch_data.dataset):
         }
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
+        self.with_label = with_label
 
     def __getitem__(self, idx):
         if self.test_mode:
-            return self.prepare_test_data(idx)
+            return self._prepare_test_data(idx)
         while True:
-            data = self.prepare_train_data(idx)
+            data = self._prepare_train_data(idx)
             if data is None:
                 idx = self._rand_another(idx)
                 continue
             return data
 
-    def prepare_test_data(self, index):
-        input_dict = self.get_sensor_data(index)
+    def _prepare_test_data(self, index):
+        input_dict = self._get_sensor_data(index)
         example = self.pipeline(input_dict)
         return example
 
-    def prepare_train_data(self, index):
-        input_dict = self.get_sensor_data(index)
-        input_dict = self.train_pre_pipeline(input_dict)
+    def _prepare_train_data(self, index):
+        input_dict = self._get_sensor_data(index)
+        input_dict = self._train_pre_pipeline(input_dict)
         if input_dict is None:
             return None
         example = self.pipeline(input_dict)
@@ -119,43 +115,40 @@ class ScannetDataset(torch_data.dataset):
             return None
         return example
 
-    def train_pre_pipeline(self, input_dict):
+    def _train_pre_pipeline(self, input_dict):
         if len(input_dict['gt_bboxes_3d']) == 0:
             return None
         return input_dict
 
-    def get_sensor_data(self, index):
+    def _get_sensor_data(self, index):
         info = self.scannet_infos[index]
         sample_idx = info['point_cloud']['lidar_idx']
-        points = self.get_lidar(sample_idx)
+        pts_filename = self._get_pts_filename(sample_idx)
 
-        input_dict = dict(
-            sample_idx=sample_idx,
-            points=points,
-        )
+        input_dict = dict(pts_filename=pts_filename)
 
         if self.with_label:
-            annos = self.get_ann_info(index, sample_idx)
+            annos = self._get_ann_info(index, sample_idx)
             input_dict.update(annos)
 
         return input_dict
 
-    def get_lidar(self, sample_idx):
-        lidar_file = os.path.join(self.data_path, sample_idx + '_vert.npy')
-        assert os.path.exists(lidar_file)
-        return np.load(lidar_file)
+    def _get_pts_filename(self, sample_idx):
+        pts_filename = os.path.join(self.data_path, sample_idx + '_vert.npy')
+        mmcv.check_file_exist(pts_filename)
+        return pts_filename
 
-    def get_ann_info(self, index, sample_idx):
+    def _get_ann_info(self, index, sample_idx):
         # Use index to get the annos, thus the evalhook could also use this api
-        info = self.kitti_infos[index]
+        info = self.scannet_infos[index]
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']  # k, 6
-            gt_labels = info['annos']['class'].reshape(-1, 1)
-            gt_bboxes_3d_mask = np.ones_like(gt_labels)
+            gt_labels = info['annos']['class']
+            gt_bboxes_3d_mask = np.ones_like(gt_labels).astype(np.bool)
         else:
             gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-            gt_labels = np.zeros((1, 1))
-            gt_bboxes_3d_mask = np.zeros((1, 1))
+            gt_labels = np.zeros(1, ).astype(np.bool)
+            gt_bboxes_3d_mask = np.zeros(1, ).astype(np.bool)
         pts_instance_mask_path = osp.join(self.data_path,
                                           sample_idx + '_ins_label.npy')
         pts_semantic_mask_path = osp.join(self.data_path,
@@ -173,7 +166,7 @@ class ScannetDataset(torch_data.dataset):
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
 
-    def generate_annotations(self, output):
+    def _generate_annotations(self, output):
         '''
         transfer input_dict & pred_dicts to anno format
         which is needed by AP calculator
@@ -209,15 +202,15 @@ class ScannetDataset(torch_data.dataset):
 
         return result
 
-    def format_results(self, outputs):
+    def _format_results(self, outputs):
         results = []
         for output in outputs:
-            result = self.generate_annotations(output)
+            result = self._generate_annotations(output)
             results.append(result)
         return results
 
     def evaluate(self, results, metric=None, logger=None, pklfile_prefix=None):
-        results = self.format_results(results)
+        results = self._format_results(results)
         from mmdet3d.core.evaluation.scannet_utils.eval import scannet_eval
         assert ('AP_IOU_THRESHHOLDS' in metric)
         gt_annos = [
