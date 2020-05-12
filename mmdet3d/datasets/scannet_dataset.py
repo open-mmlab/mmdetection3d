@@ -1,3 +1,4 @@
+import copy
 import os
 import os.path as osp
 
@@ -171,6 +172,59 @@ class ScannetDataset(torch_data.dataset):
     def _rand_another(self, idx):
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
+
+    def generate_annotations(self, output):
+        '''
+        transfer input_dict & pred_dicts to anno format
+        which is needed by AP calculator
+        return annos: a tuple (batch_pred_map_cls,batch_gt_map_cls)
+                        batch_pred_map_cls is a list: i=0,1..bs-1
+                            pred_list_i:[(pred_sem_cls,
+                            box_params, box_score)_j]
+                            j=0,1..num_pred_obj -1
+
+                        batch_gt_map_cls is a list: i=0,1..bs-1
+                            gt_list_i: [(sem_cls_label, box_params)_j]
+                            j=0,1..num_gt_obj -1
+        '''
+        result = []
+        bs = len(output)
+        for i in range(bs):
+            pred_list_i = list()
+            pred_boxes = output[i]
+            box3d_depth = pred_boxes['box3d_lidar']
+            if box3d_depth is not None:
+                label_preds = pred_boxes.get['label_preds']
+                scores = pred_boxes['scores'].detach().cpu().numpy()
+                label_preds = label_preds.detach().cpu().numpy()
+                num_proposal = box3d_depth.shape[0]
+                for j in range(num_proposal):
+                    bbox_lidar = box3d_depth[j]  # [7] in lidar
+                    bbox_lidar_bottom = bbox_lidar.copy()
+                    pred_list_i.append(
+                        (label_preds[j], bbox_lidar_bottom, scores[j]))
+                result.append(pred_list_i)
+            else:
+                result.append(pred_list_i)
+
+        return result
+
+    def format_results(self, outputs):
+        results = []
+        for output in outputs:
+            result = self.generate_annotations(output)
+            results.append(result)
+        return results
+
+    def evaluate(self, results, metric=None, logger=None, pklfile_prefix=None):
+        results = self.format_results(results)
+        from mmdet3d.core.evaluation.scannet_utils.eval import scannet_eval
+        assert ('AP_IOU_THRESHHOLDS' in metric)
+        gt_annos = [
+            copy.deepcopy(info['annos']) for info in self.scannet_infos
+        ]
+        ap_result_str, ap_dict = scannet_eval(gt_annos, results)
+        return ap_dict
 
     def __len__(self):
         return len(self.scannet_infos)
