@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.datasets.scannet_dataset import ScannetDataset
@@ -72,6 +73,8 @@ def test_getitem():
 
 
 def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip()
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
     scannet_dataset = ScannetDataset(root_path, ann_file)
