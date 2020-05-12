@@ -9,7 +9,7 @@ from .. import builder
 
 @NECKS.register_module()
 class SECONDFPN(nn.Module):
-    """FPN used in SECOND/PointPillars
+    """FPN used in SECOND/PointPillars/PartA2/MVXNet
 
     Args:
         in_channels (list[int]): Input channels of multi-scale feature maps
