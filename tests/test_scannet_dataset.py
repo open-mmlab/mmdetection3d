@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from mmdet3d.datasets.scannet_dataset import ScannetDataset
 
@@ -68,3 +69,49 @@ def test_getitem():
     assert np.all(gt_labels.numpy() == expected_gt_labels)
     assert np.all(pts_semantic_mask == expected_pts_semantic_mask)
     assert np.all(pts_instance_mask == expected_pts_instance_mask)
+
+
+def test_evaluate():
+    root_path = './tests/data/scannet'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    scannet_dataset = ScannetDataset(root_path, ann_file)
+    results = []
+    pred_boxes = dict()
+    pred_boxes['box3d_lidar'] = np.array([[
+        3.52074146e+00, -1.48129511e+00, 1.57035351e+00, 2.31956959e-01,
+        1.74445975e+00, 5.72351933e-01, 0
+    ],
+                                          [
+                                              -3.48033905e+00, -2.90395617e+00,
+                                              1.19105673e+00, 1.70723915e-01,
+                                              6.60776615e-01, 6.71535969e-01, 0
+                                          ],
+                                          [
+                                              2.19867110e+00, -1.14655101e+00,
+                                              9.25755501e-03, 2.53463078e+00,
+                                              5.41841269e-01, 1.21447623e+00, 0
+                                          ],
+                                          [
+                                              2.50163722, -2.91681337,
+                                              0.82875049, 1.84280431,
+                                              0.61697435, 0.28697443, 0
+                                          ],
+                                          [
+                                              -0.01335114, 3.3114481,
+                                              -0.00895238, 3.85815716,
+                                              0.44081616, 2.16034412, 0
+                                          ]])
+    pred_boxes['label_preds'] = torch.Tensor([6, 6, 4, 9, 11]).cuda()
+    pred_boxes['scores'] = torch.Tensor([0.5, 1.0, 1.0, 1.0, 1.0]).cuda()
+    results.append([pred_boxes])
+    metric = dict()
+    metric['AP_IOU_THRESHHOLDS'] = [0.25, 0.5]
+    ap_dict = scannet_dataset.evaluate(results, metric)
+    table_average_precision_25 = ap_dict['table Average Precision 25']
+    window_average_precision_25 = ap_dict['window Average Precision 25']
+    counter_average_precision_25 = ap_dict['counter Average Precision 25']
+    curtain_average_precision_25 = ap_dict['curtain Average Precision 25']
+    assert abs(table_average_precision_25 - 0.3333) < 0.01
+    assert abs(window_average_precision_25 - 1) < 0.01
+    assert abs(counter_average_precision_25 - 1) < 0.01
+    assert abs(curtain_average_precision_25 - 0.5) < 0.01

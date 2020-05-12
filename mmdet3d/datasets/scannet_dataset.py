@@ -187,7 +187,7 @@ class ScannetDataset(torch_data.Dataset):
             pred_boxes = output[i]
             box3d_depth = pred_boxes['box3d_lidar']
             if box3d_depth is not None:
-                label_preds = pred_boxes.get['label_preds']
+                label_preds = pred_boxes['label_preds']
                 scores = pred_boxes['scores'].detach().cpu().numpy()
                 label_preds = label_preds.detach().cpu().numpy()
                 num_proposal = box3d_depth.shape[0]
@@ -216,7 +216,8 @@ class ScannetDataset(torch_data.Dataset):
         gt_annos = [
             copy.deepcopy(info['annos']) for info in self.scannet_infos
         ]
-        ap_result_str, ap_dict = scannet_eval(gt_annos, results)
+        ap_result_str, ap_dict = scannet_eval(gt_annos, results, metric,
+                                              self.class2type)
         return ap_dict
 
     def __len__(self):
