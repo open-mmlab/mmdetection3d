@@ -7,7 +7,7 @@ from mmdet.models import BACKBONES
 
 @BACKBONES.register_module()
 class SECOND(nn.Module):
-    """Backbone network for SECOND/PointPillars/MVXNet
+    """Backbone network for SECOND/PointPillars/PartA2/MVXNet
 
     Args:
         in_channels (int): Input channels
