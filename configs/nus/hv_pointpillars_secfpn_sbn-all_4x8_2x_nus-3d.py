@@ -34,7 +34,7 @@ model = dict(
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         layer_nums=[3, 5, 5],
         layer_strides=[2, 2, 2],
-        num_filters=[64, 128, 256],
+        out_channels=[64, 128, 256],
     ),
     pts_neck=dict(
         type='SECONDFPN',
