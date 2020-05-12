@@ -90,7 +90,8 @@ class_names = ['Car']
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 input_modality = dict(
-    use_lidar=True,
+    use_lidar=False,
+    use_lidar_reduced=True,
     use_depth=False,
     use_lidar_intensity=True,
     use_camera=False,
