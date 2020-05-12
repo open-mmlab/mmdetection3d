@@ -146,9 +146,9 @@ class SUNRGBDData(object):
             pc_upright_depth = self.get_depth(sample_idx)
             pc_upright_depth_subsampled = random_sampling(
                 pc_upright_depth, SAMPLE_NUM)
-            np.savez_compressed(
-                os.path.join(self.root_dir, 'lidar', f'{sample_idx:06d}.npz'),
-                pc=pc_upright_depth_subsampled)
+            np.save(
+                os.path.join(self.root_dir, 'lidar', f'{sample_idx:06d}.npy'),
+                pc_upright_depth_subsampled)
 
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
