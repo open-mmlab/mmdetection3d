@@ -1,4 +1,6 @@
 import numpy as np
+import pytest
+import torch
 
 from mmdet3d.datasets import SunrgbdDataset
 
@@ -57,3 +59,33 @@ def test_getitem():
     assert np.allclose(points, expected_points)
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert np.all(gt_labels.numpy() == expected_gt_labels)
+
+
+def test_evaluate():
+
+    if not torch.cuda.is_available():
+        pytest.skip()
+    root_path = './tests/data/sunrgbd'
+    ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
+    sunrgbd_dataset = SunrgbdDataset(root_path, ann_file)
+    results = []
+    pred_boxes = dict()
+    pred_boxes['box3d_lidar'] = np.array([[
+        1.047307, 4.168696, -0.246859, 2.30207, 1.887584, 1.969614, 1.69564944
+    ], [
+        2.583086, 4.811675, -0.786667, 0.585172, 0.883176, 0.973334, 1.64999513
+    ], [
+        -1.086364, 1.904545, -0.147727, 0.71281, 1.563134, 2.104546, 0.1022069
+    ]])
+    pred_boxes['label_preds'] = torch.Tensor([0, 7, 6]).cuda()
+    pred_boxes['scores'] = torch.Tensor([0.5, 1.0, 1.0]).cuda()
+    results.append([pred_boxes])
+    metric = dict()
+    metric['AP_IOU_THRESHHOLDS'] = [0.25, 0.5]
+    ap_dict = sunrgbd_dataset.evaluate(results, metric)
+    bed_precision_25 = ap_dict['bed Average Precision 25']
+    dresser_precision_25 = ap_dict['dresser Average Precision 25']
+    night_stand_precision_25 = ap_dict['night_stand Average Precision 25']
+    assert abs(bed_precision_25 - 1) < 0.01
+    assert abs(dresser_precision_25 - 1) < 0.01
+    assert abs(night_stand_precision_25 - 1) < 0.01
