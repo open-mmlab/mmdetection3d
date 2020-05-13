@@ -31,7 +31,7 @@ def test_scannet_pipeline():
         dict(
             type='Collect3D',
             keys=[
-                'points', 'gt_bboxes_3d', 'gt_labels', 'pts_semantic_mask',
+                'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
                 'pts_instance_mask'
             ]),
     ]
@@ -44,12 +44,12 @@ def test_scannet_pipeline():
     results['pts_filename'] = osp.join(data_path, f'{scan_name}_vert.npy')
     if info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-        scannet_gt_labels = info['annos']['class']
-        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels).astype(
+        scannet_gt_labels_3d = info['annos']['class']
+        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels_3d).astype(
             np.bool)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        scannet_gt_labels = np.zeros((1, ))
+        scannet_gt_labels_3d = np.zeros((1, ))
         scannet_gt_bboxes_3d_mask = np.zeros((1, )).astype(np.bool)
     scan_name = info['point_cloud']['lidar_idx']
 
@@ -58,14 +58,14 @@ def test_scannet_pipeline():
     results['pts_semantic_mask_path'] = osp.join(data_path,
                                                  f'{scan_name}_sem_label.npy')
     results['gt_bboxes_3d'] = scannet_gt_bboxes_3d
-    results['gt_labels'] = scannet_gt_labels
+    results['gt_labels_3d'] = scannet_gt_labels_3d
     results['gt_bboxes_3d_mask'] = scannet_gt_bboxes_3d_mask
 
     results = pipeline(results)
 
     points = results['points']._data
     gt_bboxes_3d = results['gt_bboxes_3d']._data
-    gt_labels = results['gt_labels']._data
+    gt_labels_3d = results['gt_labels_3d']._data
     pts_semantic_mask = results['pts_semantic_mask']
     pts_instance_mask = results['pts_instance_mask']
     expected_points = np.array(
@@ -81,7 +81,7 @@ def test_scannet_pipeline():
         [-2.930457, -2.4856408, 0.9722377, 0.6270478, 1.8461524, 0.28697443],
         [3.3114715, -0.00476722, 1.0712197, 0.46191898, 3.8605113, 2.1603441]
     ])
-    expected_gt_labels = np.array([
+    expected_gt_labels_3d = np.array([
         6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
         0, 0, 0, 5, 5, 5
     ])
@@ -89,7 +89,7 @@ def test_scannet_pipeline():
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     assert np.allclose(points, expected_points)
     assert np.allclose(gt_bboxes_3d[:5, :], expected_gt_bboxes_3d)
-    assert np.all(gt_labels.numpy() == expected_gt_labels)
+    assert np.all(gt_labels_3d.numpy() == expected_gt_labels_3d)
     assert np.all(pts_semantic_mask == expected_pts_semantic_mask)
     assert np.all(pts_instance_mask == expected_pts_instance_mask)
 
@@ -112,7 +112,8 @@ def test_sunrgbd_pipeline():
             scale_range=[0.85, 1.15]),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
-        dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels']),
+        dict(
+            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
     ]
     pipeline = Compose(pipelines)
     results = dict()
@@ -124,20 +125,20 @@ def test_sunrgbd_pipeline():
 
     if info['annos']['gt_num'] != 0:
         gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-        gt_labels = info['annos']['class']
-        gt_bboxes_3d_mask = np.ones_like(gt_labels).astype(np.bool)
+        gt_labels_3d = info['annos']['class']
+        gt_bboxes_3d_mask = np.ones_like(gt_labels_3d).astype(np.bool)
     else:
         gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        gt_labels = np.zeros((1, ))
+        gt_labels_3d = np.zeros((1, ))
         gt_bboxes_3d_mask = np.zeros((1, )).astype(np.bool)
 
     results['gt_bboxes_3d'] = gt_bboxes_3d
-    results['gt_labels'] = gt_labels
+    results['gt_labels_3d'] = gt_labels_3d
     results['gt_bboxes_3d_mask'] = gt_bboxes_3d_mask
     results = pipeline(results)
     points = results['points']._data
     gt_bboxes_3d = results['gt_bboxes_3d']._data
-    gt_labels = results['gt_labels']._data
+    gt_labels_3d = results['gt_labels_3d']._data
     expected_points = np.array(
         [[0.6570105, 1.5538014, 0.24514851, 1.0165423],
          [0.656101, 1.558591, 0.21755838, 0.98895216],
@@ -158,7 +159,7 @@ def test_sunrgbd_pipeline():
                                           0.7347852, 1.6113238, 2.1694272,
                                           2.81404
                                       ]])
-    expected_gt_labels = np.array([0, 7, 6])
+    expected_gt_labels_3d = np.array([0, 7, 6])
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
-    assert np.allclose(gt_labels.flatten(), expected_gt_labels)
+    assert np.allclose(gt_labels_3d.flatten(), expected_gt_labels_3d)
     assert np.allclose(points, expected_points)
