@@ -9,28 +9,28 @@ from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class IndoorDataset(torch_data.Dataset):
+class IndoorBaseDataset(torch_data.Dataset):
 
     def __init__(self,
                  root_path,
                  ann_file,
                  pipeline=None,
                  training=False,
-                 class_names=None,
+                 cat_ids=None,
                  test_mode=False,
                  with_label=True):
         super().__init__()
         self.root_path = root_path
-        self.class_names = class_names if class_names else self.CLASSES
+        self.cat_ids = cat_ids if cat_ids else self.CLASSES
         self.test_mode = test_mode
         self.training = training
         self.mode = 'TRAIN' if self.training else 'TEST'
-
+        self.label2cat = {i: cat_id for i, cat_id in enumerate(self.cat_ids)}
         mmcv.check_file_exist(ann_file)
         self.infos = mmcv.load(ann_file)
 
         # dataset config
-        self.num_class = len(self.class_names)
+        self.num_class = len(self.cat_ids)
         self.pcd_limit_range = [0, -40, -3.0, 70.4, 40, 3.0]
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
@@ -134,7 +134,7 @@ class IndoorDataset(torch_data.Dataset):
         assert len(metric) > 0
         gt_annos = [copy.deepcopy(info['annos']) for info in self.infos]
         ap_result_str, ap_dict = indoor_eval(gt_annos, results, metric,
-                                             self.class2type)
+                                             self.label2cat)
         return ap_dict
 
     def __len__(self):

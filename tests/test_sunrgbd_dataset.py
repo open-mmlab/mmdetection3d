@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.datasets import SunrgbdDataset
+from mmdet3d.datasets import SunrgbdBaseDataset
 
 
 def test_getitem():
@@ -28,7 +28,7 @@ def test_getitem():
         dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels']),
     ]
 
-    sunrgbd_dataset = SunrgbdDataset(root_path, ann_file, pipelines, True)
+    sunrgbd_dataset = SunrgbdBaseDataset(root_path, ann_file, pipelines, True)
     data = sunrgbd_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
@@ -67,7 +67,7 @@ def test_evaluate():
         pytest.skip()
     root_path = './tests/data/sunrgbd'
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
-    sunrgbd_dataset = SunrgbdDataset(root_path, ann_file)
+    sunrgbd_dataset = SunrgbdBaseDataset(root_path, ann_file)
     results = []
     pred_boxes = dict()
     pred_boxes['box3d_lidar'] = np.array([[

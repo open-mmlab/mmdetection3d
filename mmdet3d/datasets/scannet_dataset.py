@@ -4,31 +4,12 @@ import mmcv
 import numpy as np
 
 from mmdet.datasets import DATASETS
-from .indoor_dataset import IndoorDataset
+from .indoor_base_dataset import IndoorBaseDataset
 
 
 @DATASETS.register_module()
-class ScannetDataset(IndoorDataset):
-    class2type = {
-        0: 'cabinet',
-        1: 'bed',
-        2: 'chair',
-        3: 'sofa',
-        4: 'table',
-        5: 'door',
-        6: 'window',
-        7: 'bookshelf',
-        8: 'picture',
-        9: 'counter',
-        10: 'desk',
-        11: 'curtain',
-        12: 'refrigerator',
-        13: 'showercurtrain',
-        14: 'toilet',
-        15: 'sink',
-        16: 'bathtub',
-        17: 'garbagebin'
-    }
+class ScannetBaseDataset(IndoorBaseDataset):
+
     CLASSES = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
@@ -39,10 +20,10 @@ class ScannetDataset(IndoorDataset):
                  ann_file,
                  pipeline=None,
                  training=False,
-                 class_names=None,
+                 cat_ids=None,
                  test_mode=False,
                  with_label=True):
-        super().__init__(root_path, ann_file, pipeline, training, class_names,
+        super().__init__(root_path, ann_file, pipeline, training, cat_ids,
                          test_mode, with_label)
 
         self.data_path = osp.join(root_path, 'scannet_train_instance_data')
