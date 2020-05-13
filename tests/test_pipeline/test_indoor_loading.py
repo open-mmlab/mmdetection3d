@@ -40,12 +40,12 @@ def test_load_annotations3D():
     if sunrgbd_info['annos']['gt_num'] != 0:
         sunrgbd_gt_bboxes_3d = sunrgbd_info['annos']['gt_boxes_upright_depth']
         sunrgbd_gt_labels_3d = sunrgbd_info['annos']['class']
-        sunrgbd_gt_bboxes_3d_mask = np.ones_like(sunrgbd_gt_labels_3d).astype(
-            np.bool)
+        sunrgbd_gt_bboxes_3d_mask = np.ones_like(
+            sunrgbd_gt_labels_3d, dtype=np.bool)
     else:
         sunrgbd_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
         sunrgbd_gt_labels_3d = np.zeros((1, ))
-        sunrgbd_gt_bboxes_3d_mask = np.zeros((1, ))
+        sunrgbd_gt_bboxes_3d_mask = np.zeros((1, ), dtype=np.bool)
     assert sunrgbd_gt_bboxes_3d.shape == (3, 7)
     assert sunrgbd_gt_labels_3d.shape == (3, )
     assert sunrgbd_gt_bboxes_3d_mask.shape == (3, )
@@ -57,12 +57,12 @@ def test_load_annotations3D():
     if scannet_info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = scannet_info['annos']['gt_boxes_upright_depth']
         scannet_gt_labels_3d = scannet_info['annos']['class']
-        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels_3d).astype(
-            np.bool)
+        scannet_gt_bboxes_3d_mask = np.ones_like(
+            scannet_gt_labels_3d, dtype=np.bool)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
         scannet_gt_labels_3d = np.zeros((1, ))
-        scannet_gt_bboxes_3d_mask = np.zeros((1, )).astype(np.bool)
+        scannet_gt_bboxes_3d_mask = np.zeros((1, ), dtype=np.bool)
     scan_name = scannet_info['point_cloud']['lidar_idx']
     scannet_results['pts_instance_mask_path'] = osp.join(
         data_path, f'{scan_name}_ins_label.npy')
