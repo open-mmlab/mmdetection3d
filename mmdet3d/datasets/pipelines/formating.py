@@ -127,8 +127,9 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
                 gt_bboxes_3d_mask = results['gt_bboxes_3d_mask']
                 results['gt_bboxes_3d'] = results['gt_bboxes_3d'][
                     gt_bboxes_3d_mask]
-                results['gt_names_3d'] = results['gt_names_3d'][
-                    gt_bboxes_3d_mask]
+                if 'gt_names_3d' in results:
+                    results['gt_names_3d'] = results['gt_names_3d'][
+                        gt_bboxes_3d_mask]
             if 'gt_bboxes_mask' in results:
                 gt_bboxes_mask = results['gt_bboxes_mask']
                 if 'gt_bboxes' in results:
@@ -151,10 +152,12 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
                                                     dtype=np.int64)
                 # we still assume one pipeline for one frame LiDAR
                 # thus, the 3D name is list[string]
-                results['gt_labels_3d'] = np.array([
-                    self.class_names.index(n) for n in results['gt_names_3d']
-                ],
-                                                   dtype=np.int64)
+                if 'gt_names_3d' in results:
+                    results['gt_labels_3d'] = np.array([
+                        self.class_names.index(n)
+                        for n in results['gt_names_3d']
+                    ],
+                                                       dtype=np.int64)
         results = super(DefaultFormatBundle3D, self).__call__(results)
         return results
 

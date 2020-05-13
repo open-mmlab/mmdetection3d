@@ -7,6 +7,11 @@ from mmdet3d.datasets.pipelines import Compose
 
 
 def test_scannet_pipeline():
+    class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                   'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'garbagebin')
+
     np.random.seed(0)
     pipelines = [
         dict(
@@ -21,7 +26,14 @@ def test_scannet_pipeline():
             type='IndoorGlobalRotScale',
             use_height=True,
             rot_range=[-np.pi * 1 / 36, np.pi * 1 / 36],
-            scale_range=None)
+            scale_range=None),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D',
+            keys=[
+                'points', 'gt_bboxes_3d', 'gt_labels', 'pts_semantic_mask',
+                'pts_instance_mask'
+            ]),
     ]
     pipeline = Compose(pipelines)
     info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
@@ -32,13 +44,15 @@ def test_scannet_pipeline():
     results['pts_filename'] = osp.join(data_path, f'{scan_name}_vert.npy')
     if info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-        scannet_gt_labels = info['annos']['class'].reshape(-1, 1)
-        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels)
+        scannet_gt_labels = info['annos']['class']
+        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels).astype(
+            np.bool)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        scannet_gt_labels = np.zeros((1, 1))
-        scannet_gt_bboxes_3d_mask = np.zeros((1, 1))
+        scannet_gt_labels = np.zeros((1, ))
+        scannet_gt_bboxes_3d_mask = np.zeros((1, )).astype(np.bool)
     scan_name = info['point_cloud']['lidar_idx']
+
     results['pts_instance_mask_path'] = osp.join(data_path,
                                                  f'{scan_name}_ins_label.npy')
     results['pts_semantic_mask_path'] = osp.join(data_path,
@@ -46,10 +60,12 @@ def test_scannet_pipeline():
     results['gt_bboxes_3d'] = scannet_gt_bboxes_3d
     results['gt_labels'] = scannet_gt_labels
     results['gt_bboxes_3d_mask'] = scannet_gt_bboxes_3d_mask
+
     results = pipeline(results)
-    points = results['points']
-    gt_bboxes_3d = results['gt_bboxes_3d']
-    gt_labels = results['gt_labels']
+
+    points = results['points']._data
+    gt_bboxes_3d = results['gt_bboxes_3d']._data
+    gt_labels = results['gt_labels']._data
     pts_semantic_mask = results['pts_semantic_mask']
     pts_instance_mask = results['pts_instance_mask']
     expected_points = np.array(
@@ -73,12 +89,14 @@ def test_scannet_pipeline():
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     assert np.allclose(points, expected_points)
     assert np.allclose(gt_bboxes_3d[:5, :], expected_gt_bboxes_3d)
-    assert np.all(gt_labels.flatten() == expected_gt_labels)
+    assert np.all(gt_labels.numpy() == expected_gt_labels)
     assert np.all(pts_semantic_mask == expected_pts_semantic_mask)
     assert np.all(pts_instance_mask == expected_pts_instance_mask)
 
 
 def test_sunrgbd_pipeline():
+    class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+                   'dresser', 'night_stand', 'bookshelf', 'bathtub')
     np.random.seed(0)
     pipelines = [
         dict(
@@ -93,6 +111,8 @@ def test_sunrgbd_pipeline():
             rot_range=[-np.pi / 6, np.pi / 6],
             scale_range=[0.85, 1.15]),
         dict(type='IndoorPointSample', num_points=5),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels']),
     ]
     pipeline = Compose(pipelines)
     results = dict()
@@ -104,19 +124,20 @@ def test_sunrgbd_pipeline():
 
     if info['annos']['gt_num'] != 0:
         gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-        gt_labels = info['annos']['class'].reshape(-1, 1)
-        gt_bboxes_3d_mask = np.ones_like(gt_labels)
+        gt_labels = info['annos']['class']
+        gt_bboxes_3d_mask = np.ones_like(gt_labels).astype(np.bool)
     else:
         gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        gt_labels = np.zeros((1, 1))
-        gt_bboxes_3d_mask = np.zeros((1, 1))
+        gt_labels = np.zeros((1, ))
+        gt_bboxes_3d_mask = np.zeros((1, )).astype(np.bool)
+
     results['gt_bboxes_3d'] = gt_bboxes_3d
     results['gt_labels'] = gt_labels
     results['gt_bboxes_3d_mask'] = gt_bboxes_3d_mask
     results = pipeline(results)
-    points = results['points']
-    gt_bboxes_3d = results['gt_bboxes_3d']
-    gt_labels = results['gt_labels']
+    points = results['points']._data
+    gt_bboxes_3d = results['gt_bboxes_3d']._data
+    gt_labels = results['gt_labels']._data
     expected_points = np.array(
         [[0.6570105, 1.5538014, 0.24514851, 1.0165423],
          [0.656101, 1.558591, 0.21755838, 0.98895216],

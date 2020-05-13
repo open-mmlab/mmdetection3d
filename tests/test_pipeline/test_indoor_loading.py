@@ -39,15 +39,16 @@ def test_load_annotations3D():
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')[0]
     if sunrgbd_info['annos']['gt_num'] != 0:
         sunrgbd_gt_bboxes_3d = sunrgbd_info['annos']['gt_boxes_upright_depth']
-        sunrgbd_gt_labels = sunrgbd_info['annos']['class'].reshape(-1, 1)
-        sunrgbd_gt_bboxes_3d_mask = np.ones_like(sunrgbd_gt_labels)
+        sunrgbd_gt_labels = sunrgbd_info['annos']['class']
+        sunrgbd_gt_bboxes_3d_mask = np.ones_like(sunrgbd_gt_labels).astype(
+            np.bool)
     else:
         sunrgbd_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        sunrgbd_gt_labels = np.zeros((1, 1))
-        sunrgbd_gt_bboxes_3d_mask = np.zeros((1, 1))
+        sunrgbd_gt_labels = np.zeros((1, ))
+        sunrgbd_gt_bboxes_3d_mask = np.zeros((1, ))
     assert sunrgbd_gt_bboxes_3d.shape == (3, 7)
-    assert sunrgbd_gt_labels.shape == (3, 1)
-    assert sunrgbd_gt_bboxes_3d_mask.shape == (3, 1)
+    assert sunrgbd_gt_labels.shape == (3, )
+    assert sunrgbd_gt_bboxes_3d_mask.shape == (3, )
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
     scannet_load_annotations3D = IndoorLoadAnnotations3D()
@@ -55,12 +56,13 @@ def test_load_annotations3D():
     data_path = './tests/data/scannet/scannet_train_instance_data'
     if scannet_info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = scannet_info['annos']['gt_boxes_upright_depth']
-        scannet_gt_labels = scannet_info['annos']['class'].reshape(-1, 1)
-        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels)
+        scannet_gt_labels = scannet_info['annos']['class']
+        scannet_gt_bboxes_3d_mask = np.ones_like(scannet_gt_labels).astype(
+            np.bool)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        scannet_gt_labels = np.zeros((1, 1))
-        scannet_gt_bboxes_3d_mask = np.zeros((1, 1))
+        scannet_gt_labels = np.zeros((1, ))
+        scannet_gt_bboxes_3d_mask = np.zeros((1, )).astype(np.bool)
     scan_name = scannet_info['point_cloud']['lidar_idx']
     scannet_results['pts_instance_mask_path'] = osp.join(
         data_path, f'{scan_name}_ins_label.npy')
@@ -76,7 +78,7 @@ def test_load_annotations3D():
     scannet_pts_instance_mask = scannet_results['pts_instance_mask']
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
     assert scannet_gt_boxes.shape == (27, 6)
-    assert scannet_gt_lbaels.shape == (27, 1)
-    assert scannet_gt_boxes_mask.shape == (27, 1)
+    assert scannet_gt_lbaels.shape == (27, )
+    assert scannet_gt_boxes_mask.shape == (27, )
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )
