@@ -386,9 +386,9 @@ def indoor_eval(gt_annos, dt_annos, metric, class2type):
             # convert to lidar coor for evaluation
             bbox_lidar_bottom = boxes3d_depth_to_lidar(
                 gt_anno['gt_boxes_upright_depth'], mid_to_bottom=True)
-            gt_anno['gt_boxes_upright_depth'] = np.pad(bbox_lidar_bottom,
-                                                       ((0, 0), (0, 1)),
-                                                       'constant')
+            if gt_anno['gt_boxes_upright_depth'].shape[-1] == 6:
+                gt_anno['gt_boxes_upright_depth'] = np.pad(
+                    bbox_lidar_bottom, ((0, 0), (0, 1)), 'constant')
     ap_iou_thresholds = metric['AP_IOU_THRESHHOLDS']
     ap_calculator = APCalculator(ap_iou_thresholds, class2type)
     ap_calculator.step(dt_annos, gt_annos)
