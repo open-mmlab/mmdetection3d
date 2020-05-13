@@ -40,7 +40,8 @@ class DefaultFormatBundle(object):
                 results['img'] = DC(to_tensor(img), stack=True)
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_3d', 'gt_bboxes_ignore',
-                'gt_labels', 'gt_labels_3d'
+                'gt_labels', 'gt_labels_3d', 'pts_instance_mask',
+                'pts_semantic_mask'
         ]:
             if key not in results:
                 continue
