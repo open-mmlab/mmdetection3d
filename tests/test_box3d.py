@@ -598,3 +598,60 @@ def test_camera_boxes3d():
 
     # the pytorch print loses some precision
     assert torch.allclose(boxes.corners, expected_tensor, rtol=1e-4, atol=1e-7)
+
+
+def test_boxes3d_overlaps():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    # Test LiDAR boxes 3D overlaps
+    boxes1_tensor = torch.tensor(
+        [[1.8, -2.5 - 1.8, 1.75, 3.39, 1.65, 1.6615927],
+         [8.9, -2.5, -1.6, 1.54, 4.01, 1.57, 1.5215927],
+         [28.3, 0.5, -1.3, 1.47, 2.23, 1.48, 4.7115927],
+         [31.3, -8.2, -1.6, 1.74, 3.77, 1.48, 0.35159278]],
+        device='cuda')
+    boxes1 = LiDARInstance3DBoxes(boxes1_tensor)
+
+    boxes2_tensor = torch.tensor([[1.2, -3.0, -1.9, 1.8, 3.4, 1.7, 1.9],
+                                  [8.1, -2.9, -1.8, 1.5, 4.1, 1.6, 1.8],
+                                  [20.1, -28.5, -1.9, 1.6, 3.5, 1.4, 5.1],
+                                  [28.2, -16.5, -1.8, 1.7, 3.8, 1.5, 0.6]],
+                                 device='cuda')
+    boxes2 = LiDARInstance3DBoxes(boxes2_tensor)
+
+    from mmdet3d.ops.iou3d import boxes3d_to_bev_torch_lidar
+    expected_tensor = boxes3d_to_bev_torch_lidar(boxes1_tensor, boxes2_tensor)
+    overlaps_3d = boxes1.overlaps(boxes1, boxes2)
+    assert torch.allclose(expected_tensor, overlaps_3d)
+
+    # Test camera boxes 3D overlaps
+    boxes1_tensor = torch.tensor(
+        [[1.8, -2.5 - 1.8, 1.75, 3.39, 1.65, 1.6615927],
+         [8.9, -2.5, -1.6, 1.54, 4.01, 1.57, 1.5215927],
+         [28.3, 0.5, -1.3, 1.47, 2.23, 1.48, 4.7115927],
+         [31.3, -8.2, -1.6, 1.74, 3.77, 1.48, 0.35159278]],
+        device='cuda')
+    cam_boxes1_tensor = Box3DMode.convert(boxes1_tensor, Box3DMode.LIDAR,
+                                          Box3DMode.CAM)
+    cam_boxes1 = CameraInstance3DBoxes(cam_boxes1_tensor)
+
+    boxes2_tensor = torch.tensor([[1.2, -3.0, -1.9, 1.8, 3.4, 1.7, 1.9],
+                                  [8.1, -2.9, -1.8, 1.5, 4.1, 1.6, 1.8],
+                                  [20.1, -28.5, -1.9, 1.6, 3.5, 1.4, 5.1],
+                                  [28.2, -16.5, -1.8, 1.7, 3.8, 1.5, 0.6]],
+                                 device='cuda')
+    cam_boxes2_tensor = Box3DMode.convert(boxes2_tensor, Box3DMode.LIDAR,
+                                          Box3DMode.CAM)
+    cam_boxes2 = CameraInstance3DBoxes(cam_boxes2_tensor)
+    cam_overlaps_3d = cam_boxes1.overlaps(cam_boxes1, cam_boxes2)
+
+    from mmdet3d.ops.iou3d import boxes3d_to_bev_torch_camera
+    expected_tensor = boxes3d_to_bev_torch_camera(boxes1_tensor, boxes2_tensor)
+    assert torch.allclose(expected_tensor, cam_overlaps_3d)
+    assert torch.allclose(cam_overlaps_3d, overlaps_3d)
+
+    with pytest.raises(AssertionError):
+        cam_boxes1.overlaps(cam_boxes1, boxes1)
+    with pytest.raises(AssertionError):
+        boxes1.overlaps(cam_boxes1, boxes1)
