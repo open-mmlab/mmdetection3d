@@ -46,27 +46,6 @@ def voc_ap(rec, prec, use_07_metric=False):
     return ap
 
 
-def boxes3d_to_bevboxes_lidar_torch(boxes3d):
-    """Boxes3d to Bevboxes Lidar.
-
-    Transform 3d boxes to bev boxes.
-
-    Args:
-        boxes3d (tensor): [x, y, z, w, l, h, ry] in LiDAR coords.
-
-    Returns:
-        boxes_bev (tensor): [x1, y1, x2, y2, ry].
-    """
-    boxes_bev = boxes3d.new(torch.Size((boxes3d.shape[0], 5)))
-
-    cu, cv = boxes3d[:, 0], boxes3d[:, 1]
-    half_l, half_w = boxes3d[:, 4] / 2, boxes3d[:, 3] / 2
-    boxes_bev[:, 0], boxes_bev[:, 1] = cu - half_w, cv - half_l
-    boxes_bev[:, 2], boxes_bev[:, 3] = cu + half_w, cv + half_l
-    boxes_bev[:, 4] = boxes3d[:, 6]
-    return boxes_bev
-
-
 def get_iou_gpu(bb1, bb2):
     """Get IoU.
 
@@ -201,7 +180,7 @@ def eval_det_multiprocessing(pred_all,
                              gt_all,
                              ovthresh=None,
                              use_07_metric=False):
-    """ Evaluate Detection Multiprocessing.
+    """Evaluate Detection Multiprocessing.
 
     Generic functions to compute precision/recall for object detection
         for multiple classes.
@@ -321,21 +300,22 @@ class APCalculator(object):
             for key in sorted(ap.keys()):
                 clsname = self.class2type_map[
                     key] if self.class2type_map else str(key)
-                ret_dict['%s Average Precision %d' %
-                         (clsname, iou_thresh * 100)] = ap[key]
-            ret_dict['mAP%d' % (iou_thresh * 100)] = np.mean(list(ap.values()))
+                ret_dict[f'{clsname}_AP_{int(iou_thresh * 100)}'] = ap[key]
+            ret_dict[f'mAP_{int(iou_thresh * 100)}'] = np.mean(
+                list(ap.values()))
             rec_list = []
             for key in sorted(ap.keys()):
                 clsname = self.class2type_map[
                     key] if self.class2type_map else str(key)
                 try:
-                    ret_dict['%s Recall %d' %
-                             (clsname, iou_thresh * 100)] = rec[key][-1]
+                    ret_dict[
+                        f'{clsname}_recall_{int(iou_thresh * 100)}'] = rec[
+                            key][-1]
                     rec_list.append(rec[key][-1])
                 except TypeError:
-                    ret_dict['%s Recall %d' % (clsname, iou_thresh * 100)] = 0
+                    ret_dict[f'{clsname}_recall_{int(iou_thresh * 100)}'] = 0
                     rec_list.append(0)
-            ret_dict['AR%d' % (iou_thresh * 100)] = np.mean(rec_list)
+            ret_dict[f'AR_{int(iou_thresh * 100)}'] = np.mean(rec_list)
             ret.append(ret_dict)
         return ret
 
@@ -373,7 +353,7 @@ def indoor_eval(gt_annos, dt_annos, metric, class2type):
     Args:
         gt_annos (List): GT annotations.
         dt_annos (List): Detection annotations.
-        metric (dict): AP IoU thresholds.
+        metric (List[float]): AP IoU thresholds.
         class2type (dict): {class: type}.
 
     Return:
@@ -389,17 +369,15 @@ def indoor_eval(gt_annos, dt_annos, metric, class2type):
             if gt_anno['gt_boxes_upright_depth'].shape[-1] == 6:
                 gt_anno['gt_boxes_upright_depth'] = np.pad(
                     bbox_lidar_bottom, ((0, 0), (0, 1)), 'constant')
-    ap_iou_thresholds = metric['AP_IOU_THRESHHOLDS']
-    ap_calculator = APCalculator(ap_iou_thresholds, class2type)
+    ap_calculator = APCalculator(metric, class2type)
     ap_calculator.step(dt_annos, gt_annos)
     result_str = str()
     result_str += 'mAP'
     metrics_dict = {}
     metrics = ap_calculator.compute_metrics()
-    for i, iou_threshold in enumerate(ap_iou_thresholds):
+    for i, iou_thresh in enumerate(metric):
         metrics_tmp = metrics[i]
         metrics_dict.update(metrics_tmp)
-        result_str += '(%.2f):%s   ' % (iou_threshold,
-                                        metrics_dict['mAP%d' %
-                                                     (iou_threshold * 100)])
+        metric_result = metrics_dict[f'mAP_{int(iou_thresh * 100)}']
+        result_str += f'({iou_thresh:.2f}:{metric_result}'
     return result_str, metrics_dict

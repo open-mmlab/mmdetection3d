@@ -107,13 +107,12 @@ def test_evaluate():
     pred_boxes['label_preds'] = torch.Tensor([6, 6, 4, 9, 11]).cuda()
     pred_boxes['scores'] = torch.Tensor([0.5, 1.0, 1.0, 1.0, 1.0]).cuda()
     results.append([pred_boxes])
-    metric = dict()
-    metric['AP_IOU_THRESHHOLDS'] = [0.25, 0.5]
+    metric = [0.25, 0.5]
     ap_dict = scannet_dataset.evaluate(results, metric)
-    table_average_precision_25 = ap_dict['table Average Precision 25']
-    window_average_precision_25 = ap_dict['window Average Precision 25']
-    counter_average_precision_25 = ap_dict['counter Average Precision 25']
-    curtain_average_precision_25 = ap_dict['curtain Average Precision 25']
+    table_average_precision_25 = ap_dict['table_AP_25']
+    window_average_precision_25 = ap_dict['window_AP_25']
+    counter_average_precision_25 = ap_dict['counter_AP_25']
+    curtain_average_precision_25 = ap_dict['curtain_AP_25']
     assert abs(table_average_precision_25 - 0.3333) < 0.01
     assert abs(window_average_precision_25 - 1) < 0.01
     assert abs(counter_average_precision_25 - 1) < 0.01

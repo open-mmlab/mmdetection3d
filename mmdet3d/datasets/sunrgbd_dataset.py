@@ -12,18 +12,7 @@ from .pipelines import Compose
 
 @DATASETS.register_module()
 class SunrgbdDataset(torch_data.Dataset):
-    type2class = {
-        'bed': 0,
-        'table': 1,
-        'sofa': 2,
-        'chair': 3,
-        'toilet': 4,
-        'desk': 5,
-        'dresser': 6,
-        'night_stand': 7,
-        'bookshelf': 8,
-        'bathtub': 9
-    }
+
     class2type = {
         0: 'bed',
         1: 'table',
@@ -139,19 +128,13 @@ class SunrgbdDataset(torch_data.Dataset):
         return np.random.choice(pool)
 
     def _generate_annotations(self, output):
-        '''
-        transfer input_dict & pred_dicts to anno format
-        which is needed by AP calculator
-        return annos: a tuple (batch_pred_map_cls,batch_gt_map_cls)
-                        batch_pred_map_cls is a list: i=0,1..bs-1
-                            pred_list_i:[(pred_sem_cls,
-                            box_params, box_score)_j]
-                            j=0,1..num_pred_obj -1
+        """Generate Annotations.
 
-                        batch_gt_map_cls is a list: i=0,1..bs-1
-                            gt_list_i: [(sem_cls_label, box_params)_j]
-                            j=0,1..num_gt_obj -1
-        '''
+        Transform results of the model to the form of the evaluation.
+
+        Args:
+            output (List): The output of the model.
+        """
         result = []
         bs = len(output)
         for i in range(bs):
@@ -174,17 +157,25 @@ class SunrgbdDataset(torch_data.Dataset):
 
         return result
 
-    def _format_results(self, outputs):
+    def format_results(self, outputs):
         results = []
         for output in outputs:
             result = self._generate_annotations(output)
             results.append(result)
         return results
 
-    def evaluate(self, results, metric=None):
-        results = self._format_results(results)
+    def evaluate(self, results, metric):
+        """Evaluate.
+
+        Evaluation in indoor protocol.
+
+        Args:
+            results (List): List of result.
+            metric (List[float]): AP IoU thresholds.
+        """
+        results = self.format_results(results)
         from mmdet3d.core.evaluation import indoor_eval
-        assert ('AP_IOU_THRESHHOLDS' in metric)
+        assert len(metric) > 0
         gt_annos = [
             copy.deepcopy(info['annos']) for info in self.sunrgbd_infos
         ]
