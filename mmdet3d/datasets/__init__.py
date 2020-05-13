@@ -1,6 +1,7 @@
 from mmdet.datasets.builder import DATASETS
 from .builder import build_dataset
 from .dataset_wrappers import RepeatFactorDataset
+from .indoor_dataset import IndoorDataset
 from .kitti2d_dataset import Kitti2DDataset
 from .kitti_dataset import KittiDataset
 from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
@@ -23,5 +24,5 @@ __all__ = [
     'IndoorLoadPointsFromFile', 'IndoorPointsColorNormalize',
     'IndoorPointSample', 'IndoorLoadAnnotations3D', 'IndoorPointsColorJitter',
     'IndoorGlobalRotScale', 'IndoorFlipData', 'SunrgbdDataset',
-    'ScannetDataset'
+    'ScannetDataset', 'IndoorDataset'
 ]
