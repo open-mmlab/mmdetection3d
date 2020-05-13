@@ -211,13 +211,13 @@ class ScannetDataset(torch_data.Dataset):
 
     def evaluate(self, results, metric=None, logger=None, pklfile_prefix=None):
         results = self._format_results(results)
-        from mmdet3d.core.evaluation.scannet_utils.eval import scannet_eval
+        from mmdet3d.core.evaluation import indoor_eval
         assert ('AP_IOU_THRESHHOLDS' in metric)
         gt_annos = [
             copy.deepcopy(info['annos']) for info in self.scannet_infos
         ]
-        ap_result_str, ap_dict = scannet_eval(gt_annos, results, metric,
-                                              self.class2type)
+        ap_result_str, ap_dict = indoor_eval(gt_annos, results, metric,
+                                             self.class2type)
         return ap_dict
 
     def __len__(self):
