@@ -365,7 +365,7 @@ def boxes3d_depth_to_lidar(boxes3d, mid_to_bottom=True):
     return boxes3d_lidar
 
 
-def scannet_eval(gt_annos, dt_annos, metric, class2type):
+def indoor_eval(gt_annos, dt_annos, metric, class2type):
     """Scannet Evaluation.
 
     Evaluate the result of the detection.
