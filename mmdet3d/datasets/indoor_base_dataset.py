@@ -133,9 +133,8 @@ class IndoorBaseDataset(torch_data.Dataset):
         from mmdet3d.core.evaluation import indoor_eval
         assert len(metric) > 0
         gt_annos = [copy.deepcopy(info['annos']) for info in self.infos]
-        ap_result_str, ap_dict = indoor_eval(gt_annos, results, metric,
-                                             self.label2cat)
-        return ap_dict
+        ret_dict = indoor_eval(gt_annos, results, metric, self.label2cat)
+        return ret_dict
 
     def __len__(self):
         return len(self.infos)
