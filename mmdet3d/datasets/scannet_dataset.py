@@ -12,26 +12,7 @@ from .pipelines import Compose
 
 @DATASETS.register_module()
 class ScannetDataset(torch_data.Dataset):
-    type2class = {
-        'cabinet': 0,
-        'bed': 1,
-        'chair': 2,
-        'sofa': 3,
-        'table': 4,
-        'door': 5,
-        'window': 6,
-        'bookshelf': 7,
-        'picture': 8,
-        'counter': 9,
-        'desk': 10,
-        'curtain': 11,
-        'refrigerator': 12,
-        'showercurtrain': 13,
-        'toilet': 14,
-        'sink': 15,
-        'bathtub': 16,
-        'garbagebin': 17
-    }
+
     class2type = {
         0: 'cabinet',
         1: 'bed',
@@ -196,7 +177,7 @@ class ScannetDataset(torch_data.Dataset):
 
         return result
 
-    def _format_results(self, outputs):
+    def format_results(self, outputs):
         results = []
         for output in outputs:
             result = self._generate_annotations(output)
@@ -210,11 +191,11 @@ class ScannetDataset(torch_data.Dataset):
 
         Args:
             results (List): List of result.
-            metric (dict): AP_IOU_THRESHHOLDS.
+            metric (List[float]): AP IoU thresholds.
         """
-        results = self._format_results(results)
+        results = self.format_results(results)
         from mmdet3d.core.evaluation import indoor_eval
-        assert ('AP_IOU_THRESHHOLDS' in metric)
+        assert len(metric) > 0
         gt_annos = [
             copy.deepcopy(info['annos']) for info in self.scannet_infos
         ]

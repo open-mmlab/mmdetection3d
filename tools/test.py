@@ -161,7 +161,7 @@ def main():
             mmcv.dump(outputs, args.out)
         kwargs = {} if args.options is None else args.options
         if args.format_only:
-            dataset._format_results(outputs, **kwargs)
+            dataset.format_results(outputs, **kwargs)
         if args.eval:
             dataset.evaluate(outputs, args.eval, **kwargs)
 

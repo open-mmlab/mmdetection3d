@@ -80,12 +80,11 @@ def test_evaluate():
     pred_boxes['label_preds'] = torch.Tensor([0, 7, 6]).cuda()
     pred_boxes['scores'] = torch.Tensor([0.5, 1.0, 1.0]).cuda()
     results.append([pred_boxes])
-    metric = dict()
-    metric['AP_IOU_THRESHHOLDS'] = [0.25, 0.5]
+    metric = [0.25, 0.5]
     ap_dict = sunrgbd_dataset.evaluate(results, metric)
-    bed_precision_25 = ap_dict['bed Average Precision 25']
-    dresser_precision_25 = ap_dict['dresser Average Precision 25']
-    night_stand_precision_25 = ap_dict['night_stand Average Precision 25']
+    bed_precision_25 = ap_dict['bed_AP_25']
+    dresser_precision_25 = ap_dict['dresser_AP_25']
+    night_stand_precision_25 = ap_dict['night_stand_AP_25']
     assert abs(bed_precision_25 - 1) < 0.01
     assert abs(dresser_precision_25 - 1) < 0.01
     assert abs(night_stand_precision_25 - 1) < 0.01
