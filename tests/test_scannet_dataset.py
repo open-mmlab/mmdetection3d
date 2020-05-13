@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.datasets.scannet_dataset import ScannetDataset
+from mmdet3d.datasets import ScannetDataset
 
 
 def test_getitem():
