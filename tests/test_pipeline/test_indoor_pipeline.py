@@ -66,8 +66,8 @@ def test_scannet_pipeline():
     points = results['points']._data
     gt_bboxes_3d = results['gt_bboxes_3d']._data
     gt_labels_3d = results['gt_labels_3d']._data
-    pts_semantic_mask = results['pts_semantic_mask']
-    pts_instance_mask = results['pts_instance_mask']
+    pts_semantic_mask = results['pts_semantic_mask']._data
+    pts_instance_mask = results['pts_instance_mask']._data
     expected_points = np.array(
         [[-2.9078157, -1.9569951, 2.3543026, 2.389488],
          [-0.71360034, -3.4359822, 2.1330001, 2.1681855],
@@ -90,8 +90,8 @@ def test_scannet_pipeline():
     assert np.allclose(points, expected_points)
     assert np.allclose(gt_bboxes_3d[:5, :], expected_gt_bboxes_3d)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels_3d)
-    assert np.all(pts_semantic_mask == expected_pts_semantic_mask)
-    assert np.all(pts_instance_mask == expected_pts_instance_mask)
+    assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
+    assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
 
 
 def test_sunrgbd_pipeline():
