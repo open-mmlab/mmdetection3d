@@ -51,6 +51,15 @@ class BaseInstance3DBoxes(object):
         return self.tensor[:, 3:6]
 
     @property
+    def height(self):
+        """Obtain the height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with volume of each box.
+        """
+        return self.tensor[:, 5]
+
+    @property
     def center(self):
         """Calculate the center of all the boxes.
 
@@ -275,3 +284,19 @@ class BaseInstance3DBoxes(object):
         Yield a box as a Tensor of shape (4,) at a time.
         """
         yield from self.tensor
+
+    @classmethod
+    def overlaps(cls, boxes1, boxes2, mode='iou', aligned=False):
+        """Calculate overlaps of two boxes
+
+        Args:
+            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
+            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
+            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+            aligned (bool, optional): Whether the boxes are aligned.
+                Defaults to False.
+
+        Returns:
+            torch.Tensor: Calculated iou of boxes
+        """
+        pass
