@@ -11,6 +11,8 @@ from .pipelines import (GlobalRotScale, IndoorFlipData, IndoorGlobalRotScale,
                         IndoorPointsColorNormalize, ObjectNoise,
                         ObjectRangeFilter, ObjectSample, PointShuffle,
                         PointsRangeFilter, RandomFlip3D)
+from .scannet_dataset import ScannetDataset
+from .sunrgbd_dataset import SunrgbdDataset
 
 __all__ = [
     'KittiDataset', 'GroupSampler', 'DistributedGroupSampler',
@@ -20,5 +22,6 @@ __all__ = [
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
     'IndoorLoadPointsFromFile', 'IndoorPointsColorNormalize',
     'IndoorPointSample', 'IndoorLoadAnnotations3D', 'IndoorPointsColorJitter',
-    'IndoorGlobalRotScale', 'IndoorFlipData'
+    'IndoorGlobalRotScale', 'IndoorFlipData', 'SunrgbdDataset',
+    'ScannetDataset'
 ]

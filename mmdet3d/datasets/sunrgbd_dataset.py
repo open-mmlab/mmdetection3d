@@ -11,51 +11,33 @@ from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class ScannetDataset(torch_data.Dataset):
+class SunrgbdDataset(torch_data.Dataset):
     type2class = {
-        'cabinet': 0,
-        'bed': 1,
-        'chair': 2,
-        'sofa': 3,
-        'table': 4,
-        'door': 5,
-        'window': 6,
-        'bookshelf': 7,
-        'picture': 8,
-        'counter': 9,
-        'desk': 10,
-        'curtain': 11,
-        'refrigerator': 12,
-        'showercurtrain': 13,
-        'toilet': 14,
-        'sink': 15,
-        'bathtub': 16,
-        'garbagebin': 17
+        'bed': 0,
+        'table': 1,
+        'sofa': 2,
+        'chair': 3,
+        'toilet': 4,
+        'desk': 5,
+        'dresser': 6,
+        'night_stand': 7,
+        'bookshelf': 8,
+        'bathtub': 9
     }
     class2type = {
-        0: 'cabinet',
-        1: 'bed',
-        2: 'chair',
-        3: 'sofa',
-        4: 'table',
-        5: 'door',
-        6: 'window',
-        7: 'bookshelf',
-        8: 'picture',
-        9: 'counter',
-        10: 'desk',
-        11: 'curtain',
-        12: 'refrigerator',
-        13: 'showercurtrain',
-        14: 'toilet',
-        15: 'sink',
-        16: 'bathtub',
-        17: 'garbagebin'
+        0: 'bed',
+        1: 'table',
+        2: 'sofa',
+        3: 'chair',
+        4: 'toilet',
+        5: 'desk',
+        6: 'dresser',
+        7: 'night_stand',
+        8: 'bookshelf',
+        9: 'bathtub'
     }
-    CLASSES = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-               'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-               'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-               'garbagebin')
+    CLASSES = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
+               'night_stand', 'bookshelf', 'bathtub')
 
     def __init__(self,
                  root_path,
@@ -69,23 +51,18 @@ class ScannetDataset(torch_data.Dataset):
         self.root_path = root_path
         self.class_names = class_names if class_names else self.CLASSES
 
-        self.data_path = osp.join(root_path, 'scannet_train_instance_data')
+        self.data_path = osp.join(root_path, 'sunrgbd_trainval')
         self.test_mode = test_mode
         self.training = training
         self.mode = 'TRAIN' if self.training else 'TEST'
 
         mmcv.check_file_exist(ann_file)
-        self.scannet_infos = mmcv.load(ann_file)
+        self.sunrgbd_infos = mmcv.load(ann_file)
 
         # dataset config
         self.num_class = len(self.class_names)
         self.pcd_limit_range = [0, -40, -3.0, 70.4, 40, 3.0]
-        self.nyu40ids = np.array(
-            [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
-        self.nyu40id2class = {
-            nyu40id: i
-            for i, nyu40id in enumerate(list(self.nyu40ids))
-        }
+
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
         self.with_label = with_label
@@ -121,7 +98,7 @@ class ScannetDataset(torch_data.Dataset):
         return input_dict
 
     def _get_sensor_data(self, index):
-        info = self.scannet_infos[index]
+        info = self.sunrgbd_infos[index]
         sample_idx = info['point_cloud']['lidar_idx']
         pts_filename = self._get_pts_filename(sample_idx)
 
@@ -134,13 +111,14 @@ class ScannetDataset(torch_data.Dataset):
         return input_dict
 
     def _get_pts_filename(self, sample_idx):
-        pts_filename = os.path.join(self.data_path, sample_idx + '_vert.npy')
+        pts_filename = os.path.join(self.data_path, 'lidar',
+                                    f'{sample_idx:06d}.npy')
         mmcv.check_file_exist(pts_filename)
         return pts_filename
 
     def _get_ann_info(self, index, sample_idx):
         # Use index to get the annos, thus the evalhook could also use this api
-        info = self.scannet_infos[index]
+        info = self.sunrgbd_infos[index]
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']  # k, 6
             gt_labels = info['annos']['class']
@@ -149,17 +127,11 @@ class ScannetDataset(torch_data.Dataset):
             gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
             gt_labels = np.zeros(1, ).astype(np.bool)
             gt_bboxes_3d_mask = np.zeros(1, ).astype(np.bool)
-        pts_instance_mask_path = osp.join(self.data_path,
-                                          sample_idx + '_ins_label.npy')
-        pts_semantic_mask_path = osp.join(self.data_path,
-                                          sample_idx + '_sem_label.npy')
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels=gt_labels,
-            gt_bboxes_3d_mask=gt_bboxes_3d_mask,
-            pts_instance_mask_path=pts_instance_mask_path,
-            pts_semantic_mask_path=pts_semantic_mask_path)
+            gt_bboxes_3d_mask=gt_bboxes_3d_mask)
         return anns_results
 
     def _rand_another(self, idx):
@@ -209,16 +181,16 @@ class ScannetDataset(torch_data.Dataset):
             results.append(result)
         return results
 
-    def evaluate(self, results, metric=None, logger=None, pklfile_prefix=None):
+    def evaluate(self, results, metric=None):
         results = self._format_results(results)
         from mmdet3d.core.evaluation import indoor_eval
         assert ('AP_IOU_THRESHHOLDS' in metric)
         gt_annos = [
-            copy.deepcopy(info['annos']) for info in self.scannet_infos
+            copy.deepcopy(info['annos']) for info in self.sunrgbd_infos
         ]
         ap_result_str, ap_dict = indoor_eval(gt_annos, results, metric,
                                              self.class2type)
         return ap_dict
 
     def __len__(self):
-        return len(self.scannet_infos)
+        return len(self.sunrgbd_infos)
