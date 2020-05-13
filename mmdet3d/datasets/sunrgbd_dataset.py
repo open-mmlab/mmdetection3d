@@ -4,24 +4,12 @@ import mmcv
 import numpy as np
 
 from mmdet.datasets import DATASETS
-from .indoor_dataset import IndoorDataset
+from .indoor_base_dataset import IndoorBaseDataset
 
 
 @DATASETS.register_module()
-class SunrgbdDataset(IndoorDataset):
+class SunrgbdBaseDataset(IndoorBaseDataset):
 
-    class2type = {
-        0: 'bed',
-        1: 'table',
-        2: 'sofa',
-        3: 'chair',
-        4: 'toilet',
-        5: 'desk',
-        6: 'dresser',
-        7: 'night_stand',
-        8: 'bookshelf',
-        9: 'bathtub'
-    }
     CLASSES = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
@@ -30,10 +18,10 @@ class SunrgbdDataset(IndoorDataset):
                  ann_file,
                  pipeline=None,
                  training=False,
-                 class_names=None,
+                 cat_ids=None,
                  test_mode=False,
                  with_label=True):
-        super().__init__(root_path, ann_file, pipeline, training, class_names,
+        super().__init__(root_path, ann_file, pipeline, training, cat_ids,
                          test_mode, with_label)
         self.data_path = osp.join(root_path, 'sunrgbd_trainval')
 
