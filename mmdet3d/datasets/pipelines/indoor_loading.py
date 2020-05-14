@@ -92,8 +92,8 @@ class IndoorLoadAnnotations3D(object):
 
         mmcv.check_file_exist(pts_instance_mask_path)
         mmcv.check_file_exist(pts_semantic_mask_path)
-        pts_instance_mask = np.load(pts_instance_mask_path)
-        pts_semantic_mask = np.load(pts_semantic_mask_path)
+        pts_instance_mask = np.load(pts_instance_mask_path).astype(np.int)
+        pts_semantic_mask = np.load(pts_semantic_mask_path).astype(np.int)
         results['pts_instance_mask'] = pts_instance_mask
         results['pts_semantic_mask'] = pts_semantic_mask
 
