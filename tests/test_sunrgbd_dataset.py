@@ -85,9 +85,9 @@ def test_evaluate():
     results.append([pred_boxes])
     metric = [0.25, 0.5]
     ap_dict = sunrgbd_dataset.evaluate(results, metric)
-    bed_precision_25 = ap_dict['bed_AP_25']
-    dresser_precision_25 = ap_dict['dresser_AP_25']
-    night_stand_precision_25 = ap_dict['night_stand_AP_25']
+    bed_precision_25 = ap_dict['bed_AP_0.25']
+    dresser_precision_25 = ap_dict['dresser_AP_0.25']
+    night_stand_precision_25 = ap_dict['night_stand_AP_0.25']
     assert abs(bed_precision_25 - 1) < 0.01
     assert abs(dresser_precision_25 - 1) < 0.01
     assert abs(night_stand_precision_25 - 1) < 0.01
