@@ -133,7 +133,7 @@ class IndoorGlobalRotScale(object):
 
     def __init__(self, use_height=True, rot_range=None, scale_range=None):
         self.use_height = use_height
-        self.rot_range = rot_range
+        self.rot_range = np.pi * np.array(rot_range)
         self.scale_range = scale_range
 
     def _rotz(self, t):

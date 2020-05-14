@@ -25,7 +25,7 @@ def test_scannet_pipeline():
         dict(
             type='IndoorGlobalRotScale',
             use_height=True,
-            rot_range=[-np.pi * 1 / 36, np.pi * 1 / 36],
+            rot_range=[-1 / 36, 1 / 36],
             scale_range=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -108,7 +108,7 @@ def test_sunrgbd_pipeline():
         dict(
             type='IndoorGlobalRotScale',
             use_height=True,
-            rot_range=[-np.pi / 6, np.pi / 6],
+            rot_range=[-1 / 6, 1 / 6],
             scale_range=[0.85, 1.15]),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
