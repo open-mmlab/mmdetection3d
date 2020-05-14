@@ -28,7 +28,7 @@ def test_getitem():
         dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels']),
     ]
 
-    sunrgbd_dataset = SunrgbdBaseDataset(root_path, ann_file, pipelines, True)
+    sunrgbd_dataset = SunrgbdBaseDataset(root_path, ann_file, pipelines)
     data = sunrgbd_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data

@@ -16,12 +16,11 @@ class SunrgbdBaseDataset(IndoorBaseDataset):
                  root_path,
                  ann_file,
                  pipeline=None,
-                 training=False,
                  classes=None,
                  test_mode=False,
                  with_label=True):
-        super().__init__(root_path, ann_file, pipeline, training, classes,
-                         test_mode, with_label)
+        super().__init__(root_path, ann_file, pipeline, classes, test_mode,
+                         with_label)
         self.data_path = osp.join(root_path, 'sunrgbd_trainval')
 
     def _get_pts_filename(self, sample_idx):

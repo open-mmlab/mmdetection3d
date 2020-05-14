@@ -36,7 +36,7 @@ def test_getitem():
             ]),
     ]
 
-    scannet_dataset = ScannetBaseDataset(root_path, ann_file, pipelines, True)
+    scannet_dataset = ScannetBaseDataset(root_path, ann_file, pipelines)
     data = scannet_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data

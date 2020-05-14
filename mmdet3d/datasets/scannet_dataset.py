@@ -18,12 +18,11 @@ class ScannetBaseDataset(IndoorBaseDataset):
                  root_path,
                  ann_file,
                  pipeline=None,
-                 training=False,
                  classes=None,
                  test_mode=False,
                  with_label=True):
-        super().__init__(root_path, ann_file, pipeline, training, classes,
-                         test_mode, with_label)
+        super().__init__(root_path, ann_file, pipeline, classes, test_mode,
+                         with_label)
 
         self.data_path = osp.join(root_path, 'scannet_train_instance_data')
 
