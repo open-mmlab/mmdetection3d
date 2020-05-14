@@ -15,7 +15,6 @@ class IndoorBaseDataset(torch_data.Dataset):
                  root_path,
                  ann_file,
                  pipeline=None,
-                 training=False,
                  classes=None,
                  test_mode=False,
                  with_label=True):
@@ -23,8 +22,6 @@ class IndoorBaseDataset(torch_data.Dataset):
         self.root_path = root_path
         self.CLASSES = classes if classes else self.CLASSES
         self.test_mode = test_mode
-        self.training = training
-        self.mode = 'TRAIN' if self.training else 'TEST'
         self.label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
         mmcv.check_file_exist(ann_file)
         self.data_infos = mmcv.load(ann_file)
