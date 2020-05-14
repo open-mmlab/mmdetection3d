@@ -1,6 +1,5 @@
 import os.path as osp
 
-import mmcv
 import numpy as np
 
 from mmdet.datasets import DATASETS
@@ -20,22 +19,21 @@ class ScannetBaseDataset(IndoorBaseDataset):
                  ann_file,
                  pipeline=None,
                  training=False,
-                 cat_ids=None,
+                 classes=None,
                  test_mode=False,
                  with_label=True):
-        super().__init__(root_path, ann_file, pipeline, training, cat_ids,
+        super().__init__(root_path, ann_file, pipeline, training, classes,
                          test_mode, with_label)
 
         self.data_path = osp.join(root_path, 'scannet_train_instance_data')
 
     def _get_pts_filename(self, sample_idx):
         pts_filename = osp.join(self.data_path, f'{sample_idx}_vert.npy')
-        mmcv.check_file_exist(pts_filename)
         return pts_filename
 
     def _get_ann_info(self, index, sample_idx):
         # Use index to get the annos, thus the evalhook could also use this api
-        info = self.infos[index]
+        info = self.data_infos[index]
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']  # k, 6
             gt_labels = info['annos']['class']
