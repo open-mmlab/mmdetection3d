@@ -2,12 +2,12 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.datasets import ScannetBaseDataset
+from mmdet3d.datasets import ScanNetDataset
 
 
 def test_getitem():
     np.random.seed(0)
-    root_path = './tests/data/scannet'
+    root_path = './tests/data/scannet/scannet_train_instance_data'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
     class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                    'window', 'bookshelf', 'picture', 'counter', 'desk',
@@ -36,7 +36,7 @@ def test_getitem():
             ]),
     ]
 
-    scannet_dataset = ScannetBaseDataset(root_path, ann_file, pipelines)
+    scannet_dataset = ScanNetDataset(root_path, ann_file, pipelines)
     data = scannet_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
@@ -77,7 +77,7 @@ def test_evaluate():
         pytest.skip()
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
-    scannet_dataset = ScannetBaseDataset(root_path, ann_file)
+    scannet_dataset = ScanNetDataset(root_path, ann_file)
     results = []
     pred_boxes = dict()
     pred_boxes['box3d_lidar'] = np.array([[

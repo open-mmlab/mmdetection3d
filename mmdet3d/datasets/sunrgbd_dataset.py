@@ -7,7 +7,7 @@ from .indoor_base_dataset import IndoorBaseDataset
 
 
 @DATASETS.register_module()
-class SunrgbdBaseDataset(IndoorBaseDataset):
+class SUNRGBDDataset(IndoorBaseDataset):
 
     CLASSES = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
@@ -21,10 +21,9 @@ class SunrgbdBaseDataset(IndoorBaseDataset):
                  with_label=True):
         super().__init__(root_path, ann_file, pipeline, classes, test_mode,
                          with_label)
-        self.data_path = osp.join(root_path, 'sunrgbd_trainval')
 
     def _get_pts_filename(self, sample_idx):
-        pts_filename = osp.join(self.data_path, 'lidar',
+        pts_filename = osp.join(self.root_path, 'lidar',
                                 f'{sample_idx:06d}.npy')
         return pts_filename
 

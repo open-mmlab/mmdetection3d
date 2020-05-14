@@ -4,6 +4,45 @@ import torch
 from mmdet3d.core.bbox.iou_calculators.iou3d_calculator import bbox_overlaps_3d
 
 
+def boxes3d_depth_to_lidar(boxes3d, mid_to_bottom=True):
+    """ Boxes3d Depth to Lidar.
+
+    Flip X-right,Y-forward,Z-up to X-forward,Y-left,Z-up.
+
+    Args:
+        boxes3d (ndarray): (N, 7) [x, y, z, w, l, h, r] in depth coords.
+
+    Return:
+        boxes3d_lidar (ndarray): (N, 7) [x, y, z, l, h, w, r] in LiDAR coords.
+    """
+    boxes3d_lidar = boxes3d.copy()
+    boxes3d_lidar[..., [0, 1, 2, 3, 4, 5]] = boxes3d_lidar[...,
+                                                           [1, 0, 2, 4, 3, 5]]
+    boxes3d_lidar[..., 1] *= -1
+    if mid_to_bottom:
+        boxes3d_lidar[..., 2] -= boxes3d_lidar[..., 5] / 2
+    return boxes3d_lidar
+
+
+def get_iou_gpu(bb1, bb2):
+    """Get IoU.
+
+    Compute IoU of two bounding boxes.
+
+    Args:
+        bb1 (ndarray): [x, y, z, w, l, h, ry] in LiDAR.
+        bb2 (ndarray): [x, y, z, h, w, l, ry] in LiDAR.
+
+    Returns:
+        ans_iou (tensor): The answer of IoU.
+    """
+
+    bb1 = torch.from_numpy(bb1).float().cuda()
+    bb2 = torch.from_numpy(bb2).float().cuda()
+    iou3d = bbox_overlaps_3d(bb1, bb2, mode='iou', coordinate='lidar')
+    return iou3d.cpu().numpy()
+
+
 def average_precision(recalls, precisions, mode='area'):
     """Calculate average precision (for single or multiple scales).
 
@@ -49,25 +88,6 @@ def average_precision(recalls, precisions, mode='area'):
     if no_scale:
         ap = ap[0]
     return ap
-
-
-def get_iou_gpu(bb1, bb2):
-    """Get IoU.
-
-    Compute IoU of two bounding boxes.
-
-    Args:
-        bb1 (ndarray): [x, y, z, w, l, h, ry] in LiDAR.
-        bb2 (ndarray): [x, y, z, h, w, l, ry] in LiDAR.
-
-    Returns:
-        ans_iou (tensor): The answer of IoU.
-    """
-
-    bb1 = torch.from_numpy(bb1).float().cuda()
-    bb2 = torch.from_numpy(bb2).float().cuda()
-    iou3d = bbox_overlaps_3d(bb1, bb2, mode='iou', coordinate='lidar')
-    return iou3d.cpu().numpy()
 
 
 def eval_det_cls(pred, gt, ovthresh=None):
@@ -259,26 +279,6 @@ def eval_map_rec(det_infos, gt_infos, ovthresh=None):
                 ap[iou_idx][label] = 0
 
     return rec, prec, ap
-
-
-def boxes3d_depth_to_lidar(boxes3d, mid_to_bottom=True):
-    """ Boxes3d Depth to Lidar.
-
-    Flip X-right,Y-forward,Z-up to X-forward,Y-left,Z-up.
-
-    Args:
-        boxes3d (ndarray): (N, 7) [x, y, z, w, l, h, r] in depth coords.
-
-    Return:
-        boxes3d_lidar (ndarray): (N, 7) [x, y, z, l, h, w, r] in LiDAR coords.
-    """
-    boxes3d_lidar = boxes3d.copy()
-    boxes3d_lidar[..., [0, 1, 2, 3, 4, 5]] = boxes3d_lidar[...,
-                                                           [1, 0, 2, 4, 3, 5]]
-    boxes3d_lidar[..., 1] *= -1
-    if mid_to_bottom:
-        boxes3d_lidar[..., 2] -= boxes3d_lidar[..., 5] / 2
-    return boxes3d_lidar
 
 
 def indoor_eval(gt_annos, dt_annos, metric, label2cat):
