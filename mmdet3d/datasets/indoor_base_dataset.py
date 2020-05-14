@@ -32,29 +32,8 @@ class IndoorBaseDataset(torch_data.Dataset):
             self.pipeline = Compose(pipeline)
         self.with_label = with_label
 
-    def __getitem__(self, idx):
-        if self.test_mode:
-            return self.prepare_test_data(idx)
-        while True:
-            data = self.prepare_train_data(idx)
-            if data is None:
-                idx = self._rand_another(idx)
-                continue
-            return data
-
-    def prepare_test_data(self, index):
-        input_dict = self.get_data_info(index)
-        example = self.pipeline(input_dict)
-        return example
-
-    def prepare_train_data(self, index):
-        input_dict = self.get_data_info(index)
-        if input_dict is None:
-            return None
-        example = self.pipeline(input_dict)
-        if len(example['gt_bboxes_3d']._data) == 0:
-            return None
-        return example
+    def __len__(self):
+        return len(self.data_infos)
 
     def get_data_info(self, index):
         info = self.data_infos[index]
@@ -73,6 +52,30 @@ class IndoorBaseDataset(torch_data.Dataset):
     def _rand_another(self, idx):
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
+
+    def __getitem__(self, idx):
+        if self.test_mode:
+            return self.prepare_test_data(idx)
+        while True:
+            data = self.prepare_train_data(idx)
+            if data is None:
+                idx = self._rand_another(idx)
+                continue
+            return data
+
+    def prepare_train_data(self, index):
+        input_dict = self.get_data_info(index)
+        if input_dict is None:
+            return None
+        example = self.pipeline(input_dict)
+        if len(example['gt_bboxes_3d']._data) == 0:
+            return None
+        return example
+
+    def prepare_test_data(self, index):
+        input_dict = self.get_data_info(index)
+        example = self.pipeline(input_dict)
+        return example
 
     def _generate_annotations(self, output):
         """Generate Annotations.
@@ -126,6 +129,3 @@ class IndoorBaseDataset(torch_data.Dataset):
         gt_annos = [copy.deepcopy(info['annos']) for info in self.data_infos]
         ret_dict = indoor_eval(gt_annos, results, metric, self.label2cat)
         return ret_dict
-
-    def __len__(self):
-        return len(self.data_infos)
