@@ -56,9 +56,7 @@ def average_precision(recalls, precisions, mode='area'):
     Returns:
         float or ndarray: calculated average precision
     """
-    no_scale = False
     if recalls.ndim == 1:
-        no_scale = True
         recalls = recalls[np.newaxis, :]
         precisions = precisions[np.newaxis, :]
     assert recalls.shape == precisions.shape and recalls.ndim == 2
@@ -85,8 +83,6 @@ def average_precision(recalls, precisions, mode='area'):
     else:
         raise ValueError(
             'Unrecognized mode, only "area" and "11points" are supported')
-    if no_scale:
-        ap = ap[0]
     return ap
 
 
@@ -100,9 +96,9 @@ def eval_det_cls(pred, gt, ovthresh=None):
         ovthresh (List[float]): a list, iou threshold
 
     Return:
-        rec (ndarray): numpy array of length nd
-        prec (ndarray): numpy array of length nd
-        ap (float): scalar, average precision
+        ndarray: numpy array of length nd
+        ndarray: numpy array of length nd
+        float: scalar, average precision
     """
 
     # construct gt objects
@@ -186,40 +182,32 @@ def eval_det_cls(pred, gt, ovthresh=None):
         # compute precision recall
         fp = np.cumsum(fp_thresh[iou_idx])
         tp = np.cumsum(tp_thresh[iou_idx])
-        rec = tp / float(npos)
+        recall = tp / float(npos)
         # avoid divide by zero in case the first detection matches a difficult
         # ground truth
-        prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-        ap = average_precision(rec, prec)
-        ret.append((rec, prec, ap))
+        precision = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
+        ap = average_precision(recall, precision)
+        ret.append((recall, precision, ap))
 
     return ret
 
 
-def eval_det_cls_wrapper(arguments):
-    pred, gt, ovthresh = arguments
-    ret = eval_det_cls(pred, gt, ovthresh)
-    return ret
-
-
-def eval_map_rec(det_infos, gt_infos, ovthresh=None):
+def eval_map_recall(det_infos, gt_infos, ovthresh=None):
     """Evaluate mAP and Recall.
 
     Generic functions to compute precision/recall for object detection
         for multiple classes.
 
     Args:
-        pred_all (dict): map of {img_id: [(classname, bbox, score)]}.
-        gt_all (dict): map of {img_id: [(classname, bbox)]}.
+        det_infos (List): Label, bbox and score of the detection result.
+        gt_infos (List[dict]): Information of the ground truth.
         ovthresh (List[float]): iou threshold.
             Default: None.
-        get_iou_func (func): The function to get iou.
-            Default: get_iou_gpu.
 
     Return:
-        rec (dict): {classname: rec}.
-        prec (dict): {classname: prec_all}.
-        ap (dict): {classname: scalar}.
+        dict: {classname: rec}.
+        dict: {classname: prec_all}.
+        dict: {classname: scalar}.
     """
     pred_all = {}
     gt_all = {}
@@ -251,6 +239,7 @@ def eval_map_rec(det_infos, gt_infos, ovthresh=None):
             if img_id not in gt[label]:
                 gt[int(label)][img_id] = []
             pred[int(label)][img_id].append((bbox, score))
+
     for img_id in gt_all.keys():
         for label, bbox in gt_all[img_id]:
             if label not in gt:
@@ -260,25 +249,25 @@ def eval_map_rec(det_infos, gt_infos, ovthresh=None):
             gt[label][img_id].append(bbox)
 
     ret_values = []
-    args = [(pred[classname], gt[classname], ovthresh)
-            for classname in gt.keys() if classname in pred]
-    rec = [{} for i in ovthresh]
-    prec = [{} for i in ovthresh]
+    for classname in gt.keys():
+        if classname in pred:
+            ret_values.append(
+                eval_det_cls(pred[classname], gt[classname], ovthresh))
+    recall = [{} for i in ovthresh]
+    precision = [{} for i in ovthresh]
     ap = [{} for i in ovthresh]
-    for arg in args:
-        ret_values.append(eval_det_cls_wrapper(arg))
 
     for i, label in enumerate(gt.keys()):
         for iou_idx, thresh in enumerate(ovthresh):
             if label in pred:
-                rec[iou_idx][label], prec[iou_idx][label], ap[iou_idx][
+                recall[iou_idx][label], precision[iou_idx][label], ap[iou_idx][
                     label] = ret_values[i][iou_idx]
             else:
-                rec[iou_idx][label] = 0
-                prec[iou_idx][label] = 0
+                recall[iou_idx][label] = 0
+                precision[iou_idx][label] = 0
                 ap[iou_idx][label] = 0
 
-    return rec, prec, ap
+    return recall, precision, ap
 
 
 def indoor_eval(gt_annos, dt_annos, metric, label2cat):
@@ -293,9 +282,8 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
         label2cat (dict): {label: cat}.
 
     Return:
-        ret_dict (dict): Dict of results.
+        dict: Dict of results.
     """
-
     for gt_anno in gt_annos:
         if gt_anno['gt_num'] != 0:
             # convert to lidar coor for evaluation
@@ -304,10 +292,23 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
             if gt_anno['gt_boxes_upright_depth'].shape[-1] == 6:
                 gt_anno['gt_boxes_upright_depth'] = np.pad(
                     bbox_lidar_bottom, ((0, 0), (0, 1)), 'constant')
+            else:
+                gt_anno['gt_boxes_upright_depth'] = bbox_lidar_bottom
+    # gt_infos = []
+    # for gt_anno in gt_annos:
+    #     if gt_anno['gt_num'] != 0:
+    #         # convert to lidar coor for evaluation
+    #         bbox_lidar_bottom = boxes3d_depth_to_lidar(
+    #             gt_anno['gt_boxes_upright_depth'], mid_to_bottom=True)
+    #         if bbox_lidar_bottom.shape[-1] == 6:
+    #             bbox_lidar_bottom= np.pad(
+    #                 bbox_lidar_bottom, ((0, 0), (0, 1)), 'constant')
+    #         for i in range(gt_anno['gt_num']):
+    #             gt_infos.append([gt_anno['class'][i], bbox_lidar_bottom[i]])
 
     result_str = str()
     result_str += 'mAP'
-    rec, prec, ap = eval_map_rec(dt_annos, gt_annos, metric)
+    rec, prec, ap = eval_map_recall(dt_annos, gt_annos, metric)
     ret_dict = {}
     for i, iou_thresh in enumerate(metric):
         for label in ap[i].keys():
