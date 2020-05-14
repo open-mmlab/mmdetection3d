@@ -200,7 +200,7 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
 
     Args:
         det_infos (List): Label, bbox and score of the detection result.
-        gt_infos (List[dict]): Information of the ground truth.
+        gt_infos (List): Label, bbox of the groundtruth.
         ovthresh (List[float]): iou threshold.
             Default: None.
 
@@ -210,22 +210,12 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
         dict: {classname: scalar}.
     """
     pred_all = {}
-    gt_all = {}
     scan_cnt = 0
     for batch_pred_map_cls in det_infos:
         for i in range(len(batch_pred_map_cls)):
             pred_all[scan_cnt] = batch_pred_map_cls[i]
             scan_cnt += 1
 
-    # cacge gt infos
-    scan_cnt = 0
-    for gt_info in gt_infos:
-        cur_gt = list()
-        for n in range(gt_info['gt_num']):
-            cur_gt.append(
-                (gt_info['class'][n], gt_info['gt_boxes_upright_depth'][n]))
-        gt_all[scan_cnt] = cur_gt
-        scan_cnt += 1
     pred = {}  # map {classname: pred}
     gt = {}  # map {classname: gt}
     for img_id in pred_all.keys():
@@ -240,8 +230,8 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
                 gt[int(label)][img_id] = []
             pred[int(label)][img_id].append((bbox, score))
 
-    for img_id in gt_all.keys():
-        for label, bbox in gt_all[img_id]:
+    for img_id in range(len(gt_infos)):
+        for label, bbox in gt_infos[img_id]:
             if label not in gt:
                 gt[label] = {}
             if img_id not in gt[label]:
@@ -284,31 +274,24 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     Return:
         dict: Dict of results.
     """
+    gt_infos = []
     for gt_anno in gt_annos:
         if gt_anno['gt_num'] != 0:
             # convert to lidar coor for evaluation
             bbox_lidar_bottom = boxes3d_depth_to_lidar(
                 gt_anno['gt_boxes_upright_depth'], mid_to_bottom=True)
-            if gt_anno['gt_boxes_upright_depth'].shape[-1] == 6:
-                gt_anno['gt_boxes_upright_depth'] = np.pad(
-                    bbox_lidar_bottom, ((0, 0), (0, 1)), 'constant')
-            else:
-                gt_anno['gt_boxes_upright_depth'] = bbox_lidar_bottom
-    # gt_infos = []
-    # for gt_anno in gt_annos:
-    #     if gt_anno['gt_num'] != 0:
-    #         # convert to lidar coor for evaluation
-    #         bbox_lidar_bottom = boxes3d_depth_to_lidar(
-    #             gt_anno['gt_boxes_upright_depth'], mid_to_bottom=True)
-    #         if bbox_lidar_bottom.shape[-1] == 6:
-    #             bbox_lidar_bottom= np.pad(
-    #                 bbox_lidar_bottom, ((0, 0), (0, 1)), 'constant')
-    #         for i in range(gt_anno['gt_num']):
-    #             gt_infos.append([gt_anno['class'][i], bbox_lidar_bottom[i]])
+            if bbox_lidar_bottom.shape[-1] == 6:
+                bbox_lidar_bottom = np.pad(bbox_lidar_bottom, ((0, 0), (0, 1)),
+                                           'constant')
+            gt_info_temp = []
+            for i in range(gt_anno['gt_num']):
+                gt_info_temp.append(
+                    [gt_anno['class'][i], bbox_lidar_bottom[i]])
+            gt_infos.append(gt_info_temp)
 
     result_str = str()
     result_str += 'mAP'
-    rec, prec, ap = eval_map_recall(dt_annos, gt_annos, metric)
+    rec, prec, ap = eval_map_recall(dt_annos, gt_infos, metric)
     ret_dict = {}
     for i, iou_thresh in enumerate(metric):
         for label in ap[i].keys():
