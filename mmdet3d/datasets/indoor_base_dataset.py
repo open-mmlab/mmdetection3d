@@ -20,7 +20,7 @@ class IndoorBaseDataset(torch_data.Dataset):
                  with_label=True):
         super().__init__()
         self.root_path = root_path
-        self.CLASSES = classes if classes else self.CLASSES
+        self.CLASSES = self.get_classes(classes)
         self.test_mode = test_mode
         self.label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
         mmcv.check_file_exist(ann_file)
@@ -76,6 +76,29 @@ class IndoorBaseDataset(torch_data.Dataset):
         input_dict = self.get_data_info(index)
         example = self.pipeline(input_dict)
         return example
+
+    @classmethod
+    def get_classes(cls, classes=None):
+        """Get class names of current dataset
+        Args:
+            classes (Sequence[str] | str | None): If classes is None, use
+                default CLASSES defined by builtin dataset. If classes is a
+                string, take it as a file name. The file contains the name of
+                classes where each line contains one class name. If classes is
+                a tuple or list, override the CLASSES defined by the dataset.
+        """
+        if classes is None:
+            return cls.CLASSES
+
+        if isinstance(classes, str):
+            # take it as a file path
+            class_names = mmcv.list_from_file(classes)
+        elif isinstance(classes, (tuple, list)):
+            class_names = classes
+        else:
+            raise ValueError(f'Unsupported type {type(classes)} of classes.')
+
+        return class_names
 
     def _generate_annotations(self, output):
         """Generate Annotations.

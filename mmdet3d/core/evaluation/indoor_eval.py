@@ -91,14 +91,14 @@ def eval_det_cls(pred, gt, ovthresh=None):
         for a single class.
 
     Args:
-        pred (dict): map of {img_id: [(bbox, score)]} where bbox is numpy array
-        gt (dict): map of {img_id: [bbox]}
-        ovthresh (List[float]): a list, iou threshold
+        pred (dict): {img_id: [(bbox, score)]} where bbox is numpy array.
+        gt (dict): {img_id: [bbox]}.
+        ovthresh (List[float]): a list, iou threshold.
 
     Return:
-        ndarray: numpy array of length nd
-        ndarray: numpy array of length nd
-        float: scalar, average precision
+        ndarray: numpy array of length nd.
+        ndarray: numpy array of length nd.
+        float: scalar, average precision.
     """
 
     # construct gt objects
@@ -295,13 +295,10 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     ret_dict = {}
     for i, iou_thresh in enumerate(metric):
         for label in ap[i].keys():
-            ret_dict[f'{label2cat[label]}_AP_{int(iou_thresh * 100)}'] = ap[i][
-                label]
-        ret_dict[f'mAP_{int(iou_thresh * 100)}'] = sum(ap[i].values()) / len(
-            ap[i])
+            ret_dict[f'{label2cat[label]}_AP_{iou_thresh:.2f}'] = ap[i][label]
+        ret_dict[f'mAP_{iou_thresh:.2f}'] = sum(ap[i].values()) / len(ap[i])
         for label in rec[i].keys():
-            ret_dict[f'{label2cat[label]}_rec_{int(iou_thresh * 100)}'] = rec[
-                i][label]
-        ret_dict[f'mAR_{int(iou_thresh * 100)}'] = sum(rec[i].values()) / len(
-            rec[i])
+            ret_dict[f'{label2cat[label]}_rec_{iou_thresh:.2f}'] = rec[i][
+                label]
+        ret_dict[f'mAR_{iou_thresh:.2f}'] = sum(rec[i].values()) / len(rec[i])
     return ret_dict
