@@ -30,6 +30,34 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     """
 
     @property
+    def height(self):
+        """Obtain the height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with height of each box.
+        """
+        return self.tensor[:, 4]
+
+    @property
+    def top_height(self):
+        """Obtain the top height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with the top height of each box.
+        """
+        # the positive direction is down rather than up
+        return self.bottom_height - self.height
+
+    @property
+    def bottom_height(self):
+        """Obtain the bottom's height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with bottom's height of each box.
+        """
+        return self.tensor[:, 1]
+
+    @property
     def gravity_center(self):
         """Calculate the gravity center of all the boxes.
 
@@ -85,6 +113,16 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return corners
 
     @property
+    def bev(self):
+        """Calculate the 2D bounding boxes in BEV with rotation
+
+        Returns:
+            torch.Tensor: a nx5 tensor of 2D BEV box of each box.
+                The box is in XYWHR format.
+        """
+        return self.tensor[:, [0, 2, 3, 5, 6]]
+
+    @property
     def nearset_bev(self):
         """Calculate the 2D bounding boxes in BEV without rotation
 
@@ -92,7 +130,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             torch.Tensor: a tensor of 2D BEV box of each box.
         """
         # Obtain BEV boxes with rotation in XZWHR format
-        bev_rotated_boxes = self.tensor[:, [0, 2, 3, 5, 6]]
+        bev_rotated_boxes = self.bev
         # convert the rotation to a valid range
         rotations = bev_rotated_boxes[:, -1]
         normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
@@ -158,3 +196,37 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                           & (self.tensor[:, 0] < box_range[2])
                           & (self.tensor[:, 2] < box_range[3]))
         return in_range_flags
+
+    @classmethod
+    def height_overlaps(cls, boxes1, boxes2, mode='iou'):
+        """Calculate height overlaps of two boxes
+
+        Note:
+            This function calculate the height overlaps between boxes1 and
+            boxes2,  boxes1 and boxes2 should be in the same type.
+
+        Args:
+            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
+            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
+            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+
+        Returns:
+            torch.Tensor: Calculated iou of boxes
+        """
+        assert isinstance(boxes1, BaseInstance3DBoxes)
+        assert isinstance(boxes2, BaseInstance3DBoxes)
+        assert type(boxes1) == type(boxes2), '"boxes1" and "boxes2" should' \
+            f'be in the same type, got {type(boxes1)} and {type(boxes2)}.'
+
+        boxes1_top_height = boxes1.top_height.view(-1, 1)
+        boxes1_bottom_height = boxes1.bottom_height.view(-1, 1)
+        boxes2_top_height = boxes2.top_height.view(1, -1)
+        boxes2_bottom_height = boxes2.bottom_height.view(1, -1)
+
+        # In camera coordinate system
+        # from up to down is the positive direction
+        heighest_of_bottom = torch.min(boxes1_bottom_height,
+                                       boxes2_bottom_height)
+        lowest_of_top = torch.max(boxes1_top_height, boxes2_top_height)
+        overlaps_h = torch.clamp(heighest_of_bottom - lowest_of_top, min=0)
+        return overlaps_h
