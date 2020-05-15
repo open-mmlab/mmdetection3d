@@ -126,22 +126,21 @@ class PointwiseSemanticHead(nn.Module):
         part_targets = torch.cat(part_targets, dim=0)
         return dict(seg_targets=seg_targets, part_targets=part_targets)
 
-    def loss(self, seg_preds, part_preds, seg_targets, part_targets):
+    def loss(self, semantic_results, semantic_targets):
         """Calculate point-wise segmentation and part prediction losses.
 
         Args:
-            seg_preds (torch.Tensor): prediction of binary
-                segmentation with shape [voxel_num, 1].
-            part_preds (torch.Tensor): prediction of part
-                with shape [voxel_num, 3].
-            seg_targets (torch.Tensor): target of segmentation
-                with shape [voxel_num, 1].
-            part_targets (torch.Tensor): target of part with
-                shape [voxel_num, 3].
+            semantic_results (dict): Results from semantic head.
+            semantic_targets (dict): Targets of semantic results.
 
         Returns:
             dict: loss of segmentation and part prediction.
         """
+        seg_preds = semantic_results['seg_preds']
+        part_preds = semantic_results['part_preds']
+        seg_targets = semantic_targets['seg_targets']
+        part_targets = semantic_targets['part_targets']
+
         pos_mask = (seg_targets > -1) & (seg_targets < self.num_classes)
         binary_seg_target = pos_mask.long()
         pos = pos_mask.float()
