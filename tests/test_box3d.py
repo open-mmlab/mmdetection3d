@@ -288,9 +288,9 @@ def test_boxes_conversion():
     # Some properties should be the same
     cam_boxes = CameraInstance3DBoxes(cam_box_tensor)
     assert torch.equal(cam_boxes.height, lidar_boxes.height)
-    assert torch.equal(cam_boxes.top_height, lidar_boxes.top_height)
-    assert torch.equal(cam_boxes.bottom_height, lidar_boxes.bottom_height)
-    assert torch.equal(cam_boxes.volume, lidar_boxes.volume)
+    assert torch.equal(cam_boxes.top_height, -lidar_boxes.top_height)
+    assert torch.equal(cam_boxes.bottom_height, -lidar_boxes.bottom_height)
+    assert torch.allclose(cam_boxes.volume, lidar_boxes.volume)
 
     lidar_box_tensor = Box3DMode.convert(cam_box_tensor, Box3DMode.CAM,
                                          Box3DMode.LIDAR)
