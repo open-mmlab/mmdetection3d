@@ -21,7 +21,7 @@ def test_getitem():
         dict(
             type='IndoorGlobalRotScale',
             use_height=True,
-            rot_range=[-np.pi / 6, np.pi / 6],
+            rot_range=[-1 / 6, 1 / 6],
             scale_range=[0.85, 1.15]),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
