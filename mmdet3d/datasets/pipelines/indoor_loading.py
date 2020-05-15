@@ -76,7 +76,7 @@ class IndoorLoadPointsFromFile(object):
         return repr_str
 
 
-@PIPELINES.register_module
+@PIPELINES.register_module()
 class IndoorLoadAnnotations3D(object):
     """Indoor Load Annotations3D.
 

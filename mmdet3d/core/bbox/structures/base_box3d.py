@@ -3,7 +3,8 @@ from abc import abstractmethod
 import numpy as np
 import torch
 
-from .utils import limit_period
+from mmdet3d.ops.iou3d import iou3d_cuda
+from .utils import limit_period, xywhr2xyxyr
 
 
 class BaseInstance3DBoxes(object):
@@ -49,6 +50,33 @@ class BaseInstance3DBoxes(object):
             torch.Tensor: corners of each box with size (N, 8, 3)
         """
         return self.tensor[:, 3:6]
+
+    @property
+    def height(self):
+        """Obtain the height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with volume of each box.
+        """
+        return self.tensor[:, 5]
+
+    @property
+    def top_height(self):
+        """Obtain the top height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with the top height of each box.
+        """
+        return self.bottom_height + self.height
+
+    @property
+    def bottom_height(self):
+        """Obtain the bottom's height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with bottom's height of each box.
+        """
+        return self.tensor[:, 2]
 
     @property
     def center(self):
@@ -275,3 +303,87 @@ class BaseInstance3DBoxes(object):
         Yield a box as a Tensor of shape (4,) at a time.
         """
         yield from self.tensor
+
+    @classmethod
+    def height_overlaps(cls, boxes1, boxes2, mode='iou'):
+        """Calculate height overlaps of two boxes
+
+        Note:
+            This function calculate the height overlaps between boxes1 and
+            boxes2,  boxes1 and boxes2 should be in the same type.
+
+        Args:
+            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
+            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
+            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+
+        Returns:
+            torch.Tensor: Calculated iou of boxes
+        """
+        assert isinstance(boxes1, BaseInstance3DBoxes)
+        assert isinstance(boxes2, BaseInstance3DBoxes)
+        assert type(boxes1) == type(boxes2), '"boxes1" and "boxes2" should' \
+            f'be in the same type, got {type(boxes1)} and {type(boxes2)}.'
+
+        boxes1_top_height = boxes1.top_height.view(-1, 1)
+        boxes1_bottom_height = boxes1.bottom_height.view(-1, 1)
+        boxes2_top_height = boxes2.top_height.view(1, -1)
+        boxes2_bottom_height = boxes2.bottom_height.view(1, -1)
+
+        heighest_of_bottom = torch.max(boxes1_bottom_height,
+                                       boxes2_bottom_height)
+        lowest_of_top = torch.min(boxes1_top_height, boxes2_top_height)
+        overlaps_h = torch.clamp(lowest_of_top - heighest_of_bottom, min=0)
+        return overlaps_h
+
+    @classmethod
+    def overlaps(cls, boxes1, boxes2, mode='iou'):
+        """Calculate 3D overlaps of two boxes
+
+        Note:
+            This function calculate the overlaps between boxes1 and boxes2,
+            boxes1 and boxes2 are not necessarily to be in the same type.
+
+        Args:
+            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
+            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
+            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+
+        Returns:
+            torch.Tensor: Calculated iou of boxes
+        """
+        assert isinstance(boxes1, BaseInstance3DBoxes)
+        assert isinstance(boxes2, BaseInstance3DBoxes)
+        assert type(boxes1) == type(boxes2), '"boxes1" and "boxes2" should' \
+            f'be in the same type, got {type(boxes1)} and {type(boxes2)}.'
+
+        assert mode in ['iou', 'iof']
+
+        # height overlap
+        overlaps_h = cls.height_overlaps(boxes1, boxes2)
+
+        # obtain BEV boxes in XYXYR format
+        boxes1_bev = xywhr2xyxyr(boxes1.bev)
+        boxes2_bev = xywhr2xyxyr(boxes2.bev)
+
+        # bev overlap
+        overlaps_bev = boxes1_bev.new_zeros(
+            (boxes1_bev.shape[0], boxes2_bev.shape[0])).cuda()  # (N, M)
+        iou3d_cuda.boxes_overlap_bev_gpu(boxes1_bev.contiguous().cuda(),
+                                         boxes2_bev.contiguous().cuda(),
+                                         overlaps_bev)
+
+        # 3d overlaps
+        overlaps_3d = overlaps_bev.to(boxes1.device) * overlaps_h
+
+        volume1 = boxes1.volume.view(-1, 1)
+        volume2 = boxes2.volume.view(1, -1)
+
+        if mode == 'iou':
+            # the clamp func is used to avoid division of 0
+            iou3d = overlaps_3d / torch.clamp(
+                volume1 + volume2 - overlaps_3d, min=1e-8)
+        else:
+            iou3d = overlaps_3d / torch.clamp(volume1, min=1e-8)
+
+        return iou3d

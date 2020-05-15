@@ -80,6 +80,16 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         return corners
 
     @property
+    def bev(self):
+        """Calculate the 2D bounding boxes in BEV with rotation
+
+        Returns:
+            torch.Tensor: a nx5 tensor of 2D BEV box of each box.
+                The box is in XYWHR format
+        """
+        return self.tensor[:, [0, 1, 3, 4, 6]]
+
+    @property
     def nearset_bev(self):
         """Calculate the 2D bounding boxes in BEV without rotation
 
@@ -87,7 +97,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             torch.Tensor: a tensor of 2D BEV box of each box.
         """
         # Obtain BEV boxes with rotation in XYWHR format
-        bev_rotated_boxes = self.tensor[:, [0, 1, 3, 4, 6]]
+        bev_rotated_boxes = self.bev
         # convert the rotation to a valid range
         rotations = bev_rotated_boxes[:, -1]
         normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
