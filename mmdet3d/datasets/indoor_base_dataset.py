@@ -1,5 +1,3 @@
-import copy
-
 import mmcv
 import numpy as np
 import torch.utils.data as torch_data
@@ -26,8 +24,6 @@ class IndoorBaseDataset(torch_data.Dataset):
         mmcv.check_file_exist(ann_file)
         self.data_infos = mmcv.load(ann_file)
 
-        # dataset config
-        self.num_class = len(self.CLASSES)
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
         self.with_label = with_label
@@ -79,7 +75,8 @@ class IndoorBaseDataset(torch_data.Dataset):
 
     @classmethod
     def get_classes(cls, classes=None):
-        """Get class names of current dataset
+        """Get class names of current dataset.
+
         Args:
             classes (Sequence[str] | str | None): If classes is None, use
                 default CLASSES defined by builtin dataset. If classes is a
@@ -116,7 +113,7 @@ class IndoorBaseDataset(torch_data.Dataset):
             box3d_depth = pred_boxes['box3d_lidar']
             if box3d_depth is not None:
                 label_preds = pred_boxes['label_preds']
-                scores = pred_boxes['scores'].detach().cpu().numpy()
+                scores = pred_boxes['scores']
                 label_preds = label_preds.detach().cpu().numpy()
                 num_proposal = box3d_depth.shape[0]
                 for j in range(num_proposal):
@@ -149,6 +146,6 @@ class IndoorBaseDataset(torch_data.Dataset):
         results = self.format_results(results)
         from mmdet3d.core.evaluation import indoor_eval
         assert len(metric) > 0
-        gt_annos = [copy.deepcopy(info['annos']) for info in self.data_infos]
+        gt_annos = [info['annos'] for info in self.data_infos]
         ret_dict = indoor_eval(gt_annos, results, metric, self.label2cat)
         return ret_dict

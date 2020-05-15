@@ -55,10 +55,32 @@ def test_getitem():
                                           2.81404
                                       ]])
     expected_gt_labels = np.array([0, 7, 6])
+    original_classes = sunrgbd_dataset.CLASSES
 
     assert np.allclose(points, expected_points)
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert np.all(gt_labels.numpy() == expected_gt_labels)
+    assert original_classes == class_names
+
+    SUNRGBD_dataset = SUNRGBDDataset(
+        root_path, ann_file, pipeline=None, classes=['bed', 'table'])
+    assert SUNRGBD_dataset.CLASSES != original_classes
+    assert SUNRGBD_dataset.CLASSES == ['bed', 'table']
+
+    SUNRGBD_dataset = SUNRGBDDataset(
+        root_path, ann_file, pipeline=None, classes=('bed', 'table'))
+    assert SUNRGBD_dataset.CLASSES != original_classes
+    assert SUNRGBD_dataset.CLASSES == ('bed', 'table')
+
+    import tempfile
+    tmp_file = tempfile.NamedTemporaryFile()
+    with open(tmp_file.name, 'w') as f:
+        f.write('bed\ntable\n')
+
+    SUNRGBD_dataset = SUNRGBDDataset(
+        root_path, ann_file, pipeline=None, classes=tmp_file.name)
+    assert SUNRGBD_dataset.CLASSES != original_classes
+    assert SUNRGBD_dataset.CLASSES == ['bed', 'table']
 
 
 def test_evaluate():
