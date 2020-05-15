@@ -63,13 +63,36 @@ def test_getitem():
     ])
     expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
+    original_classes = scannet_dataset.CLASSES
 
+    assert scannet_dataset.CLASSES == class_names
     assert np.allclose(points, expected_points)
     assert gt_bboxes_3d[:5].shape == (5, 6)
     assert np.allclose(gt_bboxes_3d[:5], expected_gt_bboxes_3d)
     assert np.all(gt_labels.numpy() == expected_gt_labels)
     assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
     assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
+    assert original_classes == class_names
+
+    scannet_dataset = ScanNetDataset(
+        root_path, ann_file, pipeline=None, classes=['cabinet', 'bed'])
+    assert scannet_dataset.CLASSES != original_classes
+    assert scannet_dataset.CLASSES == ['cabinet', 'bed']
+
+    scannet_dataset = ScanNetDataset(
+        root_path, ann_file, pipeline=None, classes=('cabinet', 'bed'))
+    assert scannet_dataset.CLASSES != original_classes
+    assert scannet_dataset.CLASSES == ('cabinet', 'bed')
+
+    import tempfile
+    tmp_file = tempfile.NamedTemporaryFile()
+    with open(tmp_file.name, 'w') as f:
+        f.write('cabinet\nbed\n')
+
+    scannet_dataset = ScanNetDataset(
+        root_path, ann_file, pipeline=None, classes=tmp_file.name)
+    assert scannet_dataset.CLASSES != original_classes
+    assert scannet_dataset.CLASSES == ['cabinet', 'bed']
 
 
 def test_evaluate():

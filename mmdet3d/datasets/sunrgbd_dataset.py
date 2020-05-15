@@ -33,11 +33,11 @@ class SUNRGBDDataset(IndoorBaseDataset):
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']  # k, 6
             gt_labels = info['annos']['class']
-            gt_bboxes_3d_mask = np.ones_like(gt_labels).astype(np.bool)
+            gt_bboxes_3d_mask = np.ones_like(gt_labels, dtype=np.bool)
         else:
             gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-            gt_labels = np.zeros(1, ).astype(np.bool)
-            gt_bboxes_3d_mask = np.zeros(1, ).astype(np.bool)
+            gt_labels = np.zeros(1, dtype=np.bool)
+            gt_bboxes_3d_mask = np.zeros(1, dtype=np.bool)
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,

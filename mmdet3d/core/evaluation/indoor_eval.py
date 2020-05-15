@@ -5,7 +5,7 @@ from mmdet3d.core.bbox.iou_calculators.iou3d_calculator import bbox_overlaps_3d
 
 
 def boxes3d_depth_to_lidar(boxes3d, mid_to_bottom=True):
-    """ Boxes3d Depth to Lidar.
+    """Boxes3d Depth to Lidar.
 
     Flip X-right,Y-forward,Z-up to X-forward,Y-left,Z-up.
 
@@ -86,14 +86,14 @@ def average_precision(recalls, precisions, mode='area'):
     return ap
 
 
-def eval_det_cls(pred, gt, ovthresh=None):
+def eval_det_cls(pred, gt, iou_thr=None):
     """Generic functions to compute precision/recall for object detection
         for a single class.
 
     Args:
         pred (dict): {img_id: [(bbox, score)]} where bbox is numpy array.
         gt (dict): {img_id: [bbox]}.
-        ovthresh (List[float]): a list, iou threshold.
+        iou_thr (List[float]): a list, iou threshold.
 
     Return:
         ndarray: numpy array of length nd.
@@ -106,7 +106,7 @@ def eval_det_cls(pred, gt, ovthresh=None):
     npos = 0
     for img_id in gt.keys():
         bbox = np.array(gt[img_id])
-        det = [[False] * len(bbox) for i in ovthresh]
+        det = [[False] * len(bbox) for i in iou_thr]
         npos += len(bbox)
         class_recs[img_id] = {'bbox': bbox, 'det': det}
     # pad empty list to all other imgids
@@ -150,11 +150,11 @@ def eval_det_cls(pred, gt, ovthresh=None):
 
     # go down dets and mark TPs and FPs
     nd = len(image_ids)
-    tp_thresh = [np.zeros(nd) for i in ovthresh]
-    fp_thresh = [np.zeros(nd) for i in ovthresh]
+    tp_thr = [np.zeros(nd) for i in iou_thr]
+    fp_thr = [np.zeros(nd) for i in iou_thr]
     for d in range(nd):
         R = class_recs[image_ids[d]]
-        ovmax = -np.inf
+        iou_max = -np.inf
         BBGT = R['bbox'].astype(float)
         cur_iou = ious[d]
 
@@ -163,25 +163,25 @@ def eval_det_cls(pred, gt, ovthresh=None):
             for j in range(BBGT.shape[0]):
                 # iou = get_iou_main(get_iou_func, (bb, BBGT[j,...]))
                 iou = cur_iou[j]
-                if iou > ovmax:
-                    ovmax = iou
+                if iou > iou_max:
+                    iou_max = iou
                     jmax = j
 
-        for iou_idx, thresh in enumerate(ovthresh):
-            if ovmax > thresh:
+        for iou_idx, thresh in enumerate(iou_thr):
+            if iou_max > thresh:
                 if not R['det'][iou_idx][jmax]:
-                    tp_thresh[iou_idx][d] = 1.
+                    tp_thr[iou_idx][d] = 1.
                     R['det'][iou_idx][jmax] = 1
                 else:
-                    fp_thresh[iou_idx][d] = 1.
+                    fp_thr[iou_idx][d] = 1.
             else:
-                fp_thresh[iou_idx][d] = 1.
+                fp_thr[iou_idx][d] = 1.
 
     ret = []
-    for iou_idx, thresh in enumerate(ovthresh):
+    for iou_idx, thresh in enumerate(iou_thr):
         # compute precision recall
-        fp = np.cumsum(fp_thresh[iou_idx])
-        tp = np.cumsum(tp_thresh[iou_idx])
+        fp = np.cumsum(fp_thr[iou_idx])
+        tp = np.cumsum(tp_thr[iou_idx])
         recall = tp / float(npos)
         # avoid divide by zero in case the first detection matches a difficult
         # ground truth
