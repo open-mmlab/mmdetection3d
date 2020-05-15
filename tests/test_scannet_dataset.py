@@ -25,7 +25,7 @@ def test_getitem():
         dict(
             type='IndoorGlobalRotScale',
             use_height=True,
-            rot_range=[-np.pi * 1 / 36, np.pi * 1 / 36],
+            rot_range=[-1 / 36, 1 / 36],
             scale_range=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -41,8 +41,8 @@ def test_getitem():
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels = data['gt_labels']._data
-    pts_semantic_mask = data['pts_semantic_mask']
-    pts_instance_mask = data['pts_instance_mask']
+    pts_semantic_mask = data['pts_semantic_mask']._data
+    pts_instance_mask = data['pts_instance_mask']._data
 
     expected_points = np.array(
         [[-2.9078157, -1.9569951, 2.3543026, 2.389488],
@@ -68,8 +68,8 @@ def test_getitem():
     assert gt_bboxes_3d[:5].shape == (5, 6)
     assert np.allclose(gt_bboxes_3d[:5], expected_gt_bboxes_3d)
     assert np.all(gt_labels.numpy() == expected_gt_labels)
-    assert np.all(pts_semantic_mask == expected_pts_semantic_mask)
-    assert np.all(pts_instance_mask == expected_pts_instance_mask)
+    assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
+    assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
 
 
 def test_evaluate():
