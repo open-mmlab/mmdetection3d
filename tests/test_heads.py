@@ -103,18 +103,18 @@ def test_second_head_loss():
 
     losses = self.loss(cls_score, bbox_pred, dir_cls_preds, gt_bboxes,
                        gt_labels, input_metas)
-    assert losses['loss_cls_3d'][0] > 0
-    assert losses['loss_bbox_3d'][0] > 0
-    assert losses['loss_dir_3d'][0] > 0
+    assert losses['loss_rpn_cls'][0] > 0
+    assert losses['loss_rpn_bbox'][0] > 0
+    assert losses['loss_rpn_dir'][0] > 0
 
     # test empty ground truth case
     gt_bboxes = list(torch.empty((2, 0, 7)).cuda())
     gt_labels = list(torch.empty((2, 0)).cuda())
     empty_gt_losses = self.loss(cls_score, bbox_pred, dir_cls_preds, gt_bboxes,
                                 gt_labels, input_metas)
-    assert empty_gt_losses['loss_cls_3d'][0] > 0
-    assert empty_gt_losses['loss_bbox_3d'][0] == 0
-    assert empty_gt_losses['loss_dir_3d'][0] == 0
+    assert empty_gt_losses['loss_rpn_cls'][0] > 0
+    assert empty_gt_losses['loss_rpn_bbox'][0] == 0
+    assert empty_gt_losses['loss_rpn_dir'][0] == 0
 
 
 def test_second_head_getboxes():
@@ -147,7 +147,7 @@ def test_parta2_rpnhead_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     rpn_head_cfg, proposal_cfg = _get_rpn_head_cfg(
-        'kitti/hv_PartA2_secfpn_4x8_cosine_80e_kitti-3d-3class.py')
+        'kitti/hv_PartA2_secfpn_4x8_cyclic_80e_kitti-3d-3class.py')
 
     from mmdet3d.models.builder import build_head
     self = build_head(rpn_head_cfg)

@@ -62,9 +62,7 @@ def test_PointwiseSemanticHead():
         [voxel_features.shape[0], 3])
 
     # test loss
-    loss_dict = self.loss(feats_dict['seg_preds'], feats_dict['part_preds'],
-                          target_dict['seg_targets'],
-                          target_dict['part_targets'])
+    loss_dict = self.loss(feats_dict, target_dict)
     assert loss_dict['loss_seg'] > 0
     assert loss_dict['loss_part'] == 0  # no points in gt_boxes
     total_loss = loss_dict['loss_seg'] + loss_dict['loss_part']

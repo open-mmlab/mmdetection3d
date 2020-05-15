@@ -566,3 +566,69 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=True):
                     break
             ret[i, j] = success
     return ret
+
+
+def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
+    """convert kitti center boxes to corners
+
+        7 -------- 4
+       /|         /|
+      6 -------- 5 .
+      | |        | |
+      . 3 -------- 0
+      |/         |/
+      2 -------- 1
+
+    Args:
+        boxes3d (numpy.array): (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords,
+            see the definition of ry in KITTI dataset
+        bottom_center (bool): whether z is on the bottom center of object.
+
+    Returns:
+        numpy.array: box corners with shape (N, 8, 3)
+    """
+    boxes_num = boxes3d.shape[0]
+    w, l, h = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
+    x_corners = np.array(
+        [w / 2., -w / 2., -w / 2., w / 2., w / 2., -w / 2., -w / 2., w / 2.],
+        dtype=np.float32).T
+    y_corners = np.array(
+        [-l / 2., -l / 2., l / 2., l / 2., -l / 2., -l / 2., l / 2., l / 2.],
+        dtype=np.float32).T
+    if bottom_center:
+        z_corners = np.zeros((boxes_num, 8), dtype=np.float32)
+        z_corners[:, 4:8] = h.reshape(boxes_num, 1).repeat(4, axis=1)  # (N, 8)
+    else:
+        z_corners = np.array([
+            -h / 2., -h / 2., -h / 2., -h / 2., h / 2., h / 2., h / 2., h / 2.
+        ],
+                             dtype=np.float32).T
+
+    ry = boxes3d[:, 6]
+    zeros, ones = np.zeros(
+        ry.size, dtype=np.float32), np.ones(
+            ry.size, dtype=np.float32)
+    rot_list = np.array([[np.cos(ry), -np.sin(ry), zeros],
+                         [np.sin(ry), np.cos(ry), zeros], [zeros, zeros,
+                                                           ones]])  # (3, 3, N)
+    R_list = np.transpose(rot_list, (2, 0, 1))  # (N, 3, 3)
+
+    temp_corners = np.concatenate((x_corners.reshape(
+        -1, 8, 1), y_corners.reshape(-1, 8, 1), z_corners.reshape(-1, 8, 1)),
+                                  axis=2)  # (N, 8, 3)
+    rotated_corners = np.matmul(temp_corners, R_list)  # (N, 8, 3)
+    x_corners = rotated_corners[:, :, 0]
+    y_corners = rotated_corners[:, :, 1]
+    z_corners = rotated_corners[:, :, 2]
+
+    x_loc, y_loc, z_loc = boxes3d[:, 0], boxes3d[:, 1], boxes3d[:, 2]
+
+    x = x_loc.reshape(-1, 1) + x_corners.reshape(-1, 8)
+    y = y_loc.reshape(-1, 1) + y_corners.reshape(-1, 8)
+    z = z_loc.reshape(-1, 1) + z_corners.reshape(-1, 8)
+
+    corners = np.concatenate(
+        (x.reshape(-1, 8, 1), y.reshape(-1, 8, 1), z.reshape(-1, 8, 1)),
+        axis=2)
+
+    return corners.astype(np.float32)

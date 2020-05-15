@@ -258,9 +258,9 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
             dir_weights_list,
             num_total_samples=num_total_samples)
         return dict(
-            loss_cls_3d=losses_cls,
-            loss_bbox_3d=losses_bbox,
-            loss_dir_3d=losses_dir)
+            loss_rpn_cls=losses_cls,
+            loss_rpn_bbox=losses_bbox,
+            loss_rpn_dir=losses_dir)
 
     def get_bboxes(self,
                    cls_scores,

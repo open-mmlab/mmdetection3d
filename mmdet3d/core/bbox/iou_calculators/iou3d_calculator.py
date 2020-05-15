@@ -88,6 +88,11 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     assert bboxes1.size(-1) == bboxes2.size(-1) == 7
     assert coordinate in ['camera', 'lidar']
 
+    rows = bboxes1.size(0)
+    cols = bboxes2.size(0)
+    if rows * cols == 0:
+        return bboxes1.new(rows, cols)
+
     if coordinate == 'camera':
         return boxes_iou3d_gpu_camera(bboxes1, bboxes2, mode)
     elif coordinate == 'lidar':

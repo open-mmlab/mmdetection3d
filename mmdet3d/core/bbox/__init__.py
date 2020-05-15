@@ -8,7 +8,7 @@ from .samplers import (BaseSampler, CombinedSampler,
                        InstanceBalancedPosSampler, IoUBalancedNegSampler,
                        PseudoSampler, RandomSampler, SamplingResult)
 from .structures import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
-from .transforms import boxes3d_to_bev_torch_lidar
+from .transforms import bbox3d2roi, boxes3d_to_bev_torch_lidar
 
 from .assign_sampling import (  # isort:skip, avoid recursive imports
     build_bbox_coder,  # temporally settings
@@ -22,5 +22,5 @@ __all__ = [
     'build_bbox_coder', 'DeltaXYZWLHRBBoxCoder', 'boxes3d_to_bev_torch_lidar',
     'BboxOverlapsNearest3D', 'BboxOverlaps3D', 'bbox_overlaps_nearest_3d',
     'bbox_overlaps_3d', 'Box3DMode', 'LiDARInstance3DBoxes',
-    'CameraInstance3DBoxes'
+    'CameraInstance3DBoxes', 'bbox3d2roi'
 ]
