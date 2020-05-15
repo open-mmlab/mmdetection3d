@@ -5,7 +5,7 @@ from mmdet3d import ops
 from mmdet.models.builder import ROI_EXTRACTORS
 
 
-@ROI_EXTRACTORS.register_module
+@ROI_EXTRACTORS.register_module()
 class Single3DRoIAwareExtractor(nn.Module):
     """Point-wise roi-aware Extractor
 

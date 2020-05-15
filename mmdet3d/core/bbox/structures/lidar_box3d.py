@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-from mmdet3d.ops.iou3d import iou3d_cuda
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -81,30 +80,14 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         return corners
 
     @property
-    def bev(self, mode='XYWHR'):
+    def bev(self):
         """Calculate the 2D bounding boxes in BEV with rotation
-
-        Args:
-            mode (str): The mode of BEV boxes. Default to 'XYWHR'.
 
         Returns:
             torch.Tensor: a nx5 tensor of 2D BEV box of each box.
+                The box is in XYWHR format
         """
-        boxes_xywhr = self.tensor[:, [0, 1, 3, 4, 6]]
-        if mode == 'XYWHR':
-            return boxes_xywhr
-        elif mode == 'XYXYR':
-            boxes = torch.zeros_like(boxes_xywhr)
-            boxes[:, 0] = boxes_xywhr[:, 0] - boxes_xywhr[2]
-            boxes[:, 1] = boxes_xywhr[:, 1] - boxes_xywhr[3]
-            boxes[:, 2] = boxes_xywhr[:, 0] + boxes_xywhr[2]
-            boxes[:, 3] = boxes_xywhr[:, 1] + boxes_xywhr[3]
-            boxes[:, 4] = boxes_xywhr[:, 4]
-            return boxes
-        else:
-            raise ValueError(
-                'Only support mode to be either "XYWHR" or "XYXYR",'
-                f'got {mode}')
+        return self.tensor[:, [0, 1, 3, 4, 6]]
 
     @property
     def nearset_bev(self):
@@ -180,55 +163,3 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                           & (self.tensor[:, 0] < box_range[2])
                           & (self.tensor[:, 1] < box_range[3]))
         return in_range_flags
-
-    @classmethod
-    def overlaps(cls, boxes1, boxes2, mode='iou'):
-        """Calculate overlaps of two boxes
-
-        Args:
-            boxes1 (:obj:LiDARInstanceBoxes): boxes 1 contain N boxes
-            boxes2 (:obj:LiDARInstanceBoxes): boxes 2 contain M boxes
-            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
-
-        Returns:
-            torch.Tensor: Calculated iou of boxes
-        """
-        assert isinstance(boxes1, LiDARInstance3DBoxes)
-        assert isinstance(boxes2, LiDARInstance3DBoxes)
-        assert mode in ['iou', 'iof']
-
-        # height overlap
-        boxes1_height_max = (boxes1.tensor[:, 2] + boxes1.height).view(-1, 1)
-        boxes1_height_min = boxes1.tensor[:, 2].view(-1, 1)
-        boxes2_height_max = (boxes2.tensor[:, 2] + boxes2.height).view(1, -1)
-        boxes2_height_min = boxes2.tensor[:, 2].view(1, -1)
-
-        max_of_min = torch.max(boxes1_height_min, boxes2_height_min)
-        min_of_max = torch.min(boxes1_height_max, boxes2_height_max)
-        overlaps_h = torch.clamp(min_of_max - max_of_min, min=0)
-
-        # obtain BEV boxes in XYXYR format
-        boxes1_bev = boxes1.bev(mode='XYXYR')
-        boxes2_bev = boxes2.bev(mode='XYXYR')
-
-        # bev overlap
-        overlaps_bev = boxes1_bev.new_zeros(
-            (boxes1_bev.shape[0], boxes2_bev.shape[0])).cuda()  # (N, M)
-        iou3d_cuda.boxes_overlap_bev_gpu(boxes1_bev.contiguous().cuda(),
-                                         boxes2_bev.contiguous().cuda(),
-                                         overlaps_bev)
-
-        # 3d iou
-        overlaps_3d = overlaps_bev.to(boxes1.device) * overlaps_h
-
-        volume1 = boxes1.volume.view(-1, 1)
-        volume2 = boxes2.volume.view(1, -1)
-
-        if mode == 'iou':
-            # the clamp func is used to avoid division of 0
-            iou3d = overlaps_3d / torch.clamp(
-                volume1 + volume2 - overlaps_3d, min=1e-8)
-        else:
-            iou3d = overlaps_3d / torch.clamp(volume1, min=1e-8)
-
-        return iou3d

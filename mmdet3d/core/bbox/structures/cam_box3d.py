@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-from mmdet3d.ops.iou3d import iou3d_cuda
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -35,9 +34,28 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Obtain the height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with volume of each box.
+            torch.Tensor: a vector with height of each box.
         """
         return self.tensor[:, 4]
+
+    @property
+    def top_height(self):
+        """Obtain the top height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with the top height of each box.
+        """
+        # the positive direction is down rather than up
+        return self.bottom_height - self.height
+
+    @property
+    def bottom_height(self):
+        """Obtain the bottom's height of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with bottom's height of each box.
+        """
+        return self.tensor[:, 1]
 
     @property
     def gravity_center(self):
@@ -95,30 +113,14 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return corners
 
     @property
-    def bev(self, mode='XYWHR'):
+    def bev(self):
         """Calculate the 2D bounding boxes in BEV with rotation
-
-        Args:
-            mode (str): The mode of BEV boxes. Default to 'XYWHR'.
 
         Returns:
             torch.Tensor: a nx5 tensor of 2D BEV box of each box.
+                The box is in XYWHR format.
         """
-        boxes_xywhr = self.tensor[:, [0, 2, 3, 5, 6]]
-        if mode == 'XYWHR':
-            return boxes_xywhr
-        elif mode == 'XYXYR':
-            boxes = torch.zeros_like(boxes_xywhr)
-            boxes[:, 0] = boxes_xywhr[:, 0] - boxes_xywhr[2]
-            boxes[:, 1] = boxes_xywhr[:, 1] - boxes_xywhr[3]
-            boxes[:, 2] = boxes_xywhr[:, 0] + boxes_xywhr[2]
-            boxes[:, 3] = boxes_xywhr[:, 1] + boxes_xywhr[3]
-            boxes[:, 4] = boxes_xywhr[:, 4]
-            return boxes
-        else:
-            raise ValueError(
-                'Only support mode to be either "XYWHR" or "XYXYR",'
-                f'got {mode}')
+        return self.tensor[:, [0, 2, 3, 5, 6]]
 
     @property
     def nearset_bev(self):
@@ -196,53 +198,35 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return in_range_flags
 
     @classmethod
-    def overlaps(cls, boxes1, boxes2, mode='iou'):
-        """Calculate overlaps of two boxes
+    def height_overlaps(cls, boxes1, boxes2, mode='iou'):
+        """Calculate height overlaps of two boxes
+
+        Note:
+            This function calculate the height overlaps between boxes1 and
+            boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:CameraInstance3DBoxes): boxes 1 contain N boxes
-            boxes2 (:obj:CameraInstance3DBoxes): boxes 2 contain M boxes
+            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
+            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
             mode (str, optional): mode of iou calculation. Defaults to 'iou'.
 
         Returns:
             torch.Tensor: Calculated iou of boxes
         """
-        assert isinstance(boxes1, CameraInstance3DBoxes)
-        assert isinstance(boxes2, CameraInstance3DBoxes)
-        assert mode in ['iou', 'iof']
+        assert isinstance(boxes1, BaseInstance3DBoxes)
+        assert isinstance(boxes2, BaseInstance3DBoxes)
+        assert type(boxes1) == type(boxes2), '"boxes1" and "boxes2" should' \
+            f'be in the same type, got {type(boxes1)} and {type(boxes2)}.'
 
-        # height overlap
-        boxes1_height_max = (boxes1.tensor[:, 1] + boxes1.height).view(-1, 1)
-        boxes1_height_min = boxes1.tensor[:, 1].view(-1, 1)
-        boxes2_height_max = (boxes2.tensor[:, 1] + boxes2.height).view(1, -1)
-        boxes2_height_min = boxes2.tensor[:, 1].view(1, -1)
+        boxes1_top_height = boxes1.top_height.view(-1, 1)
+        boxes1_bottom_height = boxes1.bottom_height.view(-1, 1)
+        boxes2_top_height = boxes2.top_height.view(1, -1)
+        boxes2_bottom_height = boxes2.bottom_height.view(1, -1)
 
-        max_of_min = torch.max(boxes1_height_min, boxes2_height_min)
-        min_of_max = torch.min(boxes1_height_max, boxes2_height_max)
-        overlaps_h = torch.clamp(min_of_max - max_of_min, min=0)
-
-        # obtain BEV boxes in XYXYR format
-        boxes1_bev = boxes1.bev(mode='XYXYR')
-        boxes2_bev = boxes2.bev(mode='XYXYR')
-
-        # bev overlap
-        overlaps_bev = boxes1_bev.new_zeros(
-            (boxes1_bev.shape[0], boxes2_bev.shape[0])).cuda()  # (N, M)
-        iou3d_cuda.boxes_overlap_bev_gpu(boxes1_bev.contiguous().cuda(),
-                                         boxes2_bev.contiguous().cuda(),
-                                         overlaps_bev)
-
-        # 3d iou
-        overlaps_3d = overlaps_bev.to(boxes1.device) * overlaps_h
-
-        volume1 = boxes1.volume.view(-1, 1)
-        volume2 = boxes2.volume.view(1, -1)
-
-        if mode == 'iou':
-            # the clamp func is used to avoid division of 0
-            iou3d = overlaps_3d / torch.clamp(
-                volume1 + volume2 - overlaps_3d, min=1e-8)
-        else:
-            iou3d = overlaps_3d / torch.clamp(volume1, min=1e-8)
-
-        return iou3d
+        # In camera coordinate system
+        # from up to down is the positive direction
+        heighest_of_bottom = torch.min(boxes1_bottom_height,
+                                       boxes2_bottom_height)
+        lowest_of_top = torch.max(boxes1_top_height, boxes2_top_height)
+        overlaps_h = torch.clamp(heighest_of_bottom - lowest_of_top, min=0)
+        return overlaps_h

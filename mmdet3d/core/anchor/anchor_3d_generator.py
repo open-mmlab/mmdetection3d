@@ -137,6 +137,7 @@ class Anchor3DRangeGenerator(object):
                              rotations=[0, 1.5707963],
                              device='cuda'):
         """Generate anchors in a single range
+
         Args:
             feature_size: list [D, H, W](zyx)
             sizes: [N, 3] list of list or array, size of anchors, xyz
@@ -221,6 +222,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
                              rotations=[0, 1.5707963],
                              device='cuda'):
         """Generate anchors in a single range
+
         Args:
             feature_size: list [D, H, W](zyx)
             sizes: [N, 3] list of list or array, size of anchors, xyz
