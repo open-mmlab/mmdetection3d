@@ -47,3 +47,25 @@ def boxes3d_to_bev_torch_lidar(boxes3d):
     boxes_bev[:, 2], boxes_bev[:, 3] = cu + half_w, cv + half_l
     boxes_bev[:, 4] = boxes3d[:, 6]
     return boxes_bev
+
+
+def bbox3d2roi(bbox_list):
+    """Convert a list of bboxes to roi format.
+
+    Args:
+        bbox_list (list[Tensor]): a list of bboxes corresponding to a batch
+            of images.
+
+    Returns:
+        Tensor: shape (n, c), [batch_ind, x, y ...]
+    """
+    rois_list = []
+    for img_id, bboxes in enumerate(bbox_list):
+        if bboxes.size(0) > 0:
+            img_inds = bboxes.new_full((bboxes.size(0), 1), img_id)
+            rois = torch.cat([img_inds, bboxes], dim=-1)
+        else:
+            rois = torch.zeros_like(bboxes)
+        rois_list.append(rois)
+    rois = torch.cat(rois_list, 0)
+    return rois

@@ -731,7 +731,6 @@ def kitti_eval(gt_annos,
             result += 'aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(*mAPaos[:, 0])
 
         # prepare results for logger
-        ret_dict['Overall'] = dict()
         for idx in range(3):
             postfix = f'{difficulty[idx]}'
             if mAP3d is not None:

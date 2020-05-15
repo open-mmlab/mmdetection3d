@@ -34,11 +34,13 @@ class PartA2(TwoStageDetector):
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
     def extract_feat(self, points, img_meta):
-        voxels, num_points, coors = self.voxelize(points)
-        voxel_dict = dict(voxels=voxels, num_points=num_points, coors=coors)
-        voxel_features = self.voxel_encoder(voxels, num_points, coors)
-        batch_size = coors[-1, 0].item() + 1
-        feats_dict = self.middle_encoder(voxel_features, coors, batch_size)
+        voxel_dict = self.voxelize(points)
+        voxel_features = self.voxel_encoder(voxel_dict['voxels'],
+                                            voxel_dict['num_points'],
+                                            voxel_dict['coors'])
+        batch_size = voxel_dict['coors'][-1, 0].item() + 1
+        feats_dict = self.middle_encoder(voxel_features, voxel_dict['coors'],
+                                         batch_size)
         x = self.backbone(feats_dict['spatial_features'])
         if self.with_neck:
             neck_feats = self.neck(x)
@@ -47,20 +49,33 @@ class PartA2(TwoStageDetector):
 
     @torch.no_grad()
     def voxelize(self, points):
-        voxels, coors, num_points = [], [], []
+        voxels, coors, num_points, voxel_centers = [], [], [], []
         for res in points:
             res_voxels, res_coors, res_num_points = self.voxel_layer(res)
+            res_voxel_centers = (
+                res_coors[:, [2, 1, 0]] + 0.5) * res_voxels.new_tensor(
+                    self.voxel_layer.voxel_size) + res_voxels.new_tensor(
+                        self.voxel_layer.point_cloud_range[0:3])
             voxels.append(res_voxels)
             coors.append(res_coors)
             num_points.append(res_num_points)
+            voxel_centers.append(res_voxel_centers)
+
         voxels = torch.cat(voxels, dim=0)
         num_points = torch.cat(num_points, dim=0)
+        voxel_centers = torch.cat(voxel_centers, dim=0)
         coors_batch = []
         for i, coor in enumerate(coors):
             coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
             coors_batch.append(coor_pad)
         coors_batch = torch.cat(coors_batch, dim=0)
-        return voxels, num_points, coors_batch
+
+        voxel_dict = dict(
+            voxels=voxels,
+            num_points=num_points,
+            coors=coors_batch,
+            voxel_centers=voxel_centers)
+        return voxel_dict
 
     def forward_train(self,
                       points,
@@ -69,7 +84,6 @@ class PartA2(TwoStageDetector):
                       gt_labels_3d,
                       gt_bboxes_ignore=None,
                       proposals=None):
-        # TODO: complete it
         feats_dict, voxels_dict = self.extract_feat(points, img_meta)
 
         losses = dict()
@@ -86,7 +100,13 @@ class PartA2(TwoStageDetector):
             proposal_inputs = rpn_outs + (img_meta, proposal_cfg)
             proposal_list = self.rpn_head.get_bboxes(*proposal_inputs)
         else:
-            proposal_list = proposals  # noqa: F841
+            proposal_list = proposals
+
+        roi_losses = self.roi_head.forward_train(feats_dict, voxels_dict,
+                                                 img_meta, proposal_list,
+                                                 gt_bboxes_3d, gt_labels_3d)
+
+        losses.update(roi_losses)
 
         return losses
 
@@ -102,16 +122,18 @@ class PartA2(TwoStageDetector):
     def simple_test(self,
                     points,
                     img_meta,
-                    gt_bboxes_3d=None,
+                    gt_bboxes_3d,
                     proposals=None,
                     rescale=False):
         feats_dict, voxels_dict = self.extract_feat(points, img_meta)
-        # TODO: complete it
-        if proposals is None:
-            proposal_list = self.simple_test_rpn(feats_dict['neck_feats'],
-                                                 img_meta, self.test_cfg.rpn)
+
+        if self.with_rpn:
+            rpn_outs = self.rpn_head(feats_dict['neck_feats'])
+            proposal_cfg = self.test_cfg.rpn
+            bbox_inputs = rpn_outs + (img_meta, proposal_cfg)
+            proposal_list = self.rpn_head.get_bboxes(*bbox_inputs)
         else:
             proposal_list = proposals
 
-        return self.roi_head.simple_test(
-            feats_dict, proposal_list, img_meta, rescale=rescale)
+        return self.roi_head.simple_test(feats_dict, voxels_dict, img_meta,
+                                         proposal_list)

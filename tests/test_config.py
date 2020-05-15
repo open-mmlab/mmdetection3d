@@ -61,7 +61,10 @@ def test_config_build_detector():
             assert detector.roi_head.with_mask == detector.with_mask
 
             head_config = config_mod.model['roi_head']
-            _check_roi_head(head_config, detector.roi_head)
+            if head_config.type == 'PartAggregationROIHead':
+                check_parta2_roi_head(head_config, detector.roi_head)
+            else:
+                _check_roi_head(head_config, detector.roi_head)
         # else:
         #     # for single stage detector
         #     # detectors must have bbox head
@@ -319,3 +322,44 @@ def _check_bbox_head(bbox_cfg, bbox_head):
             out_dim = (4 if bbox_cfg.reg_class_agnostic else 4 *
                        bbox_cfg.num_classes)
             assert bbox_head.fc_reg.out_features == out_dim
+
+
+def check_parta2_roi_head(config, head):
+    assert config['type'] == head.__class__.__name__
+
+    # check seg_roi_extractor
+    seg_roi_cfg = config.seg_roi_extractor
+    seg_roi_extractor = head.seg_roi_extractor
+    _check_parta2_roi_extractor(seg_roi_cfg, seg_roi_extractor)
+
+    # check part_roi_extractor
+    part_roi_cfg = config.part_roi_extractor
+    part_roi_extractor = head.part_roi_extractor
+    _check_parta2_roi_extractor(part_roi_cfg, part_roi_extractor)
+
+    # check bbox head infos
+    bbox_cfg = config.bbox_head
+    bbox_head = head.bbox_head
+    _check_parta2_bbox_head(bbox_cfg, bbox_head)
+
+
+def _check_parta2_roi_extractor(config, roi_extractor):
+    assert config['type'] == roi_extractor.__class__.__name__
+    assert (config.roi_layer.out_size == roi_extractor.roi_layer.out_size)
+    assert (config.roi_layer.max_pts_per_voxel ==
+            roi_extractor.roi_layer.max_pts_per_voxel)
+
+
+def _check_parta2_bbox_head(bbox_cfg, bbox_head):
+    import torch.nn as nn
+    if isinstance(bbox_cfg, list):
+        for single_bbox_cfg, single_bbox_head in zip(bbox_cfg, bbox_head):
+            _check_bbox_head(single_bbox_cfg, single_bbox_head)
+    elif isinstance(bbox_head, nn.ModuleList):
+        for single_bbox_head in bbox_head:
+            _check_bbox_head(bbox_cfg, single_bbox_head)
+    else:
+        assert bbox_cfg['type'] == bbox_head.__class__.__name__
+        assert bbox_cfg.seg_in_channels == bbox_head.seg_conv[0][0].in_channels
+        assert bbox_cfg.part_in_channels == bbox_head.part_conv[0][
+            0].in_channels
