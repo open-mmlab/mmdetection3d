@@ -231,19 +231,15 @@ class PartA2RPNHead(SECONDHead):
                 labels = labels[inds]
                 scores = scores[inds]
                 cls_scores = cls_scores[inds]
-                dir_scores = dir_scores[inds]
             return dict(
-                box3d_lidar=bboxes.cpu(),
-                scores=scores.cpu(),
-                label_preds=labels.cpu(),
-                cls_preds=cls_scores.cpu(
-                )  # raw scores with shape [max_num, cls_num]
+                box3d_lidar=bboxes,
+                scores=scores,
+                label_preds=labels,
+                cls_preds=cls_scores  # raw scores [max_num, cls_num]
             )
         else:
             return dict(
-                box3d_lidar=mlvl_bboxes.new_zeros([0,
-                                                   self.box_code_size]).cpu(),
-                scores=mlvl_bboxes.new_zeros([0]).cpu(),
-                label_preds=mlvl_bboxes.new_zeros([0]).cpu(),
-                cls_preds=mlvl_bboxes.new_zeros([0, mlvl_cls_score.shape[-1]
-                                                 ]).cpu())
+                box3d_lidar=mlvl_bboxes.new_zeros([0, self.box_code_size]),
+                scores=mlvl_bboxes.new_zeros([0]),
+                label_preds=mlvl_bboxes.new_zeros([0]),
+                cls_preds=mlvl_bboxes.new_zeros([0, mlvl_cls_score.shape[-1]]))
