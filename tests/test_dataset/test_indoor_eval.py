@@ -1,6 +1,6 @@
 import numpy as np
 
-from mmdet3d.core.evaluation.indoor_eval import indoor_eval
+from mmdet3d.core.evaluation.indoor_eval import average_precision, indoor_eval
 
 
 def test_indoor_eval():
@@ -241,3 +241,11 @@ def test_indoor_eval():
     assert table_rec_50 == 0.5
     assert chair_rec_50 == 0.125
     assert abs(mAR_50 - 0.160714) < 0.001
+
+
+def test_average_precision():
+    ap = average_precision(
+        np.array([[0.25, 0.5, 0.75], [0.25, 0.5, 0.75]]),
+        np.array([[1., 1., 1.], [1., 1., 1.]]), '11points')
+    print(ap[0])
+    assert abs(ap[0] - 0.06611571) < 0.001
