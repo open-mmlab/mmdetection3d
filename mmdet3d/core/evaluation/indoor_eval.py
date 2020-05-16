@@ -199,8 +199,9 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
         for multiple classes.
 
     Args:
-        det_infos (List): Label, bbox and score of the detection result.
-        gt_infos (List): Label, bbox of the groundtruth.
+        det_infos (List[ListList[[tuple]]]): Label, bbox and
+            score of the detection result.
+        gt_infos (List[List[List]]): Label, bbox of the groundtruth.
         ovthresh (List[float]): iou threshold.
             Default: None.
 
@@ -253,9 +254,9 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
                 recall[iou_idx][label], precision[iou_idx][label], ap[iou_idx][
                     label] = ret_values[i][iou_idx]
             else:
-                recall[iou_idx][label] = 0
-                precision[iou_idx][label] = 0
-                ap[iou_idx][label] = 0
+                recall[iou_idx][label] = [0]
+                precision[iou_idx][label] = [0]
+                ap[iou_idx][label] = [0]
 
     return recall, precision, ap
 
@@ -266,8 +267,8 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     Evaluate the result of the detection.
 
     Args:
-        gt_annos (List): GT annotations.
-        dt_annos (List): Detection annotations.
+        gt_annos (List[List[dict]]): GT annotations.
+        dt_annos (List[List[List[tuple]]]): Detection annotations.
         metric (List[float]): AP IoU thresholds.
         label2cat (dict): {label: cat}.
 
@@ -294,11 +295,14 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     rec, prec, ap = eval_map_recall(dt_annos, gt_infos, metric)
     ret_dict = {}
     for i, iou_thresh in enumerate(metric):
+        rec_list = []
         for label in ap[i].keys():
-            ret_dict[f'{label2cat[label]}_AP_{iou_thresh:.2f}'] = ap[i][label]
-        ret_dict[f'mAP_{iou_thresh:.2f}'] = sum(ap[i].values()) / len(ap[i])
+            ret_dict[f'{label2cat[label]}_AP_{iou_thresh:.2f}'] = ap[i][label][
+                0]
+        ret_dict[f'mAP_{iou_thresh:.2f}'] = np.mean(list(ap[i].values()))
         for label in rec[i].keys():
             ret_dict[f'{label2cat[label]}_rec_{iou_thresh:.2f}'] = rec[i][
-                label]
-        ret_dict[f'mAR_{iou_thresh:.2f}'] = sum(rec[i].values()) / len(rec[i])
+                label][-1]
+            rec_list.append(rec[i][label][-1])
+        ret_dict[f'mAR_{iou_thresh:.2f}'] = np.mean(rec_list)
     return ret_dict
