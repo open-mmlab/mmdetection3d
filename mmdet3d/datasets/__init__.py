@@ -1,6 +1,7 @@
 from mmdet.datasets.builder import DATASETS
 from .builder import build_dataset
 from .dataset_wrappers import RepeatFactorDataset
+from .indoor_base_dataset import IndoorBaseDataset
 from .kitti2d_dataset import Kitti2DDataset
 from .kitti_dataset import KittiDataset
 from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
@@ -11,6 +12,8 @@ from .pipelines import (GlobalRotScale, IndoorFlipData, IndoorGlobalRotScale,
                         IndoorPointsColorNormalize, ObjectNoise,
                         ObjectRangeFilter, ObjectSample, PointShuffle,
                         PointsRangeFilter, RandomFlip3D)
+from .scannet_dataset import ScanNetDataset
+from .sunrgbd_dataset import SUNRGBDDataset
 
 __all__ = [
     'KittiDataset', 'GroupSampler', 'DistributedGroupSampler',
@@ -20,5 +23,6 @@ __all__ = [
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
     'IndoorLoadPointsFromFile', 'IndoorPointsColorNormalize',
     'IndoorPointSample', 'IndoorLoadAnnotations3D', 'IndoorPointsColorJitter',
-    'IndoorGlobalRotScale', 'IndoorFlipData'
+    'IndoorGlobalRotScale', 'IndoorFlipData', 'SUNRGBDDataset',
+    'ScanNetDataset', 'IndoorBaseDataset'
 ]
