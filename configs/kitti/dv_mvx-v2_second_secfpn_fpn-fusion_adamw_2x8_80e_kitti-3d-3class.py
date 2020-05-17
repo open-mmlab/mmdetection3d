@@ -49,9 +49,8 @@ model = dict(
     pts_middle_encoder=dict(
         type='SparseEncoder',
         in_channels=128,
-        output_shape=[41, 1600, 1408],  # checked from PointCloud3D
-        pre_act=False,
-    ),
+        sparse_shape=[41, 1600, 1408],
+        order=('conv', 'norm', 'act')),
     pts_backbone=dict(
         type='SECOND',
         in_channels=256,
