@@ -1,13 +1,12 @@
 import torch
 
 import mmdet3d.ops.spconv as spconv
-from mmdet3d.ops import SparseBasicBlock, SparseBasicBlockV0
+from mmdet3d.ops import SparseBasicBlock
 
 
 def test_SparseUNet():
     from mmdet3d.models.middle_encoders.sparse_unet import SparseUNet
-    self = SparseUNet(
-        in_channels=4, output_shape=[41, 1600, 1408], pre_act=False)
+    self = SparseUNet(in_channels=4, sparse_shape=[41, 1600, 1408])
 
     # test encoder layers
     assert len(self.encoder_layers) == 4
@@ -61,17 +60,6 @@ def test_SparseBasicBlock():
          [1, 35, 930, 469]],
         dtype=torch.int32)  # n, 4(batch, ind_x, ind_y, ind_z)
 
-    # test v0
-    self = SparseBasicBlockV0(
-        4,
-        4,
-        indice_key='subm0',
-        norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01))
-    input_sp_tensor = spconv.SparseConvTensor(voxel_features, coordinates,
-                                              [41, 1600, 1408], 2)
-    out_features = self(input_sp_tensor)
-    assert out_features.features.shape == torch.Size([4, 4])
-
     # test
     input_sp_tensor = spconv.SparseConvTensor(voxel_features, coordinates,
                                               [41, 1600, 1408], 2)
@@ -92,3 +80,57 @@ def test_SparseBasicBlock():
 
     out_features = self(input_sp_tensor)
     assert out_features.features.shape == torch.Size([4, 4])
+
+
+def test_make_sparse_convmodule():
+    from mmdet3d.ops import make_sparse_convmodule
+
+    voxel_features = torch.tensor([[6.56126, 0.9648336, -1.7339306, 0.315],
+                                   [6.8162713, -2.480431, -1.3616394, 0.36],
+                                   [11.643568, -4.744306, -1.3580885, 0.16],
+                                   [23.482342, 6.5036807, 0.5806964, 0.35]],
+                                  dtype=torch.float32)  # n, point_features
+    coordinates = torch.tensor(
+        [[0, 12, 819, 131], [0, 16, 750, 136], [1, 16, 705, 232],
+         [1, 35, 930, 469]],
+        dtype=torch.int32)  # n, 4(batch, ind_x, ind_y, ind_z)
+
+    # test
+    input_sp_tensor = spconv.SparseConvTensor(voxel_features, coordinates,
+                                              [41, 1600, 1408], 2)
+
+    sparse_block0 = make_sparse_convmodule(
+        4,
+        16,
+        3,
+        'test0',
+        stride=1,
+        padding=0,
+        conv_type='SubMConv3d',
+        norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
+        order=('conv', 'norm', 'act'))
+    assert isinstance(sparse_block0[0], spconv.SubMConv3d)
+    assert sparse_block0[0].in_channels == 4
+    assert sparse_block0[0].out_channels == 16
+    assert isinstance(sparse_block0[1], torch.nn.BatchNorm1d)
+    assert sparse_block0[1].eps == 0.001
+    assert sparse_block0[1].momentum == 0.01
+    assert isinstance(sparse_block0[2], torch.nn.ReLU)
+
+    # test forward
+    out_features = sparse_block0(input_sp_tensor)
+    assert out_features.features.shape == torch.Size([4, 16])
+
+    sparse_block1 = make_sparse_convmodule(
+        4,
+        16,
+        3,
+        'test1',
+        stride=1,
+        padding=0,
+        conv_type='SparseInverseConv3d',
+        norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
+        order=('norm', 'act', 'conv'))
+    assert isinstance(sparse_block1[0], torch.nn.BatchNorm1d)
+    assert isinstance(sparse_block1[1], torch.nn.ReLU)
+    assert isinstance(sparse_block1[2], spconv.SparseInverseConv3d)

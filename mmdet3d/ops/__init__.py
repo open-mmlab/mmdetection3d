@@ -4,8 +4,8 @@ from mmdet.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_cpu,
                               points_in_boxes_gpu)
-from .sparse_block import (SparseBasicBlock, SparseBasicBlockV0,
-                           SparseBottleneck, SparseBottleneckV0)
+from .sparse_block import (SparseBasicBlock, SparseBottleneck,
+                           make_sparse_convmodule)
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
     'get_compiling_cuda_version', 'NaiveSyncBatchNorm1d',
     'NaiveSyncBatchNorm2d', 'batched_nms', 'Voxelization', 'voxelization',
     'dynamic_scatter', 'DynamicScatter', 'sigmoid_focal_loss',
-    'SigmoidFocalLoss', 'SparseBasicBlockV0', 'SparseBottleneckV0',
-    'SparseBasicBlock', 'SparseBottleneck', 'RoIAwarePool3d',
-    'points_in_boxes_gpu', 'points_in_boxes_cpu'
+    'SigmoidFocalLoss', 'SparseBasicBlock', 'SparseBottleneck',
+    'RoIAwarePool3d', 'points_in_boxes_gpu', 'points_in_boxes_cpu',
+    'make_sparse_convmodule'
 ]

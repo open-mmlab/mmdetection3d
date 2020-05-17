@@ -18,9 +18,8 @@ model = dict(
     middle_encoder=dict(
         type='SparseEncoder',
         in_channels=4,
-        output_shape=[41, 1600, 1408],
-        pre_act=False,
-    ),
+        sparse_shape=[41, 1600, 1408],
+        order=('conv', 'norm', 'act')),
     backbone=dict(
         type='SECOND',
         in_channels=256,
