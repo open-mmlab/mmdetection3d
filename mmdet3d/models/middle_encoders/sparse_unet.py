@@ -1,19 +1,35 @@
 import torch
 import torch.nn as nn
-from mmcv.cnn import build_norm_layer
 
 import mmdet3d.ops.spconv as spconv
-from mmdet3d.ops import SparseBasicBlock
+from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from ..registry import MIDDLE_ENCODERS
 
 
 @MIDDLE_ENCODERS.register_module()
 class SparseUNet(nn.Module):
+    """SparseUNet for PartA^2
+
+    See https://arxiv.org/abs/1907.03670 for more detials.
+
+    Args:
+        in_channels (int): the number of input channels
+        sparse_shape (list[int]): the sparse shape of input tensor
+        norm_cfg (dict): config of normalization layer
+        base_channels (int): out channels for conv_input layer
+        output_channels (int): out channels for conv_out layer
+        encoder_channels (tuple[tuple[int]]):
+            conv channels of each encode block
+        encoder_paddings (tuple[tuple[int]]): paddings of each encode block
+        decoder_channels (tuple[tuple[int]]):
+            conv channels of each decode block
+        decoder_paddings (tuple[tuple[int]]): paddings of each decode block
+    """
 
     def __init__(self,
                  in_channels,
-                 output_shape,
-                 pre_act=False,
+                 sparse_shape,
+                 order=('conv', 'norm', 'act'),
                  norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
                  base_channels=16,
                  output_channels=128,
@@ -24,29 +40,10 @@ class SparseUNet(nn.Module):
                  decoder_channels=((64, 64, 64), (64, 64, 32), (32, 32, 16),
                                    (16, 16, 16)),
                  decoder_paddings=((1, 0), (1, 0), (0, 0), (0, 1))):
-        """SparseUNet for PartA^2
-
-        See https://arxiv.org/abs/1907.03670 for more detials.
-
-        Args:
-            in_channels (int): the number of input channels
-            output_shape (list[int]): the shape of output tensor
-            pre_act (bool): use pre_act_block or post_act_block
-            norm_cfg (dict): config of normalization layer
-            base_channels (int): out channels for conv_input layer
-            output_channels (int): out channels for conv_out layer
-            encoder_channels (tuple[tuple[int]]):
-                conv channels of each encode block
-            encoder_paddings (tuple[tuple[int]]): paddings of each encode block
-            decoder_channels (tuple[tuple[int]]):
-                conv channels of each decode block
-            decoder_paddings (tuple[tuple[int]]): paddings of each decode block
-        """
         super().__init__()
-        self.sparse_shape = output_shape
-        self.output_shape = output_shape
+        self.sparse_shape = sparse_shape
         self.in_channels = in_channels
-        self.pre_act = pre_act
+        self.order = order
         self.base_channels = base_channels
         self.output_channels = output_channels
         self.encoder_channels = encoder_channels
@@ -56,44 +53,43 @@ class SparseUNet(nn.Module):
         self.stage_num = len(self.encoder_channels)
         # Spconv init all weight on its own
 
-        if pre_act:
-            # TODO: use ConvModule to encapsulate
-            self.conv_input = spconv.SparseSequential(
-                spconv.SubMConv3d(
-                    in_channels,
-                    self.base_channels,
-                    3,
-                    padding=1,
-                    bias=False,
-                    indice_key='subm1'))
-            make_block = self.pre_act_block
-        else:
-            self.conv_input = spconv.SparseSequential(
-                spconv.SubMConv3d(
-                    in_channels,
-                    self.base_channels,
-                    3,
-                    padding=1,
-                    bias=False,
-                    indice_key='subm1'),
-                build_norm_layer(norm_cfg, self.base_channels)[1], nn.ReLU())
-            make_block = self.post_act_block
+        assert isinstance(order, tuple) and len(order) == 3
+        assert set(order) == {'conv', 'norm', 'act'}
+
+        if self.order[0] != 'conv':  # pre activate
+            self.conv_input = make_sparse_convmodule(
+                in_channels,
+                self.base_channels,
+                3,
+                norm_cfg=norm_cfg,
+                padding=1,
+                indice_key='subm1',
+                conv_type='SubMConv3d',
+                order=('conv', ))
+        else:  # post activate
+            self.conv_input = make_sparse_convmodule(
+                in_channels,
+                self.base_channels,
+                3,
+                norm_cfg=norm_cfg,
+                padding=1,
+                indice_key='subm1',
+                conv_type='SubMConv3d')
 
         encoder_out_channels = self.make_encoder_layers(
-            make_block, norm_cfg, self.base_channels)
-        self.make_decoder_layers(make_block, norm_cfg, encoder_out_channels)
+            make_sparse_convmodule, norm_cfg, self.base_channels)
+        self.make_decoder_layers(make_sparse_convmodule, norm_cfg,
+                                 encoder_out_channels)
 
-        self.conv_out = spconv.SparseSequential(
-            # [200, 176, 5] -> [200, 176, 2]
-            spconv.SparseConv3d(
-                encoder_out_channels,
-                self.output_channels, (3, 1, 1),
-                stride=(2, 1, 1),
-                padding=0,
-                bias=False,
-                indice_key='spconv_down2'),
-            build_norm_layer(norm_cfg, self.output_channels)[1],
-            nn.ReLU())
+        self.conv_out = make_sparse_convmodule(
+            encoder_out_channels,
+            self.output_channels,
+            kernel_size=(3, 1, 1),
+            stride=(2, 1, 1),
+            norm_cfg=norm_cfg,
+            padding=0,
+            indice_key='spconv_down2',
+            conv_type='SparseConv3d')
 
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseUNet
@@ -187,133 +183,6 @@ class SparseUNet(nn.Module):
         x.features = features.view(n, out_channels, -1).sum(dim=2)
         return x
 
-    def pre_act_block(self,
-                      in_channels,
-                      out_channels,
-                      kernel_size,
-                      indice_key=None,
-                      stride=1,
-                      padding=0,
-                      conv_type='subm',
-                      norm_cfg=None):
-        """Make pre activate sparse convolution block.
-
-        Args:
-            in_channels (int): the number of input channels
-            out_channels (int): the number of out channels
-            kernel_size (int): kernel size of convolution
-            indice_key (str): the indice key used for sparse tensor
-            stride (int): the stride of convolution
-            padding (int or list[int]): the padding number of input
-            conv_type (str): conv type in 'subm', 'spconv' or 'inverseconv'
-            norm_cfg (dict): config of normalization layer
-
-        Returns:
-            spconv.SparseSequential: pre activate sparse convolution block.
-        """
-        # TODO: use ConvModule to encapsulate
-        assert conv_type in ['subm', 'spconv', 'inverseconv']
-
-        if conv_type == 'subm':
-            m = spconv.SparseSequential(
-                build_norm_layer(norm_cfg, in_channels)[1],
-                nn.ReLU(inplace=True),
-                spconv.SubMConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    padding=padding,
-                    bias=False,
-                    indice_key=indice_key))
-        elif conv_type == 'spconv':
-            m = spconv.SparseSequential(
-                build_norm_layer(norm_cfg, in_channels)[1],
-                nn.ReLU(inplace=True),
-                spconv.SparseConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    bias=False,
-                    indice_key=indice_key))
-        elif conv_type == 'inverseconv':
-            m = spconv.SparseSequential(
-                build_norm_layer(norm_cfg, in_channels)[1],
-                nn.ReLU(inplace=True),
-                spconv.SparseInverseConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    bias=False,
-                    indice_key=indice_key))
-        else:
-            raise NotImplementedError
-        return m
-
-    def post_act_block(self,
-                       in_channels,
-                       out_channels,
-                       kernel_size,
-                       indice_key,
-                       stride=1,
-                       padding=0,
-                       conv_type='subm',
-                       norm_cfg=None):
-        """Make post activate sparse convolution block.
-
-        Args:
-            in_channels (int): the number of input channels
-            out_channels (int): the number of out channels
-            kernel_size (int): kernel size of convolution
-            indice_key (str): the indice key used for sparse tensor
-            stride (int): the stride of convolution
-            padding (int or list[int]): the padding number of input
-            conv_type (str): conv type in 'subm', 'spconv' or 'inverseconv'
-            norm_cfg (dict[str]): config of normalization layer
-
-        Returns:
-            spconv.SparseSequential: post activate sparse convolution block.
-        """
-        # TODO: use ConvModule to encapsulate
-        assert conv_type in ['subm', 'spconv', 'inverseconv']
-
-        if conv_type == 'subm':
-            m = spconv.SparseSequential(
-                spconv.SubMConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    bias=False,
-                    indice_key=indice_key),
-                build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True))
-        elif conv_type == 'spconv':
-            m = spconv.SparseSequential(
-                spconv.SparseConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    bias=False,
-                    indice_key=indice_key),
-                build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True))
-        elif conv_type == 'inverseconv':
-            m = spconv.SparseSequential(
-                spconv.SparseInverseConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    bias=False,
-                    indice_key=indice_key),
-                build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True))
-        else:
-            raise NotImplementedError
-        return m
-
     def make_encoder_layers(self, make_block, norm_cfg, in_channels):
         """make encoder layers using sparse convs
 
@@ -326,6 +195,7 @@ class SparseUNet(nn.Module):
             int: the number of encoder output channels
         """
         self.encoder_layers = spconv.SparseSequential()
+
         for i, blocks in enumerate(self.encoder_channels):
             blocks_list = []
             for j, out_channels in enumerate(tuple(blocks)):
@@ -342,7 +212,7 @@ class SparseUNet(nn.Module):
                             stride=2,
                             padding=padding,
                             indice_key=f'spconv{i + 1}',
-                            conv_type='spconv'))
+                            conv_type='SparseConv3d'))
                 else:
                     blocks_list.append(
                         make_block(
@@ -351,7 +221,8 @@ class SparseUNet(nn.Module):
                             3,
                             norm_cfg=norm_cfg,
                             padding=padding,
-                            indice_key=f'subm{i + 1}'))
+                            indice_key=f'subm{i + 1}',
+                            conv_type='SubMConv3d'))
                 in_channels = out_channels
             stage_name = f'encoder_layer{i + 1}'
             stage_layers = spconv.SparseSequential(*blocks_list)
@@ -388,7 +259,8 @@ class SparseUNet(nn.Module):
                     3,
                     norm_cfg=norm_cfg,
                     padding=paddings[0],
-                    indice_key=f'subm{block_num - i}'))
+                    indice_key=f'subm{block_num - i}',
+                    conv_type='SubMConv3d'))
             if block_num - i != 1:
                 setattr(
                     self, f'upsample_layer{block_num - i}',
@@ -397,9 +269,8 @@ class SparseUNet(nn.Module):
                         block_channels[2],
                         3,
                         norm_cfg=norm_cfg,
-                        padding=paddings[1],
                         indice_key=f'spconv{block_num - i}',
-                        conv_type='inverseconv'))
+                        conv_type='SparseInverseConv3d'))
             else:
                 # use submanifold conv instead of inverse conv
                 # in the last block
@@ -412,5 +283,5 @@ class SparseUNet(nn.Module):
                         norm_cfg=norm_cfg,
                         padding=paddings[1],
                         indice_key='subm1',
-                        conv_type='subm'))
+                        conv_type='SubMConv3d'))
             in_channels = block_channels[2]
