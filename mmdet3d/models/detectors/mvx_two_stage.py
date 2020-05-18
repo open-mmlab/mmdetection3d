@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from mmdet3d.core import bbox3d2result
 from mmdet3d.ops import Voxelization
 from mmdet.models import DETECTORS
 from .. import builder
@@ -272,9 +273,13 @@ class MVXTwoStageDetector(BaseDetector):
 
     def simple_test_pts(self, x, img_meta, rescale=False):
         outs = self.pts_bbox_head(x)
-        bbox_inputs = outs + (img_meta, rescale)
-        bbox_list = self.pts_bbox_head.get_bboxes(*bbox_inputs)
-        return bbox_list
+        bbox_list = self.pts_bbox_head.get_bboxes(
+            *outs, img_meta, rescale=rescale)
+        bbox_results = [
+            bbox3d2result(bboxes, scores, labels)
+            for bboxes, scores, labels in bbox_list
+        ]
+        return bbox_results[0]
 
     def simple_test(self,
                     points,

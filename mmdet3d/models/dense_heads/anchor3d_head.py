@@ -3,30 +3,26 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import bias_init_with_prob, normal_init
 
-from mmdet3d.core import (PseudoSampler, box_torch_ops,
+from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, box_torch_ops,
                           boxes3d_to_bev_torch_lidar, build_anchor_generator,
                           build_assigner, build_bbox_coder, build_sampler,
                           multi_apply)
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.models import HEADS
 from ..builder import build_loss
 from .train_mixins import AnchorTrainMixin
 
 
 @HEADS.register_module()
-class SECONDHead(nn.Module, AnchorTrainMixin):
-    """Anchor-based head for VoxelNet detectors.
+class Anchor3DHead(nn.Module, AnchorTrainMixin):
+    """Anchor head for SECOND/PointPillars/MVXNet/PartA2.
 
     Args:
-        class_name (list[str]): name of classes (TODO: to be removed)
+        num_classes (int): Number of classes.
         in_channels (int): Number of channels in the input feature map.
         train_cfg (dict): train configs
         test_cfg (dict): test configs
         feat_channels (int): Number of channels of the feature map.
         use_direction_classifier (bool): Whether to add a direction classifier.
-        encode_bg_as_zeros (bool): Whether to use sigmoid of softmax
-            (TODO: to be removed)
-        box_code_size (int): The size of box code.
         anchor_generator(dict): Config dict of anchor generator.
         assigner_per_size (bool): Whether to do assignment for each separate
             anchor size.
@@ -41,17 +37,15 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
         loss_dir (dict): Config of direction classifier loss.
-    """  # noqa: W605
+    """
 
     def __init__(self,
-                 class_name,
+                 num_classes,
                  in_channels,
                  train_cfg,
                  test_cfg,
                  feat_channels=256,
                  use_direction_classifier=True,
-                 encode_bg_as_zeros=False,
-                 box_code_size=7,
                  anchor_generator=dict(
                      type='Anchor3DRangeGenerator',
                      range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
@@ -75,47 +69,52 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                  loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2)):
         super().__init__()
         self.in_channels = in_channels
-        self.num_classes = len(class_name)
+        self.num_classes = num_classes
         self.feat_channels = feat_channels
         self.diff_rad_by_sin = diff_rad_by_sin
         self.use_direction_classifier = use_direction_classifier
-        # self.encode_background_as_zeros = encode_bg_as_zeros
-        self.box_code_size = box_code_size
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.bbox_coder = build_bbox_coder(bbox_coder)
         self.assigner_per_size = assigner_per_size
         self.assign_per_class = assign_per_class
         self.dir_offset = dir_offset
         self.dir_limit_offset = dir_limit_offset
 
-        # build target assigner & sampler
-        if train_cfg is not None:
-            self.sampling = loss_cls['type'] not in ['FocalLoss', 'GHMC']
-            if self.sampling:
-                self.bbox_sampler = build_sampler(train_cfg.sampler)
-            else:
-                self.bbox_sampler = PseudoSampler()
-            if isinstance(train_cfg.assigner, dict):
-                self.bbox_assigner = build_assigner(train_cfg.assigner)
-            elif isinstance(train_cfg.assigner, list):
-                self.bbox_assigner = [
-                    build_assigner(res) for res in train_cfg.assigner
-                ]
-
         # build anchor generator
         self.anchor_generator = build_anchor_generator(anchor_generator)
         # In 3D detection, the anchor stride is connected with anchor size
         self.num_anchors = self.anchor_generator.num_base_anchors
+        # build box coder
+        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.box_code_size = self.bbox_coder.code_size
 
-        self._init_layers()
+        # build loss function
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
+        self.sampling = loss_cls['type'] not in ['FocalLoss', 'GHMC']
         if not self.use_sigmoid_cls:
             self.num_classes += 1
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_dir = build_loss(loss_dir)
         self.fp16_enabled = False
+
+        self._init_layers()
+        self._init_assigner_sampler()
+
+    def _init_assigner_sampler(self):
+        if self.train_cfg is None:
+            return
+
+        if self.sampling:
+            self.bbox_sampler = build_sampler(self.train_cfg.sampler)
+        else:
+            self.bbox_sampler = PseudoSampler()
+        if isinstance(self.train_cfg.assigner, dict):
+            self.bbox_assigner = build_assigner(self.train_cfg.assigner)
+        elif isinstance(self.train_cfg.assigner, list):
+            self.bbox_assigner = [
+                build_assigner(res) for res in self.train_cfg.assigner
+            ]
 
     def _init_layers(self):
         self.cls_out_channels = self.num_anchors * self.num_classes
@@ -144,9 +143,12 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
 
     def get_anchors(self, featmap_sizes, input_metas, device='cuda'):
         """Get anchors according to feature map sizes.
+
         Args:
             featmap_sizes (list[tuple]): Multi-level feature map sizes.
             input_metas (list[dict]): contain pcd and img's meta info.
+            device (str): device of current module
+
         Returns:
             tuple: anchors of each image, valid flags of each image
         """
@@ -204,12 +206,25 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
 
     @staticmethod
     def add_sin_difference(boxes1, boxes2):
-        rad_pred_encoding = torch.sin(boxes1[..., -1:]) * torch.cos(
-            boxes2[..., -1:])
-        rad_tg_encoding = torch.cos(boxes1[..., -1:]) * torch.sin(boxes2[...,
-                                                                         -1:])
-        boxes1 = torch.cat([boxes1[..., :-1], rad_pred_encoding], dim=-1)
-        boxes2 = torch.cat([boxes2[..., :-1], rad_tg_encoding], dim=-1)
+        """Convert the rotation difference to difference in sine function
+
+        Args:
+            boxes1 (Tensor): shape (NxC), where C>=7 and the 7th dimension is
+                rotation dimension
+            boxes2 (Tensor): shape (NxC), where C>=7 and the 7th dimension is
+                rotation dimension
+
+        Returns:
+            tuple: (boxes1, boxes2) whose 7th dimensions are changed
+        """
+        rad_pred_encoding = torch.sin(boxes1[..., 6:7]) * torch.cos(
+            boxes2[..., 6:7])
+        rad_tg_encoding = torch.cos(boxes1[..., 6:7]) * torch.sin(boxes2[...,
+                                                                         6:7])
+        boxes1 = torch.cat(
+            [boxes1[..., :6], rad_pred_encoding, boxes1[..., 7:]], dim=-1)
+        boxes2 = torch.cat([boxes2[..., :6], rad_tg_encoding, boxes2[..., 7:]],
+                           dim=-1)
         return boxes1, boxes2
 
     def loss(self,
@@ -267,6 +282,7 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                    bbox_preds,
                    dir_cls_preds,
                    input_metas,
+                   cfg=None,
                    rescale=False):
         assert len(cls_scores) == len(bbox_preds)
         assert len(cls_scores) == len(dir_cls_preds)
@@ -294,7 +310,7 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
             input_meta = input_metas[img_id]
             proposals = self.get_bboxes_single(cls_score_list, bbox_pred_list,
                                                dir_cls_pred_list, mlvl_anchors,
-                                               input_meta, rescale)
+                                               input_meta, cfg, rescale)
             result_list.append(proposals)
         return result_list
 
@@ -304,17 +320,19 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                           dir_cls_preds,
                           mlvl_anchors,
                           input_meta,
+                          cfg=None,
                           rescale=False):
+        cfg = self.test_cfg if cfg is None else cfg
         assert len(cls_scores) == len(bbox_preds) == len(mlvl_anchors)
         mlvl_bboxes = []
         mlvl_scores = []
         mlvl_dir_scores = []
-        mlvl_bboxes_for_nms = []
         for cls_score, bbox_pred, dir_cls_pred, anchors in zip(
                 cls_scores, bbox_preds, dir_cls_preds, mlvl_anchors):
             assert cls_score.size()[-2:] == bbox_pred.size()[-2:]
-            if self.use_direction_classifier:
-                assert cls_score.size()[-2:] == dir_cls_pred.size()[-2:]
+            assert cls_score.size()[-2:] == dir_cls_pred.size()[-2:]
+            dir_cls_pred = dir_cls_pred.permute(1, 2, 0).reshape(-1, 2)
+            dir_cls_score = torch.max(dir_cls_pred, dim=-1)[1]
 
             cls_score = cls_score.permute(1, 2,
                                           0).reshape(-1, self.num_classes)
@@ -324,66 +342,44 @@ class SECONDHead(nn.Module, AnchorTrainMixin):
                 scores = cls_score.softmax(-1)
             bbox_pred = bbox_pred.permute(1, 2,
                                           0).reshape(-1, self.box_code_size)
-            dir_cls_pred = dir_cls_pred.permute(1, 2, 0).reshape(-1, 2)
-            dir_cls_score = torch.max(dir_cls_pred, dim=-1)[1]
 
-            score_thr = self.test_cfg.get('score_thr', 0)
-            if score_thr > 0:
+            nms_pre = cfg.get('nms_pre', -1)
+            if nms_pre > 0 and scores.shape[0] > nms_pre:
                 if self.use_sigmoid_cls:
                     max_scores, _ = scores.max(dim=1)
                 else:
-                    max_scores, _ = scores[:, 1:].max(dim=1)
-                thr_inds = (max_scores >= score_thr)
-                anchors = anchors[thr_inds]
-                bbox_pred = bbox_pred[thr_inds]
-                scores = scores[thr_inds]
-                dir_cls_scores = dir_cls_score[thr_inds]
+                    max_scores, _ = scores[:, :-1].max(dim=1)
+                _, topk_inds = max_scores.topk(nms_pre)
+                anchors = anchors[topk_inds, :]
+                bbox_pred = bbox_pred[topk_inds, :]
+                scores = scores[topk_inds, :]
+                dir_cls_score = dir_cls_score[topk_inds]
+
             bboxes = self.bbox_coder.decode(anchors, bbox_pred)
-            bboxes_for_nms = boxes3d_to_bev_torch_lidar(bboxes)
-            mlvl_bboxes_for_nms.append(bboxes_for_nms)
             mlvl_bboxes.append(bboxes)
             mlvl_scores.append(scores)
-            mlvl_dir_scores.append(dir_cls_scores)
+            mlvl_dir_scores.append(dir_cls_score)
 
         mlvl_bboxes = torch.cat(mlvl_bboxes)
-        mlvl_bboxes_for_nms = torch.cat(mlvl_bboxes_for_nms)
+        mlvl_bboxes_for_nms = boxes3d_to_bev_torch_lidar(mlvl_bboxes)
         mlvl_scores = torch.cat(mlvl_scores)
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
 
-        if len(mlvl_scores) > 0:
-            mlvl_scores, mlvl_label_preds = mlvl_scores.max(dim=-1)
-            if self.test_cfg.use_rotate_nms:
-                nms_func = nms_gpu
-            else:
-                nms_func = nms_normal_gpu
-            selected = nms_func(mlvl_bboxes_for_nms, mlvl_scores,
-                                self.test_cfg.nms_thr)
-        else:
-            selected = []
+        if self.use_sigmoid_cls:
+            # Add a dummy background class to the front when using sigmoid
+            padding = mlvl_scores.new_zeros(mlvl_scores.shape[0], 1)
+            mlvl_scores = torch.cat([mlvl_scores, padding], dim=1)
 
-        if len(selected) > 0:
-            selected_bboxes = mlvl_bboxes[selected]
-            selected_scores = mlvl_scores[selected]
-            selected_label_preds = mlvl_label_preds[selected]
-            selected_dir_scores = mlvl_dir_scores[selected]
-            # TODO: move dir_offset to box coder
+        score_thr = cfg.get('score_thr', 0)
+        results = box3d_multiclass_nms(mlvl_bboxes, mlvl_bboxes_for_nms,
+                                       mlvl_scores, score_thr, cfg.max_num,
+                                       cfg, mlvl_dir_scores)
+        bboxes, scores, labels, dir_scores = results
+        if bboxes.shape[0] > 0:
             dir_rot = box_torch_ops.limit_period(
-                selected_bboxes[..., -1] - self.dir_offset,
-                self.dir_limit_offset, np.pi)
-            selected_bboxes[..., -1] = (
+                bboxes[..., 6] - self.dir_offset, self.dir_limit_offset, np.pi)
+            bboxes[..., 6] = (
                 dir_rot + self.dir_offset +
-                np.pi * selected_dir_scores.to(selected_bboxes.dtype))
+                np.pi * dir_scores.to(bboxes.dtype))
 
-            return dict(
-                box3d_lidar=selected_bboxes.cpu(),
-                scores=selected_scores.cpu(),
-                label_preds=selected_label_preds.cpu(),
-                sample_idx=input_meta['sample_idx'],
-            )
-
-        return dict(
-            box3d_lidar=mlvl_scores.new_zeros([0, 7]).cpu(),
-            scores=mlvl_scores.new_zeros([0]).cpu(),
-            label_preds=mlvl_scores.new_zeros([0, 4]).cpu(),
-            sample_idx=input_meta['sample_idx'],
-        )
+        return bboxes, scores, labels

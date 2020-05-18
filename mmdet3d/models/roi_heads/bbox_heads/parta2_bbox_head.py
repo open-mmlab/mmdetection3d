@@ -14,7 +14,7 @@ from mmdet.models import HEADS
 
 @HEADS.register_module()
 class PartA2BboxHead(nn.Module):
-    """PartA2 rcnn box head.
+    """PartA2 RoI head.
 
     Args:
         num_classes (int): The number of classes to prediction.
@@ -533,17 +533,10 @@ class PartA2BboxHead(nn.Module):
                                             cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[selected]
             selected_label_preds = cur_class_labels[selected]
-            if cfg.use_raw_score:
-                selected_scores = cur_cls_score[selected]
-            else:
-                selected_scores = torch.sigmoid(cur_cls_score)[selected]
+            selected_scores = cur_cls_score[selected]
 
-            cur_result = dict(
-                box3d_lidar=selected_bboxes.cpu(),
-                scores=selected_scores.cpu(),
-                label_preds=selected_label_preds.cpu(),
-                sample_idx=img_meta[batch_id]['sample_idx'])
-            result_list.append(cur_result)
+            result_list.append(
+                (selected_bboxes, selected_scores, selected_label_preds))
         return result_list
 
     def multi_class_nms(self,

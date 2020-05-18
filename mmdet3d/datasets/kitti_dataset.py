@@ -275,12 +275,9 @@ class KittiDataset(torch_data.Dataset):
         else:
             tmp_dir = None
 
-        if not isinstance(outputs[0][0], dict):
-            sample_idx = [
-                info['image']['image_idx'] for info in self.kitti_infos
-            ]
+        if not isinstance(outputs[0], dict):
             result_files = self.bbox2result_kitti2d(outputs, self.class_names,
-                                                    sample_idx, pklfile_prefix,
+                                                    pklfile_prefix,
                                                     submission_prefix)
         else:
             result_files = self.bbox2result_kitti(outputs, self.class_names,
@@ -330,6 +327,7 @@ class KittiDataset(torch_data.Dataset):
                           class_names,
                           pklfile_prefix=None,
                           submission_prefix=None):
+        assert len(net_outputs) == len(self.kitti_infos)
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
 
@@ -339,92 +337,82 @@ class KittiDataset(torch_data.Dataset):
                 mmcv.track_iter_progress(net_outputs)):
             annos = []
             info = self.kitti_infos[idx]
+            sample_idx = info['image']['image_idx']
             image_shape = info['image']['image_shape'][:2]
-            for i, box_dict in enumerate(pred_dicts):
-                num_example = 0
-                sample_idx = box_dict['sample_idx']
-                box_dict = self.convert_valid_bboxes(box_dict, info)
-                if box_dict['bbox'] is not None or box_dict['bbox'].size.numel(
-                ) != 0:
-                    box_2d_preds = box_dict['bbox']
-                    box_preds = box_dict['box3d_camera']
-                    scores = box_dict['scores']
-                    box_preds_lidar = box_dict['box3d_lidar']
-                    label_preds = box_dict['label_preds']
 
-                    anno = {
-                        'name': [],
-                        'truncated': [],
-                        'occluded': [],
-                        'alpha': [],
-                        'bbox': [],
-                        'dimensions': [],
-                        'location': [],
-                        'rotation_y': [],
-                        'score': []
-                    }
-                    gt_iou = scores * 0
+            box_dict = self.convert_valid_bboxes(pred_dicts, info)
+            if len(box_dict['bbox']) > 0:
+                box_2d_preds = box_dict['bbox']
+                box_preds = box_dict['box3d_camera']
+                scores = box_dict['scores']
+                box_preds_lidar = box_dict['box3d_lidar']
+                label_preds = box_dict['label_preds']
 
-                    for box, box_lidar, bbox, score, label, cur_gt_iou in zip(
-                            box_preds, box_preds_lidar, box_2d_preds, scores,
-                            label_preds, gt_iou):
-                        bbox[2:] = np.minimum(bbox[2:], image_shape[::-1])
-                        bbox[:2] = np.maximum(bbox[:2], [0, 0])
-                        anno['name'].append(class_names[int(label)])
-                        anno['truncated'].append(0.0)
-                        anno['occluded'].append(0)
-                        anno['alpha'].append(
-                            -np.arctan2(-box_lidar[1], box_lidar[0]) + box[6])
-                        anno['bbox'].append(bbox)
-                        anno['dimensions'].append(box[3:6])
-                        anno['location'].append(box[:3])
-                        anno['rotation_y'].append(box[6])
-                        # anno["gt_iou"].append(cur_gt_iou)
-                        anno['score'].append(score)
+                anno = {
+                    'name': [],
+                    'truncated': [],
+                    'occluded': [],
+                    'alpha': [],
+                    'bbox': [],
+                    'dimensions': [],
+                    'location': [],
+                    'rotation_y': [],
+                    'score': []
+                }
 
-                        num_example += 1
+                for box, box_lidar, bbox, score, label in zip(
+                        box_preds, box_preds_lidar, box_2d_preds, scores,
+                        label_preds):
+                    bbox[2:] = np.minimum(bbox[2:], image_shape[::-1])
+                    bbox[:2] = np.maximum(bbox[:2], [0, 0])
+                    anno['name'].append(class_names[int(label)])
+                    anno['truncated'].append(0.0)
+                    anno['occluded'].append(0)
+                    anno['alpha'].append(
+                        -np.arctan2(-box_lidar[1], box_lidar[0]) + box[6])
+                    anno['bbox'].append(bbox)
+                    anno['dimensions'].append(box[3:6])
+                    anno['location'].append(box[:3])
+                    anno['rotation_y'].append(box[6])
+                    anno['score'].append(score)
 
-                    if num_example != 0:
-                        anno = {k: np.stack(v) for k, v in anno.items()}
-                        annos.append(anno)
+                anno = {k: np.stack(v) for k, v in anno.items()}
+                annos.append(anno)
 
-                    if submission_prefix is not None:
-                        curr_file = f'{submission_prefix}/{sample_idx:06d}.txt'
-                        with open(curr_file, 'w') as f:
-                            bbox = anno['bbox']
-                            loc = anno['location']
-                            dims = anno['dimensions']  # lhw -> hwl
+                if submission_prefix is not None:
+                    curr_file = f'{submission_prefix}/{sample_idx:06d}.txt'
+                    with open(curr_file, 'w') as f:
+                        bbox = anno['bbox']
+                        loc = anno['location']
+                        dims = anno['dimensions']  # lhw -> hwl
 
-                            for idx in range(len(bbox)):
-                                print(
-                                    '{} -1 -1 {:.4f} {:.4f} {:.4f} {:.4f} '
-                                    '{:.4f} {:.4f} {:.4f} '
-                                    '{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f}'
-                                    .format(anno['name'][idx],
-                                            anno['alpha'][idx], bbox[idx][0],
-                                            bbox[idx][1], bbox[idx][2],
-                                            bbox[idx][3], dims[idx][1],
-                                            dims[idx][2], dims[idx][0],
-                                            loc[idx][0], loc[idx][1],
-                                            loc[idx][2],
-                                            anno['rotation_y'][idx],
-                                            anno['score'][idx]),
-                                    file=f)
-
-                if num_example == 0:
-                    annos.append({
-                        'name': np.array([]),
-                        'truncated': np.array([]),
-                        'occluded': np.array([]),
-                        'alpha': np.array([]),
-                        'bbox': np.zeros([0, 4]),
-                        'dimensions': np.zeros([0, 3]),
-                        'location': np.zeros([0, 3]),
-                        'rotation_y': np.array([]),
-                        'score': np.array([]),
-                    })
-                annos[-1]['sample_idx'] = np.array(
-                    [sample_idx] * num_example, dtype=np.int64)
+                        for idx in range(len(bbox)):
+                            print(
+                                '{} -1 -1 {:.4f} {:.4f} {:.4f} {:.4f} '
+                                '{:.4f} {:.4f} {:.4f} '
+                                '{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f}'.
+                                format(anno['name'][idx], anno['alpha'][idx],
+                                       bbox[idx][0], bbox[idx][1],
+                                       bbox[idx][2], bbox[idx][3],
+                                       dims[idx][1], dims[idx][2],
+                                       dims[idx][0], loc[idx][0], loc[idx][1],
+                                       loc[idx][2], anno['rotation_y'][idx],
+                                       anno['score'][idx]),
+                                file=f)
+            else:
+                annos.append({
+                    'name': np.array([]),
+                    'truncated': np.array([]),
+                    'occluded': np.array([]),
+                    'alpha': np.array([]),
+                    'bbox': np.zeros([0, 4]),
+                    'dimensions': np.zeros([0, 3]),
+                    'location': np.zeros([0, 3]),
+                    'rotation_y': np.array([]),
+                    'score': np.array([]),
+                })
+            annos[-1]['sample_idx'] = np.array(
+                [sample_idx] * len(annos[-1]['score']), dtype=np.int64)
 
             det_annos += annos
 
@@ -439,7 +427,6 @@ class KittiDataset(torch_data.Dataset):
     def bbox2result_kitti2d(self,
                             net_outputs,
                             class_names,
-                            sample_ids,
                             pklfile_prefix=None,
                             submission_prefix=None):
         """Convert results to kitti format for evaluation and test submission
@@ -447,18 +434,16 @@ class KittiDataset(torch_data.Dataset):
         Args:
             net_outputs (List[array]): list of array storing the bbox and score
             class_nanes (List[String]): A list of class names
-            sample_idx (List[Int]): A list of samples' index,
-                should have the same length as net_outputs.
             pklfile_prefix (str | None): The prefix of pkl file.
             submission_prefix (str | None): The prefix of submission file.
 
         Return:
             List([dict]): A list of dict have the kitti format
         """
-        assert len(net_outputs) == len(sample_ids)
+        assert len(net_outputs) == len(self.kitti_infos)
 
         det_annos = []
-        print('Converting prediction to KITTI format')
+        print('\nConverting prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
                 mmcv.track_iter_progress(net_outputs)):
             annos = []
@@ -472,7 +457,7 @@ class KittiDataset(torch_data.Dataset):
                 location=[],
                 rotation_y=[],
                 score=[])
-            sample_idx = sample_ids[i]
+            sample_idx = self.kitti_infos[i]['image']['image_idx']
 
             num_example = 0
             for label in range(len(bboxes_per_sample)):
@@ -526,7 +511,7 @@ class KittiDataset(torch_data.Dataset):
             mmcv.mkdir_or_exist(submission_prefix)
             print(f'Saving KITTI submission to {submission_prefix}')
             for i, anno in enumerate(det_annos):
-                sample_idx = sample_ids[i]
+                sample_idx = self.kitti_infos[i]['image']['image_idx']
                 cur_det_file = f'{submission_prefix}/{sample_idx:06d}.txt'
                 with open(cur_det_file, 'w') as f:
                     bbox = anno['bbox']
@@ -551,9 +536,9 @@ class KittiDataset(torch_data.Dataset):
 
     def convert_valid_bboxes(self, box_dict, info):
         # TODO: refactor this function
-        final_box_preds = box_dict['box3d_lidar']
-        final_scores = box_dict['scores']
-        final_labels = box_dict['label_preds']
+        final_box_preds = box_dict['boxes_3d']
+        final_scores = box_dict['scores_3d']
+        final_labels = box_dict['labels_3d']
         sample_idx = info['image']['image_idx']
         final_box_preds[:, -1] = box_np_ops.limit_period(
             final_box_preds[:, -1] - np.pi, offset=0.5, period=np.pi * 2)

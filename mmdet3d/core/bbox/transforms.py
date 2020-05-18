@@ -69,3 +69,18 @@ def bbox3d2roi(bbox_list):
         rois_list.append(rois)
     rois = torch.cat(rois_list, 0)
     return rois
+
+
+def bbox3d2result(bboxes, scores, labels):
+    """Convert detection results to a list of numpy arrays.
+
+    Args:
+        bboxes (Tensor): shape (n, 5)
+        labels (Tensor): shape (n, )
+        scores (Tensor): shape (n, )
+
+    Returns:
+        dict(Tensor): bbox results in cpu mode
+    """
+    return dict(
+        boxes_3d=bboxes.cpu(), scores_3d=scores.cpu(), labels_3d=labels.cpu())
