@@ -269,6 +269,33 @@ if __name__ == '__main__':
                     'src/roiaware_pool3d_kernel.cu',
                     'src/points_in_boxes_cuda.cu',
                 ]),
+            make_cuda_ext(
+                name='ball_query_ext',
+                module='mmdet3d.ops.ball_query',
+                sources=['src/ball_query.cpp'],
+                sources_cuda=['src/ball_query_cuda.cu']),
+            make_cuda_ext(
+                name='group_points_ext',
+                module='mmdet3d.ops.group_points',
+                sources=['src/group_points.cpp'],
+                sources_cuda=['src/group_points_cuda.cu']),
+            make_cuda_ext(
+                name='interpolate_ext',
+                module='mmdet3d.ops.interpolate',
+                sources=['src/interpolate.cpp'],
+                sources_cuda=[
+                    'src/three_interpolate_cuda.cu', 'src/three_nn_cuda.cu'
+                ]),
+            make_cuda_ext(
+                name='furthest_point_sample_ext',
+                module='mmdet3d.ops.furthest_point_sample',
+                sources=['src/furthest_point_sample.cpp'],
+                sources_cuda=['src/furthest_point_sample_cuda.cu']),
+            make_cuda_ext(
+                name='gather_points_ext',
+                module='mmdet3d.ops.gather_points',
+                sources=['src/gather_points.cpp'],
+                sources_cuda=['src/gather_points_cuda.cu'])
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
