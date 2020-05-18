@@ -6,12 +6,12 @@ import numpy as np
 
 
 class ScanNetData(object):
-    """ScanNet Data
+    """ScanNet data.
 
-    Generate scannet infos for scannet_converter
+    Generate scannet infos for scannet_converter.
 
     Args:
-        root_path (str): Root path of the raw data
+        root_path (str): Root path of the raw data.
         split (str): Set split type of the data. Default: 'train'.
     """
 
@@ -56,11 +56,11 @@ class ScanNetData(object):
         Args:
             num_workers (int): Number of threads to be used. Default: 4.
             has_label (bool): Whether the data has label. Default: True.
-            sample_id_list (List[int]): Index list of the sample.
+            sample_id_list (list[int]): Index list of the sample.
                 Default: None.
 
         Returns:
-            infos (List[dict]): Information of the raw data.
+            infos (list[dict]): Information of the raw data.
         """
 
         def process_single_scene(sample_idx):

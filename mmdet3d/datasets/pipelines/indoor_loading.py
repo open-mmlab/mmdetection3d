@@ -6,12 +6,12 @@ from mmdet.datasets.builder import PIPELINES
 
 @PIPELINES.register_module()
 class IndoorPointsColorNormalize(object):
-    """Indoor Points Color Normalize
+    """Indoor points color normalize
 
     Normalize color of the points.
 
     Args:
-        color_mean (List[float]): Mean color of the point cloud.
+        color_mean (list[float]): Mean color of the point cloud.
     """
 
     def __init__(self, color_mean):
@@ -33,7 +33,7 @@ class IndoorPointsColorNormalize(object):
 
 @PIPELINES.register_module()
 class IndoorLoadPointsFromFile(object):
-    """Indoor Load Points From File.
+    """Indoor load points from file.
 
     Load sunrgbd and scannet points from file.
 
@@ -41,7 +41,7 @@ class IndoorLoadPointsFromFile(object):
         use_height (bool): Whether to use height.
         load_dim (int): The dimension of the loaded points.
             Default: 6.
-        use_dim (List[int]): Which dimensions of the points to be used.
+        use_dim (list[int]): Which dimensions of the points to be used.
             Default: [0, 1, 2].
     """
 
@@ -78,7 +78,7 @@ class IndoorLoadPointsFromFile(object):
 
 @PIPELINES.register_module()
 class IndoorLoadAnnotations3D(object):
-    """Indoor Load Annotations3D.
+    """Indoor load annotations3D.
 
     Load instance mask and semantic mask of points.
     """

@@ -9,7 +9,7 @@ def create_indoor_info_file(data_path,
                             pkl_prefix='sunrgbd',
                             save_path=None,
                             use_v1=False):
-    """Create indoor  information file.
+    """Create indoor information file.
 
     Get information of the raw data and save it to the pkl file.
 
