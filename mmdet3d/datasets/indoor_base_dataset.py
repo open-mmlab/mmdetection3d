@@ -98,12 +98,12 @@ class IndoorBaseDataset(torch_data.Dataset):
         return class_names
 
     def _generate_annotations(self, output):
-        """Generate Annotations.
+        """Generate annotations.
 
         Transform results of the model to the form of the evaluation.
 
         Args:
-            output (List): The output of the model.
+            output (list): The output of the model.
         """
         result = []
         bs = len(output)
@@ -140,8 +140,8 @@ class IndoorBaseDataset(torch_data.Dataset):
         Evaluation in indoor protocol.
 
         Args:
-            results (List): List of result.
-            metric (List[float]): AP IoU thresholds.
+            results (list): List of result.
+            metric (list[float]): AP IoU thresholds.
         """
         results = self.format_results(results)
         from mmdet3d.core.evaluation import indoor_eval
