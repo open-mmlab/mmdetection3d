@@ -5,10 +5,10 @@ from mmdet.datasets.builder import PIPELINES
 
 @PIPELINES.register_module()
 class IndoorFlipData(object):
-    """Indoor Flip Data.
+    """Indoor flip data.
 
     Flip point cloud and ground truth boxes.
-    The point cloud will ve flipped along the yz plane
+    The point cloud will be flipped along the yz plane
     and the xz plane with a certain probability.
 
     Args:
@@ -53,19 +53,19 @@ class IndoorFlipData(object):
 
 @PIPELINES.register_module()
 class IndoorPointsColorJitter(object):
-    """Indoor Points Color Jitter.
+    """Indoor points color jitter.
 
     Randomly change the brightness and color of the point cloud, and
     drop out the points' colors with a certain range and probability.
 
     Args:
-        color_mean (List[float]): Mean color of the point cloud.
+        color_mean (list[float]): Mean color of the point cloud.
             Default: [0.5, 0.5, 0.5].
-        bright_range (List[float]): Range of brightness.
+        bright_range (list[float]): Range of brightness.
             Default: [0.8, 1.2].
-        color_shift_range (List[float]): Range of color shift.
+        color_shift_range (list[float]): Range of color shift.
             Default: [0.95, 1.05].
-        jitter_range (List[float]): Range of jittering.
+        jitter_range (list[float]): Range of jittering.
             Default: [-0.025, 0.025].
         drop_prob (float): Probability to drop out points' color.
             Default: 0.3
@@ -118,16 +118,16 @@ class IndoorPointsColorJitter(object):
 # TODO: try transform noise.
 @PIPELINES.register_module()
 class IndoorGlobalRotScale(object):
-    """Indoor Global Rotate Scale.
+    """Indoor global rotate and scale.
 
     Augment sunrgbd and scannet data with global rotating and scaling.
 
     Args:
         use_height (bool): Whether to use height.
             Default: True.
-        rot_range (List[float]): Range of rotation.
+        rot_range (list[float]): Range of rotation.
             Default: None.
-        scale_range (List[float]): Range of scale.
+        scale_range (list[float]): Range of scale.
             Default: None.
     """
 
@@ -153,7 +153,7 @@ class IndoorGlobalRotScale(object):
         return rot_mat
 
     def _rotate_aligned_boxes(self, input_boxes, rot_mat):
-        """Rotate Aligned Boxes.
+        """Rotate aligned boxes.
 
         Rotate function for the aligned boxes.
 

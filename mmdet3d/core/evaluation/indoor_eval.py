@@ -5,7 +5,7 @@ from mmdet3d.core.bbox.iou_calculators.iou3d_calculator import bbox_overlaps_3d
 
 
 def boxes3d_depth_to_lidar(boxes3d, mid_to_bottom=True):
-    """Boxes3d Depth to Lidar.
+    """Boxes3d depth to lidar.
 
     Flip X-right,Y-forward,Z-up to X-forward,Y-left,Z-up.
 
@@ -93,7 +93,7 @@ def eval_det_cls(pred, gt, iou_thr=None):
     Args:
         pred (dict): {img_id: [(bbox, score)]} where bbox is numpy array.
         gt (dict): {img_id: [bbox]}.
-        iou_thr (List[float]): a list, iou threshold.
+        iou_thr (list[float]): a list, iou threshold.
 
     Return:
         ndarray: numpy array of length nd.
@@ -193,16 +193,16 @@ def eval_det_cls(pred, gt, iou_thr=None):
 
 
 def eval_map_recall(det_infos, gt_infos, ovthresh=None):
-    """Evaluate mAP and Recall.
+    """Evaluate mAP and recall.
 
     Generic functions to compute precision/recall for object detection
         for multiple classes.
 
     Args:
-        det_infos (List[ListList[[tuple]]]): Label, bbox and
+        det_infos (list[list[list[tuple]]]): Label, bbox and
             score of the detection result.
-        gt_infos (List[List[List]]): Label, bbox of the groundtruth.
-        ovthresh (List[float]): iou threshold.
+        gt_infos (list[list[list]]): Label, bbox of the groundtruth.
+        ovthresh (list[float]): iou threshold.
             Default: None.
 
     Return:
@@ -267,9 +267,9 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     Evaluate the result of the detection.
 
     Args:
-        gt_annos (List[List[dict]]): GT annotations.
-        dt_annos (List[List[List[tuple]]]): Detection annotations.
-        metric (List[float]): AP IoU thresholds.
+        gt_annos (list[list[dict]]): GT annotations.
+        dt_annos (list[list[List[tuple]]]): Detection annotations.
+        metric (list[float]): AP IoU thresholds.
         label2cat (dict): {label: cat}.
 
     Return:

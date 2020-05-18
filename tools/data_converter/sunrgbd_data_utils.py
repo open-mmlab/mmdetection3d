@@ -7,7 +7,7 @@ import scipy.io as sio
 
 
 def random_sampling(points, num_points, replace=None, return_choices=False):
-    """Random Sampling.
+    """Random sampling.
 
     Sampling point cloud to a certain number of points.
 
@@ -57,9 +57,9 @@ class SUNRGBDInstance(object):
 
 
 class SUNRGBDData(object):
-    """SUNRGBD Data
+    """SUNRGBD data.
 
-    Generate scannet infos for sunrgbd_converter
+    Generate scannet infos for sunrgbd_converter.
 
     Args:
         root_path (str): Root path of the raw data.
@@ -130,11 +130,11 @@ class SUNRGBDData(object):
         Args:
             num_workers (int): Number of threads to be used. Default: 4.
             has_label (bool): Whether the data has label. Default: True.
-            sample_id_list (List[int]): Index list of the sample.
+            sample_id_list (list[int]): Index list of the sample.
                 Default: None.
 
         Returns:
-            infos (List[dict]): Information of the raw data.
+            infos (list[dict]): Information of the raw data.
         """
 
         def process_single_scene(sample_idx):

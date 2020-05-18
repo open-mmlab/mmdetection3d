@@ -5,7 +5,7 @@ from mmdet.datasets.builder import PIPELINES
 
 @PIPELINES.register_module()
 class IndoorPointSample(object):
-    """Point Sample.
+    """Indoor point sample.
 
     Sampling data to a certain number.
 
@@ -22,7 +22,7 @@ class IndoorPointSample(object):
                                num_samples,
                                replace=None,
                                return_choices=False):
-        """Points Random Sampling.
+        """Points random sampling.
 
         Sample points to a certain number.
 
@@ -34,7 +34,7 @@ class IndoorPointSample(object):
 
         Returns:
             points (ndarray): 3D Points.
-            choices (ndarray): The generated random samples
+            choices (ndarray): The generated random samples.
         """
         if replace is None:
             replace = (points.shape[0] < num_samples)
