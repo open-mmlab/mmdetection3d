@@ -36,12 +36,11 @@ model = dict(
         out_channels=[128, 128, 128],
     ),
     bbox_head=dict(
-        type='SECONDHead',
-        class_name=['Car'],
+        type='Anchor3DHead',
+        num_classes=1,
         in_channels=384,
         feat_channels=384,
         use_direction_classifier=True,
-        encode_bg_as_zeros=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[[0, -39.68, -1.78, 69.12, 39.68, -1.78]],
@@ -80,8 +79,8 @@ test_cfg = dict(
     nms_thr=0.01,
     score_thr=0.3,
     min_bbox_size=0,
-    post_center_limit_range=point_cloud_range,
-)
+    nms_pre=100,
+    max_num=50)
 
 # dataset settings
 dataset_type = 'KittiDataset'

@@ -44,13 +44,11 @@ model = dict(
         out_channels=[128, 128, 128],
     ),
     pts_bbox_head=dict(
-        type='Anchor3DVeloHead',
-        class_names=class_names,
+        type='Anchor3DHead',
         num_classes=10,
         in_channels=384,
         feat_channels=384,
         use_direction_classifier=True,
-        encode_bg_as_zeros=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[
@@ -79,7 +77,7 @@ model = dict(
         diff_rad_by_sin=True,
         dir_offset=0.7854,  # pi/4
         dir_limit_offset=0,
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', ),
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=9),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -113,10 +111,7 @@ test_cfg = dict(
         nms_thr=0.2,
         score_thr=0.05,
         min_bbox_size=0,
-        max_per_img=500,
-        post_center_limit_range=point_cloud_range,
-        # TODO: check whether need to change this
-        # post_center_limit_range=[-59.6, -59.6, -6, 59.6, 59.6, 4],
+        max_num=500
         # soft-nms is also supported for rcnn testing
         # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
     ))
@@ -209,7 +204,7 @@ lr_config = dict(
 momentum_config = None
 checkpoint_config = dict(interval=1)
 # yapf:disable
-evaluation = dict(interval=20)
+evaluation = dict(interval=24)
 log_config = dict(
     interval=50,
     hooks=[

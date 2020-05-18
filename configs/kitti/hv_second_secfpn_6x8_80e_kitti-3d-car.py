@@ -34,12 +34,11 @@ model = dict(
         out_channels=[256, 256],
     ),
     bbox_head=dict(
-        type='SECONDHead',
-        class_name=['Car'],
+        type='Anchor3DHead',
+        num_classes=1,
         in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
-        encode_bg_as_zeros=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
@@ -78,8 +77,8 @@ test_cfg = dict(
     nms_thr=0.01,
     score_thr=0.3,
     min_bbox_size=0,
-    post_center_limit_range=[0, -40, -3, 70.4, 40, 0.0],
-)
+    nms_pre=100,
+    max_num=50)
 
 # dataset settings
 dataset_type = 'KittiDataset'
@@ -135,7 +134,7 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=4,
+    samples_per_gpu=6,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -166,7 +165,7 @@ data = dict(
         class_names=class_names,
         with_label=True))
 # optimizer
-lr = 0.001  # max learning rate
+lr = 0.0018  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(

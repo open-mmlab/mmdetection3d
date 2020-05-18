@@ -65,7 +65,7 @@ def _get_rpn_head_cfg(fname):
     return rpn_head, train_cfg.rpn_proposal
 
 
-def test_second_head_loss():
+def test_anchor3d_head_loss():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     bbox_head_cfg = _get_head_cfg(
@@ -117,7 +117,7 @@ def test_second_head_loss():
     assert empty_gt_losses['loss_rpn_dir'][0] == 0
 
 
-def test_second_head_getboxes():
+def test_anchor3d_head_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     bbox_head_cfg = _get_head_cfg(
@@ -140,7 +140,7 @@ def test_second_head_getboxes():
     cls_score[0] -= 1.5  # too many positive samples may cause cuda oom
     result_list = self.get_bboxes(cls_score, bbox_pred, dir_cls_preds,
                                   input_metas)
-    assert (result_list[0]['scores'] > 0.3).all()
+    assert (result_list[0][1] > 0.3).all()
 
 
 def test_parta2_rpnhead_getboxes():
@@ -166,7 +166,7 @@ def test_parta2_rpnhead_getboxes():
     cls_score[0] -= 1.5  # too many positive samples may cause cuda oom
     result_list = self.get_bboxes(cls_score, bbox_pred, dir_cls_preds,
                                   input_metas, proposal_cfg)
-    assert result_list[0]['scores'].shape == torch.Size([512])
-    assert result_list[0]['label_preds'].shape == torch.Size([512])
+    assert result_list[0]['scores_3d'].shape == torch.Size([512])
+    assert result_list[0]['labels_3d'].shape == torch.Size([512])
     assert result_list[0]['cls_preds'].shape == torch.Size([512, 3])
-    assert result_list[0]['box3d_lidar'].shape == torch.Size([512, 7])
+    assert result_list[0]['boxes_3d'].shape == torch.Size([512, 7])
