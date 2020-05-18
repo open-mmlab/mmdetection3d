@@ -6,23 +6,31 @@ import torch
 from mmdet3d.core import box_torch_ops, boxes3d_to_bev_torch_lidar
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.models import HEADS
-from .second_head import SECONDHead
+from .anchor3d_head import Anchor3DHead
 
 
 @HEADS.register_module()
-class PartA2RPNHead(SECONDHead):
-    """rpn head for PartA2
+class PartA2RPNHead(Anchor3DHead):
+    """RPN head for PartA2
+
+    Note:
+        The main difference between the PartA2 RPN head and the Anchor3DHead
+        lies in their output during inference. PartA2 RPN head further returns
+        the original classification score for the second stage since the bbox
+        head in RoI head does not do classification task.
+
+        Different from RPN heads in 2D detectors, this RPN head does
+        multi-class classification task and uses FocalLoss like the SECOND and
+        PointPillars do. But this head uses class agnostic nms rather than
+        multi-class nms.
 
     Args:
-        class_name (list[str]): name of classes (TODO: to be removed)
+        num_classes (int): Number of classes.
         in_channels (int): Number of channels in the input feature map.
         train_cfg (dict): train configs
         test_cfg (dict): test configs
         feat_channels (int): Number of channels of the feature map.
         use_direction_classifier (bool): Whether to add a direction classifier.
-        encode_bg_as_zeros (bool): Whether to use sigmoid of softmax
-            (TODO: to be removed)
-        box_code_size (int): The size of box code.
         anchor_generator(dict): Config dict of anchor generator.
         assigner_per_size (bool): Whether to do assignment for each separate
             anchor size.
@@ -37,17 +45,15 @@ class PartA2RPNHead(SECONDHead):
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
         loss_dir (dict): Config of direction classifier loss.
-    """  # npqa:W293
+    """
 
     def __init__(self,
-                 class_name,
+                 num_classes,
                  in_channels,
                  train_cfg,
                  test_cfg,
                  feat_channels=256,
                  use_direction_classifier=True,
-                 encode_bg_as_zeros=False,
-                 box_code_size=7,
                  anchor_generator=dict(
                      type='Anchor3DRangeGenerator',
                      range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
@@ -69,49 +75,11 @@ class PartA2RPNHead(SECONDHead):
                  loss_bbox=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
                  loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2)):
-        super().__init__(class_name, in_channels, train_cfg, test_cfg,
+        super().__init__(num_classes, in_channels, train_cfg, test_cfg,
                          feat_channels, use_direction_classifier,
-                         encode_bg_as_zeros, box_code_size, anchor_generator,
-                         assigner_per_size, assign_per_class, diff_rad_by_sin,
-                         dir_offset, dir_limit_offset, bbox_coder, loss_cls,
-                         loss_bbox, loss_dir)
-
-    def get_bboxes(self,
-                   cls_scores,
-                   bbox_preds,
-                   dir_cls_preds,
-                   input_metas,
-                   cfg,
-                   rescale=False):
-        assert len(cls_scores) == len(bbox_preds)
-        assert len(cls_scores) == len(dir_cls_preds)
-        num_levels = len(cls_scores)
-        featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
-        device = cls_scores[0].device
-        mlvl_anchors = self.anchor_generator.grid_anchors(
-            featmap_sizes, device=device)
-        mlvl_anchors = [
-            anchor.reshape(-1, self.box_code_size) for anchor in mlvl_anchors
-        ]
-
-        result_list = []
-        for img_id in range(len(input_metas)):
-            cls_score_list = [
-                cls_scores[i][img_id].detach() for i in range(num_levels)
-            ]
-            bbox_pred_list = [
-                bbox_preds[i][img_id].detach() for i in range(num_levels)
-            ]
-            dir_cls_pred_list = [
-                dir_cls_preds[i][img_id].detach() for i in range(num_levels)
-            ]
-
-            input_meta = input_metas[img_id]
-            proposals = self.get_bboxes_single(cls_score_list, bbox_pred_list,
-                                               dir_cls_pred_list, mlvl_anchors,
-                                               input_meta, cfg, rescale)
-            result_list.append(proposals)
-        return result_list
+                         anchor_generator, assigner_per_size, assign_per_class,
+                         diff_rad_by_sin, dir_offset, dir_limit_offset,
+                         bbox_coder, loss_cls, loss_bbox, loss_dir)
 
     def get_bboxes_single(self,
                           cls_scores,
@@ -155,7 +123,7 @@ class PartA2RPNHead(SECONDHead):
                 anchors = anchors[topk_inds, :]
                 bbox_pred = bbox_pred[topk_inds, :]
                 max_scores = topk_scores
-                cls_score = cls_score[topk_inds, :]
+                cls_score = scores[topk_inds, :]
                 dir_cls_score = dir_cls_score[topk_inds]
                 pred_labels = pred_labels[topk_inds]
 
@@ -171,8 +139,12 @@ class PartA2RPNHead(SECONDHead):
         mlvl_max_scores = torch.cat(mlvl_max_scores)
         mlvl_label_pred = torch.cat(mlvl_label_pred)
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
-        mlvl_cls_score = torch.cat(
-            mlvl_cls_score)  # shape [k, num_class] before sigmoid
+        # shape [k, num_class] before sigmoid
+        # PartA2 need to keep raw classification score
+        # becase the bbox head in the second stage does not have
+        # classification branch,
+        # roi head need this score as classification score
+        mlvl_cls_score = torch.cat(mlvl_cls_score)
 
         score_thr = cfg.get('score_thr', 0)
         result = self.class_agnostic_nms(mlvl_bboxes, mlvl_bboxes_for_nms,
@@ -180,7 +152,6 @@ class PartA2RPNHead(SECONDHead):
                                          mlvl_cls_score, mlvl_dir_scores,
                                          score_thr, cfg.nms_post, cfg)
 
-        result.update(dict(sample_idx=input_meta['sample_idx']))
         return result
 
     def class_agnostic_nms(self, mlvl_bboxes, mlvl_bboxes_for_nms,
@@ -232,14 +203,14 @@ class PartA2RPNHead(SECONDHead):
                 scores = scores[inds]
                 cls_scores = cls_scores[inds]
             return dict(
-                box3d_lidar=bboxes,
-                scores=scores,
-                label_preds=labels,
+                boxes_3d=bboxes,
+                scores_3d=scores,
+                labels_3d=labels,
                 cls_preds=cls_scores  # raw scores [max_num, cls_num]
             )
         else:
             return dict(
-                box3d_lidar=mlvl_bboxes.new_zeros([0, self.box_code_size]),
-                scores=mlvl_bboxes.new_zeros([0]),
-                label_preds=mlvl_bboxes.new_zeros([0]),
+                boxes_3d=mlvl_bboxes.new_zeros([0, self.box_code_size]),
+                scores_3d=mlvl_bboxes.new_zeros([0]),
+                labels_3d=mlvl_bboxes.new_zeros([0]),
                 cls_preds=mlvl_bboxes.new_zeros([0, mlvl_cls_score.shape[-1]]))

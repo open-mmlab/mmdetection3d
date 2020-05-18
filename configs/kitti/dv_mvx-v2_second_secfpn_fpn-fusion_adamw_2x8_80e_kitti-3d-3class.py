@@ -65,12 +65,11 @@ model = dict(
         out_channels=[256, 256],
     ),
     pts_bbox_head=dict(
-        type='SECONDHead',
-        class_name=['Pedestrian', 'Cyclist', 'Car'],
+        type='Anchor3DHead',
+        num_classes=3,
         in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
-        encode_bg_as_zeros=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[
@@ -85,7 +84,7 @@ model = dict(
         assigner_per_size=True,
         diff_rad_by_sin=True,
         assign_per_class=True,
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', ),
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -132,8 +131,8 @@ test_cfg = dict(
         nms_thr=0.01,
         score_thr=0.3,
         min_bbox_size=0,
-        post_center_limit_range=[0, -40, -3, 70.4, 40, 0.0],
-    ), )
+        nms_pre=100,
+        max_num=50))
 
 # dataset settings
 dataset_type = 'KittiDataset'

@@ -275,15 +275,14 @@ class NuScenesDataset(torch_data.Dataset):
     def _format_bbox(self, results, jsonfile_prefix=None):
         nusc_annos = {}
         mapped_class_names = self.class_names
-        token2info = {}
-        for info in self.data_infos:
-            token2info[info['token']] = info
+
         print('Start to convert detection format...')
-        for det in mmcv.track_iter_progress(results):
+        for sample_id, det in enumerate(mmcv.track_iter_progress(results)):
             annos = []
-            boxes = output_to_nusc_box(det[0])
-            boxes = lidar_nusc_box_to_global(token2info[det[0]['sample_idx']],
-                                             boxes, mapped_class_names,
+            boxes = output_to_nusc_box(det)
+            sample_token = self.data_infos[sample_id]['token']
+            boxes = lidar_nusc_box_to_global(self.data_infos[sample_id], boxes,
+                                             mapped_class_names,
                                              self.eval_detection_configs,
                                              self.eval_version)
             for i, box in enumerate(boxes):
@@ -310,7 +309,7 @@ class NuScenesDataset(torch_data.Dataset):
                         attr = NuScenesDataset.DefaultAttribute[name]
 
                 nusc_anno = dict(
-                    sample_token=det[0]['sample_idx'],
+                    sample_token=sample_token,
                     translation=box.center.tolist(),
                     size=box.wlh.tolist(),
                     rotation=box.orientation.elements.tolist(),
@@ -319,7 +318,7 @@ class NuScenesDataset(torch_data.Dataset):
                     detection_score=box.score,
                     attribute_name=attr)
                 annos.append(nusc_anno)
-            nusc_annos[det[0]['sample_idx']] = annos
+            nusc_annos[sample_token] = annos
         nusc_submissions = {
             'meta': self.modality,
             'results': nusc_annos,
@@ -401,7 +400,7 @@ class NuScenesDataset(torch_data.Dataset):
         else:
             result_files = dict()
             for name in results[0]:
-                print('Formating bboxes of {}'.format(name))
+                print(f'\nFormating bboxes of {name}')
                 results_ = [out[name] for out in results]
                 tmp_file_ = osp.join(jsonfile_prefix, name)
                 result_files.update(
@@ -445,9 +444,9 @@ class NuScenesDataset(torch_data.Dataset):
 
 
 def output_to_nusc_box(detection):
-    box3d = detection['box3d_lidar'].numpy()
-    scores = detection['scores'].numpy()
-    labels = detection['label_preds'].numpy()
+    box3d = detection['boxes_3d'].numpy()
+    scores = detection['scores_3d'].numpy()
+    labels = detection['labels_3d'].numpy()
     # TODO: check whether this is necessary
     # with dir_offset & dir_limit in the head
     box3d[:, 6] = -box3d[:, 6] - np.pi / 2

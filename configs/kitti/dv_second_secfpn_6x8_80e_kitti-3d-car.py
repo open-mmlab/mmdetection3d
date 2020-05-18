@@ -34,12 +34,11 @@ model = dict(
         out_channels=[256, 256],
     ),
     bbox_head=dict(
-        type='SECONDHead',
-        class_name=['Car'],
+        type='Anchor3DHead',
+        num_classes=1,
         in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
-        encode_bg_as_zeros=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
@@ -78,10 +77,8 @@ test_cfg = dict(
     nms_thr=0.01,
     score_thr=0.3,
     min_bbox_size=0,
-    post_center_limit_range=[0, -40, -3, 70.4, 40, 0.0],
-    # soft-nms is also supported for rcnn testing
-    # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
-)
+    nms_pre=100,
+    max_num=50)
 
 # dataset settings
 dataset_type = 'KittiDataset'
