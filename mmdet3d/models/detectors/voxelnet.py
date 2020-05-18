@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+from mmdet3d.core import bbox3d2result
 from mmdet3d.ops import Voxelization
 from mmdet.models import DETECTORS, SingleStageDetector
 from .. import builder
@@ -83,9 +84,12 @@ class VoxelNet(SingleStageDetector):
     def simple_test(self, points, img_meta, gt_bboxes_3d=None, rescale=False):
         x = self.extract_feat(points, img_meta)
         outs = self.bbox_head(x)
-        bbox_inputs = outs + (img_meta, rescale)
-        bbox_list = self.bbox_head.get_bboxes(*bbox_inputs)
-        return bbox_list
+        bbox_list = self.bbox_head.get_bboxes(*outs, img_meta, rescale=rescale)
+        bbox_results = [
+            bbox3d2result(bboxes, scores, labels)
+            for bboxes, scores, labels in bbox_list
+        ]
+        return bbox_results[0]
 
 
 @DETECTORS.register_module()

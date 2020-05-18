@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 
 from mmdet3d.core import AssignResult
-from mmdet3d.core.bbox import bbox3d2roi
+from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
 from mmdet.core import build_assigner, build_sampler
 from mmdet.models import HEADS
 from ..builder import build_head, build_roi_extractor
@@ -95,6 +95,9 @@ class PartAggregationROIHead(Base3DRoIHead):
                     **kwargs):
         """Simple testing forward function of PartAggregationROIHead
 
+        Note:
+            This function assumes that the batch size is 1
+
         Args:
             feats_dict (dict): Contains features from the first stage.
             voxels_dict (dict): Contains information of voxels.
@@ -102,15 +105,15 @@ class PartAggregationROIHead(Base3DRoIHead):
             proposal_list (list[dict]): Proposal information from rpn.
 
         Returns:
-            list[dict]: Bbox results of each batch.
+            dict: Bbox results of one frame.
         """
         assert self.with_bbox, 'Bbox head must be implemented.'
         assert self.with_semantic
 
         semantic_results = self.semantic_head(feats_dict['seg_features'])
 
-        rois = bbox3d2roi([res['box3d_lidar'] for res in proposal_list])
-        label_preds = [res['label_preds'] for res in proposal_list]
+        rois = bbox3d2roi([res['boxes_3d'] for res in proposal_list])
+        labels_3d = [res['labels_3d'] for res in proposal_list]
         cls_preds = [res['cls_preds'] for res in proposal_list]
         bbox_results = self._bbox_forward(feats_dict['seg_features'],
                                           semantic_results['part_feats'],
@@ -120,11 +123,16 @@ class PartAggregationROIHead(Base3DRoIHead):
             rois,
             bbox_results['cls_score'],
             bbox_results['bbox_pred'],
-            label_preds,
+            labels_3d,
             cls_preds,
             img_meta,
             cfg=self.test_cfg)
-        return bbox_list
+
+        bbox_results = [
+            bbox3d2result(bboxes, scores, labels)
+            for bboxes, scores, labels in bbox_list
+        ]
+        return bbox_results[0]
 
     def _bbox_forward_train(self, seg_feats, part_feats, voxels_dict,
                             sampling_results):
@@ -164,8 +172,8 @@ class PartAggregationROIHead(Base3DRoIHead):
         # bbox assign
         for batch_idx in range(len(proposal_list)):
             cur_proposal_list = proposal_list[batch_idx]
-            cur_boxes = cur_proposal_list['box3d_lidar']
-            cur_label_preds = cur_proposal_list['label_preds']
+            cur_boxes = cur_proposal_list['boxes_3d']
+            cur_labels_3d = cur_proposal_list['labels_3d']
             cur_gt_bboxes = gt_bboxes_3d[batch_idx]
             cur_gt_labels = gt_labels_3d[batch_idx]
 
@@ -178,7 +186,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             if isinstance(self.bbox_assigner, list):  # for multi classes
                 for i, assigner in enumerate(self.bbox_assigner):
                     gt_per_cls = (cur_gt_labels == i)
-                    pred_per_cls = (cur_label_preds == i)
+                    pred_per_cls = (cur_labels_3d == i)
                     cur_assign_res = assigner.assign(
                         cur_boxes[pred_per_cls],
                         cur_gt_bboxes[gt_per_cls],
