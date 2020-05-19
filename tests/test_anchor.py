@@ -17,7 +17,7 @@ def test_aligned_anchor_generator():
     anchor_generator_cfg = dict(
         type='AlignedAnchor3DRangeGenerator',
         ranges=[[-51.2, -51.2, -1.80, 51.2, 51.2, -1.80]],
-        strides=[1, 2, 4],
+        scales=[1, 2, 4],
         sizes=[
             [0.8660, 2.5981, 1.],  # 1.5/sqrt(3)
             [0.5774, 1.7321, 1.],  # 1/sqrt(3)

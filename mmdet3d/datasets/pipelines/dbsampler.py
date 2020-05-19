@@ -55,14 +55,23 @@ class BatchSampler:
 @OBJECTSAMPLERS.register_module()
 class DataBaseSampler(object):
 
-    def __init__(self, info_path, root_path, rate, prepare, object_rot_range,
-                 sample_groups, use_road_plane):
+    def __init__(self,
+                 info_path,
+                 data_root,
+                 rate,
+                 prepare,
+                 object_rot_range,
+                 sample_groups,
+                 classes=None):
         super().__init__()
-        self.root_path = root_path
+        self.data_root = data_root
         self.info_path = info_path
         self.rate = rate
         self.prepare = prepare
         self.object_rot_range = object_rot_range
+        self.classes = classes
+        self.cat2label = {name: i for i, name in enumerate(classes)}
+        self.label2cat = {i: name for i, name in enumerate(classes)}
 
         with open(info_path, 'rb') as f:
             db_infos = pickle.load(f)
@@ -125,13 +134,16 @@ class DataBaseSampler(object):
                 db_infos[name] = filtered_infos
         return db_infos
 
-    def sample_all(self, gt_bboxes, gt_names, img=None):
+    def sample_all(self, gt_bboxes, gt_labels, img=None):
         sampled_num_dict = {}
         sample_num_per_class = []
         for class_name, max_sample_num in zip(self.sample_classes,
                                               self.sample_max_nums):
+            class_label = self.cat2label[class_name]
+            # sampled_num = int(max_sample_num -
+            #                   np.sum([n == class_name for n in gt_names]))
             sampled_num = int(max_sample_num -
-                              np.sum([n == class_name for n in gt_names]))
+                              np.sum([n == class_label for n in gt_labels]))
             sampled_num = np.round(self.rate * sampled_num).astype(np.int64)
             sampled_num_dict[class_name] = sampled_num
             sample_num_per_class.append(sampled_num)
@@ -164,13 +176,13 @@ class DataBaseSampler(object):
             sampled_gt_bboxes = np.concatenate(sampled_gt_bboxes, axis=0)
             # center = sampled_gt_bboxes[:, 0:3]
 
-            num_sampled = len(sampled)
+            # num_sampled = len(sampled)
             s_points_list = []
             count = 0
             for info in sampled:
                 file_path = os.path.join(
-                    self.root_path,
-                    info['path']) if self.root_path else info['path']
+                    self.data_root,
+                    info['path']) if self.data_root else info['path']
                 s_points = np.fromfile(
                     file_path, dtype=np.float32).reshape([-1, 4])
 
@@ -183,18 +195,16 @@ class DataBaseSampler(object):
                 count += 1
 
                 s_points_list.append(s_points)
-
+            # gt_names = np.array([s['name'] for s in sampled]),
+            # gt_labels = np.array([self.cat2label(s) for s in gt_names])
+            gt_labels = np.array([self.cat2label[s['name']] for s in sampled])
             ret = {
-                'gt_names':
-                np.array([s['name'] for s in sampled]),
-                'difficulty':
-                np.array([s['difficulty'] for s in sampled]),
+                'gt_labels_3d':
+                gt_labels,
                 'gt_bboxes_3d':
                 sampled_gt_bboxes,
                 'points':
                 np.concatenate(s_points_list, axis=0),
-                'gt_masks':
-                np.ones((num_sampled, ), dtype=np.bool_),
                 'group_ids':
                 np.arange(gt_bboxes.shape[0],
                           gt_bboxes.shape[0] + len(sampled))
@@ -260,11 +270,12 @@ class MMDataBaseSampler(DataBaseSampler):
 
     def __init__(self,
                  info_path,
-                 root_path,
+                 data_root,
                  rate,
                  prepare,
                  object_rot_range,
                  sample_groups,
+                 classes=None,
                  check_2D_collision=False,
                  collision_thr=0,
                  collision_in_classes=False,
@@ -272,13 +283,12 @@ class MMDataBaseSampler(DataBaseSampler):
                  blending_type=None):
         super(MMDataBaseSampler, self).__init__(
             info_path=info_path,
-            root_path=root_path,
+            data_root=data_root,
             rate=rate,
             prepare=prepare,
             object_rot_range=object_rot_range,
             sample_groups=sample_groups,
-            use_road_plane=False,
-        )
+            classes=classes)
         self.blending_type = blending_type
         self.depth_consistent = depth_consistent
         self.check_2D_collision = check_2D_collision
@@ -337,7 +347,6 @@ class MMDataBaseSampler(DataBaseSampler):
             sampled_gt_bboxes_3d = np.concatenate(sampled_gt_bboxes_3d, axis=0)
             sampled_gt_bboxes_2d = np.concatenate(sampled_gt_bboxes_2d, axis=0)
 
-            num_sampled = len(sampled)
             s_points_list = []
             count = 0
 
@@ -355,8 +364,8 @@ class MMDataBaseSampler(DataBaseSampler):
                 else:
                     info = sampled[idx]
                 pcd_file_path = os.path.join(
-                    self.root_path,
-                    info['path']) if self.root_path else info['path']
+                    self.data_root,
+                    info['path']) if self.data_root else info['path']
                 img_file_path = pcd_file_path + '.png'
                 mask_file_path = pcd_file_path + '.mask.png'
                 s_points = np.fromfile(
@@ -389,7 +398,6 @@ class MMDataBaseSampler(DataBaseSampler):
                 gt_bboxes_3d=sampled_gt_bboxes_3d,
                 gt_bboxes_2d=sampled_gt_bboxes_2d,
                 points=np.concatenate(s_points_list, axis=0),
-                gt_masks=np.ones((num_sampled, ), dtype=np.bool_),
                 group_ids=np.arange(gt_bboxes_3d.shape[0],
                                     gt_bboxes_3d.shape[0] + len(sampled)))
 

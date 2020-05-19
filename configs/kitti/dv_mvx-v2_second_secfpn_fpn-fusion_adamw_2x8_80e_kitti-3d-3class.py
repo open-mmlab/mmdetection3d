@@ -77,7 +77,6 @@ model = dict(
                 [0, -40.0, -0.6, 70.4, 40.0, -0.6],
                 [0, -40.0, -1.78, 70.4, 40.0, -1.78],
             ],
-            strides=[2],
             sizes=[[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
             reshape_out=False),
@@ -148,7 +147,7 @@ input_modality = dict(
 )
 db_sampler = dict(
     type='MMDataBaseSampler',
-    root_path=data_root,
+    data_root=data_root,
     info_path=data_root + 'kitti_mm_dbinfos_train.pkl',
     rate=1.0,
     object_rot_range=[0.0, 0.0],
@@ -169,7 +168,7 @@ db_sampler = dict(
         Pedestrian=6,
         Cyclist=6,
     ),
-)
+    classes=class_names)
 train_pipeline = [
     dict(
         type='Resize',
@@ -223,33 +222,33 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_train.pkl',
         split='training',
-        training=True,
+        pts_prefix='velodyne_reduced',
         pipeline=train_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=False),
     val=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_val.pkl',
         split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True,
+        classes=class_names,
         test_mode=True),
     test=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_val.pkl',
-        split='testing',
+        split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True,
+        classes=class_names,
         test_mode=True))
 # Training settings
 optimizer = dict(type='AdamW', lr=0.003, betas=(0.95, 0.99), weight_decay=0.01)

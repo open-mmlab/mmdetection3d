@@ -15,23 +15,28 @@ def test_getitem():
                    'sink', 'bathtub', 'garbagebin')
     pipelines = [
         dict(
-            type='IndoorLoadPointsFromFile',
-            use_height=True,
+            type='LoadPointsFromFile',
+            shift_height=True,
             load_dim=6,
             use_dim=[0, 1, 2]),
-        dict(type='IndoorLoadAnnotations3D'),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=True,
+            with_label_3d=True,
+            with_mask_3d=True,
+            with_seg_3d=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0, flip_ratio_xz=1.0),
         dict(
             type='IndoorGlobalRotScale',
-            use_height=True,
+            shift_height=True,
             rot_range=[-1 / 36, 1 / 36],
             scale_range=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',
             keys=[
-                'points', 'gt_bboxes_3d', 'gt_labels', 'pts_semantic_mask',
+                'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
                 'pts_instance_mask'
             ]),
     ]
@@ -40,7 +45,7 @@ def test_getitem():
     data = scannet_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
-    gt_labels = data['gt_labels']._data
+    gt_labels = data['gt_labels_3d']._data
     pts_semantic_mask = data['pts_semantic_mask']._data
     pts_instance_mask = data['pts_instance_mask']._data
 
@@ -84,6 +89,7 @@ def test_getitem():
     assert scannet_dataset.CLASSES != original_classes
     assert scannet_dataset.CLASSES == ('cabinet', 'bed')
 
+    # Test load classes from file
     import tempfile
     tmp_file = tempfile.NamedTemporaryFile()
     with open(tmp_file.name, 'w') as f:

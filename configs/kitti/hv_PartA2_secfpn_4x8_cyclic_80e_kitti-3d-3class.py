@@ -42,7 +42,6 @@ model = dict(
             ranges=[[0, -40.0, -0.6, 70.4, 40.0, -0.6],
                     [0, -40.0, -0.6, 70.4, 40.0, -0.6],
                     [0, -40.0, -1.78, 70.4, 40.0, -1.78]],
-            strides=[2],
             sizes=[[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
             reshape_out=False),
@@ -149,6 +148,7 @@ train_cfg = dict(
     rpn_proposal=dict(
         nms_pre=9000,
         nms_post=512,
+        max_num=512,
         nms_thr=0.8,
         score_thr=0,
         use_rotate_nms=False),
@@ -191,6 +191,7 @@ test_cfg = dict(
     rpn=dict(
         nms_pre=1024,
         nms_post=100,
+        max_num=100,
         nms_thr=0.7,
         score_thr=0,
         use_rotate_nms=True),
@@ -208,10 +209,9 @@ input_modality = dict(
     use_lidar_intensity=True,
     use_camera=False)
 db_sampler = dict(
-    root_path=data_root,
+    data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
-    use_road_plane=False,
     object_rot_range=[0.0, 0.0],
     prepare=dict(
         filter_by_difficulty=[-1],
@@ -220,12 +220,15 @@ db_sampler = dict(
             Pedestrian=10,
             Cyclist=10,
         )),
+    classes=class_names,
     sample_groups=dict(
         Car=12,
         Pedestrian=6,
         Cyclist=6,
     ))
 train_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -240,17 +243,19 @@ train_pipeline = [
         scaling_uniform_noise=[0.95, 1.05]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d'])
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(
@@ -258,32 +263,34 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_train.pkl',
         split='training',
-        training=True,
+        pts_prefix='velodyne_reduced',
         pipeline=train_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=False),
     val=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_val.pkl',
         split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=True),
     test=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_val.pkl',
-        split='testing',
+        split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True))
+        classes=class_names,
+        test_mode=True))
 # optimizer
 lr = 0.001  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
