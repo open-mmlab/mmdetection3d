@@ -1,17 +1,17 @@
 from mmdet.datasets.builder import DATASETS
 from .builder import build_dataset
+from .custom_3d import Custom3DDataset
 from .dataset_wrappers import RepeatFactorDataset
-from .indoor_base_dataset import IndoorBaseDataset
 from .kitti2d_dataset import Kitti2DDataset
 from .kitti_dataset import KittiDataset
 from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
 from .nuscenes_dataset import NuScenesDataset
 from .pipelines import (GlobalRotScale, IndoorFlipData, IndoorGlobalRotScale,
-                        IndoorLoadAnnotations3D, IndoorLoadPointsFromFile,
                         IndoorPointSample, IndoorPointsColorJitter,
-                        IndoorPointsColorNormalize, ObjectNoise,
-                        ObjectRangeFilter, ObjectSample, PointShuffle,
-                        PointsRangeFilter, RandomFlip3D)
+                        IndoorPointsColorNormalize, LoadAnnotations3D,
+                        LoadPointsFromFile, ObjectNoise, ObjectRangeFilter,
+                        ObjectSample, PointShuffle, PointsRangeFilter,
+                        RandomFlip3D)
 from .scannet_dataset import ScanNetDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 
@@ -21,8 +21,7 @@ __all__ = [
     'CocoDataset', 'Kitti2DDataset', 'NuScenesDataset', 'ObjectSample',
     'RandomFlip3D', 'ObjectNoise', 'GlobalRotScale', 'PointShuffle',
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
-    'IndoorLoadPointsFromFile', 'IndoorPointsColorNormalize',
-    'IndoorPointSample', 'IndoorLoadAnnotations3D', 'IndoorPointsColorJitter',
-    'IndoorGlobalRotScale', 'IndoorFlipData', 'SUNRGBDDataset',
-    'ScanNetDataset', 'IndoorBaseDataset'
+    'LoadPointsFromFile', 'IndoorPointsColorNormalize', 'IndoorPointSample',
+    'LoadAnnotations3D', 'IndoorPointsColorJitter', 'IndoorGlobalRotScale',
+    'IndoorFlipData', 'SUNRGBDDataset', 'ScanNetDataset', 'Custom3DDataset'
 ]

@@ -13,26 +13,28 @@ def test_getitem():
                    'dresser', 'night_stand', 'bookshelf', 'bathtub')
     pipelines = [
         dict(
-            type='IndoorLoadPointsFromFile',
-            use_height=True,
+            type='LoadPointsFromFile',
+            shift_height=True,
             load_dim=6,
             use_dim=[0, 1, 2]),
+        dict(type='LoadAnnotations3D'),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0),
         dict(
             type='IndoorGlobalRotScale',
-            use_height=True,
+            shift_height=True,
             rot_range=[-1 / 6, 1 / 6],
             scale_range=[0.85, 1.15]),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
-        dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels']),
+        dict(
+            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
     ]
 
     sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file, pipelines)
     data = sunrgbd_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
-    gt_labels = data['gt_labels']._data
+    gt_labels_3d = data['gt_labels_3d']._data
 
     expected_points = np.array(
         [[0.6570105, 1.5538014, 0.24514851, 1.0165423],
@@ -59,7 +61,7 @@ def test_getitem():
 
     assert np.allclose(points, expected_points)
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
-    assert np.all(gt_labels.numpy() == expected_gt_labels)
+    assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
     assert original_classes == class_names
 
     SUNRGBD_dataset = SUNRGBDDataset(

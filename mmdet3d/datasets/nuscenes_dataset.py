@@ -1,21 +1,18 @@
-import copy
 import os.path as osp
 import tempfile
 
 import mmcv
 import numpy as np
 import pyquaternion
-import torch.utils.data as torch_data
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet.datasets import DATASETS
 from ..core.bbox import box_np_ops
-from .pipelines import Compose
+from .custom_3d import Custom3DDataset
 
 
 @DATASETS.register_module()
-class NuScenesDataset(torch_data.Dataset):
-    NumPointFeatures = 4  # xyz, timestamp. set 4 to use kitti pretrain
+class NuScenesDataset(Custom3DDataset):
     NameMapping = {
         'movable_object.barrier': 'barrier',
         'vehicle.bicycle': 'bicycle',
@@ -71,153 +68,60 @@ class NuScenesDataset(torch_data.Dataset):
     def __init__(self,
                  ann_file,
                  pipeline=None,
-                 root_path=None,
-                 class_names=None,
+                 data_root=None,
+                 classes=None,
                  load_interval=1,
                  with_velocity=True,
                  test_mode=False,
                  modality=None,
-                 eval_version='detection_cvpr_2019',
-                 with_label=True,
-                 max_sweeps=10,
-                 filter_empty_gt=True):
-        super().__init__()
-        self.data_root = root_path
-        self.class_names = class_names if class_names else self.CLASSES
-        self.test_mode = test_mode
+                 eval_version='detection_cvpr_2019'):
         self.load_interval = load_interval
-        self.with_label = with_label
-        self.max_sweeps = max_sweeps
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
+            classes=classes,
+            modality=modality,
+            test_mode=test_mode)
 
-        self.ann_file = ann_file
-        data = mmcv.load(ann_file)
-        self.data_infos = list(
-            sorted(data['infos'], key=lambda e: e['timestamp']))
-        self.data_infos = self.data_infos[::load_interval]
-        self.metadata = data['metadata']
-        self.version = self.metadata['version']
         self.with_velocity = with_velocity
         self.eval_version = eval_version
         from nuscenes.eval.detection.config import config_factory
         self.eval_detection_configs = config_factory(self.eval_version)
 
-        if modality is None:
-            modality = dict(
+        if self.modality is None:
+            self.modality = dict(
                 use_camera=False,
                 use_lidar=True,
                 use_radar=False,
                 use_map=False,
                 use_external=False,
             )
-        self.modality = modality
-        # set group flag for the sampler
-        if not self.test_mode:
-            self._set_group_flag()
 
-        # processing pipeline
-        if pipeline is not None:
-            self.pipeline = Compose(pipeline)
+    def load_annotations(self, ann_file):
+        data = mmcv.load(ann_file)
+        data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
+        data_infos = data_infos[::self.load_interval]
+        self.metadata = data['metadata']
+        self.version = self.metadata['version']
+        return data_infos
 
-        # kitti map: nusc det name -> kitti eval name
-        self._kitti_name_mapping = {
-            'car': 'car',
-            'pedestrian': 'pedestrian',
-        }  # we only eval these classes in kitti
-
-    def __getitem__(self, idx):
-        if self.test_mode:
-            return self.prepare_test_data(idx)
-        while True:
-            data = self.prepare_train_data(idx)
-            if data is None:
-                idx = self._rand_another(idx)
-                continue
-            return data
-
-    def _set_group_flag(self):
-        """Set flag according to image aspect ratio.
-        Images with aspect ratio greater than 1 will be set as group 1,
-        otherwise group 0.
-        In kitti's pcd, they are all the same, thus are all zeros
-        """
-        self.flag = np.zeros(len(self), dtype=np.uint8)
-
-    def _rand_another(self, idx):
-        pool = np.where(self.flag == self.flag[idx])[0]
-        return np.random.choice(pool)
-
-    def __len__(self):
-        return len(self.data_infos)
-
-    def prepare_train_data(self, index):
-        input_dict = self.get_sensor_data(index)
-        input_dict = self.train_pre_pipeline(input_dict)
-        if input_dict is None:
-            return None
-        example = self.pipeline(input_dict)
-        if len(example['gt_bboxes_3d']._data) == 0:
-            return None
-        return example
-
-    def train_pre_pipeline(self, input_dict):
-        if len(input_dict['gt_bboxes_3d']) == 0:
-            return None
-        return input_dict
-
-    def prepare_test_data(self, index):
-        input_dict = self.get_sensor_data(index)
-        # input_dict = self.test_pre_pipeline(input_dict)
-        example = self.pipeline(input_dict)
-        return example
-
-    def test_pre_pipeline(self, input_dict):
-        gt_names = input_dict['gt_names']
-        input_dict['gt_names_3d'] = copy.deepcopy(gt_names)
-        return input_dict
-
-    def get_sensor_data(self, index):
+    def get_data_info(self, index):
         info = self.data_infos[index]
-        points = np.fromfile(
-            info['lidar_path'], dtype=np.float32, count=-1).reshape([-1, 5])
+
         # standard protocal modified from SECOND.Pytorch
-        points[:, 3] /= 255
-        points[:, 4] = 0
-        sweep_points_list = [points]
-        ts = info['timestamp'] / 1e6
-
-        for idx, sweep in enumerate(info['sweeps']):
-            if idx >= self.max_sweeps:
-                break
-            points_sweep = np.fromfile(
-                sweep['data_path'], dtype=np.float32,
-                count=-1).reshape([-1, 5])
-            sweep_ts = sweep['timestamp'] / 1e6
-            points_sweep[:, 3] /= 255
-            points_sweep[:, :3] = points_sweep[:, :3] @ sweep[
-                'sensor2lidar_rotation'].T
-            points_sweep[:, :3] += sweep['sensor2lidar_translation']
-            points_sweep[:, 4] = ts - sweep_ts
-            sweep_points_list.append(points_sweep)
-
-        points = np.concatenate(sweep_points_list, axis=0)[:, [0, 1, 2, 4]]
         input_dict = dict(
-            points=points,
             sample_idx=info['token'],
+            pts_filename=info['lidar_path'],
+            sweeps=info['sweeps'],
+            timestamp=info['timestamp'] / 1e6,
         )
 
         if self.modality['use_camera']:
-            # TODO support image
-            imgs = []
-            ori_shapes = []
             image_paths = []
             lidar2img_rts = []
             for cam_type, cam_info in info['cams'].items():
-                image_path = cam_info['data_path']
-                # image_path = osp.join(self.data_root, image_path)
-                img = mmcv.imread(image_path)
-                imgs.append(img)
-                ori_shapes.append(img.shape)
-                image_paths.append(image_path)
+                image_paths.append(cam_info['data_path'])
                 # obtain lidar to image transformation matrix
                 lidar2cam_r = np.linalg.inv(cam_info['sensor2lidar_rotation'])
                 lidar2cam_t = cam_info[
@@ -233,16 +137,13 @@ class NuScenesDataset(torch_data.Dataset):
 
             input_dict.update(
                 dict(
-                    img=imgs,
-                    img_shape=ori_shapes,
-                    ori_shape=ori_shapes,
-                    filename=image_paths,
+                    img_filename=image_paths,
                     lidar2img=lidar2img_rts,
                 ))
 
-        if self.with_label:
+        if not self.test_mode:
             annos = self.get_ann_info(index)
-            input_dict.update(annos)
+            input_dict['ann_info'] = annos
 
         return input_dict
 
@@ -256,6 +157,13 @@ class NuScenesDataset(torch_data.Dataset):
         box_np_ops.change_box3d_center_(gt_bboxes_3d, [0.5, 0.5, 0.5],
                                         [0.5, 0.5, 0])
         gt_names_3d = info['gt_names'][mask]
+        gt_labels_3d = []
+        for cat in gt_names_3d:
+            if cat in self.CLASSES:
+                gt_labels_3d.append(self.CLASSES.index(cat))
+            else:
+                gt_labels_3d.append(-1)
+        gt_labels_3d = np.array(gt_labels_3d)
 
         if self.with_velocity:
             gt_velocity = info['gt_velocity'][mask]
@@ -263,18 +171,15 @@ class NuScenesDataset(torch_data.Dataset):
             gt_velocity[nan_mask] = [0.0, 0.0]
             gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
 
-        gt_bboxes_3d_mask = np.array(
-            [n in self.class_names for n in gt_names_3d], dtype=np.bool_)
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
-            gt_names_3d=gt_names_3d,
-            gt_bboxes_3d_mask=gt_bboxes_3d_mask,
+            gt_labels_3d=gt_labels_3d,
         )
         return anns_results
 
     def _format_bbox(self, results, jsonfile_prefix=None):
         nusc_annos = {}
-        mapped_class_names = self.class_names
+        mapped_class_names = self.CLASSES
 
         print('Start to convert detection format...')
         for sample_id, det in enumerate(mmcv.track_iter_progress(results)):
@@ -358,7 +263,7 @@ class NuScenesDataset(torch_data.Dataset):
         metrics = mmcv.load(osp.join(output_dir, 'metrics_summary.json'))
         detail = dict()
         metric_prefix = '{}_NuScenes'.format(result_name)
-        for name in self.class_names:
+        for name in self.CLASSES:
             for k, v in metrics['label_aps'][name].items():
                 val = float('{:.4f}'.format(v))
                 detail['{}/{}_AP_dist_{}'.format(metric_prefix, name, k)] = val

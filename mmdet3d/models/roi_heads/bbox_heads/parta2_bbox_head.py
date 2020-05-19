@@ -545,7 +545,6 @@ class PartA2BboxHead(nn.Module):
                         score_thr,
                         nms_thr,
                         use_rotate_nms=True):
-        normalized_scores = torch.sigmoid(box_probs)
         if use_rotate_nms:
             nms_func = nms_gpu
         else:
@@ -562,7 +561,7 @@ class PartA2BboxHead(nn.Module):
         nms_thresh = nms_thr if isinstance(
             nms_thr, list) else [nms_thr for x in range(self.num_classes)]
         for k in range(0, self.num_classes):
-            class_scores_keep = normalized_scores[:, k] >= score_thresh[k]
+            class_scores_keep = box_probs[:, k] >= score_thresh[k]
 
             if class_scores_keep.int().sum() > 0:
                 original_idxs = class_scores_keep.nonzero().view(-1)

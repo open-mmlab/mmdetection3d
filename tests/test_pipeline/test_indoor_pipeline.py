@@ -15,16 +15,21 @@ def test_scannet_pipeline():
     np.random.seed(0)
     pipelines = [
         dict(
-            type='IndoorLoadPointsFromFile',
-            use_height=True,
+            type='LoadPointsFromFile',
+            shift_height=True,
             load_dim=6,
             use_dim=[0, 1, 2]),
-        dict(type='IndoorLoadAnnotations3D'),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=True,
+            with_label_3d=True,
+            with_mask_3d=True,
+            with_seg_3d=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0, flip_ratio_xz=1.0),
         dict(
             type='IndoorGlobalRotScale',
-            use_height=True,
+            shift_height=True,
             rot_range=[-1 / 36, 1 / 36],
             scale_range=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
@@ -45,21 +50,21 @@ def test_scannet_pipeline():
     if info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
         scannet_gt_labels_3d = info['annos']['class']
-        scannet_gt_bboxes_3d_mask = np.ones_like(
-            scannet_gt_labels_3d, dtype=np.bool)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
         scannet_gt_labels_3d = np.zeros((1, ))
-        scannet_gt_bboxes_3d_mask = np.zeros((1, ), dtype=np.bool)
     scan_name = info['point_cloud']['lidar_idx']
+    results['ann_info'] = dict()
+    results['ann_info']['pts_instance_mask_path'] = osp.join(
+        data_path, f'{scan_name}_ins_label.npy')
+    results['ann_info']['pts_semantic_mask_path'] = osp.join(
+        data_path, f'{scan_name}_sem_label.npy')
+    results['ann_info']['gt_bboxes_3d'] = scannet_gt_bboxes_3d
+    results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
 
-    results['pts_instance_mask_path'] = osp.join(data_path,
-                                                 f'{scan_name}_ins_label.npy')
-    results['pts_semantic_mask_path'] = osp.join(data_path,
-                                                 f'{scan_name}_sem_label.npy')
-    results['gt_bboxes_3d'] = scannet_gt_bboxes_3d
-    results['gt_labels_3d'] = scannet_gt_labels_3d
-    results['gt_bboxes_3d_mask'] = scannet_gt_bboxes_3d_mask
+    results['bbox3d_fields'] = []
+    results['pts_mask_fields'] = []
+    results['pts_seg_fields'] = []
 
     results = pipeline(results)
 
@@ -100,14 +105,15 @@ def test_sunrgbd_pipeline():
     np.random.seed(0)
     pipelines = [
         dict(
-            type='IndoorLoadPointsFromFile',
-            use_height=True,
+            type='LoadPointsFromFile',
+            shift_height=True,
             load_dim=6,
             use_dim=[0, 1, 2]),
+        dict(type='LoadAnnotations3D'),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0),
         dict(
             type='IndoorGlobalRotScale',
-            use_height=True,
+            shift_height=True,
             rot_range=[-1 / 6, 1 / 6],
             scale_range=[0.85, 1.15]),
         dict(type='IndoorPointSample', num_points=5),
@@ -126,15 +132,18 @@ def test_sunrgbd_pipeline():
     if info['annos']['gt_num'] != 0:
         gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
         gt_labels_3d = info['annos']['class']
-        gt_bboxes_3d_mask = np.ones_like(gt_labels_3d, dtype=np.bool)
     else:
         gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
         gt_labels_3d = np.zeros((1, ))
-        gt_bboxes_3d_mask = np.zeros((1, ), dtype=np.bool)
 
-    results['gt_bboxes_3d'] = gt_bboxes_3d
-    results['gt_labels_3d'] = gt_labels_3d
-    results['gt_bboxes_3d_mask'] = gt_bboxes_3d_mask
+    # prepare input of pipeline
+    results['ann_info'] = dict()
+    results['ann_info']['gt_bboxes_3d'] = gt_bboxes_3d
+    results['ann_info']['gt_labels_3d'] = gt_labels_3d
+    results['bbox3d_fields'] = []
+    results['pts_mask_fields'] = []
+    results['pts_seg_fields'] = []
+
     results = pipeline(results)
     points = results['points']._data
     gt_bboxes_3d = results['gt_bboxes_3d']._data

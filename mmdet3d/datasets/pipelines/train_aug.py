@@ -109,8 +109,8 @@ class ObjectSample(object):
 
     def __call__(self, input_dict):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
-        gt_names_3d = input_dict['gt_names_3d']
-        gt_bboxes_3d_mask = input_dict['gt_bboxes_3d_mask']
+        gt_labels_3d = input_dict['gt_labels_3d']
+
         # change to float for blending operation
         points = input_dict['points']
         #         rect = input_dict['rect']
@@ -119,27 +119,23 @@ class ObjectSample(object):
         if self.sample_2d:
             img = input_dict['img']  # .astype(np.float32)
             gt_bboxes_2d = input_dict['gt_bboxes']
-            gt_bboxes_mask = input_dict['gt_bboxes_mask']
-            gt_names = input_dict['gt_names']
             # Assume for now 3D & 2D bboxes are the same
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d, gt_names_3d, gt_bboxes_2d=gt_bboxes_2d, img=img)
+                gt_bboxes_3d, gt_labels_3d, gt_bboxes_2d=gt_bboxes_2d, img=img)
         else:
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d, gt_names_3d, img=None)
+                gt_bboxes_3d, gt_labels_3d, img=None)
 
         if sampled_dict is not None:
-            sampled_gt_names = sampled_dict['gt_names']
             sampled_gt_bboxes_3d = sampled_dict['gt_bboxes_3d']
             sampled_points = sampled_dict['points']
-            sampled_gt_masks = sampled_dict['gt_masks']
+            sampled_gt_labels = sampled_dict['gt_labels_3d']
 
-            gt_names_3d = np.concatenate([gt_names_3d, sampled_gt_names],
-                                         axis=0)
+            gt_labels_3d = np.concatenate([gt_labels_3d, sampled_gt_labels],
+                                          axis=0)
             gt_bboxes_3d = np.concatenate([gt_bboxes_3d, sampled_gt_bboxes_3d
                                            ]).astype(np.float32)
-            gt_bboxes_3d_mask = np.concatenate(
-                [gt_bboxes_3d_mask, sampled_gt_masks], axis=0)
+
             points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
             # check the points dimension
             dim_inds = points.shape[-1]
@@ -150,18 +146,14 @@ class ObjectSample(object):
                 sampled_gt_bboxes_2d = sampled_dict['gt_bboxes_2d']
                 gt_bboxes_2d = np.concatenate(
                     [gt_bboxes_2d, sampled_gt_bboxes_2d]).astype(np.float32)
-                gt_bboxes_mask = np.concatenate(
-                    [gt_bboxes_mask, sampled_gt_masks], axis=0)
-                gt_names = np.concatenate([gt_names, sampled_gt_names], axis=0)
-                input_dict['gt_names'] = gt_names
+
                 input_dict['gt_bboxes'] = gt_bboxes_2d
-                input_dict['gt_bboxes_mask'] = gt_bboxes_mask
                 input_dict['img'] = sampled_dict['img']  # .astype(np.uint8)
 
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-        input_dict['gt_names_3d'] = gt_names_3d
+        input_dict['gt_labels_3d'] = gt_labels_3d
         input_dict['points'] = points
-        input_dict['gt_bboxes_3d_mask'] = gt_bboxes_3d_mask
+
         return input_dict
 
     def __repr__(self):
@@ -184,12 +176,11 @@ class ObjectNoise(object):
     def __call__(self, input_dict):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         points = input_dict['points']
-        gt_bboxes_3d_mask = input_dict['gt_bboxes_3d_mask']
+
         # TODO: check this inplace function
         noise_per_object_v3_(
             gt_bboxes_3d,
             points,
-            gt_bboxes_3d_mask,
             rotation_perturb=self.rot_uniform_noise,
             center_noise_std=self.loc_noise_std,
             global_random_rot_range=self.global_rot_range,
@@ -322,20 +313,17 @@ class ObjectRangeFilter(object):
 
     def __call__(self, input_dict):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
-        gt_names_3d = input_dict['gt_names_3d']
-        gt_bboxes_3d_mask = input_dict['gt_bboxes_3d_mask']
+        gt_labels_3d = input_dict['gt_labels_3d']
         mask = self.filter_gt_box_outside_range(gt_bboxes_3d, self.bev_range)
         gt_bboxes_3d = gt_bboxes_3d[mask]
-        gt_names_3d = gt_names_3d[mask]
-        # the mask should also be updated
-        gt_bboxes_3d_mask = gt_bboxes_3d_mask[mask]
+        gt_labels_3d = gt_labels_3d[mask]
 
         # limit rad to [-pi, pi]
         gt_bboxes_3d[:, 6] = self.limit_period(
             gt_bboxes_3d[:, 6], offset=0.5, period=2 * np.pi)
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d.astype('float32')
-        input_dict['gt_names_3d'] = gt_names_3d
-        input_dict['gt_bboxes_3d_mask'] = gt_bboxes_3d_mask
+        input_dict['gt_labels_3d'] = gt_labels_3d
+
         return input_dict
 
     def __repr__(self):
@@ -363,4 +351,31 @@ class PointsRangeFilter(object):
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += '(point_cloud_range={})'.format(self.pcd_range.tolist())
+        return repr_str
+
+
+@PIPELINES.register_module()
+class ObjectNameFilter(object):
+    """Filter GT objects by their names
+
+    Args:
+        classes (list[str]): list of class names to be kept for training
+    """
+
+    def __init__(self, classes):
+        self.classes = classes
+        self.labels = list(range(len(self.classes)))
+
+    def __call__(self, input_dict):
+        gt_labels_3d = input_dict['gt_labels_3d']
+        gt_bboxes_mask = np.array([n in self.labels for n in gt_labels_3d],
+                                  dtype=np.bool_)
+        input_dict['gt_bboxes_3d'] = input_dict['gt_bboxes_3d'][gt_bboxes_mask]
+        input_dict['gt_labels_3d'] = input_dict['gt_labels_3d'][gt_bboxes_mask]
+
+        return input_dict
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(classes={self.classes})'
         return repr_str

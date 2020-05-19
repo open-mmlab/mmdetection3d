@@ -45,7 +45,6 @@ model = dict(
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[[0, -39.68, -1.78, 69.12, 39.68, -1.78]],
-            strides=[2],
             sizes=[[1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
             reshape_out=True),
@@ -106,10 +105,12 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5),
     ),
-    sample_groups=dict(Car=15),
-)
+    classes=class_names,
+    sample_groups=dict(Car=15))
 
 train_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -129,12 +130,13 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d']),
+    dict(type='Collect3D', keys=['points']),
 ]
 
 data = dict(
@@ -142,32 +144,34 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_train.pkl',
         split='training',
-        training=True,
+        pts_prefix='velodyne_reduced',
         pipeline=train_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=False),
     val=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_val.pkl',
         split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=True),
     test=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'kitti_infos_val.pkl',
-        split='testing',
+        split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True))
+        classes=class_names,
+        test_mode=True))
 # optimizer
 lr = 0.001  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
