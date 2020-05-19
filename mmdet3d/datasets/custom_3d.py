@@ -1,35 +1,39 @@
 import mmcv
 import numpy as np
-import torch.utils.data as torch_data
+from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class IndoorBaseDataset(torch_data.Dataset):
+class Custom3DDataset(Dataset):
 
     def __init__(self,
-                 root_path,
+                 data_root,
                  ann_file,
                  pipeline=None,
                  classes=None,
-                 test_mode=False,
-                 with_label=True):
+                 modality=None,
+                 test_mode=False):
         super().__init__()
-        self.root_path = root_path
-        self.CLASSES = self.get_classes(classes)
+        self.data_root = data_root
+        self.ann_file = ann_file
         self.test_mode = test_mode
-        self.label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
-        mmcv.check_file_exist(ann_file)
-        self.data_infos = mmcv.load(ann_file)
+        self.modality = modality
+
+        self.CLASSES = self.get_classes(classes)
+        self.data_infos = self.load_annotations(self.ann_file)
 
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
-        self.with_label = with_label
 
-    def __len__(self):
-        return len(self.data_infos)
+        # set group flag for the sampler
+        if not self.test_mode:
+            self._set_group_flag()
+
+    def load_annotations(self, ann_file):
+        return mmcv.load(ann_file)
 
     def get_data_info(self, index):
         info = self.data_infos[index]
@@ -38,38 +42,31 @@ class IndoorBaseDataset(torch_data.Dataset):
 
         input_dict = dict(pts_filename=pts_filename)
 
-        if self.with_label:
-            annos = self._get_ann_info(index, sample_idx)
-            input_dict.update(annos)
-        if len(input_dict['gt_bboxes_3d']) == 0:
-            return None
+        if not self.test_mode:
+            annos = self.get_ann_info(index, sample_idx)
+            input_dict['ann_info'] = annos
+            if len(annos['gt_bboxes_3d']) == 0:
+                return None
         return input_dict
 
-    def _rand_another(self, idx):
-        pool = np.where(self.flag == self.flag[idx])[0]
-        return np.random.choice(pool)
-
-    def __getitem__(self, idx):
-        if self.test_mode:
-            return self.prepare_test_data(idx)
-        while True:
-            data = self.prepare_train_data(idx)
-            if data is None:
-                idx = self._rand_another(idx)
-                continue
-            return data
+    def pre_pipeline(self, results):
+        results['bbox3d_fields'] = []
+        results['pts_mask_fields'] = []
+        results['pts_seg_fields'] = []
 
     def prepare_train_data(self, index):
         input_dict = self.get_data_info(index)
         if input_dict is None:
             return None
+        self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
-        if len(example['gt_bboxes_3d']._data) == 0:
+        if example is None or len(example['gt_bboxes_3d']._data) == 0:
             return None
         return example
 
     def prepare_test_data(self, index):
         input_dict = self.get_data_info(index)
+        self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
         return example
 
@@ -83,6 +80,9 @@ class IndoorBaseDataset(torch_data.Dataset):
                 string, take it as a file name. The file contains the name of
                 classes where each line contains one class name. If classes is
                 a tuple or list, override the CLASSES defined by the dataset.
+
+        Return:
+            list[str]: return the list of class names
         """
         if classes is None:
             return cls.CLASSES
@@ -115,8 +115,7 @@ class IndoorBaseDataset(torch_data.Dataset):
                 label_preds = pred_boxes['label_preds']
                 scores = pred_boxes['scores']
                 label_preds = label_preds.detach().cpu().numpy()
-                num_proposal = box3d_depth.shape[0]
-                for j in range(num_proposal):
+                for j in range(box3d_depth.shape[0]):
                     bbox_lidar = box3d_depth[j]  # [7] in lidar
                     bbox_lidar_bottom = bbox_lidar.copy()
                     pred_list_i.append(
@@ -147,5 +146,33 @@ class IndoorBaseDataset(torch_data.Dataset):
         from mmdet3d.core.evaluation import indoor_eval
         assert len(metric) > 0
         gt_annos = [info['annos'] for info in self.data_infos]
-        ret_dict = indoor_eval(gt_annos, results, metric, self.label2cat)
+        label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
+        ret_dict = indoor_eval(gt_annos, results, metric, label2cat)
         return ret_dict
+
+    def __len__(self):
+        return len(self.data_infos)
+
+    def _rand_another(self, idx):
+        pool = np.where(self.flag == self.flag[idx])[0]
+        return np.random.choice(pool)
+
+    def __getitem__(self, idx):
+        if self.test_mode:
+            return self.prepare_test_data(idx)
+        while True:
+            data = self.prepare_train_data(idx)
+            if data is None:
+                idx = self._rand_another(idx)
+                continue
+            return data
+
+    def _set_group_flag(self):
+        """Set flag according to image aspect ratio.
+
+        Images with aspect ratio greater than 1 will be set as group 1,
+        otherwise group 0.
+        In 3D datasets, they are all the same, thus are all zeros
+
+        """
+        self.flag = np.zeros(len(self), dtype=np.uint8)

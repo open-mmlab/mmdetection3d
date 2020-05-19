@@ -119,12 +119,7 @@ class PartA2(TwoStageDetector):
         else:
             return self.forward_test(**kwargs)
 
-    def simple_test(self,
-                    points,
-                    img_meta,
-                    gt_bboxes_3d,
-                    proposals=None,
-                    rescale=False):
+    def simple_test(self, points, img_meta, proposals=None, rescale=False):
         feats_dict, voxels_dict = self.extract_feat(points, img_meta)
 
         if self.with_rpn:
