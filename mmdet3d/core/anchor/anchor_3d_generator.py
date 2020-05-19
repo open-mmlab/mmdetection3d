@@ -19,7 +19,7 @@ class Anchor3DRangeGenerator(object):
             The ranges are the same across different feature levels. But may
             vary for different anchor sizes if size_per_range is True.
         sizes (list[list[float]]): 3D sizes of anchors.
-        strides (list[int]): Strides of anchors in different feature levels.
+        scales (list[int]): Scales of anchors in different feature levels.
         rotations (list(float)): Rotations of anchors in a feature grid.
         custom_values (tuple(float)): Customized values of that anchor. For
             example, in nuScenes the anchors have velocities.
@@ -32,7 +32,7 @@ class Anchor3DRangeGenerator(object):
     def __init__(self,
                  ranges,
                  sizes=[[1.6, 3.9, 1.56]],
-                 strides=[2],
+                 scales=[1],
                  rotations=[0, 1.5707963],
                  custom_values=(),
                  reshape_out=True,
@@ -46,10 +46,10 @@ class Anchor3DRangeGenerator(object):
         else:
             assert len(ranges) == 1
         assert mmcv.is_list_of(sizes, list)
-        assert isinstance(strides, list)
+        assert isinstance(scales, list)
 
         self.sizes = sizes
-        self.strides = strides
+        self.scales = scales
         self.ranges = ranges
         self.rotations = rotations
         self.custom_values = custom_values
@@ -60,7 +60,7 @@ class Anchor3DRangeGenerator(object):
     def __repr__(self):
         s = self.__class__.__name__ + '('
         s += f'anchor_range={self.ranges},\n'
-        s += f'strides={self.strides},\n'
+        s += f'scales={self.scales},\n'
         s += f'sizes={self.sizes},\n'
         s += f'rotations={self.rotations},\n'
         s += f'reshape_out={self.reshape_out},\n'
@@ -75,7 +75,7 @@ class Anchor3DRangeGenerator(object):
 
     @property
     def num_levels(self):
-        return len(self.strides)
+        return len(self.scales)
 
     def grid_anchors(self, featmap_sizes, device='cuda'):
         """Generate grid anchors in multiple feature levels
@@ -96,13 +96,13 @@ class Anchor3DRangeGenerator(object):
         multi_level_anchors = []
         for i in range(self.num_levels):
             anchors = self.single_level_grid_anchors(
-                featmap_sizes[i], self.strides[i], device=device)
+                featmap_sizes[i], self.scales[i], device=device)
             if self.reshape_out:
                 anchors = anchors.reshape(-1, anchors.size(-1))
             multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def single_level_grid_anchors(self, featmap_size, stride, device='cuda'):
+    def single_level_grid_anchors(self, featmap_size, scale, device='cuda'):
         # We reimplement the anchor generator using torch in cuda
         # torch: 0.6975 s for 1000 times
         # numpy: 4.3345 s for 1000 times
@@ -111,7 +111,7 @@ class Anchor3DRangeGenerator(object):
             return self.anchors_single_range(
                 featmap_size,
                 self.ranges[0],
-                stride,
+                scale,
                 self.sizes,
                 self.rotations,
                 device=device)
@@ -122,7 +122,7 @@ class Anchor3DRangeGenerator(object):
                 self.anchors_single_range(
                     featmap_size,
                     anchor_range,
-                    stride,
+                    scale,
                     anchor_size,
                     self.rotations,
                     device=device))
@@ -132,7 +132,7 @@ class Anchor3DRangeGenerator(object):
     def anchors_single_range(self,
                              feature_size,
                              anchor_range,
-                             stride=1,
+                             scale=1,
                              sizes=[[1.6, 3.9, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
@@ -154,7 +154,7 @@ class Anchor3DRangeGenerator(object):
             anchor_range[1], anchor_range[4], feature_size[1], device=device)
         x_centers = torch.linspace(
             anchor_range[0], anchor_range[3], feature_size[2], device=device)
-        sizes = torch.tensor(sizes, device=device).reshape(-1, 3)
+        sizes = torch.tensor(sizes, device=device).reshape(-1, 3) * scale
         rotations = torch.tensor(rotations, device=device)
 
         # torch.meshgrid default behavior is 'id', np's default is 'xy'
@@ -217,7 +217,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
     def anchors_single_range(self,
                              feature_size,
                              anchor_range,
-                             stride,
+                             scale,
                              sizes=[[1.6, 3.9, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
@@ -248,7 +248,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             anchor_range[3],
             feature_size[2] + 1,
             device=device)
-        sizes = torch.tensor(sizes, device=device).reshape(-1, 3) * stride
+        sizes = torch.tensor(sizes, device=device).reshape(-1, 3) * scale
         rotations = torch.tensor(rotations, device=device)
 
         # shift the anchor center

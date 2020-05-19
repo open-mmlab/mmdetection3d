@@ -6,227 +6,76 @@ import tempfile
 import mmcv
 import numpy as np
 import torch
-import torch.utils.data as torch_data
 from mmcv.utils import print_log
 
 from mmdet.datasets import DATASETS
 from ..core.bbox import box_np_ops
-from .pipelines import Compose
+from .custom_3d import Custom3DDataset
 from .utils import remove_dontcare
 
 
 @DATASETS.register_module()
-class KittiDataset(torch_data.Dataset):
+class KittiDataset(Custom3DDataset):
 
     CLASSES = ('car', 'pedestrian', 'cyclist')
 
     def __init__(self,
-                 root_path,
+                 data_root,
                  ann_file,
                  split,
+                 pts_prefix='velodyne',
                  pipeline=None,
-                 training=False,
-                 class_names=None,
+                 classes=None,
                  modality=None,
-                 with_label=True,
                  test_mode=False):
-        super().__init__()
-        self.root_path = root_path
-        self.root_split_path = os.path.join(
-            self.root_path, 'training' if split != 'test' else 'testing')
-        self.class_names = class_names if class_names else self.CLASSES
-        self.modality = modality
-        self.with_label = with_label
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
+            classes=classes,
+            modality=modality,
+            test_mode=test_mode)
+
+        self.root_split = os.path.join(self.data_root, split)
         assert self.modality is not None
-        self.modality = modality
-        self.test_mode = test_mode
-        # TODO: rm the key training if it is not needed
-        self.training = training
         self.pcd_limit_range = [0, -40, -3, 70.4, 40, 0.0]
+        self.pts_prefix = pts_prefix
 
-        self.ann_file = ann_file
-        self.kitti_infos = mmcv.load(ann_file)
+    def _get_pts_filename(self, idx):
+        pts_filename = osp.join(self.root_split, self.pts_prefix,
+                                f'{idx:06d}.bin')
+        return pts_filename
 
-        # set group flag for the sampler
-        if not self.test_mode:
-            self._set_group_flag()
-
-        # processing pipeline
-        if pipeline is not None:
-            self.pipeline = Compose(pipeline)
-
-    def __getitem__(self, idx):
-        if self.test_mode:
-            return self.prepare_test_data(idx)
-        while True:
-            data = self.prepare_train_data(idx)
-            if data is None:
-                idx = self._rand_another(idx)
-                continue
-            return data
-
-    def prepare_train_data(self, index):
-        input_dict = self.get_sensor_data(index)
-        input_dict = self.train_pre_pipeline(input_dict)
-        if input_dict is None:
-            return None
-        example = self.pipeline(input_dict)
-        if example is None or len(example['gt_bboxes_3d']._data) == 0:
-            return None
-        return example
-
-    def train_pre_pipeline(self, input_dict):
-        gt_bboxes_3d = input_dict['gt_bboxes_3d']
-        gt_bboxes = input_dict['gt_bboxes']
-        gt_names = input_dict['gt_names']
-        difficulty = input_dict['difficulty']
-        input_dict['bbox_fields'] = []
-
-        selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
-        # selected = self.keep_arrays_by_name(gt_names, self.class_names)
-        gt_bboxes_3d = gt_bboxes_3d[selected]
-        gt_bboxes = gt_bboxes[selected]
-        gt_names = gt_names[selected]
-        difficulty = difficulty[selected]
-        gt_bboxes_mask = np.array([n in self.class_names for n in gt_names],
-                                  dtype=np.bool_)
-
-        input_dict['gt_bboxes_3d'] = gt_bboxes_3d.astype('float32')
-        input_dict['gt_bboxes'] = gt_bboxes.astype('float32')
-        input_dict['gt_names'] = gt_names
-        input_dict['gt_names_3d'] = copy.deepcopy(gt_names)
-        input_dict['difficulty'] = difficulty
-        input_dict['gt_bboxes_mask'] = gt_bboxes_mask
-        input_dict['gt_bboxes_3d_mask'] = copy.deepcopy(gt_bboxes_mask)
-        input_dict['bbox_fields'].append('gt_bboxes')
-        if len(gt_bboxes) == 0:
-            return None
-        return input_dict
-
-    def prepare_test_data(self, index):
-        input_dict = self.get_sensor_data(index)
-        # input_dict = self.test_pre_pipeline(input_dict)
-        example = self.pipeline(input_dict)
-        return example
-
-    def test_pre_pipeline(self, input_dict):
-        gt_bboxes_3d = input_dict['gt_bboxes_3d']
-        gt_bboxes = input_dict['gt_bboxes']
-        gt_names = input_dict['gt_names']
-
-        if gt_bboxes_3d is not None:
-            selected = self.keep_arrays_by_name(gt_names, self.class_names)
-            gt_bboxes_3d = gt_bboxes_3d[selected]
-            gt_bboxes = gt_bboxes[selected]
-            gt_names = gt_names[selected]
-
-        input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-        input_dict['gt_bboxes'] = gt_bboxes
-        input_dict['gt_names'] = gt_names
-        input_dict['gt_names_3d'] = copy.deepcopy(gt_names)
-        return input_dict
-
-    def _set_group_flag(self):
-        """Set flag according to image aspect ratio.
-        Images with aspect ratio greater than 1 will be set as group 1,
-        otherwise group 0.
-        In kitti's pcd, they are all the same, thus are all zeros
-        """
-        self.flag = np.zeros(len(self), dtype=np.uint8)
-
-    def _rand_another(self, idx):
-        pool = np.where(self.flag == self.flag[idx])[0]
-        return np.random.choice(pool)
-
-    def get_lidar(self, idx):
-        lidar_file = os.path.join(self.root_split_path, 'velodyne',
-                                  '%06d.bin' % idx)
-        assert os.path.exists(lidar_file)
-        return np.fromfile(lidar_file, dtype=np.float32).reshape(-1, 4)
-
-    def get_lidar_reduced(self, idx):
-        lidar_file = os.path.join(self.root_split_path, 'velodyne_reduced',
-                                  '%06d.bin' % idx)
-        assert os.path.exists(lidar_file)
-        return np.fromfile(lidar_file, dtype=np.float32).reshape(-1, 4)
-
-    def get_lidar_depth_reduced(self, idx):
-        lidar_file = os.path.join(self.root_split_path,
-                                  'velodyne_depth_reduced', '%06d.bin' % idx)
-        assert os.path.exists(lidar_file)
-        return np.fromfile(lidar_file, dtype=np.float32).reshape(-1, 4)
-
-    def get_pure_depth_reduced(self, idx):
-        lidar_file = os.path.join(self.root_split_path, 'depth_reduced',
-                                  '%06d.bin' % idx)
-        assert os.path.exists(lidar_file)
-        return np.fromfile(lidar_file, dtype=np.float32).reshape(-1, 4)
-
-    def get_depth(self, idx):
-        depth_file = os.path.join(self.root_split_path, 'depth_completion',
-                                  '%06d.png' % idx)
-        assert os.path.exists(depth_file)
-        depth_img = mmcv.imread(depth_file, -1) / 256.0
-        return depth_img
-
-    def __len__(self):
-        return len(self.kitti_infos)
-
-    def get_sensor_data(self, index):
-        info = self.kitti_infos[index]
+    def get_data_info(self, index):
+        info = self.data_infos[index]
         sample_idx = info['image']['image_idx']
+        img_filename = os.path.join(self.root_split,
+                                    info['image']['image_path'])
+
         # TODO: consider use torch.Tensor only
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
         P2 = info['calib']['P2'].astype(np.float32)
         lidar2img = P2 @ rect @ Trv2c
 
-        if self.modality['use_depth'] and self.modality['use_lidar']:
-            points = self.get_lidar_depth_reduced(sample_idx)
-        elif self.modality['use_lidar']:
-            points = self.get_lidar(sample_idx)
-        elif self.modality['use_lidar_reduced']:
-            points = self.get_lidar_reduced(sample_idx)
-        elif self.modality['use_depth']:
-            points = self.get_pure_depth_reduced(sample_idx)
-        else:
-            assert (self.modality['use_depth'] or self.modality['use_lidar'])
-
-        if not self.modality['use_lidar_intensity']:
-            points = points[:, :3]
-
+        pts_filename = self._get_pts_filename(sample_idx)
         input_dict = dict(
             sample_idx=sample_idx,
-            points=points,
-            lidar2img=lidar2img,
-        )
+            pts_filename=pts_filename,
+            img_filename=img_filename,
+            lidar2img=lidar2img)
 
-        # TODO: support image input
-        if self.modality['use_camera']:
-            image_info = info['image']
-            image_path = image_info['image_path']
-            image_path = os.path.join(self.root_path, image_path)
-            img = mmcv.imread(image_path)
-            input_dict.update(
-                dict(
-                    img=img,
-                    img_shape=img.shape,
-                    ori_shape=img.shape,
-                    filename=image_path))
-        else:
-            input_dict.update(dict(img_shape=info['image']['image_shape']))
-        if self.with_label:
+        if not self.test_mode:
             annos = self.get_ann_info(index)
-            input_dict.update(annos)
+            input_dict['ann_info'] = annos
 
         return input_dict
 
     def get_ann_info(self, index):
         # Use index to get the annos, thus the evalhook could also use this api
-        info = self.kitti_infos[index]
+        info = self.data_infos[index]
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-        # P2 = info['calib']['P2'].astype(np.float32)
 
         annos = info['annos']
         # we need other objects to avoid collision when sample
@@ -238,21 +87,30 @@ class KittiDataset(torch_data.Dataset):
         # print(gt_names, len(loc))
         gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
                                       axis=1).astype(np.float32)
-        difficulty = annos['difficulty']
         # this change gt_bboxes_3d to velodyne coordinates
         gt_bboxes_3d = box_np_ops.box_camera_to_lidar(gt_bboxes_3d, rect,
                                                       Trv2c)
-        # only center format is allowed. so we need to convert
-        # kitti [0.5, 0.5, 0] center to [0.5, 0.5, 0.5]
-        # box_np_ops.change_box3d_center_(gt_bboxes, [0.5, 0.5, 0],
-        #                                 [0.5, 0.5, 0.5])
+        gt_bboxes = annos['bbox']
 
-        # For simplicity gt_bboxes means 2D gt bboxes
+        selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
+        gt_bboxes_3d = gt_bboxes_3d[selected].astype('float32')
+        gt_bboxes = gt_bboxes[selected].astype('float32')
+        gt_names = gt_names[selected]
+
+        gt_labels = []
+        for cat in gt_names:
+            if cat in self.CLASSES:
+                gt_labels.append(self.CLASSES.index(cat))
+            else:
+                gt_labels.append(-1)
+        gt_labels = np.array(gt_labels)
+        gt_labels_3d = copy.deepcopy(gt_labels)
+
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
-            gt_bboxes=annos['bbox'],
-            gt_names=gt_names,
-            difficulty=difficulty)
+            gt_labels_3d=gt_labels_3d,
+            gt_bboxes=gt_bboxes,
+            gt_labels=gt_labels)
         return anns_results
 
     def drop_arrays_by_name(self, gt_names, used_classes):
@@ -276,11 +134,11 @@ class KittiDataset(torch_data.Dataset):
             tmp_dir = None
 
         if not isinstance(outputs[0], dict):
-            result_files = self.bbox2result_kitti2d(outputs, self.class_names,
+            result_files = self.bbox2result_kitti2d(outputs, self.CLASSES,
                                                     pklfile_prefix,
                                                     submission_prefix)
         else:
-            result_files = self.bbox2result_kitti(outputs, self.class_names,
+            result_files = self.bbox2result_kitti(outputs, self.CLASSES,
                                                   pklfile_prefix,
                                                   submission_prefix)
         return result_files, tmp_dir
@@ -310,13 +168,13 @@ class KittiDataset(torch_data.Dataset):
         """
         result_files, tmp_dir = self.format_results(results, pklfile_prefix)
         from mmdet3d.core.evaluation import kitti_eval
-        gt_annos = [info['annos'] for info in self.kitti_infos]
+        gt_annos = [info['annos'] for info in self.data_infos]
         if metric == 'img_bbox':
             ap_result_str, ap_dict = kitti_eval(
-                gt_annos, result_files, self.class_names, eval_types=['bbox'])
+                gt_annos, result_files, self.CLASSES, eval_types=['bbox'])
         else:
             ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
-                                                self.class_names)
+                                                self.CLASSES)
         print_log('\n' + ap_result_str, logger=logger)
         if tmp_dir is not None:
             tmp_dir.cleanup()
@@ -327,7 +185,7 @@ class KittiDataset(torch_data.Dataset):
                           class_names,
                           pklfile_prefix=None,
                           submission_prefix=None):
-        assert len(net_outputs) == len(self.kitti_infos)
+        assert len(net_outputs) == len(self.data_infos)
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
 
@@ -336,7 +194,7 @@ class KittiDataset(torch_data.Dataset):
         for idx, pred_dicts in enumerate(
                 mmcv.track_iter_progress(net_outputs)):
             annos = []
-            info = self.kitti_infos[idx]
+            info = self.data_infos[idx]
             sample_idx = info['image']['image_idx']
             image_shape = info['image']['image_shape'][:2]
 
@@ -440,7 +298,7 @@ class KittiDataset(torch_data.Dataset):
         Return:
             List([dict]): A list of dict have the kitti format
         """
-        assert len(net_outputs) == len(self.kitti_infos)
+        assert len(net_outputs) == len(self.data_infos)
 
         det_annos = []
         print('\nConverting prediction to KITTI format')
@@ -457,7 +315,7 @@ class KittiDataset(torch_data.Dataset):
                 location=[],
                 rotation_y=[],
                 score=[])
-            sample_idx = self.kitti_infos[i]['image']['image_idx']
+            sample_idx = self.data_infos[i]['image']['image_idx']
 
             num_example = 0
             for label in range(len(bboxes_per_sample)):
@@ -511,7 +369,7 @@ class KittiDataset(torch_data.Dataset):
             mmcv.mkdir_or_exist(submission_prefix)
             print(f'Saving KITTI submission to {submission_prefix}')
             for i, anno in enumerate(det_annos):
-                sample_idx = self.kitti_infos[i]['image']['image_idx']
+                sample_idx = self.data_infos[i]['image']['image_idx']
                 cur_det_file = f'{submission_prefix}/{sample_idx:06d}.txt'
                 with open(cur_det_file, 'w') as f:
                     bbox = anno['bbox']

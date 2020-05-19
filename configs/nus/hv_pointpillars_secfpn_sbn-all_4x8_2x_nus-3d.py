@@ -60,7 +60,6 @@ model = dict(
                 [-49.6, -49.6, -1.80984986, 49.6, 49.6, -1.80984986],
                 [-49.6, -49.6, -1.763965, 49.6, 49.6, -1.763965],
             ],
-            strides=[2],
             sizes=[
                 [1.95017717, 4.60718145, 1.72270761],  # car
                 [2.4560939, 6.73778078, 2.73004906],  # truck
@@ -128,20 +127,23 @@ input_modality = dict(
     use_camera=False,
 )
 db_sampler = dict(
-    root_path=data_root,
+    data_root=data_root,
     info_path=data_root + 'nuscenes_dbinfos_train.pkl',
     rate=1.0,
     use_road_plane=False,
     object_rot_range=[0.0, 0.0],
     prepare=dict(),
+    classes=class_names,
     sample_groups=dict(
         bus=4,
         trailer=4,
         truck=4,
-    ),
-)
+    ))
 
 train_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScale',
         rot_uniform_noise=[-0.3925, 0.3925],
@@ -155,6 +157,8 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='RandomFlip3D', flip_ratio=0),
     dict(
@@ -169,28 +173,28 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'nuscenes_infos_train.pkl',
         pipeline=train_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=False),
     val=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'nuscenes_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=True),
+        classes=class_names,
+        test_mode=True),
     test=dict(
         type=dataset_type,
-        root_path=data_root,
+        data_root=data_root,
         ann_file=data_root + 'nuscenes_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
-        class_names=class_names,
-        with_label=False))
+        classes=class_names,
+        test_mode=True))
 # optimizer
 optimizer = dict(type='AdamW', lr=0.001, weight_decay=0.01)
 # max_norm=10 is better for SECOND

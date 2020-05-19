@@ -123,7 +123,7 @@ class IndoorGlobalRotScale(object):
     Augment sunrgbd and scannet data with global rotating and scaling.
 
     Args:
-        use_height (bool): Whether to use height.
+        shift_height (bool): Whether to use height.
             Default: True.
         rot_range (list[float]): Range of rotation.
             Default: None.
@@ -131,8 +131,8 @@ class IndoorGlobalRotScale(object):
             Default: None.
     """
 
-    def __init__(self, use_height=True, rot_range=None, scale_range=None):
-        self.use_height = use_height
+    def __init__(self, shift_height=True, rot_range=None, scale_range=None):
+        self.shift_height = shift_height
         self.rot_range = np.pi * np.array(rot_range)
         self.scale_range = scale_range
 
@@ -215,7 +215,7 @@ class IndoorGlobalRotScale(object):
             points[:, :3] *= scale_ratio
             gt_bboxes_3d[:, :3] *= scale_ratio
             gt_bboxes_3d[:, 3:6] *= scale_ratio
-            if self.use_height:
+            if self.shift_height:
                 points[:, -1] *= scale_ratio
 
         results['points'] = points
@@ -224,7 +224,7 @@ class IndoorGlobalRotScale(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += '(use_height={})'.format(self.use_height)
+        repr_str += '(shift_height={})'.format(self.shift_height)
         repr_str += '(rot_range={})'.format(self.rot_range)
         repr_str += '(scale_range={})'.format(self.scale_range)
         return repr_str
