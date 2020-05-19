@@ -4,9 +4,11 @@ from mmdet.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
 from .ball_query import ball_query
 from .furthest_point_sample import furthest_point_sample
 from .gather_points import gather_points
-from .group_points import group_points, grouping_operation
+from .group_points import (GroupAll, QueryAndGroup, group_points,
+                           grouping_operation)
 from .interpolate import three_interpolate, three_nn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
+from .pointnet_modules import PointFPModule, PointSAModule, PointSAModuleMSG
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_cpu,
                               points_in_boxes_gpu)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
@@ -22,5 +24,6 @@ __all__ = [
     'RoIAwarePool3d', 'points_in_boxes_gpu', 'points_in_boxes_cpu',
     'make_sparse_convmodule', 'ball_query', 'furthest_point_sample',
     'three_interpolate', 'three_nn', 'gather_points', 'grouping_operation',
-    'group_points'
+    'group_points', 'GroupAll', 'QueryAndGroup', 'PointSAModule',
+    'PointSAModuleMSG', 'PointFPModule'
 ]
