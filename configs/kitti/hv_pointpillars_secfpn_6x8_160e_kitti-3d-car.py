@@ -98,7 +98,6 @@ db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
-    use_road_plane=False,
     object_rot_range=[0.0, 0.0],
     prepare=dict(
         filter_by_difficulty=[-1],
