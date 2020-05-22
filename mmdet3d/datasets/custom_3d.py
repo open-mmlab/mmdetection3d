@@ -43,7 +43,7 @@ class Custom3DDataset(Dataset):
         input_dict = dict(pts_filename=pts_filename)
 
         if not self.test_mode:
-            annos = self.get_ann_info(index, sample_idx)
+            annos = self.get_ann_info(index)
             input_dict['ann_info'] = annos
             if len(annos['gt_bboxes_3d']) == 0:
                 return None
