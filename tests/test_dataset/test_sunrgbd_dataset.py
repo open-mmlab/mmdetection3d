@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 import torch
 
 from mmdet3d.datasets import SUNRGBDDataset
@@ -27,7 +26,12 @@ def test_getitem():
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
-            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
+            type='Collect3D',
+            keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'],
+            meta_keys=[
+                'file_name', 'flip_xz', 'flip_yz', 'sample_idx', 'scale_ratio',
+                'rot_angle'
+            ]),
     ]
 
     sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file, pipelines)
@@ -35,7 +39,19 @@ def test_getitem():
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
-
+    file_name = data['img_meta']._data['file_name']
+    flip_xz = data['img_meta']._data['flip_xz']
+    flip_yz = data['img_meta']._data['flip_yz']
+    scale_ratio = data['img_meta']._data['scale_ratio']
+    rot_angle = data['img_meta']._data['rot_angle']
+    sample_idx = data['img_meta']._data['sample_idx']
+    assert file_name == './tests/data/sunrgbd/sunrgbd_trainval' \
+                        '/lidar/000001.npy'
+    assert flip_xz is False
+    assert flip_yz is True
+    assert abs(scale_ratio - 1.0308290128214932) < 1e-5
+    assert abs(rot_angle - 0.22534577750874518) < 1e-5
+    assert sample_idx == 1
     expected_points = np.array(
         [[0.6570105, 1.5538014, 0.24514851, 1.0165423],
          [0.656101, 1.558591, 0.21755838, 0.98895216],
@@ -86,15 +102,12 @@ def test_getitem():
 
 
 def test_evaluate():
-
-    if not torch.cuda.is_available():
-        pytest.skip()
     root_path = './tests/data/sunrgbd'
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
     sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file)
     results = []
     pred_boxes = dict()
-    pred_boxes['box3d_lidar'] = np.array(
+    pred_boxes['boxes_3d'] = torch.Tensor(
         [[
             4.168696, -1.047307, -1.231666, 1.887584, 2.30207, 1.969614,
             1.69564944
@@ -104,9 +117,9 @@ def test_evaluate():
              1.64999513
          ], [1.904545, 1.086364, -1.2, 1.563134, 0.71281, 2.104546,
              0.1022069]])
-    pred_boxes['label_preds'] = torch.Tensor([0, 7, 6]).cuda()
-    pred_boxes['scores'] = torch.Tensor([0.5, 1.0, 1.0]).cuda()
-    results.append([pred_boxes])
+    pred_boxes['labels_3d'] = torch.Tensor([0, 7, 6])
+    pred_boxes['scores_3d'] = torch.Tensor([0.5, 1.0, 1.0])
+    results.append(pred_boxes)
     metric = [0.25, 0.5]
     ap_dict = sunrgbd_dataset.evaluate(results, metric)
     bed_precision_25 = ap_dict['bed_AP_0.25']
