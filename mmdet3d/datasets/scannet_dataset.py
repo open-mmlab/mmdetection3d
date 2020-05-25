@@ -30,11 +30,12 @@ class ScanNetDataset(Custom3DDataset):
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
         if info['annos']['gt_num'] != 0:
-            gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']  # k, 6
-            gt_labels_3d = info['annos']['class']
+            gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
+                np.float32)  # k, 6
+            gt_labels_3d = info['annos']['class'].astype(np.long)
         else:
             gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
-            gt_labels_3d = np.zeros(0, )
+            gt_labels_3d = np.zeros((0, ), dtype=np.long)
         sample_idx = info['point_cloud']['lidar_idx']
         pts_instance_mask_path = osp.join(self.data_root,
                                           f'{sample_idx}_ins_label.npy')

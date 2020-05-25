@@ -1,3 +1,6 @@
+import os.path as osp
+import tempfile
+
 import mmcv
 import numpy as np
 from torch.utils.data import Dataset
@@ -40,7 +43,10 @@ class Custom3DDataset(Dataset):
         sample_idx = info['point_cloud']['lidar_idx']
         pts_filename = self._get_pts_filename(sample_idx)
 
-        input_dict = dict(pts_filename=pts_filename)
+        input_dict = dict(
+            pts_filename=pts_filename,
+            sample_idx=sample_idx,
+            file_name=pts_filename)
 
         if not self.test_mode:
             annos = self.get_ann_info(index)
@@ -97,41 +103,16 @@ class Custom3DDataset(Dataset):
 
         return class_names
 
-    def _generate_annotations(self, output):
-        """Generate annotations.
-
-        Transform results of the model to the form of the evaluation.
-
-        Args:
-            output (list): The output of the model.
-        """
-        result = []
-        bs = len(output)
-        for i in range(bs):
-            pred_list_i = list()
-            pred_boxes = output[i]
-            box3d_depth = pred_boxes['box3d_lidar']
-            if box3d_depth is not None:
-                label_preds = pred_boxes['label_preds']
-                scores = pred_boxes['scores']
-                label_preds = label_preds.detach().cpu().numpy()
-                for j in range(box3d_depth.shape[0]):
-                    bbox_lidar = box3d_depth[j]  # [7] in lidar
-                    bbox_lidar_bottom = bbox_lidar.copy()
-                    pred_list_i.append(
-                        (label_preds[j], bbox_lidar_bottom, scores[j]))
-                result.append(pred_list_i)
-            else:
-                result.append(pred_list_i)
-
-        return result
-
-    def format_results(self, outputs):
-        results = []
-        for output in outputs:
-            result = self._generate_annotations(output)
-            results.append(result)
-        return results
+    def format_results(self,
+                       outputs,
+                       pklfile_prefix=None,
+                       submission_prefix=None):
+        if pklfile_prefix is None:
+            tmp_dir = tempfile.TemporaryDirectory()
+            pklfile_prefix = osp.join(tmp_dir.name, 'results')
+            out = f'{pklfile_prefix}.pkl'
+        mmcv.dump(outputs, out)
+        return outputs, tmp_dir
 
     def evaluate(self, results, metric=None):
         """Evaluate.
@@ -139,12 +120,17 @@ class Custom3DDataset(Dataset):
         Evaluation in indoor protocol.
 
         Args:
-            results (list): List of result.
+            results (list[dict]): List of results.
             metric (list[float]): AP IoU thresholds.
         """
-        results = self.format_results(results)
         from mmdet3d.core.evaluation import indoor_eval
-        assert len(metric) > 0
+        assert isinstance(
+            results, list), f'Expect results to be list, got {type(results)}.'
+        assert len(results) > 0, f'Expect length of results > 0.'
+        assert isinstance(
+            results[0], dict
+        ), f'Expect elements in results to be dict, got {type(results[0])}.'
+        assert len(metric) > 0, f'Expect length of metric > 0.'
         gt_annos = [info['annos'] for info in self.data_infos]
         label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
         ret_dict = indoor_eval(gt_annos, results, metric, label2cat)
