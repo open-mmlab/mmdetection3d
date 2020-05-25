@@ -164,6 +164,7 @@ def test_config_data_pipeline():
                                                     True) else 'polygon'
         results = dict(
             filename='test_img.png',
+            ori_filename='test_img.png',
             img=img,
             img_shape=img.shape,
             ori_shape=img.shape,
@@ -171,6 +172,7 @@ def test_config_data_pipeline():
             gt_labels=np.array([1], dtype=np.int64),
             gt_masks=dummy_masks(img.shape[0], img.shape[1], mode=mode),
         )
+        results['img_fields'] = ['img']
         results['bbox_fields'] = ['gt_bboxes']
         results['mask_fields'] = ['gt_masks']
         output_results = train_pipeline(results)
@@ -179,6 +181,7 @@ def test_config_data_pipeline():
         print('Test testing data pipeline: \n{!r}'.format(test_pipeline))
         results = dict(
             filename='test_img.png',
+            ori_filename='test_img.png',
             img=img,
             img_shape=img.shape,
             ori_shape=img.shape,
@@ -186,6 +189,7 @@ def test_config_data_pipeline():
             gt_labels=np.array([1], dtype=np.int64),
             gt_masks=dummy_masks(img.shape[0], img.shape[1], mode=mode),
         )
+        results['img_fields'] = ['img']
         results['bbox_fields'] = ['gt_bboxes']
         results['mask_fields'] = ['gt_masks']
         output_results = test_pipeline(results)
@@ -196,6 +200,7 @@ def test_config_data_pipeline():
             train_pipeline))
         results = dict(
             filename='test_img.png',
+            ori_filename='test_img.png',
             img=img,
             img_shape=img.shape,
             ori_shape=img.shape,
@@ -204,6 +209,7 @@ def test_config_data_pipeline():
             gt_masks=dummy_masks(
                 img.shape[0], img.shape[1], num_obj=0, mode=mode),
         )
+        results['img_fields'] = ['img']
         results['bbox_fields'] = ['gt_bboxes']
         results['mask_fields'] = ['gt_masks']
         output_results = train_pipeline(results)
@@ -213,6 +219,7 @@ def test_config_data_pipeline():
             test_pipeline))
         results = dict(
             filename='test_img.png',
+            ori_filename='test_img.png',
             img=img,
             img_shape=img.shape,
             ori_shape=img.shape,
@@ -221,6 +228,7 @@ def test_config_data_pipeline():
             gt_masks=dummy_masks(
                 img.shape[0], img.shape[1], num_obj=0, mode=mode),
         )
+        results['img_fields'] = ['img']
         results['bbox_fields'] = ['gt_bboxes']
         results['mask_fields'] = ['gt_masks']
         output_results = test_pipeline(results)

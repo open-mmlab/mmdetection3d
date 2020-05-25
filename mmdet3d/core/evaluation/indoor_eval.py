@@ -199,28 +199,35 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
         for multiple classes.
 
     Args:
-        det_infos (list[list[list[tuple]]]): Label, bbox and
-            score of the detection result.
-        gt_infos (list[list[list]]): Label, bbox of the groundtruth.
+        det_infos (list[dict]): Information of detection results, the dict
+            includes the following keys
+            - labels_3d (Tensor): Labels of boxes.
+            - boxes_3d (Tensor): 3d bboxes.
+            - scores_3d (Tensor): Scores of boxes.
+
+        gt_infos (list[dict]): information of gt results, the dict
+            includes the following keys
+            - labels_3d (Tensor): labels of boxes.
+            - boxes_3d (Tensor): 3d bboxes.
         ovthresh (list[float]): iou threshold.
             Default: None.
 
     Return:
-        dict: {classname: rec}.
-        dict: {classname: prec_all}.
-        dict: {classname: scalar}.
+        tuple[dict]: dict results of recall, AP, and precision for all classes.
     """
     pred_all = {}
     scan_cnt = 0
-    for batch_pred_map_cls in det_infos:
-        for i in range(len(batch_pred_map_cls)):
-            pred_all[scan_cnt] = batch_pred_map_cls[i]
-            scan_cnt += 1
+    for det_info in det_infos:
+        pred_all[scan_cnt] = det_info
+        scan_cnt += 1
 
     pred = {}  # map {classname: pred}
     gt = {}  # map {classname: gt}
     for img_id in pred_all.keys():
-        for label, bbox, score in pred_all[img_id]:
+        for i in range(len(pred_all[img_id]['labels_3d'])):
+            label = pred_all[img_id]['labels_3d'].numpy()[i]
+            bbox = pred_all[img_id]['boxes_3d'].numpy()[i]
+            score = pred_all[img_id]['scores_3d'].numpy()[i]
             if label not in pred:
                 pred[int(label)] = {}
             if img_id not in pred[label]:
@@ -232,7 +239,9 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
             pred[int(label)][img_id].append((bbox, score))
 
     for img_id in range(len(gt_infos)):
-        for label, bbox in gt_infos[img_id]:
+        for i in range(len(gt_infos[img_id]['labels_3d'])):
+            label = gt_infos[img_id]['labels_3d'][i]
+            bbox = gt_infos[img_id]['boxes_3d'][i]
             if label not in gt:
                 gt[label] = {}
             if img_id not in gt[label]:
@@ -267,8 +276,8 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     Evaluate the result of the detection.
 
     Args:
-        gt_annos (list[list[dict]]): GT annotations.
-        dt_annos (list[list[List[tuple]]]): Detection annotations.
+        gt_annos (list[dict]): GT annotations.
+        dt_annos (list[dict]): Detection annotations.
         metric (list[float]): AP IoU thresholds.
         label2cat (dict): {label: cat}.
 
@@ -284,11 +293,8 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
             if bbox_lidar_bottom.shape[-1] == 6:
                 bbox_lidar_bottom = np.pad(bbox_lidar_bottom, ((0, 0), (0, 1)),
                                            'constant')
-            gt_info_temp = []
-            for i in range(gt_anno['gt_num']):
-                gt_info_temp.append(
-                    [gt_anno['class'][i], bbox_lidar_bottom[i]])
-            gt_infos.append(gt_info_temp)
+            gt_infos.append(
+                dict(boxes_3d=bbox_lidar_bottom, labels_3d=gt_anno['class']))
 
     result_str = str()
     result_str += 'mAP'

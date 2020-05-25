@@ -26,6 +26,8 @@ class IndoorFlipData(object):
         points = results['points']
         gt_bboxes_3d = results['gt_bboxes_3d']
         aligned = True if gt_bboxes_3d.shape[1] == 6 else False
+        results['flip_yz'] = False
+        results['flip_xz'] = False
         if np.random.random() < self.flip_ratio_yz:
             # Flipping along the YZ plane
             points[:, 0] = -1 * points[:, 0]
@@ -203,6 +205,7 @@ class IndoorGlobalRotScale(object):
             else:
                 gt_bboxes_3d[:, :3] = np.dot(gt_bboxes_3d[:, :3], rot_mat.T)
                 gt_bboxes_3d[:, 6] -= rot_angle
+            results['rot_angle'] = rot_angle
 
         if self.scale_range is not None:
             assert len(self.scale_range) == 2, \
@@ -217,6 +220,8 @@ class IndoorGlobalRotScale(object):
             gt_bboxes_3d[:, 3:6] *= scale_ratio
             if self.shift_height:
                 points[:, -1] *= scale_ratio
+
+            results['scale_ratio'] = scale_ratio
 
         results['points'] = points
         results['gt_bboxes_3d'] = gt_bboxes_3d
