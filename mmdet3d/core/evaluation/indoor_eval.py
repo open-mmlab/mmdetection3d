@@ -295,6 +295,11 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
                                            'constant')
             gt_infos.append(
                 dict(boxes_3d=bbox_lidar_bottom, labels_3d=gt_anno['class']))
+        else:
+            gt_infos.append(
+                dict(
+                    boxes_3d=np.array([], dtype=np.float32),
+                    labels_3d=np.array([], dtype=np.int64)))
 
     result_str = str()
     result_str += 'mAP'
@@ -303,12 +308,13 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat):
     for i, iou_thresh in enumerate(metric):
         rec_list = []
         for label in ap[i].keys():
-            ret_dict[f'{label2cat[label]}_AP_{iou_thresh:.2f}'] = ap[i][label][
-                0]
-        ret_dict[f'mAP_{iou_thresh:.2f}'] = np.mean(list(ap[i].values()))
+            ret_dict[f'{label2cat[label]}_AP_{iou_thresh:.2f}'] = float(
+                ap[i][label][0])
+        ret_dict[f'mAP_{iou_thresh:.2f}'] = float(
+            np.mean(list(ap[i].values())))
         for label in rec[i].keys():
-            ret_dict[f'{label2cat[label]}_rec_{iou_thresh:.2f}'] = rec[i][
-                label][-1]
+            ret_dict[f'{label2cat[label]}_rec_{iou_thresh:.2f}'] = float(
+                rec[i][label][-1])
             rec_list.append(rec[i][label][-1])
-        ret_dict[f'mAR_{iou_thresh:.2f}'] = np.mean(rec_list)
+        ret_dict[f'mAR_{iou_thresh:.2f}'] = float(np.mean(rec_list))
     return ret_dict

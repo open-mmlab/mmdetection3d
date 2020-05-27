@@ -3,6 +3,7 @@ import tempfile
 
 import mmcv
 import numpy as np
+from mmcv.utils import print_log
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
@@ -114,26 +115,33 @@ class Custom3DDataset(Dataset):
         mmcv.dump(outputs, out)
         return outputs, tmp_dir
 
-    def evaluate(self, results, metric=None):
+    def evaluate(self, results, metric=None, iou_thr=(0.25, 0.5), logger=None):
         """Evaluate.
 
         Evaluation in indoor protocol.
 
         Args:
             results (list[dict]): List of results.
-            metric (list[float]): AP IoU thresholds.
+            metric (str | list[str]): Metrics to be evaluated.
+            iou_thr (list[float]): AP IoU thresholds.
         """
         from mmdet3d.core.evaluation import indoor_eval
         assert isinstance(
             results, list), f'Expect results to be list, got {type(results)}.'
-        assert len(results) > 0, f'Expect length of results > 0.'
         assert isinstance(
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
-        assert len(metric) > 0, f'Expect length of metric > 0.'
         gt_annos = [info['annos'] for info in self.data_infos]
         label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
-        ret_dict = indoor_eval(gt_annos, results, metric, label2cat)
+        ret_dict = indoor_eval(gt_annos, results, iou_thr, label2cat)
+
+        result_str = str()
+        for key, val in ret_dict.items():
+            result_str += f'{key} : {val} \n'
+        mAP_25, mAP_50 = ret_dict['mAP_0.25'], ret_dict['mAP_0.50']
+        result_str += f'mAP(0.25): {mAP_25}    mAP(0.50): {mAP_50}'
+        print_log('\n' + result_str, logger=logger)
+
         return ret_dict
 
     def __len__(self):
