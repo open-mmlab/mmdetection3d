@@ -5,12 +5,12 @@ import torch
 from mmdet3d.models import build_backbone
 
 
-def test_pointnet2_sa():
+def test_pointnet2_sa_ssg():
     if not torch.cuda.is_available():
         pytest.skip()
 
     cfg = dict(
-        type='PointNet2SA',
+        type='PointNet2SASSG',
         in_channels=6,
         num_points=(32, 16),
         radius=(0.8, 1.2),
