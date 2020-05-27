@@ -7,9 +7,8 @@ from mmdet.models import BACKBONES
 
 
 @BACKBONES.register_module()
-class PointNet2SA(nn.Module):
-    """PointNet2 using set abstraction (SA) and feature propagation (FP)
-    modules.
+class PointNet2SASSG(nn.Module):
+    """PointNet2 with Single-scale grouping.
 
     Args:
         in_channels (int): input channels of point cloud.
