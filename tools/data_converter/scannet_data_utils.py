@@ -1,5 +1,5 @@
 import concurrent.futures as futures
-import os
+import os.path as osp
 
 import mmcv
 import numpy as np
@@ -18,7 +18,7 @@ class ScanNetData(object):
     def __init__(self, root_path, split='train'):
         self.root_dir = root_path
         self.split = split
-        self.split_dir = os.path.join(root_path)
+        self.split_dir = osp.join(root_path)
         self.classes = [
             'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
             'bookshelf', 'picture', 'counter', 'desk', 'curtain',
@@ -34,8 +34,8 @@ class ScanNetData(object):
             for i, nyu40id in enumerate(list(self.cat_ids))
         }
         assert split in ['train', 'val', 'test']
-        split_file = os.path.join(self.root_dir, 'meta_data',
-                                  f'scannetv2_{split}.txt')
+        split_file = osp.join(self.root_dir, 'meta_data',
+                              f'scannetv2_{split}.txt')
         mmcv.check_file_exist(split_file)
         self.sample_id_list = mmcv.list_from_file(split_file)
 
@@ -43,9 +43,9 @@ class ScanNetData(object):
         return len(self.sample_id_list)
 
     def get_box_label(self, idx):
-        box_file = os.path.join(self.root_dir, 'scannet_train_instance_data',
-                                f'{idx}_bbox.npy')
-        assert os.path.exists(box_file)
+        box_file = osp.join(self.root_dir, 'scannet_train_instance_data',
+                            f'{idx}_bbox.npy')
+        mmcv.check_file_exist(box_file)
         return np.load(box_file)
 
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
@@ -68,6 +68,36 @@ class ScanNetData(object):
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
+            pts_filename = osp.join(self.root_dir,
+                                    'scannet_train_instance_data',
+                                    f'{sample_idx}_vert.npy')
+            pts_instance_mask_path = osp.join(self.root_dir,
+                                              'scannet_train_instance_data',
+                                              f'{sample_idx}_ins_label.npy')
+            pts_semantic_mask_path = osp.join(self.root_dir,
+                                              'scannet_train_instance_data',
+                                              f'{sample_idx}_sem_label.npy')
+
+            points = np.load(pts_filename)
+            pts_instance_mask = np.load(pts_instance_mask_path).astype(np.long)
+            pts_semantic_mask = np.load(pts_semantic_mask_path).astype(np.long)
+
+            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
+            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
+
+            points.tofile(
+                osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
+            pts_instance_mask.tofile(
+                osp.join(self.root_dir, 'instance_mask', f'{sample_idx}.bin'))
+            pts_semantic_mask.tofile(
+                osp.join(self.root_dir, 'semantic_mask', f'{sample_idx}.bin'))
+
+            info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
+            info['pts_instance_mask_path'] = osp.join('instance_mask',
+                                                      f'{sample_idx}.bin')
+            info['pts_semantic_mask_path'] = osp.join('semantic_mask',
+                                                      f'{sample_idx}.bin')
 
             if has_label:
                 annotations = {}

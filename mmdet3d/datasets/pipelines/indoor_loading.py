@@ -143,7 +143,7 @@ class LoadAnnotations3D(LoadAnnotations):
     def _load_masks_3d(self, results):
         pts_instance_mask_path = results['ann_info']['pts_instance_mask_path']
         mmcv.check_file_exist(pts_instance_mask_path)
-        pts_instance_mask = np.load(pts_instance_mask_path).astype(np.int)
+        pts_instance_mask = np.fromfile(pts_instance_mask_path, dtype=np.long)
         results['pts_instance_mask'] = pts_instance_mask
         results['pts_mask_fields'].append(results['pts_instance_mask'])
         return results
@@ -151,7 +151,7 @@ class LoadAnnotations3D(LoadAnnotations):
     def _load_semantic_seg_3d(self, results):
         pts_semantic_mask_path = results['ann_info']['pts_semantic_mask_path']
         mmcv.check_file_exist(pts_semantic_mask_path)
-        pts_semantic_mask = np.load(pts_semantic_mask_path).astype(np.int)
+        pts_semantic_mask = np.fromfile(pts_semantic_mask_path, dtype=np.long)
         results['pts_semantic_mask'] = pts_semantic_mask
         results['pts_seg_fields'].append(results['pts_semantic_mask'])
         return results

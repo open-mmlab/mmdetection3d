@@ -43,22 +43,20 @@ def test_scannet_pipeline():
     pipeline = Compose(pipelines)
     info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
     results = dict()
-    data_path = './tests/data/scannet/scannet_train_instance_data'
-    results['data_path'] = data_path
-    scan_name = info['point_cloud']['lidar_idx']
-    results['pts_filename'] = osp.join(data_path, f'{scan_name}_vert.npy')
+    data_path = './tests/data/scannet'
+    results['pts_filename'] = osp.join(data_path, info['pts_path'])
     if info['annos']['gt_num'] != 0:
-        scannet_gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-        scannet_gt_labels_3d = info['annos']['class']
+        scannet_gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
+            np.float32)
+        scannet_gt_labels_3d = info['annos']['class'].astype(np.long)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        scannet_gt_labels_3d = np.zeros((1, ))
-    scan_name = info['point_cloud']['lidar_idx']
+        scannet_gt_labels_3d = np.zeros((1, ), dtype=np.long)
     results['ann_info'] = dict()
     results['ann_info']['pts_instance_mask_path'] = osp.join(
-        data_path, f'{scan_name}_ins_label.npy')
+        data_path, info['pts_instance_mask_path'])
     results['ann_info']['pts_semantic_mask_path'] = osp.join(
-        data_path, f'{scan_name}_sem_label.npy')
+        data_path, info['pts_semantic_mask_path'])
     results['ann_info']['gt_bboxes_3d'] = scannet_gt_bboxes_3d
     results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
 
@@ -124,17 +122,16 @@ def test_sunrgbd_pipeline():
     pipeline = Compose(pipelines)
     results = dict()
     info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')[0]
-    data_path = './tests/data/sunrgbd/sunrgbd_trainval'
-    scan_name = info['point_cloud']['lidar_idx']
-    results['pts_filename'] = osp.join(data_path, 'lidar',
-                                       f'{scan_name:06d}.npy')
+    data_path = './tests/data/sunrgbd'
+    results['pts_filename'] = osp.join(data_path, info['pts_path'])
 
     if info['annos']['gt_num'] != 0:
-        gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
-        gt_labels_3d = info['annos']['class']
+        gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
+            np.float32)
+        gt_labels_3d = info['annos']['class'].astype(np.long)
     else:
         gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        gt_labels_3d = np.zeros((1, ))
+        gt_labels_3d = np.zeros((1, ), dtype=np.long)
 
     # prepare input of pipeline
     results['ann_info'] = dict()
@@ -148,12 +145,11 @@ def test_sunrgbd_pipeline():
     points = results['points']._data
     gt_bboxes_3d = results['gt_bboxes_3d']._data
     gt_labels_3d = results['gt_labels_3d']._data
-    expected_points = np.array(
-        [[0.6570105, 1.5538014, 0.24514851, 1.0165423],
-         [0.656101, 1.558591, 0.21755838, 0.98895216],
-         [0.6293659, 1.5679953, -0.10004003, 0.67135376],
-         [0.6068739, 1.5974995, -0.41063973, 0.36075398],
-         [0.6464709, 1.5573514, 0.15114647, 0.9225402]])
+    expected_points = np.array([[0.6512, 1.5781, 0.0710, 0.0499],
+                                [0.6473, 1.5701, 0.0657, 0.0447],
+                                [0.6464, 1.5635, 0.0826, 0.0616],
+                                [0.6453, 1.5603, 0.0849, 0.0638],
+                                [0.6488, 1.5786, 0.0461, 0.0251]])
     expected_gt_bboxes_3d = np.array([[
         -2.012483, 3.9473376, -0.25446942, 2.3730404, 1.9457763, 2.0303352,
         1.2205974
@@ -171,4 +167,4 @@ def test_sunrgbd_pipeline():
     expected_gt_labels_3d = np.array([0, 7, 6])
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert np.allclose(gt_labels_3d.flatten(), expected_gt_labels_3d)
-    assert np.allclose(points, expected_points)
+    assert np.allclose(points, expected_points, 1e-2)
