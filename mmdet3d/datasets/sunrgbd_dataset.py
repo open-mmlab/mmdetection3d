@@ -1,5 +1,3 @@
-import os.path as osp
-
 import numpy as np
 
 from mmdet.datasets import DATASETS
@@ -17,13 +15,10 @@ class SUNRGBDDataset(Custom3DDataset):
                  ann_file,
                  pipeline=None,
                  classes=None,
+                 modality=None,
                  test_mode=False):
-        super().__init__(data_root, ann_file, pipeline, classes, test_mode)
-
-    def _get_pts_filename(self, sample_idx):
-        pts_filename = osp.join(self.data_root, 'lidar',
-                                f'{sample_idx:06d}.npy')
-        return pts_filename
+        super().__init__(data_root, ann_file, pipeline, classes, modality,
+                         test_mode)
 
     def get_ann_info(self, index):
         # Use index to get the annos, thus the evalhook could also use this api

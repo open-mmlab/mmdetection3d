@@ -11,11 +11,10 @@ def test_load_points_from_indoor_file():
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
     sunrgbd_load_points_from_file = LoadPointsFromFile(6, shift_height=True)
     sunrgbd_results = dict()
-    data_path = './tests/data/sunrgbd/sunrgbd_trainval'
+    data_path = './tests/data/sunrgbd'
     sunrgbd_info = sunrgbd_info[0]
-    scan_name = sunrgbd_info['point_cloud']['lidar_idx']
-    sunrgbd_results['pts_filename'] = osp.join(data_path, 'lidar',
-                                               f'{scan_name:06d}.npy')
+    sunrgbd_results['pts_filename'] = osp.join(data_path,
+                                               sunrgbd_info['pts_path'])
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
     sunrgbd_point_cloud = sunrgbd_results['points']
     assert sunrgbd_point_cloud.shape == (100, 4)
@@ -23,13 +22,11 @@ def test_load_points_from_indoor_file():
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
     scannet_load_data = LoadPointsFromFile(shift_height=True)
     scannet_results = dict()
-    data_path = './tests/data/scannet/scannet_train_instance_data'
-    scannet_results['data_path'] = data_path
+    data_path = './tests/data/scannet'
     scannet_info = scannet_info[0]
-    scan_name = scannet_info['point_cloud']['lidar_idx']
 
     scannet_results['pts_filename'] = osp.join(data_path,
-                                               f'{scan_name}_vert.npy')
+                                               scannet_info['pts_path'])
     scannet_results = scannet_load_data(scannet_results)
     scannet_point_cloud = scannet_results['points']
     assert scannet_point_cloud.shape == (100, 4)
@@ -67,7 +64,7 @@ def test_load_annotations3D():
         with_mask_3d=True,
         with_seg_3d=True)
     scannet_results = dict()
-    data_path = './tests/data/scannet/scannet_train_instance_data'
+    data_path = './tests/data/scannet'
 
     if scannet_info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = scannet_info['annos']['gt_boxes_upright_depth']
@@ -77,12 +74,11 @@ def test_load_annotations3D():
         scannet_gt_labels_3d = np.zeros((1, ))
 
     # prepare input of loading pipeline
-    scan_name = scannet_info['point_cloud']['lidar_idx']
     scannet_results['ann_info'] = dict()
     scannet_results['ann_info']['pts_instance_mask_path'] = osp.join(
-        data_path, f'{scan_name}_ins_label.npy')
+        data_path, scannet_info['pts_instance_mask_path'])
     scannet_results['ann_info']['pts_semantic_mask_path'] = osp.join(
-        data_path, f'{scan_name}_sem_label.npy')
+        data_path, scannet_info['pts_semantic_mask_path'])
     scannet_results['ann_info']['gt_bboxes_3d'] = scannet_gt_bboxes_3d
     scannet_results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
 
