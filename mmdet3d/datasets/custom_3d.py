@@ -42,7 +42,7 @@ class Custom3DDataset(Dataset):
     def get_data_info(self, index):
         info = self.data_infos[index]
         sample_idx = info['point_cloud']['lidar_idx']
-        pts_filename = self._get_pts_filename(sample_idx)
+        pts_filename = osp.join(self.data_root, info['pts_path'])
 
         input_dict = dict(
             pts_filename=pts_filename,

@@ -6,7 +6,7 @@ from mmdet3d.datasets import SUNRGBDDataset
 
 def test_getitem():
     np.random.seed(0)
-    root_path = './tests/data/sunrgbd/sunrgbd_trainval'
+    root_path = './tests/data/sunrgbd'
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
     class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                    'dresser', 'night_stand', 'bookshelf', 'bathtub')
@@ -45,19 +45,18 @@ def test_getitem():
     scale_ratio = data['img_meta']._data['scale_ratio']
     rot_angle = data['img_meta']._data['rot_angle']
     sample_idx = data['img_meta']._data['sample_idx']
-    assert file_name == './tests/data/sunrgbd/sunrgbd_trainval' \
-                        '/lidar/000001.npy'
+    assert file_name == './tests/data/sunrgbd' \
+                        '/points/000001.bin'
     assert flip_xz is False
     assert flip_yz is True
     assert abs(scale_ratio - 1.0308290128214932) < 1e-5
     assert abs(rot_angle - 0.22534577750874518) < 1e-5
     assert sample_idx == 1
-    expected_points = np.array(
-        [[0.6570105, 1.5538014, 0.24514851, 1.0165423],
-         [0.656101, 1.558591, 0.21755838, 0.98895216],
-         [0.6293659, 1.5679953, -0.10004003, 0.67135376],
-         [0.6068739, 1.5974995, -0.41063973, 0.36075398],
-         [0.6464709, 1.5573514, 0.15114647, 0.9225402]])
+    expected_points = np.array([[0.6512, 1.5781, 0.0710, 0.0499],
+                                [0.6473, 1.5701, 0.0657, 0.0447],
+                                [0.6464, 1.5635, 0.0826, 0.0616],
+                                [0.6453, 1.5603, 0.0849, 0.0638],
+                                [0.6488, 1.5786, 0.0461, 0.0251]])
     expected_gt_bboxes_3d = np.array([[
         -2.012483, 3.9473376, -0.25446942, 2.3730404, 1.9457763, 2.0303352,
         1.2205974
@@ -75,7 +74,7 @@ def test_getitem():
     expected_gt_labels = np.array([0, 7, 6])
     original_classes = sunrgbd_dataset.CLASSES
 
-    assert np.allclose(points, expected_points)
+    assert np.allclose(points, expected_points, 1e-2)
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
     assert original_classes == class_names

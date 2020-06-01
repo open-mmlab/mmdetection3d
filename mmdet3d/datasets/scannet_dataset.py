@@ -19,12 +19,10 @@ class ScanNetDataset(Custom3DDataset):
                  ann_file,
                  pipeline=None,
                  classes=None,
+                 modality=None,
                  test_mode=False):
-        super().__init__(data_root, ann_file, pipeline, classes, test_mode)
-
-    def _get_pts_filename(self, sample_idx):
-        pts_filename = osp.join(self.data_root, f'{sample_idx}_vert.npy')
-        return pts_filename
+        super().__init__(data_root, ann_file, pipeline, classes, modality,
+                         test_mode)
 
     def get_ann_info(self, index):
         # Use index to get the annos, thus the evalhook could also use this api
@@ -36,11 +34,10 @@ class ScanNetDataset(Custom3DDataset):
         else:
             gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
             gt_labels_3d = np.zeros((0, ), dtype=np.long)
-        sample_idx = info['point_cloud']['lidar_idx']
         pts_instance_mask_path = osp.join(self.data_root,
-                                          f'{sample_idx}_ins_label.npy')
+                                          info['pts_instance_mask_path'])
         pts_semantic_mask_path = osp.join(self.data_root,
-                                          f'{sample_idx}_sem_label.npy')
+                                          info['pts_semantic_mask_path'])
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,

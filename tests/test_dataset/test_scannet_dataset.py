@@ -6,7 +6,7 @@ from mmdet3d.datasets import ScanNetDataset
 
 def test_getitem():
     np.random.seed(0)
-    root_path = './tests/data/scannet/scannet_train_instance_data'
+    root_path = './tests/data/scannet/'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
     class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                    'window', 'bookshelf', 'picture', 'counter', 'desk',
@@ -56,7 +56,7 @@ def test_getitem():
     rot_angle = data['img_meta']._data['rot_angle']
     sample_idx = data['img_meta']._data['sample_idx']
     assert file_name == './tests/data/scannet/' \
-                        'scannet_train_instance_data/scene0000_00_vert.npy'
+                        'points/scene0000_00.bin'
     assert flip_xz is True
     assert flip_yz is True
     assert abs(rot_angle - (-0.005471397477913809)) < 1e-5

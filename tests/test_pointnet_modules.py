@@ -1,8 +1,11 @@
 import numpy as np
+import pytest
 import torch
 
 
 def test_pointnet_sa_module_msg():
+    if not torch.cuda.is_available():
+        pytest.skip()
     from mmdet3d.ops import PointSAModuleMSG
 
     self = PointSAModuleMSG(
@@ -19,7 +22,7 @@ def test_pointnet_sa_module_msg():
     assert self.mlps[1].layer0.conv.in_channels == 12
     assert self.mlps[1].layer0.conv.out_channels == 32
 
-    xyz = np.load('tests/data/sunrgbd/sunrgbd_trainval/lidar/000001.npy')
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
     xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
@@ -34,6 +37,8 @@ def test_pointnet_sa_module_msg():
 
 
 def test_pointnet_sa_module():
+    if not torch.cuda.is_available():
+        pytest.skip()
     from mmdet3d.ops import PointSAModule
 
     self = PointSAModule(
@@ -48,7 +53,7 @@ def test_pointnet_sa_module():
     assert self.mlps[0].layer0.conv.in_channels == 15
     assert self.mlps[0].layer0.conv.out_channels == 32
 
-    xyz = np.load('tests/data/sunrgbd/sunrgbd_trainval/lidar/000001.npy')
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
     xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
@@ -63,13 +68,16 @@ def test_pointnet_sa_module():
 
 
 def test_pointnet_fp_module():
+    if not torch.cuda.is_available():
+        pytest.skip()
     from mmdet3d.ops import PointFPModule
 
     self = PointFPModule(mlp_channels=[24, 16]).cuda()
     assert self.mlps.layer0.conv.in_channels == 24
     assert self.mlps.layer0.conv.out_channels == 16
 
-    xyz = np.load('tests/data/sunrgbd/sunrgbd_trainval/lidar/000001.npy')
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin',
+                      np.float32).reshape((-1, 6))
 
     # (B, N, 3)
     xyz1 = torch.from_numpy(xyz[0::2, :3]).view(1, -1, 3).cuda()
