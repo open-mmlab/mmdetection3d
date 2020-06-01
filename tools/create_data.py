@@ -44,12 +44,14 @@ def nuscenes_data_prep(root_path,
         '{}/{}_infos_train.pkl'.format(out_dir, info_prefix))
 
 
-def scannet_data_prep(root_path, info_prefix, out_dir):
-    indoor.create_indoor_info_file(root_path, info_prefix, out_dir)
+def scannet_data_prep(root_path, info_prefix, out_dir, workers):
+    indoor.create_indoor_info_file(
+        root_path, info_prefix, out_dir, workers=workers)
 
 
-def sunrgbd_data_prep(root_path, info_prefix, out_dir):
-    indoor.create_indoor_info_file(root_path, info_prefix, out_dir)
+def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
+    indoor.create_indoor_info_file(
+        root_path, info_prefix, out_dir, workers=workers)
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
@@ -78,6 +80,8 @@ parser.add_argument(
     required='False',
     help='name of info pkl')
 parser.add_argument('--extra-tag', type=str, default='kitti')
+parser.add_argument(
+    '--workers', type=int, default=4, help='number of threads to be used')
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -117,9 +121,11 @@ if __name__ == '__main__':
         scannet_data_prep(
             root_path=args.root_path,
             info_prefix=args.extra_tag,
-            out_dir=args.out_dir)
+            out_dir=args.out_dir,
+            workers=args.workers)
     elif args.dataset == 'sunrgbd':
         sunrgbd_data_prep(
             root_path=args.root_path,
             info_prefix=args.extra_tag,
-            out_dir=args.out_dir)
+            out_dir=args.out_dir,
+            workers=args.workers)

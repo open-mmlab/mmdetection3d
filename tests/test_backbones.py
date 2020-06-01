@@ -27,7 +27,7 @@ def test_pointnet2_sa_ssg():
     assert self.FP_modules[0].mlps.layer0.conv.out_channels == 16
     assert self.FP_modules[1].mlps.layer0.conv.in_channels == 19
 
-    xyz = np.load('tests/data/sunrgbd/sunrgbd_trainval/lidar/000001.npy')
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
     ret_dict = self(xyz)

@@ -1,5 +1,5 @@
 import concurrent.futures as futures
-import os
+import os.path as osp
 
 import mmcv
 import numpy as np
@@ -70,7 +70,7 @@ class SUNRGBDData(object):
     def __init__(self, root_path, split='train', use_v1=False):
         self.root_dir = root_path
         self.split = split
-        self.split_dir = os.path.join(root_path)
+        self.split_dir = osp.join(root_path, 'sunrgbd_trainval')
         self.classes = [
             'bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
             'night_stand', 'bookshelf', 'bathtub'
@@ -81,22 +81,22 @@ class SUNRGBDData(object):
             for label in range(len(self.classes))
         }
         assert split in ['train', 'val', 'test']
-        split_file = os.path.join(self.root_dir, f'{split}_data_idx.txt')
+        split_file = osp.join(self.split_dir, f'{split}_data_idx.txt')
         mmcv.check_file_exist(split_file)
         self.sample_id_list = map(int, mmcv.list_from_file(split_file))
-        self.image_dir = os.path.join(self.split_dir, 'image')
-        self.calib_dir = os.path.join(self.split_dir, 'calib')
-        self.depth_dir = os.path.join(self.split_dir, 'depth')
+        self.image_dir = osp.join(self.split_dir, 'image')
+        self.calib_dir = osp.join(self.split_dir, 'calib')
+        self.depth_dir = osp.join(self.split_dir, 'depth')
         if use_v1:
-            self.label_dir = os.path.join(self.split_dir, 'label_v1')
+            self.label_dir = osp.join(self.split_dir, 'label_v1')
         else:
-            self.label_dir = os.path.join(self.split_dir, 'label')
+            self.label_dir = osp.join(self.split_dir, 'label')
 
     def __len__(self):
         return len(self.sample_id_list)
 
     def get_image(self, idx):
-        img_filename = os.path.join(self.image_dir, f'{idx:06d}.jpg')
+        img_filename = osp.join(self.image_dir, f'{idx:06d}.jpg')
         return mmcv.imread(img_filename)
 
     def get_image_shape(self, idx):
@@ -104,12 +104,12 @@ class SUNRGBDData(object):
         return np.array(image.shape[:2], dtype=np.int32)
 
     def get_depth(self, idx):
-        depth_filename = os.path.join(self.depth_dir, f'{idx:06d}.mat')
+        depth_filename = osp.join(self.depth_dir, f'{idx:06d}.mat')
         depth = sio.loadmat(depth_filename)['instance']
         return depth
 
     def get_calibration(self, idx):
-        calib_filepath = os.path.join(self.calib_dir, f'{idx:06d}.txt')
+        calib_filepath = osp.join(self.calib_dir, f'{idx:06d}.txt')
         lines = [line.rstrip() for line in open(calib_filepath)]
         Rt = np.array([float(x) for x in lines[0].split(' ')])
         Rt = np.reshape(Rt, (3, 3), order='F')
@@ -117,7 +117,7 @@ class SUNRGBDData(object):
         return K, Rt
 
     def get_label_objects(self, idx):
-        label_filename = os.path.join(self.label_dir, f'{idx:06d}.txt')
+        label_filename = osp.join(self.label_dir, f'{idx:06d}.txt')
         lines = [line.rstrip() for line in open(label_filename)]
         objects = [SUNRGBDInstance(line) for line in lines]
         return objects
@@ -146,15 +146,18 @@ class SUNRGBDData(object):
             pc_upright_depth = self.get_depth(sample_idx)
             pc_upright_depth_subsampled = random_sampling(
                 pc_upright_depth, SAMPLE_NUM)
-            np.save(
-                os.path.join(self.root_dir, 'lidar', f'{sample_idx:06d}.npy'),
-                pc_upright_depth_subsampled)
 
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
-            img_name = os.path.join(self.image_dir, f'{sample_idx:06d}')
-            img_path = os.path.join(self.image_dir, img_name)
+
+            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+            pc_upright_depth_subsampled.tofile(
+                osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
+
+            info['pts_path'] = osp.join('points', f'{sample_idx:06d}.bin')
+            img_name = osp.join(self.image_dir, f'{sample_idx:06d}')
+            img_path = osp.join(self.image_dir, img_name)
             image_info = {
                 'image_idx': sample_idx,
                 'image_shape': self.get_image_shape(sample_idx),
@@ -211,8 +214,6 @@ class SUNRGBDData(object):
                 info['annos'] = annotations
             return info
 
-        lidar_save_dir = os.path.join(self.root_dir, 'lidar')
-        mmcv.mkdir_or_exist(lidar_save_dir)
         sample_id_list = sample_id_list if \
             sample_id_list is not None else self.sample_id_list
         with futures.ThreadPoolExecutor(num_workers) as executor:
