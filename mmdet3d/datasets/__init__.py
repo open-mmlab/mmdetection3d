@@ -8,8 +8,8 @@ from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
 from .nuscenes_dataset import NuScenesDataset
 from .pipelines import (GlobalRotScale, IndoorFlipData, IndoorGlobalRotScale,
                         IndoorPointSample, IndoorPointsColorJitter,
-                        IndoorPointsColorNormalize, LoadAnnotations3D,
-                        LoadPointsFromFile, ObjectNoise, ObjectRangeFilter,
+                        LoadAnnotations3D, LoadPointsFromFile,
+                        NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointShuffle, PointsRangeFilter,
                         RandomFlip3D)
 from .scannet_dataset import ScanNetDataset
@@ -21,7 +21,7 @@ __all__ = [
     'CocoDataset', 'Kitti2DDataset', 'NuScenesDataset', 'ObjectSample',
     'RandomFlip3D', 'ObjectNoise', 'GlobalRotScale', 'PointShuffle',
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
-    'LoadPointsFromFile', 'IndoorPointsColorNormalize', 'IndoorPointSample',
+    'LoadPointsFromFile', 'NormalizePointsColor', 'IndoorPointSample',
     'LoadAnnotations3D', 'IndoorPointsColorJitter', 'IndoorGlobalRotScale',
     'IndoorFlipData', 'SUNRGBDDataset', 'ScanNetDataset', 'Custom3DDataset'
 ]
