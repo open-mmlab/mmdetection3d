@@ -16,9 +16,10 @@ class SUNRGBDDataset(Custom3DDataset):
                  pipeline=None,
                  classes=None,
                  modality=None,
+                 filter_empty_gt=True,
                  test_mode=False):
         super().__init__(data_root, ann_file, pipeline, classes, modality,
-                         test_mode)
+                         filter_empty_gt, test_mode)
 
     def get_ann_info(self, index):
         # Use index to get the annos, thus the evalhook could also use this api

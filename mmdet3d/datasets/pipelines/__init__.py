@@ -7,6 +7,7 @@ from .indoor_loading import (LoadAnnotations3D, LoadPointsFromFile,
                              NormalizePointsColor)
 from .indoor_sample import IndoorPointSample
 from .loading import LoadMultiViewImageFromFiles
+from .point_seg_class_mapping import PointSegClassMapping
 from .train_aug import (GlobalRotScale, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointShuffle, PointsRangeFilter,
                         RandomFlip3D)
@@ -18,5 +19,5 @@ __all__ = [
     'DefaultFormatBundle', 'DefaultFormatBundle3D', 'DataBaseSampler',
     'IndoorGlobalRotScale', 'IndoorPointsColorJitter', 'IndoorFlipData',
     'MMDataBaseSampler', 'NormalizePointsColor', 'LoadAnnotations3D',
-    'IndoorPointSample'
+    'IndoorPointSample', 'PointSegClassMapping'
 ]

@@ -189,7 +189,8 @@ class LoadAnnotations3D(LoadAnnotations):
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_semantic_mask_path)
-            pts_semantic_mask = np.frombuffer(mask_bytes, dtype=np.int)
+            # add .copy() to fix read-only bug
+            pts_semantic_mask = np.frombuffer(mask_bytes, dtype=np.int).copy()
         except ConnectionError:
             mmcv.check_file_exist(pts_semantic_mask_path)
             pts_semantic_mask = np.fromfile(

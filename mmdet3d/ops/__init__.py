@@ -9,11 +9,10 @@ from .group_points import (GroupAll, QueryAndGroup, group_points,
 from .interpolate import three_interpolate, three_nn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
 from .pointnet_modules import PointFPModule, PointSAModule, PointSAModuleMSG
-from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_cpu,
-                              points_in_boxes_gpu)
+from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
+                              points_in_boxes_cpu, points_in_boxes_gpu)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
-from .vote_module import VoteModule
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
 
 __all__ = [
@@ -26,5 +25,5 @@ __all__ = [
     'make_sparse_convmodule', 'ball_query', 'furthest_point_sample',
     'three_interpolate', 'three_nn', 'gather_points', 'grouping_operation',
     'group_points', 'GroupAll', 'QueryAndGroup', 'PointSAModule',
-    'PointSAModuleMSG', 'PointFPModule', 'VoteModule'
+    'PointSAModuleMSG', 'PointFPModule', 'points_in_boxes_batch'
 ]
