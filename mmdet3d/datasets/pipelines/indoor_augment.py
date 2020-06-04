@@ -224,7 +224,7 @@ class IndoorGlobalRotScale(object):
             results['scale_ratio'] = scale_ratio
 
         results['points'] = points
-        results['gt_bboxes_3d'] = gt_bboxes_3d
+        results['gt_bboxes_3d'] = gt_bboxes_3d.astype(np.float32)
         return results
 
     def __repr__(self):
