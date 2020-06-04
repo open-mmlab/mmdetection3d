@@ -19,12 +19,14 @@ class Custom3DDataset(Dataset):
                  pipeline=None,
                  classes=None,
                  modality=None,
+                 filter_empty_gt=True,
                  test_mode=False):
         super().__init__()
         self.data_root = data_root
         self.ann_file = ann_file
         self.test_mode = test_mode
         self.modality = modality
+        self.filter_empty_gt = filter_empty_gt
 
         self.CLASSES = self.get_classes(classes)
         self.data_infos = self.load_annotations(self.ann_file)
@@ -52,7 +54,7 @@ class Custom3DDataset(Dataset):
         if not self.test_mode:
             annos = self.get_ann_info(index)
             input_dict['ann_info'] = annos
-            if len(annos['gt_bboxes_3d']) == 0:
+            if self.filter_empty_gt and len(annos['gt_bboxes_3d']) == 0:
                 return None
         return input_dict
 
@@ -67,7 +69,8 @@ class Custom3DDataset(Dataset):
             return None
         self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
-        if example is None or len(example['gt_bboxes_3d']._data) == 0:
+        if self.filter_empty_gt and (example is None or len(
+                example['gt_bboxes_3d']._data) == 0):
             return None
         return example
 
@@ -124,10 +127,13 @@ class Custom3DDataset(Dataset):
             results (list[dict]): List of results.
             metric (str | list[str]): Metrics to be evaluated.
             iou_thr (list[float]): AP IoU thresholds.
+
         """
         from mmdet3d.core.evaluation import indoor_eval
         assert isinstance(
             results, list), f'Expect results to be list, got {type(results)}.'
+        assert len(results) > 0, f'Expect length of results > 0.'
+        assert len(results) == len(self.data_infos)
         assert isinstance(
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'

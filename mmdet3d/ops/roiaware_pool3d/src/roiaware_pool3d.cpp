@@ -44,6 +44,9 @@ int points_in_boxes_cpu(at::Tensor boxes_tensor, at::Tensor pts_tensor,
 int points_in_boxes_gpu(at::Tensor boxes_tensor, at::Tensor pts_tensor,
                         at::Tensor box_idx_of_points_tensor);
 
+int points_in_boxes_batch(at::Tensor boxes_tensor, at::Tensor pts_tensor,
+                          at::Tensor box_idx_of_points_tensor);
+
 int roiaware_pool3d_gpu(at::Tensor rois, at::Tensor pts, at::Tensor pts_feature,
                         at::Tensor argmax, at::Tensor pts_idx_of_voxels,
                         at::Tensor pooled_features, int pool_method) {
@@ -127,6 +130,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         "roiaware pool3d backward (CUDA)");
   m.def("points_in_boxes_gpu", &points_in_boxes_gpu,
         "points_in_boxes_gpu forward (CUDA)");
+  m.def("points_in_boxes_batch", &points_in_boxes_batch,
+        "points_in_boxes_batch forward (CUDA)");
   m.def("points_in_boxes_cpu", &points_in_boxes_cpu,
         "points_in_boxes_cpu forward (CPU)");
 }
