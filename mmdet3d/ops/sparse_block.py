@@ -6,6 +6,21 @@ from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 
 
 class SparseBottleneck(Bottleneck, spconv.SparseModule):
+    """Sparse bottleneck block for PartA^2.
+
+    Bottleneck block implemented with submanifold sparse convolution.
+
+    Args:
+        inplanes (int): inplanes of block.
+        planes (int): planes of block.
+        stride (int): stride of the first block. Default: 1
+        downsample (None | Module): down sample module for block.
+        conv_cfg (dict): dictionary to construct and config conv layer.
+            Default: None
+        norm_cfg (dict): dictionary to construct and config norm layer.
+            Default: dict(type='BN')
+    """
+
     expansion = 4
 
     def __init__(self,
@@ -15,10 +30,7 @@ class SparseBottleneck(Bottleneck, spconv.SparseModule):
                  downsample=None,
                  conv_cfg=None,
                  norm_cfg=None):
-        """Sparse bottleneck block for PartA^2.
 
-        Bottleneck block implemented with submanifold sparse convolution.
-        """
         spconv.SparseModule.__init__(self)
         Bottleneck.__init__(
             self,
@@ -53,6 +65,21 @@ class SparseBottleneck(Bottleneck, spconv.SparseModule):
 
 
 class SparseBasicBlock(BasicBlock, spconv.SparseModule):
+    """Sparse basic block for PartA^2.
+
+    Sparse basic block implemented with submanifold sparse convolution.
+
+    Args:
+        inplanes (int): inplanes of block.
+        planes (int): planes of block.
+        stride (int): stride of the first block. Default: 1
+        downsample (None | Module): down sample module for block.
+        conv_cfg (dict): dictionary to construct and config conv layer.
+            Default: None
+        norm_cfg (dict): dictionary to construct and config norm layer.
+            Default: dict(type='BN')
+    """
+
     expansion = 1
 
     def __init__(self,
@@ -62,10 +89,6 @@ class SparseBasicBlock(BasicBlock, spconv.SparseModule):
                  downsample=None,
                  conv_cfg=None,
                  norm_cfg=None):
-        """Sparse basic block for PartA^2.
-
-        Sparse basic block implemented with submanifold sparse convolution.
-        """
         spconv.SparseModule.__init__(self)
         BasicBlock.__init__(
             self,
@@ -125,6 +148,7 @@ def make_sparse_convmodule(in_channels,
         spconv.SparseSequential: sparse convolution module.
     """
     assert isinstance(order, tuple) and len(order) <= 3
+    assert set(order) | {'conv', 'norm', 'act'} == {'conv', 'norm', 'act'}
 
     conv_cfg = dict(type=conv_type, indice_key=indice_key)
 
