@@ -15,9 +15,10 @@
 #ifndef SPCONV_GEOMETRY_H_
 #define SPCONV_GEOMETRY_H_
 
+#include <tensorview/tensorview.h>
+
 #include <iostream>
 #include <limits>
-#include <tensorview/tensorview.h>
 
 namespace spconv {
 template <typename Index, unsigned NDim>
@@ -70,8 +71,7 @@ TV_HOST_DEVICE Index getValidOutPos(const Index *input_pos,
     }
 
     out[pointCounter * (NDim + 1) + NDim] = offset;
-    if (valid)
-      ++pointCounter;
+    if (valid) ++pointCounter;
     counter[NDim - 1] += 1;
 #pragma unroll
     for (int c = NDim - 1; c >= 0; --c) {
@@ -128,8 +128,7 @@ TV_HOST_DEVICE Index getValidOutPosTranspose(
       m *= kernelSize[j];
     }
     out[pointCounter * (NDim + 1) + NDim] = offset;
-    if (valid)
-      ++pointCounter;
+    if (valid) ++pointCounter;
     counter[NDim - 1] += 1;
 #pragma unroll
     for (int c = NDim - 1; c >= 0; --c) {
@@ -167,7 +166,7 @@ Index getIndicePairsConv(tv::TensorView<const Index> indicesIn,
   }
   Index numValidPoints = 0;
   std::vector<Index> validPoints_(kernelVolume * (NDim + 1));
-  Index* validPoints = validPoints_.data();
+  Index *validPoints = validPoints_.data();
   Index *pointPtr = nullptr;
   for (int j = 0; j < numActIn; ++j) {
     batchIdx = indicesIn(j, 0);
@@ -218,7 +217,7 @@ Index getIndicePairsDeConv(tv::TensorView<const Index> indicesIn,
   }
   Index numValidPoints = 0;
   std::vector<Index> validPoints_(kernelVolume * (NDim + 1));
-  Index* validPoints = validPoints_.data();
+  Index *validPoints = validPoints_.data();
   Index *pointPtr = nullptr;
   for (int j = 0; j < numActIn; ++j) {
     batchIdx = indicesIn(j, 0);
@@ -252,7 +251,8 @@ Index getIndicePairsSubM(tv::TensorView<const Index> indicesIn,
                          tv::TensorView<Index> indiceNum,
                          const Index *const kernelSize,
                          const Index *const stride, const Index *const padding,
-                         const Index *dilation, const Index *const outSpatialShape) {
+                         const Index *dilation,
+                         const Index *const outSpatialShape) {
   Index numAct = 0;
   auto numActIn = indicesIn.dim(0);
   Index batchIdx = 0;
@@ -269,7 +269,7 @@ Index getIndicePairsSubM(tv::TensorView<const Index> indicesIn,
   Index numValidPoints = 0;
   // Index validPoints[kernelVolume * (NDim + 1)];
   std::vector<Index> validPoints_(kernelVolume * (NDim + 1));
-  Index* validPoints = validPoints_.data();
+  Index *validPoints = validPoints_.data();
   Index *pointPtr = nullptr;
   Index index = 0;
   for (int j = 0; j < numActIn; ++j) {
@@ -296,6 +296,6 @@ Index getIndicePairsSubM(tv::TensorView<const Index> indicesIn,
   return numActIn;
 }
 
-} // namespace spconv
+}  // namespace spconv
 
 #endif

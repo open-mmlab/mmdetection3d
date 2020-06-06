@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #include <ATen/ATen.h>
-#include <chrono>
-#include <limits>
 #include <spconv/maxpool.h>
 #include <spconv/mp_helper.h>
 #include <tensorview/helper_kernel.cu.h>
 #include <tensorview/helper_launch.h>
 #include <tensorview/tensorview.h>
+
+#include <chrono>
+#include <limits>
 #include <type_traits>
 
 namespace spconv {
@@ -54,10 +55,11 @@ __global__ void maxPoolFwdBlockKernel(T *outFeatures, const T *inFeatures,
 }
 
 template <typename T, typename Index, int NumTLP, int NumILP>
-__global__ void
-maxPoolFwdGenericBlockKernel(T *outFeatures, const T *inFeatures,
-                             const Index *indicesIn, const Index *indicesOut,
-                             int numHot, int numPlanes) {
+__global__ void maxPoolFwdGenericBlockKernel(T *outFeatures,
+                                             const T *inFeatures,
+                                             const Index *indicesIn,
+                                             const Index *indicesOut,
+                                             int numHot, int numPlanes) {
   // see http://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf.
   int ILPStrideX[NumILP];
   Index RI[NumILP];
@@ -160,10 +162,11 @@ __global__ void maxPoolFwdGenericKernel(T *outFeatures, const T *inFeatures,
 }
 
 template <typename T, typename Index, int NumTLP, int NumILP>
-__global__ void
-maxPoolBwdBlockKernel(const T *outFeatures, const T *inFeatures, const T *dout,
-                      T *din, const Index *indicesIn, const Index *indicesOut,
-                      int numHot, int numPlanes) {
+__global__ void maxPoolBwdBlockKernel(const T *outFeatures, const T *inFeatures,
+                                      const T *dout, T *din,
+                                      const Index *indicesIn,
+                                      const Index *indicesOut, int numHot,
+                                      int numPlanes) {
   // see http://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf.
   T in, out;
   Index idxo, idxi;
@@ -226,10 +229,11 @@ __global__ void maxPoolBwdGenericBlockKernel(const T *outFeatures,
 }
 
 template <typename T, typename Index, int NumTLP, int NumILP, typename VecType>
-__global__ void
-maxPoolBwdVecBlockKernel(const T *outFeatures, const T *inFeatures,
-                         const T *dout, T *din, const Index *indicesIn,
-                         const Index *indicesOut, int numHot, int numPlanes) {
+__global__ void maxPoolBwdVecBlockKernel(const T *outFeatures,
+                                         const T *inFeatures, const T *dout,
+                                         T *din, const Index *indicesIn,
+                                         const Index *indicesOut, int numHot,
+                                         int numPlanes) {
   // see http://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf.
   int ILPStrideY[NumILP];
   constexpr int vecloadFactor = sizeof(VecType) / sizeof(T);
@@ -255,7 +259,8 @@ maxPoolBwdVecBlockKernel(const T *outFeatures, const T *inFeatures,
           reinterpret_cast<const VecType *>(inFeatures)[idxi];
       reinterpret_cast<VecType *>(bufdo)[0] =
           reinterpret_cast<const VecType *>(dout)[idxo];
-      reinterpret_cast<VecType *>(bufdi)[0] = reinterpret_cast<VecType *>(din)[idxi];
+      reinterpret_cast<VecType *>(bufdi)[0] =
+          reinterpret_cast<VecType *>(din)[idxi];
 
 #pragma unroll
       for (int i = 0; i < vecloadFactor; i++) {
@@ -263,16 +268,18 @@ maxPoolBwdVecBlockKernel(const T *outFeatures, const T *inFeatures,
           bufdi[i] += bufdo[i];
         }
       }
-      reinterpret_cast<VecType *>(din)[idxi] = reinterpret_cast<VecType *>(bufdi)[0];
+      reinterpret_cast<VecType *>(din)[idxi] =
+          reinterpret_cast<VecType *>(bufdi)[0];
     }
   }
 }
 
 template <typename T, typename Index, int NumTLP, int NumILP>
-__global__ void
-maxPoolBwdGenericKernel(const T *outFeatures, const T *inFeatures,
-                        const T *dout, T *din, const Index *indicesIn,
-                        const Index *indicesOut, int numHot, int numPlanes) {
+__global__ void maxPoolBwdGenericKernel(const T *outFeatures,
+                                        const T *inFeatures, const T *dout,
+                                        T *din, const Index *indicesIn,
+                                        const Index *indicesOut, int numHot,
+                                        int numPlanes) {
   // see http://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf.
   int ILPStrideX[NumILP];
   Index RI[NumILP];
@@ -313,8 +320,7 @@ struct SparseMaxPoolForwardFunctor<tv::GPU, T, Index> {
   void operator()(const tv::GPU &d, tv::TensorView<T> outFeatures,
                   tv::TensorView<const T> inFeatures,
                   tv::TensorView<const Index> indices, int size) {
-    if (size <= 0)
-      return;
+    if (size <= 0) return;
     int numPlanes = inFeatures.dim(1);
     bool notFound = true;
     constexpr int vecloadFactor = sizeof(vecload_type_t) / sizeof(T);
@@ -326,13 +332,14 @@ struct SparseMaxPoolForwardFunctor<tv::GPU, T, Index> {
       if (notFound) {
         if (numPlanes % NumTLP == 0) {
           if (numHotBlock >= NumTLP) {
-            maxPoolFwdVecBlockKernel<T, Index, int(NumTLP), NumILP, vecload_type_t>
+            maxPoolFwdVecBlockKernel<T, Index, int(NumTLP), NumILP,
+                                     vecload_type_t>
                 <<<dim3(std::min(size / NumTLP, 512), numPlanes / NumTLP),
                    dim3(NumTLP / vecloadFactor, NumTLP / NumILP), 0,
                    d.getStream()>>>(outFeatures.data(), inFeatures.data(),
-                                 indices.subview(0).data(),
-                                 indices.subview(1).data(), numHotBlock,
-                                 numPlanes / vecloadFactor);
+                                    indices.subview(0).data(),
+                                    indices.subview(1).data(), numHotBlock,
+                                    numPlanes / vecloadFactor);
             TV_CHECK_CUDA_ERR();
           }
 
@@ -340,9 +347,9 @@ struct SparseMaxPoolForwardFunctor<tv::GPU, T, Index> {
             maxPoolFwdGenericKernel<T, Index, int(NumTLP), NumILP>
                 <<<dim3(1, numPlanes / NumTLP), dim3(NumTLP / NumILP, NumTLP),
                    0, d.getStream()>>>(outFeatures.data(), inFeatures.data(),
-                                    indices.subview(0).data() + numHotBlock,
-                                    indices.subview(1).data() + numHotBlock,
-                                    size - numHotBlock, numPlanes);
+                                       indices.subview(0).data() + numHotBlock,
+                                       indices.subview(1).data() + numHotBlock,
+                                       size - numHotBlock, numPlanes);
             TV_CHECK_CUDA_ERR();
           }
           notFound = false;
@@ -387,8 +394,7 @@ struct SparseMaxPoolBackwardFunctor<tv::GPU, T, Index> {
                   tv::TensorView<const T> inFeatures,
                   tv::TensorView<const T> dout, tv::TensorView<T> din,
                   tv::TensorView<const Index> indices, int size) {
-    if (size <= 0)
-      return;
+    if (size <= 0) return;
     int numPlanes = inFeatures.dim(1);
     bool notFound = true;
     constexpr int vecloadFactor = sizeof(vecload_type_t) / sizeof(T);
@@ -400,14 +406,15 @@ struct SparseMaxPoolBackwardFunctor<tv::GPU, T, Index> {
       if (notFound) {
         if (numPlanes % NumTLP == 0) {
           if (numHotBlock >= NumTLP) {
-            maxPoolBwdVecBlockKernel<T, Index, int(NumTLP), NumILP, vecload_type_t>
+            maxPoolBwdVecBlockKernel<T, Index, int(NumTLP), NumILP,
+                                     vecload_type_t>
                 <<<dim3(std::min(size / NumTLP, 512), numPlanes / NumTLP),
                    dim3(NumTLP / vecloadFactor, NumTLP / NumILP), 0,
                    d.getStream()>>>(outFeatures.data(), inFeatures.data(),
-                                 dout.data(), din.data(),
-                                 indices.subview(0).data(),
-                                 indices.subview(1).data(), numHotBlock,
-                                 numPlanes / vecloadFactor);
+                                    dout.data(), din.data(),
+                                    indices.subview(0).data(),
+                                    indices.subview(1).data(), numHotBlock,
+                                    numPlanes / vecloadFactor);
             TV_CHECK_CUDA_ERR();
           }
 
@@ -415,10 +422,10 @@ struct SparseMaxPoolBackwardFunctor<tv::GPU, T, Index> {
             maxPoolBwdGenericKernel<T, Index, int(NumTLP), NumILP>
                 <<<dim3(1, numPlanes / NumTLP), dim3(NumTLP / NumILP, NumTLP),
                    0, d.getStream()>>>(outFeatures.data(), inFeatures.data(),
-                                    dout.data(), din.data(),
-                                    indices.subview(0).data() + numHotBlock,
-                                    indices.subview(1).data() + numHotBlock,
-                                    size - numHotBlock, numPlanes);
+                                       dout.data(), din.data(),
+                                       indices.subview(0).data() + numHotBlock,
+                                       indices.subview(1).data() + numHotBlock,
+                                       size - numHotBlock, numPlanes);
             TV_CHECK_CUDA_ERR();
           }
           notFound = false;
@@ -454,10 +461,10 @@ struct SparseMaxPoolBackwardFunctor<tv::GPU, T, Index> {
   }
 };
 
-} // namespace functor
+}  // namespace functor
 
-#define DECLARE_GPU_SPECS_T_INDEX(T, Index)                                    \
-  template struct functor::SparseMaxPoolForwardFunctor<tv::GPU, T, Index>;     \
+#define DECLARE_GPU_SPECS_T_INDEX(T, Index)                                \
+  template struct functor::SparseMaxPoolForwardFunctor<tv::GPU, T, Index>; \
   template struct functor::SparseMaxPoolBackwardFunctor<tv::GPU, T, Index>;
 
 #define DECLARE_GPU_SPECS(T) DECLARE_GPU_SPECS_T_INDEX(T, int);
@@ -468,4 +475,4 @@ DECLARE_GPU_SPECS(at::Half);
 
 #undef DECLARE_GPU_SPECS
 #undef DECLARE_GPU_SPECS_T_INDEX
-} // namespace spconv
+}  // namespace spconv

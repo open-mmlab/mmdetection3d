@@ -156,6 +156,6 @@ __global__ void scatterAddVecBlockKernel(T *outFeatures, const T *buffer,
   }
 }
 
-} // namespace spconv
+}  // namespace spconv
 
 #endif

@@ -16,11 +16,13 @@
 #define NMS_CPU_H
 #include <pybind11/pybind11.h>
 // must include pybind11/stl.h if using containers in STL in arguments.
-#include <algorithm>
-#include <boost/geometry.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+
+#include <algorithm>
+#include <boost/geometry.hpp>
 #include <vector>
+
 #include "box_iou.h"
 #include "nms_gpu.h"
 namespace spconv {
@@ -48,13 +50,11 @@ std::vector<int> non_max_suppression_cpu(py::array_t<DType> boxes,
   DType xx1, xx2, w, h, inter, ovr;
   for (int _i = 0; _i < ndets; ++_i) {
     i = order_r(_i);
-    if (suppressed_rw(i) == 1)
-      continue;
+    if (suppressed_rw(i) == 1) continue;
     keep.push_back(i);
     for (int _j = _i + 1; _j < ndets; ++_j) {
       j = order_r(_j);
-      if (suppressed_rw(j) == 1)
-        continue;
+      if (suppressed_rw(j) == 1) continue;
       xx2 = std::min(boxes_r(i, 2), boxes_r(j, 2));
       xx1 = std::max(boxes_r(i, 0), boxes_r(j, 0));
       w = xx2 - xx1 + eps;
@@ -65,8 +65,7 @@ std::vector<int> non_max_suppression_cpu(py::array_t<DType> boxes,
         if (h > 0) {
           inter = w * h;
           ovr = inter / (area_rw(i) + area_rw(j) - inter);
-          if (ovr >= thresh)
-            suppressed_rw(j) = 1;
+          if (ovr >= thresh) suppressed_rw(j) = 1;
         }
       }
     }
@@ -97,15 +96,12 @@ std::vector<int> rotate_non_max_suppression_cpu(py::array_t<DType> box_corners,
 
   for (int _i = 0; _i < ndets; ++_i) {
     i = order_r(_i);
-    if (suppressed_rw(i) == 1)
-      continue;
+    if (suppressed_rw(i) == 1) continue;
     keep.push_back(i);
     for (int _j = _i + 1; _j < ndets; ++_j) {
       j = order_r(_j);
-      if (suppressed_rw(j) == 1)
-        continue;
-      if (standup_iou_r(i, j) <= 0.0)
-        continue;
+      if (suppressed_rw(j) == 1) continue;
+      if (standup_iou_r(i, j) <= 0.0) continue;
       // std::cout << "pre_poly" << std::endl;
       try {
         bg::append(poly,
@@ -164,13 +160,12 @@ std::vector<int> rotate_non_max_suppression_cpu(py::array_t<DType> box_corners,
             }
         }*/
         // std::cout << "post_union" << poly_union.empty() << std::endl;
-        if (!poly_union.empty()) { // ignore invalid box
+        if (!poly_union.empty()) {  // ignore invalid box
           union_area = bg::area(poly_union.front());
           // std::cout << "post union area" << std::endl;
           // std::cout << union_area << "debug" << std::endl;
           overlap = inter_area / union_area;
-          if (overlap >= thresh)
-            suppressed_rw(j) = 1;
+          if (overlap >= thresh) suppressed_rw(j) = 1;
           poly_union.clear();
         }
       }
@@ -197,5 +192,5 @@ int non_max_suppression(py::array_t<DType> boxes, py::array_t<int> keep_out,
                                           nms_overlap_thresh, device_id);
 }
 
-} // namespace spconv
+}  // namespace spconv
 #endif
