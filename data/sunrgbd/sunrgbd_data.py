@@ -126,9 +126,10 @@ def extract_sunrgbd_data(idx_filename,
         print('------------- ', data_idx)
         objects = dataset.get_label_objects(data_idx)
 
-        if skip_empty_scene and (len(objects) == 0 or len([
-                obj for obj in objects if obj.classname in type_whitelist
-        ]) == 0):  # noqa:
+        if skip_empty_scene and \
+                (len(objects) == 0 or
+                 len([obj for obj in objects if
+                      obj.classname in type_whitelist]) == 0):
             continue
 
         object_list = []
