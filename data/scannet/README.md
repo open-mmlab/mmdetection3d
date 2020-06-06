@@ -1,4 +1,5 @@
 ### Prepare ScanNet Data
+We follow the procedure in [votenet](https://github.com/facebookresearch/votenet/).
 
 1. Download ScanNet v2 data [HERE](https://github.com/ScanNet/ScanNet). Move/link the `scans` folder such that under `scans` there should be folders with names such as `scene0001_01`.
 
