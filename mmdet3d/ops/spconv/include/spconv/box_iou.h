@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef BOX_IOU_H
 #define BOX_IOU_H
 
 #include <pybind11/pybind11.h>
 // must include pybind11/eigen.h if using eigen matrix as arguments.
+#include <pybind11/numpy.h>
+
 #include <algorithm>
 #include <boost/geometry.hpp>
-#include <pybind11/numpy.h>
 
 namespace spconv {
 // #include "voxelnet/core/cc/pybind11_helper.h"
@@ -40,9 +40,10 @@ inline py::array_t<DType> zeros(std::vector<long int> shape) {
 }
 
 template <typename DType>
-py::array_t<DType>
-rbbox_iou(py::array_t<DType> box_corners, py::array_t<DType> qbox_corners,
-          py::array_t<DType> standup_iou, DType standup_thresh) {
+py::array_t<DType> rbbox_iou(py::array_t<DType> box_corners,
+                             py::array_t<DType> qbox_corners,
+                             py::array_t<DType> standup_iou,
+                             DType standup_thresh) {
   namespace bg = boost::geometry;
   typedef bg::model::point<DType, 2, bg::cs::cartesian> point_t;
   typedef bg::model::polygon<point_t> polygon_t;
@@ -61,8 +62,7 @@ rbbox_iou(py::array_t<DType> box_corners, py::array_t<DType> qbox_corners,
   }
   for (int k = 0; k < K; ++k) {
     for (int n = 0; n < N; ++n) {
-      if (standup_iou_r(n, k) <= standup_thresh)
-        continue;
+      if (standup_iou_r(n, k) <= standup_thresh) continue;
       bg::append(poly, point_t(box_corners_r(n, 0, 0), box_corners_r(n, 0, 1)));
       bg::append(poly, point_t(box_corners_r(n, 1, 0), box_corners_r(n, 1, 1)));
       bg::append(poly, point_t(box_corners_r(n, 2, 0), box_corners_r(n, 2, 1)));
@@ -99,9 +99,10 @@ rbbox_iou(py::array_t<DType> box_corners, py::array_t<DType> qbox_corners,
 }
 
 template <typename DType>
-py::array_t<DType>
-rbbox_intersection(py::array_t<DType> box_corners, py::array_t<DType> qbox_corners,
-          py::array_t<DType> standup_iou, DType standup_thresh) {
+py::array_t<DType> rbbox_intersection(py::array_t<DType> box_corners,
+                                      py::array_t<DType> qbox_corners,
+                                      py::array_t<DType> standup_iou,
+                                      DType standup_thresh) {
   namespace bg = boost::geometry;
   typedef bg::model::point<DType, 2, bg::cs::cartesian> point_t;
   typedef bg::model::polygon<point_t> polygon_t;
@@ -120,8 +121,7 @@ rbbox_intersection(py::array_t<DType> box_corners, py::array_t<DType> qbox_corne
   }
   for (int k = 0; k < K; ++k) {
     for (int n = 0; n < N; ++n) {
-      if (standup_iou_r(n, k) <= standup_thresh)
-        continue;
+      if (standup_iou_r(n, k) <= standup_thresh) continue;
       bg::append(poly, point_t(box_corners_r(n, 0, 0), box_corners_r(n, 0, 1)));
       bg::append(poly, point_t(box_corners_r(n, 1, 0), box_corners_r(n, 1, 1)));
       bg::append(poly, point_t(box_corners_r(n, 2, 0), box_corners_r(n, 2, 1)));
@@ -152,6 +152,5 @@ rbbox_intersection(py::array_t<DType> box_corners, py::array_t<DType> qbox_corne
   return overlaps;
 }
 
-
-} // namespace spconv
+}  // namespace spconv
 #endif

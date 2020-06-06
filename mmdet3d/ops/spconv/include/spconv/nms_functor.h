@@ -16,27 +16,22 @@
 #define NMS_FUNCTOR_H_
 #include <tensorview/tensorview.h>
 
-namespace spconv
-{
-namespace functor
-{
+namespace spconv {
+namespace functor {
 template <typename Device, typename T, typename Index>
-struct NonMaxSupressionFunctor
-{
-    Index operator()(const Device& d, tv::TensorView<Index> keep,
-                  tv::TensorView<const T> boxes,
-                  T threshold, T eps);
+struct NonMaxSupressionFunctor {
+  Index operator()(const Device& d, tv::TensorView<Index> keep,
+                   tv::TensorView<const T> boxes, T threshold, T eps);
 };
 
 template <typename Device, typename T, typename Index>
-struct rotateNonMaxSupressionFunctor
-{
-    Index operator()(const Device& d, tv::TensorView<Index> keep,
-                  tv::TensorView<const T> boxCorners,
-                  tv::TensorView<const T> standupIoU, T threshold);
+struct rotateNonMaxSupressionFunctor {
+  Index operator()(const Device& d, tv::TensorView<Index> keep,
+                   tv::TensorView<const T> boxCorners,
+                   tv::TensorView<const T> standupIoU, T threshold);
 };
 
-} // namespace functor
-} // namespace spconv
+}  // namespace functor
+}  // namespace spconv
 
 #endif
