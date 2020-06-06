@@ -8,8 +8,8 @@ from mmcv import track_iter_progress
 from pycocotools.coco import COCO
 
 import mmdet3d.core.bbox.box_np_ops as box_np_ops
-from mmdet3d.core.evaluation.bbox_overlaps import bbox_overlaps
 from mmdet3d.datasets import build_dataset
+from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
 from mmdet.ops import roi_align
 
 
