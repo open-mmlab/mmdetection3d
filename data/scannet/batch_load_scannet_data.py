@@ -7,6 +7,7 @@ for semantic and instance segmentations
 
 Usage example: python ./batch_load_scannet_data.py
 """
+import argparse
 import datetime
 import os
 
@@ -14,30 +15,25 @@ import numpy as np
 from load_scannet_data import export
 
 SCANNET_DIR = 'scans'
-TRAIN_SCAN_NAMES = [
-    line.rstrip() for line in open('meta_data/scannet_train.txt')
-]
-LABEL_MAP_FILE = 'meta_data/scannetv2-labels.combined.tsv'
 DONOTCARE_CLASS_IDS = np.array([])
 OBJ_CLASS_IDS = np.array(
     [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
-MAX_NUM_POINT = 50000
-OUTPUT_FOLDER = './scannet_train_detection_data'
 
 
-def export_one_scan(scan_name, output_filename_prefix):
-    mesh_file = os.path.join(SCANNET_DIR, scan_name,
+def export_one_scan(scan_name, output_filename_prefix, max_num_point,
+                    label_map_file, scannet_dir):
+    mesh_file = os.path.join(scannet_dir, scan_name,
                              scan_name + '_vh_clean_2.ply')
-    agg_file = os.path.join(SCANNET_DIR, scan_name,
+    agg_file = os.path.join(scannet_dir, scan_name,
                             scan_name + '.aggregation.json')
-    seg_file = os.path.join(SCANNET_DIR, scan_name,
+    seg_file = os.path.join(scannet_dir, scan_name,
                             scan_name + '_vh_clean_2.0.010000.segs.json')
     meta_file = os.path.join(
-        SCANNET_DIR, scan_name, scan_name +
+        scannet_dir, scan_name, scan_name +
         '.txt')  # includes axisAlignment info for the train set scans.
     mesh_vertices, semantic_labels, instance_labels, instance_bboxes, \
         instance2semantic = export(mesh_file, agg_file, seg_file,
-                                   meta_file, LABEL_MAP_FILE, None)
+                                   meta_file, label_map_file, None)
 
     mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
     mesh_vertices = mesh_vertices[mask, :]
@@ -52,8 +48,8 @@ def export_one_scan(scan_name, output_filename_prefix):
     print('Num of care instances: ', instance_bboxes.shape[0])
 
     N = mesh_vertices.shape[0]
-    if N > MAX_NUM_POINT:
-        choices = np.random.choice(N, MAX_NUM_POINT, replace=False)
+    if N > max_num_point:
+        choices = np.random.choice(N, max_num_point, replace=False)
         mesh_vertices = mesh_vertices[choices, :]
         semantic_labels = semantic_labels[choices]
         instance_labels = instance_labels[choices]
@@ -64,26 +60,62 @@ def export_one_scan(scan_name, output_filename_prefix):
     np.save(output_filename_prefix + '_bbox.npy', instance_bboxes)
 
 
-def batch_export():
-    if not os.path.exists(OUTPUT_FOLDER):
-        print('Creating new data folder: {}'.format(OUTPUT_FOLDER))
-        os.mkdir(OUTPUT_FOLDER)
+def batch_export(max_num_point, output_folder, train_scan_names_file,
+                 label_map_file, scannet_dir):
+    if not os.path.exists(output_folder):
+        print('Creating new data folder: {}'.format(output_folder))
+        os.mkdir(output_folder)
 
-    for scan_name in TRAIN_SCAN_NAMES:
+    train_scan_names = [line.rstrip() for line in open(train_scan_names_file)]
+    for scan_name in train_scan_names:
         print('-' * 20 + 'begin')
         print(datetime.datetime.now())
         print(scan_name)
-        output_filename_prefix = os.path.join(OUTPUT_FOLDER, scan_name)
+        output_filename_prefix = os.path.join(output_folder, scan_name)
         if os.path.isfile(output_filename_prefix + '_vert.npy'):
             print('File already exists. skipping.')
             print('-' * 20 + 'done')
             continue
         try:
-            export_one_scan(scan_name, output_filename_prefix)
+            export_one_scan(scan_name, output_filename_prefix, max_num_point,
+                            label_map_file, scannet_dir)
         except Exception:
             print('Failed export scan: %s' % (scan_name))
         print('-' * 20 + 'done')
 
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--max_num_point',
+        required=True,
+        default=50000,
+        help='The maximum number of the points.')
+    parser.add_argument(
+        '--output_folder',
+        required=True,
+        default='./scannet_train_instance_data',
+        help='output folder of the result.')
+    parser.add_argument(
+        '--scannet_dir',
+        required=True,
+        default='scans',
+        help='scannet data directory.')
+    parser.add_argument(
+        '--label_map_file',
+        required=True,
+        default='meta_data/scannetv2-labels.combined.tsv',
+        help='The path of label map file.')
+    parser.add_argument(
+        '--train_scan_names_file',
+        required=True,
+        default='meta_data/scannet_train.txt',
+        help='The path of the file that stores the scan names.')
+    args = parser.parse_args()
+    batch_export(args.max_num_point, args.output_folder,
+                 args.train_scan_names_file, args.label_map_file,
+                 args.scannet_dir)
+
+
 if __name__ == '__main__':
-    batch_export()
+    main()
