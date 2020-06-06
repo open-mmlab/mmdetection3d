@@ -1,4 +1,5 @@
 ### Prepare SUN RGB-D Data
+We follow the procedure in [votenet](https://github.com/facebookresearch/votenet/).
 
 1. Download SUNRGBD v2 data [HERE](http://rgbd.cs.princeton.edu/data/) (SUNRGBD.zip, SUNRGBDMeta2DBB_v2.mat, SUNRGBDMeta3DBB_v2.mat) and the toolkits (SUNRGBDtoolbox.zip). Move all the downloaded files under OFFICIAL_SUNRGBD. Unzip the zip files.
 
