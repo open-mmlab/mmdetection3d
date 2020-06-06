@@ -4,4 +4,4 @@
 
 2. Extract point clouds and annotations (semantic seg, instance seg etc.) by running `python batch_load_scannet_data.py`, which will create a folder named `scannet_train_instance_data` here.
 
-3. Enter the project root directory, generate training data by running `python tools\create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet`
+3. Enter the project root directory, generate training data by running `python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet`.
