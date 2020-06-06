@@ -88,27 +88,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--max_num_point',
-        required=True,
         default=50000,
         help='The maximum number of the points.')
     parser.add_argument(
         '--output_folder',
-        required=True,
         default='./scannet_train_instance_data',
         help='output folder of the result.')
     parser.add_argument(
-        '--scannet_dir',
-        required=True,
-        default='scans',
-        help='scannet data directory.')
+        '--scannet_dir', default='scans', help='scannet data directory.')
     parser.add_argument(
         '--label_map_file',
-        required=True,
         default='meta_data/scannetv2-labels.combined.tsv',
         help='The path of label map file.')
     parser.add_argument(
         '--train_scan_names_file',
-        required=True,
         default='meta_data/scannet_train.txt',
         help='The path of the file that stores the scan names.')
     args = parser.parse_args()
