@@ -16,12 +16,14 @@
 #include <pybind11/pybind11.h>
 // must include pybind11/eigen.h if using eigen matrix as arguments.
 // must include pybind11/stl.h if using containers in STL in arguments.
-#include <algorithm>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+
+#include <algorithm>
 // #include <vector>
-#include <iostream>
 #include <math.h>
+
+#include <iostream>
 
 namespace spconv {
 namespace py = pybind11;
@@ -64,13 +66,11 @@ int points_to_voxel_3d_np(py::array_t<DType> points, py::array_t<DType> voxels,
       }
       coor[ndim_minus_1 - j] = c;
     }
-    if (failed)
-      continue;
+    if (failed) continue;
     voxelidx = coor_to_voxelidx_rw(coor[0], coor[1], coor[2]);
     if (voxelidx == -1) {
       voxelidx = voxel_num;
-      if (voxel_num >= max_voxels)
-        break;
+      if (voxel_num >= max_voxels) break;
       voxel_num += 1;
       coor_to_voxelidx_rw(coor[0], coor[1], coor[2]) = voxelidx;
       for (int k = 0; k < NDim; ++k) {
@@ -87,20 +87,19 @@ int points_to_voxel_3d_np(py::array_t<DType> points, py::array_t<DType> voxels,
   }
   for (int i = 0; i < voxel_num; ++i) {
     coor_to_voxelidx_rw(coors_rw(i, 0), coors_rw(i, 1), coors_rw(i, 2)) = -1;
-
   }
   return voxel_num;
 }
 
 template <typename DType, int NDim>
-int points_to_voxel_3d_np_mean(py::array_t<DType> points, py::array_t<DType> voxels,
-                          py::array_t<DType> means,
-                          py::array_t<int> coors,
-                          py::array_t<int> num_points_per_voxel,
-                          py::array_t<int> coor_to_voxelidx,
-                          std::vector<DType> voxel_size,
-                          std::vector<DType> coors_range, int max_points,
-                          int max_voxels) {
+int points_to_voxel_3d_np_mean(py::array_t<DType> points,
+                               py::array_t<DType> voxels,
+                               py::array_t<DType> means, py::array_t<int> coors,
+                               py::array_t<int> num_points_per_voxel,
+                               py::array_t<int> coor_to_voxelidx,
+                               std::vector<DType> voxel_size,
+                               std::vector<DType> coors_range, int max_points,
+                               int max_voxels) {
   auto points_rw = points.template mutable_unchecked<2>();
   auto means_rw = means.template mutable_unchecked<2>();
   auto voxels_rw = voxels.template mutable_unchecked<3>();
@@ -131,13 +130,11 @@ int points_to_voxel_3d_np_mean(py::array_t<DType> points, py::array_t<DType> vox
       }
       coor[ndim_minus_1 - j] = c;
     }
-    if (failed)
-      continue;
+    if (failed) continue;
     voxelidx = coor_to_voxelidx_rw(coor[0], coor[1], coor[2]);
     if (voxelidx == -1) {
       voxelidx = voxel_num;
-      if (voxel_num >= max_voxels)
-        break;
+      if (voxel_num >= max_voxels) break;
       voxel_num += 1;
       coor_to_voxelidx_rw(coor[0], coor[1], coor[2]) = voxelidx;
       for (int k = 0; k < NDim; ++k) {
@@ -151,14 +148,15 @@ int points_to_voxel_3d_np_mean(py::array_t<DType> points, py::array_t<DType> vox
       }
       num_points_per_voxel_rw(voxelidx) += 1;
       for (int k = 0; k < num_features; ++k) {
-        means_rw(voxelidx, k) += (points_rw(i, k) - means_rw(voxelidx, k)) / DType(num + 1);
+        means_rw(voxelidx, k) +=
+            (points_rw(i, k) - means_rw(voxelidx, k)) / DType(num + 1);
       }
     }
   }
   for (int i = 0; i < voxel_num; ++i) {
     coor_to_voxelidx_rw(coors_rw(i, 0), coors_rw(i, 1), coors_rw(i, 2)) = -1;
     num = num_points_per_voxel_rw(i);
-    for (int j = num; j < max_points; ++j){
+    for (int j = num; j < max_points; ++j) {
       for (int k = 0; k < num_features; ++k) {
         voxels_rw(i, j, k) = means_rw(i, k);
       }
@@ -168,15 +166,12 @@ int points_to_voxel_3d_np_mean(py::array_t<DType> points, py::array_t<DType> vox
 }
 
 template <typename DType, int NDim>
-int points_to_voxel_3d_np_height(py::array_t<DType> points, py::array_t<DType> voxels,
-                          py::array_t<DType> height,
-                          py::array_t<DType> maxs,
-                          py::array_t<int> coors,
-                          py::array_t<int> num_points_per_voxel,
-                          py::array_t<int> coor_to_voxelidx,
-                          std::vector<DType> voxel_size,
-                          std::vector<DType> coors_range, int max_points,
-                          int max_voxels) {
+int points_to_voxel_3d_np_height(
+    py::array_t<DType> points, py::array_t<DType> voxels,
+    py::array_t<DType> height, py::array_t<DType> maxs, py::array_t<int> coors,
+    py::array_t<int> num_points_per_voxel, py::array_t<int> coor_to_voxelidx,
+    std::vector<DType> voxel_size, std::vector<DType> coors_range,
+    int max_points, int max_voxels) {
   auto points_rw = points.template mutable_unchecked<2>();
   auto height_rw = height.template mutable_unchecked<2>();
   auto maxs_rw = maxs.template mutable_unchecked<2>();
@@ -208,13 +203,11 @@ int points_to_voxel_3d_np_height(py::array_t<DType> points, py::array_t<DType> v
       }
       coor[ndim_minus_1 - j] = c;
     }
-    if (failed)
-      continue;
+    if (failed) continue;
     voxelidx = coor_to_voxelidx_rw(coor[0], coor[1], coor[2]);
     if (voxelidx == -1) {
       voxelidx = voxel_num;
-      if (voxel_num >= max_voxels)
-        break;
+      if (voxel_num >= max_voxels) break;
       voxel_num += 1;
       coor_to_voxelidx_rw(coor[0], coor[1], coor[2]) = voxelidx;
       for (int k = 0; k < NDim; ++k) {
@@ -225,7 +218,8 @@ int points_to_voxel_3d_np_height(py::array_t<DType> points, py::array_t<DType> v
     if (num < max_points) {
       for (int k = 0; k < num_features; ++k) {
         voxels_rw(voxelidx, num, k) = points_rw(i, k);
-        height_rw(voxelidx, k) = std::min(points_rw(i, k), height_rw(voxelidx, k));
+        height_rw(voxelidx, k) =
+            std::min(points_rw(i, k), height_rw(voxelidx, k));
         maxs_rw(voxelidx, k) = std::max(points_rw(i, k), maxs_rw(voxelidx, k));
       }
       num_points_per_voxel_rw(voxelidx) += 1;
@@ -241,15 +235,11 @@ int points_to_voxel_3d_np_height(py::array_t<DType> points, py::array_t<DType> v
 }
 
 template <typename DType, int NDim>
-int block_filtering(py::array_t<DType> points,
-                          py::array_t<int> mask,
-                          py::array_t<DType> height,
-                          py::array_t<DType> maxs,
-                          py::array_t<int> coor_to_voxelidx,
-                          std::vector<DType> voxel_size,
-                          std::vector<DType> coors_range,
-                          int max_voxels,
-                          DType eps) {
+int block_filtering(py::array_t<DType> points, py::array_t<int> mask,
+                    py::array_t<DType> height, py::array_t<DType> maxs,
+                    py::array_t<int> coor_to_voxelidx,
+                    std::vector<DType> voxel_size,
+                    std::vector<DType> coors_range, int max_voxels, DType eps) {
   auto points_rw = points.template mutable_unchecked<2>();
   auto height_rw = height.template mutable_unchecked<1>();
   auto maxs_rw = maxs.template mutable_unchecked<1>();
@@ -278,8 +268,7 @@ int block_filtering(py::array_t<DType> points,
       }
       coor[ndim_minus_1 - j] = c;
     }
-    if (failed)
-      continue;
+    if (failed) continue;
     voxelidx = coor_to_voxelidx_rw(coor[0], coor[1], coor[2]);
     if (voxelidx == -1) {
       voxelidx = voxel_num;
@@ -299,30 +288,23 @@ int block_filtering(py::array_t<DType> points,
       }
       coor[ndim_minus_1 - j] = c;
     }
-    if (failed)
-      continue;
+    if (failed) continue;
     voxelidx = coor_to_voxelidx_rw(coor[0], coor[1], coor[2]);
-    if ((maxs_rw(voxelidx) - height_rw(voxelidx, 2)) < eps){
+    if ((maxs_rw(voxelidx) - height_rw(voxelidx, 2)) < eps) {
       mask(i) = 0;
     }
   }
 }
 
 template <typename DType, int NDim>
-int points_to_voxel_3d_with_filtering(py::array_t<DType> points, py::array_t<DType> voxels,
-                          py::array_t<int> voxel_mask,
-                          py::array_t<DType> mins,
-                          py::array_t<DType> maxs,
-                          py::array_t<int> coors,
-                          py::array_t<int> num_points_per_voxel,
-                          py::array_t<int> coor_to_voxelidx,
-                          std::vector<DType> voxel_size,
-                          std::vector<DType> coors_range,
-                          int max_points,
-                          int max_voxels,
-                          int block_factor,
-                          int block_size,
-                          DType height_threshold) {
+int points_to_voxel_3d_with_filtering(
+    py::array_t<DType> points, py::array_t<DType> voxels,
+    py::array_t<int> voxel_mask, py::array_t<DType> mins,
+    py::array_t<DType> maxs, py::array_t<int> coors,
+    py::array_t<int> num_points_per_voxel, py::array_t<int> coor_to_voxelidx,
+    std::vector<DType> voxel_size, std::vector<DType> coors_range,
+    int max_points, int max_voxels, int block_factor, int block_size,
+    DType height_threshold) {
   auto points_rw = points.template mutable_unchecked<2>();
   auto mins_rw = mins.template mutable_unchecked<2>();
   auto maxs_rw = maxs.template mutable_unchecked<2>();
@@ -361,13 +343,11 @@ int points_to_voxel_3d_with_filtering(py::array_t<DType> points, py::array_t<DTy
       }
       coor[ndim_minus_1 - j] = c;
     }
-    if (failed)
-      continue;
+    if (failed) continue;
     voxelidx = coor_to_voxelidx_rw(coor[0], coor[1], coor[2]);
     if (voxelidx == -1) {
       voxelidx = voxel_num;
-      if (voxel_num >= max_voxels)
-        break;
+      if (voxel_num >= max_voxels) break;
       voxel_num += 1;
       coor_to_voxelidx_rw(coor[0], coor[1], coor[2]) = voxelidx;
       for (int k = 0; k < NDim; ++k) {
@@ -381,8 +361,10 @@ int points_to_voxel_3d_with_filtering(py::array_t<DType> points, py::array_t<DTy
       }
       block_coor[0] = coor[1] / block_factor;
       block_coor[1] = coor[2] / block_factor;
-      mins_rw(block_coor[0], block_coor[1]) = std::min(points_rw(i, 2), mins_rw(block_coor[0], block_coor[1]));
-      maxs_rw(block_coor[0], block_coor[1]) = std::max(points_rw(i, 2), maxs_rw(block_coor[0], block_coor[1]));
+      mins_rw(block_coor[0], block_coor[1]) =
+          std::min(points_rw(i, 2), mins_rw(block_coor[0], block_coor[1]));
+      maxs_rw(block_coor[0], block_coor[1]) =
+          std::max(points_rw(i, 2), maxs_rw(block_coor[0], block_coor[1]));
       num_points_per_voxel_rw(voxelidx) += 1;
     }
   }
@@ -394,13 +376,15 @@ int points_to_voxel_3d_with_filtering(py::array_t<DType> points, py::array_t<DTy
     block_coor[1] = coor[2] / block_factor;
     min_value = mins_rw(block_coor[0], block_coor[1]);
     max_value = maxs_rw(block_coor[0], block_coor[1]);
-    startx = std::max(0, block_coor[0]-block_size/2);
-    stopx = std::min(block_shape_H, block_coor[0]+block_size-block_size/2);
-    starty = std::max(0, block_coor[1]-block_size/2);
-    stopy = std::min(block_shape_W, block_coor[1]+block_size-block_size/2);
+    startx = std::max(0, block_coor[0] - block_size / 2);
+    stopx =
+        std::min(block_shape_H, block_coor[0] + block_size - block_size / 2);
+    starty = std::max(0, block_coor[1] - block_size / 2);
+    stopy =
+        std::min(block_shape_W, block_coor[1] + block_size - block_size / 2);
 
-    for (int j = startx; j < stopx; ++j){
-      for (int k = starty; k < stopy; ++k){
+    for (int j = startx; j < stopx; ++j) {
+      for (int k = starty; k < stopy; ++k) {
         min_value = std::min(min_value, mins_rw(j, k));
         max_value = std::max(max_value, maxs_rw(j, k));
       }
@@ -410,5 +394,4 @@ int points_to_voxel_3d_with_filtering(py::array_t<DType> points, py::array_t<DTy
   return voxel_num;
 }
 
-
-} // namespace spconv
+}  // namespace spconv

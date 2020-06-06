@@ -13,10 +13,11 @@
 // limitations under the License.
 
 #pragma once
+#include <cuda_runtime_api.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
-#include <cuda_runtime_api.h>
 #include <iostream>
 #include <memory>
 // #include <prettyprint.h>
@@ -42,22 +43,22 @@ namespace tv {
 #define TV_HOST_DEVICE
 #endif
 
-#define TV_REQUIRE(expr, ...)                                                  \
-  {                                                                            \
-    if (!(expr)) {                                                             \
-      printf(__VA_ARGS__);                                                     \
-      assert(expr);                                                            \
-    }                                                                          \
+#define TV_REQUIRE(expr, ...) \
+  {                           \
+    if (!(expr)) {            \
+      printf(__VA_ARGS__);    \
+      assert(expr);           \
+    }                         \
   }
 
-#define TV_DEVICE_REQUIRE(expr, ...)                                           \
-  {                                                                            \
-    if (!(expr) && threadIdx.x == 0)                                           \
-      printf(__VA_ARGS__);                                                     \
-    assert(expr);                                                              \
+#define TV_DEVICE_REQUIRE(expr, ...)                      \
+  {                                                       \
+    if (!(expr) && threadIdx.x == 0) printf(__VA_ARGS__); \
+    assert(expr);                                         \
   }
 
-template <class SStream, class T> void sstream_print(SStream &ss, T val) {
+template <class SStream, class T>
+void sstream_print(SStream &ss, T val) {
   ss << val;
 }
 
@@ -67,37 +68,37 @@ void sstream_print(SStream &ss, T val, TArgs... args) {
   sstream_print(ss, args...);
 }
 
-#define TV_ASSERT_RT_ERR(expr, ...)                                            \
-  {                                                                            \
-    if (!(expr)) {                                                             \
-      std::stringstream __macro_s;                                             \
-      __macro_s << __FILE__ << " " << __LINE__ << "\n";                        \
-      __macro_s << #expr << " assert faild. ";                                 \
-      tv::sstream_print(__macro_s, __VA_ARGS__);                               \
-      throw std::runtime_error(__macro_s.str());                               \
-    }                                                                          \
+#define TV_ASSERT_RT_ERR(expr, ...)                     \
+  {                                                     \
+    if (!(expr)) {                                      \
+      std::stringstream __macro_s;                      \
+      __macro_s << __FILE__ << " " << __LINE__ << "\n"; \
+      __macro_s << #expr << " assert faild. ";          \
+      tv::sstream_print(__macro_s, __VA_ARGS__);        \
+      throw std::runtime_error(__macro_s.str());        \
+    }                                                   \
   }
 
-#define TV_ASSERT_INVALID_ARG(expr, ...)                                       \
-  {                                                                            \
-    if (!(expr)) {                                                             \
-      std::stringstream __macro_s;                                             \
-      __macro_s << __FILE__ << " " << __LINE__ << "\n";                        \
-      __macro_s << #expr << " assert faild. ";                                 \
-      tv::sstream_print(__macro_s, __VA_ARGS__);                               \
-      throw std::invalid_argument(__macro_s.str());                            \
-    }                                                                          \
+#define TV_ASSERT_INVALID_ARG(expr, ...)                \
+  {                                                     \
+    if (!(expr)) {                                      \
+      std::stringstream __macro_s;                      \
+      __macro_s << __FILE__ << " " << __LINE__ << "\n"; \
+      __macro_s << #expr << " assert faild. ";          \
+      tv::sstream_print(__macro_s, __VA_ARGS__);        \
+      throw std::invalid_argument(__macro_s.str());     \
+    }                                                   \
   }
 
-#define TV_CHECK_CUDA_ERR()                                                    \
-  {                                                                            \
-    auto err = cudaGetLastError();                                             \
-    if (err != cudaSuccess) {                                                  \
-      std::stringstream __macro_s;                                             \
-      __macro_s << __FILE__ << " " << __LINE__ << "\n";                        \
-      __macro_s << "cuda execution failed with error " << err;                 \
-      throw std::runtime_error(__macro_s.str());                               \
-    }                                                                          \
+#define TV_CHECK_CUDA_ERR()                                    \
+  {                                                            \
+    auto err = cudaGetLastError();                             \
+    if (err != cudaSuccess) {                                  \
+      std::stringstream __macro_s;                             \
+      __macro_s << __FILE__ << " " << __LINE__ << "\n";        \
+      __macro_s << "cuda execution failed with error " << err; \
+      throw std::runtime_error(__macro_s.str());               \
+    }                                                          \
   }
 
 struct GPU {
@@ -130,7 +131,7 @@ constexpr size_t calc_align(size_t ndim)
 */
 template <typename T, size_t MaxDim = TV_MAX_DIM>
 struct /*alignas(calc_align<T>(MaxDim))*/ SimpleVector {
-public:
+ public:
   TV_HOST_DEVICE_INLINE SimpleVector(){};
   TV_HOST_DEVICE_INLINE SimpleVector(std::initializer_list<T> q) {
     TV_ASSERT(q.size() <= MaxDim);
@@ -187,7 +188,7 @@ public:
   typedef size_t size_type;
 
   class iterator {
-  public:
+   public:
     typedef iterator self_type;
     typedef T value_type;
     typedef T &reference;
@@ -213,12 +214,12 @@ public:
       return ptr_ != rhs.ptr_;
     }
 
-  private:
+   private:
     pointer ptr_;
   };
 
   class const_iterator {
-  public:
+   public:
     typedef const_iterator self_type;
     typedef T value_type;
     typedef const T &reference;
@@ -244,7 +245,7 @@ public:
       return ptr_ != rhs.ptr_;
     }
 
-  private:
+   private:
     pointer ptr_;
   };
 
@@ -267,7 +268,7 @@ public:
     return const_iterator(mArray + mSize);
   }
 
-protected:
+ protected:
   T mArray[MaxDim];
   size_t mSize = 0;
 };
@@ -275,11 +276,9 @@ protected:
 template <typename T, size_t MaxDim>
 bool operator==(const SimpleVector<T, MaxDim> &lfs,
                 const SimpleVector<T, MaxDim> &rfs) {
-  if (lfs.size() != rfs.size())
-    return false;
+  if (lfs.size() != rfs.size()) return false;
   for (size_t i = 0; i < lfs.size(); ++i) {
-    if (lfs[i] != rfs[i])
-      return false;
+    if (lfs[i] != rfs[i]) return false;
   }
   return true;
 }
@@ -287,12 +286,12 @@ bool operator==(const SimpleVector<T, MaxDim> &lfs,
 template <typename T, size_t MaxDim>
 bool operator!=(const SimpleVector<T, MaxDim> &lfs,
                 const SimpleVector<T, MaxDim> &rfs) {
-
   return !(lfs == rfs);
 }
 
 struct Slice {
-  template <class... Integers> TV_HOST_DEVICE_INLINE Slice(Integers... ints) {
+  template <class... Integers>
+  TV_HOST_DEVICE_INLINE Slice(Integers... ints) {
     static_assert(sizeof...(ints) <= 3, "slice init must smaller than 3");
     SimpleVector<int, 3> slices{int(ints)...};
     mSlices[0] = -1;
@@ -333,7 +332,7 @@ struct Slice {
     return mSlices[idx];
   }
 
-protected:
+ protected:
   int mSlices[3];
 };
 
@@ -372,8 +371,7 @@ struct ShapeBase : public SimpleVector<int, MaxDim> {
   }
 
   TV_HOST_DEVICE_INLINE size_t size() const {
-    if (this->mSize == 0)
-      return 0;
+    if (this->mSize == 0) return 0;
     size_t s = 1;
     for (int i = 0; i < int(this->mSize); ++i) {
       s *= this->mArray[i];
@@ -384,16 +382,14 @@ struct ShapeBase : public SimpleVector<int, MaxDim> {
   TV_HOST_DEVICE_INLINE ShapeBase<MaxDim> squeeze() const {
     ShapeBase<MaxDim> shape;
     for (int i = 0; i < this->mSize; ++i) {
-      if (this->mArray[i] != 1)
-        shape.push_back(this->mArray[i]);
+      if (this->mArray[i] != 1) shape.push_back(this->mArray[i]);
     }
     return shape;
   }
   TV_HOST_DEVICE_INLINE ShapeBase<MaxDim> squeeze(int dim) const {
     ShapeBase<MaxDim> shape;
     for (int i = 0; i < this->mSize; ++i) {
-      if (i != dim || this->mArray[i] != 1)
-        shape.push_back(this->mArray[i]);
+      if (i != dim || this->mArray[i] != 1) shape.push_back(this->mArray[i]);
     }
     return shape;
   }
@@ -479,7 +475,8 @@ TV_HOST_DEVICE_INLINE Index rowArrayIdxInv(Index index, Index *output,
   return index;
 }
 
-template <int N> struct ArrayIndexRowMajor {
+template <int N>
+struct ArrayIndexRowMajor {
   // mPtr[((i1 * mShape[1] + i2) * mShape[2] + i3) * mShape[3] + i4];
   TV_HOST_DEVICE_INLINE static unsigned run(const Shape &shape,
                                             const Shape &indexes) {
@@ -488,7 +485,8 @@ template <int N> struct ArrayIndexRowMajor {
   }
 };
 
-template <> struct ArrayIndexRowMajor<0> {
+template <>
+struct ArrayIndexRowMajor<0> {
   TV_HOST_DEVICE_INLINE static unsigned run(const Shape &shape,
                                             const Shape &indexes) {
     return 0;
@@ -496,24 +494,36 @@ template <> struct ArrayIndexRowMajor<0> {
 };
 
 namespace detail {
-template <typename T> constexpr const char *simpleTypeName(T val = T());
-template <> constexpr const char *simpleTypeName(float val) {
+template <typename T>
+constexpr const char *simpleTypeName(T val = T());
+template <>
+constexpr const char *simpleTypeName(float val) {
   return "float32";
 }
-template <> constexpr const char *simpleTypeName(double val) {
+template <>
+constexpr const char *simpleTypeName(double val) {
   return "float64";
 }
-template <> constexpr const char *simpleTypeName(int val) { return "int32"; }
-template <> constexpr const char *simpleTypeName(unsigned val) {
+template <>
+constexpr const char *simpleTypeName(int val) {
+  return "int32";
+}
+template <>
+constexpr const char *simpleTypeName(unsigned val) {
   return "uint32";
 }
-template <> constexpr const char *simpleTypeName(long val) { return "int64"; }
-template <> constexpr const char *simpleTypeName(unsigned long val) {
+template <>
+constexpr const char *simpleTypeName(long val) {
+  return "int64";
+}
+template <>
+constexpr const char *simpleTypeName(unsigned long val) {
   return "uint64";
 }
-}; // namespace detail
+};  // namespace detail
 
-template <typename T, int Rank = -1> struct TensorView {
+template <typename T, int Rank = -1>
+struct TensorView {
   TV_HOST_DEVICE_INLINE TensorView() {}
   explicit TV_HOST_DEVICE_INLINE TensorView(T *ptr, Shape shape)
       : mPtr(ptr), mShape(shape) {}
@@ -526,29 +536,28 @@ template <typename T, int Rank = -1> struct TensorView {
     mShape = {int(shapes)...};
   }
 
-  TV_HOST_DEVICE_INLINE TensorView<T, Rank> &
-  assign(const TensorView<T, Rank> &tensor) {
+  TV_HOST_DEVICE_INLINE TensorView<T, Rank> &assign(
+      const TensorView<T, Rank> &tensor) {
     TV_REQUIRE(tensor.shape() == shape(), "you must provide same input size%s",
                "\n");
     T *ptr = mPtr;
     const T *other_ptr = tensor.data();
-    for (size_t i = 0; i < size(); ++i)
-      *(ptr++) = *(other_ptr++);
+    for (size_t i = 0; i < size(); ++i) *(ptr++) = *(other_ptr++);
     return *this;
   }
 
   template <typename T1>
-  TV_HOST_DEVICE_INLINE TensorView<T, Rank> &
-  assign(std::initializer_list<T1> seq) {
+  TV_HOST_DEVICE_INLINE TensorView<T, Rank> &assign(
+      std::initializer_list<T1> seq) {
     TV_REQUIRE(seq.size() == size(), "you must provide same input size%s",
                "\n");
     T *ptr = mPtr;
-    for (const T1 &s : seq)
-      *(ptr++) = T(s);
+    for (const T1 &s : seq) *(ptr++) = T(s);
     return *this;
   }
 
-  template <class... Inds> TV_HOST_DEVICE_INLINE T &operator()(Inds... inds) {
+  template <class... Inds>
+  TV_HOST_DEVICE_INLINE T &operator()(Inds... inds) {
 #ifdef TV_DEBUG
     int idxes[sizeof...(Inds)]{int(inds)...};
     TV_REQUIRE(sizeof...(inds) == mShape.ndim(),
@@ -610,7 +619,8 @@ template <typename T, int Rank = -1> struct TensorView {
     return mPtr[0];
   }
 
-  template <class T1> TV_HOST_DEVICE_INLINE T &operator()(T1 i1) {
+  template <class T1>
+  TV_HOST_DEVICE_INLINE T &operator()(T1 i1) {
 #if defined TV_DEBUG
 #if defined(__CUDA_ARCH__)
     TV_DEVICE_REQUIRE(mShape.ndim() == 1,
@@ -711,7 +721,8 @@ template <typename T, int Rank = -1> struct TensorView {
     return mPtr[((i1 * mShape[1] + i2) * mShape[2] + i3) * mShape[3] + i4];
   }
 
-  template <class T1> TV_HOST_DEVICE_INLINE const T &operator()(T1 i1) const {
+  template <class T1>
+  TV_HOST_DEVICE_INLINE const T &operator()(T1 i1) const {
 #ifdef TV_DEBUG
 #if defined(__CUDA_ARCH__)
     TV_DEVICE_REQUIRE(mShape.ndim() == 1,
@@ -843,12 +854,12 @@ template <typename T, int Rank = -1> struct TensorView {
 #endif
     return mPtr[idx];
   }*/
-  TV_HOST_DEVICE_INLINE TensorView<T, Rank>
-  operator[](SimpleVector<Slice> slice_vec) {
+  TV_HOST_DEVICE_INLINE TensorView<T, Rank> operator[](
+      SimpleVector<Slice> slice_vec) {
     return _subview(slice_vec);
   }
-  TV_HOST_DEVICE_INLINE const TensorView<T, Rank>
-  operator[](SimpleVector<Slice> slice_vec) const {
+  TV_HOST_DEVICE_INLINE const TensorView<T, Rank> operator[](
+      SimpleVector<Slice> slice_vec) const {
     return _subview(slice_vec);
   }
   TV_HOST_DEVICE_INLINE bool empty() const { return mPtr == nullptr; }
@@ -917,7 +928,7 @@ template <typename T, int Rank = -1> struct TensorView {
         new_shape[i] = slice_vec[i][1] - slice_vec[i][0];
         TV_ASSERT(new_shape[i] >= 0);
       } else {
-        new_shape[i] = 1; // reduce dim
+        new_shape[i] = 1;  // reduce dim
       }
     }
     auto offset = rowArrayIdx(mShape, start);
@@ -952,8 +963,7 @@ template <typename T, int Rank = -1> struct TensorView {
 
   std::string repr() const {
     std::ostringstream ss;
-    if (empty())
-      return "";
+    if (empty()) return "";
     if (mShape.ndim() == 0) {
       ss << *mPtr;
       // ss << fmt::format("\nTensor: shape={}, dtype={}", mShape,
@@ -980,14 +990,12 @@ template <typename T, int Rank = -1> struct TensorView {
           print_comma = false;
         }
       }
-      if (print_comma && i != this->size() - 1)
-        ss << ", ";
+      if (print_comma && i != this->size() - 1) ss << ", ";
       for (int j = 0; j < inc_count; ++j) {
         ss << "]";
       }
       if (i != this->size() - 1) {
-        if (inc_count != 0)
-          ss << "\n";
+        if (inc_count != 0) ss << "\n";
         for (int j = 0; j < inc_count; ++j) {
           ss << "[";
         }
@@ -1000,11 +1008,11 @@ template <typename T, int Rank = -1> struct TensorView {
     return ss.str();
   }
 
-protected:
+ protected:
   // TODO: make this function public.
   // currently this function is called unexpectedly when using subview({0, 0}).
-  TV_HOST_DEVICE_INLINE TensorView<T, Rank>
-  _subview(SimpleVector<Slice> slice_vec) {
+  TV_HOST_DEVICE_INLINE TensorView<T, Rank> _subview(
+      SimpleVector<Slice> slice_vec) {
     Shape new_shape;
     for (int i = 0; i < slice_vec.size(); ++i) {
       new_shape.push_back(slice_vec[i][0]);
@@ -1022,7 +1030,7 @@ protected:
         new_shape[i] = slice_vec[i][1] - slice_vec[i][0];
         TV_ASSERT(new_shape[i] >= 0);
       } else {
-        new_shape[i] = 1; // reduce dim
+        new_shape[i] = 1;  // reduce dim
       }
     }
     auto offset = rowArrayIdx(mShape, start);
@@ -1041,7 +1049,8 @@ protected:
     }
     return TensorView<T, Rank>(mPtr + offset, reduced_shape);
   }
-  template <typename T1> TV_HOST_DEVICE_INLINE Slice to_slice(T1 s) const {
+  template <typename T1>
+  TV_HOST_DEVICE_INLINE Slice to_slice(T1 s) const {
     return Slice{int(s), -1, -1};
   }
 
@@ -1064,26 +1073,38 @@ Os &operator<<(Os &os, const TensorView<const T, Rank> &dt) {
 }
 
 namespace detail {
-template <typename T> constexpr const char *printfTypeFormat(T val = T());
-template <> constexpr const char *printfTypeFormat(float val) { return "%.2f"; }
-template <> constexpr const char *printfTypeFormat(double val) {
+template <typename T>
+constexpr const char *printfTypeFormat(T val = T());
+template <>
+constexpr const char *printfTypeFormat(float val) {
   return "%.2f";
 }
-template <> constexpr const char *printfTypeFormat(int val) { return "%d"; }
-template <> constexpr const char *printfTypeFormat(unsigned val) {
+template <>
+constexpr const char *printfTypeFormat(double val) {
+  return "%.2f";
+}
+template <>
+constexpr const char *printfTypeFormat(int val) {
+  return "%d";
+}
+template <>
+constexpr const char *printfTypeFormat(unsigned val) {
   return "%u";
 }
-template <> constexpr const char *printfTypeFormat(long val) { return "%ld"; }
-template <> constexpr const char *printfTypeFormat(unsigned long val) {
+template <>
+constexpr const char *printfTypeFormat(long val) {
+  return "%ld";
+}
+template <>
+constexpr const char *printfTypeFormat(unsigned long val) {
   return "%lu";
 }
-}; // namespace detail
+};  // namespace detail
 
 template <typename T>
 TV_HOST_DEVICE void printTensorView(const TensorView<T> tensor,
                                     const char *format) {
-  if (tensor.empty())
-    return;
+  if (tensor.empty()) return;
   if (tensor.ndim() == 0) {
     printf(format, tensor());
     printf("\n");
@@ -1108,14 +1129,12 @@ TV_HOST_DEVICE void printTensorView(const TensorView<T> tensor,
         print_comma = false;
       }
     }
-    if (print_comma && i != tensor.size() - 1)
-      printf(", ");
+    if (print_comma && i != tensor.size() - 1) printf(", ");
     for (int j = 0; j < inc_count; ++j) {
       printf("]");
     }
     if (i != tensor.size() - 1) {
-      if (inc_count != 0)
-        printf("\n");
+      if (inc_count != 0) printf("\n");
       for (int j = 0; j < inc_count; ++j) {
         printf("[");
       }
@@ -1141,4 +1160,4 @@ TV_HOST_DEVICE void printTensorView(const T *ptr, Shape shape,
   return printTensorView(TensorView<const T>(ptr, shape), format);
 }
 
-} // namespace tv
+}  // namespace tv

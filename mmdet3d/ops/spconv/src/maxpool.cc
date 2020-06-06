@@ -62,14 +62,14 @@ struct SparseMaxPoolBackwardFunctor<tv::CPU, T, Index> {
     }
   }
 };
-} // namespace functor
+}  // namespace functor
 
-#define DECLARE_CPU_SPECS_T_INDEX(T, Index)                                    \
-  template struct functor::SparseMaxPoolForwardFunctor<tv::CPU, T, Index>;     \
+#define DECLARE_CPU_SPECS_T_INDEX(T, Index)                                \
+  template struct functor::SparseMaxPoolForwardFunctor<tv::CPU, T, Index>; \
   template struct functor::SparseMaxPoolBackwardFunctor<tv::CPU, T, Index>;
 
-#define DECLARE_CPU_SPECS(T)                                                   \
-  DECLARE_CPU_SPECS_T_INDEX(T, int);                                           \
+#define DECLARE_CPU_SPECS(T)         \
+  DECLARE_CPU_SPECS_T_INDEX(T, int); \
   DECLARE_CPU_SPECS_T_INDEX(T, long);
 
 DECLARE_CPU_SPECS(float);
@@ -79,4 +79,4 @@ DECLARE_CPU_SPECS(at::Half);
 #undef DECLARE_CPU_SPECS
 #undef DECLARE_CPU_SPECS_T_INDEX
 
-} // namespace spconv
+}  // namespace spconv
