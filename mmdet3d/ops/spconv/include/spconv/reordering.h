@@ -16,25 +16,23 @@
 #define SPARSE_REORDERING_FUNCTOR_H_
 #include <tensorview/tensorview.h>
 
-namespace spconv
-{
-namespace functor
-{
+namespace spconv {
+namespace functor {
 template <typename Device, typename T, typename Index>
-struct SparseGatherFunctor
-{
-    void operator()(const Device& d, tv::TensorView<T> buffer, tv::TensorView<const T> features,
-                    tv::TensorView<const Index> indices, int size);
+struct SparseGatherFunctor {
+  void operator()(const Device& d, tv::TensorView<T> buffer,
+                  tv::TensorView<const T> features,
+                  tv::TensorView<const Index> indices, int size);
 };
 
 template <typename Device, typename T, typename Index>
-struct SparseScatterAddFunctor
-{
-    void operator()(const Device& d, tv::TensorView<T> out_features,
-                    tv::TensorView<const T> buffer, tv::TensorView<const Index> indices,
-                    int size, bool stable=false);
+struct SparseScatterAddFunctor {
+  void operator()(const Device& d, tv::TensorView<T> out_features,
+                  tv::TensorView<const T> buffer,
+                  tv::TensorView<const Index> indices, int size,
+                  bool stable = false);
 };
-} // namespace functor
-} // namespace spconv
+}  // namespace functor
+}  // namespace spconv
 
 #endif
