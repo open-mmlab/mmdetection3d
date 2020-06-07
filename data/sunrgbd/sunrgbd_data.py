@@ -148,7 +148,7 @@ def extract_sunrgbd_data(idx_filename,
                 continue
             obb = np.zeros((8))
             obb[0:3] = obj.centroid
-            obb[3:6] = np.array([obj.l, obj.w, obj.h])
+            obb[3:6] = np.array([obj.length, obj.width, obj.height])
             obb[6] = obj.heading_angle
             obb[7] = sunrgbd_utils.type2class[obj.classname]
             object_list.append(obb)
