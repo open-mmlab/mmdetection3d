@@ -466,8 +466,8 @@ def get_frustum(bbox_image, C, near_clip=0.001, far_clip=100):
 def surface_equ_3d(polygon_surfaces):
     # return [a, b, c], d in ax+by+cz+d=0
     # polygon_surfaces: [num_polygon, num_surfaces, num_points_of_polygon, 3]
-    surface_vec = polygon_surfaces[:, :, :2, :] - polygon_surfaces[:, :,
-                                                                   1:3, :]
+    surface_vec = polygon_surfaces[:, :, :2, :] - \
+        polygon_surfaces[:, :, 1:3, :]
     # normal_vec: [..., 3]
     normal_vec = np.cross(surface_vec[:, :, 0, :], surface_vec[:, :, 1, :])
     # print(normal_vec.shape, points[..., 0, :].shape)
