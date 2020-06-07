@@ -2,19 +2,19 @@
 norm_cfg = dict(type='BN', requires_grad=False)
 model = dict(
     type='FasterRCNN',
-    pretrained=('open-mmlab://detectron2/resnet50_caffe'),
+    pretrained='open-mmlab://regnetx_3.2gf',
     backbone=dict(
-        type='ResNet',
-        depth=50,
-        num_stages=4,
+        type='RegNet',
+        arch='regnetx_3.2gf',
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
-        norm_cfg=norm_cfg,
+        base_channels=32,
+        norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
-        style='caffe'),
+        style='pytorch'),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[96, 192, 432, 1008],
         out_channels=256,
         num_outs=5),
     rpn_head=dict(
@@ -112,16 +112,13 @@ test_cfg = dict(
 # dataset settings
 dataset_type = 'CocoDataset'
 data_root = 'data/nuscenes/'
-# Values to be used for image normalization (BGR order)
-# Default mean pixel values are from ImageNet: [103.53, 116.28, 123.675]
-# When using pre-trained models in Detectron1 or any MSRA models,
-# std has been absorbed into its conv1 weights, so the std needs to be set 1.
 classes = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
            'motorcycle', 'pedestrian', 'traffic_cone', 'barrier')
 img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
-
-# file_client_args = dict(backend='disk')
+    # The mean and std is used in PyCls when training RegNets
+    mean=[103.53, 116.28, 123.675],
+    std=[57.375, 57.12, 58.395],
+    to_rgb=False)
 file_client_args = dict(
     backend='petrel',
     path_mapping=dict({
@@ -180,7 +177,7 @@ data = dict(
         ann_file=data_root + 'nuscenes_infos_val.coco.json',
         pipeline=test_pipeline))
 # optimizer
-optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.00005)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -204,6 +201,6 @@ total_epochs = 12
 dist_params = dict(backend='nccl', port=29501)
 log_level = 'INFO'
 work_dir = './work_dirs/faster_rcnn_r50_fpn_1x'
-load_from = './pretrain_mmdet/faster_r50_fpn_detectron2-caffe_freezeBN_l1-loss_roialign-v2_3x-4767dd8e.pth'  # noqa
+load_from = './pretrain_mmdet/mask_rcnn_regnetx-3GF_fpn_mstrain_3x_coco_box-AP-43.1_mask-AP-38.7-e003695a.pth'  # noqa
 resume_from = None
 workflow = [('train', 1)]

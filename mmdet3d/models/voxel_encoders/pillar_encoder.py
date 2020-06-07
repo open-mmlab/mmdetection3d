@@ -9,55 +9,54 @@ from .utils import PFNLayer, get_paddings_indicator
 
 @VOXEL_ENCODERS.register_module()
 class PillarFeatureNet(nn.Module):
+    """Pillar Feature Net.
+
+    The network prepares the pillar features and performs forward pass
+    through PFNLayers.
+
+    Args:
+        in_channels (int). Number of input features,
+            either x, y, z or x, y, z, r.
+        feat_channels (list[int]). Number of features in each of the
+            N PFNLayers.
+        with_distance (bool). Whether to include Euclidean distance
+            to points.
+        voxel_size (list[float]). Size of voxels, only utilize x and y
+            size.
+        point_cloud_range (list[float]). Point cloud range, only
+            utilizes x and y min.
+    """
 
     def __init__(self,
-                 num_input_features=4,
-                 use_norm=True,
-                 num_filters=(64, ),
+                 in_channels=4,
+                 feat_channels=(64, ),
                  with_distance=False,
                  with_cluster_center=True,
                  with_voxel_center=True,
                  voxel_size=(0.2, 0.2, 4),
                  point_cloud_range=(0, -40, -3, 70.4, 40, 1),
+                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
                  mode='max'):
-        """ Pillar Feature Net.
-        The network prepares the pillar features and performs forward pass
-        through PFNLayers.
-
-        Args:
-            num_input_features (int). Number of input features,
-                either x, y, z or x, y, z, r.
-            use_norm (bool). Whether to include BatchNorm.
-            num_filters (list[int]). Number of features in each of the
-                N PFNLayers.
-            with_distance (bool). Whether to include Euclidean distance
-                to points.
-            voxel_size (list[float]). Size of voxels, only utilize x and y
-                size.
-            point_cloud_range (list[float>]). Point cloud range, only
-                utilize x and y min.
-        """
-
         super(PillarFeatureNet, self).__init__()
-        assert len(num_filters) > 0
+        assert len(feat_channels) > 0
         if with_cluster_center:
-            num_input_features += 3
+            in_channels += 3
         if with_voxel_center:
-            num_input_features += 2
+            in_channels += 2
         if with_distance:
-            num_input_features += 1
+            in_channels += 1
         self._with_distance = with_distance
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
 
         # Create PillarFeatureNet layers
-        self.num_input_features = num_input_features
-        num_filters = [num_input_features] + list(num_filters)
+        self.in_channels = in_channels
+        feat_channels = [in_channels] + list(feat_channels)
         pfn_layers = []
-        for i in range(len(num_filters) - 1):
-            in_filters = num_filters[i]
-            out_filters = num_filters[i + 1]
-            if i < len(num_filters) - 2:
+        for i in range(len(feat_channels) - 1):
+            in_filters = feat_channels[i]
+            out_filters = feat_channels[i + 1]
+            if i < len(feat_channels) - 2:
                 last_layer = False
             else:
                 last_layer = True
@@ -65,7 +64,7 @@ class PillarFeatureNet(nn.Module):
                 PFNLayer(
                     in_filters,
                     out_filters,
-                    use_norm,
+                    norm_cfg=norm_cfg,
                     last_layer=last_layer,
                     mode=mode))
         self.pfn_layers = nn.ModuleList(pfn_layers)
@@ -122,9 +121,8 @@ class PillarFeatureNet(nn.Module):
 class DynamicPillarFeatureNet(PillarFeatureNet):
 
     def __init__(self,
-                 num_input_features=4,
-                 use_norm=True,
-                 num_filters=(64, ),
+                 in_channels=4,
+                 feat_channels=(64, ),
                  with_distance=False,
                  with_cluster_center=True,
                  with_voxel_center=True,
@@ -138,23 +136,23 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         """
 
         super(DynamicPillarFeatureNet, self).__init__(
-            num_input_features,
-            use_norm,
-            num_filters,
+            in_channels,
+            feat_channels,
             with_distance,
             with_cluster_center=with_cluster_center,
             with_voxel_center=with_voxel_center,
             voxel_size=voxel_size,
             point_cloud_range=point_cloud_range,
+            norm_cfg=norm_cfg,
             mode=mode)
 
-        num_filters = [self.num_input_features] + list(num_filters)
+        feat_channels = [self.in_channels] + list(feat_channels)
         pfn_layers = []
         # TODO: currently only support one PFNLayer
 
-        for i in range(len(num_filters) - 1):
-            in_filters = num_filters[i]
-            out_filters = num_filters[i + 1]
+        for i in range(len(feat_channels) - 1):
+            in_filters = feat_channels[i]
+            out_filters = feat_channels[i + 1]
             if i > 0:
                 in_filters *= 2
             norm_name, norm_layer = build_norm_layer(norm_cfg, out_filters)
@@ -235,145 +233,3 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
                 features = torch.cat([point_feats, feat_per_point], dim=1)
 
         return voxel_feats, voxel_coors
-
-
-@VOXEL_ENCODERS.register_module()
-class AlignedPillarFeatureNet(nn.Module):
-
-    def __init__(self,
-                 num_input_features=4,
-                 use_norm=True,
-                 num_filters=(64, ),
-                 with_distance=False,
-                 with_cluster_center=True,
-                 with_voxel_center=True,
-                 voxel_size=(0.2, 0.2, 4),
-                 point_cloud_range=(0, -40, -3, 70.4, 40, 1),
-                 mode='max'):
-        """ Pillar Feature Net.
-
-        The network prepares the pillar features and performs forward pass
-        through PFNLayers.
-
-        Args:
-            num_input_features (int): Number of input features, either x, y, z
-                or x, y, z, r.
-            use_norm (bool): Whether to include BatchNorm.
-            num_filters (list[int]): Number of features in each of the N
-                PFNLayers.
-            with_distance (bool): Whether to include Euclidean distance to
-                points.
-            voxel_size (list[float]): Size of voxels, only utilize x and y
-                size.
-            point_cloud_range: (list[float]): Point cloud range, only
-                utilize x and y min.
-        """
-
-        super(AlignedPillarFeatureNet, self).__init__()
-
-        assert len(num_filters) > 0
-        if with_cluster_center:
-            print('Use cluster center')
-            num_input_features += 3
-        if with_voxel_center:
-            print('Use voxel center')
-            num_input_features += 2
-        if with_distance:
-            num_input_features += 1
-        self._with_distance = with_distance
-        self._with_cluster_center = with_cluster_center
-        self._with_voxel_center = with_voxel_center
-
-        # Create PillarFeatureNet layers
-        num_filters = [num_input_features] + list(num_filters)
-        pfn_layers = []
-        for i in range(len(num_filters) - 1):
-            in_filters = num_filters[i]
-            out_filters = num_filters[i + 1]
-            if i < len(num_filters) - 2:
-                last_layer = False
-            else:
-                last_layer = True
-            pfn_layers.append(
-                PFNLayer(
-                    in_filters,
-                    out_filters,
-                    use_norm,
-                    last_layer=last_layer,
-                    mode=mode))
-        self.pfn_layers = nn.ModuleList(pfn_layers)
-
-        # Need pillar (voxel) size and x/y offset in order to
-        # calculate pillar offset
-        self.vx = voxel_size[0]
-        self.vy = voxel_size[1]
-        self.vz = voxel_size[2]
-        self.x_offset = self.vx / 2 + point_cloud_range[0]
-        self.y_offset = self.vy / 2 + point_cloud_range[1]
-        self.z_offset = self.vz / 2 + point_cloud_range[2]
-
-    def forward(self, features, num_points, coors):
-        features_ls = [features]
-        # Find distance of x, y, and z from cluster center
-        if self._with_cluster_center:
-            points_mean = features[:, :, :3].sum(
-                dim=1, keepdim=True) / num_points.type_as(features).view(
-                    -1, 1, 1)
-            f_cluster = features[:, :, :3] - points_mean
-            features_ls.append(f_cluster)
-
-        x_distance = features[:, :, 0] - (
-            coors[:, 3].type_as(features).unsqueeze(1) * self.vx +
-            self.x_offset)
-        y_distance = features[:, :, 1] - (
-            coors[:, 2].type_as(features).unsqueeze(1) * self.vy +
-            self.y_offset)
-        z_distance = features[:, :, 2] - (
-            coors[:, 1].type_as(features).unsqueeze(1) * self.vz +
-            self.z_offset)
-
-        normed_x_distance = 1 - torch.abs(x_distance / self.vx)
-        normed_y_distance = 1 - torch.abs(y_distance / self.vy)
-        normed_z_distance = 1 - torch.abs(z_distance / self.vz)
-
-        x_mask = torch.gt(normed_x_distance, 0).type_as(features)
-        y_mask = torch.gt(normed_y_distance, 0).type_as(features)
-        z_mask = torch.gt(normed_z_distance, 0).type_as(features)
-
-        nonzero_points_mask = x_mask.mul(y_mask).mul(z_mask)
-        aligned_distance = normed_x_distance.mul(normed_y_distance).mul(
-            normed_z_distance).mul(nonzero_points_mask)
-
-        # Find distance of x, y, and z from pillar center
-        if self._with_voxel_center:
-            f_center = features[:, :, :2]
-            f_center[:, :, 0] = f_center[:, :, 0] - (
-                coors[:, 3].type_as(features).unsqueeze(1) * self.vx +
-                self.x_offset)
-            f_center[:, :, 1] = f_center[:, :, 1] - (
-                coors[:, 2].type_as(features).unsqueeze(1) * self.vy +
-                self.y_offset)
-            features_ls.append(f_center)
-
-        if self._with_distance:
-            points_dist = torch.norm(features[:, :, :3], 2, 2, keepdim=True)
-            features_ls.append(points_dist)
-
-        # Combine together feature decorations
-        features = torch.cat(features_ls, dim=-1)
-
-        # The feature decorations were calculated without regard to
-        # whether pillar was empty. Need to ensure that
-        # empty pillars remain set to zeros.
-        voxel_count = features.shape[1]
-        mask = get_paddings_indicator(num_points, voxel_count, axis=0)
-        mask = torch.unsqueeze(mask, -1).type_as(features)
-        features *= mask
-
-        for pfn in self.pfn_layers:
-            if pfn.last_vfe:
-                features = pfn(features, aligned_distance)
-            else:
-                features = pfn(features)
-
-        return features.squeeze()
