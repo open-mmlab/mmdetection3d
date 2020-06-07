@@ -41,7 +41,17 @@ def random_sampling(pc, num_sample, replace=None, return_choices=False):
 
 
 class sunrgbd_object(object):
-    ''' Load and parse object data '''
+    """Surrgbd object.
+
+    Load and parse object data.
+
+    Args:
+        root_dir(str): Root directory.
+        split(str): Training or testing.
+            Default: 'training.
+        use_v1(bool): Whether to use v1.
+            Default(False).
+    """
 
     def __init__(self, root_dir, split='training', use_v1=False):
         self.root_dir = root_dir

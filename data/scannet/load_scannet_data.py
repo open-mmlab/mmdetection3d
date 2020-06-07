@@ -58,11 +58,25 @@ def export(mesh_file,
            meta_file,
            label_map_file,
            output_file=None):
-    """ points are XYZ RGB (RGB in 0-255),
-    semantic label as nyu40 ids,
-    instance label as 1-#instance,
-    box as (cx,cy,cz,dx,dy,dz,semantic_label)
+    """Export original files to vert, ins_label, sem_label and bbox file.
+
+    Args:
+        mesh_file(str): Path of the mesh_file.
+        agg_file(str): Path of the agg_file.
+        seg_file(str): Path of the seg_file.
+        meta_file(str): Path of the meta_file.
+        label_map_file(str): Path of the label_map_file.
+        output_file(str): Path of the output folder.
+            Default: None.
+
+    Return:
+        ndarray: Vertices of points data.
+        ndarray: Indexes of label.
+        ndarray: Indexes of instance.
+        ndarray: Instance bboxes.
+        dict: Map from object_id to label_id.
     """
+
     label_map = scannet_utils.read_label_mapping(
         label_map_file, label_from='raw_category', label_to='nyu40id')
     mesh_vertices = scannet_utils.read_mesh_vertices_rgb(mesh_file)
@@ -85,7 +99,7 @@ def export(mesh_file,
     # Load semantic and instance labels
     object_id_to_segs, label_to_segs = read_aggregation(agg_file)
     seg_to_verts, num_verts = read_segmentation(seg_file)
-    label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)  # 0: unannotated
+    label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)
     object_id_to_label_id = {}
     for label, segs in label_to_segs.items():
         label_id = label_map[label]
@@ -107,11 +121,6 @@ def export(mesh_file,
         obj_pc = mesh_vertices[instance_ids == obj_id, 0:3]
         if len(obj_pc) == 0:
             continue
-        # Compute axis aligned box
-        # An axis aligned bounding box is parameterized by
-        # (cx,cy,cz) and (dx,dy,dz) and label id
-        # where (cx,cy,cz) is the center point of the box,
-        # dx is the x-axis length of the box.
         xmin = np.min(obj_pc[:, 0])
         ymin = np.min(obj_pc[:, 1])
         zmin = np.min(obj_pc[:, 2])
