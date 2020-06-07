@@ -3,7 +3,6 @@ import tempfile
 
 import mmcv
 import numpy as np
-from mmcv.utils import print_log
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
@@ -139,14 +138,8 @@ class Custom3DDataset(Dataset):
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
         gt_annos = [info['annos'] for info in self.data_infos]
         label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
-        ret_dict = indoor_eval(gt_annos, results, iou_thr, label2cat)
-
-        result_str = str()
-        for key, val in ret_dict.items():
-            result_str += f'{key} : {val} \n'
-        mAP_25, mAP_50 = ret_dict['mAP_0.25'], ret_dict['mAP_0.50']
-        result_str += f'mAP(0.25): {mAP_25}    mAP(0.50): {mAP_50}'
-        print_log('\n' + result_str, logger=logger)
+        ret_dict = indoor_eval(
+            gt_annos, results, iou_thr, label2cat, logger=logger)
 
         return ret_dict
 
