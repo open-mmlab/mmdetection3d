@@ -13,16 +13,17 @@
 // limitations under the License.
 
 #include <ATen/ATen.h>
-#include <chrono>
-#include <limits>
 #include <spconv/mp_helper.h>
-#include <spconv/reordering.h>
 #include <spconv/reordering.cu.h>
+#include <spconv/reordering.h>
 #include <tensorview/helper_kernel.cu.h>
 #include <tensorview/helper_launch.h>
 #include <tensorview/tensorview.h>
-#include <type_traits>
 #include <utility/timer.h>
+
+#include <chrono>
+#include <limits>
+#include <type_traits>
 
 namespace spconv {
 namespace functor {
@@ -34,8 +35,7 @@ struct SparseGatherFunctor<tv::GPU, T, Index> {
   void operator()(const tv::GPU &d, tv::TensorView<T> buffer,
                   tv::TensorView<const T> features,
                   tv::TensorView<const Index> indices, int size) {
-    if (size <= 0)
-      return;
+    if (size <= 0) return;
     int numPlanes = features.dim(1);
     bool notFound = true;
     constexpr int vecloadFactor = sizeof(vecload_type_t) / sizeof(T);
@@ -50,8 +50,9 @@ struct SparseGatherFunctor<tv::GPU, T, Index> {
             gatherVecBlockKernel<T, Index, int(NumTLP), NumILP, vecload_type_t>
                 <<<dim3(numPlanes / NumTLP, size / NumTLP),
                    dim3(NumTLP / vecloadFactor, NumTLP / NumILP), 0,
-                   d.getStream()>>>(buffer.data(), features.data(), indices.data(),
-                                 nHotBlock, numPlanes / vecloadFactor);
+                   d.getStream()>>>(buffer.data(), features.data(),
+                                    indices.data(), nHotBlock,
+                                    numPlanes / vecloadFactor);
 
             TV_CHECK_CUDA_ERR();
           }
@@ -60,8 +61,9 @@ struct SparseGatherFunctor<tv::GPU, T, Index> {
                 <<<dim3(1, numPlanes / NumTLP),
                    dim3(NumTLP / NumILP, NumTLP / vecloadFactor), 0,
                    d.getStream()>>>(buffer.data() + nHotBlock * numPlanes,
-                                 features.data(), indices.data() + nHotBlock,
-                                 size - nHotBlock, numPlanes / vecloadFactor);
+                                    features.data(), indices.data() + nHotBlock,
+                                    size - nHotBlock,
+                                    numPlanes / vecloadFactor);
             TV_CHECK_CUDA_ERR();
           }
           notFound = false;
@@ -89,12 +91,11 @@ struct SparseScatterAddFunctor<tv::GPU, T, Index> {
   void operator()(const tv::GPU &d, tv::TensorView<T> outFeatures,
                   tv::TensorView<const T> buffer,
                   tv::TensorView<const Index> indices, int size, bool stable) {
-    if (size <= 0)
-      return;
+    if (size <= 0) return;
     int numPlanes = outFeatures.dim(1);
     bool notFound = true;
     constexpr int vecloadFactor =
-        sizeof(vecload_type_t) / sizeof(T); // important for half.
+        sizeof(vecload_type_t) / sizeof(T);  // important for half.
     mp_for_each<kernel_block_t>([=, &d, &outFeatures, &buffer, &indices,
                                  &notFound](auto NumTLP) {
       // constexpr int NumILP = NumTLP / (64 / (NumTLP / vecloadFactor));
@@ -108,8 +109,8 @@ struct SparseScatterAddFunctor<tv::GPU, T, Index> {
                 <<<dim3(numPlanes / NumTLP, size / NumTLP),
                    dim3(NumTLP / vecloadFactor, NumTLP / NumILP), 0,
                    d.getStream()>>>(outFeatures.data(), buffer.data(),
-                                 indices.data(), nHotBlock,
-                                 numPlanes / vecloadFactor);
+                                    indices.data(), nHotBlock,
+                                    numPlanes / vecloadFactor);
             TV_CHECK_CUDA_ERR();
           }
           if (size - nHotBlock > 0) {
@@ -137,11 +138,10 @@ struct SparseScatterAddFunctor<tv::GPU, T, Index> {
     }
   }
 };
-} // namespace functor
+}  // namespace functor
 
-
-#define DECLARE_GPU_SPECS_T_INDEX(T, Index)                                    \
-  template struct functor::SparseGatherFunctor<tv::GPU, T, Index>;             \
+#define DECLARE_GPU_SPECS_T_INDEX(T, Index)                        \
+  template struct functor::SparseGatherFunctor<tv::GPU, T, Index>; \
   template struct functor::SparseScatterAddFunctor<tv::GPU, T, Index>;
 
 #define DECLARE_GPU_SPECS(T) DECLARE_GPU_SPECS_T_INDEX(T, int);
@@ -152,4 +152,4 @@ DECLARE_GPU_SPECS(at::Half);
 
 #undef DECLARE_GPU_SPECS
 #undef DECLARE_GPU_SPECS_T_INDEX
-} // namespace spconv
+}  // namespace spconv

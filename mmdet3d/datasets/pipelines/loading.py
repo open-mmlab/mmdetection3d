@@ -42,9 +42,40 @@ class LoadMultiViewImageFromFiles(object):
 
 @PIPELINES.register_module()
 class LoadPointsFromMultiSweeps(object):
+    """Load points from multiple sweeps
 
-    def __init__(self, sweeps_num=10):
+    This is usually used for nuScenes dataset to utilize previous sweeps.
+
+    Args:
+        sweeps_num (int): number of sweeps
+        load_dim (int): dimension number of the loaded points
+        file_client_args (dict): Config dict of file clients, refer to
+            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            for more details.
+    """
+
+    def __init__(self,
+                 sweeps_num=10,
+                 load_dim=5,
+                 file_client_args=dict(backend='disk')):
+        self.load_dim = load_dim
         self.sweeps_num = sweeps_num
+        self.file_client_args = file_client_args.copy()
+        self.file_client = None
+
+    def _load_points(self, pts_filename):
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+        try:
+            pts_bytes = self.file_client.get(pts_filename)
+            points = np.frombuffer(pts_bytes, dtype=np.float32)
+        except ConnectionError:
+            mmcv.check_file_exist(pts_filename)
+            if pts_filename.endswith('.npy'):
+                points = np.load(pts_filename)
+            else:
+                points = np.fromfile(pts_filename, dtype=np.float32)
+        return points
 
     def __call__(self, results):
         points = results['points']
@@ -56,9 +87,8 @@ class LoadPointsFromMultiSweeps(object):
         for idx, sweep in enumerate(results['sweeps']):
             if idx >= self.sweeps_num:
                 break
-            points_sweep = np.fromfile(
-                sweep['data_path'], dtype=np.float32,
-                count=-1).reshape([-1, 5])
+            points_sweep = self._load_points(sweep['data_path'])
+            points_sweep = np.copy(points_sweep).reshape(-1, self.load_dim)
             sweep_ts = sweep['timestamp'] / 1e6
             points_sweep[:, 3] /= 255
             points_sweep[:, :3] = points_sweep[:, :3] @ sweep[

@@ -84,3 +84,87 @@ def bbox3d2result(bboxes, scores, labels):
     """
     return dict(
         boxes_3d=bboxes.cpu(), scores_3d=scores.cpu(), labels_3d=labels.cpu())
+
+
+def upright_depth_to_lidar_torch(points=None,
+                                 bboxes=None,
+                                 to_bottom_center=False):
+    """Convert points and boxes in upright depth coordinate to lidar.
+
+    Args:
+        points (None | Tensor): points in upright depth coordinate.
+        bboxes (None | Tensor): bboxes in upright depth coordinate.
+        to_bottom_center (bool): covert bboxes to bottom center.
+
+    Returns:
+        tuple: points and bboxes in lidar coordinate.
+    """
+    if points is not None:
+        points_lidar = points.clone()
+        points_lidar = points_lidar[..., [1, 0, 2]]
+        points_lidar[..., 1] *= -1
+    else:
+        points_lidar = None
+
+    if bboxes is not None:
+        bboxes_lidar = bboxes.clone()
+        bboxes_lidar = bboxes_lidar[..., [1, 0, 2, 4, 3, 5, 6]]
+        bboxes_lidar[..., 1] *= -1
+        if to_bottom_center:
+            bboxes_lidar[..., 2] -= 0.5 * bboxes_lidar[..., 5]
+    else:
+        bboxes_lidar = None
+
+    return points_lidar, bboxes_lidar
+
+
+def box3d_to_corner3d_upright_depth(boxes3d):
+    """Convert box3d to corner3d in upright depth coordinate
+
+    Args:
+        boxes3d (Tensor): boxes with shape [n,7] in upright depth coordinate
+
+    Returns:
+        Tensor: boxes with [n, 8, 3] in upright depth coordinate
+    """
+    boxes_num = boxes3d.shape[0]
+    ry = boxes3d[:, 6:7]
+    l, w, h = boxes3d[:, 3:4], boxes3d[:, 4:5], boxes3d[:, 5:6]
+    zeros = boxes3d.new_zeros((boxes_num, 1))
+    ones = boxes3d.new_ones((boxes_num, 1))
+    # zeros = torch.cuda.FloatTensor(boxes_num, 1).fill_(0)
+    # ones = torch.cuda.FloatTensor(boxes_num, 1).fill_(1)
+    x_corners = torch.cat(
+        [-l / 2., l / 2., l / 2., -l / 2., -l / 2., l / 2., l / 2., -l / 2.],
+        dim=1)  # (N, 8)
+    y_corners = torch.cat(
+        [w / 2., w / 2., -w / 2., -w / 2., w / 2., w / 2., -w / 2., -w / 2.],
+        dim=1)  # (N, 8)
+    z_corners = torch.cat(
+        [h / 2., h / 2., h / 2., h / 2., -h / 2., -h / 2., -h / 2., -h / 2.],
+        dim=1)  # (N, 8)
+    temp_corners = torch.cat(
+        (x_corners.unsqueeze(dim=2), y_corners.unsqueeze(dim=2),
+         z_corners.unsqueeze(dim=2)),
+        dim=2)  # (N, 8, 3)
+
+    cosa, sina = torch.cos(-ry), torch.sin(-ry)
+    raw_1 = torch.cat([cosa, -sina, zeros], dim=1)  # (N, 3)
+    raw_2 = torch.cat([sina, cosa, zeros], dim=1)  # (N, 3)
+    raw_3 = torch.cat([zeros, zeros, ones], dim=1)  # (N, 3)
+    R = torch.cat((raw_1.unsqueeze(dim=1), raw_2.unsqueeze(dim=1),
+                   raw_3.unsqueeze(dim=1)),
+                  dim=1)  # (N, 3, 3)
+    rotated_corners = torch.matmul(temp_corners, R)  # (N, 8, 3)
+    x_corners = rotated_corners[:, :, 0]
+    y_corners = rotated_corners[:, :, 1]
+    z_corners = rotated_corners[:, :, 2]
+    x_loc, y_loc, z_loc = boxes3d[:, 0], boxes3d[:, 1], boxes3d[:, 2]
+
+    x = x_loc.view(-1, 1) + x_corners.view(-1, 8)
+    y = y_loc.view(-1, 1) + y_corners.view(-1, 8)
+    z = z_loc.view(-1, 1) + z_corners.view(-1, 8)
+    corners3d = torch.cat(
+        (x.view(-1, 8, 1), y.view(-1, 8, 1), z.view(-1, 8, 1)), dim=2)
+
+    return corners3d

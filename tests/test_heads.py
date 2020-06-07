@@ -170,3 +170,87 @@ def test_parta2_rpnhead_getboxes():
     assert result_list[0]['labels_3d'].shape == torch.Size([512])
     assert result_list[0]['cls_preds'].shape == torch.Size([512, 3])
     assert result_list[0]['boxes_3d'].shape == torch.Size([512, 7])
+
+
+def test_vote_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    from mmdet3d.models.dense_heads import VoteHead
+    bbox_head_cfg = dict(
+        num_classes=10,
+        bbox_coder=dict(
+            type='PartialBinBasedBBoxCoder',
+            num_sizes=10,
+            num_dir_bins=5,
+            with_rot=True,
+            mean_sizes=[[2.114256, 1.620300, 0.927272],
+                        [0.791118, 1.279516, 0.718182],
+                        [0.923508, 1.867419, 0.845495],
+                        [0.591958, 0.552978, 0.827272],
+                        [0.699104, 0.454178, 0.75625],
+                        [0.69519, 1.346299, 0.736364],
+                        [0.528526, 1.002642, 1.172878],
+                        [0.500618, 0.632163, 0.683424],
+                        [0.404671, 1.071108, 1.688889],
+                        [0.76584, 1.398258, 0.472728]]),
+        vote_moudule_cfg=dict(
+            in_channels=64,
+            vote_per_seed=1,
+            gt_per_seed=3,
+            conv_channels=(64, 64),
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            norm_feats=True,
+            vote_loss=dict(
+                type='ChamferDistance',
+                mode='l1',
+                reduction='none',
+                loss_dst_weight=10.0)),
+        vote_aggregation_cfg=dict(
+            num_point=256,
+            radius=0.3,
+            num_sample=16,
+            mlp_channels=[64, 32, 32, 32],
+            use_xyz=True,
+            normalize_xyz=True),
+        feat_channels=(64, 64),
+        conv_cfg=dict(type='Conv1d'),
+        norm_cfg=dict(type='BN1d'),
+        objectness_loss=dict(
+            type='CrossEntropyLoss',
+            class_weight=[0.2, 0.8],
+            reduction='sum',
+            loss_weight=5.0),
+        center_loss=dict(
+            type='ChamferDistance',
+            mode='l2',
+            reduction='sum',
+            loss_src_weight=10.0,
+            loss_dst_weight=10.0),
+        dir_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        dir_res_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+        size_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        size_res_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+        semantic_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0))
+
+    train_cfg = dict(
+        pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')
+
+    self = VoteHead(train_cfg=train_cfg, **bbox_head_cfg).cuda()
+    fp_xyz = [torch.rand([2, 64, 3], dtype=torch.float32).cuda()]
+    fp_features = [torch.rand([2, 64, 64], dtype=torch.float32).cuda()]
+    fp_indices = [torch.randint(0, 128, [2, 64]).cuda()]
+
+    input_dict = dict(
+        fp_xyz=fp_xyz, fp_features=fp_features, fp_indices=fp_indices)
+    # test forward
+    ret_dict = self(input_dict, 'vote')
+    assert ret_dict['center'].shape == torch.Size([2, 256, 3])
+    assert ret_dict['obj_scores'].shape == torch.Size([2, 256, 2])
+    assert ret_dict['size_res'].shape == torch.Size([2, 256, 10, 3])
+    assert ret_dict['dir_res'].shape == torch.Size([2, 256, 5])

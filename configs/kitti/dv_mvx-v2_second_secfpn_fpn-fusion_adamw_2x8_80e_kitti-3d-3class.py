@@ -255,13 +255,11 @@ optimizer = dict(type='AdamW', lr=0.003, betas=(0.95, 0.99), weight_decay=0.01)
 # max_norm=10 is better for SECOND
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(
-    policy='cosine',
+    policy='CosineAnealing',
     warmup='linear',
     warmup_iters=1000,
     warmup_ratio=1.0 / 10,
-    target_lr=1e-5,
-    as_ratio=True,
-)
+    min_lr_ratio=1e-5)
 momentum_config = None
 checkpoint_config = dict(interval=1)
 # yapf:disable
