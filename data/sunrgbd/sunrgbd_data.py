@@ -179,7 +179,8 @@ def extract_sunrgbd_data(idx_filename,
                 try:
                     # Find all points in this object's OBB
                     box3d_pts_3d = sunrgbd_utils.my_compute_box_3d(
-                        obj.centroid, np.array([obj.l, obj.w, obj.h]),
+                        obj.centroid,
+                        np.array([obj.length, obj.width, obj.height]),
                         obj.heading_angle)
                     pc_in_box3d, inds = sunrgbd_utils.extract_pc_in_box3d(
                         pc_upright_depth_subsampled, box3d_pts_3d)
