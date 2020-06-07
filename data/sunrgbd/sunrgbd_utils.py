@@ -11,8 +11,6 @@ Updated by Charles R. Qi
 Date: December, 2018
 Note: removed basis loading.
 '''
-import gzip
-import pickle
 
 import cv2
 import numpy as np
@@ -164,20 +162,6 @@ class SUNRGBD_Calibration(object):
             pts_3d_upright_depth)
 
 
-def rotx(t):
-    """Rotation about the x-axis."""
-    c = np.cos(t)
-    s = np.sin(t)
-    return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
-
-
-def roty(t):
-    """Rotation about the y-axis."""
-    c = np.cos(t)
-    s = np.sin(t)
-    return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
-
-
 def rotz(t):
     """Rotation about the z-axis."""
     c = np.cos(t)
@@ -190,16 +174,6 @@ def transform_from_rot_trans(R, t):
     R = R.reshape(3, 3)
     t = t.reshape(3, 1)
     return np.vstack((np.hstack([R, t]), [0, 0, 0, 1]))
-
-
-def inverse_rigid_trans(Tr):
-    """Inverse a rigid body transform matrix (3x4 as [R|t])
-        [R'|-R't; 0|1]
-    """
-    inv_Tr = np.zeros_like(Tr)  # 3x4
-    inv_Tr[0:3, 0:3] = np.transpose(Tr[0:3, 0:3])
-    inv_Tr[0:3, 3] = np.dot(-np.transpose(Tr[0:3, 0:3]), Tr[0:3, 3])
-    return inv_Tr
 
 
 def read_sunrgbd_label(label_filename):
@@ -220,23 +194,6 @@ def load_depth_points(depth_filename):
 def load_depth_points_mat(depth_filename):
     depth = sio.loadmat(depth_filename)['instance']
     return depth
-
-
-def random_shift_box2d(box2d, shift_ratio=0.1):
-    ''' Randomly shift box center, randomly scale width and height
-    '''
-    r = shift_ratio
-    xmin, ymin, xmax, ymax = box2d
-    h = ymax - ymin
-    w = xmax - xmin
-    cx = (xmin + xmax) / 2.0
-    cy = (ymin + ymax) / 2.0
-    cx2 = cx + w * r * (np.random.random() * 2 - 1)
-    cy2 = cy + h * r * (np.random.random() * 2 - 1)
-    h2 = h * (1 + np.random.random() * 2 * r - r)  # 0.9 to 1.1
-    w2 = w * (1 + np.random.random() * 2 * r - r)  # 0.9 to 1.1
-    return np.array(
-        [cx2 - w2 / 2.0, cy2 - h2 / 2.0, cx2 + w2 / 2.0, cy2 + h2 / 2.0])
 
 
 def in_hull(p, hull):
@@ -299,64 +256,3 @@ def compute_box_3d(obj, calib):
     corners_2d, _ = calib.project_upright_depth_to_image(
         np.transpose(corners_3d))
     return corners_2d, np.transpose(corners_3d)
-
-
-def compute_orientation_3d(obj, calib):
-    ''' Takes an object and a projection matrix (P) and projects the 3d
-        object orientation vector into the image plane.
-        Returns:
-            orientation_2d: (2,2) array in image coord.
-            orientation_3d: (2,3) array in depth coord.
-    '''
-
-    # orientation in object coordinate system
-    ori = obj.orientation
-    orientation_3d = np.array([[0, ori[0]], [0, ori[1]], [0, 0]])
-    center = obj.centroid
-    orientation_3d[0, :] = orientation_3d[0, :] + center[0]
-    orientation_3d[1, :] = orientation_3d[1, :] + center[1]
-    orientation_3d[2, :] = orientation_3d[2, :] + center[2]
-
-    # project orientation into the image plane
-    orientation_2d, _ = calib.project_upright_depth_to_image(
-        np.transpose(orientation_3d))
-    return orientation_2d, np.transpose(orientation_3d)
-
-
-def draw_projected_box3d(image, qs, color=(255, 255, 255), thickness=2):
-    ''' Draw 3d bounding box in image
-        qs: (8,2) array of vertices for the 3d box in following order:
-            1 -------- 0
-           /|         /|
-          2 -------- 3 .
-          | |        | |
-          . 5 -------- 4
-          |/         |/
-          6 -------- 7
-    '''
-    qs = qs.astype(np.int32)
-    for k in range(0, 4):
-        # http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html
-        i, j = k, (k + 1) % 4
-        cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color,
-                 thickness, cv2.CV_AA)  # use LINE_AA for opencv3
-
-        i, j = k + 4, (k + 1) % 4 + 4
-        cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color,
-                 thickness, cv2.CV_AA)
-
-        i, j = k, k + 4
-        cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color,
-                 thickness, cv2.CV_AA)
-    return image
-
-
-def save_zipped_pickle(obj, filename, protocol=-1):
-    with gzip.open(filename, 'wb') as f:
-        pickle.dump(obj, f, protocol)
-
-
-def load_zipped_pickle(filename):
-    with gzip.open(filename, 'rb') as f:
-        loaded_object = pickle.load(f)
-        return loaded_object
