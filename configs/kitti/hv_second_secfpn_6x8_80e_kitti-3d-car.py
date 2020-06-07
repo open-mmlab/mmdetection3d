@@ -10,11 +10,7 @@ model = dict(
         voxel_size=voxel_size,
         max_voxels=(16000, 40000),  # (training, testing) max_coxels
     ),
-    voxel_encoder=dict(
-        type='VoxelFeatureExtractorV3',
-        num_input_features=4,
-        num_filters=[4],
-        with_distance=False),
+    voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseEncoder',
         in_channels=4,
@@ -104,9 +100,21 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=15),
 )
+file_client_args = dict(backend='disk')
+# file_client_args = dict(
+#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+
 train_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=True,
+        with_label_3d=True,
+        file_client_args=file_client_args),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -126,7 +134,11 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
         type='DefaultFormatBundle3D',
