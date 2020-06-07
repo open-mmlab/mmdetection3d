@@ -14,9 +14,9 @@
 
 #ifndef INDICE_CU_H_
 #define INDICE_CU_H_
-#include <tensorview/tensorview.h>
-#include <tensorview/helper_kernel.cu.h>
 #include <spconv/geometry.h>
+#include <tensorview/helper_kernel.cu.h>
+#include <tensorview/tensorview.h>
 
 namespace spconv {
 template <typename Index, typename IndexGrid, unsigned NDim,
@@ -115,7 +115,6 @@ __global__ void assignGridAndIndiceOutKernel(
     int numAct, tv::TensorView<Index> indicePairs,
     tv::TensorView<Index> indicePairUnique,
     const tv::SimpleVector<Index, NDim> outSpatialShape, int batchSize) {
-
   Index index;
   auto indicesOutPtr = indicesOut.data();
   for (int ix : tv::KernelLoopX<int>(numAct)) {
@@ -128,13 +127,11 @@ __global__ void assignGridAndIndiceOutKernel(
 }
 
 template <typename Index, typename IndexGrid, unsigned NDim>
-__global__ void
-assignIndicePairsKernel(tv::TensorView<Index> indicesOut,
-                        tv::TensorView<IndexGrid> gridsOut, int numActIn,
-                        tv::TensorView<Index> indicePairs,
-                        tv::TensorView<Index> indicePairUnique,
-                        const tv::SimpleVector<Index, NDim> outSpatialShape) {
-
+__global__ void assignIndicePairsKernel(
+    tv::TensorView<Index> indicesOut, tv::TensorView<IndexGrid> gridsOut,
+    int numActIn, tv::TensorView<Index> indicePairs,
+    tv::TensorView<Index> indicePairUnique,
+    const tv::SimpleVector<Index, NDim> outSpatialShape) {
   Index index;
   int kernelVolume = indicePairs.dim(0);
   for (int ix : tv::KernelLoopX<int>(numActIn)) {
@@ -148,10 +145,9 @@ assignIndicePairsKernel(tv::TensorView<Index> indicesOut,
 }
 
 template <typename Index, typename IndexGrid, unsigned NDim>
-__global__ void
-prepareSubMGridKernel(tv::TensorView<const Index> indicesIn,
-                  tv::TensorView<IndexGrid> gridsOut,
-                  const tv::SimpleVector<Index, NDim> outSpatialShape) {
+__global__ void prepareSubMGridKernel(
+    tv::TensorView<const Index> indicesIn, tv::TensorView<IndexGrid> gridsOut,
+    const tv::SimpleVector<Index, NDim> outSpatialShape) {
   auto numActIn = indicesIn.dim(0);
   Index spatialVolume = 1;
 #pragma unroll
@@ -216,10 +212,9 @@ __global__ void resetGridKernel(const Index *indicePairUnique,
 }
 
 template <typename Index, typename IndexGrid, unsigned NDim>
-__global__ void
-resetGridSubMKernel(const Index *indices, tv::TensorView<IndexGrid> gridsOut,
-                    const tv::SimpleVector<Index, NDim> outSpatialShape,
-                    int numAct) {
+__global__ void resetGridSubMKernel(
+    const Index *indices, tv::TensorView<IndexGrid> gridsOut,
+    const tv::SimpleVector<Index, NDim> outSpatialShape, int numAct) {
   int outSpatialShapeReg[NDim];
   for (int i = 0; i < NDim; ++i) {
     outSpatialShapeReg[i] = outSpatialShape[i];
@@ -238,6 +233,6 @@ resetGridSubMKernel(const Index *indices, tv::TensorView<IndexGrid> gridsOut,
   }
 }
 
-} // namespace spconv
+}  // namespace spconv
 
 #endif

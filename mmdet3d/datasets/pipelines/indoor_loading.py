@@ -6,8 +6,8 @@ from mmdet.datasets.pipelines import LoadAnnotations
 
 
 @PIPELINES.register_module()
-class IndoorPointsColorNormalize(object):
-    """Indoor points color normalize
+class NormalizePointsColor(object):
+    """Normalize color of points
 
     Normalize color of the points.
 
@@ -45,9 +45,16 @@ class LoadPointsFromFile(object):
         use_dim (list[int]): Which dimensions of the points to be used.
             Default: [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension
+        file_client_args (dict): Config dict of file clients, refer to
+            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            for more details.
     """
 
-    def __init__(self, load_dim=6, use_dim=[0, 1, 2], shift_height=False):
+    def __init__(self,
+                 load_dim=6,
+                 use_dim=[0, 1, 2],
+                 shift_height=False,
+                 file_client_args=dict(backend='disk')):
         self.shift_height = shift_height
         if isinstance(use_dim, int):
             use_dim = list(range(use_dim))
@@ -56,13 +63,21 @@ class LoadPointsFromFile(object):
 
         self.load_dim = load_dim
         self.use_dim = use_dim
+        self.file_client_args = file_client_args.copy()
+        self.file_client = None
 
     def _load_points(self, pts_filename):
-        mmcv.check_file_exist(pts_filename)
-        if pts_filename.endswith('.npy'):
-            points = np.load(pts_filename)
-        else:
-            points = np.fromfile(pts_filename, dtype=np.float32)
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+        try:
+            pts_bytes = self.file_client.get(pts_filename)
+            points = np.frombuffer(pts_bytes, dtype=np.float32)
+        except ConnectionError:
+            mmcv.check_file_exist(pts_filename)
+            if pts_filename.endswith('.npy'):
+                points = np.load(pts_filename)
+            else:
+                points = np.fromfile(pts_filename, dtype=np.float32)
         return points
 
     def __call__(self, results):
@@ -113,6 +128,9 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to False.
         poly2mask (bool, optional): Whether to convert polygon annotations
             to bitmasks. Defaults to True.
+        file_client_args (dict): Config dict of file clients, refer to
+            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            for more details.
     """
 
     def __init__(self,
@@ -124,8 +142,15 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_label=False,
                  with_mask=False,
                  with_seg=False,
-                 poly2mask=True):
-        super().__init__(with_bbox, with_label, with_mask, with_seg, poly2mask)
+                 poly2mask=True,
+                 file_client_args=dict(backend='disk')):
+        super().__init__(
+            with_bbox,
+            with_label,
+            with_mask,
+            with_seg,
+            poly2mask,
+            file_client_args=file_client_args)
         self.with_bbox_3d = with_bbox_3d
         self.with_label_3d = with_label_3d
         self.with_mask_3d = with_mask_3d
@@ -142,16 +167,35 @@ class LoadAnnotations3D(LoadAnnotations):
 
     def _load_masks_3d(self, results):
         pts_instance_mask_path = results['ann_info']['pts_instance_mask_path']
-        mmcv.check_file_exist(pts_instance_mask_path)
-        pts_instance_mask = np.fromfile(pts_instance_mask_path, dtype=np.long)
+
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+        try:
+            mask_bytes = self.file_client.get(pts_instance_mask_path)
+            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int)
+        except ConnectionError:
+            mmcv.check_file_exist(pts_instance_mask_path)
+            pts_instance_mask = np.fromfile(
+                pts_instance_mask_path, dtype=np.long)
+
         results['pts_instance_mask'] = pts_instance_mask
         results['pts_mask_fields'].append(results['pts_instance_mask'])
         return results
 
     def _load_semantic_seg_3d(self, results):
         pts_semantic_mask_path = results['ann_info']['pts_semantic_mask_path']
-        mmcv.check_file_exist(pts_semantic_mask_path)
-        pts_semantic_mask = np.fromfile(pts_semantic_mask_path, dtype=np.long)
+
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+        try:
+            mask_bytes = self.file_client.get(pts_semantic_mask_path)
+            # add .copy() to fix read-only bug
+            pts_semantic_mask = np.frombuffer(mask_bytes, dtype=np.int).copy()
+        except ConnectionError:
+            mmcv.check_file_exist(pts_semantic_mask_path)
+            pts_semantic_mask = np.fromfile(
+                pts_semantic_mask_path, dtype=np.long)
+
         results['pts_semantic_mask'] = pts_semantic_mask
         results['pts_seg_fields'].append(results['pts_semantic_mask'])
         return results

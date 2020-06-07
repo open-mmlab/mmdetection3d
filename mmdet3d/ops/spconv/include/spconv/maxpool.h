@@ -16,29 +16,24 @@
 #define SPARSE_MAXPOOL_FUNCTOR_H_
 #include <tensorview/tensorview.h>
 
-namespace spconv
-{
-namespace functor
-{
+namespace spconv {
+namespace functor {
 template <typename Device, typename T, typename Index>
-struct SparseMaxPoolForwardFunctor
-{
-    void operator()(const Device& d, tv::TensorView<T> outFeatures,
+struct SparseMaxPoolForwardFunctor {
+  void operator()(const Device& d, tv::TensorView<T> outFeatures,
                   tv::TensorView<const T> inFeatures,
                   tv::TensorView<const Index> indices, int size);
 };
 
 template <typename Device, typename T, typename Index>
-struct SparseMaxPoolBackwardFunctor
-{
-    void operator()(const Device& d, tv::TensorView<const T> outFeatures,
+struct SparseMaxPoolBackwardFunctor {
+  void operator()(const Device& d, tv::TensorView<const T> outFeatures,
                   tv::TensorView<const T> inFeatures,
-                  tv::TensorView<const T> dout,
-                  tv::TensorView<T> din,
+                  tv::TensorView<const T> dout, tv::TensorView<T> din,
                   tv::TensorView<const Index> indices, int size);
 };
 
-} // namespace functor
-} // namespace spconv
+}  // namespace functor
+}  // namespace spconv
 
 #endif

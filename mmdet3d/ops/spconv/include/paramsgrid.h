@@ -18,13 +18,19 @@
 #include <vector>
 
 namespace detail {
-template <class T> int getTotalSize(std::vector<T> arg) { return arg.size(); }
+template <class T>
+int getTotalSize(std::vector<T> arg) {
+  return arg.size();
+}
 
 template <class T, class... TArgs>
 int getTotalSize(std::vector<T> arg, std::vector<TArgs>... args) {
   return arg.size() * getTotalSize(args...);
 }
-template <typename T> int getSize(std::vector<T> arg) { return arg.size(); }
+template <typename T>
+int getSize(std::vector<T> arg) {
+  return arg.size();
+}
 
 template <int Idx, class TT, class T>
 void assigner(TT &src, std::vector<int> counter, std::vector<T> &arg) {
@@ -37,7 +43,7 @@ void assigner(TT &src, std::vector<int> counter, std::vector<T> &arg,
   std::get<Idx>(src) = arg[counter[Idx]];
   assigner<Idx + 1>(src, counter, args...);
 }
-} // namespace detail
+}  // namespace detail
 template <class... TArgs>
 std::vector<std::tuple<TArgs...>> paramsGrid(std::vector<TArgs>... args) {
   int length = detail::getTotalSize(args...);

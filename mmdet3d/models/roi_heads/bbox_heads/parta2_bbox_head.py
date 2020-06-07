@@ -1,12 +1,13 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule, build_norm_layer, normal_init, xavier_init
+from mmcv.cnn import ConvModule, normal_init, xavier_init
 
 import mmdet3d.ops.spconv as spconv
 from mmdet3d.core import build_bbox_coder, multi_apply
 from mmdet3d.core.bbox import box_torch_ops
 from mmdet3d.models.builder import build_loss
+from mmdet3d.ops import make_sparse_convmodule
 from mmdet3d.ops.iou3d.iou3d_utils import (boxes3d_to_bev_torch_lidar, nms_gpu,
                                            nms_normal_gpu)
 from mmdet.models import HEADS
@@ -78,19 +79,18 @@ class PartA2BboxHead(nn.Module):
         assert down_conv_channels[-1] == shared_fc_channels[0]
 
         # init layers
-        block = self.post_act_block
-
         part_channel_last = part_in_channels
         part_conv = []
         for i, channel in enumerate(part_conv_channels):
             part_conv.append(
-                block(
+                make_sparse_convmodule(
                     part_channel_last,
                     channel,
                     3,
                     padding=1,
                     norm_cfg=norm_cfg,
-                    indice_key=f'rcnn_part{i}'))
+                    indice_key=f'rcnn_part{i}',
+                    conv_type='SubMConv3d'))
             part_channel_last = channel
         self.part_conv = spconv.SparseSequential(*part_conv)
 
@@ -98,13 +98,14 @@ class PartA2BboxHead(nn.Module):
         seg_conv = []
         for i, channel in enumerate(seg_conv_channels):
             seg_conv.append(
-                block(
+                make_sparse_convmodule(
                     seg_channel_last,
                     channel,
                     3,
                     padding=1,
                     norm_cfg=norm_cfg,
-                    indice_key=f'rcnn_seg{i}'))
+                    indice_key=f'rcnn_seg{i}',
+                    conv_type='SubMConv3d'))
             seg_channel_last = channel
         self.seg_conv = spconv.SparseSequential(*seg_conv)
 
@@ -114,26 +115,28 @@ class PartA2BboxHead(nn.Module):
         merge_conv = []
         for i, channel in enumerate(merge_conv_channels):
             merge_conv.append(
-                block(
+                make_sparse_convmodule(
                     merge_conv_channel_last,
                     channel,
                     3,
                     padding=1,
                     norm_cfg=norm_cfg,
-                    indice_key=f'rcnn_down0'))
+                    indice_key=f'rcnn_down0',
+                    conv_type='SubMConv3d'))
             merge_conv_channel_last = channel
 
         down_conv_channel_last = merge_conv_channel_last
         conv_down = []
         for i, channel in enumerate(down_conv_channels):
             conv_down.append(
-                block(
+                make_sparse_convmodule(
                     down_conv_channel_last,
                     channel,
                     3,
                     padding=1,
                     norm_cfg=norm_cfg,
-                    indice_key=f'rcnn_down1'))
+                    indice_key=f'rcnn_down1',
+                    conv_type='SubMConv3d'))
             down_conv_channel_last = channel
 
         self.conv_down.add_module('merge_conv',
@@ -227,69 +230,6 @@ class PartA2BboxHead(nn.Module):
                 xavier_init(m, distribution='uniform')
 
         normal_init(self.conv_reg[-1].conv, mean=0, std=0.001)
-
-    def post_act_block(self,
-                       in_channels,
-                       out_channels,
-                       kernel_size,
-                       indice_key,
-                       stride=1,
-                       padding=0,
-                       conv_type='subm',
-                       norm_cfg=None):
-        """Make post activate sparse convolution block.
-
-        Args:
-            in_channels (int): the number of input channels
-            out_channels (int): the number of out channels
-            kernel_size (int): kernel size of convolution
-            indice_key (str): the indice key used for sparse tensor
-            stride (int): the stride of convolution
-            padding (int or list[int]): the padding number of input
-            conv_type (str): conv type in 'subm', 'spconv' or 'inverseconv'
-            norm_cfg (dict[str]): config of normalization layer
-
-        Returns:
-            spconv.SparseSequential: post activate sparse convolution block.
-        """
-        # TODO: clean post_act_block by existing bottlnecks.
-        assert conv_type in ['subm', 'spconv', 'inverseconv']
-
-        if conv_type == 'subm':
-            m = spconv.SparseSequential(
-                spconv.SubMConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    bias=False,
-                    indice_key=indice_key),
-                build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True))
-        elif conv_type == 'spconv':
-            m = spconv.SparseSequential(
-                spconv.SparseConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    bias=False,
-                    indice_key=indice_key),
-                build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True))
-        elif conv_type == 'inverseconv':
-            m = spconv.SparseSequential(
-                spconv.SparseInverseConv3d(
-                    in_channels,
-                    out_channels,
-                    kernel_size,
-                    bias=False,
-                    indice_key=indice_key),
-                build_norm_layer(norm_cfg, out_channels)[1],
-                nn.ReLU(inplace=True))
-        else:
-            raise NotImplementedError
-        return m
 
     def forward(self, seg_feats, part_feats):
         # (B * N, out_x, out_y, out_z, 4)
