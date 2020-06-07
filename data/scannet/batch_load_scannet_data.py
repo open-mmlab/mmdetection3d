@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Modified from Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -10,6 +10,7 @@ Usage example: python ./batch_load_scannet_data.py
 import argparse
 import datetime
 import os
+import os.path as osp
 
 import numpy as np
 from load_scannet_data import export
@@ -22,15 +23,13 @@ OBJ_CLASS_IDS = np.array(
 
 def export_one_scan(scan_name, output_filename_prefix, max_num_point,
                     label_map_file, scannet_dir):
-    mesh_file = os.path.join(scannet_dir, scan_name,
-                             scan_name + '_vh_clean_2.ply')
-    agg_file = os.path.join(scannet_dir, scan_name,
-                            scan_name + '.aggregation.json')
-    seg_file = os.path.join(scannet_dir, scan_name,
-                            scan_name + '_vh_clean_2.0.010000.segs.json')
-    meta_file = os.path.join(
-        scannet_dir, scan_name, scan_name +
-        '.txt')  # includes axisAlignment info for the train set scans.
+    mesh_file = osp.join(scannet_dir, scan_name, scan_name + '_vh_clean_2.ply')
+    agg_file = osp.join(scannet_dir, scan_name,
+                        scan_name + '.aggregation.json')
+    seg_file = osp.join(scannet_dir, scan_name,
+                        scan_name + '_vh_clean_2.0.010000.segs.json')
+    # includes axisAlignment info for the train set scans.
+    meta_file = osp.join(scannet_dir, scan_name, f'{scan_name}.txt')
     mesh_vertices, semantic_labels, instance_labels, instance_bboxes, \
         instance2semantic = export(mesh_file, agg_file, seg_file,
                                    meta_file, label_map_file, None)
@@ -41,7 +40,7 @@ def export_one_scan(scan_name, output_filename_prefix, max_num_point,
     instance_labels = instance_labels[mask]
 
     num_instances = len(np.unique(instance_labels))
-    print('Num of instances: ', num_instances)
+    print(f'Num of instances: {num_instances}')
 
     bbox_mask = np.in1d(instance_bboxes[:, -1], OBJ_CLASS_IDS)
     instance_bboxes = instance_bboxes[bbox_mask, :]
@@ -54,16 +53,16 @@ def export_one_scan(scan_name, output_filename_prefix, max_num_point,
         semantic_labels = semantic_labels[choices]
         instance_labels = instance_labels[choices]
 
-    np.save(output_filename_prefix + '_vert.npy', mesh_vertices)
-    np.save(output_filename_prefix + '_sem_label.npy', semantic_labels)
-    np.save(output_filename_prefix + '_ins_label.npy', instance_labels)
-    np.save(output_filename_prefix + '_bbox.npy', instance_bboxes)
+    np.save(f'{output_filename_prefix}_vert.npy', mesh_vertices)
+    np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
+    np.save(f'{output_filename_prefix}_ins_label.npy', instance_labels)
+    np.save(f'{output_filename_prefix}_bbox.npy', instance_bboxes)
 
 
 def batch_export(max_num_point, output_folder, train_scan_names_file,
                  label_map_file, scannet_dir):
     if not os.path.exists(output_folder):
-        print('Creating new data folder: {}'.format(output_folder))
+        print(f'Creating new data folder: {output_folder}')
         os.mkdir(output_folder)
 
     train_scan_names = [line.rstrip() for line in open(train_scan_names_file)]
@@ -71,8 +70,8 @@ def batch_export(max_num_point, output_folder, train_scan_names_file,
         print('-' * 20 + 'begin')
         print(datetime.datetime.now())
         print(scan_name)
-        output_filename_prefix = os.path.join(output_folder, scan_name)
-        if os.path.isfile(output_filename_prefix + '_vert.npy'):
+        output_filename_prefix = osp.join(output_folder, scan_name)
+        if osp.isfile(f'{output_filename_prefix}_vert.npy'):
             print('File already exists. skipping.')
             print('-' * 20 + 'done')
             continue

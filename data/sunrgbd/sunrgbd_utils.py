@@ -34,9 +34,16 @@ class2type = {type2class[t]: t for t in type2class}
 
 
 def flip_axis_to_camera(pc):
-    ''' Flip X-right,Y-forward,Z-up to X-right,Y-down,Z-forward
-        Input and output are both (N,3) array
-    '''
+    """Flip axis to camera.
+
+    Flip X-right,Y-forward,Z-up to X-right,Y-down,Z-forward.
+
+    Args:
+        pc(ndarray): points in depth axis.
+
+    Return:
+        ndarray: points in camera  axis.
+    """
     pc2 = np.copy(pc)
     pc2[:, [0, 1, 2]] = pc2[:, [0, 2, 1]]  # cam X,Y,Z = depth X,-Z,Y
     pc2[:, 1] *= -1
