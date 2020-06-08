@@ -7,7 +7,8 @@ from .iou_calculators import (BboxOverlaps3D, BboxOverlapsNearest3D,
 from .samplers import (BaseSampler, CombinedSampler,
                        InstanceBalancedPosSampler, IoUBalancedNegSampler,
                        PseudoSampler, RandomSampler, SamplingResult)
-from .structures import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
+from .structures import (Box3DMode, CameraInstance3DBoxes,
+                         DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from .transforms import (bbox3d2result, bbox3d2roi,
                          box3d_to_corner3d_upright_depth,
                          boxes3d_to_bev_torch_lidar)
@@ -25,5 +26,5 @@ __all__ = [
     'BboxOverlapsNearest3D', 'BboxOverlaps3D', 'bbox_overlaps_nearest_3d',
     'bbox_overlaps_3d', 'Box3DMode', 'LiDARInstance3DBoxes',
     'CameraInstance3DBoxes', 'bbox3d2roi', 'bbox3d2result',
-    'box3d_to_corner3d_upright_depth'
+    'box3d_to_corner3d_upright_depth', 'DepthInstance3DBoxes'
 ]
