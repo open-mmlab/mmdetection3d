@@ -9,7 +9,7 @@ import torch
 from mmcv.utils import print_log
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import box_np_ops
+from ..core.bbox import Box3DMode, CameraInstance3DBoxes, box_np_ops
 from .custom_3d import Custom3DDataset
 from .utils import remove_dontcare
 
@@ -87,13 +87,14 @@ class KittiDataset(Custom3DDataset):
         # print(gt_names, len(loc))
         gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
                                       axis=1).astype(np.float32)
-        # this change gt_bboxes_3d to velodyne coordinates
-        gt_bboxes_3d = box_np_ops.box_camera_to_lidar(gt_bboxes_3d, rect,
-                                                      Trv2c)
+
+        # convert gt_bboxes_3d to velodyne coordinates
+        gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
+            Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
         gt_bboxes = annos['bbox']
 
         selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
-        gt_bboxes_3d = gt_bboxes_3d[selected].astype('float32')
+        # gt_bboxes_3d = gt_bboxes_3d[selected].astype('float32')
         gt_bboxes = gt_bboxes[selected].astype('float32')
         gt_names = gt_names[selected]
 

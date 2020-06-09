@@ -240,3 +240,22 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         lowest_of_top = torch.max(boxes1_top_height, boxes2_top_height)
         overlaps_h = torch.clamp(heighest_of_bottom - lowest_of_top, min=0)
         return overlaps_h
+
+    def convert_to(self, dst, rt_mat=None):
+        """Convert self to `dst` mode.
+
+        Args:
+            dst (BoxMode): the target Box mode
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+                matrix between different coordinates. Defaults to None.
+                The conversion from `src` coordinates to `dst` coordinates
+                usually comes along the change of sensors, e.g., from camera
+                to LiDAR. This requires a transformation matrix.
+
+        Returns:
+            BaseInstance3DBoxes:
+                The converted box of the same type in the `dst` mode.
+        """
+        from .box_3d_mode import Box3DMode
+        return Box3DMode.convert(
+            box=self, src=Box3DMode.CAM, dst=dst, rt_mat=rt_mat)
