@@ -133,6 +133,10 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
         self.tensor[:, 6] += angle
 
+        if self.tensor.shape[1] == 9:
+            # rotate velo vector
+            self.tensor[:, 7:9] = self.tensor[:, 7:9] @ rot_mat_T[:2, :2]
+
     def flip(self, bev_direction='horizontal'):
         """Flip the boxes in BEV along given BEV direction
 
@@ -173,3 +177,22 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                           & (self.tensor[:, 0] < box_range[2])
                           & (self.tensor[:, 1] < box_range[3]))
         return in_range_flags
+
+    def convert_to(self, dst, rt_mat=None):
+        """Convert self to `dst` mode.
+
+        Args:
+            dst (BoxMode): the target Box mode
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+                matrix between different coordinates. Defaults to None.
+                The conversion from `src` coordinates to `dst` coordinates
+                usually comes along the change of sensors, e.g., from camera
+                to LiDAR. This requires a transformation matrix.
+
+        Returns:
+            BaseInstance3DBoxes:
+                The converted box of the same type in the `dst` mode.
+        """
+        from .box_3d_mode import Box3DMode
+        return Box3DMode.convert(
+            box=self, src=Box3DMode.LIDAR, dst=dst, rt_mat=rt_mat)

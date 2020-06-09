@@ -213,6 +213,7 @@ lr_config = dict(
     min_lr_ratio=1e-5)
 momentum_config = None
 checkpoint_config = dict(interval=1)
+evaluation = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,

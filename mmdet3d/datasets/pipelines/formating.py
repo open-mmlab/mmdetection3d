@@ -1,6 +1,7 @@
 import numpy as np
 from mmcv.parallel import DataContainer as DC
 
+from mmdet3d.core.bbox import BaseInstance3DBoxes
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import to_tensor
 
@@ -39,9 +40,8 @@ class DefaultFormatBundle(object):
                 img = np.ascontiguousarray(results['img'].transpose(2, 0, 1))
                 results['img'] = DC(to_tensor(img), stack=True)
         for key in [
-                'proposals', 'gt_bboxes', 'gt_bboxes_3d', 'gt_bboxes_ignore',
-                'gt_labels', 'gt_labels_3d', 'pts_instance_mask',
-                'pts_semantic_mask'
+                'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
+                'gt_labels_3d', 'pts_instance_mask', 'pts_semantic_mask'
         ]:
             if key not in results:
                 continue
@@ -49,6 +49,14 @@ class DefaultFormatBundle(object):
                 results[key] = DC([to_tensor(res) for res in results[key]])
             else:
                 results[key] = DC(to_tensor(results[key]))
+        if 'gt_bboxes_3d' in results:
+            if isinstance(results['gt_bboxes_3d'], BaseInstance3DBoxes):
+                results['gt_bboxes_3d'] = DC(
+                    results['gt_bboxes_3d'], cpu_only=True)
+            else:
+                results['gt_bboxes_3d'] = DC(
+                    to_tensor(results['gt_bboxes_3d']))
+
         if 'gt_masks' in results:
             results['gt_masks'] = DC(results['gt_masks'], cpu_only=True)
         if 'gt_semantic_seg' in results:

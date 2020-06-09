@@ -168,6 +168,8 @@ class AnchorTrainMixin(object):
         labels = anchors.new_zeros(num_valid_anchors, dtype=torch.long)
         label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)
         if len(gt_bboxes) > 0:
+            if not isinstance(gt_bboxes, torch.Tensor):
+                gt_bboxes = gt_bboxes.tensor.to(anchors.device)
             assign_result = bbox_assigner.assign(anchors, gt_bboxes,
                                                  gt_bboxes_ignore, gt_labels)
             sampling_result = self.bbox_sampler.sample(assign_result, anchors,
