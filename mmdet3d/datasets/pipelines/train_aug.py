@@ -26,12 +26,8 @@ class RandomFlip3D(RandomFlip):
         self.sync_2d = sync_2d
 
     def random_flip_points(self, gt_bboxes_3d, points):
-        gt_bboxes_3d[:, 1] = -gt_bboxes_3d[:, 1]
-        gt_bboxes_3d[:, 6] = -gt_bboxes_3d[:, 6] + np.pi
+        gt_bboxes_3d.flip()
         points[:, 1] = -points[:, 1]
-        if gt_bboxes_3d.shape[1] == 9:
-            # flip velocitys at the same time
-            gt_bboxes_3d[:, 8] = -gt_bboxes_3d[:, 8]
         return gt_bboxes_3d, points
 
     def __call__(self, input_dict):
@@ -121,10 +117,13 @@ class ObjectSample(object):
             gt_bboxes_2d = input_dict['gt_bboxes']
             # Assume for now 3D & 2D bboxes are the same
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d, gt_labels_3d, gt_bboxes_2d=gt_bboxes_2d, img=img)
+                gt_bboxes_3d.tensor.numpy(),
+                gt_labels_3d,
+                gt_bboxes_2d=gt_bboxes_2d,
+                img=img)
         else:
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d, gt_labels_3d, img=None)
+                gt_bboxes_3d.tensor.numpy(), gt_labels_3d, img=None)
 
         if sampled_dict is not None:
             sampled_gt_bboxes_3d = sampled_dict['gt_bboxes_3d']
@@ -133,8 +132,9 @@ class ObjectSample(object):
 
             gt_labels_3d = np.concatenate([gt_labels_3d, sampled_gt_labels],
                                           axis=0)
-            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, sampled_gt_bboxes_3d
-                                           ]).astype(np.float32)
+            gt_bboxes_3d = gt_bboxes_3d.new_box(
+                np.concatenate(
+                    [gt_bboxes_3d.tensor.numpy(), sampled_gt_bboxes_3d]))
 
             points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
             # check the points dimension
@@ -178,14 +178,16 @@ class ObjectNoise(object):
         points = input_dict['points']
 
         # TODO: check this inplace function
+        numpy_box = gt_bboxes_3d.tensor.numpy()
         noise_per_object_v3_(
-            gt_bboxes_3d,
+            numpy_box,
             points,
             rotation_perturb=self.rot_uniform_noise,
             center_noise_std=self.loc_noise_std,
             global_random_rot_range=self.global_rot_range,
             num_try=self.num_try)
-        input_dict['gt_bboxes_3d'] = gt_bboxes_3d.astype('float32')
+
+        input_dict['gt_bboxes_3d'] = gt_bboxes_3d.new_box(numpy_box)
         input_dict['points'] = points
         return input_dict
 
@@ -212,7 +214,7 @@ class GlobalRotScale(object):
     def _trans_bbox_points(self, gt_boxes, points):
         noise_trans = np.random.normal(0, self.trans_normal_noise[0], 3).T
         points[:, :3] += noise_trans
-        gt_boxes[:, :3] += noise_trans
+        gt_boxes.translate(noise_trans)
         return gt_boxes, points, noise_trans
 
     def _rot_bbox_points(self, gt_boxes, points, rotation=np.pi / 4):
@@ -221,16 +223,8 @@ class GlobalRotScale(object):
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
         points[:, :3], rot_mat_T = box_np_ops.rotation_points_single_angle(
             points[:, :3], noise_rotation, axis=2)
-        gt_boxes[:, :3], _ = box_np_ops.rotation_points_single_angle(
-            gt_boxes[:, :3], noise_rotation, axis=2)
-        gt_boxes[:, 6] += noise_rotation
-        if gt_boxes.shape[1] == 9:
-            # rotate velo vector
-            rot_cos = np.cos(noise_rotation)
-            rot_sin = np.sin(noise_rotation)
-            rot_mat_T_bev = np.array([[rot_cos, -rot_sin], [rot_sin, rot_cos]],
-                                     dtype=points.dtype)
-            gt_boxes[:, 7:9] = gt_boxes[:, 7:9] @ rot_mat_T_bev
+        gt_boxes.rotate(noise_rotation)
+
         return gt_boxes, points, rot_mat_T
 
     def _scale_bbox_points(self,
@@ -240,9 +234,7 @@ class GlobalRotScale(object):
                            max_scale=1.05):
         noise_scale = np.random.uniform(min_scale, max_scale)
         points[:, :3] *= noise_scale
-        gt_boxes[:, :6] *= noise_scale
-        if gt_boxes.shape[1] == 9:
-            gt_boxes[:, 7:] *= noise_scale
+        gt_boxes.scale(noise_scale)
         return gt_boxes, points, noise_scale
 
     def __call__(self, input_dict):
@@ -256,7 +248,7 @@ class GlobalRotScale(object):
         gt_bboxes_3d, points, trans_factor = self._trans_bbox_points(
             gt_bboxes_3d, points)
 
-        input_dict['gt_bboxes_3d'] = gt_bboxes_3d.astype('float32')
+        input_dict['gt_bboxes_3d'] = gt_bboxes_3d
         input_dict['points'] = points
         input_dict['pcd_scale_factor'] = scale_factor
         input_dict['pcd_rotation'] = rotation_factor
@@ -291,10 +283,6 @@ class ObjectRangeFilter(object):
         self.bev_range = self.pcd_range[[0, 1, 3, 4]]
 
     @staticmethod
-    def limit_period(val, offset=0.5, period=np.pi):
-        return val - np.floor(val / period + offset) * period
-
-    @staticmethod
     def filter_gt_box_outside_range(gt_bboxes_3d, limit_range):
         """remove gtbox outside training range.
         this function should be applied after other prep functions
@@ -314,14 +302,13 @@ class ObjectRangeFilter(object):
     def __call__(self, input_dict):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
-        mask = self.filter_gt_box_outside_range(gt_bboxes_3d, self.bev_range)
+        mask = gt_bboxes_3d.in_range_bev(self.bev_range)
         gt_bboxes_3d = gt_bboxes_3d[mask]
         gt_labels_3d = gt_labels_3d[mask]
 
         # limit rad to [-pi, pi]
-        gt_bboxes_3d[:, 6] = self.limit_period(
-            gt_bboxes_3d[:, 6], offset=0.5, period=2 * np.pi)
-        input_dict['gt_bboxes_3d'] = gt_bboxes_3d.astype('float32')
+        gt_bboxes_3d.limit_yaw(offset=0.5, period=2 * np.pi)
+        input_dict['gt_bboxes_3d'] = gt_bboxes_3d
         input_dict['gt_labels_3d'] = gt_labels_3d
 
         return input_dict
