@@ -192,6 +192,7 @@ momentum_config = dict(
     step_ratio_up=0.4,
 )
 checkpoint_config = dict(interval=1)
+evaluation = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,

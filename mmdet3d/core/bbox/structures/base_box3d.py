@@ -199,6 +199,24 @@ class BaseInstance3DBoxes(object):
         """
         pass
 
+    @abstractmethod
+    def convert_to(self, dst, rt_mat=None):
+        """Convert self to `dst` mode.
+
+        Args:
+            dst (BoxMode): the target Box mode
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+                matrix between different coordinates. Defaults to None.
+                The conversion from `src` coordinates to `dst` coordinates
+                usually comes along the change of sensors, e.g., from camera
+                to LiDAR. This requires a transformation matrix.
+
+        Returns:
+            BaseInstance3DBoxes:
+                The converted box of the same type in the `dst` mode.
+        """
+        pass
+
     def scale(self, scale_factor):
         """Scale the box with horizontal and vertical scaling factors
 
