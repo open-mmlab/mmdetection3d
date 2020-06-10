@@ -8,7 +8,7 @@ from ..builder import build_head, build_roi_extractor
 from .base_3droi_head import Base3DRoIHead
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class PartAggregationROIHead(Base3DRoIHead):
     """Part aggregation roi head for PartA2"""
 
@@ -174,7 +174,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             cur_proposal_list = proposal_list[batch_idx]
             cur_boxes = cur_proposal_list['boxes_3d']
             cur_labels_3d = cur_proposal_list['labels_3d']
-            cur_gt_bboxes = gt_bboxes_3d[batch_idx]
+            cur_gt_bboxes = gt_bboxes_3d[batch_idx].to(cur_boxes.device)
             cur_gt_labels = gt_labels_3d[batch_idx]
 
             batch_num_gts = 0
@@ -189,7 +189,7 @@ class PartAggregationROIHead(Base3DRoIHead):
                     pred_per_cls = (cur_labels_3d == i)
                     cur_assign_res = assigner.assign(
                         cur_boxes[pred_per_cls],
-                        cur_gt_bboxes[gt_per_cls],
+                        cur_gt_bboxes.tensor[gt_per_cls],
                         gt_labels=cur_gt_labels[gt_per_cls])
                     # gather assign_results in different class into one result
                     batch_num_gts += cur_assign_res.num_gts
@@ -215,11 +215,11 @@ class PartAggregationROIHead(Base3DRoIHead):
                                              batch_gt_labels)
             else:  # for single class
                 assign_result = self.bbox_assigner.assign(
-                    cur_boxes, cur_gt_bboxes, gt_labels=cur_gt_labels)
+                    cur_boxes, cur_gt_bboxes.tensor, gt_labels=cur_gt_labels)
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes,
-                                                       cur_gt_bboxes,
+                                                       cur_gt_bboxes.tensor,
                                                        cur_gt_labels)
             sampling_results.append(sampling_result)
         return sampling_results
