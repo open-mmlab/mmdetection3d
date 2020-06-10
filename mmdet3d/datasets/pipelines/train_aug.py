@@ -304,7 +304,11 @@ class ObjectRangeFilter(object):
         gt_labels_3d = input_dict['gt_labels_3d']
         mask = gt_bboxes_3d.in_range_bev(self.bev_range)
         gt_bboxes_3d = gt_bboxes_3d[mask]
-        gt_labels_3d = gt_labels_3d[mask]
+        # mask is a torch tensor but gt_labels_3d is still numpy array
+        # using mask to index gt_labels_3d will cause bug when
+        # len(gt_labels_3d) == 1, where mask=1 will be interpreted
+        # as gt_labels_3d[1] and cause out of index error
+        gt_labels_3d = gt_labels_3d[mask.numpy().astype(np.bool)]
 
         # limit rad to [-pi, pi]
         gt_bboxes_3d.limit_yaw(offset=0.5, period=2 * np.pi)
