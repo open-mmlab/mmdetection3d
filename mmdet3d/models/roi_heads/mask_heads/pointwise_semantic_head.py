@@ -5,7 +5,6 @@ import torch.nn.functional as F
 from mmdet3d.core import multi_apply
 from mmdet3d.core.bbox import box_torch_ops
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops.roiaware_pool3d import points_in_boxes_gpu
 from mmdet.models import HEADS
 
 
@@ -14,7 +13,7 @@ class PointwiseSemanticHead(nn.Module):
     """Semantic segmentation head for point-wise segmentation.
 
     Predict point-wise segmentation and part regression results for PartA2.
-    See https://arxiv.org/abs/1907.03670 for more detials.
+    See `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
 
     Args:
         in_channels (int): the number of input channel.
@@ -65,28 +64,27 @@ class PointwiseSemanticHead(nn.Module):
             seg_preds=seg_preds, part_preds=part_preds, part_feats=part_feats)
 
     def get_targets_single(self, voxel_centers, gt_bboxes_3d, gt_labels_3d):
-        """generate segmentation and part prediction targets
+        """generate segmentation and part prediction targets for a single sample
 
         Args:
             voxel_centers (torch.Tensor): shape [voxel_num, 3],
                 the center of voxels
-            gt_bboxes_3d (torch.Tensor): shape [box_num, 7], gt boxes
+            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt boxes containing tensor
+                of shape [box_num, 7].
             gt_labels_3d (torch.Tensor): shape [box_num], class label of gt
 
         Returns:
             tuple : segmentation targets with shape [voxel_num]
                 part prediction targets with shape [voxel_num, 3]
         """
-        enlarged_gt_boxes = box_torch_ops.enlarge_box3d_lidar(
-            gt_bboxes_3d, extra_width=self.extra_width)
+        gt_bboxes_3d = gt_bboxes_3d.to(voxel_centers.device)
+        enlarged_gt_boxes = gt_bboxes_3d.enlarged_box(self.extra_width)
+
         part_targets = voxel_centers.new_zeros((voxel_centers.shape[0], 3),
                                                dtype=torch.float32)
-        box_idx = points_in_boxes_gpu(
-            voxel_centers.unsqueeze(0),
-            gt_bboxes_3d.unsqueeze(0)).squeeze(0)  # -1 ~ box_num
-        enlarge_box_idx = points_in_boxes_gpu(
-            voxel_centers.unsqueeze(0),
-            enlarged_gt_boxes.unsqueeze(0)).squeeze(0).long()  # -1 ~ box_num
+        box_idx = gt_bboxes_3d.points_in_boxes(voxel_centers)
+        enlarge_box_idx = enlarged_gt_boxes.points_in_boxes(
+            voxel_centers).long()
 
         gt_labels_pad = F.pad(
             gt_labels_3d, (1, 0), mode='constant', value=self.num_classes)
@@ -95,24 +93,37 @@ class PointwiseSemanticHead(nn.Module):
         ignore_flag = fg_pt_flag ^ (enlarge_box_idx > -1)
         seg_targets[ignore_flag] = -1
 
-        for k in range(gt_bboxes_3d.shape[0]):
+        for k in range(len(gt_bboxes_3d)):
             k_box_flag = box_idx == k
             # no point in current box (caused by velodyne reduce)
             if not k_box_flag.any():
                 continue
             fg_voxels = voxel_centers[k_box_flag]
-            transformed_voxels = fg_voxels - gt_bboxes_3d[k, 0:3]
+            transformed_voxels = fg_voxels - gt_bboxes_3d.bottom_center[k]
             transformed_voxels = box_torch_ops.rotation_3d_in_axis(
                 transformed_voxels.unsqueeze(0),
-                -gt_bboxes_3d[k, 6].view(1),
+                -gt_bboxes_3d.yaw[k].view(1),
                 axis=2)
-            part_targets[k_box_flag] = transformed_voxels / gt_bboxes_3d[
-                k, 3:6] + voxel_centers.new_tensor([0.5, 0.5, 0])
+            part_targets[k_box_flag] = transformed_voxels / gt_bboxes_3d.dims[
+                k] + voxel_centers.new_tensor([0.5, 0.5, 0])
 
         part_targets = torch.clamp(part_targets, min=0)
         return seg_targets, part_targets
 
     def get_targets(self, voxels_dict, gt_bboxes_3d, gt_labels_3d):
+        """generate segmentation and part prediction targets
+
+        Args:
+            voxel_centers (torch.Tensor): shape [voxel_num, 3],
+                the center of voxels
+            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): list of gt boxes
+                containing tensor of shape [box_num, 7].
+            gt_labels_3d (list[torch.Tensor]): list of GT labels.
+
+        Returns:
+            tuple : segmentation targets with shape [voxel_num]
+                part prediction targets with shape [voxel_num, 3]
+        """
         batch_size = len(gt_labels_3d)
         voxel_center_list = []
         for idx in range(batch_size):

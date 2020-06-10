@@ -10,15 +10,24 @@ from .utils import limit_period, xywhr2xyxyr
 class BaseInstance3DBoxes(object):
     """Base class for 3D Boxes
 
+    Note:
+        The box is bottom centered, i.e. the relative position of origin in
+            the box is [0.5, 0.5, 0].
+
     Args:
-        tensor (torch.Tensor | np.ndarray): a Nxbox_dim matrix.
+        tensor (torch.Tensor | np.ndarray | list): a Nxbox_dim matrix.
         box_dim (int): number of the dimension of a box
-        Each row is (x, y, z, x_size, y_size, z_size, yaw).
-        with_yaw (bool): if True, the value of yaw will be
-        set to 0 as minmax boxes.
+            Each row is (x, y, z, x_size, y_size, z_size, yaw).
+            Default to 7.
+        with_yaw (bool): Whether the box is with yaw rotation.
+            If False, the value of yaw will be set to 0 as minmax boxes.
+            Default to True.
+        origin (tuple): The relative position of origin in the box.
+            Default to [0.5, 0.5, 0]. This will guide the box be converted to
+            [0.5, 0.5, 0] mode.
     """
 
-    def __init__(self, tensor, box_dim=7, with_yaw=True):
+    def __init__(self, tensor, box_dim=7, with_yaw=True, origin=[0.5, 0.5, 0]):
         if isinstance(tensor, torch.Tensor):
             device = tensor.device
         else:
@@ -41,6 +50,11 @@ class BaseInstance3DBoxes(object):
         self.with_yaw = with_yaw
         self.tensor = tensor
 
+        if origin != [0.5, 0.5, 0]:
+            dst = self.tensor.new_tensor([0.5, 0.5, 0])
+            src = self.tensor.new_tensor(origin)
+            self.tensor[:, :3] += self.tensor[:, 3:6] * (dst - src)
+
     @property
     def volume(self):
         """Computes the volume of all the boxes.
@@ -62,11 +76,20 @@ class BaseInstance3DBoxes(object):
         return self.tensor[:, 3:6]
 
     @property
+    def yaw(self):
+        """Obtain the rotation of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with yaw of each box.
+        """
+        return self.tensor[:, 6]
+
+    @property
     def height(self):
         """Obtain the height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with volume of each box.
+            torch.Tensor: a vector with height of each box.
         """
         return self.tensor[:, 5]
 
@@ -438,7 +461,8 @@ class BaseInstance3DBoxes(object):
             BaseInstance3DBoxes: A new bbox with data and other
                 properties are similar to self.
         """
-        new_tensor = self.tensor.new_tensor(data)
+        new_tensor = self.tensor.new_tensor(data) \
+            if not isinstance(data, torch.Tensor) else data.to(self.device)
         original_type = type(self)
         return original_type(
             new_tensor, box_dim=self.box_dim, with_yaw=self.with_yaw)
