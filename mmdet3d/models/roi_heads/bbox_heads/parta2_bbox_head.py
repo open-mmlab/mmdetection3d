@@ -121,8 +121,7 @@ class PartA2BboxHead(nn.Module):
                     3,
                     padding=1,
                     norm_cfg=norm_cfg,
-                    indice_key=f'rcnn_down0',
-                    conv_type='SubMConv3d'))
+                    indice_key='rcnn_down0'))
             merge_conv_channel_last = channel
 
         down_conv_channel_last = merge_conv_channel_last
@@ -135,8 +134,7 @@ class PartA2BboxHead(nn.Module):
                     3,
                     padding=1,
                     norm_cfg=norm_cfg,
-                    indice_key=f'rcnn_down1',
-                    conv_type='SubMConv3d'))
+                    indice_key='rcnn_down1'))
             down_conv_channel_last = channel
 
         self.conv_down.add_module('merge_conv',

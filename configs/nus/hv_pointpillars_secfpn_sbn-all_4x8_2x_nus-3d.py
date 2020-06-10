@@ -15,8 +15,8 @@ model = dict(
     ),
     pts_voxel_encoder=dict(
         type='HardVFE',
-        num_input_features=4,
-        num_filters=[64, 64],
+        in_channels=4,
+        feat_channels=[64, 64],
         with_distance=False,
         voxel_size=voxel_size,
         with_cluster_center=True,
@@ -85,9 +85,7 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2),
-    ),
-)
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
 # model training and testing settings
 train_cfg = dict(
     pts=dict(
@@ -138,10 +136,23 @@ db_sampler = dict(
         trailer=4,
         truck=4,
     ))
-
+file_client_args = dict(backend='disk')
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/nuscenes/': 's3://nuscenes/nuscenes/',
+#         'data/nuscenes/': 's3://nuscenes/nuscenes/'
+#     }))
 train_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
-    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScale',
@@ -156,8 +167,15 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
-    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='RandomFlip3D', flip_ratio=0),
     dict(

@@ -10,8 +10,8 @@ model = dict(
     ),
     voxel_encoder=dict(
         type='PillarFeatureNet',
-        num_input_features=4,
-        num_filters=[64],
+        in_channels=4,
+        feat_channels=[64],
         with_distance=False,
         # these two arguments should be consistent with the voxel_generator
         voxel_size=[0.16, 0.16, 4],
@@ -192,6 +192,7 @@ momentum_config = dict(
     step_ratio_up=0.4,
 )
 checkpoint_config = dict(interval=1)
+evaluation = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,

@@ -1,11 +1,11 @@
 import torch
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
-from mmcv.runner import DistSamplerSeedHook, Runner
+from mmcv.runner import DistSamplerSeedHook, Runner, build_optimizer
 
 from mmdet3d.utils import get_root_logger
 from mmdet.apis.train import parse_losses
 from mmdet.core import (DistEvalHook, DistOptimizerHook, EvalHook,
-                        Fp16OptimizerHook, build_optimizer)
+                        Fp16OptimizerHook)
 from mmdet.datasets import build_dataloader, build_dataset
 
 

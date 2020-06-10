@@ -1,27 +1,26 @@
 import numpy as np
 import torch
 
-from mmdet3d.ops.roiaware_pool3d import points_in_boxes_gpu
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
 
-class LiDARInstance3DBoxes(BaseInstance3DBoxes):
-    """3D boxes of instances in LIDAR coordinates
+class DepthInstance3DBoxes(BaseInstance3DBoxes):
+    """3D boxes of instances in Depth coordinates
 
-    Coordinates in LiDAR:
+    Coordinates in Depth:
     .. code-block:: none
 
-                            up z    x front (yaw=0.5*pi)
-                               ^   ^
-                               |  /
-                               | /
-       (yaw=pi) left y <------ 0
+                    up z    y front (yaw=0.5*pi)
+                       ^   ^
+                       |  /
+                       | /
+                       0 ------> x right (yaw=0)
 
-    The relative coordinate of bottom center in a LiDAR box is [0.5, 0.5, 0],
+    The relative coordinate of bottom center in a Depth box is [0.5, 0.5, 0],
     and the yaw is around the z axis, thus the rotation axis=2.
-    The yaw is 0 at the negative direction of y axis, and increases from
-    the negative direction of y to the positive direction of x.
+    The yaw is 0 at the positive direction of x axis, and increases from
+    the positive direction of x to the positive direction of y.
 
     Attributes:
         tensor (torch.Tensor): float matrix of N x box_dim.
@@ -54,17 +53,17 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         .. code-block:: none
 
                                            up z
-                            front x           ^
+                            front y           ^
                                  /            |
                                 /             |
-                  (x1, y0, z1) + -----------  + (x1, y1, z1)
+                  (x0, y1, z1) + -----------  + (x1, y1, z1)
                               /|            / |
                              / |           /  |
                (x0, y0, z1) + ----------- +   + (x1, y1, z0)
                             |  /      .   |  /
                             | / oriign    | /
-            left y<-------- + ----------- + (x0, y1, z0)
-                (x0, y0, z0)
+               (x0, y0, z0) + ----------- + --------> right x
+                                          (x1, y0, z0)
 
         Returns:
             torch.Tensor: corners of each box with size (N, 8, 3)
@@ -128,31 +127,36 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             angle = self.tensor.new_tensor(angle)
         rot_sin = torch.sin(angle)
         rot_cos = torch.cos(angle)
-        rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
-                                            [rot_sin, rot_cos, 0], [0, 0, 1]])
-
-        self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
-        self.tensor[:, 6] += angle
-
-        if self.tensor.shape[1] == 9:
-            # rotate velo vector
-            self.tensor[:, 7:9] = self.tensor[:, 7:9] @ rot_mat_T[:2, :2]
+        rot_mat = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
+                                          [rot_sin, rot_cos, 0], [0, 0, 1]])
+        self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat.T
+        if self.with_yaw:
+            self.tensor[:, 6] -= angle
+        else:
+            corners_rot = self.corners @ rot_mat.T
+            new_x_size = corners_rot[..., 0].max(
+                dim=1, keepdim=True)[0] - corners_rot[..., 0].min(
+                    dim=1, keepdim=True)[0]
+            new_y_size = corners_rot[..., 1].max(
+                dim=1, keepdim=True)[0] - corners_rot[..., 1].min(
+                    dim=1, keepdim=True)[0]
+            self.tensor[:, 3:5] = torch.cat((new_x_size, new_y_size), dim=-1)
 
     def flip(self, bev_direction='horizontal'):
         """Flip the boxes in BEV along given BEV direction
 
-        In LIDAR coordinates, it flips the y (horizontal) or x (vertical) axis.
+        In Depth coordinates, it flips x (horizontal) or y (vertical) axis.
 
         Args:
             bev_direction (str): Flip direction (horizontal or vertical).
         """
         assert bev_direction in ('horizontal', 'vertical')
         if bev_direction == 'horizontal':
-            self.tensor[:, 1::7] = -self.tensor[:, 1::7]
+            self.tensor[:, 0::7] = -self.tensor[:, 0::7]
             if self.with_yaw:
                 self.tensor[:, 6] = -self.tensor[:, 6] + np.pi
         elif bev_direction == 'vertical':
-            self.tensor[:, 0::7] = -self.tensor[:, 0::7]
+            self.tensor[:, 1::7] = -self.tensor[:, 1::7]
             if self.with_yaw:
                 self.tensor[:, 6] = -self.tensor[:, 6]
 
@@ -196,33 +200,4 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
-            box=self, src=Box3DMode.LIDAR, dst=dst, rt_mat=rt_mat)
-
-    def enlarged_box(self, extra_width):
-        """Enlarge the length, width and height boxes
-
-        Args:
-            extra_width (float | torch.Tensor): extra width to enlarge the box
-
-        Returns:
-            :obj:LiDARInstance3DBoxes: enlarged boxes
-        """
-        enlarged_boxes = self.tensor.clone()
-        enlarged_boxes[:, 3:6] += extra_width * 2
-        # bottom center z minus extra_width
-        enlarged_boxes[:, 2] -= extra_width
-        return self.new_box(enlarged_boxes)
-
-    def points_in_boxes(self, points):
-        """Find the box which the points are in.
-
-        Args:
-            points (:obj:torch.Tensor): Points in shape Nx3
-
-        Returns:
-            torch.Tensor: The index of box where each point are in.
-        """
-        box_idx = points_in_boxes_gpu(
-            points.unsqueeze(0),
-            self.tensor.unsqueeze(0).to(points.device)).squeeze(0)
-        return box_idx
+            box=self, src=Box3DMode.DEPTH, dst=dst, rt_mat=rt_mat)

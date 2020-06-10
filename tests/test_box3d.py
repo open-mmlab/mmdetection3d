@@ -3,7 +3,7 @@ import pytest
 import torch
 
 from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
-                               LiDARInstance3DBoxes)
+                               DepthInstance3DBoxes, LiDARInstance3DBoxes)
 
 
 def test_lidar_boxes3d():
@@ -12,6 +12,46 @@ def test_lidar_boxes3d():
     boxes = LiDARInstance3DBoxes(empty_boxes)
     assert boxes.tensor.shape[0] == 0
     assert boxes.tensor.shape[1] == 7
+
+    # Test init with origin
+    gravity_center_box = np.array(
+        [[
+            -5.24223238e+00, 4.00209696e+01, 2.97570381e-01, 2.06200000e+00,
+            4.40900000e+00, 1.54800000e+00, -1.48801203e+00
+        ],
+         [
+             -2.66751588e+01, 5.59499564e+00, -9.14345860e-01, 3.43000000e-01,
+             4.58000000e-01, 7.82000000e-01, -4.62759755e+00
+         ],
+         [
+             -5.80979675e+00, 3.54092357e+01, 2.00889888e-01, 2.39600000e+00,
+             3.96900000e+00, 1.73200000e+00, -4.65203216e+00
+         ],
+         [
+             -3.13086877e+01, 1.09007628e+00, -1.94612112e-01, 1.94400000e+00,
+             3.85700000e+00, 1.72300000e+00, -2.81427027e+00
+         ]],
+        dtype=np.float32)
+    bottom_center_box = LiDARInstance3DBoxes(
+        gravity_center_box, origin=[0.5, 0.5, 0.5])
+    expected_tensor = torch.tensor(
+        [[
+            -5.24223238e+00, 4.00209696e+01, -4.76429619e-01, 2.06200000e+00,
+            4.40900000e+00, 1.54800000e+00, -1.48801203e+00
+        ],
+         [
+             -2.66751588e+01, 5.59499564e+00, -1.30534586e+00, 3.43000000e-01,
+             4.58000000e-01, 7.82000000e-01, -4.62759755e+00
+         ],
+         [
+             -5.80979675e+00, 3.54092357e+01, -6.65110112e-01, 2.39600000e+00,
+             3.96900000e+00, 1.73200000e+00, -4.65203216e+00
+         ],
+         [
+             -3.13086877e+01, 1.09007628e+00, -1.05611211e+00, 1.94400000e+00,
+             3.85700000e+00, 1.72300000e+00, -2.81427027e+00
+         ]])
+    assert torch.allclose(expected_tensor, bottom_center_box.tensor)
 
     # Test init with numpy array
     np_boxes = np.array(
@@ -70,8 +110,18 @@ def test_lidar_boxes3d():
          [28.2967, 0.5557558, -1.303325, 1.47, 2.23, 1.48, 4.7115927],
          [26.66902, -21.82302, -1.736057, 1.56, 3.48, 1.4, 4.8315926],
          [31.31978, -8.162144, -1.6217787, 1.74, 3.77, 1.48, 0.35159278]])
-    boxes.flip()
+    boxes.flip('horizontal')
     assert torch.allclose(boxes.tensor, expected_tensor)
+
+    expected_tensor = torch.tensor(
+        [[-1.7802, -2.5162, -1.7501, 1.7500, 3.3900, 1.6500, -1.6616],
+         [-8.9594, -2.4567, -1.6357, 1.5400, 4.0100, 1.5700, -1.5216],
+         [-28.2967, 0.5558, -1.3033, 1.4700, 2.2300, 1.4800, -4.7116],
+         [-26.6690, -21.8230, -1.7361, 1.5600, 3.4800, 1.4000, -4.8316],
+         [-31.3198, -8.1621, -1.6218, 1.7400, 3.7700, 1.4800, -0.3516]])
+    boxes_flip_vert = boxes.clone()
+    boxes_flip_vert.flip('vertical')
+    assert torch.allclose(boxes_flip_vert.tensor, expected_tensor, 1e-4)
 
     # test box rotation
     expected_tensor = torch.tensor(
@@ -223,7 +273,7 @@ def test_lidar_boxes3d():
                                     [27.3398, -18.3976, 29.0896, -14.6065]])
     # the pytorch print loses some precision
     assert torch.allclose(
-        boxes.nearset_bev, expected_tensor, rtol=1e-4, atol=1e-7)
+        boxes.nearest_bev, expected_tensor, rtol=1e-4, atol=1e-7)
 
     # obtained by the print of the original implementation
     expected_tensor = torch.tensor([[[2.4093e+00, -4.4784e+00, -1.9169e+00],
@@ -269,6 +319,25 @@ def test_lidar_boxes3d():
     # the pytorch print loses some precision
     assert torch.allclose(boxes.corners, expected_tensor, rtol=1e-4, atol=1e-7)
 
+    # test new_box
+    new_box1 = boxes.new_box([[1, 2, 3, 4, 5, 6, 7]])
+    assert torch.allclose(
+        new_box1.tensor,
+        torch.tensor([[1, 2, 3, 4, 5, 6, 7]], dtype=boxes.tensor.dtype))
+    assert new_box1.device == boxes.device
+    assert new_box1.with_yaw == boxes.with_yaw
+    assert new_box1.box_dim == boxes.box_dim
+
+    new_box2 = boxes.new_box(np.array([[1, 2, 3, 4, 5, 6, 7]]))
+    assert torch.allclose(
+        new_box2.tensor,
+        torch.tensor([[1, 2, 3, 4, 5, 6, 7]], dtype=boxes.tensor.dtype))
+
+    new_box3 = boxes.new_box(torch.tensor([[1, 2, 3, 4, 5, 6, 7]]))
+    assert torch.allclose(
+        new_box3.tensor,
+        torch.tensor([[1, 2, 3, 4, 5, 6, 7]], dtype=boxes.tensor.dtype))
+
 
 def test_boxes_conversion():
     """Test the conversion of boxes between different modes.
@@ -284,6 +353,8 @@ def test_boxes_conversion():
          [31.31978, 8.162144, -1.6217787, 1.74, 3.77, 1.48, 2.79]])
     cam_box_tensor = Box3DMode.convert(lidar_boxes.tensor, Box3DMode.LIDAR,
                                        Box3DMode.CAM)
+    expected_box = lidar_boxes.convert_to(Box3DMode.CAM)
+    assert torch.equal(expected_box.tensor, cam_box_tensor)
 
     # Some properties should be the same
     cam_boxes = CameraInstance3DBoxes(cam_box_tensor)
@@ -310,16 +381,10 @@ def test_boxes_conversion():
                                                 Box3DMode.DEPTH, Box3DMode.CAM)
     assert torch.allclose(cam_box_tensor, depth_to_cam_box_tensor)
 
-    # test error raise with not supported conversion
-    with pytest.raises(NotImplementedError):
-        Box3DMode.convert(lidar_box_tensor, Box3DMode.LIDAR, Box3DMode.DEPTH)
-    with pytest.raises(NotImplementedError):
-        Box3DMode.convert(depth_box_tensor, Box3DMode.DEPTH, Box3DMode.LIDAR)
-
     # test similar mode conversion
     same_results = Box3DMode.convert(depth_box_tensor, Box3DMode.DEPTH,
                                      Box3DMode.DEPTH)
-    assert (same_results == depth_box_tensor).all()
+    assert torch.equal(same_results, depth_box_tensor)
 
     # test conversion with a given rt_mat
     camera_boxes = CameraInstance3DBoxes(
@@ -389,6 +454,35 @@ def test_boxes_conversion():
         rt_mat.inverse().numpy())
     assert np.allclose(np.array(cam_to_lidar_box), expected_tensor[0].numpy())
 
+    # test convert from depth to lidar
+    depth_boxes = torch.tensor(
+        [[2.4593, 2.5870, -0.4321, 0.8597, 0.6193, 1.0204, 3.0693],
+         [1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601]],
+        dtype=torch.float32)
+    depth_boxes = DepthInstance3DBoxes(depth_boxes)
+    depth_to_lidar_box = depth_boxes.convert_to(Box3DMode.LIDAR)
+    expected_box = depth_to_lidar_box.convert_to(Box3DMode.DEPTH)
+    assert torch.equal(depth_boxes.tensor, expected_box.tensor)
+
+    lidar_to_depth_box = Box3DMode.convert(depth_to_lidar_box, Box3DMode.LIDAR,
+                                           Box3DMode.DEPTH)
+    assert torch.allclose(depth_boxes.tensor, lidar_to_depth_box.tensor)
+    assert torch.allclose(depth_boxes.volume, lidar_to_depth_box.volume)
+
+    # test convert from depth to camera
+    depth_to_cam_box = Box3DMode.convert(depth_boxes, Box3DMode.DEPTH,
+                                         Box3DMode.CAM)
+    cam_to_depth_box = Box3DMode.convert(depth_to_cam_box, Box3DMode.CAM,
+                                         Box3DMode.DEPTH)
+    expected_tensor = depth_to_cam_box.convert_to(Box3DMode.DEPTH)
+    assert torch.equal(expected_tensor.tensor, cam_to_depth_box.tensor)
+    assert torch.allclose(depth_boxes.tensor, cam_to_depth_box.tensor)
+    assert torch.allclose(depth_boxes.volume, cam_to_depth_box.volume)
+
+    with pytest.raises(NotImplementedError):
+        # assert invalid convert mode
+        Box3DMode.convert(depth_boxes, Box3DMode.DEPTH, 3)
+
 
 def test_camera_boxes3d():
     # Test init with numpy array
@@ -449,8 +543,18 @@ def test_camera_boxes3d():
              [26.66902, -21.82302, -1.736057, 1.56, 3.48, 1.4, 4.8315926],
              [31.31978, -8.162144, -1.6217787, 1.74, 3.77, 1.48, 0.35159278]]),
         Box3DMode.LIDAR, Box3DMode.CAM)
-    boxes.flip()
+    boxes.flip('horizontal')
     assert torch.allclose(boxes.tensor, expected_tensor)
+
+    expected_tensor = torch.tensor(
+        [[2.5162, 1.7501, -1.7802, 3.3900, 1.6500, 1.7500, -1.6616],
+         [2.4567, 1.6357, -8.9594, 4.0100, 1.5700, 1.5400, -1.5216],
+         [-0.5558, 1.3033, -28.2967, 2.2300, 1.4800, 1.4700, -4.7116],
+         [21.8230, 1.7361, -26.6690, 3.4800, 1.4000, 1.5600, -4.8316],
+         [8.1621, 1.6218, -31.3198, 3.7700, 1.4800, 1.7400, -0.3516]])
+    boxes_flip_vert = boxes.clone()
+    boxes_flip_vert.flip('vertical')
+    assert torch.allclose(boxes_flip_vert.tensor, expected_tensor, 1e-4)
 
     # test box rotation
     expected_tensor = Box3DMode.convert(
@@ -560,7 +664,7 @@ def test_camera_boxes3d():
     expected_tensor[:, 1::2] = lidar_expected_tensor[:, 0::2]
     # the pytorch print loses some precision
     assert torch.allclose(
-        boxes.nearset_bev, expected_tensor, rtol=1e-4, atol=1e-7)
+        boxes.nearest_bev, expected_tensor, rtol=1e-4, atol=1e-7)
 
     # obtained by the print of the original implementation
     expected_tensor = torch.tensor([[[3.2684e+00, 2.5769e-01, -7.7767e-01],
@@ -659,3 +763,130 @@ def test_boxes3d_overlaps():
         cam_boxes1.overlaps(cam_boxes1, boxes1)
     with pytest.raises(AssertionError):
         boxes1.overlaps(cam_boxes1, boxes1)
+
+
+def test_depth_boxes3d():
+    # test empty initialization
+    empty_boxes = []
+    boxes = DepthInstance3DBoxes(empty_boxes)
+    assert boxes.tensor.shape[0] == 0
+    assert boxes.tensor.shape[1] == 7
+
+    # Test init with numpy array
+    np_boxes = np.array(
+        [[1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601],
+         [2.3262, 3.3065, --0.44255, 0.8234, 0.5325, 1.0099, 2.9971]],
+        dtype=np.float32)
+    boxes_1 = DepthInstance3DBoxes(np_boxes)
+    assert torch.allclose(boxes_1.tensor, torch.from_numpy(np_boxes))
+
+    # test properties
+
+    assert boxes_1.volume.size(0) == 2
+    assert (boxes_1.center == boxes_1.bottom_center).all()
+    expected_tensor = torch.tensor([[1.4856, 2.5299, -0.1093],
+                                    [2.3262, 3.3065, 0.9475]])
+    assert torch.allclose(boxes_1.gravity_center, expected_tensor)
+    expected_tensor = torch.tensor([[1.4856, 2.5299, 0.9385, 2.1404, 3.0601],
+                                    [2.3262, 3.3065, 0.8234, 0.5325, 2.9971]])
+    assert torch.allclose(boxes_1.bev, expected_tensor)
+    expected_tensor = torch.tensor([[1.0164, 1.4597, 1.9548, 3.6001],
+                                    [1.9145, 3.0402, 2.7379, 3.5728]])
+    assert torch.allclose(boxes_1.nearest_bev, expected_tensor, 1e-4)
+    assert repr(boxes) == (
+        'DepthInstance3DBoxes(\n    tensor([], size=(0, 7)))')
+
+    # test init with torch.Tensor
+    th_boxes = torch.tensor(
+        [[2.4593, 2.5870, -0.4321, 0.8597, 0.6193, 1.0204, 3.0693],
+         [1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601]],
+        dtype=torch.float32)
+    boxes_2 = DepthInstance3DBoxes(th_boxes)
+    assert torch.allclose(boxes_2.tensor, th_boxes)
+
+    # test clone/to/device
+    boxes_2 = boxes_2.clone()
+    boxes_1 = boxes_1.to(boxes_2.device)
+
+    # test box concatenation
+    expected_tensor = torch.tensor(
+        [[1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601],
+         [2.3262, 3.3065, --0.44255, 0.8234, 0.5325, 1.0099, 2.9971],
+         [2.4593, 2.5870, -0.4321, 0.8597, 0.6193, 1.0204, 3.0693],
+         [1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601]])
+    boxes = DepthInstance3DBoxes.cat([boxes_1, boxes_2])
+    assert torch.allclose(boxes.tensor, expected_tensor)
+    # concatenate empty list
+    empty_boxes = DepthInstance3DBoxes.cat([])
+    assert empty_boxes.tensor.shape[0] == 0
+    assert empty_boxes.tensor.shape[-1] == 7
+
+    # test box flip
+    expected_tensor = torch.tensor(
+        [[-1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 0.0815],
+         [-2.3262, 3.3065, 0.4426, 0.8234, 0.5325, 1.0099, 0.1445],
+         [-2.4593, 2.5870, -0.4321, 0.8597, 0.6193, 1.0204, 0.0723],
+         [-1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 0.0815]])
+    boxes.flip(bev_direction='horizontal')
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    expected_tensor = torch.tensor(
+        [[-1.4856, -2.5299, -0.5570, 0.9385, 2.1404, 0.8954, -0.0815],
+         [-2.3262, -3.3065, 0.4426, 0.8234, 0.5325, 1.0099, -0.1445],
+         [-2.4593, -2.5870, -0.4321, 0.8597, 0.6193, 1.0204, -0.0723],
+         [-1.4856, -2.5299, -0.5570, 0.9385, 2.1404, 0.8954, -0.0815]])
+    boxes.flip(bev_direction='vertical')
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+
+    # test box rotation
+    boxes_rot = boxes.clone()
+    expected_tensor = torch.tensor(
+        [[-1.6004, -2.4589, -0.5570, 0.9385, 2.1404, 0.8954, -0.0355],
+         [-2.4758, -3.1960, 0.4426, 0.8234, 0.5325, 1.0099, -0.0985],
+         [-2.5757, -2.4712, -0.4321, 0.8597, 0.6193, 1.0204, -0.0263],
+         [-1.6004, -2.4589, -0.5570, 0.9385, 2.1404, 0.8954, -0.0355]])
+    boxes_rot.rotate(-0.04599790655000615)
+    assert torch.allclose(boxes_rot.tensor, expected_tensor, 1e-3)
+
+    th_boxes = torch.tensor(
+        [[0.61211395, 0.8129094, 0.10563634, 1.497534, 0.16927195, 0.27956772],
+         [1.430009, 0.49797538, 0.9382923, 0.07694054, 0.9312509, 1.8919173]],
+        dtype=torch.float32)
+    boxes = DepthInstance3DBoxes(th_boxes, box_dim=6, with_yaw=False)
+    expected_tensor = torch.tensor([[
+        0.64884546, 0.78390356, 0.10563634, 1.50373348, 0.23795205, 0.27956772,
+        0
+    ],
+                                    [
+                                        1.45139421, 0.43169443, 0.93829232,
+                                        0.11967964, 0.93380373, 1.89191735, 0
+                                    ]])
+    boxes_3 = boxes.clone()
+    boxes_3.rotate(-0.04599790655000615)
+    assert torch.allclose(boxes_3.tensor, expected_tensor)
+    boxes.rotate(torch.tensor(-0.04599790655000615))
+    assert torch.allclose(boxes.tensor, expected_tensor)
+
+    # test bbox in_range_bev
+    expected_tensor = torch.tensor([1, 1], dtype=torch.bool)
+    mask = boxes.in_range_bev([0., -40., 70.4, 40.])
+    assert (mask == expected_tensor).all()
+    mask = boxes.nonempty()
+    assert (mask == expected_tensor).all()
+
+    expected_tensor = torch.tensor([[[-0.1030, 0.6649, 0.1056],
+                                     [-0.1030, 0.6649, 0.3852],
+                                     [-0.1030, 0.9029, 0.3852],
+                                     [-0.1030, 0.9029, 0.1056],
+                                     [1.4007, 0.6649, 0.1056],
+                                     [1.4007, 0.6649, 0.3852],
+                                     [1.4007, 0.9029, 0.3852],
+                                     [1.4007, 0.9029, 0.1056]],
+                                    [[1.3916, -0.0352, 0.9383],
+                                     [1.3916, -0.0352, 2.8302],
+                                     [1.3916, 0.8986, 2.8302],
+                                     [1.3916, 0.8986, 0.9383],
+                                     [1.5112, -0.0352, 0.9383],
+                                     [1.5112, -0.0352, 2.8302],
+                                     [1.5112, 0.8986, 2.8302],
+                                     [1.5112, 0.8986, 0.9383]]])
+    torch.allclose(boxes.corners, expected_tensor)

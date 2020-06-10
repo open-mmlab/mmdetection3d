@@ -10,11 +10,7 @@ model = dict(
         voxel_size=voxel_size,
         max_voxels=(16000, 40000),  # (training, testing) max_coxels
     ),
-    voxel_encoder=dict(
-        type='VoxelFeatureExtractorV3',
-        num_input_features=4,
-        num_filters=[4],
-        with_distance=False),
+    voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseEncoder',
         in_channels=4,
@@ -104,9 +100,21 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=15),
 )
+file_client_args = dict(backend='disk')
+# file_client_args = dict(
+#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+
 train_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=True,
+        with_label_3d=True,
+        file_client_args=file_client_args),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -126,7 +134,11 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
         type='DefaultFormatBundle3D',
@@ -139,15 +151,18 @@ data = dict(
     samples_per_gpu=6,
     workers_per_gpu=4,
     train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_train.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=train_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=False),
+        type='RepeatDataset',
+        times=2,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            split='training',
+            pts_prefix='velodyne_reduced',
+            pipeline=train_pipeline,
+            modality=input_modality,
+            classes=class_names,
+            test_mode=False)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -185,6 +200,7 @@ momentum_config = dict(
     step_ratio_up=0.4,
 )
 checkpoint_config = dict(interval=1)
+evaluation = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -194,7 +210,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 80
+total_epochs = 40
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/sec_secfpn_80e'
