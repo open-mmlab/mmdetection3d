@@ -5,7 +5,7 @@ from mmdet3d.core.bbox import LiDARInstance3DBoxes
 from mmdet3d.datasets.pipelines import Compose
 
 
-def test_outdoor_pipeline():
+def test_outdoor_aug_pipeline():
     point_cloud_range = [0, -40, -3, 70.4, 40, 1]
     class_names = ['Car']
     np.random.seed(0)
@@ -117,5 +117,126 @@ def test_outdoor_pipeline():
          [22.4492, 3.2944, -2.1674, 1.5510, 3.4084, 1.6372, 0.3928],
          [37.3824, 5.0472, -0.6579, 1.5797, 3.3988, 1.7233, -1.4862],
          [8.9259, -1.2578, -1.6081, 1.5223, 3.0350, 1.3308, -1.7212]])
+    assert torch.allclose(
+        output['gt_bboxes_3d']._data.tensor, expected_tensor, atol=1e-3)
+
+
+def test_outdoor_velocity_aug_pipeline():
+    point_cloud_range = [-50, -50, -5, 50, 50, 3]
+    class_names = [
+        'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
+        'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
+    ]
+    np.random.seed(0)
+
+    train_pipeline = [
+        dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+        dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+        dict(
+            type='GlobalRotScale',
+            rot_uniform_noise=[-0.3925, 0.3925],
+            scaling_uniform_noise=[0.95, 1.05],
+            trans_normal_noise=[0, 0, 0]),
+        dict(type='RandomFlip3D', flip_ratio=0.5),
+        dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+        dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+        dict(type='PointShuffle'),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    ]
+    pipeline = Compose(train_pipeline)
+
+    gt_bboxes_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[
+                -5.2422e+00, 4.0021e+01, -4.7643e-01, 2.0620e+00, 4.4090e+00,
+                1.5480e+00, -1.4880e+00, 8.5338e-03, 4.4934e-02
+            ],
+             [
+                 -2.6675e+01, 5.5950e+00, -1.3053e+00, 3.4300e-01, 4.5800e-01,
+                 7.8200e-01, -4.6276e+00, -4.3284e-04, -1.8543e-03
+             ],
+             [
+                 -5.8098e+00, 3.5409e+01, -6.6511e-01, 2.3960e+00, 3.9690e+00,
+                 1.7320e+00, -4.6520e+00, 0.0000e+00, 0.0000e+00
+             ],
+             [
+                 -3.1309e+01, 1.0901e+00, -1.0561e+00, 1.9440e+00, 3.8570e+00,
+                 1.7230e+00, -2.8143e+00, -2.7606e-02, -8.0573e-02
+             ],
+             [
+                 -4.5642e+01, 2.0136e+01, -2.4681e-02, 1.9870e+00, 4.4400e+00,
+                 1.9420e+00, 2.8336e-01, 0.0000e+00, 0.0000e+00
+             ],
+             [
+                 -5.1617e+00, 1.8305e+01, -1.0879e+00, 2.3230e+00, 4.8510e+00,
+                 1.3710e+00, -1.5803e+00, 0.0000e+00, 0.0000e+00
+             ],
+             [
+                 -2.5285e+01, 4.1442e+00, -1.2713e+00, 1.7550e+00, 1.9890e+00,
+                 2.2200e+00, -4.4900e+00, -3.1784e-02, -1.5291e-01
+             ],
+             [
+                 -2.2611e+00, 1.9170e+01, -1.1452e+00, 9.1900e-01, 1.1230e+00,
+                 1.9310e+00, 4.7790e-02, 6.7684e-02, -1.7537e+00
+             ],
+             [
+                 -6.5878e+01, 1.3500e+01, -2.2528e-01, 1.8200e+00, 3.8520e+00,
+                 1.5450e+00, -2.8757e+00, 0.0000e+00, 0.0000e+00
+             ],
+             [
+                 -5.4490e+00, 2.8363e+01, -7.7275e-01, 2.2360e+00, 3.7540e+00,
+                 1.5590e+00, -4.6520e+00, -7.9736e-03, 7.7207e-03
+             ]],
+            dtype=torch.float32),
+        box_dim=9)
+
+    gt_labels_3d = np.array([0, 8, 0, 0, 0, 0, -1, 7, 0, 0])
+    results = dict(
+        pts_filename='tests/data/kitti/a.bin',
+        ann_info=dict(gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d),
+        bbox3d_fields=[],
+    )
+
+    output = pipeline(results)
+
+    expected_tensor = torch.tensor(
+        [[
+            -3.7849e+00, -4.1057e+01, -4.8668e-01, 2.1064e+00, 4.5039e+00,
+            1.5813e+00, -1.6919e+00, 1.0469e-02, -4.5533e-02
+        ],
+         [
+             -2.7010e+01, -6.7551e+00, -1.3334e+00, 3.5038e-01, 4.6786e-01,
+             7.9883e-01, 1.4477e+00, -5.1440e-04, 1.8758e-03
+         ],
+         [
+             -4.5448e+00, -3.6372e+01, -6.7942e-01, 2.4476e+00, 4.0544e+00,
+             1.7693e+00, 1.4721e+00, 0.0000e+00, -0.0000e+00
+         ],
+         [
+             -3.1916e+01, -2.3379e+00, -1.0788e+00, 1.9858e+00, 3.9400e+00,
+             1.7601e+00, -3.6564e-01, -3.1333e-02, 8.1166e-02
+         ],
+         [
+             -4.5802e+01, -2.2340e+01, -2.5213e-02, 2.0298e+00, 4.5355e+00,
+             1.9838e+00, 2.8199e+00, 0.0000e+00, -0.0000e+00
+         ],
+         [
+             -4.5526e+00, -1.8887e+01, -1.1114e+00, 2.3730e+00, 4.9554e+00,
+             1.4005e+00, -1.5997e+00, 0.0000e+00, -0.0000e+00
+         ],
+         [
+             -2.5648e+01, -5.2197e+00, -1.2987e+00, 1.7928e+00, 2.0318e+00,
+             2.2678e+00, 1.3100e+00, -3.8428e-02, 1.5485e-01
+         ],
+         [
+             -1.5578e+00, -1.9657e+01, -1.1699e+00, 9.3878e-01, 1.1472e+00,
+             1.9726e+00, 3.0555e+00, 4.5907e-04, 1.7928e+00
+         ],
+         [
+             -4.4522e+00, -2.9166e+01, -7.8938e-01, 2.2841e+00, 3.8348e+00,
+             1.5925e+00, 1.4721e+00, -7.8371e-03, -8.1931e-03
+         ]])
     assert torch.allclose(
         output['gt_bboxes_3d']._data.tensor, expected_tensor, atol=1e-3)

@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from mmdet3d.ops.roiaware_pool3d import points_in_boxes_gpu
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -25,9 +26,9 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
     Attributes:
         tensor (torch.Tensor): float matrix of N x box_dim.
         box_dim (int): integer indicates the dimension of a box
-        Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): if True, the value of yaw will be
-        set to 0 as minmax boxes.
+            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+        with_yaw (bool): if True, the value of yaw will be set to 0 as minmax
+            boxes.
     """
 
     @property
@@ -196,3 +197,32 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
             box=self, src=Box3DMode.LIDAR, dst=dst, rt_mat=rt_mat)
+
+    def enlarged_box(self, extra_width):
+        """Enlarge the length, width and height boxes
+
+        Args:
+            extra_width (float | torch.Tensor): extra width to enlarge the box
+
+        Returns:
+            :obj:LiDARInstance3DBoxes: enlarged boxes
+        """
+        enlarged_boxes = self.tensor.clone()
+        enlarged_boxes[:, 3:6] += extra_width * 2
+        # bottom center z minus extra_width
+        enlarged_boxes[:, 2] -= extra_width
+        return self.new_box(enlarged_boxes)
+
+    def points_in_boxes(self, points):
+        """Find the box which the points are in.
+
+        Args:
+            points (:obj:torch.Tensor): Points in shape Nx3
+
+        Returns:
+            torch.Tensor: The index of box where each point are in.
+        """
+        box_idx = points_in_boxes_gpu(
+            points.unsqueeze(0),
+            self.tensor.unsqueeze(0).to(points.device)).squeeze(0)
+        return box_idx

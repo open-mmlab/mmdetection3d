@@ -28,9 +28,9 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     Attributes:
         tensor (torch.Tensor): float matrix of N x box_dim.
         box_dim (int): integer indicates the dimension of a box
-        Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): if True, the value of yaw will be
-        set to 0 as minmax boxes.
+            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+        with_yaw (bool): if True, the value of yaw will be set to 0 as minmax
+            boxes.
     """
 
     @property

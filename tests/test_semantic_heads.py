@@ -1,6 +1,8 @@
 import pytest
 import torch
 
+from mmdet3d.core.bbox import LiDARInstance3DBoxes
+
 
 def test_PointwiseSemanticHead():
     # PointwiseSemanticHead only support gpu version currently.
@@ -47,19 +49,29 @@ def test_PointwiseSemanticHead():
          [1, 35, 930, 469]],
         dtype=torch.int32).cuda()  # n, 4(batch, ind_x, ind_y, ind_z)
     voxel_dict = dict(voxel_centers=voxel_centers, coors=coordinates)
-    gt_bboxes = list(
-        torch.tensor(
-            [[[6.4118, -3.4305, -1.7291, 1.7033, 3.4693, 1.6197, -0.9091]],
-             [[16.9107, 9.7925, -1.9201, 1.6097, 3.2786, 1.5307, -2.4056]]],
-            dtype=torch.float32).cuda())
+    gt_bboxes = [
+        LiDARInstance3DBoxes(
+            torch.tensor(
+                [[6.4118, -3.4305, -1.7291, 1.7033, 3.4693, 1.6197, -0.9091]],
+                dtype=torch.float32).cuda()),
+        LiDARInstance3DBoxes(
+            torch.tensor(
+                [[16.9107, 9.7925, -1.9201, 1.6097, 3.2786, 1.5307, -2.4056]],
+                dtype=torch.float32).cuda())
+    ]
+    # batch size is 2 in the unit test
     gt_labels = list(torch.tensor([[0], [1]], dtype=torch.int64).cuda())
 
     # test get_targets
     target_dict = self.get_targets(voxel_dict, gt_bboxes, gt_labels)
+
     assert target_dict['seg_targets'].shape == torch.Size(
         [voxel_features.shape[0]])
+    assert torch.allclose(target_dict['seg_targets'],
+                          target_dict['seg_targets'].new_tensor([3, -1, 3, 3]))
     assert target_dict['part_targets'].shape == torch.Size(
         [voxel_features.shape[0], 3])
+    assert target_dict['part_targets'].sum() == 0
 
     # test loss
     loss_dict = self.loss(feats_dict, target_dict)
@@ -67,7 +79,3 @@ def test_PointwiseSemanticHead():
     assert loss_dict['loss_part'] == 0  # no points in gt_boxes
     total_loss = loss_dict['loss_seg'] + loss_dict['loss_part']
     total_loss.backward()
-
-
-if __name__ == '__main__':
-    test_PointwiseSemanticHead()

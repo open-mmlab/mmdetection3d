@@ -7,7 +7,7 @@ import pyquaternion
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import box_np_ops
+from ..core.bbox import LiDARInstance3DBoxes, box_np_ops
 from .custom_3d import Custom3DDataset
 
 
@@ -152,10 +152,6 @@ class NuScenesDataset(Custom3DDataset):
         # filter out bbox containing no points
         mask = info['num_lidar_pts'] > 0
         gt_bboxes_3d = info['gt_boxes'][mask]
-        # the nuscenes box center is [0.5, 0.5, 0.5], we keep it
-        # the same as KITTI [0.5, 0.5, 0]
-        box_np_ops.change_box3d_center_(gt_bboxes_3d, [0.5, 0.5, 0.5],
-                                        [0.5, 0.5, 0])
         gt_names_3d = info['gt_names'][mask]
         gt_labels_3d = []
         for cat in gt_names_3d:
@@ -170,6 +166,13 @@ class NuScenesDataset(Custom3DDataset):
             nan_mask = np.isnan(gt_velocity[:, 0])
             gt_velocity[nan_mask] = [0.0, 0.0]
             gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
+
+        # the nuscenes box center is [0.5, 0.5, 0.5], we keep it
+        # the same as KITTI [0.5, 0.5, 0]
+        gt_bboxes_3d = LiDARInstance3DBoxes(
+            gt_bboxes_3d,
+            box_dim=gt_bboxes_3d.shape[-1],
+            origin=[0.5, 0.5, 0.5])
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
