@@ -5,6 +5,7 @@ import torch
 
 from .base_box3d import BaseInstance3DBoxes
 from .cam_box3d import CameraInstance3DBoxes
+from .depth_box3d import DepthInstance3DBoxes
 from .lidar_box3d import LiDARInstance3DBoxes
 
 
@@ -61,7 +62,8 @@ class Box3DMode(IntEnum):
         """Convert boxes from `src` mode to `dst` mode.
 
         Args:
-            box (tuple | list | np.ndarray | torch.Tensor):
+            box (tuple | list | np.ndarray |
+                torch.Tensor | BaseInstance3DBoxes):
                 can be a k-tuple, k-list or an Nxk array/tensor, where k = 7
             src (BoxMode): the src Box mode
             dst (BoxMode): the target Box mode
@@ -72,7 +74,7 @@ class Box3DMode(IntEnum):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor):
+            (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes):
                 The converted box of the same type.
         """
         if src == dst:
@@ -113,6 +115,14 @@ class Box3DMode(IntEnum):
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
+        elif src == Box3DMode.LIDAR and dst == Box3DMode.DEPTH:
+            if rt_mat is None:
+                rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+            xyz_size = torch.cat([y_size, x_size, z_size], dim=-1)
+        elif src == Box3DMode.DEPTH and dst == Box3DMode.LIDAR:
+            if rt_mat is None:
+                rt_mat = arr.new_tensor([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+            xyz_size = torch.cat([y_size, x_size, z_size], dim=-1)
         else:
             raise NotImplementedError(
                 f'Conversion from Box3DMode {src} to {dst} '
@@ -141,10 +151,13 @@ class Box3DMode(IntEnum):
                 target_type = CameraInstance3DBoxes
             elif dst == Box3DMode.LIDAR:
                 target_type = LiDARInstance3DBoxes
+            elif dst == Box3DMode.DEPTH:
+                target_type = DepthInstance3DBoxes
             else:
                 raise NotImplementedError(
                     f'Conversion to {dst} through {original_type}'
                     ' is not supported yet')
-            return target_type(arr, box_dim=arr.size(-1))
+            return target_type(
+                arr, box_dim=arr.size(-1), with_yaw=box.with_yaw)
         else:
             return arr

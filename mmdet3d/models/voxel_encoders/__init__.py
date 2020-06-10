@@ -1,8 +1,7 @@
-from .pillar_encoder import AlignedPillarFeatureNet, PillarFeatureNet
-from .voxel_encoder import (DynamicVFE, VoxelFeatureExtractor,
-                            VoxelFeatureExtractorV2, VoxelFeatureExtractorV3)
+from .pillar_encoder import PillarFeatureNet
+from .voxel_encoder import DynamicSimpleVFE, DynamicVFE, HardSimpleVFE, HardVFE
 
 __all__ = [
-    'PillarFeatureNet', 'AlignedPillarFeatureNet', 'VoxelFeatureExtractor',
-    'DynamicVFE', 'VoxelFeatureExtractorV2', 'VoxelFeatureExtractorV3'
+    'PillarFeatureNet', 'HardVFE', 'DynamicVFE', 'HardSimpleVFE',
+    'DynamicSimpleVFE'
 ]

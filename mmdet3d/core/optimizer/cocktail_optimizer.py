@@ -1,6 +1,5 @@
+from mmcv.runner.optimizer import OPTIMIZERS
 from torch.optim import Optimizer
-
-from mmdet.core.optimizer import OPTIMIZERS
 
 
 @OPTIMIZERS.register_module()
@@ -8,6 +7,11 @@ class CocktailOptimizer(Optimizer):
     """Cocktail Optimizer that contains multiple optimizers
 
     This optimizer applies the cocktail optimzation for multi-modality models.
+
+    Args:
+        optimizers (list[:obj:`torch.optim.Optimizer`]): The list containing
+            different optimizers that optimize different parameters
+        step_intervals (list[int]): Step intervals of each optimizer
 
     """
 
@@ -18,6 +22,9 @@ class CocktailOptimizer(Optimizer):
             self.param_groups += optimizer.param_groups
         if not isinstance(step_intervals, list):
             step_intervals = [1] * len(self.optimizers)
+        assert len(step_intervals) == len(optimizers), \
+            '"step_intervals" should contain the same number of intervals as' \
+            f'len(optimizers)={len(optimizers)}, got {step_intervals}'
         self.step_intervals = step_intervals
         self.num_step_updated = 0
 

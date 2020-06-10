@@ -10,13 +10,24 @@ from .utils import limit_period, xywhr2xyxyr
 class BaseInstance3DBoxes(object):
     """Base class for 3D Boxes
 
+    Note:
+        The box is bottom centered, i.e. the relative position of origin in
+            the box is [0.5, 0.5, 0].
+
     Args:
-        tensor (torch.Tensor | np.ndarray): a Nxbox_dim matrix.
+        tensor (torch.Tensor | np.ndarray | list): a Nxbox_dim matrix.
         box_dim (int): number of the dimension of a box
-        Each row is (x, y, z, x_size, y_size, z_size, yaw).
+            Each row is (x, y, z, x_size, y_size, z_size, yaw).
+            Default to 7.
+        with_yaw (bool): Whether the box is with yaw rotation.
+            If False, the value of yaw will be set to 0 as minmax boxes.
+            Default to True.
+        origin (tuple): The relative position of origin in the box.
+            Default to [0.5, 0.5, 0]. This will guide the box be converted to
+            [0.5, 0.5, 0] mode.
     """
 
-    def __init__(self, tensor, box_dim=7):
+    def __init__(self, tensor, box_dim=7, with_yaw=True, origin=[0.5, 0.5, 0]):
         if isinstance(tensor, torch.Tensor):
             device = tensor.device
         else:
@@ -28,8 +39,21 @@ class BaseInstance3DBoxes(object):
             tensor = tensor.reshape((0, box_dim)).to(
                 dtype=torch.float32, device=device)
         assert tensor.dim() == 2 and tensor.size(-1) == box_dim, tensor.size()
-        self.box_dim = box_dim
+
+        if not with_yaw and tensor.shape[-1] == 6:
+            assert box_dim == 6
+            fake_rot = tensor.new_zeros(tensor.shape[0], 1)
+            tensor = torch.cat((tensor, fake_rot), dim=-1)
+            self.box_dim = box_dim + 1
+        else:
+            self.box_dim = box_dim
+        self.with_yaw = with_yaw
         self.tensor = tensor
+
+        if origin != [0.5, 0.5, 0]:
+            dst = self.tensor.new_tensor([0.5, 0.5, 0])
+            src = self.tensor.new_tensor(origin)
+            self.tensor[:, :3] += self.tensor[:, 3:6] * (dst - src)
 
     @property
     def volume(self):
@@ -52,11 +76,20 @@ class BaseInstance3DBoxes(object):
         return self.tensor[:, 3:6]
 
     @property
+    def yaw(self):
+        """Obtain the rotation of all the boxes.
+
+        Returns:
+            torch.Tensor: a vector with yaw of each box.
+        """
+        return self.tensor[:, 6]
+
+    @property
     def height(self):
         """Obtain the height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with volume of each box.
+            torch.Tensor: a vector with height of each box.
         """
         return self.tensor[:, 5]
 
@@ -135,8 +168,8 @@ class BaseInstance3DBoxes(object):
         pass
 
     @abstractmethod
-    def flip(self):
-        """Flip the boxes in horizontal direction
+    def flip(self, bev_direction='horizontal'):
+        """Flip the boxes in BEV along given BEV direction
         """
         pass
 
@@ -184,8 +217,26 @@ class BaseInstance3DBoxes(object):
                 (x_min, y_min, x_max, y_max)
 
         Returns:
-            a binary vector, indicating whether each box is inside
-            the reference range.
+            torch.Tensor: Indicating whether each box is inside
+                the reference range.
+        """
+        pass
+
+    @abstractmethod
+    def convert_to(self, dst, rt_mat=None):
+        """Convert self to `dst` mode.
+
+        Args:
+            dst (BoxMode): the target Box mode
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+                matrix between different coordinates. Defaults to None.
+                The conversion from `src` coordinates to `dst` coordinates
+                usually comes along the change of sensors, e.g., from camera
+                to LiDAR. This requires a transformation matrix.
+
+        Returns:
+            BaseInstance3DBoxes:
+                The converted box of the same type in the `dst` mode.
         """
         pass
 
@@ -193,8 +244,7 @@ class BaseInstance3DBoxes(object):
         """Scale the box with horizontal and vertical scaling factors
 
         Args:
-            scale_factors (float):
-                scale factors to scale the boxes.
+            scale_factors (float): scale factors to scale the boxes.
         """
         self.tensor[:, :6] *= scale_factor
         self.tensor[:, 7:] *= scale_factor
@@ -218,9 +268,8 @@ class BaseInstance3DBoxes(object):
             threshold (float): the threshold of minimal sizes
 
         Returns:
-            Tensor:
-                a binary vector which represents whether each box is empty
-                (False) or non-empty (True).
+            torch.Tensor: a binary vector which represents whether each
+                box is empty (False) or non-empty (True).
         """
         box = self.tensor
         size_x = box[..., 3]
@@ -245,15 +294,19 @@ class BaseInstance3DBoxes(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            Boxes: Create a new :class:`Boxes` by indexing.
+            BaseInstance3DBoxes: Create a new :class:`BaseInstance3DBoxes`
+                by indexing.
         """
         original_type = type(self)
         if isinstance(item, int):
-            return original_type(self.tensor[item].view(1, -1))
+            return original_type(
+                self.tensor[item].view(1, -1),
+                box_dim=self.box_dim,
+                with_yaw=self.with_yaw)
         b = self.tensor[item]
         assert b.dim() == 2, \
             f'Indexing on Boxes with {item} failed to return a matrix!'
-        return original_type(b)
+        return original_type(b, box_dim=self.box_dim, with_yaw=self.with_yaw)
 
     def __len__(self):
         return self.tensor.shape[0]
@@ -283,24 +336,30 @@ class BaseInstance3DBoxes(object):
 
     def to(self, device):
         original_type = type(self)
-        return original_type(self.tensor.to(device))
+        return original_type(
+            self.tensor.to(device),
+            box_dim=self.box_dim,
+            with_yaw=self.with_yaw)
 
     def clone(self):
         """Clone the Boxes.
 
         Returns:
-            Boxes
+            BaseInstance3DBoxes: Box object with the same properties as self.
         """
         original_type = type(self)
-        return original_type(self.tensor.clone())
+        return original_type(
+            self.tensor.clone(), box_dim=self.box_dim, with_yaw=self.with_yaw)
 
     @property
     def device(self):
         return self.tensor.device
 
     def __iter__(self):
-        """
-        Yield a box as a Tensor of shape (4,) at a time.
+        """Yield a box as a Tensor of shape (4,) at a time.
+
+        Returns:
+            torch.Tensor: a box of shape (4,).
         """
         yield from self.tensor
 
@@ -387,3 +446,23 @@ class BaseInstance3DBoxes(object):
             iou3d = overlaps_3d / torch.clamp(volume1, min=1e-8)
 
         return iou3d
+
+    def new_box(self, data):
+        """Create a new box object with data.
+
+        The new box and its tensor has the similar properties
+            as self and self.tensor, respectively.
+
+        Args:
+            data (torch.Tensor | numpy.array | list): Data which the
+                returned Tensor copies.
+
+        Returns:
+            BaseInstance3DBoxes: A new bbox with data and other
+                properties are similar to self.
+        """
+        new_tensor = self.tensor.new_tensor(data) \
+            if not isinstance(data, torch.Tensor) else data.to(self.device)
+        original_type = type(self)
+        return original_type(
+            new_tensor, box_dim=self.box_dim, with_yaw=self.with_yaw)

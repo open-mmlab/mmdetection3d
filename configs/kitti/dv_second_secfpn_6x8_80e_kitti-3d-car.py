@@ -11,8 +11,7 @@ model = dict(
         max_voxels=(-1, -1),  # (training, testing) max_coxels
     ),
     voxel_encoder=dict(
-        type='DynamicVFEV3',
-        num_input_features=4,
+        type='DynamicSimpleVFE',
         voxel_size=voxel_size,
         point_cloud_range=point_cloud_range),
     middle_encoder=dict(
@@ -184,6 +183,7 @@ momentum_config = dict(
     step_ratio_up=0.4,
 )
 checkpoint_config = dict(interval=1)
+evaluation = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,

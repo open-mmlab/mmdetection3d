@@ -1,7 +1,7 @@
+from mmcv.runner.optimizer import OPTIMIZER_BUILDERS, OPTIMIZERS
 from mmcv.utils import build_from_cfg
 
 from mmdet3d.utils import get_root_logger
-from mmdet.core.optimizer import OPTIMIZER_BUILDERS, OPTIMIZERS
 from .cocktail_optimizer import CocktailOptimizer
 
 

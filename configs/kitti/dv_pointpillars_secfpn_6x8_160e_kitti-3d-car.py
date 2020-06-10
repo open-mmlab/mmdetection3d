@@ -12,8 +12,8 @@ model = dict(
     ),
     voxel_encoder=dict(
         type='DynamicPillarFeatureNet',
-        num_input_features=4,
-        num_filters=[64],
+        in_channels=4,
+        feat_channels=[64],
         with_distance=False,
         voxel_size=voxel_size,
         point_cloud_range=point_cloud_range,
@@ -189,6 +189,7 @@ momentum_config = dict(
     step_ratio_up=0.4,
 )
 checkpoint_config = dict(interval=1)
+evaluation = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,

@@ -4,28 +4,15 @@ from torch import nn
 from torch.nn import functional as F
 
 
-class Empty(nn.Module):
-
-    def __init__(self, *args, **kwargs):
-        super(Empty, self).__init__()
-
-    def forward(self, *args, **kwargs):
-        if len(args) == 1:
-            return args[0]
-        elif len(args) == 0:
-            return None
-        return args
-
-
 def get_paddings_indicator(actual_num, max_num, axis=0):
     """Create boolean mask by actually number of a padded tensor.
 
     Args:
-        actual_num ([type]): [description]
-        max_num ([type]): [description]
+        actual_num (torch.Tensor): Actual number of points in each voxel.
+        max_num (int): Max number of points in each voxel
 
     Returns:
-        [type]: [description]
+        torch.Tensor: Mask indicates which points are valid inside a voxel.
     """
     actual_num = torch.unsqueeze(actual_num, axis + 1)
     # tiled_actual_num: [N, M, 1]
@@ -52,13 +39,9 @@ class VFELayer(nn.Module):
         self.cat_max = cat_max
         self.max_out = max_out
         # self.units = int(out_channels / 2)
-        if norm_cfg:
-            norm_name, norm_layer = build_norm_layer(norm_cfg, out_channels)
-            self.norm = norm_layer
-            self.linear = nn.Linear(in_channels, out_channels, bias=False)
-        else:
-            self.norm = Empty(out_channels)
-            self.linear = nn.Linear(in_channels, out_channels, bias=True)
+
+        self.norm = build_norm_layer(norm_cfg, out_channels)[1]
+        self.linear = nn.Linear(in_channels, out_channels, bias=False)
 
     def forward(self, inputs):
         # [K, T, 7] tensordot [7, units] = [K, T, units]
@@ -89,7 +72,7 @@ class PFNLayer(nn.Module):
     def __init__(self,
                  in_channels,
                  out_channels,
-                 use_norm=True,
+                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
                  last_layer=False,
                  mode='max'):
         """ Pillar Feature Net Layer.
@@ -100,9 +83,11 @@ class PFNLayer(nn.Module):
         Args:
             in_channels (int): Number of input channels.
             out_channels (int): Number of output channels.
-            use_norm (bool): Whether to include BatchNorm.
+            norm_cfg (dict): Config dict of normalization layers
             last_layer (bool): If last_layer, there is no concatenation of
                 features.
+            mode (str): Pooling model to gather features inside voxels.
+                Default to 'max'.
         """
 
         super().__init__()
@@ -112,13 +97,10 @@ class PFNLayer(nn.Module):
             out_channels = out_channels // 2
         self.units = out_channels
 
-        if use_norm:
-            self.norm = nn.BatchNorm1d(self.units, eps=1e-3, momentum=0.01)
-            self.linear = nn.Linear(in_channels, self.units, bias=False)
-        else:
-            self.norm = Empty(self.unints)
-            self.linear = nn.Linear(in_channels, self.units, bias=True)
+        self.norm = build_norm_layer(norm_cfg, self.units)[1]
+        self.linear = nn.Linear(in_channels, self.units, bias=False)
 
+        assert mode in ['max', 'avg']
         self.mode = mode
 
     def forward(self, inputs, num_voxels=None, aligned_distance=None):

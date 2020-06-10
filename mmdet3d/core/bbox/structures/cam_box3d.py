@@ -11,10 +11,10 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     Coordinates in camera:
     .. code-block:: none
 
-                z front
+                z front (yaw=0.5*pi)
                /
               /
-             0 ------> x right
+             0 ------> x right (yaw=0)
              |
              |
              v
@@ -22,11 +22,15 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
     and the yaw is around the y axis, thus the rotation axis=1.
+    The yaw is 0 at the positive direction of x axis, and increases from
+    the positive direction of x to the positive direction of z.
 
     Attributes:
         tensor (torch.Tensor): float matrix of N x box_dim.
         box_dim (int): integer indicates the dimension of a box
-        Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+        with_yaw (bool): if True, the value of yaw will be set to 0 as minmax
+            boxes.
     """
 
     @property
@@ -75,7 +79,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the coordinates of corners of all the boxes.
 
         Convert the boxes to  in clockwise order, in the form of
-        (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z0, x1y1z1)
+        (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
 
         .. code-block:: none
 
@@ -85,7 +89,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                (x0, y0, z1) + -----------  + (x1, y0, z1)
                            /|            / |
                           / |           /  |
-            (x0, y0, z0) + ----------- +   + (x1, y1, z0)
+            (x0, y0, z0) + ----------- +   + (x1, y1, z1)
                          |  /      .   |  /
                          | / oriign    | /
             (x0, y1, z0) + ----------- + -------> x right
@@ -123,7 +127,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return self.tensor[:, [0, 2, 3, 5, 6]]
 
     @property
-    def nearset_bev(self):
+    def nearest_bev(self):
         """Calculate the 2D bounding boxes in BEV without rotation
 
         Returns:
@@ -150,11 +154,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate whether the points is in any of the boxes
 
         Args:
-            angles (float | torch.Tensor): rotation angle
-
-        Returns:
-            None if `return_rot_mat=False`,
-            torch.Tensor if `return_rot_mat=True`
+            angle (float | torch.Tensor): rotation angle
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
@@ -166,13 +166,23 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
         self.tensor[:, 6] += angle
 
-    def flip(self):
-        """Flip the boxes in horizontal direction
+    def flip(self, bev_direction='horizontal'):
+        """Flip the boxes in BEV along given BEV direction
 
-        In CAM coordinates, it flips the x axis.
+        In CAM coordinates, it flips the x (horizontal) or z (vertical) axis.
+
+        Args:
+            bev_direction (str): Flip direction (horizontal or vertical).
         """
-        self.tensor[:, 0::7] = -self.tensor[:, 0::7]
-        self.tensor[:, 6] = -self.tensor[:, 6] + np.pi
+        assert bev_direction in ('horizontal', 'vertical')
+        if bev_direction == 'horizontal':
+            self.tensor[:, 0::7] = -self.tensor[:, 0::7]
+            if self.with_yaw:
+                self.tensor[:, 6] = -self.tensor[:, 6] + np.pi
+        elif bev_direction == 'vertical':
+            self.tensor[:, 2::7] = -self.tensor[:, 2::7]
+            if self.with_yaw:
+                self.tensor[:, 6] = -self.tensor[:, 6]
 
     def in_range_bev(self, box_range):
         """Check whether the boxes are in the given range
@@ -188,8 +198,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             TODO: check whether this will effect the performance
 
         Returns:
-            a binary vector, indicating whether each box is inside
-            the reference range.
+            torch.Tensor: Indicating whether each box is inside
+                the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
                           & (self.tensor[:, 2] > box_range[1])
@@ -230,3 +240,22 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         lowest_of_top = torch.max(boxes1_top_height, boxes2_top_height)
         overlaps_h = torch.clamp(heighest_of_bottom - lowest_of_top, min=0)
         return overlaps_h
+
+    def convert_to(self, dst, rt_mat=None):
+        """Convert self to `dst` mode.
+
+        Args:
+            dst (BoxMode): the target Box mode
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+                matrix between different coordinates. Defaults to None.
+                The conversion from `src` coordinates to `dst` coordinates
+                usually comes along the change of sensors, e.g., from camera
+                to LiDAR. This requires a transformation matrix.
+
+        Returns:
+            BaseInstance3DBoxes:
+                The converted box of the same type in the `dst` mode.
+        """
+        from .box_3d_mode import Box3DMode
+        return Box3DMode.convert(
+            box=self, src=Box3DMode.CAM, dst=dst, rt_mat=rt_mat)
