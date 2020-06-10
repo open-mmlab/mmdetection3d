@@ -13,6 +13,46 @@ def test_lidar_boxes3d():
     assert boxes.tensor.shape[0] == 0
     assert boxes.tensor.shape[1] == 7
 
+    # Test init with origin
+    gravity_center_box = np.array(
+        [[
+            -5.24223238e+00, 4.00209696e+01, 2.97570381e-01, 2.06200000e+00,
+            4.40900000e+00, 1.54800000e+00, -1.48801203e+00
+        ],
+         [
+             -2.66751588e+01, 5.59499564e+00, -9.14345860e-01, 3.43000000e-01,
+             4.58000000e-01, 7.82000000e-01, -4.62759755e+00
+         ],
+         [
+             -5.80979675e+00, 3.54092357e+01, 2.00889888e-01, 2.39600000e+00,
+             3.96900000e+00, 1.73200000e+00, -4.65203216e+00
+         ],
+         [
+             -3.13086877e+01, 1.09007628e+00, -1.94612112e-01, 1.94400000e+00,
+             3.85700000e+00, 1.72300000e+00, -2.81427027e+00
+         ]],
+        dtype=np.float32)
+    bottom_center_box = LiDARInstance3DBoxes(
+        gravity_center_box, origin=[0.5, 0.5, 0.5])
+    expected_tensor = torch.tensor(
+        [[
+            -5.24223238e+00, 4.00209696e+01, -4.76429619e-01, 2.06200000e+00,
+            4.40900000e+00, 1.54800000e+00, -1.48801203e+00
+        ],
+         [
+             -2.66751588e+01, 5.59499564e+00, -1.30534586e+00, 3.43000000e-01,
+             4.58000000e-01, 7.82000000e-01, -4.62759755e+00
+         ],
+         [
+             -5.80979675e+00, 3.54092357e+01, -6.65110112e-01, 2.39600000e+00,
+             3.96900000e+00, 1.73200000e+00, -4.65203216e+00
+         ],
+         [
+             -3.13086877e+01, 1.09007628e+00, -1.05611211e+00, 1.94400000e+00,
+             3.85700000e+00, 1.72300000e+00, -2.81427027e+00
+         ]])
+    assert torch.allclose(expected_tensor, bottom_center_box.tensor)
+
     # Test init with numpy array
     np_boxes = np.array(
         [[1.7802081, 2.516249, -1.7501148, 1.75, 3.39, 1.65, 1.48],
@@ -313,6 +353,8 @@ def test_boxes_conversion():
          [31.31978, 8.162144, -1.6217787, 1.74, 3.77, 1.48, 2.79]])
     cam_box_tensor = Box3DMode.convert(lidar_boxes.tensor, Box3DMode.LIDAR,
                                        Box3DMode.CAM)
+    expected_box = lidar_boxes.convert_to(Box3DMode.CAM)
+    assert torch.equal(expected_box.tensor, cam_box_tensor)
 
     # Some properties should be the same
     cam_boxes = CameraInstance3DBoxes(cam_box_tensor)
@@ -342,7 +384,7 @@ def test_boxes_conversion():
     # test similar mode conversion
     same_results = Box3DMode.convert(depth_box_tensor, Box3DMode.DEPTH,
                                      Box3DMode.DEPTH)
-    assert (same_results == depth_box_tensor).all()
+    assert torch.equal(same_results, depth_box_tensor)
 
     # test conversion with a given rt_mat
     camera_boxes = CameraInstance3DBoxes(
@@ -418,8 +460,10 @@ def test_boxes_conversion():
          [1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601]],
         dtype=torch.float32)
     depth_boxes = DepthInstance3DBoxes(depth_boxes)
-    depth_to_lidar_box = Box3DMode.convert(depth_boxes, Box3DMode.DEPTH,
-                                           Box3DMode.LIDAR)
+    depth_to_lidar_box = depth_boxes.convert_to(Box3DMode.LIDAR)
+    expected_box = depth_to_lidar_box.convert_to(Box3DMode.DEPTH)
+    assert torch.equal(depth_boxes.tensor, expected_box.tensor)
+
     lidar_to_depth_box = Box3DMode.convert(depth_to_lidar_box, Box3DMode.LIDAR,
                                            Box3DMode.DEPTH)
     assert torch.allclose(depth_boxes.tensor, lidar_to_depth_box.tensor)
@@ -430,6 +474,8 @@ def test_boxes_conversion():
                                          Box3DMode.CAM)
     cam_to_depth_box = Box3DMode.convert(depth_to_cam_box, Box3DMode.CAM,
                                          Box3DMode.DEPTH)
+    expected_tensor = depth_to_cam_box.convert_to(Box3DMode.DEPTH)
+    assert torch.equal(expected_tensor.tensor, cam_to_depth_box.tensor)
     assert torch.allclose(depth_boxes.tensor, cam_to_depth_box.tensor)
     assert torch.allclose(depth_boxes.volume, cam_to_depth_box.volume)
 
