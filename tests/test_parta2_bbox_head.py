@@ -3,6 +3,7 @@ import torch
 from mmcv import Config
 from torch.nn import BatchNorm1d, ReLU
 
+from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
 from mmdet3d.core.bbox.samplers import IoUNegPiecewiseSampler
 from mmdet3d.models import PartA2BboxHead
 from mmdet3d.ops import make_sparse_convmodule
@@ -336,8 +337,10 @@ def test_get_bboxes():
             use_raw_score=True,
             nms_thr=0.01,
             score_thr=0.1))
+    input_meta = dict(
+        box_type_3d=LiDARInstance3DBoxes, box_mode_3d=Box3DMode.LIDAR)
     result_list = self.get_bboxes(rois, cls_score, bbox_pred, class_labels,
-                                  class_pred, None, cfg)
+                                  class_pred, [input_meta], cfg)
     selected_bboxes, selected_scores, selected_label_preds = result_list[0]
 
     expected_selected_bboxes = torch.Tensor(
@@ -347,7 +350,8 @@ def test_get_bboxes():
     expected_selected_scores = torch.Tensor([-2.2061, -2.1121, -0.1761]).cuda()
     expected_selected_label_preds = torch.Tensor([2., 2., 2.]).cuda()
 
-    assert torch.allclose(selected_bboxes, expected_selected_bboxes, 1e-3)
+    assert torch.allclose(selected_bboxes.tensor, expected_selected_bboxes,
+                          1e-3)
     assert torch.allclose(selected_scores, expected_selected_scores, 1e-3)
     assert torch.allclose(selected_label_preds, expected_selected_label_preds)
 

@@ -20,10 +20,18 @@ class ScanNetDataset(Custom3DDataset):
                  pipeline=None,
                  classes=None,
                  modality=None,
+                 box_type_3d='Depth',
                  filter_empty_gt=True,
                  test_mode=False):
-        super().__init__(data_root, ann_file, pipeline, classes, modality,
-                         filter_empty_gt, test_mode)
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
+            classes=classes,
+            modality=modality,
+            box_type_3d=box_type_3d,
+            filter_empty_gt=filter_empty_gt,
+            test_mode=test_mode)
 
     def get_ann_info(self, index):
         # Use index to get the annos, thus the evalhook could also use this api

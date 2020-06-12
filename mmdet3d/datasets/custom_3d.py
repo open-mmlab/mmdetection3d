@@ -6,11 +6,39 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
+from ..core.bbox import (Box3DMode, CameraInstance3DBoxes,
+                         DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
 class Custom3DDataset(Dataset):
+    """Customized 3D dataset
+
+    This is the base dataset of SUNRGB-D, ScanNet, nuScenes, and KITTI
+    dataset.
+
+    Args:
+        data_root (str): Path of dataset root.
+        ann_file (str): Path of annotation file.
+        pipeline (list[dict], optional): Pipeline used for data processing.
+            Defaults to None.
+        classes (tuple[str], optional): Classes used in the dataset.
+            Defaults to None.
+        modality ([dict], optional): Modality to specify the sensor data used
+            as input. Defaults to None.
+        box_type_3d (str, optional): Type of 3D box of this dataset.
+            Based on the `box_type_3d`, the dataset will encapsulate the box
+            to its original format then converted them to `box_type_3d`.
+            Defaults to 'LiDAR'. Available options includes
+            - 'LiDAR': box in LiDAR coordinates
+            - 'Depth': box in depth coordinates, usually for indoor dataset
+            - 'Camera': box in camera coordinates
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
+            Defaults to True.
+        test_mode (bool, optional): Whether the dataset is in test mode.
+            Defaults to False.
+    """
 
     def __init__(self,
                  data_root,
@@ -18,6 +46,7 @@ class Custom3DDataset(Dataset):
                  pipeline=None,
                  classes=None,
                  modality=None,
+                 box_type_3d='LiDAR',
                  filter_empty_gt=True,
                  test_mode=False):
         super().__init__()
@@ -26,6 +55,7 @@ class Custom3DDataset(Dataset):
         self.test_mode = test_mode
         self.modality = modality
         self.filter_empty_gt = filter_empty_gt
+        self.get_box_type(box_type_3d)
 
         self.CLASSES = self.get_classes(classes)
         self.data_infos = self.load_annotations(self.ann_file)
@@ -39,6 +69,21 @@ class Custom3DDataset(Dataset):
 
     def load_annotations(self, ann_file):
         return mmcv.load(ann_file)
+
+    def get_box_type(self, box_type):
+        box_type_lower = box_type.lower()
+        if box_type_lower == 'lidar':
+            self.box_type_3d = LiDARInstance3DBoxes
+            self.box_mode_3d = Box3DMode.LIDAR
+        elif box_type_lower == 'camera':
+            self.box_type_3d = CameraInstance3DBoxes
+            self.box_mode_3d = Box3DMode.CAM
+        elif box_type_lower == 'depth':
+            self.box_type_3d = DepthInstance3DBoxes
+            self.box_mode_3d = Box3DMode.DEPTH
+        else:
+            raise ValueError('Only "box_type" of "camera", "lidar", "depth"'
+                             f' are supported, got {box_type}')
 
     def get_data_info(self, index):
         info = self.data_infos[index]
@@ -61,6 +106,8 @@ class Custom3DDataset(Dataset):
         results['bbox3d_fields'] = []
         results['pts_mask_fields'] = []
         results['pts_seg_fields'] = []
+        results['box_type_3d'] = self.box_type_3d
+        results['box_mode_3d'] = self.box_mode_3d
 
     def prepare_train_data(self, index):
         input_dict = self.get_data_info(index)
