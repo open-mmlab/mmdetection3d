@@ -83,7 +83,9 @@ def bbox3d2result(bboxes, scores, labels):
         dict(Tensor): bbox results in cpu mode
     """
     return dict(
-        boxes_3d=bboxes.cpu(), scores_3d=scores.cpu(), labels_3d=labels.cpu())
+        boxes_3d=bboxes.to('cpu'),
+        scores_3d=scores.cpu(),
+        labels_3d=labels.cpu())
 
 
 def upright_depth_to_lidar_torch(points=None,
