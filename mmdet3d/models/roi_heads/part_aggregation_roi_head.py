@@ -112,7 +112,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         semantic_results = self.semantic_head(feats_dict['seg_features'])
 
-        rois = bbox3d2roi([res['boxes_3d'] for res in proposal_list])
+        rois = bbox3d2roi([res['boxes_3d'].tensor for res in proposal_list])
         labels_3d = [res['labels_3d'] for res in proposal_list]
         cls_preds = [res['cls_preds'] for res in proposal_list]
         bbox_results = self._bbox_forward(feats_dict['seg_features'],

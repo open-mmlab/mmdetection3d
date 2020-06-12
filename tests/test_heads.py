@@ -4,6 +4,8 @@ from os.path import dirname, exists, join
 import pytest
 import torch
 
+from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
+
 
 def _get_config_directory():
     """ Find the predefined detector config directory """
@@ -129,11 +131,16 @@ def test_anchor3d_head_getboxes():
 
     feats = list()
     feats.append(torch.rand([2, 512, 200, 176], dtype=torch.float32).cuda())
+    # fake input_metas
     input_metas = [{
-        'sample_idx': 1234
+        'sample_idx': 1234,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
     }, {
-        'sample_idx': 2345
-    }]  # fake input_metas
+        'sample_idx': 2345,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
+    }]
     (cls_score, bbox_pred, dir_cls_preds) = self.forward(feats)
 
     # test get_boxes
@@ -155,11 +162,16 @@ def test_parta2_rpnhead_getboxes():
 
     feats = list()
     feats.append(torch.rand([2, 512, 200, 176], dtype=torch.float32).cuda())
+    # fake input_metas
     input_metas = [{
-        'sample_idx': 1234
+        'sample_idx': 1234,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
     }, {
-        'sample_idx': 2345
-    }]  # fake input_metas
+        'sample_idx': 2345,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
+    }]
     (cls_score, bbox_pred, dir_cls_preds) = self.forward(feats)
 
     # test get_boxes
@@ -169,7 +181,7 @@ def test_parta2_rpnhead_getboxes():
     assert result_list[0]['scores_3d'].shape == torch.Size([512])
     assert result_list[0]['labels_3d'].shape == torch.Size([512])
     assert result_list[0]['cls_preds'].shape == torch.Size([512, 3])
-    assert result_list[0]['boxes_3d'].shape == torch.Size([512, 7])
+    assert result_list[0]['boxes_3d'].tensor.shape == torch.Size([512, 7])
 
 
 def test_vote_head():

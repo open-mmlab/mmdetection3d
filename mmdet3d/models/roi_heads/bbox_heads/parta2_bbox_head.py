@@ -474,7 +474,9 @@ class PartA2BboxHead(nn.Module):
             selected_scores = cur_cls_score[selected]
 
             result_list.append(
-                (selected_bboxes, selected_scores, selected_label_preds))
+                (img_meta[batch_id]['box_type_3d'](selected_bboxes,
+                                                   self.bbox_coder.code_size),
+                 selected_scores, selected_label_preds))
         return result_list
 
     def multi_class_nms(self,
