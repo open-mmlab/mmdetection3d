@@ -73,14 +73,13 @@ class Collect3D(object):
 
     def __init__(self,
                  keys,
-                 pcd_shape=[1, 1600, 1408],
                  meta_keys=('filename', 'ori_shape', 'img_shape', 'lidar2img',
                             'pad_shape', 'scale_factor', 'flip', 'pcd_flip',
-                            'img_norm_cfg', 'rect', 'Trv2c', 'P2', 'pcd_trans',
-                            'sample_idx', 'pcd_scale_factor', 'pcd_rotation')):
+                            'box_mode_3d', 'box_type_3d', 'img_norm_cfg',
+                            'rect', 'Trv2c', 'P2', 'pcd_trans', 'sample_idx',
+                            'pcd_scale_factor', 'pcd_rotation')):
         self.keys = keys
         self.meta_keys = meta_keys
-        self.pcd_shape = pcd_shape
 
     def __call__(self, results):
         data = {}
@@ -88,7 +87,7 @@ class Collect3D(object):
         for key in self.meta_keys:
             if key in results:
                 img_meta[key] = results[key]
-        img_meta.update(pcd_shape=self.pcd_shape, pcd_pad_shape=self.pcd_shape)
+
         data['img_meta'] = DC(img_meta, cpu_only=True)
         for key in self.keys:
             data[key] = results[key]

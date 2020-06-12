@@ -7,7 +7,7 @@ import pyquaternion
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import LiDARInstance3DBoxes, box_np_ops
+from ..core.bbox import LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
 
 
@@ -72,8 +72,10 @@ class NuScenesDataset(Custom3DDataset):
                  classes=None,
                  load_interval=1,
                  with_velocity=True,
-                 test_mode=False,
                  modality=None,
+                 box_type_3d='LiDAR',
+                 filter_empty_gt=True,
+                 test_mode=False,
                  eval_version='detection_cvpr_2019'):
         self.load_interval = load_interval
         super().__init__(
@@ -82,6 +84,8 @@ class NuScenesDataset(Custom3DDataset):
             pipeline=pipeline,
             classes=classes,
             modality=modality,
+            box_type_3d=box_type_3d,
+            filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
 
         self.with_velocity = with_velocity
@@ -172,7 +176,7 @@ class NuScenesDataset(Custom3DDataset):
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,
             box_dim=gt_bboxes_3d.shape[-1],
-            origin=[0.5, 0.5, 0.5])
+            origin=[0.5, 0.5, 0.5]).convert_to(self.box_mode_3d)
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
@@ -352,26 +356,28 @@ class NuScenesDataset(Custom3DDataset):
 
 
 def output_to_nusc_box(detection):
-    box3d = detection['boxes_3d'].numpy()
+    box3d = detection['boxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
+
+    box_gravity_center = box3d.gravity_center.numpy()
+    box_dims = box3d.dims.numpy()
+    box_yaw = box3d.yaw.numpy()
     # TODO: check whether this is necessary
     # with dir_offset & dir_limit in the head
-    box3d[:, 6] = -box3d[:, 6] - np.pi / 2
-    # the trained model is in [0.5, 0.5, 0],
-    # change them back to nuscenes [0.5, 0.5, 0.5]
-    box_np_ops.change_box3d_center_(box3d, [0.5, 0.5, 0], [0.5, 0.5, 0.5])
+    box_yaw = -box_yaw - np.pi / 2
+
     box_list = []
-    for i in range(box3d.shape[0]):
-        quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box3d[i, 6])
-        velocity = (*box3d[i, 7:9], 0.0)
+    for i in range(len(box3d)):
+        quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
+        velocity = (*box3d.tensor[i, 7:9], 0.0)
         # velo_val = np.linalg.norm(box3d[i, 7:9])
         # velo_ori = box3d[i, 6]
         # velocity = (
         # velo_val * np.cos(velo_ori), velo_val * np.sin(velo_ori), 0.0)
         box = NuScenesBox(
-            box3d[i, :3],
-            box3d[i, 3:6],
+            box_gravity_center[i],
+            box_dims[i],
             quat,
             label=labels[i],
             score=scores[i],
