@@ -167,14 +167,29 @@ class SUNRGBD_Calibration(object):
 
 
 def rotz(t):
-    """Rotation about the z-axis."""
+    """Rotation about the z-axis.
+
+    Args:
+        t(float): Heading angle.
+
+    Returns:
+        ndarray: Transforation matrix
+    """
     c = np.cos(t)
     s = np.sin(t)
     return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
 
 
 def transform_from_rot_trans(R, t):
-    """Transforation matrix from rotation matrix and translation vector."""
+    """Transforation matrix from rotation matrix and translation vector.
+
+    Args:
+        R(ndarray): Rotation matrix.
+        t(ndarray): Translation vector.
+
+    Returns:
+        ndarray: Transforation matrix.
+    """
     R = R.reshape(3, 3)
     t = t.reshape(3, 1)
     return np.vstack((np.hstack([R, t]), [0, 0, 0, 1]))
