@@ -11,7 +11,14 @@ from plyfile import PlyData
 
 
 def represents_int(s):
-    ''' if string s represents an int. '''
+    """Judge whether string s represents an int.
+
+    Args:
+        s(str): The input string to be judged.
+
+    Returns:
+        bool: Whether s represents int or not.
+    """
     try:
         int(s)
         return True
@@ -34,7 +41,13 @@ def read_label_mapping(filename,
 
 
 def read_mesh_vertices(filename):
-    """ read XYZ for each vertex.
+    """Read XYZ for each vertex.
+
+    Args:
+        filename(str): The name of the mesh vertices file.
+
+    Returns:
+        ndarray: Vertices.
     """
     assert os.path.isfile(filename)
     with open(filename, 'rb') as f:
@@ -48,8 +61,13 @@ def read_mesh_vertices(filename):
 
 
 def read_mesh_vertices_rgb(filename):
-    """ read XYZ RGB for each vertex.
-    Note: RGB values are in 0-255
+    """Read XYZ and RGB for each vertex.
+
+    Args:
+        filename(str): The name of the mesh vertices file.
+
+    Returns:
+        Vertices. Note that RGB values are in 0-255.
     """
     assert os.path.isfile(filename)
     with open(filename, 'rb') as f:
