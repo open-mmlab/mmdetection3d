@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-''' Provides Python helper function to read My SUNRGBD dataset.
+"""Provides Python helper function to read My SUNRGBD dataset.
 
 Author: Charles R. Qi
 Date: October, 2017
@@ -10,7 +10,7 @@ Date: October, 2017
 Updated by Charles R. Qi
 Date: December, 2018
 Note: removed basis loading.
-'''
+"""
 
 import cv2
 import numpy as np
@@ -39,7 +39,7 @@ def flip_axis_to_camera(pc):
     Args:
         pc(ndarray): points in depth axis.
 
-    Return:
+    Returns:
         ndarray: points in camera  axis.
     """
     pc2 = np.copy(pc)
@@ -79,20 +79,22 @@ class SUNObject3d(object):
 
 
 class SUNRGBD_Calibration(object):
-    ''' Calibration matrices and utils
-        We define five coordinate system in SUN RGBD dataset
+    """Calibration matrices and utils
+
+    We define five coordinate system in SUN RGBD dataset:
 
         camera coodinate:
-            Z is forward, Y is downward, X is rightward
+            Z is forward, Y is downward, X is rightward.
 
         depth coordinate:
-            Just change axis order and flip up-down axis from camera coord
+            Just change axis order and flip up-down axis from camera coord.
 
         upright depth coordinate: tilted depth coordinate by Rtilt such that
-            Z is gravity direction, Z is up-axis, Y is forward, X is right-ward
+            Z is gravity direction, Z is up-axis, Y is forward,
+            X is right-ward.
 
         upright camera coordinate:
-            Just change axis order and flip up-down axis from upright
+            Just change axis order and flip up-down axis from upright.
                 depth coordinate
 
         image coordinate:
@@ -106,8 +108,12 @@ class SUNRGBD_Calibration(object):
             depth coordinate.
         2d boxes are in image coordinate
 
-        We generate frustum point cloud and 3d box in upright camera coordinate
-    '''
+        We generate frustum point cloud and 3d box
+        in upright camera coordinate.
+
+    Args:
+        calib_filepath(str): Path of the calib file.
+    """
 
     def __init__(self, calib_filepath):
         lines = [line.rstrip() for line in open(calib_filepath)]
@@ -121,27 +127,34 @@ class SUNRGBD_Calibration(object):
         self.c_v = self.K[1, 2]
 
     def project_upright_depth_to_camera(self, pc):
-        ''' project point cloud from depth coord to camera coordinate
-            Input: (N,3) Output: (N,3)
-        '''
+        """Convert pc coordinate from depth to image.
+
+        Args:
+            pc(ndarray): Point cloud in depth coordinate.
+
+        Returns:
+            pc(ndarray): Point cloud in camera coordinate.
+        """
         # Project upright depth to depth coordinate
         pc2 = np.dot(np.transpose(self.Rtilt), np.transpose(pc[:,
                                                                0:3]))  # (3,n)
         return flip_axis_to_camera(np.transpose(pc2))
 
     def project_upright_depth_to_image(self, pc):
-        ''' Input: (N,3) Output: (N,2) UV and (N,) depth '''
+        """Convert pc coordinate from depth to image.
+
+        Args:
+            pc(ndarray): Point cloud in depth coordinate.
+
+        Returns:
+            ndarray: [N, 2] uv.
+            ndarray: [n,] depth.
+        """
         pc2 = self.project_upright_depth_to_camera(pc)
         uv = np.dot(pc2, np.transpose(self.K))  # (n,3)
         uv[:, 0] /= uv[:, 2]
         uv[:, 1] /= uv[:, 2]
         return uv[:, 0:2], pc2[:, 2]
-
-    def project_upright_depth_to_upright_camera(self, pc):
-        return flip_axis_to_camera(pc)
-
-    def project_upright_camera_to_upright_depth(self, pc):
-        return flip_axis_to_depth(pc)
 
     def project_image_to_camera(self, uv_depth):
         n = uv_depth.shape[0]
@@ -152,14 +165,6 @@ class SUNRGBD_Calibration(object):
         pts_3d_camera[:, 1] = y
         pts_3d_camera[:, 2] = uv_depth[:, 2]
         return pts_3d_camera
-
-    def project_image_to_upright_camerea(self, uv_depth):
-        pts_3d_camera = self.project_image_to_camera(uv_depth)
-        pts_3d_depth = flip_axis_to_depth(pts_3d_camera)
-        pts_3d_upright_depth = np.transpose(
-            np.dot(self.Rtilt, np.transpose(pts_3d_depth)))
-        return self.project_upright_depth_to_upright_camera(
-            pts_3d_upright_depth)
 
 
 def rotz(t):
@@ -204,7 +209,16 @@ def in_hull(p, hull):
 
 
 def extract_pc_in_box3d(pc, box3d):
-    ''' pc: (N,3), box3d: (8,3) '''
+    """Extract point cloud in box3d.
+
+    Args:
+        pc(ndarray): [N, 3] Point cloud.
+        box3d(ndarray): [8,3] 3d box.
+
+    Returns:
+        ndarray: Selected point cloud.
+        ndarray: Indices of selected point cloud.
+    """
     box3d_roi_inds = in_hull(pc[:, 0:3], box3d)
     return pc[box3d_roi_inds, :], box3d_roi_inds
 
@@ -223,12 +237,17 @@ def my_compute_box_3d(center, size, heading_angle):
 
 
 def compute_box_3d(obj, calib):
-    ''' Takes an object and a projection matrix (P) and projects the 3d
+    """Takes an object and a projection matrix (P) and projects the 3d
         bounding box into the image plane.
-        Returns:
-            corners_2d: (8,2) array in image coord.
-            corners_3d: (8,3) array in in upright depth coord.
-    '''
+
+    Args:
+        obj(SUNObject3d): Instance of SUNObject3d.
+        calib(SUNRGBD_Calibration): Instance of SUNRGBD_Calibration.
+
+    Returns:
+        ndarray: [8,2] array in image coord.
+        corners_3d: [8,3] array in in upright depth coord.
+    """
     center = obj.centroid
 
     # compute rotational matrix around yaw axis
