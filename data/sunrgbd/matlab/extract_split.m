@@ -30,7 +30,9 @@ end
 
 %% Map data to train or val set.
 load('../OFFICIAL_SUNRGBD/SUNRGBDMeta3DBB_v2.mat');
-
+if exist('../sunrgbd_trainval','dir')==0
+    mkdir('../sunrgbd_trainval');
+end
 fid_train = fopen('../sunrgbd_trainval/train_data_idx.txt', 'w');
 fid_val = fopen('../sunrgbd_trainval/val_data_idx.txt', 'w');
 
