@@ -103,9 +103,10 @@ def extract_sunrgbd_data(idx_filename,
                          save_votes=False,
                          use_v1=False,
                          skip_empty_scene=True):
-    """ Extract scene point clouds and
-    bounding boxes (centroids, box sizes, heading angles, semantic classes).
-    Dumped point clouds and boxes are in upright depth coord.
+    """Extract scene point clouds and
+            bounding boxes (centroids, box sizes, heading angles,
+            semantic classes). Dumped point clouds and boxes are in
+            upright depth coord.
 
     Args:
         idx_filename: a TXT file where each line is an int number (index)
