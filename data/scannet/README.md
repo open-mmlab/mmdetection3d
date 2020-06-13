@@ -10,8 +10,16 @@ We follow the procedure in [votenet](https://github.com/facebookresearch/votenet
 ```
 scannet
 ├── scannet_utils.py
+├── batch_load_scannet_data.py
 ├── load_scannet_data.py
+├── scannet_utils.py
 ├── README.md
 ├── scans
+├── scannet_train_instance_data
+├── points
+├── instance_mask
+├── semantic_mask
+├── scannet_infos_train.pkl
+├── scannet_infos_val.pkl
 
 ```
