@@ -26,6 +26,20 @@ sunrgbd
 │   ├── SUNRGBD
 │   ├── SUNRGBDMeta2DBB_v2.mat
 │   ├── SUNRGBDMeta3DBB_v2.mat
-│   ├── SUNRGBDtoolbox
+│   ├── SUNRGBDtoolboNRGBD
+├── sunrgbd_trainval
+│   ├── calib
+│   ├── image
+│   ├── label_v1
+│   ├── train_data_idx.txt
+│   ├── depth
+│   ├── label
+│   ├── seg_label
+│   ├── val_data_idx.txt
+├── sunrgbd_pc_bbox_votes_50k_v1_train
+├── sunrgbd_pc_bbox_votes_50k_v1_val
+├── points
+├── sunrgbd_infos_train.pkl
+├── sunrgbd_infos_val.pkl
 
 ```
