@@ -1,8 +1,7 @@
-# Modified from Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-""" Batch mode in loading Scannet scenes with vertices and ground truth labels
+# Modified from
+# https://github.com/facebookresearch/votenet/blob/master/scannet/batch_load_scannet_data.py
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""Batch mode in loading Scannet scenes with vertices and ground truth labels
 for semantic and instance segmentations
 
 Usage example: python ./batch_load_scannet_data.py

@@ -1,7 +1,6 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
+# Modified from
+# https://github.com/facebookresearch/votenet/blob/master/sunrgbd/sunrgbd_data.py
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 ''' Helper class and functions for loading SUN RGB-D objects
 
 Author: Charles R. Qi
