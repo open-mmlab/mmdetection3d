@@ -4,6 +4,7 @@ import mmcv
 import numpy as np
 import pytest
 
+from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.datasets.pipelines import LoadAnnotations3D, LoadPointsFromFile
 
 
@@ -79,7 +80,8 @@ def test_load_annotations3D():
         data_path, scannet_info['pts_instance_mask_path'])
     scannet_results['ann_info']['pts_semantic_mask_path'] = osp.join(
         data_path, scannet_info['pts_semantic_mask_path'])
-    scannet_results['ann_info']['gt_bboxes_3d'] = scannet_gt_bboxes_3d
+    scannet_results['ann_info']['gt_bboxes_3d'] = DepthInstance3DBoxes(
+        scannet_gt_bboxes_3d, box_dim=6, with_yaw=False)
     scannet_results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
 
     scannet_results['bbox3d_fields'] = []
@@ -92,7 +94,7 @@ def test_load_annotations3D():
 
     scannet_pts_instance_mask = scannet_results['pts_instance_mask']
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
-    assert scannet_gt_boxes.shape == (27, 6)
+    assert scannet_gt_boxes.tensor.shape == (27, 7)
     assert scannet_gt_lbaels.shape == (27, )
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )

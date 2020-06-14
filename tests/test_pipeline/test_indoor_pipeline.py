@@ -2,7 +2,9 @@ import os.path as osp
 
 import mmcv
 import numpy as np
+import torch
 
+from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.datasets.pipelines import Compose
 
 
@@ -57,7 +59,8 @@ def test_scannet_pipeline():
         data_path, info['pts_instance_mask_path'])
     results['ann_info']['pts_semantic_mask_path'] = osp.join(
         data_path, info['pts_semantic_mask_path'])
-    results['ann_info']['gt_bboxes_3d'] = scannet_gt_bboxes_3d
+    results['ann_info']['gt_bboxes_3d'] = DepthInstance3DBoxes(
+        scannet_gt_bboxes_3d, box_dim=6, with_yaw=False)
     results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
 
     results['bbox3d_fields'] = []
@@ -77,13 +80,12 @@ def test_scannet_pipeline():
          [-1.332374, 1.474838, -0.04405887, -0.00887359],
          [2.1336637, -1.3265059, -0.02880373, 0.00638155],
          [0.43895668, -3.0259454, 1.5560012, 1.5911865]])
-    expected_gt_bboxes_3d = np.array([
-        [-1.5005362, -3.512584, 1.8565295, 1.7457027, 0.24149807, 0.57235193],
-        [-2.8848705, 3.4961755, 1.5268247, 0.66170084, 0.17433672, 0.67153597],
-        [-1.1585636, -2.192365, 0.61649567, 0.5557011, 2.5375574, 1.2144762],
-        [-2.930457, -2.4856408, 0.9722377, 0.6270478, 1.8461524, 0.28697443],
-        [3.3114715, -0.00476722, 1.0712197, 0.46191898, 3.8605113, 2.1603441]
-    ])
+    expected_gt_bboxes_3d = torch.tensor(
+        [[-1.5005, -3.5126, 1.8565, 1.7457, 0.2415, 0.5724, 0.0000],
+         [-2.8849, 3.4962, 1.5268, 0.6617, 0.1743, 0.6715, 0.0000],
+         [-1.1586, -2.1924, 0.6165, 0.5557, 2.5376, 1.2145, 0.0000],
+         [-2.9305, -2.4856, 0.9722, 0.6270, 1.8462, 0.2870, 0.0000],
+         [3.3115, -0.0048, 1.0712, 0.4619, 3.8605, 2.1603, 0.0000]])
     expected_gt_labels_3d = np.array([
         6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
         0, 0, 0, 5, 5, 5
@@ -91,7 +93,8 @@ def test_scannet_pipeline():
     expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     assert np.allclose(points, expected_points)
-    assert np.allclose(gt_bboxes_3d[:5, :], expected_gt_bboxes_3d)
+    assert torch.allclose(gt_bboxes_3d.tensor[:5, :], expected_gt_bboxes_3d,
+                          1e-2)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels_3d)
     assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
     assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
@@ -130,12 +133,12 @@ def test_sunrgbd_pipeline():
             np.float32)
         gt_labels_3d = info['annos']['class'].astype(np.long)
     else:
-        gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
+        gt_bboxes_3d = np.zeros((1, 7), dtype=np.float32)
         gt_labels_3d = np.zeros((1, ), dtype=np.long)
 
     # prepare input of pipeline
     results['ann_info'] = dict()
-    results['ann_info']['gt_bboxes_3d'] = gt_bboxes_3d
+    results['ann_info']['gt_bboxes_3d'] = DepthInstance3DBoxes(gt_bboxes_3d)
     results['ann_info']['gt_labels_3d'] = gt_labels_3d
     results['bbox3d_fields'] = []
     results['pts_mask_fields'] = []
@@ -150,21 +153,11 @@ def test_sunrgbd_pipeline():
                                 [0.6464, 1.5635, 0.0826, 0.0616],
                                 [0.6453, 1.5603, 0.0849, 0.0638],
                                 [0.6488, 1.5786, 0.0461, 0.0251]])
-    expected_gt_bboxes_3d = np.array([[
-        -2.012483, 3.9473376, -0.25446942, 2.3730404, 1.9457763, 2.0303352,
-        1.2205974
-    ],
-                                      [
-                                          -3.7036808, 4.2396426, -0.81091917,
-                                          0.6032123, 0.91040343, 1.003341,
-                                          1.2662518
-                                      ],
-                                      [
-                                          0.6528646, 2.1638472, -0.15228128,
-                                          0.7347852, 1.6113238, 2.1694272,
-                                          2.81404
-                                      ]])
+    expected_gt_bboxes_3d = torch.tensor(
+        [[-2.0125, 3.9473, -0.2545, 2.3730, 1.9458, 2.0303, 1.2206],
+         [-3.7037, 4.2396, -0.8109, 0.6032, 0.9104, 1.0033, 1.2663],
+         [0.6529, 2.1638, -0.1523, 0.7348, 1.6113, 2.1694, 2.8140]])
     expected_gt_labels_3d = np.array([0, 7, 6])
-    assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
+    assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.allclose(gt_labels_3d.flatten(), expected_gt_labels_3d)
     assert np.allclose(points, expected_points, 1e-2)

@@ -62,7 +62,7 @@ def points_in_boxes_batch(points, boxes):
         points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR coordinate
         boxes (torch.Tensor): [B, T, 7],
             num_valid_boxes <= T, [x, y, z, w, l, h, ry] in LiDAR coordinate,
-            (x, y, z) is the bottom center
+            (x, y, z) is the bottom center.
 
     Returns:
         box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0

@@ -67,13 +67,12 @@ def test_getitem():
          [-1.332374, 1.474838, -0.04405887, -0.00887359],
          [2.1336637, -1.3265059, -0.02880373, 0.00638155],
          [0.43895668, -3.0259454, 1.5560012, 1.5911865]])
-    expected_gt_bboxes_3d = np.array([
-        [-1.5005362, -3.512584, 1.8565295, 1.7457027, 0.24149807, 0.57235193],
-        [-2.8848705, 3.4961755, 1.5268247, 0.66170084, 0.17433672, 0.67153597],
-        [-1.1585636, -2.192365, 0.61649567, 0.5557011, 2.5375574, 1.2144762],
-        [-2.930457, -2.4856408, 0.9722377, 0.6270478, 1.8461524, 0.28697443],
-        [3.3114715, -0.00476722, 1.0712197, 0.46191898, 3.8605113, 2.1603441]
-    ])
+    expected_gt_bboxes_3d = torch.tensor(
+        [[-1.5005, -3.5126, 1.5704, 1.7457, 0.2415, 0.5724, 0.0000],
+         [-2.8849, 3.4962, 1.1911, 0.6617, 0.1743, 0.6715, 0.0000],
+         [-1.1586, -2.1924, 0.0093, 0.5557, 2.5376, 1.2145, 0.0000],
+         [-2.9305, -2.4856, 0.8288, 0.6270, 1.8462, 0.2870, 0.0000],
+         [3.3115, -0.0048, -0.0090, 0.4619, 3.8605, 2.1603, 0.0000]])
     expected_gt_labels = np.array([
         6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
         0, 0, 0, 5, 5, 5
@@ -84,8 +83,8 @@ def test_getitem():
 
     assert scannet_dataset.CLASSES == class_names
     assert np.allclose(points, expected_points)
-    assert gt_bboxes_3d[:5].shape == (5, 6)
-    assert np.allclose(gt_bboxes_3d[:5], expected_gt_bboxes_3d)
+    assert gt_bboxes_3d.tensor[:5].shape == (5, 7)
+    assert torch.allclose(gt_bboxes_3d.tensor[:5], expected_gt_bboxes_3d, 1e-2)
     assert np.all(gt_labels.numpy() == expected_gt_labels)
     assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
     assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
@@ -114,42 +113,51 @@ def test_getitem():
 
 
 def test_evaluate():
+    from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
     scannet_dataset = ScanNetDataset(root_path, ann_file)
     results = []
     pred_boxes = dict()
-    pred_boxes['boxes_3d'] = torch.Tensor(
-        [[
-            3.52074146e+00, -1.48129511e+00, 1.57035351e+00, 2.31956959e-01,
-            1.74445975e+00, 5.72351933e-01, 0
+    pred_boxes['boxes_3d'] = DepthInstance3DBoxes(
+        torch.tensor([[
+            1.4813e+00, 3.5207e+00, 1.5704e+00, 1.7445e+00, 2.3196e-01,
+            5.7235e-01, 0.0000e+00
         ],
-         [
-             -3.48033905e+00, -2.90395617e+00, 1.19105673e+00, 1.70723915e-01,
-             6.60776615e-01, 6.71535969e-01, 0
-         ],
-         [
-             2.19867110e+00, -1.14655101e+00, 9.25755501e-03, 2.53463078e+00,
-             5.41841269e-01, 1.21447623e+00, 0
-         ],
-         [
-             2.50163722, -2.91681337, 0.82875049, 1.84280431, 0.61697435,
-             0.28697443, 0
-         ],
-         [
-             -0.01335114, 3.3114481, -0.00895238, 3.85815716, 0.44081616,
-             2.16034412, 0
-         ]])
-    pred_boxes['labels_3d'] = torch.Tensor([6, 6, 4, 9, 11])
-    pred_boxes['scores_3d'] = torch.Tensor([0.5, 1.0, 1.0, 1.0, 1.0])
+                      [
+                          2.9040e+00, -3.4803e+00, 1.1911e+00, 6.6078e-01,
+                          1.7072e-01, 6.7154e-01, 0.0000e+00
+                      ],
+                      [
+                          1.1466e+00, 2.1987e+00, 9.2576e-03, 5.4184e-01,
+                          2.5346e+00, 1.2145e+00, 0.0000e+00
+                      ],
+                      [
+                          2.9168e+00, 2.5016e+00, 8.2875e-01, 6.1697e-01,
+                          1.8428e+00, 2.8697e-01, 0.0000e+00
+                      ],
+                      [
+                          -3.3114e+00, -1.3351e-02, -8.9524e-03, 4.4082e-01,
+                          3.8582e+00, 2.1603e+00, 0.0000e+00
+                      ],
+                      [
+                          -2.0135e+00, -3.4857e+00, 9.3848e-01, 1.9911e+00,
+                          2.1603e-01, 1.2767e+00, 0.0000e+00
+                      ],
+                      [
+                          -2.1945e+00, -3.1402e+00, -3.8165e-02, 1.4801e+00,
+                          6.8676e-01, 1.0586e+00, 0.0000e+00
+                      ],
+                      [
+                          -2.7553e+00, 2.4055e+00, -2.9972e-02, 1.4764e+00,
+                          1.4927e+00, 2.3380e+00, 0.0000e+00
+                      ]]))
+    pred_boxes['labels_3d'] = torch.tensor([6, 6, 4, 9, 11, 11])
+    pred_boxes['scores_3d'] = torch.tensor([0.5, 1.0, 1.0, 1.0, 1.0, 0.5])
     results.append(pred_boxes)
     metric = [0.25, 0.5]
     ret_dict = scannet_dataset.evaluate(results, metric)
-    table_average_precision_25 = ret_dict['table_AP_0.25']
-    window_average_precision_25 = ret_dict['window_AP_0.25']
-    counter_average_precision_25 = ret_dict['counter_AP_0.25']
-    curtain_average_precision_25 = ret_dict['curtain_AP_0.25']
-    assert abs(table_average_precision_25 - 0.3333) < 0.01
-    assert abs(window_average_precision_25 - 1) < 0.01
-    assert abs(counter_average_precision_25 - 1) < 0.01
-    assert abs(curtain_average_precision_25 - 0.5) < 0.01
+    assert abs(ret_dict['table_AP_0.25'] - 0.3333) < 0.01
+    assert abs(ret_dict['window_AP_0.25'] - 1.0) < 0.01
+    assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
+    assert abs(ret_dict['curtain_AP_0.25'] - 1.0) < 0.01

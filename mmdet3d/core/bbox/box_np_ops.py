@@ -148,7 +148,7 @@ def center_to_corner_box3d(centers,
         dims (float array, shape=[N, 3]): dimensions in kitti label file.
         angles (float array, shape=[N]): rotation_y in kitti label file.
         origin (list or array or float): origin point relate to smallest point.
-            use [0.5, 1.0, 0.5] in camera and [0.5, 0.5, 0] in lidar.
+            use (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
         axis (int): rotation axis. 1 for camera and 2 for lidar.
     Returns:
         [type]: [description]

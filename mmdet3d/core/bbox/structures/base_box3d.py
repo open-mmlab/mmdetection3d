@@ -12,7 +12,7 @@ class BaseInstance3DBoxes(object):
 
     Note:
         The box is bottom centered, i.e. the relative position of origin in
-            the box is [0.5, 0.5, 0].
+            the box is (0.5, 0.5, 0).
 
     Args:
         tensor (torch.Tensor | np.ndarray | list): a Nxbox_dim matrix.
@@ -23,11 +23,11 @@ class BaseInstance3DBoxes(object):
             If False, the value of yaw will be set to 0 as minmax boxes.
             Default to True.
         origin (tuple): The relative position of origin in the box.
-            Default to [0.5, 0.5, 0]. This will guide the box be converted to
-            [0.5, 0.5, 0] mode.
+            Default to (0.5, 0.5, 0). This will guide the box be converted to
+            (0.5, 0.5, 0) mode.
     """
 
-    def __init__(self, tensor, box_dim=7, with_yaw=True, origin=[0.5, 0.5, 0]):
+    def __init__(self, tensor, box_dim=7, with_yaw=True, origin=(0.5, 0.5, 0)):
         if isinstance(tensor, torch.Tensor):
             device = tensor.device
         else:
@@ -40,18 +40,21 @@ class BaseInstance3DBoxes(object):
                 dtype=torch.float32, device=device)
         assert tensor.dim() == 2 and tensor.size(-1) == box_dim, tensor.size()
 
-        if not with_yaw and tensor.shape[-1] == 6:
+        if tensor.shape[-1] == 6:
+            # If the dimension of boxes is 6, we expand box_dim by padding
+            # 0 as a fake yaw and set with_yaw to False.
             assert box_dim == 6
             fake_rot = tensor.new_zeros(tensor.shape[0], 1)
             tensor = torch.cat((tensor, fake_rot), dim=-1)
             self.box_dim = box_dim + 1
+            self.with_yaw = False
         else:
             self.box_dim = box_dim
-        self.with_yaw = with_yaw
+            self.with_yaw = with_yaw
         self.tensor = tensor
 
-        if origin != [0.5, 0.5, 0]:
-            dst = self.tensor.new_tensor([0.5, 0.5, 0])
+        if origin != (0.5, 0.5, 0):
+            dst = self.tensor.new_tensor((0.5, 0.5, 0))
             src = self.tensor.new_tensor(origin)
             self.tensor[:, :3] += self.tensor[:, 3:6] * (dst - src)
 
@@ -121,7 +124,7 @@ class BaseInstance3DBoxes(object):
 
             The relative position of the centers in different kinds of
             boxes are different, e.g., the relative center of a boxes is
-            [0.5, 1.0, 0.5] in camera and [0.5, 0.5, 0] in lidar.
+            (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
             It is recommended to use `bottom_center` or `gravity_center`
             for more clear usage.
 
