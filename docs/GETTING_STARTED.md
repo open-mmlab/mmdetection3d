@@ -9,39 +9,57 @@ It is recommended to symlink the dataset root to `$MMDETECTION/data`.
 If your folder structure is different, you may need to change the corresponding paths in config files.
 
 ```
-mmdetection
-├── mmdet
+mmdetection3d
+├── mmdet3d
 ├── tools
 ├── configs
 ├── data
-│   ├── coco
-│   │   ├── annotations
-│   │   ├── train2017
-│   │   ├── val2017
-│   │   ├── test2017
-│   ├── cityscapes
-│   │   ├── annotations
-│   │   ├── leftImg8bit
-│   │   │   ├── train
-│   │   │   ├── val
-│   │   ├── gtFine
-│   │   │   ├── train
-│   │   │   ├── val
-│   ├── VOCdevkit
-│   │   ├── VOC2007
-│   │   ├── VOC2012
+│   ├── nuscenes
+│   │   ├── maps
+│   │   ├── samples
+│   │   ├── sweeps
+│   │   ├── v1.0-test
+|   |   ├── v1.0-trainval
+│   ├── kitti
+│   │   ├── ImageSets
+│   │   ├── testing
+│   │   │   ├── calib
+│   │   │   ├── image_2
+│   │   │   ├── velodyne
+│   │   ├── training
+│   │   │   ├── calib
+│   │   │   ├── image_2
+│   │   │   ├── label_2
+│   │   │   ├── velodyne
+│   ├── scannet
+│   │   ├── meta_data
+│   │   ├── scans
+│   │   ├── batch_load_scannet_data.py
+│   │   ├── load_scannet_data.py
+│   │   ├── scannet_utils.py
+│   │   ├── README.md
+│   ├── sunrgbd
+│   │   ├── OFFICIAL_SUNRGBD
+│   │   ├── matlab
+│   │   ├── sunrgbd_data.py
+│   │   ├── sunrgbd_utils.py
+│   │   ├── README.md
 
 ```
 
-The cityscapes annotations have to be converted into the coco format using `tools/convert_datasets/cityscapes.py`:
-
-```shell
-pip install cityscapesscripts
-python tools/convert_datasets/cityscapes.py ./data/cityscapes --nproc 8 --out_dir ./data/cityscapes/annotations
+Download nuScenes V1.0 full dataset data [HERE]( https://www.nuscenes.org/download). Prepare nuscenes data by running
+```bash
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
-Currently the config files in `cityscapes` use COCO pre-trained weights to initialize.
-You could download the pre-trained models in advance if network is unavailable or slow, otherwise it would cause errors at the beginning of training.
+Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare kitti data by running
+```bash
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
+```
+
+To prepare scannet data, please see [scannet](../data/scannet/README.md).
+
+To prepare sunrgbd data, please see [sunrgbd](../data/sunrgbd/README.md).
 
 For using custom datasets, please refer to [Tutorials 2: Adding New Dataset](tutorials/new_dataset.md).
 
