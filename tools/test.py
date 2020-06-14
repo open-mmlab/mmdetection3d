@@ -9,7 +9,7 @@ from tools.fuse_conv_bn import fuse_module
 
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_detector
-from mmdet.apis import multi_gpu_test, single_gpu_test
+from mmdet.apis import multi_gpu_test, set_random_seed, single_gpu_test
 from mmdet.core import wrap_fp16_model
 
 
@@ -76,6 +76,11 @@ def parse_args():
         '--tmpdir',
         help='tmp directory used for collecting results from multiple '
         'workers, available when gpu_collect is not specified')
+    parser.add_argument('--seed', type=int, default=0, help='random seed')
+    parser.add_argument(
+        '--deterministic',
+        action='store_true',
+        help='whether to set deterministic options for CUDNN backend.')
     parser.add_argument(
         '--options', nargs='+', action=MultipleKVAction, help='custom options')
     parser.add_argument(
@@ -108,6 +113,7 @@ def main():
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
+
     cfg.model.pretrained = None
     cfg.data.test.test_mode = True
 
@@ -117,6 +123,10 @@ def main():
     else:
         distributed = True
         init_dist(args.launcher, **cfg.dist_params)
+
+    # set random seeds
+    if args.seed is not None:
+        set_random_seed(args.seed, deterministic=args.deterministic)
 
     # build the dataloader
     # TODO: support multiple images per gpu (only minor changes are needed)

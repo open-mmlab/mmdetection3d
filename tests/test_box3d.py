@@ -33,7 +33,7 @@ def test_lidar_boxes3d():
          ]],
         dtype=np.float32)
     bottom_center_box = LiDARInstance3DBoxes(
-        gravity_center_box, origin=[0.5, 0.5, 0.5])
+        gravity_center_box, origin=(0.5, 0.5, 0.5))
     expected_tensor = torch.tensor(
         [[
             -5.24223238e+00, 4.00209696e+01, -4.76429619e-01, 2.06200000e+00,

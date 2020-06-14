@@ -18,7 +18,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                                | /
        (yaw=pi) left y <------ 0
 
-    The relative coordinate of bottom center in a LiDAR box is [0.5, 0.5, 0],
+    The relative coordinate of bottom center in a LiDAR box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
     The yaw is 0 at the negative direction of y axis, and increases from
     the negative direction of y to the positive direction of x.
