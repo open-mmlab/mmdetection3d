@@ -3,47 +3,6 @@ import torch
 from mmcv.utils import print_log
 from terminaltables import AsciiTable
 
-from mmdet3d.core.bbox.iou_calculators.iou3d_calculator import bbox_overlaps_3d
-
-
-def boxes3d_depth_to_lidar(boxes3d, mid_to_bottom=True):
-    """Boxes3d depth to lidar.
-
-    Flip X-right,Y-forward,Z-up to X-forward,Y-left,Z-up.
-
-    Args:
-        boxes3d (ndarray): (N, 7) [x, y, z, w, l, h, r] in depth coords.
-
-    Return:
-        boxes3d_lidar (ndarray): (N, 7) [x, y, z, l, h, w, r] in LiDAR coords.
-    """
-    boxes3d_lidar = boxes3d.copy()
-    boxes3d_lidar[..., [0, 1, 2, 3, 4, 5]] = boxes3d_lidar[...,
-                                                           [1, 0, 2, 4, 3, 5]]
-    boxes3d_lidar[..., 1] *= -1
-    if mid_to_bottom:
-        boxes3d_lidar[..., 2] -= boxes3d_lidar[..., 5] / 2
-    return boxes3d_lidar
-
-
-def get_iou_gpu(bb1, bb2):
-    """Get IoU.
-
-    Compute IoU of two bounding boxes.
-
-    Args:
-        bb1 (ndarray): [x, y, z, w, l, h, ry] in LiDAR.
-        bb2 (ndarray): [x, y, z, h, w, l, ry] in LiDAR.
-
-    Returns:
-        ans_iou (tensor): The answer of IoU.
-    """
-
-    bb1 = torch.from_numpy(bb1).float().cuda()
-    bb2 = torch.from_numpy(bb2).float().cuda()
-    iou3d = bbox_overlaps_3d(bb1, bb2, mode='iou', coordinate='lidar')
-    return iou3d.cpu().numpy()
-
 
 def average_precision(recalls, precisions, mode='area'):
     """Calculate average precision (for single or multiple scales).
@@ -61,7 +20,10 @@ def average_precision(recalls, precisions, mode='area'):
     if recalls.ndim == 1:
         recalls = recalls[np.newaxis, :]
         precisions = precisions[np.newaxis, :]
-    assert recalls.shape == precisions.shape and recalls.ndim == 2
+
+    assert recalls.shape == precisions.shape
+    assert recalls.ndim == 2
+
     num_scales = recalls.shape[0]
     ap = np.zeros(num_scales, dtype=np.float32)
     if mode == 'area':
@@ -103,40 +65,42 @@ def eval_det_cls(pred, gt, iou_thr=None):
         float: scalar, average precision.
     """
 
-    # construct gt objects
-    class_recs = {}  # {img_id: {'bbox': bbox list, 'det': matched list}}
+    # {img_id: {'bbox': box structure, 'det': matched list}}
+    class_recs = {}
     npos = 0
     for img_id in gt.keys():
-        bbox = np.array(gt[img_id])
+        cur_gt_num = len(gt[img_id])
+        if cur_gt_num != 0:
+            gt_cur = torch.zeros([cur_gt_num, 7], dtype=torch.float32)
+            for i in range(cur_gt_num):
+                gt_cur[i] = gt[img_id][i].tensor
+            bbox = gt[img_id][0].new_box(gt_cur)
+        else:
+            bbox = gt[img_id]
         det = [[False] * len(bbox) for i in iou_thr]
         npos += len(bbox)
         class_recs[img_id] = {'bbox': bbox, 'det': det}
-    # pad empty list to all other imgids
-    for img_id in pred.keys():
-        if img_id not in gt:
-            class_recs[img_id] = {'bbox': np.array([]), 'det': []}
 
     # construct dets
     image_ids = []
     confidence = []
-    BB = []
     ious = []
     for img_id in pred.keys():
         cur_num = len(pred[img_id])
         if cur_num == 0:
             continue
-        BB_cur = np.zeros((cur_num, 7))  # hard code
+        pred_cur = torch.zeros((cur_num, 7), dtype=torch.float32)
         box_idx = 0
         for box, score in pred[img_id]:
             image_ids.append(img_id)
             confidence.append(score)
-            BB.append(box)
-            BB_cur[box_idx] = box
+            pred_cur[box_idx] = box.tensor
             box_idx += 1
-        gt_cur = class_recs[img_id]['bbox'].astype(float)
+        pred_cur = box.new_box(pred_cur)
+        gt_cur = class_recs[img_id]['bbox']
         if len(gt_cur) > 0:
             # calculate iou in each image
-            iou_cur = get_iou_gpu(BB_cur, gt_cur)
+            iou_cur = pred_cur.overlaps(pred_cur, gt_cur)
             for i in range(cur_num):
                 ious.append(iou_cur[i])
         else:
@@ -157,12 +121,12 @@ def eval_det_cls(pred, gt, iou_thr=None):
     for d in range(nd):
         R = class_recs[image_ids[d]]
         iou_max = -np.inf
-        BBGT = R['bbox'].astype(float)
+        BBGT = R['bbox']
         cur_iou = ious[d]
 
-        if BBGT.size > 0:
+        if len(BBGT) > 0:
             # compute overlaps
-            for j in range(BBGT.shape[0]):
+            for j in range(len(BBGT)):
                 # iou = get_iou_main(get_iou_func, (bb, BBGT[j,...]))
                 iou = cur_iou[j]
                 if iou > iou_max:
@@ -194,61 +158,22 @@ def eval_det_cls(pred, gt, iou_thr=None):
     return ret
 
 
-def eval_map_recall(det_infos, gt_infos, ovthresh=None):
+def eval_map_recall(pred, gt, ovthresh=None):
     """Evaluate mAP and recall.
 
     Generic functions to compute precision/recall for object detection
         for multiple classes.
 
     Args:
-        det_infos (list[dict]): Information of detection results, the dict
-            includes the following keys
-            - labels_3d (Tensor): Labels of boxes.
-            - boxes_3d (Tensor): 3d bboxes.
-            - scores_3d (Tensor): Scores of boxes.
-
-        gt_infos (list[dict]): information of gt results, the dict
-            includes the following keys
-            - labels_3d (Tensor): labels of boxes.
-            - boxes_3d (Tensor): 3d bboxes.
+        pred (dict): Information of detection results,
+            which maps class_id and predictions.
+        gt (dict): information of gt results, which maps class_id and gt.
         ovthresh (list[float]): iou threshold.
             Default: None.
 
     Return:
         tuple[dict]: dict results of recall, AP, and precision for all classes.
     """
-    pred_all = {}
-    scan_cnt = 0
-    for det_info in det_infos:
-        pred_all[scan_cnt] = det_info
-        scan_cnt += 1
-
-    pred = {}  # map {classname: pred}
-    gt = {}  # map {classname: gt}
-    for img_id in pred_all.keys():
-        for i in range(len(pred_all[img_id]['labels_3d'])):
-            label = pred_all[img_id]['labels_3d'].numpy()[i]
-            bbox = pred_all[img_id]['boxes_3d'].numpy()[i]
-            score = pred_all[img_id]['scores_3d'].numpy()[i]
-            if label not in pred:
-                pred[int(label)] = {}
-            if img_id not in pred[label]:
-                pred[int(label)][img_id] = []
-            if label not in gt:
-                gt[int(label)] = {}
-            if img_id not in gt[label]:
-                gt[int(label)][img_id] = []
-            pred[int(label)][img_id].append((bbox, score))
-
-    for img_id in range(len(gt_infos)):
-        for i in range(len(gt_infos[img_id]['labels_3d'])):
-            label = gt_infos[img_id]['labels_3d'][i]
-            bbox = gt_infos[img_id]['boxes_3d'][i]
-            if label not in gt:
-                gt[label] = {}
-            if img_id not in gt[label]:
-                gt[label][img_id] = []
-            gt[label][img_id].append(bbox)
 
     ret_values = []
     for classname in gt.keys():
@@ -272,14 +197,24 @@ def eval_map_recall(det_infos, gt_infos, ovthresh=None):
     return recall, precision, ap
 
 
-def indoor_eval(gt_annos, dt_annos, metric, label2cat, logger=None):
+def indoor_eval(gt_annos,
+                dt_annos,
+                metric,
+                label2cat,
+                logger=None,
+                box_type_3d=None,
+                box_mode_3d=None):
     """Scannet Evaluation.
 
     Evaluate the result of the detection.
 
     Args:
         gt_annos (list[dict]): GT annotations.
-        dt_annos (list[dict]): Detection annotations.
+        dt_annos (list[dict]): Detection annotations. the dict
+            includes the following keys
+            - labels_3d (Tensor): Labels of boxes.
+            - boxes_3d (BaseInstance3DBoxes): 3d bboxes in Depth coordinate.
+            - scores_3d (Tensor): Scores of boxes.
         metric (list[float]): AP IoU thresholds.
         label2cat (dict): {label: cat}.
         logger (logging.Logger | str | None): The way to print the mAP
@@ -288,24 +223,48 @@ def indoor_eval(gt_annos, dt_annos, metric, label2cat, logger=None):
     Return:
         dict: Dict of results.
     """
-    gt_infos = []
-    for gt_anno in gt_annos:
-        if gt_anno['gt_num'] != 0:
-            # convert to lidar coor for evaluation
-            bbox_lidar_bottom = boxes3d_depth_to_lidar(
-                gt_anno['gt_boxes_upright_depth'], mid_to_bottom=True)
-            if bbox_lidar_bottom.shape[-1] == 6:
-                bbox_lidar_bottom = np.pad(bbox_lidar_bottom, ((0, 0), (0, 1)),
-                                           'constant')
-            gt_infos.append(
-                dict(boxes_3d=bbox_lidar_bottom, labels_3d=gt_anno['class']))
-        else:
-            gt_infos.append(
-                dict(
-                    boxes_3d=np.array([], dtype=np.float32),
-                    labels_3d=np.array([], dtype=np.int64)))
+    assert len(dt_annos) == len(gt_annos)
+    pred = {}  # map {class_id: pred}
+    gt = {}  # map {class_id: gt}
+    for img_id in range(len(dt_annos)):
+        # parse detected annotations
+        det_anno = dt_annos[img_id]
+        for i in range(len(det_anno['labels_3d'])):
+            label = det_anno['labels_3d'].numpy()[i]
+            bbox = det_anno['boxes_3d'].convert_to(box_mode_3d)[i]
+            score = det_anno['scores_3d'].numpy()[i]
+            if label not in pred:
+                pred[int(label)] = {}
+            if img_id not in pred[label]:
+                pred[int(label)][img_id] = []
+            if label not in gt:
+                gt[int(label)] = {}
+            if img_id not in gt[label]:
+                gt[int(label)][img_id] = []
+            pred[int(label)][img_id].append((bbox, score))
 
-    rec, prec, ap = eval_map_recall(dt_annos, gt_infos, metric)
+        # parse gt annotations
+        gt_anno = gt_annos[img_id]
+        if gt_anno['gt_num'] != 0:
+            gt_boxes = box_type_3d(
+                gt_anno['gt_boxes_upright_depth'],
+                box_dim=gt_anno['gt_boxes_upright_depth'].shape[-1],
+                origin=(0.5, 0.5, 0.5)).convert_to(box_mode_3d)
+            labels_3d = gt_anno['class']
+        else:
+            gt_boxes = box_type_3d(np.array([], dtype=np.float32))
+            labels_3d = np.array([], dtype=np.int64)
+
+        for i in range(len(labels_3d)):
+            label = labels_3d[i]
+            bbox = gt_boxes[i]
+            if label not in gt:
+                gt[label] = {}
+            if img_id not in gt[label]:
+                gt[label][img_id] = []
+            gt[label][img_id].append(bbox)
+
+    rec, prec, ap = eval_map_recall(pred, gt, metric)
     ret_dict = dict()
     header = ['classes']
     table_columns = [[label2cat[label]

@@ -1,5 +1,6 @@
 import numpy as np
 
+from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
 
@@ -39,6 +40,10 @@ class SUNRGBDDataset(Custom3DDataset):
         else:
             gt_bboxes_3d = np.zeros((0, 7), dtype=np.float32)
             gt_labels_3d = np.zeros((0, ), dtype=np.long)
+
+        # to target box structure
+        gt_bboxes_3d = DepthInstance3DBoxes(
+            gt_bboxes_3d, origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d)

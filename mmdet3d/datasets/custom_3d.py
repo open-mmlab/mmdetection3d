@@ -186,7 +186,13 @@ class Custom3DDataset(Dataset):
         gt_annos = [info['annos'] for info in self.data_infos]
         label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
         ret_dict = indoor_eval(
-            gt_annos, results, iou_thr, label2cat, logger=logger)
+            gt_annos,
+            results,
+            iou_thr,
+            label2cat,
+            logger=logger,
+            box_type_3d=self.box_type_3d,
+            box_mode_3d=self.box_mode_3d)
 
         return ret_dict
 

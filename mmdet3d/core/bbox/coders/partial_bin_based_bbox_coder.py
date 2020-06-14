@@ -28,28 +28,28 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (Tensor): 3d gt bboxes with shape (n, 7).
-            gt_labels_3d (Tensor): Gt classes.
+            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes with shape (n, 7).
+            gt_labels_3d (Tensor): gt classes.
 
         Returns:
             tuple: Targets of center, size and direction.
         """
         # generate center target
-        center_target = gt_bboxes_3d[..., 0:3]
+        center_target = gt_bboxes_3d.gravity_center
 
         # generate bbox size target
         size_class_target = gt_labels_3d
-        size_res_target = gt_bboxes_3d[..., 3:6] - gt_bboxes_3d.new_tensor(
+        size_res_target = gt_bboxes_3d.dims - gt_bboxes_3d.tensor.new_tensor(
             self.mean_sizes)[size_class_target]
 
         # generate dir target
-        box_num = gt_bboxes_3d.shape[0]
+        box_num = gt_labels_3d.shape[0]
         if self.with_rot:
             (dir_class_target,
-             dir_res_target) = self.angle2class(gt_bboxes_3d[..., 6])
+             dir_res_target) = self.angle2class(gt_bboxes_3d.yaw)
         else:
             dir_class_target = gt_labels_3d.new_zeros(box_num)
-            dir_res_target = gt_bboxes_3d.new_zeros(box_num)
+            dir_res_target = gt_bboxes_3d.tensor.new_zeros(box_num)
 
         return (center_target, size_class_target, size_res_target,
                 dir_class_target, dir_res_target)

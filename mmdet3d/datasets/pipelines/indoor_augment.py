@@ -25,21 +25,19 @@ class IndoorFlipData(object):
     def __call__(self, results):
         points = results['points']
         gt_bboxes_3d = results['gt_bboxes_3d']
-        aligned = True if gt_bboxes_3d.shape[1] == 6 else False
         results['flip_yz'] = False
         results['flip_xz'] = False
         if np.random.random() < self.flip_ratio_yz:
             # Flipping along the YZ plane
             points[:, 0] = -1 * points[:, 0]
-            gt_bboxes_3d[:, 0] = -1 * gt_bboxes_3d[:, 0]
-            if not aligned:
-                gt_bboxes_3d[:, 6] = np.pi - gt_bboxes_3d[:, 6]
+            gt_bboxes_3d.flip('horizontal')
             results['flip_yz'] = True
 
-        if aligned and np.random.random() < self.flip_ratio_xz:
+        if not gt_bboxes_3d.with_yaw and np.random.random(
+        ) < self.flip_ratio_xz:
             # Flipping along the XZ plane
             points[:, 1] = -1 * points[:, 1]
-            gt_bboxes_3d[:, 1] = -1 * gt_bboxes_3d[:, 1]
+            gt_bboxes_3d.flip('vertical')
             results['flip_xz'] = True
 
         results['points'] = points
@@ -154,57 +152,18 @@ class IndoorGlobalRotScale(object):
         rot_mat = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
         return rot_mat
 
-    def _rotate_aligned_boxes(self, input_boxes, rot_mat):
-        """Rotate aligned boxes.
-
-        Rotate function for the aligned boxes.
-
-        Args:
-            input_boxes (ndarray): 3D boxes.
-            rot_mat (ndarray): Rotation matrix.
-
-        Returns:
-            rotated_boxes (ndarry): 3D boxes after rotation.
-        """
-        centers, lengths = input_boxes[:, 0:3], input_boxes[:, 3:6]
-        new_centers = np.dot(centers, rot_mat.T)
-
-        dx, dy = lengths[:, 0] / 2.0, lengths[:, 1] / 2.0
-        new_x = np.zeros((dx.shape[0], 4))
-        new_y = np.zeros((dx.shape[0], 4))
-
-        for i, corner in enumerate([(-1, -1), (1, -1), (1, 1), (-1, 1)]):
-            corners = np.zeros((dx.shape[0], 3))
-            corners[:, 0] = corner[0] * dx
-            corners[:, 1] = corner[1] * dy
-            corners = np.dot(corners, rot_mat.T)
-            new_x[:, i] = corners[:, 0]
-            new_y[:, i] = corners[:, 1]
-
-        new_dx = 2.0 * np.max(new_x, 1)
-        new_dy = 2.0 * np.max(new_y, 1)
-        new_lengths = np.stack((new_dx, new_dy, lengths[:, 2]), axis=1)
-
-        return np.concatenate([new_centers, new_lengths], axis=1)
-
     def __call__(self, results):
         points = results['points']
         gt_bboxes_3d = results['gt_bboxes_3d']
-        aligned = True if gt_bboxes_3d.shape[1] == 6 else False
 
         if self.rot_range is not None:
             assert len(self.rot_range) == 2, \
                 f'Expect length of rot range =2, ' \
                 f'got {len(self.rot_range)}.'
             rot_angle = np.random.uniform(self.rot_range[0], self.rot_range[1])
-            rot_mat = self._rotz(rot_angle)
-            points[:, :3] = np.dot(points[:, :3], rot_mat.T)
-            if aligned:
-                gt_bboxes_3d = self._rotate_aligned_boxes(
-                    gt_bboxes_3d, rot_mat)
-            else:
-                gt_bboxes_3d[:, :3] = np.dot(gt_bboxes_3d[:, :3], rot_mat.T)
-                gt_bboxes_3d[:, 6] -= rot_angle
+            if gt_bboxes_3d.tensor.shape[0] != 0:
+                gt_bboxes_3d.rotate(rot_angle)
+            points[:, :3] = np.dot(points[:, :3], self._rotz(rot_angle).T)
             results['rot_angle'] = rot_angle
 
         if self.scale_range is not None:
@@ -216,15 +175,14 @@ class IndoorGlobalRotScale(object):
                                             self.scale_range[1])
 
             points[:, :3] *= scale_ratio
-            gt_bboxes_3d[:, :3] *= scale_ratio
-            gt_bboxes_3d[:, 3:6] *= scale_ratio
+            gt_bboxes_3d.scale(scale_ratio)
             if self.shift_height:
                 points[:, -1] *= scale_ratio
 
             results['scale_ratio'] = scale_ratio
 
         results['points'] = points
-        results['gt_bboxes_3d'] = gt_bboxes_3d.astype(np.float32)
+        results['gt_bboxes_3d'] = gt_bboxes_3d
         return results
 
     def __repr__(self):
