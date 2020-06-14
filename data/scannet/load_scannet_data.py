@@ -1,9 +1,13 @@
 # Modified from
 # https://github.com/facebookresearch/votenet/blob/master/scannet/load_scannet_data.py
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 """Load Scannet scenes with vertices and ground truth labels
 for semantic and instance segmentations
 """
+
 import argparse
 import inspect
 import json
