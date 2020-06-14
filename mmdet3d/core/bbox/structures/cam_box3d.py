@@ -20,7 +20,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
              v
         down y
 
-    The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
+    The relative coordinate of bottom center in a CAM box is (0.5, 1.0, 0.5),
     and the yaw is around the y axis, thus the rotation axis=1.
     The yaw is 0 at the positive direction of x axis, and increases from
     the positive direction of x to the positive direction of z.

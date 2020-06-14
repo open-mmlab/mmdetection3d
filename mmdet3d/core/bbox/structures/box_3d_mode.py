@@ -22,7 +22,7 @@ class Box3DMode(IntEnum):
                        | /
         left y <------ 0
 
-    The relative coordinate of bottom center in a LiDAR box is [0.5, 0.5, 0],
+    The relative coordinate of bottom center in a LiDAR box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
 
     Coordinates in camera:
@@ -49,7 +49,7 @@ class Box3DMode(IntEnum):
            | /
            0 ------> x right
 
-    The relative coordinate of bottom center in a DEPTH box is [0.5, 0.5, 0],
+    The relative coordinate of bottom center in a DEPTH box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
     """
 

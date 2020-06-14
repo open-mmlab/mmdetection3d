@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from mmdet3d.ops import points_in_boxes_batch
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -17,7 +18,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                        | /
                        0 ------> x right (yaw=0)
 
-    The relative coordinate of bottom center in a Depth box is [0.5, 0.5, 0],
+    The relative coordinate of bottom center in a Depth box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
     The yaw is 0 at the positive direction of x axis, and increases from
     the positive direction of x to the positive direction of y.
@@ -74,7 +75,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 device=dims.device, dtype=dims.dtype)
 
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-        # use relative origin [0.5, 0.5, 0]
+        # use relative origin (0.5, 0.5, 0)
         corners_norm = corners_norm - dims.new_tensor([0.5, 0.5, 0])
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
@@ -201,3 +202,30 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
             box=self, src=Box3DMode.DEPTH, dst=dst, rt_mat=rt_mat)
+
+    def points_in_boxes(self, points):
+        """Find points that are in boxes (CUDA)
+
+        Args:
+            points (torch.Tensor): [1, M, 3] or [M, 3], [x, y, z]
+                in LiDAR coordinate.
+
+        Returns:
+            torch.Tensor: The box index of each point in, shape is (B, M, T).
+        """
+        from .box_3d_mode import Box3DMode
+
+        # to lidar
+        points_lidar = points.clone()
+        points_lidar = points_lidar[..., [1, 0, 2]]
+        points_lidar[..., 1] *= -1
+        if points.dim() == 2:
+            points_lidar = points_lidar.unsqueeze(0)
+        else:
+            assert points.dim() == 3 and points_lidar.shape[0] == 1
+
+        boxes_lidar = self.convert_to(Box3DMode.LIDAR).tensor
+        boxes_lidar = boxes_lidar.to(points.device).unsqueeze(0)
+        box_idxs_of_pts = points_in_boxes_batch(points_lidar, boxes_lidar)
+
+        return box_idxs_of_pts.squeeze(0)

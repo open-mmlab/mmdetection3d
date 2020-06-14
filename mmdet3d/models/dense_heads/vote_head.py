@@ -5,14 +5,11 @@ import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 
 from mmdet3d.core import build_bbox_coder, multi_apply
-from mmdet3d.core.bbox.box_torch_ops import boxes3d_to_corners3d_lidar_torch
-from mmdet3d.core.bbox.transforms import upright_depth_to_lidar_torch
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
-from mmdet3d.ops import (PointSAModule, furthest_point_sample,
-                         points_in_boxes_batch)
+from mmdet3d.ops import PointSAModule, furthest_point_sample
 from mmdet.models import HEADS
 
 
@@ -276,7 +273,7 @@ class VoteHead(nn.Module):
 
         Args:
             points (list[Tensor]): Points of each batch.
-            gt_bboxes_3d (list[Tensor]): gt bboxes of each batch.
+            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes of each batch.
             gt_labels_3d (list[Tensor]): gt class labels of each batch.
             pts_semantic_mask (None | list[Tensor]): point-wise semantic
                 label of each batch.
@@ -293,8 +290,9 @@ class VoteHead(nn.Module):
         gt_num = list()
         for index in range(len(gt_labels_3d)):
             if len(gt_labels_3d[index]) == 0:
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_zeros(
-                    1, gt_bboxes_3d[index].shape[-1])
+                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
+                    1, gt_bboxes_3d[index].tensor.shape[-1])
+                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
                 gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
                 valid_gt_masks.append(gt_labels_3d[index].new_zeros(1))
                 gt_num.append(1)
@@ -359,25 +357,23 @@ class VoteHead(nn.Module):
                            aggregated_points=None):
         assert self.bbox_coder.with_rot or pts_semantic_mask is not None
 
+        gt_bboxes_3d = gt_bboxes_3d.to(points.device)
+
         # generate votes target
         num_points = points.shape[0]
         if self.bbox_coder.with_rot:
-            points_lidar, gt_bboxes_3d_lidar = upright_depth_to_lidar_torch(
-                points, gt_bboxes_3d, to_bottom_center=True)
             vote_targets = points.new_zeros([num_points, 3 * self.gt_per_seed])
             vote_target_masks = points.new_zeros([num_points],
                                                  dtype=torch.long)
             vote_target_idx = points.new_zeros([num_points], dtype=torch.long)
-
-            box_indices_all = points_in_boxes_batch(
-                points_lidar.unsqueeze(0), gt_bboxes_3d_lidar.unsqueeze(0))[0]
-            for i in range(gt_bboxes_3d.shape[0]):
+            box_indices_all = gt_bboxes_3d.points_in_boxes(points)
+            for i in range(gt_labels_3d.shape[0]):
                 box_indices = box_indices_all[:, i]
                 indices = torch.nonzero(box_indices).squeeze(-1)
                 selected_points = points[indices]
                 vote_target_masks[indices] = 1
                 vote_targets_tmp = vote_targets[indices]
-                votes = gt_bboxes_3d[i][:3].unsqueeze(
+                votes = gt_bboxes_3d.gravity_center[i].unsqueeze(
                     0) - selected_points[:, :3]
 
                 for j in range(self.gt_per_seed):
@@ -438,7 +434,7 @@ class VoteHead(nn.Module):
         size_class_targets = size_class_targets[assignment]
         size_res_targets = size_res_targets[assignment]
 
-        one_hot_size_targets = gt_bboxes_3d.new_zeros(
+        one_hot_size_targets = gt_bboxes_3d.tensor.new_zeros(
             (proposal_num, self.num_sizes))
         one_hot_size_targets.scatter_(1, size_class_targets.unsqueeze(-1), 1)
         one_hot_size_targets = one_hot_size_targets.unsqueeze(-1).repeat(
@@ -455,38 +451,43 @@ class VoteHead(nn.Module):
                 dir_class_targets, dir_res_targets, center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
-    def get_bboxes(self, points, bbox_preds, img_meta, rescale=False):
+    def get_bboxes(self, points, bbox_preds, input_meta, rescale=False):
         # decode boxes
         obj_scores = F.softmax(bbox_preds['obj_scores'], dim=-1)[..., -1]
         sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
         bbox_depth = self.bbox_coder.decode(bbox_preds)
 
-        points_lidar, bbox_lidar = upright_depth_to_lidar_torch(
-            points[..., :3], bbox_depth, to_bottom_center=True)
         batch_size = bbox_depth.shape[0]
-
         results = list()
         for b in range(batch_size):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
-                obj_scores[b], sem_scores[b], bbox_lidar[b], points_lidar[b])
-            results.append((bbox_selected, score_selected, labels))
+                obj_scores[b], sem_scores[b], bbox_depth[b],
+                points[b, ..., :3], input_meta[b])
+            bbox = input_meta[b]['box_type_3d'](
+                bbox_selected,
+                box_dim=bbox_selected.shape[-1],
+                with_yaw=self.bbox_coder.with_rot)
+            results.append((bbox, score_selected, labels))
 
         return results
 
-    def multiclass_nms_single(self, obj_scores, sem_scores, bbox,
-                              points_lidar):
-        box_indices = points_in_boxes_batch(
-            points_lidar.unsqueeze(0), bbox.unsqueeze(0))[0]
-        nonempty_box_mask = box_indices.T.sum(1) > 5
+    def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
+                              input_meta):
+        bbox = input_meta['box_type_3d'](
+            bbox,
+            box_dim=bbox.shape[-1],
+            with_yaw=self.bbox_coder.with_rot,
+            origin=(0.5, 0.5, 0.5))
+        box_indices = bbox.points_in_boxes(points)
 
-        bbox_classes = torch.argmax(sem_scores, -1)
-
-        # boxes3d to aligned boxes
-        corner3d = boxes3d_to_corners3d_lidar_torch(bbox)
+        corner3d = bbox.corners
         minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
         minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
+        nonempty_box_mask = box_indices.T.sum(1) > 5
+
+        bbox_classes = torch.argmax(sem_scores, -1)
         nms_selected = aligned_3d_nms(minmax_box3d[nonempty_box_mask],
                                       obj_scores[nonempty_box_mask],
                                       bbox_classes[nonempty_box_mask],
@@ -502,7 +503,7 @@ class VoteHead(nn.Module):
         if self.test_cfg.per_class_proposal:
             bbox_selected, score_selected, labels = [], [], []
             for k in range(sem_scores.shape[-1]):
-                bbox_selected.append(bbox[selected])
+                bbox_selected.append(bbox[selected].tensor)
                 score_selected.append(obj_scores[selected] *
                                       sem_scores[selected][:, k])
                 labels.append(
@@ -511,7 +512,7 @@ class VoteHead(nn.Module):
             score_selected = torch.cat(score_selected, 0)
             labels = torch.cat(labels, 0)
         else:
-            bbox_selected = bbox[selected]
+            bbox_selected = bbox[selected].tensor
             score_selected = obj_scores[selected]
             labels = bbox_classes[selected]
 

@@ -113,7 +113,7 @@ class ObjectSample(object):
         #         Trv2c = input_dict['Trv2c']
         #         P2 = input_dict['P2']
         if self.sample_2d:
-            img = input_dict['img']  # .astype(np.float32)
+            img = input_dict['img']
             gt_bboxes_2d = input_dict['gt_bboxes']
             # Assume for now 3D & 2D bboxes are the same
             sampled_dict = self.db_sampler.sample_all(
@@ -148,7 +148,7 @@ class ObjectSample(object):
                     [gt_bboxes_2d, sampled_gt_bboxes_2d]).astype(np.float32)
 
                 input_dict['gt_bboxes'] = gt_bboxes_2d
-                input_dict['img'] = sampled_dict['img']  # .astype(np.uint8)
+                input_dict['img'] = sampled_dict['img']
 
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d
         input_dict['gt_labels_3d'] = gt_labels_3d
