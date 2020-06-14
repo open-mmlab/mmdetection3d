@@ -5,14 +5,17 @@ We follow the procedure in [votenet](https://github.com/facebookresearch/votenet
 
 2. Enter the `matlab` folder, Extract point clouds and annotations by running `extract_split.m`, `extract_rgbd_data_v2.m` and `extract_rgbd_data_v1.m`.
 
-3. Back to this level of directory, prepare data by running `python sunrgbd_data.py --gen_v1_data`.
+3. Back to this directory, prepare data by running `python sunrgbd_data.py --gen_v1_data`.
 
-4. Enter the project root directory, Generate training data by running `python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd`.
+4. Enter the project root directory, Generate training data by running
+```bash
+python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd
+```
 
 
 NOTE: SUNRGBDtoolbox.zip should have MD5 hash `18d22e1761d36352f37232cba102f91f` (you can check the hash with `md5 SUNRGBDtoolbox.zip` on Mac OS or `md5sum SUNRGBDtoolbox.zip` on Linux)
 
-
+The directory structure after pre-processing should be as below
 ```
 sunrgbd
 ├── sunrgbd_utils.py
