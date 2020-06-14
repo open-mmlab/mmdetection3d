@@ -26,7 +26,7 @@ sunrgbd
 │   ├── SUNRGBD
 │   ├── SUNRGBDMeta2DBB_v2.mat
 │   ├── SUNRGBDMeta3DBB_v2.mat
-│   ├── SUNRGBDtoolboNRGBD
+│   ├── SUNRGBDtoolbox
 ├── sunrgbd_trainval
 │   ├── calib
 │   ├── image
