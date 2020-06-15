@@ -7,34 +7,27 @@ model = dict(
         max_num_points=64,
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(12000, 20000)  # (training, testing) max_coxels
-    ),
+        max_voxels=(12000, 20000)),
     voxel_encoder=dict(
         type='PillarFeatureNet',
         in_channels=4,
         feat_channels=[64],
         with_distance=False,
         voxel_size=voxel_size,
-        point_cloud_range=point_cloud_range,
-    ),
+        point_cloud_range=point_cloud_range),
     middle_encoder=dict(
-        type='PointPillarsScatter',
-        in_channels=64,
-        output_shape=[496, 432],
-    ),
+        type='PointPillarsScatter', in_channels=64, output_shape=[496, 432]),
     backbone=dict(
         type='SECOND',
         in_channels=64,
         layer_nums=[3, 5, 5],
         layer_strides=[2, 2, 2],
-        out_channels=[64, 128, 256],
-    ),
+        out_channels=[64, 128, 256]),
     neck=dict(
         type='SECONDFPN',
         in_channels=[64, 128, 256],
         upsample_strides=[1, 2, 4],
-        out_channels=[128, 128, 128],
-    ),
+        out_channels=[128, 128, 128]),
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=1,
@@ -57,9 +50,7 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2),
-    ),
-)
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
 # model training and testing settings
 train_cfg = dict(
     assigner=dict(
@@ -91,10 +82,7 @@ db_sampler = dict(
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
     object_rot_range=[0.0, 0.0],
-    prepare=dict(
-        filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=5),
-    ),
+    prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
     sample_groups=dict(Car=15),
     classes=class_names)
 
@@ -117,7 +105,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
@@ -126,7 +114,7 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points']),
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(
@@ -178,14 +166,12 @@ lr_config = dict(
     policy='cyclic',
     target_ratio=(10, 1e-4),
     cyclic_times=1,
-    step_ratio_up=0.4,
-)
+    step_ratio_up=0.4)
 momentum_config = dict(
     policy='cyclic',
     target_ratio=(0.85 / 0.95, 1),
     cyclic_times=1,
-    step_ratio_up=0.4,
-)
+    step_ratio_up=0.4)
 checkpoint_config = dict(interval=1)
 evaluation = dict(interval=1)
 # yapf:disable
