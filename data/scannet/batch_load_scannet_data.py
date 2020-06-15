@@ -47,7 +47,7 @@ def export_one_scan(scan_name, output_filename_prefix, max_num_point,
 
     bbox_mask = np.in1d(instance_bboxes[:, -1], OBJ_CLASS_IDS)
     instance_bboxes = instance_bboxes[bbox_mask, :]
-    print('Num of care instances: ', instance_bboxes.shape[0])
+    print(f'Num of care instances: {instance_bboxes.shape[0]}')
 
     N = mesh_vertices.shape[0]
     if N > max_num_point:
@@ -82,7 +82,7 @@ def batch_export(max_num_point, output_folder, train_scan_names_file,
             export_one_scan(scan_name, output_filename_prefix, max_num_point,
                             label_map_file, scannet_dir)
         except Exception:
-            print('Failed export scan: %s' % (scan_name))
+            print(f'Failed export scan: {scan_name}')
         print('-' * 20 + 'done')
 
 
