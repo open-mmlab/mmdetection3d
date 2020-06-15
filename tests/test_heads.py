@@ -71,7 +71,7 @@ def test_anchor3d_head_loss():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     bbox_head_cfg = _get_head_cfg(
-        'kitti/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py')
+        'second/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py')
 
     from mmdet3d.models.builder import build_head
     self = build_head(bbox_head_cfg)
@@ -123,7 +123,7 @@ def test_anchor3d_head_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     bbox_head_cfg = _get_head_cfg(
-        'kitti/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py')
+        'second/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py')
 
     from mmdet3d.models.builder import build_head
     self = build_head(bbox_head_cfg)
@@ -154,7 +154,7 @@ def test_parta2_rpnhead_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     rpn_head_cfg, proposal_cfg = _get_rpn_head_cfg(
-        'kitti/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+        'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
 
     from mmdet3d.models.builder import build_head
     self = build_head(rpn_head_cfg)
