@@ -72,7 +72,7 @@ def export(mesh_file,
         output_file(str): Path of the output folder.
             Default: None.
 
-    Returns:
+    It returns a tuple, which containts the the following things:
         ndarray: Vertices of points data.
         ndarray: Indexes of label.
         ndarray: Indexes of instance.
