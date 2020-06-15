@@ -6,7 +6,7 @@ from numba.errors import NumbaPerformanceWarning
 
 from mmdet3d.core.bbox import box_np_ops
 
-warnings.filterwarnings("ignore", category=NumbaPerformanceWarning)
+warnings.filterwarnings('ignore', category=NumbaPerformanceWarning)
 
 
 @numba.njit
@@ -301,7 +301,7 @@ def noise_per_object_v3_(gt_boxes,
         grot_uppers[..., np.newaxis],
         size=[num_boxes, num_try])
 
-    origin = [0.5, 0.5, 0]
+    origin = (0.5, 0.5, 0)
     gt_box_corners = box_np_ops.center_to_corner_box3d(
         gt_boxes[:, :3],
         gt_boxes[:, 3:6],

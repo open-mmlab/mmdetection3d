@@ -150,13 +150,15 @@ class PartA2RPNHead(Anchor3DHead):
         result = self.class_agnostic_nms(mlvl_bboxes, mlvl_bboxes_for_nms,
                                          mlvl_max_scores, mlvl_label_pred,
                                          mlvl_cls_score, mlvl_dir_scores,
-                                         score_thr, cfg.nms_post, cfg)
+                                         score_thr, cfg.nms_post, cfg,
+                                         input_meta)
 
         return result
 
     def class_agnostic_nms(self, mlvl_bboxes, mlvl_bboxes_for_nms,
                            mlvl_max_scores, mlvl_label_pred, mlvl_cls_score,
-                           mlvl_dir_scores, score_thr, max_num, cfg):
+                           mlvl_dir_scores, score_thr, max_num, cfg,
+                           input_meta):
         bboxes = []
         scores = []
         labels = []
@@ -202,6 +204,8 @@ class PartA2RPNHead(Anchor3DHead):
                 labels = labels[inds]
                 scores = scores[inds]
                 cls_scores = cls_scores[inds]
+            bboxes = input_meta['box_type_3d'](
+                bboxes, box_dim=self.box_code_size)
             return dict(
                 boxes_3d=bboxes,
                 scores_3d=scores,
@@ -210,7 +214,9 @@ class PartA2RPNHead(Anchor3DHead):
             )
         else:
             return dict(
-                boxes_3d=mlvl_bboxes.new_zeros([0, self.box_code_size]),
+                boxes_3d=input_meta['box_type_3d'](
+                    mlvl_bboxes.new_zeros([0, self.box_code_size]),
+                    box_dim=self.box_code_size),
                 scores_3d=mlvl_bboxes.new_zeros([0]),
                 labels_3d=mlvl_bboxes.new_zeros([0]),
                 cls_preds=mlvl_bboxes.new_zeros([0, mlvl_cls_score.shape[-1]]))

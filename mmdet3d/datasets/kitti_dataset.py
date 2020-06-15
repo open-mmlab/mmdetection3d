@@ -9,7 +9,7 @@ import torch
 from mmcv.utils import print_log
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import Box3DMode, CameraInstance3DBoxes, box_np_ops
+from ..core.bbox import Box3DMode, CameraInstance3DBoxes
 from .custom_3d import Custom3DDataset
 from .utils import remove_dontcare
 
@@ -27,6 +27,8 @@ class KittiDataset(Custom3DDataset):
                  pipeline=None,
                  classes=None,
                  modality=None,
+                 box_type_3d='LiDAR',
+                 filter_empty_gt=True,
                  test_mode=False):
         super().__init__(
             data_root=data_root,
@@ -34,6 +36,8 @@ class KittiDataset(Custom3DDataset):
             pipeline=pipeline,
             classes=classes,
             modality=modality,
+            box_type_3d=box_type_3d,
+            filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
 
         self.root_split = os.path.join(self.data_root, split)
@@ -90,7 +94,7 @@ class KittiDataset(Custom3DDataset):
 
         # convert gt_bboxes_3d to velodyne coordinates
         gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
-            Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
+            self.box_mode_3d, np.linalg.inv(rect @ Trv2c))
         gt_bboxes = annos['bbox']
 
         selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
@@ -395,73 +399,66 @@ class KittiDataset(Custom3DDataset):
 
     def convert_valid_bboxes(self, box_dict, info):
         # TODO: refactor this function
-        final_box_preds = box_dict['boxes_3d']
-        final_scores = box_dict['scores_3d']
-        final_labels = box_dict['labels_3d']
+        box_preds = box_dict['boxes_3d']
+        scores = box_dict['scores_3d']
+        labels = box_dict['labels_3d']
         sample_idx = info['image']['image_idx']
-        final_box_preds[:, -1] = box_np_ops.limit_period(
-            final_box_preds[:, -1] - np.pi, offset=0.5, period=np.pi * 2)
+        # TODO: remove the hack of yaw
+        box_preds.tensor[:, -1] = box_preds.tensor[:, -1] - np.pi
+        box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
 
-        if final_box_preds.shape[0] == 0:
+        if len(box_preds) == 0:
             return dict(
-                bbox=final_box_preds.new_zeros([0, 4]).numpy(),
-                box3d_camera=final_box_preds.new_zeros([0, 7]).numpy(),
-                box3d_lidar=final_box_preds.new_zeros([0, 7]).numpy(),
-                scores=final_box_preds.new_zeros([0]).numpy(),
-                label_preds=final_box_preds.new_zeros([0, 4]).numpy(),
-                sample_idx=sample_idx,
-            )
+                bbox=np.zeros([0, 4]),
+                box3d_camera=np.zeros([0, 7]),
+                box3d_lidar=np.zeros([0, 7]),
+                scores=np.zeros([0]),
+                label_preds=np.zeros([0, 4]),
+                sample_idx=sample_idx)
 
         from mmdet3d.core.bbox import box_torch_ops
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
         P2 = info['calib']['P2'].astype(np.float32)
         img_shape = info['image']['image_shape']
-        rect = final_box_preds.new_tensor(rect)
-        Trv2c = final_box_preds.new_tensor(Trv2c)
-        P2 = final_box_preds.new_tensor(P2)
+        P2 = box_preds.tensor.new_tensor(P2)
 
-        final_box_preds_camera = box_torch_ops.box_lidar_to_camera(
-            final_box_preds, rect, Trv2c)
-        locs = final_box_preds_camera[:, :3]
-        dims = final_box_preds_camera[:, 3:6]
-        angles = final_box_preds_camera[:, 6]
-        camera_box_origin = [0.5, 1.0, 0.5]
-        box_corners = box_torch_ops.center_to_corner_box3d(
-            locs, dims, angles, camera_box_origin, axis=1)
+        box_preds_camera = box_preds.convert_to(Box3DMode.CAM, rect @ Trv2c)
+
+        box_corners = box_preds_camera.corners
         box_corners_in_image = box_torch_ops.project_to_image(box_corners, P2)
         # box_corners_in_image: [N, 8, 2]
         minxy = torch.min(box_corners_in_image, dim=1)[0]
         maxxy = torch.max(box_corners_in_image, dim=1)[0]
         box_2d_preds = torch.cat([minxy, maxxy], dim=1)
         # Post-processing
-        # check final_box_preds_camera
-        image_shape = final_box_preds.new_tensor(img_shape)
-        valid_cam_inds = ((final_box_preds_camera[:, 0] < image_shape[1]) &
-                          (final_box_preds_camera[:, 1] < image_shape[0]) &
-                          (final_box_preds_camera[:, 2] > 0) &
-                          (final_box_preds_camera[:, 3] > 0))
-        # check final_box_preds
-        limit_range = final_box_preds.new_tensor(self.pcd_limit_range)
-        valid_pcd_inds = ((final_box_preds[:, :3] > limit_range[:3]) &
-                          (final_box_preds[:, :3] < limit_range[3:]))
+        # check box_preds_camera
+        image_shape = box_preds.tensor.new_tensor(img_shape)
+        valid_cam_inds = ((box_preds_camera.tensor[:, 0] < image_shape[1]) &
+                          (box_preds_camera.tensor[:, 1] < image_shape[0]) &
+                          (box_preds_camera.tensor[:, 2] > 0) &
+                          (box_preds_camera.tensor[:, 3] > 0))
+        # check box_preds
+        limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
+        valid_pcd_inds = ((box_preds.center > limit_range[:3]) &
+                          (box_preds.center < limit_range[3:]))
         valid_inds = valid_cam_inds & valid_pcd_inds.all(-1)
 
         if valid_inds.sum() > 0:
             return dict(
                 bbox=box_2d_preds[valid_inds, :].numpy(),
-                box3d_camera=final_box_preds_camera[valid_inds, :].numpy(),
-                box3d_lidar=final_box_preds[valid_inds, :].numpy(),
-                scores=final_scores[valid_inds].numpy(),
-                label_preds=final_labels[valid_inds].numpy(),
+                box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
+                box3d_lidar=box_preds[valid_inds].tensor.numpy(),
+                scores=scores[valid_inds].numpy(),
+                label_preds=labels[valid_inds].numpy(),
                 sample_idx=sample_idx,
             )
         else:
             return dict(
-                bbox=final_box_preds.new_zeros([0, 4]).numpy(),
-                box3d_camera=final_box_preds.new_zeros([0, 7]).numpy(),
-                box3d_lidar=final_box_preds.new_zeros([0, 7]).numpy(),
-                scores=final_box_preds.new_zeros([0]).numpy(),
-                label_preds=final_box_preds.new_zeros([0, 4]).numpy(),
+                bbox=np.zeros([0, 4]),
+                box3d_camera=np.zeros([0, 7]),
+                box3d_lidar=np.zeros([0, 7]),
+                scores=np.zeros([0]),
+                label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx,
             )
