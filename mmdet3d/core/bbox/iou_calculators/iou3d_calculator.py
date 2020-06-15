@@ -83,8 +83,6 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     Return:
         iou: (M, N) not support aligned mode currently
     """
-    # TODO: check the input dimension meanings,
-    #  this is inconsistent with that in bbox_overlaps_nearest_3d
     assert bboxes1.size(-1) == bboxes2.size(-1) == 7
     assert coordinate in ['camera', 'lidar']
 

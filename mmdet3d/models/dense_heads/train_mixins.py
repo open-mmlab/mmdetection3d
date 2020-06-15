@@ -20,7 +20,8 @@ class AnchorTrainMixin(object):
 
         Args:
             anchor_list (list[list]): Multi level anchors of each image.
-            gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image.
+            gt_bboxes_list (list[BaseInstance3DBoxes]): Ground truth
+                bboxes of each image.
             img_metas (list[dict]): Meta info of each image.
 
         Returns:

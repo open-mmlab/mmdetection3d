@@ -66,21 +66,30 @@ class MVXTwoStageDetector(BaseDetector):
 
     def init_weights(self, pretrained=None):
         super(MVXTwoStageDetector, self).init_weights(pretrained)
+        if pretrained is None:
+            img_pretrained = None
+            pts_pretrained = None
+        elif isinstance(pretrained, dict):
+            img_pretrained = pretrained.get('img', None)
+            pts_pretrained = pretrained.get('pts', None)
+        else:
+            raise ValueError(
+                f'pretrained should be a dict, got {type(pretrained)}')
         if self.with_img_backbone:
-            self.img_backbone.init_weights(pretrained=pretrained)
+            self.img_backbone.init_weights(pretrained=img_pretrained)
+        if self.with_pts_backbone:
+            self.pts_backbone.init_weights(pretrained=pts_pretrained)
         if self.with_img_neck:
             if isinstance(self.img_neck, nn.Sequential):
                 for m in self.img_neck:
                     m.init_weights()
             else:
                 self.img_neck.init_weights()
-        if self.with_shared_head:
-            self.img_shared_head.init_weights(pretrained=pretrained)
+
+        if self.with_img_roi_head:
+            self.img_roi_head.init_weights(img_pretrained)
         if self.with_img_rpn:
             self.img_rpn_head.init_weights()
-        if self.with_img_bbox:
-            self.img_bbox_roi_extractor.init_weights()
-            self.img_bbox_head.init_weights()
         if self.with_pts_bbox:
             self.pts_bbox_head.init_weights()
 
@@ -104,6 +113,10 @@ class MVXTwoStageDetector(BaseDetector):
         return hasattr(self, 'img_backbone') and self.img_backbone is not None
 
     @property
+    def with_pts_backbone(self):
+        return hasattr(self, 'pts_backbone') and self.pts_backbone is not None
+
+    @property
     def with_fusion(self):
         return hasattr(self,
                        'pts_fusion_layer') and self.fusion_layer is not None
@@ -119,6 +132,10 @@ class MVXTwoStageDetector(BaseDetector):
     @property
     def with_img_rpn(self):
         return hasattr(self, 'img_rpn_head') and self.img_rpn_head is not None
+
+    @property
+    def with_img_roi_head(self):
+        return hasattr(self, 'img_roi_head') and self.img_roi_head is not None
 
     def extract_img_feat(self, img, img_meta):
         if self.with_img_backbone:
