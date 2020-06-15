@@ -53,7 +53,7 @@ class Kitti2DDataset(CustomDataset):
         self.data_infos = mmcv.load(ann_file)
         self.cat2label = {
             cat_name: i
-            for i, cat_name in enumerate(self.class_names)
+            for i, cat_name in enumerate(self.CLASSES)
         }
         return self.data_infos
 
@@ -106,14 +106,6 @@ class Kitti2DDataset(CustomDataset):
             results['proposals'] = self.proposals[idx]
         self.pre_pipeline(results)
         return self.pipeline(results)
-
-    def _set_group_flag(self):
-        """Set flag according to image aspect ratio.
-        Images with aspect ratio greater than 1 will be set as group 1,
-        otherwise group 0.
-        In kitti's pcd, they are all the same, thus are all zeros
-        """
-        self.flag = np.zeros(len(self), dtype=np.uint8)
 
     def drop_arrays_by_name(self, gt_names, used_classes):
         inds = [i for i, x in enumerate(gt_names) if x not in used_classes]

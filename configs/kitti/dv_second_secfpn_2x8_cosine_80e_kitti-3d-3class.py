@@ -1,6 +1,6 @@
 # model settings
 voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='DynamicVoxelNet',
@@ -8,7 +8,7 @@ model = dict(
         max_num_points=-1,  # max_points_per_voxel
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(-1, -1),  # (training, testing) max_coxels
+        max_voxels=(-1, -1)  # (training, testing) max_coxels
     ),
     voxel_encoder=dict(
         type='DynamicSimpleVFE',
@@ -24,14 +24,12 @@ model = dict(
         in_channels=256,
         layer_nums=[5, 5],
         layer_strides=[1, 2],
-        out_channels=[128, 256],
-    ),
+        out_channels=[128, 256]),
     neck=dict(
         type='SECONDFPN',
         in_channels=[128, 256],
         upsample_strides=[1, 2],
-        out_channels=[256, 256],
-    ),
+        out_channels=[256, 256]),
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
@@ -60,9 +58,7 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2),
-    ),
-)
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
 # model training and testing settings
 train_cfg = dict(
     assigner=[
@@ -95,7 +91,7 @@ test_cfg = dict(
     use_rotate_nms=True,
     nms_across_levels=False,
     nms_thr=0.01,
-    score_thr=0.3,
+    score_thr=0.1,
     min_bbox_size=0,
     nms_pre=100,
     max_num=50)
@@ -104,15 +100,7 @@ test_cfg = dict(
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
-input_modality = dict(
-    use_lidar=False,
-    use_lidar_reduced=True,
-    use_depth=False,
-    use_lidar_intensity=True,
-    use_camera=True,
-)
+input_modality = dict(use_lidar=True, use_camera=False)
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -120,17 +108,8 @@ db_sampler = dict(
     object_rot_range=[0.0, 0.0],
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(
-            Car=5,
-            Pedestrian=10,
-            Cyclist=10,
-        ),
-    ),
-    sample_groups=dict(
-        Car=12,
-        Pedestrian=6,
-        Cyclist=6,
-    ),
+        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
     classes=class_names)
 train_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
@@ -152,7 +131,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
@@ -161,22 +140,25 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points']),
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_train.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=train_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=False),
+        type='RepeatDataset',
+        times=2,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            split='training',
+            pts_prefix='velodyne_reduced',
+            pipeline=train_pipeline,
+            modality=input_modality,
+            classes=class_names,
+            test_mode=False)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -213,7 +195,7 @@ lr_config = dict(
     min_lr_ratio=1e-5)
 momentum_config = None
 checkpoint_config = dict(interval=1)
-evaluation = dict(interval=2)
+evaluation = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -223,7 +205,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 80
+total_epochs = 40
 dist_params = dict(backend='nccl', port=29502)
 log_level = 'INFO'
 work_dir = './work_dirs/sec_secfpn_80e'
