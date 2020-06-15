@@ -1,44 +1,49 @@
 # model settings
-voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
-
+voxel_size = [0.16, 0.16, 4]
+point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 model = dict(
-    type='DynamicVoxelNet',
+    type='VoxelNet',
     voxel_layer=dict(
-        max_num_points=-1,  # max_points_per_voxel
+        max_num_points=64,
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(-1, -1)  # (training, testing) max_coxels
+        max_voxels=(12000, 20000)  # (training, testing) max_coxels
     ),
     voxel_encoder=dict(
-        type='DynamicSimpleVFE',
-        voxel_size=voxel_size,
-        point_cloud_range=point_cloud_range),
-    middle_encoder=dict(
-        type='SparseEncoder',
+        type='PillarFeatureNet',
         in_channels=4,
-        sparse_shape=[41, 1600, 1408],
-        order=('conv', 'norm', 'act')),
+        feat_channels=[64],
+        with_distance=False,
+        voxel_size=voxel_size,
+        point_cloud_range=point_cloud_range,
+    ),
+    middle_encoder=dict(
+        type='PointPillarsScatter',
+        in_channels=64,
+        output_shape=[496, 432],
+    ),
     backbone=dict(
         type='SECOND',
-        in_channels=256,
-        layer_nums=[5, 5],
-        layer_strides=[1, 2],
-        out_channels=[128, 256]),
+        in_channels=64,
+        layer_nums=[3, 5, 5],
+        layer_strides=[2, 2, 2],
+        out_channels=[64, 128, 256],
+    ),
     neck=dict(
         type='SECONDFPN',
-        in_channels=[128, 256],
-        upsample_strides=[1, 2],
-        out_channels=[256, 256]),
+        in_channels=[64, 128, 256],
+        upsample_strides=[1, 2, 4],
+        out_channels=[128, 128, 128],
+    ),
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=1,
-        in_channels=512,
-        feat_channels=512,
+        in_channels=384,
+        feat_channels=384,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
-            ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
+            ranges=[[0, -39.68, -1.78, 69.12, 39.68, -1.78]],
             sizes=[[1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
             reshape_out=True),
@@ -52,7 +57,9 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2),
+    ),
+)
 # model training and testing settings
 train_cfg = dict(
     assigner=dict(
@@ -90,6 +97,7 @@ db_sampler = dict(
     ),
     sample_groups=dict(Car=15),
     classes=class_names)
+
 train_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
@@ -97,9 +105,9 @@ train_pipeline = [
     dict(
         type='ObjectNoise',
         num_try=100,
-        loc_noise_std=[1.0, 1.0, 0.5],
+        loc_noise_std=[0.25, 0.25, 0.25],
         global_rot_range=[0.0, 0.0],
-        rot_uniform_noise=[-0.78539816, 0.78539816]),
+        rot_uniform_noise=[-0.15707963267, 0.15707963267]),
     dict(type='RandomFlip3D', flip_ratio=0.5),
     dict(
         type='GlobalRotScale',
@@ -158,9 +166,14 @@ data = dict(
         classes=class_names,
         test_mode=True))
 # optimizer
-lr = 0.0018  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
+lr = 0.001  # max learning rate
+optimizer = dict(
+    type='AdamW',
+    lr=lr,
+    betas=(0.95, 0.99),  # the momentum is change during training
+    weight_decay=0.01)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+# learning policy
 lr_config = dict(
     policy='cyclic',
     target_ratio=(10, 1e-4),
@@ -187,7 +200,7 @@ log_config = dict(
 total_epochs = 40
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/sec_secfpn_80e'
+work_dir = './work_dirs/pp_secfpn_80e'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

@@ -198,12 +198,7 @@ test_cfg = dict(
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-input_modality = dict(
-    use_lidar=False,
-    use_lidar_reduced=True,
-    use_depth=False,
-    use_lidar_intensity=True,
-    use_camera=False)
+input_modality = dict(use_lidar=True, use_camera=False)
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -211,17 +206,9 @@ db_sampler = dict(
     object_rot_range=[0.0, 0.0],
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(
-            Car=5,
-            Pedestrian=10,
-            Cyclist=10,
-        )),
+        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
     classes=class_names,
-    sample_groups=dict(
-        Car=12,
-        Pedestrian=6,
-        Cyclist=6,
-    ))
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6))
 train_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
@@ -258,15 +245,18 @@ data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_train.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=train_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=False),
+        type='RepeatDataset',
+        times=2,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            split='training',
+            pts_prefix='velodyne_reduced',
+            pipeline=train_pipeline,
+            modality=input_modality,
+            classes=class_names,
+            test_mode=False)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -302,7 +292,7 @@ momentum_config = dict(
     cyclic_times=1,
     step_ratio_up=0.4)
 checkpoint_config = dict(interval=1)
-evaluation = dict(interval=2)
+evaluation = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -312,8 +302,8 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 80
-dist_params = dict(backend='nccl')
+total_epochs = 40
+dist_params = dict(backend='nccl', port=29506)
 log_level = 'INFO'
 find_unused_parameters = True
 work_dir = './work_dirs/parta2_secfpn_80e'

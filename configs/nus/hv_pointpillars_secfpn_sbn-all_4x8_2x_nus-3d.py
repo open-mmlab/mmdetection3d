@@ -8,11 +8,10 @@ class_names = [
 model = dict(
     type='MVXFasterRCNNV2',
     pts_voxel_layer=dict(
-        max_num_points=64,  # max_points_per_voxel
-        point_cloud_range=point_cloud_range,  # velodyne coordinates, x, y, z
+        max_num_points=64,
+        point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(30000, 40000),  # (training, testing) max_coxels
-    ),
+        max_voxels=(30000, 40000)),
     pts_voxel_encoder=dict(
         type='HardVFE',
         in_channels=4,
@@ -24,25 +23,20 @@ model = dict(
         point_cloud_range=point_cloud_range,
         norm_cfg=dict(type='naiveSyncBN1d', eps=1e-3, momentum=0.01)),
     pts_middle_encoder=dict(
-        type='PointPillarsScatter',
-        in_channels=64,
-        output_shape=[400, 400],  # checked from PointCloud3D
-    ),
+        type='PointPillarsScatter', in_channels=64, output_shape=[400, 400]),
     pts_backbone=dict(
         type='SECOND',
         in_channels=64,
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         layer_nums=[3, 5, 5],
         layer_strides=[2, 2, 2],
-        out_channels=[64, 128, 256],
-    ),
+        out_channels=[64, 128, 256]),
     pts_neck=dict(
         type='SECONDFPN',
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         in_channels=[64, 128, 256],
         upsample_strides=[1, 2, 4],
-        out_channels=[128, 128, 128],
-    ),
+        out_channels=[128, 128, 128]),
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=10,
@@ -108,34 +102,17 @@ test_cfg = dict(
         nms_thr=0.2,
         score_thr=0.05,
         min_bbox_size=0,
-        max_num=500
-        # soft-nms is also supported for rcnn testing
-        # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
-    ))
+        max_num=500))
 
 # dataset settings
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
-img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 input_modality = dict(
     use_lidar=True,
-    use_depth=False,
-    use_lidar_intensity=True,
     use_camera=False,
-)
-db_sampler = dict(
-    data_root=data_root,
-    info_path=data_root + 'nuscenes_dbinfos_train.pkl',
-    rate=1.0,
-    object_rot_range=[0.0, 0.0],
-    prepare=dict(),
-    classes=class_names,
-    sample_groups=dict(
-        bus=4,
-        trailer=4,
-        truck=4,
-    ))
+    use_radar=False,
+    use_map=False,
+    use_external=False)
 file_client_args = dict(backend='disk')
 # file_client_args = dict(
 #     backend='petrel',
@@ -164,7 +141,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -182,7 +159,7 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points']),
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(
