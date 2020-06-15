@@ -1,19 +1,15 @@
 # model settings
 voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
-    type='DynamicVoxelNet',
+    type='VoxelNet',
     voxel_layer=dict(
-        max_num_points=-1,  # max_points_per_voxel
+        max_num_points=5,
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(-1, -1)  # (training, testing) max_coxels
-    ),
-    voxel_encoder=dict(
-        type='DynamicSimpleVFE',
-        voxel_size=voxel_size,
-        point_cloud_range=point_cloud_range),
+        max_voxels=(16000, 40000)),
+    voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseEncoder',
         in_channels=4,
@@ -32,16 +28,20 @@ model = dict(
         out_channels=[256, 256]),
     bbox_head=dict(
         type='Anchor3DHead',
-        num_classes=1,
+        num_classes=3,
         in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
-            ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
-            sizes=[[1.6, 3.9, 1.56]],
+            ranges=[
+                [0, -40.0, -0.6, 70.4, 40.0, -0.6],
+                [0, -40.0, -0.6, 70.4, 40.0, -0.6],
+                [0, -40.0, -1.78, 70.4, 40.0, -1.78],
+            ],
+            sizes=[[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
-            reshape_out=True),
+            reshape_out=False),
         diff_rad_by_sin=True,
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
@@ -55,13 +55,29 @@ model = dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
 # model training and testing settings
 train_cfg = dict(
-    assigner=dict(
-        type='MaxIoUAssigner',
-        iou_calculator=dict(type='BboxOverlapsNearest3D'),
-        pos_iou_thr=0.6,
-        neg_iou_thr=0.45,
-        min_pos_iou=0.45,
-        ignore_iof_thr=-1),
+    assigner=[
+        dict(  # for Pedestrian
+            type='MaxIoUAssigner',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
+            pos_iou_thr=0.5,
+            neg_iou_thr=0.35,
+            min_pos_iou=0.35,
+            ignore_iof_thr=-1),
+        dict(  # for Cyclist
+            type='MaxIoUAssigner',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
+            pos_iou_thr=0.5,
+            neg_iou_thr=0.35,
+            min_pos_iou=0.35,
+            ignore_iof_thr=-1),
+        dict(  # for Car
+            type='MaxIoUAssigner',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
+            pos_iou_thr=0.6,
+            neg_iou_thr=0.45,
+            min_pos_iou=0.45,
+            ignore_iof_thr=-1),
+    ],
     allowed_border=0,
     pos_weight=-1,
     debug=False)
@@ -77,8 +93,8 @@ test_cfg = dict(
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Car']
-input_modality = dict(use_lidar=True, use_camera=False)
+class_names = ['Pedestrian', 'Cyclist', 'Car']
+input_modality = dict(use_lidar=False, use_camera=False)
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -86,18 +102,37 @@ db_sampler = dict(
     object_rot_range=[0.0, 0.0],
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=5),
-    ),
-    sample_groups=dict(Car=15),
-    classes=class_names)
+        filter_by_min_points=dict(
+            Car=5,
+            Pedestrian=10,
+            Cyclist=10,
+        )),
+    classes=class_names,
+    sample_groups=dict(
+        Car=12,
+        Pedestrian=6,
+        Cyclist=6,
+    ))
+file_client_args = dict(backend='disk')
+# file_client_args = dict(
+#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+
 train_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=True,
+        with_label_3d=True,
+        file_client_args=file_client_args),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
         num_try=100,
-        loc_noise_std=[1.0, 1.0, 0.5],
+        loc_noise_std=[1.0, 1.0, 0.1],
         global_rot_range=[0.0, 0.0],
         rot_uniform_noise=[-0.78539816, 0.78539816]),
     dict(type='RandomFlip3D', flip_ratio=0.5),
@@ -109,34 +144,35 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points']),
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(
     samples_per_gpu=6,
     workers_per_gpu=4,
     train=dict(
-        type='RepeatDataset',
-        times=2,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'kitti_infos_train.pkl',
-            split='training',
-            pts_prefix='velodyne_reduced',
-            pipeline=train_pipeline,
-            modality=input_modality,
-            classes=class_names,
-            test_mode=False)),
+        type=dataset_type,
+        data_root=data_root,
+        ann_file=data_root + 'kitti_infos_train.pkl',
+        split='training',
+        pts_prefix='velodyne_reduced',
+        pipeline=train_pipeline,
+        modality=input_modality,
+        classes=class_names,
+        test_mode=False),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -174,7 +210,7 @@ momentum_config = dict(
     step_ratio_up=0.4,
 )
 checkpoint_config = dict(interval=1)
-evaluation = dict(interval=1)
+evaluation = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -184,7 +220,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 40
+total_epochs = 80
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/sec_secfpn_80e'

@@ -108,25 +108,12 @@ test_cfg = dict(
 # dataset settings
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
-img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 input_modality = dict(
     use_lidar=True,
-    use_depth=False,
-    use_lidar_intensity=True,
     use_camera=False,
-)
-db_sampler = dict(
-    data_root=data_root,
-    info_path=data_root + 'nuscenes_dbinfos_train.pkl',
-    rate=1.0,
-    object_rot_range=[0.0, 0.0],
-    prepare=dict(),
-    sample_groups=dict(
-        bus=4,
-        trailer=4,
-        truck=4,
-    ))
+    use_radar=False,
+    use_map=False,
+    use_external=False)
 file_client_args = dict(backend='disk')
 # file_client_args = dict(
 #     backend='petrel',
@@ -155,7 +142,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -173,7 +160,7 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points']),
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(
