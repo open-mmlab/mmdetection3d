@@ -68,8 +68,14 @@ class PartAggregationROIHead(Base3DRoIHead):
             voxels_dict (dict): Contains information of voxels.
             img_metas (list[dict]): Meta info of each image.
             proposal_list (list[dict]): Proposal information from rpn.
-            gt_bboxes_3d (list[FloatTensor]): GT bboxes of each batch.
-            gt_labels_3d (list[LongTensor]): GT labels of each batch.
+                The dictionary should contain the following keys:
+                - boxes_3d (:obj:BaseInstance3DBoxes): Proposal bboxes
+                - labels_3d (torch.Tensor): Labels of proposals
+                - cls_preds (torch.Tensor): Original scores of proposals
+            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]):
+                GT bboxes of each sample. The bboxes are encapsulated
+                by 3D box structures.
+            gt_labels_3d (list[LongTensor]): GT labels of each sample.
 
         Returns:
             dict: losses from each head.
@@ -178,17 +184,19 @@ class PartAggregationROIHead(Base3DRoIHead):
             cur_gt_labels = gt_labels_3d[batch_idx]
 
             batch_num_gts = 0
-            batch_gt_indis = cur_gt_labels.new_full((cur_boxes.shape[0], ),
-                                                    0)  # 0 is bg
-            batch_max_overlaps = cur_boxes.new_zeros(cur_boxes.shape[0])
-            batch_gt_labels = cur_gt_labels.new_full((cur_boxes.shape[0], ),
-                                                     -1)  # -1 is bg
-            if isinstance(self.bbox_assigner, list):  # for multi classes
+            # 0 is bg
+            batch_gt_indis = cur_gt_labels.new_full((len(cur_boxes), ), 0)
+            batch_max_overlaps = cur_boxes.tensor.new_zeros(len(cur_boxes))
+            # -1 is bg
+            batch_gt_labels = cur_gt_labels.new_full((len(cur_boxes), ), -1)
+
+            # each class may have its own assigner
+            if isinstance(self.bbox_assigner, list):
                 for i, assigner in enumerate(self.bbox_assigner):
                     gt_per_cls = (cur_gt_labels == i)
                     pred_per_cls = (cur_labels_3d == i)
                     cur_assign_res = assigner.assign(
-                        cur_boxes[pred_per_cls],
+                        cur_boxes.tensor[pred_per_cls],
                         cur_gt_bboxes.tensor[gt_per_cls],
                         gt_labels=cur_gt_labels[gt_per_cls])
                     # gather assign_results in different class into one result
@@ -215,10 +223,12 @@ class PartAggregationROIHead(Base3DRoIHead):
                                              batch_gt_labels)
             else:  # for single class
                 assign_result = self.bbox_assigner.assign(
-                    cur_boxes, cur_gt_bboxes.tensor, gt_labels=cur_gt_labels)
+                    cur_boxes.tensor,
+                    cur_gt_bboxes.tensor,
+                    gt_labels=cur_gt_labels)
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
-                                                       cur_boxes,
+                                                       cur_boxes.tensor,
                                                        cur_gt_bboxes.tensor,
                                                        cur_gt_labels)
             sampling_results.append(sampling_result)

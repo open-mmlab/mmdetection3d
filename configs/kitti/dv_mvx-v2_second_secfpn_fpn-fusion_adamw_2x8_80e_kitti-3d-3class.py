@@ -1,6 +1,6 @@
 # model settings
 voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='DynamicMVXFasterRCNNV2',
@@ -21,10 +21,10 @@ model = dict(
         out_channels=256,
         num_outs=5),
     pts_voxel_layer=dict(
-        max_num_points=-1,  # max_points_per_voxel
+        max_num_points=-1,
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(-1, -1),  # (training, testing) max_coxels
+        max_voxels=(-1, -1),
     ),
     pts_voxel_encoder=dict(
         type='DynamicVFE',
@@ -44,8 +44,7 @@ model = dict(
             img_levels=[0, 1, 2, 3, 4],
             align_corners=False,
             activate_out=True,
-            fuse_out=False),
-    ),
+            fuse_out=False)),
     pts_middle_encoder=dict(
         type='SparseEncoder',
         in_channels=128,
@@ -56,14 +55,12 @@ model = dict(
         in_channels=256,
         layer_nums=[5, 5],
         layer_strides=[1, 2],
-        out_channels=[128, 256],
-    ),
+        out_channels=[128, 256]),
     pts_neck=dict(
         type='SECONDFPN',
         in_channels=[128, 256],
         upsample_strides=[1, 2],
-        out_channels=[256, 256],
-    ),
+        out_channels=[256, 256]),
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
@@ -92,8 +89,7 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2),
-    ))
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
 # model training and testing settings
 train_cfg = dict(
     pts=dict(
@@ -128,7 +124,7 @@ test_cfg = dict(
         use_rotate_nms=True,
         nms_across_levels=False,
         nms_thr=0.01,
-        score_thr=0.3,
+        score_thr=0.1,
         min_bbox_size=0,
         nms_pre=100,
         max_num=50))
@@ -139,12 +135,7 @@ data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
-input_modality = dict(
-    use_lidar=True,
-    use_depth=False,
-    use_lidar_intensity=True,
-    use_camera=True,
-)
+input_modality = dict(use_lidar=True, use_camera=True)
 db_sampler = dict(
     type='MMDataBaseSampler',
     data_root=data_root,
@@ -157,17 +148,8 @@ db_sampler = dict(
     collision_thr=[0, 0.3, 0.5, 0.7],
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(
-            Car=5,
-            Pedestrian=10,
-            Cyclist=10,
-        ),
-    ),
-    sample_groups=dict(
-        Car=12,
-        Pedestrian=6,
-        Cyclist=6,
-    ),
+        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
     classes=class_names)
 train_pipeline = [
     dict(
@@ -189,10 +171,7 @@ train_pipeline = [
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Collect3D',
-        keys=[
-            'points', 'img', 'gt_bboxes_3d', 'gt_bboxes', 'gt_labels',
-            'gt_labels_3d'
-        ]),
+        keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
@@ -214,7 +193,7 @@ test_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points', 'img']),
+    dict(type='Collect3D', keys=['points', 'img'])
 ]
 
 data = dict(

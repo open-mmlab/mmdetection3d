@@ -11,7 +11,6 @@ from mmcv.utils import print_log
 from mmdet.datasets import DATASETS
 from ..core.bbox import Box3DMode, CameraInstance3DBoxes
 from .custom_3d import Custom3DDataset
-from .utils import remove_dontcare
 
 
 @DATASETS.register_module()
@@ -83,7 +82,7 @@ class KittiDataset(Custom3DDataset):
 
         annos = info['annos']
         # we need other objects to avoid collision when sample
-        annos = remove_dontcare(annos)
+        annos = self.remove_dontcare(annos)
         loc = annos['location']
         dims = annos['dimensions']
         rots = annos['rotation_y']
@@ -127,6 +126,16 @@ class KittiDataset(Custom3DDataset):
         inds = [i for i, x in enumerate(gt_names) if x in used_classes]
         inds = np.array(inds, dtype=np.int64)
         return inds
+
+    def remove_dontcare(self, ann_info):
+        img_filtered_annotations = {}
+        relevant_annotation_indices = [
+            i for i, x in enumerate(ann_info['name']) if x != 'DontCare'
+        ]
+        for key in ann_info.keys():
+            img_filtered_annotations[key] = (
+                ann_info[key][relevant_annotation_indices])
+        return img_filtered_annotations
 
     def format_results(self,
                        outputs,
