@@ -55,7 +55,7 @@ def _get_detector_cfg(fname):
 
 
 def test_faster_rcnn_forward():
-    _test_two_stage_forward('nus/faster_rcnn_r50_fpn_caffe_2x8_1x_nus.py')
+    _test_two_stage_forward('mvxnet/faster_rcnn_r50_fpn_caffe_2x8_1x_nus.py')
 
 
 def _test_two_stage_forward(cfg_file):

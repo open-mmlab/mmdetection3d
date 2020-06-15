@@ -85,7 +85,7 @@ def test_config_build_pipeline():
 
     # Other configs needs database sampler.
     config_names = [
-        'nus/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py',
+        'pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py',
     ]
 
     print('Using {} config files'.format(len(config_names)))
@@ -117,9 +117,9 @@ def test_config_data_pipeline():
     # Only tests a representative subset of configurations
     # TODO: test pipelines using Albu, current Albu throw None given empty GT
     config_names = [
-        'nus/faster_rcnn_r50_fpn_caffe_2x8_1x_nus.py',
-        'nus/retinanet_r50_fpn_caffe_2x8_1x_nus.py',
-        'kitti/'
+        'mvxnet/faster_rcnn_r50_fpn_caffe_2x8_1x_nus.py',
+        'mvxnet/retinanet_r50_fpn_caffe_2x8_1x_nus.py',
+        'mvxnet/'
         'faster_rcnn_r50_fpn_caffe_1x_kitti-2d-3class_coco-3x-pretrain.py',
     ]
 
