@@ -154,7 +154,7 @@ def test_parta2_rpnhead_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     rpn_head_cfg, proposal_cfg = _get_rpn_head_cfg(
-        'kitti/hv_PartA2_secfpn_4x8_cyclic_80e_kitti-3d-3class.py')
+        'kitti/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
 
     from mmdet3d.models.builder import build_head
     self = build_head(rpn_head_cfg)
