@@ -10,6 +10,13 @@ We follow the procedure in [votenet](https://github.com/facebookresearch/votenet
 python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
 ```
 
+The overall process could be achieved through the following script
+```bash
+python batch_load_scannet_data.py
+cd ../..
+python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
+```
+
 The directory structure after pre-processing should be as below
 ```
 scannet

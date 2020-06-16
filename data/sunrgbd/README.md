@@ -12,6 +12,17 @@ We follow the procedure in [votenet](https://github.com/facebookresearch/votenet
 python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd
 ```
 
+The overall process could be achieved through the following script
+```bash
+cd matlab
+matlab -nosplash -nodesktop -r 'extract_split;quit;'
+matlab -nosplash -nodesktop -r 'extract_rgbd_data_v2;quit;'
+matlab -nosplash -nodesktop -r 'extract_rgbd_data_v1;quit;'
+cd ..
+python sunrgbd_data.py --gen_v1_data
+cd ..
+python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd
+```
 
 NOTE: SUNRGBDtoolbox.zip should have MD5 hash `18d22e1761d36352f37232cba102f91f` (you can check the hash with `md5 SUNRGBDtoolbox.zip` on Mac OS or `md5sum SUNRGBDtoolbox.zip` on Linux)
 
