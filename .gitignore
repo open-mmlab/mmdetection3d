@@ -125,3 +125,5 @@ exps/
 # demo
 *.jpg
 *.png
+/data/scannet/scans/
+/data/sunrgbd/OFFICIAL_SUNRGBD/
