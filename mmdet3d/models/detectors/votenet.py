@@ -43,7 +43,7 @@ class VoteNet(SingleStageDetector):
         Args:
             points (list[Tensor]): Points of each batch.
             img_meta (list): Image metas.
-            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes of each batch.
+            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
             gt_labels_3d (list[Tensor]): gt class labels of each batch.
             pts_semantic_mask (None | list[Tensor]): point-wise semantic
                 label of each batch.
@@ -86,7 +86,7 @@ class VoteNet(SingleStageDetector):
         Args:
             points (list[Tensor]): Points of each sample.
             img_meta (list): Image metas.
-            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes of each sample.
+            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each sample.
             gt_labels_3d (list[Tensor]): gt class labels of each sample.
             pts_semantic_mask (None | list[Tensor]): point-wise semantic
                 label of each sample.

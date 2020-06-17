@@ -19,8 +19,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
     Args:
         num_classes (int): Number of classes.
         in_channels (int): Number of channels in the input feature map.
-        train_cfg (dict): train configs
-        test_cfg (dict): test configs
+        train_cfg (dict): Train configs.
+        test_cfg (dict): Test configs.
         feat_channels (int): Number of channels of the feature map.
         use_direction_classifier (bool): Whether to add a direction classifier.
         anchor_generator(dict): Config dict of anchor generator.
@@ -29,11 +29,11 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         assign_per_class (bool): Whether to do assignment for each class.
         diff_rad_by_sin (bool): Whether to change the difference into sin
             difference for box regression loss.
-        dir_offset (float | int): The offset of BEV rotation angles
+        dir_offset (float | int): The offset of BEV rotation angles.
             (TODO: may be moved into box coder)
-        dirlimit_offset (float | int): The limited range of BEV rotation angles
-            (TODO: may be moved into box coder)
-        box_coder (dict): Config dict of box coders.
+        dir_limit_offset (float | int): The limited range of BEV
+            rotation angles. (TODO: may be moved into box coder)
+        bbox_coder (dict): Config dict of box coders.
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
         loss_dir (dict): Config of direction classifier loss.
@@ -131,6 +131,15 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         normal_init(self.conv_reg, std=0.01)
 
     def forward_single(self, x):
+        """Forward function on a single-scale feature map.
+
+        Args:
+            x (Tensor): Input features.
+
+        Returns:
+            tuple[Tensor]: Contain score of each class, bbox predictions
+                and class predictions of direction.
+        """
         cls_score = self.conv_cls(x)
         bbox_pred = self.conv_reg(x)
         dir_cls_preds = None
@@ -139,6 +148,16 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         return cls_score, bbox_pred, dir_cls_preds
 
     def forward(self, feats):
+        """Forward pass.
+
+        Args:
+            feats (list[Tensor]): Multi-level features, e.g.,
+                features produced by FPN.
+
+        Returns:
+            tuple[list[Tensor]]: Multi-level class score, bbox
+                and direction predictions.
+        """
         return multi_apply(self.forward_single, feats)
 
     def get_anchors(self, featmap_sizes, input_metas, device='cuda'):
@@ -163,6 +182,24 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
     def loss_single(self, cls_score, bbox_pred, dir_cls_preds, labels,
                     label_weights, bbox_targets, bbox_weights, dir_targets,
                     dir_weights, num_total_samples):
+        """Calculate loss of Single-level results.
+
+        Args:
+            cls_score (Tensor): Class score in single-level.
+            bbox_pred (Tensor): Bbox prediction in single-level.
+            dir_cls_preds (Tensor): Predictions of direction class
+                in single-level.
+            labels (Tensor): Labels of class.
+            label_weights (Tensor): Weights of class loss.
+            bbox_targets (Tensor): Targets of bbox predictions.
+            bbox_weights (Tensor): Weights of bbox loss.
+            dir_targets (Tensor): Targets of direction predictions.
+            dir_weights (Tensor): Weights of direction loss.
+            num_total_samples (int): The number of valid samples.
+
+        Returns:
+            tuple[Tensor]: losses of class, bbox and direction, respectively.
+        """
         # classification loss
         if num_total_samples is None:
             num_total_samples = int(cls_score.shape[0])
@@ -235,6 +272,22 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
              gt_labels,
              input_metas,
              gt_bboxes_ignore=None):
+        """Calculate losses.
+
+        Args:
+            cls_scores (list[Tensor]): Multi-level class scores.
+            bbox_preds (list[Tensor]): Multi-level bbox predictions.
+            dir_cls_preds (list[Tensor]): Multi-level direction
+                class predictions.
+            gt_bboxes (list[:obj:BaseInstance3DBoxes]): Gt bboxes
+                of each sample.
+            gt_labels (list[Tensor]): Gt labels of each sample.
+            input_metas (list[dict]): Contain pcd and img's meta info.
+            gt_bboxes_ignore (None | list[Tensor]): Specify which bounding.
+
+        Returns:
+            dict: Contain class, bbox and direction losses of each level.
+        """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.anchor_generator.num_levels
         device = cls_scores[0].device
@@ -284,6 +337,20 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                    input_metas,
                    cfg=None,
                    rescale=False):
+        """Get bboxes of anchor head.
+
+        Args:
+            cls_scores (list[Tensor]): Multi-level class scores.
+            bbox_preds (list[Tensor]): Multi-level bbox predictions.
+            dir_cls_preds (list[Tensor]): Multi-level direction
+                class predictions.
+            input_metas (list[dict]): Contain pcd and img's meta info.
+            cfg (None | ConfigDict): Training or testing config.
+            rescale (list[Tensor]): whether th rescale bbox.
+
+        Returns:
+            list[tuple]: prediction resultes of batches.
+        """
         assert len(cls_scores) == len(bbox_preds)
         assert len(cls_scores) == len(dir_cls_preds)
         num_levels = len(cls_scores)
@@ -322,6 +389,24 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                           input_meta,
                           cfg=None,
                           rescale=False):
+        """Get bboxes of single branch.
+
+        Args:
+            cls_scores (Tensor): Class score in single batch.
+            bbox_preds (Tensor): Bbox prediction in single batch.
+            dir_cls_preds (Tensor): Predictions of direction class
+                in single batch.
+            mlvl_anchors (List[Tensor]): Multi-level anchors in single batch.
+            input_meta (list[dict]): Contain pcd and img's meta info.
+            cfg (None | ConfigDict): Training or testing config.
+            rescale (list[Tensor]): whether th rescale bbox.
+
+        Returns:
+            tuple: Contain predictions of single batch.
+                - bboxes (:obj:BaseInstance3DBoxes): Predicted 3d bboxes.
+                - scores (Tensor): Class score of each bbox.
+                - labels (Tensor): Label of each bbox.
+        """
         cfg = self.test_cfg if cfg is None else cfg
         assert len(cls_scores) == len(bbox_preds) == len(mlvl_anchors)
         mlvl_bboxes = []
