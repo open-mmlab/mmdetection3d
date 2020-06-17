@@ -1,3 +1,7 @@
+_base_ = [
+    '../_base_/datasets/nus-3d.py', '../_base_/schedules/schedule_2x.py',
+    '../_base_/default_runtime.py'
+]
 # model settings
 voxel_size = [0.25, 0.25, 8]
 point_cloud_range = [-50, -50, -5, 50, 50, 3]
@@ -105,116 +109,16 @@ test_cfg = dict(
         max_num=500))
 
 # dataset settings
-dataset_type = 'NuScenesDataset'
-data_root = 'data/nuscenes/'
 input_modality = dict(
     use_lidar=True,
     use_camera=False,
     use_radar=False,
     use_map=False,
     use_external=False)
-file_client_args = dict(backend='disk')
-# file_client_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/nuscenes/': 's3://nuscenes/nuscenes/',
-#         'data/nuscenes/': 's3://nuscenes/nuscenes/'
-#     }))
-train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        file_client_args=file_client_args),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    dict(
-        type='GlobalRotScale',
-        rot_uniform_noise=[-0.3925, 0.3925],
-        scaling_uniform_noise=[0.95, 1.05],
-        trans_normal_noise=[0, 0, 0]),
-    dict(type='RandomFlip3D', flip_ratio=0.5),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
-]
-test_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        file_client_args=file_client_args),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='RandomFlip3D', flip_ratio=0),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
-]
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
-    train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_train.pkl',
-        pipeline=train_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=False),
-    val=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_val.pkl',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=True),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_val.pkl',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=True))
-# optimizer
-optimizer = dict(type='AdamW', lr=0.001, weight_decay=0.01)
-# max_norm=10 is better for SECOND
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=1000,
-    warmup_ratio=1.0 / 1000,
-    step=[20, 23])
-momentum_config = None
-checkpoint_config = dict(interval=1)
-# yapf:disable
+    train=dict(modality=input_modality),
+    val=dict(modality=input_modality),
+    test=dict(modality=input_modality))
+
 evaluation = dict(interval=24)
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
-# runtime settings
-total_epochs = 24
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-work_dir = './work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d'
-load_from = None
-resume_from = None
-workflow = [('train', 1)]
