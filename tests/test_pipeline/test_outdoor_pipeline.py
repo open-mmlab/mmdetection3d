@@ -16,14 +16,14 @@ def test_outdoor_aug_pipeline():
         dict(
             type='ObjectNoise',
             num_try=100,
-            loc_noise_std=[1.0, 1.0, 0.5],
+            translation_std=[1.0, 1.0, 0.5],
             global_rot_range=[0.0, 0.0],
-            rot_uniform_noise=[-0.78539816, 0.78539816]),
+            rot_range=[-0.78539816, 0.78539816]),
         dict(type='RandomFlip3D', flip_ratio=0.5),
         dict(
-            type='GlobalRotScale',
-            rot_uniform_noise=[-0.78539816, 0.78539816],
-            scaling_uniform_noise=[0.95, 1.05]),
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.78539816, 0.78539816],
+            scale_ratio_range=[0.95, 1.05]),
         dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
         dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
         dict(type='PointShuffle'),
@@ -98,7 +98,7 @@ def test_outdoor_aug_pipeline():
         pts_filename='tests/data/kitti/a.bin',
         ann_info=dict(gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d),
         bbox3d_fields=[],
-    )
+        img_fields=[])
 
     output = pipeline(results)
 
@@ -133,10 +133,10 @@ def test_outdoor_velocity_aug_pipeline():
         dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
         dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
         dict(
-            type='GlobalRotScale',
-            rot_uniform_noise=[-0.3925, 0.3925],
-            scaling_uniform_noise=[0.95, 1.05],
-            trans_normal_noise=[0, 0, 0]),
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.3925, 0.3925],
+            scale_ratio_range=[0.95, 1.05],
+            translation_std=[0, 0, 0]),
         dict(type='RandomFlip3D', flip_ratio=0.5),
         dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
         dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
@@ -197,7 +197,7 @@ def test_outdoor_velocity_aug_pipeline():
         pts_filename='tests/data/kitti/a.bin',
         ann_info=dict(gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d),
         bbox3d_fields=[],
-    )
+        img_fields=[])
 
     output = pipeline(results)
 

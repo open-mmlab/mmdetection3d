@@ -30,7 +30,7 @@ def test_scannet_pipeline():
         dict(type='IndoorPointSample', num_points=5),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0, flip_ratio_xz=1.0),
         dict(
-            type='IndoorGlobalRotScale',
+            type='IndoorGlobalRotScaleTrans',
             shift_height=True,
             rot_range=[-1 / 36, 1 / 36],
             scale_range=None),
@@ -113,7 +113,7 @@ def test_sunrgbd_pipeline():
         dict(type='LoadAnnotations3D'),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0),
         dict(
-            type='IndoorGlobalRotScale',
+            type='IndoorGlobalRotScaleTrans',
             shift_height=True,
             rot_range=[-1 / 6, 1 / 6],
             scale_range=[0.85, 1.15]),

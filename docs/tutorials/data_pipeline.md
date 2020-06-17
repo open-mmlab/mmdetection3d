@@ -117,7 +117,7 @@ For each operation, we list the related dict fields that are added/updated/remov
 - update: img, proposals, gt_bboxes, gt_bboxes_ignore, gt_labels, gt_masks, gt_semantic_seg
 
 `Collect`
-- add: img_meta (the keys of img_meta is specified by `meta_keys`)
+- add: img_metas (the keys of img_metas is specified by `meta_keys`)
 - remove: all other keys except for those specified by `keys`
 
 ### Test time augmentation

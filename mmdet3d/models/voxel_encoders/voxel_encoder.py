@@ -188,7 +188,7 @@ class DynamicVFE(nn.Module):
                 coors,
                 points=None,
                 img_feats=None,
-                img_meta=None):
+                img_metas=None):
         """Forward functions
 
         Args:
@@ -198,7 +198,7 @@ class DynamicVFE(nn.Module):
                 multi-modality fusion. Defaults to None.
             img_feats (list[torch.Tensor], optional): Image fetures used for
                 multi-modality fusion. Defaults to None.
-            img_meta (dict, optional): [description]. Defaults to None.
+            img_metas (dict, optional): [description]. Defaults to None.
 
         Returns:
             tuple: If `return_point_feats` is False, returns voxel features and
@@ -237,7 +237,7 @@ class DynamicVFE(nn.Module):
             if (i == len(self.vfe_layers) - 1 and self.fusion_layer is not None
                     and img_feats is not None):
                 point_feats = self.fusion_layer(img_feats, points, point_feats,
-                                                img_meta)
+                                                img_metas)
             voxel_feats, voxel_coors = self.vfe_scatter(point_feats, coors)
             if i != len(self.vfe_layers) - 1:
                 # need to concat voxel feats if it is not the last vfe
@@ -351,7 +351,7 @@ class HardVFE(nn.Module):
                 num_points,
                 coors,
                 img_feats=None,
-                img_meta=None):
+                img_metas=None):
         """Forward functions
 
         Args:
@@ -360,7 +360,7 @@ class HardVFE(nn.Module):
             coors (torch.Tensor): Coordinates of voxels, shape is Mx(1+NDim).
             img_feats (list[torch.Tensor], optional): Image fetures used for
                 multi-modality fusion. Defaults to None.
-            img_meta (dict, optional): [description]. Defaults to None.
+            img_metas (dict, optional): [description]. Defaults to None.
 
         Returns:
             tuple: If `return_point_feats` is False, returns voxel features and
@@ -410,12 +410,12 @@ class HardVFE(nn.Module):
 
         if (self.fusion_layer is not None and img_feats is not None):
             voxel_feats = self.fusion_with_mask(features, mask, voxel_feats,
-                                                coors, img_feats, img_meta)
+                                                coors, img_feats, img_metas)
 
         return voxel_feats
 
     def fusion_with_mask(self, features, mask, voxel_feats, coors, img_feats,
-                         img_meta):
+                         img_metas):
         """Fuse image and point features with mask.
 
         Args:
@@ -425,7 +425,7 @@ class HardVFE(nn.Module):
             voxel_feats (torch.Tensor): Features of voxels.
             coors (torch.Tensor): Coordinates of each single voxel.
             img_feats (list[torch.Tensor]): Multi-scale feature maps of image.
-            img_meta (list(dict)): Meta information of image and points.
+            img_metas (list(dict)): Meta information of image and points.
 
         Returns:
             torch.Tensor: Fused features of each voxel.
@@ -439,7 +439,7 @@ class HardVFE(nn.Module):
 
         point_feats = voxel_feats[mask]
         point_feats = self.fusion_layer(img_feats, points, point_feats,
-                                        img_meta)
+                                        img_metas)
 
         voxel_canvas = voxel_feats.new_zeros(
             size=(voxel_feats.size(0), voxel_feats.size(1),

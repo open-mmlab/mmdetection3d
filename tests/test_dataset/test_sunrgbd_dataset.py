@@ -19,7 +19,7 @@ def test_getitem():
         dict(type='LoadAnnotations3D'),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0),
         dict(
-            type='IndoorGlobalRotScale',
+            type='IndoorGlobalRotScaleTrans',
             shift_height=True,
             rot_range=[-1 / 6, 1 / 6],
             scale_range=[0.85, 1.15]),
@@ -39,12 +39,12 @@ def test_getitem():
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
-    file_name = data['img_meta']._data['file_name']
-    flip_xz = data['img_meta']._data['flip_xz']
-    flip_yz = data['img_meta']._data['flip_yz']
-    scale_ratio = data['img_meta']._data['scale_ratio']
-    rot_angle = data['img_meta']._data['rot_angle']
-    sample_idx = data['img_meta']._data['sample_idx']
+    file_name = data['img_metas']._data['file_name']
+    flip_xz = data['img_metas']._data['flip_xz']
+    flip_yz = data['img_metas']._data['flip_yz']
+    scale_ratio = data['img_metas']._data['scale_ratio']
+    rot_angle = data['img_metas']._data['rot_angle']
+    sample_idx = data['img_metas']._data['sample_idx']
     assert file_name == './tests/data/sunrgbd' \
                         '/points/000001.bin'
     assert flip_xz is False

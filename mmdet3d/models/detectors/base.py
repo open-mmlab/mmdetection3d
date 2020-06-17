@@ -3,26 +3,16 @@ from abc import ABCMeta, abstractmethod
 import torch.nn as nn
 
 
-class BaseDetector(nn.Module, metaclass=ABCMeta):
+class Base3DDetector(nn.Module, metaclass=ABCMeta):
     """Base class for detectors"""
 
     def __init__(self):
-        super(BaseDetector, self).__init__()
+        super(Base3DDetector, self).__init__()
         self.fp16_enabled = False
 
     @property
     def with_neck(self):
         return hasattr(self, 'neck') and self.neck is not None
-
-    @property
-    def with_voxel_encoder(self):
-        return hasattr(self,
-                       'voxel_encoder') and self.voxel_encoder is not None
-
-    @property
-    def with_middle_encoder(self):
-        return hasattr(self,
-                       'middle_encoder') and self.middle_encoder is not None
 
     @property
     def with_shared_head(self):
@@ -63,48 +53,50 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
             logger = get_root_logger()
             logger.info('load model from: {}'.format(pretrained))
 
-    def forward_test(self, imgs, img_metas, **kwargs):
+    def forward_test(self, points, img_metas, imgs=None, **kwargs):
         """
         Args:
-            imgs (List[Tensor]): the outer list indicates test-time
-                augmentations and inner Tensor should have a shape NxCxHxW,
-                which contains all images in the batch.
-            img_meta (List[List[dict]]): the outer list indicates test-time
+            points (List[Tensor]): the outer list indicates test-time
+                augmentations and inner Tensor should have a shape NxC,
+                which contains all points in the batch.
+            img_metas (List[List[dict]]): the outer list indicates test-time
                 augs (multiscale, flip, etc.) and the inner list indicates
                 images in a batch
+            imgs (List[Tensor], optional): the outer list indicates test-time
+                augmentations and inner Tensor should have a shape NxCxHxW,
+                which contains all images in the batch. Defaults to None.
         """
-        for var, name in [(imgs, 'imgs'), (img_metas, 'img_metas')]:
+        for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
             if not isinstance(var, list):
                 raise TypeError('{} must be a list, but got {}'.format(
                     name, type(var)))
 
-        num_augs = len(imgs)
+        num_augs = len(points)
         if num_augs != len(img_metas):
             raise ValueError(
                 'num of augmentations ({}) != num of image meta ({})'.format(
-                    len(imgs), len(img_metas)))
+                    len(points), len(img_metas)))
         # TODO: remove the restriction of imgs_per_gpu == 1 when prepared
-        imgs_per_gpu = imgs[0].size(0)
-        assert imgs_per_gpu == 1
+        samples_per_gpu = len(points[0])
+        assert samples_per_gpu == 1
 
         if num_augs == 1:
-            return self.simple_test(imgs[0], img_metas[0], **kwargs)
+            imgs = [imgs] if imgs is None else imgs
+            return self.simple_test(points[0], img_metas[0], imgs[0], **kwargs)
         else:
-            return self.aug_test(imgs, img_metas, **kwargs)
+            return self.aug_test(points, img_metas, imgs, **kwargs)
 
-    def forward(self, img, img_meta, return_loss=True, **kwargs):
+    def forward(self, return_loss=True, **kwargs):
         """
         Calls either forward_train or forward_test depending on whether
         return_loss=True. Note this setting will change the expected inputs.
-        When `return_loss=True`, img and img_meta are single-nested (i.e.
-        Tensor and List[dict]), and when `resturn_loss=False`, img and img_meta
-        should be double nested (i.e.  List[Tensor], List[List[dict]]), with
-        the outer list indicating test time augmentations.
+        When `return_loss=True`, img and img_metas are single-nested (i.e.
+        Tensor and List[dict]), and when `resturn_loss=False`, img and
+        img_metas should be double nested
+        (i.e.  List[Tensor], List[List[dict]]), with the outer list
+        indicating test time augmentations.
         """
-
-        # TODO: current version only support 2D detector now, find
-        # a better way to be compatible with both
         if return_loss:
-            return self.forward_train(img, img_meta, **kwargs)
+            return self.forward_train(**kwargs)
         else:
-            return self.forward_test(img, img_meta, **kwargs)
+            return self.forward_test(**kwargs)

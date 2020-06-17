@@ -181,7 +181,7 @@ class VoteHead(nn.Module):
              gt_labels_3d,
              pts_semantic_mask=None,
              pts_instance_mask=None,
-             input_meta=None,
+             img_metas=None,
              gt_bboxes_ignore=None):
         """Compute loss.
 
@@ -193,7 +193,7 @@ class VoteHead(nn.Module):
             gt_labels_3d (list[Tensor]): Gt labels of each sample.
             pts_semantic_mask (None | list[Tensor]): Point-wise semantic mask.
             pts_instance_mask (None | list[Tensor]): Point-wise instance mask.
-            input_metas (list[dict]): Contain pcd and img's meta info.
+            img_metas (list[dict]): Contain pcd and img's meta info.
             gt_bboxes_ignore (None | list[Tensor]): Specify which bounding.
 
         Returns:

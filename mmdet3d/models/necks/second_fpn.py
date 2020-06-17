@@ -100,7 +100,7 @@ class SECONDFusionFPN(SECONDFPN):
                 coors=None,
                 points=None,
                 img_feats=None,
-                img_meta=None):
+                img_metas=None):
         assert len(x) == len(self.in_channels)
         ups = [deblock(x[i]) for i, deblock in enumerate(self.deblocks)]
 
@@ -119,5 +119,5 @@ class SECONDFusionFPN(SECONDFPN):
                 coors[:, 3] / self.downsample_rates[2])
             # fusion for each point
             out = self.fusion_layer(img_feats, points, out,
-                                    downsample_pts_coors, img_meta)
+                                    downsample_pts_coors, img_metas)
         return [out]
