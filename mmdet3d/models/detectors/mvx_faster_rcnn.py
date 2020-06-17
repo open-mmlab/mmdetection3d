@@ -11,13 +11,14 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
     def __init__(self, **kwargs):
         super(DynamicMVXFasterRCNN, self).__init__(**kwargs)
 
-    def extract_pts_feat(self, points, img_feats, img_meta):
+    def extract_pts_feat(self, points, img_feats, img_metas):
         if not self.with_pts_bbox:
             return None
         voxels, coors = self.voxelize(points)
         # adopt an early fusion strategy
         if self.with_fusion:
-            voxels = self.pts_fusion_layer(img_feats, points, voxels, img_meta)
+            voxels = self.pts_fusion_layer(img_feats, points, voxels,
+                                           img_metas)
         voxel_features, feature_coors = self.pts_voxel_encoder(voxels, coors)
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, feature_coors, batch_size)
@@ -48,12 +49,12 @@ class DynamicMVXFasterRCNNV2(DynamicMVXFasterRCNN):
     def __init__(self, **kwargs):
         super(DynamicMVXFasterRCNNV2, self).__init__(**kwargs)
 
-    def extract_pts_feat(self, points, img_feats, img_meta):
+    def extract_pts_feat(self, points, img_feats, img_metas):
         if not self.with_pts_bbox:
             return None
         voxels, coors = self.voxelize(points)
         voxel_features, feature_coors = self.pts_voxel_encoder(
-            voxels, coors, points, img_feats, img_meta)
+            voxels, coors, points, img_feats, img_metas)
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, feature_coors, batch_size)
         x = self.pts_backbone(x)
@@ -68,12 +69,12 @@ class MVXFasterRCNNV2(MVXTwoStageDetector):
     def __init__(self, **kwargs):
         super(MVXFasterRCNNV2, self).__init__(**kwargs)
 
-    def extract_pts_feat(self, pts, img_feats, img_meta):
+    def extract_pts_feat(self, pts, img_feats, img_metas):
         if not self.with_pts_bbox:
             return None
         voxels, num_points, coors = self.voxelize(pts)
         voxel_features = self.pts_voxel_encoder(voxels, num_points, coors,
-                                                img_feats, img_meta)
+                                                img_feats, img_metas)
 
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, coors, batch_size)
@@ -81,23 +82,4 @@ class MVXFasterRCNNV2(MVXTwoStageDetector):
 
         if self.with_pts_neck:
             x = self.pts_neck(x)
-        return x
-
-
-@DETECTORS.register_module()
-class DynamicMVXFasterRCNNV3(DynamicMVXFasterRCNN):
-
-    def __init__(self, **kwargs):
-        super(DynamicMVXFasterRCNNV3, self).__init__(**kwargs)
-
-    def extract_pts_feat(self, points, img_feats, img_meta):
-        if not self.with_pts_bbox:
-            return None
-        voxels, coors = self.voxelize(points)
-        voxel_features, feature_coors = self.pts_voxel_encoder(voxels, coors)
-        batch_size = coors[-1, 0] + 1
-        x = self.pts_middle_encoder(voxel_features, feature_coors, batch_size)
-        x = self.pts_backbone(x)
-        if self.with_pts_neck:
-            x = self.pts_neck(x, coors, points, img_feats, img_meta)
         return x

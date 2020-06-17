@@ -59,7 +59,7 @@ class PartAggregationROIHead(Base3DRoIHead):
         return hasattr(self,
                        'semantic_head') and self.semantic_head is not None
 
-    def forward_train(self, feats_dict, voxels_dict, img_meta, proposal_list,
+    def forward_train(self, feats_dict, voxels_dict, img_metas, proposal_list,
                       gt_bboxes_3d, gt_labels_3d):
         """Training forward function of PartAggregationROIHead
 
@@ -97,7 +97,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         return losses
 
-    def simple_test(self, feats_dict, voxels_dict, img_meta, proposal_list,
+    def simple_test(self, feats_dict, voxels_dict, img_metas, proposal_list,
                     **kwargs):
         """Simple testing forward function of PartAggregationROIHead
 
@@ -131,7 +131,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             bbox_results['bbox_pred'],
             labels_3d,
             cls_preds,
-            img_meta,
+            img_metas,
             cfg=self.test_cfg)
 
         bbox_results = [

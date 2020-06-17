@@ -158,10 +158,10 @@ train_pipeline = [
         multiscale_mode='range',
         keep_ratio=True),
     dict(
-        type='GlobalRotScale',
-        rot_uniform_noise=[-0.78539816, 0.78539816],
-        scaling_uniform_noise=[0.95, 1.05],
-        trans_normal_noise=[0.2, 0.2, 0.2]),
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.78539816, 0.78539816],
+        scale_ratio_range=[0.95, 1.05],
+        translation_std=[0.2, 0.2, 0.2]),
     dict(type='RandomFlip3D', flip_ratio=0.5),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
@@ -176,24 +176,28 @@ train_pipeline = [
 test_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
-        type='Resize',
-        img_scale=[
-            (1280, 384),
-        ],
-        multiscale_mode='value',
-        keep_ratio=True),
-    dict(
-        type='GlobalRotScale',
-        rot_uniform_noise=[0, 0],
-        scaling_uniform_noise=[1, 1]),
-    dict(type='RandomFlip3D', flip_ratio=0),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points', 'img'])
+        type='MultiScaleFlipAug3D',
+        img_scale=(1280, 384),
+        pts_scale_ratio=1,
+        flip=False,
+        transforms=[
+            dict(type='Resize', multiscale_mode='value', keep_ratio=True),
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1., 1.],
+                translation_std=[0, 0, 0]),
+            dict(type='RandomFlip3D'),
+            dict(type='Normalize', **img_norm_cfg),
+            dict(type='Pad', size_divisor=32),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=class_names,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ])
 ]
 
 data = dict(

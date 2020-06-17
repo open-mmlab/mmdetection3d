@@ -180,14 +180,14 @@ train_pipeline = [
     dict(
         type='ObjectNoise',
         num_try=100,
-        loc_noise_std=[1.0, 1.0, 0.5],
+        translation_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
-        rot_uniform_noise=[-0.78539816, 0.78539816]),
+        rot_range=[-0.78539816, 0.78539816]),
     dict(type='RandomFlip3D', flip_ratio=0.5),
     dict(
-        type='GlobalRotScale',
-        rot_uniform_noise=[-0.78539816, 0.78539816],
-        scaling_uniform_noise=[0.95, 1.05]),
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.78539816, 0.78539816],
+        scale_ratio_range=[0.95, 1.05]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
@@ -197,12 +197,26 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+        type='MultiScaleFlipAug3D',
+        img_scale=(1333, 800),
+        pts_scale_ratio=1,
+        flip=False,
+        transforms=[
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1., 1.],
+                translation_std=[0, 0, 0]),
+            dict(type='RandomFlip3D'),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=class_names,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ])
 ]
 
 data = dict(

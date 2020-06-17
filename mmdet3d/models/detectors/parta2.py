@@ -33,7 +33,7 @@ class PartA2(TwoStageDetector):
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
-    def extract_feat(self, points, img_meta):
+    def extract_feat(self, points, img_metas):
         voxel_dict = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
@@ -79,39 +79,66 @@ class PartA2(TwoStageDetector):
 
     def forward_train(self,
                       points,
-                      img_meta,
+                      img_metas,
                       gt_bboxes_3d,
                       gt_labels_3d,
                       gt_bboxes_ignore=None,
                       proposals=None):
-        feats_dict, voxels_dict = self.extract_feat(points, img_meta)
+        feats_dict, voxels_dict = self.extract_feat(points, img_metas)
 
         losses = dict()
 
         if self.with_rpn:
             rpn_outs = self.rpn_head(feats_dict['neck_feats'])
-            rpn_loss_inputs = rpn_outs + (gt_bboxes_3d, gt_labels_3d, img_meta)
+            rpn_loss_inputs = rpn_outs + (gt_bboxes_3d, gt_labels_3d,
+                                          img_metas)
             rpn_losses = self.rpn_head.loss(
                 *rpn_loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
             losses.update(rpn_losses)
 
             proposal_cfg = self.train_cfg.get('rpn_proposal',
                                               self.test_cfg.rpn)
-            proposal_inputs = rpn_outs + (img_meta, proposal_cfg)
+            proposal_inputs = rpn_outs + (img_metas, proposal_cfg)
             proposal_list = self.rpn_head.get_bboxes(*proposal_inputs)
         else:
             proposal_list = proposals
 
         roi_losses = self.roi_head.forward_train(feats_dict, voxels_dict,
-                                                 img_meta, proposal_list,
+                                                 img_metas, proposal_list,
                                                  gt_bboxes_3d, gt_labels_3d)
 
         losses.update(roi_losses)
 
         return losses
 
-    def forward_test(self, **kwargs):
-        return self.simple_test(**kwargs)
+    def forward_test(self, points, img_metas, imgs=None, **kwargs):
+        """
+        Args:
+            points (List[Tensor]): the outer list indicates test-time
+                augmentations and inner Tensor should have a shape NxC,
+                which contains all points in the batch.
+            img_metas (List[List[dict]]): the outer list indicates test-time
+                augs (multiscale, flip, etc.) and the inner list indicates
+                images in a batch
+        """
+        for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
+            if not isinstance(var, list):
+                raise TypeError('{} must be a list, but got {}'.format(
+                    name, type(var)))
+
+        num_augs = len(points)
+        if num_augs != len(img_metas):
+            raise ValueError(
+                'num of augmentations ({}) != num of image meta ({})'.format(
+                    len(points), len(img_metas)))
+        # TODO: remove the restriction of imgs_per_gpu == 1 when prepared
+        samples_per_gpu = len(points[0])
+        assert samples_per_gpu == 1
+
+        if num_augs == 1:
+            return self.simple_test(points[0], img_metas[0], **kwargs)
+        else:
+            return self.aug_test(points, img_metas, **kwargs)
 
     def forward(self, return_loss=True, **kwargs):
         if return_loss:
@@ -119,16 +146,19 @@ class PartA2(TwoStageDetector):
         else:
             return self.forward_test(**kwargs)
 
-    def simple_test(self, points, img_meta, proposals=None, rescale=False):
-        feats_dict, voxels_dict = self.extract_feat(points, img_meta)
+    def simple_test(self, points, img_metas, proposals=None, rescale=False):
+        feats_dict, voxels_dict = self.extract_feat(points, img_metas)
 
         if self.with_rpn:
             rpn_outs = self.rpn_head(feats_dict['neck_feats'])
             proposal_cfg = self.test_cfg.rpn
-            bbox_inputs = rpn_outs + (img_meta, proposal_cfg)
+            bbox_inputs = rpn_outs + (img_metas, proposal_cfg)
             proposal_list = self.rpn_head.get_bboxes(*bbox_inputs)
         else:
             proposal_list = proposals
 
-        return self.roi_head.simple_test(feats_dict, voxels_dict, img_meta,
+        return self.roi_head.simple_test(feats_dict, voxels_dict, img_metas,
                                          proposal_list)
+
+    def aug_test(self, **kwargs):
+        raise NotImplementedError

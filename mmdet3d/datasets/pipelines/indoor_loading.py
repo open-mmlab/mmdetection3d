@@ -158,7 +158,7 @@ class LoadAnnotations3D(LoadAnnotations):
 
     def _load_bboxes_3d(self, results):
         results['gt_bboxes_3d'] = results['ann_info']['gt_bboxes_3d']
-        results['bbox3d_fields'].append(results['gt_bboxes_3d'])
+        results['bbox3d_fields'].append('gt_bboxes_3d')
         return results
 
     def _load_labels_3d(self, results):
@@ -179,7 +179,7 @@ class LoadAnnotations3D(LoadAnnotations):
                 pts_instance_mask_path, dtype=np.long)
 
         results['pts_instance_mask'] = pts_instance_mask
-        results['pts_mask_fields'].append(results['pts_instance_mask'])
+        results['pts_mask_fields'].append('pts_instance_mask')
         return results
 
     def _load_semantic_seg_3d(self, results):
@@ -197,7 +197,7 @@ class LoadAnnotations3D(LoadAnnotations):
                 pts_semantic_mask_path, dtype=np.long)
 
         results['pts_semantic_mask'] = pts_semantic_mask
-        results['pts_seg_fields'].append(results['pts_semantic_mask'])
+        results['pts_seg_fields'].append('pts_semantic_mask')
         return results
 
     def __call__(self, results):

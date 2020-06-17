@@ -1,4 +1,3 @@
-import mmcv
 import numpy as np
 from mmcv.utils import build_from_cfg
 
@@ -18,6 +17,10 @@ class RandomFlip3D(RandomFlip):
     method.
 
     Args:
+        sync_2d (bool, optional): Whether to apply flip according to the 2D
+            images. If True, it will apply the same flip as that to 2D images.
+            If False, it will decide whether to flip randomly and independently
+            to that of 2D images.
         flip_ratio (float, optional): The flipping probability.
     """
 
@@ -25,61 +28,23 @@ class RandomFlip3D(RandomFlip):
         super(RandomFlip3D, self).__init__(**kwargs)
         self.sync_2d = sync_2d
 
-    def random_flip_points(self, gt_bboxes_3d, points):
-        gt_bboxes_3d.flip()
-        points[:, 1] = -points[:, 1]
-        return gt_bboxes_3d, points
+    def random_flip_data_3d(self, input_dict):
+        input_dict['points'][:, 1] = -input_dict['points'][:, 1]
+        for key in input_dict['bbox3d_fields']:
+            input_dict[key].flip()
 
     def __call__(self, input_dict):
         # filp 2D image and its annotations
-        if 'flip' not in input_dict:
-            flip = True if np.random.rand() < self.flip_ratio else False
-            input_dict['flip'] = flip
-        if 'flip_direction' not in input_dict:
-            input_dict['flip_direction'] = self.direction
-        if input_dict['flip']:
-            # flip image
-            if 'img' in input_dict:
-                if isinstance(input_dict['img'], list):
-                    input_dict['img'] = [
-                        mmcv.imflip(
-                            img, direction=input_dict['flip_direction'])
-                        for img in input_dict['img']
-                    ]
-                else:
-                    input_dict['img'] = mmcv.imflip(
-                        input_dict['img'],
-                        direction=input_dict['flip_direction'])
-            # flip bboxes
-            for key in input_dict.get('bbox_fields', []):
-                input_dict[key] = self.bbox_flip(input_dict[key],
-                                                 input_dict['img_shape'],
-                                                 input_dict['flip_direction'])
-            # flip masks
-            for key in input_dict.get('mask_fields', []):
-                input_dict[key] = [
-                    mmcv.imflip(mask, direction=input_dict['flip_direction'])
-                    for mask in input_dict[key]
-                ]
-
-            # flip segs
-            for key in input_dict.get('seg_fields', []):
-                input_dict[key] = mmcv.imflip(
-                    input_dict[key], direction=input_dict['flip_direction'])
+        super(RandomFlip3D, self).__call__(input_dict)
 
         if self.sync_2d:
             input_dict['pcd_flip'] = input_dict['flip']
         else:
             flip = True if np.random.rand() < self.flip_ratio else False
             input_dict['pcd_flip'] = flip
+
         if input_dict['pcd_flip']:
-            # flip image
-            gt_bboxes_3d = input_dict['gt_bboxes_3d']
-            points = input_dict['points']
-            gt_bboxes_3d, points = self.random_flip_points(
-                gt_bboxes_3d, points)
-            input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-            input_dict['points'] = points
+            self.random_flip_data_3d(input_dict)
         return input_dict
 
     def __repr__(self):
@@ -89,6 +54,13 @@ class RandomFlip3D(RandomFlip):
 
 @PIPELINES.register_module()
 class ObjectSample(object):
+    """Sample GT objects to the data
+
+    Args:
+        db_sampler (dict): Config dict of the database sampler.
+        sample_2d (bool): Whether to also paste 2D image patch to the images
+            This should be true when applying multi-modality cut-and-paste.
+    """
 
     def __init__(self, db_sampler, sample_2d=False):
         self.sampler_cfg = db_sampler
@@ -109,9 +81,6 @@ class ObjectSample(object):
 
         # change to float for blending operation
         points = input_dict['points']
-        #         rect = input_dict['rect']
-        #         Trv2c = input_dict['Trv2c']
-        #         P2 = input_dict['P2']
         if self.sample_2d:
             img = input_dict['img']
             gt_bboxes_2d = input_dict['gt_bboxes']
@@ -162,15 +131,28 @@ class ObjectSample(object):
 
 @PIPELINES.register_module()
 class ObjectNoise(object):
+    """Apply noise to each GT objects in the scene
+
+    Args:
+        translation_std (list, optional): Standard deviation of the
+            distribution where translation noise are sampled from.
+            Defaults to [0.25, 0.25, 0.25].
+        global_rot_range (list, optional): Global rotation to the scene.
+            Defaults to [0.0, 0.0].
+        rot_range (list, optional): Object rotation range.
+            Defaults to [-0.15707963267, 0.15707963267].
+        num_try (int, optional): Number of times to try if the noise applied is
+            invalid. Defaults to 100.
+    """
 
     def __init__(self,
-                 loc_noise_std=[0.25, 0.25, 0.25],
+                 translation_std=[0.25, 0.25, 0.25],
                  global_rot_range=[0.0, 0.0],
-                 rot_uniform_noise=[-0.15707963267, 0.15707963267],
+                 rot_range=[-0.15707963267, 0.15707963267],
                  num_try=100):
-        self.loc_noise_std = loc_noise_std
+        self.translation_std = translation_std
         self.global_rot_range = global_rot_range
-        self.rot_uniform_noise = rot_uniform_noise
+        self.rot_range = rot_range
         self.num_try = num_try
 
     def __call__(self, input_dict):
@@ -182,8 +164,8 @@ class ObjectNoise(object):
         noise_per_object_v3_(
             numpy_box,
             points,
-            rotation_perturb=self.rot_uniform_noise,
-            center_noise_std=self.loc_noise_std,
+            rotation_perturb=self.rot_range,
+            center_noise_std=self.translation_std,
             global_random_rot_range=self.global_rot_range,
             num_try=self.num_try)
 
@@ -194,73 +176,92 @@ class ObjectNoise(object):
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += '(num_try={},'.format(self.num_try)
-        repr_str += ' loc_noise_std={},'.format(self.loc_noise_std)
+        repr_str += ' translation_std={},'.format(self.translation_std)
         repr_str += ' global_rot_range={},'.format(self.global_rot_range)
-        repr_str += ' rot_uniform_noise={})'.format(self.rot_uniform_noise)
+        repr_str += ' rot_range={})'.format(self.rot_range)
         return repr_str
 
 
 @PIPELINES.register_module()
-class GlobalRotScale(object):
+class GlobalRotScaleTrans(object):
+    """Apply global rotation, scaling and translation to a 3D scene
+
+    Args:
+        rot_range (list[float]): Range of rotation angle.
+            Default to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
+        scale_ratio_range (list[float]): Range of scale ratio.
+            Default to [0.95, 1.05].
+        translation_std (list[float]): The standard deviation of ranslation
+            noise. This apply random translation to a scene by a noise, which
+            is sampled from a gaussian distribution whose standard deviation
+            is set by ``translation_std``. Default to [0, 0, 0]
+    """
 
     def __init__(self,
-                 rot_uniform_noise=[-0.78539816, 0.78539816],
-                 scaling_uniform_noise=[0.95, 1.05],
-                 trans_normal_noise=[0, 0, 0]):
-        self.rot_uniform_noise = rot_uniform_noise
-        self.scaling_uniform_noise = scaling_uniform_noise
-        self.trans_normal_noise = trans_normal_noise
+                 rot_range=[-0.78539816, 0.78539816],
+                 scale_ratio_range=[0.95, 1.05],
+                 translation_std=[0, 0, 0]):
+        self.rot_range = rot_range
+        self.scale_ratio_range = scale_ratio_range
+        self.translation_std = translation_std
 
-    def _trans_bbox_points(self, gt_boxes, points):
-        noise_trans = np.random.normal(0, self.trans_normal_noise[0], 3).T
-        points[:, :3] += noise_trans
-        gt_boxes.translate(noise_trans)
-        return gt_boxes, points, noise_trans
+    def _trans_bbox_points(self, input_dict):
+        if not isinstance(self.translation_std, (list, tuple, np.ndarray)):
+            translation_std = [
+                self.translation_std, self.translation_std,
+                self.translation_std
+            ]
+        else:
+            translation_std = self.translation_std
+        translation_std = np.array(translation_std, dtype=np.float32)
+        trans_factor = np.random.normal(scale=translation_std, size=3).T
 
-    def _rot_bbox_points(self, gt_boxes, points, rotation=np.pi / 4):
+        input_dict['points'][:, :3] += trans_factor
+        input_dict['pcd_trans'] = trans_factor
+        for key in input_dict['bbox3d_fields']:
+            input_dict[key].translate(trans_factor)
+
+    def _rot_bbox_points(self, input_dict):
+        rotation = self.rot_range
         if not isinstance(rotation, list):
             rotation = [-rotation, rotation]
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
+
+        points = input_dict['points']
         points[:, :3], rot_mat_T = box_np_ops.rotation_points_single_angle(
             points[:, :3], noise_rotation, axis=2)
-        gt_boxes.rotate(noise_rotation)
+        input_dict['points'] = points
+        input_dict['pcd_rotation'] = rot_mat_T
 
-        return gt_boxes, points, rot_mat_T
+        for key in input_dict['bbox3d_fields']:
+            input_dict[key].rotate(noise_rotation)
 
-    def _scale_bbox_points(self,
-                           gt_boxes,
-                           points,
-                           min_scale=0.95,
-                           max_scale=1.05):
-        noise_scale = np.random.uniform(min_scale, max_scale)
-        points[:, :3] *= noise_scale
-        gt_boxes.scale(noise_scale)
-        return gt_boxes, points, noise_scale
+    def _scale_bbox_points(self, input_dict):
+        scale = input_dict['pcd_scale_factor']
+        input_dict['points'][:, :3] *= scale
+        for key in input_dict['bbox3d_fields']:
+            input_dict[key].scale(scale)
+
+    def _random_scale(self, input_dict):
+        scale_factor = np.random.uniform(self.scale_ratio_range[0],
+                                         self.scale_ratio_range[1])
+        input_dict['pcd_scale_factor'] = scale_factor
 
     def __call__(self, input_dict):
-        gt_bboxes_3d = input_dict['gt_bboxes_3d']
-        points = input_dict['points']
+        self._rot_bbox_points(input_dict)
 
-        gt_bboxes_3d, points, rotation_factor = self._rot_bbox_points(
-            gt_bboxes_3d, points, rotation=self.rot_uniform_noise)
-        gt_bboxes_3d, points, scale_factor = self._scale_bbox_points(
-            gt_bboxes_3d, points, *self.scaling_uniform_noise)
-        gt_bboxes_3d, points, trans_factor = self._trans_bbox_points(
-            gt_bboxes_3d, points)
+        if 'pcd_scale_factor' not in input_dict:
+            self._random_scale(input_dict)
+        self._scale_bbox_points(input_dict)
 
-        input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-        input_dict['points'] = points
-        input_dict['pcd_scale_factor'] = scale_factor
-        input_dict['pcd_rotation'] = rotation_factor
-        input_dict['pcd_trans'] = trans_factor
+        self._trans_bbox_points(input_dict)
         return input_dict
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += '(rot_uniform_noise={},'.format(self.rot_uniform_noise)
-        repr_str += ' scaling_uniform_noise={},'.format(
-            self.scaling_uniform_noise)
-        repr_str += ' trans_normal_noise={})'.format(self.trans_normal_noise)
+        repr_str += '(rot_range={},'.format(self.rot_range)
+        repr_str += ' scale_ratio_range={},'.format(self.scale_ratio_range)
+        repr_str += ' translation_std={})'.format(self.translation_std)
         return repr_str
 
 

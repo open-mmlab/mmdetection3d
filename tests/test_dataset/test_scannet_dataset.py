@@ -27,7 +27,7 @@ def test_getitem():
         dict(type='IndoorPointSample', num_points=5),
         dict(type='IndoorFlipData', flip_ratio_yz=1.0, flip_ratio_xz=1.0),
         dict(
-            type='IndoorGlobalRotScale',
+            type='IndoorGlobalRotScaleTrans',
             shift_height=True,
             rot_range=[-1 / 36, 1 / 36],
             scale_range=None),
@@ -50,11 +50,11 @@ def test_getitem():
     gt_labels = data['gt_labels_3d']._data
     pts_semantic_mask = data['pts_semantic_mask']._data
     pts_instance_mask = data['pts_instance_mask']._data
-    file_name = data['img_meta']._data['file_name']
-    flip_xz = data['img_meta']._data['flip_xz']
-    flip_yz = data['img_meta']._data['flip_yz']
-    rot_angle = data['img_meta']._data['rot_angle']
-    sample_idx = data['img_meta']._data['sample_idx']
+    file_name = data['img_metas']._data['file_name']
+    flip_xz = data['img_metas']._data['flip_xz']
+    flip_yz = data['img_metas']._data['flip_yz']
+    rot_angle = data['img_metas']._data['rot_angle']
+    sample_idx = data['img_metas']._data['sample_idx']
     assert file_name == './tests/data/scannet/' \
                         'points/scene0000_00.bin'
     assert flip_xz is True

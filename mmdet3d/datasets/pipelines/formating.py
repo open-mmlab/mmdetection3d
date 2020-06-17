@@ -83,12 +83,12 @@ class Collect3D(object):
 
     def __call__(self, results):
         data = {}
-        img_meta = {}
+        img_metas = {}
         for key in self.meta_keys:
             if key in results:
-                img_meta[key] = results[key]
+                img_metas[key] = results[key]
 
-        data['img_meta'] = DC(img_meta, cpu_only=True)
+        data['img_metas'] = DC(img_metas, cpu_only=True)
         for key in self.keys:
             data[key] = results[key]
         return data

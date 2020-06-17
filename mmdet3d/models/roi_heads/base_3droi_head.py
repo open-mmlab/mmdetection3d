@@ -51,7 +51,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
     @abstractmethod
     def forward_train(self,
                       x,
-                      img_meta,
+                      img_metas,
                       proposal_list,
                       gt_bboxes,
                       gt_labels,
@@ -64,7 +64,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
     def simple_test(self,
                     x,
                     proposal_list,
-                    img_meta,
+                    img_metas,
                     proposals=None,
                     rescale=False,
                     **kwargs):

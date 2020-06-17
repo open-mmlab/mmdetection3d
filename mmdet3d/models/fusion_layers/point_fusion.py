@@ -23,18 +23,34 @@ def point_sample(
     padding_mode='zeros',
     align_corners=True,
 ):
-    """sample image features using point coordinates
+    """Obtain image features using points
 
-    Arguments:
+    Args:
         img_features (Tensor): 1xCxHxW image features
-        points (Tensor): Nx3 point cloud coordinates
-        P (Tensor): 4x4 transformation matrix
-        scale_factor (Tensor): scale_factor of images
-        img_pad_shape (int, int): int tuple indicates the h & w after padding,
-            this is necessary to obtain features in feature map
-        img_shape (int, int): int tuple indicates the h & w before padding
+        points (Tensor): Nx3 point cloud in LiDAR coordinates
+        lidar2img_rt (Tensor): 4x4 transformation matrix
+        pcd_rotate_mat (Tensor): 3x3 rotation matrix of points
+            during augmentation
+        img_scale_factor (Tensor): (w_scale, h_scale)
+        img_crop_offset (Tensor): (w_offset, h_offset) offset used to crop
+            image during data augmentation
+        pcd_trans_factor ([type]): Translation of points in augmentation
+        pcd_scale_factor (float): Scale factor of points during
+            data augmentation
+        pcd_flip (bool): Whether the points are flipped.
+        img_flip (bool): Whether the image is flipped.
+        img_pad_shape (tuple[int]): int tuple indicates the h & w after
+            padding, this is necessary to obtain features in feature map
+        img_shape (tuple[int]): int tuple indicates the h & w before padding
             after scaling, this is necessary for flipping coordinates
-    return:
+        aligned (bool, optional): Whether use bilinear interpolation when
+            sampling image features for each point. Defaults to True.
+        padding_mode (str, optional): Padding mode when padding values for
+            features of out-of-image points. Defaults to 'zeros'.
+        align_corners (bool, optional): Whether to align corners when
+            sampling image features for each point. Defaults to True.
+
+    Returns:
         (Tensor): NxC image features sampled by point coordinates
     """
     # aug order: flip -> trans -> scale -> rot
@@ -97,7 +113,36 @@ def point_sample(
 
 @FUSION_LAYERS.register_module()
 class PointFusion(nn.Module):
-    """Fuse image features from fused single scale features
+    """Fuse image features from multi-scale features
+
+    Args:
+        img_channels (list[int] | int): Channels of image features.
+            It could be a list if the input is multi-scale image features.
+        pts_channels (int): Channels of point features
+        mid_channels (int): Channels of middle layers
+        out_channels (int): Channels of output fused features
+        img_levels (int, optional): Number of image levels. Defaults to 3.
+        conv_cfg (dict, optional): Dict config of conv layers of middle
+            layers. Defaults to None.
+        norm_cfg (dict, optional): Dict config of norm layers of middle
+            layers. Defaults to None.
+        act_cfg (dict, optional): Dict config of activatation layers.
+            Defaults to None.
+        activate_out (bool, optional): Whether to apply relu activation
+            to output features. Defaults to True.
+        fuse_out (bool, optional): Whether apply conv layer to the fused
+            features. Defaults to False.
+        dropout_ratio (int, float, optional): Dropout ratio of image
+            features to prevent overfitting. Defaults to 0.
+        aligned (bool, optional): Whether apply aligned feature fusion.
+            Defaults to True.
+        align_corners (bool, optional): Whether to align corner when
+            sampling features according to points. Defaults to True.
+        padding_mode (str, optional): Mode used to pad the features of
+            points that do not have corresponding image features.
+            Defaults to 'zeros'.
+        lateral_conv (bool, optional): Whether to apply lateral convs
+            to image features. Defaults to True.
     """
 
     def __init__(self,
@@ -179,15 +224,20 @@ class PointFusion(nn.Module):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 xavier_init(m, distribution='uniform')
 
-    def forward(self, img_feats, pts, pts_feats, img_meta):
-        """
-        img_feats (List[Tensor]): img features
-        pts: [List[Tensor]]: a batch of points with shape Nx3
-        pts_feats (Tensor): a tensor consist of point features of the
-            total batch
+    def forward(self, img_feats, pts, pts_feats, img_metas):
+        """Forward function
 
+        Args:
+            img_feats (list[Tensor]): img features
+            pts: [list[Tensor]]: a batch of points with shape Nx3
+            pts_feats (Tensor): a tensor consist of point features of the
+                total batch
+            img_metas (list[dict]): meta information of images
+
+        Returns:
+            torch.Tensor: fused features of each point.
         """
-        img_pts = self.obtain_mlvl_feats(img_feats, pts, img_meta)
+        img_pts = self.obtain_mlvl_feats(img_feats, pts, img_metas)
         img_pre_fuse = self.img_transform(img_pts)
         if self.training and self.dropout_ratio > 0:
             img_pre_fuse = F.dropout(img_pre_fuse, self.dropout_ratio)
@@ -201,7 +251,7 @@ class PointFusion(nn.Module):
 
         return fuse_out
 
-    def obtain_mlvl_feats(self, img_feats, pts, img_meta):
+    def obtain_mlvl_feats(self, img_feats, pts, img_metas):
         if self.lateral_convs is not None:
             img_ins = [
                 lateral_conv(img_feats[i])
@@ -211,7 +261,7 @@ class PointFusion(nn.Module):
             img_ins = img_feats
         img_feats_per_point = []
         # Sample multi-level features
-        for i in range(len(img_meta)):
+        for i in range(len(img_metas)):
             mlvl_img_feats = []
             for level in range(len(self.img_levels)):
                 if torch.isnan(img_ins[level][i:i + 1]).any():
@@ -219,7 +269,7 @@ class PointFusion(nn.Module):
                     pdb.set_trace()
                 mlvl_img_feats.append(
                     self.sample_single(img_ins[level][i:i + 1], pts[i][:, :3],
-                                       img_meta[i]))
+                                       img_metas[i]))
             mlvl_img_feats = torch.cat(mlvl_img_feats, dim=-1)
             img_feats_per_point.append(mlvl_img_feats)
 

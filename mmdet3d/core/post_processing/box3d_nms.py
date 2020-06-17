@@ -61,7 +61,7 @@ def box3d_multiclass_nms(mlvl_bboxes,
     else:
         bboxes = mlvl_scores.new_zeros((0, mlvl_bboxes.size(-1)))
         scores = mlvl_scores.new_zeros((0, ))
-        labels = mlvl_scores.new_zeros((0, mlvl_scores.size(-1)))
+        labels = mlvl_scores.new_zeros((0, ), dtype=torch.long)
         dir_scores = mlvl_scores.new_zeros((0, ))
     return bboxes, scores, labels, dir_scores
 
