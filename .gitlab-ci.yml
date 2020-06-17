@@ -4,6 +4,7 @@ variables:
 stages:
   - linting
   - test
+  - deploy
 
 before_script:
   - echo $PATH
@@ -13,7 +14,8 @@ before_script:
   - pip --version
   - python -c "import torch; print(torch.__version__)"
 
-.linting_template: &linting_template_def
+linting:
+  image: $PYTORCH_IMAGE
   stage: linting
   script:
     - pip install flake8==3.7.9 yapf isort
@@ -35,10 +37,24 @@ before_script:
     - coverage run --branch --source mmdet3d -m pytest tests/
     - coverage report -m
 
-linting:pytorch1.3-cuda10:
-  image: $PYTORCH_IMAGE
-  <<: *linting_template_def
-
 test:pytorch1.3-cuda10:
   image: $PYTORCH_IMAGE
   <<: *test_template_def
+
+pages:
+  image: $PYTORCH_IMAGE
+  stage: deploy
+  script:
+    - pip install numba==0.48.0
+    - pip install sphinx sphinx_rtd_theme recommonmark sphinx_markdown_tables
+    - cd docs
+    - make html
+    - cd ..
+    - mkdir -p ./public
+    - cp -r docs/_build/html/* ./public
+    - ls ./public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
