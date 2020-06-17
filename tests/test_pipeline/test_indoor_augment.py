@@ -2,7 +2,8 @@ import numpy as np
 import torch
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmdet3d.datasets.pipelines import IndoorFlipData, IndoorGlobalRotScale
+from mmdet3d.datasets.pipelines import (IndoorFlipData,
+                                        IndoorGlobalRotScaleTrans)
 
 
 def test_indoor_flip_data():
@@ -69,7 +70,7 @@ def test_indoor_flip_data():
 
 def test_global_rot_scale():
     np.random.seed(0)
-    sunrgbd_augment = IndoorGlobalRotScale(
+    sunrgbd_augment = IndoorGlobalRotScaleTrans(
         True, rot_range=[-1 / 6, 1 / 6], scale_range=[0.85, 1.15])
     sunrgbd_results = dict()
     sunrgbd_results['points'] = np.array(
@@ -100,7 +101,7 @@ def test_global_rot_scale():
                           expected_sunrgbd_gt_bboxes_3d, 1e-3)
 
     np.random.seed(0)
-    scannet_augment = IndoorGlobalRotScale(
+    scannet_augment = IndoorGlobalRotScaleTrans(
         True, rot_range=[-1 * 1 / 36, 1 / 36], scale_range=None)
     scannet_results = dict()
     scannet_results['points'] = np.array(

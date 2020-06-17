@@ -19,13 +19,3 @@ model = dict(
                 [0.404671, 1.071108, 1.688889], [0.76584, 1.398258, 0.472728]
             ]),
     ))
-
-# optimizer
-# yapf:disable
-log_config = dict(
-    interval=30,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable

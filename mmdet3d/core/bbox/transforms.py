@@ -1,6 +1,16 @@
 import torch
 
 
+def bbox3d_mapping_back(bboxes, scale_factor, flip):
+    """Map bboxes from testing scale to original image scale"""
+    new_bboxes = bboxes.clone()
+    if flip:
+        new_bboxes.flip()
+    new_bboxes.scale(1 / scale_factor)
+
+    return new_bboxes
+
+
 def transform_lidar_to_cam(boxes_lidar):
     """
     Only transform format, not exactly in camera coords

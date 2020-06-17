@@ -1,11 +1,12 @@
 import torch
 
-from mmdet3d.core import bbox3d2result
-from mmdet.models import DETECTORS, SingleStageDetector
+from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
+from mmdet.models import DETECTORS
+from .single_stage import SingleStage3DDetector
 
 
 @DETECTORS.register_module()
-class VoteNet(SingleStageDetector):
+class VoteNet(SingleStage3DDetector):
     """VoteNet model.
 
     https://arxiv.org/pdf/1904.09664.pdf
@@ -24,15 +25,9 @@ class VoteNet(SingleStageDetector):
             test_cfg=test_cfg,
             pretrained=pretrained)
 
-    def extract_feat(self, points):
-        x = self.backbone(points)
-        if self.with_neck:
-            x = self.neck(x)
-        return x
-
     def forward_train(self,
                       points,
-                      img_meta,
+                      img_metas,
                       gt_bboxes_3d,
                       gt_labels_3d,
                       pts_semantic_mask=None,
@@ -42,7 +37,7 @@ class VoteNet(SingleStageDetector):
 
         Args:
             points (list[Tensor]): Points of each batch.
-            img_meta (list): Image metas.
+            img_metas (list): Image metas.
             gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
             gt_labels_3d (list[Tensor]): gt class labels of each batch.
             pts_semantic_mask (None | list[Tensor]): point-wise semantic
@@ -54,57 +49,57 @@ class VoteNet(SingleStageDetector):
         Returns:
             dict: Losses.
         """
-        points_cat = torch.stack(points)  # tmp
+        points_cat = torch.stack(points)
 
         x = self.extract_feat(points_cat)
         bbox_preds = self.bbox_head(x, self.train_cfg.sample_mod)
         loss_inputs = (points, gt_bboxes_3d, gt_labels_3d, pts_semantic_mask,
-                       pts_instance_mask, img_meta)
+                       pts_instance_mask, img_metas)
         losses = self.bbox_head.loss(
             bbox_preds, *loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
         return losses
 
-    def forward_test(self, **kwargs):
-        return self.simple_test(**kwargs)
-
-    def forward(self, return_loss=True, **kwargs):
-        if return_loss:
-            return self.forward_train(**kwargs)
-        else:
-            return self.forward_test(**kwargs)
-
-    def simple_test(self,
-                    points,
-                    img_meta,
-                    gt_bboxes_3d=None,
-                    gt_labels_3d=None,
-                    pts_semantic_mask=None,
-                    pts_instance_mask=None,
-                    rescale=False):
+    def simple_test(self, points, img_metas, imgs=None, rescale=False):
         """Forward of testing.
 
         Args:
             points (list[Tensor]): Points of each sample.
-            img_meta (list): Image metas.
-            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each sample.
-            gt_labels_3d (list[Tensor]): gt class labels of each sample.
-            pts_semantic_mask (None | list[Tensor]): point-wise semantic
-                label of each sample.
-            pts_instance_mask (None | list[Tensor]): point-wise instance
-                label of each sample.
+            img_metas (list): Image metas.
             rescale (bool): Whether to rescale results.
 
         Returns:
             list: Predicted 3d boxes.
         """
-        points_cat = torch.stack(points)  # tmp
+        points_cat = torch.stack(points)
 
         x = self.extract_feat(points_cat)
         bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
         bbox_list = self.bbox_head.get_bboxes(
-            points_cat, bbox_preds, img_meta, rescale=rescale)
+            points_cat, bbox_preds, img_metas, rescale=rescale)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
         return bbox_results[0]
+
+    def aug_test(self, points, img_metas, imgs=None, rescale=False):
+        points_cat = [torch.stack(pts) for pts in points]
+        feats = self.extract_feats(points_cat, img_metas)
+
+        # only support aug_test for one sample
+        aug_bboxes = []
+        for x, pts_cat, img_meta in zip(feats, points_cat, img_metas):
+            bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
+            bbox_list = self.bbox_head.get_bboxes(
+                pts_cat, bbox_preds, img_meta, rescale=rescale)
+            bbox_list = [
+                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+                for bboxes, scores, labels in bbox_list
+            ]
+            aug_bboxes.append(bbox_list[0])
+
+        # after merging, bboxes will be rescaled to the original image size
+        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
+                                            self.bbox_head.test_cfg)
+
+        return merged_bboxes

@@ -1,4 +1,6 @@
 # optimizer
+# This schedule is mainly used by models on indoor dataset,
+# e.g., VoteNet on SUNRGBD and ScanNet
 lr = 0.008  # max learning rate
 optimizer = dict(type='Adam', lr=lr)
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))

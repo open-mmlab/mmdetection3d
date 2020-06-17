@@ -8,8 +8,9 @@ from .samplers import (BaseSampler, CombinedSampler,
                        InstanceBalancedPosSampler, IoUBalancedNegSampler,
                        PseudoSampler, RandomSampler, SamplingResult)
 from .structures import (BaseInstance3DBoxes, Box3DMode, CameraInstance3DBoxes,
-                         DepthInstance3DBoxes, LiDARInstance3DBoxes)
-from .transforms import (bbox3d2result, bbox3d2roi,
+                         DepthInstance3DBoxes, LiDARInstance3DBoxes,
+                         xywhr2xyxyr)
+from .transforms import (bbox3d2result, bbox3d2roi, bbox3d_mapping_back,
                          box3d_to_corner3d_upright_depth,
                          boxes3d_to_bev_torch_lidar)
 
@@ -27,5 +28,5 @@ __all__ = [
     'bbox_overlaps_3d', 'Box3DMode', 'LiDARInstance3DBoxes',
     'CameraInstance3DBoxes', 'bbox3d2roi', 'bbox3d2result',
     'box3d_to_corner3d_upright_depth', 'DepthInstance3DBoxes',
-    'BaseInstance3DBoxes'
+    'BaseInstance3DBoxes', 'bbox3d_mapping_back', 'xywhr2xyxyr'
 ]

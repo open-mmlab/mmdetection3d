@@ -24,7 +24,7 @@ train_pipeline = [
     dict(type='IndoorPointSample', num_points=40000),
     dict(type='IndoorFlipData', flip_ratio_yz=0.5, flip_ratio_xz=0.5),
     dict(
-        type='IndoorGlobalRotScale',
+        type='IndoorGlobalRotScaleTrans',
         shift_height=True,
         rot_range=[-1 / 36, 1 / 36],
         scale_range=None),
@@ -42,9 +42,25 @@ test_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
-    dict(type='IndoorPointSample', num_points=40000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points'])
+    dict(
+        type='MultiScaleFlipAug3D',
+        img_scale=(1333, 800),
+        pts_scale_ratio=1,
+        flip=False,
+        transforms=[
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1., 1.],
+                translation_std=[0, 0, 0]),
+            dict(type='RandomFlip3D'),
+            dict(type='IndoorPointSample', num_points=40000),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=class_names,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ])
 ]
 
 data = dict(

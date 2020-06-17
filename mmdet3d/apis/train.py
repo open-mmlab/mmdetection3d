@@ -28,8 +28,8 @@ def batch_processor(model, data, train_mode):
     losses = model(**data)
     loss, log_vars = parse_losses(losses)
 
-    if 'img_meta' in data:
-        num_samples = len(data['img_meta'].data)
+    if 'img_metas' in data:
+        num_samples = len(data['img_metas'].data)
     else:
         num_samples = len(data['img'].data)
     outputs = dict(loss=loss, log_vars=log_vars, num_samples=num_samples)
