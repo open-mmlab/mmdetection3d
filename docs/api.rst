@@ -40,7 +40,7 @@ utils
     :members:
 
 mmdet3d.datasets
---------------
+----------------
 
 datasets
 ^^^^^^^^^^
