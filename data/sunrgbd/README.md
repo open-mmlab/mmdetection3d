@@ -20,7 +20,7 @@ matlab -nosplash -nodesktop -r 'extract_rgbd_data_v2;quit;'
 matlab -nosplash -nodesktop -r 'extract_rgbd_data_v1;quit;'
 cd ..
 python sunrgbd_data.py --gen_v1_data
-cd ..
+cd ../..
 python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd
 ```
 
