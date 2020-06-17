@@ -28,7 +28,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes with shape (n, 7).
+            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes with
+                shape (n, 7).
             gt_labels_3d (Tensor): gt classes.
 
         Returns:

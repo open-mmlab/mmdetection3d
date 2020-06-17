@@ -213,7 +213,8 @@ def indoor_eval(gt_annos,
         dt_annos (list[dict]): Detection annotations. the dict
             includes the following keys
             - labels_3d (Tensor): Labels of boxes.
-            - boxes_3d (BaseInstance3DBoxes): 3d bboxes in Depth coordinate.
+            - boxes_3d (:obj:BaseInstance3DBoxes): 3d bboxes in
+                Depth coordinate.
             - scores_3d (Tensor): Scores of boxes.
         metric (list[float]): AP IoU thresholds.
         label2cat (dict): {label: cat}.

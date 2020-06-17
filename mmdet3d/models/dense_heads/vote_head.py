@@ -122,6 +122,9 @@ class VoteHead(nn.Module):
             feat_dict (dict): feature dict from backbone.
             sample_mod (str): sample mode for vote aggregation layer.
                 valid modes are "vote", "seed" and "random".
+
+        Returns:
+            dict: Predictions of vote head.
         """
         assert sample_mod in ['vote', 'seed', 'random']
 
@@ -178,8 +181,24 @@ class VoteHead(nn.Module):
              gt_labels_3d,
              pts_semantic_mask=None,
              pts_instance_mask=None,
-             img_meta=None,
+             input_meta=None,
              gt_bboxes_ignore=None):
+        """Compute loss.
+
+        Args:
+            bbox_preds (dict): Predictions from forward of vote head.
+            points (list[Tensor]): Input points.
+            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): Gt bboxes
+                of each sample.
+            gt_labels_3d (list[Tensor]): Gt labels of each sample.
+            pts_semantic_mask (None | list[Tensor]): Point-wise semantic mask.
+            pts_instance_mask (None | list[Tensor]): Point-wise instance mask.
+            input_metas (list[dict]): Contain pcd and img's meta info.
+            gt_bboxes_ignore (None | list[Tensor]): Specify which bounding.
+
+        Returns:
+            dict: Losses of Votenet.
+        """
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    pts_semantic_mask, pts_instance_mask,
                                    bbox_preds)
@@ -269,11 +288,12 @@ class VoteHead(nn.Module):
                     pts_semantic_mask=None,
                     pts_instance_mask=None,
                     bbox_preds=None):
-        """Get targets of vote head.
+        """Generate targets of vote head.
 
         Args:
             points (list[Tensor]): Points of each batch.
-            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes of each batch.
+            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): gt bboxes of
+                each batch.
             gt_labels_3d (list[Tensor]): gt class labels of each batch.
             pts_semantic_mask (None | list[Tensor]): point-wise semantic
                 label of each batch.
@@ -284,7 +304,6 @@ class VoteHead(nn.Module):
         Returns:
             tuple: Targets of vote head.
         """
-
         # find empty example
         valid_gt_masks = list()
         gt_num = list()
@@ -355,6 +374,22 @@ class VoteHead(nn.Module):
                            pts_semantic_mask=None,
                            pts_instance_mask=None,
                            aggregated_points=None):
+        """Generate targets of vote head for single batch.
+
+        Args:
+            points (Tensor): Points of each batch.
+            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
+            gt_labels_3d (Tensor): gt class labels of each batch.
+            pts_semantic_mask (None | Tensor): point-wise semantic
+                label of each batch.
+            pts_instance_mask (None | Tensor): point-wise instance
+                label of each batch.
+            aggregated_points (Tensor): Aggregated points from
+                vote aggregation layer.
+
+        Returns:
+            tuple: Targets of vote head.
+        """
         assert self.bbox_coder.with_rot or pts_semantic_mask is not None
 
         gt_bboxes_3d = gt_bboxes_3d.to(points.device)
@@ -451,19 +486,30 @@ class VoteHead(nn.Module):
                 dir_class_targets, dir_res_targets, center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
-    def get_bboxes(self, points, bbox_preds, input_meta, rescale=False):
+    def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
+        """Generate bboxes from vote head predictions.
+
+        Args:
+            points (Tensor): Input points.
+            bbox_preds (dict): Predictions from vote head.
+            input_metas (list[dict]): Contain pcd and img's meta info.
+            rescale (bool): Whether to rescale bboxes.
+
+        Returns:
+            list[tuple[Tensor]]: Contain bbox, scores and labels.
+        """
         # decode boxes
         obj_scores = F.softmax(bbox_preds['obj_scores'], dim=-1)[..., -1]
         sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
-        bbox_depth = self.bbox_coder.decode(bbox_preds)
+        bbox3d = self.bbox_coder.decode(bbox_preds)
 
-        batch_size = bbox_depth.shape[0]
+        batch_size = bbox3d.shape[0]
         results = list()
         for b in range(batch_size):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
-                obj_scores[b], sem_scores[b], bbox_depth[b],
-                points[b, ..., :3], input_meta[b])
-            bbox = input_meta[b]['box_type_3d'](
+                obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
+                input_metas[b])
+            bbox = input_metas[b]['box_type_3d'](
                 bbox_selected,
                 box_dim=bbox_selected.shape[-1],
                 with_yaw=self.bbox_coder.with_rot)
@@ -473,6 +519,18 @@ class VoteHead(nn.Module):
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta):
+        """multi-class nms in single batch.
+
+        Args:
+            obj_scores (Tensor): Objectness score of bboxes.
+            sem_scores (Tensor): semantic class score of bboxes.
+            bbox (Tensor): Predicted bbox.
+            points (Tensor): Input points.
+            input_meta (dict): Contain pcd and img's meta info.
+
+        Returns:
+            tuple[Tensor]: Contain bbox, scores and labels.
+        """
         bbox = input_meta['box_type_3d'](
             bbox,
             box_dim=bbox.shape[-1],
