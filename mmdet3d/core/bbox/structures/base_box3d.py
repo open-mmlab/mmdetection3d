@@ -334,7 +334,10 @@ class BaseInstance3DBoxes(object):
 
         # use torch.cat (v.s. layers.cat)
         # so the returned boxes never share storage with input
-        cat_boxes = cls(torch.cat([b.tensor for b in boxes_list], dim=0))
+        cat_boxes = cls(
+            torch.cat([b.tensor for b in boxes_list], dim=0),
+            box_dim=boxes_list[0].tensor.shape[1],
+            with_yaw=boxes_list[0].with_yaw)
         return cat_boxes
 
     def to(self, device):

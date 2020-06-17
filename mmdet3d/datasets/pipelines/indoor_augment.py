@@ -117,7 +117,7 @@ class IndoorPointsColorJitter(object):
 # TODO: merge outdoor indoor transform.
 # TODO: try transform noise.
 @PIPELINES.register_module()
-class IndoorGlobalRotScale(object):
+class IndoorGlobalRotScaleTrans(object):
     """Indoor global rotate and scale.
 
     Augment sunrgbd and scannet data with global rotating and scaling.

@@ -441,7 +441,7 @@ class PartA2BboxHead(nn.Module):
                    bbox_pred,
                    class_labels,
                    class_pred,
-                   img_meta,
+                   img_metas,
                    cfg=None):
         roi_batch_id = rois[..., 0]
         roi_boxes = rois[..., 1:]  # boxes without batch id
@@ -474,8 +474,8 @@ class PartA2BboxHead(nn.Module):
             selected_scores = cur_cls_score[selected]
 
             result_list.append(
-                (img_meta[batch_id]['box_type_3d'](selected_bboxes,
-                                                   self.bbox_coder.code_size),
+                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
+                                                    self.bbox_coder.code_size),
                  selected_scores, selected_label_preds))
         return result_list
 

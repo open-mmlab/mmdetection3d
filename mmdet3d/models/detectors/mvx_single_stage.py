@@ -6,11 +6,11 @@ from mmdet3d.core import bbox3d2result
 from mmdet3d.ops import Voxelization
 from mmdet.models import DETECTORS
 from .. import builder
-from .base import BaseDetector
+from .single_stage import SingleStage3DDetector
 
 
 @DETECTORS.register_module()
-class MVXSingleStageDetector(BaseDetector):
+class MVXSingleStageDetector(SingleStage3DDetector):
 
     def __init__(self,
                  voxel_layer,
@@ -92,7 +92,7 @@ class MVXSingleStageDetector(BaseDetector):
     def with_pts_neck(self):
         return hasattr(self, 'pts_neck') and self.pts_neck is not None
 
-    def extract_feat(self, points, img, img_meta):
+    def extract_feat(self, points, img, img_metas):
         if self.with_img_backbone:
             img_feats = self.img_backbone(img)
         if self.with_img_neck:
@@ -126,37 +126,28 @@ class MVXSingleStageDetector(BaseDetector):
 
     def forward_train(self,
                       points,
-                      img_meta,
+                      img_metas,
                       gt_bboxes_3d,
                       gt_labels,
                       img=None,
                       gt_bboxes_ignore=None):
-        x = self.extract_feat(points, img=img, img_meta=img_meta)
+        x = self.extract_feat(points, img=img, img_metas=img_metas)
         outs = self.pts_bbox_head(x)
-        loss_inputs = outs + (gt_bboxes_3d, gt_labels, img_meta)
+        loss_inputs = outs + (gt_bboxes_3d, gt_labels, img_metas)
         losses = self.pts_bbox_head.loss(
             *loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
         return losses
 
-    def forward_test(self, **kwargs):
-        return self.simple_test(**kwargs)
-
-    def forward(self, return_loss=True, **kwargs):
-        if return_loss:
-            return self.forward_train(**kwargs)
-        else:
-            return self.forward_test(**kwargs)
-
     def simple_test(self,
                     points,
-                    img_meta,
+                    img_metas,
                     img=None,
                     gt_bboxes_3d=None,
                     rescale=False):
-        x = self.extract_feat(points, img, img_meta)
+        x = self.extract_feat(points, img, img_metas)
         outs = self.pts_bbox_head(x)
         bbox_list = self.pts_bbox_head.get_bboxes(
-            *outs, img_meta, rescale=rescale)
+            *outs, img_metas, rescale=rescale)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
@@ -200,7 +191,7 @@ class DynamicMVXNet(MVXSingleStageDetector):
             pretrained=pretrained,
         )
 
-    def extract_feat(self, points, img, img_meta):
+    def extract_feat(self, points, img, img_metas):
         if self.with_img_backbone:
             img_feats = self.img_backbone(img)
         if self.with_img_neck:
@@ -209,7 +200,7 @@ class DynamicMVXNet(MVXSingleStageDetector):
         voxels, coors = self.voxelize(points)
         # adopt an early fusion strategy
         if self.with_fusion:
-            voxels = self.fusion_layer(img_feats, points, voxels, img_meta)
+            voxels = self.fusion_layer(img_feats, points, voxels, img_metas)
 
         voxel_features, feature_coors = self.voxel_encoder(voxels, coors)
         batch_size = coors[-1, 0] + 1
@@ -268,7 +259,7 @@ class DynamicMVXNetV2(DynamicMVXNet):
             pretrained=pretrained,
         )
 
-    def extract_feat(self, points, img, img_meta):
+    def extract_feat(self, points, img, img_metas):
         if self.with_img_backbone:
             img_feats = self.img_backbone(img)
         if self.with_img_neck:
@@ -277,7 +268,7 @@ class DynamicMVXNetV2(DynamicMVXNet):
         voxels, coors = self.voxelize(points)
 
         voxel_features, feature_coors = self.voxel_encoder(
-            voxels, coors, points, img_feats, img_meta)
+            voxels, coors, points, img_feats, img_metas)
         batch_size = coors[-1, 0] + 1
         x = self.middle_encoder(voxel_features, feature_coors, batch_size)
         x = self.pts_backbone(x)
@@ -319,7 +310,7 @@ class DynamicMVXNetV3(DynamicMVXNet):
             pretrained=pretrained,
         )
 
-    def extract_feat(self, points, img, img_meta):
+    def extract_feat(self, points, img, img_metas):
         if self.with_img_backbone:
             img_feats = self.img_backbone(img)
         if self.with_img_neck:
@@ -331,5 +322,5 @@ class DynamicMVXNetV3(DynamicMVXNet):
         x = self.middle_encoder(voxel_features, feature_coors, batch_size)
         x = self.pts_backbone(x)
         if self.with_pts_neck:
-            x = self.pts_neck(x, coors, points, img_feats, img_meta)
+            x = self.pts_neck(x, coors, points, img_feats, img_metas)
         return x

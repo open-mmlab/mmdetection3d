@@ -1,14 +1,14 @@
-from .base import BaseDetector
-from .mvx_faster_rcnn import (DynamicMVXFasterRCNN, DynamicMVXFasterRCNNV2,
-                              DynamicMVXFasterRCNNV3)
+from .base import Base3DDetector
+from .dynamic_voxelnet import DynamicVoxelNet
+from .mvx_faster_rcnn import DynamicMVXFasterRCNN, DynamicMVXFasterRCNNV2
 from .mvx_single_stage import MVXSingleStageDetector
 from .mvx_two_stage import MVXTwoStageDetector
 from .parta2 import PartA2
 from .votenet import VoteNet
-from .voxelnet import DynamicVoxelNet, VoxelNet
+from .voxelnet import VoxelNet
 
 __all__ = [
-    'BaseDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXSingleStageDetector',
+    'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXSingleStageDetector',
     'MVXTwoStageDetector', 'DynamicMVXFasterRCNN', 'DynamicMVXFasterRCNNV2',
-    'DynamicMVXFasterRCNNV3', 'PartA2', 'VoteNet'
+    'PartA2', 'VoteNet'
 ]
