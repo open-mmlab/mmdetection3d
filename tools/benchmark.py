@@ -7,15 +7,16 @@ from mmcv.parallel import MMDataParallel
 from mmcv.runner import load_checkpoint
 from tools.fuse_conv_bn import fuse_module
 
+from mmdet3d.datasets import build_dataloader, build_dataset
+from mmdet3d.models import build_detector
 from mmdet.core import wrap_fp16_model
-from mmdet.datasets import build_dataloader, build_dataset
-from mmdet.models import build_detector
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='MMDet benchmark a model')
     parser.add_argument('config', help='test config file path')
     parser.add_argument('checkpoint', help='checkpoint file')
+    parser.add_argument('--samples', default=2000, help='samples to benchmark')
     parser.add_argument(
         '--log-interval', default=50, help='interval of logging')
     parser.add_argument(
@@ -64,7 +65,7 @@ def main():
     num_warmup = 5
     pure_inf_time = 0
 
-    # benchmark with 2000 image and take the average
+    # benchmark with several samples and take the average
     for i, data in enumerate(data_loader):
 
         torch.cuda.synchronize()
@@ -80,9 +81,10 @@ def main():
             pure_inf_time += elapsed
             if (i + 1) % args.log_interval == 0:
                 fps = (i + 1 - num_warmup) / pure_inf_time
-                print(f'Done image [{i + 1:<3}/ 2000], fps: {fps:.1f} img / s')
+                print(f'Done image [{i + 1:<3}/ {args.samples}], '
+                      f'fps: {fps:.1f} img / s')
 
-        if (i + 1) == 2000:
+        if (i + 1) == args.samples:
             pure_inf_time += elapsed
             fps = (i + 1 - num_warmup) / pure_inf_time
             print(f'Overall fps: {fps:.1f} img / s')
