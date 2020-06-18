@@ -5,7 +5,7 @@
 # keys in the config.
 voxel_size = [0.25, 0.25, 8]
 model = dict(
-    type='MVXFasterRCNNV2',
+    type='MVXFasterRCNN',
     pts_voxel_layer=dict(
         max_num_points=64,
         point_cloud_range=[-50, -50, -5, 50, 50, 3],
