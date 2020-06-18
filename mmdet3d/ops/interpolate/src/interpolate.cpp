@@ -48,7 +48,7 @@ void three_nn_wrapper(int b, int n, int m, at::Tensor unknown_tensor,
   float *dist2 = dist2_tensor.data_ptr<float>();
   int *idx = idx_tensor.data_ptr<int>();
 
-  cudaStream_t stream = THCState_getCurrentStream(state);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
   three_nn_kernel_launcher(b, n, m, unknown, known, dist2, idx, stream);
 }
 
@@ -61,7 +61,7 @@ void three_interpolate_wrapper(int b, int c, int m, int n,
   float *out = out_tensor.data_ptr<float>();
   const int *idx = idx_tensor.data_ptr<int>();
 
-  cudaStream_t stream = THCState_getCurrentStream(state);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
   three_interpolate_kernel_launcher(b, c, m, n, points, idx, weight, out,
                                     stream);
 }
@@ -76,7 +76,7 @@ void three_interpolate_grad_wrapper(int b, int c, int n, int m,
   float *grad_points = grad_points_tensor.data_ptr<float>();
   const int *idx = idx_tensor.data_ptr<int>();
 
-  cudaStream_t stream = THCState_getCurrentStream(state);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
   three_interpolate_grad_kernel_launcher(b, c, n, m, grad_out, idx, weight,
                                          grad_points, stream);
 }
