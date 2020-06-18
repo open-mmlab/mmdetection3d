@@ -229,7 +229,11 @@ if __name__ == '__main__':
                 name='sparse_conv_ext',
                 module='mmdet3d.ops.spconv',
                 extra_include_path=[
-                    os.path.join(*'mmdet3d.ops.spconv'.split('.'), 'include/')
+                    # PyTorch 1.5 uses ninjia, which requires absolute path
+                    # of included files, relative path will cause failure.
+                    os.path.abspath(
+                        os.path.join(*'mmdet3d.ops.spconv'.split('.'),
+                                     'include/'))
                 ],
                 sources=[
                     'src/all.cc',
