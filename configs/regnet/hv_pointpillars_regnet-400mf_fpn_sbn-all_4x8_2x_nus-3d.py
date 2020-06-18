@@ -6,7 +6,7 @@ _base_ = [
 ]
 # model settings
 model = dict(
-    type='MVXFasterRCNNV2',
+    type='MVXFasterRCNN',
     pretrained=dict(pts='open-mmlab://regnetx_400mf'),
     pts_backbone=dict(
         _delete_=True,
