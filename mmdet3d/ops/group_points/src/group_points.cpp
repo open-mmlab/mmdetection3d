@@ -32,7 +32,7 @@ int group_points_grad_wrapper(int b, int c, int n, int npoints, int nsample,
   const int *idx = idx_tensor.data_ptr<int>();
   const float *grad_out = grad_out_tensor.data_ptr<float>();
 
-  cudaStream_t stream = THCState_getCurrentStream(state);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
 
   group_points_grad_kernel_launcher(b, c, n, npoints, nsample, grad_out, idx,
                                     grad_points, stream);
@@ -46,7 +46,7 @@ int group_points_wrapper(int b, int c, int n, int npoints, int nsample,
   const int *idx = idx_tensor.data_ptr<int>();
   float *out = out_tensor.data_ptr<float>();
 
-  cudaStream_t stream = THCState_getCurrentStream(state);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
 
   group_points_kernel_launcher(b, c, n, npoints, nsample, points, idx, out,
                                stream);
