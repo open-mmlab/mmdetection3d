@@ -4,12 +4,13 @@ import torch.nn as nn
 from mmcv.cnn import ConvModule, normal_init, xavier_init
 
 import mmdet3d.ops.spconv as spconv
-from mmdet3d.core import build_bbox_coder, multi_apply
+from mmdet3d.core import build_bbox_coder
 from mmdet3d.core.bbox import box_torch_ops
 from mmdet3d.models.builder import build_loss
 from mmdet3d.ops import make_sparse_convmodule
 from mmdet3d.ops.iou3d.iou3d_utils import (boxes3d_to_bev_torch_lidar, nms_gpu,
                                            nms_normal_gpu)
+from mmdet.core import multi_apply
 from mmdet.models import HEADS
 
 
