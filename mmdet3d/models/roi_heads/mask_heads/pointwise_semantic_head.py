@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mmdet3d.core import multi_apply
 from mmdet3d.core.bbox import box_torch_ops
 from mmdet3d.models.builder import build_loss
+from mmdet.core import multi_apply
 from mmdet.models import HEADS
 
 
