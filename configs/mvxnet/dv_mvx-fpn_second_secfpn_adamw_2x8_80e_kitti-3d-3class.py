@@ -4,8 +4,6 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='DynamicMVXFasterRCNN',
-    pretrained=('./pretrain_detectron/'
-                'ImageNetPretrained/MSRA/resnet50_msra.pth'),
     img_backbone=dict(
         type='ResNet',
         depth=50,
@@ -136,22 +134,10 @@ class_names = ['Pedestrian', 'Cyclist', 'Car']
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 input_modality = dict(use_lidar=True, use_camera=True)
-db_sampler = dict(
-    type='MMDataBaseSampler',
-    data_root=data_root,
-    info_path=data_root + 'kitti_mm_dbinfos_train.pkl',
-    rate=1.0,
-    object_rot_range=[0.0, 0.0],
-    blending_type=['box', 'gaussian', 'poisson'],
-    depth_consistent=True,
-    check_2D_collision=True,
-    collision_thr=[0, 0.3, 0.5, 0.7],
-    prepare=dict(
-        filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
-    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
-    classes=class_names)
 train_pipeline = [
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='Resize',
         img_scale=[(640, 192), (2560, 768)],
@@ -171,10 +157,11 @@ train_pipeline = [
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Collect3D',
-        keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d'])
+        keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1280, 384),
@@ -196,7 +183,7 @@ test_pipeline = [
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
-            dict(type='Collect3D', keys=['points'])
+            dict(type='Collect3D', keys=['points', 'img'])
         ])
 ]
 
@@ -204,15 +191,18 @@ data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_train.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=train_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=False),
+        type='RepeatDataset',
+        times=2,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            split='training',
+            pts_prefix='velodyne_reduced',
+            pipeline=train_pipeline,
+            modality=input_modality,
+            classes=class_names,
+            test_mode=False)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -255,10 +245,10 @@ log_config = dict(
 # yapf:enable
 evaluation = dict(interval=1)
 # runtime settings
-total_epochs = 80
+total_epochs = 40
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/sec_secfpn_80e'
-load_from = './pretrain_mmdet/mvx_faster_rcnn_r50_fpn_detectron2-caffe_freezeBN_l1-loss_roialign-v2_1x_coco-3-class_44.7_20200205-b1c1533f.pth'  # noqa
+work_dir = None
+load_from = './pretrain_mmdet/mvx_faster_rcnn_detectron2-caffe_20e_coco-pretrain_gt-sample_kitti-3-class_moderate-79.3_20200207-a4a6a3c7.pth'  # noqa
 resume_from = None
 workflow = [('train', 1)]
