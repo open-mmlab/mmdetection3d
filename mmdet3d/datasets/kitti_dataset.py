@@ -52,7 +52,7 @@ class KittiDataset(Custom3DDataset):
     def get_data_info(self, index):
         info = self.data_infos[index]
         sample_idx = info['image']['image_idx']
-        img_filename = os.path.join(self.root_split,
+        img_filename = os.path.join(self.data_root,
                                     info['image']['image_path'])
 
         # TODO: consider use torch.Tensor only
@@ -65,7 +65,8 @@ class KittiDataset(Custom3DDataset):
         input_dict = dict(
             sample_idx=sample_idx,
             pts_filename=pts_filename,
-            img_filename=img_filename,
+            img_prefix=None,
+            img_info=dict(filename=img_filename),
             lidar2img=lidar2img)
 
         if not self.test_mode:
@@ -113,8 +114,8 @@ class KittiDataset(Custom3DDataset):
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
-            gt_bboxes=gt_bboxes,
-            gt_labels=gt_labels)
+            bboxes=gt_bboxes,
+            labels=gt_labels)
         return anns_results
 
     def drop_arrays_by_name(self, gt_names, used_classes):
@@ -151,6 +152,24 @@ class KittiDataset(Custom3DDataset):
             result_files = self.bbox2result_kitti2d(outputs, self.CLASSES,
                                                     pklfile_prefix,
                                                     submission_prefix)
+        elif 'pts_bbox' in outputs[0] or 'img_bbox' in outputs[0]:
+            result_files = dict()
+            for name in outputs[0]:
+                results_ = [out[name] for out in outputs]
+                pklfile_prefix_ = pklfile_prefix + name
+                if submission_prefix is not None:
+                    submission_prefix_ = submission_prefix + name
+                else:
+                    submission_prefix_ = None
+                if 'img' in name:
+                    result_files = self.bbox2result_kitti2d(
+                        results_, self.CLASSES, pklfile_prefix_,
+                        submission_prefix_)
+                else:
+                    result_files_ = self.bbox2result_kitti(
+                        results_, self.CLASSES, pklfile_prefix_,
+                        submission_prefix_)
+                result_files[name] = result_files_
         else:
             result_files = self.bbox2result_kitti(outputs, self.CLASSES,
                                                   pklfile_prefix,
@@ -162,8 +181,7 @@ class KittiDataset(Custom3DDataset):
                  metric=None,
                  logger=None,
                  pklfile_prefix=None,
-                 submission_prefix=None,
-                 result_names=['pts_bbox']):
+                 submission_prefix=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -178,18 +196,38 @@ class KittiDataset(Custom3DDataset):
                 If not specified, the submission data will not be generated.
 
         Returns:
-            dict[str: float]
+            dict[str: float]: results of each evaluation metric
         """
         result_files, tmp_dir = self.format_results(results, pklfile_prefix)
         from mmdet3d.core.evaluation import kitti_eval
         gt_annos = [info['annos'] for info in self.data_infos]
-        if metric == 'img_bbox':
-            ap_result_str, ap_dict = kitti_eval(
-                gt_annos, result_files, self.CLASSES, eval_types=['bbox'])
+
+        if isinstance(result_files, dict):
+            ap_dict = dict()
+            for name, result_files_ in result_files.items():
+                eval_types = ['bbox', 'bev', '3d']
+                if 'img' in name:
+                    eval_types = ['bbox']
+                ap_result_str, ap_dict_ = kitti_eval(
+                    gt_annos,
+                    result_files_,
+                    self.CLASSES,
+                    eval_types=eval_types)
+                for ap_type, ap in ap_dict_.items():
+                    ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
+
+                print_log(
+                    f'Results of {name}:\n' + ap_result_str, logger=logger)
+
         else:
-            ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
-                                                self.CLASSES)
-        print_log('\n' + ap_result_str, logger=logger)
+            if metric == 'img_bbox':
+                ap_result_str, ap_dict = kitti_eval(
+                    gt_annos, result_files, self.CLASSES, eval_types=['bbox'])
+            else:
+                ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
+                                                    self.CLASSES)
+            print_log('\n' + ap_result_str, logger=logger)
+
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return ap_dict

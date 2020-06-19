@@ -1,59 +1,10 @@
-from abc import ABCMeta, abstractmethod
-
-import torch.nn as nn
+from mmdet.models.detectors import BaseDetector
 
 
-class Base3DDetector(nn.Module, metaclass=ABCMeta):
+class Base3DDetector(BaseDetector):
     """Base class for detectors"""
 
-    def __init__(self):
-        super(Base3DDetector, self).__init__()
-        self.fp16_enabled = False
-
-    @property
-    def with_neck(self):
-        return hasattr(self, 'neck') and self.neck is not None
-
-    @property
-    def with_shared_head(self):
-        return hasattr(self, 'shared_head') and self.shared_head is not None
-
-    @property
-    def with_bbox(self):
-        return hasattr(self, 'bbox_head') and self.bbox_head is not None
-
-    @property
-    def with_mask(self):
-        return hasattr(self, 'mask_head') and self.mask_head is not None
-
-    @abstractmethod
-    def extract_feat(self, imgs):
-        pass
-
-    def extract_feats(self, imgs):
-        assert isinstance(imgs, list)
-        for img in imgs:
-            yield self.extract_feat(img)
-
-    @abstractmethod
-    def forward_train(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def simple_test(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def aug_test(self, **kwargs):
-        pass
-
-    def init_weights(self, pretrained=None):
-        if pretrained is not None:
-            from mmdet3d.utils import get_root_logger
-            logger = get_root_logger()
-            logger.info('load model from: {}'.format(pretrained))
-
-    def forward_test(self, points, img_metas, imgs=None, **kwargs):
+    def forward_test(self, points, img_metas, img=None, **kwargs):
         """
         Args:
             points (List[Tensor]): the outer list indicates test-time
@@ -62,7 +13,7 @@ class Base3DDetector(nn.Module, metaclass=ABCMeta):
             img_metas (List[List[dict]]): the outer list indicates test-time
                 augs (multiscale, flip, etc.) and the inner list indicates
                 images in a batch
-            imgs (List[Tensor], optional): the outer list indicates test-time
+            img (List[Tensor], optional): the outer list indicates test-time
                 augmentations and inner Tensor should have a shape NxCxHxW,
                 which contains all images in the batch. Defaults to None.
         """
@@ -81,10 +32,10 @@ class Base3DDetector(nn.Module, metaclass=ABCMeta):
         assert samples_per_gpu == 1
 
         if num_augs == 1:
-            imgs = [imgs] if imgs is None else imgs
-            return self.simple_test(points[0], img_metas[0], imgs[0], **kwargs)
+            img = [img] if img is None else img
+            return self.simple_test(points[0], img_metas[0], img[0], **kwargs)
         else:
-            return self.aug_test(points, img_metas, imgs, **kwargs)
+            return self.aug_test(points, img_metas, img, **kwargs)
 
     def forward(self, return_loss=True, **kwargs):
         """

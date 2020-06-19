@@ -1,5 +1,5 @@
 matplotlib
-mmcv>=0.5.1
+mmcv>=0.6.0
 numba==0.48.0
 numpy
 # need older pillow until torchvision is fixed
