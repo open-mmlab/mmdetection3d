@@ -6,6 +6,21 @@ from .base import Base3DDetector
 
 @DETECTORS.register_module()
 class SingleStage3DDetector(Base3DDetector):
+    """SingleStage3DDetector
+
+    This class serves as a base class for single-stage 3D detectors.
+
+    Args:
+        backbone (dict): Config dict of detector's backbone.
+        neck (dict, optional): Config dict of neck. Defaults to None.
+        bbox_head (dict, optional): Config dict of box head. Defaults to None.
+        train_cfg (dict, optional): Config dict of training hyper-parameters.
+            Defaults to None.
+        test_cfg (dict, optional): Config dict of test hyper-parameters.
+            Defaults to None.
+        pretrained (str, optional): Path of pretrained models.
+            Defaults to None.
+    """
 
     def __init__(self,
                  backbone,

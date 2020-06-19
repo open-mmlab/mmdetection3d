@@ -27,7 +27,7 @@ linting:
   stage: test
   script:
     - echo "Start building..."
-    - pip install "git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI"
+    - pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
     - pip install git+https://github.com/open-mmlab/mmcv.git
     - pip install git+https://github.com/open-mmlab/mmdetection.git
     - python -c "import mmdet; print(mmdet.__version__)"

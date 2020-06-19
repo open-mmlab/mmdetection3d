@@ -2,12 +2,17 @@ import torch
 import torch.nn.functional as F
 
 from mmdet3d.ops import Voxelization
-from mmdet.models import DETECTORS, TwoStageDetector
+from mmdet.models import DETECTORS
 from .. import builder
+from .two_stage import TwoStage3DDetector
 
 
 @DETECTORS.register_module()
-class PartA2(TwoStageDetector):
+class PartA2(TwoStage3DDetector):
+    """Part-A2 detector
+
+    Please refer to the `paper <https://arxiv.org/abs/1907.03670>`_
+    """
 
     def __init__(self,
                  voxel_layer,
@@ -111,41 +116,6 @@ class PartA2(TwoStageDetector):
 
         return losses
 
-    def forward_test(self, points, img_metas, imgs=None, **kwargs):
-        """
-        Args:
-            points (List[Tensor]): the outer list indicates test-time
-                augmentations and inner Tensor should have a shape NxC,
-                which contains all points in the batch.
-            img_metas (List[List[dict]]): the outer list indicates test-time
-                augs (multiscale, flip, etc.) and the inner list indicates
-                images in a batch
-        """
-        for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
-            if not isinstance(var, list):
-                raise TypeError('{} must be a list, but got {}'.format(
-                    name, type(var)))
-
-        num_augs = len(points)
-        if num_augs != len(img_metas):
-            raise ValueError(
-                'num of augmentations ({}) != num of image meta ({})'.format(
-                    len(points), len(img_metas)))
-        # TODO: remove the restriction of imgs_per_gpu == 1 when prepared
-        samples_per_gpu = len(points[0])
-        assert samples_per_gpu == 1
-
-        if num_augs == 1:
-            return self.simple_test(points[0], img_metas[0], **kwargs)
-        else:
-            return self.aug_test(points, img_metas, **kwargs)
-
-    def forward(self, return_loss=True, **kwargs):
-        if return_loss:
-            return self.forward_train(**kwargs)
-        else:
-            return self.forward_test(**kwargs)
-
     def simple_test(self, points, img_metas, proposals=None, rescale=False):
         feats_dict, voxels_dict = self.extract_feat(points, img_metas)
 
@@ -159,6 +129,3 @@ class PartA2(TwoStageDetector):
 
         return self.roi_head.simple_test(feats_dict, voxels_dict, img_metas,
                                          proposal_list)
-
-    def aug_test(self, **kwargs):
-        raise NotImplementedError

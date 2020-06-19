@@ -1,11 +1,6 @@
 API Documentation
 =================
 
-mmdet3d.apis
---------------
-.. automodule:: mmdet3d.apis
-    :members:
-
 mmdet3d.core
 --------------
 

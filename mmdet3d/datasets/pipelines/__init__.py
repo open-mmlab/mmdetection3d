@@ -1,5 +1,5 @@
 from mmdet.datasets.pipelines import Compose
-from .dbsampler import DataBaseSampler, MMDataBaseSampler
+from .dbsampler import DataBaseSampler
 from .formating import DefaultFormatBundle, DefaultFormatBundle3D
 from .indoor_augment import (IndoorFlipData, IndoorGlobalRotScaleTrans,
                              IndoorPointsColorJitter)
@@ -19,6 +19,6 @@ __all__ = [
     'Compose', 'LoadMultiViewImageFromFiles', 'LoadPointsFromFile',
     'DefaultFormatBundle', 'DefaultFormatBundle3D', 'DataBaseSampler',
     'IndoorGlobalRotScaleTrans', 'IndoorPointsColorJitter', 'IndoorFlipData',
-    'MMDataBaseSampler', 'NormalizePointsColor', 'LoadAnnotations3D',
-    'IndoorPointSample', 'PointSegClassMapping', 'MultiScaleFlipAug3D'
+    'NormalizePointsColor', 'LoadAnnotations3D', 'IndoorPointSample',
+    'PointSegClassMapping', 'MultiScaleFlipAug3D'
 ]
