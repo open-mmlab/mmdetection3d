@@ -265,13 +265,13 @@ class MVXTwoStageDetector(Base3DDetector):
             proposal_list = proposals
 
         # bbox head forward and loss
-        img_roi_losses = self.roi_head.forward_train(x, img_metas,
-                                                     proposal_list, gt_bboxes,
-                                                     gt_labels,
-                                                     gt_bboxes_ignore,
-                                                     **kwargs)
+        if self.with_img_bbox:
+            # bbox head forward and loss
+            img_roi_losses = self.img_roi_head.forward_train(
+                x, img_metas, proposal_list, gt_bboxes, gt_labels,
+                gt_bboxes_ignore, **kwargs)
+            losses.update(img_roi_losses)
 
-        losses.update(img_roi_losses)
         return losses
 
     def simple_test_img(self, x, img_metas, proposals=None, rescale=False):

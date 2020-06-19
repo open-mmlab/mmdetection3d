@@ -115,10 +115,8 @@ def test_config_data_pipeline():
     print('Found config_dpath = {!r}'.format(config_dpath))
 
     # Only tests a representative subset of configurations
-    # TODO: test pipelines using Albu, current Albu throw None given empty GT
     config_names = [
         'mvxnet/faster_rcnn_r50_fpn_caffe_2x8_1x_nus.py',
-        'mvxnet/retinanet_r50_fpn_caffe_2x8_1x_nus.py',
         'mvxnet/'
         'faster_rcnn_r50_fpn_caffe_1x_kitti-2d-3class_coco-3x-pretrain.py',
     ]
