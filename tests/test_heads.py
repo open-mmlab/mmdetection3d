@@ -105,18 +105,18 @@ def test_anchor3d_head_loss():
 
     losses = self.loss(cls_score, bbox_pred, dir_cls_preds, gt_bboxes,
                        gt_labels, input_metas)
-    assert losses['loss_rpn_cls'][0] > 0
-    assert losses['loss_rpn_bbox'][0] > 0
-    assert losses['loss_rpn_dir'][0] > 0
+    assert losses['loss_cls'][0] > 0
+    assert losses['loss_bbox'][0] > 0
+    assert losses['loss_dir'][0] > 0
 
     # test empty ground truth case
     gt_bboxes = list(torch.empty((2, 0, 7)).cuda())
     gt_labels = list(torch.empty((2, 0)).cuda())
     empty_gt_losses = self.loss(cls_score, bbox_pred, dir_cls_preds, gt_bboxes,
                                 gt_labels, input_metas)
-    assert empty_gt_losses['loss_rpn_cls'][0] > 0
-    assert empty_gt_losses['loss_rpn_bbox'][0] == 0
-    assert empty_gt_losses['loss_rpn_dir'][0] == 0
+    assert empty_gt_losses['loss_cls'][0] > 0
+    assert empty_gt_losses['loss_bbox'][0] == 0
+    assert empty_gt_losses['loss_dir'][0] == 0
 
 
 def test_anchor3d_head_getboxes():

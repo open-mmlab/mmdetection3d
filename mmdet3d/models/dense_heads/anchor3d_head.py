@@ -5,8 +5,8 @@ from mmcv.cnn import bias_init_with_prob, normal_init
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, box_torch_ops,
                           boxes3d_to_bev_torch_lidar, build_anchor_generator,
-                          build_assigner, build_bbox_coder, build_sampler,
-                          multi_apply)
+                          build_assigner, build_bbox_coder, build_sampler)
+from mmdet.core import multi_apply
 from mmdet.models import HEADS
 from ..builder import build_loss
 from .train_mixins import AnchorTrainMixin
@@ -326,9 +326,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             dir_weights_list,
             num_total_samples=num_total_samples)
         return dict(
-            loss_rpn_cls=losses_cls,
-            loss_rpn_bbox=losses_bbox,
-            loss_rpn_dir=losses_dir)
+            loss_cls=losses_cls, loss_bbox=losses_bbox, loss_dir=losses_dir)
 
     def get_bboxes(self,
                    cls_scores,
