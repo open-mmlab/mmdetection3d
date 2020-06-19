@@ -81,6 +81,23 @@ class PartA2RPNHead(Anchor3DHead):
                          diff_rad_by_sin, dir_offset, dir_limit_offset,
                          bbox_coder, loss_cls, loss_bbox, loss_dir)
 
+    def loss(self,
+             cls_scores,
+             bbox_preds,
+             dir_cls_preds,
+             gt_bboxes,
+             gt_labels,
+             input_metas,
+             gt_bboxes_ignore=None):
+        loss_dict = super().loss(cls_scores, bbox_preds, dir_cls_preds,
+                                 gt_bboxes, gt_labels, input_metas,
+                                 gt_bboxes_ignore)
+        # change the loss key names to avoid conflict
+        return dict(
+            loss_rpn_cls=loss_dict['loss_cls'],
+            loss_rpn_bbox=loss_dict['loss_bbox'],
+            loss_rpn_dir=loss_dict['loss_dir'])
+
     def get_bboxes_single(self,
                           cls_scores,
                           bbox_preds,

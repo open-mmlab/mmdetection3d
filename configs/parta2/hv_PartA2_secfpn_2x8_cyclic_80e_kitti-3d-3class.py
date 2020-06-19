@@ -1,15 +1,16 @@
+_base_ = ['../_base_/schedules/cyclic_40e.py', '../_base_/default_runtime.py']
+
 # model settings
 voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='PartA2',
     voxel_layer=dict(
-        max_num_points=5,  # max_points_per_voxel
+        max_num_points=5,
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(16000, 40000)  # (training, testing) max_coxels
-    ),
+        max_voxels=(16000, 40000)),
     voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseUNet',
@@ -291,36 +292,8 @@ data = dict(
         modality=input_modality,
         classes=class_names,
         test_mode=True))
-# optimizer
-lr = 0.001  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
-lr_config = dict(
-    policy='cyclic',
-    target_ratio=(10, 1e-4),
-    cyclic_times=1,
-    step_ratio_up=0.4)
-momentum_config = dict(
-    policy='cyclic',
-    target_ratio=(0.85 / 0.95, 1),
-    cyclic_times=1,
-    step_ratio_up=0.4)
-checkpoint_config = dict(interval=1)
-evaluation = dict(interval=1)
-# yapf:disable
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
-# runtime settings
-total_epochs = 40
-dist_params = dict(backend='nccl', port=29506)
-log_level = 'INFO'
+
+# Part-A2 uses a different learning rate from what SECOND uses.
+lr = 0.001
+optimizer = dict(lr=lr)
 find_unused_parameters = True
-work_dir = './work_dirs/parta2_secfpn_80e'
-load_from = None
-resume_from = None
-workflow = [('train', 1)]

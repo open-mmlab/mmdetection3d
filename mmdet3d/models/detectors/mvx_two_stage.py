@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d, multi_apply
+from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.ops import Voxelization
+from mmdet.core import multi_apply
 from mmdet.models import DETECTORS
 from .. import builder
 from .base import Base3DDetector
