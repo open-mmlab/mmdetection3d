@@ -69,6 +69,9 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         Returns:
             torch.Tensor: corners of each box with size (N, 8, 3)
         """
+        # TODO: rotation_3d_in_axis function do not support
+        #  empty tensor currently.
+        assert len(self.tensor) != 0
         dims = self.dims
         corners_norm = torch.from_numpy(
             np.stack(np.unravel_index(np.arange(8), [2] * 3), axis=1)).to(
@@ -118,23 +121,31 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         bev_boxes = torch.cat([centers - dims / 2, centers + dims / 2], dim=-1)
         return bev_boxes
 
-    def rotate(self, angle):
-        """Calculate whether the points is in any of the boxes
+    def rotate(self, angle, points=None):
+        """Rotate boxes with points (optional) with the given angle.
 
         Args:
-            angle (float | torch.Tensor): rotation angle
+            angle (float, torch.Tensor): Rotation angle.
+            points (torch.Tensor, numpy.ndarray, optional): Points to rotate.
+                Defaults to None.
+
+        Returns:
+            tuple or None: When ``points`` is None, the function returns None,
+                otherwise it returns the rotated points and the
+                rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
         rot_sin = torch.sin(angle)
         rot_cos = torch.cos(angle)
-        rot_mat = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
-                                          [rot_sin, rot_cos, 0], [0, 0, 1]])
-        self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat.T
+        rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
+                                            [rot_sin, rot_cos, 0], [0, 0,
+                                                                    1]]).T
+        self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
         if self.with_yaw:
             self.tensor[:, 6] -= angle
         else:
-            corners_rot = self.corners @ rot_mat.T
+            corners_rot = self.corners @ rot_mat_T
             new_x_size = corners_rot[..., 0].max(
                 dim=1, keepdim=True)[0] - corners_rot[..., 0].min(
                     dim=1, keepdim=True)[0]
@@ -143,13 +154,28 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                     dim=1, keepdim=True)[0]
             self.tensor[:, 3:5] = torch.cat((new_x_size, new_y_size), dim=-1)
 
-    def flip(self, bev_direction='horizontal'):
+        if points is not None:
+            if isinstance(points, torch.Tensor):
+                points[:, :3] = points[:, :3] @ rot_mat_T
+            elif isinstance(points, np.ndarray):
+                rot_mat_T = rot_mat_T.numpy()
+                points[:, :3] = np.dot(points[:, :3], rot_mat_T)
+            else:
+                raise ValueError
+            return points, rot_mat_T
+
+    def flip(self, bev_direction='horizontal', points=None):
         """Flip the boxes in BEV along given BEV direction
 
         In Depth coordinates, it flips x (horizontal) or y (vertical) axis.
 
         Args:
             bev_direction (str): Flip direction (horizontal or vertical).
+            points (torch.Tensor, numpy.ndarray, None): Points to flip.
+                Defaults to None.
+
+        Returns:
+            torch.Tensor, numpy.ndarray or None: Flipped points.
         """
         assert bev_direction in ('horizontal', 'vertical')
         if bev_direction == 'horizontal':
@@ -160,6 +186,14 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             self.tensor[:, 1::7] = -self.tensor[:, 1::7]
             if self.with_yaw:
                 self.tensor[:, 6] = -self.tensor[:, 6]
+
+        if points is not None:
+            assert isinstance(points, (torch.Tensor, np.ndarray))
+            if bev_direction == 'horizontal':
+                points[:, 0] = -points[:, 0]
+            elif bev_direction == 'vertical':
+                points[:, 1] = -points[:, 1]
+            return points
 
     def in_range_bev(self, box_range):
         """Check whether the boxes are in the given range

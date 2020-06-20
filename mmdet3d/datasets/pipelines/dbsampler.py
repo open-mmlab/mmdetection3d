@@ -58,7 +58,6 @@ class DataBaseSampler(object):
                  data_root,
                  rate,
                  prepare,
-                 object_rot_range,
                  sample_groups,
                  classes=None):
         super().__init__()
@@ -66,7 +65,6 @@ class DataBaseSampler(object):
         self.info_path = info_path
         self.rate = rate
         self.prepare = prepare
-        self.object_rot_range = object_rot_range
         self.classes = classes
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
@@ -103,11 +101,6 @@ class DataBaseSampler(object):
         self.sampler_dict = {}
         for k, v in self.group_db_infos.items():
             self.sampler_dict[k] = BatchSampler(v, k, shuffle=True)
-
-        self.object_rot_range = object_rot_range
-        self.object_rot_enable = np.abs(self.object_rot_range[0] -
-                                        self.object_rot_range[1]) >= 1e-3
-
         # TODO: No group_sampling currently
 
     @staticmethod
@@ -183,11 +176,6 @@ class DataBaseSampler(object):
                     info['path']) if self.data_root else info['path']
                 s_points = np.fromfile(
                     file_path, dtype=np.float32).reshape([-1, 4])
-
-                if 'rot_transform' in info:
-                    rot = info['rot_transform']
-                    s_points[:, :3] = box_np_ops.rotation_points_single_angle(
-                        s_points[:, :3], rot, axis=2)
                 s_points[:, :3] += info['box3d_lidar'][:3]
 
                 count += 1
@@ -219,24 +207,7 @@ class DataBaseSampler(object):
             gt_bboxes[:, 0:2], gt_bboxes[:, 3:5], gt_bboxes[:, 6])
 
         sp_boxes = np.stack([i['box3d_lidar'] for i in sampled], axis=0)
-
-        valid_mask = np.zeros([gt_bboxes.shape[0]], dtype=np.bool_)
-        valid_mask = np.concatenate(
-            [valid_mask,
-             np.ones([sp_boxes.shape[0]], dtype=np.bool_)], axis=0)
         boxes = np.concatenate([gt_bboxes, sp_boxes], axis=0).copy()
-        if self.object_rot_enable:
-            assert False, 'This part needs to be checked'
-            # place samples to any place in a circle.
-            # TODO: rm it if not needed
-            data_augment_utils.noise_per_object_v3_(
-                boxes,
-                None,
-                valid_mask,
-                0,
-                0,
-                self._global_rot_range,
-                num_try=100)
 
         sp_boxes_new = boxes[gt_bboxes.shape[0]:]
         sp_boxes_bv = box_np_ops.center_to_corner_box2d(
@@ -253,11 +224,5 @@ class DataBaseSampler(object):
                 coll_mat[i] = False
                 coll_mat[:, i] = False
             else:
-                if self.object_rot_enable:
-                    assert False, 'This part needs to be checked'
-                    sampled[i - num_gt]['box3d_lidar'][:2] = boxes[i, :2]
-                    sampled[i - num_gt]['box3d_lidar'][-1] = boxes[i, -1]
-                    sampled[i - num_gt]['rot_transform'] = (
-                        boxes[i, -1] - sp_boxes[i - num_gt, -1])
                 valid_samples.append(sampled[i - num_gt])
         return valid_samples

@@ -21,35 +21,67 @@ class RandomFlip3D(RandomFlip):
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
             to that of 2D images.
-        flip_ratio (float, optional): The flipping probability.
+        flip_ratio_bev_horizontal (float, optional): The flipping probability
+            in horizontal direction.
+        flip_ratio_bev_vertical (float, optional): The flipping probability
+            in vertical direction.
     """
 
-    def __init__(self, sync_2d=True, **kwargs):
-        super(RandomFlip3D, self).__init__(**kwargs)
+    def __init__(self,
+                 sync_2d=True,
+                 flip_ratio_bev_horizontal=0.0,
+                 flip_ratio_bev_vertical=0.0,
+                 **kwargs):
+        super(RandomFlip3D, self).__init__(
+            flip_ratio=flip_ratio_bev_horizontal, **kwargs)
         self.sync_2d = sync_2d
+        self.flip_ratio_bev_vertical = flip_ratio_bev_vertical
+        if flip_ratio_bev_horizontal is not None:
+            assert isinstance(
+                flip_ratio_bev_horizontal,
+                (int, float)) and 0 <= flip_ratio_bev_horizontal <= 1
+        if flip_ratio_bev_vertical is not None:
+            assert isinstance(
+                flip_ratio_bev_vertical,
+                (int, float)) and 0 <= flip_ratio_bev_vertical <= 1
 
-    def random_flip_data_3d(self, input_dict):
-        input_dict['points'][:, 1] = -input_dict['points'][:, 1]
+    def random_flip_data_3d(self, input_dict, direction='horizontal'):
+        assert direction in ['horizontal', 'vertical']
         for key in input_dict['bbox3d_fields']:
-            input_dict[key].flip()
+            input_dict['points'] = input_dict[key].flip(
+                direction, points=input_dict['points'])
 
     def __call__(self, input_dict):
         # filp 2D image and its annotations
         super(RandomFlip3D, self).__call__(input_dict)
 
         if self.sync_2d:
-            input_dict['pcd_flip'] = input_dict['flip']
+            input_dict['pcd_horizontal_flip'] = input_dict['flip']
+            input_dict['pcd_vertical_flip'] = False
         else:
-            flip = True if np.random.rand() < self.flip_ratio else False
-            input_dict['pcd_flip'] = flip
+            if 'pcd_horizontal_flip' not in input_dict:
+                flip_horizontal = True if np.random.rand(
+                ) < self.flip_ratio else False
+                input_dict['pcd_horizontal_flip'] = flip_horizontal
+            if 'pcd_vertical_flip' not in input_dict:
+                flip_vertical = True if np.random.rand(
+                ) < self.flip_ratio_bev_vertical else False
+                input_dict['pcd_vertical_flip'] = flip_vertical
 
-        if input_dict['pcd_flip']:
-            self.random_flip_data_3d(input_dict)
+        if input_dict['pcd_horizontal_flip']:
+            self.random_flip_data_3d(input_dict, 'horizontal')
+        if input_dict['pcd_vertical_flip']:
+            self.random_flip_data_3d(input_dict, 'vertical')
         return input_dict
 
     def __repr__(self):
-        return self.__class__.__name__ + '(flip_ratio={}, sync_2d={})'.format(
-            self.flip_ratio, self.sync_2d)
+        repr_str = self.__class__.__name__
+        repr_str += '(sync_2d={},'.format(self.sync_2d)
+        repr_str += '(flip_ratio_bev_horizontal={},'.format(
+            self.flip_ratio_bev_horizontal)
+        repr_str += '(flip_ratio_bev_vertical={},'.format(
+            self.flip_ratio_bev_vertical)
+        return repr_str
 
 
 @PIPELINES.register_module()
@@ -195,15 +227,19 @@ class GlobalRotScaleTrans(object):
             noise. This apply random translation to a scene by a noise, which
             is sampled from a gaussian distribution whose standard deviation
             is set by ``translation_std``. Default to [0, 0, 0]
+        shift_height (bool): whether to shift height
+            (the fourth dimension of indoor points) when scaling.
     """
 
     def __init__(self,
                  rot_range=[-0.78539816, 0.78539816],
                  scale_ratio_range=[0.95, 1.05],
-                 translation_std=[0, 0, 0]):
+                 translation_std=[0, 0, 0],
+                 shift_height=False):
         self.rot_range = rot_range
         self.scale_ratio_range = scale_ratio_range
         self.translation_std = translation_std
+        self.shift_height = shift_height
 
     def _trans_bbox_points(self, input_dict):
         if not isinstance(self.translation_std, (list, tuple, np.ndarray)):
@@ -227,18 +263,19 @@ class GlobalRotScaleTrans(object):
             rotation = [-rotation, rotation]
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
 
-        points = input_dict['points']
-        points[:, :3], rot_mat_T = box_np_ops.rotation_points_single_angle(
-            points[:, :3], noise_rotation, axis=2)
-        input_dict['points'] = points
-        input_dict['pcd_rotation'] = rot_mat_T
-
         for key in input_dict['bbox3d_fields']:
-            input_dict[key].rotate(noise_rotation)
+            if len(input_dict[key].tensor) != 0:
+                points, rot_mat_T = input_dict[key].rotate(
+                    noise_rotation, input_dict['points'])
+                input_dict['points'] = points
+                input_dict['pcd_rotation'] = rot_mat_T
 
     def _scale_bbox_points(self, input_dict):
         scale = input_dict['pcd_scale_factor']
         input_dict['points'][:, :3] *= scale
+        if self.shift_height:
+            input_dict['points'][:, -1] *= scale
+
         for key in input_dict['bbox3d_fields']:
             input_dict[key].scale(scale)
 
@@ -262,6 +299,7 @@ class GlobalRotScaleTrans(object):
         repr_str += '(rot_range={},'.format(self.rot_range)
         repr_str += ' scale_ratio_range={},'.format(self.scale_ratio_range)
         repr_str += ' translation_std={})'.format(self.translation_std)
+        repr_str += ' shift_height={})'.format(self.shift_height)
         return repr_str
 
 
@@ -282,23 +320,6 @@ class ObjectRangeFilter(object):
     def __init__(self, point_cloud_range):
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
         self.bev_range = self.pcd_range[[0, 1, 3, 4]]
-
-    @staticmethod
-    def filter_gt_box_outside_range(gt_bboxes_3d, limit_range):
-        """remove gtbox outside training range.
-        this function should be applied after other prep functions
-        Args:
-            gt_bboxes_3d ([type]): [description]
-            limit_range ([type]): [description]
-        """
-        gt_bboxes_3d_bv = box_np_ops.center_to_corner_box2d(
-            gt_bboxes_3d[:, [0, 1]], gt_bboxes_3d[:, [3, 3 + 1]],
-            gt_bboxes_3d[:, 6])
-        bounding_box = box_np_ops.minmax_to_corner_2d(
-            np.asarray(limit_range)[np.newaxis, ...])
-        ret = box_np_ops.points_in_convex_polygon_jit(
-            gt_bboxes_3d_bv.reshape(-1, 2), bounding_box)
-        return np.any(ret.reshape(-1, 4), axis=1)
 
     def __call__(self, input_dict):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
@@ -370,4 +391,68 @@ class ObjectNameFilter(object):
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += f'(classes={self.classes})'
+        return repr_str
+
+
+@PIPELINES.register_module()
+class IndoorPointSample(object):
+    """Indoor point sample.
+
+    Sampling data to a certain number.
+
+    Args:
+        name (str): Name of the dataset.
+        num_points (int): Number of points to be sampled.
+    """
+
+    def __init__(self, num_points):
+        self.num_points = num_points
+
+    def points_random_sampling(self,
+                               points,
+                               num_samples,
+                               replace=None,
+                               return_choices=False):
+        """Points random sampling.
+
+        Sample points to a certain number.
+
+        Args:
+            points (ndarray): 3D Points.
+            num_samples (int): Number of samples to be sampled.
+            replace (bool): Whether the sample is with or without replacement.
+            return_choices (bool): Whether return choice.
+
+        Returns:
+            points (ndarray): 3D Points.
+            choices (ndarray): The generated random samples.
+        """
+        if replace is None:
+            replace = (points.shape[0] < num_samples)
+        choices = np.random.choice(
+            points.shape[0], num_samples, replace=replace)
+        if return_choices:
+            return points[choices], choices
+        else:
+            return points[choices]
+
+    def __call__(self, results):
+        points = results['points']
+        points, choices = self.points_random_sampling(
+            points, self.num_points, return_choices=True)
+        pts_instance_mask = results.get('pts_instance_mask', None)
+        pts_semantic_mask = results.get('pts_semantic_mask', None)
+        results['points'] = points
+
+        if pts_instance_mask is not None and pts_semantic_mask is not None:
+            pts_instance_mask = pts_instance_mask[choices]
+            pts_semantic_mask = pts_semantic_mask[choices]
+            results['pts_instance_mask'] = pts_instance_mask
+            results['pts_semantic_mask'] = pts_semantic_mask
+
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += '(num_points={})'.format(self.num_points)
         return repr_str
