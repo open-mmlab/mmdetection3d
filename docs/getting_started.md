@@ -5,7 +5,7 @@ For installation instructions, please see [install.md](install.md).
 
 ## Prepare datasets
 
-It is recommended to symlink the dataset root to `$MMDETECTION/data`.
+It is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
 If your folder structure is different, you may need to change the corresponding paths in config files.
 
 ```
@@ -60,6 +60,7 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 To prepare scannet data, please see [scannet](../data/scannet/README.md).
 
 To prepare sunrgbd data, please see [sunrgbd](../data/sunrgbd/README.md).
+
 
 For using custom datasets, please refer to [Tutorials 2: Adding New Dataset](tutorials/new_dataset.md).
 
@@ -156,12 +157,13 @@ You will get two json files `mask_rcnn_test-dev_results.bbox.json` and `mask_rcn
 
 The generated png and txt would be under `./mask_rcnn_cityscapes_test_results` directory.
 
+
 ### Image demo
 
 We provide a demo script to test a single image.
 
 ```shell
-python demo/image_demo.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--camera-id ${CAMERA-ID}] [--score-thr ${SCORE_THR}]
+python demo/image_demo.py ${IMAGE_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}]
 ```
 
 Examples:
@@ -176,7 +178,7 @@ python demo/image_demo.py demo/demo.jpg configs/faster_rcnn_r50_fpn_1x_coco.py \
 We provide a webcam demo to illustrate the results.
 
 ```shell
-python demo/webcam_demo.py ${IMAGE_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}]
+python demo/webcam_demo.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--camera-id ${CAMERA-ID}] [--score-thr ${SCORE_THR}]
 ```
 
 Examples:
@@ -185,6 +187,7 @@ Examples:
 python demo/webcam_demo.py configs/faster_rcnn_r50_fpn_1x_coco.py \
     checkpoints/faster_rcnn_r50_fpn_1x_20181010-3d1b3351.pth
 ```
+
 
 ### High-level APIs for testing images
 
@@ -318,8 +321,8 @@ GPUS=16 ./tools/slurm_train.sh dev mask_r50_1x configs/mask_rcnn_r50_fpn_1x_coco
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
 
 If you have just multiple machines connected with ethernet, you can refer to
-pytorch [launch utility](https://pytorch.org/docs/stable/distributed_deprecated.html#launch-utility).
-Usually it is slow if you do not have high speed networking like infiniband.
+PyTorch [launch utility](https://pytorch.org/docs/stable/distributed_deprecated.html#launch-utility).
+Usually it is slow if you do not have high speed networking like InfiniBand.
 
 ### Launch multiple jobs on a single machine
 
@@ -333,7 +336,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG_FILE} 4
 CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29501 ./tools/dist_train.sh ${CONFIG_FILE} 4
 ```
 
-If you use launch training jobs with slurm, you need to modify the config files (usually the 6th line from the bottom in config files) to set different communication ports.
+If you use launch training jobs with Slurm, you need to modify the config files (usually the 6th line from the bottom in config files) to set different communication ports.
 
 In `config1.py`,
 ```python
@@ -377,7 +380,7 @@ python tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_c
 - Plot the classification and regression loss of some run, and save the figure to a pdf.
 
 ```shell
-python tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_reg --out losses.pdf
+python tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
 ```
 
 - Compare the bbox mAP of two runs in the same figure.
@@ -389,7 +392,7 @@ python tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --le
 You can also compute the average training speed.
 
 ```shell
-python tools/analyze_logs.py cal_train_time ${CONFIG_FILE} [--include-outliers]
+python tools/analyze_logs.py cal_train_time log.json [--include-outliers]
 ```
 
 The output is expected to be like the following.
@@ -462,4 +465,5 @@ python tools/pytorch2onnx.py ${CONFIG_FILE} ${CHECKPOINT_FILE} --out ${ONNX_FILE
 
 ## Tutorials
 
-Currently, we provide three tutorials for users to [finetune models](tutorials/finetune.md), [add new dataset](tutorials/new_dataset.md), and [add new modules](tutorials/new_modules.md)
+Currently, we provide four tutorials for users to [finetune models](tutorials/finetune.md), [add new dataset](tutorials/new_dataset.md), [design data pipeline](tutorials/data_pipeline.md) and [add new modules](tutorials/new_modules.md).
+We also provide a full description about the [config system](config.md).
