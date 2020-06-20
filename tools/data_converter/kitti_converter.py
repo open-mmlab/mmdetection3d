@@ -10,6 +10,9 @@ from .kitti_data_utils import get_kitti_image_info
 
 def convert_to_kitti_info_version2(info):
     """convert kitti info v1 to v2 if possible.
+
+    Args:
+        info (dict): Info of the input kitti data.
     """
     if 'image' not in info or 'calib' not in info or 'point_cloud' not in info:
         info['image'] = {
@@ -78,6 +81,16 @@ def create_kitti_info_file(data_path,
                            pkl_prefix='kitti_',
                            save_path=None,
                            relative_path=True):
+    """Create info file of KITTI dataset.
+
+    Given the raw data, generate its related info file in pkl format.
+
+    Args:
+        data_path (str): Path of the data root.
+        pkl_prefix (str): Prefix of the info file to be generated.
+        save_path (str): Path to save the info file.
+        relative_path (bool): Whether to use relative path.
+    """
     imageset_folder = Path(data_path) / 'ImageSets'
     train_img_ids = _read_imageset_file(
         str(imageset_folder / 'train_6014.txt'))

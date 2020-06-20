@@ -36,15 +36,16 @@ class VoteNet(SingleStage3DDetector):
         """Forward of training.
 
         Args:
-            points (list[Tensor]): Points of each batch.
+            points (list[torch.Tensor]): Points of each batch.
             img_metas (list): Image metas.
             gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
-            gt_labels_3d (list[Tensor]): gt class labels of each batch.
-            pts_semantic_mask (None | list[Tensor]): point-wise semantic
+            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
+            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[Tensor]): point-wise instance
+            pts_instance_mask (None | list[torch.Tensor]): point-wise instance
                 label of each batch.
-            gt_bboxes_ignore (None | list[Tensor]): Specify which bounding.
+            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+                which bounding.
 
         Returns:
             dict: Losses.
@@ -63,7 +64,7 @@ class VoteNet(SingleStage3DDetector):
         """Forward of testing.
 
         Args:
-            points (list[Tensor]): Points of each sample.
+            points (list[torch.Tensor]): Points of each sample.
             img_metas (list): Image metas.
             rescale (bool): Whether to rescale results.
 

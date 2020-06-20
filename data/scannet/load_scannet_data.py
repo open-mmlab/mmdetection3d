@@ -64,19 +64,19 @@ def export(mesh_file,
     """Export original files to vert, ins_label, sem_label and bbox file.
 
     Args:
-        mesh_file(str): Path of the mesh_file.
-        agg_file(str): Path of the agg_file.
-        seg_file(str): Path of the seg_file.
-        meta_file(str): Path of the meta_file.
-        label_map_file(str): Path of the label_map_file.
-        output_file(str): Path of the output folder.
+        mesh_file (str): Path of the mesh_file.
+        agg_file (str): Path of the agg_file.
+        seg_file (str): Path of the seg_file.
+        meta_file (str): Path of the meta_file.
+        label_map_file (str): Path of the label_map_file.
+        output_file (str): Path of the output folder.
             Default: None.
 
     It returns a tuple, which containts the the following things:
-        ndarray: Vertices of points data.
-        ndarray: Indexes of label.
-        ndarray: Indexes of instance.
-        ndarray: Instance bboxes.
+        np.ndarray: Vertices of points data.
+        np.ndarray: Indexes of label.
+        np.ndarray: Indexes of instance.
+        np.ndarray: Instance bboxes.
         dict: Map from object_id to label_id.
     """
 

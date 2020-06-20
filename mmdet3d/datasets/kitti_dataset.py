@@ -339,7 +339,7 @@ class KittiDataset(Custom3DDataset):
                             class_names,
                             pklfile_prefix=None,
                             submission_prefix=None):
-        """Convert results to kitti format for evaluation and test submission
+        """Convert results to kitti format for evaluation and test submission.
 
         Args:
             net_outputs (List[array]): list of array storing the bbox and score
@@ -348,7 +348,7 @@ class KittiDataset(Custom3DDataset):
             submission_prefix (str | None): The prefix of submission file.
 
         Return:
-            List([dict]): A list of dict have the kitti format
+            List[dict]: A list of dict have the kitti format
         """
         assert len(net_outputs) == len(self.data_infos)
 

@@ -46,13 +46,14 @@ def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
     """Calculate nearest 3D IoU
 
     Args:
-        bboxes1: Tensor, shape (N, 7+N) [x, y, z, h, w, l, ry, v]
-        bboxes2: Tensor, shape (M, 7+N) [x, y, z, h, w, l, ry, v]
-        mode: mode (str): "iou" (intersection over union) or iof
+        bboxes1 (torch.Tensor): shape (N, 7+N) [x, y, z, h, w, l, ry, v].
+        bboxes2 (torch.Tensor): shape (M, 7+N) [x, y, z, h, w, l, ry, v].
+        mode (str): "iou" (intersection over union) or iof
             (intersection over foreground).
 
     Return:
-        iou: (M, N) not support aligned mode currently
+        torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
+            with shape (M, N).(not support aligned mode currently).
     """
     assert bboxes1.size(-1) >= 7
     assert bboxes2.size(-1) >= 7
@@ -74,14 +75,15 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     """Calculate 3D IoU using cuda implementation
 
     Args:
-        bboxes1: Tensor, shape (N, 7) [x, y, z, h, w, l, ry]
-        bboxes2: Tensor, shape (M, 7) [x, y, z, h, w, l, ry]
-        mode: mode (str): "iou" (intersection over union) or
+        bboxes1 (torch.Tensor): shape (N, 7) [x, y, z, h, w, l, ry].
+        bboxes2 (torch.Tensor): shape (M, 7) [x, y, z, h, w, l, ry].
+        mode (str): "iou" (intersection over union) or
             iof (intersection over foreground).
-        coordinate (str): 'camera' or 'lidar' coordinate system
+        coordinate (str): 'camera' or 'lidar' coordinate system.
 
     Return:
-        iou: (M, N) not support aligned mode currently
+        torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
+            with shape (M, N).(not support aligned mode currently).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) == 7
     assert coordinate in ['camera', 'lidar']

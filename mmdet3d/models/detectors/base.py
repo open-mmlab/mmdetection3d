@@ -7,15 +7,16 @@ class Base3DDetector(BaseDetector):
     def forward_test(self, points, img_metas, img=None, **kwargs):
         """
         Args:
-            points (List[Tensor]): the outer list indicates test-time
-                augmentations and inner Tensor should have a shape NxC,
+            points (list[torch.Tensor]): the outer list indicates test-time
+                augmentations and inner torch.Tensor should have a shape NxC,
                 which contains all points in the batch.
-            img_metas (List[List[dict]]): the outer list indicates test-time
+            img_metas (list[list[dict]]): the outer list indicates test-time
                 augs (multiscale, flip, etc.) and the inner list indicates
                 images in a batch
-            img (List[Tensor], optional): the outer list indicates test-time
-                augmentations and inner Tensor should have a shape NxCxHxW,
-                which contains all images in the batch. Defaults to None.
+            img (list[torch.Tensor], optional): the outer
+                list indicates test-time augmentations and inner
+                torch.Tensor should have a shape NxCxHxW, which contains
+                all images in the batch. Defaults to None.
         """
         for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
             if not isinstance(var, list):
@@ -42,9 +43,9 @@ class Base3DDetector(BaseDetector):
         Calls either forward_train or forward_test depending on whether
         return_loss=True. Note this setting will change the expected inputs.
         When `return_loss=True`, img and img_metas are single-nested (i.e.
-        Tensor and List[dict]), and when `resturn_loss=False`, img and
+        torch.Tensor and list[dict]), and when `resturn_loss=False`, img and
         img_metas should be double nested
-        (i.e.  List[Tensor], List[List[dict]]), with the outer list
+        (i.e.  list[torch.Tensor], list[list[dict]]), with the outer list
         indicating test time augmentations.
         """
         if return_loss:

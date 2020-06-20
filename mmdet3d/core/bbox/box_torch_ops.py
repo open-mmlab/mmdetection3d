@@ -7,15 +7,15 @@ def limit_period(val, offset=0.5, period=np.pi):
 
 
 def corners_nd(dims, origin=0.5):
-    """generate relative box corners based on length per dim and
+    """Generate relative box corners based on length per dim and
     origin point.
 
     Args:
-        dims (float array, shape=[N, ndim]): array of length per dim
-        origin (list or array or float): origin point relate to smallest point.
+        dims (np.ndarray, shape=[N, ndim]): Array of length per dim
+        origin (list or array or float): Origin point relate to smallest point.
 
     Returns:
-        float array, shape=[N, 2 ** ndim, ndim]: returned corners.
+        np.ndarray: Corners of boxes in shape [N, 2 ** ndim, ndim].
         point layout example: (2d) x0y0, x0y1, x1y0, x1y1;
             (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
             where x0 < x1, y0 < y1, z0 < z1
@@ -76,17 +76,21 @@ def center_to_corner_box3d(centers,
                            angles,
                            origin=(0.5, 1.0, 0.5),
                            axis=1):
-    """convert kitti locations, dimensions and angles to corners
+    """Convert kitti locations, dimensions and angles to corners.
 
     Args:
-        centers (float array, shape=[N, 3]): locations in kitti label file.
-        dims (float array, shape=[N, 3]): dimensions in kitti label file.
-        angles (float array, shape=[N]): rotation_y in kitti label file.
-        origin (list or array or float): origin point relate to smallest point.
+        centers (np.ndarray): Locations in kitti label file
+            with the shape of [N, 3].
+        dims (np.ndarray): Dimensions in kitti label
+            file with the shape of [N, 3]
+        angles (np.ndarray): Rotation_y in kitti
+            label file with the shape of [N]
+        origin (list or array or float): Origin point relate to smallest point.
             use (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
-        axis (int): rotation axis. 1 for camera and 2 for lidar.
+        axis (int): Rotation axis. 1 for camera and 2 for lidar.
+
     Returns:
-        [type]: [description]
+        torch.Tensor: Corners with the shape of [N, 8, 3].
     """
     # 'length' in kitti format is in x axis.
     # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
@@ -130,9 +134,10 @@ def rbbox2d_to_near_bbox(rbboxes):
     """convert rotated bbox to nearest 'standing' or 'lying' bbox.
 
     Args:
-        rbboxes: [N, 5(x, y, xdim, ydim, rad)] rotated bboxes
+        rbboxes (torch.Tensor): [N, 5(x, y, xdim, ydim, rad)] rotated bboxes.
+
     Returns:
-        bboxes: [N, 4(xmin, ymin, xmax, ymax)] bboxes
+        torch.Tensor: Bboxes with the shape of [N, 4(xmin, ymin, xmax, ymax)].
     """
     rots = rbboxes[..., -1]
     rots_0_pi_div_2 = torch.abs(limit_period(rots, 0.5, np.pi))
@@ -154,16 +159,16 @@ def center_to_minmax_2d(centers, dims, origin=0.5):
 
 
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
-    """convert kitti locations, dimensions and angles to corners.
-    format: center(xy), dims(xy), angles(clockwise when positive)
+    """Convert kitti locations, dimensions and angles to corners.
+        format: center(xy), dims(xy), angles(clockwise when positive)
 
     Args:
-        centers (float array, shape=[N, 2]): locations in kitti label file.
-        dims (float array, shape=[N, 2]): dimensions in kitti label file.
-        angles (float array, shape=[N]): rotation_y in kitti label file.
+        centers (np.ndarray, shape=[N, 2]): locations in kitti label file.
+        dims (np.ndarray, shape=[N, 2]): dimensions in kitti label file.
+        angles (np.ndarray, shape=[N]): rotation_y in kitti label file.
 
     Returns:
-        [type]: [description]
+        torch.Tensor: Corners with the shape of [N, 4, 2].
     """
     # 'length' in kitti format is in x axis.
     # xyz(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
@@ -180,11 +185,11 @@ def rotation_2d(points, angles):
     """rotation 2d points based on origin point clockwise when angle positive.
 
     Args:
-        points (float array, shape=[N, point_size, 2]): points to be rotated.
-        angles (float array, shape=[N]): rotation angle.
+        points (np.ndarray, shape=[N, point_size, 2]): points to be rotated.
+        angles (np.ndarray, shape=[N]): rotation angle.
 
     Returns:
-        float array: same shape as points
+        np.ndarray: Same shape as points.
     """
     rot_sin = torch.sin(angles)
     rot_cos = torch.cos(angles)
@@ -213,7 +218,7 @@ def enlarge_box3d_lidar(boxes3d, extra_width):
 
 
 def boxes3d_to_corners3d_lidar_torch(boxes3d, bottom_center=True):
-    """convert kitti center boxes to corners
+    """Convert kitti center boxes to corners.
 
         7 -------- 4
        /|         /|

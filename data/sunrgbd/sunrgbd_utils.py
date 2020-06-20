@@ -39,10 +39,10 @@ def flip_axis_to_camera(pc):
     Flip X-right,Y-forward,Z-up to X-right,Y-down,Z-forward.
 
     Args:
-        pc(ndarray): points in depth axis.
+        pc (np.ndarray): points in depth axis.
 
     Returns:
-        ndarray: points in camera  axis.
+        np.ndarray: points in camera  axis.
     """
     pc2 = np.copy(pc)
     pc2[:, [0, 1, 2]] = pc2[:, [0, 2, 1]]  # cam X,Y,Z = depth X,-Z,Y
@@ -132,10 +132,10 @@ class SUNRGBD_Calibration(object):
         """Convert pc coordinate from depth to image.
 
         Args:
-            pc(ndarray): Point cloud in depth coordinate.
+            pc (np.ndarray): Point cloud in depth coordinate.
 
         Returns:
-            pc(ndarray): Point cloud in camera coordinate.
+            pc (np.ndarray): Point cloud in camera coordinate.
         """
         # Project upright depth to depth coordinate
         pc2 = np.dot(np.transpose(self.Rtilt), np.transpose(pc[:,
@@ -146,11 +146,11 @@ class SUNRGBD_Calibration(object):
         """Convert pc coordinate from depth to image.
 
         Args:
-            pc(ndarray): Point cloud in depth coordinate.
+            pc (np.ndarray): Point cloud in depth coordinate.
 
         Returns:
-            ndarray: [N, 2] uv.
-            ndarray: [n,] depth.
+            np.ndarray: [N, 2] uv.
+            np.ndarray: [n,] depth.
         """
         pc2 = self.project_upright_depth_to_camera(pc)
         uv = np.dot(pc2, np.transpose(self.K))  # (n,3)
@@ -173,10 +173,10 @@ def rotz(t):
     """Rotation about the z-axis.
 
     Args:
-        t(float): Heading angle.
+        t (float): Heading angle.
 
     Returns:
-        ndarray: Transforation matrix
+        np.ndarray: Transforation matrix
     """
     c = np.cos(t)
     s = np.sin(t)
@@ -187,11 +187,11 @@ def transform_from_rot_trans(R, t):
     """Transforation matrix from rotation matrix and translation vector.
 
     Args:
-        R(ndarray): Rotation matrix.
-        t(ndarray): Translation vector.
+        R (np.ndarray): Rotation matrix.
+        t (np.ndarray): Translation vector.
 
     Returns:
-        ndarray: Transforation matrix.
+        np.ndarray: Transforation matrix.
     """
     R = R.reshape(3, 3)
     t = t.reshape(3, 1)
@@ -229,12 +229,12 @@ def extract_pc_in_box3d(pc, box3d):
     """Extract point cloud in box3d.
 
     Args:
-        pc(ndarray): [N, 3] Point cloud.
-        box3d(ndarray): [8,3] 3d box.
+        pc (np.ndarray): [N, 3] Point cloud.
+        box3d (np.ndarray): [8,3] 3d box.
 
     Returns:
-        ndarray: Selected point cloud.
-        ndarray: Indices of selected point cloud.
+        np.ndarray: Selected point cloud.
+        np.ndarray: Indices of selected point cloud.
     """
     box3d_roi_inds = in_hull(pc[:, 0:3], box3d)
     return pc[box3d_roi_inds, :], box3d_roi_inds
@@ -258,11 +258,11 @@ def compute_box_3d(obj, calib):
         bounding box into the image plane.
 
     Args:
-        obj(SUNObject3d): Instance of SUNObject3d.
-        calib(SUNRGBD_Calibration): Instance of SUNRGBD_Calibration.
+        obj (SUNObject3d): Instance of SUNObject3d.
+        calib (SUNRGBD_Calibration): Instance of SUNRGBD_Calibration.
 
     Returns:
-        ndarray: [8,2] array in image coord.
+        np.ndarray: [8,2] array in image coord.
         corners_3d: [8,3] array in in upright depth coord.
     """
     center = obj.centroid
