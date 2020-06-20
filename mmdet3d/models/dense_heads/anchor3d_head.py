@@ -3,9 +3,10 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import bias_init_with_prob, normal_init
 
-from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, box_torch_ops,
-                          boxes3d_to_bev_torch_lidar, build_anchor_generator,
-                          build_assigner, build_bbox_coder, build_sampler)
+from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms,
+                          build_anchor_generator, build_assigner,
+                          build_bbox_coder, build_sampler, limit_period,
+                          xywhr2xyxyr)
 from mmdet.core import multi_apply
 from mmdet.models import HEADS
 from ..builder import build_loss
@@ -447,7 +448,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             mlvl_dir_scores.append(dir_cls_score)
 
         mlvl_bboxes = torch.cat(mlvl_bboxes)
-        mlvl_bboxes_for_nms = boxes3d_to_bev_torch_lidar(mlvl_bboxes)
+        mlvl_bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
+            mlvl_bboxes, box_dim=self.box_code_size).bev)
         mlvl_scores = torch.cat(mlvl_scores)
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
 
@@ -462,8 +464,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                                        cfg, mlvl_dir_scores)
         bboxes, scores, labels, dir_scores = results
         if bboxes.shape[0] > 0:
-            dir_rot = box_torch_ops.limit_period(
-                bboxes[..., 6] - self.dir_offset, self.dir_limit_offset, np.pi)
+            dir_rot = limit_period(bboxes[..., 6] - self.dir_offset,
+                                   self.dir_limit_offset, np.pi)
             bboxes[..., 6] = (
                 dir_rot + self.dir_offset +
                 np.pi * dir_scores.to(bboxes.dtype))

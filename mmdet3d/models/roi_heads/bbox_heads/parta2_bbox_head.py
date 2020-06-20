@@ -4,12 +4,12 @@ import torch.nn as nn
 from mmcv.cnn import ConvModule, normal_init, xavier_init
 
 import mmdet3d.ops.spconv as spconv
-from mmdet3d.core import build_bbox_coder
-from mmdet3d.core.bbox import box_torch_ops
+from mmdet3d.core import build_bbox_coder, xywhr2xyxyr
+from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
+                                          rotation_3d_in_axis)
 from mmdet3d.models.builder import build_loss
 from mmdet3d.ops import make_sparse_convmodule
-from mmdet3d.ops.iou3d.iou3d_utils import (boxes3d_to_bev_torch_lidar, nms_gpu,
-                                           nms_normal_gpu)
+from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import multi_apply
 from mmdet.models import HEADS
 
@@ -335,7 +335,7 @@ class PartA2BboxHead(nn.Module):
                     batch_anchors,
                     pos_bbox_pred.view(-1, code_size)).view(-1, code_size)
 
-                pred_boxes3d[..., 0:3] = box_torch_ops.rotation_3d_in_axis(
+                pred_boxes3d[..., 0:3] = rotation_3d_in_axis(
                     pred_boxes3d[..., 0:3].unsqueeze(1),
                     (pos_rois_rotation + np.pi / 2),
                     axis=2).squeeze(1)
@@ -412,7 +412,7 @@ class PartA2BboxHead(nn.Module):
             # canonical transformation
             pos_gt_bboxes_ct[..., 0:3] -= roi_center
             pos_gt_bboxes_ct[..., 6] -= roi_ry
-            pos_gt_bboxes_ct[..., 0:3] = box_torch_ops.rotation_3d_in_axis(
+            pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
                 pos_gt_bboxes_ct[..., 0:3].unsqueeze(1),
                 -(roi_ry + np.pi / 2),
                 axis=2).squeeze(1)
@@ -451,15 +451,17 @@ class PartA2BboxHead(nn.Module):
         """
         assert pred_bbox3d.shape[0] == gt_bbox3d.shape[0]
 
-        pred_box_corners = box_torch_ops.boxes3d_to_corners3d_lidar_torch(
-            pred_bbox3d)
-        gt_box_corners = box_torch_ops.boxes3d_to_corners3d_lidar_torch(
-            gt_bbox3d)
+        # This is a little bit hack here because we assume the box for
+        # Part-A2 is in LiDAR coordinates
+        gt_boxes_structure = LiDARInstance3DBoxes(gt_bbox3d)
+        pred_box_corners = LiDARInstance3DBoxes(pred_bbox3d).corners
+        gt_box_corners = gt_boxes_structure.corners
 
-        gt_bbox3d_flip = gt_bbox3d.clone()
-        gt_bbox3d_flip[:, 6] += np.pi
-        gt_box_corners_flip = box_torch_ops.boxes3d_to_corners3d_lidar_torch(
-            gt_bbox3d_flip)
+        # This flip only changes the heading direction of GT boxes
+        gt_bbox3d_flip = gt_boxes_structure.clone()
+        gt_bbox3d_flip.tensor[:, 6] += np.pi
+        gt_box_corners_flip = gt_bbox3d_flip.corners
+
         corner_dist = torch.min(
             torch.norm(pred_box_corners - gt_box_corners, dim=2),
             torch.norm(pred_box_corners - gt_box_corners_flip,
@@ -504,7 +506,7 @@ class PartA2BboxHead(nn.Module):
         local_roi_boxes = roi_boxes.clone().detach()
         local_roi_boxes[..., 0:3] = 0
         rcnn_boxes3d = self.bbox_coder.decode(local_roi_boxes, bbox_pred)
-        rcnn_boxes3d[..., 0:3] = box_torch_ops.rotation_3d_in_axis(
+        rcnn_boxes3d[..., 0:3] = rotation_3d_in_axis(
             rcnn_boxes3d[..., 0:3].unsqueeze(1), (roi_ry + np.pi / 2),
             axis=2).squeeze(1)
         rcnn_boxes3d[:, 0:3] += roi_xyz
@@ -519,6 +521,7 @@ class PartA2BboxHead(nn.Module):
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
                                             cfg.score_thr, cfg.nms_thr,
+                                            img_metas[batch_id],
                                             cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[selected]
             selected_label_preds = cur_class_labels[selected]
@@ -535,6 +538,7 @@ class PartA2BboxHead(nn.Module):
                         box_preds,
                         score_thr,
                         nms_thr,
+                        input_meta,
                         use_rotate_nms=True):
         if use_rotate_nms:
             nms_func = nms_gpu
@@ -545,7 +549,8 @@ class PartA2BboxHead(nn.Module):
             1] == self.num_classes, f'box_probs shape: {str(box_probs.shape)}'
         selected_list = []
         selected_labels = []
-        boxes_for_nms = boxes3d_to_bev_torch_lidar(box_preds)
+        boxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
+            box_preds, self.bbox_coder.code_size).bev)
 
         score_thresh = score_thr if isinstance(
             score_thr, list) else [score_thr for x in range(self.num_classes)]

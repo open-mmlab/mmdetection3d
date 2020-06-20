@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mmdet3d.core import box_torch_ops
+from mmdet3d.core import limit_period
 from mmdet.core import images_to_levels, multi_apply
 
 
@@ -270,7 +270,7 @@ def get_direction_target(anchors,
         torch.Tensor: Encoded direction targets.
     """
     rot_gt = reg_targets[..., 6] + anchors[..., 6]
-    offset_rot = box_torch_ops.limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
+    offset_rot = limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
     dir_cls_targets = torch.floor(offset_rot / (2 * np.pi / num_bins)).long()
     dir_cls_targets = torch.clamp(dir_cls_targets, min=0, max=num_bins - 1)
     if one_hot:

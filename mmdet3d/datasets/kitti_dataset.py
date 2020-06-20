@@ -9,7 +9,7 @@ import torch
 from mmcv.utils import print_log
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import Box3DMode, CameraInstance3DBoxes
+from ..core.bbox import Box3DMode, CameraInstance3DBoxes, points_cam2img
 from .custom_3d import Custom3DDataset
 
 
@@ -463,7 +463,6 @@ class KittiDataset(Custom3DDataset):
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
 
-        from mmdet3d.core.bbox import box_torch_ops
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
         P2 = info['calib']['P2'].astype(np.float32)
@@ -473,7 +472,7 @@ class KittiDataset(Custom3DDataset):
         box_preds_camera = box_preds.convert_to(Box3DMode.CAM, rect @ Trv2c)
 
         box_corners = box_preds_camera.corners
-        box_corners_in_image = box_torch_ops.project_to_image(box_corners, P2)
+        box_corners_in_image = points_cam2img(box_corners, P2)
         # box_corners_in_image: [N, 8, 2]
         minxy = torch.min(box_corners_in_image, dim=1)[0]
         maxxy = torch.max(box_corners_in_image, dim=1)[0]

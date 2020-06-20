@@ -3,12 +3,21 @@ import numpy as np
 
 
 class VoxelGenerator(object):
+    """Voxel generator in numpy implementation"""
 
     def __init__(self,
                  voxel_size,
                  point_cloud_range,
                  max_num_points,
                  max_voxels=20000):
+        """
+        Args:
+            voxel_size (list[float]): Size of a single voxel
+            point_cloud_range (list[float]): Range of points
+            max_num_points (int): Maximum number of points in a single voxel
+            max_voxels (int, optional): Maximum number of voxels.
+                Defaults to 20000.
+        """
         point_cloud_range = np.array(point_cloud_range, dtype=np.float32)
         # [0, -40, -3, 70.4, 40, 1]
         voxel_size = np.array(voxel_size, dtype=np.float32)
@@ -55,24 +64,25 @@ def points_to_voxel(points,
     with jit and 3.2ghz cpu.(don't calculate other features)
 
     Args:
-        points: [N, ndim] float tensor. points[:, :3] contain xyz points and
+        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
             points[:, 3:] contain other information such as reflectivity.
-        voxel_size: [3] list/tuple or array, float. xyz, indicate voxel size
+        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
         coors_range: [6] list/tuple or array, float. indicate voxel range.
             format: xyzxyz, minmax
-        max_points: int. indicate maximum points contained in a voxel.
-        reverse_index: boolean. indicate whether return reversed coordinates.
+        max_points (int): Indicate maximum points contained in a voxel.
+        reverse_index (bool): Whether return reversed coordinates.
             if points has xyz format and reverse_index is True, output
             coordinates will be zyx format, but points in features always
             xyz format.
-        max_voxels: int. indicate maximum voxels this function create.
-            for second, 20000 is a good choice. you should shuffle points
-            before call this function because max_voxels may drop some points.
+        max_voxels (int): Maximum number of voxels this function create.
+            for second, 20000 is a good choice. Points should be shuffled for
+            randomness before this function because max_voxels drops points.
 
     Returns:
-        voxels: [M, max_points, ndim] float tensor. only contain points.
-        coordinates: [M, 3] int32 tensor.
-        num_points_per_voxel: [M] int32 tensor.
+        tuple[np.ndarray]:
+            voxels: [M, max_points, ndim] float tensor. only contain points.
+            coordinates: [M, 3] int32 tensor.
+            num_points_per_voxel: [M] int32 tensor.
     """
     if not isinstance(voxel_size, np.ndarray):
         voxel_size = np.array(voxel_size, dtype=points.dtype)
