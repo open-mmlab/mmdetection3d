@@ -1,3 +1,6 @@
+// Modified from
+// https://github.com/sshaoshuai/Pointnet2.PyTorch/tree/master/pointnet2/src/sampling.cpp
+
 #include <ATen/cuda/CUDAContext.h>
 #include <THC/THC.h>
 #include <torch/extension.h>

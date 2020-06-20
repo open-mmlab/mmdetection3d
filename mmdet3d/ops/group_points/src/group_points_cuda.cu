@@ -1,3 +1,6 @@
+// Modified from
+// https://github.com/sshaoshuai/Pointnet2.PyTorch/tree/master/pointnet2/src/group_points_gpu.cu
+
 #include <stdio.h>
 #include <stdlib.h>
 
