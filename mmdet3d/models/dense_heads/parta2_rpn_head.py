@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 import torch
 
-from mmdet3d.core import box_torch_ops, boxes3d_to_bev_torch_lidar
+from mmdet3d.core import limit_period, xywhr2xyxyr
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.models import HEADS
 from .anchor3d_head import Anchor3DHead
@@ -172,7 +172,8 @@ class PartA2RPNHead(Anchor3DHead):
             mlvl_dir_scores.append(dir_cls_score)
 
         mlvl_bboxes = torch.cat(mlvl_bboxes)
-        mlvl_bboxes_for_nms = boxes3d_to_bev_torch_lidar(mlvl_bboxes)
+        mlvl_bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
+            mlvl_bboxes, box_dim=self.box_code_size).bev)
         mlvl_max_scores = torch.cat(mlvl_max_scores)
         mlvl_label_pred = torch.cat(mlvl_label_pred)
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
@@ -246,9 +247,8 @@ class PartA2RPNHead(Anchor3DHead):
             labels.append(_mlvl_label_pred[selected])
             cls_scores.append(_mlvl_cls_score[selected])
             dir_scores.append(_mlvl_dir_scores[selected])
-            dir_rot = box_torch_ops.limit_period(
-                bboxes[-1][..., 6] - self.dir_offset, self.dir_limit_offset,
-                np.pi)
+            dir_rot = limit_period(bboxes[-1][..., 6] - self.dir_offset,
+                                   self.dir_limit_offset, np.pi)
             bboxes[-1][..., 6] = (
                 dir_rot + self.dir_offset +
                 np.pi * dir_scores[-1].to(bboxes[-1].dtype))
