@@ -1,3 +1,6 @@
+// Modified from
+// https://github.com/sshaoshuai/Pointnet2.PyTorch/tree/master/pointnet2/src/group_points.cpp
+
 #include <THC/THC.h>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
