@@ -188,14 +188,17 @@ class VoteHead(nn.Module):
 
         Args:
             bbox_preds (dict): Predictions from forward of vote head.
-            points (list[Tensor]): Input points.
+            points (list[torch.Tensor]): Input points.
             gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): Gt bboxes
                 of each sample.
-            gt_labels_3d (list[Tensor]): Gt labels of each sample.
-            pts_semantic_mask (None | list[Tensor]): Point-wise semantic mask.
-            pts_instance_mask (None | list[Tensor]): Point-wise instance mask.
+            gt_labels_3d (list[torch.Tensor]): Gt labels of each sample.
+            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
+                semantic mask.
+            pts_instance_mask (None | list[torch.Tensor]): Point-wise
+                instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[Tensor]): Specify which bounding.
+            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+                which bounding.
 
         Returns:
             dict: Losses of Votenet.
@@ -292,15 +295,15 @@ class VoteHead(nn.Module):
         """Generate targets of vote head.
 
         Args:
-            points (list[Tensor]): Points of each batch.
+            points (list[torch.Tensor]): Points of each batch.
             gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): gt bboxes of
                 each batch.
-            gt_labels_3d (list[Tensor]): gt class labels of each batch.
-            pts_semantic_mask (None | list[Tensor]): point-wise semantic
+            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
+            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[Tensor]): point-wise instance
+            pts_instance_mask (None | list[torch.Tensor]): point-wise instance
                 label of each batch.
-            bbox_preds (Tensor): Bbox predictions of vote head.
+            bbox_preds (torch.Tensor): Bbox predictions of vote head.
 
         Returns:
             tuple: Targets of vote head.
@@ -378,14 +381,14 @@ class VoteHead(nn.Module):
         """Generate targets of vote head for single batch.
 
         Args:
-            points (Tensor): Points of each batch.
+            points (torch.Tensor): Points of each batch.
             gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
-            gt_labels_3d (Tensor): gt class labels of each batch.
-            pts_semantic_mask (None | Tensor): point-wise semantic
+            gt_labels_3d (torch.Tensor): gt class labels of each batch.
+            pts_semantic_mask (None | torch.Tensor): point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | Tensor): point-wise instance
+            pts_instance_mask (None | torch.Tensor): point-wise instance
                 label of each batch.
-            aggregated_points (Tensor): Aggregated points from
+            aggregated_points (torch.Tensor): Aggregated points from
                 vote aggregation layer.
 
         Returns:
@@ -491,13 +494,13 @@ class VoteHead(nn.Module):
         """Generate bboxes from vote head predictions.
 
         Args:
-            points (Tensor): Input points.
+            points (torch.Tensor): Input points.
             bbox_preds (dict): Predictions from vote head.
             input_metas (list[dict]): Contain pcd and img's meta info.
             rescale (bool): Whether to rescale bboxes.
 
         Returns:
-            list[tuple[Tensor]]: Contain bbox, scores and labels.
+            list[tuple[torch.Tensor]]: Contain bbox, scores and labels.
         """
         # decode boxes
         obj_scores = F.softmax(bbox_preds['obj_scores'], dim=-1)[..., -1]
@@ -523,14 +526,14 @@ class VoteHead(nn.Module):
         """multi-class nms in single batch.
 
         Args:
-            obj_scores (Tensor): Objectness score of bboxes.
-            sem_scores (Tensor): semantic class score of bboxes.
-            bbox (Tensor): Predicted bbox.
-            points (Tensor): Input points.
+            obj_scores (torch.Tensor): Objectness score of bboxes.
+            sem_scores (torch.Tensor): semantic class score of bboxes.
+            bbox (torch.Tensor): Predicted bbox.
+            points (torch.Tensor): Input points.
             input_meta (dict): Contain pcd and img's meta info.
 
         Returns:
-            tuple[Tensor]: Contain bbox, scores and labels.
+            tuple[torch.Tensor]: Contain bbox, scores and labels.
         """
         bbox = input_meta['box_type_3d'](
             bbox,

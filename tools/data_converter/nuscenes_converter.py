@@ -20,6 +20,18 @@ def create_nuscenes_infos(root_path,
                           info_prefix,
                           version='v1.0-trainval',
                           max_sweeps=10):
+    """Create info file of nuscene dataset.
+
+    Given the raw data, generate its related info file in pkl format.
+
+    Args:
+        root_path (str): Path of the data root.
+        info_prefix (str): Prefix of the info file to be generated.
+        version (str): Version of the data.
+            Default: 'v1.0-trainval'
+        max_sweeps (int): Max number of sweeps.
+            Default: 10
+    """
     from nuscenes.nuscenes import NuScenes
     nusc = NuScenes(version=version, dataroot=root_path, verbose=True)
     from nuscenes.utils import splits

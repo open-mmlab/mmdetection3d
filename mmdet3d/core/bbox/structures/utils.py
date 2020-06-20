@@ -6,7 +6,7 @@ def limit_period(val, offset=0.5, period=np.pi):
     """Limit the value into a period for periodic function.
 
     Args:
-        val (torch.Tensor): The value to be converted
+        val (torch.Tensor): The value to be converted.
         offset (float, optional): Offset to set the value range.
             Defaults to 0.5.
         period ([type], optional): Period of the value. Defaults to np.pi.

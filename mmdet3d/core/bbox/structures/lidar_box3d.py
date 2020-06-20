@@ -24,10 +24,10 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
     the negative direction of y to the positive direction of x.
 
     Attributes:
-        tensor (torch.Tensor): float matrix of N x box_dim.
-        box_dim (int): integer indicates the dimension of a box
+        tensor (torch.Tensor): Float matrix of N x box_dim.
+        box_dim (int): Integer indicates the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): if True, the value of yaw will be set to 0 as minmax
+        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
 
@@ -36,7 +36,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the gravity center of all the boxes.
 
         Returns:
-            torch.Tensor: a tensor with center of each box.
+            torch.Tensor: A tensor with center of each box.
         """
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
@@ -92,7 +92,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation
 
         Returns:
-            torch.Tensor: a nx5 tensor of 2D BEV box of each box.
+            torch.Tensor: A nx5 tensor of 2D BEV box of each box.
                 The box is in XYWHR format
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
@@ -102,7 +102,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV without rotation
 
         Returns:
-            torch.Tensor: a tensor of 2D BEV box of each box.
+            torch.Tensor: A tensor of 2D BEV box of each box.
         """
         # Obtain BEV boxes with rotation in XYWHR format
         bev_rotated_boxes = self.bev

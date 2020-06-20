@@ -19,18 +19,18 @@ def box_camera_to_lidar(data, r_rect, velo2cam):
 
 
 def corners_nd(dims, origin=0.5):
-    """generate relative box corners based on length per dim and
+    """Generate relative box corners based on length per dim and
     origin point.
 
     Args:
-        dims (float array, shape=[N, ndim]): array of length per dim
+        dims (np.ndarray, shape=[N, ndim]): Array of length per dim
         origin (list or array or float): origin point relate to smallest point.
 
     Returns:
-        float array, shape=[N, 2 ** ndim, ndim]: returned corners.
+        np.ndarray, shape=[N, 2 ** ndim, ndim]: Returned corners.
         point layout example: (2d) x0y0, x0y1, x1y0, x1y1;
             (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
-            where x0 < x1, y0 < y1, z0 < z1
+            where x0 < x1, y0 < y1, z0 < z1.
     """
     ndim = int(dims.shape[1])
     corners_norm = np.stack(
@@ -53,14 +53,14 @@ def corners_nd(dims, origin=0.5):
 
 
 def rotation_2d(points, angles):
-    """rotation 2d points based on origin point clockwise when angle positive.
+    """Rotation 2d points based on origin point clockwise when angle positive.
 
     Args:
-        points (float array, shape=[N, point_size, 2]): points to be rotated.
-        angles (float array, shape=[N]): rotation angle.
+        points (np.ndarray, shape=[N, point_size, 2]): points to be rotated.
+        angles (np.ndarray, shape=[N]): rotation angle.
 
     Returns:
-        float array: same shape as points
+        np.ndarray: Same shape as points.
     """
     rot_sin = np.sin(angles)
     rot_cos = np.cos(angles)
@@ -69,16 +69,16 @@ def rotation_2d(points, angles):
 
 
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
-    """convert kitti locations, dimensions and angles to corners.
+    """Convert kitti locations, dimensions and angles to corners.
     format: center(xy), dims(xy), angles(clockwise when positive)
 
     Args:
-        centers (float array, shape=[N, 2]): locations in kitti label file.
-        dims (float array, shape=[N, 2]): dimensions in kitti label file.
-        angles (float array, shape=[N]): rotation_y in kitti label file.
+        centers (np.ndarray, shape=[N, 2]): locations in kitti label file.
+        dims (np.ndarray, shape=[N, 2]): dimensions in kitti label file.
+        angles (np.ndarray, shape=[N]): rotation_y in kitti label file.
 
     Returns:
-        [type]: [description]
+        np.ndarray: Corners with the shape of [N, 4, 2].
     """
     # 'length' in kitti format is in x axis.
     # xyz(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
@@ -141,17 +141,18 @@ def center_to_corner_box3d(centers,
                            angles=None,
                            origin=(0.5, 1.0, 0.5),
                            axis=1):
-    """convert kitti locations, dimensions and angles to corners
+    """Convert kitti locations, dimensions and angles to corners.
 
     Args:
-        centers (float array, shape=[N, 3]): locations in kitti label file.
-        dims (float array, shape=[N, 3]): dimensions in kitti label file.
-        angles (float array, shape=[N]): rotation_y in kitti label file.
-        origin (list or array or float): origin point relate to smallest point.
+        centers (np.ndarray, shape=[N, 3]): Locations in kitti label file.
+        dims (np.ndarray, shape=[N, 3]): Dimensions in kitti label file.
+        angles (np.ndarray, shape=[N]): Rotation_y in kitti label file.
+        origin (list or array or float): Origin point relate to smallest point.
             use (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
-        axis (int): rotation axis. 1 for camera and 2 for lidar.
+        axis (int): Rotation axis. 1 for camera and 2 for lidar.
+
     Returns:
-        [type]: [description]
+        np.ndarray: Corners with the shape of [N, 8, 3].
     """
     # 'length' in kitti format is in x axis.
     # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
@@ -202,13 +203,15 @@ def corner_to_standup_nd_jit(boxes_corner):
 
 @numba.jit(nopython=True)
 def corner_to_surfaces_3d_jit(corners):
-    """convert 3d box corners from corner function above
+    """Convert 3d box corners from corner function above
     to surfaces that normal vectors all direct to internal.
 
     Args:
-        corners (float array, [N, 8, 3]): 3d box corners.
+        corners (np.ndarray, [N, 8, 3]): 3d box corners
+            with the shape of [N, 8, 3].
+
     Returns:
-        surfaces (float array, [N, 6, 4, 3]):
+        np.ndarray: Surfaces with the shape of [N, 6, 4, 3].
     """
     # box_corners: [N, 8, 3], must from corner functions in this module
     num_boxes = corners.shape[0]
@@ -270,9 +273,10 @@ def corner_to_surfaces_3d(corners):
     to surfaces that normal vectors all direct to internal.
 
     Args:
-        corners (float array, [N, 8, 3]): 3d box corners.
+        corners (np.ndarray, [N, 8, 3]): 3d box corners.
+
     Returns:
-        surfaces (float array, [N, 6, 4, 3]):
+        np.ndarray: Surfaces with the shape of [N, 6, 4, 3].
     """
     # box_corners: [N, 8, 3], must from corner functions in this module
     surfaces = np.array([
@@ -318,7 +322,7 @@ def create_anchors_3d_range(feature_size,
         sizes: [N, 3] list of list or array, size of anchors, xyz
 
     Returns:
-        anchors: [*feature_size, num_sizes, num_rots, 7] tensor.
+        np.ndarray: [*feature_size, num_sizes, num_rots, 7].
     """
     anchor_range = np.array(anchor_range, dtype)
     z_centers = np.linspace(
@@ -358,10 +362,13 @@ def center_to_minmax_2d(centers, dims, origin=0.5):
 
 def rbbox2d_to_near_bbox(rbboxes):
     """convert rotated bbox to nearest 'standing' or 'lying' bbox.
+
     Args:
-        rbboxes: [N, 5(x, y, xdim, ydim, rad)] rotated bboxes
+        rbboxes (np.ndarray): [N, 5(x, y, xdim, ydim, rad)] rotated bboxes.
+
     Returns:
-        bboxes: [N, 4(xmin, ymin, xmax, ymax)] bboxes
+        np.ndarray: Bboxes with the shpae of
+            [N, 4(xmin, ymin, xmax, ymax)].
     """
     rots = rbboxes[..., -1]
     rots_0_pi_div_2 = np.abs(limit_period(rots, 0.5, np.pi))
@@ -373,15 +380,16 @@ def rbbox2d_to_near_bbox(rbboxes):
 
 @numba.jit(nopython=True)
 def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
-    """calculate box iou. note that jit version runs ~10x faster than the
-    box_overlaps function in mmdet3d.core.evaluation
-    Parameters
-    ----------
-    boxes: (N, 4) ndarray of float
-    query_boxes: (K, 4) ndarray of float
-    Returns
-    -------
-    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    """Calculate box iou. note that jit version runs ~10x faster than the
+    box_overlaps function in mmdet3d.core.evaluation.
+
+    Args:
+        boxes (np.ndarray): (N, 4) ndarray of float
+        query_boxes (np.ndarray): (K, 4) ndarray of float
+
+    Returns:
+        np.ndarray: Overlap between boxes and query_boxes
+            with the shape of [N, K].
     """
     N = boxes.shape[0]
     K = query_boxes.shape[0]
@@ -502,17 +510,19 @@ def _points_in_convex_polygon_3d_jit(points, polygon_surfaces, normal_vec, d,
 def points_in_convex_polygon_3d_jit(points,
                                     polygon_surfaces,
                                     num_surfaces=None):
-    """check points is in 3d convex polygons.
+    """Check points is in 3d convex polygons.
+
     Args:
-        points: [num_points, 3] array.
-        polygon_surfaces: [num_polygon, max_num_surfaces,
+        points (np.ndarray): [num_points, 3] array.
+        polygon_surfaces (np.ndarray): [num_polygon, max_num_surfaces,
             max_num_points_of_surface, 3]
             array. all surfaces' normal vector must direct to internal.
             max_num_points_of_surface must at least 3.
-        num_surfaces: [num_polygon] array. indicate how many surfaces
-            a polygon contain
+        num_surfaces (np.ndarray): [num_polygon] array.
+            indicate how many surfaces a polygon contain
+
     Returns:
-        [num_points, num_polygon] bool array.
+        np.ndarray: Result matrix with the shape of [num_points, num_polygon].
     """
     max_num_surfaces, max_num_points_of_surface = polygon_surfaces.shape[1:3]
     # num_points = points.shape[0]
@@ -528,13 +538,16 @@ def points_in_convex_polygon_3d_jit(points,
 
 @numba.jit
 def points_in_convex_polygon_jit(points, polygon, clockwise=True):
-    """check points is in 2d convex polygons. True when point in polygon
+    """Check points is in 2d convex polygons. True when point in polygon.
+
     Args:
-        points: [num_points, 2] array.
-        polygon: [num_polygon, num_points_of_polygon, 2] array.
-        clockwise: bool. indicate polygon is clockwise.
+        points (np.ndarray): Input points with the shape of [num_points, 2].
+        polygon (dnarray): Input polygon with the shape of
+            [num_polygon, num_points_of_polygon, 2].
+        clockwise (bool): Indicate polygon is clockwise.
+
     Returns:
-        [num_points, num_polygon] bool array.
+        np.ndarray: Result matrix with the shape of [num_points, num_polygon].
     """
     # first convert polygon to directed lines
     num_points_of_polygon = polygon.shape[1]
@@ -569,7 +582,7 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=True):
 
 
 def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
-    """convert kitti center boxes to corners
+    """Convert kitti center boxes to corners.
 
         7 -------- 4
        /|         /|
@@ -580,12 +593,12 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
       2 -------- 1
 
     Args:
-        boxes3d (numpy.array): (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords,
+        boxes3d (np.ndarray): (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords,
             see the definition of ry in KITTI dataset
         bottom_center (bool): whether z is on the bottom center of object.
 
     Returns:
-        numpy.array: box corners with shape (N, 8, 3)
+        np.ndarray: Box corners with the shape of [N, 8, 3].
     """
     boxes_num = boxes3d.shape[0]
     w, l, h = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]

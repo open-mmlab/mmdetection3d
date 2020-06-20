@@ -14,10 +14,17 @@ def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
 
 
 def transform_lidar_to_cam(boxes_lidar):
-    """
-    Only transform format, not exactly in camera coords
-    :param boxes_lidar: (N, 3 or 7) [x, y, z, w, l, h, ry] in LiDAR coords
-    :return: boxes_cam: (N, 3 or 7) [x, y, z, h, w, l, ry] in camera coords
+    """Transform boxes from lidar coords to cam coords.
+        Only transform format, not exactly in camera coords.
+
+    Args:
+        boxes_lidar (torch.Tensor): (N, 3 or 7) [x, y, z, w, l, h, ry]
+            in LiDAR coords.
+        boxes_cam (torch.Tensor): (N, 3 or 7) [x, y, z, h, w, l, ry]
+            in camera coords.
+
+    Returns:
+        torch.Tensor: Boxes in camera coords.
     """
     # boxes_cam = boxes_lidar.new_tensor(boxes_lidar.data)
     boxes_cam = boxes_lidar.clone().detach()
@@ -30,10 +37,15 @@ def transform_lidar_to_cam(boxes_lidar):
 
 
 def boxes3d_to_bev_torch(boxes3d):
-    """
-    :param boxes3d: (N, 7) [x, y, z, h, w, l, ry] in camera coords
-    :return:
-        boxes_bev: (N, 5) [x1, y1, x2, y2, ry]
+    """Transform 3d boxes to bev in camera coords.
+
+    Args:
+        boxes3d (torch.Tensor): 3d boxes in camera coords
+            with the shape of [N, 7] (x, y, z, h, w, l, ry).
+
+    Returns:
+        torch.Tensor: Bev boxes with the shape of [N, 5]
+            (x1, y1, x2, y2, ry).
     """
     boxes_bev = boxes3d.new(torch.Size((boxes3d.shape[0], 5)))
 
@@ -46,10 +58,13 @@ def boxes3d_to_bev_torch(boxes3d):
 
 
 def boxes3d_to_bev_torch_lidar(boxes3d):
-    """
-    :param boxes3d: (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords
-    :return:
-        boxes_bev: (N, 5) [x1, y1, x2, y2, ry]
+    """Transform 3d boxes to bev in lidar coords.
+
+    Args:
+        boxes3d (torch.Tensor): 3d boxes in lidar coords
+            with the shape of [N, 7] (x, y, z, h, w, l, ry).
+
+    Returns: Bev boxes with the shape of [N, 5] (x1, y1, x2, y2, ry).
     """
     boxes_bev = boxes3d.new(torch.Size((boxes3d.shape[0], 5)))
 
@@ -65,11 +80,11 @@ def bbox3d2roi(bbox_list):
     """Convert a list of bboxes to roi format.
 
     Args:
-        bbox_list (list[Tensor]): a list of bboxes corresponding to a batch
-            of images.
+        bbox_list (list[torch.Tensor]): a list of bboxes
+            corresponding to a batch of images.
 
     Returns:
-        Tensor: shape (n, c), [batch_ind, x, y ...]
+        torch.Tensor: shape (n, c), [batch_ind, x, y ...].
     """
     rois_list = []
     for img_id, bboxes in enumerate(bbox_list):
@@ -87,12 +102,12 @@ def bbox3d2result(bboxes, scores, labels):
     """Convert detection results to a list of numpy arrays.
 
     Args:
-        bboxes (Tensor): shape (n, 5)
-        labels (Tensor): shape (n, )
-        scores (Tensor): shape (n, )
+        bboxes (torch.Tensor): shape (n, 5)
+        labels (torch.Tensor): shape (n, )
+        scores (torch.Tensor): shape (n, )
 
     Returns:
-        dict(Tensor): bbox results in cpu mode
+        dict(torch.Tensor): Bbox results in cpu mode.
     """
     return dict(
         boxes_3d=bboxes.to('cpu'),
@@ -106,8 +121,8 @@ def upright_depth_to_lidar_torch(points=None,
     """Convert points and boxes in upright depth coordinate to lidar.
 
     Args:
-        points (None | Tensor): points in upright depth coordinate.
-        bboxes (None | Tensor): bboxes in upright depth coordinate.
+        points (None | torch.Tensor): points in upright depth coordinate.
+        bboxes (None | torch.Tensor): bboxes in upright depth coordinate.
         to_bottom_center (bool): covert bboxes to bottom center.
 
     Returns:
@@ -136,10 +151,11 @@ def box3d_to_corner3d_upright_depth(boxes3d):
     """Convert box3d to corner3d in upright depth coordinate
 
     Args:
-        boxes3d (Tensor): boxes with shape [n,7] in upright depth coordinate
+        boxes3d (torch.Tensor): boxes with shape [n,7] in
+            upright depth coordinate.
 
     Returns:
-        Tensor: boxes with [n, 8, 3] in upright depth coordinate
+        torch.Tensor: boxes with [n, 8, 3] in upright depth coordinate
     """
     boxes_num = boxes3d.shape[0]
     ry = boxes3d[:, 6:7]

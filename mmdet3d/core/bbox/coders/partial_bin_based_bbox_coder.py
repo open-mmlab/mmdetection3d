@@ -28,9 +28,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes with
-                shape (n, 7).
-            gt_labels_3d (Tensor): gt classes.
+            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes with shape (n, 7).
+            gt_labels_3d (torch.Tensor): gt classes.
 
         Returns:
             tuple: Targets of center, size and direction.
@@ -67,7 +66,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
                 - size_res: predicted bbox size residual.
 
         Returns:
-            Tensor: decoded bbox3d with shape (batch, n, 7)
+            torch.Tensor: decoded bbox3d with shape (batch, n, 7)
         """
         center = bbox_out['center']
         batch_size, num_proposal = center.shape[:2]
@@ -99,8 +98,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Split predicted features to specific parts.
 
         Args:
-            preds (Tensor): predicted features to split.
-            base_xyz (Tensor): coordinates of points.
+            preds (torch.Tensor): predicted features to split.
+            base_xyz (torch.Tensor): coordinates of points.
 
         Returns:
             dict: split results.
@@ -161,8 +160,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         regression number from class center angle to current angle.
 
         Args:
-            angle (Tensor): Angle is from 0-2pi (or -pi~pi), class center at
-                0, 1*(2pi/N), 2*(2pi/N) ...  (N-1)*(2pi/N)
+            angle (torch.Tensor): Angle is from 0-2pi (or -pi~pi),
+                class center at 0, 1*(2pi/N), 2*(2pi/N) ...  (N-1)*(2pi/N).
 
         Returns:
             tuple: Encoded discrete class and residual.
@@ -179,12 +178,12 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Inverse function to angle2class
 
         Args:
-            angle_cls (Tensor): Angle class to decode.
-            angle_res (Tensor): Angle residual to decode.
+            angle_cls (torch.Tensor): Angle class to decode.
+            angle_res (torch.Tensor): Angle residual to decode.
             limit_period (bool): Whether to limit angle to [-pi, pi].
 
         Returns:
-            Tensor: angle decoded from angle_cls and angle_res.
+            torch.Tensor: angle decoded from angle_cls and angle_res.
         """
         angle_per_class = 2 * np.pi / float(self.num_dir_bins)
         angle_center = angle_cls.float() * angle_per_class

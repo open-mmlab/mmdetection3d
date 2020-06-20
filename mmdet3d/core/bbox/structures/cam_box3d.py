@@ -6,7 +6,7 @@ from .utils import limit_period, rotation_3d_in_axis
 
 
 class CameraInstance3DBoxes(BaseInstance3DBoxes):
-    """3D boxes of instances in CAM coordinates
+    """3D boxes of instances in CAM coordinates.
 
     Coordinates in camera:
     .. code-block:: none
@@ -26,10 +26,10 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     the positive direction of x to the positive direction of z.
 
     Attributes:
-        tensor (torch.Tensor): float matrix of N x box_dim.
-        box_dim (int): integer indicates the dimension of a box
+        tensor (torch.Tensor): Float matrix of N x box_dim.
+        box_dim (int): Integer indicates the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): if True, the value of yaw will be set to 0 as minmax
+        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
 
@@ -38,7 +38,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Obtain the height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with height of each box.
+            torch.Tensor: A vector with height of each box.
         """
         return self.tensor[:, 4]
 
@@ -47,7 +47,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Obtain the top height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with the top height of each box.
+            torch.Tensor: A vector with the top height of each box.
         """
         # the positive direction is down rather than up
         return self.bottom_height - self.height
@@ -57,7 +57,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Obtain the bottom's height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with bottom's height of each box.
+            torch.Tensor: A vector with bottom's height of each box.
         """
         return self.tensor[:, 1]
 
@@ -66,7 +66,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the gravity center of all the boxes.
 
         Returns:
-            torch.Tensor: a tensor with center of each box.
+            torch.Tensor: A tensor with center of each box.
         """
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
@@ -99,7 +99,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                     down y
 
         Returns:
-            torch.Tensor: corners of each box with size (N, 8, 3)
+            torch.Tensor: Corners of each box with size (N, 8, 3)
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -124,7 +124,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation
 
         Returns:
-            torch.Tensor: a nx5 tensor of 2D BEV box of each box.
+            torch.Tensor: A nx5 tensor of 2D BEV box of each box.
                 The box is in XYWHR format.
         """
         return self.tensor[:, [0, 2, 3, 5, 6]]
@@ -134,7 +134,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV without rotation
 
         Returns:
-            torch.Tensor: a tensor of 2D BEV box of each box.
+            torch.Tensor: A tensor of 2D BEV box of each box.
         """
         # Obtain BEV boxes with rotation in XZWHR format
         bev_rotated_boxes = self.bev
@@ -221,8 +221,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Check whether the boxes are in the given range
 
         Args:
-            box_range (list | torch.Tensor): the range of box
-                (x_min, z_min, x_max, z_max)
+            box_range (list | torch.Tensor): The range of box
+                (x_min, z_min, x_max, z_max).
 
         Note:
             In the original implementation of SECOND, checking whether
@@ -249,12 +249,12 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
-            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
-            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+            boxes1 (:obj:BaseInstanceBoxes): Boxes 1 contain N boxes.
+            boxes2 (:obj:BaseInstanceBoxes): Boxes 2 contain M boxes.
+            mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes
+            torch.Tensor: Calculated iou of boxes.
         """
         assert isinstance(boxes1, BaseInstance3DBoxes)
         assert isinstance(boxes2, BaseInstance3DBoxes)
@@ -278,8 +278,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to `dst` mode.
 
         Args:
-            dst (BoxMode): the target Box mode
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+            dst (BoxMode): The target Box mode.
+            rt_mat (np.dnarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
