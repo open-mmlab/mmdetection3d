@@ -50,6 +50,15 @@ class PointwiseSemanticHead(nn.Module):
         self.loss_part = build_loss(loss_part)
 
     def forward(self, x):
+        """Forward pass.
+
+        Args:
+            x (torch.Tensor): Features from the first stage.
+
+        Returns:
+            dict: part features, segmentation and part predictions.
+
+        """
         seg_preds = self.seg_cls_layer(x)  # (N, 1)
         part_preds = self.seg_reg_layer(x)  # (N, 3)
 

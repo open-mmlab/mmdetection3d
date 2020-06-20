@@ -28,12 +28,16 @@ def test_scannet_pipeline():
             with_mask_3d=True,
             with_seg_3d=True),
         dict(type='IndoorPointSample', num_points=5),
-        dict(type='IndoorFlipData', flip_ratio_yz=1.0, flip_ratio_xz=1.0),
         dict(
-            type='IndoorGlobalRotScaleTrans',
-            shift_height=True,
-            rot_range=[-1 / 36, 1 / 36],
-            scale_range=None),
+            type='RandomFlip3D',
+            sync_2d=False,
+            flip_ratio_bev_horizontal=1.0,
+            flip_ratio_bev_vertical=1.0),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.087266, 0.087266],
+            scale_ratio_range=[1.0, 1.0],
+            shift_height=True),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',
@@ -63,6 +67,7 @@ def test_scannet_pipeline():
         scannet_gt_bboxes_3d, box_dim=6, with_yaw=False)
     results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
 
+    results['img_fields'] = []
     results['bbox3d_fields'] = []
     results['pts_mask_fields'] = []
     results['pts_seg_fields'] = []
@@ -74,25 +79,24 @@ def test_scannet_pipeline():
     gt_labels_3d = results['gt_labels_3d']._data
     pts_semantic_mask = results['pts_semantic_mask']._data
     pts_instance_mask = results['pts_instance_mask']._data
-    expected_points = np.array(
-        [[-2.9078157, -1.9569951, 2.3543026, 2.389488],
-         [-0.71360034, -3.4359822, 2.1330001, 2.1681855],
-         [-1.332374, 1.474838, -0.04405887, -0.00887359],
-         [2.1336637, -1.3265059, -0.02880373, 0.00638155],
-         [0.43895668, -3.0259454, 1.5560012, 1.5911865]])
+    expected_points = torch.tensor([[-2.7231, -2.2068, 2.3543, 2.3895],
+                                    [-0.4065, -3.4857, 2.1330, 2.1682],
+                                    [-1.4578, 1.3510, -0.0441, -0.0089],
+                                    [2.2428, -1.1323, -0.0288, 0.0064],
+                                    [0.7052, -2.9752, 1.5560, 1.5912]])
     expected_gt_bboxes_3d = torch.tensor(
-        [[-1.5005, -3.5126, 1.8565, 1.7457, 0.2415, 0.5724, 0.0000],
-         [-2.8849, 3.4962, 1.5268, 0.6617, 0.1743, 0.6715, 0.0000],
-         [-1.1586, -2.1924, 0.6165, 0.5557, 2.5376, 1.2145, 0.0000],
-         [-2.9305, -2.4856, 0.9722, 0.6270, 1.8462, 0.2870, 0.0000],
-         [3.3115, -0.0048, 1.0712, 0.4619, 3.8605, 2.1603, 0.0000]])
+        [[-1.1835, -3.6317, 1.8565, 1.7577, 0.3761, 0.5724, 0.0000],
+         [-3.1832, 3.2269, 1.5268, 0.6727, 0.2251, 0.6715, 0.0000],
+         [-0.9598, -2.2864, 0.6165, 0.7506, 2.5709, 1.2145, 0.0000],
+         [-2.6988, -2.7354, 0.9722, 0.7680, 1.8877, 0.2870, 0.0000],
+         [3.2989, 0.2885, 1.0712, 0.7600, 3.8814, 2.1603, 0.0000]])
     expected_gt_labels_3d = np.array([
         6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
         0, 0, 0, 5, 5, 5
     ])
     expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
-    assert np.allclose(points, expected_points)
+    assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor[:5, :], expected_gt_bboxes_3d,
                           1e-2)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels_3d)
@@ -111,12 +115,16 @@ def test_sunrgbd_pipeline():
             load_dim=6,
             use_dim=[0, 1, 2]),
         dict(type='LoadAnnotations3D'),
-        dict(type='IndoorFlipData', flip_ratio_yz=1.0),
         dict(
-            type='IndoorGlobalRotScaleTrans',
-            shift_height=True,
-            rot_range=[-1 / 6, 1 / 6],
-            scale_range=[0.85, 1.15]),
+            type='RandomFlip3D',
+            sync_2d=False,
+            flip_ratio_bev_horizontal=1.0,
+        ),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.523599, 0.523599],
+            scale_ratio_range=[0.85, 1.15],
+            shift_height=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -140,6 +148,7 @@ def test_sunrgbd_pipeline():
     results['ann_info'] = dict()
     results['ann_info']['gt_bboxes_3d'] = DepthInstance3DBoxes(gt_bboxes_3d)
     results['ann_info']['gt_labels_3d'] = gt_labels_3d
+    results['img_fields'] = []
     results['bbox3d_fields'] = []
     results['pts_mask_fields'] = []
     results['pts_seg_fields'] = []
@@ -148,16 +157,16 @@ def test_sunrgbd_pipeline():
     points = results['points']._data
     gt_bboxes_3d = results['gt_bboxes_3d']._data
     gt_labels_3d = results['gt_labels_3d']._data
-    expected_points = np.array([[0.6512, 1.5781, 0.0710, 0.0499],
-                                [0.6473, 1.5701, 0.0657, 0.0447],
-                                [0.6464, 1.5635, 0.0826, 0.0616],
-                                [0.6453, 1.5603, 0.0849, 0.0638],
-                                [0.6488, 1.5786, 0.0461, 0.0251]])
+    expected_points = torch.tensor([[0.8678, 1.3470, 0.1105, 0.0905],
+                                    [0.8707, 1.3635, 0.0437, 0.0238],
+                                    [0.8636, 1.3511, 0.0504, 0.0304],
+                                    [0.8690, 1.3461, 0.1265, 0.1065],
+                                    [0.8668, 1.3434, 0.1216, 0.1017]])
     expected_gt_bboxes_3d = torch.tensor(
-        [[-2.0125, 3.9473, -0.2545, 2.3730, 1.9458, 2.0303, 1.2206],
-         [-3.7037, 4.2396, -0.8109, 0.6032, 0.9104, 1.0033, 1.2663],
-         [0.6529, 2.1638, -0.1523, 0.7348, 1.6113, 2.1694, 2.8140]])
+        [[-1.2136, 4.0206, -0.2412, 2.2493, 1.8444, 1.9245, 1.3989],
+         [-2.7420, 4.5777, -0.7686, 0.5718, 0.8629, 0.9510, 1.4446],
+         [0.9729, 1.9087, -0.1443, 0.6965, 1.5273, 2.0563, 2.9924]])
     expected_gt_labels_3d = np.array([0, 7, 6])
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.allclose(gt_labels_3d.flatten(), expected_gt_labels_3d)
-    assert np.allclose(points, expected_points, 1e-2)
+    assert torch.allclose(points, expected_points, 1e-2)

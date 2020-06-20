@@ -56,9 +56,22 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                       gt_bboxes,
                       gt_labels,
                       gt_bboxes_ignore=None,
-                      gt_masks=None,
                       **kwargs):
-        """Forward function during training"""
+        """Forward function during training
+
+        Args:
+            x (dict): Contains features from the first stage.
+            img_metas (list[dict]): Meta info of each image.
+            proposal_list (list[dict]): Proposal information from rpn.
+            gt_bboxes (list[:obj:BaseInstance3DBoxes]):
+                GT bboxes of each sample. The bboxes are encapsulated
+                by 3D box structures.
+            gt_labels (list[LongTensor]): GT labels of each sample.
+            gt_bboxes_ignore (list[Tensor], optional): Specify which bounding.
+
+        Returns:
+            dict: losses from each head.
+        """
         pass
 
     def simple_test(self,
