@@ -1,11 +1,13 @@
 import torch
 
 
-def bbox3d_mapping_back(bboxes, scale_factor, flip):
+def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
     """Map bboxes from testing scale to original image scale"""
     new_bboxes = bboxes.clone()
-    if flip:
-        new_bboxes.flip()
+    if flip_horizontal:
+        new_bboxes.flip('horizontal')
+    if flip_vertical:
+        new_bboxes.flip('vertical')
     new_bboxes.scale(1 / scale_factor)
 
     return new_bboxes

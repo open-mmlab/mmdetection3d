@@ -22,12 +22,16 @@ train_pipeline = [
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39)),
     dict(type='IndoorPointSample', num_points=40000),
-    dict(type='IndoorFlipData', flip_ratio_yz=0.5, flip_ratio_xz=0.5),
     dict(
-        type='IndoorGlobalRotScaleTrans',
-        shift_height=True,
-        rot_range=[-1 / 36, 1 / 36],
-        scale_range=None),
+        type='RandomFlip3D',
+        sync_2d=False,
+        flip_ratio_bev_horizontal=0.5,
+        flip_ratio_bev_vertical=0.5),
+    dict(
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.087266, 0.087266],
+        scale_ratio_range=[1.0, 1.0],
+        shift_height=True),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Collect3D',
@@ -53,7 +57,11 @@ test_pipeline = [
                 rot_range=[0, 0],
                 scale_ratio_range=[1., 1.],
                 translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=0.5,
+                flip_ratio_bev_vertical=0.5),
             dict(type='IndoorPointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
