@@ -247,7 +247,7 @@ class BaseInstance3DBoxes(object):
         """Scale the box with horizontal and vertical scaling factors
 
         Args:
-            scale_factors (float): scale factors to scale the boxes.
+            scale_factors (float): Scale factors to scale the boxes.
         """
         self.tensor[:, :6] *= scale_factor
         self.tensor[:, 7:] *= scale_factor
@@ -256,8 +256,8 @@ class BaseInstance3DBoxes(object):
         """Limit the yaw to a given period and offset
 
         Args:
-            offset (float): the offset of the yaw
-            period (float): the expected period
+            offset (float): The offset of the yaw.
+            period (float): The expected period.
         """
         self.tensor[:, 6] = limit_period(self.tensor[:, 6], offset, period)
 
@@ -268,10 +268,10 @@ class BaseInstance3DBoxes(object):
         if either of its side is no larger than threshold.
 
         Args:
-            threshold (float): the threshold of minimal sizes
+            threshold (float): The threshold of minimal sizes.
 
         Returns:
-            torch.Tensor: a binary vector which represents whether each
+            torch.Tensor: A binary vector which represents whether each
                 box is empty (False) or non-empty (True).
         """
         box = self.tensor
@@ -321,11 +321,11 @@ class BaseInstance3DBoxes(object):
     def cat(cls, boxes_list):
         """Concatenates a list of Boxes into a single Boxes
 
-        Arguments:
-            boxes_list (list[Boxes])
+        Args:
+            boxes_list (list[Boxes]): List of boxes.
 
         Returns:
-            Boxes: the concatenated Boxes
+            Boxes: The concatenated Boxes.
         """
         assert isinstance(boxes_list, (list, tuple))
         if len(boxes_list) == 0:
@@ -365,7 +365,7 @@ class BaseInstance3DBoxes(object):
         """Yield a box as a Tensor of shape (4,) at a time.
 
         Returns:
-            torch.Tensor: a box of shape (4,).
+            torch.Tensor: A box of shape (4,).
         """
         yield from self.tensor
 
@@ -378,12 +378,12 @@ class BaseInstance3DBoxes(object):
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
-            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
-            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+            boxes1 (:obj:BaseInstanceBoxes): Boxes 1 contain N boxes.
+            boxes2 (:obj:BaseInstanceBoxes): Boxes 2 contain M boxes.
+            mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes
+            torch.Tensor: Calculated iou of boxes.
         """
         assert isinstance(boxes1, BaseInstance3DBoxes)
         assert isinstance(boxes2, BaseInstance3DBoxes)
@@ -410,12 +410,12 @@ class BaseInstance3DBoxes(object):
             boxes1 and boxes2 are not necessarily to be in the same type.
 
         Args:
-            boxes1 (:obj:BaseInstanceBoxes): boxes 1 contain N boxes
-            boxes2 (:obj:BaseInstanceBoxes): boxes 2 contain M boxes
-            mode (str, optional): mode of iou calculation. Defaults to 'iou'.
+            boxes1 (:obj:BaseInstanceBoxes): Boxes 1 contain N boxes.
+            boxes2 (:obj:BaseInstanceBoxes): Boxes 2 contain M boxes.
+            mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes
+            torch.Tensor: Calculated iou of boxes.
         """
         assert isinstance(boxes1, BaseInstance3DBoxes)
         assert isinstance(boxes2, BaseInstance3DBoxes)

@@ -85,7 +85,7 @@ class Anchor3DRangeGenerator(object):
                 multiple feature levels.
             device (str): Device where the anchors will be put on.
 
-        Return:
+        Returns:
             list[torch.Tensor]: Anchors in multiple feature levels.
                 The sizes of each tensor should be [N, 4], where
                 N = width * height * num_base_anchors, width and height

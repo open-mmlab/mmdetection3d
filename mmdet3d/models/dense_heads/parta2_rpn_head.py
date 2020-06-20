@@ -109,21 +109,22 @@ class PartA2RPNHead(Anchor3DHead):
         """Get bboxes of single branch.
 
         Args:
-            cls_scores (Tensor): Class score in single batch.
-            bbox_preds (Tensor): Bbox prediction in single batch.
-            dir_cls_preds (Tensor): Predictions of direction class
+            cls_scores (torch.Tensor): Class score in single batch.
+            bbox_preds (torch.Tensor): Bbox prediction in single batch.
+            dir_cls_preds (torch.Tensor): Predictions of direction class
                 in single batch.
-            mlvl_anchors (List[Tensor]): Multi-level anchors in single batch.
+            mlvl_anchors (List[torch.Tensor]): Multi-level anchors
+                in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
             cfg (None | ConfigDict): Training or testing config.
-            rescale (list[Tensor]): whether th rescale bbox.
+            rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:
             dict: Predictions of single batch. Contain the keys:
                 - boxes_3d (:obj:BaseInstance3DBoxes): Predicted 3d bboxes.
-                - scores_3d (Tensor): Score of each bbox.
-                - labels_3d (Tensor): Label of each bbox.
-                - cls_preds (Tensor): Class score of each bbox.
+                - scores_3d (torch.Tensor): Score of each bbox.
+                - labels_3d (torch.Tensor): Label of each bbox.
+                - cls_preds (torch.Tensor): Class score of each bbox.
         """
         assert len(cls_scores) == len(bbox_preds) == len(mlvl_anchors)
         mlvl_bboxes = []
@@ -198,13 +199,16 @@ class PartA2RPNHead(Anchor3DHead):
         """Class agnostic nms for single batch.
 
         Args:
-            mlvl_bboxes (Tensor): Bboxes from Multi-level.
-            mlvl_bboxes_for_nms (Tensor): Bboxes for nms (bev or minmax boxes)
-                from Multi-level.
-            mlvl_max_scores (Tensor): Max scores of Multi-level bbox.
-            mlvl_label_pred (Tensor): Class predictions of Multi-level bbox.
-            mlvl_cls_score (Tensor): Class scores of Multi-level bbox.
-            mlvl_dir_scores (Tensor): Direction scores of Multi-level bbox.
+            mlvl_bboxes (torch.Tensor): Bboxes from Multi-level.
+            mlvl_bboxes_for_nms (torch.Tensor): Bboxes for nms
+                (bev or minmax boxes) from Multi-level.
+            mlvl_max_scores (torch.Tensor): Max scores of Multi-level bbox.
+            mlvl_label_pred (torch.Tensor): Class predictions
+                of Multi-level bbox.
+            mlvl_cls_score (torch.Tensor): Class scores of
+                Multi-level bbox.
+            mlvl_dir_scores (torch.Tensor): Direction scores of
+                Multi-level bbox.
             score_thr (int): Score threshold.
             max_num (int): Max number of bboxes after nms.
             cfg (None | ConfigDict): Training or testing config.
@@ -213,9 +217,9 @@ class PartA2RPNHead(Anchor3DHead):
         Returns:
             dict: Predictions of single batch. Contain the keys:
                 - boxes_3d (:obj:BaseInstance3DBoxes): Predicted 3d bboxes.
-                - scores_3d (Tensor): Score of each bbox.
-                - labels_3d (Tensor): Label of each bbox.
-                - cls_preds (Tensor): Class score of each bbox.
+                - scores_3d (torch.Tensor): Score of each bbox.
+                - labels_3d (torch.Tensor): Label of each bbox.
+                - cls_preds (torch.Tensor): Class score of each bbox.
         """
         bboxes = []
         scores = []

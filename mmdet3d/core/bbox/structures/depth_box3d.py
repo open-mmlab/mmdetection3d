@@ -7,7 +7,7 @@ from .utils import limit_period, rotation_3d_in_axis
 
 
 class DepthInstance3DBoxes(BaseInstance3DBoxes):
-    """3D boxes of instances in Depth coordinates
+    """3D boxes of instances in Depth coordinates.
 
     Coordinates in Depth:
     .. code-block:: none
@@ -23,11 +23,11 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
     The yaw is 0 at the positive direction of x axis, and increases from
     the positive direction of x to the positive direction of y.
 
-    Attributes:
-        tensor (torch.Tensor): float matrix of N x box_dim.
-        box_dim (int): integer indicates the dimension of a box
+    Args:
+        tensor (Tensor): Float matrix of N x box_dim.
+        box_dim (int): Integer indicates the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): if True, the value of yaw will be set to 0 as minmax
+        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
 
@@ -89,17 +89,17 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def bev(self):
-        """Calculate the 2D bounding boxes in BEV with rotation
+        """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: a nx5 tensor of 2D BEV box of each box.
-                The box is in XYWHR format
+            torch.Tensor: A nx5 tensor of 2D BEV box of each box.
+                The box is in XYWHR format.
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
 
     @property
     def nearest_bev(self):
-        """Calculate the 2D bounding boxes in BEV without rotation
+        """Calculate the 2D bounding boxes in BEV without rotation.
 
         Returns:
             torch.Tensor: a tensor of 2D BEV box of each box.
@@ -196,11 +196,11 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             return points
 
     def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range
+        """Check whether the boxes are in the given range.
 
         Args:
-            box_range (list | torch.Tensor): the range of box
-                (x_min, y_min, x_max, y_max)
+            box_range (list | torch.Tensor): The range of box
+                (x_min, y_min, x_max, y_max).
 
         Note:
             In the original implementation of SECOND, checking whether
@@ -222,7 +222,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to `dst` mode.
 
         Args:
-            dst (BoxMode): the target Box mode
+            dst (BoxMode): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -238,7 +238,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             box=self, src=Box3DMode.DEPTH, dst=dst, rt_mat=rt_mat)
 
     def points_in_boxes(self, points):
-        """Find points that are in boxes (CUDA)
+        """Find points that are in boxes (CUDA).
 
         Args:
             points (torch.Tensor): [1, M, 3] or [M, 3], [x, y, z]

@@ -340,13 +340,14 @@ def fused_compute_statistics(overlaps,
 
 
 def calculate_iou_partly(gt_annos, dt_annos, metric, num_parts=50):
-    """fast iou algorithm. this function can be used independently to
+    """Fast iou algorithm. this function can be used independently to
     do result analysis. Must be used in CAMERA coordinate system.
+
     Args:
-        gt_annos: dict, must from get_label_annos() in kitti_common.py
-        dt_annos: dict, must from get_label_annos() in kitti_common.py
-        metric: eval type. 0: bbox, 1: bev, 2: 3d
-        num_parts: int. a parameter for fast calculate algorithm
+        gt_annos (dict): Must from get_label_annos() in kitti_common.py.
+        dt_annos (dict): Must from get_label_annos() in kitti_common.py.
+        metric (int): Eval type. 0: bbox, 1: bev, 2: 3d.
+        num_parts (int): A parameter for fast calculate algorithm.
     """
     assert len(gt_annos) == len(dt_annos)
     total_dt_num = np.stack([len(a['name']) for a in dt_annos], 0)
@@ -456,17 +457,19 @@ def eval_class(gt_annos,
                compute_aos=False,
                num_parts=200):
     """Kitti eval. support 2d/bev/3d/aos eval. support 0.5:0.05:0.95 coco AP.
+
     Args:
-        gt_annos: dict, must from get_label_annos() in kitti_common.py
-        dt_annos: dict, must from get_label_annos() in kitti_common.py
-        current_classes: list of int, 0: car, 1: pedestrian, 2: cyclist
-        difficultys: list of int. eval difficulty, 0: easy, 1: normal, 2: hard
-        metric: eval type. 0: bbox, 1: bev, 2: 3d
-        min_overlaps: float, min overlap. format: [num_overlap, metric, class].
-        num_parts: int. a parameter for fast calculate algorithm
+        gt_annos (dict): Must from get_label_annos() in kitti_common.py.
+        dt_annos (dict): Must from get_label_annos() in kitti_common.py.
+        current_classes (list[int]): 0: car, 1: pedestrian, 2: cyclist.
+        difficultys (list[int]): Eval difficulty, 0: easy, 1: normal, 2: hard
+        metric (int): Eval type. 0: bbox, 1: bev, 2: 3d
+        min_overlaps (float): Min overlap. format:
+            [num_overlap, metric, class].
+        num_parts (int): A parameter for fast calculate algorithm
 
     Returns:
-        dict of recall, precision and aos
+        dict: recall, precision and aos
     """
     assert len(gt_annos) == len(dt_annos)
     num_examples = len(gt_annos)
