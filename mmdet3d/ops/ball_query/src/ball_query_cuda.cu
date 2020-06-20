@@ -1,3 +1,6 @@
+// Modified from
+// https://github.com/sshaoshuai/Pointnet2.PyTorch/tree/master/pointnet2/src/ball_query_gpu.cu
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
