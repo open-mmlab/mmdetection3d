@@ -1,22 +1,32 @@
-import torch
-
-from mmdet3d.ops.iou3d import boxes_iou3d_gpu_camera, boxes_iou3d_gpu_lidar
 from mmdet.core.bbox import bbox_overlaps
 from mmdet.core.bbox.iou_calculators.builder import IOU_CALCULATORS
-from .. import box_torch_ops
+from ..structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                          LiDARInstance3DBoxes)
 
 
 @IOU_CALCULATORS.register_module()
 class BboxOverlapsNearest3D(object):
-    """Nearest 3D IoU Calculator"""
+    """Nearest 3D IoU Calculator
+
+    Note:
+        This IoU calculator first finds the nearest 2D boxes in bird eye view
+        (BEV), and then calculate the 2D IoU using ``:meth:bbox_overlaps``.
+
+    Args:
+        coordinate (str): 'camera', 'lidar', or 'depth' coordinate system
+    """
+
+    def __init__(self, coordinate='lidar'):
+        assert coordinate in ['camera', 'lidar', 'depth']
+        self.coordinate = coordinate
 
     def __call__(self, bboxes1, bboxes2, mode='iou', is_aligned=False):
-        return bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode, is_aligned)
+        return bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode, is_aligned,
+                                        self.coordinate)
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += '(mode={}, is_aligned={})'.format(self.mode,
-                                                      self.is_aligned)
+        repr_str += f'(coordinate={self.coordinate}'
         return repr_str
 
 
@@ -25,11 +35,11 @@ class BboxOverlaps3D(object):
     """3D IoU Calculator
 
     Args:
-        coordinate (str): 'camera' or 'lidar' coordinate system
+        coordinate (str): 'camera', 'lidar', or 'depth' coordinate system
     """
 
     def __init__(self, coordinate):
-        assert coordinate in ['camera', 'lidar']
+        assert coordinate in ['camera', 'lidar', 'depth']
         self.coordinate = coordinate
 
     def __call__(self, bboxes1, bboxes2, mode='iou'):
@@ -37,35 +47,63 @@ class BboxOverlaps3D(object):
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += '(mode={}, is_aligned={})'.format(self.mode,
-                                                      self.is_aligned)
+        repr_str += f'(coordinate={self.coordinate}'
         return repr_str
 
 
-def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
+def bbox_overlaps_nearest_3d(bboxes1,
+                             bboxes2,
+                             mode='iou',
+                             is_aligned=False,
+                             coordinate='lidar'):
     """Calculate nearest 3D IoU
+
+    Note:
+        This function first finds the nearest 2D boxes in bird eye view
+        (BEV), and then calculate the 2D IoU using ``:meth:bbox_overlaps``.
+        Ths IoU calculator ``:class:BboxOverlapsNearest3D`` uses this
+        function to calculate IoUs of boxes.
+
+        If ``is_aligned`` is ``False``, then it calculates the ious between
+        each bbox of bboxes1 and bboxes2, otherwise the ious between each
+        aligned pair of bboxes1 and bboxes2.
 
     Args:
         bboxes1 (torch.Tensor): shape (N, 7+N) [x, y, z, h, w, l, ry, v].
         bboxes2 (torch.Tensor): shape (M, 7+N) [x, y, z, h, w, l, ry, v].
         mode (str): "iou" (intersection over union) or iof
             (intersection over foreground).
+        is_aligned (bool): Whether the calculation is aligned
 
     Return:
-        torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
-            with shape (M, N).(not support aligned mode currently).
+        torch.Tensor: If ``is_aligned`` is ``True``, return ious between
+            bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
+            ``False``, return shape is M.
+
     """
     assert bboxes1.size(-1) >= 7
     assert bboxes2.size(-1) >= 7
-    column_index1 = bboxes1.new_tensor([0, 1, 3, 4, 6], dtype=torch.long)
-    rbboxes1_bev = bboxes1.index_select(dim=-1, index=column_index1)
-    rbboxes2_bev = bboxes2.index_select(dim=-1, index=column_index1)
+
+    if coordinate == 'camera':
+        box_type = CameraInstance3DBoxes
+    elif coordinate == 'lidar':
+        box_type = LiDARInstance3DBoxes
+    elif coordinate == 'depth':
+        box_type = DepthInstance3DBoxes
+    else:
+        raise ValueError(
+            '"coordinate" should be in ["camera", "lidar", "depth"],'
+            f' got invalid {coordinate}')
+
+    bboxes1 = box_type(bboxes1, box_dim=bboxes1.shape[-1])
+    bboxes2 = box_type(bboxes2, box_dim=bboxes2.shape[-1])
 
     # Change the bboxes to bev
     # box conversion and iou calculation in torch version on CUDA
     # is 10x faster than that in numpy version
-    bboxes1_bev = box_torch_ops.rbbox2d_to_near_bbox(rbboxes1_bev)
-    bboxes2_bev = box_torch_ops.rbbox2d_to_near_bbox(rbboxes2_bev)
+    bboxes1_bev = bboxes1.nearest_bev
+    bboxes2_bev = bboxes2.nearest_bev
+
     ret = bbox_overlaps(
         bboxes1_bev, bboxes2_bev, mode=mode, is_aligned=is_aligned)
     return ret
@@ -73,6 +111,11 @@ def bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode='iou', is_aligned=False):
 
 def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     """Calculate 3D IoU using cuda implementation
+
+    Note:
+        This function calculate the IoU of 3D boxes based on their volumes.
+        IoU calculator ``:class:BboxOverlaps3D`` uses this function to
+        calculate the actual IoUs of boxes.
 
     Args:
         bboxes1 (torch.Tensor): shape (N, 7) [x, y, z, h, w, l, ry].
@@ -83,19 +126,21 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
 
     Return:
         torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
-            with shape (M, N).(not support aligned mode currently).
+            with shape (M, N) (aligned mode is not supported currently).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) == 7
-    assert coordinate in ['camera', 'lidar']
-
-    rows = bboxes1.size(0)
-    cols = bboxes2.size(0)
-    if rows * cols == 0:
-        return bboxes1.new(rows, cols)
-
     if coordinate == 'camera':
-        return boxes_iou3d_gpu_camera(bboxes1, bboxes2, mode)
+        box_type = CameraInstance3DBoxes
     elif coordinate == 'lidar':
-        return boxes_iou3d_gpu_lidar(bboxes1, bboxes2, mode)
+        box_type = LiDARInstance3DBoxes
+    elif coordinate == 'depth':
+        box_type = DepthInstance3DBoxes
     else:
-        raise NotImplementedError
+        raise ValueError(
+            '"coordinate" should be in ["camera", "lidar", "depth"],'
+            f' got invalid {coordinate}')
+
+    bboxes1 = box_type(bboxes1, box_dim=bboxes1.shape[-1])
+    bboxes2 = box_type(bboxes2, box_dim=bboxes2.shape[-1])
+
+    return bboxes1.overlaps(bboxes1, bboxes2, mode=mode)

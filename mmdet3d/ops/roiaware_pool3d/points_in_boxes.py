@@ -31,7 +31,8 @@ def points_in_boxes_gpu(points, boxes):
 def points_in_boxes_cpu(points, boxes):
     """Find points that are in boxes (CPU)
 
-    Note: Currently, the output of this function is different from that of
+    Note:
+        Currently, the output of this function is different from that of
         points_in_boxes_gpu.
 
     Args:
