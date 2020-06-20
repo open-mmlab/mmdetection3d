@@ -8,14 +8,14 @@ def average_precision(recalls, precisions, mode='area'):
     """Calculate average precision (for single or multiple scales).
 
     Args:
-        recalls (ndarray): shape (num_scales, num_dets) or (num_dets, )
-        precisions (ndarray): shape (num_scales, num_dets) or (num_dets, )
+        recalls (np.ndarray): shape (num_scales, num_dets) or (num_dets, )
+        precisions (np.ndarray): shape (num_scales, num_dets) or (num_dets, )
         mode (str): 'area' or '11points', 'area' means calculating the area
             under precision-recall curve, '11points' means calculating
             the average precision of recalls at [0, 0.1, ..., 1]
 
     Returns:
-        float or ndarray: calculated average precision
+        float or np.ndarray: calculated average precision
     """
     if recalls.ndim == 1:
         recalls = recalls[np.newaxis, :]
@@ -60,8 +60,8 @@ def eval_det_cls(pred, gt, iou_thr=None):
         iou_thr (list[float]): a list, iou threshold.
 
     Return:
-        ndarray: numpy array of length nd.
-        ndarray: numpy array of length nd.
+        np.ndarray: numpy array of length nd.
+        np.ndarray: numpy array of length nd.
         float: scalar, average precision.
     """
 
@@ -204,7 +204,7 @@ def indoor_eval(gt_annos,
                 logger=None,
                 box_type_3d=None,
                 box_mode_3d=None):
-    """Scannet Evaluation.
+    """Indoor Evaluation.
 
     Evaluate the result of the detection.
 
@@ -212,10 +212,9 @@ def indoor_eval(gt_annos,
         gt_annos (list[dict]): GT annotations.
         dt_annos (list[dict]): Detection annotations. the dict
             includes the following keys
-            - labels_3d (Tensor): Labels of boxes.
-            - boxes_3d (:obj:BaseInstance3DBoxes): 3d bboxes in
-                Depth coordinate.
-            - scores_3d (Tensor): Scores of boxes.
+            - labels_3d (torch.Tensor): Labels of boxes.
+            - boxes_3d (BaseInstance3DBoxes): 3d bboxes in Depth coordinate.
+            - scores_3d (torch.Tensor): Scores of boxes.
         metric (list[float]): AP IoU thresholds.
         label2cat (dict): {label: cat}.
         logger (logging.Logger | str | None): The way to print the mAP

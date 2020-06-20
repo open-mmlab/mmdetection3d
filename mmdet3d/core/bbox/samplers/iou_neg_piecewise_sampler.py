@@ -6,7 +6,7 @@ from . import RandomSampler, SamplingResult
 
 @BBOX_SAMPLERS.register_module()
 class IoUNegPiecewiseSampler(RandomSampler):
-    """IoU Piece-wise Sampling
+    """IoU Piece-wise Sampling.
 
     Sampling negtive proposals according to a list of IoU thresholds.
     The negtive proposals are divided into several pieces according

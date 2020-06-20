@@ -304,19 +304,19 @@ def rotate_iou_kernel_eval(N,
 
 
 def rotate_iou_gpu_eval(boxes, query_boxes, criterion=-1, device_id=0):
-    """rotated box iou running in gpu. 500x faster than cpu version
+    """Rotated box iou running in gpu. 500x faster than cpu version
     (take 5ms in one example with numba.cuda code).
     convert from [this project](
         https://github.com/hongzhenwang/RRPN-revise/tree/master/lib/rotation).
 
     Args:
-        boxes (float tensor: [N, 5]): rbboxes. format: centers, dims,
-            angles(clockwise when positive)
+        boxes (torch.Tensor): rbboxes. format: centers, dims,
+            angles(clockwise when positive) with the shape of [N, 5].
         query_boxes (float tensor: [K, 5]): [description]
         device_id (int, optional): Defaults to 0. [description]
 
     Returns:
-        [type]: [description]
+        np.ndarray: IoU results.
     """
     boxes = boxes.astype(np.float32)
     query_boxes = query_boxes.astype(np.float32)

@@ -70,13 +70,13 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
     """3d nms for aligned boxes.
 
     Args:
-        boxes (Tensor): Aligned box with shape [n, 6].
-        scores (Tensor): Scores of each box.
-        classes (Tensor): Class of each box.
+        boxes (torch.Tensor): Aligned box with shape [n, 6].
+        scores (torch.Tensor): Scores of each box.
+        classes (torch.Tensor): Class of each box.
         thresh (float): Iou threshold for nms.
 
     Returns:
-        Tensor: Indices of selected boxes.
+        torch.Tensor: Indices of selected boxes.
     """
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
