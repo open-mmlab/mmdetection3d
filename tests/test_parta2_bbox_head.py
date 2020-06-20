@@ -425,7 +425,10 @@ def test_multi_class_nms():
              1.4715e+00, -2.9639e+00
          ]]).cuda()
 
-    selected = self.multi_class_nms(box_probs, box_preds, 0.1, 0.001)
+    input_meta = dict(
+        box_type_3d=LiDARInstance3DBoxes, box_mode_3d=Box3DMode.LIDAR)
+    selected = self.multi_class_nms(box_probs, box_preds, 0.1, 0.001,
+                                    input_meta)
     expected_selected = torch.Tensor([0, 1, 4, 8]).cuda()
 
     assert torch.all(selected == expected_selected)

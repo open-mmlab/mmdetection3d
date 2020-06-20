@@ -1,3 +1,6 @@
+# TODO: clean the functions in this file and move the APIs into box structures
+# in the future
+
 import numba
 import numpy as np
 
@@ -248,7 +251,7 @@ def rotation_points_single_angle(points, angle, axis=0):
     return points @ rot_mat_T, rot_mat_T
 
 
-def project_to_image(points_3d, proj_mat):
+def points_cam2img(points_3d, proj_mat):
     points_shape = list(points_3d.shape)
     points_shape[-1] = 1
     points_4 = np.concatenate([points_3d, np.zeros(points_shape)], axis=-1)
@@ -260,7 +263,7 @@ def project_to_image(points_3d, proj_mat):
 def box3d_to_bbox(box3d, rect, Trv2c, P2):
     box_corners = center_to_corner_box3d(
         box3d[:, :3], box3d[:, 3:6], box3d[:, 6], [0.5, 1.0, 0.5], axis=1)
-    box_corners_in_image = project_to_image(box_corners, P2)
+    box_corners_in_image = points_cam2img(box_corners, P2)
     # box_corners_in_image: [N, 8, 2]
     minxy = np.min(box_corners_in_image, axis=1)
     maxxy = np.max(box_corners_in_image, axis=1)

@@ -12,7 +12,7 @@ class BaseInstance3DBoxes(object):
 
     Note:
         The box is bottom centered, i.e. the relative position of origin in
-            the box is (0.5, 0.5, 0).
+        the box is (0.5, 0.5, 0).
 
     Args:
         tensor (torch.Tensor | np.ndarray | list): a Nxbox_dim matrix.
@@ -423,6 +423,11 @@ class BaseInstance3DBoxes(object):
             f'be in the same type, got {type(boxes1)} and {type(boxes2)}.'
 
         assert mode in ['iou', 'iof']
+
+        rows = len(boxes1)
+        cols = len(boxes2)
+        if rows * cols == 0:
+            return boxes1.tensor.new(rows, cols)
 
         # height overlap
         overlaps_h = cls.height_overlaps(boxes1, boxes2)
