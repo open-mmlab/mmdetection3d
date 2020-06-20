@@ -24,11 +24,6 @@ post_processing
 .. automodule:: mmdet3d.core.post_processing
     :members:
 
-optimizer
-^^^^^^^^^^
-.. automodule:: mmdet3d.core.optimizer
-    :members:
-
 utils
 ^^^^^^^^^^
 .. automodule:: mmdet3d.core.utils
@@ -60,6 +55,11 @@ backbones
 .. automodule:: mmdet3d.models.backbones
     :members:
 
+necks
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.necks
+    :members:
+
 dense_heads
 ^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.dense_heads
@@ -68,4 +68,39 @@ dense_heads
 roi_heads
 ^^^^^^^^^^
 .. automodule:: mmdet3d.models.roi_heads
+    :members:
+
+roi_heads.bbox_heads
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.roi_heads.bbox_heads
+    :members:
+
+roi_heads.mask_heads
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.roi_heads.mask_heads
+    :members:
+
+roi_heads.roi_extractors
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.roi_heads.roi_extractors
+    :members:
+
+fusion_layers
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.fusion_layers
+    :members:
+
+losses
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.losses
+    :members:
+
+middle_encoders
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.middle_encoders
+    :members:
+
+model_utils
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.model_utils
     :members:
