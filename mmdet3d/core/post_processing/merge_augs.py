@@ -33,10 +33,12 @@ def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
 
     for bboxes, img_info in zip(aug_results, img_metas):
         scale_factor = img_info[0]['pcd_scale_factor']
-        flip = img_info[0]['pcd_flip']
+        pcd_horizontal_flip = img_info[0]['pcd_horizontal_flip']
+        pcd_vertical_flip = img_info[0]['pcd_vertical_flip']
         recovered_scores.append(bboxes['scores_3d'])
         recovered_labels.append(bboxes['labels_3d'])
-        bboxes = bbox3d_mapping_back(bboxes['boxes_3d'], scale_factor, flip)
+        bboxes = bbox3d_mapping_back(bboxes['boxes_3d'], scale_factor,
+                                     pcd_horizontal_flip, pcd_vertical_flip)
         recovered_bboxes.append(bboxes)
 
     aug_bboxes = recovered_bboxes[0].cat(recovered_bboxes)

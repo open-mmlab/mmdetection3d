@@ -78,7 +78,6 @@ db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
-    object_rot_range=[0.0, 0.0],
     prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
     classes=class_names,
     sample_groups=dict(Car=15))
@@ -92,7 +91,7 @@ train_pipeline = [
         translation_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
         rot_range=[-0.78539816, 0.78539816]),
-    dict(type='RandomFlip3D', flip_ratio=0.5),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],

@@ -10,7 +10,17 @@ from .base_3droi_head import Base3DRoIHead
 
 @HEADS.register_module()
 class PartAggregationROIHead(Base3DRoIHead):
-    """Part aggregation roi head for PartA2"""
+    """Part aggregation roi head for PartA2
+
+    Args:
+        semantic_head (ConfigDict): Config of semantic head.
+        num_classes (int): The number of classes.
+        seg_roi_extractor (ConfigDict): Config of seg_roi_extractor.
+        part_roi_extractor (ConfigDict): Config of part_roi_extractor.
+        bbox_head (ConfigDict): Config of bbox_head.
+        train_cfg (ConfigDict): Training config.
+        test_cfg (ConfigDict): Testing config.
+    """
 
     def __init__(self,
                  semantic_head,
@@ -156,6 +166,18 @@ class PartAggregationROIHead(Base3DRoIHead):
         return bbox_results
 
     def _bbox_forward(self, seg_feats, part_feats, voxels_dict, rois):
+        """Forward function of roi_extractor and bbox_head.
+
+        Args:
+            seg_feats (torch.Tensor): Point-wise semantic features.
+            part_feats (torch.Tensor): Point-wise part prediction features.
+            voxels_dict (dict): Contains information of voxels.
+            rois (Tensor): Roi boxes.
+
+        Returns:
+            dict: Contains predictions of bbox_head and
+                features of roi_extractor.
+        """
         pooled_seg_feats = self.seg_roi_extractor(seg_feats,
                                                   voxels_dict['voxel_centers'],
                                                   voxels_dict['coors'][..., 0],

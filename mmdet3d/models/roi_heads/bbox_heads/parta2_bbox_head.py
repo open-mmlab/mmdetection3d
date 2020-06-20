@@ -231,6 +231,15 @@ class PartA2BboxHead(nn.Module):
         normal_init(self.conv_reg[-1].conv, mean=0, std=0.001)
 
     def forward(self, seg_feats, part_feats):
+        """Forward pass.
+
+        Args:
+            seg_feats (torch.Tensor): Point-wise semantic features.
+            part_feats (torch.Tensor): Point-wise part prediction features.
+
+        Returns:
+            tuple[torch.Tensor]: Score of class and bbox predictions.
+        """
         # (B * N, out_x, out_y, out_z, 4)
         rcnn_batch_size = part_feats.shape[0]
 
@@ -273,6 +282,22 @@ class PartA2BboxHead(nn.Module):
 
     def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
              pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
+        """Coumputing losses.
+
+        Args:
+            cls_score (Torch.tensor): Scores of each roi.
+            bbox_pred (Torch.tensor): Predictions of bboxes.
+            rois (Torch.tensor): Roi bboxes.
+            labels (Torch.tensor): Labels of class.
+            bbox_targets (Torch.tensor): Target of positive bboxes.
+            pos_gt_bboxes (Torch.tensor): Gt of positive bboxes.
+            reg_mask (Torch.tensor): Mask for positive bboxes.
+            label_weights (Torch.tensor): Weights of class loss.
+            bbox_weights (Torch.tensor): Weights of bbox loss.
+
+        Returns:
+            dict: Computed losses.
+        """
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
 
@@ -325,6 +350,17 @@ class PartA2BboxHead(nn.Module):
         return losses
 
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
+        """Generate targets.
+
+        Args:
+            sampling_results (list[:obj:SamplingResult]):
+                Sampled results from rois.
+            rcnn_train_cfg (ConfigDict): Training config of rcnn.
+            concat (bool): Whether to concatenate targets between batches.
+
+        Returns:
+            tuple: Targets of boxes and class prediction.
+        """
         pos_bboxes_list = [res.pos_bboxes for res in sampling_results]
         pos_gt_bboxes_list = [res.pos_gt_bboxes for res in sampling_results]
         iou_list = [res.iou for res in sampling_results]
@@ -444,6 +480,20 @@ class PartA2BboxHead(nn.Module):
                    class_pred,
                    img_metas,
                    cfg=None):
+        """Generate bboxes from bbox head predictions.
+
+        Args:
+            rois (torch.Tensor): Roi bboxes.
+            cls_score (torch.Tensor): Scores of bboxes.
+            bbox_pred (torch.Tensor): Bbox predictions
+            class_labels (torch.Tensor): Label of classes
+            class_pred (torch.Tensor): Score for nms.
+            img_metas (list[dict]): Contain pcd and img's meta info.
+            cfg (ConfigDict): Testing config.
+
+        Returns:
+            list[tuple]: Decoded bbox, scores and labels after nms.
+        """
         roi_batch_id = rois[..., 0]
         roi_boxes = rois[..., 1:]  # boxes without batch id
         batch_size = int(roi_batch_id.max().item() + 1)

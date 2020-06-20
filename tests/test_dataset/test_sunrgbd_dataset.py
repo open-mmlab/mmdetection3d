@@ -17,20 +17,24 @@ def test_getitem():
             load_dim=6,
             use_dim=[0, 1, 2]),
         dict(type='LoadAnnotations3D'),
-        dict(type='IndoorFlipData', flip_ratio_yz=1.0),
         dict(
-            type='IndoorGlobalRotScaleTrans',
-            shift_height=True,
-            rot_range=[-1 / 6, 1 / 6],
-            scale_range=[0.85, 1.15]),
+            type='RandomFlip3D',
+            sync_2d=False,
+            flip_ratio_bev_horizontal=0.5,
+        ),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.523599, 0.523599],
+            scale_ratio_range=[0.85, 1.15],
+            shift_height=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',
             keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'],
             meta_keys=[
-                'file_name', 'flip_xz', 'flip_yz', 'sample_idx', 'scale_ratio',
-                'rot_angle'
+                'file_name', 'pcd_horizontal_flip', 'sample_idx',
+                'pcd_scale_factor', 'pcd_rotation'
             ]),
     ]
 
@@ -40,32 +44,32 @@ def test_getitem():
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
     file_name = data['img_metas']._data['file_name']
-    flip_xz = data['img_metas']._data['flip_xz']
-    flip_yz = data['img_metas']._data['flip_yz']
-    scale_ratio = data['img_metas']._data['scale_ratio']
-    rot_angle = data['img_metas']._data['rot_angle']
+    pcd_horizontal_flip = data['img_metas']._data['pcd_horizontal_flip']
+    pcd_scale_factor = data['img_metas']._data['pcd_scale_factor']
+    pcd_rotation = data['img_metas']._data['pcd_rotation']
     sample_idx = data['img_metas']._data['sample_idx']
-    assert file_name == './tests/data/sunrgbd' \
-                        '/points/000001.bin'
-    assert flip_xz is False
-    assert flip_yz is True
-    assert abs(scale_ratio - 1.0308290128214932) < 1e-5
-    assert abs(rot_angle - 0.22534577750874518) < 1e-5
+    pcd_rotation_expected = np.array([[0.99889565, 0.04698427, 0.],
+                                      [-0.04698427, 0.99889565, 0.],
+                                      [0., 0., 1.]])
+    assert file_name == './tests/data/sunrgbd/points/000001.bin'
+    assert pcd_horizontal_flip is False
+    assert abs(pcd_scale_factor - 0.9770964398016714) < 1e-5
+    assert np.allclose(pcd_rotation, pcd_rotation_expected, 1e-3)
     assert sample_idx == 1
-    expected_points = np.array([[0.6512, 1.5781, 0.0710, 0.0499],
-                                [0.6473, 1.5701, 0.0657, 0.0447],
-                                [0.6464, 1.5635, 0.0826, 0.0616],
-                                [0.6453, 1.5603, 0.0849, 0.0638],
-                                [0.6488, 1.5786, 0.0461, 0.0251]])
+    expected_points = torch.tensor([[-0.9904, 1.2596, 0.1105, 0.0905],
+                                    [-0.9948, 1.2758, 0.0437, 0.0238],
+                                    [-0.9866, 1.2641, 0.0504, 0.0304],
+                                    [-0.9915, 1.2586, 0.1265, 0.1065],
+                                    [-0.9890, 1.2561, 0.1216, 0.1017]])
     expected_gt_bboxes_3d = torch.tensor(
-        [[-2.0125, 3.9473, -1.2696, 2.3730, 1.9458, 2.0303, 1.2206],
-         [-3.7037, 4.2396, -1.3126, 0.6032, 0.9104, 1.0033, 1.2663],
-         [0.6529, 2.1638, -1.2370, 0.7348, 1.6113, 2.1694, 2.8140]])
+        [[0.8308, 4.1168, -1.2035, 2.2493, 1.8444, 1.9245, 1.6486],
+         [2.3002, 4.8149, -1.2442, 0.5718, 0.8629, 0.9510, 1.6030],
+         [-1.1477, 1.8090, -1.1725, 0.6965, 1.5273, 2.0563, 0.0552]])
     expected_gt_labels = np.array([0, 7, 6])
     original_classes = sunrgbd_dataset.CLASSES
 
-    assert np.allclose(points, expected_points, 1e-2)
-    assert np.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-2)
+    assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
     assert original_classes == class_names
 
