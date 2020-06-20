@@ -1,6 +1,5 @@
 // Modified from
 // https://github.com/sshaoshuai/PCDet/blob/master/pcdet/ops/roiaware_pool3d/src/roiaware_pool3d_kernel.cu
-// Points in boxes cpu
 // Written by Shaoshuai Shi
 // All Rights Reserved 2019.
 

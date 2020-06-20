@@ -1,3 +1,6 @@
+// Modified from
+// https://github.com/sshaoshuai/Pointnet2.PyTorch/tree/master/pointnet2/src/ball_query.cpp
+
 #include <THC/THC.h>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
