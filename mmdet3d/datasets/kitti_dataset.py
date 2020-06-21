@@ -115,7 +115,8 @@ class KittiDataset(Custom3DDataset):
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
             bboxes=gt_bboxes,
-            labels=gt_labels)
+            labels=gt_labels,
+            gt_names=gt_names)
         return anns_results
 
     def drop_arrays_by_name(self, gt_names, used_classes):
