@@ -51,7 +51,7 @@ For other pre-trained models or self-implemented regnet models, the users are re
 
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP |NDS| Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [SECFPN](../)     |  2x    ||||
-|[RegNetX-400MF-SECFPN](./hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py)|  2x    ||||
-|    [FPN](../)     |  2x    ||||
-|[RegNetX-400MF-FPN](./hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py)|  2x    ||||
+|[SECFPN](../pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py)|2x|16.4||35.17|49.7||
+|[RegNetX-400MF-SECFPN](./hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py)|  2x    |16.4||41.2|55.2||
+|[FPN](../pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py)|2x|17.1||40.0|53.3||
+|[RegNetX-400MF-FPN](./hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py)|2x|17.3||44.8|56.4||
