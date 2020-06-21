@@ -1,6 +1,9 @@
 # PointPillars: Fast Encoders for Object Detection from Point Clouds
+
 ## Introduction
+
 We implement PointPillars and provide the results and checkpoints on KITTI and nuScenes datasets.
+
 ```
 @inproceedings{lang2019pointpillars,
   title={Pointpillars: Fast encoders for object detection from point clouds},
@@ -11,14 +14,19 @@ We implement PointPillars and provide the results and checkpoints on KITTI and n
 }
 
 ```
-## Usage
+
 ## Results
+
 ### KITTI
-|  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP |NDS| Download |
-| :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [SECFPN](../)    |||||
+
+|  Backbone|Class   | Lr schd | Mem (GB) | Inf time (fps) | AP  |Download |
+| :---------: | :-----: |:-----: | :------: | :------------: | :----: | :------: |
+|    [SECFPN](./hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py)|Car|cyclic 160e|5.4||77.1||
+|    [SECFPN](./hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py)|3 Class|cyclic 160e|5.5||59.5|
 
 ### nuScenes
+
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP |NDS| Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [SECFPN](../)    |||||
+|[SECFPN](./hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py)|2x|16.4||35.17|49.7||
+|[FPN](./hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py)|2x|16.4||40.0|53.3||

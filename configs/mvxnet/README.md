@@ -1,5 +1,7 @@
 # MVX-Net: Multimodal VoxelNet for 3D Object Detection
+
 ## Introduction
+
 We implement MVX-Net and provide its results and models on KITTI dataset.
 ```
 @inproceedings{sindagi2019mvx,
@@ -12,9 +14,11 @@ We implement MVX-Net and provide its results and models on KITTI dataset.
 }
 
 ```
-## Usage
+
 ## Results
+
 ### KITTI
-|  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP |NDS| Download |
+
+|  Backbone   |Class| Lr schd | Mem (GB) | Inf time (fps) | mAP | Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [SECFPN](../)    |||||
+|    [SECFPN](./dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py)|3 Class|cosine 80e|6.7||63.0||
