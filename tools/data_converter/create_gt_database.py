@@ -144,12 +144,12 @@ def create_groundtruth_database(dataset_class_name,
     print(f'Create GT Database of {dataset_class_name}')
     dataset_cfg = dict(
         type=dataset_class_name,
-        root_path=data_path,
+        data_root=data_path,
         ann_file=info_path,
     )
     if dataset_class_name == 'KittiDataset':
         dataset_cfg.update(
-            training=True,
+            test_mode=False,
             split='training',
             modality=dict(
                 use_lidar=True,
@@ -178,11 +178,11 @@ def create_groundtruth_database(dataset_class_name,
 
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
-        image_idx = j
-        annos = dataset.get_sensor_data(j)
+        annos = dataset.get_data_info(j)
         image_idx = annos['sample_idx']
-        points = annos['points']
-        gt_boxes_3d = annos['gt_bboxes_3d']
+        points = np.fromfile(
+            annos['pts_file_name'], dtype=np.float32).reshape(-1, 4)
+        gt_boxes_3d = annos['ann_info']['gt_bboxes_3d']
         names = annos['gt_names']
         group_dict = dict()
         group_ids = np.full([gt_boxes_3d.shape[0]], -1, dtype=np.int64)
