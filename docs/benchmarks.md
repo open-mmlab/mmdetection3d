@@ -18,111 +18,135 @@ with some other popular open source 3D detection codebases.
 
 ### VoteNet
 
-We compare our implementation with VoteNet and report the performance of VoteNets on SUNRGB-D v2 dataset under the AP@0.5 metric.
+We compare our implementation of VoteNet with [votenet](https://github.com/facebookresearch/votenet/) and report the performance on SUNRGB-D v2 dataset under the AP@0.5 metric.
 
 ```eval_rst
-  +----------------+---------------------+--------------------+-------------------+--------+
-  | Implementation | Training (sample/s) | Testing (sample/s) | Training Time (h) | AP@0.5 |
-  +================+=====================+====================+===================+========+
-  | MMDetection3D  |                     |                    |                   |        |
-  +----------------+---------------------+--------------------+-------------------+--------+
-  | VoteNet        |                     |                    |                   |        |
-  +----------------+---------------------+--------------------+-------------------+--------+
+  +----------------+---------------------+--------------------+--------+
+  | Implementation | Training (sample/s) | Testing (sample/s) | AP@0.5 |
+  +================+=====================+====================+========+
+  | MMDetection3D  |        358          |         17         |  35.8  |
+  +----------------+---------------------+--------------------+--------+
+  | VoteNet        |        77           |         3          |  31.5  |
+  +----------------+---------------------+--------------------+--------+
 ```
 
 ### PointPillars
 
-Since Det3D only provides PointPillars on car class while PCDet only provides PointPillars
+Since [Det3D](https://github.com/poodarchu/Det3D/) only provides PointPillars on car class while [PCDet](https://github.com/sshaoshuai/PCDet) only provides PointPillars
 on 3 classes, we compare with them separately. For performance on single class, we report the AP on moderate
 condition following the KITTI benchmark and compare average AP over all classes on moderate condition for
 performance on 3 classes.
 
 ```eval_rst
-  +----------------+---------------------+--------------------+-------------------+-------------+
-  | Implementation | Training (sample/s) | Testing (sample/s) | Training Time (h) | Moderate AP |
-  +================+=====================+====================+===================+=============+
-  | MMDetection3D  |                     |                    |                   |             |
-  +----------------+---------------------+--------------------+-------------------+-------------+
-  | PCDet          |                     |                    |                   |             |
-  +----------------+---------------------+--------------------+-------------------+-------------+
+  +----------------+---------------------+--------------------+
+  | Implementation | Training (sample/s) | Testing (sample/s) |
+  +================+=====================+====================+
+  | MMDetection3D  |         141         |                    |
+  +----------------+---------------------+--------------------+
+  | Det3D          |         140         |        20          |
+  +----------------+---------------------+--------------------+
 ```
 
 ```eval_rst
-  +----------------+---------------------+--------------------+-------------------+-------------+
-  | Implementation | Training (sample/s) | Testing (sample/s) | Training Time (h) | Moderate AP |
-  +================+=====================+====================+===================+=============+
-  | MMDetection3D  |                     |                    |                   |             |
-  +----------------+---------------------+--------------------+-------------------+-------------+
-  | Det3D          |                     |                    |                   |             |
-  +----------------+---------------------+--------------------+-------------------+-------------+
+  +----------------+---------------------+--------------------+
+  | Implementation | Training (sample/s) | Testing (sample/s) |
+  +================+=====================+====================+
+  | MMDetection3D  |         120         |                    |
+  +----------------+---------------------+--------------------+
+  | PCDet          |         43          |        64          |
+  +----------------+---------------------+--------------------+
 ```
 
 ### SECOND
 
-Det3D provides a different SECOND on car class and we cannot train the original SECOND by modifying the config.
-So we only compare with PCDet, which is a SECOND model on 3 classes, we report the AP on moderate
+[Det3D](https://github.com/poodarchu/Det3D/) provides a different SECOND on car class and we cannot train the original SECOND by modifying the config.
+So we only compare with [PCDet](https://github.com/sshaoshuai/PCDet), which is a SECOND model on 3 classes, we report the AP on moderate
 condition following the KITTI benchmark and compare average AP over all classes on moderate condition for
 performance on 3 classes.
 
   ```eval_rst
-    +----------------+---------------------+--------------------+-------------------+-------------+
-    | Implementation | Training (sample/s) | Testing (sample/s) | Training Time (h) | Moderate AP |
-    +================+=====================+====================+===================+=============+
-    | MMDetection3D  |                     |                    |                   |             |
-    +----------------+---------------------+--------------------+-------------------+-------------+
-    | PCDet          |                     |                    |                   |             |
-    +----------------+---------------------+--------------------+-------------------+-------------+
+    +----------------+---------------------+--------------------+
+    | Implementation | Training (sample/s) | Testing (sample/s) |
+    +================+=====================+====================+
+    | MMDetection3D  |         54          |                    |
+    +----------------+---------------------+--------------------+
+    | PCDet          |         44          |         30         |
+    +----------------+---------------------+--------------------+
   ```
 
 ### Part-A2
 
-We benchmark Part-A2 with that in PCDet. We report the AP on moderate condition following the KITTI benchmark
+We benchmark Part-A2 with that in [PCDet](https://github.com/sshaoshuai/PCDet). We report the AP on moderate condition following the KITTI benchmark
 and compare average AP over all classes on moderate condition for performance on 3 classes.
 
   ```eval_rst
-    +----------------+---------------------+--------------------+-------------------+-------------+
-    | Implementation | Training (sample/s) | Testing (sample/s) | Training Time (h) | Moderate AP |
-    +================+=====================+====================+===================+=============+
-    | MMDetection3D  |                     |                    |                   |             |
-    +----------------+---------------------+--------------------+-------------------+-------------+
-    | PCDet          |                     |                    |                   |             |
-    +----------------+---------------------+--------------------+-------------------+-------------+
+    +----------------+---------------------+--------------------+
+    | Implementation | Training (sample/s) | Testing (sample/s) |
+    +================+=====================+====================+
+    | MMDetection3D  |         17          |                    |
+    +----------------+---------------------+--------------------+
+    | PCDet          |         15          |         12         |
+    +----------------+---------------------+--------------------+
   ```
 
 ## Details of Comparison
+
+### Modification for Calculating Speed
+
+* __Det3D__: At commit 255c593
+
+
+* __PCDet__: At commit 2244be4
+
+
 
 ### VoteNet
 
 * __MMDetection3D__: With release v0.1.0, run
 ```
-./tools/dist_train.sh configs/votenet/mask_rcnn_r50_caffe_fpn_1x_coco.py 8
+./tools/dist_train.sh configs/votenet/votenet_16x8_sunrgbd-3d-10class.py 8 --no-validate
 ```
-* __votenet__:
+* __votenet__: At commit xxxx, run
+```
+```
 
 
 ### PointPillars
 
 * __MMDetection3D__: With release v0.1.0, run
 ```
+./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_6x8_160e_pcdet_kitti-3d-3class.py 8 --no-validate
 ```
 * __PCDet__: At commit xxxx
+```
+./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_6x8_160e_pcdet_kitti-3d-3class.py 8 --no-validate
+```
+
+* __MMDetection3D__: With release v0.1.0, run
+```
+./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
+```
+* __Det3D__: At commit xxxx
+```
+
+```
 
 
 ### SECOND
 
 * __MMDetection3D__: With release v0.1.0, run
 ```
+./tools/dist_train.sh configs/benchmark/hv_second_secfpn_6x8_80e_pcdet_kitti-3d-3class.py 8 --no-validate
 ```
 
-* __PCDet__:
+* __PCDet__: At commit 2244be4
 
 
 ### Part-A2
 
 * __MMDetection3D__: With release v0.1.0, run
 ```
+./tools/dist_train.sh configs/benchmark/hv_PartA2_secfpn_2x8_cyclic_80e_pcdet_kitti-3d-3class.py 8 --no-validate
 ```
 
-* __PCDet__: At commit xxxx
-
-### Modification for Calculating Training Speed
+* __PCDet__:

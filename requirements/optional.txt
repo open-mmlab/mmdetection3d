@@ -1,2 +1,0 @@
-# To avoid install too many unnecessary packages
-nuscenes-devkit==1.0.5
