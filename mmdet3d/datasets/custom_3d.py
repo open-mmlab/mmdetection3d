@@ -168,7 +168,13 @@ class Custom3DDataset(Dataset):
         mmcv.dump(outputs, out)
         return outputs, tmp_dir
 
-    def evaluate(self, results, metric=None, iou_thr=(0.25, 0.5), logger=None):
+    def evaluate(self,
+                 results,
+                 metric=None,
+                 iou_thr=(0.25, 0.5),
+                 logger=None,
+                 show=False,
+                 out_dir=None):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -177,7 +183,13 @@ class Custom3DDataset(Dataset):
             results (list[dict]): List of results.
             metric (str | list[str]): Metrics to be evaluated.
             iou_thr (list[float]): AP IoU thresholds.
+            show (bool): Whether to visualize.
+                Default: False.
+            out_dir (str): Path to save the visualization results.
+                Default: None.
 
+        Returns:
+            dict: Evaluation results.
         """
         from mmdet3d.core.evaluation import indoor_eval
         assert isinstance(
@@ -197,6 +209,8 @@ class Custom3DDataset(Dataset):
             logger=logger,
             box_type_3d=self.box_type_3d,
             box_mode_3d=self.box_mode_3d)
+        if show:
+            self.show(results, out_dir)
 
         return ret_dict
 
