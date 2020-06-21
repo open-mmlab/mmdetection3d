@@ -6,6 +6,8 @@ Welcome to MMDetection3D's documentation!
 
    install.md
    getting_started.md
+   model_zoo.md
+   benchmarks.md
    config.md
    tutorials/finetune.md
    tutorials/new_dataset.md
