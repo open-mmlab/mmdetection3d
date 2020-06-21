@@ -9,6 +9,7 @@ import torch
 from mmcv.utils import print_log
 
 from mmdet.datasets import DATASETS
+from ..core import show_result
 from ..core.bbox import Box3DMode, CameraInstance3DBoxes, points_cam2img
 from .custom_3d import Custom3DDataset
 
@@ -181,7 +182,9 @@ class KittiDataset(Custom3DDataset):
                  metric=None,
                  logger=None,
                  pklfile_prefix=None,
-                 submission_prefix=None):
+                 submission_prefix=None,
+                 show=False,
+                 out_dir=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -194,6 +197,10 @@ class KittiDataset(Custom3DDataset):
                 If not specified, a temp file will be created. Default: None.
             submission_prefix (str | None): The prefix of submission datas.
                 If not specified, the submission data will not be generated.
+            show (bool): Whether to visualize.
+                Default: False.
+            out_dir (str): Path to save the visualization results.
+                Default: None.
 
         Returns:
             dict[str: float]: results of each evaluation metric
@@ -230,6 +237,8 @@ class KittiDataset(Custom3DDataset):
 
         if tmp_dir is not None:
             tmp_dir.cleanup()
+        if show:
+            self.show(results, out_dir)
         return ap_dict
 
     def bbox2result_kitti(self,
@@ -508,3 +517,26 @@ class KittiDataset(Custom3DDataset):
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx,
             )
+
+    def show(self, results, out_dir):
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        for i, result in enumerate(results):
+            data_info = self.data_infos[i]
+            pts_path = data_info['point_cloud']['velodyne_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            points = np.fromfile(
+                osp.join(self.root_split, 'velodyne_reduced',
+                         f'{file_name}.bin'),
+                dtype=np.float32).reshape(-1, 4)
+            points = points[..., [1, 0, 2]]
+            points[..., 0] *= -1
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
+            gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
+                                          Box3DMode.DEPTH)
+            gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
+            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
+                                            Box3DMode.DEPTH)
+            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+        print(results)

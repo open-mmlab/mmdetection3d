@@ -7,7 +7,8 @@ import pyquaternion
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import LiDARInstance3DBoxes
+from ..core import show_result
+from ..core.bbox import Box3DMode, LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
 
 
@@ -324,7 +325,9 @@ class NuScenesDataset(Custom3DDataset):
                  metric='bbox',
                  logger=None,
                  jsonfile_prefix=None,
-                 result_names=['pts_bbox']):
+                 result_names=['pts_bbox'],
+                 show=False,
+                 out_dir=None):
         """Evaluation in nuScenes protocol.
 
         Args:
@@ -335,6 +338,10 @@ class NuScenesDataset(Custom3DDataset):
             jsonfile_prefix (str | None): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
+            show (bool): Whether to visualize.
+                Default: False.
+            out_dir (str): Path to save the visualization results.
+                Default: None.
 
         Returns:
             dict[str: float]
@@ -352,7 +359,29 @@ class NuScenesDataset(Custom3DDataset):
 
         if tmp_dir is not None:
             tmp_dir.cleanup()
+
+        if show:
+            self.show(results, out_dir)
         return results_dict
+
+    def show(self, results, out_dir):
+        for i, result in enumerate(results):
+            data_info = self.data_infos[i]
+            pts_path = data_info['lidar_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            points = np.fromfile(pts_path, dtype=np.float32).reshape(-1, 4)
+            points = points[..., [1, 0, 2]]
+            points[..., 0] *= -1
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
+            gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
+                                          Box3DMode.DEPTH)
+            gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
+            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
+                                            Box3DMode.DEPTH)
+            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+        print(results)
 
 
 def output_to_nusc_box(detection):
