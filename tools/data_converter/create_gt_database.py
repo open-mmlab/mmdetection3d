@@ -147,8 +147,8 @@ def create_groundtruth_database(dataset_class_name,
         data_root=data_path,
         ann_file=info_path,
     )
-    file_client_args = dict(backend='disk')
     if dataset_class_name == 'KittiDataset':
+        file_client_args = dict(backend='disk')
         dataset_cfg.update(
             test_mode=False,
             split='training',
@@ -170,6 +170,29 @@ def create_groundtruth_database(dataset_class_name,
                     with_label_3d=True,
                     file_client_args=file_client_args)
             ])
+
+    if dataset_class_name == 'NuScenesDataset':
+        file_client_args = dict(
+            backend='petrel',
+            path_mapping=dict({
+                './data/nuscenes/': 's3://nuscenes/nuscenes/',
+                'data/nuscenes/': 's3://nuscenes/nuscenes/'
+            }))
+        dataset_cfg.update(pipeline=[
+            dict(
+                type='LoadPointsFromFile',
+                load_dim=5,
+                use_dim=5,
+                file_client_args=file_client_args),
+            dict(
+                type='LoadPointsFromMultiSweeps',
+                sweeps_num=10,
+                file_client_args=file_client_args),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=True,
+                with_label_3d=True)
+        ])
     dataset = build_dataset(dataset_cfg)
 
     if database_save_path is None:
