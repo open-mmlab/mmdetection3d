@@ -8,9 +8,10 @@ from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import get_dist_info, init_dist, load_checkpoint
 from tools.fuse_conv_bn import fuse_module
 
+from mmdet3d.apis import single_gpu_test
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_detector
-from mmdet.apis import multi_gpu_test, set_random_seed, single_gpu_test
+from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.core import wrap_fp16_model
 
 
@@ -38,6 +39,8 @@ def parse_args():
         help='evaluation metrics, which depends on the dataset, e.g., "bbox",'
         ' "segm", "proposal" for COCO, and "mAP", "recall" for PASCAL VOC')
     parser.add_argument('--show', action='store_true', help='show results')
+    parser.add_argument(
+        '--show-dir', help='directory where results will be saved')
     parser.add_argument(
         '--gpu-collect',
         action='store_true',
@@ -125,7 +128,7 @@ def main():
 
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
-        outputs = single_gpu_test(model, data_loader, args.show)
+        outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
     else:
         model = MMDistributedDataParallel(
             model.cuda(),

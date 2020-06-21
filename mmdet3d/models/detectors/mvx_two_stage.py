@@ -1,8 +1,11 @@
+import os.path as osp
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
+from mmdet3d.core import (Box3DMode, bbox3d2result, merge_aug_bboxes_3d,
+                          show_result)
 from mmdet3d.ops import Voxelization
 from mmdet.core import multi_apply
 from mmdet.models import DETECTORS
@@ -349,3 +352,23 @@ class MVXTwoStageDetector(Base3DDetector):
         merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
                                             self.pts_bbox_head.test_cfg)
         return merged_bboxes
+
+    def show_results(self, data, result, out_dir):
+        points = data['points'][0]._data[0][0].numpy()
+        pts_filename = data['img_metas'][0]._data[0][0]['pts_filename']
+        file_name = osp.split(pts_filename)[-1].split('.')[0]
+
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        inds = result['pts_bbox']['scores_3d'] > 0.1
+        pred_bboxes = result['pts_bbox']['boxes_3d'][inds].tensor.numpy()
+        # for now we convert points into depth mode
+        if data['img_metas'][0]._data[0][0]['box_mode_3d'] != Box3DMode.DEPTH:
+            points = points[..., [1, 0, 2]]
+            points[..., 0] *= -1
+            pred_bboxes = Box3DMode.convert(
+                pred_bboxes, data['img_metas'][0]._data[0][0]['box_mode_3d'],
+                Box3DMode.DEPTH)
+            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+        else:
+            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+        show_result(points, None, pred_bboxes, out_dir, file_name)

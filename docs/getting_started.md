@@ -88,9 +88,8 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 Optional arguments:
 - `RESULT_FILE`: Filename of the output results in pickle format. If not specified, the results will not be saved to a file.
 - `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset, e.g., `proposal_fast`, `proposal`, `bbox`, `segm` are available for COCO, `mAP`, `recall` for PASCAL VOC. Cityscapes could be evaluated by `cityscapes` as well as all COCO metrics.
-- `--show`: If specified, detection results will be plotted on the images and shown in a new window. It is only applicable to single GPU testing and used for debugging and visualization. Please make sure that GUI is available in your environment, otherwise you may encounter the error like `cannot connect to X server`.
-- `--show-dir`: If specified, detection results will be plotted on the images and saved to the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option.
-- `--show-score-thr`: If specified, detections with score below this threshold will be removed.
+- `--show`: If specified, detection results will be plotted in the silient mode. It is only applicable to single GPU testing and used for debugging and visualization. This should be used with `--show-dir`.
+- `--show-dir`: If specified, detection results will be plotted on the `***_points.obj` and `***_pred.ply` files in the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option. 
 
 
 Examples:
@@ -157,6 +156,25 @@ You will get two json files `mask_rcnn_test-dev_results.bbox.json` and `mask_rcn
 
 The generated png and txt would be under `./mask_rcnn_cityscapes_test_results` directory.
 
+### Visualization
+
+To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
+
+ ```bash
+ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
+  ```
+
+Aftering running this command, plotted results ***_points.obj and ***_pred.ply files in `${SHOW_DIR}`.
+
+To see the points, detection results and ground truth of SUNRGBD, ScanNet or KITTI during evaluation time, you can run the following command
+```bash
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options "show=True" "out_dir=${SHOW_DIR}"
+```
+After running this command, you will obtain ***_points.ob, ***_pred.ply files and ***_gt.ply in `${SHOW_DIR}`.
+
+You can use 3D visualization software such as the [MeshLab](http://www.meshlab.net/) to open the these files under `${SHOW_DIR}` to see the 3D detection output. Specifically, open `***_points.obj` to see the input point cloud and open `***_pred.ply` to see the predicted 3D bounding boxes. This allows the inference and results generation be done in remote server and the users can open them on their host with GUI.
+
+**Notice**: The visualization API is a little unstable since we plan to refactor these parts together with MMDetection in the future.
 
 ### Image demo
 
