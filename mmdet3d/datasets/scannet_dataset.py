@@ -2,6 +2,7 @@ import os.path as osp
 
 import numpy as np
 
+from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
@@ -63,3 +64,18 @@ class ScanNetDataset(Custom3DDataset):
             pts_instance_mask_path=pts_instance_mask_path,
             pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
+
+    def show(self, results, out_dir):
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        for i, result in enumerate(results):
+            data_info = self.data_infos[i]
+            pts_path = data_info['pts_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            points = np.fromfile(
+                osp.join(self.data_root, pts_path),
+                dtype=np.float32).reshape(-1, 6)
+            gt_bboxes = np.pad(data_info['annos']['gt_boxes_upright_depth'],
+                               ((0, 0), (0, 1)), 'constant')
+            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)

@@ -1,5 +1,8 @@
+import os.path as osp
+
 import numpy as np
 
+from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
@@ -48,3 +51,21 @@ class SUNRGBDDataset(Custom3DDataset):
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d)
         return anns_results
+
+    def show(self, results, out_dir):
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        for i, result in enumerate(results):
+            data_info = self.data_infos[i]
+            pts_path = data_info['pts_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            points = np.fromfile(
+                osp.join(self.data_root, pts_path),
+                dtype=np.float32).reshape(-1, 6)
+            points[:, 3:] *= 255
+            if data_info['annos']['gt_num'] > 0:
+                gt_bboxes = data_info['annos']['gt_boxes_upright_depth']
+            else:
+                gt_bboxes = np.zeros((0, 7))
+            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
