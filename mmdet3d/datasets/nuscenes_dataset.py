@@ -181,7 +181,7 @@ class NuScenesDataset(Custom3DDataset):
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
-        )
+            gt_names_3d=gt_names_3d)
         return anns_results
 
     def _format_bbox(self, results, jsonfile_prefix=None):
