@@ -147,6 +147,7 @@ def create_groundtruth_database(dataset_class_name,
         data_root=data_path,
         ann_file=info_path,
     )
+    file_client_args = dict(backend='disk')
     if dataset_class_name == 'KittiDataset':
         dataset_cfg.update(
             test_mode=False,
@@ -156,7 +157,19 @@ def create_groundtruth_database(dataset_class_name,
                 use_depth=False,
                 use_lidar_intensity=True,
                 use_camera=with_mask,
-            ))
+            ),
+            pipeline=[
+                dict(
+                    type='LoadPointsFromFile',
+                    load_dim=4,
+                    use_dim=4,
+                    file_client_args=file_client_args),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True,
+                    file_client_args=file_client_args)
+            ])
     dataset = build_dataset(dataset_cfg)
 
     if database_save_path is None:
@@ -178,14 +191,15 @@ def create_groundtruth_database(dataset_class_name,
 
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
-        annos = dataset.get_data_info(j)
-        image_idx = annos['sample_idx']
-        points = np.fromfile(
-            annos['pts_file_name'], dtype=np.float32).reshape(-1, 4)
-        gt_boxes_3d = annos['ann_info']['gt_bboxes_3d']
+        input_dict = dataset.get_data_info(j)
+        dataset.pre_pipeline(input_dict)
+        example = dataset.pipeline(input_dict)
+        annos = example['ann_info']
+        image_idx = example['sample_idx']
+        points = example['points']
+        gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
         names = annos['gt_names']
         group_dict = dict()
-        group_ids = np.full([gt_boxes_3d.shape[0]], -1, dtype=np.int64)
         if 'group_ids' in annos:
             group_ids = annos['group_ids']
         else:
@@ -200,7 +214,7 @@ def create_groundtruth_database(dataset_class_name,
         if with_mask:
             # prepare masks
             gt_boxes = annos['gt_bboxes']
-            img_path = annos['filename'].split('/')[-1]
+            img_path = osp.split(example['img_info']['filename'])[-1]
             if img_path not in file2id.keys():
                 print('skip image {} for empty mask'.format(img_path))
                 continue
