@@ -172,12 +172,7 @@ def create_groundtruth_database(dataset_class_name,
             ])
 
     if dataset_class_name == 'NuScenesDataset':
-        file_client_args = dict(
-            backend='petrel',
-            path_mapping=dict({
-                './data/nuscenes/': 's3://nuscenes/nuscenes/',
-                'data/nuscenes/': 's3://nuscenes/nuscenes/'
-            }))
+        file_client_args = dict(backend='disk')
         dataset_cfg.update(pipeline=[
             dict(
                 type='LoadPointsFromFile',
