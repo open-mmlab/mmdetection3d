@@ -41,7 +41,7 @@ performance on 3 classes.
   +----------------+---------------------+--------------------+
   | Implementation | Training (sample/s) | Testing (sample/s) |
   +================+=====================+====================+
-  | MMDetection3D  |         141         |                    |
+  | MMDetection3D  |         141         |       44.3         |
   +----------------+---------------------+--------------------+
   | Det3D          |         140         |        20          |
   +----------------+---------------------+--------------------+
@@ -106,8 +106,9 @@ and compare average AP over all classes on moderate condition for performance on
 ```
 ./tools/dist_train.sh configs/votenet/votenet_16x8_sunrgbd-3d-10class.py 8 --no-validate
 ```
-* __votenet__: At commit xxxx, run
+* __votenet__: At commit 2f6d6d3, run
 ```
+python train.py --dataset sunrgbd --batch_size 16
 ```
 
 
@@ -126,11 +127,29 @@ and compare average AP over all classes on moderate condition for performance on
 ```
 ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
 ```
-* __Det3D__: At commit xxxx
+* __Det3D__: At commit 255c593, use kitti_point_pillars_mghead_syncbn.py and run
 ```
-
+./tools/scripts/train.sh --launcher=slurm --gpus=8
 ```
+Note that the config in train.sh is modified to train point pillars.
+```
+diff --git a/tools/scripts/train.sh b/tools/scripts/train.sh
+index 3a93f95..461e0ea 100755
+--- a/tools/scripts/train.sh
++++ b/tools/scripts/train.sh
+@@ -16,9 +16,9 @@ then
+ fi
 
+ # Voxelnet
+-python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/kitti_car_vfev3_spmiddlefhd_rpn1_mghead_syncbn.py --work_dir=$SECOND_WORK_DIR
++# python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/kitti_car_vfev3_spmiddlefhd_rpn1_mghead_syncbn.py --work_dir=$SECOND_WORK_DIR
+ # python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/cbgs/configs/nusc_all_vfev3_spmiddleresnetfhd_rpn2_mghead_syncbn.py --work_dir=$NUSC_CBGS_WORK_DIR
+ # python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/lyft_all_vfev3_spmiddleresnetfhd_rpn2_mghead_syncbn.py --work_dir=$LYFT_CBGS_WORK_DIR
+
+ # PointPillars
+-# python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py ./examples/point_pillars/configs/original_pp_mghead_syncbn_kitti.py --work_dir=$PP_WORK_DIR
++python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py ./examples/point_pillars/configs/kitti_point_pillars_mghead_syncbn.py
+```
 
 ### SECOND
 
