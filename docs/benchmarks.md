@@ -21,13 +21,14 @@ with some other popular open source 3D detection codebases.
 We compare our implementation of VoteNet with [votenet](https://github.com/facebookresearch/votenet/) and report the performance on SUNRGB-D v2 dataset under the AP@0.5 metric.
 
 ```eval_rst
-  +----------------+---------------------+--------------------+--------+
-  | Implementation | Training (sample/s) | Testing (sample/s) | AP@0.5 |
-  +================+=====================+====================+========+
-  | MMDetection3D  |        358          |         17         |  35.8  |
-  +----------------+---------------------+--------------------+--------+
-  | VoteNet        |        77           |         3          |  31.5  |
-  +----------------+---------------------+--------------------+--------+
++----------------+---------------------+--------------------+--------+
+| Implementation | Training (sample/s) | Testing (sample/s) | AP@0.5 |
++================+=====================+====================+========+
+| MMDetection3D  |        358          |         17         |  35.8  |
++----------------+---------------------+--------------------+--------+
+| votenet_       |        77           |         3          |  31.5  |
++----------------+---------------------+--------------------+--------+
+
 ```
 
 ### PointPillars
@@ -38,23 +39,23 @@ condition following the KITTI benchmark and compare average AP over all classes 
 performance on 3 classes.
 
 ```eval_rst
-  +----------------+---------------------+--------------------+
-  | Implementation | Training (sample/s) | Testing (sample/s) |
-  +================+=====================+====================+
-  | MMDetection3D  |         141         |       44.3         |
-  +----------------+---------------------+--------------------+
-  | Det3D          |         140         |        20          |
-  +----------------+---------------------+--------------------+
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         141         |       44.3         |
++----------------+---------------------+--------------------+
+| Det3D          |         140         |        20          |
++----------------+---------------------+--------------------+
 ```
 
 ```eval_rst
-  +----------------+---------------------+--------------------+
-  | Implementation | Training (sample/s) | Testing (sample/s) |
-  +================+=====================+====================+
-  | MMDetection3D  |         120         |                    |
-  +----------------+---------------------+--------------------+
-  | PCDet          |         43          |        64          |
-  +----------------+---------------------+--------------------+
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         120         |                    |
++----------------+---------------------+--------------------+
+| PCDet          |         43          |        64          |
++----------------+---------------------+--------------------+
 ```
 
 ### SECOND
@@ -64,30 +65,30 @@ So we only compare with [PCDet](https://github.com/sshaoshuai/PCDet), which is a
 condition following the KITTI benchmark and compare average AP over all classes on moderate condition for
 performance on 3 classes.
 
-  ```eval_rst
-    +----------------+---------------------+--------------------+
-    | Implementation | Training (sample/s) | Testing (sample/s) |
-    +================+=====================+====================+
-    | MMDetection3D  |         54          |                    |
-    +----------------+---------------------+--------------------+
-    | PCDet          |         44          |         30         |
-    +----------------+---------------------+--------------------+
-  ```
+```eval_rst
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         54          |                    |
++----------------+---------------------+--------------------+
+| PCDet          |         44          |         30         |
++----------------+---------------------+--------------------+
+```
 
 ### Part-A2
 
 We benchmark Part-A2 with that in [PCDet](https://github.com/sshaoshuai/PCDet). We report the AP on moderate condition following the KITTI benchmark
 and compare average AP over all classes on moderate condition for performance on 3 classes.
 
-  ```eval_rst
-    +----------------+---------------------+--------------------+
-    | Implementation | Training (sample/s) | Testing (sample/s) |
-    +================+=====================+====================+
-    | MMDetection3D  |         17          |                    |
-    +----------------+---------------------+--------------------+
-    | PCDet          |         15          |         12         |
-    +----------------+---------------------+--------------------+
-  ```
+```eval_rst
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         17          |                    |
++----------------+---------------------+--------------------+
+| PCDet          |         15          |         12         |
++----------------+---------------------+--------------------+
+```
 
 ## Details of Comparison
 
@@ -128,28 +129,36 @@ python train.py --dataset sunrgbd --batch_size 16
 ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
 ```
 * __Det3D__: At commit 255c593, use kitti_point_pillars_mghead_syncbn.py and run
-```
-./tools/scripts/train.sh --launcher=slurm --gpus=8
-```
-Note that the config in train.sh is modified to train point pillars.
-```
-diff --git a/tools/scripts/train.sh b/tools/scripts/train.sh
-index 3a93f95..461e0ea 100755
---- a/tools/scripts/train.sh
-+++ b/tools/scripts/train.sh
-@@ -16,9 +16,9 @@ then
- fi
+  ```
+  ./tools/scripts/train.sh --launcher=slurm --gpus=8
+  ```
+  Note that the config in train.sh is modified to train point pillars.
 
- # Voxelnet
--python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/kitti_car_vfev3_spmiddlefhd_rpn1_mghead_syncbn.py --work_dir=$SECOND_WORK_DIR
-+# python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/kitti_car_vfev3_spmiddlefhd_rpn1_mghead_syncbn.py --work_dir=$SECOND_WORK_DIR
- # python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/cbgs/configs/nusc_all_vfev3_spmiddleresnetfhd_rpn2_mghead_syncbn.py --work_dir=$NUSC_CBGS_WORK_DIR
- # python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/lyft_all_vfev3_spmiddleresnetfhd_rpn2_mghead_syncbn.py --work_dir=$LYFT_CBGS_WORK_DIR
+  <details>
+  <summary>
+  (diff to make it use the same hyperparameters - click to expand)
+  </summary>
 
- # PointPillars
--# python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py ./examples/point_pillars/configs/original_pp_mghead_syncbn_kitti.py --work_dir=$PP_WORK_DIR
-+python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py ./examples/point_pillars/configs/kitti_point_pillars_mghead_syncbn.py
-```
+  ```diff
+  diff --git a/tools/scripts/train.sh b/tools/scripts/train.sh
+  index 3a93f95..461e0ea 100755
+  --- a/tools/scripts/train.sh
+  +++ b/tools/scripts/train.sh
+  @@ -16,9 +16,9 @@ then
+   fi
+
+   # Voxelnet
+  -python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/  kitti_car_vfev3_spmiddlefhd_rpn1_mghead_syncbn.py --work_dir=$SECOND_WORK_DIR
+  +# python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/  kitti_car_vfev3_spmiddlefhd_rpn1_mghead_syncbn.py --work_dir=$SECOND_WORK_DIR
+   # python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/cbgs/configs/  nusc_all_vfev3_spmiddleresnetfhd_rpn2_mghead_syncbn.py --work_dir=$NUSC_CBGS_WORK_DIR
+   # python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py examples/second/configs/  lyft_all_vfev3_spmiddleresnetfhd_rpn2_mghead_syncbn.py --work_dir=$LYFT_CBGS_WORK_DIR
+
+   # PointPillars
+  -# python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py ./examples/point_pillars/configs/  original_pp_mghead_syncbn_kitti.py --work_dir=$PP_WORK_DIR
+  +python -m torch.distributed.launch --nproc_per_node=8 ./tools/train.py ./examples/point_pillars/configs/  kitti_point_pillars_mghead_syncbn.py
+  ```
+
+  </details>
 
 ### SECOND
 
