@@ -281,13 +281,9 @@ def create_groundtruth_database(dataset_class_name,
                 gt_points.tofile(f)
 
             if (used_classes is None) or names[i] in used_classes:
-                if relative_path:
-                    db_path = osp.join(data_path, filename)
-                else:
-                    db_path = filepath
                 db_info = {
                     'name': names[i],
-                    'path': db_path,
+                    'path': osp.join(f'{info_prefix}_gt_database', filename),
                     'image_idx': image_idx,
                     'gt_idx': i,
                     'box3d_lidar': gt_boxes_3d[i],
