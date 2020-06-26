@@ -171,18 +171,13 @@ def create_groundtruth_database(dataset_class_name,
                     file_client_args=file_client_args)
             ])
 
-    if dataset_class_name == 'NuScenesDataset':
-        file_client_args = dict(backend='disk')
+    elif dataset_class_name == 'NuScenesDataset':
         dataset_cfg.update(pipeline=[
-            dict(
-                type='LoadPointsFromFile',
-                load_dim=5,
-                use_dim=5,
-                file_client_args=file_client_args),
+            dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
             dict(
                 type='LoadPointsFromMultiSweeps',
                 sweeps_num=10,
-                file_client_args=file_client_args),
+            ),
             dict(
                 type='LoadAnnotations3D',
                 with_bbox_3d=True,
