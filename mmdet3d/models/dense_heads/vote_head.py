@@ -189,7 +189,7 @@ class VoteHead(nn.Module):
         Args:
             bbox_preds (dict): Predictions from forward of vote head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): Gt bboxes
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Gt bboxes
                 of each sample.
             gt_labels_3d (list[torch.Tensor]): Gt labels of each sample.
             pts_semantic_mask (None | list[torch.Tensor]): Point-wise
@@ -296,7 +296,7 @@ class VoteHead(nn.Module):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): gt bboxes of
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): gt bboxes of
                 each batch.
             gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
             pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
@@ -382,7 +382,7 @@ class VoteHead(nn.Module):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
             gt_labels_3d (torch.Tensor): gt class labels of each batch.
             pts_semantic_mask (None | torch.Tensor): point-wise semantic
                 label of each batch.

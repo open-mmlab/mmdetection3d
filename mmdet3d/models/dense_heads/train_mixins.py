@@ -20,7 +20,7 @@ class AnchorTrainMixin(object):
 
         Args:
             anchor_list (list[list]): Multi level anchors of each image.
-            gt_bboxes_list (list[:obj:BaseInstance3DBoxes]): Ground truth
+            gt_bboxes_list (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each image.
             input_metas (list[dict]): Meta info of each image.
             gt_bboxes_ignore_list (None | list): Ignore list of gt bboxes.
@@ -96,7 +96,7 @@ class AnchorTrainMixin(object):
 
         Args:
             anchors (torch.Tensor): Concatenated multi-level anchor.
-            gt_bboxes (:obj:BaseInstance3DBoxes): Gt bboxes.
+            gt_bboxes (:obj:`BaseInstance3DBoxes`): Gt bboxes.
             gt_bboxes_ignore (torch.Tensor): Ignored gt bboxes.
             gt_labels (torch.Tensor): Gt class labels.
             input_meta (dict): Meta info of each image.
@@ -185,7 +185,7 @@ class AnchorTrainMixin(object):
         Args:
             bbox_assigner (BaseAssigner): assign positive and negative boxes.
             anchors (torch.Tensor): Concatenated multi-level anchor.
-            gt_bboxes (:obj:BaseInstance3DBoxes): Gt bboxes.
+            gt_bboxes (:obj:`BaseInstance3DBoxes`): Gt bboxes.
             gt_bboxes_ignore (torch.Tensor): Ignored gt bboxes.
             gt_labels (torch.Tensor): Gt class labels.
             input_meta (dict): Meta info of each image.
