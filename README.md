@@ -51,6 +51,7 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
 | SECOND             | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
 | PointPillars       | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
+| FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
 | VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |

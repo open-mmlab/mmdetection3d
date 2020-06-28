@@ -63,7 +63,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
             x (dict): Contains features from the first stage.
             img_metas (list[dict]): Meta info of each image.
             proposal_list (list[dict]): Proposal information from rpn.
-            gt_bboxes (list[:obj:BaseInstance3DBoxes]):
+            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]):
                 GT bboxes of each sample. The bboxes are encapsulated
                 by 3D box structures.
             gt_labels (list[LongTensor]): GT labels of each sample.

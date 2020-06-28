@@ -79,10 +79,10 @@ class PartAggregationROIHead(Base3DRoIHead):
             img_metas (list[dict]): Meta info of each image.
             proposal_list (list[dict]): Proposal information from rpn.
                 The dictionary should contain the following keys:
-                - boxes_3d (:obj:BaseInstance3DBoxes): Proposal bboxes
+                - boxes_3d (:obj:`BaseInstance3DBoxes`): Proposal bboxes
                 - labels_3d (torch.Tensor): Labels of proposals
                 - cls_preds (torch.Tensor): Original scores of proposals
-            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]):
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]):
                 GT bboxes of each sample. The bboxes are encapsulated
                 by 3D box structures.
             gt_labels_3d (list[LongTensor]): GT labels of each sample.

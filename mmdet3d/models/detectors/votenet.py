@@ -38,7 +38,7 @@ class VoteNet(SingleStage3DDetector):
         Args:
             points (list[torch.Tensor]): Points of each batch.
             img_metas (list): Image metas.
-            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt bboxes of each batch.
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
             pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
                 label of each batch.

@@ -281,7 +281,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
-            gt_bboxes (list[:obj:BaseInstance3DBoxes]): Gt bboxes
+            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Gt bboxes
                 of each sample.
             gt_labels (list[torch.Tensor]): Gt labels of each sample.
             input_metas (list[dict]): Contain pcd and img's meta info.
@@ -405,7 +405,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
 
         Returns:
             tuple: Contain predictions of single batch.
-                - bboxes (:obj:BaseInstance3DBoxes): Predicted 3d bboxes.
+                - bboxes (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
                 - scores (torch.Tensor): Class score of each bbox.
                 - labels (torch.Tensor): Label of each bbox.
         """
