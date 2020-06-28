@@ -27,15 +27,16 @@ linting:
   stage: test
   script:
     - echo "Start building..."
-    - pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
-    - pip install git+https://github.com/open-mmlab/mmcv.git
-    - pip install git+https://github.com/open-mmlab/mmdetection.git
+    - pip install -q "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
+    - pip install -q git+https://github.com/open-mmlab/mmcv.git
+    - pip install -q git+https://github.com/open-mmlab/mmdetection.git
     - python -c "import mmdet; print(mmdet.__version__)"
-    - pip install -v -e .[all]
+    - pip install -e .[all]
     - python -c "import mmdet3d; print(mmdet3d.__version__)"
     - echo "Start testing..."
     - coverage run --branch --source mmdet3d -m pytest tests/
     - coverage report -m
+    - interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 44 mmdet3d
 
 test:pytorch1.3-cuda10:
   image: $PYTORCH_IMAGE
