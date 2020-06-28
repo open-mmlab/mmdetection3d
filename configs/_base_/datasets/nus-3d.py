@@ -16,16 +16,16 @@ input_modality = dict(
     use_radar=False,
     use_map=False,
     use_external=False)
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/nuscenes/': 's3://nuscenes/nuscenes/',
-        'data/nuscenes/': 's3://nuscenes/nuscenes/'
-    }))
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/nuscenes/': 's3://nuscenes/nuscenes/',
+#         'data/nuscenes/': 's3://nuscenes/nuscenes/'
+#     }))
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -45,6 +45,7 @@ train_pipeline = [
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])

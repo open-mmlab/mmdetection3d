@@ -78,7 +78,7 @@ class PointwiseSemanticHead(nn.Module):
         Args:
             voxel_centers (torch.Tensor): shape [voxel_num, 3],
                 the center of voxels
-            gt_bboxes_3d (:obj:BaseInstance3DBoxes): gt boxes containing tensor
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt boxes with tensor
                 of shape [box_num, 7].
             gt_labels_3d (torch.Tensor): shape [box_num], class label of gt
 
@@ -125,7 +125,7 @@ class PointwiseSemanticHead(nn.Module):
         Args:
             voxel_centers (torch.Tensor): shape [voxel_num, 3],
                 the center of voxels
-            gt_bboxes_3d (list[:obj:BaseInstance3DBoxes]): list of gt boxes
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): list of gt boxes
                 containing tensor of shape [box_num, 7].
             gt_labels_3d (list[torch.Tensor]): list of GT labels.
 
