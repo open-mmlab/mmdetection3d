@@ -74,6 +74,35 @@ def xywhr2xyxyr(boxes_xywhr):
     return boxes
 
 
+def get_box_type(box_type):
+    """Get the type and mode of box structure.
+
+    Args:
+        box_type (str): Indicate the type of box structure.
+            The valid value are "LiDAR", "Camera", or "Depth".
+
+    Returns:
+        tuple: box type and box mode.
+    """
+    from .box_3d_mode import (LiDARInstance3DBoxes, CameraInstance3DBoxes,
+                              DepthInstance3DBoxes, Box3DMode)
+    box_type_lower = box_type.lower()
+    if box_type_lower == 'lidar':
+        box_type_3d = LiDARInstance3DBoxes
+        box_mode_3d = Box3DMode.LIDAR
+    elif box_type_lower == 'camera':
+        box_type_3d = CameraInstance3DBoxes
+        box_mode_3d = Box3DMode.CAM
+    elif box_type_lower == 'depth':
+        box_type_3d = DepthInstance3DBoxes
+        box_mode_3d = Box3DMode.DEPTH
+    else:
+        raise ValueError('Only "box_type" of "camera", "lidar", "depth"'
+                         f' are supported, got {box_type}')
+
+    return box_type_3d, box_mode_3d
+
+
 def points_cam2img(points_3d, proj_mat):
     points_num = list(points_3d.shape)[:-1]
     points_shape = np.concatenate([points_num, [1]], axis=0).tolist()

@@ -6,8 +6,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import (Box3DMode, CameraInstance3DBoxes,
-                         DepthInstance3DBoxes, LiDARInstance3DBoxes)
+from ..core.bbox import get_box_type
 from .pipelines import Compose
 
 
@@ -55,7 +54,7 @@ class Custom3DDataset(Dataset):
         self.test_mode = test_mode
         self.modality = modality
         self.filter_empty_gt = filter_empty_gt
-        self.get_box_type(box_type_3d)
+        self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
         self.CLASSES = self.get_classes(classes)
         self.data_infos = self.load_annotations(self.ann_file)
@@ -69,21 +68,6 @@ class Custom3DDataset(Dataset):
 
     def load_annotations(self, ann_file):
         return mmcv.load(ann_file)
-
-    def get_box_type(self, box_type):
-        box_type_lower = box_type.lower()
-        if box_type_lower == 'lidar':
-            self.box_type_3d = LiDARInstance3DBoxes
-            self.box_mode_3d = Box3DMode.LIDAR
-        elif box_type_lower == 'camera':
-            self.box_type_3d = CameraInstance3DBoxes
-            self.box_mode_3d = Box3DMode.CAM
-        elif box_type_lower == 'depth':
-            self.box_type_3d = DepthInstance3DBoxes
-            self.box_mode_3d = Box3DMode.DEPTH
-        else:
-            raise ValueError('Only "box_type" of "camera", "lidar", "depth"'
-                             f' are supported, got {box_type}')
 
     def get_data_info(self, index):
         info = self.data_infos[index]

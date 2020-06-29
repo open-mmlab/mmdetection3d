@@ -14,7 +14,6 @@ from .sunrgbd_dataset import SUNRGBDDataset
 __all__ = [
     'KittiDataset', 'GroupSampler', 'DistributedGroupSampler',
     'build_dataloader', 'RepeatFactorDataset', 'DATASETS', 'build_dataset',
-    'build_dataloader'
     'CocoDataset', 'Kitti2DDataset', 'NuScenesDataset', 'ObjectSample',
     'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle',
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
