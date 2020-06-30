@@ -62,6 +62,14 @@ def rotation_3d_in_axis(points, angles, axis=0):
 
 
 def xywhr2xyxyr(boxes_xywhr):
+    """Convert a rotated boxes in XYWHR format to XYXYR format.
+
+    Args:
+        boxes_xywhr (torch.Tensor): Rotated boxes in XYWHR format.
+
+    Returns:
+        torch.Tensor: Converted boxes in XYXYR format.
+    """
     boxes = torch.zeros_like(boxes_xywhr)
     half_w = boxes_xywhr[:, 2] / 2
     half_h = boxes_xywhr[:, 3] / 2
@@ -104,6 +112,15 @@ def get_box_type(box_type):
 
 
 def points_cam2img(points_3d, proj_mat):
+    """Project points from camera coordicates to image coordinates
+
+    Args:
+        points_3d (torch.Tensor): Points in shape (N, 3)
+        proj_mat (torch.Tensor): Transformation matrix between coordinates.
+
+    Returns:
+        torch.Tensor: Points in image coordinates with shape [N, 2].
+    """
     points_num = list(points_3d.shape)[:-1]
     points_shape = np.concatenate([points_num, [1]], axis=0).tolist()
     # previous implementation use new_zeros, new_one yeilds better results

@@ -4,13 +4,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 
-from mmdet3d.core import build_bbox_coder
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import PointSAModule, furthest_point_sample
-from mmdet.core import multi_apply
+from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
 

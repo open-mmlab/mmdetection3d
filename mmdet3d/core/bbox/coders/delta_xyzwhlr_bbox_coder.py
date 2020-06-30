@@ -6,6 +6,11 @@ from mmdet.core.bbox.builder import BBOX_CODERS
 
 @BBOX_CODERS.register_module()
 class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
+    """Bbox Coder for 3D boxes
+
+    Args:
+        code_size (int): The dimension of boxes to be encoded.
+    """
 
     def __init__(self, code_size=7):
         super(DeltaXYZWLHRBBoxCoder, self).__init__()
