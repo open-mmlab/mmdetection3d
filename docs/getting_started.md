@@ -409,31 +409,6 @@ average iter time: 1.1959 s/iter
 
 ```
 
-### Get the FLOPs and params (experimental)
-
-We provide a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch) to compute the FLOPs and params of a given model.
-
-```shell
-python tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
-```
-
-You will get the result like this.
-
-```
-==============================
-Input shape: (3, 1280, 800)
-Flops: 239.32 GMac
-Params: 37.74 M
-==============================
-```
-
-**Note**: This tool is still experimental and we do not guarantee that the number is correct. You may well use the result for simple comparisons, but double check it before you adopt it in technical reports or papers.
-
-(1) FLOPs are related to the input shape while parameters are not. The default input shape is (1, 3, 1280, 800).
-(2) Some operators are not counted into FLOPs like GN and custom operators.
-You can add support for new operators by modifying [`mmdet/utils/flops_counter.py`](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/utils/flops_counter.py).
-(3) The FLOPs of two-stage detectors is dependent on the number of proposals.
-
 ### Publish a model
 
 Before you upload a model to AWS, you may want to

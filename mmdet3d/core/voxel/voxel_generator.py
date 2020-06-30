@@ -3,21 +3,22 @@ import numpy as np
 
 
 class VoxelGenerator(object):
-    """Voxel generator in numpy implementation"""
+    """Voxel generator in numpy implementation
+
+    Args:
+        voxel_size (list[float]): Size of a single voxel
+        point_cloud_range (list[float]): Range of points
+        max_num_points (int): Maximum number of points in a single voxel
+        max_voxels (int, optional): Maximum number of voxels.
+            Defaults to 20000.
+    """
 
     def __init__(self,
                  voxel_size,
                  point_cloud_range,
                  max_num_points,
                  max_voxels=20000):
-        """
-        Args:
-            voxel_size (list[float]): Size of a single voxel
-            point_cloud_range (list[float]): Range of points
-            max_num_points (int): Maximum number of points in a single voxel
-            max_voxels (int, optional): Maximum number of voxels.
-                Defaults to 20000.
-        """
+
         point_cloud_range = np.array(point_cloud_range, dtype=np.float32)
         # [0, -40, -3, 70.4, 40, 1]
         voxel_size = np.array(voxel_size, dtype=np.float32)
@@ -32,24 +33,29 @@ class VoxelGenerator(object):
         self._grid_size = grid_size
 
     def generate(self, points):
+        """Generate voxels given points"""
         return points_to_voxel(points, self._voxel_size,
                                self._point_cloud_range, self._max_num_points,
                                True, self._max_voxels)
 
     @property
     def voxel_size(self):
+        """list[float]: size of a single voxel"""
         return self._voxel_size
 
     @property
     def max_num_points_per_voxel(self):
+        """int: maximum number of points per voxel"""
         return self._max_num_points
 
     @property
     def point_cloud_range(self):
+        """list[float]: range of point cloud"""
         return self._point_cloud_range
 
     @property
     def grid_size(self):
+        """np.ndarray: The size of grids"""
         return self._grid_size
 
 
@@ -59,15 +65,13 @@ def points_to_voxel(points,
                     max_points=35,
                     reverse_index=True,
                     max_voxels=20000):
-    """convert kitti points(N, >=3) to voxels. This version calculate
-    everything in one loop. now it takes only 4.2ms(complete point cloud)
-    with jit and 3.2ghz cpu.(don't calculate other features)
+    """convert kitti points(N, >=3) to voxels.
 
     Args:
         points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
             points[:, 3:] contain other information such as reflectivity.
         voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
-        coors_range: [6] list/tuple or array, float. indicate voxel range.
+        coors_range (list[float | tuple[float] | ndarray]): Voxel range.
             format: xyzxyz, minmax
         max_points (int): Indicate maximum points contained in a voxel.
         reverse_index (bool): Whether return reversed coordinates.
@@ -126,6 +130,31 @@ def _points_to_voxel_reverse_kernel(points,
                                     coors,
                                     max_points=35,
                                     max_voxels=20000):
+    """convert kitti points(N, >=3) to voxels.
+
+    Args:
+        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
+            points[:, 3:] contain other information such as reflectivity.
+        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
+        coors_range (list[float | tuple[float] | ndarray]): Range of voxels.
+            format: xyzxyz, minmax
+        num_points_per_voxel (int): Number of points per voxel.
+        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W), which
+            has the same shape as the complete voxel map. It indicates the
+            index of each corresponding voxel.
+        voxels (np.ndarray): Created empty voxels.
+        coors (np.ndarray): Created coordinates of each voxel.
+        max_points (int): Indicate maximum points contained in a voxel.
+        max_voxels (int): Maximum number of voxels this function create.
+            for second, 20000 is a good choice. Points should be shuffled for
+            randomness before this function because max_voxels drops points.
+
+    Returns:
+        tuple[np.ndarray]:
+            voxels: Shape [M, max_points, ndim], only contain points.
+            coordinates: Shape [M, 3].
+            num_points_per_voxel: Shape [M].
+    """
     # put all computations to one loop.
     # we shouldn't create large array in main jit code, otherwise
     # reduce performance
@@ -175,11 +204,31 @@ def _points_to_voxel_kernel(points,
                             coors,
                             max_points=35,
                             max_voxels=20000):
-    # need mutex if write in cuda, but numba.cuda don't support mutex.
-    # in addition, pytorch don't support cuda in dataloader.
-    # put all computations to one loop.
-    # we shouldn't create large array in main jit code, otherwise
-    # decrease performance
+    """convert kitti points(N, >=3) to voxels.
+
+    Args:
+        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
+            points[:, 3:] contain other information such as reflectivity.
+        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
+        coors_range (list[float | tuple[float] | ndarray]): Range of voxels.
+            format: xyzxyz, minmax
+        num_points_per_voxel (int): Number of points per voxel.
+        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W), which
+            has the same shape as the complete voxel map. It indicates the
+            index of each corresponding voxel.
+        voxels (np.ndarray): Created empty voxels.
+        coors (np.ndarray): Created coordinates of each voxel.
+        max_points (int): Indicate maximum points contained in a voxel.
+        max_voxels (int): Maximum number of voxels this function create.
+            for second, 20000 is a good choice. Points should be shuffled for
+            randomness before this function because max_voxels drops points.
+
+    Returns:
+        tuple[np.ndarray]:
+            voxels: Shape [M, max_points, ndim], only contain points.
+            coordinates: Shape [M, 3].
+            num_points_per_voxel: Shape [M].
+    """
     N = points.shape[0]
     # ndim = points.shape[1] - 1
     ndim = 3

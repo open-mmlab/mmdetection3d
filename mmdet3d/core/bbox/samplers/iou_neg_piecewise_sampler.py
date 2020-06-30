@@ -54,6 +54,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
             return self.random_choice(pos_inds, num_expected)
 
     def _sample_neg(self, assign_result, num_expected, **kwargs):
+        """Randomly sample some negative samples."""
         neg_inds = torch.nonzero(assign_result.gt_inds == 0)
         if neg_inds.numel() != 0:
             neg_inds = neg_inds.squeeze(1)

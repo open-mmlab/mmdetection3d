@@ -312,9 +312,11 @@ class BaseInstance3DBoxes(object):
         return original_type(b, box_dim=self.box_dim, with_yaw=self.with_yaw)
 
     def __len__(self):
+        """int: Number of boxes in the current object"""
         return self.tensor.shape[0]
 
     def __repr__(self):
+        """str: Return a strings that describes the object"""
         return self.__class__.__name__ + '(\n    ' + str(self.tensor) + ')'
 
     @classmethod
@@ -341,6 +343,15 @@ class BaseInstance3DBoxes(object):
         return cat_boxes
 
     def to(self, device):
+        """Convert current boxes to a specific device
+
+        Args:
+            device (str | :obj:`torch.device`): The name of the device.
+
+        Returns:
+            :obj:`BaseInstance3DBoxes`: A new boxes object in the
+                specific device.
+        """
         original_type = type(self)
         return original_type(
             self.tensor.to(device),
@@ -359,6 +370,7 @@ class BaseInstance3DBoxes(object):
 
     @property
     def device(self):
+        """str: The device of the boxes are in."""
         return self.tensor.device
 
     def __iter__(self):

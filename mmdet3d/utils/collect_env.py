@@ -13,6 +13,7 @@ import mmdet3d
 
 
 def collect_env():
+    """Collect and print the information of running enviroments."""
     env_info = {}
     env_info['sys.platform'] = sys.platform
     env_info['Python'] = sys.version.replace('\n', '')

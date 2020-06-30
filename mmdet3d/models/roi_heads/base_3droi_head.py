@@ -26,26 +26,32 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
 
     @property
     def with_bbox(self):
+        """bool: whether the RoIHead has box head"""
         return hasattr(self, 'bbox_head') and self.bbox_head is not None
 
     @property
     def with_mask(self):
+        """bool: whether the RoIHead has mask head"""
         return hasattr(self, 'mask_head') and self.mask_head is not None
 
     @abstractmethod
     def init_weights(self, pretrained):
+        """Initialize the module with pre-trained weights."""
         pass
 
     @abstractmethod
     def init_bbox_head(self):
+        """Initialize the box head."""
         pass
 
     @abstractmethod
     def init_mask_head(self):
+        """Initialize maek head."""
         pass
 
     @abstractmethod
     def init_assigner_sampler(self):
+        """Initialize assigner and sampler"""
         pass
 
     @abstractmethod

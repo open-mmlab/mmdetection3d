@@ -545,7 +545,7 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=True):
 
     Args:
         points (np.ndarray): Input points with the shape of [num_points, 2].
-        polygon (dnarray): Input polygon with the shape of
+        polygon (np.ndarray): Input polygon with the shape of
             [num_polygon, num_points_of_polygon, 2].
         clockwise (bool): Indicate polygon is clockwise.
 
