@@ -92,9 +92,8 @@ def create_kitti_info_file(data_path,
         relative_path (bool): Whether to use relative path.
     """
     imageset_folder = Path(data_path) / 'ImageSets'
-    train_img_ids = _read_imageset_file(
-        str(imageset_folder / 'train_6014.txt'))
-    val_img_ids = _read_imageset_file(str(imageset_folder / 'val_1467.txt'))
+    train_img_ids = _read_imageset_file(str(imageset_folder / 'train.txt'))
+    val_img_ids = _read_imageset_file(str(imageset_folder / 'val.txt'))
     test_img_ids = _read_imageset_file(str(imageset_folder / 'test.txt'))
 
     print('Generate info. this may take several minutes.')
