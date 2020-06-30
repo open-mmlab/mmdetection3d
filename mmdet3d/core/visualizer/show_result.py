@@ -6,6 +6,12 @@ import trimesh
 
 
 def _write_ply(points, out_filename):
+    """Write points into ply format for meshlab visualization
+
+    Args:
+        points (np.ndarray): Points in shape (N, dim).
+        out_filename (str): Filename to be saved.
+    """
     N = points.shape[0]
     fout = open(out_filename, 'w')
     for i in range(N):
@@ -64,6 +70,15 @@ def _write_oriented_bbox(scene_bbox, out_filename):
 
 
 def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
+    """Convert results into format that is directly readable for meshlab.
+
+    Args:
+        points (np.ndarray): Points.
+        gt_bboxes (np.ndarray): Ground truth boxes.
+        pred_bboxes (np.ndarray): Predicted boxes.
+        out_dir (str): Path of output directory
+        filename (str): Filename of the current frame.
+    """
     mmcv.mkdir_or_exist(out_dir)
 
     if gt_bboxes is not None:

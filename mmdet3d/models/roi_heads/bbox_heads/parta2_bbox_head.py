@@ -4,13 +4,12 @@ import torch.nn as nn
 from mmcv.cnn import ConvModule, normal_init, xavier_init
 
 import mmdet3d.ops.spconv as spconv
-from mmdet3d.core import build_bbox_coder, xywhr2xyxyr
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
-                                          rotation_3d_in_axis)
+                                          rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
 from mmdet3d.ops import make_sparse_convmodule
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
-from mmdet.core import multi_apply
+from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
 
@@ -224,6 +223,7 @@ class PartA2BboxHead(nn.Module):
         self.init_weights()
 
     def init_weights(self):
+        """Initialize weights of the bbox head"""
         for m in self.modules():
             if isinstance(m, (nn.Conv2d, nn.Conv1d)):
                 xavier_init(m, distribution='uniform')
@@ -390,6 +390,22 @@ class PartA2BboxHead(nn.Module):
                 bbox_weights)
 
     def _get_target_single(self, pos_bboxes, pos_gt_bboxes, ious, cfg):
+        """Generate training targets for a single sample.
+
+        Args:
+            pos_bboxes (torch.Tensor): Positive boxes with shape
+                (N, 7).
+            pos_gt_bboxes (torch.Tensor): Ground truth boxes with shape
+                (M, 7).
+            ious (torch.Tensor): IoU between `pos_bboxes` and `pos_gt_bboxes`
+                in shape (N, M).
+            cfg (dict): Training configs.
+
+        Returns:
+            tuple: Target for positive boxes.
+                (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
+                bbox_weights)
+        """
         cls_pos_mask = ious > cfg.cls_pos_thr
         cls_neg_mask = ious < cfg.cls_neg_thr
         interval_mask = (cls_pos_mask == 0) & (cls_neg_mask == 0)
@@ -540,6 +556,26 @@ class PartA2BboxHead(nn.Module):
                         nms_thr,
                         input_meta,
                         use_rotate_nms=True):
+        """Multi-class NMS for box head
+
+        Note:
+            This function has large overlap with the `box3d_multiclass_nms`
+            implemented in `mmdet3d.core.post_processing`. We are considering
+            merging these two functions in the future.
+
+        Args:
+            box_probs (torch.Tensor): Predicted boxes probabitilies in
+                shape (N,).
+            box_preds (torch.Tensor): Predicted boxes in shape (N, 7+C).
+            score_thr (float): Threshold of scores.
+            nms_thr (float): Threshold for NMS.
+            input_meta (dict): Meta informations of the current sample.
+            use_rotate_nms (bool, optional): Whether to use rotated nms.
+                Defaults to True.
+
+        Returns:
+            torch.Tensor: Selected indices.
+        """
         if use_rotate_nms:
             nms_func = nms_gpu
         else:

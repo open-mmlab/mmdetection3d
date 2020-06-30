@@ -34,6 +34,7 @@ class VoxelNet(SingleStage3DDetector):
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
     def extract_feat(self, points, img_metas):
+        """Extract features from points"""
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
@@ -45,6 +46,7 @@ class VoxelNet(SingleStage3DDetector):
 
     @torch.no_grad()
     def voxelize(self, points):
+        """Apply hard voxelization to points"""
         voxels, coors, num_points = [], [], []
         for res in points:
             res_voxels, res_coors, res_num_points = self.voxel_layer(res)
