@@ -69,12 +69,14 @@ class Anchor3DRangeGenerator(object):
 
     @property
     def num_base_anchors(self):
+        """list[int]: total number of base anchors in a feature grid"""
         num_rot = len(self.rotations)
         num_size = torch.tensor(self.sizes).reshape(-1, 3).size(0)
         return num_rot * num_size
 
     @property
     def num_levels(self):
+        """int: number of feature levels that the generator will be applied"""
         return len(self.scales)
 
     def grid_anchors(self, featmap_sizes, device='cuda'):
@@ -103,6 +105,20 @@ class Anchor3DRangeGenerator(object):
         return multi_level_anchors
 
     def single_level_grid_anchors(self, featmap_size, scale, device='cuda'):
+        """Generate grid anchors of a single level feature map.
+
+        Note:
+            This function is usually called by method ``self.grid_anchors``.
+
+        Args:
+            featmap_size (tuple[int]): Size of the feature map.
+            scale (float): Scale factor of the anchors in the current level.
+            device (str, optional): Device the tensor will be put on.
+                Defaults to 'cuda'.
+
+        Returns:
+            torch.Tensor: Anchors in the overall feature map.
+        """
         # We reimplement the anchor generator using torch in cuda
         # torch: 0.6975 s for 1000 times
         # numpy: 4.3345 s for 1000 times
@@ -139,11 +155,21 @@ class Anchor3DRangeGenerator(object):
         """Generate anchors in a single range
 
         Args:
-            feature_size: list [D, H, W](zyx)
-            sizes: [N, 3] list of list or array, size of anchors, xyz
+            feature_size (list[float] | tuple[float]): Feature map size. It is
+                either a list of a tuple of [D, H, W](in order of z, y, and x).
+            anchor_range (torch.Tensor | list[float]): Range of anchors with
+                shape [6]. The order is consistent with that of anchors, i.e.,
+                (x_min, y_min, z_min, x_max, y_max, z_max).
+            scale (float | int, optional): The scale factor of anchors.
+            sizes (list[list] | np.ndarray | torch.Tensor): Anchor size with
+                shape [N, 3], in order of x, y, z.
+            rotations (list[float] | np.ndarray | torch.Tensor): Rotations of
+                anchors in a single feature grid.
+            device (str): Devices that the anchors will be put on.
 
         Returns:
-            anchors: [*feature_size, num_sizes, num_rots, 7] tensor.
+            torch.Tensor: anchors with shape
+                [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
             feature_size = [1, feature_size[0], feature_size[1]]

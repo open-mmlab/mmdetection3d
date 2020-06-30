@@ -3,11 +3,10 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import bias_init_with_prob, normal_init
 
-from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms,
-                          build_anchor_generator, build_assigner,
-                          build_bbox_coder, build_sampler, limit_period,
+from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
                           xywhr2xyxyr)
-from mmdet.core import multi_apply
+from mmdet.core import (build_anchor_generator, build_assigner,
+                        build_bbox_coder, build_sampler, multi_apply)
 from mmdet.models import HEADS
 from ..builder import build_loss
 from .train_mixins import AnchorTrainMixin

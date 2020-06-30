@@ -44,15 +44,21 @@ class PartAggregationROIHead(Base3DRoIHead):
         self.init_assigner_sampler()
 
     def init_weights(self, pretrained):
+        """Initialize weights, skip since ``PartAggregationROIHead``
+        does not need to initialize weights"""
         pass
 
     def init_mask_head(self):
+        """Initialize mask head, skip since ``PartAggregationROIHead``
+        does not have one."""
         pass
 
     def init_bbox_head(self, bbox_head):
+        """Initialize box head"""
         self.bbox_head = build_head(bbox_head)
 
     def init_assigner_sampler(self):
+        """Initialize assigner and sampler"""
         self.bbox_assigner = None
         self.bbox_sampler = None
         if self.train_cfg:
@@ -66,6 +72,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     @property
     def with_semantic(self):
+        """bool: whether the head has semantic branch"""
         return hasattr(self,
                        'semantic_head') and self.semantic_head is not None
 
@@ -152,6 +159,18 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     def _bbox_forward_train(self, seg_feats, part_feats, voxels_dict,
                             sampling_results):
+        """Forward training function of roi_extractor and bbox_head.
+
+        Args:
+            seg_feats (torch.Tensor): Point-wise semantic features.
+            part_feats (torch.Tensor): Point-wise part prediction features.
+            voxels_dict (dict): Contains information of voxels.
+            sampling_results (:obj:`SamplingResult`): Sampled results used
+                for training.
+
+        Returns:
+            dict: Forward results including losses and predictions.
+        """
         rois = bbox3d2roi([res.bboxes for res in sampling_results])
         bbox_results = self._bbox_forward(seg_feats, part_feats, voxels_dict,
                                           rois)
@@ -166,7 +185,8 @@ class PartAggregationROIHead(Base3DRoIHead):
         return bbox_results
 
     def _bbox_forward(self, seg_feats, part_feats, voxels_dict, rois):
-        """Forward function of roi_extractor and bbox_head.
+        """Forward function of roi_extractor and bbox_head used in both
+        training and testing.
 
         Args:
             seg_feats (torch.Tensor): Point-wise semantic features.
@@ -196,6 +216,18 @@ class PartAggregationROIHead(Base3DRoIHead):
         return bbox_results
 
     def _assign_and_sample(self, proposal_list, gt_bboxes_3d, gt_labels_3d):
+        """Assign and sample proposals for training
+
+        Args:
+            proposal_list (list[dict]): Proposals produced by RPN.
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+                boxes.
+            gt_labels_3d (list[torch.Tensor]): Ground truth labels
+
+        Returns:
+            list[:obj:`SamplingResult`]: Sampled results of each training
+                sample.
+        """
         sampling_results = []
         # bbox assign
         for batch_idx in range(len(proposal_list)):
@@ -258,6 +290,18 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     def _semantic_forward_train(self, x, voxels_dict, gt_bboxes_3d,
                                 gt_labels_3d):
+        """Train semantic head
+
+        Args:
+            x (torch.Tensor): Point-wise semantic features for segmentation
+            voxels_dict (dict): Contains information of voxels.
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+                boxes.
+            gt_labels_3d (list[torch.Tensor]): Ground truth labels
+
+        Returns:
+            dict: Segmentation results including losses
+        """
         semantic_results = self.semantic_head(x)
         semantic_targets = self.semantic_head.get_targets(
             voxels_dict, gt_bboxes_3d, gt_labels_3d)

@@ -28,6 +28,21 @@ def get_paddings_indicator(actual_num, max_num, axis=0):
 
 
 class VFELayer(nn.Module):
+    """ Voxel Feature Encoder layer.
+
+    The voxel encoder is composed of a series of these layers.
+    This module do not support average pooling and only support to use
+    max pooling to gather features inside a VFE.
+
+    Args:
+        in_channels (int): Number of input channels.
+        out_channels (int): Number of output channels.
+        norm_cfg (dict): Config dict of normalization layers
+        max_out (bool): Whether aggregate the features of points inside
+            each voxel and only return voxel features.
+        cat_max (bool): Whether concatenate the aggregated features
+            and pointwise features.
+    """
 
     def __init__(self,
                  in_channels,
@@ -44,6 +59,23 @@ class VFELayer(nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias=False)
 
     def forward(self, inputs):
+        """Forward function
+
+        Args:
+            inputs (torch.Tensor): Voxels features of shape (N, M, C).
+                N is the number of voxels, M is the number of points in
+                voxels, C is the number of channels of point features.
+
+        Returns:
+            torch.Tensor: Voxel features. There are three mode under which the
+                features have different meaning.
+                - `max_out=False`: Return point-wise features in
+                    shape (N, M, C).
+                - `max_out=True` and `cat_max=False`: Return aggregated
+                    voxel features in shape (N, C)
+                - `max_out=True` and `cat_max=True`: Return concatenated
+                    point-wise features in shape (N, M, C).
+        """
         # [K, T, 7] tensordot [7, units] = [K, T, units]
         voxel_count = inputs.shape[1]
         x = self.linear(inputs)
@@ -68,6 +100,20 @@ class VFELayer(nn.Module):
 
 
 class PFNLayer(nn.Module):
+    """ Pillar Feature Net Layer.
+
+    The Pillar Feature Net is composed of a series of these layers, but the
+    PointPillars paper results only used a single PFNLayer.
+
+    Args:
+        in_channels (int): Number of input channels.
+        out_channels (int): Number of output channels.
+        norm_cfg (dict): Config dict of normalization layers
+        last_layer (bool): If last_layer, there is no concatenation of
+            features.
+        mode (str): Pooling model to gather features inside voxels.
+            Default to 'max'.
+    """
 
     def __init__(self,
                  in_channels,
@@ -75,20 +121,6 @@ class PFNLayer(nn.Module):
                  norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
                  last_layer=False,
                  mode='max'):
-        """ Pillar Feature Net Layer.
-
-        The Pillar Feature Net is composed of a series of these layers, but the
-        PointPillars paper results only used a single PFNLayer.
-
-        Args:
-            in_channels (int): Number of input channels.
-            out_channels (int): Number of output channels.
-            norm_cfg (dict): Config dict of normalization layers
-            last_layer (bool): If last_layer, there is no concatenation of
-                features.
-            mode (str): Pooling model to gather features inside voxels.
-                Default to 'max'.
-        """
 
         super().__init__()
         self.name = 'PFNLayer'
@@ -104,7 +136,20 @@ class PFNLayer(nn.Module):
         self.mode = mode
 
     def forward(self, inputs, num_voxels=None, aligned_distance=None):
+        """Forward function
 
+        Args:
+            inputs (torch.Tensor): Pillar/Voxel inputs with shape (N, M, C).
+                N is the number of voxels, M is the number of points in
+                voxels, C is the number of channels of point features.
+            num_voxels (torch.Tensor, optional): Number of points in each
+                voxel. Defaults to None.
+            aligned_distance (torch.Tensor, optional): The distance of
+                each points to the voxel center. Defaults to None.
+
+        Returns:
+            torch.Tensor: Features of Pillars.
+        """
         x = self.linear(inputs)
         x = self.norm(x.permute(0, 2, 1).contiguous()).permute(0, 2,
                                                                1).contiguous()

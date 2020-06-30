@@ -20,6 +20,7 @@ class Single3DRoIAwareExtractor(nn.Module):
         self.roi_layer = self.build_roi_layers(roi_layer)
 
     def build_roi_layers(self, layer_cfg):
+        """Build roi layers using `layer_cfg`"""
         cfg = layer_cfg.copy()
         layer_type = cfg.pop('type')
         assert hasattr(ops, layer_type)

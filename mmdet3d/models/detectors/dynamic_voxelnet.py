@@ -7,6 +7,8 @@ from .voxelnet import VoxelNet
 
 @DETECTORS.register_module()
 class DynamicVoxelNet(VoxelNet):
+    """VoxelNet using `dynamic voxelization
+    <https://arxiv.org/abs/1910.06528>`_."""
 
     def __init__(self,
                  voxel_layer,
@@ -31,6 +33,7 @@ class DynamicVoxelNet(VoxelNet):
         )
 
     def extract_feat(self, points, img_metas):
+        """Extract features from points"""
         voxels, coors = self.voxelize(points)
         voxel_features, feature_coors = self.voxel_encoder(voxels, coors)
         batch_size = coors[-1, 0].item() + 1
@@ -42,6 +45,7 @@ class DynamicVoxelNet(VoxelNet):
 
     @torch.no_grad()
     def voxelize(self, points):
+        """Apply dynamic voxelization to points"""
         coors = []
         # dynamic voxelization only provide a coors mapping
         for res in points:
