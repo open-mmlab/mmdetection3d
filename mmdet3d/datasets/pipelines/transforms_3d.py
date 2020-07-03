@@ -47,6 +47,11 @@ class RandomFlip3D(RandomFlip):
 
     def random_flip_data_3d(self, input_dict, direction='horizontal'):
         assert direction in ['horizontal', 'vertical']
+        if len(input_dict['bbox3d_fields']) == 0:  # test mode
+            input_dict['bbox3d_fields'].append('empty_box3d')
+            input_dict['empty_box3d'] = input_dict['box_type_3d'](
+                np.array([], dtype=np.float32))
+        assert len(input_dict['bbox3d_fields']) == 1
         for key in input_dict['bbox3d_fields']:
             input_dict['points'] = input_dict[key].flip(
                 direction, points=input_dict['points'])
