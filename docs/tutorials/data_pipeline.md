@@ -38,14 +38,24 @@ test_pipeline = [
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1333, 800),
+        pts_scale_ratio=1.0,
         flip=False,
+        pcd_horizontal_flip=False,
+        pcd_vertical_flip=False,
         transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='ImageToTensor', keys=['img']),
-            dict(type='Collect', keys=['img']),
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1., 1.],
+                translation_std=[0, 0, 0]),
+            dict(type='RandomFlip3D'),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=class_names,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
         ])
 ]
 ```
@@ -122,7 +132,8 @@ For each operation, we list the related dict fields that are added/updated/remov
 
 ### Test time augmentation
 
-`MultiScaleFlipAug`
+`MultiScaleFlipAug3D`
+- update: all the dict fields (update values to the collection of augmented data)
 
 ## Extend and use custom pipelines
 
