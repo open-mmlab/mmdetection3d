@@ -10,7 +10,36 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class SUNRGBDDataset(Custom3DDataset):
+    """SUNRGBD Dataset
 
+    This class serves as the API for experiments on the SUNRGBD Dataset.
+
+    Please refer to `<http://rgbd.cs.princeton.edu/challenge.html>`_for
+    data downloading. It is recommended to symlink the dataset root to
+    $MMDETECTION3D/data and organize them as the doc shows.
+
+    Args:
+        data_root (str): Path of dataset root.
+        ann_file (str): Path of annotation file.
+        pipeline (list[dict], optional): Pipeline used for data processing.
+            Defaults to None.
+        classes (tuple[str], optional): Classes used in the dataset.
+            Defaults to None.
+        modality (dict, optional): Modality to specify the sensor data used
+            as input. Defaults to None.
+        box_type_3d (str, optional): Type of 3D box of this dataset.
+            Based on the `box_type_3d`, the dataset will encapsulate the box
+            to its original format then converted them to `box_type_3d`.
+            Defaults to 'Depth' in this dataset. Available options includes
+
+            - 'LiDAR': box in LiDAR coordinates
+            - 'Depth': box in depth coordinates, usually for indoor dataset
+            - 'Camera': box in camera coordinates
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
+            Defaults to True.
+        test_mode (bool, optional): Whether the dataset is in test mode.
+            Defaults to False.
+    """
     CLASSES = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
