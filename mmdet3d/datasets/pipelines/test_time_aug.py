@@ -36,8 +36,8 @@ class MultiScaleFlipAug3D(object):
                  pts_scale_ratio,
                  flip=False,
                  flip_direction='horizontal',
-                 pcd_horizontal_flip=True,
-                 pcd_vertical_flip=True):
+                 pcd_horizontal_flip=False,
+                 pcd_vertical_flip=False):
         self.transforms = Compose(transforms)
         self.img_scale = img_scale if isinstance(img_scale,
                                                  list) else [img_scale]
