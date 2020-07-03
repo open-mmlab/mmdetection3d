@@ -31,6 +31,21 @@ mmdetection3d
 │   │   │   ├── image_2
 │   │   │   ├── label_2
 │   │   │   ├── velodyne
+│   ├── lyft
+│   │   ├── v1.01-train
+│   │   │   ├── v1.01-train (train_data)
+│   │   │   ├── lidar (train_lidar)
+│   │   │   ├── images (train_images)
+│   │   │   ├── maps (train_maps)
+│   │   ├── v1.01-test
+│   │   │   ├── v1.01-test (test_data)
+│   │   │   ├── lidar (test_lidar)
+│   │   │   ├── images (test_images)
+│   │   │   ├── maps (test_maps)
+│   │   ├── train.txt
+│   │   ├── val.txt
+│   │   ├── test.txt
+│   │   ├── sample_submission.csv
 │   ├── scannet
 │   │   ├── meta_data
 │   │   ├── scans
@@ -56,6 +71,12 @@ Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eva
 ```bash
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
 ```
+
+Download Lyft 3D detection data [HERE](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data). Prepare Lyft data by running
+```bash
+python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
+```
+Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above.
 
 To prepare scannet data, please see [scannet](../data/scannet/README.md).
 

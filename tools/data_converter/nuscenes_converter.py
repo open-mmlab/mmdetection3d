@@ -50,7 +50,7 @@ def create_nuscenes_infos(root_path,
         raise ValueError('unknown')
 
     # filter existing scenes.
-    available_scenes = _get_available_scenes(nusc)
+    available_scenes = get_available_scenes(nusc)
     available_scene_names = [s['name'] for s in available_scenes]
     train_scenes = list(
         filter(lambda x: x in available_scene_names, train_scenes))
@@ -93,7 +93,19 @@ def create_nuscenes_infos(root_path,
         mmcv.dump(data, info_val_path)
 
 
-def _get_available_scenes(nusc):
+def get_available_scenes(nusc):
+    """Get available scenes from the input nuscenes class.
+
+    Given the raw data, get the information of available scenes for
+    further info generation.
+
+    Args:
+        nusc (class): Dataset class in the nuScenes dataset.
+
+    Returns:
+        available_scenes (list[dict]): List of basic information for the
+            available scenes.
+    """
     available_scenes = []
     print('total scene num: {}'.format(len(nusc.scene)))
     for scene in nusc.scene:
@@ -105,6 +117,7 @@ def _get_available_scenes(nusc):
         scene_not_exist = False
         while has_more_frames:
             lidar_path, boxes, _ = nusc.get_sample_data(sd_rec['token'])
+            lidar_path = str(lidar_path)
             if not mmcv.is_filepath(lidar_path):
                 scene_not_exist = True
                 break
@@ -126,6 +139,20 @@ def _fill_trainval_infos(nusc,
                          val_scenes,
                          test=False,
                          max_sweeps=10):
+    """Generate the train/val infos from the raw data.
+
+    Args:
+        nusc (:obj:``NuScenes``): Dataset class in the nuScenes dataset.
+        train_scenes (list[str]): Basic information of training scenes.
+        val_scenes (list[str]): Basic information of validation scenes.
+        test (bool): Whether use the test mode. In the test mode, no
+            annotations can be accessed. Default: False.
+        max_sweeps (int): Max number of sweeps. Default: 10.
+
+    Returns:
+        tuple[list[dict]]: Information of training set and validation set
+            that will be saved to the info file.
+    """
     train_nusc_infos = []
     val_nusc_infos = []
 
@@ -137,7 +164,7 @@ def _fill_trainval_infos(nusc,
         pose_record = nusc.get('ego_pose', sd_rec['ego_pose_token'])
         lidar_path, boxes, _ = nusc.get_sample_data(lidar_token)
 
-        mmcv.check_file_exist(lidar_path, msg_tmpl='file "{}" does not exist.')
+        mmcv.check_file_exist(lidar_path)
 
         info = {
             'lidar_path': lidar_path,
@@ -238,13 +265,28 @@ def obtain_sensor2top(nusc,
                       e2g_t,
                       e2g_r_mat,
                       sensor_type='lidar'):
-    """Obtain the info with RT matric from general sensor to Top LiDAR
+    """Obtain the info with RT matric from general sensor to Top LiDAR.
+
+    Args:
+        nusc (class): Dataset class in the nuScenes dataset.
+        sensor_token (str): Sample data token corresponding to the
+            specific sensor type.
+        l2e_t (np.ndarray): Translation from lidar to ego in shape (1, 3).
+        l2e_r_mat (np.ndarray): Rotation matrix from lidar to ego
+            in shape (3, 3).
+        e2g_t (np.ndarray): Translation from ego to global in shape (1, 3).
+        e2g_r_mat (np.ndarray): Rotation matrix from ego to global
+            in shape (3, 3).
+        sensor_type (str): Sensor to calibrate. Default: 'lidar'.
+
+    Returns:
+        sweep (dict): Sweep information after transformation.
     """
     sd_rec = nusc.get('sample_data', sensor_token)
     cs_record = nusc.get('calibrated_sensor',
                          sd_rec['calibrated_sensor_token'])
     pose_record = nusc.get('ego_pose', sd_rec['ego_pose_token'])
-    data_path = nusc.get_sample_data_path(sd_rec['token'])
+    data_path = str(nusc.get_sample_data_path(sd_rec['token']))
     sweep = {
         'data_path': data_path,
         'type': sensor_type,
@@ -276,6 +318,13 @@ def obtain_sensor2top(nusc,
 
 
 def export_2d_annotation(root_path, info_path, version):
+    """Export 2d annotation from the info file and raw data.
+
+    Args:
+        root_path (str): Root path of the raw data.
+        info_path (str): Path of the info file.
+        version (str): Dataset version.
+    """
     # get bbox annotations for camera
     camera_types = [
         'CAM_FRONT',
@@ -295,9 +344,6 @@ def export_2d_annotation(root_path, info_path, version):
     coco_ann_id = 0
     coco_2d_dict = dict(annotations=[], images=[], categories=cat2Ids)
     for info in mmcv.track_iter_progress(nusc_infos):
-        # info_2d = dict(token=info['token'],
-        #                timestamp=info['timestamp'],
-        #                cams=dict())
         for cam in camera_types:
             cam_info = info['cams'][cam]
             coco_infos = get_2d_boxes(
@@ -319,27 +365,7 @@ def export_2d_annotation(root_path, info_path, version):
                 coco_info['id'] = coco_ann_id
                 coco_2d_dict['annotations'].append(coco_info)
                 coco_ann_id += 1
-            # gt_bbox_2d = [res['bbox_corners'] for res in anno_info]
-            # gt_names_2d = [res['category_name'] for res in anno_info]
-            # for i in range(len(gt_names_2d)):
-            #     if gt_names_2d[i] in NuScenesDataset.NameMapping:
-            #         gt_names_2d[i] = NuScenesDataset.NameMapping[
-            #               gt_names_2d[i]]
-            # assert len(gt_bbox_2d) == len(gt_names_2d)
-            # gt_bbox_2d = np.array(gt_bbox_2d, dtype=np.float32)
-            # gt_names_2d = np.array(gt_names_2d)
-            # info_2d['cams'][cam] = dict(
-            #     data_path=info['cams'][cam]['data_path'],
-            #     type=info['cams'][cam]['type'],
-            #     token=info['cams'][cam]['sample_data_token'],
-            #     gt_boxes=gt_bbox_2d,
-            #     gt_names=gt_names_2d)
-        # info_2d_list.append(info_2d)
-    # mmcv.dump(
-    #     info_2d_list,
-    #     osp.join(root_path,
-    #     '{}_2d_infos_train.pkl'.format(info_prefix)))
-    mmcv.dump(coco_2d_dict, '{}.coco.json'.format(info_path[:-4]))
+    mmcv.dump(coco_2d_dict, f'{info_path[:-4]}.coco.json')
 
 
 def get_2d_boxes(nusc, sample_data_token: str,
@@ -351,7 +377,7 @@ def get_2d_boxes(nusc, sample_data_token: str,
         visibilities: Visibility filter.
 
     Return:
-        list: List of 2D annotation record that belongs to the input
+        list[dict]: List of 2D annotation record that belongs to the input
             `sample_data_token`.
     """
 
@@ -436,12 +462,14 @@ def post_process_coords(
     bbox corners and the image canvas, return None if no
     intersection.
 
-    corner_coords: Corner coordinates of reprojected bounding box.
-    imsize: Size of the image canvas.
+    Args:
+        corner_coords (list[int]): Corner coordinates of reprojected
+            bounding box.
+        imsize (tuple[int]): Size of the image canvas.
 
     Return:
-        Intersection of the convex hull of the 2D box corners and the image
-        canvas.
+        tuple [float]: Intersection of the convex hull of the 2D box
+            corners and the image canvas.
     """
     polygon_from_2d_box = MultiPoint(corner_coords).convex_hull
     img_canvas = box(0, 0, imsize[0], imsize[1])
@@ -466,15 +494,26 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
     """
     Generate one 2D annotation record given various informations on
     top of the 2D bounding box coordinates.
-    :param ann_rec: Original 3d annotation record.
-    :param x1: Minimum value of the x coordinate.
-    :param y1: Minimum value of the y coordinate.
-    :param x2: Maximum value of the x coordinate.
-    :param y2: Maximum value of the y coordinate.
-    :param sample_data_token: Sample data token.
-    :param filename:The corresponding image file where the annotation
-                    is present.
-    :return: A sample 2D annotation record.
+
+    Args:
+        ann_rec (dict): Original 3d annotation record.
+        x1 (float): Minimum value of the x coordinate.
+        y1 (float): Minimum value of the y coordinate.
+        x2 (float): Maximum value of the x coordinate.
+        y2 (float): Maximum value of the y coordinate.
+        sample_data_token (str): Sample data token.
+        filename (str):The corresponding image file where the annotation
+            is present.
+
+    Returns:
+        dict: A sample 2D annotation record.
+            - file_name (str): flie name
+            - image_id (str): sample data token
+            - area (float): 2d box area
+            - category_name (str): category name
+            - category_id (int): category id
+            - bbox (list[float]): left x, top y, dx, dy of 2d box
+            - iscrowd (int): whether the area is crowd
     """
     repro_rec = OrderedDict()
     repro_rec['sample_data_token'] = sample_data_token

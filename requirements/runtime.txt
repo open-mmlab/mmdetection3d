@@ -5,6 +5,7 @@ mmcv>=0.6.0
 numba==0.48.0
 numpy
 nuscenes-devkit==1.0.5
+lyft_dataset_sdk
 # need older pillow until torchvision is fixed
 Pillow<=6.2.2
 plyfile

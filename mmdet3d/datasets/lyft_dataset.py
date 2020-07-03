@@ -3,24 +3,27 @@ import tempfile
 
 import mmcv
 import numpy as np
-import pyquaternion
-from nuscenes.utils.data_classes import Box as NuScenesBox
+import pandas as pd
+from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
+from lyft_dataset_sdk.utils.data_classes import Box as LyftBox
+from pyquaternion import Quaternion
 
+from mmdet3d.core.evaluation.lyft_eval import lyft_eval
 from mmdet.datasets import DATASETS
-from ..core import show_result
-from ..core.bbox import Box3DMode, LiDARInstance3DBoxes
+from ..core.bbox import LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
 
 
 @DATASETS.register_module()
-class NuScenesDataset(Custom3DDataset):
-    """NuScenes Dataset
+class LyftDataset(Custom3DDataset):
+    """Lyft Dataset
 
-    This class serves as the API for experiments on the NuScenes Dataset.
+    This class serves as the API for experiments on the Lyft Dataset.
 
-    Please refer to `<https://www.nuscenes.org/download>`_for data
-    downloading. It is recommended to symlink the dataset root to
-    $MMDETECTION3D/data and organize them as the doc shows.
+    Please refer to
+    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles
+    /data>`_for data downloading. It is recommended to symlink the dataset
+    root to $MMDETECTION3D/data and organize them as the doc shows.
 
     Args:
         ann_file (str): Path of annotation file.
@@ -31,8 +34,6 @@ class NuScenesDataset(Custom3DDataset):
             Defaults to None.
         load_interval (int, optional): Interval of loading the dataset. It is
             used to uniformly sample the dataset. Defaults to 1.
-        with_velocity (bool, optional): Whether include velocity prediction
-            into the experiments. Defaults to True.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to None.
         box_type_3d (str, optional): Type of 3D box of this dataset.
@@ -47,60 +48,31 @@ class NuScenesDataset(Custom3DDataset):
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        eval_version (bool, optional): Configuration version of evaluation.
-            Defaults to  'detection_cvpr_2019'.
     """
     NameMapping = {
-        'movable_object.barrier': 'barrier',
-        'vehicle.bicycle': 'bicycle',
-        'vehicle.bus.bendy': 'bus',
-        'vehicle.bus.rigid': 'bus',
-        'vehicle.car': 'car',
-        'vehicle.construction': 'construction_vehicle',
-        'vehicle.motorcycle': 'motorcycle',
-        'human.pedestrian.adult': 'pedestrian',
-        'human.pedestrian.child': 'pedestrian',
-        'human.pedestrian.construction_worker': 'pedestrian',
-        'human.pedestrian.police_officer': 'pedestrian',
-        'movable_object.trafficcone': 'traffic_cone',
-        'vehicle.trailer': 'trailer',
-        'vehicle.truck': 'truck'
+        'bicycle': 'bicycle',
+        'bus': 'bus',
+        'car': 'car',
+        'emergency_vehicle': 'emergency_vehicle',
+        'motorcycle': 'motorcycle',
+        'other_vehicle': 'other_vehicle',
+        'pedestrian': 'pedestrian',
+        'truck': 'truck',
+        'animal': 'animal'
     }
     DefaultAttribute = {
-        'car': 'vehicle.parked',
-        'pedestrian': 'pedestrian.moving',
-        'trailer': 'vehicle.parked',
-        'truck': 'vehicle.parked',
-        'bus': 'vehicle.moving',
-        'motorcycle': 'cycle.without_rider',
-        'construction_vehicle': 'vehicle.parked',
-        'bicycle': 'cycle.without_rider',
-        'barrier': '',
-        'traffic_cone': '',
+        'car': 'is_stationary',
+        'truck': 'is_stationary',
+        'bus': 'is_stationary',
+        'emergency_vehicle': 'is_stationary',
+        'other_vehicle': 'is_stationary',
+        'motorcycle': 'is_stationary',
+        'bicycle': 'is_stationary',
+        'pedestrian': 'is_stationary',
+        'animal': 'is_stationary'
     }
-    AttrMapping = {
-        'cycle.with_rider': 0,
-        'cycle.without_rider': 1,
-        'pedestrian.moving': 2,
-        'pedestrian.standing': 3,
-        'pedestrian.sitting_lying_down': 4,
-        'vehicle.moving': 5,
-        'vehicle.parked': 6,
-        'vehicle.stopped': 7,
-    }
-    AttrMapping_rev = [
-        'cycle.with_rider',
-        'cycle.without_rider',
-        'pedestrian.moving',
-        'pedestrian.standing',
-        'pedestrian.sitting_lying_down',
-        'vehicle.moving',
-        'vehicle.parked',
-        'vehicle.stopped',
-    ]
-    CLASSES = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
-               'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
-               'barrier')
+    CLASSES = ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
+               'motorcycle', 'bicycle', 'pedestrian', 'animal')
 
     def __init__(self,
                  ann_file,
@@ -108,12 +80,10 @@ class NuScenesDataset(Custom3DDataset):
                  data_root=None,
                  classes=None,
                  load_interval=1,
-                 with_velocity=True,
                  modality=None,
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
-                 test_mode=False,
-                 eval_version='detection_cvpr_2019'):
+                 test_mode=False):
         self.load_interval = load_interval
         super().__init__(
             data_root=data_root,
@@ -125,11 +95,6 @@ class NuScenesDataset(Custom3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
 
-        self.with_velocity = with_velocity
-        self.eval_version = eval_version
-        from nuscenes.eval.detection.config import config_factory
-        self.eval_detection_configs = config_factory(self.eval_version)
-
         if self.modality is None:
             self.modality = dict(
                 use_camera=False,
@@ -140,6 +105,14 @@ class NuScenesDataset(Custom3DDataset):
             )
 
     def load_annotations(self, ann_file):
+        """Load annotations from ann_file.
+
+        Args:
+            ann_file (str): Path of the annotation file.
+
+        Returns:
+            list[dict]: List of annotations sorted by timestamps.
+        """
         data = mmcv.load(ann_file)
         data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
         data_infos = data_infos[::self.load_interval]
@@ -148,6 +121,24 @@ class NuScenesDataset(Custom3DDataset):
         return data_infos
 
     def get_data_info(self, index):
+        """Get data info according to the given index.
+
+        Args:
+            index (int): Index of the sample data to get.
+
+        Returns:
+            dict: Standard input_dict consists of the
+                data information.
+
+                - sample_idx (str): sample index
+                - pts_filename (str): filename of point clouds
+                - sweeps (list[dict]): infos of sweeps
+                - timestamp (float): sample timestamp
+                - img_filename (str, optional): image filename
+                - lidar2img (list[np.ndarray], optional): transformations from
+                    lidar to different cameras
+                - ann_info (dict): annotation info
+        """
         info = self.data_infos[index]
 
         # standard protocal modified from SECOND.Pytorch
@@ -189,11 +180,23 @@ class NuScenesDataset(Custom3DDataset):
         return input_dict
 
     def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Standard annotation dictionary
+                consists of the data information.
+
+                - gt_bboxes_3d (:obj:``LiDARInstance3DBoxes``):
+                    3D ground truth bboxes
+                - gt_labels_3d (np.ndarray): labels of ground truths
+                - gt_names (list[str]): class names of ground truths
+        """
         info = self.data_infos[index]
-        # filter out bbox containing no points
-        mask = info['num_lidar_pts'] > 0
-        gt_bboxes_3d = info['gt_boxes'][mask]
-        gt_names_3d = info['gt_names'][mask]
+        gt_bboxes_3d = info['gt_boxes']
+        gt_names_3d = info['gt_names']
         gt_labels_3d = []
         for cat in gt_names_3d:
             if cat in self.CLASSES:
@@ -202,13 +205,11 @@ class NuScenesDataset(Custom3DDataset):
                 gt_labels_3d.append(-1)
         gt_labels_3d = np.array(gt_labels_3d)
 
-        if self.with_velocity:
-            gt_velocity = info['gt_velocity'][mask]
-            nan_mask = np.isnan(gt_velocity[:, 0])
-            gt_velocity[nan_mask] = [0.0, 0.0]
-            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
+        if 'gt_shape' in info:
+            gt_shape = info['gt_shape']
+            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_shape], axis=-1)
 
-        # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
+        # the lyft box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,
@@ -218,65 +219,50 @@ class NuScenesDataset(Custom3DDataset):
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
-            gt_names=gt_names_3d)
+        )
         return anns_results
 
     def _format_bbox(self, results, jsonfile_prefix=None):
-        nusc_annos = {}
+        """Convert the results to the standard format.
+
+        Args:
+            results (list[dict]): Testing results of the dataset.
+            jsonfile_prefix (str): The prefix of the output jsonfile.
+                You can specify the output directory/filename by
+                modifying the jsonfile_prefix. Default: None.
+
+        Returns:
+            str: Path of the output json file.
+        """
+        lyft_annos = {}
         mapped_class_names = self.CLASSES
 
         print('Start to convert detection format...')
         for sample_id, det in enumerate(mmcv.track_iter_progress(results)):
             annos = []
-            boxes = output_to_nusc_box(det)
+            boxes = output_to_lyft_box(det)
             sample_token = self.data_infos[sample_id]['token']
-            boxes = lidar_nusc_box_to_global(self.data_infos[sample_id], boxes,
-                                             mapped_class_names,
-                                             self.eval_detection_configs,
-                                             self.eval_version)
+            boxes = lidar_lyft_box_to_global(self.data_infos[sample_id], boxes)
             for i, box in enumerate(boxes):
                 name = mapped_class_names[box.label]
-                if np.sqrt(box.velocity[0]**2 + box.velocity[1]**2) > 0.2:
-                    if name in [
-                            'car',
-                            'construction_vehicle',
-                            'bus',
-                            'truck',
-                            'trailer',
-                    ]:
-                        attr = 'vehicle.moving'
-                    elif name in ['bicycle', 'motorcycle']:
-                        attr = 'cycle.with_rider'
-                    else:
-                        attr = NuScenesDataset.DefaultAttribute[name]
-                else:
-                    if name in ['pedestrian']:
-                        attr = 'pedestrian.standing'
-                    elif name in ['bus']:
-                        attr = 'vehicle.stopped'
-                    else:
-                        attr = NuScenesDataset.DefaultAttribute[name]
-
-                nusc_anno = dict(
+                lyft_anno = dict(
                     sample_token=sample_token,
                     translation=box.center.tolist(),
                     size=box.wlh.tolist(),
                     rotation=box.orientation.elements.tolist(),
-                    velocity=box.velocity[:2].tolist(),
-                    detection_name=name,
-                    detection_score=box.score,
-                    attribute_name=attr)
-                annos.append(nusc_anno)
-            nusc_annos[sample_token] = annos
-        nusc_submissions = {
+                    name=name,
+                    score=box.score)
+                annos.append(lyft_anno)
+            lyft_annos[sample_token] = annos
+        lyft_submissions = {
             'meta': self.modality,
-            'results': nusc_annos,
+            'results': lyft_annos,
         }
 
         mmcv.mkdir_or_exist(jsonfile_prefix)
-        res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
+        res_path = osp.join(jsonfile_prefix, 'results_lyft.json')
         print('Results writes to', res_path)
-        mmcv.dump(nusc_submissions, res_path)
+        mmcv.dump(lyft_submissions, res_path)
         return res_path
 
     def _evaluate_single(self,
@@ -284,42 +270,43 @@ class NuScenesDataset(Custom3DDataset):
                          logger=None,
                          metric='bbox',
                          result_name='pts_bbox'):
-        from nuscenes import NuScenes
-        from nuscenes.eval.detection.evaluate import NuScenesEval
+        """Evaluation for a single model in Lyft protocol.
+
+        Args:
+            result_path (str): Path of the result file.
+            logger (logging.Logger | str | None): Logger used for printing
+                related information during evaluation. Default: None.
+            metric (str): Metric name used for evaluation. Default: 'bbox'.
+            result_name (str): Result name in the metric prefix.
+                Default: 'pts_bbox'.
+
+        Returns:
+            dict: Dictionary of evaluation details.
+        """
 
         output_dir = osp.join(*osp.split(result_path)[:-1])
-        nusc = NuScenes(
-            version=self.version, dataroot=self.data_root, verbose=False)
+        lyft = Lyft(
+            data_path=osp.join(self.data_root, self.version),
+            json_path=osp.join(self.data_root, self.version, self.version),
+            verbose=True)
         eval_set_map = {
-            'v1.0-mini': 'mini_train',
-            'v1.0-trainval': 'val',
+            'v1.01-train': 'val',
         }
-        nusc_eval = NuScenesEval(
-            nusc,
-            config=self.eval_detection_configs,
-            result_path=result_path,
-            eval_set=eval_set_map[self.version],
-            output_dir=output_dir,
-            verbose=False)
-        nusc_eval.main(render_curves=False)
+        metrics = lyft_eval(lyft, self.data_root, result_path,
+                            eval_set_map[self.version], output_dir, logger)
 
         # record metrics
-        metrics = mmcv.load(osp.join(output_dir, 'metrics_summary.json'))
         detail = dict()
-        metric_prefix = f'{result_name}_NuScenes'
-        for name in self.CLASSES:
-            for k, v in metrics['label_aps'][name].items():
-                val = float('{:.4f}'.format(v))
-                detail['{}/{}_AP_dist_{}'.format(metric_prefix, name, k)] = val
-            for k, v in metrics['label_tp_errors'][name].items():
-                val = float('{:.4f}'.format(v))
-                detail['{}/{}_{}'.format(metric_prefix, name, k)] = val
+        metric_prefix = f'{result_name}_Lyft'
 
-        detail['{}/NDS'.format(metric_prefix)] = metrics['nd_score']
-        detail['{}/mAP'.format(metric_prefix)] = metrics['mean_ap']
+        for i, name in enumerate(metrics['class_names']):
+            AP = float("f{round(metrics['mAPs_cate'][i], 3)}")
+            detail[f'{metric_prefix}/{name}_AP'] = AP
+
+        detail[f'{metric_prefix}/mAP'] = metrics['Final mAP']
         return detail
 
-    def format_results(self, results, jsonfile_prefix=None):
+    def format_results(self, results, jsonfile_prefix=None, csv_savepath=None):
         """Format the results to json (standard format for COCO evaluation).
 
         Args:
@@ -327,6 +314,10 @@ class NuScenesDataset(Custom3DDataset):
             jsonfile_prefix (str | None): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
+            csv_savepath (str | None): The path for saving csv files.
+                It includes the file path and the csv filename,
+                e.g., "a/b/filename.csv". If not specified,
+                the result will not be converted to csv file.
 
         Returns:
             tuple (dict, str): result_files is a dict containing the json
@@ -354,6 +345,8 @@ class NuScenesDataset(Custom3DDataset):
                 tmp_file_ = osp.join(jsonfile_prefix, name)
                 result_files.update(
                     {name: self._format_bbox(results_, tmp_file_)})
+        if csv_savepath is not None:
+            self.json2csv(result_files['pts_bbox'], csv_savepath)
         return result_files, tmp_dir
 
     def evaluate(self,
@@ -361,10 +354,9 @@ class NuScenesDataset(Custom3DDataset):
                  metric='bbox',
                  logger=None,
                  jsonfile_prefix=None,
-                 result_names=['pts_bbox'],
-                 show=False,
-                 out_dir=None):
-        """Evaluation in nuScenes protocol.
+                 csv_savepath=None,
+                 result_names=['pts_bbox']):
+        """Evaluation in Lyft protocol.
 
         Args:
             results (list[dict]): Testing results of the dataset.
@@ -374,20 +366,21 @@ class NuScenesDataset(Custom3DDataset):
             jsonfile_prefix (str | None): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            show (bool): Whether to visualize.
-                Default: False.
-            out_dir (str): Path to save the visualization results.
-                Default: None.
+            csv_savepath (str | None): The path for saving csv files.
+                It includes the file path and the csv filename,
+                e.g., "a/b/filename.csv". If not specified,
+                the result will not be converted to csv file.
 
         Returns:
             dict[str: float]
         """
-        result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
+        result_files, tmp_dir = self.format_results(results, jsonfile_prefix,
+                                                    csv_savepath)
 
         if isinstance(result_files, dict):
             results_dict = dict()
             for name in result_names:
-                print('Evaluating bboxes of {}'.format(name))
+                print(f'Evaluating bboxes of {name}')
                 ret_dict = self._evaluate_single(result_files[name])
             results_dict.update(ret_dict)
         elif isinstance(result_files, str):
@@ -395,32 +388,56 @@ class NuScenesDataset(Custom3DDataset):
 
         if tmp_dir is not None:
             tmp_dir.cleanup()
-
-        if show:
-            self.show(results, out_dir)
         return results_dict
 
-    def show(self, results, out_dir):
-        for i, result in enumerate(results):
-            data_info = self.data_infos[i]
-            pts_path = data_info['lidar_path']
-            file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = np.fromfile(pts_path, dtype=np.float32).reshape(-1, 4)
-            points = points[..., [1, 0, 2]]
-            points[..., 0] *= -1
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
-            gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
-                                          Box3DMode.DEPTH)
-            gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
-            pred_bboxes = result['boxes_3d'].tensor.numpy()
-            pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
-                                            Box3DMode.DEPTH)
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
-        print(results)
+    @staticmethod
+    def json2csv(json_path, csv_savepath):
+        """Convert the json file to csv format for submission.
+
+        Args:
+            json_path (str): Path of the result json file.
+            csv_savepath (str): Path to save the csv file.
+        """
+        with open(json_path, 'r') as f:
+            results = mmcv.load(f)['results']
+        csv_nopred = 'data/lyft/sample_submission.csv'
+        data = pd.read_csv(csv_nopred)
+        Id_list = list(data['Id'])
+        pred_list = list(data['PredictionString'])
+        cnt = 0
+        print('Converting the json to csv...')
+        for token in results.keys():
+            cnt += 1
+            predictions = results[token]
+            prediction_str = ''
+            for i in range(len(predictions)):
+                prediction_str += \
+                    str(predictions[i]['score']) + ' ' + \
+                    str(predictions[i]['translation'][0]) + ' ' + \
+                    str(predictions[i]['translation'][1]) + ' ' + \
+                    str(predictions[i]['translation'][2]) + ' ' + \
+                    str(predictions[i]['size'][0]) + ' ' + \
+                    str(predictions[i]['size'][1]) + ' ' + \
+                    str(predictions[i]['size'][2]) + ' ' + \
+                    str(Quaternion(list(predictions[i]['rotation']))
+                        .yaw_pitch_roll[0]) + ' ' + \
+                    predictions[i]['name'] + ' '
+            prediction_str = prediction_str[:-1]
+            idx = Id_list.index(token)
+            pred_list[idx] = prediction_str
+        df = pd.DataFrame({'Id': Id_list, 'PredictionString': pred_list})
+        df.to_csv(csv_savepath, index=False)
 
 
-def output_to_nusc_box(detection):
+def output_to_lyft_box(detection):
+    """Convert the output to the box class in the Lyft.
+
+    Args:
+        detection (dict): Detection results.
+
+    Returns:
+        list[:obj:``LyftBox``]: List of standard LyftBoxes.
+    """
     box3d = detection['boxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
@@ -434,41 +451,36 @@ def output_to_nusc_box(detection):
 
     box_list = []
     for i in range(len(box3d)):
-        quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
-        velocity = (*box3d.tensor[i, 7:9], 0.0)
-        # velo_val = np.linalg.norm(box3d[i, 7:9])
-        # velo_ori = box3d[i, 6]
-        # velocity = (
-        # velo_val * np.cos(velo_ori), velo_val * np.sin(velo_ori), 0.0)
-        box = NuScenesBox(
+        quat = Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
+        box = LyftBox(
             box_gravity_center[i],
             box_dims[i],
             quat,
             label=labels[i],
-            score=scores[i],
-            velocity=velocity)
+            score=scores[i])
         box_list.append(box)
     return box_list
 
 
-def lidar_nusc_box_to_global(info,
-                             boxes,
-                             classes,
-                             eval_configs,
-                             eval_version='detection_cvpr_2019'):
+def lidar_lyft_box_to_global(info, boxes):
+    """Convert the box from ego to global coordinate.
+
+    Args:
+        info (dict): Info for a specific sample data, including the
+            calibration information.
+        boxes (list[:obj:``LyftBox``]): List of predicted LyftBoxes.
+
+    Returns:
+        list: List of standard LyftBoxes in the global
+            coordinate.
+    """
     box_list = []
     for box in boxes:
         # Move box to ego vehicle coord system
-        box.rotate(pyquaternion.Quaternion(info['lidar2ego_rotation']))
+        box.rotate(Quaternion(info['lidar2ego_rotation']))
         box.translate(np.array(info['lidar2ego_translation']))
-        # filter det in ego.
-        cls_range_map = eval_configs.class_range
-        radius = np.linalg.norm(box.center[:2], 2)
-        det_range = cls_range_map[classes[box.label]]
-        if radius > det_range:
-            continue
         # Move box to global coord system
-        box.rotate(pyquaternion.Quaternion(info['ego2global_rotation']))
+        box.rotate(Quaternion(info['ego2global_rotation']))
         box.translate(np.array(info['ego2global_translation']))
         box_list.append(box)
     return box_list

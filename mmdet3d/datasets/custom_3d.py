@@ -24,12 +24,13 @@ class Custom3DDataset(Dataset):
             Defaults to None.
         classes (tuple[str], optional): Classes used in the dataset.
             Defaults to None.
-        modality ([dict], optional): Modality to specify the sensor data used
+        modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to None.
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR'. Available options includes
+
             - 'LiDAR': box in LiDAR coordinates
             - 'Depth': box in depth coordinates, usually for indoor dataset
             - 'Camera': box in camera coordinates

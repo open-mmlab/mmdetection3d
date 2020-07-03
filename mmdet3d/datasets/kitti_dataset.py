@@ -16,7 +16,40 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class KittiDataset(Custom3DDataset):
+    """KITTI Dataset
 
+    This class serves as the API for experiments on the KITTI Dataset.
+
+    Please refer to `<http://www.cvlibs.net/datasets/kitti/eval_object.php?
+    obj_benchmark=3d>`_for data downloading. It is recommended to symlink
+    the dataset root to $MMDETECTION3D/data and organize them as the doc
+    shows.
+
+    Args:
+        data_root (str): Path of dataset root.
+        ann_file (str): Path of annotation file.
+        split (str): Split of input data.
+        pts_prefix (str, optional): Prefix of points files.
+            Defaults to 'velodyne'.
+        pipeline (list[dict], optional): Pipeline used for data processing.
+            Defaults to None.
+        classes (tuple[str], optional): Classes used in the dataset.
+            Defaults to None.
+        modality (dict, optional): Modality to specify the sensor data used
+            as input. Defaults to None.
+        box_type_3d (str, optional): Type of 3D box of this dataset.
+            Based on the `box_type_3d`, the dataset will encapsulate the box
+            to its original format then converted them to `box_type_3d`.
+            Defaults to 'LiDAR' in this dataset. Available options includes
+
+            - 'LiDAR': box in LiDAR coordinates
+            - 'Depth': box in depth coordinates, usually for indoor dataset
+            - 'Camera': box in camera coordinates
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
+            Defaults to True.
+        test_mode (bool, optional): Whether the dataset is in test mode.
+            Defaults to False.
+    """
     CLASSES = ('car', 'pedestrian', 'cyclist')
 
     def __init__(self,
@@ -189,7 +222,7 @@ class KittiDataset(Custom3DDataset):
         """Evaluation in KITTI protocol.
 
         Args:
-            results (list): Testing results of the dataset.
+            results (list[dict]): Testing results of the dataset.
             metric (str | list[str]): Metrics to be evaluated.
             logger (logging.Logger | str | None): Logger used for printing
                 related information during evaluation. Default: None.
@@ -352,7 +385,8 @@ class KittiDataset(Custom3DDataset):
         """Convert results to kitti format for evaluation and test submission.
 
         Args:
-            net_outputs (List[array]): list of array storing the bbox and score
+            net_outputs (List[np.ndarray]): list of array storing the
+                bbox and score
             class_nanes (List[String]): A list of class names
             pklfile_prefix (str | None): The prefix of pkl file.
             submission_prefix (str | None): The prefix of submission file.
