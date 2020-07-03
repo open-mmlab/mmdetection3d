@@ -49,17 +49,17 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
-| SECOND             | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
-| PointPillars       | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
-| FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
+| SECOND             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
+| PointPillars       | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
+| FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| Part-A2            | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
-| MVXNet             | ☐        | ☐        | ☐        | ✗         | ✓     | ✓        | ☐     |
+| Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
+| MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/carafe/README.md)
 
-**Notice**: All the models or modules supported in [MMDetection's model zoo](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) can be trained or used in this codebase.
+All the about **300 models, 40+ papers**, and modules supported in [MMDetection's model zoo](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
 
