@@ -13,6 +13,9 @@ def convert_to_kitti_info_version2(info):
 
     Args:
         info (dict): Info of the input kitti data.
+            - image (dict): image info
+            - calib (dict): calibration info
+            - point_cloud (dict): point cloud info
     """
     if 'image' not in info or 'calib' not in info or 'point_cloud' not in info:
         info['image'] = {
@@ -194,6 +197,20 @@ def create_reduced_point_cloud(data_path,
                                test_info_path=None,
                                save_path=None,
                                with_back=False):
+    """Create reduced point cloud info file.
+
+    Args:
+        data_path (str): Path of original infos.
+        pkl_prefix (str): Prefix of info files.
+        train_info_path (str | None): Path of training set info.
+            Default: None.
+        val_info_path (str | None): Path of validation set info.
+            Default: None.
+        test_info_path (str | None): Path of test set info.
+            Default: None.
+        save_path (str | None): Path to save reduced info.
+        with_back (bool | None): Whether to create backup info.
+    """
     if train_info_path is None:
         train_info_path = Path(data_path) / f'{pkl_prefix}_infos_train.pkl'
     if val_info_path is None:

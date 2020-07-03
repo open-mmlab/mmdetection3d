@@ -3,18 +3,30 @@ import os.path as osp
 
 import tools.data_converter.indoor_converter as indoor
 import tools.data_converter.kitti_converter as kitti
+import tools.data_converter.lyft_converter as lyft_converter
 import tools.data_converter.nuscenes_converter as nuscenes_converter
 from tools.data_converter.create_gt_database import create_groundtruth_database
 
 
 def kitti_data_prep(root_path, info_prefix, version, out_dir):
+    """Prepare data related to Kitti dataset.
+
+    Related data consists of '.pkl' files recording basic infos,
+    2D annotations and groundtruth database.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        version (str): Dataset version.
+        out_dir (str): Output directory of the groundtruth database info.
+    """
     kitti.create_kitti_info_file(root_path, info_prefix)
     kitti.create_reduced_point_cloud(root_path, info_prefix)
     create_groundtruth_database(
         'KittiDataset',
         root_path,
         info_prefix,
-        '{}/{}_infos_train.pkl'.format(out_dir, info_prefix),
+        f'{out_dir}/{info_prefix}_infos_train.pkl',
         relative_path=False,
         mask_anno_path='instances_train.json',
         with_mask=(version == 'mask'))
@@ -26,30 +38,97 @@ def nuscenes_data_prep(root_path,
                        dataset_name,
                        out_dir,
                        max_sweeps=10):
+    """Prepare data related to nuScenes dataset.
+
+    Related data consists of '.pkl' files recording basic infos,
+    2D annotations and groundtruth database.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        version (str): Dataset version.
+        dataset_name (str): The dataset class name.
+        out_dir (str): Output directory of the groundtruth database info.
+        max_sweeps (int): Number of input consecutive frames. Default: 10
+    """
     nuscenes_converter.create_nuscenes_infos(
         root_path, info_prefix, version=version, max_sweeps=max_sweeps)
 
     if version == 'v1.0-test':
         return
 
-    info_train_path = osp.join(root_path,
-                               '{}_infos_train.pkl'.format(info_prefix))
-    info_val_path = osp.join(root_path, '{}_infos_val.pkl'.format(info_prefix))
+    info_train_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(root_path, f'{info_prefix}_infos_val.pkl')
     nuscenes_converter.export_2d_annotation(
         root_path, info_train_path, version=version)
     nuscenes_converter.export_2d_annotation(
         root_path, info_val_path, version=version)
-    create_groundtruth_database(
-        dataset_name, root_path, info_prefix,
-        '{}/{}_infos_train.pkl'.format(out_dir, info_prefix))
+    create_groundtruth_database(dataset_name, root_path, info_prefix,
+                                f'{out_dir}/{info_prefix}_infos_train.pkl')
+
+
+def lyft_data_prep(root_path,
+                   info_prefix,
+                   version,
+                   dataset_name,
+                   out_dir,
+                   max_sweeps=10):
+    """Prepare data related to Lyft dataset.
+
+    Related data consists of '.pkl' files recording basic infos,
+    and 2D annotations.
+    Although the ground truth database is not used in Lyft, it can also be
+    generated like nuScenes.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        version (str): Dataset version.
+        dataset_name (str): The dataset class name.
+        out_dir (str): Output directory of the groundtruth database info.
+            Not used here if the groundtruth database is not generated.
+        max_sweeps (int): Number of input consecutive frames. Default: 10
+    """
+    lyft_converter.create_lyft_infos(
+        root_path, info_prefix, version=version, max_sweeps=max_sweeps)
+
+    if version == 'v1.01-test':
+        return
+
+    train_info_name = f'{info_prefix}_infos_train'
+    val_info_name = f'{info_prefix}_infos_val'
+
+    info_train_path = osp.join(root_path, f'{train_info_name}.pkl')
+    info_val_path = osp.join(root_path, f'{val_info_name}.pkl')
+
+    lyft_converter.export_2d_annotation(
+        root_path, info_train_path, version=version)
+    lyft_converter.export_2d_annotation(
+        root_path, info_val_path, version=version)
 
 
 def scannet_data_prep(root_path, info_prefix, out_dir, workers):
+    """Prepare the info file for scannet dataset.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+        workers (int): Number of threads to be used.
+    """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
 
 
 def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
+    """Prepare the info file for sunrgbd dataset.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+        workers (int): Number of threads to be used.
+    """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
 
@@ -115,6 +194,23 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             version=train_version,
             dataset_name='NuScenesDataset',
+            out_dir=args.out_dir,
+            max_sweeps=args.max_sweeps)
+    elif args.dataset == 'lyft':
+        train_version = f'{args.version}-train'
+        lyft_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            version=train_version,
+            dataset_name='LyftDataset',
+            out_dir=args.out_dir,
+            max_sweeps=args.max_sweeps)
+        test_version = f'{args.version}-test'
+        lyft_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            version=test_version,
+            dataset_name='LyftDataset',
             out_dir=args.out_dir,
             max_sweeps=args.max_sweeps)
     elif args.dataset == 'scannet':
