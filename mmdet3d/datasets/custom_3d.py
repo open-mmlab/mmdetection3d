@@ -1,8 +1,7 @@
-import os.path as osp
-import tempfile
-
 import mmcv
 import numpy as np
+import tempfile
+from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
@@ -12,7 +11,7 @@ from .pipelines import Compose
 
 @DATASETS.register_module()
 class Custom3DDataset(Dataset):
-    """Customized 3D dataset
+    """Customized 3D dataset.
 
     This is the base dataset of SUNRGB-D, ScanNet, nuScenes, and KITTI
     dataset.
@@ -179,7 +178,7 @@ class Custom3DDataset(Dataset):
         from mmdet3d.core.evaluation import indoor_eval
         assert isinstance(
             results, list), f'Expect results to be list, got {type(results)}.'
-        assert len(results) > 0, f'Expect length of results > 0.'
+        assert len(results) > 0, 'Expect length of results > 0.'
         assert len(results) == len(self.data_infos)
         assert isinstance(
             results[0], dict
@@ -220,8 +219,7 @@ class Custom3DDataset(Dataset):
         """Set flag according to image aspect ratio.
 
         Images with aspect ratio greater than 1 will be set as group 1,
-        otherwise group 0.
-        In 3D datasets, they are all the same, thus are all zeros
-
+        otherwise group 0. In 3D datasets, they are all the same, thus are all
+        zeros
         """
         self.flag = np.zeros(len(self), dtype=np.uint8)

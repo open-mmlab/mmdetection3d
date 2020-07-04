@@ -1,12 +1,11 @@
 import copy
-import os
-import os.path as osp
-import tempfile
-
 import mmcv
 import numpy as np
+import os
+import tempfile
 import torch
 from mmcv.utils import print_log
+from os import path as osp
 
 from mmdet.datasets import DATASETS
 from ..core import show_result
@@ -16,7 +15,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class KittiDataset(Custom3DDataset):
-    """KITTI Dataset
+    """KITTI Dataset.
 
     This class serves as the API for experiments on the KITTI Dataset.
 

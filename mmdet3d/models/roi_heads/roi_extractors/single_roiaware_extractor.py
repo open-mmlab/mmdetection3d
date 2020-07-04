@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn as nn
 
 from mmdet3d import ops
 from mmdet.models.builder import ROI_EXTRACTORS
@@ -7,7 +7,7 @@ from mmdet.models.builder import ROI_EXTRACTORS
 
 @ROI_EXTRACTORS.register_module()
 class Single3DRoIAwareExtractor(nn.Module):
-    """Point-wise roi-aware Extractor
+    """Point-wise roi-aware Extractor.
 
     Extract Point-wise roi features.
 
@@ -29,7 +29,7 @@ class Single3DRoIAwareExtractor(nn.Module):
         return roi_layers
 
     def forward(self, feats, coordinate, batch_inds, rois):
-        """Extract point-wise roi features
+        """Extract point-wise roi features.
 
         Args:
             feats (FloatTensor): point-wise features with

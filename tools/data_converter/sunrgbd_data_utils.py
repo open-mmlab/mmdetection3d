@@ -1,9 +1,8 @@
-import concurrent.futures as futures
-import os.path as osp
-
 import mmcv
 import numpy as np
-import scipy.io as sio
+from concurrent import futures as futures
+from os import path as osp
+from scipy import io as sio
 
 
 def random_sampling(points, num_points, replace=None, return_choices=False):

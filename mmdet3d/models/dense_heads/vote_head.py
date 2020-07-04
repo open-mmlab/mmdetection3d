@@ -1,8 +1,8 @@
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from mmcv.cnn import ConvModule
+from torch import nn as nn
+from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss

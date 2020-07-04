@@ -1,5 +1,3 @@
-import os.path as osp
-
 import mmcv
 import numpy as np
 from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
@@ -8,6 +6,7 @@ from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
                                                             group_by_key,
                                                             wrap_in_box)
 from mmcv.utils import print_log
+from os import path as osp
 from terminaltables import AsciiTable
 
 
@@ -198,8 +197,8 @@ def get_classwise_aps(gt: list, predictions: list, class_names: list,
 
 
 def get_single_class_aps(gt, predictions, iou_thresholds):
-    """Compute recall and precision for all iou thresholds.
-    Adapted from LyftDatasetDevkit.
+    """Compute recall and precision for all iou thresholds. Adapted from
+    LyftDatasetDevkit.
 
     Args:
         gt (list[dict]): list of dictionaries in the format described above.

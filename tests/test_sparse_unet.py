@@ -1,7 +1,7 @@
 import torch
 
-import mmdet3d.ops.spconv as spconv
 from mmdet3d.ops import SparseBasicBlock
+from mmdet3d.ops import spconv as spconv
 
 
 def test_SparseUNet():

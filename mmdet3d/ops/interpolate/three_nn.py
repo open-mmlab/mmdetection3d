@@ -1,7 +1,6 @@
-from typing import Tuple
-
 import torch
 from torch.autograd import Function
+from typing import Tuple
 
 from . import interpolate_ext
 
@@ -11,7 +10,8 @@ class ThreeNN(Function):
     @staticmethod
     def forward(ctx, target: torch.Tensor,
                 source: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Find the top-3 nearest neighbors of the target set from the source set.
+        """Find the top-3 nearest neighbors of the target set from the source
+        set.
 
         Args:
             target (Tensor): shape (B, N, 3), points set that needs to

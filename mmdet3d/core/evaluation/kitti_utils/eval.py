@@ -1,6 +1,5 @@
 import gc
 import io as sysio
-
 import numba
 import numpy as np
 
@@ -340,8 +339,8 @@ def fused_compute_statistics(overlaps,
 
 
 def calculate_iou_partly(gt_annos, dt_annos, metric, num_parts=50):
-    """Fast iou algorithm. this function can be used independently to
-    do result analysis. Must be used in CAMERA coordinate system.
+    """Fast iou algorithm. this function can be used independently to do result
+    analysis. Must be used in CAMERA coordinate system.
 
     Args:
         gt_annos (dict): Must from get_label_annos() in kitti_common.py.
@@ -487,7 +486,7 @@ def eval_class(gt_annos,
         [num_class, num_difficulty, num_minoverlap, N_SAMPLE_PTS])
     aos = np.zeros([num_class, num_difficulty, num_minoverlap, N_SAMPLE_PTS])
     for m, current_class in enumerate(current_classes):
-        for l, difficulty in enumerate(difficultys):
+        for idx_l, difficulty in enumerate(difficultys):
             rets = _prepare_data(gt_annos, dt_annos, current_class, difficulty)
             (gt_datas_list, dt_datas_list, ignored_gts, ignored_dets,
              dontcares, total_dc_num, total_num_valid_gt) = rets
@@ -540,16 +539,19 @@ def eval_class(gt_annos,
                         compute_aos=compute_aos)
                     idx += num_part
                 for i in range(len(thresholds)):
-                    recall[m, l, k, i] = pr[i, 0] / (pr[i, 0] + pr[i, 2])
-                    precision[m, l, k, i] = pr[i, 0] / (pr[i, 0] + pr[i, 1])
+                    recall[m, idx_l, k, i] = pr[i, 0] / (pr[i, 0] + pr[i, 2])
+                    precision[m, idx_l, k, i] = pr[i, 0] / (
+                        pr[i, 0] + pr[i, 1])
                     if compute_aos:
-                        aos[m, l, k, i] = pr[i, 3] / (pr[i, 0] + pr[i, 1])
+                        aos[m, idx_l, k, i] = pr[i, 3] / (pr[i, 0] + pr[i, 1])
                 for i in range(len(thresholds)):
-                    precision[m, l, k, i] = np.max(
-                        precision[m, l, k, i:], axis=-1)
-                    recall[m, l, k, i] = np.max(recall[m, l, k, i:], axis=-1)
+                    precision[m, idx_l, k, i] = np.max(
+                        precision[m, idx_l, k, i:], axis=-1)
+                    recall[m, idx_l, k, i] = np.max(
+                        recall[m, idx_l, k, i:], axis=-1)
                     if compute_aos:
-                        aos[m, l, k, i] = np.max(aos[m, l, k, i:], axis=-1)
+                        aos[m, idx_l, k, i] = np.max(
+                            aos[m, idx_l, k, i:], axis=-1)
     ret_dict = {
         'recall': recall,
         'precision': precision,

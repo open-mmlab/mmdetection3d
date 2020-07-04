@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 from mmcv.cnn import ConvModule
+from torch import nn as nn
 
 from mmdet3d.models.builder import build_loss
 

@@ -1,8 +1,7 @@
-from typing import List
-
 import torch
-import torch.nn as nn
 from mmcv.cnn import ConvModule
+from torch import nn as nn
+from typing import List
 
 from mmdet3d.ops import three_interpolate, three_nn
 

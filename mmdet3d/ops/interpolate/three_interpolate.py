@@ -1,7 +1,6 @@
-from typing import Tuple
-
 import torch
 from torch.autograd import Function
+from typing import Tuple
 
 from . import interpolate_ext
 
@@ -11,7 +10,7 @@ class ThreeInterpolate(Function):
     @staticmethod
     def forward(ctx, features: torch.Tensor, indices: torch.Tensor,
                 weight: torch.Tensor) -> torch.Tensor:
-        """Performs weighted linear interpolation on 3 features
+        """Performs weighted linear interpolation on 3 features.
 
         Args:
             features (Tensor): (B, C, M) Features descriptors to be
@@ -40,7 +39,7 @@ class ThreeInterpolate(Function):
     def backward(
         ctx, grad_out: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Backward of three interpolate
+        """Backward of three interpolate.
 
         Args:
             grad_out (Tensor): (B, C, N) tensor with gradients of outputs

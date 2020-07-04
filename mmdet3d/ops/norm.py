@@ -1,7 +1,7 @@
 import torch
-import torch.distributed as dist
-import torch.nn as nn
 from mmcv.cnn import NORM_LAYERS
+from torch import distributed as dist
+from torch import nn as nn
 from torch.autograd.function import Function
 
 
@@ -25,7 +25,7 @@ class AllReduce(Function):
 
 @NORM_LAYERS.register_module('naiveSyncBN1d')
 class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
-    """Syncronized Batch Normalization for 3D Tensors
+    """Syncronized Batch Normalization for 3D Tensors.
 
     Note:
         This implementation is modified from
@@ -70,7 +70,7 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
 
 @NORM_LAYERS.register_module('naiveSyncBN2d')
 class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
-    """Syncronized Batch Normalization for 4D Tensors
+    """Syncronized Batch Normalization for 4D Tensors.
 
     Note:
         This implementation is modified from

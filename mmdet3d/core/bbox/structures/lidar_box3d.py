@@ -7,7 +7,7 @@ from .utils import limit_period, rotation_3d_in_axis
 
 
 class LiDARInstance3DBoxes(BaseInstance3DBoxes):
-    """3D boxes of instances in LIDAR coordinates
+    """3D boxes of instances in LIDAR coordinates.
 
     Coordinates in LiDAR:
     .. code-block:: none
@@ -89,7 +89,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def bev(self):
-        """Calculate the 2D bounding boxes in BEV with rotation
+        """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
             torch.Tensor: A nx5 tensor of 2D BEV box of each box.
@@ -99,7 +99,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def nearest_bev(self):
-        """Calculate the 2D bounding boxes in BEV without rotation
+        """Calculate the 2D bounding boxes in BEV without rotation.
 
         Returns:
             torch.Tensor: A tensor of 2D BEV box of each box.
@@ -159,7 +159,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             return points, rot_mat_T
 
     def flip(self, bev_direction='horizontal', points=None):
-        """Flip the boxes in BEV along given BEV direction
+        """Flip the boxes in BEV along given BEV direction.
 
         In LIDAR coordinates, it flips the y (horizontal) or x (vertical) axis.
 
@@ -190,7 +190,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             return points
 
     def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range
+        """Check whether the boxes are in the given range.
 
         Args:
             box_range (list | torch.Tensor): the range of box
@@ -232,7 +232,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             box=self, src=Box3DMode.LIDAR, dst=dst, rt_mat=rt_mat)
 
     def enlarged_box(self, extra_width):
-        """Enlarge the length, width and height boxes
+        """Enlarge the length, width and height boxes.
 
         Args:
             extra_width (float | torch.Tensor): extra width to enlarge the box

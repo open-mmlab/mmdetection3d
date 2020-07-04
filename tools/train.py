@@ -1,15 +1,15 @@
 from __future__ import division
+
 import argparse
 import copy
 import logging
-import os
-import os.path as osp
-import time
-
 import mmcv
+import os
+import time
 import torch
 from mmcv import Config, DictAction
 from mmcv.runner import init_dist
+from os import path as osp
 
 from mmdet3d import __version__
 from mmdet3d.datasets import build_dataset

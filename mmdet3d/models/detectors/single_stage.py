@@ -1,4 +1,4 @@
-import torch.nn as nn
+from torch import nn as nn
 
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from .base import Base3DDetector
@@ -6,7 +6,7 @@ from .base import Base3DDetector
 
 @DETECTORS.register_module()
 class SingleStage3DDetector(Base3DDetector):
-    """SingleStage3DDetector
+    """SingleStage3DDetector.
 
     This class serves as a base class for single-stage 3D detectors.
 

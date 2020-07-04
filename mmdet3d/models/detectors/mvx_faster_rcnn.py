@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+from torch.nn import functional as F
 
 from mmdet.models import DETECTORS
 from .mvx_two_stage import MVXTwoStageDetector
@@ -7,6 +7,7 @@ from .mvx_two_stage import MVXTwoStageDetector
 
 @DETECTORS.register_module()
 class MVXFasterRCNN(MVXTwoStageDetector):
+    """Multi-modality VoxelNet using Faster R-CNN."""
 
     def __init__(self, **kwargs):
         super(MVXFasterRCNN, self).__init__(**kwargs)
@@ -14,12 +15,21 @@ class MVXFasterRCNN(MVXTwoStageDetector):
 
 @DETECTORS.register_module()
 class DynamicMVXFasterRCNN(MVXTwoStageDetector):
+    """Multi-modality VoxelNet using Faster R-CNN and dynamic voxelization."""
 
     def __init__(self, **kwargs):
         super(DynamicMVXFasterRCNN, self).__init__(**kwargs)
 
     @torch.no_grad()
     def voxelize(self, points):
+        """Apply dynamic voxelization to points.
+
+        Args:
+            points (list[torch.Tensor]): Points of each sample.
+
+        Returns:
+            tuple[torch.Tensor]: Concatenated points and coordinates.
+        """
         coors = []
         # dynamic voxelization only provide a coors mapping
         for res in points:
@@ -34,6 +44,7 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
         return points, coors_batch
 
     def extract_pts_feat(self, points, img_feats, img_metas):
+        """Extract point features."""
         if not self.with_pts_bbox:
             return None
         voxels, coors = self.voxelize(points)

@@ -28,7 +28,7 @@ def get_paddings_indicator(actual_num, max_num, axis=0):
 
 
 class VFELayer(nn.Module):
-    """ Voxel Feature Encoder layer.
+    """Voxel Feature Encoder layer.
 
     The voxel encoder is composed of a series of these layers.
     This module do not support average pooling and only support to use
@@ -59,7 +59,7 @@ class VFELayer(nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias=False)
 
     def forward(self, inputs):
-        """Forward function
+        """Forward function.
 
         Args:
             inputs (torch.Tensor): Voxels features of shape (N, M, C).
@@ -100,7 +100,7 @@ class VFELayer(nn.Module):
 
 
 class PFNLayer(nn.Module):
-    """ Pillar Feature Net Layer.
+    """Pillar Feature Net Layer.
 
     The Pillar Feature Net is composed of a series of these layers, but the
     PointPillars paper results only used a single PFNLayer.
@@ -136,7 +136,7 @@ class PFNLayer(nn.Module):
         self.mode = mode
 
     def forward(self, inputs, num_voxels=None, aligned_distance=None):
-        """Forward function
+        """Forward function.
 
         Args:
             inputs (torch.Tensor): Pillar/Voxel inputs with shape (N, M, C).

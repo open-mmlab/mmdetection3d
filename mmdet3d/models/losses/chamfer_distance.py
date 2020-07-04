@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn as nn
 from torch.nn.functional import l1_loss, mse_loss, smooth_l1_loss
 
 from mmdet.models.builder import LOSSES

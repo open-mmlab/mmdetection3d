@@ -1,7 +1,6 @@
+import mmcv
 import warnings
 from copy import deepcopy
-
-import mmcv
 
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import Compose
@@ -9,7 +8,7 @@ from mmdet.datasets.pipelines import Compose
 
 @PIPELINES.register_module()
 class MultiScaleFlipAug3D(object):
-    """Test-time augmentation with multiple scales and flipping
+    """Test-time augmentation with multiple scales and flipping.
 
     Args:
         transforms (list[dict]): Transforms to apply in each augmentation.

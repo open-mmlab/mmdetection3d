@@ -1,8 +1,7 @@
-import os.path as osp
-
 import mmcv
 import numpy as np
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
+from os import path as osp
 from pyquaternion import Quaternion
 
 from mmdet3d.datasets import LyftDataset

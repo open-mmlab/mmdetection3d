@@ -3,7 +3,7 @@ import numpy as np
 
 
 class VoxelGenerator(object):
-    """Voxel generator in numpy implementation
+    """Voxel generator in numpy implementation.
 
     Args:
         voxel_size (list[float]): Size of a single voxel
@@ -33,7 +33,7 @@ class VoxelGenerator(object):
         self._grid_size = grid_size
 
     def generate(self, points):
-        """Generate voxels given points"""
+        """Generate voxels given points."""
         return points_to_voxel(points, self._voxel_size,
                                self._point_cloud_range, self._max_num_points,
                                True, self._max_voxels)

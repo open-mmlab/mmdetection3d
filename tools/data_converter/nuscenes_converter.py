@@ -1,13 +1,12 @@
-import os.path as osp
-from collections import OrderedDict
-from typing import List, Tuple, Union
-
 import mmcv
 import numpy as np
+from collections import OrderedDict
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points
+from os import path as osp
 from pyquaternion import Quaternion
 from shapely.geometry import MultiPoint, box
+from typing import List, Tuple, Union
 
 from mmdet3d.datasets import NuScenesDataset
 
@@ -457,10 +456,8 @@ def get_2d_boxes(nusc, sample_data_token: str,
 def post_process_coords(
     corner_coords: List, imsize: Tuple[int, int] = (1600, 900)
 ) -> Union[Tuple[float, float, float, float], None]:
-    """
-    Get the intersection of the convex hull of the reprojected
-    bbox corners and the image canvas, return None if no
-    intersection.
+    """Get the intersection of the convex hull of the reprojected bbox corners
+    and the image canvas, return None if no intersection.
 
     Args:
         corner_coords (list[int]): Corner coordinates of reprojected
@@ -491,9 +488,8 @@ def post_process_coords(
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
                     sample_data_token: str, filename: str) -> OrderedDict:
-    """
-    Generate one 2D annotation record given various informations on
-    top of the 2D bounding box coordinates.
+    """Generate one 2D annotation record given various informations on top of
+    the 2D bounding box coordinates.
 
     Args:
         ann_rec (dict): Original 3d annotation record.

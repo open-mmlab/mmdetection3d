@@ -5,7 +5,7 @@ from . import ball_query_ext
 
 
 class BallQuery(Function):
-    """Ball Query
+    """Ball Query.
 
     Find nearby points in spherical space.
     """

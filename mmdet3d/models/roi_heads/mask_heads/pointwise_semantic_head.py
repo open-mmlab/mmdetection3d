@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn as nn
+from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
 from mmdet3d.models.builder import build_loss
@@ -57,7 +57,6 @@ class PointwiseSemanticHead(nn.Module):
 
         Returns:
             dict: part features, segmentation and part predictions.
-
         """
         seg_preds = self.seg_cls_layer(x)  # (N, 1)
         part_preds = self.seg_reg_layer(x)  # (N, 3)
@@ -73,7 +72,8 @@ class PointwiseSemanticHead(nn.Module):
             seg_preds=seg_preds, part_preds=part_preds, part_feats=part_feats)
 
     def get_targets_single(self, voxel_centers, gt_bboxes_3d, gt_labels_3d):
-        """generate segmentation and part prediction targets for a single sample
+        """generate segmentation and part prediction targets for a single
+        sample.
 
         Args:
             voxel_centers (torch.Tensor): shape [voxel_num, 3],
@@ -120,7 +120,7 @@ class PointwiseSemanticHead(nn.Module):
         return seg_targets, part_targets
 
     def get_targets(self, voxels_dict, gt_bboxes_3d, gt_labels_3d):
-        """generate segmentation and part prediction targets
+        """generate segmentation and part prediction targets.
 
         Args:
             voxel_centers (torch.Tensor): shape [voxel_num, 3],

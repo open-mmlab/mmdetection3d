@@ -1,11 +1,11 @@
-import os.path as osp
+from os import path as osp
 
 from mmdet3d.core import Box3DMode, show_result
 from mmdet.models.detectors import BaseDetector
 
 
 class Base3DDetector(BaseDetector):
-    """Base class for detectors"""
+    """Base class for detectors."""
 
     def forward_test(self, points, img_metas, img=None, **kwargs):
         """
@@ -42,14 +42,15 @@ class Base3DDetector(BaseDetector):
             return self.aug_test(points, img_metas, img, **kwargs)
 
     def forward(self, return_loss=True, **kwargs):
-        """
-        Calls either forward_train or forward_test depending on whether
-        return_loss=True. Note this setting will change the expected inputs.
-        When `return_loss=True`, img and img_metas are single-nested (i.e.
+        """Calls either forward_train or forward_test depending on whether
+        return_loss=True.
+
+        Note this setting will change the expected inputs. When
+        `return_loss=True`, img and img_metas are single-nested (i.e.
         torch.Tensor and list[dict]), and when `resturn_loss=False`, img and
-        img_metas should be double nested
-        (i.e.  list[torch.Tensor], list[list[dict]]), with the outer list
-        indicating test time augmentations.
+        img_metas should be double nested (i.e.  list[torch.Tensor],
+        list[list[dict]]), with the outer list indicating test time
+        augmentations.
         """
         if return_loss:
             return self.forward_train(**kwargs)

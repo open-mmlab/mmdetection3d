@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import sys
-from collections import OrderedDict
-
 import torch
+from collections import OrderedDict
 from torch import nn
 
 from .structure import SparseConvTensor
@@ -46,9 +44,8 @@ def _mean_update(vals, m_vals, t):
 
 
 class SparseModule(nn.Module):
-    """ place holder,
-        All module subclass from this will take sptensor in SparseSequential.
-    """
+    """place holder, All module subclass from this will take sptensor in
+    SparseSequential."""
     pass
 
 
@@ -140,7 +137,9 @@ class SparseSequential(SparseModule):
         return input
 
     def fused(self):
-        """don't use this. no effect.
+        """don't use this.
+
+        no effect.
         """
         from .conv import SparseConvolution
         mods = [v for k, v in self._modules.items()]
@@ -189,16 +188,14 @@ class SparseSequential(SparseModule):
 
 
 class ToDense(SparseModule):
-    """convert SparseConvTensor to NCHW dense tensor.
-    """
+    """convert SparseConvTensor to NCHW dense tensor."""
 
     def forward(self, x: SparseConvTensor):
         return x.dense()
 
 
 class RemoveGrid(SparseModule):
-    """remove pre-allocated grid buffer.
-    """
+    """remove pre-allocated grid buffer."""
 
     def forward(self, x: SparseConvTensor):
         x.grid = None
