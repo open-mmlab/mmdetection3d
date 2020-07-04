@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-import torch.nn as nn
 from mmcv.cnn import bias_init_with_prob, normal_init
+from torch import nn as nn
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
                           xywhr2xyxyr)
@@ -244,7 +244,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
 
     @staticmethod
     def add_sin_difference(boxes1, boxes2):
-        """Convert the rotation difference to difference in sine function
+        """Convert the rotation difference to difference in sine function.
 
         Args:
             boxes1 (torch.Tensor): shape (NxC), where C>=7 and

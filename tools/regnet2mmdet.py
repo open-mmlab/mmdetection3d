@@ -1,7 +1,6 @@
 import argparse
-from collections import OrderedDict
-
 import torch
+from collections import OrderedDict
 
 
 def convert_stem(model_key, model_weight, state_dict, converted_names):

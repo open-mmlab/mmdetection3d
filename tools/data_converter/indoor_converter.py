@@ -1,6 +1,6 @@
+import mmcv
 import os
 
-import mmcv
 from tools.data_converter.scannet_data_utils import ScanNetData
 from tools.data_converter.sunrgbd_data_utils import SUNRGBDData
 

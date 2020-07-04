@@ -1,14 +1,14 @@
 import torch
-import torch.nn as nn
 from mmcv.cnn import (build_norm_layer, build_upsample_layer, constant_init,
                       is_norm, kaiming_init)
+from torch import nn as nn
 
 from mmdet.models import NECKS
 
 
 @NECKS.register_module()
 class SECONDFPN(nn.Module):
-    """FPN used in SECOND/PointPillars/PartA2/MVXNet
+    """FPN used in SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
         in_channels (list[int]): Input channels of multi-scale feature maps
@@ -46,7 +46,7 @@ class SECONDFPN(nn.Module):
         self.deblocks = nn.ModuleList(deblocks)
 
     def init_weights(self):
-        """Initialize weights of FPN"""
+        """Initialize weights of FPN."""
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 kaiming_init(m)
@@ -54,7 +54,7 @@ class SECONDFPN(nn.Module):
                 constant_init(m, 1)
 
     def forward(self, x):
-        """Forward function
+        """Forward function.
 
         Args:
             x (torch.Tensor): 4D Tensor in (N, C, H, W) shape.

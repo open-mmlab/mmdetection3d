@@ -2,7 +2,7 @@ import torch
 
 
 def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
-    """Map bboxes from testing scale to original image scale"""
+    """Map bboxes from testing scale to original image scale."""
     new_bboxes = bboxes.clone()
     if flip_horizontal:
         new_bboxes.flip('horizontal')

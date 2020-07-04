@@ -1,8 +1,7 @@
-import pickle
-from pathlib import Path
-
 import numpy as np
+import pickle
 from mmcv import track_iter_progress
+from pathlib import Path
 
 from mmdet3d.core.bbox import box_np_ops
 from .kitti_data_utils import get_kitti_image_info

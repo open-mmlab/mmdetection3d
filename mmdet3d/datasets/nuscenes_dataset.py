@@ -1,10 +1,9 @@
-import os.path as osp
-import tempfile
-
 import mmcv
 import numpy as np
 import pyquaternion
+import tempfile
 from nuscenes.utils.data_classes import Box as NuScenesBox
+from os import path as osp
 
 from mmdet.datasets import DATASETS
 from ..core import show_result
@@ -14,7 +13,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class NuScenesDataset(Custom3DDataset):
-    """NuScenes Dataset
+    """NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.
 

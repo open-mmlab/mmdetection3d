@@ -4,7 +4,6 @@
 # Author: yanyan, scrin@foxmail.com
 #####################
 import math
-
 import numba
 import numpy as np
 from numba import cuda
@@ -304,10 +303,9 @@ def rotate_iou_kernel_eval(N,
 
 
 def rotate_iou_gpu_eval(boxes, query_boxes, criterion=-1, device_id=0):
-    """Rotated box iou running in gpu. 500x faster than cpu version
-    (take 5ms in one example with numba.cuda code).
-    convert from [this project](
-        https://github.com/hongzhenwang/RRPN-revise/tree/master/lib/rotation).
+    """Rotated box iou running in gpu. 500x faster than cpu version (take 5ms
+    in one example with numba.cuda code). convert from [this project](
+    https://github.com/hongzhenwang/RRPN-revise/tree/master/lib/rotation).
 
     Args:
         boxes (torch.Tensor): rbboxes. format: centers, dims,

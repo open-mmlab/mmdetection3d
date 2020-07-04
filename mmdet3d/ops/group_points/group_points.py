@@ -1,8 +1,7 @@
-from typing import Tuple
-
 import torch
-import torch.nn as nn
+from torch import nn as nn
 from torch.autograd import Function
+from typing import Tuple
 
 from ..ball_query import ball_query
 from . import group_points_ext
@@ -49,7 +48,7 @@ class QueryAndGroup(nn.Module):
             assert self.uniform_sample
 
     def forward(self, points_xyz, center_xyz, features=None):
-        """forward
+        """forward.
 
         Args:
             points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.

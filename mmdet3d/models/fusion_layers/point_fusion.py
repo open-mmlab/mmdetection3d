@@ -1,7 +1,7 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from mmcv.cnn import ConvModule, xavier_init
+from torch import nn as nn
+from torch.nn import functional as F
 
 from ..registry import FUSION_LAYERS
 
@@ -23,7 +23,7 @@ def point_sample(
     padding_mode='zeros',
     align_corners=True,
 ):
-    """Obtain image features using points
+    """Obtain image features using points.
 
     Args:
         img_features (Tensor): 1xCxHxW image features
@@ -113,7 +113,7 @@ def point_sample(
 
 @FUSION_LAYERS.register_module()
 class PointFusion(nn.Module):
-    """Fuse image features from multi-scale features
+    """Fuse image features from multi-scale features.
 
     Args:
         img_channels (list[int] | int): Channels of image features.
@@ -225,7 +225,7 @@ class PointFusion(nn.Module):
                 xavier_init(m, distribution='uniform')
 
     def forward(self, img_feats, pts, pts_feats, img_metas):
-        """Forward function
+        """Forward function.
 
         Args:
             img_feats (list[Tensor]): img features

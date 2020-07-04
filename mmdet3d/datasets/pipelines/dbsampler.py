@@ -1,8 +1,7 @@
 import copy
+import numpy as np
 import os
 import pickle
-
-import numpy as np
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils

@@ -1,6 +1,6 @@
 import mmcv
 import torch
-import torch.nn as nn
+from torch import nn as nn
 from torch.autograd import Function
 
 from . import roiaware_pool3d_ext
@@ -24,7 +24,7 @@ class RoIAwarePool3d(nn.Module):
         self.mode = pool_method_map[mode]
 
     def forward(self, rois, pts, pts_feature):
-        """RoIAwarePool3d module forward
+        """RoIAwarePool3d module forward.
 
         Args:
             rois (torch.Tensor): [N, 7],in LiDAR coordinate,
@@ -46,7 +46,7 @@ class RoIAwarePool3dFunction(Function):
     @staticmethod
     def forward(ctx, rois, pts, pts_feature, out_size, max_pts_per_voxel,
                 mode):
-        """RoIAwarePool3d function forward
+        """RoIAwarePool3d function forward.
 
         Args:
             rois (torch.Tensor): [N, 7], in LiDAR coordinate,
@@ -89,7 +89,7 @@ class RoIAwarePool3dFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_out):
-        """RoIAwarePool3d function forward
+        """RoIAwarePool3d function forward.
 
         Args:
             grad_out (torch.Tensor): [N, out_x, out_y, out_z, C]

@@ -10,7 +10,7 @@ from .utils import VFELayer, get_paddings_indicator
 
 @VOXEL_ENCODERS.register_module()
 class HardSimpleVFE(nn.Module):
-    """Simple voxel feature encoder used in SECOND
+    """Simple voxel feature encoder used in SECOND.
 
     It simply averages the values of points in a voxel.
     """
@@ -19,7 +19,7 @@ class HardSimpleVFE(nn.Module):
         super(HardSimpleVFE, self).__init__()
 
     def forward(self, features, num_points, coors):
-        """Forward function
+        """Forward function.
 
         Args:
             features (torch.Tensor): point features in shape
@@ -39,7 +39,7 @@ class HardSimpleVFE(nn.Module):
 
 @VOXEL_ENCODERS.register_module()
 class DynamicSimpleVFE(nn.Module):
-    """Simple dynamic voxel feature encoder used in DV-SECOND
+    """Simple dynamic voxel feature encoder used in DV-SECOND.
 
     It simply averages the values of points in a voxel.
     But the number of points in a voxel is dynamic and varies.
@@ -57,7 +57,7 @@ class DynamicSimpleVFE(nn.Module):
 
     @torch.no_grad()
     def forward(self, features, coors):
-        """Forward function
+        """Forward function.
 
         Args:
             features (torch.Tensor): point features in shape
@@ -76,7 +76,7 @@ class DynamicSimpleVFE(nn.Module):
 
 @VOXEL_ENCODERS.register_module()
 class DynamicVFE(nn.Module):
-    """Dynamic Voxel feature encoder used in DV-SECOND
+    """Dynamic Voxel feature encoder used in DV-SECOND.
 
     It encodes features of voxels and their points. It could also fuse
     image feature into voxel features in a point-wise manner.
@@ -211,7 +211,7 @@ class DynamicVFE(nn.Module):
                 points=None,
                 img_feats=None,
                 img_metas=None):
-        """Forward functions
+        """Forward functions.
 
         Args:
             features (torch.Tensor): Features of voxels, shape is NxC.
@@ -274,7 +274,7 @@ class DynamicVFE(nn.Module):
 
 @VOXEL_ENCODERS.register_module()
 class HardVFE(nn.Module):
-    """Voxel feature encoder used in DV-SECOND
+    """Voxel feature encoder used in DV-SECOND.
 
     It encodes features of voxels and their points. It could also fuse
     image feature into voxel features in a point-wise manner.
@@ -374,7 +374,7 @@ class HardVFE(nn.Module):
                 coors,
                 img_feats=None,
                 img_metas=None):
-        """Forward functions
+        """Forward functions.
 
         Args:
             features (torch.Tensor): Features of voxels, shape is MxNxC.

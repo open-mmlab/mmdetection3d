@@ -11,7 +11,7 @@ from .anchor3d_head import Anchor3DHead
 
 @HEADS.register_module()
 class PartA2RPNHead(Anchor3DHead):
-    """RPN head for PartA2
+    """RPN head for PartA2.
 
     Note:
         The main difference between the PartA2 RPN head and the Anchor3DHead

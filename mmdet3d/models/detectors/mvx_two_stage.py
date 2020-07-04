@@ -1,8 +1,7 @@
-import os.path as osp
-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from os import path as osp
+from torch import nn as nn
+from torch.nn import functional as F
 
 from mmdet3d.core import (Box3DMode, bbox3d2result, merge_aug_bboxes_3d,
                           show_result)
@@ -15,6 +14,7 @@ from .base import Base3DDetector
 
 @DETECTORS.register_module()
 class MVXTwoStageDetector(Base3DDetector):
+    """Base class of Multi-modality VoxelNet."""
 
     def __init__(self,
                  pts_voxel_layer=None,
@@ -69,6 +69,7 @@ class MVXTwoStageDetector(Base3DDetector):
         self.init_weights(pretrained=pretrained)
 
     def init_weights(self, pretrained=None):
+        """Initialize model weights."""
         super(MVXTwoStageDetector, self).init_weights(pretrained)
         if pretrained is None:
             img_pretrained = None
@@ -99,59 +100,72 @@ class MVXTwoStageDetector(Base3DDetector):
 
     @property
     def with_img_shared_head(self):
+        """bool: Whether the detector has a shared head in image branch."""
         return hasattr(self,
                        'img_shared_head') and self.img_shared_head is not None
 
     @property
     def with_pts_bbox(self):
+        """bool: Whether the detector has a 3D box head."""
         return hasattr(self,
                        'pts_bbox_head') and self.pts_bbox_head is not None
 
     @property
     def with_img_bbox(self):
+        """bool: Whether the detector has a 2D image box head."""
         return hasattr(self,
                        'img_bbox_head') and self.img_bbox_head is not None
 
     @property
     def with_img_backbone(self):
+        """bool: Whether the detector has a 2D image backbone."""
         return hasattr(self, 'img_backbone') and self.img_backbone is not None
 
     @property
     def with_pts_backbone(self):
+        """bool: Whether the detector has a 3D backbone."""
         return hasattr(self, 'pts_backbone') and self.pts_backbone is not None
 
     @property
     def with_fusion(self):
+        """bool: Whether the detector has a fusion layer."""
         return hasattr(self,
                        'pts_fusion_layer') and self.fusion_layer is not None
 
     @property
     def with_img_neck(self):
+        """bool: Whether the detector has a neck in image branch."""
         return hasattr(self, 'img_neck') and self.img_neck is not None
 
     @property
     def with_pts_neck(self):
+        """bool: Whether the detector has a neck in 3D detector branch."""
         return hasattr(self, 'pts_neck') and self.pts_neck is not None
 
     @property
     def with_img_rpn(self):
+        """bool: Whether the detector has a 2D RPN in image detector branch."""
         return hasattr(self, 'img_rpn_head') and self.img_rpn_head is not None
 
     @property
     def with_img_roi_head(self):
+        """bool: Whether the detector has a RoI Head in image branch."""
         return hasattr(self, 'img_roi_head') and self.img_roi_head is not None
 
     @property
     def with_voxel_encoder(self):
+        """bool: Whether the detector has a voxel encoder."""
         return hasattr(self,
                        'voxel_encoder') and self.voxel_encoder is not None
 
     @property
     def with_middle_encoder(self):
+        """bool: Whether the detector has a middle encoder."""
         return hasattr(self,
                        'middle_encoder') and self.middle_encoder is not None
 
     def extract_img_feat(self, img, img_metas):
+        """Extract features of images."""
         if self.with_img_backbone:
             if img.dim() == 5 and img.size(0) == 1:
                 img.squeeze_()
@@ -166,6 +180,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return img_feats
 
     def extract_pts_feat(self, pts, img_feats, img_metas):
+        """Extract features of points."""
         if not self.with_pts_bbox:
             return None
         voxels, num_points, coors = self.voxelize(pts)
@@ -179,12 +194,22 @@ class MVXTwoStageDetector(Base3DDetector):
         return x
 
     def extract_feat(self, points, img, img_metas):
+        """Extract features from images and points."""
         img_feats = self.extract_img_feat(img, img_metas)
         pts_feats = self.extract_pts_feat(points, img_feats, img_metas)
         return (img_feats, pts_feats)
 
     @torch.no_grad()
     def voxelize(self, points):
+        """Apply dynamic voxelization to points.
+
+        Args:
+            points (list[torch.Tensor]): Points of each sample.
+
+        Returns:
+            tuple[torch.Tensor]: Concatenated points, number of points
+                per voxel, and coordinates.
+        """
         voxels, coors, num_points = [], [], []
         for res in points:
             res_voxels, res_coors, res_num_points = self.pts_voxel_layer(res)
@@ -208,8 +233,33 @@ class MVXTwoStageDetector(Base3DDetector):
                       gt_labels=None,
                       gt_bboxes=None,
                       img=None,
-                      bboxes=None,
+                      proposals=None,
                       gt_bboxes_ignore=None):
+        """Forward training function.
+
+        Args:
+            points (list[torch.Tensor], optional): Points of each sample.
+                Defaults to None.
+            img_metas (list[dict], optional): Meta information of each sample.
+                Defaults to None.
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`], optional):
+                Ground truth 3D boxes. Defaults to None.
+            gt_labels_3d (list[torch.Tensor], optional): Ground truth labels
+                of 3D boxes. Defaults to None.
+            gt_labels (list[torch.Tensor], optional): Ground truth labels
+                of 2D boxes in images. Defaults to None.
+            gt_bboxes (list[torch.Tensor], optional): Ground truth 2D boxes in
+                images. Defaults to None.
+            img (torch.Tensor optional): Images of each sample with shape
+                (N, C, H, W). Defaults to None.
+            proposals ([list[torch.Tensor], optional): Predicted proposals
+                used for training Fast RCNN. Defaults to None.
+            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
+                2D boxes in images to be ignored. Defaults to None.
+
+        Returns:
+            dict: Losses of different branches.
+        """
         img_feats, pts_feats = self.extract_feat(
             points, img=img, img_metas=img_metas)
         losses = dict()
@@ -225,8 +275,7 @@ class MVXTwoStageDetector(Base3DDetector):
                 gt_bboxes=gt_bboxes,
                 gt_labels=gt_labels,
                 gt_bboxes_ignore=gt_bboxes_ignore,
-                bboxes=bboxes,
-            )
+                proposals=proposals)
             losses.update(losses_img)
         return losses
 

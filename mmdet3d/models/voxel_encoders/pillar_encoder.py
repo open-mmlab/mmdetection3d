@@ -83,7 +83,7 @@ class PillarFeatureNet(nn.Module):
         self.point_cloud_range = point_cloud_range
 
     def forward(self, features, num_points, coors):
-        """Forward function
+        """Forward function.
 
         Args:
             features (torch.Tensor): Point features or raw points in shape
@@ -136,7 +136,7 @@ class PillarFeatureNet(nn.Module):
 
 @VOXEL_ENCODERS.register_module()
 class DynamicPillarFeatureNet(PillarFeatureNet):
-    """Pillar Feature Net using dynamic voxelization
+    """Pillar Feature Net using dynamic voxelization.
 
     The network prepares the pillar features and performs forward pass
     through PFNLayers. The main difference is that it is used for
@@ -205,7 +205,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
             voxel_size, point_cloud_range, average_points=True)
 
     def map_voxel_center_to_point(self, pts_coors, voxel_mean, voxel_coors):
-        """Map the centers of voxels to its corresponding points
+        """Map the centers of voxels to its corresponding points.
 
         Args:
             pts_coors (torch.Tensor): The coordinates of each points, shape
@@ -244,7 +244,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         return center_per_point
 
     def forward(self, features, coors):
-        """Forward function
+        """Forward function.
 
         Args:
             features (torch.Tensor): Point features or raw points in shape

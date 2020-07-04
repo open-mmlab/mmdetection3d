@@ -1,7 +1,6 @@
-from enum import IntEnum, unique
-
 import numpy as np
 import torch
+from enum import IntEnum, unique
 
 from .base_box3d import BaseInstance3DBoxes
 from .cam_box3d import CameraInstance3DBoxes

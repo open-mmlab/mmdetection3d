@@ -1,4 +1,4 @@
-import torch.nn.functional as F
+from torch.nn import functional as F
 
 from mmdet3d.core import AssignResult
 from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
@@ -10,7 +10,7 @@ from .base_3droi_head import Base3DRoIHead
 
 @HEADS.register_module()
 class PartAggregationROIHead(Base3DRoIHead):
-    """Part aggregation roi head for PartA2
+    """Part aggregation roi head for PartA2.
 
     Args:
         semantic_head (ConfigDict): Config of semantic head.
@@ -44,21 +44,21 @@ class PartAggregationROIHead(Base3DRoIHead):
         self.init_assigner_sampler()
 
     def init_weights(self, pretrained):
-        """Initialize weights, skip since ``PartAggregationROIHead``
-        does not need to initialize weights"""
+        """Initialize weights, skip since ``PartAggregationROIHead`` does not
+        need to initialize weights."""
         pass
 
     def init_mask_head(self):
-        """Initialize mask head, skip since ``PartAggregationROIHead``
-        does not have one."""
+        """Initialize mask head, skip since ``PartAggregationROIHead`` does not
+        have one."""
         pass
 
     def init_bbox_head(self, bbox_head):
-        """Initialize box head"""
+        """Initialize box head."""
         self.bbox_head = build_head(bbox_head)
 
     def init_assigner_sampler(self):
-        """Initialize assigner and sampler"""
+        """Initialize assigner and sampler."""
         self.bbox_assigner = None
         self.bbox_sampler = None
         if self.train_cfg:
@@ -78,7 +78,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     def forward_train(self, feats_dict, voxels_dict, img_metas, proposal_list,
                       gt_bboxes_3d, gt_labels_3d):
-        """Training forward function of PartAggregationROIHead
+        """Training forward function of PartAggregationROIHead.
 
         Args:
             feats_dict (dict): Contains features from the first stage.
@@ -116,7 +116,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     def simple_test(self, feats_dict, voxels_dict, img_metas, proposal_list,
                     **kwargs):
-        """Simple testing forward function of PartAggregationROIHead
+        """Simple testing forward function of PartAggregationROIHead.
 
         Note:
             This function assumes that the batch size is 1
@@ -216,7 +216,7 @@ class PartAggregationROIHead(Base3DRoIHead):
         return bbox_results
 
     def _assign_and_sample(self, proposal_list, gt_bboxes_3d, gt_labels_3d):
-        """Assign and sample proposals for training
+        """Assign and sample proposals for training.
 
         Args:
             proposal_list (list[dict]): Proposals produced by RPN.
@@ -290,7 +290,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     def _semantic_forward_train(self, x, voxels_dict, gt_bboxes_3d,
                                 gt_labels_3d):
-        """Train semantic head
+        """Train semantic head.
 
         Args:
             x (torch.Tensor): Point-wise semantic features for segmentation

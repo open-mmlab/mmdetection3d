@@ -1,8 +1,7 @@
-import concurrent.futures as futures
-from collections import OrderedDict
-from pathlib import Path
-
 import numpy as np
+from collections import OrderedDict
+from concurrent import futures as futures
+from pathlib import Path
 from skimage import io
 
 

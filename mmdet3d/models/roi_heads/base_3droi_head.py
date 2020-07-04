@@ -1,10 +1,9 @@
 from abc import ABCMeta, abstractmethod
-
-import torch.nn as nn
+from torch import nn as nn
 
 
 class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
-    """Base class for 3d RoIHeads"""
+    """Base class for 3d RoIHeads."""
 
     def __init__(self,
                  bbox_head=None,
@@ -51,7 +50,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
 
     @abstractmethod
     def init_assigner_sampler(self):
-        """Initialize assigner and sampler"""
+        """Initialize assigner and sampler."""
         pass
 
     @abstractmethod
@@ -63,7 +62,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                       gt_labels,
                       gt_bboxes_ignore=None,
                       **kwargs):
-        """Forward function during training
+        """Forward function during training.
 
         Args:
             x (dict): Contains features from the first stage.

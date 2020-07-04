@@ -5,7 +5,7 @@ from mmdet3d.core.evaluation.indoor_eval import average_precision, indoor_eval
 
 
 def test_indoor_eval():
-    from mmdet3d.core.bbox.structures import DepthInstance3DBoxes, Box3DMode
+    from mmdet3d.core.bbox.structures import Box3DMode, DepthInstance3DBoxes
     det_infos = [{
         'labels_3d':
         torch.tensor([0, 1, 2, 2, 0, 3, 1, 2, 3, 2]),
