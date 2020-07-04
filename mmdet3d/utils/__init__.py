@@ -1,6 +1,6 @@
 from mmcv.utils import Registry, build_from_cfg, print_log
 
-from mmdet import get_root_logger
+from mmdet.utils import get_root_logger
 from .collect_env import collect_env
 
 __all__ = [
