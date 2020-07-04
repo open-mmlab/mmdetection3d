@@ -121,7 +121,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def bev(self):
-        """Calculate the 2D bounding boxes in BEV with rotation
+        """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
             torch.Tensor: A nx5 tensor of 2D BEV box of each box.
@@ -131,7 +131,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def nearest_bev(self):
-        """Calculate the 2D bounding boxes in BEV without rotation
+        """Calculate the 2D bounding boxes in BEV without rotation.
 
         Returns:
             torch.Tensor: A tensor of 2D BEV box of each box.
@@ -187,7 +187,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             return points, rot_mat_T
 
     def flip(self, bev_direction='horizontal', points=None):
-        """Flip the boxes in BEV along given BEV direction
+        """Flip the boxes in BEV along given BEV direction.
 
         In CAM coordinates, it flips the x (horizontal) or z (vertical) axis.
 
@@ -218,7 +218,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             return points
 
     def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range
+        """Check whether the boxes are in the given range.
 
         Args:
             box_range (list | torch.Tensor): The range of box
@@ -242,7 +242,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @classmethod
     def height_overlaps(cls, boxes1, boxes2, mode='iou'):
-        """Calculate height overlaps of two boxes
+        """Calculate height overlaps of two boxes.
 
         Note:
             This function calculate the height overlaps between boxes1 and

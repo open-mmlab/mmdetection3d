@@ -4,7 +4,7 @@ from mmdet.core import BitmapMasks, PolygonMasks
 
 
 def _get_config_directory():
-    """ Find the predefined detector config directory """
+    """Find the predefined detector config directory."""
     try:
         # Assume we are running in the source mmdetection repo
         repo_dpath = dirname(dirname(__file__))
@@ -19,10 +19,10 @@ def _get_config_directory():
 
 
 def test_config_build_detector():
-    """
-    Test that all detection models defined in the configs can be initialized.
-    """
+    """Test that all detection models defined in the configs can be
+    initialized."""
     from mmcv import Config
+
     from mmdet3d.models import build_detector
 
     config_dpath = _get_config_directory()
@@ -74,10 +74,10 @@ def test_config_build_detector():
 
 
 def test_config_build_pipeline():
-    """
-    Test that all detection models defined in the configs can be initialized.
-    """
+    """Test that all detection models defined in the configs can be
+    initialized."""
     from mmcv import Config
+
     from mmdet3d.datasets.pipelines import Compose
 
     config_dpath = _get_config_directory()
@@ -102,14 +102,15 @@ def test_config_build_pipeline():
 
 
 def test_config_data_pipeline():
-    """
-    Test whether the data pipeline is valid and can process corner cases.
+    """Test whether the data pipeline is valid and can process corner cases.
+
     CommandLine:
         xdoctest -m tests/test_config.py test_config_build_data_pipeline
     """
-    from mmcv import Config
-    from mmdet3d.datasets.pipelines import Compose
     import numpy as np
+    from mmcv import Config
+
+    from mmdet3d.datasets.pipelines import Compose
 
     config_dpath = _get_config_directory()
     print('Found config_dpath = {!r}'.format(config_dpath))
@@ -262,7 +263,7 @@ def _check_roi_head(config, head):
 
 
 def _check_roi_extractor(config, roi_extractor, prev_roi_extractor=None):
-    import torch.nn as nn
+    from torch import nn as nn
     if isinstance(roi_extractor, nn.ModuleList):
         if prev_roi_extractor:
             prev_roi_extractor = prev_roi_extractor[0]
@@ -289,7 +290,7 @@ def _check_roi_extractor(config, roi_extractor, prev_roi_extractor=None):
 
 
 def _check_mask_head(mask_cfg, mask_head):
-    import torch.nn as nn
+    from torch import nn as nn
     if isinstance(mask_cfg, list):
         for single_mask_cfg, single_mask_head in zip(mask_cfg, mask_head):
             _check_mask_head(single_mask_cfg, single_mask_head)
@@ -307,7 +308,7 @@ def _check_mask_head(mask_cfg, mask_head):
 
 
 def _check_bbox_head(bbox_cfg, bbox_head):
-    import torch.nn as nn
+    from torch import nn as nn
     if isinstance(bbox_cfg, list):
         for single_bbox_cfg, single_bbox_head in zip(bbox_cfg, bbox_head):
             _check_bbox_head(single_bbox_cfg, single_bbox_head)
@@ -357,7 +358,7 @@ def _check_parta2_roi_extractor(config, roi_extractor):
 
 
 def _check_parta2_bbox_head(bbox_cfg, bbox_head):
-    import torch.nn as nn
+    from torch import nn as nn
     if isinstance(bbox_cfg, list):
         for single_bbox_cfg, single_bbox_head in zip(bbox_cfg, bbox_head):
             _check_bbox_head(single_bbox_cfg, single_bbox_head)

@@ -1,22 +1,17 @@
-"""
-Test model forward process
+"""Test model forward process.
 
 CommandLine:
     pytest tests/test_forward.py
     xdoctest tests/test_forward.py zero
-
-
-
 """
 import copy
-from os.path import dirname, exists, join
-
 import numpy as np
 import torch
+from os.path import dirname, exists, join
 
 
 def _get_config_directory():
-    """ Find the predefined detector config directory """
+    """Find the predefined detector config directory."""
     try:
         # Assume we are running in the source mmdetection repo
         repo_dpath = dirname(dirname(__file__))
@@ -31,9 +26,7 @@ def _get_config_directory():
 
 
 def _get_config_module(fname):
-    """
-    Load a configuration as a python module
-    """
+    """Load a configuration as a python module."""
     from mmcv import Config
     config_dpath = _get_config_directory()
     config_fpath = join(config_dpath, fname)
@@ -42,9 +35,10 @@ def _get_config_module(fname):
 
 
 def _get_detector_cfg(fname):
-    """
-    Grab configs necessary to create a detector. These are deep copied to allow
-    for safe modification of parameters without influencing other tests.
+    """Grab configs necessary to create a detector.
+
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
     """
     import mmcv
     config = _get_config_module(fname)
@@ -154,8 +148,7 @@ def _test_single_stage_forward(cfg_file):
 
 def _demo_mm_inputs(input_shape=(1, 3, 300, 300),
                     num_items=None, num_classes=10):  # yapf: disable
-    """
-    Create a superset of inputs needed to run test or train batches.
+    """Create a superset of inputs needed to run test or train batches.
 
     Args:
         input_shape (tuple):

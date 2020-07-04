@@ -1,16 +1,16 @@
-from typing import List
-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from mmcv.cnn import ConvModule
+from torch import nn as nn
+from torch.nn import functional as F
+from typing import List
 
 from mmdet3d.ops import (GroupAll, QueryAndGroup, furthest_point_sample,
                          gather_points)
 
 
 class PointSAModuleMSG(nn.Module):
-    """Point set abstraction module with multi-scale grouping used in Pointnets.
+    """Point set abstraction module with multi-scale grouping used in
+    Pointnets.
 
     Args:
         num_point (int): Number of points.

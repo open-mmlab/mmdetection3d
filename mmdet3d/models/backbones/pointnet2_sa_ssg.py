@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 from mmcv.runner import load_checkpoint
+from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule, PointSAModule
 from mmdet.models import BACKBONES

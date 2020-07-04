@@ -1,13 +1,13 @@
-import torch.nn as nn
 from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmcv.runner import load_checkpoint
+from torch import nn as nn
 
 from mmdet.models import BACKBONES
 
 
 @BACKBONES.register_module()
 class SECOND(nn.Module):
-    """Backbone network for SECOND/PointPillars/PartA2/MVXNet
+    """Backbone network for SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
         in_channels (int): Input channels

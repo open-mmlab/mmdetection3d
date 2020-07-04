@@ -1,14 +1,14 @@
 import torch
-import torch.nn as nn
+from torch import nn as nn
 
-import mmdet3d.ops.spconv as spconv
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
+from mmdet3d.ops import spconv as spconv
 from ..registry import MIDDLE_ENCODERS
 
 
 @MIDDLE_ENCODERS.register_module()
 class SparseUNet(nn.Module):
-    """SparseUNet for PartA^2
+    """SparseUNet for PartA^2.
 
     See https://arxiv.org/abs/1907.03670 for more detials.
 
@@ -92,7 +92,7 @@ class SparseUNet(nn.Module):
             conv_type='SparseConv3d')
 
     def forward(self, voxel_features, coors, batch_size):
-        """Forward of SparseUNet
+        """Forward of SparseUNet.
 
         Args:
             voxel_features (torch.float32): shape [N, C]
@@ -184,7 +184,7 @@ class SparseUNet(nn.Module):
         return x
 
     def make_encoder_layers(self, make_block, norm_cfg, in_channels):
-        """make encoder layers using sparse convs
+        """make encoder layers using sparse convs.
 
         Args:
             make_block (method): a bounded function to build blocks
@@ -230,7 +230,7 @@ class SparseUNet(nn.Module):
         return out_channels
 
     def make_decoder_layers(self, make_block, norm_cfg, in_channels):
-        """make decoder layers using sparse convs
+        """make decoder layers using sparse convs.
 
         Args:
             make_block (method): a bounded function to build blocks

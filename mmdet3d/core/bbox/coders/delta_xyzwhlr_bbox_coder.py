@@ -6,7 +6,7 @@ from mmdet.core.bbox.builder import BBOX_CODERS
 
 @BBOX_CODERS.register_module()
 class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
-    """Bbox Coder for 3D boxes
+    """Bbox Coder for 3D boxes.
 
     Args:
         code_size (int): The dimension of boxes to be encoded.
@@ -18,9 +18,9 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
 
     @staticmethod
     def encode(src_boxes, dst_boxes):
-        """Get box regression transformation deltas
-            (dx, dy, dz, dw, dh, dl, dr, dv*) that can be used
-            to transform the `src_boxes` into the `target_boxes`.
+        """Get box regression transformation deltas (dx, dy, dz, dw, dh, dl,
+        dr, dv*) that can be used to transform the `src_boxes` into the
+        `target_boxes`.
 
         Args:
             src_boxes (torch.Tensor): source boxes, e.g., object proposals.
@@ -55,7 +55,8 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
 
     @staticmethod
     def decode(anchors, deltas):
-        """Apply transformation `deltas` (dx, dy, dz, dw, dh, dl, dr, dv*) to `boxes`.
+        """Apply transformation `deltas` (dx, dy, dz, dw, dh, dl, dr, dv*) to
+        `boxes`.
 
         Args:
             anchors (torch.Tensor): Parameters of anchors with shape (N, 7).

@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+from torch.nn import functional as F
 
 from mmdet3d.ops import Voxelization
 from mmdet.models import DETECTORS
@@ -9,7 +9,7 @@ from .two_stage import TwoStage3DDetector
 
 @DETECTORS.register_module()
 class PartA2(TwoStage3DDetector):
-    """Part-A2 detector
+    """Part-A2 detector.
 
     Please refer to the `paper <https://arxiv.org/abs/1907.03670>`_
     """

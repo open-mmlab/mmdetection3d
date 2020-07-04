@@ -1,6 +1,5 @@
-import os.path as osp
-
 import numpy as np
+from os import path as osp
 
 from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
@@ -10,7 +9,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class ScanNetDataset(Custom3DDataset):
-    """ScanNet Dataset
+    """ScanNet Dataset.
 
     This class serves as the API for experiments on the ScanNet Dataset.
 

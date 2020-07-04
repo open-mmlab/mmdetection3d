@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import unittest
-
 import numpy as np
+import unittest
 
 
 class TestCase(unittest.TestCase):
@@ -26,6 +24,7 @@ class TestCase(unittest.TestCase):
 
     def assertAllEqual(self, a, b):
         """Asserts that two numpy arrays have the same values.
+
         Args:
         a: the expected numpy ndarray or anything can be converted to one.
         b: the actual numpy ndarray or anything can be converted to one.
@@ -56,6 +55,7 @@ class TestCase(unittest.TestCase):
 
     def assertAllClose(self, a, b, rtol=1e-6, atol=1e-6):
         """Asserts that two numpy arrays, or dicts of same, have near values.
+
         This does not support nested dicts.
         Args:
         a: The expected numpy ndarray (or anything can be converted to one), or

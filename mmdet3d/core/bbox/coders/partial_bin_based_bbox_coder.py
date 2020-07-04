@@ -7,7 +7,7 @@ from mmdet.core.bbox.builder import BBOX_CODERS
 
 @BBOX_CODERS.register_module()
 class PartialBinBasedBBoxCoder(BaseBBoxCoder):
-    """Partial bin based bbox coder
+    """Partial bin based bbox coder.
 
     Args:
         num_dir_bins (int): Number of bins to encode direction angle.
@@ -175,7 +175,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         return angle_cls.long(), angle_res
 
     def class2angle(self, angle_cls, angle_res, limit_period=True):
-        """Inverse function to angle2class
+        """Inverse function to angle2class.
 
         Args:
             angle_cls (torch.Tensor): Angle class to decode.

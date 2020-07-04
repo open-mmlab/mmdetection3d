@@ -1,7 +1,6 @@
-import warnings
-
 import numba
 import numpy as np
+import warnings
 from numba.errors import NumbaPerformanceWarning
 
 from mmdet3d.core.bbox import box_np_ops
@@ -44,11 +43,11 @@ def box_collision_test(boxes, qboxes, clockwise=True):
                     max(boxes_standup[i, 1], qboxes_standup[j, 1]))
                 if ih > 0:
                     for k in range(4):
-                        for l in range(4):
+                        for box_l in range(4):
                             A = lines_boxes[i, k, 0]
                             B = lines_boxes[i, k, 1]
-                            C = lines_qboxes[j, l, 0]
-                            D = lines_qboxes[j, l, 1]
+                            C = lines_qboxes[j, box_l, 0]
+                            D = lines_qboxes[j, box_l, 1]
                             acd = (D[1] - A[1]) * (C[0] -
                                                    A[0]) > (C[1] - A[1]) * (
                                                        D[0] - A[0])
@@ -71,15 +70,15 @@ def box_collision_test(boxes, qboxes, clockwise=True):
                         # now check complete overlap.
                         # box overlap qbox:
                         box_overlap_qbox = True
-                        for l in range(4):  # point l in qboxes
+                        for box_l in range(4):  # point l in qboxes
                             for k in range(4):  # corner k in boxes
                                 vec = boxes[i, k] - boxes[i, (k + 1) % 4]
                                 if clockwise:
                                     vec = -vec
                                 cross = vec[1] * (
-                                    boxes[i, k, 0] - qboxes[j, l, 0])
+                                    boxes[i, k, 0] - qboxes[j, box_l, 0])
                                 cross -= vec[0] * (
-                                    boxes[i, k, 1] - qboxes[j, l, 1])
+                                    boxes[i, k, 1] - qboxes[j, box_l, 1])
                                 if cross >= 0:
                                     box_overlap_qbox = False
                                     break
@@ -88,15 +87,15 @@ def box_collision_test(boxes, qboxes, clockwise=True):
 
                         if box_overlap_qbox is False:
                             qbox_overlap_box = True
-                            for l in range(4):  # point l in boxes
+                            for box_l in range(4):  # point box_l in boxes
                                 for k in range(4):  # corner k in qboxes
                                     vec = qboxes[j, k] - qboxes[j, (k + 1) % 4]
                                     if clockwise:
                                         vec = -vec
                                     cross = vec[1] * (
-                                        qboxes[j, k, 0] - boxes[i, l, 0])
+                                        qboxes[j, k, 0] - boxes[i, box_l, 0])
                                     cross -= vec[0] * (
-                                        qboxes[j, k, 1] - boxes[i, l, 1])
+                                        qboxes[j, k, 1] - boxes[i, box_l, 1])
                                     if cross >= 0:  #
                                         qbox_overlap_box = False
                                         break
@@ -264,8 +263,8 @@ def noise_per_object_v3_(gt_boxes,
                          center_noise_std=1.0,
                          global_random_rot_range=np.pi / 4,
                          num_try=100):
-    """random rotate or remove each groundtrutn independently.
-    use kitti viewer to test this function points_transform_
+    """random rotate or remove each groundtrutn independently. use kitti viewer
+    to test this function points_transform_
 
     Args:
         gt_boxes: [N, 7], gt box in lidar.points_transform_

@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+from torch.nn import functional as F
 
 from mmdet3d.core.bbox import bbox_overlaps_nearest_3d
 from mmdet.models import HEADS
@@ -9,7 +9,7 @@ from .train_mixins import get_direction_target
 
 @HEADS.register_module()
 class FreeAnchor3DHead(Anchor3DHead):
-    """`FreeAnchor <https://arxiv.org/abs/1909.02466>`_ head for 3D detection
+    """`FreeAnchor <https://arxiv.org/abs/1909.02466>`_ head for 3D detection.
 
     Note:
         This implementation is directly modified from the `mmdet implementation
@@ -237,7 +237,7 @@ class FreeAnchor3DHead(Anchor3DHead):
         return losses
 
     def positive_bag_loss(self, matched_cls_prob, matched_box_prob):
-        """Generate positive bag loss
+        """Generate positive bag loss.
 
         Args:
             matched_cls_prob (torch.Tensor): Classification probability
@@ -259,7 +259,7 @@ class FreeAnchor3DHead(Anchor3DHead):
             bag_prob, torch.ones_like(bag_prob), reduction='none')
 
     def negative_bag_loss(self, cls_prob, box_prob):
-        """Generate negative bag loss
+        """Generate negative bag loss.
 
         Args:
             cls_prob (torch.Tensor): Classification probability

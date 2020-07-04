@@ -23,7 +23,7 @@ class PointPillarsScatter(nn.Module):
         self.in_channels = in_channels
 
     def forward(self, voxel_features, coors, batch_size=None):
-        """Foraward function to scatter features"""
+        """Foraward function to scatter features."""
         # TODO: rewrite the function in a batch manner
         # no need to deal with different batch cases
         if batch_size is not None:
@@ -32,7 +32,7 @@ class PointPillarsScatter(nn.Module):
             return self.forward_single(voxel_features, coors)
 
     def forward_single(self, voxel_features, coors):
-        """Scatter features of single sample
+        """Scatter features of single sample.
 
         Args:
             voxel_features (torch.Tensor): Voxel features in shape (N, M, C).
@@ -56,7 +56,7 @@ class PointPillarsScatter(nn.Module):
         return [canvas]
 
     def forward_batch(self, voxel_features, coors, batch_size):
-        """Scatter features of single sample
+        """Scatter features of single sample.
 
         Args:
             voxel_features (torch.Tensor): Voxel features in shape (N, M, C).

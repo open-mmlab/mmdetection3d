@@ -165,7 +165,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             return points, rot_mat_T
 
     def flip(self, bev_direction='horizontal', points=None):
-        """Flip the boxes in BEV along given BEV direction
+        """Flip the boxes in BEV along given BEV direction.
 
         In Depth coordinates, it flips x (horizontal) or y (vertical) axis.
 

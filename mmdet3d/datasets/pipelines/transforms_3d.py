@@ -91,7 +91,7 @@ class RandomFlip3D(RandomFlip):
 
 @PIPELINES.register_module()
 class ObjectSample(object):
-    """Sample GT objects to the data
+    """Sample GT objects to the data.
 
     Args:
         db_sampler (dict): Config dict of the database sampler.
@@ -168,7 +168,7 @@ class ObjectSample(object):
 
 @PIPELINES.register_module()
 class ObjectNoise(object):
-    """Apply noise to each GT objects in the scene
+    """Apply noise to each GT objects in the scene.
 
     Args:
         translation_std (list, optional): Standard deviation of the
@@ -221,7 +221,7 @@ class ObjectNoise(object):
 
 @PIPELINES.register_module()
 class GlobalRotScaleTrans(object):
-    """Apply global rotation, scaling and translation to a 3D scene
+    """Apply global rotation, scaling and translation to a 3D scene.
 
     Args:
         rot_range (list[float]): Range of rotation angle.
@@ -374,7 +374,7 @@ class PointsRangeFilter(object):
 
 @PIPELINES.register_module()
 class ObjectNameFilter(object):
-    """Filter GT objects by their names
+    """Filter GT objects by their names.
 
     Args:
         classes (list[str]): list of class names to be kept for training
