@@ -22,8 +22,7 @@ def box_camera_to_lidar(data, r_rect, velo2cam):
 
 
 def corners_nd(dims, origin=0.5):
-    """Generate relative box corners based on length per dim and
-    origin point.
+    """Generate relative box corners based on length per dim and origin point.
 
     Args:
         dims (np.ndarray, shape=[N, ndim]): Array of length per dim
@@ -206,8 +205,8 @@ def corner_to_standup_nd_jit(boxes_corner):
 
 @numba.jit(nopython=True)
 def corner_to_surfaces_3d_jit(corners):
-    """Convert 3d box corners from corner function above
-    to surfaces that normal vectors all direct to internal.
+    """Convert 3d box corners from corner function above to surfaces that
+    normal vectors all direct to internal.
 
     Args:
         corners (np.ndarray, [N, 8, 3]): 3d box corners
@@ -272,8 +271,8 @@ def box3d_to_bbox(box3d, rect, Trv2c, P2):
 
 
 def corner_to_surfaces_3d(corners):
-    """convert 3d box corners from corner function above
-    to surfaces that normal vectors all direct to internal.
+    """convert 3d box corners from corner function above to surfaces that
+    normal vectors all direct to internal.
 
     Args:
         corners (np.ndarray, [N, 8, 3]): 3d box corners.

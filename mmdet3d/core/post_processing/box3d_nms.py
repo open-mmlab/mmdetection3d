@@ -10,7 +10,7 @@ def box3d_multiclass_nms(mlvl_bboxes,
                          max_num,
                          cfg,
                          mlvl_dir_scores=None):
-    """Multi-class nms for 3D boxes
+    """Multi-class nms for 3D boxes.
 
     Args:
         mlvl_bboxes (torch.Tensor): Multi-level boxes with shape (N, M).

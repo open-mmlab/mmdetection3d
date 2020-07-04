@@ -1,13 +1,13 @@
 import numpy as np
 import torch
-import torch.nn as nn
 from mmcv.cnn import ConvModule, normal_init, xavier_init
+from torch import nn as nn
 
-import mmdet3d.ops.spconv as spconv
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
 from mmdet3d.ops import make_sparse_convmodule
+from mmdet3d.ops import spconv as spconv
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
@@ -223,7 +223,7 @@ class PartA2BboxHead(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        """Initialize weights of the bbox head"""
+        """Initialize weights of the bbox head."""
         for m in self.modules():
             if isinstance(m, (nn.Conv2d, nn.Conv1d)):
                 xavier_init(m, distribution='uniform')
@@ -556,7 +556,7 @@ class PartA2BboxHead(nn.Module):
                         nms_thr,
                         input_meta,
                         use_rotate_nms=True):
-        """Multi-class NMS for box head
+        """Multi-class NMS for box head.
 
         Note:
             This function has large overlap with the `box3d_multiclass_nms`

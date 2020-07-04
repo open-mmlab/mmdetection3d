@@ -51,8 +51,8 @@ def average_precision(recalls, precisions, mode='area'):
 
 
 def eval_det_cls(pred, gt, iou_thr=None):
-    """Generic functions to compute precision/recall for object detection
-        for a single class.
+    """Generic functions to compute precision/recall for object detection for a
+    single class.
 
     Args:
         pred (dict): {img_id: [(bbox, score)]} where bbox is numpy array.

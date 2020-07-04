@@ -1,10 +1,9 @@
-import os.path as osp
-from copy import deepcopy
-
 import mmcv
 import torch
+from copy import deepcopy
 from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
+from os import path as osp
 
 from mmdet3d.core import Box3DMode, show_result
 from mmdet3d.core.bbox import get_box_type

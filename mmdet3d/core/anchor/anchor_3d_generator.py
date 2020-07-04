@@ -6,7 +6,7 @@ from mmdet.core.anchor import ANCHOR_GENERATORS
 
 @ANCHOR_GENERATORS.register_module()
 class Anchor3DRangeGenerator(object):
-    """3D Anchor Generator by range
+    """3D Anchor Generator by range.
 
     This anchor generator generates anchors by the given range in different
     feature levels.
@@ -80,7 +80,7 @@ class Anchor3DRangeGenerator(object):
         return len(self.scales)
 
     def grid_anchors(self, featmap_sizes, device='cuda'):
-        """Generate grid anchors in multiple feature levels
+        """Generate grid anchors in multiple feature levels.
 
         Args:
             featmap_sizes (list[tuple]): List of feature map sizes in
@@ -152,7 +152,7 @@ class Anchor3DRangeGenerator(object):
                              sizes=[[1.6, 3.9, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
-        """Generate anchors in a single range
+        """Generate anchors in a single range.
 
         Args:
             feature_size (list[float] | tuple[float]): Feature map size. It is
@@ -212,7 +212,7 @@ class Anchor3DRangeGenerator(object):
 
 @ANCHOR_GENERATORS.register_module()
 class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
-    """Aligned 3D Anchor Generator by range
+    """Aligned 3D Anchor Generator by range.
 
     This anchor generator uses a different manner to generate the positions
     of anchors' centers from `Anchor3DRangeGenerator`.
@@ -247,7 +247,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
                              sizes=[[1.6, 3.9, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
-        """Generate anchors in a single range
+        """Generate anchors in a single range.
 
         Args:
             feature_size: list [D, H, W](zyx)

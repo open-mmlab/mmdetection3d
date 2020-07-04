@@ -5,7 +5,7 @@ from . import gather_points_ext
 
 
 class GatherPoints(Function):
-    """Gather Points
+    """Gather Points.
 
     Gather points with given index.
     """

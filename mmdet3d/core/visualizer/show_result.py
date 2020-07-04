@@ -1,12 +1,11 @@
-import os.path as osp
-
 import mmcv
 import numpy as np
 import trimesh
+from os import path as osp
 
 
 def _write_ply(points, out_filename):
-    """Write points into ply format for meshlab visualization
+    """Write points into ply format for meshlab visualization.
 
     Args:
         points (np.ndarray): Points in shape (N, dim).
@@ -28,7 +27,7 @@ def _write_ply(points, out_filename):
 
 
 def _write_oriented_bbox(scene_bbox, out_filename):
-    """Export oriented (around Z axis) scene bbox to meshes
+    """Export oriented (around Z axis) scene bbox to meshes.
 
     Args:
         scene_bbox(list[ndarray] or ndarray): xyz pos of center and

@@ -1,13 +1,12 @@
-import os.path as osp
-import pickle
-
 import mmcv
 import numpy as np
-import pycocotools.mask as maskUtils
+import pickle
 from mmcv import track_iter_progress
+from os import path as osp
+from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 
-import mmdet3d.core.bbox.box_np_ops as box_np_ops
+from mmdet3d.core.bbox import box_np_ops as box_np_ops
 from mmdet3d.datasets import build_dataset
 from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
 from mmdet.ops import roi_align

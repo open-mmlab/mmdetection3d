@@ -1,14 +1,13 @@
-from abc import abstractmethod
-
 import numpy as np
 import torch
+from abc import abstractmethod
 
 from mmdet3d.ops.iou3d import iou3d_cuda
 from .utils import limit_period, xywhr2xyxyr
 
 
 class BaseInstance3DBoxes(object):
-    """Base class for 3D Boxes
+    """Base class for 3D Boxes.
 
     Note:
         The box is bottom centered, i.e. the relative position of origin in
@@ -162,7 +161,7 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def rotate(self, angles, axis=0):
-        """Calculate whether the points is in any of the boxes
+        """Calculate whether the points is in any of the boxes.
 
         Args:
             angles (float): rotation angles
@@ -172,12 +171,11 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def flip(self, bev_direction='horizontal'):
-        """Flip the boxes in BEV along given BEV direction
-        """
+        """Flip the boxes in BEV along given BEV direction."""
         pass
 
     def translate(self, trans_vector):
-        """Calculate whether the points is in any of the boxes
+        """Calculate whether the points is in any of the boxes.
 
         Args:
             trans_vector (torch.Tensor): translation vector of size 1x3
@@ -187,7 +185,7 @@ class BaseInstance3DBoxes(object):
         self.tensor[:, :3] += trans_vector
 
     def in_range_3d(self, box_range):
-        """Check whether the boxes are in the given range
+        """Check whether the boxes are in the given range.
 
         Args:
             box_range (list | torch.Tensor): the range of box
@@ -213,7 +211,7 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range
+        """Check whether the boxes are in the given range.
 
         Args:
             box_range (list | torch.Tensor): the range of box
@@ -244,7 +242,7 @@ class BaseInstance3DBoxes(object):
         pass
 
     def scale(self, scale_factor):
-        """Scale the box with horizontal and vertical scaling factors
+        """Scale the box with horizontal and vertical scaling factors.
 
         Args:
             scale_factors (float): Scale factors to scale the boxes.
@@ -253,7 +251,7 @@ class BaseInstance3DBoxes(object):
         self.tensor[:, 7:] *= scale_factor
 
     def limit_yaw(self, offset=0.5, period=np.pi):
-        """Limit the yaw to a given period and offset
+        """Limit the yaw to a given period and offset.
 
         Args:
             offset (float): The offset of the yaw.
@@ -321,7 +319,7 @@ class BaseInstance3DBoxes(object):
 
     @classmethod
     def cat(cls, boxes_list):
-        """Concatenates a list of Boxes into a single Boxes
+        """Concatenates a list of Boxes into a single Boxes.
 
         Args:
             boxes_list (list[Boxes]): List of boxes.
@@ -343,7 +341,7 @@ class BaseInstance3DBoxes(object):
         return cat_boxes
 
     def to(self, device):
-        """Convert current boxes to a specific device
+        """Convert current boxes to a specific device.
 
         Args:
             device (str | :obj:`torch.device`): The name of the device.
@@ -383,7 +381,7 @@ class BaseInstance3DBoxes(object):
 
     @classmethod
     def height_overlaps(cls, boxes1, boxes2, mode='iou'):
-        """Calculate height overlaps of two boxes
+        """Calculate height overlaps of two boxes.
 
         Note:
             This function calculate the height overlaps between boxes1 and
@@ -415,7 +413,7 @@ class BaseInstance3DBoxes(object):
 
     @classmethod
     def overlaps(cls, boxes1, boxes2, mode='iou'):
-        """Calculate 3D overlaps of two boxes
+        """Calculate 3D overlaps of two boxes.
 
         Note:
             This function calculate the overlaps between boxes1 and boxes2,

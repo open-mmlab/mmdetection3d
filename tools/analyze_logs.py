@@ -1,10 +1,9 @@
 import argparse
 import json
-from collections import defaultdict
-
-import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from collections import defaultdict
+from matplotlib import pyplot as plt
 
 
 def cal_train_time(log_dicts, args):

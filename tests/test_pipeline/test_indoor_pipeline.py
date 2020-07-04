@@ -1,8 +1,7 @@
-import os.path as osp
-
 import mmcv
 import numpy as np
 import torch
+from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.datasets.pipelines import Compose

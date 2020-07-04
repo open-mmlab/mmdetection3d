@@ -7,7 +7,7 @@ from mmdet.datasets.pipelines import LoadAnnotations
 
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
-    """ Load multi channel images from a list of separate channel files.
+    """Load multi channel images from a list of separate channel files.
 
     Expects results['img_filename'] to be a list of filenames
     """
@@ -43,7 +43,7 @@ class LoadMultiViewImageFromFiles(object):
 
 @PIPELINES.register_module()
 class LoadPointsFromMultiSweeps(object):
-    """Load points from multiple sweeps
+    """Load points from multiple sweeps.
 
     This is usually used for nuScenes dataset to utilize previous sweeps.
 
@@ -143,7 +143,7 @@ class PointSegClassMapping(object):
 
 @PIPELINES.register_module()
 class NormalizePointsColor(object):
-    """Normalize color of points
+    """Normalize color of points.
 
     Normalize color of the points.
 

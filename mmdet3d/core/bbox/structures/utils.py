@@ -19,7 +19,7 @@ def limit_period(val, offset=0.5, period=np.pi):
 
 
 def rotation_3d_in_axis(points, angles, axis=0):
-    """Rotate points by angles according to axis
+    """Rotate points by angles according to axis.
 
     Args:
         points (torch.Tensor): Points of shape (N, M, 3).
@@ -92,8 +92,8 @@ def get_box_type(box_type):
     Returns:
         tuple: box type and box mode.
     """
-    from .box_3d_mode import (LiDARInstance3DBoxes, CameraInstance3DBoxes,
-                              DepthInstance3DBoxes, Box3DMode)
+    from .box_3d_mode import (Box3DMode, CameraInstance3DBoxes,
+                              DepthInstance3DBoxes, LiDARInstance3DBoxes)
     box_type_lower = box_type.lower()
     if box_type_lower == 'lidar':
         box_type_3d = LiDARInstance3DBoxes
@@ -112,7 +112,7 @@ def get_box_type(box_type):
 
 
 def points_cam2img(points_3d, proj_mat):
-    """Project points from camera coordicates to image coordinates
+    """Project points from camera coordicates to image coordinates.
 
     Args:
         points_3d (torch.Tensor): Points in shape (N, 3)

@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+from torch.nn import functional as F
 
 from mmdet.models import DETECTORS
 from .voxelnet import VoxelNet
@@ -7,8 +7,8 @@ from .voxelnet import VoxelNet
 
 @DETECTORS.register_module()
 class DynamicVoxelNet(VoxelNet):
-    """VoxelNet using `dynamic voxelization
-    <https://arxiv.org/abs/1910.06528>`_."""
+    r"""VoxelNet using `dynamic voxelization <https://arxiv.org/abs/1910.06528>`_.
+    """
 
     def __init__(self,
                  voxel_layer,
@@ -33,7 +33,7 @@ class DynamicVoxelNet(VoxelNet):
         )
 
     def extract_feat(self, points, img_metas):
-        """Extract features from points"""
+        """Extract features from points."""
         voxels, coors = self.voxelize(points)
         voxel_features, feature_coors = self.voxel_encoder(voxels, coors)
         batch_size = coors[-1, 0].item() + 1
@@ -45,7 +45,14 @@ class DynamicVoxelNet(VoxelNet):
 
     @torch.no_grad()
     def voxelize(self, points):
-        """Apply dynamic voxelization to points"""
+        """Apply dynamic voxelization to points.
+
+        Args:
+            points (list[torch.Tensor]): Points of each sample.
+
+        Returns:
+            tuple[torch.Tensor]: Concatenated points and coordinates.
+        """
         coors = []
         # dynamic voxelization only provide a coors mapping
         for res in points:

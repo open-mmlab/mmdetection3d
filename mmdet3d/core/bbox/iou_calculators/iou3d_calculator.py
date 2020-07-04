@@ -5,7 +5,7 @@ from ..structures import get_box_type
 
 @IOU_CALCULATORS.register_module()
 class BboxOverlapsNearest3D(object):
-    """Nearest 3D IoU Calculator
+    """Nearest 3D IoU Calculator.
 
     Note:
         This IoU calculator first finds the nearest 2D boxes in bird eye view
@@ -20,7 +20,7 @@ class BboxOverlapsNearest3D(object):
         self.coordinate = coordinate
 
     def __call__(self, bboxes1, bboxes2, mode='iou', is_aligned=False):
-        """Calculate nearest 3D IoU
+        """Calculate nearest 3D IoU.
 
         Note:
             If ``is_aligned`` is ``False``, then it calculates the ious between
@@ -51,7 +51,7 @@ class BboxOverlapsNearest3D(object):
 
 @IOU_CALCULATORS.register_module()
 class BboxOverlaps3D(object):
-    """3D IoU Calculator
+    """3D IoU Calculator.
 
     Args:
         coordinate (str): The coordinate system, valid options are
@@ -63,7 +63,7 @@ class BboxOverlaps3D(object):
         self.coordinate = coordinate
 
     def __call__(self, bboxes1, bboxes2, mode='iou'):
-        """Calculate 3D IoU using cuda implementation
+        """Calculate 3D IoU using cuda implementation.
 
         Note:
             This function calculate the IoU of 3D boxes based on their volumes.
@@ -94,7 +94,7 @@ def bbox_overlaps_nearest_3d(bboxes1,
                              mode='iou',
                              is_aligned=False,
                              coordinate='lidar'):
-    """Calculate nearest 3D IoU
+    """Calculate nearest 3D IoU.
 
     Note:
         This function first finds the nearest 2D boxes in bird eye view
@@ -117,7 +117,6 @@ def bbox_overlaps_nearest_3d(bboxes1,
         torch.Tensor: If ``is_aligned`` is ``True``, return ious between
             bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
             ``False``, return shape is M.
-
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
 
@@ -138,7 +137,7 @@ def bbox_overlaps_nearest_3d(bboxes1,
 
 
 def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
-    """Calculate 3D IoU using cuda implementation
+    """Calculate 3D IoU using cuda implementation.
 
     Note:
         This function calculate the IoU of 3D boxes based on their volumes.
