@@ -299,7 +299,7 @@ class LyftDataset(Custom3DDataset):
         metric_prefix = f'{result_name}_Lyft'
 
         for i, name in enumerate(metrics['class_names']):
-            AP = float("f{round(metrics['mAPs_cate'][i], 3)}")
+            AP = float(metrics['mAPs_cate'][i])
             detail[f'{metric_prefix}/{name}_AP'] = AP
 
         detail[f'{metric_prefix}/mAP'] = metrics['Final mAP']
