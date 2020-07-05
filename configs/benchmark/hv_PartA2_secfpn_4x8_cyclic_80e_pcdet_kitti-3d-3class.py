@@ -203,23 +203,16 @@ db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
-    object_rot_range=[0.0, 0.0],
     prepare=dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
     classes=class_names,
-    sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10))
+    sample_groups=dict(Car=20, Pedestrian=15, Cyclist=15))
 train_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
-    dict(
-        type='ObjectNoise',
-        num_try=100,
-        translation_std=[1.0, 1.0, 0.5],
-        global_rot_range=[0.0, 0.0],
-        rot_range=[-0.78539816, 0.78539816]),
-    dict(type='RandomFlip3D', flip_ratio=0.5),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],

@@ -1,36 +1,45 @@
 # model settings
-voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-
+point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
+voxel_size = [0.16, 0.16, 4]
 model = dict(
     type='VoxelNet',
     voxel_layer=dict(
-        max_num_points=5,
+        max_num_points=32,  # max_points_per_voxel
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(16000, 40000)),
-    voxel_encoder=dict(type='HardSimpleVFE'),
-    middle_encoder=dict(
-        type='SparseEncoder',
+        max_voxels=(16000, 40000)  # (training, testing) max_coxels
+    ),
+    voxel_encoder=dict(
+        type='PillarFeatureNet',
         in_channels=4,
-        sparse_shape=[41, 1600, 1408],
-        order=('conv', 'norm', 'act')),
+        feat_channels=[64],
+        with_distance=False,
+        voxel_size=voxel_size,
+        point_cloud_range=point_cloud_range,
+    ),
+    middle_encoder=dict(
+        type='PointPillarsScatter',
+        in_channels=64,
+        output_shape=[496, 432],
+    ),
     backbone=dict(
         type='SECOND',
-        in_channels=256,
-        layer_nums=[5, 5],
-        layer_strides=[1, 2],
-        out_channels=[128, 256]),
+        in_channels=64,
+        layer_nums=[3, 5, 5],
+        layer_strides=[2, 2, 2],
+        out_channels=[64, 128, 256],
+    ),
     neck=dict(
         type='SECONDFPN',
-        in_channels=[128, 256],
-        upsample_strides=[1, 2],
-        out_channels=[256, 256]),
+        in_channels=[64, 128, 256],
+        upsample_strides=[1, 2, 4],
+        out_channels=[128, 128, 128],
+    ),
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
-        in_channels=512,
-        feat_channels=512,
+        in_channels=384,
+        feat_channels=384,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
@@ -52,7 +61,9 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2),
+    ),
+)
 # model training and testing settings
 train_cfg = dict(
     assigner=[
@@ -94,7 +105,7 @@ test_cfg = dict(
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-input_modality = dict(use_lidar=False, use_camera=False)
+input_modality = dict(use_lidar=True, use_camera=False)
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -103,37 +114,20 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(
             Car=5,
-            Pedestrian=10,
-            Cyclist=10,
+            Pedestrian=5,
+            Cyclist=5,
         )),
     classes=class_names,
     sample_groups=dict(
-        Car=12,
-        Pedestrian=6,
-        Cyclist=6,
+        Car=20,
+        Pedestrian=15,
+        Cyclist=15,
     ))
-file_client_args = dict(backend='disk')
-# file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
 
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
-    dict(
-        type='ObjectNoise',
-        num_try=100,
-        translation_std=[1.0, 1.0, 0.1],
-        global_rot_range=[0.0, 0.0],
-        rot_range=[-0.78539816, 0.78539816]),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
@@ -143,14 +137,10 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),
 ]
 test_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -174,7 +164,7 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=6,
+    samples_per_gpu=4,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -207,9 +197,14 @@ data = dict(
         classes=class_names,
         test_mode=True))
 # optimizer
-lr = 0.0018  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
+lr = 0.001  # max learning rate
+optimizer = dict(
+    type='AdamW',
+    lr=lr,
+    betas=(0.95, 0.99),  # the momentum is change during training
+    weight_decay=0.01)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+# learning policy
 lr_config = dict(
     policy='cyclic',
     target_ratio=(10, 1e-4),
@@ -233,10 +228,10 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 80
+total_epochs = 160
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/sec_secfpn_80e'
+work_dir = './work_dirs/pp_secfpn_80e'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
