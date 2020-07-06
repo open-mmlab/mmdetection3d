@@ -121,6 +121,7 @@ class PartA2RPNHead(Anchor3DHead):
 
         Returns:
             dict: Predictions of single batch. Contain the keys:
+
                 - boxes_3d (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
                 - scores_3d (torch.Tensor): Score of each bbox.
                 - labels_3d (torch.Tensor): Label of each bbox.
@@ -217,6 +218,7 @@ class PartA2RPNHead(Anchor3DHead):
 
         Returns:
             dict: Predictions of single batch. Contain the keys:
+
                 - boxes_3d (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
                 - scores_3d (torch.Tensor): Score of each bbox.
                 - labels_3d (torch.Tensor): Label of each bbox.

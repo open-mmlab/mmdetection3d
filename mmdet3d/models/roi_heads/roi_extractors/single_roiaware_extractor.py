@@ -32,14 +32,14 @@ class Single3DRoIAwareExtractor(nn.Module):
         """Extract point-wise roi features.
 
         Args:
-            feats (FloatTensor): point-wise features with
+            feats (torch.FloatTensor): point-wise features with
                 shape (batch, npoints, channels) for pooling
-            coordinate (FloatTensor): coordinate of each point
-            batch_inds (longTensor): indicate the batch of each point
-            rois (FloatTensor): roi boxes with batch indices
+            coordinate (torch.FloatTensor): coordinate of each point
+            batch_inds (torch.LongTensor): indicate the batch of each point
+            rois (torch.FloatTensor): roi boxes with batch indices
 
         Returns:
-            FloatTensor: pooled features
+            torch.FloatTensor: pooled features
         """
         pooled_roi_feats = []
         for batch_idx in range(int(batch_inds.max()) + 1):

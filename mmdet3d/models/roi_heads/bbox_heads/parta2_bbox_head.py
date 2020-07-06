@@ -297,6 +297,10 @@ class PartA2BboxHead(nn.Module):
 
         Returns:
             dict: Computed losses.
+
+                - loss_cls (torch.Tensor): loss of classes.
+                - loss_bbox (torch.Tensor): loss of bboxes.
+                - loss_corner (torch.Tensor): loss of corners.
         """
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
@@ -359,7 +363,7 @@ class PartA2BboxHead(nn.Module):
             concat (bool): Whether to concatenate targets between batches.
 
         Returns:
-            tuple: Targets of boxes and class prediction.
+            tuple[torch.Tensor]: Targets of boxes and class prediction.
         """
         pos_bboxes_list = [res.pos_bboxes for res in sampling_results]
         pos_gt_bboxes_list = [res.pos_gt_bboxes for res in sampling_results]
@@ -402,7 +406,7 @@ class PartA2BboxHead(nn.Module):
             cfg (dict): Training configs.
 
         Returns:
-            tuple: Target for positive boxes.
+            tuple[torch.Tensor]: Target for positive boxes.
                 (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
         """
@@ -459,11 +463,11 @@ class PartA2BboxHead(nn.Module):
         """Calculate corner loss of given boxes.
 
         Args:
-            pred_bbox3d (FloatTensor): predicted boxes with shape (N, 7).
-            gt_bbox3d (FloatTensor): gt boxes with shape (N, 7).
+            pred_bbox3d (torch.FloatTensor): predicted boxes with shape (N, 7).
+            gt_bbox3d (torch.FloatTensor): gt boxes with shape (N, 7).
 
         Returns:
-            FloatTensor: Calculated corner loss with shape (N).
+            torch.FloatTensor: Calculated corner loss with shape (N).
         """
         assert pred_bbox3d.shape[0] == gt_bbox3d.shape[0]
 
