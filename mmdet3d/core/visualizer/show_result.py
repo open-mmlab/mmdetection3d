@@ -78,16 +78,17 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
     """
-    mmcv.mkdir_or_exist(out_dir)
+    result_path = osp.join(out_dir, filename)
+    mmcv.mkdir_or_exist(result_path)
 
     if gt_bboxes is not None:
         gt_bboxes[:, 6] *= -1
-        _write_oriented_bbox(gt_bboxes, osp.join(out_dir,
-                                                 f'{filename}_gt.ply'))
+        _write_oriented_bbox(gt_bboxes,
+                             osp.join(result_path, f'{filename}_gt.ply'))
     if points is not None:
-        _write_ply(points, osp.join(out_dir, f'{filename}_points.obj'))
+        _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if pred_bboxes is not None:
         pred_bboxes[:, 6] *= -1
         _write_oriented_bbox(pred_bboxes,
-                             osp.join(out_dir, f'{filename}_pred.ply'))
+                             osp.join(result_path, f'{filename}_pred.ply'))
