@@ -57,6 +57,11 @@ class PointwiseSemanticHead(nn.Module):
 
         Returns:
             dict: part features, segmentation and part predictions.
+
+                - seg_preds (torch.Tensor): segment predictions
+                - part_preds (torch.Tensor): part predictions
+                - part_feats (torch.Tensor): feature predictions
+
         """
         seg_preds = self.seg_cls_layer(x)  # (N, 1)
         part_preds = self.seg_reg_layer(x)  # (N, 3)
@@ -83,7 +88,7 @@ class PointwiseSemanticHead(nn.Module):
             gt_labels_3d (torch.Tensor): shape [box_num], class label of gt
 
         Returns:
-            tuple : segmentation targets with shape [voxel_num]
+            tuple[torch.Tensor]: segmentation targets with shape [voxel_num]
                 part prediction targets with shape [voxel_num, 3]
         """
         gt_bboxes_3d = gt_bboxes_3d.to(voxel_centers.device)
@@ -130,8 +135,12 @@ class PointwiseSemanticHead(nn.Module):
             gt_labels_3d (list[torch.Tensor]): list of GT labels.
 
         Returns:
-            tuple : segmentation targets with shape [voxel_num]
-                part prediction targets with shape [voxel_num, 3]
+            dict: prediction targets
+
+                - seg_targets (torch.Tensor): segmentation targets
+                    with shape [voxel_num]
+                - part_targets (torch.Tensor): part prediction targets
+                    with shape [voxel_num, 3]
         """
         batch_size = len(gt_labels_3d)
         voxel_center_list = []
@@ -151,10 +160,20 @@ class PointwiseSemanticHead(nn.Module):
 
         Args:
             semantic_results (dict): Results from semantic head.
+
+                - seg_preds: segmentation predictions
+                - part_preds: part predictions
+
             semantic_targets (dict): Targets of semantic results.
+
+                - seg_preds: segmentation targets
+                - part_preds: part targets
 
         Returns:
             dict: loss of segmentation and part prediction.
+
+                - loss_seg (torch.Tensor): segmentation prediction loss
+                - loss_part (torch.Tensor): part prediction loss
         """
         seg_preds = semantic_results['seg_preds']
         part_preds = semantic_results['part_preds']

@@ -63,6 +63,9 @@ class FreeAnchor3DHead(Anchor3DHead):
 
         Returns:
             dict: Loss items.
+
+                - positive_bag_loss (torch.Tensor): Loss of positive samples.
+                - negative_bag_loss (torch.Tensor): Loss of negative samples.
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.anchor_generator.num_levels

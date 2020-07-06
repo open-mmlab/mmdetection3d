@@ -30,7 +30,11 @@ class AnchorTrainMixin(object):
             sampling (bool): Whether to sample anchors.
 
         Returns:
-            tuple: Anchor targets.
+            tuple (list, list, list, list, list, list, int, int):
+                Anchor targets, including labels, label weights,
+                bbox targets, bbox weights, direction targets,
+                direction weights, number of postive anchors and
+                number of negative anchors.
         """
         num_imgs = len(input_metas)
         assert len(anchor_list) == num_imgs
@@ -105,7 +109,7 @@ class AnchorTrainMixin(object):
             sampling (bool): Whether to sample anchors.
 
         Returns:
-            tuple: Anchor targets.
+            tuple[torch.Tensor]: Anchor targets.
         """
         if isinstance(self.bbox_assigner, list):
             feat_size = anchors.size(0) * anchors.size(1) * anchors.size(2)
@@ -194,7 +198,7 @@ class AnchorTrainMixin(object):
             sampling (bool): Whether to sample anchors.
 
         Returns:
-            tuple: Anchor targets.
+            tuple[torch.Tensor]: Anchor targets.
         """
         anchors = anchors.reshape(-1, anchors.size(-1))
         num_valid_anchors = anchors.shape[0]

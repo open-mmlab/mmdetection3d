@@ -96,6 +96,9 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Returns:
             dict: losses from each head.
+
+                - loss_semantic (torch.Tensor): loss of semantic head
+                - loss_bbox (torch.Tensor): loss of bboxes
         """
         losses = dict()
         if self.with_semantic:

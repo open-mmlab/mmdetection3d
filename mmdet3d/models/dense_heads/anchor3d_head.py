@@ -169,7 +169,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             device (str): device of current module
 
         Returns:
-            tuple: anchors of each image, valid flags of each image
+            list[list[torch.Tensor]]: anchors of each image, valid flags
+                of each image
         """
         num_imgs = len(input_metas)
         # since feature map sizes of all images are the same, we only compute
@@ -253,7 +254,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                 dimension is rotation dimension
 
         Returns:
-            tuple: (boxes1, boxes2) whose 7th dimensions are changed
+            tuple[torch.Tensor]: boxes1 and boxes2 whose 7th dimensions
+                are changed
         """
         rad_pred_encoding = torch.sin(boxes1[..., 6:7]) * torch.cos(
             boxes2[..., 6:7])
@@ -289,6 +291,10 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
 
         Returns:
             dict: Contain class, bbox and direction losses of each level.
+
+                - loss_cls (list[torch.Tensor]): class losses
+                - loss_bbox (list[torch.Tensor]): bbox losses
+                - loss_dir (list[torch.Tensor]): direction losses
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.anchor_generator.num_levels
@@ -404,6 +410,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
 
         Returns:
             tuple: Contain predictions of single batch.
+
                 - bboxes (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
                 - scores (torch.Tensor): Class score of each bbox.
                 - labels (torch.Tensor): Label of each bbox.
