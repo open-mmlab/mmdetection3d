@@ -555,13 +555,11 @@ class KittiDataset(Custom3DDataset):
     def show(self, results, out_dir):
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
+            example = self.prepare_test_data(i)
             data_info = self.data_infos[i]
             pts_path = data_info['point_cloud']['velodyne_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = np.fromfile(
-                osp.join(self.root_split, 'velodyne_reduced',
-                         f'{file_name}.bin'),
-                dtype=np.float32).reshape(-1, 4)
+            points = example['points'][0]._data.numpy()
             points = points[..., [1, 0, 2]]
             points[..., 0] *= -1
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
@@ -573,4 +571,3 @@ class KittiDataset(Custom3DDataset):
                                             Box3DMode.DEPTH)
             pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
-        print(results)
