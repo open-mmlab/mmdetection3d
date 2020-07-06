@@ -230,11 +230,11 @@ class LoadPointsFromFile(object):
         return results
 
     def __repr__(self):
-        repr_str = self.__class__.__name__
-        repr_str += '(shift_height={})'.format(self.shift_height)
-        repr_str += '(mean_color={})'.format(self.color_mean)
-        repr_str += '(load_dim={})'.format(self.load_dim)
-        repr_str += '(use_dim={})'.format(self.use_dim)
+        repr_str = self.__class__.__name__ + '('
+        repr_str += 'shift_height={}, '.format(self.shift_height)
+        repr_str += 'file_client_args={}), '.format(self.file_client_args)
+        repr_str += 'load_dim={}, '.format(self.load_dim)
+        repr_str += 'use_dim={})'.format(self.use_dim)
         return repr_str
 
 
@@ -354,13 +354,13 @@ class LoadAnnotations3D(LoadAnnotations):
     def __repr__(self):
         indent_str = '    '
         repr_str = self.__class__.__name__ + '(\n'
-        repr_str += f'{indent_str}with_bbox_3d={self.with_bbox_3d},\n'
-        repr_str += f'{indent_str}with_label_3d={self.with_label_3d},\n'
-        repr_str += f'{indent_str}with_mask_3d={self.with_mask_3d},\n'
-        repr_str += f'{indent_str}with_seg_3d={self.with_seg_3d},\n'
-        repr_str += f'{indent_str}with_bbox={self.with_bbox},\n'
-        repr_str += f'{indent_str}with_label={self.with_label},\n'
-        repr_str += f'{indent_str}with_mask={self.with_mask},\n'
-        repr_str += f'{indent_str}with_seg={self.with_seg},\n'
+        repr_str += f'{indent_str}with_bbox_3d={self.with_bbox_3d}, '
+        repr_str += f'{indent_str}with_label_3d={self.with_label_3d}, '
+        repr_str += f'{indent_str}with_mask_3d={self.with_mask_3d}, '
+        repr_str += f'{indent_str}with_seg_3d={self.with_seg_3d}, '
+        repr_str += f'{indent_str}with_bbox={self.with_bbox}, '
+        repr_str += f'{indent_str}with_label={self.with_label}, '
+        repr_str += f'{indent_str}with_mask={self.with_mask}, '
+        repr_str += f'{indent_str}with_seg={self.with_seg}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str
