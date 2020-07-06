@@ -305,7 +305,7 @@ class VoteHead(nn.Module):
             bbox_preds (torch.Tensor): Bbox predictions of vote head.
 
         Returns:
-            tuple: Targets of vote head.
+            tuple[torch.Tensor]: Targets of vote head.
         """
         # find empty example
         valid_gt_masks = list()
@@ -391,7 +391,7 @@ class VoteHead(nn.Module):
                 vote aggregation layer.
 
         Returns:
-            tuple: Targets of vote head.
+            tuple[torch.Tensor]: Targets of vote head.
         """
         assert self.bbox_coder.with_rot or pts_semantic_mask is not None
 
