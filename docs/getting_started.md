@@ -117,65 +117,58 @@ Examples:
 
 Assume that you have already downloaded the checkpoints to the directory `checkpoints/`.
 
-1. Test Faster R-CNN and visualize the results. Press any key for the next image.
+1. Test votenet on ScanNet and save the points and prediction visualization results.
 
 ```shell
-python tools/test.py configs/faster_rcnn_r50_fpn_1x_coco.py \
-    checkpoints/faster_rcnn_r50_fpn_1x_20181010-3d1b3351.pth \
-    --show
+python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+    checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
+    --show --show-dir ./data/scannet/show_results
 ```
 
-2. Test Faster R-CNN and save the painted images for latter visualization.
+2. Test votenet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
 
 ```shell
-python tools/test.py configs/faster_rcnn_r50_fpn_1x.py \
-    checkpoints/faster_rcnn_r50_fpn_1x_20181010-3d1b3351.pth \
-    --show-dir faster_rcnn_r50_fpn_1x_results
+python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+    checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
+    --eval mAP
+    --options 'show=True' 'out_dir=./data/scannet/show_results'
 ```
 
-3. Test Faster R-CNN on PASCAL VOC (without saving the test results) and evaluate the mAP.
+3. Test votenet on ScanNet (without saving the test results) and evaluate the mAP.
 
 ```shell
-python tools/test.py configs/pascal_voc/faster_rcnn_r50_fpn_1x_voc.py \
-    checkpoints/SOME_CHECKPOINT.pth \
+python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+    checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
     --eval mAP
 ```
 
-4. Test Mask R-CNN with 8 GPUs, and evaluate the bbox and mask AP.
+4. Test SECOND with 8 GPUs, and evaluate the mAP.
 
 ```shell
-./tools/dist_test.sh configs/mask_rcnn_r50_fpn_1x_coco.py \
-    checkpoints/mask_rcnn_r50_fpn_1x_20181010-069fa190.pth \
-    8 --out results.pkl --eval bbox segm
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
+    checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
+    --out results.pkl --eval mAP
 ```
 
-5. Test Mask R-CNN with 8 GPUs, and evaluate the **classwise** bbox and mask AP.
+5. Test PointPillars on nuscenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
 
 ```shell
-./tools/dist_test.sh configs/mask_rcnn_r50_fpn_1x_coco.py \
-    checkpoints/mask_rcnn_r50_fpn_1x_20181010-069fa190.pth \
-    8 --out results.pkl --eval bbox segm --options "classwise=True"
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
+    checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
+    --format-only --options 'jsonfile_prefix=./pointpillars_nuscenes_results'
 ```
 
-6. Test Mask R-CNN on COCO test-dev with 8 GPUs, and generate the json file to be submit to the official evaluation server.
+The generated results be under `./pointpillars_nuscenes_results` directory.
+
+6. Test SECOND on KITTI with 8 GPUs, and generate the pkl files and submission datas to be submit to the official evaluation server.
 
 ```shell
-./tools/dist_test.sh configs/mask_rcnn_r50_fpn_1x_coco.py \
-    checkpoints/mask_rcnn_r50_fpn_1x_20181010-069fa190.pth \
-    8 --format-only --options "jsonfile_prefix=./mask_rcnn_test-dev_results"
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
+    checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
+    --format-only --options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
 ```
 
-You will get two json files `mask_rcnn_test-dev_results.bbox.json` and `mask_rcnn_test-dev_results.segm.json`.
-
-7. Test Mask R-CNN on Cityscapes test with 8 GPUs, and generate the txt and png files to be submit to the official evaluation server.
-
-```shell
-./tools/dist_test.sh configs/cityscapes/mask_rcnn_r50_fpn_1x_cityscapes.py \
-    checkpoints/mask_rcnn_r50_fpn_1x_cityscapes_20200227-afe51d5a.pth \
-    8  --format-only --options "txtfile_prefix=./mask_rcnn_cityscapes_test_results"
-```
-
-The generated png and txt would be under `./mask_rcnn_cityscapes_test_results` directory.
+The generated results be under `./second_kitti_results` directory.
 
 ### Visualization
 
@@ -189,7 +182,7 @@ Aftering running this command, plotted results ***_points.obj and ***_pred.ply f
 
 To see the points, detection results and ground truth of SUNRGBD, ScanNet or KITTI during evaluation time, you can run the following command
 ```bash
-python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options "show=True" "out_dir=${SHOW_DIR}"
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 After running this command, you will obtain ***_points.ob, ***_pred.ply files and ***_gt.ply in `${SHOW_DIR}`.
 
