@@ -83,6 +83,23 @@ class KittiDataset(Custom3DDataset):
         return pts_filename
 
     def get_data_info(self, index):
+        """Get data info according to the given index.
+
+        Args:
+            index (int): Index of the sample data to get.
+
+        Returns:
+            dict: Standard input_dict consists of the
+                data information.
+
+                - sample_idx (str): sample index
+                - pts_filename (str): filename of point clouds
+                - img_prefix (str | None): prefix of image files
+                - img_info (dict): image info
+                - lidar2img (list[np.ndarray], optional): transformations from
+                    lidar to different cameras
+                - ann_info (dict): annotation info
+        """
         info = self.data_infos[index]
         sample_idx = info['image']['image_idx']
         img_filename = os.path.join(self.data_root,
@@ -109,6 +126,22 @@ class KittiDataset(Custom3DDataset):
         return input_dict
 
     def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Standard annotation dictionary
+                consists of the data information.
+
+                - gt_bboxes_3d (:obj:``LiDARInstance3DBoxes``):
+                    3D ground truth bboxes
+                - gt_labels_3d (np.ndarray): labels of ground truths
+                - gt_bboxes (np.ndarray): 2D ground truth bboxes
+                - gt_labels (np.ndarray): labels of ground truths
+                - gt_names (list[str]): class names of ground truths
+        """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
         rect = info['calib']['R0_rect'].astype(np.float32)
@@ -153,16 +186,43 @@ class KittiDataset(Custom3DDataset):
         return anns_results
 
     def drop_arrays_by_name(self, gt_names, used_classes):
+        """Drop irrelevant ground truths by name.
+
+        Args:
+            gt_names (list[str]): Names of ground truths.
+            used_classes (list[str]): Classes of interest.
+
+        Returns:
+            np.ndarray: Indices of ground truths that will be dropped.
+        """
         inds = [i for i, x in enumerate(gt_names) if x not in used_classes]
         inds = np.array(inds, dtype=np.int64)
         return inds
 
     def keep_arrays_by_name(self, gt_names, used_classes):
+        """Keep useful ground truths by name.
+
+        Args:
+            gt_names (list[str]): Names of ground truths.
+            used_classes (list[str]): Classes of interest.
+
+        Returns:
+            np.ndarray: Indices of ground truths that will be keeped.
+        """
         inds = [i for i, x in enumerate(gt_names) if x in used_classes]
         inds = np.array(inds, dtype=np.int64)
         return inds
 
     def remove_dontcare(self, ann_info):
+        """Remove annotations that do not need to be cared.
+
+        Args:
+            ann_info (dict): Dict of annotation infos. The ``'DontCare'``
+                annotations will be removed according to ann_file['name'].
+
+        Returns:
+            dict: Annotations after filtering.
+        """
         img_filtered_annotations = {}
         relevant_annotation_indices = [
             i for i, x in enumerate(ann_info['name']) if x != 'DontCare'
@@ -176,6 +236,23 @@ class KittiDataset(Custom3DDataset):
                        outputs,
                        pklfile_prefix=None,
                        submission_prefix=None):
+        """Format the results to pkl file.
+
+        Args:
+            outputs (list[dict]): Testing results of the dataset.
+            pklfile_prefix (str | None): The prefix of pkl files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+            submission_prefix (str | None): The prefix of submitted files. It
+                includes the file path and the prefix of filename, e.g.,
+                "a/b/prefix". If not specified, a temp file will be created.
+                Default: None.
+
+        Returns:
+            tuple: (result_files, tmp_dir), result_files is a dict containing
+                the json filepaths, tmp_dir is the temporal directory created
+                for saving json files when jsonfile_prefix is not specified.
+        """
         if pklfile_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()
             pklfile_prefix = osp.join(tmp_dir.name, 'results')
@@ -390,7 +467,7 @@ class KittiDataset(Custom3DDataset):
             pklfile_prefix (str | None): The prefix of pkl file.
             submission_prefix (str | None): The prefix of submission file.
 
-        Return:
+        Returns:
             List[dict]: A list of dict have the kitti format
         """
         assert len(net_outputs) == len(self.data_infos)
@@ -553,6 +630,12 @@ class KittiDataset(Custom3DDataset):
             )
 
     def show(self, results, out_dir):
+        """Results visualization.
+
+        Args:
+            results (list[dict]): List of bounding boxes results.
+            out_dir (str): Output directory of visualization result.
+        """
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
             example = self.prepare_test_data(i)
