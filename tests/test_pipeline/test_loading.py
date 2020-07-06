@@ -4,7 +4,8 @@ import pytest
 from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmdet3d.datasets.pipelines import LoadAnnotations3D, LoadPointsFromFile
+from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
+                                        LoadPointsFromMultiSweeps)
 
 
 def test_load_points_from_indoor_file():
@@ -29,6 +30,11 @@ def test_load_points_from_indoor_file():
                                                scannet_info['pts_path'])
     scannet_results = scannet_load_data(scannet_results)
     scannet_point_cloud = scannet_results['points']
+    repr_str = repr(scannet_load_data)
+    expected_repr_str = 'LoadPointsFromFile(shift_height=True, ' \
+                        'file_client_args={\'backend\': \'disk\'}), ' \
+                        'load_dim=6, use_dim=[0, 1, 2])'
+    assert repr_str == expected_repr_str
     assert scannet_point_cloud.shape == (100, 4)
 
 
@@ -93,7 +99,39 @@ def test_load_annotations3D():
 
     scannet_pts_instance_mask = scannet_results['pts_instance_mask']
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
+    repr_str = repr(scannet_load_annotations3D)
+    expected_repr_str = 'LoadAnnotations3D(\n    with_bbox_3d=True,     ' \
+                        'with_label_3d=True,     with_mask_3d=True,     ' \
+                        'with_seg_3d=True,     with_bbox=False,     ' \
+                        'with_label=False,     with_mask=False,     ' \
+                        'with_seg=False,     poly2mask=True)'
+    assert repr_str == expected_repr_str
     assert scannet_gt_boxes.tensor.shape == (27, 7)
     assert scannet_gt_lbaels.shape == (27, )
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )
+
+
+def test_load_points_from_multi_sweeps():
+    load_points_from_multi_sweeps = LoadPointsFromMultiSweeps()
+    sweep = dict(
+        data_path='./tests/data/nuscenes/sweeps/LIDAR_TOP/'
+        'n008-2018-09-18-12-07-26-0400__LIDAR_TOP__1537287083900561.pcd.bin',
+        timestamp=1537290014899034,
+        sensor2lidar_translation=[-0.02344713, -3.88266051, -0.17151584],
+        sensor2lidar_rotation=np.array(
+            [[9.99979347e-01, 3.99870769e-04, 6.41441690e-03],
+             [-4.42034222e-04, 9.99978299e-01, 6.57316197e-03],
+             [-6.41164929e-03, -6.57586161e-03, 9.99957824e-01]]))
+    results = dict(
+        points=np.array([[1., 2., 3., 4., 5.], [1., 2., 3., 4., 5.],
+                         [1., 2., 3., 4., 5.]]),
+        timestamp=1537290014899034,
+        sweeps=[sweep])
+
+    results = load_points_from_multi_sweeps(results)
+    points = results['points']
+    repr_str = repr(load_points_from_multi_sweeps)
+    expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
+    assert repr_str == expected_repr_str
+    assert points.shape == (403, 4)
