@@ -139,6 +139,14 @@ class NuScenesDataset(Custom3DDataset):
             )
 
     def load_annotations(self, ann_file):
+        """Load annotations from ann_file.
+
+        Args:
+            ann_file (str): Path of the annotation file.
+
+        Returns:
+            list[dict]: List of annotations sorted by timestamps.
+        """
         data = mmcv.load(ann_file)
         data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
         data_infos = data_infos[::self.load_interval]
@@ -147,6 +155,24 @@ class NuScenesDataset(Custom3DDataset):
         return data_infos
 
     def get_data_info(self, index):
+        """Get data info according to the given index.
+
+        Args:
+            index (int): Index of the sample data to get.
+
+        Returns:
+            dict: Standard input_dict consists of the
+                data information.
+
+                - sample_idx (str): sample index
+                - pts_filename (str): filename of point clouds
+                - sweeps (list[dict]): infos of sweeps
+                - timestamp (float): sample timestamp
+                - img_filename (str, optional): image filename
+                - lidar2img (list[np.ndarray], optional): transformations from
+                    lidar to different cameras
+                - ann_info (dict): annotation info
+        """
         info = self.data_infos[index]
 
         # standard protocal modified from SECOND.Pytorch
@@ -188,6 +214,20 @@ class NuScenesDataset(Custom3DDataset):
         return input_dict
 
     def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Standard annotation dictionary
+                consists of the data information.
+
+                - gt_bboxes_3d (:obj:``LiDARInstance3DBoxes``):
+                    3D ground truth bboxes
+                - gt_labels_3d (np.ndarray): labels of ground truths
+                - gt_names (list[str]): class names of ground truths
+        """
         info = self.data_infos[index]
         # filter out bbox containing no points
         mask = info['num_lidar_pts'] > 0
@@ -221,6 +261,17 @@ class NuScenesDataset(Custom3DDataset):
         return anns_results
 
     def _format_bbox(self, results, jsonfile_prefix=None):
+        """Convert the results to the standard format.
+
+        Args:
+            results (list[dict]): Testing results of the dataset.
+            jsonfile_prefix (str): The prefix of the output jsonfile.
+                You can specify the output directory/filename by
+                modifying the jsonfile_prefix. Default: None.
+
+        Returns:
+            str: Path of the output json file.
+        """
         nusc_annos = {}
         mapped_class_names = self.CLASSES
 
@@ -283,6 +334,19 @@ class NuScenesDataset(Custom3DDataset):
                          logger=None,
                          metric='bbox',
                          result_name='pts_bbox'):
+        """Evaluation for a single model in nuScenes protocol.
+
+        Args:
+            result_path (str): Path of the result file.
+            logger (logging.Logger | str | None): Logger used for printing
+                related information during evaluation. Default: None.
+            metric (str): Metric name used for evaluation. Default: 'bbox'.
+            result_name (str): Result name in the metric prefix.
+                Default: 'pts_bbox'.
+
+        Returns:
+            dict: Dictionary of evaluation details.
+        """
         from nuscenes import NuScenes
         from nuscenes.eval.detection.evaluate import NuScenesEval
 
@@ -400,6 +464,12 @@ class NuScenesDataset(Custom3DDataset):
         return results_dict
 
     def show(self, results, out_dir):
+        """Results visualization.
+
+        Args:
+            results (list[dict]): List of bounding boxes results.
+            out_dir (str): Output directory of visualization result.
+        """
         for i, result in enumerate(results):
             example = self.prepare_test_data(i)
             points = example['points'][0]._data.numpy()
@@ -421,6 +491,18 @@ class NuScenesDataset(Custom3DDataset):
 
 
 def output_to_nusc_box(detection):
+    """Convert the output to the box class in the nuScenes.
+
+    Args:
+        detection (dict): Detection results.
+
+            - boxes_3d (:obj:``BaseInstance3DBoxes``): detection bbox
+            - scores_3d (torch.Tensor): detection scores
+            - labels_3d (torch.Tensor): predicted box labels
+
+    Returns:
+        list[:obj:``NuScenesBox``]: List of standard NuScenesBoxes.
+    """
     box3d = detection['boxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
@@ -456,6 +538,21 @@ def lidar_nusc_box_to_global(info,
                              classes,
                              eval_configs,
                              eval_version='detection_cvpr_2019'):
+    """Convert the box from ego to global coordinate.
+
+    Args:
+        info (dict): Info for a specific sample data, including the
+            calibration information.
+        boxes (list[:obj:``NuScenesBox``]): List of predicted NuScenesBoxes.
+        classes (list[str]): Mapped classes in the evaluation.
+        eval_configs (object): Evaluation configuration object.
+        eval_version (str): Evaluation version.
+            Default: 'detection_cvpr_2019'
+
+    Returns:
+        list: List of standard NuScenesBoxes in the global
+            coordinate.
+    """
     box_list = []
     for box in boxes:
         # Move box to ego vehicle coord system

@@ -50,6 +50,14 @@ class Kitti2DDataset(CustomDataset):
     """
 
     def load_annotations(self, ann_file):
+        """Load annotations from ann_file.
+
+        Args:
+            ann_file (str): Path of the annotation file.
+
+        Returns:
+            list[dict]: List of annotations.
+        """
         self.data_infos = mmcv.load(ann_file)
         self.cat2label = {
             cat_name: i
@@ -66,6 +74,18 @@ class Kitti2DDataset(CustomDataset):
         return valid_inds
 
     def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Standard annotation dictionary
+                consists of the data information.
+
+                - bboxes (np.ndarray): ground truth bboxes
+                - labels (np.ndarray): labels of ground truths
+        """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
         annos = info['annos']
@@ -87,6 +107,15 @@ class Kitti2DDataset(CustomDataset):
         return anns_results
 
     def prepare_train_img(self, idx):
+        """Training image preparation.
+
+        Args:
+            index (int): Index for accessing the target image data.
+
+        Returns:
+            dict: Training image data dict after preprocessing
+                corresponding to the index.
+        """
         img_raw_info = self.data_infos[idx]['image']
         img_info = dict(filename=img_raw_info['image_path'])
         ann_info = self.get_ann_info(idx)
@@ -99,6 +128,15 @@ class Kitti2DDataset(CustomDataset):
         return self.pipeline(results)
 
     def prepare_test_img(self, idx):
+        """Prepare data for testing.
+
+        Args:
+            index (int): Index for accessing the target image data.
+
+        Returns:
+            dict: Testing image data dict after preprocessing
+                corresponding to the index.
+        """
         img_raw_info = self.data_infos[idx]['image']
         img_info = dict(filename=img_raw_info['image_path'])
         results = dict(img_info=img_info)
@@ -108,11 +146,29 @@ class Kitti2DDataset(CustomDataset):
         return self.pipeline(results)
 
     def drop_arrays_by_name(self, gt_names, used_classes):
+        """Drop irrelevant ground truths by name.
+
+        Args:
+            gt_names (list[str]): Names of ground truths.
+            used_classes (list[str]): Classes of interest.
+
+        Returns:
+            np.ndarray: Indices of ground truths that will be dropped.
+        """
         inds = [i for i, x in enumerate(gt_names) if x not in used_classes]
         inds = np.array(inds, dtype=np.int64)
         return inds
 
     def keep_arrays_by_name(self, gt_names, used_classes):
+        """Keep useful ground truths by name.
+
+        Args:
+            gt_names (list[str]): Names of ground truths.
+            used_classes (list[str]): Classes of interest.
+
+        Returns:
+            np.ndarray: Indices of ground truths that will be keeped.
+        """
         inds = [i for i, x in enumerate(gt_names) if x in used_classes]
         inds = np.array(inds, dtype=np.int64)
         return inds
@@ -125,6 +181,17 @@ class Kitti2DDataset(CustomDataset):
         return result_files
 
     def evaluate(self, result_files, eval_types=None):
+        """Evaluation in KITTI protocol.
+
+        Args:
+            result_files (str): Path of result files.
+            eval_types (str): Types of evaluation. Default: None.
+                KITTI dataset only support 'bbox' evaluation type.
+
+        Returns:
+            tuple (str, dict): Average precision results in str format
+                and average precision results in dict format.
+        """
         from mmdet3d.core.evaluation import kitti_eval
         eval_types = ['bbox'] if not eval_types else eval_types
         assert eval_types in ('bbox', ['bbox'

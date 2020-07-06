@@ -51,6 +51,16 @@ class BatchSampler:
 
 @OBJECTSAMPLERS.register_module()
 class DataBaseSampler(object):
+    """Class for sampling data from the ground truth database.
+
+    Args:
+        info_path (str): Path of groundtruth database info.
+        data_root (str): Path of groundtruth database.
+        rate (float): Rate of actual sampled over maximum sampled number.
+        prepare (dict): Name of preparation functions and the input value.
+        sample_groups (dict): Sampled classes and numbers.
+        classes (list[str]): List of classes. Default: None.
+    """
 
     def __init__(self,
                  info_path,
@@ -104,6 +114,15 @@ class DataBaseSampler(object):
 
     @staticmethod
     def filter_by_difficulty(db_infos, removed_difficulty):
+        """Filter ground truths by difficulties.
+
+        Args:
+            db_infos (dict): Info of groundtruth database.
+            removed_difficulty (list): Difficulties that are not qualified.
+
+        Returns:
+            dict: Info of database after filtering.
+        """
         new_db_infos = {}
         for key, dinfos in db_infos.items():
             new_db_infos[key] = [
@@ -114,6 +133,16 @@ class DataBaseSampler(object):
 
     @staticmethod
     def filter_by_min_points(db_infos, min_gt_points_dict):
+        """Filter ground truths by number of points in the bbox.
+
+        Args:
+            db_infos (dict): Info of groundtruth database.
+            min_gt_points_dict (dict): Different number of minimum points
+                needed for different categories of ground truths.
+
+        Returns:
+            dict: Info of database after filtering.
+        """
         for name, min_num in min_gt_points_dict.items():
             min_num = int(min_num)
             if min_num > 0:
@@ -125,6 +154,22 @@ class DataBaseSampler(object):
         return db_infos
 
     def sample_all(self, gt_bboxes, gt_labels, img=None):
+        """Sampling all categories of bboxes.
+
+        Args:
+            gt_bboxes (np.ndarray): Ground truth bounding boxes.
+            gt_labels (np.ndarray): Labels of boxes.
+
+        Returns:
+            dict: Dict of sampled 'pseudo ground truths'.
+
+                - gt_labels_3d (np.ndarray): labels of ground truths:
+                    labels of sampled ground truths
+                - gt_bboxes_3d (:obj:``BaseInstance3DBoxes``):
+                    sampled 3D bounding boxes
+                - points (np.ndarray): sampled points
+                - group_ids (np.ndarray): ids of sampled ground truths
+        """
         sampled_num_dict = {}
         sample_num_per_class = []
         for class_name, max_sample_num in zip(self.sample_classes,
@@ -198,6 +243,16 @@ class DataBaseSampler(object):
         return ret
 
     def sample_class_v2(self, name, num, gt_bboxes):
+        """Sampling specific categories of bounding boxes.
+
+        Args:
+            name (str): Class of objects to be sampled.
+            num (int): Number of sampled bboxes.
+            gt_bboxes (np.ndarray): Ground truth boxes.
+
+        Returns:
+            list[dict]: Valid samples after collision test.
+        """
         sampled = self.sampler_dict[name].sample(num)
         sampled = copy.deepcopy(sampled)
         num_gt = gt_bboxes.shape[0]
