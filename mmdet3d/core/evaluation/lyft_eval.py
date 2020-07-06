@@ -129,8 +129,8 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
         row = [class_names[i], round(mAPs_cate[i], 3)]
         APs_data.append(row)
     APs_data.append(['Overall', round(final_mAP, 3)])
-    APs_table = AsciiTable(
-        APs_data, title='mAPs@0.5:0.95', inner_footing_row_border=True)
+    APs_table = AsciiTable(APs_data, title='mAPs@0.5:0.95')
+    APs_table.inner_footing_row_border = True
     print_log(APs_table.table, logger=logger)
 
     res_path = osp.join(output_dir, 'lyft_metrics.json')
