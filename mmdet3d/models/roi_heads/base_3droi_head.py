@@ -71,8 +71,9 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
             gt_bboxes (list[:obj:`BaseInstance3DBoxes`]):
                 GT bboxes of each sample. The bboxes are encapsulated
                 by 3D box structures.
-            gt_labels (list[LongTensor]): GT labels of each sample.
-            gt_bboxes_ignore (list[Tensor], optional): Specify which bounding.
+            gt_labels (list[torch.LongTensor]): GT labels of each sample.
+            gt_bboxes_ignore (list[torch.Tensor], optional):
+                Specify which bounding.
 
         Returns:
             dict: losses from each head.
