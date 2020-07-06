@@ -1,3 +1,4 @@
+import copy
 from os import path as osp
 
 from mmdet3d.core import Box3DMode, show_result
@@ -64,7 +65,7 @@ class Base3DDetector(BaseDetector):
 
         assert out_dir is not None, 'Expect out_dir, got none.'
 
-        pred_bboxes = result['pts_bbox']['boxes_3d'].tensor.numpy()
+        pred_bboxes = copy.deepcopy(result['boxes_3d'].tensor.numpy())
         # for now we convert points into depth mode
         if data['img_metas'][0]._data[0][0]['box_mode_3d'] != Box3DMode.DEPTH:
             points = points[..., [1, 0, 2]]
