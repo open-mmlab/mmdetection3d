@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import os
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
 from os import path as osp
 from pyquaternion import Quaternion
@@ -115,8 +116,12 @@ def _fill_trainval_infos(lyft,
         cs_record = lyft.get('calibrated_sensor',
                              sd_rec['calibrated_sensor_token'])
         pose_record = lyft.get('ego_pose', sd_rec['ego_pose_token'])
-        lidar_path, boxes, _ = lyft.get_sample_data(lidar_token)
-        lidar_path = str(lidar_path)
+        abs_lidar_path, boxes, _ = lyft.get_sample_data(lidar_token)
+        # nuScenes devkit returns more convenient relative paths while
+        # lyft devkit returns absolute paths
+        abs_lidar_path = str(abs_lidar_path)  # absolute path
+        lidar_path = abs_lidar_path.split(f'{os.getcwd()}/')[-1]
+        # relative path
 
         mmcv.check_file_exist(lidar_path)
 
