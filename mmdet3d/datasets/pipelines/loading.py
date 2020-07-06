@@ -114,7 +114,7 @@ class PointSegClassMapping(object):
     others as len(valid_cat_ids).
 
     Args:
-        valid_cat_ids (tuple[int): A tuple of valid category.
+        valid_cat_ids (tuple[int]): A tuple of valid category.
     """
 
     def __init__(self, valid_cat_ids):
