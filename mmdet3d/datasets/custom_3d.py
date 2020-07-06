@@ -67,9 +67,31 @@ class Custom3DDataset(Dataset):
             self._set_group_flag()
 
     def load_annotations(self, ann_file):
+        """Load annotations from ann_file.
+
+        Args:
+            ann_file (str): Path of the annotation file.
+
+        Returns:
+            list[dict]: List of annotations.
+        """
         return mmcv.load(ann_file)
 
     def get_data_info(self, index):
+        """Get data info according to the given index.
+
+        Args:
+            index (int): Index of the sample data to get.
+
+        Returns:
+            dict: Standard input_dict consists of the
+                data information.
+
+                - sample_idx (str): sample index
+                - pts_filename (str): filename of point clouds
+                - file_name (str): filename of point clouds
+                - ann_info (dict): annotation info
+        """
         info = self.data_infos[index]
         sample_idx = info['point_cloud']['lidar_idx']
         pts_filename = osp.join(self.data_root, info['pts_path'])
@@ -87,6 +109,21 @@ class Custom3DDataset(Dataset):
         return input_dict
 
     def pre_pipeline(self, results):
+        """Initialization before data preparation.
+
+        Args:
+            dict: Dict before data preprocessing.
+
+                - img_fields (list): image fields
+                - bbox3d_fields (list): 3D bounding boxes fields
+                - pts_mask_fields (list): mask fields of points
+                - pts_seg_fields (list): mask fields of point segments
+                - bbox_fields (list): fields of bounding boxes
+                - mask_fields (list): fields of masks
+                - seg_fields (list): segment fields
+                - box_type_3d (str): 3D box type
+                - box_mode_3d (str): 3D box mode
+        """
         results['img_fields'] = []
         results['bbox3d_fields'] = []
         results['pts_mask_fields'] = []
@@ -98,6 +135,14 @@ class Custom3DDataset(Dataset):
         results['box_mode_3d'] = self.box_mode_3d
 
     def prepare_train_data(self, index):
+        """Training data preparation.
+
+        Args:
+            index (int): Index for accessing the target data.
+
+        Returns:
+            dict: Training data dict corresponding to the index.
+        """
         input_dict = self.get_data_info(index)
         if input_dict is None:
             return None
@@ -109,6 +154,14 @@ class Custom3DDataset(Dataset):
         return example
 
     def prepare_test_data(self, index):
+        """Prepare data for testing.
+
+        Args:
+            index (int): Index for accessing the target data.
+
+        Returns:
+            dict: Testing data dict corresponding to the index.
+        """
         input_dict = self.get_data_info(index)
         self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
@@ -145,6 +198,19 @@ class Custom3DDataset(Dataset):
                        outputs,
                        pklfile_prefix=None,
                        submission_prefix=None):
+        """Format the results to pkl file.
+
+        Args:
+            outputs (list[dict]): Testing results of the dataset.
+            pklfile_prefix (str | None): The prefix of pkl files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+
+        Returns:
+            tuple: (outputs, tmp_dir), outputs is the detection results,
+                tmp_dir is the temporal directory created for saving json
+                files when jsonfile_prefix is not specified.
+        """
         if pklfile_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()
             pklfile_prefix = osp.join(tmp_dir.name, 'results')

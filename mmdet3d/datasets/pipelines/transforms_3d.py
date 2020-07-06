@@ -171,12 +171,12 @@ class ObjectNoise(object):
     """Apply noise to each GT objects in the scene.
 
     Args:
-        translation_std (list, optional): Standard deviation of the
+        translation_std (list[float], optional): Standard deviation of the
             distribution where translation noise are sampled from.
             Defaults to [0.25, 0.25, 0.25].
-        global_rot_range (list, optional): Global rotation to the scene.
+        global_rot_range (list[float], optional): Global rotation to the scene.
             Defaults to [0.0, 0.0].
-        rot_range (list, optional): Object rotation range.
+        rot_range (list[float], optional): Object rotation range.
             Defaults to [-0.15707963267, 0.15707963267].
         num_try (int, optional): Number of times to try if the noise applied is
             invalid. Defaults to 100.
@@ -429,8 +429,9 @@ class IndoorPointSample(object):
             return_choices (bool): Whether return choice.
 
         Returns:
-            points (ndarray): 3D Points.
-            choices (ndarray): The generated random samples.
+            tuple (np.ndarray, np.ndarray) | np.ndarray:
+                points (np.ndarray): 3D Points.
+                choices (np.ndarray, optional): The generated random samples.
         """
         if replace is None:
             replace = (points.shape[0] < num_samples)

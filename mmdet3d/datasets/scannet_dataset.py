@@ -64,6 +64,21 @@ class ScanNetDataset(Custom3DDataset):
             test_mode=test_mode)
 
     def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Standard annotation dictionary
+                consists of the data information.
+
+                - gt_bboxes_3d (:obj:``DepthInstance3DBoxes``):
+                    3D ground truth bboxes
+                - gt_labels_3d (np.ndarray): labels of ground truths
+                - pts_instance_mask_path (str): path of instance masks
+                - pts_semantic_mask_path (str): path of semantic masks
+        """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
         if info['annos']['gt_num'] != 0:
@@ -94,6 +109,12 @@ class ScanNetDataset(Custom3DDataset):
         return anns_results
 
     def show(self, results, out_dir):
+        """Results visualization.
+
+        Args:
+            results (list[dict]): List of bounding boxes results.
+            out_dir (str): Output directory of visualization result.
+        """
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
