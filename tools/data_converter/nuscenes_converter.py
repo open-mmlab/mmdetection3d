@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import os
 from collections import OrderedDict
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points
@@ -117,6 +118,10 @@ def get_available_scenes(nusc):
         while has_more_frames:
             lidar_path, boxes, _ = nusc.get_sample_data(sd_rec['token'])
             lidar_path = str(lidar_path)
+            if os.getcwd() in lidar_path:
+                # path from lyftdataset is absolute path
+                lidar_path = lidar_path.split(f'{os.getcwd()}/')[-1]
+                # relative path
             if not mmcv.is_filepath(lidar_path):
                 scene_not_exist = True
                 break
@@ -286,6 +291,8 @@ def obtain_sensor2top(nusc,
                          sd_rec['calibrated_sensor_token'])
     pose_record = nusc.get('ego_pose', sd_rec['ego_pose_token'])
     data_path = str(nusc.get_sample_data_path(sd_rec['token']))
+    if os.getcwd() in data_path:  # path from lyftdataset is absolute path
+        data_path = data_path.split(f'{os.getcwd()}/')[-1]  # relative path
     sweep = {
         'data_path': data_path,
         'type': sensor_type,
