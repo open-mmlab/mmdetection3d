@@ -6,9 +6,9 @@ from .lyft_dataset import LyftDataset
 from .nuscenes_dataset import NuScenesDataset
 from .pipelines import (GlobalRotScaleTrans, IndoorPointSample,
                         LoadAnnotations3D, LoadPointsFromFile,
-                        NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
-                        ObjectSample, PointShuffle, PointsRangeFilter,
-                        RandomFlip3D)
+                        LoadPointsFromMultiSweeps, NormalizePointsColor,
+                        ObjectNoise, ObjectRangeFilter, ObjectSample,
+                        PointShuffle, PointsRangeFilter, RandomFlip3D)
 from .scannet_dataset import ScanNetDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 
@@ -19,5 +19,6 @@ __all__ = [
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
     'PointShuffle', 'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
     'LoadPointsFromFile', 'NormalizePointsColor', 'IndoorPointSample',
-    'LoadAnnotations3D', 'SUNRGBDDataset', 'ScanNetDataset', 'Custom3DDataset'
+    'LoadAnnotations3D', 'SUNRGBDDataset', 'ScanNetDataset', 'Custom3DDataset',
+    'LoadPointsFromMultiSweeps'
 ]
