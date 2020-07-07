@@ -126,7 +126,6 @@ def points_cam2img(points_3d, proj_mat):
     # previous implementation use new_zeros, new_one yeilds better results
     points_4 = torch.cat(
         [points_3d, points_3d.new_ones(*points_shape)], dim=-1)
-    # point_2d = points_4 @ tf.transpose(proj_mat, [1, 0])
     point_2d = torch.matmul(points_4, proj_mat.t())
     point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
     return point_2d_res
