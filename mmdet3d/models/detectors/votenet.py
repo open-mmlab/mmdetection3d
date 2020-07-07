@@ -84,6 +84,7 @@ class VoteNet(SingleStage3DDetector):
         return bbox_results[0]
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
+        """Test with augmentation."""
         points_cat = [torch.stack(pts) for pts in points]
         feats = self.extract_feats(points_cat, img_metas)
 

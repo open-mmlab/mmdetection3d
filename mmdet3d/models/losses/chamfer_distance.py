@@ -14,16 +14,16 @@ def chamfer_distance(src,
     """Calculate Chamfer Distance of two sets.
 
     Args:
-        src (tensor): Source set with shape [B, N, C] to
+        src (Tensor): Source set with shape [B, N, C] to
             calculate Chamfer Distance.
-        dst (tensor): Destination set with shape [B, M, C] to
+        dst (Tensor): Destination set with shape [B, M, C] to
             calculate Chamfer Distance.
-        src_weight (tensor or float): Weight of source loss.
-        dst_weight (tensor or float): Weight of destination loss.
+        src_weight (Tensor or float): Weight of source loss.
+        dst_weight (Tensor or float): Weight of destination loss.
         criterion_mode (str): Criterion mode to calculate distance.
             The valid modes are smooth_l1, l1 or l2.
         reduction (str): Method to reduce losses.
-            The valid reduction method are none, sum or mean.
+            The valid reduction method are 'none', 'sum' or 'mean'.
 
     Returns:
         tuple: Source and Destination loss with indices.
@@ -103,6 +103,29 @@ class ChamferDistance(nn.Module):
                 reduction_override=None,
                 return_indices=False,
                 **kwargs):
+        """Forward function of loss calculation.
+
+        Args:
+            source (Tensor): Source set with shape [B, N, C] to
+                calculate Chamfer Distance.
+            target (Tensor): Destination set with shape [B, M, C] to
+                calculate Chamfer Distance.
+            src_weight (Tensor | float, optional): Weight of source loss.
+                Defaults to 1.0.
+            dst_weight (Tensor | float, optional): Weight of destination loss.
+                Defaults to 1.0.
+            reduction_override (str, optional): Method to reduce losses.
+                The valid reduction method are 'none', 'sum' or 'mean'.
+                Defaults to None.
+            return_indices (bool, optional): Whether to return indices.
+                Defaults to False.
+
+        Returns:
+            tuple[torch.Tensor]: If ``return_indices=True``, return losses of
+                source and target with their corresponding indices in the order
+                of (loss_source, loss_target, indices1, indices2). If
+                ``return_indices=False``, return (loss_source, loss_target).
+        """
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
             reduction_override if reduction_override else self.reduction)

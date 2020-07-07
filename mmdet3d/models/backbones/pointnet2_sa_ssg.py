@@ -83,6 +83,7 @@ class PointNet2SASSG(nn.Module):
                 fp_target_channel = skip_channel_list.pop()
 
     def init_weights(self, pretrained=None):
+        """Initialize the weights of PointNet backbone."""
         # Do not initialize the conv layers
         # to follow the original implementation
         if isinstance(pretrained, str):
@@ -118,7 +119,8 @@ class PointNet2SASSG(nn.Module):
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict: outputs after SA and FP modules.
+            dict[str, list[Tensor]]: outputs after SA and FP modules.
+
                 - fp_xyz (list[Tensor]): contains the coordinates of
                     each fp features.
                 - fp_features (list[Tensor]): contains the features

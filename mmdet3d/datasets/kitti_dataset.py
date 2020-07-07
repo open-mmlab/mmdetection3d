@@ -313,7 +313,7 @@ class KittiDataset(Custom3DDataset):
                 Default: None.
 
         Returns:
-            dict[str: float]: results of each evaluation metric
+            dict[str, float]: results of each evaluation metric
         """
         result_files, tmp_dir = self.format_results(results, pklfile_prefix)
         from mmdet3d.core.evaluation import kitti_eval
