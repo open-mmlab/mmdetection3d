@@ -119,7 +119,7 @@ db_sampler = dict(
         )),
     classes=class_names,
     sample_groups=dict(
-        Car=20,
+        Car=15,
         Pedestrian=15,
         Cyclist=15,
     ))
@@ -197,26 +197,24 @@ data = dict(
         classes=class_names,
         test_mode=True))
 # optimizer
-lr = 0.001  # max learning rate
+lr = 0.0003  # max learning rate
 optimizer = dict(
     type='AdamW',
     lr=lr,
     betas=(0.95, 0.99),  # the momentum is change during training
     weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 # learning policy
 lr_config = dict(
     policy='cyclic',
     target_ratio=(10, 1e-4),
     cyclic_times=1,
-    step_ratio_up=0.4,
-)
+    step_ratio_up=0.4)
 momentum_config = dict(
     policy='cyclic',
     target_ratio=(0.85 / 0.95, 1),
     cyclic_times=1,
-    step_ratio_up=0.4,
-)
+    step_ratio_up=0.4)
 checkpoint_config = dict(interval=1)
 evaluation = dict(interval=2)
 # yapf:disable
@@ -228,7 +226,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 160
+total_epochs = 80
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/pp_secfpn_80e'
