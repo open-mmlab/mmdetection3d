@@ -476,6 +476,7 @@ class NuScenesDataset(Custom3DDataset):
             data_info = self.data_infos[i]
             pts_path = data_info['lidar_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
+            # for now we convert points into depth mode
             points = points[..., [1, 0, 2]]
             points[..., 0] *= -1
             inds = result['pts_bbox']['scores_3d'] > 0.1
