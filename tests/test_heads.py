@@ -1,9 +1,21 @@
 import copy
+import numpy as np
 import pytest
+import random
 import torch
 from os.path import dirname, exists, join
 
-from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
+from mmdet3d.core.bbox import (Box3DMode, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes)
+from mmdet3d.models.builder import build_head
+
+
+def _setup_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
 
 
 def _get_config_directory():
@@ -64,6 +76,73 @@ def _get_rpn_head_cfg(fname):
     rpn_head.update(train_cfg=train_cfg.rpn)
     rpn_head.update(test_cfg=test_cfg.rpn)
     return rpn_head, train_cfg.rpn_proposal
+
+
+def _get_roi_head_cfg(fname):
+    """Grab configs necessary to create a roi_head.
+
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
+    """
+    import mmcv
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+    train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg))
+    test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg))
+
+    roi_head = model.roi_head
+    roi_head.update(train_cfg=train_cfg.rcnn)
+    roi_head.update(test_cfg=test_cfg.rcnn)
+    return roi_head
+
+
+def _get_pts_bbox_head_cfg(fname):
+    """Grab configs necessary to create a pts_bbox_head.
+
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
+    """
+    import mmcv
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+    train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg.pts))
+    test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg.pts))
+
+    pts_bbox_head = model.pts_bbox_head
+    pts_bbox_head.update(train_cfg=train_cfg)
+    pts_bbox_head.update(test_cfg=test_cfg)
+    return pts_bbox_head
+
+
+def _get_vote_head_cfg(fname):
+    """Grab configs necessary to create a vote_head.
+
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
+    """
+    import mmcv
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+    train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg))
+    test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg))
+
+    vote_head = model.bbox_head
+    vote_head.update(train_cfg=train_cfg)
+    vote_head.update(test_cfg=test_cfg)
+    return vote_head
+
+
+def _get_parta2_bbox_head_cfg(fname):
+    """Grab configs necessary to create a parta2_bbox_head.
+
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
+    """
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+
+    vote_head = model.roi_head.bbox_head
+    return vote_head
 
 
 def test_anchor3d_head_loss():
@@ -155,7 +234,6 @@ def test_parta2_rpnhead_getboxes():
     rpn_head_cfg, proposal_cfg = _get_rpn_head_cfg(
         'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
 
-    from mmdet3d.models.builder import build_head
     self = build_head(rpn_head_cfg)
     self.cuda()
 
@@ -186,82 +264,196 @@ def test_parta2_rpnhead_getboxes():
 def test_vote_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
-    from mmdet3d.models.dense_heads import VoteHead
-    bbox_head_cfg = dict(
-        num_classes=10,
-        bbox_coder=dict(
-            type='PartialBinBasedBBoxCoder',
-            num_sizes=10,
-            num_dir_bins=5,
-            with_rot=True,
-            mean_sizes=[[2.114256, 1.620300, 0.927272],
-                        [0.791118, 1.279516, 0.718182],
-                        [0.923508, 1.867419, 0.845495],
-                        [0.591958, 0.552978, 0.827272],
-                        [0.699104, 0.454178, 0.75625],
-                        [0.69519, 1.346299, 0.736364],
-                        [0.528526, 1.002642, 1.172878],
-                        [0.500618, 0.632163, 0.683424],
-                        [0.404671, 1.071108, 1.688889],
-                        [0.76584, 1.398258, 0.472728]]),
-        vote_moudule_cfg=dict(
-            in_channels=64,
-            vote_per_seed=1,
-            gt_per_seed=3,
-            conv_channels=(64, 64),
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d'),
-            norm_feats=True,
-            vote_loss=dict(
-                type='ChamferDistance',
-                mode='l1',
-                reduction='none',
-                loss_dst_weight=10.0)),
-        vote_aggregation_cfg=dict(
-            num_point=256,
-            radius=0.3,
-            num_sample=16,
-            mlp_channels=[64, 32, 32, 32],
-            use_xyz=True,
-            normalize_xyz=True),
-        feat_channels=(64, 64),
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
-        objectness_loss=dict(
-            type='CrossEntropyLoss',
-            class_weight=[0.2, 0.8],
-            reduction='sum',
-            loss_weight=5.0),
-        center_loss=dict(
-            type='ChamferDistance',
-            mode='l2',
-            reduction='sum',
-            loss_src_weight=10.0,
-            loss_dst_weight=10.0),
-        dir_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-        dir_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-        size_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-        size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
-        semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0))
-
-    train_cfg = dict(
-        pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')
-
-    self = VoteHead(train_cfg=train_cfg, **bbox_head_cfg).cuda()
-    fp_xyz = [torch.rand([2, 64, 3], dtype=torch.float32).cuda()]
-    fp_features = [torch.rand([2, 64, 64], dtype=torch.float32).cuda()]
-    fp_indices = [torch.randint(0, 128, [2, 64]).cuda()]
+    _setup_seed(0)
+    vote_head_cfg = _get_vote_head_cfg(
+        'votenet/votenet_8x8_scannet-3d-18class.py')
+    self = build_head(vote_head_cfg).cuda()
+    fp_xyz = [torch.rand([2, 256, 3], dtype=torch.float32).cuda()]
+    fp_features = [torch.rand([2, 256, 256], dtype=torch.float32).cuda()]
+    fp_indices = [torch.randint(0, 128, [2, 256]).cuda()]
 
     input_dict = dict(
         fp_xyz=fp_xyz, fp_features=fp_features, fp_indices=fp_indices)
+
     # test forward
     ret_dict = self(input_dict, 'vote')
     assert ret_dict['center'].shape == torch.Size([2, 256, 3])
     assert ret_dict['obj_scores'].shape == torch.Size([2, 256, 2])
-    assert ret_dict['size_res'].shape == torch.Size([2, 256, 10, 3])
-    assert ret_dict['dir_res'].shape == torch.Size([2, 256, 5])
+    assert ret_dict['size_res'].shape == torch.Size([2, 256, 18, 3])
+    assert ret_dict['dir_res'].shape == torch.Size([2, 256, 1])
+
+    # test loss
+    points = [torch.rand([40000, 4], device='cuda') for i in range(2)]
+    gt_bbox1 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bbox2 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bboxes = [gt_bbox1, gt_bbox2]
+    gt_labels = [torch.randint(0, 18, [10], device='cuda') for i in range(2)]
+    pts_semantic_mask = [
+        torch.randint(0, 18, [40000], device='cuda') for i in range(2)
+    ]
+    pts_instance_mask = [
+        torch.randint(0, 10, [40000], device='cuda') for i in range(2)
+    ]
+    losses = self.loss(ret_dict, points, gt_bboxes, gt_labels,
+                       pts_semantic_mask, pts_instance_mask)
+    assert losses['vote_loss'] >= 0
+    assert losses['objectness_loss'] >= 0
+    assert losses['semantic_loss'] >= 0
+    assert losses['center_loss'] >= 0
+    assert losses['dir_class_loss'] >= 0
+    assert losses['dir_res_loss'] >= 0
+    assert losses['size_class_loss'] >= 0
+    assert losses['size_res_loss'] >= 0
+
+    # test multiclass_nms_single
+    obj_scores = torch.rand([256], device='cuda')
+    sem_scores = torch.rand([256, 18], device='cuda')
+    points = torch.rand([40000, 3], device='cuda')
+    bbox = torch.rand([256, 7], device='cuda')
+    input_meta = dict(box_type_3d=DepthInstance3DBoxes)
+    bbox_selected, score_selected, labels = self.multiclass_nms_single(
+        obj_scores, sem_scores, bbox, points, input_meta)
+    assert bbox_selected.shape[0] >= 0
+    assert bbox_selected.shape[1] == 7
+    assert score_selected.shape[0] >= 0
+    assert labels.shape[0] >= 0
+
+    # test get_boxes
+    points = torch.rand([1, 40000, 4], device='cuda')
+    seed_points = torch.rand([1, 1024, 3], device='cuda')
+    seed_indices = torch.randint(0, 40000, [1, 1024], device='cuda')
+    vote_points = torch.rand([1, 1024, 3], device='cuda')
+    vote_features = torch.rand([1, 256, 1024], device='cuda')
+    aggregated_points = torch.rand([1, 256, 3], device='cuda')
+    aggregated_indices = torch.range(0, 256, device='cuda')
+    obj_scores = torch.rand([1, 256, 2], device='cuda')
+    center = torch.rand([1, 256, 3], device='cuda')
+    dir_class = torch.rand([1, 256, 1], device='cuda')
+    dir_res_norm = torch.rand([1, 256, 1], device='cuda')
+    dir_res = torch.rand([1, 256, 1], device='cuda')
+    size_class = torch.rand([1, 256, 18], device='cuda')
+    size_res = torch.rand([1, 256, 18, 3], device='cuda')
+    sem_scores = torch.rand([1, 256, 18], device='cuda')
+    bbox_preds = dict(
+        seed_points=seed_points,
+        seed_indices=seed_indices,
+        vote_points=vote_points,
+        vote_features=vote_features,
+        aggregated_points=aggregated_points,
+        aggregated_indices=aggregated_indices,
+        obj_scores=obj_scores,
+        center=center,
+        dir_class=dir_class,
+        dir_res_norm=dir_res_norm,
+        dir_res=dir_res,
+        size_class=size_class,
+        size_res=size_res,
+        sem_scores=sem_scores)
+    results = self.get_bboxes(points, bbox_preds, [input_meta])
+    assert results[0][0].tensor.shape[0] >= 0
+    assert results[0][0].tensor.shape[1] == 7
+    assert results[0][1].shape[0] >= 0
+    assert results[0][2].shape[0] >= 0
+
+
+def test_parta2_bbox_head():
+    parta2_bbox_head_cfg = _get_parta2_bbox_head_cfg(
+        './parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+    self = build_head(parta2_bbox_head_cfg)
+    seg_feats = torch.rand([256, 14, 14, 14, 16])
+    part_feats = torch.rand([256, 14, 14, 14, 4])
+
+    cls_score, bbox_pred = self.forward(seg_feats, part_feats)
+    assert cls_score.shape == (256, 1)
+    assert bbox_pred.shape == (256, 7)
+
+
+def test_part_aggregation_ROI_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    _setup_seed(0)
+    roi_head_cfg = _get_roi_head_cfg(
+        'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+    self = build_head(roi_head_cfg).cuda()
+    spatial_features = torch.rand([1, 256, 200, 176], device='cuda')
+    seg_features = torch.rand([32000, 16], device='cuda')
+    neck_features = [torch.rand([1, 512, 200, 176], device='cuda')]
+    feats_dict = dict(
+        spatial_features=spatial_features,
+        seg_features=seg_features,
+        neck_features=neck_features)
+
+    voxels = torch.rand([32000, 5, 4], device='cuda')
+    num_points = torch.ones([32000], device='cuda')
+    coors = torch.zeros([32000, 4], device='cuda')
+    voxel_centers = torch.zeros([32000, 3], device='cuda')
+    box_type_3d = LiDARInstance3DBoxes
+    img_metas = [dict(box_type_3d=box_type_3d)]
+    voxels_dict = dict(
+        voxels=voxels,
+        num_points=num_points,
+        coors=coors,
+        voxel_centers=voxel_centers)
+
+    pred_bboxes = LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
+    pred_scores = torch.rand([5], device='cuda')
+    pred_labels = torch.randint(0, 3, [5], device='cuda')
+    pred_clses = torch.rand([5, 3], device='cuda')
+    proposal = dict(
+        boxes_3d=pred_bboxes,
+        scores_3d=pred_scores,
+        labels_3d=pred_labels,
+        cls_preds=pred_clses)
+    proposal_list = [proposal]
+    gt_bboxes_3d = [LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))]
+    gt_labels_3d = [torch.randint(0, 3, [5], device='cuda')]
+
+    losses = self.forward_train(feats_dict, voxels_dict, {}, proposal_list,
+                                gt_bboxes_3d, gt_labels_3d)
+    assert losses['loss_seg'] >= 0
+    assert losses['loss_part'] >= 0
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
+    assert losses['loss_corner'] >= 0
+
+    bbox_results = self.simple_test(feats_dict, voxels_dict, img_metas,
+                                    proposal_list)
+    boxes_3d = bbox_results['boxes_3d']
+    scores_3d = bbox_results['scores_3d']
+    labels_3d = bbox_results['labels_3d']
+    assert boxes_3d.tensor.shape == (6, 7)
+    assert scores_3d.shape == (6, )
+    assert labels_3d.shape == (6, )
+
+
+def test_free_anchor_3D_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    pts_bbox_head_cfg = _get_pts_bbox_head_cfg(
+        './free_anchor/hv_pointpillars_fpn_sbn-all_'
+        'free-anchor_4x8_2x_nus-3d.py')
+    self = build_head(pts_bbox_head_cfg)
+    cls_scores = [
+        torch.rand([4, 80, 200, 200], device='cuda') for i in range(3)
+    ]
+    bbox_preds = [
+        torch.rand([4, 72, 200, 200], device='cuda') for i in range(3)
+    ]
+    dir_cls_preds = [
+        torch.rand([4, 16, 200, 200], device='cuda') for i in range(3)
+    ]
+    gt_bboxes = [
+        LiDARInstance3DBoxes(torch.rand([8, 9], device='cuda'), box_dim=9)
+        for i in range(4)
+    ]
+    gt_labels = [
+        torch.randint(0, 10, [8], device='cuda', dtype=torch.long)
+        for i in range(4)
+    ]
+    input_metas = [0]
+    losses = self.loss(cls_scores, bbox_preds, dir_cls_preds, gt_bboxes,
+                       gt_labels, input_metas, None)
+    assert losses['positive_bag_loss'] >= 0
+    assert losses['negative_bag_loss'] >= 0
