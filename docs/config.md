@@ -50,7 +50,7 @@ For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th e
 Sometimes, you may set `_delete_=True` to ignore some of fields in base configs.
 You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple inllustration.
 
-In MMDetection, for example, to change the backbone of Mask R-CNN with the following config.
+In MMDetection or MMDetection3D, for example, to change the backbone of Mask R-CNN with the following config.
 
 ```python
 model = dict(
