@@ -403,6 +403,13 @@ class MVXTwoStageDetector(Base3DDetector):
         return merged_bboxes
 
     def show_results(self, data, result, out_dir):
+        """Results visualization.
+
+        Args:
+            data (dict): Input points and info.
+            result (dict): Prediction results.
+            out_dir (str): Output directory of visualization result.
+        """
         points = data['points'][0]._data[0][0].numpy()
         pts_filename = data['img_metas'][0]._data[0][0]['pts_filename']
         file_name = osp.split(pts_filename)[-1].split('.')[0]
