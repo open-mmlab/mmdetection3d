@@ -12,6 +12,8 @@
 #
 import os
 import sys
+from m2r import MdInclude
+from recommonmark.transform import AutoStructify
 
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -36,6 +38,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'recommonmark',
     'sphinx_markdown_tables',
+    'sphinx.ext.autosectionlabel',
 ]
 
 autodoc_mock_imports = [
@@ -46,6 +49,7 @@ autodoc_mock_imports = [
     'mmdet3d.ops.interpolate', 'mmdet3d.ops.roiaware_pool3d',
     'mmdet3d.ops.spconv', 'mmdet3d.ops.voxel.voxel_layer', 'mmdet3d.ops.iou3d'
 ]
+autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -77,3 +81,16 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+def setup(app):
+    app.add_config_value('no_underscore_emphasis', False, 'env')
+    app.add_config_value('m2r_parse_relative_links', False, 'env')
+    app.add_config_value('m2r_anonymous_references', False, 'env')
+    app.add_config_value('m2r_disable_inline_math', False, 'env')
+    app.add_directive('mdinclude', MdInclude)
+    app.add_config_value('recommonmark_config', {
+        'auto_toc_tree_section': 'Contents',
+        'enable_eval_rst': True,
+    }, True)
+    app.add_transform(AutoStructify)

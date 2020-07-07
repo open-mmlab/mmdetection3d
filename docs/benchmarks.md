@@ -24,7 +24,7 @@ We compare our implementation of VoteNet with [votenet](https://github.com/faceb
 +================+=====================+====================+========+
 | MMDetection3D  |        358          |         17         |  35.8  |
 +----------------+---------------------+--------------------+--------+
-| votenet_       |        77           |         3          |  31.5  |
+| votenet        |        77           |         3          |  31.5  |
 +----------------+---------------------+--------------------+--------+
 
 ```
@@ -47,13 +47,13 @@ performance on 3 classes.
 ```
 
 ```eval_rst
-  +----------------+---------------------+--------------------+
-  | Implementation | Training (sample/s) | Testing (sample/s) |
-  +================+=====================+====================+
-  | MMDetection3D  |         107         |        45          |
-  +----------------+---------------------+--------------------+
-  | OpenPCDet      |         44          |        25          |
-  +----------------+---------------------+--------------------+
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         107         |        45          |
++----------------+---------------------+--------------------+
+| OpenPCDet      |         44          |        25          |
++----------------+---------------------+--------------------+
 ```
 
 ### SECOND
@@ -63,36 +63,36 @@ So we only compare with [OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree
 condition following the KITTI benchmark and compare average AP over all classes on moderate condition for
 performance on 3 classes.
 
-  ```eval_rst
-    +----------------+---------------------+--------------------+
-    | Implementation | Training (sample/s) | Testing (sample/s) |
-    +================+=====================+====================+
-    | MMDetection3D  |         40          |         27         |
-    +----------------+---------------------+--------------------+
-    | OpenPCDet      |         30          |         32         |
-    +----------------+---------------------+--------------------+
-  ```
+```eval_rst
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         40          |         27         |
++----------------+---------------------+--------------------+
+| OpenPCDet      |         30          |         32         |
++----------------+---------------------+--------------------+
+```
 
 ### Part-A2
 
 We benchmark Part-A2 with that in [OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2). We report the AP on moderate condition following the KITTI benchmark
 and compare average AP over all classes on moderate condition for performance on 3 classes.
 
-  ```eval_rst
-    +----------------+---------------------+--------------------+
-    | Implementation | Training (sample/s) | Testing (sample/s) |
-    +================+=====================+====================+
-    | MMDetection3D  |         17          |         11         |
-    +----------------+---------------------+--------------------+
-    | OpenPCDet      |         14          |         13         |
-    +----------------+---------------------+--------------------+
-  ```
+```eval_rst
++----------------+---------------------+--------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) |
++================+=====================+====================+
+| MMDetection3D  |         17          |         11         |
++----------------+---------------------+--------------------+
+| OpenPCDet      |         14          |         13         |
++----------------+---------------------+--------------------+
+```
 
 ## Details of Comparison
 
 ### Modification for Calculating Speed
 
-* __Det3D__: At commit 255c593
+* __Det3D__: At commit [255c593]()
 
 * __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2)
 

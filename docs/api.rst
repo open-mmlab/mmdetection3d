@@ -71,22 +71,22 @@ roi_heads
     :members:
 
 roi_heads.bbox_heads
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.roi_heads.bbox_heads
     :members:
 
 roi_heads.mask_heads
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.roi_heads.mask_heads
     :members:
 
 roi_heads.roi_extractors
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.roi_heads.roi_extractors
     :members:
 
 fusion_layers
-^^^^^^^^^^
+^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.fusion_layers
     :members:
 
@@ -96,11 +96,11 @@ losses
     :members:
 
 middle_encoders
-^^^^^^^^^^
+^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.middle_encoders
     :members:
 
 model_utils
-^^^^^^^^^^
+^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.model_utils
     :members:
