@@ -642,6 +642,7 @@ class KittiDataset(Custom3DDataset):
             data_info = self.data_infos[i]
             pts_path = data_info['point_cloud']['velodyne_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
+            # for now we convert points into depth mode
             points = example['points'][0]._data.numpy()
             points = points[..., [1, 0, 2]]
             points[..., 0] *= -1
