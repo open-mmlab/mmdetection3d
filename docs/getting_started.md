@@ -63,25 +63,28 @@ mmdetection3d
 ```
 
 Download nuScenes V1.0 full dataset data [HERE]( https://www.nuscenes.org/download). Prepare nuscenes data by running
+
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
 Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare kitti data by running
+
 ```bash
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
 ```
 
 Download Lyft 3D detection data [HERE](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data). Prepare Lyft data by running
+
 ```bash
 python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
 ```
+
 Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above.
 
-To prepare scannet data, please see [scannet](../data/scannet/README.md).
+To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/data/scannet/README.md).
 
-To prepare sunrgbd data, please see [sunrgbd](../data/sunrgbd/README.md).
-
+To prepare sunrgbd data, please see [sunrgbd](https://github.com/open-mmlab/mmdetection3d/data/sunrgbd/README.md).
 
 For using custom datasets, please refer to [Tutorials 2: Adding New Dataset](tutorials/new_dataset.md).
 
@@ -112,71 +115,70 @@ Optional arguments:
 - `--show`: If specified, detection results will be plotted in the silient mode. It is only applicable to single GPU testing and used for debugging and visualization. This should be used with `--show-dir`.
 - `--show-dir`: If specified, detection results will be plotted on the `***_points.obj` and `***_pred.ply` files in the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option.
 
-
 Examples:
 
 Assume that you have already downloaded the checkpoints to the directory `checkpoints/`.
 
 1. Test votenet on ScanNet and save the points and prediction visualization results.
 
-```shell
-python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
-    checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
-    --show --show-dir ./data/scannet/show_results
-```
+   ```shell
+   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
+       --show --show-dir ./data/scannet/show_results
+   ```
 
 2. Test votenet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
 
-```shell
-python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
-    checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
-    --eval mAP
-    --options 'show=True' 'out_dir=./data/scannet/show_results'
-```
+   ```shell
+   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
+       --eval mAP
+       --options 'show=True' 'out_dir=./data/scannet/show_results'
+   ```
 
 3. Test votenet on ScanNet (without saving the test results) and evaluate the mAP.
 
-```shell
-python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
-    checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
-    --eval mAP
-```
+   ```shell
+   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
+       --eval mAP
+   ```
 
 4. Test SECOND with 8 GPUs, and evaluate the mAP.
 
-```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
-    checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
-    --out results.pkl --eval mAP
-```
+   ```shell
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
+       checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
+       --out results.pkl --eval mAP
+   ```
 
 5. Test PointPillars on nuscenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
 
-```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
-    checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
-    --format-only --options 'jsonfile_prefix=./pointpillars_nuscenes_results'
-```
+   ```shell
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
+       checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
+       --format-only --options 'jsonfile_prefix=./pointpillars_nuscenes_results'
+   ```
 
-The generated results be under `./pointpillars_nuscenes_results` directory.
+   The generated results be under `./pointpillars_nuscenes_results` directory.
 
 6. Test SECOND on KITTI with 8 GPUs, and generate the pkl files and submission datas to be submit to the official evaluation server.
 
-```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
-    checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
-    --format-only --options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
-```
+   ```shell
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
+       checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
+       --format-only --options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
+   ```
 
-The generated results be under `./second_kitti_results` directory.
+   The generated results be under `./second_kitti_results` directory.
 
 ### Visualization
 
 To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
 
- ```bash
- python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
-  ```
+```bash
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
+```
 
 Aftering running this command, plotted results ***_points.obj and ***_pred.ply files in `${SHOW_DIR}`.
 
@@ -202,7 +204,7 @@ Examples:
 
 ```shell
 python demo/pcd_demo.py demo/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py \
-    checkpoints/epoch_40.pth
+    checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth
 ```
 
 
@@ -238,49 +240,6 @@ for frame in video:
 
 A notebook demo can be found in [demo/inference_demo.ipynb](https://github.com/open-mmlab/mmdetection/blob/master/demo/inference_demo.ipynb).
 
-#### Asynchronous interface - supported for Python 3.7+
-
-Async interface allows not to block CPU on GPU bound inference code and enables better CPU/GPU utilization for single threaded application. Inference can be done concurrently either between different input data samples or between different models of some inference pipeline.
-
-See `tests/async_benchmark.py` to compare the speed of synchronous and asynchronous interfaces.
-
-```python
-import asyncio
-import torch
-from mmdet.apis import init_detector, async_inference_detector
-from mmdet.utils.contextmanagers import concurrent
-
-async def main():
-    config_file = 'configs/faster_rcnn_r50_fpn_1x_coco.py'
-    checkpoint_file = 'checkpoints/faster_rcnn_r50_fpn_1x_20181010-3d1b3351.pth'
-    device = 'cuda:0'
-    model = init_detector(config_file, checkpoint=checkpoint_file, device=device)
-
-    # queue is used for concurrent inference of multiple images
-    streamqueue = asyncio.Queue()
-    # queue size defines concurrency level
-    streamqueue_size = 3
-
-    for _ in range(streamqueue_size):
-        streamqueue.put_nowait(torch.cuda.Stream(device=device))
-
-    # test a single image and show the results
-    img = 'test.jpg'  # or img = mmcv.imread(img), which will only load it once
-
-    async with concurrent(streamqueue):
-        result = await async_inference_detector(model, img)
-
-    # visualize the results in a new window
-    model.show_result(img, result)
-    # or save the visualization results to image files
-    model.show_result(img, result, out_file='result.jpg')
-
-
-asyncio.run(main())
-
-```
-
-
 ## Train a model
 
 MMDetection implements distributed training and non-distributed training,
@@ -294,7 +253,7 @@ By default we evaluate the model on the validation set after each epoch, you can
 evaluation = dict(interval=12)  # This evaluate the model per 12 epoch.
 ```
 
-**\*Important\***: The default learning rate in config files is for 8 GPUs and 2 img/gpu (batch size = 8*2 = 16).
+**\*Important\***: The default learning rate in config files is for 8 GPUs and the exact batch size is marked by the config's file name, e.g. '2x8' means 2 samples per GPU using 8 GPUs.
 According to the [Linear Scaling Rule](https://arxiv.org/abs/1706.02677), you need to set the learning rate proportional to the batch size if you use different GPUs or images per GPU, e.g., lr=0.01 for 4 GPUs * 2 img/gpu and lr=0.08 for 16 GPUs * 4 img/gpu.
 
 ### Train with a single GPU
@@ -316,6 +275,7 @@ Optional arguments are:
 - `--no-validate` (**not suggested**): By default, the codebase will perform evaluation at every k (default value is 1, which can be modified like [this](https://github.com/open-mmlab/mmdetection/blob/master/configs/mask_rcnn/mask_rcnn_r50_fpn_1x_coco.py#L174)) epochs during the training. To disable this behavior, use `--no-validate`.
 - `--work-dir ${WORK_DIR}`: Override the working directory specified in the config file.
 - `--resume-from ${CHECKPOINT_FILE}`: Resume from a previous checkpoint file.
+- `--options 'Key=value'`: Overide some settings in the used config.
 
 Difference between `resume-from` and `load-from`:
 `resume-from` loads both the model weights and optimizer status, and the epoch is also inherited from the specified checkpoint. It is usually used for resuming the training process that is interrupted accidentally.
@@ -353,24 +313,35 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG_FILE} 4
 CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29501 ./tools/dist_train.sh ${CONFIG_FILE} 4
 ```
 
-If you use launch training jobs with Slurm, you need to modify the config files (usually the 6th line from the bottom in config files) to set different communication ports.
+If you use launch training jobs with Slurm, there are two ways to specify the ports.
 
-In `config1.py`,
-```python
-dist_params = dict(backend='nccl', port=29500)
-```
+1. Modify the config files (usually the 6th line from the bottom in config files) to set different communication ports.
 
-In `config2.py`,
-```python
-dist_params = dict(backend='nccl', port=29501)
-```
+   In `config1.py`,
 
-Then you can launch two jobs with `config1.py` ang `config2.py`.
+   ```python
+   dist_params = dict(backend='nccl', port=29500)
+   ```
 
-```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR}
-CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR}
-```
+   In `config2.py`,
+
+   ```python
+   dist_params = dict(backend='nccl', port=29501)
+   ```
+
+   Then you can launch two jobs with `config1.py` ang `config2.py`.
+
+   ```shell
+   CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR}
+   CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR}
+   ```
+
+2. Set the port through `--options`. This is more recommended since it does not change the original configs.
+
+   ```shell
+   CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR} --options 'dist_params.port=29500'
+   CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR} --options 'dist_params.port=29501'
+   ```
 
 ## Useful tools
 
@@ -390,21 +361,21 @@ Examples:
 
 - Plot the classification loss of some run.
 
-```shell
-python tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
-```
+  ```shell
+  python tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
+  ```
 
 - Plot the classification and regression loss of some run, and save the figure to a pdf.
 
-```shell
-python tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
-```
+  ```shell
+  python tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
+  ```
 
 - Compare the bbox mAP of two runs in the same figure.
 
-```shell
-python tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
-```
+  ```shell
+  python tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
+  ```
 
 You can also compute the average training speed.
 
@@ -440,20 +411,6 @@ python tools/publish_model.py work_dirs/faster_rcnn/latest.pth faster_rcnn_r50_f
 ```
 
 The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`.
-
-### Test the robustness of detectors
-
-Please refer to [robustness_benchmarking.md](robustness_benchmarking.md).
-
-### Convert to ONNX (experimental)
-
-We provide a script to convert model to [ONNX](https://github.com/onnx/onnx) format. The converted model could be visualized by tools like [Netron](https://github.com/lutzroeder/netron).
-
-```shell
-python tools/pytorch2onnx.py ${CONFIG_FILE} ${CHECKPOINT_FILE} --out ${ONNX_FILE} [--shape ${INPUT_SHAPE}]
-```
-
-**Note**: This tool is still experimental. Customized operators are not supported for now. We set `use_torchvision=True` on-the-fly for `RoIPool` and `RoIAlign`.
 
 ## Tutorials
 
