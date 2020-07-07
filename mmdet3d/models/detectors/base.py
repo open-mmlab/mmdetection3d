@@ -62,7 +62,7 @@ class Base3DDetector(BaseDetector):
         """Results visualization.
 
         Args:
-            data (dict): Input points and info.
+            data (dict): Input points and the information of the sample.
             result (dict): Prediction results.
             out_dir (str): Output directory of visualization result.
         """

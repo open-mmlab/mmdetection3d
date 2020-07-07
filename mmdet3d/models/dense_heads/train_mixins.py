@@ -6,6 +6,7 @@ from mmdet.core import images_to_levels, multi_apply
 
 
 class AnchorTrainMixin(object):
+    """Mixin class for target assigning of dense heads."""
 
     def anchor_target_3d(self,
                          anchor_list,

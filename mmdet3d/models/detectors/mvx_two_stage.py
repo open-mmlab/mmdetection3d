@@ -285,6 +285,21 @@ class MVXTwoStageDetector(Base3DDetector):
                           gt_labels_3d,
                           img_metas,
                           gt_bboxes_ignore=None):
+        """Forward function for point cloud branch.
+
+        Args:
+            pts_feats (list[torch.Tensor]): Features of point cloud branch
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+                boxes for each sample.
+            gt_labels_3d (list[torch.Tensor]): Ground truth labels for
+                boxes of each sampole
+            img_metas (list[dict]): Meta information of samples.
+            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
+                boxes to be ignored. Defaults to None.
+
+        Returns:
+            dict: Losses of each branch.
+        """
         outs = self.pts_bbox_head(pts_feats)
         loss_inputs = outs + (gt_bboxes_3d, gt_labels_3d, img_metas)
         losses = self.pts_bbox_head.loss(
@@ -299,6 +314,25 @@ class MVXTwoStageDetector(Base3DDetector):
                           gt_bboxes_ignore=None,
                           proposals=None,
                           **kwargs):
+        """Forward function for image branch.
+
+        This function works similar to the forward function of Faster R-CNN.
+
+        Args:
+            x (list[torch.Tensor]): Image features of shape (B, C, H, W)
+                of multiple levels.
+            img_metas (list[dict]): Meta information of images.
+            gt_bboxes (list[torch.Tensor]): Ground truth boxes of each image
+                sample.
+            gt_labels (list[torch.Tensor]): Ground truth labels of boxes.
+            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
+                boxes to be ignored. Defaults to None.
+            proposals (list[torch.Tensor], optional): Proposals of each sample.
+                Defaults to None.
+
+        Returns:
+            dict: Losses of each branch.
+        """
         losses = dict()
         # RPN forward and loss
         if self.with_img_rpn:
@@ -338,12 +372,14 @@ class MVXTwoStageDetector(Base3DDetector):
             x, proposal_list, img_metas, rescale=rescale)
 
     def simple_test_rpn(self, x, img_metas, rpn_test_cfg):
+        """RPN test function."""
         rpn_outs = self.img_rpn_head(x)
         proposal_inputs = rpn_outs + (img_metas, rpn_test_cfg)
         proposal_list = self.img_rpn_head.get_bboxes(*proposal_inputs)
         return proposal_list
 
     def simple_test_pts(self, x, img_metas, rescale=False):
+        """Test function of point cloud branch."""
         outs = self.pts_bbox_head(x)
         bbox_list = self.pts_bbox_head.get_bboxes(
             *outs, img_metas, rescale=rescale)
@@ -354,6 +390,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return bbox_results[0]
 
     def simple_test(self, points, img_metas, img=None, rescale=False):
+        """Test function without augmentaiton."""
         img_feats, pts_feats = self.extract_feat(
             points, img=img, img_metas=img_metas)
 
@@ -369,6 +406,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return bbox_list
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
+        """Test function with augmentaiton."""
         img_feats, pts_feats = self.extract_feats(points, img_metas, imgs)
 
         bbox_list = dict()
@@ -378,6 +416,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return bbox_list
 
     def extract_feats(self, points, img_metas, imgs=None):
+        """Extract point and image features of multiple samples."""
         if imgs is None:
             imgs = [None] * len(img_metas)
         img_feats, pts_feats = multi_apply(self.extract_feat, points, imgs,
@@ -385,6 +424,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return img_feats, pts_feats
 
     def aug_test_pts(self, feats, img_metas, rescale=False):
+        """Test function of point cloud branch with augmentaiton."""
         # only support aug_test for one sample
         aug_bboxes = []
         for x, img_meta in zip(feats, img_metas):
@@ -406,7 +446,7 @@ class MVXTwoStageDetector(Base3DDetector):
         """Results visualization.
 
         Args:
-            data (dict): Input points and info.
+            data (dict): Input points and the information of the sample.
             result (dict): Prediction results.
             out_dir (str): Output directory of visualization result.
         """

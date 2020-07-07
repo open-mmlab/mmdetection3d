@@ -378,7 +378,7 @@ class LyftDataset(Custom3DDataset):
                 Default: None.
 
         Returns:
-            dict[str: float]
+            dict[str, float]: Evaluation results.
         """
         result_files, tmp_dir = self.format_results(results, jsonfile_prefix,
                                                     csv_savepath)

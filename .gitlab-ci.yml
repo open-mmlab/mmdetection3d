@@ -36,7 +36,7 @@ linting:
     - echo "Start testing..."
     - coverage run --branch --source mmdet3d -m pytest tests/
     - coverage report -m
-    - interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 44 mmdet3d
+    - interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 80 mmdet3d
 
 test:pytorch1.3-cuda10:
   image: $PYTORCH_IMAGE

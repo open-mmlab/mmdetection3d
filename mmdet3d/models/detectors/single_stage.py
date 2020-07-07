@@ -41,6 +41,7 @@ class SingleStage3DDetector(Base3DDetector):
         self.init_weights(pretrained=pretrained)
 
     def init_weights(self, pretrained=None):
+        """Initialize weights of detector."""
         super(SingleStage3DDetector, self).init_weights(pretrained)
         self.backbone.init_weights(pretrained=pretrained)
         if self.with_neck:
@@ -63,6 +64,7 @@ class SingleStage3DDetector(Base3DDetector):
         return x
 
     def extract_feats(self, points, img_metas):
+        """Extract features of multiple samples."""
         return [
             self.extract_feat(pts, img_meta)
             for pts, img_meta in zip(points, img_metas)

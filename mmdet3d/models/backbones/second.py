@@ -62,6 +62,7 @@ class SECOND(nn.Module):
         self.blocks = nn.ModuleList(blocks)
 
     def init_weights(self, pretrained=None):
+        """Initialize weights of the 2D backbone."""
         # Do not initialize the conv layers
         # to follow the original implementation
         if isinstance(pretrained, str):
@@ -70,6 +71,14 @@ class SECOND(nn.Module):
             load_checkpoint(self, pretrained, strict=False, logger=logger)
 
     def forward(self, x):
+        """Forward function.
+
+        Args:
+            x (torch.Tensor): Input with shape (N, C, H, W).
+
+        Returns:
+            tuple[torch.Tensor]: Multi-scale features.
+        """
         outs = []
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
