@@ -38,24 +38,14 @@ test_pipeline = [
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1333, 800),
-        pts_scale_ratio=1.0,
         flip=False,
-        pcd_horizontal_flip=False,
-        pcd_vertical_flip=False,
         transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
+            dict(type='Resize', keep_ratio=True),
+            dict(type='RandomFlip'),
+            dict(type='Normalize', **img_norm_cfg),
+            dict(type='Pad', size_divisor=32),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img']),
         ])
 ]
 ```
@@ -127,13 +117,12 @@ For each operation, we list the related dict fields that are added/updated/remov
 - update: img, proposals, gt_bboxes, gt_bboxes_ignore, gt_labels, gt_masks, gt_semantic_seg
 
 `Collect`
-- add: img_metas (the keys of img_metas is specified by `meta_keys`)
+- add: img_meta (the keys of img_meta is specified by `meta_keys`)
 - remove: all other keys except for those specified by `keys`
 
 ### Test time augmentation
 
-`MultiScaleFlipAug3D`
-- update: all the dict fields (update values to the collection of augmented data)
+`MultiScaleFlipAug`
 
 ## Extend and use custom pipelines
 
