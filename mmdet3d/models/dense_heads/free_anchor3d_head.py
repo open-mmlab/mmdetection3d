@@ -62,7 +62,7 @@ class FreeAnchor3DHead(Anchor3DHead):
                 Ground truth boxes that should be ignored. Defaults to None.
 
         Returns:
-            dict: Loss items.
+            dict[str, torch.Tensor]: Loss items.
 
                 - positive_bag_loss (torch.Tensor): Loss of positive samples.
                 - negative_bag_loss (torch.Tensor): Loss of negative samples.

@@ -18,6 +18,7 @@ def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
 
     Returns:
         dict: bbox results in cpu mode, containing the merged results
+
             - boxes_3d (:obj:`BaseInstance3DBoxes`): merged detection bbox
             - scores_3d (torch.Tensor): merged detection scores
             - labels_3d (torch.Tensor): merged predicted box labels

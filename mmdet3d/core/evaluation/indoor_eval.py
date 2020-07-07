@@ -221,7 +221,7 @@ def indoor_eval(gt_annos,
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 
     Return:
-        dict: Dict of results.
+        dict[str, float]: Dict of results.
     """
     assert len(dt_annos) == len(gt_annos)
     pred = {}  # map {class_id: pred}

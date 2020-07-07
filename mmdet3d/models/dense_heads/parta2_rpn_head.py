@@ -89,6 +89,29 @@ class PartA2RPNHead(Anchor3DHead):
              gt_labels,
              input_metas,
              gt_bboxes_ignore=None):
+        """Calculate losses.
+
+        Args:
+            cls_scores (list[torch.Tensor]): Multi-level class scores.
+            bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
+            dir_cls_preds (list[torch.Tensor]): Multi-level direction
+                class predictions.
+            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Gt bboxes
+                of each sample.
+            gt_labels (list[torch.Tensor]): Gt labels of each sample.
+            input_metas (list[dict]): Contain pcd and img's meta info.
+            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+                which bounding.
+
+        Returns:
+            dict[str, list[torch.Tensor]]: Classification, bbox, and direction
+                losses of each level.
+
+                - loss_rpn_cls (list[torch.Tensor]): Classification losses.
+                - loss_rpn_bbox (list[torch.Tensor]): Box regression losses.
+                - loss_rpn_dir (list[torch.Tensor]): Direction classification
+                    losses.
+        """
         loss_dict = super().loss(cls_scores, bbox_preds, dir_cls_preds,
                                  gt_bboxes, gt_labels, input_metas,
                                  gt_bboxes_ignore)

@@ -10,6 +10,7 @@ from .single_stage import SingleStage3DDetector
 
 @DETECTORS.register_module()
 class VoxelNet(SingleStage3DDetector):
+    r"""`VoxelNet <https://arxiv.org/abs/1711.06396>`_ for 3D detection."""
 
     def __init__(self,
                  voxel_layer,
@@ -68,6 +69,21 @@ class VoxelNet(SingleStage3DDetector):
                       gt_bboxes_3d,
                       gt_labels_3d,
                       gt_bboxes_ignore=None):
+        """Training forward function.
+
+        Args:
+            points (list[torch.Tensor]): Point cloud of each sample.
+            img_metas (list[dict]): Meta information of each sample
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+                boxes for each sample.
+            gt_labels_3d (list[torch.Tensor]): Ground truth labels for
+                boxes of each sampole
+            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
+                boxes to be ignored. Defaults to None.
+
+        Returns:
+            dict: Losses of each branch.
+        """
         x = self.extract_feat(points, img_metas)
         outs = self.bbox_head(x)
         loss_inputs = outs + (gt_bboxes_3d, gt_labels_3d, img_metas)
@@ -76,6 +92,7 @@ class VoxelNet(SingleStage3DDetector):
         return losses
 
     def simple_test(self, points, img_metas, imgs=None, rescale=False):
+        """Test function without augmentaiton."""
         x = self.extract_feat(points, img_metas)
         outs = self.bbox_head(x)
         bbox_list = self.bbox_head.get_bboxes(
@@ -87,6 +104,7 @@ class VoxelNet(SingleStage3DDetector):
         return bbox_results[0]
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
+        """Test function with augmentaiton."""
         feats = self.extract_feats(points, img_metas)
 
         # only support aug_test for one sample

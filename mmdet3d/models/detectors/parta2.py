@@ -9,7 +9,7 @@ from .two_stage import TwoStage3DDetector
 
 @DETECTORS.register_module()
 class PartA2(TwoStage3DDetector):
-    """Part-A2 detector.
+    r"""Part-A2 detector.
 
     Please refer to the `paper <https://arxiv.org/abs/1907.03670>`_
     """
@@ -39,6 +39,7 @@ class PartA2(TwoStage3DDetector):
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
     def extract_feat(self, points, img_metas):
+        """Extract features from points."""
         voxel_dict = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
@@ -54,6 +55,7 @@ class PartA2(TwoStage3DDetector):
 
     @torch.no_grad()
     def voxelize(self, points):
+        """Apply hard voxelization to points."""
         voxels, coors, num_points, voxel_centers = [], [], [], []
         for res in points:
             res_voxels, res_coors, res_num_points = self.voxel_layer(res)
@@ -89,6 +91,21 @@ class PartA2(TwoStage3DDetector):
                       gt_labels_3d,
                       gt_bboxes_ignore=None,
                       proposals=None):
+        """Training forward function.
+
+        Args:
+            points (list[torch.Tensor]): Point cloud of each sample.
+            img_metas (list[dict]): Meta information of each sample
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+                boxes for each sample.
+            gt_labels_3d (list[torch.Tensor]): Ground truth labels for
+                boxes of each sampole
+            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
+                boxes to be ignored. Defaults to None.
+
+        Returns:
+            dict: Losses of each branch.
+        """
         feats_dict, voxels_dict = self.extract_feat(points, img_metas)
 
         losses = dict()
@@ -117,6 +134,7 @@ class PartA2(TwoStage3DDetector):
         return losses
 
     def simple_test(self, points, img_metas, proposals=None, rescale=False):
+        """Test function without augmentaiton."""
         feats_dict, voxels_dict = self.extract_feat(points, img_metas)
 
         if self.with_rpn:
