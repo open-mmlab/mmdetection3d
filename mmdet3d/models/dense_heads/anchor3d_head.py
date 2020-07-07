@@ -102,6 +102,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         self._init_assigner_sampler()
 
     def _init_assigner_sampler(self):
+        """Initialize the target assigner and sampler of the head."""
         if self.train_cfg is None:
             return
 
@@ -117,6 +118,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             ]
 
     def _init_layers(self):
+        """Initialize neural network layers of the head."""
         self.cls_out_channels = self.num_anchors * self.num_classes
         self.conv_cls = nn.Conv2d(self.feat_channels, self.cls_out_channels, 1)
         self.conv_reg = nn.Conv2d(self.feat_channels,
@@ -126,6 +128,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                                           self.num_anchors * 2, 1)
 
     def init_weights(self):
+        """Initialize the weights of head."""
         bias_cls = bias_init_with_prob(0.01)
         normal_init(self.conv_cls, std=0.01, bias=bias_cls)
         normal_init(self.conv_reg, std=0.01)
@@ -290,11 +293,13 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                 which bounding.
 
         Returns:
-            dict: Contain class, bbox and direction losses of each level.
+            dict[str, list[torch.Tensor]]: Classification, bbox, and direction
+                losses of each level.
 
-                - loss_cls (list[torch.Tensor]): class losses
-                - loss_bbox (list[torch.Tensor]): bbox losses
-                - loss_dir (list[torch.Tensor]): direction losses
+                - loss_cls (list[torch.Tensor]): Classification losses.
+                - loss_bbox (list[torch.Tensor]): Box regression losses.
+                - loss_dir (list[torch.Tensor]): Direction classification
+                    losses.
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.anchor_generator.num_levels

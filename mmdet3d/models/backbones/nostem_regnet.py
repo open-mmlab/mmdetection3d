@@ -61,9 +61,19 @@ class NoStemRegNet(RegNet):
         super(NoStemRegNet, self).__init__(arch, **kwargs)
 
     def _make_stem_layer(self, in_channels, base_channels):
+        """Override the original function that do not initialize a stem layer
+        since 3D detector's voxel encoder works like a stem layer."""
         return
 
     def forward(self, x):
+        """Forward function of backbone.
+
+        Args:
+            x (torch.Tensor): Features in shape (N, C, H, W).
+
+        Returns:
+            tuple[torch.Tensor]: Multi-scale features.
+        """
         outs = []
         for i, layer_name in enumerate(self.res_layers):
             res_layer = getattr(self, layer_name)

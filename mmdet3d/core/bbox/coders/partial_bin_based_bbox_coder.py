@@ -102,7 +102,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
             base_xyz (torch.Tensor): coordinates of points.
 
         Returns:
-            dict: split results.
+            dict[str, torch.Tensor]: split results.
         """
         results = {}
         start, end = 0, 0

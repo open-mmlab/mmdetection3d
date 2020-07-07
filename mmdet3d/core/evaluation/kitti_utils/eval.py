@@ -468,7 +468,7 @@ def eval_class(gt_annos,
         num_parts (int): A parameter for fast calculate algorithm
 
     Returns:
-        dict: recall, precision and aos
+        dict[str, np.ndarray]: recall, precision and aos
     """
     assert len(gt_annos) == len(dt_annos)
     num_examples = len(gt_annos)

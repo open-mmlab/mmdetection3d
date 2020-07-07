@@ -107,6 +107,7 @@ class VoteHead(nn.Module):
                                   nn.Conv1d(prev_channel, conv_out_channel, 1))
 
     def init_weights(self):
+        """Initialize weights of VoteHead."""
         pass
 
     def forward(self, feat_dict, sample_mod):

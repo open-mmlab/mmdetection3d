@@ -220,6 +220,7 @@ class PointFusion(nn.Module):
 
     # default init_weights for conv(msra) and norm in ConvModule
     def init_weights(self):
+        """Initialize the weights of modules."""
         for m in self.modules():
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 xavier_init(m, distribution='uniform')
@@ -252,6 +253,17 @@ class PointFusion(nn.Module):
         return fuse_out
 
     def obtain_mlvl_feats(self, img_feats, pts, img_metas):
+        """Obtain multi-level features for each point.
+
+        Args:
+            img_feats (list(torch.Tensor)): Multi-scale image features produced
+                by image backbone in shape (N, C, H, W).
+            pts (list[torch.Tensor]): Points of each sample.
+            img_metas (list[dict]): Meta information for each sample.
+
+        Returns:
+            torch.Tensor: Corresponding image features of each point.
+        """
         if self.lateral_convs is not None:
             img_ins = [
                 lateral_conv(img_feats[i])
@@ -277,6 +289,17 @@ class PointFusion(nn.Module):
         return img_pts
 
     def sample_single(self, img_feats, pts, img_meta):
+        """Sample features from single level image feature map.
+
+        Args:
+            img_feats (torch.Tensor): Image feature map in shape
+                (N, C, H, W).
+            pts (torch.Tensor): Points of a single sample.
+            img_meta (dict): Meta information of the single sample.
+
+        Returns:
+            torch.Tensor: Single level image features of each point.
+        """
         pcd_scale_factor = (
             img_meta['pcd_scale_factor']
             if 'pcd_scale_factor' in img_meta.keys() else 1)

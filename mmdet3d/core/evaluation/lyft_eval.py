@@ -99,7 +99,7 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
                 related information during evaluation. Default: None.
 
     Returns:
-        dict: The metric dictionary recording the evaluation results.
+        dict[str, float]: The evaluation results.
     """
     # evaluate by lyft metrics
     gts = load_lyft_gts(lyft, data_root, eval_set, logger)
