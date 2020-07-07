@@ -252,18 +252,15 @@ data = dict(
     samples_per_gpu=4,
     workers_per_gpu=4,
     train=dict(
-        type='RepeatDataset',
-        times=2,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'kitti_infos_train.pkl',
-            split='training',
-            pts_prefix='velodyne_reduced',
-            pipeline=train_pipeline,
-            modality=input_modality,
-            classes=class_names,
-            test_mode=False)),
+        type=dataset_type,
+        data_root=data_root,
+        ann_file=data_root + 'kitti_infos_train.pkl',
+        split='training',
+        pts_prefix='velodyne_reduced',
+        pipeline=train_pipeline,
+        modality=input_modality,
+        classes=class_names,
+        test_mode=False),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -309,7 +306,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 40
+total_epochs = 80
 dist_params = dict(backend='nccl', port=29506)
 log_level = 'INFO'
 find_unused_parameters = True
