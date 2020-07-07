@@ -1,9 +1,48 @@
 import numpy as np
 import pytest
 import torch
+import unittest
 
-from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
-                               DepthInstance3DBoxes, LiDARInstance3DBoxes)
+from mmdet3d.core.bbox import (BaseInstance3DBoxes, Box3DMode,
+                               CameraInstance3DBoxes, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes)
+from mmdet3d.core.bbox.structures.utils import (get_box_type, limit_period,
+                                                points_cam2img,
+                                                rotation_3d_in_axis,
+                                                xywhr2xyxyr)
+
+
+def test_base_boxes3d():
+    # test empty initialization
+    empty_boxes = []
+    boxes = BaseInstance3DBoxes(empty_boxes)
+    assert boxes.tensor.shape[0] == 0
+    assert boxes.tensor.shape[1] == 7
+
+    # Test init with origin
+    gravity_center_box = np.array(
+        [[
+            -5.24223238e+00, 4.00209696e+01, 2.97570381e-01, 2.06200000e+00,
+            4.40900000e+00, 1.54800000e+00, -1.48801203e+00
+        ],
+         [
+             -2.66751588e+01, 5.59499564e+00, -9.14345860e-01, 3.43000000e-01,
+             4.58000000e-01, 7.82000000e-01, -4.62759755e+00
+         ],
+         [
+             -5.80979675e+00, 3.54092357e+01, 2.00889888e-01, 2.39600000e+00,
+             3.96900000e+00, 1.73200000e+00, -4.65203216e+00
+         ],
+         [
+             -3.13086877e+01, 1.09007628e+00, -1.94612112e-01, 1.94400000e+00,
+             3.85700000e+00, 1.72300000e+00, -2.81427027e+00
+         ]],
+        dtype=np.float32)
+
+    bottom_center_box = BaseInstance3DBoxes(
+        gravity_center_box, origin=(0.5, 0.5, 0.5))
+
+    assert bottom_center_box.yaw.shape[0] == 4
 
 
 def test_lidar_boxes3d():
@@ -104,14 +143,25 @@ def test_lidar_boxes3d():
     assert empty_boxes.tensor.shape[-1] == 7
 
     # test box flip
+    points = torch.tensor([[1.2559, -0.6762, -1.4658],
+                           [4.7814, -0.8784,
+                            -1.3857], [6.7053, 0.2517, -0.9697],
+                           [0.6533, -0.5520, -0.5265],
+                           [4.5870, 0.5358, -1.4741]])
     expected_tensor = torch.tensor(
         [[1.7802081, -2.516249, -1.7501148, 1.75, 3.39, 1.65, 1.6615927],
          [8.959413, -2.4567227, -1.6357126, 1.54, 4.01, 1.57, 1.5215927],
          [28.2967, 0.5557558, -1.303325, 1.47, 2.23, 1.48, 4.7115927],
          [26.66902, -21.82302, -1.736057, 1.56, 3.48, 1.4, 4.8315926],
          [31.31978, -8.162144, -1.6217787, 1.74, 3.77, 1.48, 0.35159278]])
-    boxes.flip('horizontal')
+    expected_points = torch.tensor([[1.2559, 0.6762, -1.4658],
+                                    [4.7814, 0.8784, -1.3857],
+                                    [6.7053, -0.2517, -0.9697],
+                                    [0.6533, 0.5520, -0.5265],
+                                    [4.5870, -0.5358, -1.4741]])
+    points = boxes.flip('horizontal', points)
     assert torch.allclose(boxes.tensor, expected_tensor)
+    assert torch.allclose(points, expected_points, 1e-3)
 
     expected_tensor = torch.tensor(
         [[-1.7802, -2.5162, -1.7501, 1.7500, 3.3900, 1.6500, -1.6616],
@@ -120,18 +170,52 @@ def test_lidar_boxes3d():
          [-26.6690, -21.8230, -1.7361, 1.5600, 3.4800, 1.4000, -4.8316],
          [-31.3198, -8.1621, -1.6218, 1.7400, 3.7700, 1.4800, -0.3516]])
     boxes_flip_vert = boxes.clone()
-    boxes_flip_vert.flip('vertical')
+    points = boxes_flip_vert.flip('vertical', points)
+    expected_points = torch.tensor([[-1.2559, 0.6762, -1.4658],
+                                    [-4.7814, 0.8784, -1.3857],
+                                    [-6.7053, -0.2517, -0.9697],
+                                    [-0.6533, 0.5520, -0.5265],
+                                    [-4.5870, -0.5358, -1.4741]])
     assert torch.allclose(boxes_flip_vert.tensor, expected_tensor, 1e-4)
+    assert torch.allclose(points, expected_points)
 
     # test box rotation
     expected_tensor = torch.tensor(
-        [[1.0385344, -2.9020846, -1.7501148, 1.75, 3.39, 1.65, 1.9336663],
-         [7.969653, -4.774011, -1.6357126, 1.54, 4.01, 1.57, 1.7936664],
-         [27.405172, -7.0688415, -1.303325, 1.47, 2.23, 1.48, 4.9836664],
-         [19.823532, -28.187025, -1.736057, 1.56, 3.48, 1.4, 5.1036663],
-         [27.974297, -16.27845, -1.6217787, 1.74, 3.77, 1.48, 0.6236664]])
-    boxes.rotate(0.27207362796436096)
-    assert torch.allclose(boxes.tensor, expected_tensor)
+        [[1.4225, -2.7344, -1.7501, 1.7500, 3.3900, 1.6500, 1.7976],
+         [8.5435, -3.6491, -1.6357, 1.5400, 4.0100, 1.5700, 1.6576],
+         [28.1106, -3.2869, -1.3033, 1.4700, 2.2300, 1.4800, 4.8476],
+         [23.4630, -25.2382, -1.7361, 1.5600, 3.4800, 1.4000, 4.9676],
+         [29.9235, -12.3342, -1.6218, 1.7400, 3.7700, 1.4800, 0.4876]])
+    points, rot_mat_T = boxes.rotate(0.13603681398218053, points)
+    expected_points = torch.tensor([[-1.1526, 0.8403, -1.4658],
+                                    [-4.6181, 1.5187, -1.3857],
+                                    [-6.6775, 0.6600, -0.9697],
+                                    [-0.5724, 0.6355, -0.5265],
+                                    [-4.6173, 0.0912, -1.4741]])
+    expected_rot_mat_T = torch.tensor([[0.9908, -0.1356, 0.0000],
+                                       [0.1356, 0.9908, 0.0000],
+                                       [0.0000, 0.0000, 1.0000]])
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-3)
+    assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
+
+    points_np = np.array([[-1.0280, 0.9888,
+                           -1.4658], [-4.3695, 2.1310, -1.3857],
+                          [-6.5263, 1.5595,
+                           -0.9697], [-0.4809, 0.7073, -0.5265],
+                          [-4.5623, 0.7166, -1.4741]])
+    points_np, rot_mat_T_np = boxes.rotate(0.13603681398218053, points_np)
+    expected_points_np = np.array([[-0.8844, 1.1191, -1.4658],
+                                   [-4.0401, 2.7039, -1.3857],
+                                   [-6.2545, 2.4302, -0.9697],
+                                   [-0.3805, 0.7660, -0.5265],
+                                   [-4.4230, 1.3287, -1.4741]])
+    expected_rot_mat_T_np = np.array([[0.9908, -0.1356, 0.0000],
+                                      [0.1356, 0.9908, 0.0000],
+                                      [0.0000, 0.0000, 1.0000]])
+
+    assert np.allclose(points_np, expected_points_np, 1e-3)
+    assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
 
     # test box scaling
     expected_tensor = torch.tensor([[
@@ -535,6 +619,9 @@ def test_camera_boxes3d():
     assert torch.allclose(boxes.tensor, expected_tensor)
 
     # test box flip
+    points = torch.tensor([[0.6762, 1.4658, 1.2559], [0.8784, 1.3857, 4.7814],
+                           [-0.2517, 0.9697, 6.7053], [0.5520, 0.5265, 0.6533],
+                           [-0.5358, 1.4741, 4.5870]])
     expected_tensor = Box3DMode.convert(
         torch.tensor(
             [[1.7802081, -2.516249, -1.7501148, 1.75, 3.39, 1.65, 1.6615927],
@@ -543,8 +630,14 @@ def test_camera_boxes3d():
              [26.66902, -21.82302, -1.736057, 1.56, 3.48, 1.4, 4.8315926],
              [31.31978, -8.162144, -1.6217787, 1.74, 3.77, 1.48, 0.35159278]]),
         Box3DMode.LIDAR, Box3DMode.CAM)
-    boxes.flip('horizontal')
+    points = boxes.flip('horizontal', points)
+    expected_points = torch.tensor([[-0.6762, 1.4658, 1.2559],
+                                    [-0.8784, 1.3857, 4.7814],
+                                    [0.2517, 0.9697, 6.7053],
+                                    [-0.5520, 0.5265, 0.6533],
+                                    [0.5358, 1.4741, 4.5870]])
     assert torch.allclose(boxes.tensor, expected_tensor)
+    assert torch.allclose(points, expected_points, 1e-3)
 
     expected_tensor = torch.tensor(
         [[2.5162, 1.7501, -1.7802, 3.3900, 1.6500, 1.7500, -1.6616],
@@ -553,20 +646,55 @@ def test_camera_boxes3d():
          [21.8230, 1.7361, -26.6690, 3.4800, 1.4000, 1.5600, -4.8316],
          [8.1621, 1.6218, -31.3198, 3.7700, 1.4800, 1.7400, -0.3516]])
     boxes_flip_vert = boxes.clone()
-    boxes_flip_vert.flip('vertical')
+    points = boxes_flip_vert.flip('vertical', points)
+    expected_points = torch.tensor([[-0.6762, 1.4658, -1.2559],
+                                    [-0.8784, 1.3857, -4.7814],
+                                    [0.2517, 0.9697, -6.7053],
+                                    [-0.5520, 0.5265, -0.6533],
+                                    [0.5358, 1.4741, -4.5870]])
     assert torch.allclose(boxes_flip_vert.tensor, expected_tensor, 1e-4)
+    assert torch.allclose(points, expected_points)
 
     # test box rotation
     expected_tensor = Box3DMode.convert(
         torch.tensor(
-            [[1.0385344, -2.9020846, -1.7501148, 1.75, 3.39, 1.65, 1.9336663],
-             [7.969653, -4.774011, -1.6357126, 1.54, 4.01, 1.57, 1.7936664],
-             [27.405172, -7.0688415, -1.303325, 1.47, 2.23, 1.48, 4.9836664],
-             [19.823532, -28.187025, -1.736057, 1.56, 3.48, 1.4, 5.1036663],
-             [27.974297, -16.27845, -1.6217787, 1.74, 3.77, 1.48, 0.6236664]]),
+            [[1.4225, -2.7344, -1.7501, 1.7500, 3.3900, 1.6500, 1.7976],
+             [8.5435, -3.6491, -1.6357, 1.5400, 4.0100, 1.5700, 1.6576],
+             [28.1106, -3.2869, -1.3033, 1.4700, 2.2300, 1.4800, 4.8476],
+             [23.4630, -25.2382, -1.7361, 1.5600, 3.4800, 1.4000, 4.9676],
+             [29.9235, -12.3342, -1.6218, 1.7400, 3.7700, 1.4800, 0.4876]]),
         Box3DMode.LIDAR, Box3DMode.CAM)
-    boxes.rotate(torch.tensor(0.27207362796436096))
-    assert torch.allclose(boxes.tensor, expected_tensor)
+    points, rot_mat_T = boxes.rotate(torch.tensor(0.13603681398218053), points)
+    expected_points = torch.tensor([[-0.8403, 1.4658, -1.1526],
+                                    [-1.5187, 1.3857, -4.6181],
+                                    [-0.6600, 0.9697, -6.6775],
+                                    [-0.6355, 0.5265, -0.5724],
+                                    [-0.0912, 1.4741, -4.6173]])
+    expected_rot_mat_T = torch.tensor([[0.9908, 0.0000, -0.1356],
+                                       [0.0000, 1.0000, 0.0000],
+                                       [0.1356, 0.0000, 0.9908]])
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-3)
+    assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
+
+    points_np = np.array([[0.6762, 1.2559, -1.4658, 2.5359],
+                          [0.8784, 4.7814, -1.3857, 0.7167],
+                          [-0.2517, 6.7053, -0.9697, 0.5599],
+                          [0.5520, 0.6533, -0.5265, 1.0032],
+                          [-0.5358, 4.5870, -1.4741, 0.0556]])
+    points_np, rot_mat_T_np = boxes.rotate(
+        torch.tensor(0.13603681398218053), points_np)
+    expected_points_np = np.array([[0.4712, 1.2559, -1.5440, 2.5359],
+                                   [0.6824, 4.7814, -1.4920, 0.7167],
+                                   [-0.3809, 6.7053, -0.9266, 0.5599],
+                                   [0.4755, 0.6533, -0.5965, 1.0032],
+                                   [-0.7308, 4.5870, -1.3878, 0.0556]])
+    expected_rot_mat_T_np = np.array([[0.9908, 0.0000, -0.1356],
+                                      [0.0000, 1.0000, 0.0000],
+                                      [0.1356, 0.0000, 0.9908]])
+
+    assert np.allclose(points_np, expected_points_np, 1e-3)
+    assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
 
     # test box scaling
     expected_tensor = Box3DMode.convert(
@@ -737,13 +865,27 @@ def test_boxes3d_overlaps():
                                  device='cuda')
     boxes2 = LiDARInstance3DBoxes(boxes2_tensor)
 
-    expected_tensor = torch.tensor(
+    expected_iou_tensor = torch.tensor(
         [[0.3710, 0.0000, 0.0000, 0.0000], [0.0000, 0.3322, 0.0000, 0.0000],
          [0.0000, 0.0000, 0.0000, 0.0000], [0.0000, 0.0000, 1.0000, 0.0000]],
         device='cuda')
-    overlaps_3d = boxes1.overlaps(boxes1, boxes2)
-    assert torch.allclose(expected_tensor, overlaps_3d, rtol=1e-4, atol=1e-7)
+    overlaps_3d_iou = boxes1.overlaps(boxes1, boxes2)
+    assert torch.allclose(
+        expected_iou_tensor, overlaps_3d_iou, rtol=1e-4, atol=1e-7)
 
+    expected_iof_tensor = torch.tensor(
+        [[0.5582, 0.0000, 0.0000, 0.0000], [0.0000, 0.5025, 0.0000, 0.0000],
+         [0.0000, 0.0000, 0.0000, 0.0000], [0.0000, 0.0000, 1.0000, 0.0000]],
+        device='cuda')
+    overlaps_3d_iof = boxes1.overlaps(boxes1, boxes2, mode='iof')
+    assert torch.allclose(
+        expected_iof_tensor, overlaps_3d_iof, rtol=1e-4, atol=1e-7)
+
+    empty_boxes = []
+    boxes3 = LiDARInstance3DBoxes(empty_boxes)
+    overlaps_3d_empty = boxes1.overlaps(boxes3, boxes2)
+    assert overlaps_3d_empty.shape[0] == 0
+    assert overlaps_3d_empty.shape[1] == 4
     # Test camera boxes 3D overlaps
     cam_boxes1_tensor = Box3DMode.convert(boxes1_tensor, Box3DMode.LIDAR,
                                           Box3DMode.CAM)
@@ -756,8 +898,8 @@ def test_boxes3d_overlaps():
 
     # same boxes under different coordinates should have the same iou
     assert torch.allclose(
-        expected_tensor, cam_overlaps_3d, rtol=1e-4, atol=1e-7)
-    assert torch.allclose(cam_overlaps_3d, overlaps_3d)
+        expected_iou_tensor, cam_overlaps_3d, rtol=1e-4, atol=1e-7)
+    assert torch.allclose(cam_overlaps_3d, overlaps_3d_iou)
 
     with pytest.raises(AssertionError):
         cam_boxes1.overlaps(cam_boxes1, boxes1)
@@ -822,31 +964,79 @@ def test_depth_boxes3d():
     assert empty_boxes.tensor.shape[-1] == 7
 
     # test box flip
+    points = torch.tensor([[0.6762, 1.2559, -1.4658, 2.5359],
+                           [0.8784, 4.7814, -1.3857, 0.7167],
+                           [-0.2517, 6.7053, -0.9697, 0.5599],
+                           [0.5520, 0.6533, -0.5265, 1.0032],
+                           [-0.5358, 4.5870, -1.4741, 0.0556]])
     expected_tensor = torch.tensor(
         [[-1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 0.0815],
          [-2.3262, 3.3065, 0.4426, 0.8234, 0.5325, 1.0099, 0.1445],
          [-2.4593, 2.5870, -0.4321, 0.8597, 0.6193, 1.0204, 0.0723],
          [-1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 0.0815]])
-    boxes.flip(bev_direction='horizontal')
+    points = boxes.flip(bev_direction='horizontal', points=points)
+    expected_points = torch.tensor([[-0.6762, 1.2559, -1.4658, 2.5359],
+                                    [-0.8784, 4.7814, -1.3857, 0.7167],
+                                    [0.2517, 6.7053, -0.9697, 0.5599],
+                                    [-0.5520, 0.6533, -0.5265, 1.0032],
+                                    [0.5358, 4.5870, -1.4741, 0.0556]])
     assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points)
     expected_tensor = torch.tensor(
         [[-1.4856, -2.5299, -0.5570, 0.9385, 2.1404, 0.8954, -0.0815],
          [-2.3262, -3.3065, 0.4426, 0.8234, 0.5325, 1.0099, -0.1445],
          [-2.4593, -2.5870, -0.4321, 0.8597, 0.6193, 1.0204, -0.0723],
          [-1.4856, -2.5299, -0.5570, 0.9385, 2.1404, 0.8954, -0.0815]])
-    boxes.flip(bev_direction='vertical')
+    points = boxes.flip(bev_direction='vertical', points=points)
+    expected_points = torch.tensor([[-0.6762, -1.2559, -1.4658, 2.5359],
+                                    [-0.8784, -4.7814, -1.3857, 0.7167],
+                                    [0.2517, -6.7053, -0.9697, 0.5599],
+                                    [-0.5520, -0.6533, -0.5265, 1.0032],
+                                    [0.5358, -4.5870, -1.4741, 0.0556]])
     assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
-
+    assert torch.allclose(points, expected_points)
     # test box rotation
     boxes_rot = boxes.clone()
     expected_tensor = torch.tensor(
-        [[-1.6004, -2.4589, -0.5570, 0.9385, 2.1404, 0.8954, -0.0355],
-         [-2.4758, -3.1960, 0.4426, 0.8234, 0.5325, 1.0099, -0.0985],
-         [-2.5757, -2.4712, -0.4321, 0.8597, 0.6193, 1.0204, -0.0263],
-         [-1.6004, -2.4589, -0.5570, 0.9385, 2.1404, 0.8954, -0.0355]])
-    boxes_rot.rotate(-0.04599790655000615)
+        [[-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585],
+         [-2.4016, -3.2521, 0.4426, 0.8234, 0.5325, 1.0099, -0.1215],
+         [-2.5181, -2.5298, -0.4321, 0.8597, 0.6193, 1.0204, -0.0493],
+         [-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585]])
+    points, rot_mar_T = boxes_rot.rotate(-0.022998953275003075, points)
+    expected_points = torch.tensor([[-0.7049, -1.2400, -1.4658, 2.5359],
+                                    [-0.9881, -4.7599, -1.3857, 0.7167],
+                                    [0.0974, -6.7093, -0.9697, 0.5599],
+                                    [-0.5669, -0.6404, -0.5265, 1.0032],
+                                    [0.4302, -4.5981, -1.4741, 0.0556]])
+    expected_rot_mat_T = torch.tensor([[0.9997, -0.0230, 0.0000],
+                                       [0.0230, 0.9997, 0.0000],
+                                       [0.0000, 0.0000, 1.0000]])
     assert torch.allclose(boxes_rot.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-3)
+    assert torch.allclose(rot_mar_T, expected_rot_mat_T, 1e-3)
 
+    points_np = np.array([[0.6762, 1.2559, -1.4658, 2.5359],
+                          [0.8784, 4.7814, -1.3857, 0.7167],
+                          [-0.2517, 6.7053, -0.9697, 0.5599],
+                          [0.5520, 0.6533, -0.5265, 1.0032],
+                          [-0.5358, 4.5870, -1.4741, 0.0556]])
+    points_np, rot_mar_T_np = boxes.rotate(-0.022998953275003075, points_np)
+    expected_points_np = np.array([[0.7049, 1.2400, -1.4658, 2.5359],
+                                   [0.9881, 4.7599, -1.3857, 0.7167],
+                                   [-0.0974, 6.7093, -0.9697, 0.5599],
+                                   [0.5669, 0.6404, -0.5265, 1.0032],
+                                   [-0.4302, 4.5981, -1.4741, 0.0556]])
+    expected_rot_mat_T_np = np.array([[0.9997, -0.0230, 0.0000],
+                                      [0.0230, 0.9997, 0.0000],
+                                      [0.0000, 0.0000, 1.0000]])
+    expected_tensor = torch.tensor(
+        [[-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585],
+         [-2.4016, -3.2521, 0.4426, 0.8234, 0.5325, 1.0099, -0.1215],
+         [-2.5181, -2.5298, -0.4321, 0.8597, 0.6193, 1.0204, -0.0493],
+         [-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585]])
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert np.allclose(points_np, expected_points_np, 1e-3)
+    assert np.allclose(rot_mar_T_np, expected_rot_mat_T_np, 1e-3)
     th_boxes = torch.tensor(
         [[0.61211395, 0.8129094, 0.10563634, 1.497534, 0.16927195, 0.27956772],
          [1.430009, 0.49797538, 0.9382923, 0.07694054, 0.9312509, 1.8919173]],
@@ -890,3 +1080,79 @@ def test_depth_boxes3d():
                                      [1.5112, 0.8986, 2.8302],
                                      [1.5112, 0.8986, 0.9383]]])
     torch.allclose(boxes.corners, expected_tensor)
+
+    # test points in boxes
+    if torch.cuda.is_available():
+        box_idxs_of_pts = boxes.points_in_boxes(points.cuda())
+        expected_idxs_of_pts = torch.tensor(
+            [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
+            device='cuda:0',
+            dtype=torch.int32)
+        assert torch.all(box_idxs_of_pts == expected_idxs_of_pts)
+
+
+def test_rotation_3d_in_axis():
+    points = torch.tensor([[[-0.4599, -0.0471, 0.0000],
+                            [-0.4599, -0.0471, 1.8433],
+                            [-0.4599, 0.0471, 1.8433]],
+                           [[-0.2555, -0.2683, 0.0000],
+                            [-0.2555, -0.2683, 0.9072],
+                            [-0.2555, 0.2683, 0.9072]]])
+    rotated = rotation_3d_in_axis(
+        points, torch.tensor([-np.pi / 10, np.pi / 10]), axis=0)
+    expected_rotated = torch.tensor([[[0.0000, -0.4228, -0.1869],
+                                      [1.8433, -0.4228, -0.1869],
+                                      [1.8433, -0.4519, -0.0973]],
+                                     [[0.0000, -0.3259, -0.1762],
+                                      [0.9072, -0.3259, -0.1762],
+                                      [0.9072, -0.1601, 0.3341]]])
+    assert torch.allclose(rotated, expected_rotated, 1e-3)
+
+
+def test_limit_period():
+    torch.manual_seed(0)
+    val = torch.rand([5, 1])
+    result = limit_period(val)
+    expected_result = torch.tensor([[0.4963], [0.7682], [0.0885], [0.1320],
+                                    [0.3074]])
+    assert torch.allclose(result, expected_result, 1e-3)
+
+
+def test_xywhr2xyxyr():
+    torch.manual_seed(0)
+    xywhr = torch.tensor([[1., 2., 3., 4., 5.], [0., 1., 2., 3., 4.]])
+    xyxyr = xywhr2xyxyr(xywhr)
+    expected_xyxyr = torch.tensor([[-0.5000, 0.0000, 2.5000, 4.0000, 5.0000],
+                                   [-1.0000, -0.5000, 1.0000, 2.5000, 4.0000]])
+
+    assert torch.allclose(xyxyr, expected_xyxyr)
+
+
+class test_get_box_type(unittest.TestCase):
+
+    def test_get_box_type(self):
+        box_type_3d, box_mode_3d = get_box_type('camera')
+        assert box_type_3d == CameraInstance3DBoxes
+        assert box_mode_3d == Box3DMode.CAM
+
+        box_type_3d, box_mode_3d = get_box_type('depth')
+        assert box_type_3d == DepthInstance3DBoxes
+        assert box_mode_3d == Box3DMode.DEPTH
+
+        box_type_3d, box_mode_3d = get_box_type('lidar')
+        assert box_type_3d == LiDARInstance3DBoxes
+        assert box_mode_3d == Box3DMode.LIDAR
+
+    def test_bad_box_type(self):
+        self.assertRaises(ValueError, get_box_type, 'test')
+
+
+def test_points_cam2img():
+    torch.manual_seed(0)
+    points = torch.rand([5, 3])
+    proj_mat = torch.rand([4, 4])
+    point_2d_res = points_cam2img(points, proj_mat)
+    expected_point_2d_res = torch.tensor([[0.5832, 0.6496], [0.6146, 0.7910],
+                                          [0.6994, 0.7782], [0.5623, 0.6303],
+                                          [0.4359, 0.6532]])
+    assert torch.allclose(point_2d_res, expected_point_2d_res, 1e-3)
