@@ -2,13 +2,13 @@
 # Benchmarks
 
 Here we benchmark the training and testing speed of models in MMDetection3D,
-with some other popular open source 3D detection codebases.
+with some other open source 3D detection codebases.
 
 ## Settings
 
 * Hardwares: 8 NVIDIA Tesla V100 (32G) GPUs, Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz
 * Software: Python 3.7, CUDA 10.1, cuDNN 7.6.5, PyTorch 1.3, numba 0.48.0.
-* Model: Since all the other codebases implements different models, we compare the corresponding models with them separately. We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark).
+* Model: Since all the other codebases implements different models, we compare the corresponding models including SECOND, PointPillars, Part-A2, and VoteNet with them separately.
 * Metrics: We use the average throughput in iterations of the entire training run and skip the first 50 iterations of each epoch to skip GPU warmup time.
   Note that the throughput of a detector typically changes during training, because it depends on the predictions of the model.
 
@@ -16,7 +16,7 @@ with some other popular open source 3D detection codebases.
 
 ### VoteNet
 
-We compare our implementation of VoteNet with [votenet](https://github.com/facebookresearch/votenet/) and report the performance on SUNRGB-D v2 dataset under the AP@0.5 metric.
+We compare our implementation of VoteNet with [votenet](https://github.com/facebookresearch/votenet/) and report the performance on SUNRGB-D v2 dataset under the AP@0.5 metric. We find that our implementation achieves higher accuracy, so we also report the AP here.
 
 ```eval_rst
 +----------------+---------------------+--------------------+--------+
@@ -29,37 +29,39 @@ We compare our implementation of VoteNet with [votenet](https://github.com/faceb
 
 ```
 
-### PointPillars
+### Single-Class PointPillars
 
-Since [Det3D](https://github.com/poodarchu/Det3D/) only provides PointPillars on car class while [OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2) only provides PointPillars
-on 3 classes, we compare with them separately. For performance on single class, we report the AP on moderate
-condition following the KITTI benchmark and compare average AP over all classes on moderate condition for
-performance on 3 classes.
+Since [Det3D](https://github.com/poodarchu/Det3D/) only provides PointPillars on car class, we compare the training speed of single-class PointPillars here.
 
 ```eval_rst
 +----------------+---------------------+--------------------+
 | Implementation | Training (sample/s) | Testing (sample/s) |
 +================+=====================+====================+
-| MMDetection3D  |         141         |       44.3         |
+| MMDetection3D  |         141         |                    |
 +----------------+---------------------+--------------------+
 | Det3D          |         140         |        20          |
 +----------------+---------------------+--------------------+
 ```
 
+### Multi-Class PointPillars
+
+[OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2) only provides PointPillars
+on 3 classes, we compare the training speed of multi-class PointPillars here.
+
 ```eval_rst
 +----------------+---------------------+--------------------+
 | Implementation | Training (sample/s) | Testing (sample/s) |
 +================+=====================+====================+
-| MMDetection3D  |         107         |        45          |
+| MMDetection3D  |         107         |                    |
 +----------------+---------------------+--------------------+
-| OpenPCDet      |         44          |        25          |
+| OpenPCDet      |         44          |        67          |
 +----------------+---------------------+--------------------+
 ```
 
 ### SECOND
 
 [Det3D](https://github.com/poodarchu/Det3D/) provides a different SECOND on car class and we cannot train the original SECOND by modifying the config.
-So we only compare with [OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), which is a SECOND model on 3 classes, we report the AP on moderate
+So we only compare SECOND with [OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), which is a SECOND model on 3 classes, we report the AP on moderate
 condition following the KITTI benchmark and compare average AP over all classes on moderate condition for
 performance on 3 classes.
 
@@ -67,7 +69,7 @@ performance on 3 classes.
 +----------------+---------------------+--------------------+
 | Implementation | Training (sample/s) | Testing (sample/s) |
 +================+=====================+====================+
-| MMDetection3D  |         40          |         27         |
+| MMDetection3D  |         40          |                    |
 +----------------+---------------------+--------------------+
 | OpenPCDet      |         30          |         32         |
 +----------------+---------------------+--------------------+
@@ -82,7 +84,7 @@ and compare average AP over all classes on moderate condition for performance on
 +----------------+---------------------+--------------------+
 | Implementation | Training (sample/s) | Testing (sample/s) |
 +================+=====================+====================+
-| MMDetection3D  |         17          |         11         |
+| MMDetection3D  |         17          |                    |
 +----------------+---------------------+--------------------+
 | OpenPCDet      |         14          |         13         |
 +----------------+---------------------+--------------------+
@@ -92,9 +94,11 @@ and compare average AP over all classes on moderate condition for performance on
 
 ### Modification for Calculating Speed
 
-* __Det3D__: At commit [255c593]()
+* __MMDetection3D__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark).
 
-* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2)
+* __Det3D__: For comparison with Det3D, we use the commit [255c593]().
+
+* __OpenPCDet__: For comparison with OpenPCDet, we use the commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2).
 
     For training speed, we add code to record the running time in the file `./tools/train_utils/train_utils.py`. We calculate the speed of each epoch, and report the average speed of all the epochs.
     <details>
@@ -238,31 +242,33 @@ and compare average AP over all classes on moderate condition for performance on
   ./tools/dist_train.sh configs/votenet/votenet_16x8_sunrgbd-3d-10class.py 8 --no-validate
   ```
 
+  Then benchmark the test speed by running
+  ```bash
+
+  ```
+
 * __votenet__: At commit 2f6d6d3, run
 
   ```bash
   python train.py --dataset sunrgbd --batch_size 16
   ```
 
-### PointPillars
-
-* __MMDetection3D__: With release v0.1.0, run
-
+  Then benchmark the test speed by running
   ```bash
-  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8 --no-validate
+
   ```
 
-* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2)
-
-  ```bash
-  cd tools
-  sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/pointpillar.yaml --batch_size 32  --workers 32
-  ```
+### Single-class PointPillars
 
 * __MMDetection3D__: With release v0.1.0, run
 
   ```bash
   /tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
+  ```
+
+  Then benchmark the test speed by running
+  ```bash
+
   ```
 
 * __Det3D__: At commit 255c593, use kitti_point_pillars_mghead_syncbn.py and run
@@ -299,6 +305,36 @@ and compare average AP over all classes on moderate condition for performance on
 
   </details>
 
+  Then benchmark the test speed by running
+  ```bash
+
+  ```
+
+### Multi-class PointPillars
+
+* __MMDetection3D__: With release v0.1.0, run
+
+  ```bash
+  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8 --no-validate
+  ```
+
+  Then benchmark the test speed by running
+  ```bash
+
+  ```
+
+* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), run
+
+  ```bash
+  cd tools
+  sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/pointpillar.yaml --batch_size 32  --workers 32
+  ```
+
+  Then benchmark the test speed by running
+  ```bash
+
+  ```
+
 ### SECOND
 
 * __MMDetection3D__: With release v0.1.0, run
@@ -307,11 +343,21 @@ and compare average AP over all classes on moderate condition for performance on
   ./tools/dist_train.sh configs/benchmark/hv_second_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8 --no-validate
   ```
 
-* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2)
+  Then benchmark the test speed by running
+  ```bash
+
+  ```
+
+* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), run
 
   ```bash
   cd tools
   sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/second.yaml --batch_size 32  --workers 32
+  ```
+
+  Then benchmark the test speed by running
+  ```bash
+
   ```
 
 ### Part-A2
@@ -322,9 +368,19 @@ and compare average AP over all classes on moderate condition for performance on
   ./tools/dist_train.sh configs/benchmark/hv_PartA2_secfpn_4x8_cyclic_80e_pcdet_kitti-3d-3class.py 8 --no-validate
   ```
 
-* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2)
+  Then benchmark the test speed by running
+  ```bash
+
+  ```
+
+* __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), train the model by running
 
   ```bash
   cd tools
   sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/PartA2.yaml --batch_size 32 --workers 32
+  ```
+
+  Then benchmark the test speed by running
+  ```bash
+
   ```
