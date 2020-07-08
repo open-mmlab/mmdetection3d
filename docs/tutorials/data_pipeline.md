@@ -19,33 +19,64 @@ We present a classical pipeline in the following figure. The blue blocks are pip
 
 The operations are categorized into data loading, pre-processing, formatting and test-time augmentation.
 
-Here is an pipeline example for Faster R-CNN.
+Here is an pipeline example for PointPillars.
+
 ```python
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.3925, 0.3925],
+        scale_ratio_range=[0.95, 1.05],
+        translation_std=[0, 0, 0]),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='PointShuffle'),
+    dict(type='DefaultFormatBundle3D', class_names=class_names),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1333, 800),
+        pts_scale_ratio=1.0,
         flip=False,
+        pcd_horizontal_flip=False,
+        pcd_vertical_flip=False,
         transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='ImageToTensor', keys=['img']),
-            dict(type='Collect', keys=['img']),
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1., 1.],
+                translation_std=[0, 0, 0]),
+            dict(type='RandomFlip3D'),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=class_names,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
         ])
 ]
 ```
@@ -54,75 +85,53 @@ For each operation, we list the related dict fields that are added/updated/remov
 
 ### Data loading
 
-`LoadImageFromFile`
-- add: img, img_shape, ori_shape
+`LoadPointsFromFile`
+- add: points
+
+`LoadPointsFromMultiSweeps`
+- update: points
 
 `LoadAnnotations`
-- add: gt_bboxes, gt_bboxes_ignore, gt_labels, gt_masks, gt_semantic_seg, bbox_fields, mask_fields
-
-`LoadProposals`
-- add: proposals
+- add: gt_bboxes_3d, gt_labels_3d, pts_instance_mask, pts_semantic_mask, bbox3d_fields, pts_mask_fields, pts_seg_fields
 
 ### Pre-processing
 
-`Resize`
-- add: scale, scale_idx, pad_shape, scale_factor, keep_ratio
-- update: img, img_shape, *bbox_fields, *mask_fields, *seg_fields
+`GlobalRotScaleTrans`
+- add: pcd_trans, pcd_rotation, pcd_scale_factor
+- update: points, *bbox3d_fields
 
-`RandomFlip`
-- add: flip
-- update: img, *bbox_fields, *mask_fields, *seg_fields
+`RandomFlip3D`
+- add: flip, pcd_horizontal_flip, pcd_vertical_flip
+- update: points, *bbox3d_fields
 
-`Pad`
-- add: pad_fixed_size, pad_size_divisor
-- update: img, pad_shape, *mask_fields, *seg_fields
+`PointsRangeFilter`
+- update: points
 
-`RandomCrop`
-- update: img, pad_shape, gt_bboxes, gt_labels, gt_masks, *bbox_fields
+`ObjectRangeFilter`
+- update: gt_bboxes_3d, gt_labels_3d
 
-`Normalize`
-- add: img_norm_cfg
-- update: img
+`ObjectNameFilter`
+- update: gt_bboxes_3d, gt_labels_3d
 
-`SegRescale`
-- update: gt_semantic_seg
+`PointShuffle`
+- update: points
 
-`PhotoMetricDistortion`
-- update: img
-
-`Expand`
-- update: img, gt_bboxes
-
-`MinIoURandomCrop`
-- update: img, gt_bboxes, gt_labels
-
-`Corrupt`
-- update: img
+`PointsRangeFilter`
+- update: points
 
 ### Formatting
 
-`ToTensor`
-- update: specified by `keys`.
+`DefaultFormatBundle3D`
+- update: voxels, coors, voxel_centers, num_points, points, gt_bboxes_3d, gt_labels_3d, gt_bboxes, gt_labels
 
-`ImageToTensor`
-- update: specified by `keys`.
-
-`Transpose`
-- update: specified by `keys`.
-
-`ToDataContainer`
-- update: specified by `fields`.
-
-`DefaultFormatBundle`
-- update: img, proposals, gt_bboxes, gt_bboxes_ignore, gt_labels, gt_masks, gt_semantic_seg
-
-`Collect`
+`Collect3D`
 - add: img_meta (the keys of img_meta is specified by `meta_keys`)
 - remove: all other keys except for those specified by `keys`
 
 ### Test time augmentation
 
 `MultiScaleFlipAug`
+- update: scale, pcd_scale_factor, flip, flip_direction, pcd_horizontal_flip, pcd_vertical_flip with list of augmented data with these specific parameters
 
 ## Extend and use custom pipelines
 
@@ -148,17 +157,29 @@ For each operation, we list the related dict fields that are added/updated/remov
 3. Use it in config files.
 
     ```python
-    img_norm_cfg = dict(
-        mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
     train_pipeline = [
-        dict(type='LoadImageFromFile'),
-        dict(type='LoadAnnotations', with_bbox=True),
-        dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
-        dict(type='RandomFlip', flip_ratio=0.5),
-        dict(type='Normalize', **img_norm_cfg),
-        dict(type='Pad', size_divisor=32),
+        dict(
+            type='LoadPointsFromFile',
+            load_dim=5,
+            use_dim=5,
+            file_client_args=file_client_args),
+        dict(
+            type='LoadPointsFromMultiSweeps',
+            sweeps_num=10,
+            file_client_args=file_client_args),
+        dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.3925, 0.3925],
+            scale_ratio_range=[0.95, 1.05],
+            translation_std=[0, 0, 0]),
+        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+        dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+        dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+        dict(type='ObjectNameFilter', classes=class_names),
         dict(type='MyTransform'),
-        dict(type='DefaultFormatBundle'),
-        dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+        dict(type='PointShuffle'),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
     ]
     ```
