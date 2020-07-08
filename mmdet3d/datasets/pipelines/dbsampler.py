@@ -9,6 +9,15 @@ from ..registry import OBJECTSAMPLERS
 
 
 class BatchSampler:
+    """Class for sampling specific category of ground truths.
+
+    Args:
+        sample_list (list[dict]): List of samples.
+        name (str | None): The category of samples. Default: None.
+        epoch (int | None): Sampling epoch. Default: None.
+        shuffle (bool): Whether to shuffle indices. Default: False.
+        drop_reminder (bool): Drop reminder. Default: False.
+    """
 
     def __init__(self,
                  sampled_list,
@@ -29,6 +38,14 @@ class BatchSampler:
         self._drop_reminder = drop_reminder
 
     def _sample(self, num):
+        """Sample specific number of ground truths and return indices.
+
+        Args:
+            num (int): Sampled number.
+
+        Returns:
+            list[int]: Indices of sampled ground truths.
+        """
         if self._idx + num >= self._example_num:
             ret = self._indices[self._idx:].copy()
             self._reset()
@@ -38,6 +55,7 @@ class BatchSampler:
         return ret
 
     def _reset(self):
+        """Reset the index of batchsampler to zero."""
         assert self._name is not None
         # print("reset", self._name)
         if self._shuffle:
@@ -45,6 +63,14 @@ class BatchSampler:
         self._idx = 0
 
     def sample(self, num):
+        """Sample specific number of ground truths.
+
+        Args:
+            num (int): Sampled number.
+
+        Returns:
+            list[dict]: Sampled ground truths.
+        """
         indices = self._sample(num)
         return [self._sampled_list[i] for i in indices]
 
