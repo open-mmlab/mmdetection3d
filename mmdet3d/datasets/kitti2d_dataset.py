@@ -80,8 +80,7 @@ class Kitti2DDataset(CustomDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: Standard annotation dictionary
-                consists of the data information.
+            dict: annotation information consists of the following keys:
 
                 - bboxes (np.ndarray): ground truth bboxes
                 - labels (np.ndarray): labels of ground truths

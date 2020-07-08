@@ -6,7 +6,7 @@ For installation instructions, please see [install.md](install.md).
 ## Prepare datasets
 
 It is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
-If your folder structure is different, you may need to change the corresponding paths in config files.
+If your folder structure is different from the following, you may need to change the corresponding paths in config files.
 
 ```
 mmdetection3d

@@ -88,10 +88,10 @@ class Anchor3DRangeGenerator(object):
             device (str): Device where the anchors will be put on.
 
         Returns:
-            list[torch.Tensor]: Anchors in multiple feature levels.
-                The sizes of each tensor should be [N, 4], where
-                N = width * height * num_base_anchors, width and height
-                are the sizes of the corresponding feature lavel,
+            list[torch.Tensor]: Anchors in multiple feature levels. \
+                The sizes of each tensor should be [N, 4], where \
+                N = width * height * num_base_anchors, width and height \
+                are the sizes of the corresponding feature lavel, \
                 num_base_anchors is the number of anchors for that level.
         """
         assert self.num_levels == len(featmap_sizes)
@@ -168,7 +168,7 @@ class Anchor3DRangeGenerator(object):
             device (str): Devices that the anchors will be put on.
 
         Returns:
-            torch.Tensor: anchors with shape
+            torch.Tensor: anchors with shape \
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
@@ -250,11 +250,21 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         """Generate anchors in a single range.
 
         Args:
-            feature_size: list [D, H, W](zyx)
-            sizes: [N, 3] list of list or array, size of anchors, xyz
+            feature_size (list[float] | tuple[float]): Feature map size. It is
+                either a list of a tuple of [D, H, W](in order of z, y, and x).
+            anchor_range (torch.Tensor | list[float]): Range of anchors with
+                shape [6]. The order is consistent with that of anchors, i.e.,
+                (x_min, y_min, z_min, x_max, y_max, z_max).
+            scale (float | int, optional): The scale factor of anchors.
+            sizes (list[list] | np.ndarray | torch.Tensor): Anchor size with
+                shape [N, 3], in order of x, y, z.
+            rotations (list[float] | np.ndarray | torch.Tensor): Rotations of
+                anchors in a single feature grid.
+            device (str): Devices that the anchors will be put on.
 
         Returns:
-            anchors: [*feature_size, num_sizes, num_rots, 7] tensor.
+            torch.Tensor: anchors with shape \
+                [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
             feature_size = [1, feature_size[0], feature_size[1]]
@@ -305,12 +315,11 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         rets.insert(3, sizes)
 
         ret = torch.cat(rets, dim=-1).permute([2, 1, 0, 3, 4, 5])
-        # [1, 200, 176, N, 2, 7] for kitti after permute
 
         if len(self.custom_values) > 0:
             custom_ndim = len(self.custom_values)
             custom = ret.new_zeros([*ret.shape[:-1], custom_ndim])
+            # TODO: check the support of custom values
             # custom[:] = self.custom_values
             ret = torch.cat([ret, custom], dim=-1)
-            # [1, 200, 176, N, 2, 9] for nus dataset after permute
         return ret

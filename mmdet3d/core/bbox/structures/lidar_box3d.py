@@ -131,8 +131,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns None,
-                otherwise it returns the rotated points and the
+            tuple or None: When ``points`` is None, the function returns \
+                None, otherwise it returns the rotated points and the \
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
@@ -204,7 +204,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             TODO: check whether this will effect the performance
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside
+            torch.Tensor: Indicating whether each box is inside \
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -225,7 +225,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`:
+            :obj:`BaseInstance3DBoxes`: \
                 The converted box of the same type in the `dst` mode.
         """
         from .box_3d_mode import Box3DMode
@@ -239,7 +239,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             extra_width (float | torch.Tensor): extra width to enlarge the box
 
         Returns:
-            :obj:`LiDARInstance3DBoxes`: enlarged boxes
+            :obj:`LiDARInstance3DBoxes`: Enlarged boxes.
         """
         enlarged_boxes = self.tensor.clone()
         enlarged_boxes[:, 3:6] += extra_width * 2
@@ -251,7 +251,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Find the box which the points are in.
 
         Args:
-            points (torch.Tensor): Points in shape Nx3
+            points (torch.Tensor): Points in shape Nx3.
 
         Returns:
             torch.Tensor: The index of box where each point are in.

@@ -15,14 +15,10 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class KittiDataset(Custom3DDataset):
-    """KITTI Dataset.
+    r"""KITTI Dataset.
 
-    This class serves as the API for experiments on the KITTI Dataset.
-
-    Please refer to
-    `<http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d>`_
-    for data downloading. It is recommended to symlink the dataset root to
-    $MMDETECTION3D/data and organize them as the doc shows.
+    This class serves as the API for experiments on the `KITTI Dataset
+    <http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d>`_.
 
     Args:
         data_root (str): Path of dataset root.
@@ -89,15 +85,15 @@ class KittiDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Standard input_dict consists of the
-                data information.
+            dict: Data information that will be passed to the data \
+                preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): sample index
                 - pts_filename (str): filename of point clouds
                 - img_prefix (str | None): prefix of image files
                 - img_info (dict): image info
-                - lidar2img (list[np.ndarray], optional): transformations from
-                    lidar to different cameras
+                - lidar2img (list[np.ndarray], optional): transformations \
+                    from lidar to different cameras
                 - ann_info (dict): annotation info
         """
         info = self.data_infos[index]
@@ -132,10 +128,9 @@ class KittiDataset(Custom3DDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: Standard annotation dictionary
-                consists of the data information.
+            dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:``LiDARInstance3DBoxes``):
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
                     3D ground truth bboxes
                 - gt_labels_3d (np.ndarray): labels of ground truths
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes
@@ -249,8 +244,8 @@ class KittiDataset(Custom3DDataset):
                 Default: None.
 
         Returns:
-            tuple: (result_files, tmp_dir), result_files is a dict containing
-                the json filepaths, tmp_dir is the temporal directory created
+            tuple: (result_files, tmp_dir), result_files is a dict containing \
+                the json filepaths, tmp_dir is the temporal directory created \
                 for saving json files when jsonfile_prefix is not specified.
         """
         if pklfile_prefix is None:
@@ -458,7 +453,8 @@ class KittiDataset(Custom3DDataset):
                             class_names,
                             pklfile_prefix=None,
                             submission_prefix=None):
-        """Convert results to kitti format for evaluation and test submission.
+        """Convert 2D detection results to kitti format for evaluation and test
+        submission.
 
         Args:
             net_outputs (list[np.ndarray]): list of array storing the

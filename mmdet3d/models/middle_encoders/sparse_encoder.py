@@ -7,9 +7,7 @@ from ..registry import MIDDLE_ENCODERS
 
 @MIDDLE_ENCODERS.register_module()
 class SparseEncoder(nn.Module):
-    """Sparse encoder for Second.
-
-    See https://arxiv.org/abs/1907.03670 for more detials.
+    r"""Sparse encoder for SECOND and Part-A2.
 
     Args:
         in_channels (int): the number of input channels

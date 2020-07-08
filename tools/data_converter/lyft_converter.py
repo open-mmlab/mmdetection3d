@@ -96,7 +96,7 @@ def _fill_trainval_infos(lyft,
     """Generate the train/val infos from the raw data.
 
     Args:
-        lyft (:obj:``LyftDataset``): Dataset class in the Lyft dataset.
+        lyft (:obj:`LyftDataset`): Dataset class in the Lyft dataset.
         train_scenes (list[str]): Basic information of training scenes.
         val_scenes (list[str]): Basic information of validation scenes.
         test (bool): Whether use the test mode. In the test mode, no
