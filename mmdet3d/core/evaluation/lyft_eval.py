@@ -10,7 +10,7 @@ from os import path as osp
 from terminaltables import AsciiTable
 
 
-def load_lyft_gts(lyft, data_root, eval_split: str, logger=None) -> list:
+def load_lyft_gts(lyft, data_root, eval_split, logger=None):
     """Loads ground truth boxes from database.
 
     Args:
@@ -138,8 +138,7 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
     return metrics
 
 
-def get_classwise_aps(gt: list, predictions: list, class_names: list,
-                      iou_thresholds: list) -> np.array:
+def get_classwise_aps(gt, predictions, class_names, iou_thresholds):
     """Returns an array with an average precision per class.
 
     Note: Ground truth and predictions should have the following format.
