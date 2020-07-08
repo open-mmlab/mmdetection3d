@@ -28,8 +28,9 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (BaseInstance3DBoxes): gt bboxes with shape (n, 7).
-            gt_labels_3d (torch.Tensor): gt classes.
+            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth bboxes \
+                with shape (n, 7).
+            gt_labels_3d (torch.Tensor): Ground truth classes.
 
         Returns:
             tuple: Targets of center, size and direction.
@@ -58,7 +59,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Decode predicted parts to bbox3d.
 
         Args:
-            bbox_out (dict): predictions from model, should contain keys below
+            bbox_out (dict): Predictions from model, should contain keys below.
+
                 - center: predicted bottom center of bboxes.
                 - dir_class: predicted bbox direction class.
                 - dir_res: predicted bbox direction residual.
@@ -66,7 +68,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
                 - size_res: predicted bbox size residual.
 
         Returns:
-            torch.Tensor: decoded bbox3d with shape (batch, n, 7)
+            torch.Tensor: Decoded bbox3d with shape (batch, n, 7).
         """
         center = bbox_out['center']
         batch_size, num_proposal = center.shape[:2]
@@ -98,11 +100,11 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Split predicted features to specific parts.
 
         Args:
-            preds (torch.Tensor): predicted features to split.
-            base_xyz (torch.Tensor): coordinates of points.
+            preds (torch.Tensor): Predicted features to split.
+            base_xyz (torch.Tensor): Coordinates of points.
 
         Returns:
-            dict[str, torch.Tensor]: split results.
+            dict[str, torch.Tensor]: Split results.
         """
         results = {}
         start, end = 0, 0
@@ -183,7 +185,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
             limit_period (bool): Whether to limit angle to [-pi, pi].
 
         Returns:
-            torch.Tensor: angle decoded from angle_cls and angle_res.
+            torch.Tensor: Angle decoded from angle_cls and angle_res.
         """
         angle_per_class = 2 * np.pi / float(self.num_dir_bins)
         angle_center = angle_cls.float() * angle_per_class

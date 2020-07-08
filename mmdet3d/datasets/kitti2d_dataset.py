@@ -80,10 +80,10 @@ class Kitti2DDataset(CustomDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
-                - bboxes (np.ndarray): ground truth bboxes
-                - labels (np.ndarray): labels of ground truths
+                - bboxes (np.ndarray): Ground truth bboxes.
+                - labels (np.ndarray): Labels of ground truths.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]

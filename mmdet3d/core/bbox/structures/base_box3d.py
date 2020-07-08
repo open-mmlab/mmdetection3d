@@ -15,7 +15,7 @@ class BaseInstance3DBoxes(object):
 
     Args:
         tensor (torch.Tensor | np.ndarray | list): a N x box_dim matrix.
-        box_dim (int): number of the dimension of a box
+        box_dim (int): Number of the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw).
             Default to 7.
         with_yaw (bool): Whether the box is with yaw rotation.
@@ -59,10 +59,10 @@ class BaseInstance3DBoxes(object):
 
     @property
     def volume(self):
-        """Computes the volume of all the boxes.
+        """Compute the volume of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with volume of each box.
+            torch.Tensor: A vector with volume of each box.
         """
         return self.tensor[:, 3] * self.tensor[:, 4] * self.tensor[:, 5]
 
@@ -70,10 +70,10 @@ class BaseInstance3DBoxes(object):
     def dims(self):
         """Calculate the length in each dimension of all the boxes.
 
-        Convert the boxes to the form of (x_size, y_size, z_size)
+        Convert the boxes to the form of (x_size, y_size, z_size).
 
         Returns:
-            torch.Tensor: corners of each box with size (N, 8, 3)
+            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         return self.tensor[:, 3:6]
 
@@ -82,7 +82,7 @@ class BaseInstance3DBoxes(object):
         """Obtain the rotation of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with yaw of each box.
+            torch.Tensor: A vector with yaw of each box.
         """
         return self.tensor[:, 6]
 
@@ -91,7 +91,7 @@ class BaseInstance3DBoxes(object):
         """Obtain the height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with height of each box.
+            torch.Tensor: A vector with height of each box.
         """
         return self.tensor[:, 5]
 
@@ -100,7 +100,7 @@ class BaseInstance3DBoxes(object):
         """Obtain the top height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with the top height of each box.
+            torch.Tensor: A vector with the top height of each box.
         """
         return self.bottom_height + self.height
 
@@ -109,7 +109,7 @@ class BaseInstance3DBoxes(object):
         """Obtain the bottom's height of all the boxes.
 
         Returns:
-            torch.Tensor: a vector with bottom's height of each box.
+            torch.Tensor: A vector with bottom's height of each box.
         """
         return self.tensor[:, 2]
 
@@ -128,7 +128,7 @@ class BaseInstance3DBoxes(object):
             for more clear usage.
 
         Returns:
-            torch.Tensor: a tensor with center of each box.
+            torch.Tensor: A tensor with center of each box.
         """
         return self.bottom_center
 
@@ -137,7 +137,7 @@ class BaseInstance3DBoxes(object):
         """Calculate the bottom center of all the boxes.
 
         Returns:
-            torch.Tensor: a tensor with center of each box.
+            torch.Tensor: A tensor with center of each box.
         """
         return self.tensor[:, :3]
 
@@ -146,7 +146,7 @@ class BaseInstance3DBoxes(object):
         """Calculate the gravity center of all the boxes.
 
         Returns:
-            torch.Tensor: a tensor with center of each box.
+            torch.Tensor: A tensor with center of each box.
         """
         pass
 
@@ -164,8 +164,8 @@ class BaseInstance3DBoxes(object):
         """Calculate whether the points is in any of the boxes.
 
         Args:
-            angles (float): rotation angles
-            axis (int): the axis to rotate the boxes
+            angles (float): Rotation angles
+            axis (int): The axis to rotate the boxes
         """
         pass
 
@@ -178,7 +178,7 @@ class BaseInstance3DBoxes(object):
         """Calculate whether the points is in any of the boxes.
 
         Args:
-            trans_vector (torch.Tensor): translation vector of size 1x3
+            trans_vector (torch.Tensor): Translation vector of size 1x3.
         """
         if not isinstance(trans_vector, torch.Tensor):
             trans_vector = self.tensor.new_tensor(trans_vector)
@@ -194,7 +194,7 @@ class BaseInstance3DBoxes(object):
         Note:
             In the original implementation of SECOND, checking whether
             a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burdun for simpler cases.
+            polygon, we try to reduce the burden for simpler cases.
 
         Returns:
             torch.Tensor: A binary vector indicating whether each box is \
@@ -227,7 +227,7 @@ class BaseInstance3DBoxes(object):
         """Convert self to `dst` mode.
 
         Args:
-            dst (:obj:`BoxMode`): the target Box mode
+            dst (:obj:`BoxMode`): The target Box mode。
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -308,11 +308,11 @@ class BaseInstance3DBoxes(object):
         return original_type(b, box_dim=self.box_dim, with_yaw=self.with_yaw)
 
     def __len__(self):
-        """int: Number of boxes in the current object"""
+        """int: Number of boxes in the current object."""
         return self.tensor.shape[0]
 
     def __repr__(self):
-        """str: Return a strings that describes the object"""
+        """str: Return a strings that describes the object."""
         return self.__class__.__name__ + '(\n    ' + str(self.tensor) + ')'
 
     @classmethod

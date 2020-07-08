@@ -16,9 +16,9 @@ class PointwiseSemanticHead(nn.Module):
     See `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
 
     Args:
-        in_channels (int): the number of input channel.
-        num_classes (int): the number of class.
-        extra_width (float): boxes enlarge width.
+        in_channels (int): The number of input channel.
+        num_classes (int): The number of class.
+        extra_width (float): Boxes enlarge width.
         loss_seg (dict): Config of segmentation loss.
         loss_part (dict): Config of part prediction loss.
     """
@@ -56,11 +56,11 @@ class PointwiseSemanticHead(nn.Module):
             x (torch.Tensor): Features from the first stage.
 
         Returns:
-            dict: part features, segmentation and part predictions.
+            dict: Part features, segmentation and part predictions.
 
-                - seg_preds (torch.Tensor): segment predictions
-                - part_preds (torch.Tensor): part predictions
-                - part_feats (torch.Tensor): feature predictions
+                - seg_preds (torch.Tensor): Segment predictions.
+                - part_preds (torch.Tensor): Part predictions.
+                - part_feats (torch.Tensor): Feature predictions.
         """
         seg_preds = self.seg_cls_layer(x)  # (N, 1)
         part_preds = self.seg_reg_layer(x)  # (N, 3)
@@ -80,14 +80,15 @@ class PointwiseSemanticHead(nn.Module):
         sample.
 
         Args:
-            voxel_centers (torch.Tensor): shape [voxel_num, 3],
-                the center of voxels
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt boxes with tensor
-                of shape [box_num, 7].
-            gt_labels_3d (torch.Tensor): shape [box_num], class label of gt
+            voxel_centers (torch.Tensor): The center of voxels in shape \
+                (voxel_num, 3).
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in \
+                shape (box_num, 7).
+            gt_labels_3d (torch.Tensor): Class labels of ground truths in \
+                shape (box_num).
 
         Returns:
-            tuple[torch.Tensor]: segmentation targets with shape [voxel_num] \
+            tuple[torch.Tensor]: Segmentation targets with shape [voxel_num] \
                 part prediction targets with shape [voxel_num, 3]
         """
         gt_bboxes_3d = gt_bboxes_3d.to(voxel_centers.device)
@@ -127,14 +128,15 @@ class PointwiseSemanticHead(nn.Module):
         """generate segmentation and part prediction targets.
 
         Args:
-            voxel_centers (torch.Tensor): shape [voxel_num, 3],
-                the center of voxels
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): list of gt boxes
-                containing tensor of shape [box_num, 7].
-            gt_labels_3d (list[torch.Tensor]): list of GT labels.
+            voxel_centers (torch.Tensor): The center of voxels in shape \
+                (voxel_num, 3).
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in \
+                shape (box_num, 7).
+            gt_labels_3d (torch.Tensor): Class labels of ground truths in \
+                shape (box_num).
 
         Returns:
-            dict: prediction targets
+            dict: Prediction targets
 
                 - seg_targets (torch.Tensor): Segmentation targets \
                     with shape [voxel_num].
@@ -160,19 +162,19 @@ class PointwiseSemanticHead(nn.Module):
         Args:
             semantic_results (dict): Results from semantic head.
 
-                - seg_preds: segmentation predictions
-                - part_preds: part predictions
+                - seg_preds: Segmentation predictions.
+                - part_preds: Part predictions.
 
             semantic_targets (dict): Targets of semantic results.
 
-                - seg_preds: segmentation targets
-                - part_preds: part targets
+                - seg_preds: Segmentation targets.
+                - part_preds: Part targets.
 
         Returns:
-            dict: loss of segmentation and part prediction.
+            dict: Loss of segmentation and part prediction.
 
-                - loss_seg (torch.Tensor): segmentation prediction loss
-                - loss_part (torch.Tensor): part prediction loss
+                - loss_seg (torch.Tensor): Segmentation prediction loss.
+                - loss_part (torch.Tensor): Part prediction loss.
         """
         seg_preds = semantic_results['seg_preds']
         part_preds = semantic_results['part_preds']

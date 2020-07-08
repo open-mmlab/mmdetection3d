@@ -228,8 +228,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         Note:
             In the original implementation of SECOND, checking whether
             a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burdun for simpler cases.
-            TODO: check whether this will effect the performance
+            polygon, we try to reduce the burden for simpler cases.
 
         Returns:
             torch.Tensor: Indicating whether each box is inside

@@ -30,9 +30,9 @@ class Custom3DDataset(Dataset):
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR'. Available options includes
 
-            - 'LiDAR': box in LiDAR coordinates
-            - 'Depth': box in depth coordinates, usually for indoor dataset
-            - 'Camera': box in camera coordinates
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -87,10 +87,10 @@ class Custom3DDataset(Dataset):
             dict: Data information that will be passed to the data \
                 preprocessing pipelines. It includes the following keys:
 
-                - sample_idx (str): sample index
-                - pts_filename (str): filename of point clouds
-                - file_name (str): filename of point clouds
-                - ann_info (dict): annotation info
+                - sample_idx (str): Sample index.
+                - pts_filename (str): Filename of point clouds.
+                - file_name (str): Filename of point clouds.
+                - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
         sample_idx = info['point_cloud']['lidar_idx']
@@ -114,15 +114,15 @@ class Custom3DDataset(Dataset):
         Args:
             results (dict): Dict before data preprocessing.
 
-                - img_fields (list): image fields
-                - bbox3d_fields (list): 3D bounding boxes fields
-                - pts_mask_fields (list): mask fields of points
-                - pts_seg_fields (list): mask fields of point segments
-                - bbox_fields (list): fields of bounding boxes
-                - mask_fields (list): fields of masks
-                - seg_fields (list): segment fields
-                - box_type_3d (str): 3D box type
-                - box_mode_3d (str): 3D box mode
+                - img_fields (list): Image fields.
+                - bbox3d_fields (list): 3D bounding boxes fields.
+                - pts_mask_fields (list): Mask fields of points.
+                - pts_seg_fields (list): Mask fields of point segments.
+                - bbox_fields (list): Fields of bounding boxes.
+                - mask_fields (list): Fields of masks.
+                - seg_fields (list): Segment fields.
+                - box_type_3d (str): 3D box type.
+                - box_mode_3d (str): 3D box mode.
         """
         results['img_fields'] = []
         results['bbox3d_fields'] = []
@@ -179,7 +179,7 @@ class Custom3DDataset(Dataset):
                 a tuple or list, override the CLASSES defined by the dataset.
 
         Return:
-            list[str]: return the list of class names
+            list[str]: A list of class names.
         """
         if classes is None:
             return cls.CLASSES

@@ -9,7 +9,7 @@ from .train_mixins import get_direction_target
 
 @HEADS.register_module()
 class FreeAnchor3DHead(Anchor3DHead):
-    """`FreeAnchor <https://arxiv.org/abs/1909.02466>`_ head for 3D detection.
+    r"""`FreeAnchor <https://arxiv.org/abs/1909.02466>`_ head for 3D detection.
 
     Note:
         This implementation is directly modified from the `mmdet implementation

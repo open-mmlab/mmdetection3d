@@ -22,7 +22,7 @@ class HardSimpleVFE(nn.Module):
         """Forward function.
 
         Args:
-            features (torch.Tensor): point features in shape
+            features (torch.Tensor): Point features in shape
                 (N, M, 3(4)). N is the number of voxels and M is the maximum
                 number of points inside a single voxel.
             num_points (torch.Tensor): Number of points in each voxel,
@@ -60,7 +60,7 @@ class DynamicSimpleVFE(nn.Module):
         """Forward function.
 
         Args:
-            features (torch.Tensor): point features in shape
+            features (torch.Tensor): Point features in shape
                 (N, 3(4)). N is the number of points.
             coors (torch.Tensor): Coordinates of voxels.
 

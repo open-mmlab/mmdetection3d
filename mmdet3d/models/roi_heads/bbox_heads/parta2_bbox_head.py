@@ -290,7 +290,7 @@ class PartA2BboxHead(nn.Module):
             rois (torch.Tensor): Roi bboxes.
             labels (torch.Tensor): Labels of class.
             bbox_targets (torch.Tensor): Target of positive bboxes.
-            pos_gt_bboxes (torch.Tensor): Gt of positive bboxes.
+            pos_gt_bboxes (torch.Tensor): Ground truths of positive bboxes.
             reg_mask (torch.Tensor): Mask for positive bboxes.
             label_weights (torch.Tensor): Weights of class loss.
             bbox_weights (torch.Tensor): Weights of bbox loss.
@@ -298,9 +298,9 @@ class PartA2BboxHead(nn.Module):
         Returns:
             dict: Computed losses.
 
-                - loss_cls (torch.Tensor): loss of classes.
-                - loss_bbox (torch.Tensor): loss of bboxes.
-                - loss_corner (torch.Tensor): loss of corners.
+                - loss_cls (torch.Tensor): Loss of classes.
+                - loss_bbox (torch.Tensor): Loss of bboxes.
+                - loss_corner (torch.Tensor): Loss of corners.
         """
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
@@ -463,11 +463,11 @@ class PartA2BboxHead(nn.Module):
         """Calculate corner loss of given boxes.
 
         Args:
-            pred_bbox3d (torch.FloatTensor): predicted boxes with shape (N, 7).
-            gt_bbox3d (torch.FloatTensor): gt boxes with shape (N, 7).
+            pred_bbox3d (torch.FloatTensor): Predicted boxes in shape (N, 7).
+            gt_bbox3d (torch.FloatTensor): Ground truth boxes in shape (N, 7).
 
         Returns:
-            torch.FloatTensor: Calculated corner loss with shape (N).
+            torch.FloatTensor: Calculated corner loss in shape (N).
         """
         assert pred_bbox3d.shape[0] == gt_bbox3d.shape[0]
 
@@ -505,12 +505,12 @@ class PartA2BboxHead(nn.Module):
         """Generate bboxes from bbox head predictions.
 
         Args:
-            rois (torch.Tensor): Roi bboxes.
-            cls_score (torch.Tensor): Scores of bboxes.
-            bbox_pred (torch.Tensor): Bbox predictions
+            rois (torch.Tensor): Roi bounding boxes.
+            cls_score (torch.Tensor): Scores of bounding boxes.
+            bbox_pred (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
             class_pred (torch.Tensor): Score for nms.
-            img_metas (list[dict]): Contain pcd and img's meta info.
+            img_metas (list[dict]): Point cloud and image's meta info.
             cfg (:obj:`ConfigDict`): Testing config.
 
         Returns:

@@ -27,7 +27,7 @@ def bbox3d2roi(bbox_list):
     """Convert a list of bboxes to roi format.
 
     Args:
-        bbox_list (list[torch.Tensor]): a list of bboxes
+        bbox_list (list[torch.Tensor]): A list of bboxes
             corresponding to a batch of images.
 
     Returns:
@@ -49,9 +49,9 @@ def bbox3d2result(bboxes, scores, labels):
     """Convert detection results to a list of numpy arrays.
 
     Args:
-        bboxes (torch.Tensor): shape (n, 5)
-        labels (torch.Tensor): shape (n, )
-        scores (torch.Tensor): shape (n, )
+        bboxes (torch.Tensor): Bounding boxes with shape of (n, 5).
+        labels (torch.Tensor): Labels with shape of (n, ).
+        scores (torch.Tensor): Scores with shape of (n, ).
 
     Returns:
         dict[str, torch.Tensor]: Bbox results in cpu mode.
