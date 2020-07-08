@@ -286,6 +286,6 @@ class Custom3DDataset(Dataset):
 
         Images with aspect ratio greater than 1 will be set as group 1,
         otherwise group 0. In 3D datasets, they are all the same, thus are all
-        zeros
+        zeros.
         """
         self.flag = np.zeros(len(self), dtype=np.uint8)

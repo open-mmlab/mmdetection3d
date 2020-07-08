@@ -4,16 +4,13 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-"""Load Scannet scenes with vertices and ground truth labels
-for semantic and instance segmentations
-"""
-
+"""Load Scannet scenes with vertices and ground truth labels for semantic and
+instance segmentations."""
 import argparse
 import inspect
 import json
-import os
-
 import numpy as np
+import os
 import scannet_utils
 
 currentdir = os.path.dirname(
