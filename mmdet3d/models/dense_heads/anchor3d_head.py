@@ -356,7 +356,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
             input_metas (list[dict]): Contain pcd and img's meta info.
-            cfg (None | ConfigDict): Training or testing config.
+            cfg (None | :obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:
@@ -410,7 +410,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             mlvl_anchors (List[torch.Tensor]): Multi-level anchors
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
-            cfg (None | ConfigDict): Training or testing config.
+            cfg (None | :obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:

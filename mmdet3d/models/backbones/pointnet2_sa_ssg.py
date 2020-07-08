@@ -115,17 +115,17 @@ class PointNet2SASSG(nn.Module):
         """Forward pass.
 
         Args:
-            points (Tensor): point coordinates with features,
+            points (torch.Tensor): point coordinates with features,
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict[str, list[Tensor]]: outputs after SA and FP modules.
+            dict[str, list[torch.Tensor]]: outputs after SA and FP modules.
 
-                - fp_xyz (list[Tensor]): contains the coordinates of
+                - fp_xyz (list[torch.Tensor]): contains the coordinates of
                     each fp features.
-                - fp_features (list[Tensor]): contains the features
+                - fp_features (list[torch.Tensor]): contains the features
                     from each Feature Propagate Layers.
-                - fp_indices (list[Tensor]): contains indices of the
+                - fp_indices (list[torch.Tensor]): contains indices of the
                     input points.
         """
         xyz, features = self._split_point_feats(points)

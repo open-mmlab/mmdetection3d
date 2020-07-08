@@ -191,7 +191,7 @@ class DataBaseSampler(object):
 
                 - gt_labels_3d (np.ndarray): labels of ground truths:
                     labels of sampled ground truths
-                - gt_bboxes_3d (:obj:``BaseInstance3DBoxes``):
+                - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`):
                     sampled 3D bounding boxes
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths

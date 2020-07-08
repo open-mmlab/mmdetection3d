@@ -443,7 +443,7 @@ class NuScenesDataset(Custom3DDataset):
                 Default: None.
 
         Returns:
-            dict[str: float]
+            dict[str, float]: results of each evaluation metric
         """
         result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
 
