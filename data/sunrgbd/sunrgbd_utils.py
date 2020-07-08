@@ -13,10 +13,9 @@ Updated by Charles R. Qi
 Date: December, 2018
 Note: removed basis loading.
 """
-
 import cv2
 import numpy as np
-import scipy.io as sio
+from scipy import io as sio
 
 type2class = {
     'bed': 0,
@@ -81,7 +80,7 @@ class SUNObject3d(object):
 
 
 class SUNRGBD_Calibration(object):
-    """Calibration matrices and utils
+    """Calibration matrices and utils.
 
     We define five coordinate system in SUN RGBD dataset:
 
@@ -254,8 +253,8 @@ def my_compute_box_3d(center, size, heading_angle):
 
 
 def compute_box_3d(obj, calib):
-    """Takes an object and a projection matrix (P) and projects the 3d
-        bounding box into the image plane.
+    """Takes an object and a projection matrix (P) and projects the 3d bounding
+    box into the image plane.
 
     Args:
         obj (SUNObject3d): Instance of SUNObject3d.

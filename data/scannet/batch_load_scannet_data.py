@@ -5,18 +5,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 """Batch mode in loading Scannet scenes with vertices and ground truth labels
-for semantic and instance segmentations
+for semantic and instance segmentations.
 
 Usage example: python ./batch_load_scannet_data.py
 """
-
 import argparse
 import datetime
-import os
-import os.path as osp
-
 import numpy as np
+import os
 from load_scannet_data import export
+from os import path as osp
 
 SCANNET_DIR = 'scans'
 DONOTCARE_CLASS_IDS = np.array([])

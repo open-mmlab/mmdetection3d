@@ -10,6 +10,13 @@ warnings.filterwarnings('ignore', category=NumbaPerformanceWarning)
 
 @numba.njit
 def _rotation_box2d_jit_(corners, angle, rot_mat_T):
+    """Rotate 2D boxes.
+
+    Args:
+        corners (np.ndarray): Corners of boxes.
+        angle (float): Rotation angle.
+        rot_mat_T (np.ndarray): Transposed rotation matrix.
+    """
     rot_sin = np.sin(angle)
     rot_cos = np.cos(angle)
     rot_mat_T[0, 0] = rot_cos
@@ -21,6 +28,14 @@ def _rotation_box2d_jit_(corners, angle, rot_mat_T):
 
 @numba.jit(nopython=True)
 def box_collision_test(boxes, qboxes, clockwise=True):
+    """Box collision test.
+
+    Args:
+        boxes (np.ndarray): Corners of current boxes.
+        qboxes (np.ndarray): Boxes to be avoid colliding.
+        clockwise (bool): Whether the corners are in clockwise order.
+            Default: True.
+    """
     N = boxes.shape[0]
     K = qboxes.shape[0]
     ret = np.zeros((N, K), dtype=np.bool_)
@@ -110,10 +125,19 @@ def box_collision_test(boxes, qboxes, clockwise=True):
 
 @numba.njit
 def noise_per_box(boxes, valid_mask, loc_noises, rot_noises):
-    # boxes: [N, 5]
-    # valid_mask: [N]
-    # loc_noises: [N, M, 3]
-    # rot_noises: [N, M]
+    """Add noise to every box (only on the horizontal plane).
+
+    Args:
+        boxes (np.ndarray): Input boxes with shape (N, 5).
+        valid_mask (np.ndarray): Mask to indicate which boxes are valid
+            with shape (N).
+        loc_noises (np.ndarray): Location noises with shape (N, M, 3).
+        rot_noises (np.ndarray): Rotation noises with shape (N, M).
+
+    Returns:
+        np.ndarray: Mask to indicate whether the noise is
+            added successfully (pass the collision test).
+    """
     num_boxes = boxes.shape[0]
     num_tests = loc_noises.shape[1]
     box_corners = box_np_ops.box2d_to_corner_jit(boxes)
@@ -143,10 +167,20 @@ def noise_per_box(boxes, valid_mask, loc_noises, rot_noises):
 @numba.njit
 def noise_per_box_v2_(boxes, valid_mask, loc_noises, rot_noises,
                       global_rot_noises):
-    # boxes: [N, 5]
-    # valid_mask: [N]
-    # loc_noises: [N, M, 3]
-    # rot_noises: [N, M]
+    """Add noise to every box (only on the horizontal plane). Version 2 used
+    when enable global rotations.
+
+    Args:
+        boxes (np.ndarray): Input boxes with shape (N, 5).
+        valid_mask (np.ndarray): Mask to indicate which boxes are valid
+            with shape (N).
+        loc_noises (np.ndarray): Location noises with shape (N, M, 3).
+        rot_noises (np.ndarray): Rotation noises with shape (N, M).
+
+    Returns:
+        np.ndarray: Mask to indicate whether the noise is
+            added successfully (pass the collision test).
+    """
     num_boxes = boxes.shape[0]
     num_tests = loc_noises.shape[1]
     box_corners = box_np_ops.box2d_to_corner_jit(boxes)
@@ -198,6 +232,15 @@ def noise_per_box_v2_(boxes, valid_mask, loc_noises, rot_noises,
 
 
 def _select_transform(transform, indices):
+    """Select transform.
+
+    Args:
+        transform (np.ndarray): Transforms to select from.
+        indices (np.ndarray): Mask to indicate which transform to select.
+
+    Returns:
+        np.ndarray: Selected transforms.
+    """
     result = np.zeros((transform.shape[0], *transform.shape[2:]),
                       dtype=transform.dtype)
     for i in range(transform.shape[0]):
@@ -208,6 +251,13 @@ def _select_transform(transform, indices):
 
 @numba.njit
 def _rotation_matrix_3d_(rot_mat_T, angle, axis):
+    """Get the 3D rotation matrix.
+
+    Args:
+        rot_mat_T (np.ndarray): Transposed rotation matrix.
+        angle (float): Rotation angle.
+        axis (int): Rotation axis.
+    """
     rot_sin = np.sin(angle)
     rot_cos = np.cos(angle)
     rot_mat_T[:] = np.eye(3)
@@ -231,6 +281,17 @@ def _rotation_matrix_3d_(rot_mat_T, angle, axis):
 @numba.njit
 def points_transform_(points, centers, point_masks, loc_transform,
                       rot_transform, valid_mask):
+    """Apply transforms to points and box centers.
+
+    Args:
+        points (np.ndarray): Input points.
+        centers (np.ndarray): Input box centers.
+        point_masks (np.ndarray): Mask to indicate which points need
+            to be transformed.
+        loc_transform (np.ndarray): Location transform to be applied.
+        rot_transform (np.ndarray): Rotation transform to be applied.
+        valid_mask (np.ndarray): Mask to indicate which boxes are valid.
+    """
     num_box = centers.shape[0]
     num_points = points.shape[0]
     rot_mat_T = np.zeros((num_box, 3, 3), dtype=points.dtype)
@@ -249,6 +310,14 @@ def points_transform_(points, centers, point_masks, loc_transform,
 
 @numba.njit
 def box3d_transform_(boxes, loc_transform, rot_transform, valid_mask):
+    """Transform 3D boxes.
+
+    Args:
+        boxes (np.ndarray): 3D boxes to be transformed.
+        loc_transform (np.ndarray): Location transform to be applied.
+        rot_transform (np.ndarray): Rotation transform to be applied.
+        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
+    """
     num_box = boxes.shape[0]
     for i in range(num_box):
         if valid_mask[i]:
@@ -263,12 +332,21 @@ def noise_per_object_v3_(gt_boxes,
                          center_noise_std=1.0,
                          global_random_rot_range=np.pi / 4,
                          num_try=100):
-    """random rotate or remove each groundtrutn independently. use kitti viewer
+    """Random rotate or remove each groundtruth independently. use kitti viewer
     to test this function points_transform_
 
     Args:
-        gt_boxes: [N, 7], gt box in lidar.points_transform_
-        points: [M, 4], point cloud in lidar.
+        gt_boxes (np.ndarray): Ground truth boxes with shape (N, 7).
+        points (np.ndarray | None): Input point cloud with shape (M, 4).
+            Default: None.
+        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
+            Default: None.
+        rotation_perturb (float): Rotation perturbation. Default: pi / 4.
+        center_noise_std (float): Center noise standard deviation.
+            Default: 1.0.
+        global_random_rot_range (float): Global random rotation range.
+            Default: pi/4.
+        num_try (int): Number of try. Default: 100.
     """
     num_boxes = gt_boxes.shape[0]
     if not isinstance(rotation_perturb, (list, tuple, np.ndarray)):
