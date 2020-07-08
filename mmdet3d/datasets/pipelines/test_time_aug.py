@@ -19,7 +19,7 @@ class MultiScaleFlipAug3D(object):
         flip_direction (str | list[str]): Flip augmentation directions
             for images, options are "horizontal" and "vertical".
             If flip_direction is list, multiple flip augmentations will
-            be applied. It has no effect when flip == False.
+            be applied. It has no effect when ``flip == False``.
             Default: "horizontal".
         pcd_horizontal_flip (bool): Whether apply horizontal flip augmentation
             to point cloud. Default: True. Note that it works only when

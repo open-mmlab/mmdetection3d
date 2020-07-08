@@ -100,7 +100,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                     down y
 
         Returns:
-            torch.Tensor: Corners of each box with size (N, 8, 3)
+            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -163,8 +163,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns None,
-                otherwise it returns the rotated points and the
+            tuple or None: When ``points`` is None, the function returns \
+                None, otherwise it returns the rotated points and the \
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
@@ -287,7 +287,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            BaseInstance3DBoxes:
+            :obj:`BaseInstance3DBoxes`:  \
                 The converted box of the same type in the `dst` mode.
         """
         from .box_3d_mode import Box3DMode

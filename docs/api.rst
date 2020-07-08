@@ -24,11 +24,6 @@ post_processing
 .. automodule:: mmdet3d.core.post_processing
     :members:
 
-utils
-^^^^^^^^^^
-.. automodule:: mmdet3d.core.utils
-    :members:
-
 mmdet3d.datasets
 ----------------
 
@@ -68,21 +63,6 @@ dense_heads
 roi_heads
 ^^^^^^^^^^
 .. automodule:: mmdet3d.models.roi_heads
-    :members:
-
-roi_heads.bbox_heads
-^^^^^^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.models.roi_heads.bbox_heads
-    :members:
-
-roi_heads.mask_heads
-^^^^^^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.models.roi_heads.mask_heads
-    :members:
-
-roi_heads.roi_extractors
-^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.models.roi_heads.roi_extractors
     :members:
 
 fusion_layers

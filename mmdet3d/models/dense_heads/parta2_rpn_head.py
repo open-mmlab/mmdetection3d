@@ -104,12 +104,12 @@ class PartA2RPNHead(Anchor3DHead):
                 which bounding.
 
         Returns:
-            dict[str, list[torch.Tensor]]: Classification, bbox, and direction
-                losses of each level.
+            dict[str, list[torch.Tensor]]: Classification, bbox, and \
+                direction losses of each level.
 
                 - loss_rpn_cls (list[torch.Tensor]): Classification losses.
                 - loss_rpn_bbox (list[torch.Tensor]): Box regression losses.
-                - loss_rpn_dir (list[torch.Tensor]): Direction classification
+                - loss_rpn_dir (list[torch.Tensor]): Direction classification \
                     losses.
         """
         loss_dict = super().loss(cls_scores, bbox_preds, dir_cls_preds,
@@ -143,7 +143,7 @@ class PartA2RPNHead(Anchor3DHead):
             rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:
-            dict: Predictions of single batch. Contain the keys:
+            dict: Predictions of single batch containing the following keys:
 
                 - boxes_3d (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
                 - scores_3d (torch.Tensor): Score of each bbox.
