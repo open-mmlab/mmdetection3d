@@ -145,8 +145,6 @@ class PointSegClassMapping(object):
 class NormalizePointsColor(object):
     """Normalize color of points.
 
-    Normalize color of the points.
-
     Args:
         color_mean (list[float]): Mean color of the point cloud.
     """

@@ -121,11 +121,11 @@ class PointNet2SASSG(nn.Module):
         Returns:
             dict[str, list[torch.Tensor]]: outputs after SA and FP modules.
 
-                - fp_xyz (list[torch.Tensor]): contains the coordinates of
+                - fp_xyz (list[torch.Tensor]): contains the coordinates of \
                     each fp features.
-                - fp_features (list[torch.Tensor]): contains the features
+                - fp_features (list[torch.Tensor]): contains the features \
                     from each Feature Propagate Layers.
-                - fp_indices (list[torch.Tensor]): contains indices of the
+                - fp_indices (list[torch.Tensor]): contains indices of the \
                     input points.
         """
         xyz, features = self._split_point_feats(points)

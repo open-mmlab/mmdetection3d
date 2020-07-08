@@ -15,9 +15,7 @@ from mmdet.models import HEADS
 
 @HEADS.register_module()
 class VoteHead(nn.Module):
-    """Bbox head of Votenet.
-
-    https://arxiv.org/pdf/1904.09664.pdf
+    r"""Bbox head of `Votenet <https://arxiv.org/abs/1904.09664>`_.
 
     Args:
         num_classes (int): The number of class.
@@ -113,11 +111,13 @@ class VoteHead(nn.Module):
     def forward(self, feat_dict, sample_mod):
         """Forward pass.
 
-        The forward of VoteHead is devided into 4 steps:
-            1. Generate vote_points from seed_points.
-            2. Aggregate vote_points.
-            3. Predict bbox and score.
-            4. Decode predictions.
+        Note:
+            The forward of VoteHead is devided into 4 steps:
+
+                1. Generate vote_points from seed_points.
+                2. Aggregate vote_points.
+                3. Predict bbox and score.
+                4. Decode predictions.
 
         Args:
             feat_dict (dict): feature dict from backbone.

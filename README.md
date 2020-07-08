@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="demo/mmdet3d-logo.png" width="600"/>
+  <img src="resources/mmdet3d-logo.png" width="600"/>
 </div>
 
 **News**: We released the codebase v0.1.0.

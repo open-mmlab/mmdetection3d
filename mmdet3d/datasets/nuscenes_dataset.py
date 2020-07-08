@@ -17,9 +17,8 @@ class NuScenesDataset(Custom3DDataset):
 
     This class serves as the API for experiments on the NuScenes Dataset.
 
-    Please refer to `<https://www.nuscenes.org/download>`_for data
-    downloading. It is recommended to symlink the dataset root to
-    $MMDETECTION3D/data and organize them as the doc shows.
+    Please refer to `NuScenes Dataset <https://www.nuscenes.org/download>`_
+    for data downloading.
 
     Args:
         ann_file (str): Path of annotation file.
@@ -161,16 +160,16 @@ class NuScenesDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Standard input_dict consists of the
-                data information.
+            dict: Data information that will be passed to the data \
+                preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): sample index
                 - pts_filename (str): filename of point clouds
                 - sweeps (list[dict]): infos of sweeps
                 - timestamp (float): sample timestamp
                 - img_filename (str, optional): image filename
-                - lidar2img (list[np.ndarray], optional): transformations from
-                    lidar to different cameras
+                - lidar2img (list[np.ndarray], optional): transformations \
+                    from lidar to different cameras
                 - ann_info (dict): annotation info
         """
         info = self.data_infos[index]
@@ -220,10 +219,9 @@ class NuScenesDataset(Custom3DDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: Standard annotation dictionary
-                consists of the data information.
+            dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:``LiDARInstance3DBoxes``):
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
                     3D ground truth bboxes
                 - gt_labels_3d (np.ndarray): labels of ground truths
                 - gt_names (list[str]): class names of ground truths
@@ -392,9 +390,10 @@ class NuScenesDataset(Custom3DDataset):
                 If not specified, a temp file will be created. Default: None.
 
         Returns:
-            tuple (dict, str): result_files is a dict containing the json
-                filepaths, tmp_dir is the temporal directory created for
-                saving json files when jsonfile_prefix is not specified.
+            tuple: Returns (result_files, tmp_dir), where `result_files` is a \
+                dict containing the json filepaths, `tmp_dir` is the temporal \
+                directory created for saving json files when \
+                `jsonfile_prefix` is not specified.
         """
         assert isinstance(results, list), 'results must be a list'
         assert len(results) == len(self), (
@@ -497,12 +496,12 @@ def output_to_nusc_box(detection):
     Args:
         detection (dict): Detection results.
 
-            - boxes_3d (:obj:``BaseInstance3DBoxes``): detection bbox
+            - boxes_3d (:obj:`BaseInstance3DBoxes`): detection bbox
             - scores_3d (torch.Tensor): detection scores
             - labels_3d (torch.Tensor): predicted box labels
 
     Returns:
-        list[:obj:``NuScenesBox``]: List of standard NuScenesBoxes.
+        list[:obj:`NuScenesBox`]: List of standard NuScenesBoxes.
     """
     box3d = detection['boxes_3d']
     scores = detection['scores_3d'].numpy()
@@ -544,7 +543,7 @@ def lidar_nusc_box_to_global(info,
     Args:
         info (dict): Info for a specific sample data, including the
             calibration information.
-        boxes (list[:obj:``NuScenesBox``]): List of predicted NuScenesBoxes.
+        boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
         classes (list[str]): Mapped classes in the evaluation.
         eval_configs (object): Evaluation configuration object.
         eval_version (str): Evaluation version.

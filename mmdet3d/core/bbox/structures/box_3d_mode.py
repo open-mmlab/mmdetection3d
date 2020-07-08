@@ -76,7 +76,7 @@ class Box3DMode(IntEnum):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.dnarray | torch.Tensor | BaseInstance3DBoxes):
+            (tuple | list | np.dnarray | torch.Tensor | BaseInstance3DBoxes): \
                 The converted box of the same type.
         """
         if src == dst:

@@ -8,9 +8,9 @@ from ..registry import MIDDLE_ENCODERS
 
 @MIDDLE_ENCODERS.register_module()
 class SparseUNet(nn.Module):
-    """SparseUNet for PartA^2.
+    r"""SparseUNet for PartA^2.
 
-    See https://arxiv.org/abs/1907.03670 for more detials.
+    See the `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
 
     Args:
         in_channels (int): the number of input channels
@@ -95,12 +95,13 @@ class SparseUNet(nn.Module):
         """Forward of SparseUNet.
 
         Args:
-            voxel_features (torch.float32): shape [N, C]
-            coors (torch.int32): shape [N, 4](batch_idx, z_idx, y_idx, x_idx)
-            batch_size (int): batch size
+            voxel_features (torch.float32): Voxel features in shape [N, C].
+            coors (torch.int32): Coordinates in shape [N, 4],
+                the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
+            batch_size (int): Batch size.
 
         Returns:
-            dict: backbone features
+            dict[str, torch.Tensor]: Backbone features.
         """
         coors = coors.int()
         input_sp_tensor = spconv.SparseConvTensor(voxel_features, coors,
@@ -147,14 +148,14 @@ class SparseUNet(nn.Module):
         """Forward of upsample and residual block.
 
         Args:
-            x_lateral (:obj:`SparseConvTensor`): lateral tensor
-            x_bottom (:obj:`SparseConvTensor`): feature from bottom layer
-            lateral_layer (SparseBasicBlock): convolution for lateral tensor
-            merge_layer (SparseSequential): convolution for merging features
-            upsample_layer (SparseSequential): convolution for upsampling
+            x_lateral (:obj:`SparseConvTensor`): Lateral tensor.
+            x_bottom (:obj:`SparseConvTensor`): Feature from bottom layer.
+            lateral_layer (SparseBasicBlock): Convolution for lateral tensor.
+            merge_layer (SparseSequential): Convolution for merging features.
+            upsample_layer (SparseSequential): Convolution for upsampling.
 
         Returns:
-            :obj:`SparseConvTensor`: upsampled feature
+            :obj:`SparseConvTensor`: Upsampled feature.
         """
         x = lateral_layer(x_lateral)
         x.features = torch.cat((x_bottom.features, x.features), dim=1)
@@ -169,11 +170,12 @@ class SparseUNet(nn.Module):
         """reduce channel for element-wise addition.
 
         Args:
-            x (:obj:`SparseConvTensor`): x.features (N, C1)
-            out_channels (int): the number of channel after reduction
+            x (:obj:`SparseConvTensor`): Sparse tensor, ``x.features``
+                are in shape (N, C1).
+            out_channels (int): The number of channel after reduction.
 
         Returns:
-            :obj:`SparseConvTensor`: channel reduced feature
+            :obj:`SparseConvTensor`: Channel reduced feature.
         """
         features = x.features
         n, in_channels = features.shape
@@ -187,12 +189,12 @@ class SparseUNet(nn.Module):
         """make encoder layers using sparse convs.
 
         Args:
-            make_block (method): a bounded function to build blocks
-            norm_cfg (dict[str]): config of normalization layer
-            in_channels (int): the number of encoder input channels
+            make_block (method): A bounded function to build blocks.
+            norm_cfg (dict[str]): Config of normalization layer.
+            in_channels (int): The number of encoder input channels.
 
         Returns:
-            int: the number of encoder output channels
+            int: the number of encoder output channels.
         """
         self.encoder_layers = spconv.SparseSequential()
 
@@ -233,12 +235,12 @@ class SparseUNet(nn.Module):
         """make decoder layers using sparse convs.
 
         Args:
-            make_block (method): a bounded function to build blocks
-            norm_cfg (dict[str]): config of normalization layer
-            in_channels (int): the number of encoder input channels
+            make_block (method): A bounded function to build blocks.
+            norm_cfg (dict[str]): Config of normalization layer.
+            in_channels (int): The number of encoder input channels.
 
         Returns:
-            int: the number of encoder output channels
+            int: The number of encoder output channels.
         """
         block_num = len(self.decoder_channels)
         for i, block_channels in enumerate(self.decoder_channels):

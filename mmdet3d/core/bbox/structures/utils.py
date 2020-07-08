@@ -12,7 +12,7 @@ def limit_period(val, offset=0.5, period=np.pi):
         period ([type], optional): Period of the value. Defaults to np.pi.
 
     Returns:
-        torch.Tensor: value in the range of
+        torch.Tensor: value in the range of \
             [-offset * period, (1-offset) * period]
     """
     return val - torch.floor(val / period + offset) * period
@@ -27,11 +27,11 @@ def rotation_3d_in_axis(points, angles, axis=0):
         axis (int, optional): The axis to be rotated. Defaults to 0.
 
     Raises:
-        ValueError: when the axis is not in range [0, 1, 2], it will
+        ValueError: when the axis is not in range [0, 1, 2], it will \
             raise value error.
 
     Returns:
-        torch.Tensor: rotated points in shape (N, M, 3)
+        torch.Tensor: Rotated points in shape (N, M, 3)
     """
     rot_sin = torch.sin(angles)
     rot_cos = torch.cos(angles)
