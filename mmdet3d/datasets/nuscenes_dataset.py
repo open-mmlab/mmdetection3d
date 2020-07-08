@@ -13,7 +13,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class NuScenesDataset(Custom3DDataset):
-    """NuScenes Dataset.
+    r"""NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.
 
@@ -38,9 +38,9 @@ class NuScenesDataset(Custom3DDataset):
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes
 
-            - 'LiDAR': box in LiDAR coordinates
-            - 'Depth': box in depth coordinates, usually for indoor dataset
-            - 'Camera': box in camera coordinates
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -163,14 +163,14 @@ class NuScenesDataset(Custom3DDataset):
             dict: Data information that will be passed to the data \
                 preprocessing pipelines. It includes the following keys:
 
-                - sample_idx (str): sample index
-                - pts_filename (str): filename of point clouds
-                - sweeps (list[dict]): infos of sweeps
-                - timestamp (float): sample timestamp
-                - img_filename (str, optional): image filename
-                - lidar2img (list[np.ndarray], optional): transformations \
-                    from lidar to different cameras
-                - ann_info (dict): annotation info
+                - sample_idx (str): Sample index.
+                - pts_filename (str): Filename of point clouds.
+                - sweeps (list[dict]): Infos of sweeps.
+                - timestamp (float): Sample timestamp.
+                - img_filename (str, optional): Image filename.
+                - lidar2img (list[np.ndarray], optional): Transformations \
+                    from lidar to different cameras.
+                - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
 
@@ -219,12 +219,12 @@ class NuScenesDataset(Custom3DDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
                     3D ground truth bboxes
-                - gt_labels_3d (np.ndarray): labels of ground truths
-                - gt_names (list[str]): class names of ground truths
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - gt_names (list[str]): Class names of ground truths.
         """
         info = self.data_infos[index]
         # filter out bbox containing no points
@@ -442,7 +442,7 @@ class NuScenesDataset(Custom3DDataset):
                 Default: None.
 
         Returns:
-            dict[str, float]: results of each evaluation metric
+            dict[str, float]: Results of each evaluation metric.
         """
         result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
 
@@ -496,9 +496,9 @@ def output_to_nusc_box(detection):
     Args:
         detection (dict): Detection results.
 
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): detection bbox
-            - scores_3d (torch.Tensor): detection scores
-            - labels_3d (torch.Tensor): predicted box labels
+            - boxes_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
+            - scores_3d (torch.Tensor): Detection scores.
+            - labels_3d (torch.Tensor): Predicted box labels.
 
     Returns:
         list[:obj:`NuScenesBox`]: List of standard NuScenesBoxes.

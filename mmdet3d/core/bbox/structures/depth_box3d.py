@@ -37,7 +37,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the gravity center of all the boxes.
 
         Returns:
-            torch.Tensor: a tensor with center of each box.
+            torch.Tensor: A tensor with center of each box.
         """
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
@@ -68,7 +68,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                                           (x1, y0, z0)
 
         Returns:
-            torch.Tensor: corners of each box with size (N, 8, 3)
+            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -103,7 +103,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV without rotation.
 
         Returns:
-            torch.Tensor: a tensor of 2D BEV box of each box.
+            torch.Tensor: A tensor of 2D BEV box of each box.
         """
         # Obtain BEV boxes with rotation in XYWHR format
         bev_rotated_boxes = self.bev

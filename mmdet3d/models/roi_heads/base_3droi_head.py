@@ -76,7 +76,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                 Ground truth boxes to be ignored.
 
         Returns:
-            dict[str, torch.Tensor]: losses from each head.
+            dict[str, torch.Tensor]: Losses from each head.
         """
         pass
 

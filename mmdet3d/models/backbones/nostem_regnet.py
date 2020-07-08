@@ -10,12 +10,12 @@ class NoStemRegNet(RegNet):
 
     Args:
         arch (dict): The parameter of RegNets.
-            - w0 (int): initial width
-            - wa (float): slope of width
-            - wm (float): quantization parameter to quantize the width
-            - depth (int): depth of the backbone
-            - group_w (int): width of group
-            - bot_mul (float): bottleneck ratio, i.e. expansion of bottlneck.
+            - w0 (int): Initial width.
+            - wa (float): Slope of width.
+            - wm (float): Quantization parameter to quantize the width.
+            - depth (int): Depth of the backbone.
+            - group_w (int): Width of group.
+            - bot_mul (float): Bottleneck ratio, i.e. expansion of bottlneck.
         strides (Sequence[int]): Strides of the first block of each stage.
         base_channels (int): Base channels after stem layer.
         in_channels (int): Number of input image channels. Normally 3.
@@ -26,13 +26,13 @@ class NoStemRegNet(RegNet):
             the first 1x1 conv layer.
         frozen_stages (int): Stages to be frozen (all param fixed). -1 means
             not freezing any parameters.
-        norm_cfg (dict): dictionary to construct and config norm layer.
+        norm_cfg (dict): Dictionary to construct and config norm layer.
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only.
         with_cp (bool): Use checkpoint or not. Using checkpoint will save some
             memory while slowing down the training speed.
-        zero_init_residual (bool): whether to use zero init for last norm layer
+        zero_init_residual (bool): Whether to use zero init for last norm layer
             in resblocks to let them behave as identity.
 
     Example:

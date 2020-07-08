@@ -169,11 +169,11 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         Args:
             featmap_sizes (list[tuple]): Multi-level feature map sizes.
             input_metas (list[dict]): contain pcd and img's meta info.
-            device (str): device of current module
+            device (str): device of current module.
 
         Returns:
-            list[list[torch.Tensor]]: anchors of each image, valid flags \
-                of each image
+            list[list[torch.Tensor]]: Anchors of each image, valid flags \
+                of each image.
         """
         num_imgs = len(input_metas)
         # since feature map sizes of all images are the same, we only compute
@@ -202,7 +202,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             num_total_samples (int): The number of valid samples.
 
         Returns:
-            tuple[torch.Tensor]: losses of class, bbox \
+            tuple[torch.Tensor]: Losses of class, bbox \
                 and direction, respectively.
         """
         # classification loss
@@ -357,10 +357,10 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                 class predictions.
             input_metas (list[dict]): Contain pcd and img's meta info.
             cfg (None | :obj:`ConfigDict`): Training or testing config.
-            rescale (list[torch.Tensor]): whether th rescale bbox.
+            rescale (list[torch.Tensor]): Whether th rescale bbox.
 
         Returns:
-            list[tuple]: prediction resultes of batches.
+            list[tuple]: Prediction resultes of batches.
         """
         assert len(cls_scores) == len(bbox_preds)
         assert len(cls_scores) == len(dir_cls_preds)

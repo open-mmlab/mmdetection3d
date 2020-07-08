@@ -40,22 +40,22 @@ class VoxelGenerator(object):
 
     @property
     def voxel_size(self):
-        """list[float]: size of a single voxel"""
+        """list[float]: Size of a single voxel."""
         return self._voxel_size
 
     @property
     def max_num_points_per_voxel(self):
-        """int: maximum number of points per voxel"""
+        """int: Maximum number of points per voxel."""
         return self._max_num_points
 
     @property
     def point_cloud_range(self):
-        """list[float]: range of point cloud"""
+        """list[float]: Range of point cloud."""
         return self._point_cloud_range
 
     @property
     def grid_size(self):
-        """np.ndarray: The size of grids"""
+        """np.ndarray: The size of grids."""
         return self._grid_size
 
 
@@ -68,18 +68,18 @@ def points_to_voxel(points,
     """convert kitti points(N, >=3) to voxels.
 
     Args:
-        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
+        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and \
             points[:, 3:] contain other information such as reflectivity.
         voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
-        coors_range (list[float | tuple[float] | ndarray]): Voxel range.
+        coors_range (list[float | tuple[float] | ndarray]): Voxel range. \
             format: xyzxyz, minmax
         max_points (int): Indicate maximum points contained in a voxel.
-        reverse_index (bool): Whether return reversed coordinates.
-            if points has xyz format and reverse_index is True, output
-            coordinates will be zyx format, but points in features always
+        reverse_index (bool): Whether return reversed coordinates. \
+            if points has xyz format and reverse_index is True, output \
+            coordinates will be zyx format, but points in features always \
             xyz format.
-        max_voxels (int): Maximum number of voxels this function create.
-            for second, 20000 is a good choice. Points should be shuffled for
+        max_voxels (int): Maximum number of voxels this function creates. \
+            For second, 20000 is a good choice. Points should be shuffled for \
             randomness before this function because max_voxels drops points.
 
     Returns:
@@ -133,20 +133,20 @@ def _points_to_voxel_reverse_kernel(points,
     """convert kitti points(N, >=3) to voxels.
 
     Args:
-        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
+        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and \
             points[:, 3:] contain other information such as reflectivity.
-        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
-        coors_range (list[float | tuple[float] | ndarray]): Range of voxels.
+        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size \
+        coors_range (list[float | tuple[float] | ndarray]): Range of voxels. \
             format: xyzxyz, minmax
         num_points_per_voxel (int): Number of points per voxel.
-        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W), which
-            has the same shape as the complete voxel map. It indicates the
-            index of each corresponding voxel.
+        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W), \
+            which has the same shape as the complete voxel map. It indicates \
+            the index of each corresponding voxel.
         voxels (np.ndarray): Created empty voxels.
         coors (np.ndarray): Created coordinates of each voxel.
         max_points (int): Indicate maximum points contained in a voxel.
-        max_voxels (int): Maximum number of voxels this function create.
-            for second, 20000 is a good choice. Points should be shuffled for
+        max_voxels (int): Maximum number of voxels this function create. \
+            for second, 20000 is a good choice. Points should be shuffled for \
             randomness before this function because max_voxels drops points.
 
     Returns:
@@ -207,20 +207,20 @@ def _points_to_voxel_kernel(points,
     """convert kitti points(N, >=3) to voxels.
 
     Args:
-        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and
+        points (np.ndarray): [N, ndim]. points[:, :3] contain xyz points and \
             points[:, 3:] contain other information such as reflectivity.
-        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size
-        coors_range (list[float | tuple[float] | ndarray]): Range of voxels.
+        voxel_size (list, tuple, np.ndarray): [3] xyz, indicate voxel size.
+        coors_range (list[float | tuple[float] | ndarray]): Range of voxels. \
             format: xyzxyz, minmax
         num_points_per_voxel (int): Number of points per voxel.
-        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W), which
-            has the same shape as the complete voxel map. It indicates the
-            index of each corresponding voxel.
+        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W), \
+            which has the same shape as the complete voxel map. It indicates \
+            the index of each corresponding voxel.
         voxels (np.ndarray): Created empty voxels.
         coors (np.ndarray): Created coordinates of each voxel.
         max_points (int): Indicate maximum points contained in a voxel.
-        max_voxels (int): Maximum number of voxels this function create.
-            for second, 20000 is a good choice. Points should be shuffled for
+        max_voxels (int): Maximum number of voxels this function create. \
+            for second, 20000 is a good choice. Points should be shuffled for \
             randomness before this function because max_voxels drops points.
 
     Returns:

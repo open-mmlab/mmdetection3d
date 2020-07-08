@@ -37,9 +37,9 @@ class KittiDataset(Custom3DDataset):
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes
 
-            - 'LiDAR': box in LiDAR coordinates
-            - 'Depth': box in depth coordinates, usually for indoor dataset
-            - 'Camera': box in camera coordinates
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -88,13 +88,13 @@ class KittiDataset(Custom3DDataset):
             dict: Data information that will be passed to the data \
                 preprocessing pipelines. It includes the following keys:
 
-                - sample_idx (str): sample index
-                - pts_filename (str): filename of point clouds
-                - img_prefix (str | None): prefix of image files
-                - img_info (dict): image info
-                - lidar2img (list[np.ndarray], optional): transformations \
-                    from lidar to different cameras
-                - ann_info (dict): annotation info
+                - sample_idx (str): Sample index.
+                - pts_filename (str): Filename of point clouds.
+                - img_prefix (str | None): Prefix of image files.
+                - img_info (dict): Image info.
+                - lidar2img (list[np.ndarray], optional): Transformations \
+                    from lidar to different cameras.
+                - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
         sample_idx = info['image']['image_idx']
@@ -131,11 +131,11 @@ class KittiDataset(Custom3DDataset):
             dict: annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
-                    3D ground truth bboxes
-                - gt_labels_3d (np.ndarray): labels of ground truths
-                - gt_bboxes (np.ndarray): 2D ground truth bboxes
-                - gt_labels (np.ndarray): labels of ground truths
-                - gt_names (list[str]): class names of ground truths
+                    3D ground truth bboxes.
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - gt_bboxes (np.ndarray): 2D ground truth bboxes.
+                - gt_labels (np.ndarray): Labels of ground truths.
+                - gt_names (list[str]): Class names of ground truths.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
@@ -308,7 +308,7 @@ class KittiDataset(Custom3DDataset):
                 Default: None.
 
         Returns:
-            dict[str, float]: results of each evaluation metric
+            dict[str, float]: Results of each evaluation metric.
         """
         result_files, tmp_dir = self.format_results(results, pklfile_prefix)
         from mmdet3d.core.evaluation import kitti_eval
@@ -629,7 +629,7 @@ class KittiDataset(Custom3DDataset):
         """Results visualization.
 
         Args:
-            results (list[dict]): list of bounding boxes results.
+            results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'

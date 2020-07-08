@@ -26,23 +26,24 @@ def point_sample(
     """Obtain image features using points.
 
     Args:
-        img_features (Tensor): 1xCxHxW image features
-        points (Tensor): Nx3 point cloud in LiDAR coordinates
-        lidar2img_rt (Tensor): 4x4 transformation matrix
-        pcd_rotate_mat (Tensor): 3x3 rotation matrix of points
-            during augmentation
-        img_scale_factor (Tensor): (w_scale, h_scale)
-        img_crop_offset (Tensor): (w_offset, h_offset) offset used to crop
-            image during data augmentation
-        pcd_trans_factor ([type]): Translation of points in augmentation
-        pcd_scale_factor (float): Scale factor of points during
+        img_features (torch.Tensor): 1 x C x H x W image features.
+        points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
+        lidar2img_rt (torch.Tensor): 4x4 transformation matrix.
+        pcd_rotate_mat (torch.Tensor): 3x3 rotation matrix of points
+            during augmentation.
+        img_scale_factor (torch.Tensor): Scale factor with shape of \
+            (w_scale, h_scale).
+        img_crop_offset (torch.Tensor): Crop offset used to crop \
+            image during data augmentation with shape of (w_offset, h_offset).
+        pcd_trans_factor ([type]): Translation of points in augmentation.
+        pcd_scale_factor (float): Scale factor of points during.
             data augmentation
         pcd_flip (bool): Whether the points are flipped.
         img_flip (bool): Whether the image is flipped.
         img_pad_shape (tuple[int]): int tuple indicates the h & w after
-            padding, this is necessary to obtain features in feature map
+            padding, this is necessary to obtain features in feature map.
         img_shape (tuple[int]): int tuple indicates the h & w before padding
-            after scaling, this is necessary for flipping coordinates
+            after scaling, this is necessary for flipping coordinates.
         aligned (bool, optional): Whether use bilinear interpolation when
             sampling image features for each point. Defaults to True.
         padding_mode (str, optional): Padding mode when padding values for
@@ -51,7 +52,7 @@ def point_sample(
             sampling image features for each point. Defaults to True.
 
     Returns:
-        (Tensor): NxC image features sampled by point coordinates
+        torch.Tensor: NxC image features sampled by point coordinates.
     """
     # aug order: flip -> trans -> scale -> rot
     # The transformation follows the augmentation order in data pipeline
@@ -229,14 +230,14 @@ class PointFusion(nn.Module):
         """Forward function.
 
         Args:
-            img_feats (list[torch.Tensor]): img features
-            pts: [list[torch.Tensor]]: a batch of points with shape Nx3
-            pts_feats (torch.Tensor): a tensor consist of point features of the
-                total batch
-            img_metas (list[dict]): meta information of images
+            img_feats (list[torch.Tensor]): Image features.
+            pts: [list[torch.Tensor]]: A batch of points with shape N x 3.
+            pts_feats (torch.Tensor): A tensor consist of point features of the
+                total batch.
+            img_metas (list[dict]): Meta information of images.
 
         Returns:
-            torch.Tensor: fused features of each point.
+            torch.Tensor: Fused features of each point.
         """
         img_pts = self.obtain_mlvl_feats(img_feats, pts, img_metas)
         img_pre_fuse = self.img_transform(img_pts)

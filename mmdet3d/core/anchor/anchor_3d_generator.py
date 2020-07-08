@@ -20,10 +20,10 @@ class Anchor3DRangeGenerator(object):
             vary for different anchor sizes if size_per_range is True.
         sizes (list[list[float]]): 3D sizes of anchors.
         scales (list[int]): Scales of anchors in different feature levels.
-        rotations (list(float)): Rotations of anchors in a feature grid.
-        custom_values (tuple(float)): Customized values of that anchor. For
+        rotations (list[float]): Rotations of anchors in a feature grid.
+        custom_values (tuple[float]): Customized values of that anchor. For
             example, in nuScenes the anchors have velocities.
-        reshape_out (bool): Whether to reshape the output into (Nx4)
+        reshape_out (bool): Whether to reshape the output into (N x 4).
         size_per_range: Whether to use separate ranges for different sizes.
             If size_per_range is True, the ranges should have the same length
             as the sizes, if not, it will be duplicated.
@@ -69,14 +69,14 @@ class Anchor3DRangeGenerator(object):
 
     @property
     def num_base_anchors(self):
-        """list[int]: total number of base anchors in a feature grid"""
+        """list[int]: Total number of base anchors in a feature grid."""
         num_rot = len(self.rotations)
         num_size = torch.tensor(self.sizes).reshape(-1, 3).size(0)
         return num_rot * num_size
 
     @property
     def num_levels(self):
-        """int: number of feature levels that the generator will be applied"""
+        """int: Number of feature levels that the generator is applied."""
         return len(self.scales)
 
     def grid_anchors(self, featmap_sizes, device='cuda'):
@@ -168,7 +168,7 @@ class Anchor3DRangeGenerator(object):
             device (str): Devices that the anchors will be put on.
 
         Returns:
-            torch.Tensor: anchors with shape \
+            torch.Tensor: Anchors with shape \
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
@@ -226,7 +226,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
     according to the feature map sizes.
     However, this makes the anchors center does not match the feature grid.
     The AlignedAnchor3DRangeGenerator add + 1 when using the feature map sizes
-    to obtain the corners of the voxel grid. Then it shift the coordinates to
+    to obtain the corners of the voxel grid. Then it shifts the coordinates to
     the center of voxel grid of use the left up corner to distribute anchors.
 
     Args:
@@ -263,7 +263,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             device (str): Devices that the anchors will be put on.
 
         Returns:
-            torch.Tensor: anchors with shape \
+            torch.Tensor: Anchors with shape \
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:

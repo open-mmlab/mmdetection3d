@@ -120,8 +120,8 @@ class VoteHead(nn.Module):
                 4. Decode predictions.
 
         Args:
-            feat_dict (dict): feature dict from backbone.
-            sample_mod (str): sample mode for vote aggregation layer.
+            feat_dict (dict): Feature dict from backbone.
+            sample_mod (str): Sample mode for vote aggregation layer.
                 valid modes are "vote", "seed" and "random".
 
         Returns:
@@ -189,9 +189,9 @@ class VoteHead(nn.Module):
         Args:
             bbox_preds (dict): Predictions from forward of vote head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Gt bboxes
-                of each sample.
-            gt_labels_3d (list[torch.Tensor]): Gt labels of each sample.
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+                bboxes of each sample.
+            gt_labels_3d (list[torch.Tensor]): Labels of each sample.
             pts_semantic_mask (None | list[torch.Tensor]): Point-wise
                 semantic mask.
             pts_instance_mask (None | list[torch.Tensor]): Point-wise
@@ -296,14 +296,14 @@ class VoteHead(nn.Module):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): gt bboxes of
-                each batch.
-            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+                bboxes of each batch.
+            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
+            pts_semantic_mask (None | list[torch.Tensor]): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): point-wise instance
+            pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
                 label of each batch.
-            bbox_preds (torch.Tensor): Bbox predictions of vote head.
+            bbox_preds (torch.Tensor): Bounding box predictions of vote head.
 
         Returns:
             tuple[torch.Tensor]: Targets of vote head.
@@ -382,11 +382,12 @@ class VoteHead(nn.Module):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
-            gt_labels_3d (torch.Tensor): gt class labels of each batch.
-            pts_semantic_mask (None | torch.Tensor): point-wise semantic
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+                boxes of each batch.
+            gt_labels_3d (torch.Tensor): Labels of each batch.
+            pts_semantic_mask (None | torch.Tensor): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | torch.Tensor): point-wise instance
+            pts_instance_mask (None | torch.Tensor): Point-wise instance
                 label of each batch.
             aggregated_points (torch.Tensor): Aggregated points from
                 vote aggregation layer.
@@ -496,11 +497,11 @@ class VoteHead(nn.Module):
         Args:
             points (torch.Tensor): Input points.
             bbox_preds (dict): Predictions from vote head.
-            input_metas (list[dict]): Contain pcd and img's meta info.
+            input_metas (list[dict]): Point cloud and image's meta info.
             rescale (bool): Whether to rescale bboxes.
 
         Returns:
-            list[tuple[torch.Tensor]]: Contain bbox, scores and labels.
+            list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
         # decode boxes
         obj_scores = F.softmax(bbox_preds['obj_scores'], dim=-1)[..., -1]
@@ -523,17 +524,17 @@ class VoteHead(nn.Module):
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta):
-        """multi-class nms in single batch.
+        """Multi-class nms in single batch.
 
         Args:
-            obj_scores (torch.Tensor): Objectness score of bboxes.
-            sem_scores (torch.Tensor): semantic class score of bboxes.
-            bbox (torch.Tensor): Predicted bbox.
+            obj_scores (torch.Tensor): Objectness score of bounding boxes.
+            sem_scores (torch.Tensor): semantic class score of bounding boxes.
+            bbox (torch.Tensor): Predicted bounding boxes.
             points (torch.Tensor): Input points.
-            input_meta (dict): Contain pcd and img's meta info.
+            input_meta (dict): Point cloud and image's meta info.
 
         Returns:
-            tuple[torch.Tensor]: Contain bbox, scores and labels.
+            tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
         bbox = input_meta['box_type_3d'](
             bbox,
