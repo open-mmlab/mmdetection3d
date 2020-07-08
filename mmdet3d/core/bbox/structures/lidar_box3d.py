@@ -10,6 +10,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
     """3D boxes of instances in LIDAR coordinates.
 
     Coordinates in LiDAR:
+
     .. code-block:: none
 
                             up z    x front (yaw=0.5*pi)
@@ -216,7 +217,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to `dst` mode.
 
         Args:
-            dst (BoxMode): the target Box mode
+            dst (:obj:`BoxMode`): the target Box mode
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -224,7 +225,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            BaseInstance3DBoxes:
+            :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the `dst` mode.
         """
         from .box_3d_mode import Box3DMode
@@ -238,7 +239,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             extra_width (float | torch.Tensor): extra width to enlarge the box
 
         Returns:
-            :obj:LiDARInstance3DBoxes: enlarged boxes
+            :obj:`LiDARInstance3DBoxes`: enlarged boxes
         """
         enlarged_boxes = self.tensor.clone()
         enlarged_boxes[:, 3:6] += extra_width * 2
@@ -250,7 +251,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Find the box which the points are in.
 
         Args:
-            points (:obj:torch.Tensor): Points in shape Nx3
+            points (torch.Tensor): Points in shape Nx3
 
         Returns:
             torch.Tensor: The index of box where each point are in.

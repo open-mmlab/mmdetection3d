@@ -66,11 +66,13 @@ class VoteModule(nn.Module):
         """forward.
 
         Args:
-            seed_points (Tensor): (B, N, 3) coordinate of the seed points.
-            seed_feats (Tensor): (B, C, N) features of the seed points.
+            seed_points (torch.Tensor): (B, N, 3) coordinate of the seed
+                points.
+            seed_feats (torch.Tensor): (B, C, N) features of the seed points.
 
         Returns:
-            tuple[Tensor]:
+            tuple[torch.Tensor]:
+
                 - vote_points: Voted xyz based on the seed points
                     with shape (B, M, 3) M=num_seed*vote_per_seed.
                 - vote_features: Voted features based on the seed points with
@@ -106,14 +108,14 @@ class VoteModule(nn.Module):
         """Calculate loss of voting module.
 
         Args:
-            seed_points (Tensor): coordinate of the seed points.
-            vote_points (Tensor): coordinate of the vote points.
-            seed_indices (Tensor): indices of seed points in raw points.
-            vote_targets_mask (Tensor): mask of valid vote targets.
-            vote_targets (Tensor): targets of votes.
+            seed_points (torch.Tensor): coordinate of the seed points.
+            vote_points (torch.Tensor): coordinate of the vote points.
+            seed_indices (torch.Tensor): indices of seed points in raw points.
+            vote_targets_mask (torch.Tensor): mask of valid vote targets.
+            vote_targets (torch.Tensor): targets of votes.
 
         Returns:
-            Tensor: weighted vote loss.
+            torch.Tensor: weighted vote loss.
         """
         batch_size, num_seed = seed_points.shape[:2]
 

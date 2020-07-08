@@ -9,6 +9,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     """3D boxes of instances in CAM coordinates.
 
     Coordinates in camera:
+
     .. code-block:: none
 
                 z front (yaw=0.5*pi)
@@ -124,7 +125,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: A nx5 tensor of 2D BEV box of each box.
+            torch.Tensor: A n x 5 tensor of 2D BEV box of each box.
                 The box is in XYWHR format.
         """
         return self.tensor[:, [0, 2, 3, 5, 6]]
@@ -249,8 +250,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:BaseInstanceBoxes): Boxes 1 contain N boxes.
-            boxes2 (:obj:BaseInstanceBoxes): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
@@ -278,7 +279,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to `dst` mode.
 
         Args:
-            dst (BoxMode): The target Box mode.
+            dst (:obj:`BoxMode`): The target Box mode.
             rt_mat (np.dnarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates

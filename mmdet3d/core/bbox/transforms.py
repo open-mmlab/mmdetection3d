@@ -2,7 +2,17 @@ import torch
 
 
 def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
-    """Map bboxes from testing scale to original image scale."""
+    """Map bboxes from testing scale to original image scale.
+
+    Args:
+        bboxes (:obj:`BaseInstance3DBoxes`): Boxes to be mapped back.
+        scale_factor (float): Scale factor.
+        flip_horizontal (bool): Whether to flip horizontally.
+        flip_vertical (bool): Whether to flip vertically.
+
+    Returns:
+        :obj:`BaseInstance3DBoxes`: Boxes mapped back.
+    """
     new_bboxes = bboxes.clone()
     if flip_horizontal:
         new_bboxes.flip('horizontal')
@@ -44,7 +54,11 @@ def bbox3d2result(bboxes, scores, labels):
         scores (torch.Tensor): shape (n, )
 
     Returns:
-        dict(torch.Tensor): Bbox results in cpu mode.
+        dict[str, torch.Tensor]: Bbox results in cpu mode.
+
+            - boxes_3d (torch.Tensor): 3D boxes
+            - scores (torch.Tensor): prediction scores
+            - labels_3d (torch.Tensor): box labels
     """
     return dict(
         boxes_3d=bboxes.to('cpu'),

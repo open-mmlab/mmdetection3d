@@ -14,14 +14,14 @@ class BaseInstance3DBoxes(object):
         the box is (0.5, 0.5, 0).
 
     Args:
-        tensor (torch.Tensor | np.ndarray | list): a Nxbox_dim matrix.
+        tensor (torch.Tensor | np.ndarray | list): a N x box_dim matrix.
         box_dim (int): number of the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw).
             Default to 7.
         with_yaw (bool): Whether the box is with yaw rotation.
             If False, the value of yaw will be set to 0 as minmax boxes.
             Default to True.
-        origin (tuple): The relative position of origin in the box.
+        origin (tuple[float]): The relative position of origin in the box.
             Default to (0.5, 0.5, 0). This will guide the box be converted to
             (0.5, 0.5, 0) mode.
     """
@@ -228,7 +228,7 @@ class BaseInstance3DBoxes(object):
         """Convert self to `dst` mode.
 
         Args:
-            dst (BoxMode): the target Box mode
+            dst (:obj:`BoxMode`): the target Box mode
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -236,7 +236,7 @@ class BaseInstance3DBoxes(object):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            BaseInstance3DBoxes:
+            A new object of :class:`xxx` after indexing:
                 The converted box of the same type in the `dst` mode.
         """
         pass
@@ -295,8 +295,7 @@ class BaseInstance3DBoxes(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            BaseInstance3DBoxes: Create a new :class:`BaseInstance3DBoxes`
-                by indexing.
+            A new object of :class:`BaseInstances3DBoxes` after indexing.
         """
         original_type = type(self)
         if isinstance(item, int):
@@ -322,10 +321,10 @@ class BaseInstance3DBoxes(object):
         """Concatenates a list of Boxes into a single Boxes.
 
         Args:
-            boxes_list (list[Boxes]): List of boxes.
+            boxes_list (list[:obj:`BaseInstances3DBoxes`]): List of boxes.
 
         Returns:
-            Boxes: The concatenated Boxes.
+            :obj:`BaseInstances3DBoxes`: The concatenated Boxes.
         """
         assert isinstance(boxes_list, (list, tuple))
         if len(boxes_list) == 0:
@@ -360,7 +359,8 @@ class BaseInstance3DBoxes(object):
         """Clone the Boxes.
 
         Returns:
-            BaseInstance3DBoxes: Box object with the same properties as self.
+            :obj:`BaseInstance3DBoxes`: Box object with the same properties
+                as self.
         """
         original_type = type(self)
         return original_type(
@@ -388,8 +388,8 @@ class BaseInstance3DBoxes(object):
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:BaseInstanceBoxes): Boxes 1 contain N boxes.
-            boxes2 (:obj:BaseInstanceBoxes): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
@@ -420,8 +420,8 @@ class BaseInstance3DBoxes(object):
             boxes1 and boxes2 are not necessarily to be in the same type.
 
         Args:
-            boxes1 (:obj:BaseInstanceBoxes): Boxes 1 contain N boxes.
-            boxes2 (:obj:BaseInstanceBoxes): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
@@ -479,7 +479,7 @@ class BaseInstance3DBoxes(object):
                 returned Tensor copies.
 
         Returns:
-            BaseInstance3DBoxes: A new bbox with data and other
+            :obj:`BaseInstance3DBoxes`: A new bbox with data and other
                 properties are similar to self.
         """
         new_tensor = self.tensor.new_tensor(data) \

@@ -139,7 +139,7 @@ class PartA2RPNHead(Anchor3DHead):
             mlvl_anchors (List[torch.Tensor]): Multi-level anchors
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
-            cfg (None | ConfigDict): Training or testing config.
+            cfg (None | :obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:
@@ -236,7 +236,7 @@ class PartA2RPNHead(Anchor3DHead):
                 Multi-level bbox.
             score_thr (int): Score threshold.
             max_num (int): Max number of bboxes after nms.
-            cfg (None | ConfigDict): Training or testing config.
+            cfg (None | :obj:`ConfigDict`): Training or testing config.
             input_meta (dict): Contain pcd and img's meta info.
 
         Returns:
