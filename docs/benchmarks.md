@@ -10,7 +10,7 @@ with some other open source 3D detection codebases.
 * Software: Python 3.7, CUDA 10.1, cuDNN 7.6.5, PyTorch 1.3, numba 0.48.0.
 * Model: Since all the other codebases implements different models, we compare the corresponding models including SECOND, PointPillars, Part-A2, and VoteNet with them separately.
 * Metrics: We use the average throughput in iterations of the entire training run and skip the first 50 iterations of each epoch to skip GPU warmup time.
-  Note that the throughput of a detector typically changes during training, because it depends on the predictions of the model.
+  For `single GPU inference speed`, we calculate the FPS in 2000 iterations after 5 warmup iterations.
 
 ## Main Results
 
@@ -47,15 +47,16 @@ Since [Det3D](https://github.com/poodarchu/Det3D/) only provides PointPillars on
 
 [OpenPCDet](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2) only provides PointPillars
 on 3 classes, we compare the training speed of multi-class PointPillars here.
+Note that we reimplement voxelization process on GPU using PyTorch, so the voxelization time is taken into count, however, other codebases apply voxelization in the data preprocessing and do not take this time into FPS calculation. Therefore we report two inference speed, with or without the voxelization time and compare with other codebases without calculating voxelization in the column of ``Calibrated Testing``.
 
 ```eval_rst
-+----------------+---------------------+--------------------+
-| Implementation | Training (sample/s) | Testing (sample/s) |
-+================+=====================+====================+
-| MMDetection3D  |         107         |                    |
-+----------------+---------------------+--------------------+
-| OpenPCDet      |         44          |        67          |
-+----------------+---------------------+--------------------+
++----------------+---------------------+--------------------+-------------------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) | Calibrated Testing (sample/s) |
++================+=====================+====================+===============================+
+| MMDetection3D  |         107         |        45          |              65               |
++----------------+---------------------+--------------------+-------------------------------+
+| OpenPCDet      |         44          |        -           |              59               |
++----------------+---------------------+--------------------+-------------------------------+
 ```
 
 ### SECOND
@@ -66,13 +67,13 @@ condition following the KITTI benchmark and compare average AP over all classes 
 performance on 3 classes.
 
 ```eval_rst
-+----------------+---------------------+--------------------+
-| Implementation | Training (sample/s) | Testing (sample/s) |
-+================+=====================+====================+
-| MMDetection3D  |         40          |                    |
-+----------------+---------------------+--------------------+
-| OpenPCDet      |         30          |         32         |
-+----------------+---------------------+--------------------+
++----------------+---------------------+--------------------+-------------------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) | Calibrated Testing (sample/s) |
++================+=====================+====================+===============================+
+| MMDetection3D  |         40          |         25         |              30               |
++----------------+---------------------+--------------------+-------------------------------+
+| OpenPCDet      |         30          |         -          |              27               |
++----------------+---------------------+--------------------+-------------------------------+
 ```
 
 ### Part-A2
@@ -81,13 +82,13 @@ We benchmark Part-A2 with that in [OpenPCDet](https://github.com/open-mmlab/Open
 and compare average AP over all classes on moderate condition for performance on 3 classes.
 
 ```eval_rst
-+----------------+---------------------+--------------------+
-| Implementation | Training (sample/s) | Testing (sample/s) |
-+================+=====================+====================+
-| MMDetection3D  |         17          |                    |
-+----------------+---------------------+--------------------+
-| OpenPCDet      |         14          |         13         |
-+----------------+---------------------+--------------------+
++----------------+---------------------+--------------------+-------------------------------+
+| Implementation | Training (sample/s) | Testing (sample/s) | Calibrated Testing (sample/s) |
++================+=====================+====================+===============================+
+| MMDetection3D  |         17          |         16         |              18               |
++----------------+---------------------+--------------------+-------------------------------+
+| OpenPCDet      |         14          |         -          |              12               |
++----------------+---------------------+--------------------+-------------------------------+
 ```
 
 ## Details of Comparison
@@ -271,7 +272,7 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-  python tools/benchmark.py configs/benchmark/hv_pointpillars_secfpn_3x8 ${CHECKPOINT}
+  python tools/benchmark.py configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py ${CHECKPOINT}
   ```
 
 * __Det3D__: At commit 519251e, use kitti_point_pillars_mghead_syncbn.py and run
