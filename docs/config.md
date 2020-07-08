@@ -6,13 +6,13 @@ You may also pass `--options xxx.yyy=zzz` to see updated config.
 ## Config File Structure
 
 There are 4 basic component types under `config/_base_`, dataset, model, schedule, default_runtime.
-Many methods could be easily constructed with one of each like Faster R-CNN, Mask R-CNN, Cascade R-CNN, RPN, SSD.
+Many methods could be easily constructed with one of each like SECOND, PointPillars, PartA2 and VoteNet.
 The configs that are composed by components from `_base_` are called _primitive_.
 
 For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
 
 For easy understanding, we recommend contributors to inherit from exiting methods.
-For example, if some modification is made base on Faster R-CNN, user may first inherit the basic Faster R-CNN structure by specifying `_base_ = ../faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py`, then modify the necessary fields in the config files.
+For example, if some modification is made based on PointPillars, user may first inherit the basic PointPillars structure by specifying `_base_ = ../pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py`, then modify the necessary fields in the config files.
 
 If you are building an entirely new method that does not share the structure with any of the existing methods, you may create a folder `xxx_rcnn` under `configs`,
 
@@ -28,133 +28,20 @@ We follow the below style to name config files. Contributors are advised to foll
 
 `{xxx}` is required field and `[yyy]` is optional.
 
-- `{model}`: model type like `faster_rcnn`, `mask_rcnn`, etc.
-- `[model setting]`: specific setting for some model, like `without_semantic` for `htc`, `moment` for `reppoints`, etc.
-- `{backbone}`: backbone type like `r50` (ResNet-50), `x101` (ResNeXt-101).
-- `{neck}`: neck type like `fpn`, `pafpn`, `nasfpn`, `c4`.
-- `[norm_setting]`: `bn` (Batch Normalization) is used unless specified, other norm layer type could be `gn` (Group Normalization), `syncbn` (Synchronized Batch Normalization).
+- `{model}`: model type like `hv_pointpillars` (Hard Voxelization PointPillars), `VoteNet`, etc.
+- `[model setting]`: specific setting for some model.
+- `{backbone}`: backbone type like `regnet-400mf`, `regnet-1.6gf`.
+- `{neck}`: neck type like `fpn`, `secfpn`.
+- `[norm_setting]`: `bn` (Batch Normalization) is used unless specified, other norm layer type could be `gn` (Group Normalization), `sbn` (Synchronized Batch Normalization).
 `gn-head`/`gn-neck` indicates GN is applied in head/neck only, while `gn-all` means GN is applied in the entire model, e.g. backbone, neck, head.
-- `[misc]`: miscellaneous setting/plugins of model, e.g. `dconv`, `gcb`, `attention`, `albu`, `mstrain`.
-- `[gpu x batch_per_gpu]`: GPUs and samples per GPU, `8x2` is used by default.
+- `[misc]`: miscellaneous setting/plugins of model, e.g. `strong-aug` means using stronger augmentation strategies for training.
+- `[batch_per_gpu x gpu]`: GPUs and samples per GPU, `4x8` is used by default.
 - `{schedule}`: training schedule, options are `1x`, `2x`, `20e`, etc.
 `1x` and `2x` means 12 epochs and 24 epochs respectively.
 `20e` is adopted in cascade models, which denotes 20 epochs.
 For `1x`/`2x`, initial learning rate decays by a factor of 10 at the 8/16th and 11/22th epochs.
 For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
-- `{dataset}`: dataset like `coco`, `cityscapes`, `voc_0712`, `wider_face`.
-
-## FAQ
-
-### Ignore some fields in the base configs
-
-Sometimes, you may set `_delete_=True` to ignore some of fields in base configs.
-You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple inllustration.
-
-In MMDetection or MMDetection3D, for example, to change the backbone of Mask R-CNN with the following config.
-
-```python
-model = dict(
-    type='MaskRCNN',
-    pretrained='torchvision://resnet50',
-    backbone=dict(
-        type='ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True),
-        norm_eval=True,
-        style='pytorch'),
-    neck=dict(...),
-    rpn_head=dict(...),
-    roi_head=dict(...))
-```
-
-`ResNet` and `HRNet` use different keywords to construct.
-
-```python
-_base_ = '../mask_rcnn/mask_rcnn_r50_fpn_1x_coco.py'
-model = dict(
-    pretrained='open-mmlab://msra/hrnetv2_w32',
-    backbone=dict(
-        _delete_=True,
-        type='HRNet',
-        extra=dict(
-            stage1=dict(
-                num_modules=1,
-                num_branches=1,
-                block='BOTTLENECK',
-                num_blocks=(4, ),
-                num_channels=(64, )),
-            stage2=dict(
-                num_modules=1,
-                num_branches=2,
-                block='BASIC',
-                num_blocks=(4, 4),
-                num_channels=(32, 64)),
-            stage3=dict(
-                num_modules=4,
-                num_branches=3,
-                block='BASIC',
-                num_blocks=(4, 4, 4),
-                num_channels=(32, 64, 128)),
-            stage4=dict(
-                num_modules=3,
-                num_branches=4,
-                block='BASIC',
-                num_blocks=(4, 4, 4, 4),
-                num_channels=(32, 64, 128, 256)))),
-    neck=dict(...))
-```
-
-The `_delete_=True` would replace all old keys in `backbone` field with new keys new keys.
-
-### Use intermediate variables in configs
-
-Some intermediate variables are used in the configs files, like `train_pipeline`/`test_pipeline` in datasets.
-It's worth noting that when modifying intermediate variables in the children configs, user need to pass the intermediate variables into corresponding fields again.
-For example, we would like to use multi scale strategy to train a Mask R-CNN. `train_pipeline`/`test_pipeline` are intermediate variable we would like modify.
-```python
-_base_ = './mask_rcnn_r50_fpn_1x_coco.py'
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
-train_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(
-        type='Resize',
-        img_scale=[(1333, 640), (1333, 672), (1333, 704), (1333, 736),
-                   (1333, 768), (1333, 800)],
-        multiscale_mode="value",
-        keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels', 'gt_masks']),
-]
-test_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1333, 800),
-        flip=False,
-        transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='ImageToTensor', keys=['img']),
-            dict(type='Collect', keys=['img']),
-        ])
-]
-data = dict(
-    train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
-```
-We first define the new `train_pipeline`/`test_pipeline` and pass them into `data`.
-
+- `{dataset}`: dataset like `nus-3d`, `kitti-3d`, `lyft-3d`, `scannet-3d`, `sunrgbd-3d`. We also indicate the number of classes we are using if there exist multiple settings, e.g., `kitti-3d-3class` and `kitti-3d-car` means training on KITTI dataset with 3 classes and single class, respectively.
 
 ## An example of VoteNet
 
@@ -456,3 +343,118 @@ resume_from = None  # Resume checkpoints from a given path, the training will be
 workflow = [('train', 1)]  # Workflow for runner. [('train', 1)] means there is only one workflow and the workflow named 'train' is executed once. The workflow trains the model by 36 epochs according to the total_epochs.
 gpu_ids = range(0, 1)  # ids of gpus
 ```
+
+## FAQ
+
+### Ignore some fields in the base configs
+
+Sometimes, you may set `_delete_=True` to ignore some of fields in base configs.
+You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple inllustration.
+
+In MMDetection or MMDetection3D, for example, to change the FPN neck of PointPillars with the following config.
+
+```python
+model = dict(
+    type='MVXFasterRCNN',
+    pts_voxel_layer=dict(...),
+    pts_voxel_encoder=dict(...),
+    pts_middle_encoder=dict(...),
+    pts_backbone=dict(...),
+    pts_neck=dict(
+        type='FPN',
+        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
+        act_cfg=dict(type='ReLU'),
+        in_channels=[64, 128, 256],
+        out_channels=256,
+        start_level=0,
+        num_outs=3),
+    pts_bbox_head=dict(...))
+```
+
+`FPN` and `SECONDFPN` use different keywords to construct.
+
+```python
+_base_ = '../_base_/models/hv_pointpillars_fpn_nus.py'
+model = dict(
+    pts_neck=dict(
+        _delete_=True,
+        type='SECONDFPN',
+        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
+        in_channels=[64, 128, 256],
+        upsample_strides=[1, 2, 4],
+        out_channels=[128, 128, 128]),
+    pts_bbox_head=dict(...))
+```
+
+The `_delete_=True` would replace all old keys in `pts_neck` field with new keys.
+
+### Use intermediate variables in configs
+
+Some intermediate variables are used in the configs files, like `train_pipeline`/`test_pipeline` in datasets.
+It's worth noting that when modifying intermediate variables in the children configs, user needs to pass the intermediate variables into corresponding fields again.
+For example, we would like to use multi scale strategy to train and test a PointPillars. `train_pipeline`/`test_pipeline` are intermediate variable we would like modify.
+
+```python
+_base_ = './nus-3d.py'
+train_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.3925, 0.3925],
+        scale_ratio_range=[0.95, 1.05],
+        translation_std=[0, 0, 0]),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='PointShuffle'),
+    dict(type='DefaultFormatBundle3D', class_names=class_names),
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+]
+test_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
+    dict(
+        type='MultiScaleFlipAug3D',
+        img_scale=(1333, 800),
+        pts_scale_ratio=[0.95, 1.0, 1.05],
+        flip=False,
+        transforms=[
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1., 1.],
+                translation_std=[0, 0, 0]),
+            dict(type='RandomFlip3D'),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=class_names,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ])
+]
+data = dict(
+    train=dict(pipeline=train_pipeline),
+    val=dict(pipeline=test_pipeline),
+    test=dict(pipeline=test_pipeline))
+```
+
+We first define the new `train_pipeline`/`test_pipeline` and pass them into `data`.
