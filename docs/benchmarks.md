@@ -37,9 +37,9 @@ Since [Det3D](https://github.com/poodarchu/Det3D/) only provides PointPillars on
 +----------------+---------------------+--------------------+
 | Implementation | Training (sample/s) | Testing (sample/s) |
 +================+=====================+====================+
-| MMDetection3D  |         141         |                    |
+| MMDetection3D  |         141         |        44          |
 +----------------+---------------------+--------------------+
-| Det3D          |         140         |        20          |
+| Det3D          |         140         |        24          |
 +----------------+---------------------+--------------------+
 ```
 
@@ -96,7 +96,7 @@ and compare average AP over all classes on moderate condition for performance on
 
 * __MMDetection3D__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark).
 
-* __Det3D__: For comparison with Det3D, we use the commit [255c593]().
+* __Det3D__: For comparison with Det3D, we use the commit [519251e](https://github.com/poodarchu/Det3D/tree/519251e72a5c1fdd58972eabeac67808676b9bb7).
 
 * __OpenPCDet__: For comparison with OpenPCDet, we use the commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2).
 
@@ -245,7 +245,7 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  python tools/benchmark.py configs/votenet/votenet_16x8_sunrgbd-3d-10class.py ${CHECKPOINTS}
   ```
 
 * __votenet__: At commit 2f6d6d3, run
@@ -257,8 +257,7 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-  cd tools
-  ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/pointpillar.yaml --batch_size 32  --workers 32
+  python eval.py --dataset sunrgbd --checkpoint_path log_sunrgbd/checkpoint.tar --batch_size 1 --dump_dir eval_sunrgbd --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal
   ```
 
 ### Single-class PointPillars
@@ -266,16 +265,16 @@ and compare average AP over all classes on moderate condition for performance on
 * __MMDetection3D__: With release v0.1.0, run
 
   ```bash
-  /tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
+  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
   ```
 
   Then benchmark the test speed by running
 
   ```bash
-
+  python tools/benchmark.py configs/benchmark/hv_pointpillars_secfpn_3x8 ${CHECKPOINT}
   ```
 
-* __Det3D__: At commit 255c593, use kitti_point_pillars_mghead_syncbn.py and run
+* __Det3D__: At commit 519251e, use kitti_point_pillars_mghead_syncbn.py and run
 
   ```bash
   ./tools/scripts/train.sh --launcher=slurm --gpus=8
@@ -312,7 +311,60 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
+  ./tools/scripts/test.sh examples/point_pillars/configs/kitti_point_pillars_mghead_syncbn.py ./work_dir/Point_Pillars/latest.pth
+  ```
 
+   Note that the `tools/dist_test.py` is modified to benchmark point pillars.
+
+  <details>
+  <summary>
+  (diff to benchmark the similar models - click to expand)
+  </summary>
+
+  ```diff
+  diff --git a/tools/dist_test.py b/tools/dist_test.py
+    index 3e37f8a..0908fee 100644
+    --- a/tools/dist_test.py
+    +++ b/tools/dist_test.py
+    @@ -3,6 +3,7 @@ import json
+     import os
+     import sys
+
+    +import time
+     import apex
+     import numpy as np
+     import torch
+    @@ -128,12 +129,26 @@ def main():
+
+         detections = {}
+         cpu_device = torch.device("cpu")
+    +    sample_time = list()
+
+         for i, data_batch in enumerate(data_loader):
+             with torch.no_grad():
+    +
+    +            torch.cuda.synchronize()
+    +            start_time = time.perf_counter()
+    +
+                 outputs = batch_processor(
+                     model, data_batch, train_mode=False, local_rank=args.local_rank,
+                 )
+    +
+    +            torch.cuda.synchronize()
+    +            elapsed = time.perf_counter() - start_time
+    +            sample_time.append(elapsed)
+    +            if i == 2006:
+    +                st_arr = np.array(sample_time)[5:]
+    +
+    +                print('avg time elapsed: %f s'%st_arr.mean())
+    +
+             for output in outputs:
+                 token = output["metadata"]["token"]
+                 for k, v in output.items():
+    @@ -185,3 +200,4 @@ def main():
+
+     if __name__ == "__main__":
+         main()
   ```
 
 ### Multi-class PointPillars
