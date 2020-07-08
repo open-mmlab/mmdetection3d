@@ -243,6 +243,7 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -254,8 +255,10 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
-  ```bash
 
+  ```bash
+  cd tools
+  ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/pointpillar.yaml --batch_size 32  --workers 32
   ```
 
 ### Single-class PointPillars
@@ -267,6 +270,7 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -306,6 +310,7 @@ and compare average AP over all classes on moderate condition for performance on
   </details>
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -319,6 +324,7 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -331,6 +337,7 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -344,6 +351,7 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -352,10 +360,11 @@ and compare average AP over all classes on moderate condition for performance on
 
   ```bash
   cd tools
-  sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/second.yaml --batch_size 32  --workers 32
+  ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/second.yaml --batch_size 32  --workers 32
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -369,6 +378,7 @@ and compare average AP over all classes on moderate condition for performance on
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
@@ -377,10 +387,11 @@ and compare average AP over all classes on moderate condition for performance on
 
   ```bash
   cd tools
-  sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/PartA2.yaml --batch_size 32 --workers 32
+  ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/PartA2.yaml --batch_size 32 --workers 32
   ```
 
   Then benchmark the test speed by running
+
   ```bash
 
   ```
