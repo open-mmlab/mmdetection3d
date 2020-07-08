@@ -423,15 +423,16 @@ class IndoorPointSample(object):
         Sample points to a certain number.
 
         Args:
-            points (ndarray): 3D Points.
+            points (np.ndarray): 3D Points.
             num_samples (int): Number of samples to be sampled.
             replace (bool): Whether the sample is with or without replacement.
             return_choices (bool): Whether return choice.
 
         Returns:
-            tuple (np.ndarray, np.ndarray) | np.ndarray:
-                points (np.ndarray): 3D Points.
-                choices (np.ndarray, optional): The generated random samples.
+            tuple[np.ndarray] | np.ndarray:
+
+                - points (np.ndarray): 3D Points.
+                - choices (np.ndarray, optional): The generated random samples.
         """
         if replace is None:
             replace = (points.shape[0] < num_samples)

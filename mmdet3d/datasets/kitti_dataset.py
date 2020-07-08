@@ -19,10 +19,10 @@ class KittiDataset(Custom3DDataset):
 
     This class serves as the API for experiments on the KITTI Dataset.
 
-    Please refer to `<http://www.cvlibs.net/datasets/kitti/eval_object.php?
-    obj_benchmark=3d>`_for data downloading. It is recommended to symlink
-    the dataset root to $MMDETECTION3D/data and organize them as the doc
-    shows.
+    Please refer to
+    `<http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d>`_
+    for data downloading. It is recommended to symlink the dataset root to
+    $MMDETECTION3D/data and organize them as the doc shows.
 
     Args:
         data_root (str): Path of dataset root.
@@ -461,14 +461,14 @@ class KittiDataset(Custom3DDataset):
         """Convert results to kitti format for evaluation and test submission.
 
         Args:
-            net_outputs (List[np.ndarray]): list of array storing the
+            net_outputs (list[np.ndarray]): list of array storing the
                 bbox and score
-            class_nanes (List[String]): A list of class names
+            class_nanes (list[String]): A list of class names
             pklfile_prefix (str | None): The prefix of pkl file.
             submission_prefix (str | None): The prefix of submission file.
 
         Returns:
-            List[dict]: A list of dict have the kitti format
+            list[dict]: A list of dict have the kitti format
         """
         assert len(net_outputs) == len(self.data_infos)
 
@@ -633,7 +633,7 @@ class KittiDataset(Custom3DDataset):
         """Results visualization.
 
         Args:
-            results (list[dict]): List of bounding boxes results.
+            results (list[dict]): list of bounding boxes results.
             out_dir (str): Output directory of visualization result.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'

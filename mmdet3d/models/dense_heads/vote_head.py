@@ -21,7 +21,7 @@ class VoteHead(nn.Module):
 
     Args:
         num_classes (int): The number of class.
-        bbox_coder (BaseBBoxCoder): Bbox coder for encoding and
+        bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.

@@ -14,12 +14,12 @@ def chamfer_distance(src,
     """Calculate Chamfer Distance of two sets.
 
     Args:
-        src (Tensor): Source set with shape [B, N, C] to
+        src (torch.Tensor): Source set with shape [B, N, C] to
             calculate Chamfer Distance.
-        dst (Tensor): Destination set with shape [B, M, C] to
+        dst (torch.Tensor): Destination set with shape [B, M, C] to
             calculate Chamfer Distance.
-        src_weight (Tensor or float): Weight of source loss.
-        dst_weight (Tensor or float): Weight of destination loss.
+        src_weight (torch.Tensor or float): Weight of source loss.
+        dst_weight (torch.Tensor or float): Weight of destination loss.
         criterion_mode (str): Criterion mode to calculate distance.
             The valid modes are smooth_l1, l1 or l2.
         reduction (str): Method to reduce losses.
@@ -27,12 +27,14 @@ def chamfer_distance(src,
 
     Returns:
         tuple: Source and Destination loss with indices.
-            - loss_src (Tensor): The min distance from source to destination.
-            - loss_dst (Tensor): The min distance from destination to source.
-            - indices1 (Tensor): Index the min distance point for each point
-                in source to destination.
-            - indices2 (Tensor): Index the min distance point for each point
-                in destination to source.
+            - loss_src (torch.Tensor): The min distance
+                from source to destination.
+            - loss_dst (torch.Tensor): The min distance
+                from destination to source.
+            - indices1 (torch.Tensor): Index the min distance point
+                for each point in source to destination.
+            - indices2 (torch.Tensor): Index the min distance point
+                for each point in destination to source.
     """
 
     if criterion_mode == 'smooth_l1':
@@ -106,14 +108,14 @@ class ChamferDistance(nn.Module):
         """Forward function of loss calculation.
 
         Args:
-            source (Tensor): Source set with shape [B, N, C] to
+            source (torch.Tensor): Source set with shape [B, N, C] to
                 calculate Chamfer Distance.
-            target (Tensor): Destination set with shape [B, M, C] to
+            target (torch.Tensor): Destination set with shape [B, M, C] to
                 calculate Chamfer Distance.
-            src_weight (Tensor | float, optional): Weight of source loss.
-                Defaults to 1.0.
-            dst_weight (Tensor | float, optional): Weight of destination loss.
-                Defaults to 1.0.
+            src_weight (torch.Tensor | float, optional):
+                Weight of source loss. Defaults to 1.0.
+            dst_weight (torch.Tensor | float, optional):
+                Weight of destination loss. Defaults to 1.0.
             reduction_override (str, optional): Method to reduce losses.
                 The valid reduction method are 'none', 'sum' or 'mean'.
                 Defaults to None.

@@ -14,7 +14,7 @@ def load_lyft_gts(lyft, data_root, eval_split, logger=None):
     """Loads ground truth boxes from database.
 
     Args:
-        lyft (:obj:``LyftDataset``): Lyft class in the sdk.
+        lyft (:obj:`LyftDataset`): Lyft class in the sdk.
         data_root (str): Root of data for reading splits.
         eval_split (str): Name of the split for evaluation.
         logger (logging.Logger | str | None): Logger used for printing
