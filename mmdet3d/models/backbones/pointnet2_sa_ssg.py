@@ -11,18 +11,18 @@ class PointNet2SASSG(nn.Module):
     """PointNet2 with Single-scale grouping.
 
     Args:
-        in_channels (int): input channels of point cloud.
-        num_points (tuple[int]): the number of points which each SA
+        in_channels (int): Input channels of point cloud.
+        num_points (tuple[int]): The number of points which each SA
             module samples.
-        radius (tuple[float]): sampling radii of each SA module.
-        num_samples (tuple[int]): the number of samples for ball
+        radius (tuple[float]): Sampling radii of each SA module.
+        num_samples (tuple[int]): The number of samples for ball
             query in each SA module.
-        sa_channels (tuple[tuple[int]]): out channels of each mlp in SA module.
-        fp_channels (tuple[tuple[int]]): out channels of each mlp in FP module.
-        norm_cfg (dict): config of normalization layer.
-        pool_mod (str): pool method ('max' or 'avg') for SA modules.
-        use_xyz (bool): whether to use xyz as a part of features.
-        normalize_xyz (bool): whether to normalize xyz with radii in
+        sa_channels (tuple[tuple[int]]): Out channels of each mlp in SA module.
+        fp_channels (tuple[tuple[int]]): Out channels of each mlp in FP module.
+        norm_cfg (dict): Config of normalization layer.
+        pool_mod (str): Pool method ('max' or 'avg') for SA modules.
+        use_xyz (bool): Whether to use xyz as a part of features.
+        normalize_xyz (bool): Whether to normalize xyz with radii in
             each SA module.
     """
 
@@ -96,12 +96,12 @@ class PointNet2SASSG(nn.Module):
         """Split coordinates and features of input points.
 
         Args:
-            points (Tensor): point coordinates with features,
+            points (torch.Tensor): Point coordinates with features,
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            Tensor: coordinates of input points.
-            Tensor: features of input points.
+            torch.Tensor: Coordinates of input points.
+            torch.Tensor: Features of input points.
         """
         xyz = points[..., 0:3].contiguous()
         if points.size(-1) > 3:
@@ -119,13 +119,13 @@ class PointNet2SASSG(nn.Module):
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict[str, list[torch.Tensor]]: outputs after SA and FP modules.
+            dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
 
-                - fp_xyz (list[torch.Tensor]): contains the coordinates of \
+                - fp_xyz (list[torch.Tensor]): The coordinates of \
                     each fp features.
-                - fp_features (list[torch.Tensor]): contains the features \
+                - fp_features (list[torch.Tensor]): The features \
                     from each Feature Propagate Layers.
-                - fp_indices (list[torch.Tensor]): contains indices of the \
+                - fp_indices (list[torch.Tensor]): Indices of the \
                     input points.
         """
         xyz, features = self._split_point_feats(points)

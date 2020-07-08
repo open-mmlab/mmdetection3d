@@ -30,9 +30,9 @@ class SUNRGBDDataset(Custom3DDataset):
             to its original format then converted them to `box_type_3d`.
             Defaults to 'Depth' in this dataset. Available options includes
 
-            - 'LiDAR': box in LiDAR coordinates
-            - 'Depth': box in depth coordinates, usually for indoor dataset
-            - 'Camera': box in camera coordinates
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -71,9 +71,9 @@ class SUNRGBDDataset(Custom3DDataset):
 
                 - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`): \
                     3D ground truth bboxes
-                - gt_labels_3d (np.ndarray): labels of ground truths
-                - pts_instance_mask_path (str): path of instance masks
-                - pts_semantic_mask_path (str): path of semantic masks
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - pts_instance_mask_path (str): Path of instance masks.
+                - pts_semantic_mask_path (str): Path of semantic masks.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]

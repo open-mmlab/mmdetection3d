@@ -10,12 +10,12 @@ class SECOND(nn.Module):
     """Backbone network for SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
-        in_channels (int): Input channels
-        out_channels (list[int]): Output channels for multi-scale feature maps
-        layer_nums (list[int]): Number of layers in each stage
-        layer_strides (list[int]): Strides of each stage
-        norm_cfg (dict): Config dict of normalization layers
-        conv_cfg (dict): Config dict of convolutional layers
+        in_channels (int): Input channels.
+        out_channels (list[int]): Output channels for multi-scale feature maps.
+        layer_nums (list[int]): Number of layers in each stage.
+        layer_strides (list[int]): Strides of each stage.
+        norm_cfg (dict): Config dict of normalization layers.
+        conv_cfg (dict): Config dict of convolutional layers.
     """
 
     def __init__(self,

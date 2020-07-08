@@ -142,6 +142,7 @@ def get_classwise_aps(gt, predictions, class_names, iou_thresholds):
     """Returns an array with an average precision per class.
 
     Note: Ground truth and predictions should have the following format.
+
     .. code-block::
 
     gt = [{
@@ -200,13 +201,13 @@ def get_single_class_aps(gt, predictions, iou_thresholds):
 
     Args:
         gt (list[dict]): list of dictionaries in the format described above.
-        predictions (list[dict]): list of dictionaries in the format
+        predictions (list[dict]): list of dictionaries in the format \
             described below.
-        iou_thresholds (list[float]): IOU thresholds used to calculate
+        iou_thresholds (list[float]): IOU thresholds used to calculate \
             TP / FN
 
     Returns:
-        tuple[np.ndarray]: returns (recalls, precisions, average precisions)
+        tuple[np.ndarray]: Returns (recalls, precisions, average precisions)
             for each class.
     """
     num_gts = len(gt)

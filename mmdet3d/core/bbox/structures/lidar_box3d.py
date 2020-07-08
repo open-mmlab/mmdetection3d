@@ -68,7 +68,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 (x0, y0, z0)
 
         Returns:
-            torch.Tensor: corners of each box with size (N, 8, 3)
+            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -93,8 +93,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: A nx5 tensor of 2D BEV box of each box.
-                The box is in XYWHR format
+            torch.Tensor: A nx5 tensor of 2D BEV box of each box. \
+                The box is in XYWHR format.
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
 

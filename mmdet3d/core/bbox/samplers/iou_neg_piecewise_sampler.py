@@ -14,15 +14,15 @@ class IoUNegPiecewiseSampler(RandomSampler):
     by `neg_piece_fractions`.
 
     Args:
-        num (int): number of proposals.
-        pos_fraction (float): the fraction of positive proposals.
-        neg_piece_fractions (list): a list contains fractions that indicates
+        num (int): Number of proposals.
+        pos_fraction (float): The fraction of positive proposals.
+        neg_piece_fractions (list): A list contains fractions that indicates
             the ratio of each piece of total negtive samplers.
-        neg_iou_piece_thrs (list): a list contains IoU thresholds that
+        neg_iou_piece_thrs (list): A list contains IoU thresholds that
             indicate the upper bound of this piece.
-        neg_pos_ub (float): the total ratio to limit the upper bound
-            number of negtive samples
-        add_gt_as_proposals (bool): whether to add gt as proposals.
+        neg_pos_ub (float): The total ratio to limit the upper bound
+            number of negtive samples.
+        add_gt_as_proposals (bool): Whether to add gt as proposals.
     """
 
     def __init__(self,
@@ -107,9 +107,10 @@ class IoUNegPiecewiseSampler(RandomSampler):
 
         Args:
             assign_result (:obj:`AssignResult`): Bbox assigning results.
-            bboxes (Tensor): Boxes to be sampled from.
-            gt_bboxes (Tensor): Ground truth bboxes.
-            gt_labels (Tensor, optional): Class labels of ground truth bboxes.
+            bboxes (torch.Tensor): Boxes to be sampled from.
+            gt_bboxes (torch.Tensor): Ground truth bboxes.
+            gt_labels (torch.Tensor, optional): Class labels of ground truth \
+                bboxes.
 
         Returns:
             :obj:`SamplingResult`: Sampling result.
