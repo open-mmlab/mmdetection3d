@@ -131,8 +131,8 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns None,
-                otherwise it returns the rotated points and the
+            tuple or None: When ``points`` is None, the function returns \
+                None, otherwise it returns the rotated points and the \
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
@@ -207,10 +207,9 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             In the original implementation of SECOND, checking whether
             a box in the range checks whether the points are in a convex
             polygon, we try to reduce the burdun for simpler cases.
-            TODO: check whether this will effect the performance
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside
+            torch.Tensor: Indicating whether each box is inside \
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -231,7 +230,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`:
+            :obj:`BaseInstance3DBoxes`: \
                 The converted box of the same type in the `dst` mode.
         """
         from .box_3d_mode import Box3DMode

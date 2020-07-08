@@ -140,8 +140,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             x (torch.Tensor): Input features.
 
         Returns:
-            tuple[torch.Tensor]: Contain score of each class, bbox predictions
-                and class predictions of direction.
+            tuple[torch.Tensor]: Contain score of each class, bbox \
+                regression and direction classification predictions.
         """
         cls_score = self.conv_cls(x)
         bbox_pred = self.conv_reg(x)
@@ -158,7 +158,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                 features produced by FPN.
 
         Returns:
-            tuple[list[torch.Tensor]]: Multi-level class score, bbox
+            tuple[list[torch.Tensor]]: Multi-level class score, bbox \
                 and direction predictions.
         """
         return multi_apply(self.forward_single, feats)
@@ -172,7 +172,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             device (str): device of current module
 
         Returns:
-            list[list[torch.Tensor]]: anchors of each image, valid flags
+            list[list[torch.Tensor]]: anchors of each image, valid flags \
                 of each image
         """
         num_imgs = len(input_metas)
@@ -202,7 +202,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             num_total_samples (int): The number of valid samples.
 
         Returns:
-            tuple[torch.Tensor]: losses of class, bbox
+            tuple[torch.Tensor]: losses of class, bbox \
                 and direction, respectively.
         """
         # classification loss
@@ -251,14 +251,14 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         """Convert the rotation difference to difference in sine function.
 
         Args:
-            boxes1 (torch.Tensor): shape (NxC), where C>=7 and
-                the 7th dimension is rotation dimension
-            boxes2 (torch.Tensor): shape (NxC), where C>=7 and the 7th
-                dimension is rotation dimension
+            boxes1 (torch.Tensor): Original Boxes in shape (NxC), where C>=7
+                and the 7th dimension is rotation dimension.
+            boxes2 (torch.Tensor): Target boxes in shape (NxC), where C>=7 and
+                the 7th dimension is rotation dimension.
 
         Returns:
-            tuple[torch.Tensor]: boxes1 and boxes2 whose 7th dimensions
-                are changed
+            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th \
+                dimensions are changed.
         """
         rad_pred_encoding = torch.sin(boxes1[..., 6:7]) * torch.cos(
             boxes2[..., 6:7])
@@ -293,12 +293,12 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                 which bounding.
 
         Returns:
-            dict[str, list[torch.Tensor]]: Classification, bbox, and direction
-                losses of each level.
+            dict[str, list[torch.Tensor]]: Classification, bbox, and \
+                direction losses of each level.
 
                 - loss_cls (list[torch.Tensor]): Classification losses.
                 - loss_bbox (list[torch.Tensor]): Box regression losses.
-                - loss_dir (list[torch.Tensor]): Direction classification
+                - loss_dir (list[torch.Tensor]): Direction classification \
                     losses.
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]

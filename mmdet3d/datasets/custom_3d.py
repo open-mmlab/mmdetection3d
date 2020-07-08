@@ -84,8 +84,8 @@ class Custom3DDataset(Dataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Standard input_dict consists of the
-                data information.
+            dict: Data information that will be passed to the data \
+                preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): sample index
                 - pts_filename (str): filename of point clouds
@@ -141,7 +141,7 @@ class Custom3DDataset(Dataset):
             index (int): Index for accessing the target data.
 
         Returns:
-            dict: Training data dict corresponding to the index.
+            dict: Training data dict of the corresponding index.
         """
         input_dict = self.get_data_info(index)
         if input_dict is None:
@@ -160,7 +160,7 @@ class Custom3DDataset(Dataset):
             index (int): Index for accessing the target data.
 
         Returns:
-            dict: Testing data dict corresponding to the index.
+            dict: Testing data dict of the corresponding index.
         """
         input_dict = self.get_data_info(index)
         self.pre_pipeline(input_dict)
@@ -207,9 +207,9 @@ class Custom3DDataset(Dataset):
                 If not specified, a temp file will be created. Default: None.
 
         Returns:
-            tuple: (outputs, tmp_dir), outputs is the detection results,
-                tmp_dir is the temporal directory created for saving json
-                files when jsonfile_prefix is not specified.
+            tuple: (outputs, tmp_dir), outputs is the detection results, \
+                tmp_dir is the temporal directory created for saving json \
+                files when ``jsonfile_prefix`` is not specified.
         """
         if pklfile_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()

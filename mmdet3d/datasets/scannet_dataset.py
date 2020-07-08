@@ -13,9 +13,8 @@ class ScanNetDataset(Custom3DDataset):
 
     This class serves as the API for experiments on the ScanNet Dataset.
 
-    Please refer to `<https://github.com/ScanNet/ScanNet>`_
-    for data downloading. It is recommended to symlink the dataset root to
-    $MMDETECTION3D/data and organize them as the doc shows.
+    Please refer to the `github repo <https://github.com/ScanNet/ScanNet>`_
+    for data downloading.
 
     Args:
         data_root (str): Path of dataset root.
@@ -70,10 +69,9 @@ class ScanNetDataset(Custom3DDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: Standard annotation dictionary
-                consists of the data information.
+            dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`):
+                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`): \
                     3D ground truth bboxes
                 - gt_labels_3d (np.ndarray): labels of ground truths
                 - pts_instance_mask_path (str): path of instance masks

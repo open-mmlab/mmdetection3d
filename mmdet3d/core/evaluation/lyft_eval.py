@@ -90,7 +90,7 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
     """Evaluation API for Lyft dataset.
 
     Args:
-        lyft (:obj:``LyftDataset``): Lyft class in the sdk.
+        lyft (:obj:`LyftDataset`): Lyft class in the sdk.
         data_root (str): Root of data for reading splits.
         res_path (str): Path of result json file recording detections.
         eval_set (str): Name of the split for evaluation.

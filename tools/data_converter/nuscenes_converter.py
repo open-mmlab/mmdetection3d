@@ -146,7 +146,7 @@ def _fill_trainval_infos(nusc,
     """Generate the train/val infos from the raw data.
 
     Args:
-        nusc (:obj:``NuScenes``): Dataset class in the nuScenes dataset.
+        nusc (:obj:`NuScenes`): Dataset class in the nuScenes dataset.
         train_scenes (list[str]): Basic information of training scenes.
         val_scenes (list[str]): Basic information of validation scenes.
         test (bool): Whether use the test mode. In the test mode, no

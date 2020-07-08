@@ -47,7 +47,7 @@ pages:
   stage: deploy
   script:
     - pip install numba==0.48.0
-    - pip install sphinx sphinx_rtd_theme recommonmark sphinx_markdown_tables
+    - pip install sphinx sphinx_rtd_theme recommonmark sphinx_markdown_tables m2r
     - cd docs
     - make html
     - cd ..

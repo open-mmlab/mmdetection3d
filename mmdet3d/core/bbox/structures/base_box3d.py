@@ -195,11 +195,10 @@ class BaseInstance3DBoxes(object):
             In the original implementation of SECOND, checking whether
             a box in the range checks whether the points are in a convex
             polygon, we try to reduce the burdun for simpler cases.
-            TODO: check whether this will effect the performance
 
         Returns:
-            a binary vector, indicating whether each box is inside
-            the reference range.
+            torch.Tensor: A binary vector indicating whether each box is \
+                inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
                           & (self.tensor[:, 1] > box_range[1])
@@ -214,8 +213,8 @@ class BaseInstance3DBoxes(object):
         """Check whether the boxes are in the given range.
 
         Args:
-            box_range (list | torch.Tensor): the range of box
-                (x_min, y_min, x_max, y_max)
+            box_range (list | torch.Tensor): The range of box
+                in order of (x_min, y_min, x_max, y_max).
 
         Returns:
             torch.Tensor: Indicating whether each box is inside
@@ -236,7 +235,7 @@ class BaseInstance3DBoxes(object):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            A new object of :class:`xxx` after indexing:
+            A new object of :class:`BaseInstance3DBoxes` after indexing: \
                 The converted box of the same type in the `dst` mode.
         """
         pass
@@ -269,7 +268,7 @@ class BaseInstance3DBoxes(object):
             threshold (float): The threshold of minimal sizes.
 
         Returns:
-            torch.Tensor: A binary vector which represents whether each
+            torch.Tensor: A binary vector which represents whether each \
                 box is empty (False) or non-empty (True).
         """
         box = self.tensor
@@ -359,7 +358,7 @@ class BaseInstance3DBoxes(object):
         """Clone the Boxes.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: Box object with the same properties
+            :obj:`BaseInstance3DBoxes`: Box object with the same properties \
                 as self.
         """
         original_type = type(self)
@@ -479,7 +478,7 @@ class BaseInstance3DBoxes(object):
                 returned Tensor copies.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: A new bbox with data and other
+            :obj:`BaseInstance3DBoxes`: A new bbox with data and other \
                 properties are similar to self.
         """
         new_tensor = self.tensor.new_tensor(data) \

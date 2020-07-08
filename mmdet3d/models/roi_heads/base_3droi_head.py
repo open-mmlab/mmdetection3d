@@ -73,10 +73,10 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                 by 3D box structures.
             gt_labels (list[torch.LongTensor]): GT labels of each sample.
             gt_bboxes_ignore (list[torch.Tensor], optional):
-                Specify which bounding.
+                Ground truth boxes to be ignored.
 
         Returns:
-            dict: losses from each head.
+            dict[str, torch.Tensor]: losses from each head.
         """
         pass
 
