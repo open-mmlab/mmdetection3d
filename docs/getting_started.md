@@ -90,7 +90,7 @@ For using custom datasets, please refer to [Tutorials 2: Adding New Dataset](tut
 
 ## Inference with pretrained models
 
-We provide testing scripts to evaluate a whole dataset (COCO, PASCAL VOC, Cityscapes, etc.),
+We provide testing scripts to evaluate a whole dataset (SUNRGBD, ScanNet, KITTI, etc.),
 and also some high-level apis for easier integration to other projects.
 
 ### Test a dataset
@@ -208,34 +208,25 @@ python demo/pcd_demo.py demo/kitti_000008.bin configs/second/hv_second_secfpn_6x
 ```
 
 
-### High-level APIs for testing images
+### High-level APIs for testing point clouds
 
 #### Synchronous interface
-Here is an example of building the model and test given images.
+Here is an example of building the model and test given point clouds.
 
 ```python
-from mmdet.apis import init_detector, inference_detector
-import mmcv
+from mmdet3d.apis import init_detector, inference_detector
 
-config_file = 'configs/faster_rcnn_r50_fpn_1x_coco.py'
-checkpoint_file = 'checkpoints/faster_rcnn_r50_fpn_1x_20181010-3d1b3351.pth'
+config_file = 'configs/votenet/votenet_8x8_scannet-3d-18class.py'
+checkpoint_file = 'checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth'
 
 # build the model from a config file and a checkpoint file
 model = init_detector(config_file, checkpoint_file, device='cuda:0')
 
 # test a single image and show the results
-img = 'test.jpg'  # or img = mmcv.imread(img), which will only load it once
-result = inference_detector(model, img)
-# visualize the results in a new window
-model.show_result(img, result)
-# or save the visualization results to image files
-model.show_result(img, result, out_file='result.jpg')
-
-# test a video and show the results
-video = mmcv.VideoReader('video.mp4')
-for frame in video:
-    result = inference_detector(model, frame)
-    model.show_result(frame, result, wait_time=1)
+point_cloud = 'test.bin'
+result, data = inference_detector(model, point_cloud)
+# visualize the results and save the results in 'results' folder
+model.show_results(data, result, out_dir='results')
 ```
 
 A notebook demo can be found in [demo/inference_demo.ipynb](https://github.com/open-mmlab/mmdetection/blob/master/demo/inference_demo.ipynb).
