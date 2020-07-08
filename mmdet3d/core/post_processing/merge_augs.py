@@ -10,18 +10,18 @@ def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
     Args:
         aug_results (list[dict]): The dict of detection results.
             The dict contains the following keys
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): detection bbox
-            - scores_3d (torch.Tensor): detection scores
-            - labels_3d (torch.Tensor): predicted box labels
-        img_metas (list[dict]): Meta information of each sample
+            - boxes_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
+            - scores_3d (torch.Tensor): Detection scores.
+            - labels_3d (torch.Tensor): Predicted box labels.
+        img_metas (list[dict]): Meta information of each sample.
         test_cfg (dict): Test config.
 
     Returns:
-        dict: bbox results in cpu mode, containing the merged results
+        dict: Bounding boxes results in cpu mode, containing merged results.
 
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): merged detection bbox
-            - scores_3d (torch.Tensor): merged detection scores
-            - labels_3d (torch.Tensor): merged predicted box labels
+            - boxes_3d (:obj:`BaseInstance3DBoxes`): Merged detection bbox.
+            - scores_3d (torch.Tensor): Merged detection scores.
+            - labels_3d (torch.Tensor): Merged predicted box labels.
     """
 
     assert len(aug_results) == len(img_metas), \

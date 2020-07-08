@@ -10,14 +10,14 @@ class SparseEncoder(nn.Module):
     r"""Sparse encoder for SECOND and Part-A2.
 
     Args:
-        in_channels (int): the number of input channels
-        sparse_shape (list[int]): the sparse shape of input tensor
-        norm_cfg (dict): config of normalization layer
-        base_channels (int): out channels for conv_input layer
-        output_channels (int): out channels for conv_out layer
+        in_channels (int): The number of input channels.
+        sparse_shape (list[int]): The sparse shape of input tensor.
+        norm_cfg (dict): Config of normalization layer.
+        base_channels (int): Out channels for conv_input layer.
+        output_channels (int): Out channels for conv_out layer.
         encoder_channels (tuple[tuple[int]]):
-            conv channels of each encode block
-        encoder_paddings (tuple[tuple[int]]): paddings of each encode block
+            Convolutional channels of each encode block.
+        encoder_paddings (tuple[tuple[int]]): Paddings of each encode block.
     """
 
     def __init__(self,
@@ -82,12 +82,13 @@ class SparseEncoder(nn.Module):
         """Forward of SparseEncoder.
 
         Args:
-            voxel_features (torch.float32): shape [N, C]
-            coors (torch.int32): shape [N, 4](batch_idx, z_idx, y_idx, x_idx)
-            batch_size (int): batch size
+            voxel_features (torch.float32): Voxel features in shape (N, C).
+            coors (torch.int32): Coordinates in shape (N, 4), \
+                the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
+            batch_size (int): Batch size.
 
         Returns:
-            dict: backbone features
+            dict: Backbone features.
         """
         coors = coors.int()
         input_sp_tensor = spconv.SparseConvTensor(voxel_features, coors,
@@ -114,12 +115,12 @@ class SparseEncoder(nn.Module):
         """make encoder layers using sparse convs.
 
         Args:
-            make_block (method): a bounded function to build blocks
-            norm_cfg (dict[str]): config of normalization layer
-            in_channels (int): the number of encoder input channels
+            make_block (method): A bounded function to build blocks.
+            norm_cfg (dict[str]): Config of normalization layer.
+            in_channels (int): The number of encoder input channels.
 
         Returns:
-            int: the number of encoder output channels
+            int: The number of encoder output channels.
         """
         self.encoder_layers = spconv.SparseSequential()
 

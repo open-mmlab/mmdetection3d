@@ -58,8 +58,9 @@ def rotation_2d(points, angles):
     """Rotation 2d points based on origin point clockwise when angle positive.
 
     Args:
-        points (np.ndarray, shape=[N, point_size, 2]): points to be rotated.
-        angles (np.ndarray, shape=[N]): rotation angle.
+        points (np.ndarray): Points to be rotated with shape \
+            (N, point_size, 2).
+        angles (np.ndarray): Rotation angle with shape (N).
 
     Returns:
         np.ndarray: Same shape as points.
@@ -75,12 +76,12 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     format: center(xy), dims(xy), angles(clockwise when positive)
 
     Args:
-        centers (np.ndarray, shape=[N, 2]): locations in kitti label file.
-        dims (np.ndarray, shape=[N, 2]): dimensions in kitti label file.
-        angles (np.ndarray, shape=[N]): rotation_y in kitti label file.
+        centers (np.ndarray): Locations in kitti label file with shape (N, 2).
+        dims (np.ndarray): Dimensions in kitti label file with shape (N, 2).
+        angles (np.ndarray): Rotation_y in kitti label file with shape (N).
 
     Returns:
-        np.ndarray: Corners with the shape of [N, 4, 2].
+        np.ndarray: Corners with the shape of (N, 4, 2).
     """
     # 'length' in kitti format is in x axis.
     # xyz(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
@@ -146,15 +147,15 @@ def center_to_corner_box3d(centers,
     """Convert kitti locations, dimensions and angles to corners.
 
     Args:
-        centers (np.ndarray, shape=[N, 3]): Locations in kitti label file.
-        dims (np.ndarray, shape=[N, 3]): Dimensions in kitti label file.
-        angles (np.ndarray, shape=[N]): Rotation_y in kitti label file.
+        centers (np.ndarray): Locations in kitti label file with shape (N, 3).
+        dims (np.ndarray): Dimensions in kitti label file with shape (N, 3).
+        angles (np.ndarray): Rotation_y in kitti label file with shape (N).
         origin (list or array or float): Origin point relate to smallest point.
             use (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
         axis (int): Rotation axis. 1 for camera and 2 for lidar.
 
     Returns:
-        np.ndarray: Corners with the shape of [N, 8, 3].
+        np.ndarray: Corners with the shape of (N, 8, 3).
     """
     # 'length' in kitti format is in x axis.
     # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
@@ -209,11 +210,10 @@ def corner_to_surfaces_3d_jit(corners):
     normal vectors all direct to internal.
 
     Args:
-        corners (np.ndarray, [N, 8, 3]): 3d box corners
-            with the shape of [N, 8, 3].
+        corners (np.ndarray): 3d box corners with the shape of (N, 8, 3).
 
     Returns:
-        np.ndarray: Surfaces with the shape of [N, 6, 4, 3].
+        np.ndarray: Surfaces with the shape of (N, 6, 4, 3).
     """
     # box_corners: [N, 8, 3], must from corner functions in this module
     num_boxes = corners.shape[0]
@@ -275,10 +275,10 @@ def corner_to_surfaces_3d(corners):
     normal vectors all direct to internal.
 
     Args:
-        corners (np.ndarray, [N, 8, 3]): 3d box corners.
+        corners (np.ndarray): 3D box corners with shape of (N, 8, 3).
 
     Returns:
-        np.ndarray: Surfaces with the shape of [N, 6, 4, 3].
+        np.ndarray: Surfaces with the shape of (N, 6, 4, 3).
     """
     # box_corners: [N, 8, 3], must from corner functions in this module
     surfaces = np.array([
@@ -320,11 +320,20 @@ def create_anchors_3d_range(feature_size,
                             dtype=np.float32):
     """
     Args:
-        feature_size: list [D, H, W](zyx)
-        sizes: [N, 3] list of list or array, size of anchors, xyz
+        feature_size (list[float] | tuple[float]): Feature map size. It is
+            either a list of a tuple of [D, H, W](in order of z, y, and x).
+        anchor_range (torch.Tensor | list[float]): Range of anchors with
+            shape [6]. The order is consistent with that of anchors, i.e.,
+            (x_min, y_min, z_min, x_max, y_max, z_max).
+        sizes (list[list] | np.ndarray | torch.Tensor): Anchor size with
+            shape [N, 3], in order of x, y, z.
+        rotations (list[float] | np.ndarray | torch.Tensor): Rotations of
+            anchors in a single feature grid.
+        dtype (type): Data type. Default to np.float32.
 
     Returns:
-        np.ndarray: [*feature_size, num_sizes, num_rots, 7].
+        np.ndarray: Range based anchors with shape of \
+            (*feature_size, num_sizes, num_rots, 7).
     """
     anchor_range = np.array(anchor_range, dtype)
     z_centers = np.linspace(
@@ -366,11 +375,12 @@ def rbbox2d_to_near_bbox(rbboxes):
     """convert rotated bbox to nearest 'standing' or 'lying' bbox.
 
     Args:
-        rbboxes (np.ndarray): [N, 5(x, y, xdim, ydim, rad)] rotated bboxes.
+        rbboxes (np.ndarray): Rotated bboxes with shape of \
+            (N, 5(x, y, xdim, ydim, rad)).
 
     Returns:
-        np.ndarray: Bboxes with the shpae of
-            [N, 4(xmin, ymin, xmax, ymax)].
+        np.ndarray: Bounding boxes with the shpae of
+            (N, 4(xmin, ymin, xmax, ymax)).
     """
     rots = rbboxes[..., -1]
     rots_0_pi_div_2 = np.abs(limit_period(rots, 0.5, np.pi))
@@ -382,12 +392,12 @@ def rbbox2d_to_near_bbox(rbboxes):
 
 @numba.jit(nopython=True)
 def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
-    """Calculate box iou. note that jit version runs ~10x faster than the
+    """Calculate box iou. Note that jit version runs ~10x faster than the
     box_overlaps function in mmdet3d.core.evaluation.
 
     Args:
-        boxes (np.ndarray): (N, 4) ndarray of float
-        query_boxes (np.ndarray): (K, 4) ndarray of float
+        boxes (np.ndarray): Input bounding boxes with shape of (N, 4).
+        query_boxes (np.ndarray): Query boxes with shape of (K, 4).
 
     Returns:
         np.ndarray: Overlap between boxes and query_boxes
@@ -515,13 +525,13 @@ def points_in_convex_polygon_3d_jit(points,
     """Check points is in 3d convex polygons.
 
     Args:
-        points (np.ndarray): [num_points, 3] array.
-        polygon_surfaces (np.ndarray): [num_polygon, max_num_surfaces,
-            max_num_points_of_surface, 3]
-            array. all surfaces' normal vector must direct to internal.
-            max_num_points_of_surface must at least 3.
-        num_surfaces (np.ndarray): [num_polygon] array.
-            indicate how many surfaces a polygon contain
+        points (np.ndarray): Input points with shape of (num_points, 3).
+        polygon_surfaces (np.ndarray): Polygon surfaces with shape of \
+            (num_polygon, max_num_surfaces, max_num_points_of_surface, 3). \
+            All surfaces' normal vector must direct to internal. \
+            Max_num_points_of_surface must at least 3.
+        num_surfaces (np.ndarray): Number of surfaces a polygon contains \
+            shape of (num_polygon).
 
     Returns:
         np.ndarray: Result matrix with the shape of [num_points, num_polygon].
@@ -595,9 +605,10 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
       2 -------- 1
 
     Args:
-        boxes3d (np.ndarray): (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords,
-            see the definition of ry in KITTI dataset
-        bottom_center (bool): whether z is on the bottom center of object.
+        boxes3d (np.ndarray): Boxes with shape of (N, 7) \
+            [x, y, z, w, l, h, ry] in LiDAR coords, see the definition of ry \
+            in KITTI dataset.
+        bottom_center (bool): Whether z is on the bottom center of object.
 
     Returns:
         np.ndarray: Box corners with the shape of [N, 8, 3].

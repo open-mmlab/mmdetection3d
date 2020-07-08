@@ -13,17 +13,17 @@ class SparseUNet(nn.Module):
     See the `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
 
     Args:
-        in_channels (int): the number of input channels
-        sparse_shape (list[int]): the sparse shape of input tensor
-        norm_cfg (dict): config of normalization layer
-        base_channels (int): out channels for conv_input layer
-        output_channels (int): out channels for conv_out layer
+        in_channels (int): The number of input channels.
+        sparse_shape (list[int]): The sparse shape of input tensor.
+        norm_cfg (dict): Config of normalization layer.
+        base_channels (int): Out channels for conv_input layer.
+        output_channels (int): Out channels for conv_out layer.
         encoder_channels (tuple[tuple[int]]):
-            conv channels of each encode block
-        encoder_paddings (tuple[tuple[int]]): paddings of each encode block
+            Convolutional channels of each encode block.
+        encoder_paddings (tuple[tuple[int]]): Paddings of each encode block.
         decoder_channels (tuple[tuple[int]]):
-            conv channels of each decode block
-        decoder_paddings (tuple[tuple[int]]): paddings of each decode block
+            Convolutional channels of each decode block.
+        decoder_paddings (tuple[tuple[int]]): Paddings of each decode block.
     """
 
     def __init__(self,
@@ -194,7 +194,7 @@ class SparseUNet(nn.Module):
             in_channels (int): The number of encoder input channels.
 
         Returns:
-            int: the number of encoder output channels.
+            int: The number of encoder output channels.
         """
         self.encoder_layers = spconv.SparseSequential()
 

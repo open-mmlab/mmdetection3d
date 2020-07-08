@@ -27,8 +27,8 @@ class PartA2RPNHead(Anchor3DHead):
     Args:
         num_classes (int): Number of classes.
         in_channels (int): Number of channels in the input feature map.
-        train_cfg (dict): train configs
-        test_cfg (dict): test configs
+        train_cfg (dict): Train configs.
+        test_cfg (dict): Test configs.
         feat_channels (int): Number of channels of the feature map.
         use_direction_classifier (bool): Whether to add a direction classifier.
         anchor_generator(dict): Config dict of anchor generator.
@@ -96,10 +96,10 @@ class PartA2RPNHead(Anchor3DHead):
             bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Gt bboxes
+            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth boxes \
                 of each sample.
-            gt_labels (list[torch.Tensor]): Gt labels of each sample.
-            input_metas (list[dict]): Contain pcd and img's meta info.
+            gt_labels (list[torch.Tensor]): Labels of each sample.
+            input_metas (list[dict]): Point cloud and image's meta info.
             gt_bboxes_ignore (None | list[torch.Tensor]): Specify
                 which bounding.
 

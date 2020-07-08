@@ -16,7 +16,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class LyftDataset(Custom3DDataset):
-    """Lyft Dataset.
+    r"""Lyft Dataset.
 
     This class serves as the API for experiments on the Lyft Dataset.
 
@@ -40,9 +40,9 @@ class LyftDataset(Custom3DDataset):
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes
 
-            - 'LiDAR': box in LiDAR coordinates
-            - 'Depth': box in depth coordinates, usually for indoor dataset
-            - 'Camera': box in camera coordinates
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -185,12 +185,12 @@ class LyftDataset(Custom3DDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
-                    3D ground truth bboxes
-                - gt_labels_3d (np.ndarray): labels of ground truths
-                - gt_names (list[str]): class names of ground truths
+                    3D ground truth bboxes.
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - gt_names (list[str]): Class names of ground truths.
         """
         info = self.data_infos[index]
         gt_bboxes_3d = info['gt_boxes']

@@ -7,12 +7,12 @@ def limit_period(val, offset=0.5, period=np.pi):
 
     Args:
         val (torch.Tensor): The value to be converted.
-        offset (float, optional): Offset to set the value range.
+        offset (float, optional): Offset to set the value range. \
             Defaults to 0.5.
         period ([type], optional): Period of the value. Defaults to np.pi.
 
     Returns:
-        torch.Tensor: value in the range of \
+        torch.Tensor: Value in the range of \
             [-offset * period, (1-offset) * period]
     """
     return val - torch.floor(val / period + offset) * period
@@ -90,7 +90,7 @@ def get_box_type(box_type):
             The valid value are "LiDAR", "Camera", or "Depth".
 
     Returns:
-        tuple: box type and box mode.
+        tuple: Box type and box mode.
     """
     from .box_3d_mode import (Box3DMode, CameraInstance3DBoxes,
                               DepthInstance3DBoxes, LiDARInstance3DBoxes)

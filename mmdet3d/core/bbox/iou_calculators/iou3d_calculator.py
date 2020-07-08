@@ -12,7 +12,7 @@ class BboxOverlapsNearest3D(object):
         (BEV), and then calculate the 2D IoU using :meth:`bbox_overlaps`.
 
     Args:
-        coordinate (str): 'camera', 'lidar', or 'depth' coordinate system
+        coordinate (str): 'camera', 'lidar', or 'depth' coordinate system.
     """
 
     def __init__(self, coordinate='lidar'):
@@ -32,7 +32,7 @@ class BboxOverlapsNearest3D(object):
             bboxes2 (torch.Tensor): shape (M, 7+N) [x, y, z, h, w, l, ry, v].
             mode (str): "iou" (intersection over union) or iof
                 (intersection over foreground).
-            is_aligned (bool): Whether the calculation is aligned
+            is_aligned (bool): Whether the calculation is aligned.
 
         Return:
             torch.Tensor: If ``is_aligned`` is ``True``, return ious between \
@@ -43,7 +43,7 @@ class BboxOverlapsNearest3D(object):
                                         self.coordinate)
 
     def __repr__(self):
-        """str: return a string that describes the module"""
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(coordinate={self.coordinate}'
         return repr_str
@@ -98,8 +98,8 @@ def bbox_overlaps_nearest_3d(bboxes1,
 
     Note:
         This function first finds the nearest 2D boxes in bird eye view
-        (BEV), and then calculate the 2D IoU using ``:meth:bbox_overlaps``.
-        Ths IoU calculator ``:class:BboxOverlapsNearest3D`` uses this
+        (BEV), and then calculates the 2D IoU using :meth:`bbox_overlaps`.
+        Ths IoU calculator :class:`BboxOverlapsNearest3D` uses this
         function to calculate IoUs of boxes.
 
         If ``is_aligned`` is ``False``, then it calculates the ious between

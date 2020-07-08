@@ -28,7 +28,7 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
                 ground-truth boxes.
 
         Returns:
-            torch.Tensor: Box transformation deltas
+            torch.Tensor: Box transformation deltas.
         """
         box_ndim = src_boxes.shape[-1]
         cas, cgs, cts = [], [], []
