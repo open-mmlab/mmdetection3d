@@ -37,7 +37,7 @@ class PartA2BboxHead(nn.Module):
             regression layers.
         roi_feat_size (int): The size of pooled roi features.
         with_corner_loss (bool): Whether to use corner loss or not.
-        bbox_coder (BaseBBoxCoder): Bbox coder for box head.
+        bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for box head.
         conv_cfg (dict): Config dict of convolutional layers
         norm_cfg (dict): Config dict of normalization layers
         loss_bbox (dict): Config dict of box regression loss.
@@ -285,15 +285,15 @@ class PartA2BboxHead(nn.Module):
         """Coumputing losses.
 
         Args:
-            cls_score (Torch.tensor): Scores of each roi.
-            bbox_pred (Torch.tensor): Predictions of bboxes.
-            rois (Torch.tensor): Roi bboxes.
-            labels (Torch.tensor): Labels of class.
-            bbox_targets (Torch.tensor): Target of positive bboxes.
-            pos_gt_bboxes (Torch.tensor): Gt of positive bboxes.
-            reg_mask (Torch.tensor): Mask for positive bboxes.
-            label_weights (Torch.tensor): Weights of class loss.
-            bbox_weights (Torch.tensor): Weights of bbox loss.
+            cls_score (torch.Tensor): Scores of each roi.
+            bbox_pred (torch.Tensor): Predictions of bboxes.
+            rois (torch.Tensor): Roi bboxes.
+            labels (torch.Tensor): Labels of class.
+            bbox_targets (torch.Tensor): Target of positive bboxes.
+            pos_gt_bboxes (torch.Tensor): Gt of positive bboxes.
+            reg_mask (torch.Tensor): Mask for positive bboxes.
+            label_weights (torch.Tensor): Weights of class loss.
+            bbox_weights (torch.Tensor): Weights of bbox loss.
 
         Returns:
             dict: Computed losses.
@@ -357,9 +357,9 @@ class PartA2BboxHead(nn.Module):
         """Generate targets.
 
         Args:
-            sampling_results (list[:obj:SamplingResult]):
+            sampling_results (list[:obj:`SamplingResult`]):
                 Sampled results from rois.
-            rcnn_train_cfg (ConfigDict): Training config of rcnn.
+            rcnn_train_cfg (:obj:`ConfigDict`): Training config of rcnn.
             concat (bool): Whether to concatenate targets between batches.
 
         Returns:
@@ -511,7 +511,7 @@ class PartA2BboxHead(nn.Module):
             class_labels (torch.Tensor): Label of classes
             class_pred (torch.Tensor): Score for nms.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            cfg (ConfigDict): Testing config.
+            cfg (:obj:`ConfigDict`): Testing config.
 
         Returns:
             list[tuple]: Decoded bbox, scores and labels after nms.

@@ -27,7 +27,8 @@ def box3d_multiclass_nms(mlvl_bboxes,
             of direction classifier. Defaults to None.
 
     Returns:
-        tuple: Return (bboxes, scores, labels, dir_scores).
+        tuple[torch.Tensor]: Return results after nms, including 3D
+            bounding boxes, scores, labels and direction scores.
     """
     # do multi class nms
     # the fg class id range: [0, num_classes-1]

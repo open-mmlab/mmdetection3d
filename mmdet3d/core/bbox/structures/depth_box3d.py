@@ -10,6 +10,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
     """3D boxes of instances in Depth coordinates.
 
     Coordinates in Depth:
+
     .. code-block:: none
 
                     up z    y front (yaw=0.5*pi)
@@ -24,7 +25,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
     the positive direction of x to the positive direction of y.
 
     Args:
-        tensor (Tensor): Float matrix of N x box_dim.
+        tensor (torch.Tensor): Float matrix of N x box_dim.
         box_dim (int): Integer indicates the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
         with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
@@ -92,7 +93,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: A nx5 tensor of 2D BEV box of each box.
+            torch.Tensor: A n x 5 tensor of 2D BEV box of each box.
                 The box is in XYWHR format.
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
@@ -222,7 +223,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to `dst` mode.
 
         Args:
-            dst (BoxMode): The target Box mode.
+            dst (:obj:`BoxMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -230,7 +231,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            BaseInstance3DBoxes:
+            :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the `dst` mode.
         """
         from .box_3d_mode import Box3DMode

@@ -112,7 +112,7 @@ class Custom3DDataset(Dataset):
         """Initialization before data preparation.
 
         Args:
-            dict: Dict before data preprocessing.
+            results (dict): Dict before data preprocessing.
 
                 - img_fields (list): image fields
                 - bbox3d_fields (list): 3D bounding boxes fields

@@ -147,14 +147,14 @@ class SparseUNet(nn.Module):
         """Forward of upsample and residual block.
 
         Args:
-            x_lateral (SparseConvTensor): lateral tensor
-            x_bottom (SparseConvTensor): feature from bottom layer
+            x_lateral (:obj:`SparseConvTensor`): lateral tensor
+            x_bottom (:obj:`SparseConvTensor`): feature from bottom layer
             lateral_layer (SparseBasicBlock): convolution for lateral tensor
             merge_layer (SparseSequential): convolution for merging features
             upsample_layer (SparseSequential): convolution for upsampling
 
         Returns:
-            SparseConvTensor: upsampled feature
+            :obj:`SparseConvTensor`: upsampled feature
         """
         x = lateral_layer(x_lateral)
         x.features = torch.cat((x_bottom.features, x.features), dim=1)
@@ -169,11 +169,11 @@ class SparseUNet(nn.Module):
         """reduce channel for element-wise addition.
 
         Args:
-            x (SparseConvTensor): x.features (N, C1)
+            x (:obj:`SparseConvTensor`): x.features (N, C1)
             out_channels (int): the number of channel after reduction
 
         Returns:
-            SparseConvTensor: channel reduced feature
+            :obj:`SparseConvTensor`: channel reduced feature
         """
         features = x.features
         n, in_channels = features.shape

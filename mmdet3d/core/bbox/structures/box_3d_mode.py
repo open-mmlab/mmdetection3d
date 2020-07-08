@@ -13,6 +13,7 @@ class Box3DMode(IntEnum):
     r"""Enum of different ways to represent a box.
 
     Coordinates in LiDAR:
+
     .. code-block:: none
 
                     up z
@@ -25,6 +26,7 @@ class Box3DMode(IntEnum):
     and the yaw is around the z axis, thus the rotation axis=2.
 
     Coordinates in camera:
+
     .. code-block:: none
 
                 z front
@@ -40,6 +42,7 @@ class Box3DMode(IntEnum):
     and the yaw is around the y axis, thus the rotation axis=1.
 
     Coordinates in Depth mode:
+
     .. code-block:: none
 
         up z

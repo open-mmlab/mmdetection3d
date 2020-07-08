@@ -229,9 +229,9 @@ class PointFusion(nn.Module):
         """Forward function.
 
         Args:
-            img_feats (list[Tensor]): img features
-            pts: [list[Tensor]]: a batch of points with shape Nx3
-            pts_feats (Tensor): a tensor consist of point features of the
+            img_feats (list[torch.Tensor]): img features
+            pts: [list[torch.Tensor]]: a batch of points with shape Nx3
+            pts_feats (torch.Tensor): a tensor consist of point features of the
                 total batch
             img_metas (list[dict]): meta information of images
 
