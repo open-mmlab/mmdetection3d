@@ -378,7 +378,7 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  python tools/benchmark.py configs/benchmark/hv_pointpillars_secfpn_4x8_80e_pcdet_kitti-3d-3class.py ${CKPT}
   ```
 
 * __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), run
@@ -391,7 +391,8 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  cd tools
+  python test.py --cfg_file cfgs/kitti_models/pointpillar.yaml --ckpt ${CKPT} --batch_size 1 --workers 4
   ```
 
 ### SECOND
@@ -405,7 +406,7 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  python tools/benchmark.py configs/benchmark/hv_second_secfpn_4x8_80e_pcdet_kitti-3d-3class.py ${CKPT}
   ```
 
 * __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), run
@@ -418,7 +419,8 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  cd tools
+  python test.py --cfg_file cfgs/kitti_models/second.yaml --ckpt ${CKPT} --batch_size 1 --workers 4
   ```
 
 ### Part-A2
@@ -432,7 +434,7 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  python tools/benchmark.py configs/benchmark/hv_PartA2_secfpn_4x8_cyclic_80e_pcdet_kitti-3d-3class.py ${CKPT}
   ```
 
 * __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), train the model by running
@@ -445,5 +447,6 @@ and compare average AP over all classes on moderate condition for performance on
   Then benchmark the test speed by running
 
   ```bash
-
+  cd tools
+  python test.py --cfg_file cfgs/kitti_models/PartA2.yaml --ckpt ${CKPT} --batch_size 1 --workers 4
   ```
