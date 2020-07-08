@@ -4,7 +4,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-''' Helper class and functions for loading SUN RGB-D objects
+"""Helper class and functions for loading SUN RGB-D objects.
 
 Author: Charles R. Qi
 Date: December, 2018
@@ -12,14 +12,12 @@ Date: December, 2018
 Note: removed unused code for frustum preparation.
 Changed a way for data visualization (removed depdency on mayavi).
 Load depth with scipy.io
-'''
-
+"""
 import argparse
-import os
-import sys
-
 import numpy as np
+import os
 import sunrgbd_utils
+import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
@@ -32,8 +30,7 @@ DEFAULT_TYPE_WHITELIST = [
 
 
 def random_sampling(pc, num_sample, replace=None, return_choices=False):
-    """ Input is NxC, output is num_samplexC
-    """
+    """Input is NxC, output is num_samplexC."""
     if replace is None:
         replace = (pc.shape[0] < num_sample)
     choices = np.random.choice(pc.shape[0], num_sample, replace=replace)
@@ -106,10 +103,9 @@ def extract_sunrgbd_data(idx_filename,
                          save_votes=False,
                          use_v1=False,
                          skip_empty_scene=True):
-    """Extract scene point clouds and
-            bounding boxes (centroids, box sizes, heading angles,
-            semantic classes). Dumped point clouds and boxes are in
-            upright depth coord.
+    """Extract scene point clouds and bounding boxes (centroids, box sizes,
+    heading angles, semantic classes). Dumped point clouds and boxes are in
+    upright depth coord.
 
     Args:
         idx_filename: a TXT file where each line is an int number (index)

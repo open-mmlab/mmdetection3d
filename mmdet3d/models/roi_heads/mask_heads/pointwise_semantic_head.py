@@ -61,7 +61,6 @@ class PointwiseSemanticHead(nn.Module):
                 - seg_preds (torch.Tensor): segment predictions
                 - part_preds (torch.Tensor): part predictions
                 - part_feats (torch.Tensor): feature predictions
-
         """
         seg_preds = self.seg_cls_layer(x)  # (N, 1)
         part_preds = self.seg_reg_layer(x)  # (N, 3)

@@ -1,8 +1,8 @@
+from setuptools import find_packages, setup
+
 import os
 import subprocess
 import time
-from setuptools import find_packages, setup
-
 import torch
 from torch.utils.cpp_extension import (BuildExtension, CppExtension,
                                        CUDAExtension)
@@ -119,26 +119,26 @@ def make_cuda_ext(name,
 
 
 def parse_requirements(fname='requirements.txt', with_version=True):
-    """
-    Parse the package dependencies listed in a requirements file but strips
+    """Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
+
     Args:
         fname (str): path to requirements file
         with_version (bool, default=False): if True include version specs
+
     Returns:
-        List[str]: list of requirements items
+        list[str]: list of requirements items
+
     CommandLine:
         python -c "import setup; print(setup.parse_requirements())"
     """
+    import re
     import sys
     from os.path import exists
-    import re
     require_fpath = fname
 
     def parse_line(line):
-        """
-        Parse information from a line in a requirements text file
-        """
+        """Parse information from a line in a requirements text file."""
         if line.startswith('-r '):
             # Allow specifying requirements in other files
             target = line.split(' ')[1]
