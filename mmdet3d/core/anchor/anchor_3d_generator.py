@@ -76,7 +76,7 @@ class Anchor3DRangeGenerator(object):
 
     @property
     def num_levels(self):
-        """int: Number of feature levels that the generator is applied."""
+        """int: Number of feature levels that the generator is applied to."""
         return len(self.scales)
 
     def grid_anchors(self, featmap_sizes, device='cuda'):
@@ -220,14 +220,14 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
     Note:
     The `align` means that the anchor's center is aligned with the voxel grid,
     which is also the feature grid. The previous implementation of
-    `Anchor3DRangeGenerator` do not generate the anchors' center according
+    `Anchor3DRangeGenerator` does not generate the anchors' center according
     to the voxel grid. Rather, it generates the center by uniformly
     distributing the anchors inside the minimum and maximum anchor ranges
     according to the feature map sizes.
     However, this makes the anchors center does not match the feature grid.
     The AlignedAnchor3DRangeGenerator add + 1 when using the feature map sizes
     to obtain the corners of the voxel grid. Then it shifts the coordinates to
-    the center of voxel grid of use the left up corner to distribute anchors.
+    the center of voxel grid and use the left up corner to distribute anchors.
 
     Args:
         anchor_corner (bool): Whether to align with the corner of the voxel

@@ -212,14 +212,16 @@ def indoor_eval(gt_annos,
     Evaluate the result of the detection.
 
     Args:
-        gt_annos (list[dict]): GT annotations.
+        gt_annos (list[dict]): Ground truth annotations.
         dt_annos (list[dict]): Detection annotations. the dict
             includes the following keys
+
             - labels_3d (torch.Tensor): Labels of boxes.
-            - boxes_3d (BaseInstance3DBoxes): 3D bboxes in Depth coordinate.
+            - boxes_3d (:obj:`BaseInstance3DBoxes`): \
+                3D bounding boxes in Depth coordinate.
             - scores_3d (torch.Tensor): Scores of boxes.
-        metric (list[float]): AP IoU thresholds.
-        label2cat (dict): {label: cat}.
+        metric (list[float]): IoU thresholds for computing average precisions.
+        label2cat (dict): Map from label to category.
         logger (logging.Logger | str | None): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 

@@ -16,18 +16,18 @@ def box3d_multiclass_nms(mlvl_bboxes,
         mlvl_bboxes (torch.Tensor): Multi-level boxes with shape (N, M).
             M is the dimensions of boxes.
         mlvl_bboxes_for_nms (torch.Tensor): Multi-level boxes with shape
-            (N, 4), N is the number of boxes.
+            (N, 4). N is the number of boxes.
         mlvl_scores (torch.Tensor): Multi-level boxes with shape
-            (N, ), N is the number of boxes.
+            (N, ). N is the number of boxes.
         score_thr (float): Score thredhold to filter boxes with low
             confidence.
         max_num (int): Maximum number of boxes will be kept.
-        cfg (dict): Config dict of NMS.
+        cfg (dict): Configuration dict of NMS.
         mlvl_dir_scores (torch.Tensor, optional): Multi-level scores
             of direction classifier. Defaults to None.
 
     Returns:
-        tuple[torch.Tensor]: Return results after nms, including 3D
+        tuple[torch.Tensor]: Return results after nms, including 3D \
             bounding boxes, scores, labels and direction scores.
     """
     # do multi class nms

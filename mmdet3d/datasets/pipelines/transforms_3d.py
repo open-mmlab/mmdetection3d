@@ -20,11 +20,11 @@ class RandomFlip3D(RandomFlip):
         sync_2d (bool, optional): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
-            to that of 2D images.
+            to that of 2D images. Defaults to True.
         flip_ratio_bev_horizontal (float, optional): The flipping probability
-            in horizontal direction.
+            in horizontal direction. Defaults to 0.0.
         flip_ratio_bev_vertical (float, optional): The flipping probability
-            in vertical direction.
+            in vertical direction. Defaults to 0.0.
     """
 
     def __init__(self,
@@ -46,6 +46,16 @@ class RandomFlip3D(RandomFlip):
                 (int, float)) and 0 <= flip_ratio_bev_vertical <= 1
 
     def random_flip_data_3d(self, input_dict, direction='horizontal'):
+        """Flip 3D data randomly.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            direction (str): Flip direction. Default: horizontal.
+
+        Returns:
+            dict: Flipped results, 'points', 'bbox3d_fields' keys are \
+                updated in the result dict.
+        """
         assert direction in ['horizontal', 'vertical']
         if len(input_dict['bbox3d_fields']) == 0:  # test mode
             input_dict['bbox3d_fields'].append('empty_box3d')
@@ -57,6 +67,17 @@ class RandomFlip3D(RandomFlip):
                 direction, points=input_dict['points'])
 
     def __call__(self, input_dict):
+        """Call function to flip points, values in the ``bbox3d_fields`` and \
+        also flip 2D image and its annotations.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Flipped results, 'flip', 'flip_direction', \
+                'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added \
+                into result dict.
+        """
         # filp 2D image and its annotations
         super(RandomFlip3D, self).__call__(input_dict)
 
@@ -80,6 +101,7 @@ class RandomFlip3D(RandomFlip):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(sync_2d={},'.format(self.sync_2d)
         repr_str += '(flip_ratio_bev_horizontal={},'.format(
@@ -97,6 +119,7 @@ class ObjectSample(object):
         db_sampler (dict): Config dict of the database sampler.
         sample_2d (bool): Whether to also paste 2D image patch to the images
             This should be true when applying multi-modality cut-and-paste.
+            Defaults to False.
     """
 
     def __init__(self, db_sampler, sample_2d=False):
@@ -108,11 +131,30 @@ class ObjectSample(object):
 
     @staticmethod
     def remove_points_in_boxes(points, boxes):
+        """Remove the points in the sampled bounding boxes.
+
+        Args:
+            points (np.ndarray): Input point cloud array.
+            boxes (np.ndarray): Sampled ground truth boxes.
+
+        Returns:
+            np.ndarray: Points with those in the boxes removed.
+        """
         masks = box_np_ops.points_in_rbbox(points, boxes)
         points = points[np.logical_not(masks.any(-1))]
         return points
 
     def __call__(self, input_dict):
+        """Call function to sample ground truth objects to the data.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after object sampling augmentation, \
+                'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated \
+                in the result dict.
+        """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 
@@ -163,6 +205,7 @@ class ObjectSample(object):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         return self.__class__.__name__
 
 
@@ -193,6 +236,15 @@ class ObjectNoise(object):
         self.num_try = num_try
 
     def __call__(self, input_dict):
+        """Call function to apply noise to each ground truth in the scene.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after adding noise to each object, \
+                'points', 'gt_bboxes_3d' keys are updated in the result dict.
+        """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         points = input_dict['points']
 
@@ -211,6 +263,7 @@ class ObjectNoise(object):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(num_try={},'.format(self.num_try)
         repr_str += ' translation_std={},'.format(self.translation_std)
@@ -225,15 +278,16 @@ class GlobalRotScaleTrans(object):
 
     Args:
         rot_range (list[float]): Range of rotation angle.
-            Default to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
+            Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
         scale_ratio_range (list[float]): Range of scale ratio.
-            Default to [0.95, 1.05].
+            Defaults to [0.95, 1.05].
         translation_std (list[float]): The standard deviation of ranslation
             noise. This apply random translation to a scene by a noise, which
             is sampled from a gaussian distribution whose standard deviation
-            is set by ``translation_std``. Default to [0, 0, 0]
-        shift_height (bool): whether to shift height
+            is set by ``translation_std``. Defaults to [0, 0, 0]
+        shift_height (bool): Whether to shift height.
             (the fourth dimension of indoor points) when scaling.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -247,6 +301,16 @@ class GlobalRotScaleTrans(object):
         self.shift_height = shift_height
 
     def _trans_bbox_points(self, input_dict):
+        """Private function to translate bounding boxes and points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after translation, 'points', 'pcd_trans' \
+                and keys in input_dict['bbox3d_fields'] are updated \
+                in the result dict.
+        """
         if not isinstance(self.translation_std, (list, tuple, np.ndarray)):
             translation_std = [
                 self.translation_std, self.translation_std,
@@ -263,6 +327,16 @@ class GlobalRotScaleTrans(object):
             input_dict[key].translate(trans_factor)
 
     def _rot_bbox_points(self, input_dict):
+        """Private function to rotate bounding boxes and points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after rotation, 'points', 'pcd_rotation' \
+                and keys in input_dict['bbox3d_fields'] are updated \
+                in the result dict.
+        """
         rotation = self.rot_range
         if not isinstance(rotation, list):
             rotation = [-rotation, rotation]
@@ -276,6 +350,15 @@ class GlobalRotScaleTrans(object):
                 input_dict['pcd_rotation'] = rot_mat_T
 
     def _scale_bbox_points(self, input_dict):
+        """Private function to scale bounding boxes and points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after scaling, 'points'and keys in \
+                input_dict['bbox3d_fields'] are updated in the result dict.
+        """
         scale = input_dict['pcd_scale_factor']
         input_dict['points'][:, :3] *= scale
         if self.shift_height:
@@ -285,11 +368,31 @@ class GlobalRotScaleTrans(object):
             input_dict[key].scale(scale)
 
     def _random_scale(self, input_dict):
+        """Private function to randomly set the scale factor.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after scaling, 'pcd_scale_factor' are updated \
+                in the result dict.
+        """
         scale_factor = np.random.uniform(self.scale_ratio_range[0],
                                          self.scale_ratio_range[1])
         input_dict['pcd_scale_factor'] = scale_factor
 
     def __call__(self, input_dict):
+        """Private function to rotate, scale and translate bounding boxes and \
+        points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after scaling, 'points', 'pcd_rotation',
+                'pcd_scale_factor', 'pcd_trans' and keys in \
+                input_dict['bbox3d_fields'] are updated in the result dict.
+        """
         self._rot_bbox_points(input_dict)
 
         if 'pcd_scale_factor' not in input_dict:
@@ -300,6 +403,7 @@ class GlobalRotScaleTrans(object):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(rot_range={},'.format(self.rot_range)
         repr_str += ' scale_ratio_range={},'.format(self.scale_ratio_range)
@@ -310,8 +414,18 @@ class GlobalRotScaleTrans(object):
 
 @PIPELINES.register_module()
 class PointShuffle(object):
+    """Shuffle input points."""
 
     def __call__(self, input_dict):
+        """Call function to shuffle points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after filtering, 'points' keys are updated \
+                in the result dict.
+        """
         np.random.shuffle(input_dict['points'])
         return input_dict
 
@@ -321,12 +435,26 @@ class PointShuffle(object):
 
 @PIPELINES.register_module()
 class ObjectRangeFilter(object):
+    """Filter objects by the range.
+
+    Args:
+        point_cloud_range (list[float]): Point cloud range.
+    """
 
     def __init__(self, point_cloud_range):
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
         self.bev_range = self.pcd_range[[0, 1, 3, 4]]
 
     def __call__(self, input_dict):
+        """Call function to filter objects by the range.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d' \
+                keys are updated in the result dict.
+        """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
         mask = gt_bboxes_3d.in_range_bev(self.bev_range)
@@ -345,6 +473,7 @@ class ObjectRangeFilter(object):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(point_cloud_range={})'.format(self.pcd_range.tolist())
         return repr_str
@@ -352,12 +481,26 @@ class ObjectRangeFilter(object):
 
 @PIPELINES.register_module()
 class PointsRangeFilter(object):
+    """Filter points by the range.
+
+    Args:
+        point_cloud_range (list[float]): Point cloud range.
+    """
 
     def __init__(self, point_cloud_range):
         self.pcd_range = np.array(
             point_cloud_range, dtype=np.float32)[np.newaxis, :]
 
     def __call__(self, input_dict):
+        """Call function to filter points by the range.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after filtering, 'points' keys are updated \
+                in the result dict.
+        """
         points = input_dict['points']
         points_mask = ((points[:, :3] >= self.pcd_range[:, :3])
                        & (points[:, :3] < self.pcd_range[:, 3:]))
@@ -367,6 +510,7 @@ class PointsRangeFilter(object):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(point_cloud_range={})'.format(self.pcd_range.tolist())
         return repr_str
@@ -377,7 +521,7 @@ class ObjectNameFilter(object):
     """Filter GT objects by their names.
 
     Args:
-        classes (list[str]): list of class names to be kept for training
+        classes (list[str]): List of class names to be kept for training.
     """
 
     def __init__(self, classes):
@@ -385,6 +529,15 @@ class ObjectNameFilter(object):
         self.labels = list(range(len(self.classes)))
 
     def __call__(self, input_dict):
+        """Call function to filter objects by their names.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d' \
+                keys are updated in the result dict.
+        """
         gt_labels_3d = input_dict['gt_labels_3d']
         gt_bboxes_mask = np.array([n in self.labels for n in gt_labels_3d],
                                   dtype=np.bool_)
@@ -394,6 +547,7 @@ class ObjectNameFilter(object):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(classes={self.classes})'
         return repr_str
@@ -426,7 +580,8 @@ class IndoorPointSample(object):
             points (np.ndarray): 3D Points.
             num_samples (int): Number of samples to be sampled.
             replace (bool): Whether the sample is with or without replacement.
-            return_choices (bool): Whether return choice.
+            Defaults to None.
+            return_choices (bool): Whether return choice. Defaults to False.
 
         Returns:
             tuple[np.ndarray] | np.ndarray:
@@ -444,6 +599,15 @@ class IndoorPointSample(object):
             return points[choices]
 
     def __call__(self, results):
+        """Call function to sample points to in indoor scenes.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after sampling, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
+        """
         points = results['points']
         points, choices = self.points_random_sampling(
             points, self.num_points, return_choices=True)
@@ -460,6 +624,7 @@ class IndoorPointSample(object):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(num_points={})'.format(self.num_points)
         return repr_str
