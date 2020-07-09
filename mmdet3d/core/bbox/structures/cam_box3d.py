@@ -36,7 +36,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def height(self):
-        """Obtain the height of all the boxes.
+        """Obtain the heights of all the boxes.
 
         Returns:
             torch.Tensor: A vector with height of each box.
@@ -125,7 +125,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: A n x 5 tensor of 2D BEV box of each box.
+            torch.Tensor: A n x 5 tensor of 2D BEV box of each box. \
                 The box is in XYWHR format.
         """
         return self.tensor[:, [0, 2, 3, 5, 6]]
@@ -231,7 +231,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             polygon, we try to reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside
+            torch.Tensor: Indicating whether each box is inside \
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -245,8 +245,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate height overlaps of two boxes.
 
         Note:
-            This function calculate the height overlaps between boxes1 and
-            boxes2,  boxes1 and boxes2 should be in the same type.
+            This function calculates the height overlaps between boxes1 and
+            boxes2, where boxes1 and boxes2 should be in the same type.
 
         Args:
             boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.

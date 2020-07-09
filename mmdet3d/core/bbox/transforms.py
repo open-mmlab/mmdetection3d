@@ -24,14 +24,15 @@ def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
 
 
 def bbox3d2roi(bbox_list):
-    """Convert a list of bboxes to roi format.
+    """Convert a list of bounding boxes to roi format.
 
     Args:
-        bbox_list (list[torch.Tensor]): A list of bboxes
+        bbox_list (list[torch.Tensor]): A list of bounding boxes
             corresponding to a batch of images.
 
     Returns:
-        torch.Tensor: shape (n, c), [batch_ind, x, y ...].
+        torch.Tensor: Region of interests in shape (n, c), where \
+            the channels are in order of [batch_ind, x, y ...].
     """
     rois_list = []
     for img_id, bboxes in enumerate(bbox_list):
@@ -54,11 +55,11 @@ def bbox3d2result(bboxes, scores, labels):
         scores (torch.Tensor): Scores with shape of (n, ).
 
     Returns:
-        dict[str, torch.Tensor]: Bbox results in cpu mode.
+        dict[str, torch.Tensor]: Bounding box results in cpu mode.
 
-            - boxes_3d (torch.Tensor): 3D boxes
-            - scores (torch.Tensor): prediction scores
-            - labels_3d (torch.Tensor): box labels
+            - boxes_3d (torch.Tensor): 3D boxes.
+            - scores (torch.Tensor): Prediction scores.
+            - labels_3d (torch.Tensor): Box labels.
     """
     return dict(
         boxes_3d=bboxes.to('cpu'),

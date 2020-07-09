@@ -15,7 +15,7 @@ class BaseInstance3DBoxes(object):
 
     Args:
         tensor (torch.Tensor | np.ndarray | list): a N x box_dim matrix.
-        box_dim (int): Number of the dimension of a box
+        box_dim (int): Number of the dimension of a box.
             Each row is (x, y, z, x_size, y_size, z_size, yaw).
             Default to 7.
         with_yaw (bool): Whether the box is with yaw rotation.
@@ -79,7 +79,7 @@ class BaseInstance3DBoxes(object):
 
     @property
     def yaw(self):
-        """Obtain the rotation of all the boxes.
+        """Obtain the rotations of all the boxes.
 
         Returns:
             torch.Tensor: A vector with yaw of each box.
@@ -118,7 +118,7 @@ class BaseInstance3DBoxes(object):
         """Calculate the center of all the boxes.
 
         Note:
-            In the MMDetection.3D's convention, the bottom center is
+            In the MMDetection3D's convention, the bottom center is
             usually taken as the default center.
 
             The relative position of the centers in different kinds of
@@ -161,11 +161,11 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def rotate(self, angles, axis=0):
-        """Calculate whether the points is in any of the boxes.
+        """Calculate whether the points are in any of the boxes.
 
         Args:
-            angles (float): Rotation angles
-            axis (int): The axis to rotate the boxes
+            angles (float): Rotation angles.
+            axis (int): The axis to rotate the boxes.
         """
         pass
 
@@ -175,7 +175,7 @@ class BaseInstance3DBoxes(object):
         pass
 
     def translate(self, trans_vector):
-        """Calculate whether the points is in any of the boxes.
+        """Calculate whether the points are in any of the boxes.
 
         Args:
             trans_vector (torch.Tensor): Translation vector of size 1x3.
@@ -188,7 +188,7 @@ class BaseInstance3DBoxes(object):
         """Check whether the boxes are in the given range.
 
         Args:
-            box_range (list | torch.Tensor): the range of box
+            box_range (list | torch.Tensor): The range of box
                 (x_min, y_min, z_min, x_max, y_max, z_max)
 
         Note:
@@ -217,7 +217,7 @@ class BaseInstance3DBoxes(object):
                 in order of (x_min, y_min, x_max, y_max).
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside
+            torch.Tensor: Indicating whether each box is inside \
                 the reference range.
         """
         pass
@@ -227,7 +227,7 @@ class BaseInstance3DBoxes(object):
         """Convert self to `dst` mode.
 
         Args:
-            dst (:obj:`BoxMode`): The target Box mode。
+            dst (:obj:`BoxMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -317,7 +317,7 @@ class BaseInstance3DBoxes(object):
 
     @classmethod
     def cat(cls, boxes_list):
-        """Concatenates a list of Boxes into a single Boxes.
+        """Concatenate a list of Boxes into a single Boxes.
 
         Args:
             boxes_list (list[:obj:`BaseInstances3DBoxes`]): List of boxes.
@@ -345,7 +345,7 @@ class BaseInstance3DBoxes(object):
             device (str | :obj:`torch.device`): The name of the device.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: A new boxes object in the
+            :obj:`BaseInstance3DBoxes`: A new boxes object on the \
                 specific device.
         """
         original_type = type(self)
@@ -367,7 +367,7 @@ class BaseInstance3DBoxes(object):
 
     @property
     def device(self):
-        """str: The device of the boxes are in."""
+        """str: The device of the boxes are on."""
         return self.tensor.device
 
     def __iter__(self):
@@ -383,7 +383,7 @@ class BaseInstance3DBoxes(object):
         """Calculate height overlaps of two boxes.
 
         Note:
-            This function calculate the height overlaps between boxes1 and
+            This function calculates the height overlaps between boxes1 and
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
@@ -415,8 +415,8 @@ class BaseInstance3DBoxes(object):
         """Calculate 3D overlaps of two boxes.
 
         Note:
-            This function calculate the overlaps between boxes1 and boxes2,
-            boxes1 and boxes2 are not necessarily to be in the same type.
+            This function calculates the overlaps between boxes1 and boxes2,
+            boxes1 and boxes2 are not necessarily in the same type.
 
         Args:
             boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
@@ -470,12 +470,11 @@ class BaseInstance3DBoxes(object):
     def new_box(self, data):
         """Create a new box object with data.
 
-        The new box and its tensor has the similar properties
+        The new box and its tensor has the similar properties \
             as self and self.tensor, respectively.
 
         Args:
-            data (torch.Tensor | numpy.array | list): Data which the
-                returned Tensor copies.
+            data (torch.Tensor | numpy.array | list): Data to be copied.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: A new bbox with data and other \
