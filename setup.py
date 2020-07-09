@@ -227,7 +227,7 @@ if __name__ == '__main__':
         ext_modules=[
             make_cuda_ext(
                 name='compiling_info',
-                module='mmdet.ops.utils',
+                module='mmdet3d.ops.utils',
                 sources=['src/compiling_info.cpp']),
             make_cuda_ext(
                 name='sparse_conv_ext',
