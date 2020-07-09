@@ -183,7 +183,7 @@ We compare the training speed (samples/s) with other codebases if they implement
 
   ```bash
   cd tools
-  sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/pointpillar.yaml --batch_size 32  --workers 32
+  sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/kitti_models/pointpillar.yaml --batch_size 32  --workers 32 --epochs 80
   ```
 
 ### SECOND
@@ -198,7 +198,7 @@ We compare the training speed (samples/s) with other codebases if they implement
 
   ```bash
   cd tools
-  ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/second.yaml --batch_size 32  --workers 32
+  sh ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/kitti_models/second.yaml --batch_size 32  --workers 32 --epochs 80
   ```
 
 ### Part-A2
@@ -213,5 +213,5 @@ We compare the training speed (samples/s) with other codebases if they implement
 
   ```bash
   cd tools
-  ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/PartA2.yaml --batch_size 32 --workers 32
+  sh ./scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} 8  --cfg_file ./cfgs/kitti_models/PartA2.yaml --batch_size 32 --workers 32 --epochs 80
   ```

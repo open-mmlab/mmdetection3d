@@ -3,6 +3,23 @@ import torch
 
 
 def single_gpu_test(model, data_loader, show=False, out_dir=None):
+    """Test model with single gpu.
+
+    This method tests model with single gpu and gives the 'show' option.
+    By setting ``show=True``, it saves the visualization results under
+    ``out_dir``.
+
+    Args:
+        model (nn.Module): Model to be tested.
+        data_loader (nn.Dataloader): Pytorch data loader.
+        show (bool): Whether to save viualization results.
+            Default: True.
+        out_dir (str): The path to save visualization results.
+            Default: None.
+
+    Returns:
+        list[dict]: The prediction results.
+    """
     model.eval()
     results = []
     dataset = data_loader.dataset
