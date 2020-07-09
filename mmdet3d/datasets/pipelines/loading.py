@@ -9,7 +9,12 @@ from mmdet.datasets.pipelines import LoadAnnotations
 class LoadMultiViewImageFromFiles(object):
     """Load multi channel images from a list of separate channel files.
 
-    Expects results['img_filename'] to be a list of filenames
+    Expects results['img_filename'] to be a list of filenames.
+
+    Args:
+        to_float32 (bool): Whether to convert the img to float32.
+            Defaults to False.
+        color_type (str): Color type of the file. Defaults to 'unchanged'.
     """
 
     def __init__(self, to_float32=False, color_type='unchanged'):
@@ -66,11 +71,11 @@ class LoadPointsFromMultiSweeps(object):
     This is usually used for nuScenes dataset to utilize previous sweeps.
 
     Args:
-        sweeps_num (int): number of sweeps
-        load_dim (int): dimension number of the loaded points
+        sweeps_num (int): number of sweeps. Defaults to 10.
+        load_dim (int): dimension number of the loaded points. Defaults to 5.
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
-            for more details.
+            for more details. Defaults to dict(backend='disk').
     """
 
     def __init__(self,
@@ -236,15 +241,15 @@ class LoadPointsFromFile(object):
     Load sunrgbd and scannet points from file.
 
     Args:
-        shift_height (bool): Whether to use shifted height.
         load_dim (int): The dimension of the loaded points.
-            Default: 6.
+            Defaults to 6.
         use_dim (list[int]): Which dimensions of the points to be used.
-            Default: [0, 1, 2]. For KITTI dataset, set use_dim=4
-            or use_dim=[0, 1, 2, 3] to use the intensity dimension
+            Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
+            or use_dim=[0, 1, 2, 3] to use the intensity dimension.
+        shift_height (bool): Whether to use shifted height. Defaults to False.
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
-            for more details.
+            for more details. Defaults to dict(backend='disk').
     """
 
     def __init__(self,
