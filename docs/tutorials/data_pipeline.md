@@ -15,7 +15,7 @@ defines how to process the annotations and a data pipeline defines all the steps
 A pipeline consists of a sequence of operations. Each operation takes a dict as input and also output a dict for the next transform.
 
 We present a classical pipeline in the following figure. The blue blocks are pipeline operations. With the pipeline going on, each operator can add new keys (marked as green) to the result dict or update the existing keys (marked as orange).
-![pipeline figure](../../demo/data_pipeline.png)
+![pipeline figure](../../resources/data_pipeline.png)
 
 The operations are categorized into data loading, pre-processing, formatting and test-time augmentation.
 
@@ -91,8 +91,8 @@ For each operation, we list the related dict fields that are added/updated/remov
 `LoadPointsFromMultiSweeps`
 - update: points
 
-`LoadAnnotations`
-- add: gt_bboxes_3d, gt_labels_3d, pts_instance_mask, pts_semantic_mask, bbox3d_fields, pts_mask_fields, pts_seg_fields
+`LoadAnnotations3D`
+- add: gt_bboxes_3d, gt_labels_3d, gt_bboxes, gt_labels, pts_instance_mask, pts_semantic_mask, bbox3d_fields, pts_mask_fields, pts_seg_fields
 
 ### Pre-processing
 
@@ -122,7 +122,7 @@ For each operation, we list the related dict fields that are added/updated/remov
 ### Formatting
 
 `DefaultFormatBundle3D`
-- update: voxels, coors, voxel_centers, num_points, points, gt_bboxes_3d, gt_labels_3d, gt_bboxes, gt_labels
+- update: points, gt_bboxes_3d, gt_labels_3d, gt_bboxes, gt_labels
 
 `Collect3D`
 - add: img_meta (the keys of img_meta is specified by `meta_keys`)
