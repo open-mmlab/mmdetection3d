@@ -74,6 +74,14 @@ class KittiDataset(Custom3DDataset):
         self.pts_prefix = pts_prefix
 
     def _get_pts_filename(self, idx):
+        """Get point cloud filename according to the given index.
+
+        Args:
+            index (int): Index of the point cloud file to get.
+
+        Returns:
+            str: Name of the point cloud file.
+        """
         pts_filename = osp.join(self.root_split, self.pts_prefix,
                                 f'{idx:06d}.bin')
         return pts_filename
@@ -351,6 +359,19 @@ class KittiDataset(Custom3DDataset):
                           class_names,
                           pklfile_prefix=None,
                           submission_prefix=None):
+        """Convert 3D detection results to kitti format for evaluation and test
+        submission.
+
+        Args:
+            net_outputs (list[np.ndarray]): List of array storing the \
+                inferenced bounding boxes and scores.
+            class_names (list[String]): A list of class names.
+            pklfile_prefix (str | None): The prefix of pkl file.
+            submission_prefix (str | None): The prefix of submission file.
+
+        Returns:
+            list[dict]: A list of dictionaries with the kitti format.
+        """
         assert len(net_outputs) == len(self.data_infos)
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
@@ -457,14 +478,14 @@ class KittiDataset(Custom3DDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): list of array storing the
-                bbox and score
-            class_nanes (list[String]): A list of class names
+            net_outputs (list[np.ndarray]): List of array storing the \
+                inferenced bounding boxes and scores.
+            class_names (list[String]): A list of class names.
             pklfile_prefix (str | None): The prefix of pkl file.
             submission_prefix (str | None): The prefix of submission file.
 
         Returns:
-            list[dict]: A list of dict have the kitti format
+            list[dict]: A list of dictionaries have the kitti format
         """
         assert len(net_outputs) == len(self.data_infos)
 
@@ -561,6 +582,28 @@ class KittiDataset(Custom3DDataset):
         return det_annos
 
     def convert_valid_bboxes(self, box_dict, info):
+        """Convert the predicted boxes into valid ones.
+
+        Args:
+            box_dict (dict): Box dictionaries to be converted.
+
+                - boxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
+                - scores_3d (torch.Tensor): Scores of boxes.
+                - labels_3d (torch.Tensor): Class labels of boxes.
+            info (dict): Data info.
+
+        Returns:
+            dict: Valid predicted boxes.
+
+                - bbox (np.ndarray): 2D bounding boxes.
+                - box3d_camera (np.ndarray): 3D bounding boxes in \
+                    camera coordinate.
+                - box3d_lidar (np.ndarray): 3D bounding boxes in \
+                    LiDAR coordinate.
+                - scores (np.ndarray): Scores of boxes.
+                - label_preds (np.ndarray): Class label predictions.
+                - sample_idx (int): Sample index.
+        """
         # TODO: refactor this function
         box_preds = box_dict['boxes_3d']
         scores = box_dict['scores_3d']

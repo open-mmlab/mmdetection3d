@@ -30,6 +30,15 @@ class DefaultFormatBundle(object):
         return
 
     def __call__(self, results):
+        """Call function to transform and format common fields in results.
+
+        Args:
+            results (dict): Result dict contains the data to convert.
+
+        Returns:
+            dict: The result dict contains the data that is formatted with
+                default bundle.
+        """
         if 'img' in results:
             if isinstance(results['img'], list):
                 # process multiple imgs in single frame
@@ -132,6 +141,17 @@ class Collect3D(object):
         self.meta_keys = meta_keys
 
     def __call__(self, results):
+        """Call function to collect keys in results. The keys in ``meta_keys``
+        will be converted to :obj:`mmcv.DataContainer`.
+
+        Args:
+            results (dict): Result dict contains the data to collect.
+
+        Returns:
+            dict: The result dict contains the following keys
+                - keys in ``self.keys``
+                - ``img_metas``
+        """
         data = {}
         img_metas = {}
         for key in self.meta_keys:
@@ -144,6 +164,7 @@ class Collect3D(object):
         return data
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         return self.__class__.__name__ + '(keys={}, meta_keys={})'.format(
             self.keys, self.meta_keys)
 
@@ -171,6 +192,15 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
         self.with_label = with_label
 
     def __call__(self, results):
+        """Call function to transform and format common fields in results.
+
+        Args:
+            results (dict): Result dict contains the data to convert.
+
+        Returns:
+            dict: The result dict contains the data that is formatted with
+                default bundle.
+        """
         # Format 3D data
         for key in [
                 'voxels', 'coors', 'voxel_centers', 'num_points', 'points'
@@ -220,6 +250,7 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(class_names={}, '.format(self.class_names)
         repr_str += 'with_gt={}, with_label={})'.format(

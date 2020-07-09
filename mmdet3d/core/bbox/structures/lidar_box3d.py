@@ -26,7 +26,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     Attributes:
         tensor (torch.Tensor): Float matrix of N x box_dim.
-        box_dim (int): Integer indicates the dimension of a box
+        box_dim (int): Integer indicating the dimension of a box.
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
         with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
@@ -93,7 +93,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: A nx5 tensor of 2D BEV box of each box. \
+            torch.Tensor: A n x 5 tensor of 2D BEV box of each box. \
                 The box is in XYWHR format.
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
@@ -201,11 +201,9 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             In the original implementation of SECOND, checking whether
             a box in the range checks whether the points are in a convex
             polygon, we try to reduce the burdun for simpler cases.
-            TODO: check whether this will effect the performance
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside \
-                the reference range.
+            torch.Tensor: Whether each box is inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
                           & (self.tensor[:, 1] > box_range[1])
@@ -236,7 +234,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Enlarge the length, width and height boxes.
 
         Args:
-            extra_width (float | torch.Tensor): extra width to enlarge the box
+            extra_width (float | torch.Tensor): Extra width to enlarge the box.
 
         Returns:
             :obj:`LiDARInstance3DBoxes`: Enlarged boxes.
@@ -251,7 +249,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """Find the box which the points are in.
 
         Args:
-            points (torch.Tensor): Points in shape Nx3.
+            points (torch.Tensor): Points in shape (N, 3).
 
         Returns:
             torch.Tensor: The index of box where each point are in.
