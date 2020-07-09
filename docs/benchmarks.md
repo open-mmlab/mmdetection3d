@@ -129,6 +129,76 @@ We compare the training speed (samples/s) with other codebases if they implement
   python train.py --dataset sunrgbd --batch_size 16
   ```
 
+
+  Then benchmark the test speed by running
+
+  ```bash
+  python eval.py --dataset sunrgbd --checkpoint_path log_sunrgbd/checkpoint.tar --batch_size 1 --dump_dir eval_sunrgbd --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal
+  ```
+
+  Note that eval.py is modified to compute inference time.
+
+  <details>
+  <summary>
+  (diff to benchmark the similar models - click to expand)
+  </summary>
+
+  ```diff
+  diff --git a/eval.py b/eval.py
+    index c0b2886..04921e9 100644
+    --- a/eval.py
+    +++ b/eval.py
+    @@ -10,6 +10,7 @@ import os
+     import sys
+     import numpy as np
+     from datetime import datetime
+    +import time
+     import argparse
+     import importlib
+     import torch
+    @@ -28,7 +29,7 @@ parser.add_argument('--checkpoint_path', default=None, help='Model checkpoint pa
+     parser.add_argument('--dump_dir', default=None, help='Dump dir to save sample outputs [default: None]')
+     parser.add_argument('--num_point', type=int, default=20000, help='Point Number [default: 20000]')
+     parser.add_argument('--num_target', type=int, default=256, help='Point Number [default: 256]')
+    -parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 8]')
+    +parser.add_argument('--batch_size', type=int, default=1, help='Batch Size during training [default: 8]')
+     parser.add_argument('--vote_factor', type=int, default=1, help='Number of votes generated from each seed [default: 1]')
+     parser.add_argument('--cluster_sampling', default='vote_fps', help='Sampling strategy for vote clusters: vote_fps, seed_fps, random [default: vote_fps]')
+     parser.add_argument('--ap_iou_thresholds', default='0.25,0.5', help='A list of AP IoU thresholds [default: 0.25,0.5]')
+    @@ -132,6 +133,7 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
+     # ------------------------------------------------------------------------- GLOBAL CONFIG END
+
+     def evaluate_one_epoch():
+    +    time_list = list()
+         stat_dict = {}
+         ap_calculator_list = [APCalculator(iou_thresh, DATASET_CONFIG.class2type) \
+             for iou_thresh in AP_IOU_THRESHOLDS]
+    @@ -144,6 +146,8 @@ def evaluate_one_epoch():
+
+             # Forward pass
+             inputs = {'point_clouds': batch_data_label['point_clouds']}
+    +        torch.cuda.synchronize()
+    +        start_time = time.perf_counter()
+             with torch.no_grad():
+                 end_points = net(inputs)
+
+    @@ -161,6 +165,12 @@ def evaluate_one_epoch():
+
+             batch_pred_map_cls = parse_predictions(end_points, CONFIG_DICT)
+             batch_gt_map_cls = parse_groundtruths(end_points, CONFIG_DICT)
+    +        torch.cuda.synchronize()
+    +        elapsed = time.perf_counter() - start_time
+    +        time_list.append(elapsed)
+    +
+    +        if len(time_list==200):
+    +            print("average inference time: %4f"%(sum(time_list[5:])/len(time_list[5:])))
+             for ap_calculator in ap_calculator_list:
+                 ap_calculator.step(batch_pred_map_cls, batch_gt_map_cls)
+
+  ```
+
+
+
 ### PointPillars-car
 
 * __MMDetection3D__: With release v0.1.0, run

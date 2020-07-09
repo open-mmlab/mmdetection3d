@@ -229,6 +229,15 @@ def rbbox_to_corners(corners, rbbox):
 
 @cuda.jit('(float32[:], float32[:])', device=True, inline=True)
 def inter(rbbox1, rbbox2):
+    """Compute intersection of two rotated boxes.
+
+    Args:
+        rbox1 (np.ndarray, shape=[5]): Rotated 2d box.
+        rbox2 (np.ndarray, shape=[5]): Rotated 2d box.
+
+    Returns:
+        float: Intersection of two rotated boxes.
+    """
     corners1 = cuda.local.array((8, ), dtype=numba.float32)
     corners2 = cuda.local.array((8, ), dtype=numba.float32)
     intersection_corners = cuda.local.array((16, ), dtype=numba.float32)
@@ -246,6 +255,19 @@ def inter(rbbox1, rbbox2):
 
 @cuda.jit('(float32[:], float32[:], int32)', device=True, inline=True)
 def devRotateIoUEval(rbox1, rbox2, criterion=-1):
+    """Compute rotated iou on device.
+
+    Args:
+        rbox1 (np.ndarray, shape=[5]): Rotated 2d box.
+        rbox2 (np.ndarray, shape=[5]): Rotated 2d box.
+        criterion (int, optional): Indicate different type of iou.
+            -1 indicate `area_inter / (area1 + area2 - area_inter)`,
+            0 indicate `area_inter / area1`,
+            1 indicate `area_inter / area2`.
+
+    Returns:
+        float: iou between two input boxes.
+    """
     area1 = rbox1[2] * rbox1[3]
     area2 = rbox2[2] * rbox2[3]
     area_inter = inter(rbox1, rbox2)
@@ -268,6 +290,19 @@ def rotate_iou_kernel_eval(N,
                            dev_query_boxes,
                            dev_iou,
                            criterion=-1):
+    """Kernel of computing rotated iou.
+
+    Args:
+        N (int): The number of boxes.
+        K (int): The number of query boxes.
+        dev_boxes (np.ndarray): Boxes on device.
+        dev_query_boxes (np.ndarray): Query boxes on device.
+        dev_iou (np.ndarray): Computed iou to return.
+        criterion (int, optional): Indicate different type of iou.
+            -1 indicate `area_inter / (area1 + area2 - area_inter)`,
+            0 indicate `area_inter / area1`,
+            1 indicate `area_inter / area2`.
+    """
     threadsPerBlock = 8 * 8
     row_start = cuda.blockIdx.x
     col_start = cuda.blockIdx.y
@@ -310,8 +345,12 @@ def rotate_iou_gpu_eval(boxes, query_boxes, criterion=-1, device_id=0):
     Args:
         boxes (torch.Tensor): rbboxes. format: centers, dims,
             angles(clockwise when positive) with the shape of [N, 5].
-        query_boxes (float tensor: [K, 5]): [description]
-        device_id (int, optional): Defaults to 0. [description]
+        query_boxes (float tensor: [K, 5]): rbboxes to compute iou with boxes.
+        device_id (int, optional): Defaults to 0. Device to use.
+        criterion (int, optional): Indicate different type of iou.
+            -1 indicate `area_inter / (area1 + area2 - area_inter)`,
+            0 indicate `area_inter / area1`,
+            1 indicate `area_inter / area2`.
 
     Returns:
         np.ndarray: IoU results.
