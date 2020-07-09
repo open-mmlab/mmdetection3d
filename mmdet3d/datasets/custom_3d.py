@@ -265,13 +265,28 @@ class Custom3DDataset(Dataset):
         return ret_dict
 
     def __len__(self):
+        """Return the length of data infos.
+
+        Returns:
+            int: Length of data infos.
+        """
         return len(self.data_infos)
 
     def _rand_another(self, idx):
+        """Randomly get another item with the same flag.
+
+        Returns:
+            int: Another index of item with the same flag.
+        """
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
 
     def __getitem__(self, idx):
+        """Get item from infos according to the given index.
+
+        Returns:
+            dict: Data dictionary of the corresponding index.
+        """
         if self.test_mode:
             return self.prepare_test_data(idx)
         while True:
@@ -285,7 +300,7 @@ class Custom3DDataset(Dataset):
         """Set flag according to image aspect ratio.
 
         Images with aspect ratio greater than 1 will be set as group 1,
-        otherwise group 0. In 3D datasets, they are all the same, thus are all
-        zeros.
+        otherwise group 0. In 3D datasets, they are all the same, thus
+        are all zeros.
         """
         self.flag = np.zeros(len(self), dtype=np.uint8)

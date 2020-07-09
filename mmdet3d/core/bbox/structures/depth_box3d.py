@@ -93,7 +93,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Calculate the 2D bounding boxes in BEV with rotation.
 
         Returns:
-            torch.Tensor: A n x 5 tensor of 2D BEV box of each box.
+            torch.Tensor: A n x 5 tensor of 2D BEV box of each box. \
                 The box is in XYWHR format.
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
@@ -241,11 +241,12 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Find points that are in boxes (CUDA).
 
         Args:
-            points (torch.Tensor): [1, M, 3] or [M, 3], [x, y, z]
-                in LiDAR coordinate.
+            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
+                3 dimensions are [x, y, z] in LiDAR coordinate.
 
         Returns:
-            torch.Tensor: The box index of each point in, shape is (B, M, T).
+            torch.Tensor: The index of boxes each point lies in with shape \
+                of (B, M, T).
         """
         from .box_3d_mode import Box3DMode
 
