@@ -67,8 +67,8 @@ class Box3DMode(IntEnum):
             box (tuple | list | np.dnarray |
                 torch.Tensor | BaseInstance3DBoxes):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
-            src (BoxMode): The src Box mode.
-            dst (BoxMode): The target Box mode.
+            src (:obj:`BoxMode`): The src Box mode.
+            dst (:obj:`BoxMode`): The target Box mode.
             rt_mat (np.dnarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates

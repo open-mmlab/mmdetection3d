@@ -63,6 +63,15 @@ class MultiScaleFlipAug3D(object):
                 'flip has no effect when RandomFlip is not in transforms')
 
     def __call__(self, results):
+        """Call function to augment common fields in results.
+
+        Args:
+            results (dict): Result dict contains the data to augment.
+
+        Returns:
+            dict: The result dict contains the data that is augmented with \
+                different scales and flips.
+        """
         aug_data = []
         flip_aug = [False, True] if self.flip else [False]
         pcd_horizontal_flip_aug = [False, True] \
@@ -97,6 +106,7 @@ class MultiScaleFlipAug3D(object):
         return aug_data_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(transforms={self.transforms}, '
         repr_str += f'img_scale={self.img_scale}, flip={self.flip}, '

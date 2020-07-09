@@ -17,6 +17,23 @@ class LoadMultiViewImageFromFiles(object):
         self.color_type = color_type
 
     def __call__(self, results):
+        """Call function to load multi-view image from files.
+
+        Args:
+            results (dict): Result dict containing multi-view image filenames.
+
+        Returns:
+            dict: The result dict containing the multi-view image data. \
+                Added keys and values are described below.
+
+                - filename (str): Multi-view image filenames.
+                - img (np.ndarray): Multi-view image arrays.
+                - img_shape (tuple[int]): Shape of multi-view image arrays.
+                - ori_shape (tuple[int]): Shape of original image arrays.
+                - pad_shape (tuple[int]): Shape of padded image arrays.
+                - scale_factor (float): Scale factor.
+                - img_norm_cfg (dict): Normalization configuration of images.
+        """
         filename = results['img_filename']
         img = np.stack(
             [mmcv.imread(name, self.color_type) for name in filename], axis=-1)
@@ -37,6 +54,7 @@ class LoadMultiViewImageFromFiles(object):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         return "{} (to_float32={}, color_type='{}')".format(
             self.__class__.__name__, self.to_float32, self.color_type)
 
@@ -65,6 +83,14 @@ class LoadPointsFromMultiSweeps(object):
         self.file_client = None
 
     def _load_points(self, pts_filename):
+        """Private function to load point clouds data.
+
+        Args:
+            pts_filename (str): Filename of point clouds data.
+
+        Returns:
+            np.ndarray: An array containing point clouds data.
+        """
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
@@ -79,6 +105,18 @@ class LoadPointsFromMultiSweeps(object):
         return points
 
     def __call__(self, results):
+        """Call function to load multi-sweep point clouds from files.
+
+        Args:
+            results (dict): Result dict containing multi-sweep point cloud \
+                filenames.
+
+        Returns:
+            dict: The result dict containing the multi-sweep points data. \
+                Added key and value are described below.
+
+                - points (np.ndarray): Multi-sweep point cloud arrays.
+        """
         points = results['points']
         points[:, 3] /= 255
         points[:, 4] = 0
@@ -103,6 +141,7 @@ class LoadPointsFromMultiSweeps(object):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         return f'{self.__class__.__name__}(sweeps_num={self.sweeps_num})'
 
 
@@ -121,6 +160,17 @@ class PointSegClassMapping(object):
         self.valid_cat_ids = valid_cat_ids
 
     def __call__(self, results):
+        """Call function to map original semantic class to valid category ids.
+
+        Args:
+            results (dict): Result dict containing point semantic masks.
+
+        Returns:
+            dict: The result dict containing the mapped category ids. \
+                Updated key and value are described below.
+
+                - pts_semantic_mask (np.ndarray): Mapped semantic masks.
+        """
         assert 'pts_semantic_mask' in results
         pts_semantic_mask = results['pts_semantic_mask']
         neg_cls = len(self.valid_cat_ids)
@@ -136,6 +186,7 @@ class PointSegClassMapping(object):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(valid_cat_ids={})'.format(self.valid_cat_ids)
         return repr_str
@@ -153,6 +204,17 @@ class NormalizePointsColor(object):
         self.color_mean = color_mean
 
     def __call__(self, results):
+        """Call function to normalize color of points.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+
+        Returns:
+            dict: The result dict containing the normalized points. \
+                Updated key and value are described below.
+
+                - points (np.ndarray): Points after color normalization.
+        """
         points = results['points']
         assert points.shape[1] >= 6,\
             f'Expect points have channel >=6, got {points.shape[1]}'
@@ -161,6 +223,7 @@ class NormalizePointsColor(object):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(color_mean={})'.format(self.color_mean)
         return repr_str
@@ -201,6 +264,14 @@ class LoadPointsFromFile(object):
         self.file_client = None
 
     def _load_points(self, pts_filename):
+        """Private function to load point clouds data.
+
+        Args:
+            pts_filename (str): Filename of point clouds data.
+
+        Returns:
+            np.ndarray: An array containing point clouds data.
+        """
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
@@ -215,6 +286,17 @@ class LoadPointsFromFile(object):
         return points
 
     def __call__(self, results):
+        """Call function to load points data from file.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+
+        Returns:
+            dict: The result dict containing the point clouds data. \
+                Added key and value are described below.
+
+                - points (np.ndarray): Point clouds data.
+        """
         pts_filename = results['pts_filename']
         points = self._load_points(pts_filename)
         points = points.reshape(-1, self.load_dim)
@@ -228,6 +310,7 @@ class LoadPointsFromFile(object):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__ + '('
         repr_str += 'shift_height={}, '.format(self.shift_height)
         repr_str += 'file_client_args={}), '.format(self.file_client_args)
@@ -291,15 +374,39 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_seg_3d = with_seg_3d
 
     def _load_bboxes_3d(self, results):
+        """Private function to load 3D bounding box annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 3D bounding box annotations.
+        """
         results['gt_bboxes_3d'] = results['ann_info']['gt_bboxes_3d']
         results['bbox3d_fields'].append('gt_bboxes_3d')
         return results
 
     def _load_labels_3d(self, results):
+        """Private function to load label annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded label annotations.
+        """
         results['gt_labels_3d'] = results['ann_info']['gt_labels_3d']
         return results
 
     def _load_masks_3d(self, results):
+        """Private function to load 3D mask annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 3D mask annotations.
+        """
         pts_instance_mask_path = results['ann_info']['pts_instance_mask_path']
 
         if self.file_client is None:
@@ -317,6 +424,14 @@ class LoadAnnotations3D(LoadAnnotations):
         return results
 
     def _load_semantic_seg_3d(self, results):
+        """Private function to load 3D semantic segmentation annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing the semantic segmentation annotations.
+        """
         pts_semantic_mask_path = results['ann_info']['pts_semantic_mask_path']
 
         if self.file_client is None:
@@ -335,6 +450,15 @@ class LoadAnnotations3D(LoadAnnotations):
         return results
 
     def __call__(self, results):
+        """Call function to load multiple types annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 3D bounding box, label, mask and
+                semantic segmentation annotations.
+        """
         results = super().__call__(results)
         if self.with_bbox_3d:
             results = self._load_bboxes_3d(results)
@@ -350,6 +474,7 @@ class LoadAnnotations3D(LoadAnnotations):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         indent_str = '    '
         repr_str = self.__class__.__name__ + '(\n'
         repr_str += f'{indent_str}with_bbox_3d={self.with_bbox_3d}, '

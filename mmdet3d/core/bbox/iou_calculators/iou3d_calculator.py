@@ -9,7 +9,7 @@ class BboxOverlapsNearest3D(object):
 
     Note:
         This IoU calculator first finds the nearest 2D boxes in bird eye view
-        (BEV), and then calculate the 2D IoU using :meth:`bbox_overlaps`.
+        (BEV), and then calculates the 2D IoU using :meth:`bbox_overlaps`.
 
     Args:
         coordinate (str): 'camera', 'lidar', or 'depth' coordinate system.
@@ -140,7 +140,7 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     """Calculate 3D IoU using cuda implementation.
 
     Note:
-        This function calculate the IoU of 3D boxes based on their volumes.
+        This function calculates the IoU of 3D boxes based on their volumes.
         IoU calculator :class:`BboxOverlaps3D` uses this function to
         calculate the actual IoUs of boxes.
 

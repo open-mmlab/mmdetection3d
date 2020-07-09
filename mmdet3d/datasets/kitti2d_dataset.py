@@ -6,6 +6,33 @@ from mmdet.datasets import DATASETS, CustomDataset
 
 @DATASETS.register_module()
 class Kitti2DDataset(CustomDataset):
+    r"""KITTI 2D Dataset.
+
+    This class serves as the API for experiments on the `KITTI Dataset
+    <http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d>`_.
+
+    Args:
+        data_root (str): Path of dataset root.
+        ann_file (str): Path of annotation file.
+        pipeline (list[dict], optional): Pipeline used for data processing.
+            Defaults to None.
+        classes (tuple[str], optional): Classes used in the dataset.
+            Defaults to None.
+        modality (dict, optional): Modality to specify the sensor data used
+            as input. Defaults to None.
+        box_type_3d (str, optional): Type of 3D box of this dataset.
+            Based on the `box_type_3d`, the dataset will encapsulate the box
+            to its original format then converted them to `box_type_3d`.
+            Defaults to 'LiDAR'. Available options includes
+
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
+            Defaults to True.
+        test_mode (bool, optional): Whether the dataset is in test mode.
+            Defaults to False.
+    """
 
     CLASSES = ('car', 'pedestrian', 'cyclist')
     """
@@ -173,6 +200,16 @@ class Kitti2DDataset(CustomDataset):
         return inds
 
     def reformat_bbox(self, outputs, out=None):
+        """Reformat bounding boxes to KITTI 2D styles.
+
+        Args:
+            outputs (list[np.ndarray]): List of arrays storing the inferenced
+                bounding boxes and scores.
+            out (str | None): The prefix of output file. Default: None.
+
+        Returns:
+            list[dict]: A list of dictionaries with the kitti 2D format.
+        """
         from mmdet3d.core.bbox.transforms import bbox2result_kitti2d
         sample_idx = [info['image']['image_idx'] for info in self.data_infos]
         result_files = bbox2result_kitti2d(outputs, self.CLASSES, sample_idx,

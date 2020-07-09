@@ -86,7 +86,7 @@ def get_box_type(box_type):
     """Get the type and mode of box structure.
 
     Args:
-        box_type (str): Indicate the type of box structure.
+        box_type (str): The type of box structure.
             The valid value are "LiDAR", "Camera", or "Depth".
 
     Returns:
