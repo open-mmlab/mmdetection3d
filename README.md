@@ -13,7 +13,7 @@ The master branch works with **PyTorch 1.3 to 1.5**.
 MMDetection3D is an open source object detection toolbox based on PyTorch, towards the next-generation platform for general 3D detection. It is
 a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk/).
 
-![demo image](resources/outdoor_demo.gif)
+![demo image](resources/mmdet3d_outdoor_demo.gif)
 
 ### Major features
 
