@@ -1,6 +1,6 @@
-from mmdet.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
-                       get_compiling_cuda_version, nms, roi_align,
-                       sigmoid_focal_loss)
+from mmcv.ops import (RoIAlign, SigmoidFocalLoss, nms, roi_align,
+                      sigmoid_focal_loss)
+
 from .ball_query import ball_query
 from .furthest_point_sample import furthest_point_sample
 from .gather_points import gather_points
@@ -13,6 +13,7 @@ from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
                               points_in_boxes_cpu, points_in_boxes_gpu)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
+from .utils import get_compiler_version, get_compiling_cuda_version
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     'make_sparse_convmodule', 'ball_query', 'furthest_point_sample',
     'three_interpolate', 'three_nn', 'gather_points', 'grouping_operation',
     'group_points', 'GroupAll', 'QueryAndGroup', 'PointSAModule',
-    'PointSAModuleMSG', 'PointFPModule', 'points_in_boxes_batch'
+    'PointSAModuleMSG', 'PointFPModule', 'points_in_boxes_batch',
+    'get_compiler_version', 'get_compiling_cuda_version'
 ]
