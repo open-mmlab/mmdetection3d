@@ -28,7 +28,7 @@ linting:
   script:
     - echo "Start building..."
     - pip install -q "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
-    - pip install -q git+https://github.com/open-mmlab/mmcv.git@v0.6.2
+    - pip install -q pip install mmcv==1.0rc0+torch1.3.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
     - pip install -q git+https://github.com/open-mmlab/mmdetection.git
     - python -c "import mmdet; print(mmdet.__version__)"
     - pip install -e .[all]

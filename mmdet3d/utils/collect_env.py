@@ -54,7 +54,7 @@ def collect_env():
     env_info['MMCV'] = mmcv.__version__
     env_info['MMDetection'] = mmdet.__version__
     env_info['MMDetection3D'] = mmdet3d.__version__
-    from mmdet.ops import get_compiler_version, get_compiling_cuda_version
+    from mmdet3d.ops import get_compiler_version, get_compiling_cuda_version
     env_info['MMDetection3D Compiler'] = get_compiler_version()
     env_info['MMDetection3D CUDA Compiler'] = get_compiling_cuda_version()
     return env_info
