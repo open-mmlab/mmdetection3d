@@ -640,6 +640,18 @@ def kitti_eval(gt_annos,
                dt_annos,
                current_classes,
                eval_types=['bbox', 'bev', '3d']):
+    """KITTI evaluation.
+
+    Args:
+        gt_annos (list[dict]): Contain gt information of each sample.
+        dt_annos (list[dict]): Contain detected information of each sample.
+        current_classes (list[str]): Classes to evaluation.
+        eval_types (list[str], optional): Types to eval.
+            Defaults to ['bbox', 'bev', '3d'].
+
+    Returns:
+        tuple: String and dict of evaluation results.
+    """
     assert 'bbox' in eval_types, 'must evaluate bbox at least'
     overlap_0_7 = np.array([[0.7, 0.5, 0.5, 0.7,
                              0.5], [0.7, 0.5, 0.5, 0.7, 0.5],
@@ -749,6 +761,16 @@ def kitti_eval(gt_annos,
 
 
 def kitti_eval_coco_style(gt_annos, dt_annos, current_classes):
+    """coco style evaluation of kitti.
+
+    Args:
+        gt_annos (list[dict]): Contain gt information of each sample.
+        dt_annos (list[dict]): Contain detected information of each sample.
+        current_classes (list[str]): Classes to evaluation.
+
+    Returns:
+        string: Evaluation results.
+    """
     class_to_name = {
         0: 'Car',
         1: 'Pedestrian',
