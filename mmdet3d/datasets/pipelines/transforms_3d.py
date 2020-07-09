@@ -20,11 +20,11 @@ class RandomFlip3D(RandomFlip):
         sync_2d (bool, optional): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
-            to that of 2D images.
+            to that of 2D images. Defaults to True.
         flip_ratio_bev_horizontal (float, optional): The flipping probability
-            in horizontal direction.
+            in horizontal direction. Defaults to 0.0.
         flip_ratio_bev_vertical (float, optional): The flipping probability
-            in vertical direction.
+            in vertical direction. Defaults to 0.0.
     """
 
     def __init__(self,
@@ -119,6 +119,7 @@ class ObjectSample(object):
         db_sampler (dict): Config dict of the database sampler.
         sample_2d (bool): Whether to also paste 2D image patch to the images
             This should be true when applying multi-modality cut-and-paste.
+            Defaults to False.
     """
 
     def __init__(self, db_sampler, sample_2d=False):
@@ -277,15 +278,16 @@ class GlobalRotScaleTrans(object):
 
     Args:
         rot_range (list[float]): Range of rotation angle.
-            Default to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
+            Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
         scale_ratio_range (list[float]): Range of scale ratio.
-            Default to [0.95, 1.05].
+            Defaults to [0.95, 1.05].
         translation_std (list[float]): The standard deviation of ranslation
             noise. This apply random translation to a scene by a noise, which
             is sampled from a gaussian distribution whose standard deviation
-            is set by ``translation_std``. Default to [0, 0, 0]
-        shift_height (bool): whether to shift height
+            is set by ``translation_std``. Defaults to [0, 0, 0]
+        shift_height (bool): Whether to shift height.
             (the fourth dimension of indoor points) when scaling.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -519,7 +521,7 @@ class ObjectNameFilter(object):
     """Filter GT objects by their names.
 
     Args:
-        classes (list[str]): list of class names to be kept for training
+        classes (list[str]): List of class names to be kept for training.
     """
 
     def __init__(self, classes):
@@ -578,7 +580,8 @@ class IndoorPointSample(object):
             points (np.ndarray): 3D Points.
             num_samples (int): Number of samples to be sampled.
             replace (bool): Whether the sample is with or without replacement.
-            return_choices (bool): Whether return choice.
+            Defaults to None.
+            return_choices (bool): Whether return choice. Defaults to False.
 
         Returns:
             tuple[np.ndarray] | np.ndarray:
