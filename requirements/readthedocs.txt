@@ -1,0 +1,4 @@
+git+https://github.com/open-mmlab/mmdetection.git
+mmcv
+torch
+torchvision
