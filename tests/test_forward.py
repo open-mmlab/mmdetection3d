@@ -48,10 +48,6 @@ def _get_detector_cfg(fname):
     return model, train_cfg, test_cfg
 
 
-def test_faster_rcnn_forward():
-    _test_two_stage_forward('mvxnet/faster_rcnn_r50_fpn_caffe_2x8_1x_nus.py')
-
-
 def _test_two_stage_forward(cfg_file):
     model, train_cfg, test_cfg = _get_detector_cfg(cfg_file)
     model['pretrained'] = None

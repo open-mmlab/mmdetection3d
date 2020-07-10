@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.datasets import SUNRGBDDataset
@@ -95,6 +96,8 @@ def test_getitem():
 
 
 def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip()
     from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
     root_path = './tests/data/sunrgbd'
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
