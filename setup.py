@@ -199,10 +199,13 @@ if __name__ == '__main__':
     setup(
         name='mmdet3d',
         version=get_version(),
-        description='3D Detection Toolbox',
+        description=("OpenMMLab's next-generation platform"
+                     'for general 3D object detection.'),
         long_description=readme(),
+        author='OpenMMLab',
+        author_email='zwwdev@gmail.com',
         keywords='computer vision, 3D object detection',
-        url='https://github.com/ZwwWayne/mmdetection3d',
+        url='https://github.com/open-mmlab/mmdetection3d',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         package_data={'mmdet3d.ops': ['*/*.so']},
         classifiers=[
@@ -210,7 +213,6 @@ if __name__ == '__main__':
             'License :: OSI Approved :: Apache Software License',
             'Operating System :: OS Independent',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
         ],
