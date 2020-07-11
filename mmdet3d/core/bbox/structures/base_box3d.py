@@ -385,7 +385,7 @@ class BaseInstance3DBoxes(object):
         """Calculate 3D overlaps of two boxes.
 
         Note:
-            This function calculates the overlaps between ``boxes1`` and 
+            This function calculates the overlaps between ``boxes1`` and
             ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
 
         Args:
