@@ -89,7 +89,7 @@ def test_object_sample():
     repr_str = repr(object_sample)
     expected_repr_str = 'ObjectSample'
     assert repr_str == expected_repr_str
-    assert points.shape == (1177, 4)
+    assert points.shape == (800, 4)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d)
     assert np.all(gt_labels_3d == expected_gt_labels_3d)
 
