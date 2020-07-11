@@ -7,3 +7,4 @@ python:
     - requirements: requirements/build.txt
     - requirements: requirements/runtime.txt
     - requirements: requirements/readthedocs.txt
+    - requirements: git+https://github.com/open-mmlab/mmdetection.git
