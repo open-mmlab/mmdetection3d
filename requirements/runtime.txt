@@ -1,17 +1,9 @@
-networkx>=2.2,<2.3
-trimesh>=2.35.39,<2.35.40
-matplotlib
-mmcv>=1.0.2
-numba==0.48.0
-numpy
-nuscenes-devkit==1.0.5
 lyft_dataset_sdk
-# need older pillow until torchvision is fixed
-Pillow<=6.2.2
+networkx>=2.2,<2.3
+# we may unlock the verion of numba in the future
+numba==0.48.0
+nuscenes-devkit==1.0.5
 plyfile
-six
-terminaltables
-torch>=1.3
-torchvision
 # by default we also use tensorboard to log results
 tensorboard
+trimesh>=2.35.39,<2.35.40

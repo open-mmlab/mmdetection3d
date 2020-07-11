@@ -5,7 +5,7 @@ from os import path as osp
 
 
 def _write_ply(points, out_filename):
-    """Write points into ply format for meshlab visualization.
+    """Write points into ``ply`` format for meshlab visualization.
 
     Args:
         points (np.ndarray): Points in shape (N, dim).
