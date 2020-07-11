@@ -69,26 +69,22 @@ class BaseInstance3DBoxes(object):
 
     @property
     def yaw(self):
-        """torch.Tensor: A vector with yaw of each box.
-        """
+        """torch.Tensor: A vector with yaw of each box."""
         return self.tensor[:, 6]
 
     @property
     def height(self):
-        """torch.Tensor: A vector with height of each box.
-        """
+        """torch.Tensor: A vector with height of each box."""
         return self.tensor[:, 5]
 
     @property
     def top_height(self):
-        """torch.Tensor: A vector with the top height of each box.
-        """
+        """torch.Tensor: A vector with the top height of each box."""
         return self.bottom_height + self.height
 
     @property
     def bottom_height(self):
-        """torch.Tensor: A vector with bottom's height of each box.
-        """
+        """torch.Tensor: A vector with bottom's height of each box."""
         return self.tensor[:, 2]
 
     @property
@@ -112,20 +108,17 @@ class BaseInstance3DBoxes(object):
 
     @property
     def bottom_center(self):
-        """torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         return self.tensor[:, :3]
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         pass
 
     @property
     def corners(self):
-        """torch.Tensor: a tensor with 8 corners of each box.
-        """
+        """torch.Tensor: a tensor with 8 corners of each box."""
         pass
 
     @abstractmethod

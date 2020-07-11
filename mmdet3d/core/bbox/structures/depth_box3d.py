@@ -34,8 +34,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, :2] = bottom_center[:, :2]
@@ -88,15 +87,13 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
     @property
     def bev(self):
         """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
-        in XYWHR format.
-        """
+        in XYWHR format."""
         return self.tensor[:, [0, 1, 3, 4, 6]]
 
     @property
     def nearest_bev(self):
         """torch.Tensor: A tensor of 2D BEV box of each box
-        without rotation.
-        """
+        without rotation."""
         # Obtain BEV boxes with rotation in XYWHR format
         bev_rotated_boxes = self.bev
         # convert the rotation to a valid range

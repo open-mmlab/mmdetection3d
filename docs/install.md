@@ -91,7 +91,6 @@ cd mmdetection3d
 f.Install build requirements and then install MMDetection3D.
 
 ```shell
-pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
@@ -138,7 +137,6 @@ git clone https://github.com/open-mmlab/mmdetection.git
 # install mmdetection3d
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
-pip install -r requirements/build.txt
 pip install -v -e .
 ```
 

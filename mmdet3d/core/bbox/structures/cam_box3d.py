@@ -36,27 +36,23 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def height(self):
-        """torch.Tensor: A vector with height of each box.
-        """
+        """torch.Tensor: A vector with height of each box."""
         return self.tensor[:, 4]
 
     @property
     def top_height(self):
-        """torch.Tensor: A vector with the top height of each box.
-        """
+        """torch.Tensor: A vector with the top height of each box."""
         # the positive direction is down rather than up
         return self.bottom_height - self.height
 
     @property
     def bottom_height(self):
-        """torch.Tensor: A vector with bottom's height of each box.
-        """
+        """torch.Tensor: A vector with bottom's height of each box."""
         return self.tensor[:, 1]
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, [0, 2]] = bottom_center[:, [0, 2]]
@@ -111,15 +107,13 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     @property
     def bev(self):
         """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
-        with rotation in XYWHR format.
-        """
+        with rotation in XYWHR format."""
         return self.tensor[:, [0, 2, 3, 5, 6]]
 
     @property
     def nearest_bev(self):
         """torch.Tensor: A tensor of 2D BEV box of each box
-        without rotation.
-        """
+        without rotation."""
         # Obtain BEV boxes with rotation in XZWHR format
         bev_rotated_boxes = self.bev
         # convert the rotation to a valid range
