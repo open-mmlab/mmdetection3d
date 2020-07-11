@@ -85,12 +85,9 @@ def test_object_sample():
     expected_gt_bboxes_3d = torch.tensor(
         [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100],
          [8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]])
-    expected_gt_labels_3d = np.array([-1, 0])
+    expected_gt_labels_3d = np.array([-1])
     repr_str = repr(object_sample)
     expected_repr_str = 'ObjectSample'
-    print(points.shape)
-    print(expected_gt_bboxes_3d)
-    print(gt_labels_3d)
     assert repr_str == expected_repr_str
     assert points.shape == (800, 4)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d)
