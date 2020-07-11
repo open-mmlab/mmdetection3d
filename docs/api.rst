@@ -37,14 +37,7 @@ post_processing
 mmdet3d.datasets
 ----------------
 
-datasets
-^^^^^^^^^^
 .. automodule:: mmdet3d.datasets
-    :members:
-
-pipelines
-^^^^^^^^^^
-.. automodule:: mmdet3d.datasets.pipelines
     :members:
 
 mmdet3d.models

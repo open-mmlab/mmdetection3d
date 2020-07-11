@@ -24,6 +24,13 @@ class BaseInstance3DBoxes(object):
         origin (tuple[float]): The relative position of origin in the box.
             Default to (0.5, 0.5, 0). This will guide the box be converted to
             (0.5, 0.5, 0) mode.
+
+    Attributes:
+        tensor (torch.Tensor): Float matrix of N x box_dim.
+        box_dim (int): Integer indicating the dimension of a box.
+            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
+            boxes.
     """
 
     def __init__(self, tensor, box_dim=7, with_yaw=True, origin=(0.5, 0.5, 0)):
@@ -186,7 +193,7 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def convert_to(self, dst, rt_mat=None):
-        """Convert self to `dst` mode.
+        """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.
@@ -378,8 +385,8 @@ class BaseInstance3DBoxes(object):
         """Calculate 3D overlaps of two boxes.
 
         Note:
-            This function calculates the overlaps between boxes1 and boxes2,
-            ``boxes1`` and ``boxes2`` should be in the same type.
+            This function calculates the overlaps between ``boxes1`` and 
+            ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
 
         Args:
             boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.

@@ -224,10 +224,10 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         uniformly distributing the anchors inside the minimum and maximum
         anchor ranges according to the feature map sizes.
         However, this makes the anchors center does not match the feature grid.
-        The AlignedAnchor3DRangeGenerator add + 1 when using the feature map
-        sizes to obtain the corners of the voxel grid. Then it shifts the
-        coordinates to the center of voxel grid and use the left up corner to
-        distribute anchors.
+        The :class:`AlignedAnchor3DRangeGenerator` add + 1 when using the
+        feature map sizes to obtain the corners of the voxel grid. Then it
+        shifts the coordinates to the center of voxel grid and use the left
+        up corner to distribute anchors.
 
     Args:
         anchor_corner (bool): Whether to align with the corner of the voxel

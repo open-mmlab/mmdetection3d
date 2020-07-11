@@ -47,7 +47,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         in shape (N, 8, 3).
 
         Convert the boxes to corners in clockwise order, in form of
-        (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
+        ``(x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)``
 
         .. code-block:: none
 
@@ -185,9 +185,9 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 (x_min, y_min, x_max, y_max)
 
         Note:
-            In the original implementation of SECOND, checking whether
-            a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burdun for simpler cases.
+            The original implementation of SECOND checks whether boxes in
+            a range by checking whether the points are in a convex
+            polygon, we reduce the burden for simpler cases.
 
         Returns:
             torch.Tensor: Whether each box is inside the reference range.
@@ -199,7 +199,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         return in_range_flags
 
     def convert_to(self, dst, rt_mat=None):
-        """Convert self to `dst` mode.
+        """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`BoxMode`): the target Box mode

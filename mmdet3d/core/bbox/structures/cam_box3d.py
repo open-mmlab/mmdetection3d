@@ -61,7 +61,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def corners(self):
-        """Calculate the coordinates of corners of all the boxes.
+        """torch.Tensor: Coordinates of corners of all the boxes in shape (N, 8, 3).
 
         Convert the boxes to  in clockwise order, in the form of
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
@@ -82,9 +82,6 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                          |
                          v
                     down y
-
-        Returns:
-            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -203,9 +200,9 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 (x_min, z_min, x_max, z_max).
 
         Note:
-            In the original implementation of SECOND, checking whether
-            a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burden for simpler cases.
+            The original implementation of SECOND checks whether boxes in
+            a range by checking whether the points are in a convex
+            polygon, we reduce the burden for simpler cases.
 
         Returns:
             torch.Tensor: Indicating whether each box is inside \
@@ -249,7 +246,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return overlaps_h
 
     def convert_to(self, dst, rt_mat=None):
-        """Convert self to `dst` mode.
+        """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.

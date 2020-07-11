@@ -24,7 +24,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
     The yaw is 0 at the positive direction of x axis, and increases from
     the positive direction of x to the positive direction of y.
 
-    Args:
+    Attributes:
         tensor (torch.Tensor): Float matrix of N x box_dim.
         box_dim (int): Integer indicates the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
@@ -43,10 +43,11 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def corners(self):
-        """Calculate the coordinates of corners of all the boxes.
+        """torch.Tensor: Coordinates of corners of all the boxes
+        in shape (N, 8, 3).
 
         Convert the boxes to corners in clockwise order, in form of
-        (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
+        ``(x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)``
 
         .. code-block:: none
 
@@ -62,9 +63,6 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                             | / oriign    | /
                (x0, y0, z0) + ----------- + --------> right x
                                           (x1, y0, z0)
-
-        Returns:
-            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -208,7 +206,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         return in_range_flags
 
     def convert_to(self, dst, rt_mat=None):
-        """Convert self to `dst` mode.
+        """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.
