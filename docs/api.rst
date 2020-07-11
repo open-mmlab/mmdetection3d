@@ -19,6 +19,16 @@ evaluation
 .. automodule:: mmdet3d.core.evaluation
     :members:
 
+visualizer
+^^^^^^^^^^^^^^^
+.. automodule:: mmdet3d.core.visualizer
+    :members:
+
+voxel
+^^^^^^^^^^^^^^^
+.. automodule:: mmdet3d.core.voxel
+    :members:
+
 post_processing
 ^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.core.post_processing

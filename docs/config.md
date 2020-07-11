@@ -6,7 +6,7 @@ You may also pass `--options xxx.yyy=zzz` to see updated config.
 ## Config File Structure
 
 There are 4 basic component types under `config/_base_`, dataset, model, schedule, default_runtime.
-Many methods could be easily constructed with one of each like SECOND, PointPillars, PartA2 and VoteNet.
+Many methods could be easily constructed with one of each like SECOND, PointPillars, PartA2, and VoteNet.
 The configs that are composed by components from `_base_` are called _primitive_.
 
 For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.

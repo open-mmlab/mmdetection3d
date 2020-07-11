@@ -107,8 +107,7 @@ class Anchor3DRangeGenerator(object):
     def single_level_grid_anchors(self, featmap_size, scale, device='cuda'):
         """Generate grid anchors of a single level feature map.
 
-        Note:
-            This function is usually called by method ``self.grid_anchors``.
+        This function is usually called by method ``self.grid_anchors``.
 
         Args:
             featmap_size (tuple[int]): Size of the feature map.
@@ -215,19 +214,20 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
     """Aligned 3D Anchor Generator by range.
 
     This anchor generator uses a different manner to generate the positions
-    of anchors' centers from `Anchor3DRangeGenerator`.
+    of anchors' centers from :class:`Anchor3DRangeGenerator`.
 
     Note:
-    The `align` means that the anchor's center is aligned with the voxel grid,
-    which is also the feature grid. The previous implementation of
-    `Anchor3DRangeGenerator` does not generate the anchors' center according
-    to the voxel grid. Rather, it generates the center by uniformly
-    distributing the anchors inside the minimum and maximum anchor ranges
-    according to the feature map sizes.
-    However, this makes the anchors center does not match the feature grid.
-    The AlignedAnchor3DRangeGenerator add + 1 when using the feature map sizes
-    to obtain the corners of the voxel grid. Then it shifts the coordinates to
-    the center of voxel grid and use the left up corner to distribute anchors.
+        The `align` means that the anchor's center is aligned with the voxel
+        grid, which is also the feature grid. The previous implementation of
+        :class:`Anchor3DRangeGenerator` does not generate the anchors' center
+        according to the voxel grid. Rather, it generates the center by
+        uniformly distributing the anchors inside the minimum and maximum
+        anchor ranges according to the feature map sizes.
+        However, this makes the anchors center does not match the feature grid.
+        The AlignedAnchor3DRangeGenerator add + 1 when using the feature map
+        sizes to obtain the corners of the voxel grid. Then it shifts the
+        coordinates to the center of voxel grid and use the left up corner to
+        distribute anchors.
 
     Args:
         anchor_corner (bool): Whether to align with the corner of the voxel

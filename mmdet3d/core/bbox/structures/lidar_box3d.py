@@ -34,10 +34,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def gravity_center(self):
-        """Calculate the gravity center of all the boxes.
-
-        Returns:
-            torch.Tensor: A tensor with center of each box.
+        """torch.Tensor: A tensor with center of each box.
         """
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
@@ -47,7 +44,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def corners(self):
-        """Calculate the coordinates of corners of all the boxes.
+        """torch.Tensor: Coordinates of corners of all the boxes
+        in shape (N, 8, 3).
 
         Convert the boxes to corners in clockwise order, in form of
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
@@ -66,9 +64,6 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                             | / oriign    | /
             left y<-------- + ----------- + (x0, y1, z0)
                 (x0, y0, z0)
-
-        Returns:
-            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -90,20 +85,15 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def bev(self):
-        """Calculate the 2D bounding boxes in BEV with rotation.
-
-        Returns:
-            torch.Tensor: A n x 5 tensor of 2D BEV box of each box. \
-                The box is in XYWHR format.
+        """torch.Tensor: 2D BEV box of each box with rotation
+        in XYWHR format.
         """
         return self.tensor[:, [0, 1, 3, 4, 6]]
 
     @property
     def nearest_bev(self):
-        """Calculate the 2D bounding boxes in BEV without rotation.
-
-        Returns:
-            torch.Tensor: A tensor of 2D BEV box of each box.
+        """torch.Tensor: A tensor of 2D BEV box of each box
+        without rotation
         """
         # Obtain BEV boxes with rotation in XYWHR format
         bev_rotated_boxes = self.bev
@@ -218,13 +208,13 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             dst (:obj:`BoxMode`): the target Box mode
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
-                The conversion from `src` coordinates to `dst` coordinates
+                The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: \
-                The converted box of the same type in the `dst` mode.
+                The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
