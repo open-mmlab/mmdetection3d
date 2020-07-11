@@ -53,7 +53,7 @@ The pre-build *mmcv-full* could be installed by running: (available versions cou
 pip install mmcv-full==latest+torch1.5.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
 ```
 
-Optionally, you could also build full version from source:
+Optionally, you could also build the full version from source:
 
 ```shell
 pip install mmcv-full
@@ -65,7 +65,8 @@ d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).
 pip install git+https://github.com/open-mmlab/mmdetection.git
 ```
 
-Optionally, you could also build full version from source:
+Optionally, you could also build MMDetection from source in case you want to modify the code:
+
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
