@@ -1,10 +1,13 @@
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.core.evaluation.indoor_eval import average_precision, indoor_eval
 
 
 def test_indoor_eval():
+    if not torch.cuda.is_available():
+        pytest.skip()
     from mmdet3d.core.bbox.structures import Box3DMode, DepthInstance3DBoxes
     det_infos = [{
         'labels_3d':

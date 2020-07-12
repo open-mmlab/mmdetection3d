@@ -248,6 +248,8 @@ def test_three_interpolate():
 
 
 def test_three_nn():
+    if not torch.cuda.is_available():
+        pytest.skip()
     known = torch.tensor([[[-1.8373, 3.5605,
                             -0.7867], [0.7615, 2.9420, 0.2314],
                            [-0.6503, 3.6637, -1.0622],

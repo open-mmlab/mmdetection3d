@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from mmdet3d.core.bbox.assigners import MaxIoUAssigner
@@ -5,6 +6,8 @@ from mmdet3d.core.bbox.samplers import IoUNegPiecewiseSampler
 
 
 def test_iou_piecewise_sampler():
+    if not torch.cuda.is_available():
+        pytest.skip()
     assigner = MaxIoUAssigner(
         pos_iou_thr=0.55,
         neg_iou_thr=0.55,

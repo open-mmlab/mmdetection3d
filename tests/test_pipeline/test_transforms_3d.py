@@ -34,66 +34,6 @@ def test_remove_points_in_boxes():
     assert points.shape == (10, 4)
 
 
-def test_object_sample():
-    db_sampler = mmcv.ConfigDict({
-        'data_root': './tests/data/kitti/',
-        'info_path': './tests/data/kitti/kitti_dbinfos_train.pkl',
-        'rate': 1.0,
-        'prepare': {
-            'filter_by_difficulty': [-1],
-            'filter_by_min_points': {
-                'Pedestrian': 10
-            }
-        },
-        'classes': ['Pedestrian', 'Cyclist', 'Car'],
-        'sample_groups': {
-            'Pedestrian': 6
-        }
-    })
-    object_sample = ObjectSample(db_sampler)
-    points = np.fromfile(
-        './tests/data/kitti/training/velodyne_reduced/000000.bin',
-        np.float32).reshape(-1, 4)
-    annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
-    info = annos[0]
-    rect = info['calib']['R0_rect'].astype(np.float32)
-    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-    annos = info['annos']
-    loc = annos['location']
-    dims = annos['dimensions']
-    rots = annos['rotation_y']
-    gt_names = annos['name']
-
-    gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
-                                  axis=1).astype(np.float32)
-    gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
-        Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
-    CLASSES = ('car', 'pedestrian', 'cyclist')
-    gt_labels = []
-    for cat in gt_names:
-        if cat in CLASSES:
-            gt_labels.append(CLASSES.index(cat))
-        else:
-            gt_labels.append(-1)
-    input_dict = dict(
-        points=points, gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels)
-    input_dict = object_sample(input_dict)
-    points = input_dict['points']
-    gt_bboxes_3d = input_dict['gt_bboxes_3d']
-    gt_labels_3d = input_dict['gt_labels_3d']
-
-    expected_gt_bboxes_3d = torch.tensor(
-        [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100],
-         [8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]])
-    expected_gt_labels_3d = np.array([-1, 0])
-    repr_str = repr(object_sample)
-    expected_repr_str = 'ObjectSample'
-    assert repr_str == expected_repr_str
-    assert points.shape == (1177, 4)
-    assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d)
-    assert np.all(gt_labels_3d == expected_gt_labels_3d)
-
-
 def test_object_noise():
     np.random.seed(0)
     object_noise = ObjectNoise()
