@@ -25,7 +25,7 @@ jobs:
       - name: Format python codes with yapf
         run: yapf -r -d mmdet3d/ tests/ examples/
       - name: Check docstring
-        run: interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 80 mmdet3d
+        run: interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 95 mmdet3d
 
   build:
     env:
