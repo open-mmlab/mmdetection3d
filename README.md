@@ -39,7 +39,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 
   It trains faster than other codebases. The comparison of training speed (samples/s) with other codebases is as below. Details can be found in [benchmark.md]((./docs/benchmarks.md)).
 
-  | Methods | MMDetection3D | OpenPCDet |votenet| Det3D |
+  | Methods | MMDetection3D | [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) |[votenet](https://github.com/facebookresearch/votenet)| [Det3D](https://github.com/poodarchu/Det3D) |
   |:-------:|:-------------:|:---------:|:-----:|:-----:|
   | VoteNet | 358           | ×         |   77  | ×     |
   | PointPillars-car| 141           | ×         |   ×  | 140     |
