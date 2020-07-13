@@ -74,7 +74,6 @@ jobs:
         run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          pip install -q "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
           pip install mmcv-full==latest+torch${{matrix.torch}}+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
           pip install -q git+https://github.com/open-mmlab/mmdetection.git
           pip install -r requirements.txt
