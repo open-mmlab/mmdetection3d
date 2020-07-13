@@ -206,7 +206,15 @@ class ObjectSample(object):
 
     def __repr__(self):
         """str: Return a string that describes the module."""
-        return self.__class__.__name__
+        repr_str = self.__class__.__name__
+        repr_str += f' sample_2d={self.sample_2d},'
+        repr_str += f' data_root={self.sampler_cfg.data_root},'
+        repr_str += f' info_path={self.sampler_cfg.info_path},'
+        repr_str += f' rate={self.sampler_cfg.rate},'
+        repr_str += f' prepare={self.sampler_cfg.prepare},'
+        repr_str += f' classes={self.sampler_cfg.classes},'
+        repr_str += f' sample_groups={self.sampler_cfg.sample_groups}'
+        return repr_str
 
 
 @PIPELINES.register_module()

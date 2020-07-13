@@ -2,7 +2,7 @@ import mmcv
 import numpy as np
 import torch
 
-from mmdet3d.core import Box3DMode, CameraInstance3DBoxes
+from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.datasets import ObjectNoise, ObjectSample
 
 
@@ -32,6 +32,64 @@ def test_remove_points_in_boxes():
 
     points = ObjectSample.remove_points_in_boxes(points, boxes)
     assert points.shape == (10, 4)
+
+
+def test_object_sample():
+    import pickle
+    db_sampler = mmcv.ConfigDict({
+        'data_root': './tests/data/kitti/',
+        'info_path': './tests/data/kitti/kitti_dbinfos_train.pkl',
+        'rate': 1.0,
+        'prepare': {
+            'filter_by_difficulty': [-1],
+            'filter_by_min_points': {
+                'Pedestrian': 10
+            }
+        },
+        'classes': ['Pedestrian', 'Cyclist', 'Car'],
+        'sample_groups': {
+            'Pedestrian': 6
+        }
+    })
+    with open('./tests/data/kitti/kitti_dbinfos_train.pkl', 'rb') as f:
+        db_infos = pickle.load(f)
+    np.random.seed(0)
+    object_sample = ObjectSample(db_sampler)
+    points = np.fromfile(
+        './tests/data/kitti/training/velodyne_reduced/000000.bin',
+        np.float32).reshape(-1, 4)
+    annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
+    info = annos[0]
+    annos = info['annos']
+    gt_names = annos['name']
+    gt_bboxes_3d = db_infos['Pedestrian'][0]['box3d_lidar']
+    gt_bboxes_3d = LiDARInstance3DBoxes([gt_bboxes_3d])
+    CLASSES = ('Car', 'Pedestrian', 'Cyclist')
+    gt_labels = []
+    for cat in gt_names:
+        if cat in CLASSES:
+            gt_labels.append(CLASSES.index(cat))
+        else:
+            gt_labels.append(-1)
+    input_dict = dict(
+        points=points, gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels)
+    input_dict = object_sample(input_dict)
+    points = input_dict['points']
+    gt_bboxes_3d = input_dict['gt_bboxes_3d']
+    gt_labels_3d = input_dict['gt_labels_3d']
+    repr_str = repr(object_sample)
+    expected_repr_str = 'ObjectSample sample_2d=False, ' \
+                        'data_root=./tests/data/kitti/, ' \
+                        'info_path=./tests/data/kitti/kitti' \
+                        '_dbinfos_train.pkl, rate=1.0, ' \
+                        'prepare={\'filter_by_difficulty\': [-1], ' \
+                        '\'filter_by_min_points\': {\'Pedestrian\': 10}}, ' \
+                        'classes=[\'Pedestrian\', \'Cyclist\', \'Car\'], ' \
+                        'sample_groups={\'Pedestrian\': 6}'
+    assert repr_str == expected_repr_str
+    assert points.shape == (1177, 4)
+    assert gt_bboxes_3d.tensor.shape == (2, 7)
+    assert np.all(gt_labels_3d == [1, 0])
 
 
 def test_object_noise():
