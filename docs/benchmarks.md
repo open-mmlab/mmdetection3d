@@ -13,7 +13,7 @@ with some other open source 3D detection codebases.
 
 ## Main Results
 
-We compare the training speed (samples/s) with other codebases if they implement the similar models. The results are as below, the greater the numbers in the table, the faster of the training process.
+We compare the training speed (samples/s) with other codebases if they implement the similar models. The results are as below, the greater the numbers in the table, the faster of the training process. The models that are not compared are marked by `×`.
 
 | Methods | MMDetection3D | OpenPCDet |votenet| Det3D |
 |:-------:|:-------------:|:---------:|:-----:|:-----:|
