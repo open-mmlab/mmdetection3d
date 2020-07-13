@@ -71,8 +71,6 @@ Optionally, you could also build MMDetection from source in case you want to mod
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
 pip install -r requirements/build.txt
-pip install cython  # cython is necessary for pycocotools
-pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
 pip install -v -e .  # or "python setup.py develop"
 ```
 
@@ -133,7 +131,7 @@ conda install -c pytorch pytorch torchvision -y
 pip install mmcv-full
 
 # install mmdetection
-git clone https://github.com/open-mmlab/mmdetection.git
+pip install git+https://github.com/open-mmlab/mmdetection.git
 
 # install mmdetection3d
 git clone https://github.com/open-mmlab/mmdetection3d.git
