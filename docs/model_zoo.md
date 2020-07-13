@@ -2,8 +2,8 @@
 
 ## Mirror sites
 
-We use AWS as the main site to host our model zoo, and maintain a mirror on aliyun.
-You can replace `https://s3.ap-northeast-2.amazonaws.com/open-mmlab` with `https://open-mmlab.oss-cn-beijing.aliyuncs.com` in model urls.
+We use aliyun as the main site to host our model zoo, and maintain a mirror on AWS.
+You can replace `https://openmmlab.oss-accelerate.aliyuncs.com/` with `https://s3.ap-northeast-2.amazonaws.com/open-mmlab` in model urls.
 
 ## Common settings
 
