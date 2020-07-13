@@ -15,13 +15,13 @@ with some other open source 3D detection codebases.
 
 We compare the training speed (samples/s) with other codebases if they implement the similar models. The results are as below, the greater the numbers in the table, the faster of the training process.
 
-| Methods | MMDetection3D |votenet| Det3D | OpenPCDet |
-|:-------:|:-------------:|:-----:|:-----:|:---------:|
-| VoteNet | 358           |   77  | ×     | ×         |
-| PointPillars-car| 141           |   ×  | 140     | ×         |
-| PointPillars-3class| 107           |   ×      | ×    |44     |
-| SECOND | 40           |   ×      | ×    |30     |
-| Part-A2| 17           |   ×      | ×    |14     |
+| Methods | MMDetection3D | OpenPCDet |votenet| Det3D |
+|:-------:|:-------------:|:---------:|:-----:|:-----:|
+| VoteNet | 358           | ×         |   77  | ×     |
+| PointPillars-car| 141           | ×         |   ×  | 140     |
+| PointPillars-3class| 107           |44     |   ×      | ×    |
+| SECOND | 40           |30     |   ×      | ×    |
+| Part-A2| 17           |14     |   ×      | ×    |
 
 ## Details of Comparison
 

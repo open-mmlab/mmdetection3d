@@ -37,7 +37,15 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 
 - **High efficiency**
 
-  It trains [faster than other codebases](./docs/benchmarks.md).
+  It trains faster than other codebases. The comparison of training speed (samples/s) with other codebases is as below. Details can be found in [benchmark.md]((./docs/benchmarks.md)).
+
+  | Methods | MMDetection3D | OpenPCDet |votenet| Det3D |
+  |:-------:|:-------------:|:---------:|:-----:|:-----:|
+  | VoteNet | 358           | ×         |   77  | ×     |
+  | PointPillars-car| 141           | ×         |   ×  | 140     |
+  | PointPillars-3class| 107           |44     |   ×      | ×    |
+  | SECOND | 40           |30     |   ×      | ×    |
+  | Part-A2| 17           |14     |   ×      | ×    |
 
 Apart from MMDetection3D, we also released a library [MMDetection](https://github.com/open-mmlab/mmdetection) and [MMCV](https://github.com/open-mmlab/mmcv) for computer vision research, which are heavily depended on by this toolbox. Like [MMDetection](https://github.com/open-mmlab/mmdetection) and [MMCV](https://github.com/open-mmlab/mmcv), MMDetection3D can also be used as a library to support different projects on top of it.
 
