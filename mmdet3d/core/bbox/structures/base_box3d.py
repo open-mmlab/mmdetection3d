@@ -24,6 +24,13 @@ class BaseInstance3DBoxes(object):
         origin (tuple[float]): The relative position of origin in the box.
             Default to (0.5, 0.5, 0). This will guide the box be converted to
             (0.5, 0.5, 0) mode.
+
+    Attributes:
+        tensor (torch.Tensor): Float matrix of N x box_dim.
+        box_dim (int): Integer indicating the dimension of a box.
+            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
+            boxes.
     """
 
     def __init__(self, tensor, box_dim=7, with_yaw=True, origin=(0.5, 0.5, 0)):
@@ -59,58 +66,32 @@ class BaseInstance3DBoxes(object):
 
     @property
     def volume(self):
-        """Compute the volume of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with volume of each box.
-        """
+        """torch.Tensor: A vector with volume of each box."""
         return self.tensor[:, 3] * self.tensor[:, 4] * self.tensor[:, 5]
 
     @property
     def dims(self):
-        """Calculate the length in each dimension of all the boxes.
-
-        Convert the boxes to the form of (x_size, y_size, z_size).
-
-        Returns:
-            torch.Tensor: Corners of each box with size (N, 8, 3).
-        """
+        """torch.Tensor: Corners of each box with size (N, 8, 3)."""
         return self.tensor[:, 3:6]
 
     @property
     def yaw(self):
-        """Obtain the rotations of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with yaw of each box.
-        """
+        """torch.Tensor: A vector with yaw of each box."""
         return self.tensor[:, 6]
 
     @property
     def height(self):
-        """Obtain the height of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with height of each box.
-        """
+        """torch.Tensor: A vector with height of each box."""
         return self.tensor[:, 5]
 
     @property
     def top_height(self):
-        """Obtain the top height of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with the top height of each box.
-        """
+        """torch.Tensor: A vector with the top height of each box."""
         return self.bottom_height + self.height
 
     @property
     def bottom_height(self):
-        """Obtain the bottom's height of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with bottom's height of each box.
-        """
+        """torch.Tensor: A vector with bottom's height of each box."""
         return self.tensor[:, 2]
 
     @property
@@ -124,7 +105,7 @@ class BaseInstance3DBoxes(object):
             The relative position of the centers in different kinds of
             boxes are different, e.g., the relative center of a boxes is
             (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
-            It is recommended to use `bottom_center` or `gravity_center`
+            It is recommended to use ``bottom_center`` or ``gravity_center``
             for more clear usage.
 
         Returns:
@@ -134,29 +115,17 @@ class BaseInstance3DBoxes(object):
 
     @property
     def bottom_center(self):
-        """Calculate the bottom center of all the boxes.
-
-        Returns:
-            torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         return self.tensor[:, :3]
 
     @property
     def gravity_center(self):
-        """Calculate the gravity center of all the boxes.
-
-        Returns:
-            torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         pass
 
     @property
     def corners(self):
-        """Calculate the coordinates of corners of all the boxes.
-
-        Returns:
-            torch.Tensor: a tensor with 8 corners of each box.
-        """
+        """torch.Tensor: a tensor with 8 corners of each box."""
         pass
 
     @abstractmethod
@@ -224,7 +193,7 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def convert_to(self, dst, rt_mat=None):
-        """Convert self to `dst` mode.
+        """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.
@@ -235,8 +204,8 @@ class BaseInstance3DBoxes(object):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            A new object of :class:`BaseInstance3DBoxes` after indexing: \
-                The converted box of the same type in the `dst` mode.
+            :obj:`BaseInstance3DBoxes`: The converted box of the same type \
+                in the `dst` mode.
         """
         pass
 
@@ -294,7 +263,8 @@ class BaseInstance3DBoxes(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            A new object of :class:`BaseInstances3DBoxes` after indexing.
+            :obj:`BaseInstances3DBoxes`: A new object of  \
+                :class:`BaseInstances3DBoxes` after indexing.
         """
         original_type = type(self)
         if isinstance(item, int):
@@ -415,8 +385,8 @@ class BaseInstance3DBoxes(object):
         """Calculate 3D overlaps of two boxes.
 
         Note:
-            This function calculates the overlaps between boxes1 and boxes2,
-            boxes1 and boxes2 are not necessarily in the same type.
+            This function calculates the overlaps between ``boxes1`` and
+            ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
 
         Args:
             boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
@@ -424,7 +394,7 @@ class BaseInstance3DBoxes(object):
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes.
+            torch.Tensor: Calculated iou of boxes' heights.
         """
         assert isinstance(boxes1, BaseInstance3DBoxes)
         assert isinstance(boxes2, BaseInstance3DBoxes)
@@ -477,8 +447,8 @@ class BaseInstance3DBoxes(object):
             data (torch.Tensor | numpy.array | list): Data to be copied.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: A new bbox with data and other \
-                properties are similar to self.
+            :obj:`BaseInstance3DBoxes`: A new bbox object with ``data``, \
+                the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \
             if not isinstance(data, torch.Tensor) else data.to(self.device)

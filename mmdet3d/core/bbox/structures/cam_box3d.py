@@ -36,39 +36,23 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def height(self):
-        """Obtain the heights of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with height of each box.
-        """
+        """torch.Tensor: A vector with height of each box."""
         return self.tensor[:, 4]
 
     @property
     def top_height(self):
-        """Obtain the top height of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with the top height of each box.
-        """
+        """torch.Tensor: A vector with the top height of each box."""
         # the positive direction is down rather than up
         return self.bottom_height - self.height
 
     @property
     def bottom_height(self):
-        """Obtain the bottom's height of all the boxes.
-
-        Returns:
-            torch.Tensor: A vector with bottom's height of each box.
-        """
+        """torch.Tensor: A vector with bottom's height of each box."""
         return self.tensor[:, 1]
 
     @property
     def gravity_center(self):
-        """Calculate the gravity center of all the boxes.
-
-        Returns:
-            torch.Tensor: A tensor with center of each box.
-        """
+        """torch.Tensor: A tensor with center of each box."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, [0, 2]] = bottom_center[:, [0, 2]]
@@ -77,7 +61,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def corners(self):
-        """Calculate the coordinates of corners of all the boxes.
+        """torch.Tensor: Coordinates of corners of all the boxes in shape (N, 8, 3).
 
         Convert the boxes to  in clockwise order, in the form of
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
@@ -98,9 +82,6 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                          |
                          v
                     down y
-
-        Returns:
-            torch.Tensor: Corners of each box with size (N, 8, 3).
         """
         # TODO: rotation_3d_in_axis function do not support
         #  empty tensor currently.
@@ -122,21 +103,14 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def bev(self):
-        """Calculate the 2D bounding boxes in BEV with rotation.
-
-        Returns:
-            torch.Tensor: A n x 5 tensor of 2D BEV box of each box. \
-                The box is in XYWHR format.
-        """
+        """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
+        with rotation in XYWHR format."""
         return self.tensor[:, [0, 2, 3, 5, 6]]
 
     @property
     def nearest_bev(self):
-        """Calculate the 2D bounding boxes in BEV without rotation.
-
-        Returns:
-            torch.Tensor: A tensor of 2D BEV box of each box.
-        """
+        """torch.Tensor: A tensor of 2D BEV box of each box
+        without rotation."""
         # Obtain BEV boxes with rotation in XZWHR format
         bev_rotated_boxes = self.bev
         # convert the rotation to a valid range
@@ -226,9 +200,9 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 (x_min, z_min, x_max, z_max).
 
         Note:
-            In the original implementation of SECOND, checking whether
-            a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burden for simpler cases.
+            The original implementation of SECOND checks whether boxes in
+            a range by checking whether the points are in a convex
+            polygon, we reduce the burden for simpler cases.
 
         Returns:
             torch.Tensor: Indicating whether each box is inside \
@@ -244,22 +218,19 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     def height_overlaps(cls, boxes1, boxes2, mode='iou'):
         """Calculate height overlaps of two boxes.
 
-        Note:
-            This function calculates the height overlaps between boxes1 and
-            boxes2, where boxes1 and boxes2 should be in the same type.
+        This function calculates the height overlaps between ``boxes1`` and
+        ``boxes2``, where ``boxes1`` and ``boxes2`` should be in the same type.
 
         Args:
-            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
-            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
+            boxes1 (:obj:`CameraInstance3DBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`CameraInstance3DBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes.
+            torch.Tensor: Calculated iou of boxes' heights.
         """
-        assert isinstance(boxes1, BaseInstance3DBoxes)
-        assert isinstance(boxes2, BaseInstance3DBoxes)
-        assert type(boxes1) == type(boxes2), '"boxes1" and "boxes2" should' \
-            f'be in the same type, got {type(boxes1)} and {type(boxes2)}.'
+        assert isinstance(boxes1, CameraInstance3DBoxes)
+        assert isinstance(boxes2, CameraInstance3DBoxes)
 
         boxes1_top_height = boxes1.top_height.view(-1, 1)
         boxes1_bottom_height = boxes1.bottom_height.view(-1, 1)
@@ -275,19 +246,19 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return overlaps_h
 
     def convert_to(self, dst, rt_mat=None):
-        """Convert self to `dst` mode.
+        """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.
             rt_mat (np.dnarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
-                The conversion from `src` coordinates to `dst` coordinates
+                The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
             :obj:`BaseInstance3DBoxes`:  \
-                The converted box of the same type in the `dst` mode.
+                The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(

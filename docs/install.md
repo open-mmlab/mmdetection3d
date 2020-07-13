@@ -45,18 +45,31 @@ conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 If you build PyTorch from source instead of installing the prebuilt pacakge,
 you can use more CUDA versions such as 9.0.
 
-c. Clone the mmdetection repository.
+c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).
+*mmcv-full* is necessary since MMDetection3D relies on MMDetection, CUDA ops in *mmcv-full* are required.
+
+The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
+```shell
+pip install mmcv-full==latest+torch1.5.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+```
+
+Optionally, you could also build the full version from source:
+
+```shell
+pip install mmcv-full
+```
+
+d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).
+
+```shell
+pip install git+https://github.com/open-mmlab/mmdetection.git
+```
+
+Optionally, you could also build MMDetection from source in case you want to modify the code:
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
-```
-
-d. Install build requirements and then install mmdetection.
-(We install our forked version of pycocotools via the github repo instead of pypi
-for better compatibility with our repo.)
-
-```shell
 pip install -r requirements/build.txt
 pip install cython  # cython is necessary for pycocotools
 pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
@@ -69,17 +82,16 @@ If you build mmdetection on macOS, replace the last command with
 CC=clang CXX=clang++ CFLAGS='-stdlib=libc++' pip install -e .
 ```
 
-e. Clone the mmdetection3d repository.
+e. Clone the MMDetection3D repository.
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 ```
 
-f.Install build requirements and then install mmdetection3d.
+f.Install build requirements and then install MMDetection3D.
 
 ```shell
-pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
@@ -116,17 +128,16 @@ conda activate open-mmlab
 
 # install latest pytorch prebuilt with the default prebuilt CUDA version (usually the latest)
 conda install -c pytorch pytorch torchvision -y
-git clone https://github.com/open-mmlab/mmdetection.git
-cd mmdetection
-pip install -r requirements/build.txt
-pip install cython
-pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
-pip install -v -e .
 
-cd ..
+# install mmcv
+pip install mmcv-full
+
+# install mmdetection
+git clone https://github.com/open-mmlab/mmdetection.git
+
+# install mmdetection3d
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
-pip install -r requirements/build.txt
 pip install -v -e .
 ```
 
