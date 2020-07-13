@@ -78,7 +78,14 @@ def test_object_sample():
     gt_bboxes_3d = input_dict['gt_bboxes_3d']
     gt_labels_3d = input_dict['gt_labels_3d']
     repr_str = repr(object_sample)
-    expected_repr_str = 'ObjectSample'
+    expected_repr_str = 'ObjectSample sample_2d=False, ' \
+                        'data_root=./tests/data/kitti/, ' \
+                        'info_path=./tests/data/kitti/kitti' \
+                        '_dbinfos_train.pkl, rate=1.0, ' \
+                        'prepare={\'filter_by_difficulty\': [-1], ' \
+                        '\'filter_by_min_points\': {\'Pedestrian\': 10}}, ' \
+                        'classes=[\'Pedestrian\', \'Cyclist\', \'Car\'], ' \
+                        'sample_groups={\'Pedestrian\': 6}'
     assert repr_str == expected_repr_str
     assert points.shape == (1177, 4)
     assert gt_bboxes_3d.tensor.shape == (2, 7)
