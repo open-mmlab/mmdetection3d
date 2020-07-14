@@ -1,3 +1,12 @@
+// Modified from
+// https://github.com/open-mmlab/OpenPCDet/blob/master/pcdet/ops/iou3d_nms/src/iou3d_nms.cpp
+
+/*
+3D IoU Calculation and Rotated NMS(modified from 2D NMS written by others)
+Written by Shaoshuai Shi
+All Rights Reserved 2019-2020.
+*/
+
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <torch/extension.h>
