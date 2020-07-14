@@ -1,13 +1,4 @@
-include requirements.txt
-include mmdet3d/ops/ball_query/src/*.cpp mmdet3d/ops/ball_query/src/*.cu
-include mmdet3d/ops/furthest_point_sample/src/*.cpp mmdet3d/ops/furthest_point_sample/src/*.cu
-include mmdet3d/ops/gather_points/src/*.cpp mmdet3d/ops/gather_points/src/*.cu
-include mmdet3d/ops/group_points/src/*.cpp mmdet3d/ops/group_points/src/*.cu
-include mmdet3d/ops/interpolate/src/*.cpp mmdet3d/ops/interpolate/src/*.cu
-include mmdet3d/ops/iou3d/src/*.cpp mmdet3d/ops/iou3d/src/*.cu
-include mmdet3d/ops/roiaware_pool3d/src/*.cpp mmdet3d/ops/roiaware_pool3d/src/*.cu
-include mmdet3d/ops/spconv/include/spconv/*.h mmdet3d/ops/spconv/include/tensorview/*.h
-include mmdet3d/ops/spconv/include/utility/*.h mmdet3d/ops/spconv/include/*.h
-include mmdet3d/ops/spconv/src/*.cc mmdet3d/ops/spconv/src/*.cu
-include mmdet3d/ops/utils/src/*.cpp
-include mmdet3d/ops/voxel/src/*.cpp mmdet3d/ops/voxel/src/*.cu
+include requirements/*.txt
+include mmdet3d/ops/**/*.cpp mmdet3d/ops/**/*.cu
+include mmdet3d/ops/**/*.h mmdet3d/ops/**/*.cc
+include mmdet3d/VERSION
