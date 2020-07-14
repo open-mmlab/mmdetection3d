@@ -13,15 +13,15 @@ with some other open source 3D detection codebases.
 
 ## Main Results
 
-We compare the training speed (samples/s) with other codebases if they implement the similar models. The results are as below, the greater the numbers in the table, the faster of the training process.
+We compare the training speed (samples/s) with other codebases if they implement the similar models. The results are as below, the greater the numbers in the table, the faster of the training process. The models that are not supported by other codebases are marked by `×`.
 
-| Methods | MMDetection3D |votenet| Det3D | OpenPCDet |
-|:-------:|:-------------:|:-----:|:-----:|:---------:|
-| VoteNet | 358           |   77  | ×     | ×         |
-| PointPillars-car| 141           |   ×  | 140     | ×         |
-| PointPillars-3class| 107           |   ×      | ×    |44     |
-| SECOND | 40           |   ×      | ×    |30     |
-| Part-A2| 17           |   ×      | ×    |14     |
+| Methods | MMDetection3D | OpenPCDet |votenet| Det3D |
+|:-------:|:-------------:|:---------:|:-----:|:-----:|
+| VoteNet | 358           | ×         |   77  | ×     |
+| PointPillars-car| 141           | ×         |   ×  | 140     |
+| PointPillars-3class| 107           |44     |   ×      | ×    |
+| SECOND| 40           |30     |   ×      | ×    |
+| Part-A2| 17           |14     |   ×      | ×    |
 
 ## Details of Comparison
 
@@ -197,8 +197,6 @@ We compare the training speed (samples/s) with other codebases if they implement
 
   ```
 
-
-
 ### PointPillars-car
 
 * __MMDetection3D__: With release v0.1.0, run
@@ -257,6 +255,8 @@ We compare the training speed (samples/s) with other codebases if they implement
   ```
 
 ### SECOND
+
+For SECOND, we mean the [SECONDv1.5](https://github.com/traveller59/second.pytorch/blob/master/second/configs/all.fhd.config) that was first implemented in [second.Pytorch](https://github.com/traveller59/second.pytorch). Det3D's implementation of SECOND uses its self-implemented Multi-Group Head, so its speed is not compatible with other codebases.
 
 * __MMDetection3D__: With release v0.1.0, run
 
