@@ -283,6 +283,8 @@ class DataBaseSampler(object):
         """
         sampled = self.sampler_dict[name].sample(num)
         sampled = copy.deepcopy(sampled)
+        assert np.allclose(
+            sampled[0]['box3d_lidar'], gt_bboxes, rtol=1e-10, atol=1e-10)
         num_gt = gt_bboxes.shape[0]
         num_sampled = len(sampled)
         gt_bboxes_bv = box_np_ops.center_to_corner_box2d(
