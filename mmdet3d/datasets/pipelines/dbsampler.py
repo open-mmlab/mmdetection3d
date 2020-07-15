@@ -265,7 +265,7 @@ class DataBaseSampler(object):
                 np.arange(gt_bboxes.shape[0],
                           gt_bboxes.shape[0] + len(sampled))
             }
-
+        print(ret['points'].shape)
         return ret
 
     def sample_class_v2(self, name, num, gt_bboxes):
