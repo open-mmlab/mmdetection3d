@@ -78,9 +78,8 @@ def test_getitem():
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
     expected_gt_bboxes_3d = torch.tensor(
-        [[7.3341, -7.3156, -1.0855, 0.4693, 1.1732, 1.8477, 0.7635],
-         [5.6783, -4.5259, -1.6217, 0.4693, 1.1732, 1.8477, 0.5641]])
-    expected_gt_labels_3d = torch.tensor([0, 0])
+        [9.5081, -5.2269, -1.1370, 0.4915, 1.2288, 1.9353, -2.7136])
+    expected_gt_labels_3d = torch.tensor([0])
     assert points.shape == (230, 4)
     assert torch.allclose(
         gt_bboxes_3d.tensor, expected_gt_bboxes_3d, atol=1e-4)
@@ -112,9 +111,10 @@ def test_getitem():
 #     pipeline, classes, modality, )
 #     boxes_3d = LiDARInstance3DBoxes([[7.3341, -7.3156, -1.0855,
 #     0.4693, 1.1732, 1.8477, 0.7635],
-#          [5.6783, -4.5259, -1.6217, 0.4693, 1.1732, 1.8477, 0.5641]])
-#     labels_3d = torch.tensor([0, 0])
-#     scores_3d = torch.tensor([0.5, 0.5])
+#          [5.6783, -4.5259, -1.6217, 0.4693, 1.1732, 1.8477, 0.5641]
+#                                      ])
+#     labels_3d = torch.tensor([0, 0, 1, 1, 2, 2])
+#     scores_3d = torch.tensor([0.5, 0.5, 1., 1., 1., 1.])
 #     metric = ['mAP']
 #     result = dict(
 #         boxes_3d = boxes_3d,
