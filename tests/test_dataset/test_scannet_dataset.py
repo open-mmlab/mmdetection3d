@@ -46,8 +46,8 @@ def test_getitem():
             meta_keys=['file_name', 'sample_idx', 'pcd_rotation']),
     ]
 
-    scannet_dataset = ScanNetDataset(root_path, ann_file, pipelines)
-    data = scannet_dataset[0]
+    self = ScanNetDataset(root_path, ann_file, pipelines)
+    data = self[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels = data['gt_labels_3d']._data
@@ -78,9 +78,9 @@ def test_getitem():
     ])
     expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
-    original_classes = scannet_dataset.CLASSES
+    original_classes = self.CLASSES
 
-    assert scannet_dataset.CLASSES == class_names
+    assert self.CLASSES == class_names
     assert torch.allclose(points, expected_points, 1e-2)
     assert gt_bboxes_3d.tensor[:5].shape == (5, 7)
     assert torch.allclose(gt_bboxes_3d.tensor[:5], expected_gt_bboxes_3d, 1e-2)
@@ -89,15 +89,15 @@ def test_getitem():
     assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
     assert original_classes == class_names
 
-    scannet_dataset = ScanNetDataset(
+    self = ScanNetDataset(
         root_path, ann_file, pipeline=None, classes=['cabinet', 'bed'])
-    assert scannet_dataset.CLASSES != original_classes
-    assert scannet_dataset.CLASSES == ['cabinet', 'bed']
+    assert self.CLASSES != original_classes
+    assert self.CLASSES == ['cabinet', 'bed']
 
-    scannet_dataset = ScanNetDataset(
+    self = ScanNetDataset(
         root_path, ann_file, pipeline=None, classes=('cabinet', 'bed'))
-    assert scannet_dataset.CLASSES != original_classes
-    assert scannet_dataset.CLASSES == ('cabinet', 'bed')
+    assert self.CLASSES != original_classes
+    assert self.CLASSES == ('cabinet', 'bed')
 
     # Test load classes from file
     import tempfile
@@ -105,10 +105,10 @@ def test_getitem():
     with open(tmp_file.name, 'w') as f:
         f.write('cabinet\nbed\n')
 
-    scannet_dataset = ScanNetDataset(
+    self = ScanNetDataset(
         root_path, ann_file, pipeline=None, classes=tmp_file.name)
-    assert scannet_dataset.CLASSES != original_classes
-    assert scannet_dataset.CLASSES == ['cabinet', 'bed']
+    assert self.CLASSES != original_classes
+    assert self.CLASSES == ['cabinet', 'bed']
 
 
 def test_evaluate():
@@ -117,7 +117,7 @@ def test_evaluate():
     from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
-    scannet_dataset = ScanNetDataset(root_path, ann_file)
+    self = ScanNetDataset(root_path, ann_file)
     results = []
     pred_boxes = dict()
     pred_boxes['boxes_3d'] = DepthInstance3DBoxes(
@@ -157,7 +157,7 @@ def test_evaluate():
     pred_boxes['scores_3d'] = torch.tensor([0.5, 1.0, 1.0, 1.0, 1.0, 0.5])
     results.append(pred_boxes)
     metric = [0.25, 0.5]
-    ret_dict = scannet_dataset.evaluate(results, metric)
+    ret_dict = self.evaluate(results, metric)
     assert abs(ret_dict['table_AP_0.25'] - 0.3333) < 0.01
     assert abs(ret_dict['window_AP_0.25'] - 1.0) < 0.01
     assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
