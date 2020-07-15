@@ -196,6 +196,11 @@ class DataBaseSampler(object):
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths
         """
+        assert np.allclose(
+            gt_bboxes,
+            self.db_infos['Pedestrian'][0]['box3d_lidar'],
+            rtol=1e-10,
+            atol=1e-10)
         sampled_num_dict = {}
         sample_num_per_class = []
         for class_name, max_sample_num in zip(self.sample_classes,
