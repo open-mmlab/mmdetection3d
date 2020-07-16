@@ -2,7 +2,7 @@ import mmcv
 import numpy as np
 import torch
 
-from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core import Box3DMode, CameraInstance3DBoxes
 from mmdet3d.datasets import ObjectNoise, ObjectSample
 
 
@@ -35,7 +35,6 @@ def test_remove_points_in_boxes():
 
 
 def test_object_sample():
-    import pickle
     db_sampler = mmcv.ConfigDict({
         'data_root': './tests/data/kitti/',
         'info_path': './tests/data/kitti/kitti_dbinfos_train.pkl',
@@ -51,8 +50,6 @@ def test_object_sample():
             'Pedestrian': 6
         }
     })
-    with open('./tests/data/kitti/kitti_dbinfos_train.pkl', 'rb') as f:
-        db_infos = pickle.load(f)
     np.random.seed(0)
     object_sample = ObjectSample(db_sampler)
     points = np.fromfile(
@@ -60,10 +57,18 @@ def test_object_sample():
         np.float32).reshape(-1, 4)
     annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
     info = annos[0]
+    rect = info['calib']['R0_rect'].astype(np.float32)
+    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
     annos = info['annos']
+    loc = annos['location']
+    dims = annos['dimensions']
+    rots = annos['rotation_y']
     gt_names = annos['name']
-    gt_bboxes_3d = db_infos['Pedestrian'][0]['box3d_lidar']
-    gt_bboxes_3d = LiDARInstance3DBoxes([gt_bboxes_3d])
+
+    gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
+                                  axis=1).astype(np.float32)
+    gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
+        Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
     CLASSES = ('Car', 'Pedestrian', 'Cyclist')
     gt_labels = []
     for cat in gt_names:
@@ -87,7 +92,7 @@ def test_object_sample():
                         'classes=[\'Pedestrian\', \'Cyclist\', \'Car\'], ' \
                         'sample_groups={\'Pedestrian\': 6}'
     assert repr_str == expected_repr_str
-    assert points.shape == (1177, 4)
+    assert points.shape == (20285, 4)
     assert gt_bboxes_3d.tensor.shape == (2, 7)
     assert np.all(gt_labels_3d == [1, 0])
 
@@ -123,5 +128,5 @@ def test_object_noise():
                         'rot_range=[-0.15707963267, 0.15707963267])'
 
     assert repr_str == expected_repr_str
-    assert points.shape == (800, 4)
+    assert points.shape == (20285, 4)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d, 1e-3)

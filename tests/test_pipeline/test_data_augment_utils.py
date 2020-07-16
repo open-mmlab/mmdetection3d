@@ -23,7 +23,7 @@ def test_noise_per_object_v3_():
     expected_gt_bboxes_3d = np.array(
         [[3.3430212, 2.1475432, 9.388738, 1.2, 1.89, 0.48, 0.05056486]])
 
-    assert points.shape == (800, 4)
+    assert points.shape == (20285, 4)
     assert np.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
 
 
