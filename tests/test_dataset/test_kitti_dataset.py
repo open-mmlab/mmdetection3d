@@ -81,7 +81,7 @@ def test_getitem():
         [[7.3341, -7.3156, -1.0855, 0.4693, 1.1732, 1.8477, 0.7635],
          [5.6783, -4.5259, -1.6217, 0.4693, 1.1732, 1.8477, 0.5641]])
     expected_gt_labels_3d = torch.tensor([0, 0])
-    assert points.shape == (988, 4)
+    assert points.shape == (20239, 4)
     assert torch.allclose(
         gt_bboxes_3d.tensor, expected_gt_bboxes_3d, atol=1e-4)
     assert torch.all(gt_labels_3d == expected_gt_labels_3d)
