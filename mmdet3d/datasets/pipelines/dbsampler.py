@@ -238,8 +238,6 @@ class DataBaseSampler(object):
                         [avoid_coll_boxes, sampled_gt_box], axis=0)
 
         ret = None
-        assert np.allclose(
-            sampled_gt_bboxes, gt_bboxes, rtol=1e-10, atol=1e-10)
         if len(sampled) > 0:
             sampled_gt_bboxes = np.concatenate(sampled_gt_bboxes, axis=0)
             # center = sampled_gt_bboxes[:, 0:3]
