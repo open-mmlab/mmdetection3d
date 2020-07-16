@@ -196,11 +196,6 @@ class DataBaseSampler(object):
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths
         """
-        assert np.allclose(
-            gt_bboxes,
-            self.db_infos['Pedestrian'][0]['box3d_lidar'],
-            rtol=1e-10,
-            atol=1e-10)
         sampled_num_dict = {}
         sample_num_per_class = []
         for class_name, max_sample_num in zip(self.sample_classes,
@@ -270,7 +265,7 @@ class DataBaseSampler(object):
                 np.arange(gt_bboxes.shape[0],
                           gt_bboxes.shape[0] + len(sampled))
             }
-        print(ret['points'].shape)
+
         return ret
 
     def sample_class_v2(self, name, num, gt_bboxes):
@@ -286,8 +281,6 @@ class DataBaseSampler(object):
         """
         sampled = self.sampler_dict[name].sample(num)
         sampled = copy.deepcopy(sampled)
-        assert np.allclose(
-            sampled[0]['box3d_lidar'], gt_bboxes, rtol=1e-10, atol=1e-10)
         num_gt = gt_bboxes.shape[0]
         num_sampled = len(sampled)
         gt_bboxes_bv = box_np_ops.center_to_corner_box2d(
