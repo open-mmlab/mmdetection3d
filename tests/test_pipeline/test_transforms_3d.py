@@ -92,7 +92,7 @@ def test_object_sample():
                         'classes=[\'Pedestrian\', \'Cyclist\', \'Car\'], ' \
                         'sample_groups={\'Pedestrian\': 6}'
     assert repr_str == expected_repr_str
-    assert points.shape == (20285, 4)
+    assert points.shape == (1377, 4)
     assert gt_bboxes_3d.tensor.shape == (2, 7)
     assert np.all(gt_labels_3d == [1, 0])
 
@@ -128,5 +128,5 @@ def test_object_noise():
                         'rot_range=[-0.15707963267, 0.15707963267])'
 
     assert repr_str == expected_repr_str
-    assert points.shape == (20285, 4)
+    assert points.shape == (1000, 4)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d, 1e-3)
