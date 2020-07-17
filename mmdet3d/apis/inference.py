@@ -72,12 +72,12 @@ def inference_detector(model, pcd):
         seg_fields=[])
     data = test_pipeline(data)
     data = collate([data], samples_per_gpu=1)
-    if next(model.parameters()).is_cuda:
+    if device.type != 'cpu':
         # scatter to specified GPU
         data = scatter(data, [device.index])[0]
     else:
-        raise NotImplementedError('Not support cpu-only currently')
-
+        data['img_metas'] = data['img_metas'][0].data
+        data['points'] = data['points'][0].data
     # forward the model
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)

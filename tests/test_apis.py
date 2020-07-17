@@ -33,11 +33,10 @@ def _get_config_module(fname):
 
 
 def test_inference_detector():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
-    pcd = 'tests/data/sunrgbd/points/000001.bin'
-    detector_cfg = 'configs/votenet/votenet_16x8_sunrgbd-3d-10class.py'
-    detector = init_detector(detector_cfg)
+    pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
+    detector_cfg = 'configs/pointpillars/hv_pointpillars_secfpn_' \
+                   '6x8_160e_kitti-3d-3class.py'
+    detector = init_detector(detector_cfg, device='cpu')
     results = inference_detector(detector, pcd)
     bboxes_3d = results[0]['boxes_3d']
     scores_3d = results[0]['scores_3d']
