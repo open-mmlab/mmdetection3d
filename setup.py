@@ -81,7 +81,13 @@ version_info = ({})
 def get_version():
     with open(version_file, 'r') as f:
         exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
+    import sys
+
+    # return short version for sdist
+    if 'sdist' in sys.argv or 'bdist_wheel' in sys.argv:
+        return locals()['short_version']
+    else:
+        return locals()['__version__']
 
 
 def make_cuda_ext(name,
