@@ -14,15 +14,6 @@ def readme():
     return content
 
 
-MAJOR = 0
-MINOR = 0
-PATCH = 0
-SUFFIX = 'rc0'
-if PATCH != '':
-    SHORT_VERSION = '{}.{}.{}{}'.format(MAJOR, MINOR, PATCH, SUFFIX)
-else:
-    SHORT_VERSION = '{}.{}{}'.format(MAJOR, MINOR, SUFFIX)
-
 version_file = 'mmdet3d/version.py'
 
 
@@ -72,18 +63,31 @@ def write_version_py():
 # TIME: {}
 __version__ = '{}'
 short_version = '{}'
+version_info = ({})
 """
     sha = get_hash()
+    with open('mmdet3d/VERSION', 'r') as f:
+        SHORT_VERSION = f.read().strip()
+    VERSION_INFO = ', '.join(
+        [x if x.isdigit() else f'"{x}"' for x in SHORT_VERSION.split('.')])
     VERSION = SHORT_VERSION + '+' + sha
 
+    version_file_str = content.format(time.asctime(), VERSION, SHORT_VERSION,
+                                      VERSION_INFO)
     with open(version_file, 'w') as f:
-        f.write(content.format(time.asctime(), VERSION, SHORT_VERSION))
+        f.write(version_file_str)
 
 
 def get_version():
     with open(version_file, 'r') as f:
         exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
+    import sys
+
+    # return short version for sdist
+    if 'sdist' in sys.argv or 'bdist_wheel' in sys.argv:
+        return locals()['short_version']
+    else:
+        return locals()['__version__']
 
 
 def make_cuda_ext(name,
