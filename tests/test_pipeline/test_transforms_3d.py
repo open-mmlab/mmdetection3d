@@ -69,7 +69,7 @@ def test_object_sample():
                                   axis=1).astype(np.float32)
     gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
         Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
-    CLASSES = ('Car', 'Pedestrian', 'Cyclist')
+    CLASSES = ('Pedestrian', 'Cyclist', 'Car')
     gt_labels = []
     for cat in gt_names:
         if cat in CLASSES:
@@ -94,7 +94,7 @@ def test_object_sample():
     assert repr_str == expected_repr_str
     assert points.shape == (800, 4)
     assert gt_bboxes_3d.tensor.shape == (1, 7)
-    assert np.all(gt_labels_3d == [1])
+    assert np.all(gt_labels_3d == [0])
 
 
 def test_object_noise():
