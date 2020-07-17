@@ -1,0 +1,4 @@
+include requirements/*.txt
+include mmdet3d/ops/**/*.cpp mmdet3d/ops/**/*.cu
+include mmdet3d/ops/**/*.h mmdet3d/ops/**/*.cc
+include mmdet3d/VERSION

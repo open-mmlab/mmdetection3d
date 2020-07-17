@@ -1,3 +1,12 @@
+// Modified from
+// https://github.com/open-mmlab/OpenPCDet/blob/master/pcdet/ops/iou3d_nms/src/iou3d_nms_kernel.cu
+
+/*
+3D IoU Calculation and Rotated NMS(modified from 2D NMS written by others)
+Written by Shaoshuai Shi
+All Rights Reserved 2019-2020.
+*/
+
 #include <stdio.h>
 #define THREADS_PER_BLOCK 16
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
