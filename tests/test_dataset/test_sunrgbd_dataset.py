@@ -39,8 +39,8 @@ def test_getitem():
             ]),
     ]
 
-    self = SUNRGBDDataset(root_path, ann_file, pipelines)
-    data = self[0]
+    sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file, pipelines)
+    data = sunrgbd_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
@@ -67,7 +67,7 @@ def test_getitem():
          [2.3002, 4.8149, -1.2442, 0.5718, 0.8629, 0.9510, 1.6030],
          [-1.1477, 1.8090, -1.1725, 0.6965, 1.5273, 2.0563, 0.0552]])
     expected_gt_labels = np.array([0, 7, 6])
-    original_classes = self.CLASSES
+    original_classes = sunrgbd_dataset.CLASSES
 
     assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
@@ -101,7 +101,7 @@ def test_evaluate():
     from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
     root_path = './tests/data/sunrgbd'
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
-    self = SUNRGBDDataset(root_path, ann_file)
+    sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file)
     results = []
     pred_boxes = dict()
     pred_boxes['boxes_3d'] = DepthInstance3DBoxes(
@@ -113,7 +113,7 @@ def test_evaluate():
     pred_boxes['scores_3d'] = torch.tensor([0.5, 1.0, 1.0])
     results.append(pred_boxes)
     metric = [0.25, 0.5]
-    ap_dict = self.evaluate(results, metric)
+    ap_dict = sunrgbd_dataset.evaluate(results, metric)
     bed_precision_25 = ap_dict['bed_AP_0.25']
     dresser_precision_25 = ap_dict['dresser_AP_0.25']
     night_stand_precision_25 = ap_dict['night_stand_AP_0.25']

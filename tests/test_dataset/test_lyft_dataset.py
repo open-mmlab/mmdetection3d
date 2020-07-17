@@ -36,8 +36,8 @@ def test_getitem():
         dict(
             type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
     ]
-    self = LyftDataset(ann_file, pipelines, root_path)
-    data = self[0]
+    lyft_dataset = LyftDataset(ann_file, pipelines, root_path)
+    data = lyft_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
@@ -76,37 +76,38 @@ def test_getitem():
          [-25.3804, 27.4598, -2.3297, 2.7412, 8.4792, 3.4343, -1.5939],
          [-15.2098, -7.0109, -2.2566, 0.7931, 0.8410, 1.7916, 1.5090]])
     expected_gt_labels = np.array([0, 4, 7])
-    original_classes = self.CLASSES
+    original_classes = lyft_dataset.CLASSES
     assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
     assert original_classes == class_names
 
-    self = LyftDataset(
+    lyft_dataset = LyftDataset(
         ann_file, None, root_path, classes=['car', 'pedestrian'])
-    assert self.CLASSES != original_classes
-    assert self.CLASSES == ['car', 'pedestrian']
+    assert lyft_dataset.CLASSES != original_classes
+    assert lyft_dataset.CLASSES == ['car', 'pedestrian']
 
-    self = LyftDataset(
+    lyft_dataset = LyftDataset(
         ann_file, None, root_path, classes=('car', 'pedestrian'))
-    assert self.CLASSES != original_classes
-    assert self.CLASSES == ('car', 'pedestrian')
+    assert lyft_dataset.CLASSES != original_classes
+    assert lyft_dataset.CLASSES == ('car', 'pedestrian')
 
     import tempfile
     tmp_file = tempfile.NamedTemporaryFile()
     with open(tmp_file.name, 'w') as f:
         f.write('car\npedestrian\n')
 
-    self = LyftDataset(ann_file, None, root_path, classes=tmp_file.name)
-    assert self.CLASSES != original_classes
-    assert self.CLASSES == ['car', 'pedestrian']
+    lyft_dataset = LyftDataset(
+        ann_file, None, root_path, classes=tmp_file.name)
+    assert lyft_dataset.CLASSES != original_classes
+    assert lyft_dataset.CLASSES == ['car', 'pedestrian']
 
 
 def test_evaluate():
     root_path = './tests/data/lyft'
     ann_file = './tests/data/lyft/lyft_infos_val.pkl'
-    self = LyftDataset(ann_file, None, root_path)
+    lyft_dataset = LyftDataset(ann_file, None, root_path)
     results = mmcv.load('./tests/data/lyft/sample_results.pkl')
-    ap_dict = self.evaluate(results, 'bbox')
+    ap_dict = lyft_dataset.evaluate(results, 'bbox')
     car_precision = ap_dict['pts_bbox_Lyft/car_AP']
     assert car_precision == 0.6
