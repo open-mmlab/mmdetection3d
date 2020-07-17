@@ -63,15 +63,19 @@ def box_collision_test(boxes, qboxes, clockwise=True):
                             B = lines_boxes[i, k, 1]
                             C = lines_qboxes[j, box_l, 0]
                             D = lines_qboxes[j, box_l, 1]
-                            acd = (D[1] - A[1]) * (C[0] - A[0]) > (
-                                C[1] - A[1]) * (D[0] - A[0]) + 1e-5
-                            bcd = (D[1] - B[1]) * (C[0] - B[0]) > (
-                                C[1] - B[1]) * (D[0] - B[0]) + 1e-5
+                            acd = (D[1] - A[1]) * (C[0] -
+                                                   A[0]) > (C[1] - A[1]) * (
+                                                       D[0] - A[0])
+                            bcd = (D[1] - B[1]) * (C[0] -
+                                                   B[0]) > (C[1] - B[1]) * (
+                                                       D[0] - B[0])
                             if acd != bcd:
                                 abc = (C[1] - A[1]) * (B[0] - A[0]) > (
-                                    B[1] - A[1]) * (C[0] - A[0]) + 1e-5
+                                    B[1] - A[1]) * (
+                                        C[0] - A[0])
                                 abd = (D[1] - A[1]) * (B[0] - A[0]) > (
-                                    B[1] - A[1]) * (D[0] - A[0]) + 1e-5
+                                    B[1] - A[1]) * (
+                                        D[0] - A[0])
                                 if abc != abd:
                                     ret[i, j] = True  # collision.
                                     break
