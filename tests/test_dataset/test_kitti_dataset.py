@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import torch
 
+from mmdet3d.core.bbox import LiDARInstance3DBoxes
 from mmdet3d.datasets import KittiDataset
 
 
@@ -90,7 +91,6 @@ def test_getitem():
 def test_evaluate():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
-    from mmdet3d.core.bbox import LiDARInstance3DBoxes
     data_root = 'tests/data/kitti'
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
@@ -218,3 +218,86 @@ def test_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+
+
+def test_format_results():
+    from mmdet3d.core.bbox import LiDARInstance3DBoxes
+    data_root = 'tests/data/kitti'
+    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
+    classes = ['Pedestrian', 'Cyclist', 'Car']
+    pts_prefix = 'velodyne_reduced'
+    pipeline = [{
+        'type': 'LoadPointsFromFile',
+        'load_dim': 4,
+        'use_dim': 4,
+        'file_client_args': {
+            'backend': 'disk'
+        }
+    }, {
+        'type':
+        'MultiScaleFlipAug3D',
+        'img_scale': (1333, 800),
+        'pts_scale_ratio':
+        1,
+        'flip':
+        False,
+        'transforms': [{
+            'type': 'GlobalRotScaleTrans',
+            'rot_range': [0, 0],
+            'scale_ratio_range': [1.0, 1.0],
+            'translation_std': [0, 0, 0]
+        }, {
+            'type': 'RandomFlip3D'
+        }, {
+            'type': 'PointsRangeFilter',
+            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
+        }, {
+            'type': 'DefaultFormatBundle3D',
+            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
+            'with_label': False
+        }, {
+            'type': 'Collect3D',
+            'keys': ['points']
+        }]
+    }]
+    modality = {'use_lidar': True, 'use_camera': False}
+    split = 'training'
+    self = KittiDataset(
+        data_root,
+        ann_file,
+        split,
+        pts_prefix,
+        pipeline,
+        classes,
+        modality,
+    )
+    boxes_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
+    labels_3d = torch.tensor([
+        0,
+    ])
+    scores_3d = torch.tensor([0.5])
+    result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    results = [result]
+    result_files, _ = self.format_results(results)
+    expected_name = np.array(['Pedestrian'])
+    expected_truncated = np.array([0.])
+    expected_occluded = np.array([0])
+    expected_alpha = np.array([-3.3410306])
+    expected_bbox = np.array([[710.443, 144.00221, 820.29114, 307.58667]])
+    expected_dimensions = np.array([[1.2, 1.89, 0.48]])
+    expected_location = np.array([[1.8399826, 1.4700007, 8.410018]])
+    expected_rotation_y = np.array([-3.1315928])
+    expected_score = np.array([0.5])
+    expected_sample_idx = np.array([0])
+    assert np.all(result_files[0]['name'] == expected_name)
+    assert np.allclose(result_files[0]['truncated'], expected_truncated)
+    assert np.all(result_files[0]['occluded'] == expected_occluded)
+    assert np.allclose(result_files[0]['alpha'], expected_alpha)
+    assert np.allclose(result_files[0]['bbox'], expected_bbox)
+    assert np.allclose(result_files[0]['dimensions'], expected_dimensions)
+    assert np.allclose(result_files[0]['location'], expected_location)
+    assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y)
+    assert np.allclose(result_files[0]['score'], expected_score)
+    assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
