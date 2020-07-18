@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.datasets import KittiDataset
@@ -87,6 +88,8 @@ def test_getitem():
 
 
 def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
     data_root = 'tests/data/kitti'
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
@@ -138,7 +141,8 @@ def test_evaluate():
         modality,
     )
     boxes_3d = LiDARInstance3DBoxes(
-        [[9.5081, -5.2269, -1.1370, 0.4915, 1.2288, 1.9353, -2.7136]])
+        torch.tensor(
+            [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
     labels_3d = torch.tensor([
         0,
     ])
@@ -146,7 +150,10 @@ def test_evaluate():
     metric = ['mAP']
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     ap_dict = self.evaluate([result], metric)
-    print(ap_dict)
+    assert abs(ap_dict['KITTI/Overall_3D_easy'] - 3.0303030303030307) < 1e-5
+    assert abs(ap_dict['KITTI/Overall_3D_moderate'] -
+               3.0303030303030307) < 1e-5
+    assert abs(ap_dict['KITTI/Overall_3D_hard'] - 3.0303030303030307) < 1e-5
 
 
 def test_show():
