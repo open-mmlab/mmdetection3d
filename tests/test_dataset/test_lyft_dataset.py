@@ -111,3 +111,61 @@ def test_evaluate():
     ap_dict = lyft_dataset.evaluate(results, 'bbox')
     car_precision = ap_dict['pts_bbox_Lyft/car_AP']
     assert car_precision == 0.6
+
+
+# def test_show():
+#     import tempfile
+#     from os import path as osp
+#     file_client_args = dict(backend='disk')
+#     point_cloud_range = [-80, -80, -5, 80, 80, 3]
+#     class_names = [
+#         'car', 'truck', 'bus', 'emergency_vehicle',
+#         'other_vehicle', 'motorcycle',
+#         'bicycle', 'pedestrian', 'animal'
+#     ]
+#     pipeline = [dict(
+#         type='LoadPointsFromFile',
+#         load_dim=5,
+#         use_dim=5,
+#         file_client_args=file_client_args),
+#     dict(
+#         type='LoadPointsFromMultiSweeps',
+#         sweeps_num=10,
+#         file_client_args=file_client_args),
+#     dict(
+#         type='MultiScaleFlipAug3D',
+#         img_scale=(1333, 800),
+#         pts_scale_ratio=1,
+#         flip=False,
+#         transforms=[
+#             dict(
+#                 type='GlobalRotScaleTrans',
+#                 rot_range=[0, 0],
+#                 scale_ratio_range=[1., 1.],
+#                 translation_std=[0, 0, 0]),
+#             dict(type='RandomFlip3D'),
+#             dict(
+#                 type='PointsRangeFilter',
+#                 point_cloud_range=point_cloud_range),
+#             dict(
+#                 type='DefaultFormatBundle3D',
+#                 class_names=class_names,
+#                 with_label=False),
+#             dict(type='Collect3D', keys=['points'])
+#         ])
+# ]
+#     temp_dir = tempfile.mkdtemp()
+#     root_path = './tests/data/lyft'
+#     ann_file = './tests/data/lyft/lyft_infos.pkl'
+#     lyft_dataset = LyftDataset(ann_file, pipeline, root_path)
+#     results = mmcv.load('./tests/data/lyft/sample_results.pkl')
+#     lyft_dataset.show(results, temp_dir)
+#     import os
+#     print(os.listdir(temp_dir))
+#     pts_file_path = osp.join(temp_dir,
+#     'host-a017_lidar1_1236118886501000046.bin')
+#     gt_file_path = osp.join(temp_dir, '000000', '000000_gt.ply')
+#     pred_file_path = osp.join(temp_dir, '000000', '000000_pred.ply')
+#     mmcv.check_file_exist(pts_file_path)
+#     # mmcv.check_file_exist(gt_file_path)
+#     # mmcv.check_file_exist(pred_file_path)
