@@ -86,6 +86,69 @@ def test_getitem():
     assert torch.all(gt_labels_3d == expected_gt_labels_3d)
 
 
+def test_evaluate():
+    from mmdet3d.core.bbox import LiDARInstance3DBoxes
+    data_root = 'tests/data/kitti'
+    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
+    classes = ['Pedestrian', 'Cyclist', 'Car']
+    pts_prefix = 'velodyne_reduced'
+    pipeline = [{
+        'type': 'LoadPointsFromFile',
+        'load_dim': 4,
+        'use_dim': 4,
+        'file_client_args': {
+            'backend': 'disk'
+        }
+    }, {
+        'type':
+        'MultiScaleFlipAug3D',
+        'img_scale': (1333, 800),
+        'pts_scale_ratio':
+        1,
+        'flip':
+        False,
+        'transforms': [{
+            'type': 'GlobalRotScaleTrans',
+            'rot_range': [0, 0],
+            'scale_ratio_range': [1.0, 1.0],
+            'translation_std': [0, 0, 0]
+        }, {
+            'type': 'RandomFlip3D'
+        }, {
+            'type': 'PointsRangeFilter',
+            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
+        }, {
+            'type': 'DefaultFormatBundle3D',
+            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
+            'with_label': False
+        }, {
+            'type': 'Collect3D',
+            'keys': ['points']
+        }]
+    }]
+    modality = {'use_lidar': True, 'use_camera': False}
+    split = 'training'
+    self = KittiDataset(
+        data_root,
+        ann_file,
+        split,
+        pts_prefix,
+        pipeline,
+        classes,
+        modality,
+    )
+    boxes_3d = LiDARInstance3DBoxes(
+        [[9.5081, -5.2269, -1.1370, 0.4915, 1.2288, 1.9353, -2.7136]])
+    labels_3d = torch.tensor([
+        0,
+    ])
+    scores_3d = torch.tensor([0.5])
+    metric = ['mAP']
+    result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    ap_dict = self.evaluate([result], metric)
+    print(ap_dict)
+
+
 def test_show():
     import mmcv
     import tempfile
