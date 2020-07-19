@@ -72,7 +72,7 @@ def inference_detector(model, pcd):
         seg_fields=[])
     data = test_pipeline(data)
     data = collate([data], samples_per_gpu=1)
-    if device.type != 'cpu':
+    if next(model.parameters()).is_cuda:
         # scatter to specified GPU
         data = scatter(data, [device.index])[0]
     else:
