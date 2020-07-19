@@ -301,3 +301,70 @@ def test_format_results():
     assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y)
     assert np.allclose(result_files[0]['score'], expected_score)
     assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
+
+
+def test_bbox2result_kitti2d():
+    data_root = 'tests/data/kitti'
+    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
+    classes = ['Pedestrian', 'Cyclist', 'Car']
+    pts_prefix = 'velodyne_reduced'
+    pipeline = [{
+        'type': 'LoadPointsFromFile',
+        'load_dim': 4,
+        'use_dim': 4,
+        'file_client_args': {
+            'backend': 'disk'
+        }
+    }, {
+        'type':
+        'MultiScaleFlipAug3D',
+        'img_scale': (1333, 800),
+        'pts_scale_ratio':
+        1,
+        'flip':
+        False,
+        'transforms': [{
+            'type': 'GlobalRotScaleTrans',
+            'rot_range': [-0.1, 0.1],
+            'scale_ratio_range': [0.9, 1.1],
+            'translation_std': [0, 0, 0]
+        }, {
+            'type': 'RandomFlip3D'
+        }, {
+            'type': 'PointsRangeFilter',
+            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
+        }, {
+            'type': 'DefaultFormatBundle3D',
+            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
+            'with_label': False
+        }, {
+            'type': 'Collect3D',
+            'keys': ['points']
+        }]
+    }]
+    modality = {'use_lidar': True, 'use_camera': False}
+    split = 'training'
+    self = KittiDataset(
+        data_root,
+        ann_file,
+        split,
+        pts_prefix,
+        pipeline,
+        classes,
+        modality,
+    )
+    bboxes = np.array([[[46.1218, -4.6496, -0.9275, 0.5316, 0.5],
+                        [33.3189, 0.1981, 0.3136, 0.5656, 0.5]],
+                       [[46.1366, -4.6404, -0.9510, 0.5162, 0.5],
+                        [33.2646, 0.2297, 0.3446, 0.5746, 0.5]]])
+    det_annos = self.bbox2result_kitti2d([bboxes], classes)
+    expected_name = np.array(
+        ['Pedestrian', 'Pedestrian', 'Cyclist', 'Cyclist'])
+    expected_bbox = np.array([[46.1218, -4.6496, -0.9275, 0.5316],
+                              [33.3189, 0.1981, 0.3136, 0.5656],
+                              [46.1366, -4.6404, -0.951, 0.5162],
+                              [33.2646, 0.2297, 0.3446, 0.5746]])
+    expected_score = np.array([0.5, 0.5, 0.5, 0.5])
+    assert np.all(det_annos[0]['name'] == expected_name)
+    assert np.allclose(det_annos[0]['bbox'], expected_bbox)
+    assert np.allclose(det_annos[0]['score'], expected_score)
