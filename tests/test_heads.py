@@ -145,6 +145,18 @@ def _get_parta2_bbox_head_cfg(fname):
     return vote_head
 
 
+def test_anchor3d_head_build():
+    bbox_head_cfg = _get_head_cfg(
+        'second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py')
+
+    self = build_head(bbox_head_cfg)
+    assert isinstance(self.conv_cls, torch.nn.modules.conv.Conv2d)
+    assert self.conv_cls.in_channels == 512
+    assert self.conv_cls.out_channels == 18
+    assert self.conv_reg.out_channels == 42
+    assert self.conv_dir_cls.out_channels == 12
+
+
 def test_anchor3d_head_loss():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
@@ -154,11 +166,6 @@ def test_anchor3d_head_loss():
     from mmdet3d.models.builder import build_head
     self = build_head(bbox_head_cfg)
     self.cuda()
-    assert isinstance(self.conv_cls, torch.nn.modules.conv.Conv2d)
-    assert self.conv_cls.in_channels == 512
-    assert self.conv_cls.out_channels == 18
-    assert self.conv_reg.out_channels == 42
-    assert self.conv_dir_cls.out_channels == 12
 
     # test forward
     feats = list()
@@ -203,7 +210,6 @@ def test_anchor3d_head_getboxes():
     bbox_head_cfg = _get_head_cfg(
         'second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py')
 
-    from mmdet3d.models.builder import build_head
     self = build_head(bbox_head_cfg)
     self.cuda()
 
@@ -226,6 +232,16 @@ def test_anchor3d_head_getboxes():
     result_list = self.get_bboxes(cls_score, bbox_pred, dir_cls_preds,
                                   input_metas)
     assert (result_list[0][1] > 0.3).all()
+
+
+def test__bparta2_rpnheaduild():
+    rpn_head_cfg, _ = _get_rpn_head_cfg(
+        'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+
+    self = build_head(rpn_head_cfg)
+    assert isinstance(self.conv_cls, torch.nn.modules.conv.Conv2d)
+    assert isinstance(self.conv_dir_cls, torch.nn.modules.conv.Conv2d)
+    assert isinstance(self.conv_reg, torch.nn.modules.conv.Conv2d)
 
 
 def test_parta2_rpnhead_getboxes():
@@ -259,6 +275,14 @@ def test_parta2_rpnhead_getboxes():
     assert result_list[0]['labels_3d'].shape == torch.Size([512])
     assert result_list[0]['cls_preds'].shape == torch.Size([512, 3])
     assert result_list[0]['boxes_3d'].tensor.shape == torch.Size([512, 7])
+
+
+def test_vote_head_build():
+    vote_head_cfg = _get_vote_head_cfg(
+        'votenet/votenet_8x8_scannet-3d-18class.py')
+    self = build_head(vote_head_cfg)
+    assert isinstance(self.conv_pred.conv_out, torch.nn.modules.conv.Conv1d)
+    assert self.conv_pred.conv_out.out_channels == 97
 
 
 def test_vote_head():
@@ -354,6 +378,14 @@ def test_vote_head():
     assert results[0][0].tensor.shape[1] == 7
     assert results[0][1].shape[0] >= 0
     assert results[0][2].shape[0] >= 0
+
+
+def test_parta2_bbox_head_build():
+    parta2_bbox_head_cfg = _get_parta2_bbox_head_cfg(
+        './parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+    self = build_head(parta2_bbox_head_cfg)
+    assert self.conv_cls[-1].out_channels == 1
+    assert self.conv_reg[-1].out_channels == 7
 
 
 def test_parta2_bbox_head():
