@@ -8,6 +8,7 @@ from os.path import dirname, exists, join
 from mmdet3d.core.bbox import (Box3DMode, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes)
 from mmdet3d.models.builder import build_head
+from mmdet3d.ops import RoIAwarePool3d
 
 
 def _setup_seed(seed):
@@ -400,6 +401,14 @@ def test_parta2_bbox_head():
     assert bbox_pred.shape == (256, 7)
 
 
+def test_part_aggregation_ROI_build():
+    roi_head_cfg = _get_roi_head_cfg(
+        'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+    self = build_head(roi_head_cfg)
+    assert isinstance(self.part_roi_extractor.roi_layer, RoIAwarePool3d)
+    assert isinstance(self.seg_roi_extractor.roi_layer, RoIAwarePool3d)
+
+
 def test_part_aggregation_ROI_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
@@ -457,6 +466,16 @@ def test_part_aggregation_ROI_head():
     assert boxes_3d.tensor.shape == (6, 7)
     assert scores_3d.shape == (6, )
     assert labels_3d.shape == (6, )
+
+
+def test_free_anchor_3D_head_build():
+    pts_bbox_head_cfg = _get_pts_bbox_head_cfg(
+        './free_anchor/hv_pointpillars_fpn_sbn-all_'
+        'free-anchor_4x8_2x_nus-3d.py')
+    self = build_head(pts_bbox_head_cfg)
+    assert self.conv_cls.out_channels == 80
+    assert self.conv_dir_cls.out_channels == 16
+    assert self.conv_reg.out_channels == 72
 
 
 def test_free_anchor_3D_head():
