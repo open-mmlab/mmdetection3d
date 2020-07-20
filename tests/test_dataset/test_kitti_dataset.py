@@ -150,10 +150,9 @@ def test_evaluate():
     metric = ['mAP']
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     ap_dict = self.evaluate([result], metric)
-    assert abs(ap_dict['KITTI/Overall_3D_easy'] - 3.0303030303030307) < 1e-5
-    assert abs(ap_dict['KITTI/Overall_3D_moderate'] -
-               3.0303030303030307) < 1e-5
-    assert abs(ap_dict['KITTI/Overall_3D_hard'] - 3.0303030303030307) < 1e-5
+    assert np.isclose(ap_dict['KITTI/Overall_3D_easy'], 3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_moderate'], 3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_hard'], 3.0303030303030307)
 
 
 def test_show():
