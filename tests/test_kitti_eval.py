@@ -8,7 +8,7 @@ from mmdet3d.core.evaluation.kitti_utils.eval import (do_eval, eval_class,
 
 def test_do_eval():
     if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
+        pytest.skip('test requires GPU and CUDA')
     gt_name = np.array(
         ['Pedestrian', 'Cyclist', 'Car', 'Car', 'Car', 'DontCare', 'DontCare'])
     gt_truncated = np.array([0., 0., 0., -1., -1., -1., -1.])
@@ -111,7 +111,7 @@ def test_do_eval():
 
 def test_kitti_eval():
     if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
+        pytest.skip('test requires GPU and CUDA')
     gt_name = np.array(
         ['Pedestrian', 'Cyclist', 'Car', 'Car', 'Car', 'DontCare', 'DontCare'])
     gt_truncated = np.array([0., 0., 0., -1., -1., -1., -1.])
@@ -182,9 +182,8 @@ def test_kitti_eval():
 
     current_classes = [1, 2, 0]
     result, ret_dict = kitti_eval([gt_anno], [dt_anno], current_classes)
-    assert abs(ret_dict['KITTI/Overall_2D_moderate'] -
-               9.090909090909092) < 1e-5
-    assert abs(ret_dict['KITTI/Overall_2D_hard'] - 9.090909090909092) < 1e-5
+    assert np.isclose(ret_dict['KITTI/Overall_2D_moderate'], 9.090909090909092)
+    assert np.isclose(ret_dict['KITTI/Overall_2D_hard'], 9.090909090909092)
 
 
 def test_eval_class():
@@ -238,6 +237,6 @@ def test_eval_class():
     recall_sum = np.sum(ret_dict['recall'])
     precision_sum = np.sum(ret_dict['precision'])
     orientation_sum = np.sum(ret_dict['orientation'])
-    assert abs(recall_sum - 16) < 1e-5
-    assert abs(precision_sum - 16) < 1e-5
-    assert abs(orientation_sum - 10.252829201850309) < 1e-5
+    assert np.isclose(recall_sum, 16)
+    assert np.isclose(precision_sum, 16)
+    assert np.isclose(orientation_sum, 10.252829201850309)
