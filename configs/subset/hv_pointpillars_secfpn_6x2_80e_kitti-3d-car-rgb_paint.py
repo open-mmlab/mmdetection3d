@@ -77,6 +77,9 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
+    dict(type='LoadImageFromFile'),
+    dict(type='Normalize', **img_norm_cfg),
+    dict(type='RGBPointPainting'),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
