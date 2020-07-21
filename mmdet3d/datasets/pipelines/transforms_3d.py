@@ -636,3 +636,74 @@ class IndoorPointSample(object):
         repr_str = self.__class__.__name__
         repr_str += '(num_points={})'.format(self.num_points)
         return repr_str
+
+
+@PIPELINES.register_module()
+class CcObjectSample(ObjectSample):
+
+    def __call__(self, input_dict):
+        """Call function to sample ground truth objects to the data.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after object sampling augmentation, \
+                'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated \
+                in the result dict.
+        """
+        gt_bboxes_3d = input_dict['gt_bboxes_3d']
+        gt_labels_3d = input_dict['gt_labels_3d']
+
+        # change to float for blending operation
+        points = input_dict['points']
+        if self.sample_2d:
+            img = input_dict['img']
+            gt_bboxes_2d = input_dict['gt_bboxes']
+            # Assume for now 3D & 2D bboxes are the same
+            sampled_dict = self.db_sampler.sample_all(
+                gt_bboxes_3d.tensor.numpy(),
+                gt_labels_3d,
+                gt_bboxes_2d=gt_bboxes_2d,
+                img=img)
+        else:
+            sampled_dict = self.db_sampler.sample_all(
+                gt_bboxes_3d.tensor.numpy(), gt_labels_3d, img=None)
+
+        if sampled_dict is not None:
+            sampled_gt_bboxes_3d = sampled_dict['gt_bboxes_3d']
+            sampled_points = sampled_dict['points']
+            sampled_gt_labels = sampled_dict['gt_labels_3d']
+
+            gt_labels_3d = np.concatenate([gt_labels_3d, sampled_gt_labels],
+                                          axis=0)
+            gt_bboxes_3d = gt_bboxes_3d.new_box(
+                np.concatenate(
+                    [gt_bboxes_3d.tensor.numpy(), sampled_gt_bboxes_3d]))
+
+            points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
+            # check the points dimension
+            dim_inds = points.shape[-1]
+            Ne, Ce = sampled_points.shape
+            if dim_inds > Ce:
+                padding = np.zeros([Ne, dim_inds-Ce],
+                                   dtype=sampled_points.dtype)
+                sampled_points = np.concatenate([sampled_points, padding],
+                                                axis=1)
+
+            points = np.concatenate([sampled_points[:, :dim_inds], points],
+                                    axis=0)
+
+            if self.sample_2d:
+                sampled_gt_bboxes_2d = sampled_dict['gt_bboxes_2d']
+                gt_bboxes_2d = np.concatenate(
+                    [gt_bboxes_2d, sampled_gt_bboxes_2d]).astype(np.float32)
+
+                input_dict['gt_bboxes'] = gt_bboxes_2d
+                input_dict['img'] = sampled_dict['img']
+
+        input_dict['gt_bboxes_3d'] = gt_bboxes_3d
+        input_dict['gt_labels_3d'] = gt_labels_3d
+        input_dict['points'] = points
+
+        return input_dict
