@@ -492,3 +492,61 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_seg={self.with_seg}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str
+
+
+@PIPELINES.register_module()
+class RGBPointPainting(object):
+
+    def _project_velo_to_cam(self, points, proj_mat):
+        points_in_velo_coord = points.copy()
+        points_in_velo_coord[:, -1] = 1
+
+        points_proj_on_img = proj_mat.dot(
+            points_in_velo_coord.transpose())
+        points_proj_on_img = points_proj_on_img.transpose()
+        points_proj_on_img /= points_proj_on_img[:,2].reshape(-1,1)
+        return points_proj_on_img
+
+    def _paint_rgb_to_points(self, image, points, points_proj_on_img):
+        """Paint RGB values to points.
+        """
+        # Only take points in FOV
+        true_where_x_on_img = (0 < points_proj_on_img[:, 0]) & \
+            (points_proj_on_img[:, 0] < image.shape[1])
+        true_where_y_on_img = (0 < points_proj_on_img[:, 1]) & \
+            (points_proj_on_img[:, 1] < image.shape[0])
+        true_where_point_on_img = true_where_x_on_img & true_where_y_on_img
+
+        points = points[true_where_point_on_img]
+        points_proj_on_img = points_proj_on_img[true_where_point_on_img]
+
+        # using floor so you don't end up indexing num_rows+1th row or col
+        points_proj_on_img = np.floor(points_proj_on_img).astype(int)
+        # drops homogenous coord 1 from points, giving (N_pts, 2) int array
+        points_proj_on_img = points_proj_on_img[:, :2]
+
+        # indexing oreder below is 1 then 0 because points_proj_on_img is x,y
+        # in image coords which is cols, rows while image shape is (rows, cols)
+        N = len(points_proj_on_img)
+        rgb_values = image[
+            points_proj_on_img[:, 1],
+            points_proj_on_img[:, 0]].reshape(N, -1).astype('float32')
+
+        augmented_points = np.concatenate((points, rgb_values), 1)
+        return augmented_points
+
+    def __call__(self, results):
+        image = results['img']
+        points = results['points']
+        lidar2img = results['lidar2img']
+
+        points_proj_on_cam = self._project_velo_to_cam(points, lidar2img)
+        augmented_points = self._paint_rgb_to_points(
+            image, points, points_proj_on_cam)
+
+        results['points'] = augmented_points
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        return repr_str
