@@ -55,7 +55,7 @@ train_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='LoadImageFromFile'),
     dict(type='Normalize', **img_norm_cfg),
-    dict(type='RGBPointPainting', zero_paint=False),
+    dict(type='RGBPointPainting', zero_paint=True),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='CcObjectSample', db_sampler=db_sampler),
     dict(
@@ -79,7 +79,7 @@ test_pipeline = [
     dict(type='LoadPointsFromFile', load_dim=4, use_dim=4),
     dict(type='LoadImageFromFile'),
     dict(type='Normalize', **img_norm_cfg),
-    dict(type='RGBPointPainting', zero_paint=False),
+    dict(type='RGBPointPainting', zero_paint=True),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),

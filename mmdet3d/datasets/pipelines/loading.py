@@ -497,6 +497,9 @@ class LoadAnnotations3D(LoadAnnotations):
 @PIPELINES.register_module()
 class RGBPointPainting(object):
 
+    def __init__(self, zero_paint=False):
+        self.zero_paint = zero_paint
+
     def _project_velo_to_cam(self, points, proj_mat):
         points_in_velo_coord = points.copy()
         points_in_velo_coord[:, -1] = 1
@@ -528,9 +531,12 @@ class RGBPointPainting(object):
         # indexing oreder below is 1 then 0 because points_proj_on_img is x,y
         # in image coords which is cols, rows while image shape is (rows, cols)
         N = len(points_proj_on_img)
-        rgb_values = image[
-            points_proj_on_img[:, 1],
-            points_proj_on_img[:, 0]].reshape(N, -1).astype('float32')
+        if self.zero_paint:
+            rgb_values = np.zeros([N, 3], dtype='float32')
+        else:
+            rgb_values = image[
+                points_proj_on_img[:, 1],
+                points_proj_on_img[:, 0]].reshape(N, -1).astype('float32')
 
         augmented_points = np.concatenate((points, rgb_values), 1)
         return augmented_points
