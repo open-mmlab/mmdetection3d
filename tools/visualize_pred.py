@@ -1,22 +1,18 @@
 import numpy as np
+from copy import deepcopy
 import mmcv, torch, os, argparse
 
 from mmdet3d.apis.inference import *
+from mmdet3d.apis import init_detector
+from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets import build_dataset
-from mmdet3d.apis import init_detector, inference_detector
+from mmdet3d.datasets.pipelines import Compose
 
 
 #------------------------------------------------------------------------------
 #  Utils
 #------------------------------------------------------------------------------
 def show_result_meshlab(data, result, out_dir):
-    """Show result by meshlab.
-
-    Args:
-        data (dict): Contain data from pipeline.
-        result (dict): Predicted result from model.
-        out_dir (str): Directory to save visualized result.
-    """
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
     file_name = osp.split(pts_filename)[-1].split('.')[0]
@@ -41,6 +37,22 @@ def show_result_meshlab(data, result, out_dir):
     show_result(points, None, pred_bboxes, out_dir, file_name)
 
 
+def inference_detector(model, data):
+    cfg = model.cfg
+    device = next(model.parameters()).device  # model device
+    data = collate([data], samples_per_gpu=1)
+    if next(model.parameters()).is_cuda:
+        # scatter to specified GPU
+        data = scatter(data, [device.index])[0]
+    else:
+        raise NotImplementedError('Not support cpu-only currently')
+
+    # forward the model
+    with torch.no_grad():
+        result = model(return_loss=False, rescale=True, **data)
+    return result, data
+
+
 #------------------------------------------------------------------------------
 #  Main execution
 #------------------------------------------------------------------------------
@@ -48,7 +60,7 @@ if __name__ == "__main__":
     # ArgumentParser
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--cfg", type=str,
+    parser.add_argument("cfg", type=str,
         default="configs/subset/hv_pointpillars_secfpn_6x2_80e_kitti-3d-car.py",
         help="Config file")
 
@@ -66,7 +78,7 @@ if __name__ == "__main__":
 
     # Build dataset and model
     cfg = mmcv.Config.fromfile(args.cfg)
-    dataset = build_dataset(cfg.data.val)
+    dataset = build_dataset(cfg.data.test)
 
     img_norm_cfg = cfg.get('img_norm_cfg', None)
     if img_norm_cfg is not None:
@@ -81,17 +93,26 @@ if __name__ == "__main__":
         print()
 
         # Select and infer a sample
-        sample = dataset.__getitem__(idx)
-        if isinstance(sample['img_metas'], list):
-            filename = sample['img_metas'][0].data['pts_filename']
+        data = dataset.__getitem__(idx)
+        if isinstance(data['img_metas'], list):
+            pcd_filename = data['img_metas'][0].data['pts_filename']
+            img_file = data['img_metas'][0].data['filename']
         else:
-            filename = sample['img_metas'].data['pts_filename']
+            pcd_filename = data['img_metas'].data['pts_filename']
+            img_file = data['img_metas'].data['filename']
 
-        pcd_file = os.path.join(dataset.root_split, dataset.pts_prefix, filename)
-        print("Selected pcd_file:", pcd_file)
+        pcd_file = os.path.join(dataset.root_split, dataset.pts_prefix, pcd_filename)
+        print("pcd_file:", pcd_file)
+        print("img_file:", img_file)
 
-        result, data = inference_detector(model, pcd_file)
+        result, data = inference_detector(model, data)
         print("Number of detected bboxes:", len(result['labels_3d']))
+
+        # Decode PointPainting if having
+        points = data['points'][0][0].data.cpu()
+        if points.shape[1] == 7:  # RGB painting
+            points[:, 4:] = torch.clamp(points[:, 4:] * _STD + _MEAN, 0, 255)
+        data['points'][0][0].data = points.cuda()
 
         # Convert to MeshLab
         os.makedirs(args.outdir, exist_ok=True)
