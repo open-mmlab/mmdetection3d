@@ -28,7 +28,7 @@ train_pipeline = [
     dict(type='Normalize', **img_norm_cfg),
     dict(type='RGBPointPainting'),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    dict(type='ObjectSample', db_sampler=db_sampler),
+    dict(type='CcObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
         num_try=100,
