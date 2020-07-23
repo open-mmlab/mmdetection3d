@@ -1,11 +1,11 @@
 name: deploy
 
-on: [push, pull_request]
+on: push
 
 jobs:
   build-n-publish:
     runs-on: ubuntu-latest
-    # if: startsWith(github.event.ref, 'refs/tags')
+    if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.7
