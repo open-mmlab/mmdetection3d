@@ -65,10 +65,9 @@ def _get_detector_cfg(fname):
     train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg))
     test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg))
 
-    vote_net = model
-    vote_net.update(train_cfg=train_cfg)
-    vote_net.update(test_cfg=test_cfg)
-    return vote_net
+    model.update(train_cfg=train_cfg)
+    model.update(test_cfg=test_cfg)
+    return model
 
 
 def test_get_dynamic_voxelnet():
