@@ -10,6 +10,8 @@ class_names = ['Pedestrian', 'Cyclist', 'Car']
 
 # PointPillars adopted a different sampling strategies among classes
 db_sampler = dict(
+    type='CcDataBaseSampler',
+    feat_dims=4,
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
@@ -64,8 +66,25 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points'])
         ])
 ]
-
 data = dict(
-    train=dict(dataset=dict(pipeline=train_pipeline, classes=class_names)),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
+    train=dict(
+        dataset=dict(
+            data_root=data_root,
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            pipeline=train_pipeline,
+            classes=class_names,
+        ),
+    ),
+    val=dict(
+        data_root=data_root,
+        ann_file=data_root + 'kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        classes=class_names,
+    ),
+    test=dict(
+        data_root=data_root,
+        ann_file=data_root + 'kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        classes=class_names,
+    ),
+)

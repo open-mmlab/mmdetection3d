@@ -72,15 +72,25 @@ if __name__ == "__main__":
     # Execution
     def execution(idx):
 
-        # Select a sample
+        # Select and infer a sample
         print("\nProcessing idx {}...".format(idx))
         sample = dataset.__getitem__(idx)
+
+        # Get img_file
+        img_file = None
+        if isinstance(sample['img_metas'], list):
+            if 'filename' in sample['img_metas'][0].data:
+                img_file = sample['img_metas'][0].data['filename']
+        else:
+            if 'filename' in sample['img_metas'].data:
+                img_file = sample['img_metas'].data['filename']
+        print("img_file:", img_file)
 
         # Decode PointPainting if having
         points = sample['points'].data
         print("points.shape:", points.shape)
 
-        if points.shape[1] == 7:  # RGB painting
+        if (points.shape[1] == 7) and img_file is not None:  # RGB painting
             points[:, 4:] = torch.clamp(points[:, 4:] * _STD + _MEAN, 0, 255)
 
         # Convert to MeshLab

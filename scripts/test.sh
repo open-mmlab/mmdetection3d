@@ -10,5 +10,7 @@ RESULT_FILE="${WORKDIR}/epoch_40.pkl"
 GPUS=4
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4
 
-python -m torch.distributed.launch --nproc_per_node=$GPUS --master_port=$((RANDOM + 10000)) \
-    tools/test.py $CONFIG $CHECKPOINT --launcher pytorch --out ${RESULT_FILE} --eval mAP
+python -m torch.distributed.launch \
+    --nproc_per_node=$GPUS --master_port=$((RANDOM + 10000)) \
+    tools/test.py $CONFIG $CHECKPOINT --launcher pytorch \
+    --out ${RESULT_FILE} --eval mAP
