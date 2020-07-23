@@ -5,13 +5,15 @@ on: push
 jobs:
   build-n-publish:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.ref, 'refs/tags')
+    # if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
           python-version: 3.7
+      - name: Install torch
+        run: pip install torch
       - name: Build MMDet3D
         run: python setup.py sdist
       - name: Publish distribution to PyPI
