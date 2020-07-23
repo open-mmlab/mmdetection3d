@@ -14,4 +14,4 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O "${IMG_SET_DIR}/val.txt"
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O "${IMG_SET_DIR}/trainval.txt"
 
-python tools/create_data.py kitti --root-path ${DATA_ROOT} --out-dir ${DATA_ROOT} --extra-tag kitti
+python tools/create_data.py kitti --root-path ${DATA_ROOT} --out-dir ${DATA_ROOT} --extra-tag kitti #--version mask

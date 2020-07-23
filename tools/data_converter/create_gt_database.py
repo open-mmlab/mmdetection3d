@@ -164,6 +164,16 @@ def create_groundtruth_database(dataset_class_name,
                     use_dim=4,
                     file_client_args=file_client_args),
                 dict(
+                    type='LoadImageFromFile'),
+                dict(
+                    type='Normalize',
+                    mean=[123.675, 116.28, 103.53],
+                    std=[58.395, 57.12, 57.375],
+                    to_rgb=True),
+                dict(
+                    type='RGBPointPainting',
+                    zero_paint=False),
+                dict(
                     type='LoadAnnotations3D',
                     with_bbox_3d=True,
                     with_label_3d=True,

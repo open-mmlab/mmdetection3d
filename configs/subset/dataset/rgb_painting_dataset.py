@@ -12,6 +12,8 @@ class_names = ['Pedestrian', 'Cyclist', 'Car']
 
 # PointPillars adopted a different sampling strategies among classes
 db_sampler = dict(
+    type='CcDataBaseSampler',
+    feat_dims=7,
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,

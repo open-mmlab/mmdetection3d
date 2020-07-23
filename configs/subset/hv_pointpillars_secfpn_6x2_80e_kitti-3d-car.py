@@ -38,6 +38,8 @@ dataset_type = 'KittiDataset'
 data_root = '/dataset/kitti/'
 class_names = ['Car']
 db_sampler = dict(
+    type='CcDataBaseSampler',
+    feat_dims=7,
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
@@ -96,9 +98,25 @@ data = dict(
     train=dict(
         type='RepeatDataset',
         times=2,
-        dataset=dict(pipeline=train_pipeline, classes=class_names)),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
-
+        dataset=dict(
+            data_root=data_root,
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            pipeline=train_pipeline,
+            classes=class_names,
+        ),
+    ),
+    val=dict(
+        data_root=data_root,
+        ann_file=data_root + 'kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        classes=class_names,
+    ),
+    test=dict(
+        data_root=data_root,
+        ann_file=data_root + 'kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        classes=class_names,
+    ),
+)
 total_epochs = 40
 evaluation = dict(interval=4)

@@ -10,6 +10,7 @@ from .transforms_3d import (GlobalRotScaleTrans, IndoorPointSample,
                             PointShuffle, PointsRangeFilter, RandomFlip3D)
 
 from .transforms_3d import CcObjectSample
+from .dbsampler import CcDataBaseSampler
 
 __all__ = [
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
@@ -19,5 +20,5 @@ __all__ = [
     'NormalizePointsColor', 'LoadAnnotations3D', 'IndoorPointSample',
     'PointSegClassMapping', 'MultiScaleFlipAug3D', 'LoadPointsFromMultiSweeps',
 
-    'CcObjectSample',
+    'CcObjectSample', 'CcDataBaseSampler',
 ]

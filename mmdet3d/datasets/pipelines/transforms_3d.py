@@ -642,16 +642,6 @@ class IndoorPointSample(object):
 class CcObjectSample(ObjectSample):
 
     def __call__(self, input_dict):
-        """Call function to sample ground truth objects to the data.
-
-        Args:
-            input_dict (dict): Result dict from loading pipeline.
-
-        Returns:
-            dict: Results after object sampling augmentation, \
-                'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated \
-                in the result dict.
-        """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 
