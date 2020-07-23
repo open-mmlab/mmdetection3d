@@ -21,6 +21,8 @@ def test_partial_bin_based_box_coder():
                     [0.404671, 1.071108, 1.688889],
                     [0.76584, 1.398258, 0.472728]])
     box_coder = build_bbox_coder(box_coder_cfg)
+
+    # test eocode
     gt_bboxes = DepthInstance3DBoxes(
         [[0.8308, 4.1168, -1.2035, 2.2493, 1.8444, 1.9245, 1.6486],
          [2.3002, 4.8149, -1.2442, 0.5718, 0.8629, 0.9510, 1.6030],
@@ -44,6 +46,7 @@ def test_partial_bin_based_box_coder():
     assert torch.all(dir_class_target == expected_dir_class_target)
     assert torch.allclose(dir_res_target, expected_dir_res_target, atol=1e-4)
 
+    # test decode
     center = torch.tensor([[[0.8014, 3.4134,
                              -0.6133], [2.6375, 8.4191, 2.0438],
                             [4.2017, 5.2504,
@@ -189,3 +192,26 @@ def test_partial_bin_based_box_coder():
           [-1.0088, 5.4107, 1.6293, 0.5064, 0.7017, 0.6602, 0.4605],
           [1.4837, 4.0268, 0.6222, 0.4071, 0.9951, 1.8243, 1.6786]]])
     assert torch.allclose(bbox3d, expected_bbox3d, atol=1e-4)
+
+    # test split_pred
+    box_preds = torch.rand(2, 79, 256)
+    base_xyz = torch.rand(2, 256, 3)
+    results = box_coder.split_pred(box_preds, base_xyz)
+    obj_scores = results['obj_scores']
+    center = results['center']
+    dir_class = results['dir_class']
+    dir_res_norm = results['dir_res_norm']
+    dir_res = results['dir_res']
+    size_class = results['size_class']
+    size_res_norm = results['size_res_norm']
+    size_res = results['size_res']
+    sem_scores = results['sem_scores']
+    assert obj_scores.shape == torch.Size([2, 256, 2])
+    assert center.shape == torch.Size([2, 256, 3])
+    assert dir_class.shape == torch.Size([2, 256, 12])
+    assert dir_res_norm.shape == torch.Size([2, 256, 12])
+    assert dir_res.shape == torch.Size([2, 256, 12])
+    assert size_class.shape == torch.Size([2, 256, 10])
+    assert size_res_norm.shape == torch.Size([2, 256, 10, 3])
+    assert size_res.shape == torch.Size([2, 256, 10, 3])
+    assert sem_scores.shape == torch.Size([2, 256, 10])
