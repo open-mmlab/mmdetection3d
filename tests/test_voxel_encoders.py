@@ -25,21 +25,12 @@ def test_pillar_feature_net():
 
     pillar_feature_net = build_voxel_encoder(pillar_feature_net_cfg)
 
-    norm_layer_weight = torch.from_numpy(
-        np.load('tests/test_voxel_encoders/norm_weight.npy'))
-    pillar_feature_net.pfn_layers[0].norm.weight = torch.nn.Parameter(
-        norm_layer_weight)
-    features = torch.from_numpy(
-        np.load('tests/test_voxel_encoders/input_features.npy'))
-    num_voxels = torch.from_numpy(
-        np.load('tests/test_voxel_encoders/num_voxels.npy'))
-    coors = torch.from_numpy(np.load('tests/test_voxel_encoders/coors.npy'))
-
-    expected_features = torch.from_numpy(
-        np.load('tests/test_voxel_encoders/expected_features.npy'))
+    features = torch.rand([97297, 20, 5])
+    num_voxels = torch.randint(1, 100, [97297])
+    coors = torch.randint(0, 100, [97297, 4])
 
     features = pillar_feature_net(features, num_voxels, coors)
-    assert torch.allclose(features, expected_features)
+    assert features.shape == torch.Size([97297, 64])
 
 
 def test_hard_simple_VFE():
