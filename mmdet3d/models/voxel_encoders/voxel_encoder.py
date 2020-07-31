@@ -15,8 +15,9 @@ class HardSimpleVFE(nn.Module):
     It simply averages the values of points in a voxel.
     """
 
-    def __init__(self):
+    def __init__(self, num_features=4):
         super(HardSimpleVFE, self).__init__()
+        self.num_features = num_features
 
     def forward(self, features, num_points, coors):
         """Forward function.
@@ -32,7 +33,7 @@ class HardSimpleVFE(nn.Module):
         Returns:
             torch.Tensor: Mean of points inside each voxel in shape (N, 3(4))
         """
-        points_mean = features[:, :, :4].sum(
+        points_mean = features[:, :, :self.num_features].sum(
             dim=1, keepdim=False) / num_points.type_as(features).view(-1, 1)
         return points_mean.contiguous()
 
