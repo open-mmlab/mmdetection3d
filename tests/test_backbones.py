@@ -41,6 +41,7 @@ def test_pointnet2_sa_ssg():
     assert fp_features[2].shape == torch.Size([1, 16, 100])
     assert fp_indices[2].shape == torch.Size([1, 100])
 
+
 def test_h3d_backbone():
     if not torch.cuda.is_available():
         pytest.skip()
@@ -48,50 +49,55 @@ def test_h3d_backbone():
     cfg = dict(
         type='H3DBackbone',
         backbone=[
-            dict(type='PointNet2SASSG',
-             in_channels=4,
-             num_points=(2048, 1024, 512, 256),
-             radius=(0.2, 0.4, 0.8, 1.2),
-             num_samples=(64, 32, 16, 16),
-             sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                          (128, 128, 256)),
-             fp_channels=((256, 256), (256, 256)),
-             norm_cfg=dict(type='BN2d'),
-             pool_mod='max',
-             suffix=''),
-            dict(type='PointNet2SASSG',
-             in_channels=4,
-             num_points=(2048, 1024, 512, 256),
-             radius=(0.2, 0.4, 0.8, 1.2),
-             num_samples=(64, 32, 16, 16),
-             sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                          (128, 128, 256)),
-             fp_channels=((256, 256), (256, 256)),
-             norm_cfg=dict(type='BN2d'),
-             pool_mod='max',
-             suffix='net1'),
-            dict(type='PointNet2SASSG',
-             in_channels=4,
-             num_points=(2048, 1024, 512, 256),
-             radius=(0.2, 0.4, 0.8, 1.2),
-             num_samples=(64, 32, 16, 16),
-             sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                          (128, 128, 256)),
-             fp_channels=((256, 256), (256, 256)),
-             norm_cfg=dict(type='BN2d'),
-             pool_mod='max',
-             suffix='net2'),
-            dict(type='PointNet2SASSG',
-             in_channels=4,
-             num_points=(2048, 1024, 512, 256),
-             radius=(0.2, 0.4, 0.8, 1.2),
-             num_samples=(64, 32, 16, 16),
-             sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                          (128, 128, 256)),
-             fp_channels=((256, 256), (256, 256)),
-             norm_cfg=dict(type='BN2d'),
-             pool_mod='max',
-             suffix='net3')])
+            dict(
+                type='PointNet2SASSG',
+                in_channels=4,
+                num_points=(2048, 1024, 512, 256),
+                radius=(0.2, 0.4, 0.8, 1.2),
+                num_samples=(64, 32, 16, 16),
+                sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                             (128, 128, 256)),
+                fp_channels=((256, 256), (256, 256)),
+                norm_cfg=dict(type='BN2d'),
+                pool_mod='max',
+                suffix=''),
+            dict(
+                type='PointNet2SASSG',
+                in_channels=4,
+                num_points=(2048, 1024, 512, 256),
+                radius=(0.2, 0.4, 0.8, 1.2),
+                num_samples=(64, 32, 16, 16),
+                sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                             (128, 128, 256)),
+                fp_channels=((256, 256), (256, 256)),
+                norm_cfg=dict(type='BN2d'),
+                pool_mod='max',
+                suffix='net1'),
+            dict(
+                type='PointNet2SASSG',
+                in_channels=4,
+                num_points=(2048, 1024, 512, 256),
+                radius=(0.2, 0.4, 0.8, 1.2),
+                num_samples=(64, 32, 16, 16),
+                sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                             (128, 128, 256)),
+                fp_channels=((256, 256), (256, 256)),
+                norm_cfg=dict(type='BN2d'),
+                pool_mod='max',
+                suffix='net2'),
+            dict(
+                type='PointNet2SASSG',
+                in_channels=4,
+                num_points=(2048, 1024, 512, 256),
+                radius=(0.2, 0.4, 0.8, 1.2),
+                num_samples=(64, 32, 16, 16),
+                sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                             (128, 128, 256)),
+                fp_channels=((256, 256), (256, 256)),
+                norm_cfg=dict(type='BN2d'),
+                pool_mod='max',
+                suffix='net3')
+        ])
 
     self = build_backbone(cfg)
     self.cuda()
@@ -101,6 +107,6 @@ def test_h3d_backbone():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
-    ret_dict = self(xyz[:,:,:4])
+    ret_dict = self(xyz[:, :, :4])
     hd_feature = ret_dict['hd_feature']
     assert hd_feature.shape == torch.Size([1, 256, 1024])

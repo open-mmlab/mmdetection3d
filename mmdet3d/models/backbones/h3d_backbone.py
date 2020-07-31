@@ -1,22 +1,22 @@
 import torch
 from mmcv.runner import load_checkpoint
 from torch import nn as nn
-import torch.nn.functional as F
-from mmdet.models import BACKBONES
-from mmdet.models import build_backbone
+from torch.nn import functional as F
+
+from mmdet.models import BACKBONES, build_backbone
 
 
 @BACKBONES.register_module()
 class H3DBackbone(nn.Module):
-    """H3DBackbone with different config.
-    '''Modified based on Ref: https://arxiv.org/abs/2006.05682 '''
-        
+    """H3DBackbone with different config. '''Modified based on Ref:
+    https://arxiv.org/abs/2006.05682 '''.
+
     Args:
         backbone (list): A list of backbone config.
     """
+
     def __init__(self, backbone=None, **kwarg):
         super().__init__()
-        assert backbone != None
         self.backbone_list = nn.ModuleList()
         self.suffix_list = []
         out_channel = 0
@@ -26,12 +26,11 @@ class H3DBackbone(nn.Module):
             out_channel += bb_cfg['fp_channels'][-1][-1]
             self.backbone_list.append(build_backbone(bb_cfg))
 
-        ### Feature concatenation
-        self.conv_agg1 = torch.nn.Conv1d(out_channel, out_channel//2, 1) 
-        self.bn_agg1 = torch.nn.BatchNorm1d(out_channel//2)
-        self.conv_agg2 = torch.nn.Conv1d(out_channel//2, 256,1)
+        # Feature concatenation
+        self.conv_agg1 = torch.nn.Conv1d(out_channel, out_channel // 2, 1)
+        self.bn_agg1 = torch.nn.BatchNorm1d(out_channel // 2)
+        self.conv_agg2 = torch.nn.Conv1d(out_channel // 2, 256, 1)
         self.bn_agg2 = torch.nn.BatchNorm1d(256)
-
 
     def init_weights(self, pretrained=None):
         """Initialize the weights of PointNet++ backbone."""
@@ -70,9 +69,11 @@ class H3DBackbone(nn.Module):
                     cur_ret[k + '_' + cur_suffix] = cur_ret.pop(k)
             ret.update(cur_ret)
 
-        ### Combine the feature here
+        # Combine the feature here
         features_hd_discriptor = torch.cat(fp_features, dim=1)
-        features_hd_discriptor = F.relu(self.bn_agg1(self.conv_agg1(features_hd_discriptor)))
-        features_hd_discriptor = F.relu(self.bn_agg2(self.conv_agg2(features_hd_discriptor)))
+        features_hd_discriptor = F.relu(
+            self.bn_agg1(self.conv_agg1(features_hd_discriptor)))
+        features_hd_discriptor = F.relu(
+            self.bn_agg2(self.conv_agg2(features_hd_discriptor)))
         ret['hd_feature'] = features_hd_discriptor
         return ret
