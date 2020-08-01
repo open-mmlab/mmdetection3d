@@ -8,6 +8,22 @@ from mmdet3d.ops.spconv.conv import SparseConv3d, SubMConv3d
 
 
 class SparseBasicBlock(spconv.SparseModule):
+    """Basic block for SpMiddleResNetFHD.
+
+    Args:
+        inplanes (int): Number of input features.
+        planes (int): Number of output features.
+        kernel_size (int): Kernel_size of the conv layer.
+            Default: 3.
+        stride (int): Stride of the conv layer.
+            Default: 1.
+        bias (bool): Whether to use bias.
+            Default: False.
+        norm_cfg (dict): Configuration of normalization.
+            Default: dict(type='BN1d', eps=1e-3, momentum=0.01).
+        indice_key (str): Indice key for spconv.
+            Default: None.
+    """
     expansion = 1
 
     def __init__(
@@ -18,7 +34,6 @@ class SparseBasicBlock(spconv.SparseModule):
         stride=1,
         bias=False,
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-        downsample=None,
         indice_key=None,
     ):
         super(SparseBasicBlock, self).__init__()
@@ -44,7 +59,6 @@ class SparseBasicBlock(spconv.SparseModule):
             indice_key=indice_key,
         )
         self.bn2 = build_norm_layer(norm_cfg, planes)[1]
-        self.downsample = downsample
         self.stride = stride
 
     def forward(self, x):
@@ -56,9 +70,6 @@ class SparseBasicBlock(spconv.SparseModule):
 
         out = self.conv2(out)
         out.features = self.bn2(out.features)
-
-        if self.downsample is not None:
-            identity = self.downsample(x)
 
         out.features += identity.features
         out.features = self.relu(out.features)

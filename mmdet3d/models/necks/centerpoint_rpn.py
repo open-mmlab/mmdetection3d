@@ -26,71 +26,68 @@ class CenterPointRPN(nn.Module):
     """
 
     def __init__(
-        self,
-        layer_nums,
-        downsample_strides,
-        downsample_channels,
-        upsample_strides,
-        upsample_channels,
-        input_channels,
-        norm_cfg,
+            self,
+            layer_nums,
+            downsample_strides,
+            downsample_channels,
+            upsample_strides,
+            upsample_channels,
+            input_channels,
+            norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
     ):
         super(CenterPointRPN, self).__init__()
-        self._layer_strides = downsample_strides
-        self._num_filters = downsample_channels
-        self._layer_nums = layer_nums
-        self._upsample_strides = upsample_strides
-        self._num_upsample_filters = upsample_channels
-        self._num_input_features = input_channels
+        self.downsample_strides = downsample_strides
+        self.downsample_channels = downsample_channels
+        self.layer_nums = layer_nums
+        self.upsample_strides = upsample_strides
+        self.upsample_channels = upsample_channels
+        self.input_channels = input_channels
+        self.norm_cfg = norm_cfg
 
-        if norm_cfg is None:
-            norm_cfg = dict(type='BN', eps=1e-3, momentum=0.01)
-        self._norm_cfg = norm_cfg
+        assert len(self.downsample_strides) == len(self.layer_nums)
+        assert len(self.downsample_channels) == len(self.layer_nums)
+        assert len(self.upsample_channels) == len(self.upsample_strides)
 
-        assert len(self._layer_strides) == len(self._layer_nums)
-        assert len(self._num_filters) == len(self._layer_nums)
-        assert len(self._num_upsample_filters) == len(self._upsample_strides)
-
-        self._upsample_start_idx = len(self._layer_nums) - len(
-            self._upsample_strides)
+        self.upsample_start_idx = len(self.layer_nums) - len(
+            self.upsample_strides)
 
         must_equal_list = []
-        for i in range(len(self._upsample_strides)):
+        for i in range(len(self.upsample_strides)):
             # print(upsample_strides[i])
-            must_equal_list.append(self._upsample_strides[i] / np.prod(
-                self._layer_strides[:i + self._upsample_start_idx + 1]))
+            must_equal_list.append(self.upsample_strides[i] / np.prod(
+                self.downsample_strides[:i + self.upsample_start_idx + 1]))
 
         for val in must_equal_list:
             assert val == must_equal_list[0]
 
-        in_filters = [self._num_input_features, *self._num_filters[:-1]]
+        in_filters = [self.input_channels, *self.downsample_channels[:-1]]
         blocks = []
         deblocks = []
 
-        for i, layer_num in enumerate(self._layer_nums):
+        for i, layer_num in enumerate(self.layer_nums):
             block, num_out_filters = self._make_layer(
                 in_filters[i],
-                self._num_filters[i],
+                self.downsample_channels[i],
                 layer_num,
-                stride=self._layer_strides[i],
+                stride=self.downsample_strides[i],
             )
             blocks.append(block)
-            if i - self._upsample_start_idx >= 0:
-                stride = (self._upsample_strides[i - self._upsample_start_idx])
+            if i - self.upsample_start_idx >= 0:
+                stride = (self.upsample_strides[i - self.upsample_start_idx])
                 if stride > 1:
                     deblock = nn.Sequential(
                         nn.ConvTranspose2d(
                             num_out_filters,
-                            self._num_upsample_filters[
-                                i - self._upsample_start_idx],
+                            self.upsample_channels[i -
+                                                   self.upsample_start_idx],
                             stride,
                             stride=stride,
                             bias=False,
                         ),
                         build_norm_layer(
-                            self._norm_cfg,
-                            self._num_upsample_filters[
-                                i - self._upsample_start_idx],
+                            self.norm_cfg,
+                            self.upsample_channels[i -
+                                                   self.upsample_start_idx],
                         )[1],
                         nn.ReLU(),
                     )
@@ -99,16 +96,16 @@ class CenterPointRPN(nn.Module):
                     deblock = nn.Sequential(
                         nn.Conv2d(
                             num_out_filters,
-                            self._num_upsample_filters[
-                                i - self._upsample_start_idx],
+                            self.upsample_channels[i -
+                                                   self.upsample_start_idx],
                             stride,
                             stride=stride,
                             bias=False,
                         ),
                         build_norm_layer(
-                            self._norm_cfg,
-                            self._num_upsample_filters[
-                                i - self._upsample_start_idx],
+                            self.norm_cfg,
+                            self.upsample_channels[i -
+                                                   self.upsample_start_idx],
                         )[1],
                         nn.ReLU(),
                     )
@@ -118,9 +115,9 @@ class CenterPointRPN(nn.Module):
 
     @property
     def downsample_factor(self):
-        factor = np.prod(self._layer_strides)
-        if len(self._upsample_strides) > 0:
-            factor /= self._upsample_strides[-1]
+        factor = np.prod(self.downsample_strides)
+        if len(self.upsample_strides) > 0:
+            factor /= self.upsample_strides[-1]
         return factor
 
     def _make_layer(self, inplanes, planes, num_blocks, stride=1):
@@ -128,7 +125,7 @@ class CenterPointRPN(nn.Module):
         block_list = [
             nn.ZeroPad2d(1),
             nn.Conv2d(inplanes, planes, 3, stride=stride, bias=False),
-            build_norm_layer(self._norm_cfg, planes)[1],
+            build_norm_layer(self.norm_cfg, planes)[1],
             nn.ReLU()
         ]
 
@@ -136,7 +133,7 @@ class CenterPointRPN(nn.Module):
             block_list.append(
                 nn.Conv2d(planes, planes, 3, padding=1, bias=False))
             block_list.append(
-                build_norm_layer(self._norm_cfg, planes)[1],
+                build_norm_layer(self.norm_cfg, planes)[1],
                 # nn.BatchNorm2d(planes, eps=1e-3, momentum=0.01)
             )
             block_list.append(nn.ReLU())
@@ -162,8 +159,8 @@ class CenterPointRPN(nn.Module):
         ups = []
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
-            if i - self._upsample_start_idx >= 0:
-                ups.append(self.deblocks[i - self._upsample_start_idx](x))
+            if i - self.upsample_start_idx >= 0:
+                ups.append(self.deblocks[i - self.upsample_start_idx](x))
         if len(ups) > 0:
             x = torch.cat(ups, dim=1)
         return x
