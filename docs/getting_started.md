@@ -233,7 +233,7 @@ def conver_ply(input_path, output_path):
 ```
 Examples:
 
-```shell
+```python
 convert_ply('./test.ply', './test.bin')
 ```
 
