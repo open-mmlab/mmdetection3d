@@ -262,19 +262,8 @@ class CenterHead(nn.Module):
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
-            # preds_dict['hm'] = self._sigmoid(preds_dict['hm'])
-            cls_num = preds_dict['hm'].shape[1]
-            preds = preds_dict['hm'].permute(0, 2, 3,
-                                             1).reshape([-1, cls_num
-                                                         ]).contiguous()
-            labels = example['hm'][task_id].permute(0, 2, 3,
-                                                    1).reshape([-1, cls_num
-                                                                ]).long()
-            labels_new = labels.new_ones([labels.shape[0]],
-                                         dtype=torch.long) * cls_num
-            pos = torch.where(labels == 1)
-            labels_new[pos[0]] = pos[1]
-            hm_loss = self.crit(preds, labels_new)
+            preds_dict['hm'] = self._sigmoid(preds_dict['hm'])
+            hm_loss = self.crit(preds_dict['hm'], example['hm'][task_id])
 
             target_box = example['anno_box'][task_id]
             # reconstruct the anno_box from multiple reg heads
