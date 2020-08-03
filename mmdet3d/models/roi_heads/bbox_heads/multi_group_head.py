@@ -40,6 +40,21 @@ class CenterPointFeatureAdaption(FeatureAdaption):
 
 @HEADS.register_module()
 class SepHead(nn.Module):
+    """SepHead for CenterHead.
+
+    Args:
+        in_channels (int): Input channels for conv_layer.
+        heads (dict): Conv information.
+        head_conv (int): Output channels.
+            Default: 64.
+        final_kernal (int): Kernal size for the last conv layer.
+            Deafult: 1.
+        init_bias (float): Initial bias. Default: -2.19.
+        conv_cfg (dict): Config of conv layer.
+            Default: dict(type='Conv2d')
+        norm_cfg (dict): Config of norm layer.
+            Default: dict(type='BN2d').
+    """
 
     def __init__(
             self,
@@ -48,7 +63,6 @@ class SepHead(nn.Module):
             head_conv=64,
             final_kernel=1,
             init_bias=-2.19,
-            directional_classifier=False,
             conv_cfg=dict(type='Conv2d'),
             norm_cfg=dict(type='BN2d'),
             **kwargs,
@@ -93,8 +107,6 @@ class SepHead(nn.Module):
 
             self.__setattr__(head, fc)
 
-        assert directional_classifier is False
-
     def forward(self, x):
         ret_dict = dict()
         for head in self.heads:
@@ -105,16 +117,33 @@ class SepHead(nn.Module):
 
 @HEADS.register_module()
 class DCNSepHead(nn.Module):
+    """DCNSepHead for CenterHead.
+
+    Args:
+        in_channels (int): Input channels for conv_layer.
+        heads (dict): Conv information.
+        num_cls (int): Output channels.
+            Default: 64.
+        final_kernal (int): Kernal size for the last conv layer.
+            Deafult: 1.
+        init_bias (float): Initial bias. Default: -2.19.
+        conv_cfg (dict): Config of conv layer.
+            Default: dict(type='Conv2d')
+        norm_cfg (dict): Config of norm layer.
+            Default: dict(type='BN2d').
+    """
 
     def __init__(
-        self,
-        in_channels,
-        num_cls,
-        heads,
-        head_conv=64,
-        final_kernel=1,
-        init_bias=-2.19,
-        **kwargs,
+            self,
+            in_channels,
+            num_cls,
+            heads,
+            head_conv=64,
+            final_kernel=1,
+            init_bias=-2.19,
+            conv_cfg=dict(type='Conv2d'),
+            norm_cfg=dict(type='BN2d'),
+            **kwargs,
     ):
         super(DCNSepHead, self).__init__(**kwargs)
 
@@ -128,10 +157,16 @@ class DCNSepHead(nn.Module):
 
         # heatmap prediction head
         self.cls_head = nn.Sequential(
-            nn.Conv2d(
-                in_channels, head_conv, kernel_size=3, padding=1, bias=True),
-            nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-            nn.Conv2d(
+            build_conv_layer(
+                conv_cfg,
+                in_channels,
+                head_conv,
+                kernel_size=3,
+                padding=1,
+                bias=True), build_norm_layer(norm_cfg, num_features=64),
+            nn.ReLU(inplace=True),
+            build_conv_layer(
+                conv_cfg,
                 head_conv,
                 num_cls,
                 kernel_size=3,
@@ -157,6 +192,34 @@ class DCNSepHead(nn.Module):
 
 @HEADS.register_module
 class CenterHead(nn.Module):
+    """CenterHead for CenterPoint.
+
+    Args:
+        mode (str): Mode of the head. Default: '3d'.
+        in_channels (list[int] | int): Channels of the input feature map.
+            Default: [128].
+        tasks list[dict]: Task information including class number
+            and class names. Default: [].
+        dataset (str): Name of the dataset. Default: 'nuscenes'.
+        weight (float): Weight for location loss. Default: 0.25.
+        code_weights (list[int]): Code weights for location loss. Default: [].
+        common_heads (dict): Conv information for common heads.
+            Default: dict().
+        crit (dict): Config of classification loss function.
+            Default: dict(type='CenterPointFocalLoss').
+        crit_reg (dict): Config of regression loss function.
+            Default: dict(type='L1Loss', reduction='none').
+        init_bias (float): Initial bias. Default: -2.19.
+        share_conv_channel (int): Output channels for share_conv_layer.
+            Default: 64.
+        num_hm_conv (int): Number of conv layers for heatmap conv layer.
+            Default: 2.
+        dcn_head (bool): Whether to use dcn_head. Default: False.
+        conv_cfg (dict): Config of conv layer.
+            Default: dict(type='Conv2d')
+        norm_cfg (dict): Config of norm layer.
+            Default: dict(type='BN2d').
+    """
 
     def __init__(
             self,
@@ -173,7 +236,6 @@ class CenterHead(nn.Module):
             crit_reg=dict(type='L1Loss', reduction='none'),
             init_bias=-2.19,
             share_conv_channel=64,
-            no_log=False,
             num_hm_conv=2,
             dcn_head=False,
             conv_cfg=dict(type='Conv2d'),
@@ -195,8 +257,6 @@ class CenterHead(nn.Module):
         self.crit = build_loss(crit)
         self.crit_reg = build_loss(crit_reg)
         self.loss_aux = None
-
-        self.no_log = no_log
 
         self.box_n_dim = 9  # change this if your box is different
         self.num_anchor_per_locs = [n for n in num_classes]
@@ -231,10 +291,18 @@ class CenterHead(nn.Module):
                         share_conv_channel,
                         heads,
                         init_bias=init_bias,
-                        final_kernel=3,
-                        directional_classifier=False))
+                        final_kernel=3))
 
     def forward(self, x):
+        """Forward function for CenterPoint.
+
+        Args:
+            x (torch.Tensor): Input feature map with the shape of
+                [B, 512, 128, 128].
+
+        Returns:
+            list[dict]: Output results for tasks.
+        """
         ret_dicts = []
 
         x = self.shared_conv(x)
@@ -259,6 +327,12 @@ class CenterHead(nn.Module):
         return feat
 
     def loss(self, example, preds_dicts, **kwargs):
+        """Loss function for CenterHead.
+
+        Args:
+            example (dict): Annos for preds.
+            preds_dicts (dict): Output of forward function.
+        """
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
