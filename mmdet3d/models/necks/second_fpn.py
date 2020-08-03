@@ -1,6 +1,7 @@
+import numpy as np
 import torch
-from mmcv.cnn import (build_norm_layer, build_upsample_layer, constant_init,
-                      is_norm, kaiming_init)
+from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
+                      constant_init, is_norm, kaiming_init)
 from torch import nn as nn
 
 from mmdet.models import NECKS
@@ -23,7 +24,9 @@ class SECONDFPN(nn.Module):
                  out_channels=[256, 256, 256],
                  upsample_strides=[1, 2, 4],
                  norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                 upsample_cfg=dict(type='deconv', bias=False)):
+                 upsample_cfg=dict(type='deconv', bias=False),
+                 conv_cfg=dict(type='Conv2d', bias=False),
+                 use_conv_for_no_stride=False):
         # if for GroupNorm,
         # cfg is dict(type='GN', num_groups=num_groups, eps=1e-3, affine=True)
         super(SECONDFPN, self).__init__()
@@ -33,16 +36,32 @@ class SECONDFPN(nn.Module):
 
         deblocks = []
         for i, out_channel in enumerate(out_channels):
-            upsample_layer = build_upsample_layer(
-                upsample_cfg,
-                in_channels=in_channels[i],
-                out_channels=out_channel,
-                kernel_size=upsample_strides[i],
-                stride=upsample_strides[i])
-            deblock = nn.Sequential(upsample_layer,
-                                    build_norm_layer(norm_cfg, out_channel)[1],
-                                    nn.ReLU(inplace=True))
-            deblocks.append(deblock)
+            stride = upsample_strides[i]
+            if stride > 1 or (stride == 1 and not use_conv_for_no_stride):
+                upsample_layer = build_upsample_layer(
+                    upsample_cfg,
+                    in_channels=in_channels[i],
+                    out_channels=out_channel,
+                    kernel_size=upsample_strides[i],
+                    stride=upsample_strides[i])
+                deblock = nn.Sequential(
+                    upsample_layer,
+                    build_norm_layer(norm_cfg, out_channel)[1],
+                    nn.ReLU(inplace=True))
+                deblocks.append(deblock)
+            else:
+                stride = np.round(1 / stride).astype(np.int64)
+                upsample_layer = build_conv_layer(
+                    conv_cfg,
+                    in_channels=in_channels[i],
+                    out_channels=out_channel,
+                    kernel_size=stride,
+                    stride=stride)
+                deblock = nn.Sequential(
+                    upsample_layer,
+                    build_norm_layer(norm_cfg, out_channel)[1],
+                    nn.ReLU(inplace=True))
+                deblocks.append(deblock)
         self.deblocks = nn.ModuleList(deblocks)
 
     def init_weights(self):
