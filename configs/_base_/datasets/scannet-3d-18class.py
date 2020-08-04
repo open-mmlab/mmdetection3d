@@ -21,7 +21,7 @@ train_pipeline = [
         type='PointSegClassMapping',
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39)),
-    dict(type='IndoorPointSample', num_points=40000),
+    dict(type='IndoorPointSample', num_points=10000),
     dict(
         type='RandomFlip3D',
         sync_2d=False,

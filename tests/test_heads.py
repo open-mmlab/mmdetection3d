@@ -457,3 +457,75 @@ def test_free_anchor_3D_head():
                        gt_labels, input_metas, None)
     assert losses['positive_bag_loss'] >= 0
     assert losses['negative_bag_loss'] >= 0
+
+
+def test_primitive_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    primitive_head_cfg = dict(
+        type='PrimitiveHead',
+        num_dim=2,
+        num_classes=18,
+        primitive_mode='z',
+        vote_moudule_cfg=dict(
+            in_channels=256,
+            vote_per_seed=1,
+            gt_per_seed=3,
+            conv_channels=(256, 256),
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            norm_feats=True,
+            vote_loss=dict(
+                type='ChamferDistance',
+                mode='l1',
+                reduction='none',
+                loss_dst_weight=10.0)),
+        vote_aggregation_cfg=dict(
+            num_point=128,
+            radius=0.3,
+            num_sample=16,
+            mlp_channels=[256, 128, 128, 128],
+            use_xyz=True,
+            normalize_xyz=True),
+        feat_channels=(128, 128),
+        conv_cfg=dict(type='Conv1d'),
+        norm_cfg=dict(type='BN1d'),
+        objectness_loss=dict(
+            type='CrossEntropyLoss',
+            class_weight=[0.2, 0.8],
+            reduction='sum',
+            loss_weight=5.0),
+        center_loss=dict(
+            type='ChamferDistance',
+            mode='l2',
+            reduction='sum',
+            loss_src_weight=10.0,
+            loss_dst_weight=10.0),
+        dir_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        dir_res_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+        size_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        size_res_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+        semantic_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0))
+    self = build_head(primitive_head_cfg).cuda()
+    fp_xyz = [torch.rand([2, 256, 3], dtype=torch.float32).cuda()]
+    hd_features = torch.rand([2, 256, 256], dtype=torch.float32).cuda()
+    fp_indices = [torch.randint(0, 128, [2, 256]).cuda()]
+    input_dict = dict(
+        fp_xyz=fp_xyz, hd_feature=hd_features, fp_indices=fp_indices)
+
+    # test forward
+    ret_dict = self(input_dict, 'vote')
+    assert ret_dict['center_z'].shape == torch.Size([2, 128, 3])
+    assert ret_dict['size_residuals_z'].shape == torch.Size([2, 128, 2])
+    assert ret_dict['sem_cls_scores_z'].shape == torch.Size([2, 128, 18])
+    assert ret_dict['aggregated_points_z'].shape == torch.Size([2, 128, 3])
+    # import pdb; pdb.set_trace()
+
+
+test_primitive_head()
