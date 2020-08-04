@@ -108,6 +108,20 @@ class SepHead(nn.Module):
             self.__setattr__(head, fc)
 
     def forward(self, x):
+        """Forwarrd function for SepHead.
+
+        Args:
+            x (torch.Tensor): Input feature map with the shape of
+                [B, 512, 128, 128].
+
+        Returns:
+            dict:   'reg': 2D regression value with the shape of [B, 2, H, W].
+                    'height': Height value with the shape of [B, 1, H, W].
+                    'dim': Size value with the shape of [B, 3, H, W].
+                    'rot': Rotation value with the shape of [B, 2, H, W].
+                    'vel': Velocity value with the shape of [B, 2, H, W].
+                    'hm': Heatmap with the shape of [B, 1, H, W].
+        """
         ret_dict = dict()
         for head in self.heads:
             ret_dict[head] = self.__getattr__(head)(x)
@@ -183,6 +197,20 @@ class DCNSepHead(nn.Module):
             in_channels, heads, head_conv=head_conv, final_kernel=final_kernel)
 
     def forward(self, x):
+        """Forwarrd function for DCNSepHead.
+
+        Args:
+            x (torch.Tensor): Input feature map with the shape of
+                [B, 512, 128, 128].
+
+        Returns:
+            dict:   'reg': 2D regression value with the shape of [B, 2, H, W].
+                    'height': Height value with the shape of [B, 1, H, W].
+                    'dim': Size value with the shape of [B, 3, H, W].
+                    'rot': Rotation value with the shape of [B, 2, H, W].
+                    'vel': Velocity value with the shape of [B, 2, H, W].
+                    'hm': Heatmap with the shape of [B, 1, H, W].
+        """
         center_feat = self.feature_adapt_cls(x)
         reg_feat = self.feature_adapt_reg(x)
 
