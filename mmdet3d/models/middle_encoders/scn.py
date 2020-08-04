@@ -16,9 +16,10 @@ class SpMiddleResNetFHD(nn.Module):
     Args:
         num_input_features (int): Number of input features.
             Default: 128.
-
-        norm_cfg (dict): Configuration of normalization.
+        norm_cfg (dict): Config of normalization.
             Default: dict(type='BN1d', eps=1e-3, momentum=0.01).
+        conv_cfg (dict): Config of conv.
+            Default: dict(type='SubMConv3d').
     """
 
     def __init__(self,
@@ -32,8 +33,7 @@ class SpMiddleResNetFHD(nn.Module):
         self.zero_init_residual = False
         # input: # [1600, 1200, 41]
         self.middle_conv = spconv.SparseSequential(
-            SubMConv3d(
-                num_input_features, 16, 3, bias=False, indice_key='res0'),
+            SubMConv3d(num_input_features, 16, 3, bias=False),
             build_norm_layer(norm_cfg, 16)[1],
             nn.ReLU(),
             SparseBasicBlock(16, 16, norm_cfg=norm_cfg, conv_cfg=conv_cfg),

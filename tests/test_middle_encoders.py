@@ -20,3 +20,19 @@ def test_sp_middle_resnet_FHD():
     ret = sp_middle_resnet_FHD(voxel_features, coors, 4,
                                np.array([1024, 1024, 40]))
     assert ret.shape == torch.Size([4, 256, 128, 128])
+
+
+def test_sparse_encoder():
+    middle_encoder = dict(
+        type='SparseEncoder',
+        in_channels=4,
+        sparse_shape=[41, 1600, 1408],
+        order=('conv', 'norm', 'act'),
+        encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
+                                                                      128)),
+        encoder_paddings=((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1,
+                                                                       1)),
+        option='basicblock')
+
+    sparse_encoder = build_middle_encoder(middle_encoder)
+    print(sparse_encoder)
