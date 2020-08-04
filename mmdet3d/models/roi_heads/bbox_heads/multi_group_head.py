@@ -156,14 +156,15 @@ class DCNSepHead(nn.Module):
             in_channels, in_channels, kernel_size=3, deform_groups=4)
 
         # heatmap prediction head
-        self.cls_head = nn.Sequential(
+        cls_head = [
             build_conv_layer(
                 conv_cfg,
                 in_channels,
                 head_conv,
                 kernel_size=3,
                 padding=1,
-                bias=True), build_norm_layer(norm_cfg, num_features=64),
+                bias=True),
+            build_norm_layer(norm_cfg, num_features=64)[1],
             nn.ReLU(inplace=True),
             build_conv_layer(
                 conv_cfg,
@@ -172,7 +173,9 @@ class DCNSepHead(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=True))
+                bias=True)
+        ]
+        self.cls_head = nn.Sequential(*cls_head)
         self.cls_head[-1].bias.data.fill_(init_bias)
 
         # other regression target
@@ -289,6 +292,14 @@ class CenterHead(nn.Module):
                 self.tasks.append(
                     SepHead(
                         share_conv_channel,
+                        heads,
+                        init_bias=init_bias,
+                        final_kernel=3))
+            else:
+                self.tasks.append(
+                    DCNSepHead(
+                        share_conv_channel,
+                        num_cls,
                         heads,
                         init_bias=init_bias,
                         final_kernel=3))

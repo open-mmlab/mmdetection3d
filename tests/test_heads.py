@@ -517,3 +517,65 @@ def test_center_head():
     for key in loss.keys():
         for i in range(len(loss[key])):
             assert torch.all(loss[key][i] >= 0)
+
+
+def test_dcn_center_head():
+    # TODO: Change to read config from file.
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and CUDA')
+    tasks = [
+        dict(num_class=1, class_names=['car']),
+        dict(num_class=2, class_names=['truck', 'construction_vehicle']),
+        dict(num_class=2, class_names=['bus', 'trailer']),
+        dict(num_class=1, class_names=['barrier']),
+        dict(num_class=2, class_names=['motorcycle', 'bicycle']),
+        dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
+    ]
+
+    dcn_center_head_cfg = dict(
+        type='CenterHead',
+        mode='3d',
+        in_channels=sum([256, 256]),
+        tasks=tasks,
+        dataset='nuscenes',
+        weight=0.25,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
+        common_heads={
+            'reg': (2, 2),
+            'height': (1, 2),
+            'dim': (3, 2),
+            'rot': (2, 2),
+            'vel': (2, 2)
+        },
+        share_conv_channel=64,
+        dcn_head=True)
+
+    dcn_center_head = build_head(dcn_center_head_cfg).cuda()
+
+    x = torch.rand([2, 512, 128, 128]).cuda()
+    output = dcn_center_head(x)
+    for i in range(6):
+        assert output[i]['reg'].shape == torch.Size([2, 2, 128, 128])
+        assert output[i]['height'].shape == torch.Size([2, 1, 128, 128])
+        assert output[i]['dim'].shape == torch.Size([2, 3, 128, 128])
+        assert output[i]['rot'].shape == torch.Size([2, 2, 128, 128])
+        assert output[i]['vel'].shape == torch.Size([2, 2, 128, 128])
+        assert output[i]['hm'].shape == torch.Size(
+            [2, tasks[i]['num_class'], 128, 128])
+
+    # Test loss.
+    hm = [torch.zeros(2, len(task), 128, 128).cuda() for task in tasks]
+    mask = [torch.randint(0, 2, [2, 500]).cuda() for _ in range(6)]
+    ind = [torch.randint(0, 10000, [2, 500]).cuda() for _ in range(6)]
+    anno_box = [torch.rand([2, 500, 10]).cuda() for _ in range(6)]
+    example = dict()
+    example['anno_box'] = anno_box
+    example['hm'] = hm
+    example['ind'] = ind
+    example['mask'] = mask
+
+    loss = dcn_center_head.loss(example, output)
+
+    for key in loss.keys():
+        for i in range(len(loss[key])):
+            assert torch.all(loss[key][i] >= 0)
