@@ -41,3 +41,4 @@ def test_hard_simple_VFE():
 
     outputs = hard_simple_VFE(features, num_voxels, None)
     assert outputs.shape == torch.Size([240000, 5])
+    assert torch.isclose(torch.mean(outputs), torch.mean(features))
