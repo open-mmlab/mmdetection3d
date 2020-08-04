@@ -24,9 +24,9 @@ def test_centerpoint_rpn():
         upsample_cfg=dict(type='deconv', bias=False),
         use_conv_for_no_stride=True)
 
-    centerpoint_fpn = build_neck(centerpoint_fpn_cfg)
+    second_fpn = build_neck(centerpoint_fpn_cfg)
 
     input = torch.rand([4, 64, 512, 512])
     sec_output = second(input)
-    output = centerpoint_fpn(sec_output)
+    output = second_fpn(sec_output)
     assert output[0].shape == torch.Size([4, 384, 128, 128])
