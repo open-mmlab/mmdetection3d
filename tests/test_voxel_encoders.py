@@ -37,8 +37,7 @@ def test_hard_simple_VFE():
     hard_simple_VFE_cfg = dict(type='HardSimpleVFE', num_features=5)
     hard_simple_VFE = build_voxel_encoder(hard_simple_VFE_cfg)
     features = torch.rand([240000, 10, 5])
-    num_voxels = torch.randint(0, 100, [240000])
+    num_voxels = torch.randint(1, 10, [240000])
 
     outputs = hard_simple_VFE(features, num_voxels, None)
     assert outputs.shape == torch.Size([240000, 5])
-    assert torch.isclose(torch.mean(outputs), torch.mean(features))
