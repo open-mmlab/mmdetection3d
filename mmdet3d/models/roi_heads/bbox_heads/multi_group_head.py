@@ -198,7 +198,7 @@ class CenterHead(nn.Module):
         mode (str): Mode of the head. Default: '3d'.
         in_channels (list[int] | int): Channels of the input feature map.
             Default: [128].
-        tasks list[dict]: Task information including class number
+        tasks (list[dict]): Task information including class number
             and class names. Default: [].
         dataset (str): Name of the dataset. Default: 'nuscenes'.
         weight (float): Weight for location loss. Default: 0.25.
@@ -376,8 +376,7 @@ class CenterHead(nn.Module):
             })
 
             rets.append(ret)
-        """convert batch-key to key-batch
-        """
+        # convert batch-key to key-batch
         rets_merged = defaultdict(list)
         for ret in rets:
             for k, v in ret.items():

@@ -471,7 +471,6 @@ def test_center_head():
     ]
 
     center_head_cfg = dict(
-        # type='RPNHead',
         type='CenterHead',
         mode='3d',
         in_channels=sum([256, 256]),
