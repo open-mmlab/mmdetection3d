@@ -76,7 +76,7 @@ class H3DNet(SingleStage3DDetector):
         x = self.extract_feat(points_cat)
         bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
         bbox_list = self.bbox_head.get_bboxes(
-            points_cat, bbox_preds, img_metas, rescale=rescale)
+            points_cat, bbox_preds, img_metas, rescale=rescale, suffix='_opt')
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
@@ -93,7 +93,7 @@ class H3DNet(SingleStage3DDetector):
         for x, pts_cat, img_meta in zip(feats, points_cat, img_metas):
             bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
             bbox_list = self.bbox_head.get_bboxes(
-                pts_cat, bbox_preds, img_meta, rescale=rescale)
+                pts_cat, bbox_preds, img_meta, rescale=rescale, suffix='_opt')
             bbox_list = [
                 dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
                 for bboxes, scores, labels in bbox_list

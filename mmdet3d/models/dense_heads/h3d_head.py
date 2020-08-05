@@ -24,6 +24,7 @@ class H3dHead(nn.Module):
         num_classes (int): The number of class.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
+        primitive_list (list[dict]): Configs of primitive head.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
         vote_moudule_cfg (dict): Config of VoteModule for point-wise votes.
@@ -206,7 +207,6 @@ class H3dHead(nn.Module):
         results.update(decode_res)
 
         refine_predictions, refine_dict = self.pnet_final(results)
-        # import pdb; pdb.set_trace()
         results.update(refine_dict)
         refine_decode_res = self.bbox_coder.split_pred(refine_predictions,
                                                        aggregated_points)
@@ -509,7 +509,12 @@ class H3dHead(nn.Module):
                 dir_class_targets, dir_res_targets, center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
-    def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
+    def get_bboxes(self,
+                   points,
+                   bbox_preds,
+                   input_metas,
+                   rescale=False,
+                   suffix=''):
         """Generate bboxes from vote head predictions.
 
         Args:
@@ -522,9 +527,10 @@ class H3dHead(nn.Module):
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
         # decode boxes
-        obj_scores = F.softmax(bbox_preds['obj_scores'], dim=-1)[..., -1]
-        sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
-        bbox3d = self.bbox_coder.decode(bbox_preds)
+        obj_scores = F.softmax(
+            bbox_preds['obj_scores' + suffix], dim=-1)[..., -1]
+        sem_scores = F.softmax(bbox_preds['sem_scores' + suffix], dim=-1)
+        bbox3d = self.bbox_coder.decode(bbox_preds, suffix=suffix)
 
         batch_size = bbox3d.shape[0]
         results = list()

@@ -381,16 +381,22 @@ class ProposalModuleRefine(nn.Module):
             dim=2)
         obj_line_feature = torch.cat((obj_line_indicator, obj_line_feature),
                                      dim=1)
+        # surface_xyz, surface_features, _ = self.match_surface_center(
+        #     torch.cat((obj_surface_center, surface_center_pred), dim=1),
+        #     torch.cat((obj_surface_feature, surface_center_feature_pred),
+        #               dim=2))
         surface_xyz, surface_features, _ = self.match_surface_center(
-            torch.cat((obj_surface_center, surface_center_pred), dim=1),
-            torch.cat((obj_surface_feature, surface_center_feature_pred),
-                      dim=2))
+            surface_center_pred,
+            surface_center_feature_pred,
+            target_xyz=obj_surface_center)
         line_feature = torch.cat((torch.zeros(
             (batch_size, 12, line_feature.shape[2])).cuda(), line_feature),
                                  dim=1)
+        # line_xyz, line_features, _ = self.match_line_center(
+        #     torch.cat((obj_line_center, line_center), dim=1),
+        #     torch.cat((obj_line_feature, line_feature), dim=2))
         line_xyz, line_features, _ = self.match_line_center(
-            torch.cat((obj_line_center, line_center), dim=1),
-            torch.cat((obj_line_feature, line_feature), dim=2))
+            line_center, line_feature, target_xyz=obj_line_center)
 
         combine_features = torch.cat(
             (surface_features.contiguous(), line_features.contiguous()), dim=2)
