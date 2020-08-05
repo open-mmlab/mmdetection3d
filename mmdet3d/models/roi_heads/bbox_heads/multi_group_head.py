@@ -9,9 +9,6 @@ from mmdet.core import multi_apply
 from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
 
-# def limit_period(val, offset=0.5, period=np.pi):
-#     return val - torch.floor(val / period + offset) * period
-
 
 def gaussian2D(shape, sigma=1):
     m, n = [(ss - 1.) / 2. for ss in shape]
@@ -178,7 +175,7 @@ class SepHead(nn.Module):
                     'dim': Size value with the shape of [B, 3, H, W].
                     'rot': Rotation value with the shape of [B, 2, H, W].
                     'vel': Velocity value with the shape of [B, 2, H, W].
-                    'hm': Heatmap with the shape of [B, 1, H, W].
+                    'hm': Heatmap with the shape of [B, N, H, W].
         """
         ret_dict = dict()
         for head in self.heads:
@@ -267,7 +264,7 @@ class DCNSepHead(nn.Module):
                     'dim': Size value with the shape of [B, 3, H, W].
                     'rot': Rotation value with the shape of [B, 2, H, W].
                     'vel': Velocity value with the shape of [B, 2, H, W].
-                    'hm': Heatmap with the shape of [B, 1, H, W].
+                    'hm': Heatmap with the shape of [B, N, H, W].
         """
         center_feat = self.feature_adapt_cls(x)
         reg_feat = self.feature_adapt_reg(x)
@@ -412,10 +409,33 @@ class CenterHead(nn.Module):
         return ret_dicts
 
     def _sigmoid(self, x):
+        """Sigmoid function for input feature.
+
+        Args:
+            x (torch.Tensor): Input feature map with the shape of [B, N, H, W].
+
+        Returns:
+            torch.Tensor: Feature map after sigmoid.
+        """
         y = torch.clamp(x.sigmoid_(), min=1e-4, max=1 - 1e-4)
         return y
 
     def _gather_feat(self, feat, ind, mask=None):
+        """Gather feature map.
+
+        Given feature map and index, return indexed feature map.
+
+        Args:
+        feat (torch.tensor): Feature map with the shape of [B, H*W, 10].
+        ind (torch.Tensor): Index of the ground truth boxes with the
+            shape of [B, max_obj].
+        mask (torch.Tensor): Mask of the feature map with the shape
+            of [B, max_obj]. Default: None.
+
+        Returns:
+            torch.Tensor: Feature map after gathering with the shape
+                of [B, max_obj, 10].
+        """
         dim = feat.size(2)
         ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
         feat = feat.gather(1, ind)
