@@ -43,8 +43,6 @@ class MultiBackbone(nn.Module):
         self.backbone_list = nn.ModuleList()
         # Rename the ret_dict with different suffixs.
         self.suffix_list = []
-        # Collect output features for feature aggregation.
-        # self.collect_func = []
 
         out_channels = 0
 
@@ -54,8 +52,6 @@ class MultiBackbone(nn.Module):
 
             self.suffix_list.append(bb_cfg['suffix'])
             bb_cfg.pop('suffix')
-            # self.collect_func.append(bb_cfg['collector'])
-            # bb_cfg.pop('collector')
 
             out_channels += bb_cfg['fp_channels'][-1][-1]
             self.backbone_list.append(build_backbone(bb_cfg))
