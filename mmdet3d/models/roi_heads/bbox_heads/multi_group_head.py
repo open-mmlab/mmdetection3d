@@ -9,6 +9,10 @@ from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
 
 
+def limit_period(val, offset=0.5, period=np.pi):
+    return val - torch.floor(val / period + offset) * period
+
+
 def gaussian2D(shape, sigma=1):
     m, n = [(ss - 1.) / 2. for ss in shape]
     y, x = np.ogrid[-m:m + 1, -n:n + 1]
@@ -459,11 +463,10 @@ class CenterHead(nn.Module):
             task_classes.append(torch.cat(task_class))
             flag2 += len(mask)
 
-        # for task_box in task_boxes:
-        #     # limit rad to [-pi, pi]
-        #     task_box[:, -1] = box_np_ops.limit_period(
-        #         task_box[:, -1], offset=0.5, period=np.pi * 2
-        #     )
+        for task_box in task_boxes:
+            # limit rad to [-pi, pi]
+            task_box[:, -1] = limit_period(
+                task_box[:, -1], offset=0.5, period=np.pi * 2)
 
         # print(gt_dict.keys())
         # gt_dict["gt_classes"] = task_classes
