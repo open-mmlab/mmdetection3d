@@ -62,7 +62,6 @@ def test_multi_backbone():
                 fp_channels=((256, 256), (256, 256)),
                 norm_cfg=dict(type='BN2d'),
                 pool_mod='max',
-                collector=lambda x: x['fp_features'][-1],
                 suffix=''),
             dict(
                 type='PointNet2SASSG',
@@ -75,7 +74,6 @@ def test_multi_backbone():
                 fp_channels=((256, 256), (256, 256)),
                 norm_cfg=dict(type='BN2d'),
                 pool_mod='max',
-                collector=lambda x: x['fp_features'][-1],
                 suffix='net1'),
             dict(
                 type='PointNet2SASSG',
@@ -88,7 +86,6 @@ def test_multi_backbone():
                 fp_channels=((256, 256), (256, 256)),
                 norm_cfg=dict(type='BN2d'),
                 pool_mod='max',
-                collector=lambda x: x['fp_features'][-1],
                 suffix='net2'),
             dict(
                 type='PointNet2SASSG',
@@ -101,7 +98,6 @@ def test_multi_backbone():
                 fp_channels=((256, 256), (256, 256)),
                 norm_cfg=dict(type='BN2d'),
                 pool_mod='max',
-                collector=lambda x: x['fp_features'][-1],
                 suffix='net3')
         ])
 
@@ -133,7 +129,6 @@ def test_multi_backbone():
             fp_channels=((256, 256), (256, 256)),
             norm_cfg=dict(type='BN2d'),
             pool_mod='max',
-            collector=lambda x: x['fp_features'][-1],
             suffix=''))
 
     self = build_backbone(cfg_dict)
