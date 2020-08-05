@@ -5,6 +5,7 @@ from collections import defaultdict
 from mmcv.cnn import build_conv_layer, build_norm_layer, kaiming_init
 from torch import nn
 
+from mmdet.core import multi_apply
 from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
 
@@ -425,6 +426,21 @@ class CenterHead(nn.Module):
         return feat
 
     def get_targets(self, gt_bboxes_3d, gt_labels_3d):
+        hms, anno_boxes, inds, masks, cats = multi_apply(
+            self.get_targets_single, gt_bboxes_3d, gt_labels_3d)
+        hms = np.array(hms).transpose(1, 0).tolist()
+        hms = [torch.stack(hms_) for hms_ in hms]
+        anno_boxes = np.array(anno_boxes).transpose(1, 0).tolist()
+        anno_boxes = [torch.stack(anno_boxes_) for anno_boxes_ in anno_boxes]
+        inds = np.array(inds).transpose(1, 0).tolist()
+        inds = [torch.stack(inds_) for inds_ in inds]
+        masks = np.array(masks).transpose(1, 0).tolist()
+        masks = [torch.stack(masks_) for masks_ in masks]
+        cats = np.array(cats).transpose(1, 0).tolist()
+        cats = [torch.stack(cats_) for cats_ in cats]
+        return hms, anno_boxes, inds, masks, cats
+
+    def get_targets_single(self, gt_bboxes_3d, gt_labels_3d):
         gt_bboxes_3d.limit_yaw(offset=0.5, period=np.pi * 2)
         gt_bboxes_3d = gt_bboxes_3d.tensor[:, [0, 1, 2, 3, 4, 5, 7, 8, 6]]
         device = gt_labels_3d.device
@@ -584,20 +600,22 @@ class CenterHead(nn.Module):
 
         return hms, anno_boxes, inds, masks, cats
 
-    def loss(self, example, preds_dicts, **kwargs):
+    def loss(self, gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs):
         """Loss function for CenterHead.
 
         Args:
             example (dict): Annos for preds.
             preds_dicts (dict): Output of forward function.
         """
+        hms, anno_boxes, inds, masks, cats = self.get_targets(
+            gt_bboxes_3d, gt_labels_3d)
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
             preds_dict['hm'] = self._sigmoid(preds_dict['hm'])
-            hm_loss = self.crit(preds_dict['hm'], example['hm'][task_id])
+            hm_loss = self.crit(preds_dict['hm'], hms[task_id])
 
-            target_box = example['anno_box'][task_id]
+            target_box = anno_boxes[task_id]
             # reconstruct the anno_box from multiple reg heads
             if self.dataset == 'nuscenes':
                 preds_dict['anno_box'] = torch.cat(
@@ -611,14 +629,13 @@ class CenterHead(nn.Module):
             ret = {}
 
             # Regression loss for dimension, offset, height, rotation
-            ind = example['ind'][task_id]
+            ind = inds[task_id]
             pred = preds_dict['anno_box'].permute(0, 2, 3, 1).contiguous()
             pred = pred.view(pred.size(0), -1, pred.size(3))
             pred = self._gather_feat(pred, ind)
-            mask = torch.unsqueeze(example['mask'][task_id],
-                                   -1).expand(pred.size())
+            mask = torch.unsqueeze(masks[task_id], -1).expand(pred.size())
             box_loss = torch.sum(self.crit_reg(pred, target_box, mask), 1) / (
-                example['mask'][task_id].float().sum() + 1e-4)
+                masks[task_id].float().sum() + 1e-4)
 
             loc_loss = (box_loss *
                         box_loss.new_tensor(self.code_weights)).sum()
@@ -630,7 +647,7 @@ class CenterHead(nn.Module):
                 'hm_loss': hm_loss.detach().cpu(),
                 'loc_loss': loc_loss,
                 'loc_loss_elem': box_loss.detach().cpu(),
-                'num_positive': example['mask'][task_id].float().sum()
+                'num_positive': masks[task_id].float().sum()
             })
 
             rets.append(ret)
