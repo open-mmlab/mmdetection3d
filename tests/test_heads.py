@@ -501,23 +501,6 @@ def test_center_head():
         assert output[i]['hm'].shape == torch.Size(
             [2, tasks[i]['num_class'], 128, 128])
 
-    # Test loss.
-    hm = [torch.zeros(2, len(task), 128, 128) for task in tasks]
-    mask = [torch.randint(0, 2, [2, 500]) for _ in range(6)]
-    ind = [torch.randint(0, 10000, [2, 500]) for _ in range(6)]
-    anno_box = [torch.rand([2, 500, 10]) for _ in range(6)]
-    example = dict()
-    example['anno_box'] = anno_box
-    example['hm'] = hm
-    example['ind'] = ind
-    example['mask'] = mask
-
-    loss = center_head.loss(example, output)
-
-    for key in loss.keys():
-        for i in range(len(loss[key])):
-            assert torch.all(loss[key][i] >= 0)
-
 
 def test_dcn_center_head():
     # TODO: Change to read config from file.
@@ -531,6 +514,16 @@ def test_dcn_center_head():
         dict(num_class=2, class_names=['motorcycle', 'bicycle']),
         dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
     ]
+    train_cfg = dict(
+        grid_size=[1024, 1024, 40],
+        point_cloud_range=[-51.2, -51.2, -5., 51.2, 51.2, 3.],
+        voxel_size=[0.1, 0.1, 0.2],
+        out_size_factor=8,
+        dense_reg=1,
+        gaussian_overlap=0.1,
+        max_objs=500,
+        min_radius=2,
+        no_log=False)
 
     dcn_center_head_cfg = dict(
         type='CenterHead',
@@ -547,6 +540,7 @@ def test_dcn_center_head():
             'rot': (2, 2),
             'vel': (2, 2)
         },
+        train_cfg=train_cfg,
         share_conv_channel=64,
         dcn_head=True)
 
@@ -563,19 +557,17 @@ def test_dcn_center_head():
         assert output[i]['hm'].shape == torch.Size(
             [2, tasks[i]['num_class'], 128, 128])
 
-    # Test loss.
-    hm = [torch.zeros(2, len(task), 128, 128).cuda() for task in tasks]
-    mask = [torch.randint(0, 2, [2, 500]).cuda() for _ in range(6)]
-    ind = [torch.randint(0, 10000, [2, 500]).cuda() for _ in range(6)]
-    anno_box = [torch.rand([2, 500, 10]).cuda() for _ in range(6)]
-    example = dict()
-    example['anno_box'] = anno_box
-    example['hm'] = hm
-    example['ind'] = ind
-    example['mask'] = mask
+        # Test loss.
+        gt_bboxes_0 = LiDARInstance3DBoxes(
+            torch.rand([10, 9]).cuda(), box_dim=9)
+        gt_bboxes_1 = LiDARInstance3DBoxes(
+            torch.rand([20, 9]).cuda(), box_dim=9)
+        gt_labels_0 = torch.randint(1, 11, [10]).cuda()
+        gt_labels_1 = torch.randint(1, 11, [20]).cuda()
+        gt_bboxes_3d = [gt_bboxes_0, gt_bboxes_1]
+        gt_labels_3d = [gt_labels_0, gt_labels_1]
+        loss = dcn_center_head.loss(gt_bboxes_3d, gt_labels_3d, output)
 
-    loss = dcn_center_head.loss(example, output)
-
-    for key in loss.keys():
-        for i in range(len(loss[key])):
-            assert torch.all(loss[key][i] >= 0)
+        for key in loss.keys():
+            for i in range(len(loss[key])):
+                assert torch.all(loss[key][i] >= 0)
