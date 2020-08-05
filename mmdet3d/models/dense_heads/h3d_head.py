@@ -6,19 +6,18 @@ from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
-from mmdet3d.models.dense_heads.primitive_head import PrimitiveHead
 from mmdet3d.models.dense_heads.proposal_module_refine import \
     ProposalModuleRefine
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import PointSAModule, furthest_point_sample
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS
+from mmdet.models import HEADS, build_head
 
 
 @HEADS.register_module()
 class H3dHead(nn.Module):
-    r"""Bbox head of `Votenet <https://arxiv.org/abs/1904.09664>`_.
+    r"""Bbox head of `H3dnet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
         num_classes (int): The number of class.
@@ -82,13 +81,11 @@ class H3dHead(nn.Module):
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
+        assert len(primitive_list) == 3
         # Primitive module
-        primitive_list[0].pop('type')
-        self.prim_z = PrimitiveHead(**(primitive_list[0]))
-        primitive_list[1].pop('type')
-        self.prim_xy = PrimitiveHead(**(primitive_list[1]))
-        primitive_list[2].pop('type')
-        self.prim_line = PrimitiveHead(**(primitive_list[2]))
+        self.prim_z = build_head(primitive_list[0])
+        self.prim_xy = build_head(primitive_list[1])
+        self.prim_line = build_head(primitive_list[2])
 
         self.vote_module = VoteModule(**vote_moudule_cfg)
         self.vote_aggregation = PointSAModule(**vote_aggregation_cfg)
@@ -240,7 +237,7 @@ class H3dHead(nn.Module):
                 which bounding.
 
         Returns:
-            dict: Losses of Votenet.
+            dict: Losses of H3dnet.
         """
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    pts_semantic_mask, pts_instance_mask,
@@ -300,7 +297,6 @@ class H3dHead(nn.Module):
         refined_loss = self.pnet_final.loss(bbox3d_opt, *loss_inputs)
         for key in refined_loss.keys():
             losses[key + '_potential'] = refined_loss[key]
-        # import pdb; pdb.set_trace()
         return losses
 
     def get_targets(self,
@@ -619,6 +615,34 @@ class H3dHead(nn.Module):
                                 box_loss_weights,
                                 valid_gt_weights,
                                 suffix=''):
+        """Compute loss for the aggregation module.
+
+        Args:
+            bbox_preds (dict): Predictions from forward of vote head.
+            size_class_targets (torch.Tensor): Ground truth \
+                size class of each prediction bounding box.
+            size_res_targets (torch.Tensor): Ground truth \
+                size residual of each prediction bounding box.
+            dir_class_targets (torch.Tensor): Ground truth \
+                direction class of each prediction bounding box.
+            dir_res_targets (torch.Tensor): Ground truth \
+                direction residual of each prediction bounding box.
+            center_targets (torch.Tensor): Ground truth center \
+                of each prediction bounding box.
+            mask_targets (torch.Tensor): Validation of each \
+                prediction bounding box.
+            objectness_targets (torch.Tensor): Ground truth \
+                objectness label of each prediction bounding box.
+            objectness_weights (torch.Tensor): Weights of objectness \
+                loss for each prediction bounding box.
+            box_loss_weights (torch.Tensor): Weights of regression \
+                loss for each prediction bounding box.
+            valid_gt_weights (torch.Tensor): Validation of each \
+                ground truth bounding box.
+
+        Returns:
+            dict: Losses of aggregation module.
+        """
         device = bbox_preds['dir_res_norm' + suffix].device
         # calculate objectness loss
         objectness_loss = self.objectness_loss(

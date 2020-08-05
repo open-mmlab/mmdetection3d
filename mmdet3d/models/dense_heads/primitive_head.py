@@ -11,7 +11,7 @@ from mmdet.models import HEADS
 
 @HEADS.register_module()
 class PrimitiveHead(nn.Module):
-    r"""Bbox head of `Votenet <https://arxiv.org/abs/1904.09664>`_.
+    r"""Bbox head of `H3dnet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
         num_dim (int): The dimension of primitive.
