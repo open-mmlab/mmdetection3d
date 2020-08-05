@@ -8,9 +8,8 @@ from torch import nn
 from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
 
-
-def limit_period(val, offset=0.5, period=np.pi):
-    return val - torch.floor(val / period + offset) * period
+# def limit_period(val, offset=0.5, period=np.pi):
+#     return val - torch.floor(val / period + offset) * period
 
 
 def gaussian2D(shape, sigma=1):
@@ -425,7 +424,9 @@ class CenterHead(nn.Module):
             feat = feat.view(-1, dim)
         return feat
 
-    def get_targets(self, gt_bboxes_3d, gt_labels_3d, gt_names_3d):
+    def get_targets(self, gt_bboxes_3d, gt_labels_3d):
+        gt_bboxes_3d.limit_yaw(offset=0.5, period=np.pi * 2)
+        gt_bboxes_3d = gt_bboxes_3d.tensor[:, [0, 1, 2, 3, 4, 5, 7, 8, 6]]
         device = gt_labels_3d.device
         max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
         # class_names_by_task = [t.class_names for t in self.tasks]
@@ -463,10 +464,10 @@ class CenterHead(nn.Module):
             task_classes.append(torch.cat(task_class))
             flag2 += len(mask)
 
-        for task_box in task_boxes:
-            # limit rad to [-pi, pi]
-            task_box[:, -1] = limit_period(
-                task_box[:, -1], offset=0.5, period=np.pi * 2)
+        # for task_box in task_boxes:
+        #     # limit rad to [-pi, pi]
+        #     task_box[:, -1] = limit_period(
+        #         task_box[:, -1], offset=0.5, period=np.pi * 2)
 
         # print(gt_dict.keys())
         # gt_dict["gt_classes"] = task_classes
