@@ -30,11 +30,12 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
     top, bottom = min(y, radius), min(height - y, radius + 1)
 
     masked_heatmap = heatmap[y - top:y + bottom, x - left:x + right]
-    masked_gaussian = gaussian[radius - top:radius + bottom,
-                               radius - left:radius + right]
+    masked_gaussian = torch.from_numpy(
+        gaussian[radius - top:radius + bottom, radius - left:radius +
+                 right]).to(heatmap.device).to(torch.float32)
     if min(masked_gaussian.shape) > 0 and min(
             masked_heatmap.shape) > 0:  # TODO debug
-        np.maximum(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
+        torch.max(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
     return heatmap
 
 
@@ -44,19 +45,19 @@ def gaussian_radius(det_size, min_overlap=0.5):
     a1 = 1
     b1 = (height + width)
     c1 = width * height * (1 - min_overlap) / (1 + min_overlap)
-    sq1 = np.sqrt(b1**2 - 4 * a1 * c1)
+    sq1 = torch.sqrt(b1**2 - 4 * a1 * c1)
     r1 = (b1 + sq1) / 2
 
     a2 = 4
     b2 = 2 * (height + width)
     c2 = (1 - min_overlap) * width * height
-    sq2 = np.sqrt(b2**2 - 4 * a2 * c2)
+    sq2 = torch.sqrt(b2**2 - 4 * a2 * c2)
     r2 = (b2 + sq2) / 2
 
     a3 = 4 * min_overlap
     b3 = -2 * min_overlap * (height + width)
     c3 = (min_overlap - 1) * width * height
-    sq3 = np.sqrt(b3**2 - 4 * a3 * c3)
+    sq3 = torch.sqrt(b3**2 - 4 * a3 * c3)
     r3 = (b3 + sq3) / 2
     return min(r1, r2, r3)
 
@@ -421,22 +422,23 @@ class CenterHead(nn.Module):
         return feat
 
     def get_targets(self, gt_bboxes_3d, gt_labels_3d, gt_names_3d):
-        max_objs = self._max_objs * self.dense_reg
-        class_names_by_task = [t.class_names for t in self.tasks]
+        device = gt_labels_3d.device
+        max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
+        # class_names_by_task = [t.class_names for t in self.tasks]
 
         # Calculate output featuremap size
         # grid_size = res["lidar"]["voxels"]["shape"]  # 448 x 512
-        grid_size = self.train_cfg['grid_size']  # 448 x 512
-        pc_range = self.train_cfg['point_cloud_range']
-        voxel_size = self.train_cfg['voxel_size']
+        grid_size = np.array(self.train_cfg['grid_size'])  # 448 x 512
+        pc_range = np.array(self.train_cfg['point_cloud_range'])
+        voxel_size = np.array(self.train_cfg['voxel_size'])
 
-        feature_map_size = grid_size[:2] // self.out_size_factor
+        feature_map_size = grid_size[:2] // self.train_cfg['out_size_factor']
         example = {}
 
         # reorganize the gt_dict by tasks
         task_masks = []
         flag = 0
-        for class_name in class_names_by_task:
+        for class_name in self.class_names:
             # print("classes: ", gt_dict["gt_classes"], "name", class_name)
             task_masks.append([
                 torch.where(gt_labels_3d == class_name.index(i) + 1 + flag)
@@ -446,19 +448,15 @@ class CenterHead(nn.Module):
 
         task_boxes = []
         task_classes = []
-        task_names = []
         flag2 = 0
         for idx, mask in enumerate(task_masks):
             task_box = []
             task_class = []
-            task_name = []
             for m in mask:
                 task_box.append(gt_bboxes_3d[m])
                 task_class.append(gt_labels_3d[m] - flag2)
-                task_name.append(gt_names_3d[m])
             task_boxes.append(torch.cat(task_box, axis=0))
             task_classes.append(torch.cat(task_class))
-            task_names.append(torch.cat(task_name))
             flag2 += len(mask)
 
         # for task_box in task_boxes:
@@ -479,15 +477,16 @@ class CenterHead(nn.Module):
         hms, anno_boxes, inds, masks, cats = [], [], [], [], []
 
         for idx, task in enumerate(self.tasks):
-            hm = torch.zeros((len(class_names_by_task[idx]),
-                              feature_map_size[1], feature_map_size[0]),
-                             dtype=torch.float32)
+            hm = gt_bboxes_3d.new_zeros(
+                (len(self.class_names[idx]), feature_map_size[1],
+                 feature_map_size[0]))
 
-            anno_box = torch.zeros((max_objs, 10), dtype=torch.float32)
+            anno_box = gt_bboxes_3d.new_zeros((max_objs, 10),
+                                              dtype=torch.float32)
 
-            ind = torch.zeros((max_objs), dtype=torch.int64)
-            mask = torch.zeros((max_objs), dtype=torch.uint8)
-            cat = torch.zeros((max_objs), dtype=torch.int64)
+            ind = gt_labels_3d.new_zeros((max_objs), dtype=torch.int64)
+            mask = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.uint8)
+            cat = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.int64)
 
             num_objs = min(task_boxes[idx].shape[0], max_objs)
 
@@ -496,13 +495,14 @@ class CenterHead(nn.Module):
 
                 width, length, _ = task_boxes[idx][k][3], task_boxes[idx][k][
                     4], task_boxes[idx][k][5]
-                width, length = width / voxel_size[
-                    0] / self.out_size_factor, length / voxel_size[
-                        1] / self.out_size_factor
+                width, length = width / voxel_size[0] / self.train_cfg[
+                    'out_size_factor'], length / voxel_size[
+                        1] / self.train_cfg['out_size_factor']
                 if width > 0 and length > 0:
-                    radius = gaussian_radius((length, width),
-                                             min_overlap=self.gaussian_overlap)
-                    radius = max(self._min_radius, int(radius))
+                    radius = gaussian_radius(
+                        (length, width),
+                        min_overlap=self.train_cfg['gaussian_overlap'])
+                    radius = max(self.train_cfg['min_radius'], int(radius))
 
                     # be really careful for the coordinate system of
                     # your box annotation.
@@ -511,11 +511,14 @@ class CenterHead(nn.Module):
 
                     coor_x, coor_y = (
                         x - pc_range[0]
-                    ) / voxel_size[0] / self.out_size_factor, (
-                        y - pc_range[1]) / voxel_size[1] / self.out_size_factor
+                    ) / voxel_size[0] / self.train_cfg['out_size_factor'], (
+                        y - pc_range[1]
+                    ) / voxel_size[1] / self.train_cfg['out_size_factor']
 
-                    ct = torch.tensor([coor_x, coor_y], dtype=torch.float32)
-                    ct_int = ct.astype(torch.int32)
+                    ct = torch.tensor([coor_x, coor_y],
+                                      dtype=torch.float32,
+                                      device=device)
+                    ct_int = ct.to(torch.int32)
 
                     # throw out not in range objects to avoid out of array
                     # area when creating the heatmap
@@ -540,18 +543,26 @@ class CenterHead(nn.Module):
 
                     vx, vy = task_boxes[idx][k][6:8]
                     rot = task_boxes[idx][k][8]
-                    if not self.no_log:
-                        anno_box[new_idx] = torch.cat(
-                            (ct - (x, y), z, torch.log(
-                                task_boxes[idx][k][3:6]), torch.tensor(vx),
-                             torch.tensor(vy), torch.sin(rot), torch.cos(rot)),
-                            axis=None)
+                    if not self.train_cfg['no_log']:
+                        anno_box[new_idx] = torch.cat([
+                            ct - torch.tensor([x, y], device=device),
+                            torch.unsqueeze(z, dim=0),
+                            torch.log(task_boxes[idx][k][3:6]),
+                            torch.unsqueeze(vx, dim=0),
+                            torch.unsqueeze(vy, dim=0),
+                            torch.unsqueeze(torch.sin(rot), dim=0),
+                            torch.unsqueeze(torch.cos(rot), dim=0)
+                        ])
                     else:
-                        anno_box[new_idx] = torch.cat(
-                            (ct - (x, y), z, task_boxes[idx][k][3:6],
-                             torch.tensor(vx), torch.tensor(vy),
-                             torch.sin(rot), torch.cos(rot)),
-                            axis=None)
+                        anno_box[new_idx] = torch.cat([
+                            ct - torch.tensor([x, y], device=device),
+                            torch.unsqueeze(z, dim=0), task_boxes[idx][k][3:6],
+                            torch.unsqueeze(vx, dim=0),
+                            torch.unsqueeze(vy, dim=0),
+                            torch.unsqueeze(torch.sin(rot), dim=0),
+                            torch.unsqueeze(torch.cos(rot), dim=0)
+                        ],
+                                                      dim=0)
 
             hms.append(hm)
             anno_boxes.append(anno_box)
