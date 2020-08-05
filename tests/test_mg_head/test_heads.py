@@ -583,7 +583,7 @@ def test_dcn_center_head():
     gt_classes = torch.from_numpy(
         np.load('tests/test_mg_head/gt_classes.npy')).cuda()
 
-    hms, anno_boxes, inds, masks, cats = dcn_center_head.get_targets(
+    hms, anno_boxes, inds, masks = dcn_center_head.get_targets(
         [gt_boxes, gt_boxes], [gt_classes, gt_classes])
     with open('tests/test_mg_head/hms.pkl', 'rb') as f:
         expected_hms = pickle.load(f)
@@ -593,8 +593,6 @@ def test_dcn_center_head():
         expected_inds = pickle.load(f)
     with open('tests/test_mg_head/masks.pkl', 'rb') as f:
         expected_masks = pickle.load(f)
-    with open('tests/test_mg_head/cats.pkl', 'rb') as f:
-        expected_cats = pickle.load(f)
     for i, hm in enumerate(hms):
         assert torch.allclose(hm[0, ...],
                               torch.from_numpy(expected_hms[i]).cuda())
@@ -609,9 +607,6 @@ def test_dcn_center_head():
     for i, mask in enumerate(masks):
         assert torch.all(
             mask[0, ...] == torch.from_numpy(expected_masks[i]).cuda())
-    for i, cat in enumerate(cats):
-        assert torch.all(cat[0,
-                             ...] == torch.from_numpy(expected_cats[i]).cuda())
     # Test loss.
     hm = [torch.zeros(2, len(task), 128, 128).cuda() for task in tasks]
     mask = [torch.randint(0, 2, [2, 500]).cuda() for _ in range(6)]

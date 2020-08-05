@@ -426,8 +426,22 @@ class CenterHead(nn.Module):
         return feat
 
     def get_targets(self, gt_bboxes_3d, gt_labels_3d):
-        hms, anno_boxes, inds, masks, cats = multi_apply(
-            self.get_targets_single, gt_bboxes_3d, gt_labels_3d)
+        """Generate targets.
+
+        Args:
+            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
+                truth gt boxes.
+            gt_labels_3d (list[torch.Tensor]): Labels of boxes.
+
+        Returns:
+            list[torch.Tensor]: Heatmap scores.
+            list[torch.Tensor]: Ground truth boxes.
+            list[torch.Tensor]: Indexes indicating the
+                position of the valid boxes.
+            list[torch.Tensor]: Masks indicating which boxes are valid.
+        """
+        hms, anno_boxes, inds, masks = multi_apply(self.get_targets_single,
+                                                   gt_bboxes_3d, gt_labels_3d)
         hms = np.array(hms).transpose(1, 0).tolist()
         hms = [torch.stack(hms_) for hms_ in hms]
         anno_boxes = np.array(anno_boxes).transpose(1, 0).tolist()
@@ -436,31 +450,37 @@ class CenterHead(nn.Module):
         inds = [torch.stack(inds_) for inds_ in inds]
         masks = np.array(masks).transpose(1, 0).tolist()
         masks = [torch.stack(masks_) for masks_ in masks]
-        cats = np.array(cats).transpose(1, 0).tolist()
-        cats = [torch.stack(cats_) for cats_ in cats]
-        return hms, anno_boxes, inds, masks, cats
+        return hms, anno_boxes, inds, masks
 
     def get_targets_single(self, gt_bboxes_3d, gt_labels_3d):
+        """Generate training targets for a single sample.
+
+        Args:
+            gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): Ground truth gt boxes.
+            gt_labels_3d (torch.Tensor): Labels of boxes.
+
+        Returns:
+            list[torch.Tensor]: Heatmap scores.
+            list[torch.Tensor]: Ground truth boxes.
+            list[torch.Tensor]: Indexes indicating the position
+                of the valid boxes.
+            list[torch.Tensor]: Masks indicating which boxes
+                are valid.
+        """
         gt_bboxes_3d.limit_yaw(offset=0.5, period=np.pi * 2)
         gt_bboxes_3d = gt_bboxes_3d.tensor[:, [0, 1, 2, 3, 4, 5, 7, 8, 6]]
         device = gt_labels_3d.device
         max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
-        # class_names_by_task = [t.class_names for t in self.tasks]
-
-        # Calculate output featuremap size
-        # grid_size = res["lidar"]["voxels"]["shape"]  # 448 x 512
-        grid_size = np.array(self.train_cfg['grid_size'])  # 448 x 512
+        grid_size = np.array(self.train_cfg['grid_size'])
         pc_range = np.array(self.train_cfg['point_cloud_range'])
         voxel_size = np.array(self.train_cfg['voxel_size'])
 
         feature_map_size = grid_size[:2] // self.train_cfg['out_size_factor']
-        example = {}
 
         # reorganize the gt_dict by tasks
         task_masks = []
         flag = 0
         for class_name in self.class_names:
-            # print("classes: ", gt_dict["gt_classes"], "name", class_name)
             task_masks.append([
                 torch.where(gt_labels_3d == class_name.index(i) + 1 + flag)
                 for i in class_name
@@ -480,21 +500,9 @@ class CenterHead(nn.Module):
             task_classes.append(torch.cat(task_class))
             flag2 += len(mask)
 
-        # for task_box in task_boxes:
-        #     # limit rad to [-pi, pi]
-        #     task_box[:, -1] = limit_period(
-        #         task_box[:, -1], offset=0.5, period=np.pi * 2)
-
-        # print(gt_dict.keys())
-        # gt_dict["gt_classes"] = task_classes
-        # gt_dict["gt_names"] = task_names
-        # gt_dict["gt_boxes"] = task_boxes
-
-        # res["lidar"]["annotations"] = gt_dict
-
         draw_gaussian = draw_umich_gaussian
 
-        hms, anno_boxes, inds, masks, cats = [], [], [], [], []
+        hms, anno_boxes, inds, masks = [], [], [], []
 
         for idx, task in enumerate(self.tasks):
             hm = gt_bboxes_3d.new_zeros(
@@ -506,7 +514,6 @@ class CenterHead(nn.Module):
 
             ind = gt_labels_3d.new_zeros((max_objs), dtype=torch.int64)
             mask = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.uint8)
-            cat = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.int64)
 
             num_objs = min(task_boxes[idx].shape[0], max_objs)
 
@@ -557,7 +564,6 @@ class CenterHead(nn.Module):
                         print(x, y, y * feature_map_size[0] + x)
                         assert False
 
-                    cat[new_idx] = cls_id
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
 
@@ -588,26 +594,19 @@ class CenterHead(nn.Module):
             anno_boxes.append(anno_box)
             masks.append(mask)
             inds.append(ind)
-            cats.append(cat)
 
-        example.update({
-            'hm': hms,
-            'anno_box': anno_boxes,
-            'ind': inds,
-            'mask': masks,
-            'cat': cats
-        })
-
-        return hms, anno_boxes, inds, masks, cats
+        return hms, anno_boxes, inds, masks
 
     def loss(self, gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs):
         """Loss function for CenterHead.
 
         Args:
-            example (dict): Annos for preds.
+            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
+                truth gt boxes.
+            gt_labels_3d (list[torch.Tensor]): Labels of boxes.
             preds_dicts (dict): Output of forward function.
         """
-        hms, anno_boxes, inds, masks, cats = self.get_targets(
+        hms, anno_boxes, inds, masks = self.get_targets(
             gt_bboxes_3d, gt_labels_3d)
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
