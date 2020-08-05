@@ -254,6 +254,7 @@ class H3dHead(nn.Module):
         loss_inputs = (bbox_preds, points, gt_bboxes_3d, gt_labels_3d,
                        pts_semantic_mask, pts_instance_mask, img_metas,
                        gt_bboxes_ignore)
+
         loss_z = self.prim_z.loss(*loss_inputs)
         loss_xy = self.prim_xy.loss(*loss_inputs)
         loss_line = self.prim_line.loss(*loss_inputs)

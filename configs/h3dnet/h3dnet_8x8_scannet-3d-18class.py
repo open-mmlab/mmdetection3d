@@ -33,24 +33,24 @@ primitive_z_cfg = dict(
     norm_cfg=dict(type='BN1d'),
     objectness_loss=dict(
         type='CrossEntropyLoss',
-        class_weight=[0.2, 0.8],
-        reduction='sum',
-        loss_weight=5.0),
+        class_weight=[0.4, 0.6],
+        reduction='mean',
+        loss_weight=1.0),
     center_loss=dict(
         type='ChamferDistance',
-        mode='l2',
-        reduction='sum',
-        loss_src_weight=10.0,
-        loss_dst_weight=10.0),
-    dir_class_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-    dir_res_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-    size_class_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-    size_res_loss=dict(
-        type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+        mode='l1',
+        reduction='none',
+        loss_src_weight=1.0,
+        loss_dst_weight=1.0),
     semantic_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0))
+        type='CrossEntropyLoss', reduction='none', loss_weight=1.0),
+    train_cfg=dict(
+        dist_thresh=0.2,
+        var_thresh=1e-2,
+        lower_thresh=1e-6,
+        num_point=100,
+        num_point_line=10,
+        line_thresh=0.2))
 
 primitive_xy_cfg = dict(
     type='PrimitiveHead',
@@ -82,24 +82,24 @@ primitive_xy_cfg = dict(
     norm_cfg=dict(type='BN1d'),
     objectness_loss=dict(
         type='CrossEntropyLoss',
-        class_weight=[0.2, 0.8],
-        reduction='sum',
-        loss_weight=5.0),
+        class_weight=[0.4, 0.6],
+        reduction='mean',
+        loss_weight=1.0),
     center_loss=dict(
         type='ChamferDistance',
-        mode='l2',
-        reduction='sum',
-        loss_src_weight=10.0,
-        loss_dst_weight=10.0),
-    dir_class_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-    dir_res_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-    size_class_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-    size_res_loss=dict(
-        type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+        mode='l1',
+        reduction='none',
+        loss_src_weight=1.0,
+        loss_dst_weight=1.0),
     semantic_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0))
+        type='CrossEntropyLoss', reduction='none', loss_weight=1.0),
+    train_cfg=dict(
+        dist_thresh=0.2,
+        var_thresh=1e-2,
+        lower_thresh=1e-6,
+        num_point=100,
+        num_point_line=10,
+        line_thresh=0.2))
 
 primitive_line_cfg = dict(
     type='PrimitiveHead',
@@ -131,24 +131,24 @@ primitive_line_cfg = dict(
     norm_cfg=dict(type='BN1d'),
     objectness_loss=dict(
         type='CrossEntropyLoss',
-        class_weight=[0.2, 0.8],
-        reduction='sum',
-        loss_weight=5.0),
+        class_weight=[0.4, 0.6],
+        reduction='mean',
+        loss_weight=1.0),
     center_loss=dict(
         type='ChamferDistance',
-        mode='l2',
-        reduction='sum',
-        loss_src_weight=10.0,
-        loss_dst_weight=10.0),
-    dir_class_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-    dir_res_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-    size_class_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-    size_res_loss=dict(
-        type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+        mode='l1',
+        reduction='none',
+        loss_src_weight=1.0,
+        loss_dst_weight=1.0),
     semantic_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0))
+        type='CrossEntropyLoss', reduction='none', loss_weight=1.0),
+    train_cfg=dict(
+        dist_thresh=0.2,
+        var_thresh=1e-2,
+        lower_thresh=1e-6,
+        num_point=100,
+        num_point_line=10,
+        line_thresh=0.2))
 
 # model settings
 model = dict(
