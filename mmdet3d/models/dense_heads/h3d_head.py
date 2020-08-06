@@ -6,13 +6,12 @@ from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
-from mmdet3d.models.dense_heads.proposal_module_refine import \
-    ProposalModuleRefine
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import PointSAModule, furthest_point_sample
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_head
+from .proposal_refine_module import ProposalRefineModule
 
 
 @HEADS.register_module()
@@ -41,24 +40,29 @@ class H3dHead(nn.Module):
         semantic_loss (dict): Config of point-wise semantic segmentation loss.
     """
 
-    def __init__(self,
-                 num_classes,
-                 bbox_coder,
-                 primitive_list,
-                 train_cfg=None,
-                 test_cfg=None,
-                 vote_moudule_cfg=None,
-                 vote_aggregation_cfg=None,
-                 feat_channels=(128, 128),
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 objectness_loss=None,
-                 center_loss=None,
-                 dir_class_loss=None,
-                 dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 semantic_loss=None):
+    def __init__(
+            self,
+            num_classes,
+            bbox_coder,
+            primitive_list,
+            train_cfg=None,
+            test_cfg=None,
+            vote_moudule_cfg=None,
+            vote_aggregation_cfg=None,
+            # suface_matching_cfg=None,
+            # line_matching_cfg=None,
+            # primitive_refine_channels=None,
+            proposal_module_cfg=None,
+            feat_channels=(128, 128),
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            objectness_loss=None,
+            center_loss=None,
+            dir_class_loss=None,
+            dir_res_loss=None,
+            size_class_loss=None,
+            size_res_loss=None,
+            semantic_loss=None):
         super(H3dHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -114,14 +118,14 @@ class H3dHead(nn.Module):
         self.conv_pred.add_module('conv_out',
                                   nn.Conv1d(prev_channel, conv_out_channel, 1))
 
-        self.pnet_final = ProposalModuleRefine(
-            num_classes,
-            24,
-            bbox_coder['num_sizes'],
-            bbox_coder['mean_sizes'],
-            vote_aggregation_cfg['num_point'],
-            seed_feat_dim=256,
-            with_angle=bbox_coder['with_rot'])
+        self.pnet_final = ProposalRefineModule(
+            num_class=num_classes,
+            num_heading_bin=bbox_coder['num_dir_bins'],
+            num_size_cluster=bbox_coder['num_sizes'],
+            mean_size_arr=bbox_coder['mean_sizes'],
+            num_proposal=vote_aggregation_cfg['num_point'],
+            with_angle=bbox_coder['with_rot'],
+            **proposal_module_cfg)
 
     def init_weights(self):
         """Initialize weights of VoteHead."""
