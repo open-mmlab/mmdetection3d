@@ -40,29 +40,25 @@ class H3dHead(nn.Module):
         semantic_loss (dict): Config of point-wise semantic segmentation loss.
     """
 
-    def __init__(
-            self,
-            num_classes,
-            bbox_coder,
-            primitive_list,
-            train_cfg=None,
-            test_cfg=None,
-            vote_moudule_cfg=None,
-            vote_aggregation_cfg=None,
-            # suface_matching_cfg=None,
-            # line_matching_cfg=None,
-            # primitive_refine_channels=None,
-            proposal_module_cfg=None,
-            feat_channels=(128, 128),
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d'),
-            objectness_loss=None,
-            center_loss=None,
-            dir_class_loss=None,
-            dir_res_loss=None,
-            size_class_loss=None,
-            size_res_loss=None,
-            semantic_loss=None):
+    def __init__(self,
+                 num_classes,
+                 bbox_coder,
+                 primitive_list,
+                 train_cfg=None,
+                 test_cfg=None,
+                 vote_moudule_cfg=None,
+                 vote_aggregation_cfg=None,
+                 proposal_module_cfg=None,
+                 feat_channels=(128, 128),
+                 conv_cfg=dict(type='Conv1d'),
+                 norm_cfg=dict(type='BN1d'),
+                 objectness_loss=None,
+                 center_loss=None,
+                 dir_class_loss=None,
+                 dir_res_loss=None,
+                 size_class_loss=None,
+                 size_res_loss=None,
+                 semantic_loss=None):
         super(H3dHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -299,6 +295,7 @@ class H3dHead(nn.Module):
         refined_loss = self.pnet_final.loss(bbox3d_opt, *loss_inputs)
         for key in refined_loss.keys():
             losses[key + '_potential'] = refined_loss[key]
+
         return losses
 
     def get_targets(self,

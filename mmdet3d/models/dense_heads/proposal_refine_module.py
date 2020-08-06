@@ -739,9 +739,11 @@ class ProposalRefineModule(nn.Module):
         line_sem = torch.argmax(pred_line_sem, dim=1).float()
 
         dist_surface, _, surface_ind, _ = chamfer_distance(
-            obj_surface_center, pred_surface_center.unsqueeze(0))
+            obj_surface_center,
+            pred_surface_center.unsqueeze(0),
+            reduction='none')
         dist_line, _, line_ind, _ = chamfer_distance(
-            obj_line_center, pred_line_center.unsqueeze(0))
+            obj_line_center, pred_line_center.unsqueeze(0), reduction='none')
 
         surface_sel = pred_surface_center[surface_ind.squeeze(0)]
         line_sel = pred_line_center[line_ind.squeeze(0)]

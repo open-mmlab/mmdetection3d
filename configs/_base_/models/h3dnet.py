@@ -28,17 +28,17 @@ proposal_module_cfg = dict(
         type='CrossEntropyLoss',
         class_weight=[0.3, 0.7],
         reduction='none',
-        loss_weight=1.0),
+        loss_weight=5.0),
     cues_semantic_loss=dict(
         type='CrossEntropyLoss',
         class_weight=[0.3, 0.7],
         reduction='none',
-        loss_weight=1.0),
+        loss_weight=5.0),
     proposal_objectness_loss=dict(
         type='CrossEntropyLoss',
         class_weight=[0.2, 0.8],
         reduction='none',
-        loss_weight=1.0),
+        loss_weight=5.0),
 )
 
 model = dict(
@@ -105,7 +105,7 @@ model = dict(
         size_class_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
         semantic_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
 # model training and testing settings
