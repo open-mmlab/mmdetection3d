@@ -64,15 +64,16 @@ class PrimitiveHead(nn.Module):
 
         # Existence flag prediction
         self.flag_conv = ConvModule(
-            256,
-            128,
+            vote_moudule_cfg['conv_channels'][-1],
+            vote_moudule_cfg['conv_channels'][-1] // 2,
             1,
             padding=0,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
             bias=True,
             inplace=True)
-        self.flag_pred = torch.nn.Conv1d(128, 2, 1)
+        self.flag_pred = torch.nn.Conv1d(
+            vote_moudule_cfg['conv_channels'][-1] // 2, 2, 1)
 
         self.vote_module = VoteModule(**vote_moudule_cfg)
         self.vote_aggregation = PointSAModule(**vote_aggregation_cfg)
@@ -126,8 +127,6 @@ class PrimitiveHead(nn.Module):
         seed_features = feat_dict['hd_feature']
         results = {}
 
-        # net_flag = F.relu(self.bn_flag1(self.conv_flag1(seed_features)))
-        # net_flag = self.conv_flag2(net_flag)
         net_flag = self.flag_conv(seed_features)
         net_flag = self.flag_pred(net_flag)
 
@@ -210,7 +209,7 @@ class PrimitiveHead(nn.Module):
 
         losses = {}
         flag_loss = self.compute_flag_loss(
-            bbox_preds, point_mask, mode=self.primitive_mode) * 30
+            bbox_preds, point_mask, mode=self.primitive_mode)
         losses['flag_loss_' + self.primitive_mode] = flag_loss
 
         # calculate vote loss
@@ -229,8 +228,7 @@ class PrimitiveHead(nn.Module):
         losses['center_loss_' + self.primitive_mode] = center_loss
         losses['size_loss_' + self.primitive_mode] = size_loss
         losses['sem_loss_' + self.primitive_mode] = sem_cls_loss
-        losses['surface_loss_' + self.primitive_mode] = center_loss * 0.5 + \
-            size_loss * 0.5 + sem_cls_loss
+
         return losses
 
     def get_targets(self,
@@ -802,7 +800,7 @@ class PrimitiveHead(nn.Module):
             size_loss = size_loss.sum() / (
                 torch.sum(seed_gt_votes_mask.float()) + 1e-6)
         else:
-            size_loss = torch.tensor(0)
+            size_loss = torch.tensor(0).float().to(center_loss.device)
 
         # 3.4 Semantic cls loss
         sem_cls_label = seed_gt_sem[:, :, -1].long()

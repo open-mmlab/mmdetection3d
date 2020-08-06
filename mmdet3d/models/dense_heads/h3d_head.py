@@ -255,23 +255,21 @@ class H3dHead(nn.Module):
         loss_inputs = (bbox_preds, points, gt_bboxes_3d, gt_labels_3d,
                        pts_semantic_mask, pts_instance_mask, img_metas,
                        gt_bboxes_ignore)
-
+        losses = {}
         loss_z = self.prim_z.loss(*loss_inputs)
         loss_xy = self.prim_xy.loss(*loss_inputs)
         loss_line = self.prim_line.loss(*loss_inputs)
-        objcue_loss = loss_z['flag_loss_z'] + loss_xy['flag_loss_xy'] + \
-            loss_line['flag_loss_line'] + \
-            loss_z['vote_loss_z'] + loss_xy['vote_loss_xy'] + \
-            loss_line['vote_loss_line'] + \
-            loss_z['surface_loss_z'] + loss_xy['surface_loss_xy'] + \
-            loss_line['surface_loss_line'] * 2
+        losses.update(loss_z)
+        losses.update(loss_xy)
+        losses.update(loss_line)
 
         # calculate vote loss
         vote_loss = self.vote_module.get_loss(bbox_preds['seed_points'],
                                               bbox_preds['vote_points'],
                                               bbox_preds['seed_indices'],
                                               vote_target_masks, vote_targets)
-        losses = dict(vote_loss=vote_loss, objcue_loss=objcue_loss)
+        losses['vote_loss'] = vote_loss
+        # losses = dict(vote_loss=vote_loss, objcue_loss=objcue_loss)
         # calculate proposal loss
         proposal_loss = self.get_proposal_stage_loss(
             bbox_preds, size_class_targets, size_res_targets,
