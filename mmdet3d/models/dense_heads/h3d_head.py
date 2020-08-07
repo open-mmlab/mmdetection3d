@@ -525,8 +525,17 @@ class H3dHead(nn.Module):
         # decode boxes
         obj_scores = F.softmax(
             bbox_preds['obj_scores' + suffix], dim=-1)[..., -1]
-        sem_scores = F.softmax(bbox_preds['sem_scores' + suffix], dim=-1)
-        bbox3d = self.bbox_coder.decode(bbox_preds, suffix=suffix)
+
+        sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
+
+        prediction_collection = {}
+        prediction_collection['center'] = bbox_preds['center' + suffix]
+        prediction_collection['dir_class'] = bbox_preds['dir_class']
+        prediction_collection['dir_res'] = bbox_preds['dir_res' + suffix]
+        prediction_collection['size_class'] = bbox_preds['size_class']
+        prediction_collection['size_res'] = bbox_preds['size_res' + suffix]
+
+        bbox3d = self.bbox_coder.decode(prediction_collection)
 
         batch_size = bbox3d.shape[0]
         results = list()
