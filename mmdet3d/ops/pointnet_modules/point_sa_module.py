@@ -81,9 +81,8 @@ class PointSAModuleMSG(nn.Module):
         self,
         points_xyz: torch.Tensor,
         features: torch.Tensor = None,
-        indices: torch.Tensor = None,
-        target_xyz: torch.Tensor = None,
-    ) -> (torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+        indices: torch.Tensor = None
+    ) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         """forward.
 
         Args:
@@ -92,7 +91,7 @@ class PointSAModuleMSG(nn.Module):
                 Default: None.
             indices (Tensor): (B, num_point) Index of the features.
                 Default: None.
-            target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
+
         Returns:
             Tensor: (B, M, 3) where M is the number of points.
                 New features xyz.
@@ -102,17 +101,15 @@ class PointSAModuleMSG(nn.Module):
                 Index of the features.
         """
         new_features_list = []
-        if target_xyz is None:
-            xyz_flipped = points_xyz.transpose(1, 2).contiguous()
-            if indices is None:
-                indices = furthest_point_sample(points_xyz, self.num_point)
-            else:
-                assert (indices.shape[1] == self.num_point)
 
-            new_xyz = gather_points(xyz_flipped, indices).transpose(
-                1, 2).contiguous() if self.num_point is not None else None
+        xyz_flipped = points_xyz.transpose(1, 2).contiguous()
+        if indices is None:
+            indices = furthest_point_sample(points_xyz, self.num_point)
         else:
-            new_xyz = target_xyz.contiguous()
+            assert (indices.shape[1] == self.num_point)
+
+        new_xyz = gather_points(xyz_flipped, indices).transpose(
+            1, 2).contiguous() if self.num_point is not None else None
 
         for i in range(len(self.groupers)):
             # (B, C, num_point, nsample)
