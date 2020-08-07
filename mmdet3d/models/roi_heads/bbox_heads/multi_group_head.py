@@ -34,8 +34,7 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
     masked_gaussian = torch.from_numpy(
         gaussian[radius - top:radius + bottom, radius - left:radius +
                  right]).to(heatmap.device).to(torch.float32)
-    if min(masked_gaussian.shape) > 0 and min(
-            masked_heatmap.shape) > 0:  # TODO debug
+    if min(masked_gaussian.shape) > 0 and min(masked_heatmap.shape) > 0:
         torch.max(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
     return heatmap
 
@@ -88,6 +87,14 @@ class CenterPointFeatureAdaption(FeatureAdaption):
             in_channels, deform_groups * offset_channels, 1, bias=True)
 
     def forward(self, x):
+        """Forward function for CenterPointFeatureAdaption.
+
+        Args:
+            x (torch.Tensor): Input feature with the shape of [B, 64, W, H].
+
+        Returns:
+            torch.Tensor: Output feature with the same shape of input feature.
+        """
         offset = self.conv_offset(x)
         x = self.relu(self.conv_adaption(x, offset))
         return x
@@ -163,19 +170,25 @@ class SepHead(nn.Module):
             self.__setattr__(head, fc)
 
     def forward(self, x):
-        """Forwarrd function for SepHead.
+        """Forward function for SepHead.
 
         Args:
             x (torch.Tensor): Input feature map with the shape of
                 [B, 512, 128, 128].
 
         Returns:
-            dict:   'reg': 2D regression value with the shape of [B, 2, H, W].
-                    'height': Height value with the shape of [B, 1, H, W].
-                    'dim': Size value with the shape of [B, 3, H, W].
-                    'rot': Rotation value with the shape of [B, 2, H, W].
-                    'vel': Velocity value with the shape of [B, 2, H, W].
-                    'hm': Heatmap with the shape of [B, N, H, W].
+            dict:   -reg （torch.Tensor): 2D regression value with the
+                        shape of [B, 2, H, W].
+                    -height (torch.Tensor): Height value with the
+                        shape of [B, 1, H, W].
+                    -dim (torch.Tensor): Size value with the shape
+                        of [B, 3, H, W].
+                    -rot (torch.Tensor): Rotation value with the
+                        shape of [B, 2, H, W].
+                    -vel (torch.Tensor): Velocity value with the
+                        shape of [B, 2, H, W].
+                    -hm (torch.Tensor): Heatmap with the shape of
+                        [B, N, H, W].
         """
         ret_dict = dict()
         for head in self.heads:
@@ -252,19 +265,25 @@ class DCNSepHead(nn.Module):
             in_channels, heads, head_conv=head_conv, final_kernel=final_kernel)
 
     def forward(self, x):
-        """Forwarrd function for DCNSepHead.
+        """Forward function for DCNSepHead.
 
         Args:
             x (torch.Tensor): Input feature map with the shape of
                 [B, 512, 128, 128].
 
         Returns:
-            dict:   'reg': 2D regression value with the shape of [B, 2, H, W].
-                    'height': Height value with the shape of [B, 1, H, W].
-                    'dim': Size value with the shape of [B, 3, H, W].
-                    'rot': Rotation value with the shape of [B, 2, H, W].
-                    'vel': Velocity value with the shape of [B, 2, H, W].
-                    'hm': Heatmap with the shape of [B, N, H, W].
+            dict:   -reg （torch.Tensor): 2D regression value with the
+                        shape of [B, 2, H, W].
+                    -height (torch.Tensor): Height value with the
+                        shape of [B, 1, H, W].
+                    -dim (torch.Tensor): Size value with the shape
+                        of [B, 3, H, W].
+                    -rot (torch.Tensor): Rotation value with the
+                        shape of [B, 2, H, W].
+                    -vel (torch.Tensor): Velocity value with the
+                        shape of [B, 2, H, W].
+                    -hm (torch.Tensor): Heatmap with the shape of
+                        [B, N, H, W].
         """
         center_feat = self.feature_adapt_cls(x)
         reg_feat = self.feature_adapt_reg(x)
@@ -345,8 +364,10 @@ class CenterHead(nn.Module):
         self.crit = build_loss(crit)
         self.crit_reg = build_loss(crit_reg)
         self.loss_aux = None
-
-        self.box_n_dim = 9  # change this if your box is different
+        if dataset == 'nuscenes':
+            self.box_n_dim = 9
+        else:
+            raise NotImplementedError
         self.num_anchor_per_locs = [n for n in num_classes]
         self.use_direction_classifier = False
 
@@ -426,15 +447,15 @@ class CenterHead(nn.Module):
         Given feature map and index, return indexed feature map.
 
         Args:
-        feat (torch.tensor): Feature map with the shape of [B, H*W, 10].
-        ind (torch.Tensor): Index of the ground truth boxes with the
-            shape of [B, max_obj].
-        mask (torch.Tensor): Mask of the feature map with the shape
-            of [B, max_obj]. Default: None.
+            feat (torch.tensor): Feature map with the shape of [B, H*W, 10].
+            ind (torch.Tensor): Index of the ground truth boxes with the
+                shape of [B, max_obj].
+            mask (torch.Tensor): Mask of the feature map with the shape
+                of [B, max_obj]. Default: None.
 
-        Returns:
-            torch.Tensor: Feature map after gathering with the shape
-                of [B, max_obj, 10].
+            Returns:
+                torch.Tensor: Feature map after gathering with the shape
+                    of [B, max_obj, 10].
         """
         dim = feat.size(2)
         ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
