@@ -518,14 +518,16 @@ class ProposalRefineModule(nn.Module):
         objectness_scores_sem = preds_dict['match_scores_sem']
 
         objectness_loss = self.cues_objectness_loss(
-            objectness_scores.transpose(2, 1), cues_objectness_label)
-        objectness_loss = torch.sum(objectness_loss * cues_mask) / (
-            torch.sum(cues_mask) + 1e-6)
+            objectness_scores.transpose(2, 1),
+            cues_objectness_label,
+            weight=cues_mask,
+            avg_factor=cues_mask.sum() + 1e-6)
 
         objectness_loss_sem = self.cues_semantic_loss(
-            objectness_scores_sem.transpose(2, 1), cues_sem_label)
-        objectness_loss_sem = torch.sum(objectness_loss_sem * cues_mask) / (
-            torch.sum(cues_mask) + 1e-6)
+            objectness_scores_sem.transpose(2, 1),
+            cues_sem_label,
+            weight=cues_mask,
+            avg_factor=cues_mask.sum() + 1e-6)
 
         objectness_scores = preds_dict['obj_scores_opt']
         objectness_loss_refine = self.proposal_objectness_loss(
