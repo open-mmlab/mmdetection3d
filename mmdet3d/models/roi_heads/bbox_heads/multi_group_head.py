@@ -334,6 +334,7 @@ class CenterHead(nn.Module):
             ],
             tasks=[],
             train_cfg=None,
+            test_cfg=None,
             dataset='nuscenes',
             weight=0.25,
             code_weights=[],
@@ -410,7 +411,10 @@ class CenterHead(nn.Module):
                         init_bias=init_bias,
                         final_kernel=3))
 
-    def forward(self, x):
+    def init_weights(self):
+        pass
+
+    def forward_single(self, x):
         """Forward function for CenterPoint.
 
         Args:
@@ -428,6 +432,18 @@ class CenterHead(nn.Module):
             ret_dicts.append(task(x))
 
         return ret_dicts
+
+    def forward(self, feats):
+        """Forward pass.
+
+        Args:
+            feats (list[torch.Tensor]): Multi-level features, e.g.,
+                features produced by FPN.
+
+        Returns:
+            tuple(list[dict]): Output results for tasks.
+        """
+        return multi_apply(self.forward_single, feats)
 
     def _sigmoid(self, x):
         """Sigmoid function for input feature.
@@ -508,9 +524,10 @@ class CenterHead(nn.Module):
             list[torch.Tensor]: Masks indicating which boxes
                 are valid.
         """
-        gt_bboxes_3d.limit_yaw(offset=0.5, period=np.pi * 2)
-        gt_bboxes_3d = gt_bboxes_3d.tensor[:, [0, 1, 2, 3, 4, 5, 7, 8, 6]]
         device = gt_labels_3d.device
+        gt_bboxes_3d.limit_yaw(offset=0.5, period=np.pi * 2)
+        gt_bboxes_3d = gt_bboxes_3d.tensor[:, [0, 1, 2, 3, 4, 5, 7, 8, 6]].to(
+            device)
         max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
         grid_size = np.array(self.train_cfg['grid_size'])
         pc_range = np.array(self.train_cfg['point_cloud_range'])
@@ -537,10 +554,9 @@ class CenterHead(nn.Module):
             for m in mask:
                 task_box.append(gt_bboxes_3d[m])
                 task_class.append(gt_labels_3d[m] - flag2)
-            task_boxes.append(torch.cat(task_box, axis=0))
-            task_classes.append(torch.cat(task_class))
+            task_boxes.append(torch.cat(task_box, axis=0).to(device))
+            task_classes.append(torch.cat(task_class).to(device))
             flag2 += len(mask)
-
         draw_gaussian = draw_umich_gaussian
 
         hms, anno_boxes, inds, masks = [], [], [], []
@@ -652,15 +668,16 @@ class CenterHead(nn.Module):
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
-            preds_dict['hm'] = self._sigmoid(preds_dict['hm'])
-            hm_loss = self.crit(preds_dict['hm'], hms[task_id])
+            preds_dict[0]['hm'] = self._sigmoid(preds_dict[0]['hm'])
+            hm_loss = self.crit(preds_dict[0]['hm'], hms[task_id])
 
             target_box = anno_boxes[task_id]
             # reconstruct the anno_box from multiple reg heads
             if self.dataset == 'nuscenes':
-                preds_dict['anno_box'] = torch.cat(
-                    (preds_dict['reg'], preds_dict['height'],
-                     preds_dict['dim'], preds_dict['vel'], preds_dict['rot']),
+                preds_dict[0]['anno_box'] = torch.cat(
+                    (preds_dict[0]['reg'], preds_dict[0]['height'],
+                     preds_dict[0]['dim'], preds_dict[0]['vel'],
+                     preds_dict[0]['rot']),
                     dim=1)
             else:
                 raise NotImplementedError()
@@ -670,7 +687,7 @@ class CenterHead(nn.Module):
 
             # Regression loss for dimension, offset, height, rotation
             ind = inds[task_id]
-            pred = preds_dict['anno_box'].permute(0, 2, 3, 1).contiguous()
+            pred = preds_dict[0]['anno_box'].permute(0, 2, 3, 1).contiguous()
             pred = pred.view(pred.size(0), -1, pred.size(3))
             pred = self._gather_feat(pred, ind)
             mask = torch.unsqueeze(masks[task_id], -1).expand(pred.size())

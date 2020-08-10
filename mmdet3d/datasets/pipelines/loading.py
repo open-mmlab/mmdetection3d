@@ -81,9 +81,11 @@ class LoadPointsFromMultiSweeps(object):
     def __init__(self,
                  sweeps_num=10,
                  load_dim=5,
+                 use_dim=[0, 1, 2, 4],
                  file_client_args=dict(backend='disk')):
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
+        self.use_dim = use_dim
         self.file_client_args = file_client_args.copy()
         self.file_client = None
 
@@ -141,7 +143,7 @@ class LoadPointsFromMultiSweeps(object):
             points_sweep[:, 4] = ts - sweep_ts
             sweep_points_list.append(points_sweep)
 
-        points = np.concatenate(sweep_points_list, axis=0)[:, [0, 1, 2, 4]]
+        points = np.concatenate(sweep_points_list, axis=0)[:, self.use_dim]
         results['points'] = points
         return results
 
