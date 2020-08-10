@@ -55,7 +55,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         return (center_target, size_class_target, size_res_target,
                 dir_class_target, dir_res_target)
 
-    def decode(self, bbox_out, suffix=''):
+    def decode(self, bbox_out):
         """Decode predicted parts to bbox3d.
 
         Args:
@@ -70,13 +70,13 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Decoded bbox3d with shape (batch, n, 7).
         """
-        center = bbox_out['center' + suffix]
+        center = bbox_out['center']
         batch_size, num_proposal = center.shape[:2]
 
         # decode heading angle
         if self.with_rot:
-            dir_class = torch.argmax(bbox_out['dir_class' + suffix], -1)
-            dir_res = torch.gather(bbox_out['dir_res' + suffix], 2,
+            dir_class = torch.argmax(bbox_out['dir_class'], -1)
+            dir_res = torch.gather(bbox_out['dir_res'], 2,
                                    dir_class.unsqueeze(-1))
             dir_res.squeeze_(2)
             dir_angle = self.class2angle(dir_class, dir_res).reshape(
@@ -85,9 +85,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
             dir_angle = center.new_zeros(batch_size, num_proposal, 1)
 
         # decode bbox size
-        size_class = torch.argmax(
-            bbox_out['size_class' + suffix], -1, keepdim=True)
-        size_res = torch.gather(bbox_out['size_res' + suffix], 2,
+        size_class = torch.argmax(bbox_out['size_class'], -1, keepdim=True)
+        size_res = torch.gather(bbox_out['size_res'], 2,
                                 size_class.unsqueeze(-1).repeat(1, 1, 1, 3))
         mean_sizes = center.new_tensor(self.mean_sizes)
         size_base = torch.index_select(mean_sizes, 0, size_class.reshape(-1))
