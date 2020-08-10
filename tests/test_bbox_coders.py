@@ -4,8 +4,8 @@ from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.core import build_bbox_coder
 
 
-def test_partial_bin_based_box_coder():
-    box_coder_cfg = dict(
+def test_partial_bin_based_bbox_coder():
+    bbox_coder_cfg = dict(
         type='PartialBinBasedBBoxCoder',
         num_sizes=10,
         num_dir_bins=12,
@@ -20,7 +20,7 @@ def test_partial_bin_based_box_coder():
                     [0.500618, 0.632163, 0.683424],
                     [0.404671, 1.071108, 1.688889],
                     [0.76584, 1.398258, 0.472728]])
-    box_coder = build_bbox_coder(box_coder_cfg)
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
 
     # test eocode
     gt_bboxes = DepthInstance3DBoxes(
@@ -30,7 +30,7 @@ def test_partial_bin_based_box_coder():
 
     gt_labels = torch.tensor([0, 1, 2])
     center_target, size_class_target, size_res_target, dir_class_target, \
-        dir_res_target = box_coder.encode(gt_bboxes, gt_labels)
+        dir_res_target = bbox_coder.encode(gt_bboxes, gt_labels)
     expected_center_target = torch.tensor([[0.8308, 4.1168, -0.2413],
                                            [2.3002, 4.8149, -0.7687],
                                            [-1.1477, 1.8090, -0.1444]])
@@ -184,7 +184,7 @@ def test_partial_bin_based_box_coder():
         dir_class=dir_class,
         dir_res=dir_res)
 
-    bbox3d = box_coder.decode(bbox_out)
+    bbox3d = bbox_coder.decode(bbox_out)
     expected_bbox3d = torch.tensor(
         [[[0.8014, 3.4134, -0.6133, 0.9750, 2.2602, 0.9725, 1.6926],
           [2.6375, 8.4191, 2.0438, 0.5511, 0.4931, 0.9471, 2.6149],
@@ -196,7 +196,7 @@ def test_partial_bin_based_box_coder():
     # test split_pred
     box_preds = torch.rand(2, 79, 256)
     base_xyz = torch.rand(2, 256, 3)
-    results = box_coder.split_pred(box_preds, base_xyz)
+    results = bbox_coder.split_pred(box_preds, base_xyz)
     obj_scores = results['obj_scores']
     center = results['center']
     dir_class = results['dir_class']
@@ -215,3 +215,32 @@ def test_partial_bin_based_box_coder():
     assert size_res_norm.shape == torch.Size([2, 256, 10, 3])
     assert size_res.shape == torch.Size([2, 256, 10, 3])
     assert sem_scores.shape == torch.Size([2, 256, 10])
+
+
+def test_centerpoint_bbox_coder():
+    bbox_coder_cfg = dict(
+        type='CenterPointBBoxCoder',
+        post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        K=500,
+        post_max_size=83,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=4,
+        voxel_size=[0.2, 0.2])
+
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+
+    batch_dim = torch.rand([2, 3, 128, 128])
+    batch_hei = torch.rand([2, 1, 128, 128])
+    batch_hm = torch.rand([2, 2, 128, 128])
+    batch_reg = torch.rand([2, 2, 128, 128])
+    batch_rotc = torch.rand([2, 1, 128, 128])
+    batch_rots = torch.rand([2, 1, 128, 128])
+    batch_vel = torch.rand([2, 2, 128, 128])
+
+    temp = bbox_coder.decode(batch_hm, batch_rots, batch_rotc, batch_hei,
+                             batch_dim, batch_vel, batch_reg, 5)
+    for i in range(len(temp)):
+        assert temp[i]['box3d_lidar'].shape == torch.Size([500, 9])
+        assert temp[i]['scores'].shape == torch.Size([500])
+        assert temp[i]['label_preds'].shape == torch.Size([500])

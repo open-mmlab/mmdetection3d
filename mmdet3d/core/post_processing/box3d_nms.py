@@ -136,6 +136,20 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
 
 
 def circle_nms(dets, thresh, post_max_size=83):
+    """Circular NMS.
+
+    An object is only counted as positive if no other center
+    with a higher confidence exists within a radius r using a
+    bird-eye view distance metric.
+
+    Args:
+        dets (torch.Tensor): Detection results with the shape of [N, 3].
+        thresh (float): Value of threshold.
+        post_max_size (int): Max number of prediction to be kept.
+
+    Returns:
+        torch.Tensor: Indexes of the detections to be kept.
+    """
     x1 = dets[:, 0]
     y1 = dets[:, 1]
     scores = dets[:, 2]
