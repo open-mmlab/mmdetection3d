@@ -36,6 +36,17 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         self.post_center_range = torch.tensor(post_center_range)
 
     def _gather_feat(self, feat, ind, mask=None):
+        """Given feats and indexes, returns the gathered feats.
+
+        Args:
+            feat (torch.Tensor): Features to be transposed and gathered
+                with the shape of [B, 2, W, H].
+            ind (torch.Tensor): Indexes with the shape of [B, N].
+            mask (torch.Tensor): Mask of the feats. Default: None.
+
+        Returns:
+            torch.Tensor: Gathered feats.
+        """
         dim = feat.size(2)
         ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
         feat = feat.gather(1, ind)
@@ -46,6 +57,18 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         return feat
 
     def _topk(self, scores, K=40):
+        """Get indexes based on scores.
+        Args:
+            scores (torch.Tensor): scores with the shape of [B, N, W, H].
+            K (int): Number to be kept.
+
+        Returns:
+            torch.Tensor: Selected scores with the shape of [B, K].
+            torch.Tensor: Selected indexes with the shape of [B, K].
+            torch.Tensor: Selected classes with the shape of [B, K].
+            torch.Tensor: Selected y coord with the shape of [B, K].
+            torch.Tensor: Selected x coord with the shape of [B, K].
+        """
         batch, cat, height, width = scores.size()
 
         topk_scores, topk_inds = torch.topk(scores.view(batch, cat, -1), K)
@@ -66,6 +89,16 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
     def _transpose_and_gather_feat(self, feat, ind):
+        """Given feats and indexes, returns the transposed and gathered feats.
+
+        Args:
+            feat (torch.Tensor): Features to be transposed and gathered
+                with the shape of [B, 2, W, H].
+            ind (torch.Tensor): Indexes with the shape of [B, N].
+
+        Returns:
+            torch.Tensor: Transposed and gathered feats.
+        """
         feat = feat.permute(0, 2, 3, 1).contiguous()
         feat = feat.view(feat.size(0), -1, feat.size(3))
         feat = self._gather_feat(feat, ind)
@@ -75,6 +108,26 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         pass
 
     def decode(self, heat, rots, rotc, hei, dim, vel, reg=None, task_id=-1):
+        """Decode bboxes.
+
+        Args:
+            heat (torch.Tensor): Heatmap with the shape of [B, N, W, H].
+            rots (torch.Tensor): Sin of rotation with the shape of
+                [B, 1, W, H].
+            rotc (torch.Tensor): Cos of rotation with the shape of
+                [B, 1, W, H].
+            hei (torch.Tensor): Height of the boxes with the shape
+                of [B, 1, W, H].
+            dim (torch.Tensor): Dim of the boxes with the shape of
+                [B, 1, W, H].
+            vel (torch.Tensor): Velocity with the shape of [B, 1, W, H].
+            reg (torch.Tensor): Regression value of the boxes in 2D with
+                the shape of [B, 2, W, H]. Default: None.
+            task_id (int): Index of task. Default: -1.
+
+        Returns:
+            list[dict]: Decoded boxes.
+        """
         batch, cat, _, _ = heat.size()
 
         scores, inds, clses, ys, xs = self._topk(heat, K=self.K)
