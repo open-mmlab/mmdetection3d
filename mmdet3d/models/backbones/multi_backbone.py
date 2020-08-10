@@ -12,7 +12,7 @@ class MultiBackbone(nn.Module):
     """MultiBackbone with different config. '''.
 
     Args:
-        num_stream (int): The number of backbones.
+        num_streams (int): The number of backbones.
         backbones (list or dict): A list of backbone configs.
         aggregation_mlp_channels (list[int]): Specify the mlp layers
             for feature aggregation.
@@ -22,7 +22,7 @@ class MultiBackbone(nn.Module):
     """
 
     def __init__(self,
-                 num_stream,
+                 num_streams,
                  backbones,
                  aggregation_mlp_channels=None,
                  conv_cfg=dict(type='Conv1d'),
@@ -33,12 +33,12 @@ class MultiBackbone(nn.Module):
         assert isinstance(backbones, dict) or isinstance(backbones, list)
         if isinstance(backbones, dict):
             backbones_list = []
-            for ind in range(num_stream):
+            for ind in range(num_streams):
                 backbones_list.append(copy.deepcopy(backbones))
                 backbones_list[-1]['suffix'] = 'net{}'.format(ind)
             backbones = backbones_list
 
-        assert len(backbones) == num_stream
+        assert len(backbones) == num_streams
 
         self.backbone_list = nn.ModuleList()
         # Rename the ret_dict with different suffixs.
@@ -97,14 +97,13 @@ class MultiBackbone(nn.Module):
 
         Returns:
             dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
-
-                - fp_xyz (list[torch.Tensor]): The coordinates of \
+                - fp_xyz (list[torch.Tensor]): The coordinates of
                     each fp features.
-                - fp_features (list[torch.Tensor]): The features \
+                - fp_features (list[torch.Tensor]): The features
                     from each Feature Propagate Layers.
-                - fp_indices (list[torch.Tensor]): Indices of the \
+                - fp_indices (list[torch.Tensor]): Indices of the
                     input points.
-                - hd_feature (torch.Tensor): The aggregation feature \
+                - hd_feature (torch.Tensor): The aggregation feature
                     from multiple backbones.
         """
         ret = {}
