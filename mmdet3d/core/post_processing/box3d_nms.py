@@ -133,3 +133,32 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
 
     indices = boxes.new_tensor(pick, dtype=torch.long)
     return indices
+
+
+def circle_nms(dets, thresh, post_max_size=83):
+    x1 = dets[:, 0]
+    y1 = dets[:, 1]
+    scores = dets[:, 2]
+    index = [i for i in range(scores.size(0) - 1, -1, -1)]
+    order = scores.argsort()[index].to(torch.int32)  # highest->lowest
+    ndets = dets.shape[0]
+    suppressed = dets.new_zeros((ndets), dtype=torch.int32)
+    keep = []
+    for _i in range(ndets):
+        i = order[_i]  # start with highest score box
+        if suppressed[
+                i] == 1:  # if any box have enough iou with this, remove it
+            continue
+        keep.append(i)
+        for _j in range(_i + 1, ndets):
+            j = order[_j]
+            if suppressed[j] == 1:
+                continue
+            # calculate center distance between i and j box
+            dist = (x1[i] - x1[j])**2 + (y1[i] - y1[j])**2
+
+            # ovr = inter / areas[j]
+            if dist <= thresh:
+                suppressed[j] = 1
+    return torch.tensor(
+        keep, dtype=torch.long, device=dets.device)[:post_max_size]
