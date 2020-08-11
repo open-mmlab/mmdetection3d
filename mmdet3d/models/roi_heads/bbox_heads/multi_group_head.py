@@ -11,6 +11,15 @@ from ...builder import HEADS, build_loss
 
 
 def gaussian2D(shape, sigma=1):
+    """Generate gaussian map.
+
+    Args:
+        shape (list[int]): Shape of the map.
+        sigma (float): Sigma to generate gaussian map.
+
+    Returns:
+        np.ndarray: Generated gaussian map.
+    """
     m, n = [(ss - 1.) / 2. for ss in shape]
     y, x = np.ogrid[-m:m + 1, -n:n + 1]
 
@@ -20,6 +29,17 @@ def gaussian2D(shape, sigma=1):
 
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):
+    """Get gaussian masked heatmap.
+
+    Args:
+        heatmap (torch.Tensor): Heatmap to be masked.
+        center (torch.Tensor): Center coord of the heatmap.
+        radius (int): Radius of gausian.
+        K (int): Multiple of masked_gaussian.
+
+    Returns:
+        torch.Tensor: Masked heatmap.
+    """
     diameter = 2 * radius + 1
     gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)
 
@@ -40,6 +60,15 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
 
 
 def gaussian_radius(det_size, min_overlap=0.5):
+    """Get radius of gaussian.
+
+    Args:
+        det_size (tuple[torch.Tensor]): Size of the detection result.
+        min_overlap (float): Gaussian_overlap.
+
+    Returns:
+        torch.Tensor: Computed radius.
+    """
     height, width = det_size
 
     a1 = 1
