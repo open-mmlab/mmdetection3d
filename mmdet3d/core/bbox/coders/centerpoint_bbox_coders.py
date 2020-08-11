@@ -33,7 +33,6 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         self.post_center_range = post_center_range
         self.K = K
         self.score_threshold = score_threshold
-        self.post_center_range = torch.tensor(post_center_range)
 
     def _gather_feat(self, feat, ind, mask=None):
         """Given feats and indexes, returns the gathered feats.
@@ -183,6 +182,8 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             thresh_mask = final_scores > self.score_threshold
 
         if self.post_center_range is not None:
+            self.post_center_range = torch.tensor(
+                self.post_center_range, device=heat.device)
             mask = (final_box_preds[..., :3] >=
                     self.post_center_range[:3]).all(2)
             mask &= (final_box_preds[..., :3] <=

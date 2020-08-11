@@ -5,7 +5,8 @@ from collections import defaultdict
 from mmcv.cnn import build_conv_layer, build_norm_layer, kaiming_init
 from torch import nn
 
-from mmdet.core import multi_apply
+from mmdet3d.core import circle_nms
+from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
 
@@ -364,6 +365,7 @@ class CenterHead(nn.Module):
             tasks=[],
             train_cfg=None,
             test_cfg=None,
+            bbox_coder=None,
             dataset='nuscenes',
             weight=0.25,
             code_weights=[],
@@ -385,7 +387,7 @@ class CenterHead(nn.Module):
         self.weight = weight  # weight between hm loss and loc loss
         self.dataset = dataset
         self.train_cfg = train_cfg
-
+        self.test_cfg = test_cfg
         self.encode_background_as_zeros = True
         self.use_sigmoid_score = True
         self.in_channels = in_channels
@@ -393,6 +395,7 @@ class CenterHead(nn.Module):
 
         self.crit = build_loss(crit)
         self.crit_reg = build_loss(crit_reg)
+        self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_aux = None
         if dataset == 'nuscenes':
             self.box_n_dim = 9
@@ -744,3 +747,79 @@ class CenterHead(nn.Module):
                 rets_merged[k].append(v)
 
         return rets_merged
+
+    def get_bboxes(self, preds_dicts):
+        """Generate bboxes from bbox head predictions.
+
+        Args:
+            preds_dicts (tuple[list[dict]]): Prediction results.
+
+        Returns:
+            list[dict]: Decoded bbox, scores and labels after nms.
+        """
+        rets = []
+        for task_id, preds_dict in enumerate(preds_dicts):
+            batch_size = preds_dict[0]['hm'].shape[0]
+            batch_hm = preds_dict[0]['hm'].sigmoid_()
+
+            batch_reg = preds_dict[0]['reg']
+            batch_hei = preds_dict[0]['height']
+
+            if not self.test_cfg['no_log']:
+                batch_dim = torch.exp(preds_dict[0]['dim'])
+            else:
+                batch_dim = preds_dict[0]['dim']
+
+            batch_rots = preds_dict[0]['rot'][:, 0].unsqueeze(1)
+            batch_rotc = preds_dict[0]['rot'][:, 1].unsqueeze(1)
+
+            if 'vel' in preds_dict:
+                batch_vel = preds_dict[0]['vel']
+            else:
+                batch_vel = None
+
+            temp = self.bbox_coder.decode(
+                batch_hm,
+                batch_rots,
+                batch_rotc,
+                batch_hei,
+                batch_dim,
+                batch_vel,
+                reg=batch_reg,
+                task_id=task_id)
+            ret_task = []
+            for i in range(batch_size):
+                boxes3d = temp[i]['box3d_lidar']
+                scores = temp[i]['scores']
+                labels = temp[i]['label_preds']
+                centers = boxes3d[:, [0, 1]]
+                boxes = torch.cat([centers, scores.view(-1, 1)], dim=1)
+                keep = circle_nms(
+                    boxes,
+                    self.test_cfg['min_radius'][task_id],
+                    post_max_size=self.test_cfg['post_max_size'])
+                boxes3d = boxes3d[keep]
+                scores = scores[keep]
+                labels = labels[keep]
+                ret = dict(
+                    box3d_lidar=boxes3d, scores=scores, label_preds=labels)
+                ret_task.append(ret)
+            rets.append(ret_task)
+
+        # Merge branches results
+        num_samples = len(rets[0])
+
+        ret_list = []
+        for i in range(num_samples):
+            ret = {}
+            for k in rets[0][i].keys():
+                if k in ['box3d_lidar', 'scores']:
+                    ret[k] = torch.cat([ret[i][k] for ret in rets])
+                elif k in ['label_preds']:
+                    flag = 0
+                    for j, num_class in enumerate(self.num_classes):
+                        rets[j][i][k] += flag
+                        flag += num_class
+                    ret[k] = torch.cat([ret[i][k] for ret in rets])
+            ret_list.append(ret)
+        return ret_list

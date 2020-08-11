@@ -469,12 +469,44 @@ def test_center_head():
         dict(num_class=2, class_names=['motorcycle', 'bicycle']),
         dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
     ]
-
+    bbox_cfg = dict(
+        type='CenterPointBBoxCoder',
+        post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        K=500,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=4,
+        voxel_size=[0.2, 0.2])
+    train_cfg = dict(
+        grid_size=[1024, 1024, 40],
+        point_cloud_range=[-51.2, -51.2, -5., 51.2, 51.2, 3.],
+        voxel_size=[0.1, 0.1, 0.2],
+        out_size_factor=8,
+        dense_reg=1,
+        gaussian_overlap=0.1,
+        max_objs=500,
+        min_radius=2,
+        no_log=False)
+    test_cfg = dict(
+        post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        max_per_img=500,
+        max_pool_nms=False,
+        min_radius=[4, 12, 10, 1, 0.85, 0.175],
+        post_max_size=83,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=4,
+        voxel_size=[0.2, 0.2],
+        circle_nms=True,
+        no_log=False)
     center_head_cfg = dict(
         type='CenterHead',
         mode='3d',
         in_channels=sum([256, 256]),
         tasks=tasks,
+        train_cfg=train_cfg,
+        test_cfg=test_cfg,
+        bbox_coder=bbox_cfg,
         dataset='nuscenes',
         weight=0.25,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
@@ -501,6 +533,13 @@ def test_center_head():
         assert output[i][0]['hm'].shape == torch.Size(
             [2, tasks[i]['num_class'], 128, 128])
 
+    # test get_bboxes
+    ret_lists = center_head.get_bboxes(output)
+    for ret_list in ret_lists:
+        assert ret_list['box3d_lidar'].shape[0] <= 500
+        assert ret_list['scores'].shape[0] <= 500
+        assert ret_list['label_preds'].shape[0] <= 500
+
 
 def test_dcn_center_head():
     # TODO: Change to read config from file.
@@ -514,6 +553,14 @@ def test_dcn_center_head():
         dict(num_class=2, class_names=['motorcycle', 'bicycle']),
         dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
     ]
+    bbox_cfg = dict(
+        type='CenterPointBBoxCoder',
+        post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        K=500,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=4,
+        voxel_size=[0.2, 0.2])
     train_cfg = dict(
         grid_size=[1024, 1024, 40],
         point_cloud_range=[-51.2, -51.2, -5., 51.2, 51.2, 3.],
@@ -523,6 +570,18 @@ def test_dcn_center_head():
         gaussian_overlap=0.1,
         max_objs=500,
         min_radius=2,
+        no_log=False)
+    test_cfg = dict(
+        post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        max_per_img=500,
+        max_pool_nms=False,
+        min_radius=[4, 12, 10, 1, 0.85, 0.175],
+        post_max_size=83,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=4,
+        voxel_size=[0.2, 0.2],
+        circle_nms=True,
         no_log=False)
 
     dcn_center_head_cfg = dict(
@@ -541,6 +600,8 @@ def test_dcn_center_head():
             'vel': (2, 2)
         },
         train_cfg=train_cfg,
+        bbox_coder=bbox_cfg,
+        test_cfg=test_cfg,
         share_conv_channel=64,
         dcn_head=True)
 
@@ -571,3 +632,10 @@ def test_dcn_center_head():
         for key in loss.keys():
             for i in range(len(loss[key])):
                 assert torch.all(loss[key][i] >= 0)
+
+    # test get_bboxes
+    ret_lists = dcn_center_head.get_bboxes(output)
+    for ret_list in ret_lists:
+        assert ret_list['box3d_lidar'].shape[0] <= 500
+        assert ret_list['scores'].shape[0] <= 500
+        assert ret_list['label_preds'].shape[0] <= 500
