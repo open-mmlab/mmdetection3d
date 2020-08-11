@@ -501,9 +501,9 @@ class CenterHead(nn.Module):
             mask (torch.Tensor): Mask of the feature map with the shape
                 of [B, max_obj]. Default: None.
 
-            Returns:
-                torch.Tensor: Feature map after gathering with the shape
-                    of [B, max_obj, 10].
+        Returns:
+            torch.Tensor: Feature map after gathering with the shape
+                of [B, max_obj, 10].
         """
         dim = feat.size(2)
         ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
