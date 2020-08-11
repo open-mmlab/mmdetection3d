@@ -12,11 +12,14 @@ class SECONDFPN(nn.Module):
     """FPN used in SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
-        in_channels (list[int]): Input channels of multi-scale feature maps
-        out_channels (list[int]): Output channels of feature maps
-        upsample_strides (list[int]): Strides used to upsample the feature maps
-        norm_cfg (dict): Config dict of normalization layers
-        upsample_cfg (dict): Config dict of upsample layers
+        in_channels (list[int]): Input channels of multi-scale feature maps.
+        out_channels (list[int]): Output channels of feature maps.
+        upsample_strides (list[int]): Strides used to upsample the
+            feature maps.
+        norm_cfg (dict): Config dict of normalization layers.
+        upsample_cfg (dict): Config dict of upsample layers.
+        conv_cfg (dict): Config dict of conv layers.
+        use_conv_for_no_stride (bool): Whether to use conv when stride is 1.
     """
 
     def __init__(self,

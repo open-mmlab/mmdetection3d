@@ -31,7 +31,7 @@ class SparseEncoder(nn.Module):
                                                                         64)),
                  encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1,
                                                                  1)),
-                 option=None):
+                 block_type='submblock'):
         super().__init__()
         self.sparse_shape = sparse_shape
         self.in_channels = in_channels
@@ -70,7 +70,7 @@ class SparseEncoder(nn.Module):
             make_sparse_convmodule,
             norm_cfg,
             self.base_channels,
-            option=option)
+            block_type=block_type)
 
         self.conv_out = make_sparse_convmodule(
             encoder_out_channels,
@@ -119,7 +119,7 @@ class SparseEncoder(nn.Module):
                             make_block,
                             norm_cfg,
                             in_channels,
-                            option=None,
+                            block_type='submblock',
                             conv_cfg=dict(type='SubMConv3d')):
         """make encoder layers using sparse convs.
 
@@ -127,10 +127,13 @@ class SparseEncoder(nn.Module):
             make_block (method): A bounded function to build blocks.
             norm_cfg (dict[str]): Config of normalization layer.
             in_channels (int): The number of encoder input channels.
+            block_type (str): Type of the block to use.
+            conv_cfg (dict): Config of conv layer.
 
         Returns:
             int: The number of encoder output channels.
         """
+        assert block_type in ['submblock', 'basicblock']
         self.encoder_layers = spconv.SparseSequential()
 
         for i, blocks in enumerate(self.encoder_channels):
@@ -139,7 +142,7 @@ class SparseEncoder(nn.Module):
                 padding = tuple(self.encoder_paddings[i])[j]
                 # each stage started with a spconv layer
                 # except the first stage
-                if i != 0 and j == 0 and option is None:
+                if i != 0 and j == 0 and block_type == 'submblock':
                     blocks_list.append(
                         make_block(
                             in_channels,
@@ -150,7 +153,7 @@ class SparseEncoder(nn.Module):
                             padding=padding,
                             indice_key=f'spconv{i + 1}',
                             conv_type='SparseConv3d'))
-                elif option == 'basicblock':
+                elif block_type == 'basicblock':
                     if j == len(blocks) - 1 and i != len(
                             self.encoder_channels) - 1:
                         blocks_list.append(
