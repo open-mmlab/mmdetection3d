@@ -6,9 +6,27 @@ from mmcv.cnn import build_conv_layer, build_norm_layer, kaiming_init
 from torch import nn
 
 from mmdet3d.core import circle_nms
+from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
+
+
+def boxes3d_to_bevboxes_lidar_torch(boxes3d):
+    """
+    :param boxes3d: (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords
+    :return:
+        boxes_bev: (N, 5) [x1, y1, x2, y2, ry]
+    """
+    boxes_bev = boxes3d.new(torch.Size((boxes3d.shape[0], 5)))
+
+    cu, cv = boxes3d[:, 0], boxes3d[:, 1]
+
+    half_w, half_l = boxes3d[:, 3] / 2, boxes3d[:, 4] / 2
+    boxes_bev[:, 0], boxes_bev[:, 1] = cu - half_w, cv - half_l
+    boxes_bev[:, 2], boxes_bev[:, 3] = cu + half_w, cv + half_l
+    boxes_bev[:, 4] = boxes3d[:, -1]
+    return boxes_bev
 
 
 def gaussian2D(shape, sigma=1):
@@ -753,12 +771,14 @@ class CenterHead(nn.Module):
 
         Args:
             preds_dicts (tuple[list[dict]]): Prediction results.
+            img_metas (list[dict]): Point cloud and image's meta info.
 
         Returns:
             list[dict]: Decoded bbox, scores and labels after nms.
         """
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
+            num_class_with_bg = self.num_classes[task_id]
             batch_size = preds_dict[0]['hm'].shape[0]
             batch_hm = preds_dict[0]['hm'].sigmoid_()
 
@@ -786,25 +806,34 @@ class CenterHead(nn.Module):
                 batch_vel,
                 reg=batch_reg,
                 task_id=task_id)
+            assert self.test_cfg['nms_type'] in ['circle', 'rotate']
+            batch_reg_preds = [box['bboxes'] for box in temp]
+            batch_cls_preds = [box['scores'] for box in temp]
+            batch_cls_labels = [box['labels'] for box in temp]
+            if self.test_cfg['nms_type'] == 'circle':
+                ret_task = []
+                for i in range(batch_size):
+                    boxes3d = temp[i]['bboxes']
+                    scores = temp[i]['scores']
+                    labels = temp[i]['labels']
+                    centers = boxes3d[:, [0, 1]]
+                    boxes = torch.cat([centers, scores.view(-1, 1)], dim=1)
+                    keep = circle_nms(
+                        boxes,
+                        self.test_cfg['min_radius'][task_id],
+                        post_max_size=self.test_cfg['post_max_size'])
 
-            ret_task = []
-            for i in range(batch_size):
-                boxes3d = temp[i]['bboxes']
-                scores = temp[i]['scores']
-                labels = temp[i]['labels']
-                centers = boxes3d[:, [0, 1]]
-                boxes = torch.cat([centers, scores.view(-1, 1)], dim=1)
-                keep = circle_nms(
-                    boxes,
-                    self.test_cfg['min_radius'][task_id],
-                    post_max_size=self.test_cfg['post_max_size'])
-
-                boxes3d = boxes3d[keep]
-                scores = scores[keep]
-                labels = labels[keep]
-                ret = dict(bboxes=boxes3d, scores=scores, labels=labels)
-                ret_task.append(ret)
-            rets.append(ret_task)
+                    boxes3d = boxes3d[keep]
+                    scores = scores[keep]
+                    labels = labels[keep]
+                    ret = dict(bboxes=boxes3d, scores=scores, labels=labels)
+                    ret_task.append(ret)
+                rets.append(ret_task)
+            else:
+                rets.append(
+                    self.get_task_detections(num_class_with_bg,
+                                             batch_cls_preds, batch_reg_preds,
+                                             batch_cls_labels))
 
         # Merge branches results
         num_samples = len(rets[0])
@@ -826,3 +855,125 @@ class CenterHead(nn.Module):
                     labels = torch.cat([ret[i][k] for ret in rets])
             ret_list.append([bboxes, scores, labels])
         return ret_list
+
+    def get_task_detections(
+        self,
+        num_class_with_bg,
+        batch_cls_preds,
+        batch_reg_preds,
+        batch_cls_labels,
+    ):
+        predictions_dicts = []
+        post_center_range = self.test_cfg['post_center_limit_range']
+        if len(post_center_range) > 0:
+            post_center_range = torch.tensor(
+                post_center_range,
+                dtype=batch_reg_preds[0].dtype,
+                device=batch_reg_preds[0].device,
+            )
+
+        for box_preds, cls_preds, cls_labels in zip(batch_reg_preds,
+                                                    batch_cls_preds,
+                                                    batch_cls_labels):
+
+            box_preds = box_preds.float()
+            cls_preds = cls_preds.float()
+
+            if self.encode_background_as_zeros:
+                # this don't support softmax
+                assert self.use_sigmoid_score is True
+                # total_scores = torch.sigmoid(cls_preds)
+                total_scores = cls_preds
+            else:
+                # encode background as first element in one-hot vector
+                total_scores = torch.sigmoid(cls_preds)[..., 1:]
+
+            # Apply NMS in birdeye view
+
+            # get highest score per prediction, than apply nms
+            # to remove overlapped box.
+            if num_class_with_bg == 1:
+                top_scores = total_scores.squeeze(-1)
+                top_labels = torch.zeros(
+                    total_scores.shape[0],
+                    device=total_scores.device,
+                    dtype=torch.long,
+                )
+
+            else:
+                top_labels = cls_labels.long()
+                top_scores = total_scores.squeeze(-1)
+                # top_scores, top_labels = torch.max(total_scores, dim=-1)
+
+            if self.test_cfg['score_threshold'] > 0.0:
+                thresh = torch.tensor(
+                    [self.test_cfg['score_threshold']],
+                    device=total_scores.device).type_as(total_scores)
+                top_scores_keep = top_scores >= thresh
+                top_scores = top_scores.masked_select(top_scores_keep)
+
+            if top_scores.shape[0] != 0:
+                if self.test_cfg['score_threshold'] > 0.0:
+                    box_preds = box_preds[top_scores_keep]
+                    top_labels = top_labels[top_scores_keep]
+                # boxes_for_nms = box_preds[:, [0, 1, 3, 4, -1]]
+
+                # GPU NMS from PCDet(https://github.com/sshaoshuai/PCDet)
+                boxes_for_nms = boxes3d_to_bevboxes_lidar_torch(box_preds)
+                # the nms in 3d detection just remove overlap boxes.
+
+                selected = nms_gpu(
+                    boxes_for_nms,
+                    top_scores,
+                    thresh=self.test_cfg['nms_iou_threshold'],
+                    pre_maxsize=self.test_cfg['nms_pre_max_size'],
+                    post_max_size=self.test_cfg['nms_post_max_size'])
+            else:
+                selected = []
+
+            # if selected is not None:
+            selected_boxes = box_preds[selected]
+            selected_labels = top_labels[selected]
+            selected_scores = top_scores[selected]
+
+            # finally generate predictions.
+            # self.logger.info(f"selected boxes: {selected_boxes.shape}")
+            if selected_boxes.shape[0] != 0:
+                box_preds = selected_boxes
+                scores = selected_scores
+                label_preds = selected_labels
+                final_box_preds = box_preds
+                final_scores = scores
+                final_labels = label_preds
+                if post_center_range is not None:
+                    mask = (final_box_preds[:, :3] >=
+                            post_center_range[:3]).all(1)
+                    mask &= (final_box_preds[:, :3] <=
+                             post_center_range[3:]).all(1)
+                    predictions_dict = {
+                        'bboxes': final_box_preds[mask],
+                        'scores': final_scores[mask],
+                        'labels': final_labels[mask]
+                    }
+                else:
+                    predictions_dict = {
+                        'bboxes': final_box_preds,
+                        'scores': final_scores,
+                        'labels': final_labels
+                    }
+            else:
+                dtype = batch_reg_preds[0].dtype
+                device = batch_reg_preds[0].device
+                predictions_dict = {
+                    'bboxes':
+                    torch.zeros([0, self.box_n_dim],
+                                dtype=dtype,
+                                device=device),
+                    'scores':
+                    torch.zeros([0], dtype=dtype, device=device),
+                    'labels':
+                    torch.zeros([0], dtype=top_labels.dtype, device=device)
+                }
+
+            predictions_dicts.append(predictions_dict)
+        return predictions_dicts

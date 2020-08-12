@@ -497,7 +497,7 @@ def test_center_head():
         pc_range=[-51.2, -51.2],
         out_size_factor=8,
         voxel_size=[0.2, 0.2],
-        circle_nms=True,
+        nms_type='circle',
         no_log=False)
     center_head_cfg = dict(
         type='CenterHead',
@@ -585,7 +585,7 @@ def test_dcn_center_head():
         pc_range=[-51.2, -51.2],
         out_size_factor=8,
         voxel_size=[0.2, 0.2],
-        circle_nms=True,
+        nms_type='circle',
         no_log=False)
 
     dcn_center_head_cfg = dict(
@@ -647,3 +647,54 @@ def test_dcn_center_head():
         assert ret_list[0].tensor.shape[0] <= 500
         assert ret_list[1].shape[0] <= 500
         assert ret_list[2].shape[0] <= 500
+
+    # test get_task_detections
+    test_cfg = dict(
+        post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        max_per_img=500,
+        max_pool_nms=False,
+        min_radius=[4, 12, 10, 1, 0.85, 0.175],
+        post_max_size=83,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=8,
+        voxel_size=[0.2, 0.2],
+        nms_type='rotate',
+        nms_pre_max_size=1000,
+        nms_post_max_size=83,
+        nms_iou_threshold=0.2,
+        no_log=False)
+    dcn_center_head_cfg = dict(
+        type='CenterHead',
+        mode='3d',
+        in_channels=sum([256, 256]),
+        tasks=tasks,
+        dataset='nuscenes',
+        weight=0.25,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
+        common_heads={
+            'reg': (2, 2),
+            'height': (1, 2),
+            'dim': (3, 2),
+            'rot': (2, 2),
+            'vel': (2, 2)
+        },
+        train_cfg=train_cfg,
+        bbox_coder=bbox_cfg,
+        test_cfg=test_cfg,
+        share_conv_channel=64,
+        dcn_head=True)
+
+    dcn_center_head = build_head(dcn_center_head_cfg).cuda()
+
+    batch_cls_labels = torch.zeros([100]).cuda()
+    batch_cls_preds = torch.rand([100]).cuda()
+    batch_reg_preds = torch.rand([100, 9]).cuda()
+
+    predictions_dicts = dcn_center_head.get_task_detections(
+        1, [batch_cls_preds], [batch_reg_preds], [batch_cls_labels])
+    bboxes = predictions_dicts[0]['bboxes']
+    scores = predictions_dicts[0]['scores']
+    labels = predictions_dicts[0]['labels']
+
+    assert bboxes.shape[0] == scores.shape[0] == labels.shape[0]
