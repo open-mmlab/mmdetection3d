@@ -25,6 +25,9 @@ def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
     :param boxes: (N, 5) [x1, y1, x2, y2, ry]
     :param scores: (N)
     :param thresh:
+    :param pre_maxsize:
+    :param post_max_size:
+
     :return:
     """
     # areas = (x2 - x1) * (y2 - y1)

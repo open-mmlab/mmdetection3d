@@ -13,10 +13,13 @@ from ...builder import HEADS, build_loss
 
 
 def boxes3d_to_bevboxes_lidar_torch(boxes3d):
-    """
-    :param boxes3d: (N, 7) [x, y, z, w, l, h, ry] in LiDAR coords
-    :return:
-        boxes_bev: (N, 5) [x1, y1, x2, y2, ry]
+    """Change 3d bboxes to bev.
+
+    Args:
+        boxes3d (torch.Tensor): 3d boxes.
+
+    Returns:
+        torch.Tensor: Boxes in bev.
     """
     boxes_bev = boxes3d.new(torch.Size((boxes3d.shape[0], 5)))
 
