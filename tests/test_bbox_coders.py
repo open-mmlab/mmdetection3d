@@ -240,6 +240,6 @@ def test_centerpoint_bbox_coder():
     temp = bbox_coder.decode(batch_hm, batch_rots, batch_rotc, batch_hei,
                              batch_dim, batch_vel, batch_reg, 5)
     for i in range(len(temp)):
-        assert temp[i]['box3d_lidar'].shape == torch.Size([500, 9])
+        assert temp[i]['bboxes'].shape == torch.Size([500, 9])
         assert temp[i]['scores'].shape == torch.Size([500])
-        assert temp[i]['label_preds'].shape == torch.Size([500])
+        assert temp[i]['labels'].shape == torch.Size([500])
