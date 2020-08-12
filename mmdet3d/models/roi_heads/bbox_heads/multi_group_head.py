@@ -748,7 +748,7 @@ class CenterHead(nn.Module):
 
         return rets_merged
 
-    def get_bboxes(self, preds_dicts):
+    def get_bboxes(self, preds_dicts, img_metas, img=None, rescale=False):
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -773,11 +773,10 @@ class CenterHead(nn.Module):
             batch_rots = preds_dict[0]['rot'][:, 0].unsqueeze(1)
             batch_rotc = preds_dict[0]['rot'][:, 1].unsqueeze(1)
 
-            if 'vel' in preds_dict:
+            if 'vel' in preds_dict[0]:
                 batch_vel = preds_dict[0]['vel']
             else:
                 batch_vel = None
-
             temp = self.bbox_coder.decode(
                 batch_hm,
                 batch_rots,
@@ -787,22 +786,23 @@ class CenterHead(nn.Module):
                 batch_vel,
                 reg=batch_reg,
                 task_id=task_id)
+
             ret_task = []
             for i in range(batch_size):
-                boxes3d = temp[i]['box3d_lidar']
+                boxes3d = temp[i]['bboxes']
                 scores = temp[i]['scores']
-                labels = temp[i]['label_preds']
+                labels = temp[i]['labels']
                 centers = boxes3d[:, [0, 1]]
                 boxes = torch.cat([centers, scores.view(-1, 1)], dim=1)
                 keep = circle_nms(
                     boxes,
                     self.test_cfg['min_radius'][task_id],
                     post_max_size=self.test_cfg['post_max_size'])
+
                 boxes3d = boxes3d[keep]
                 scores = scores[keep]
                 labels = labels[keep]
-                ret = dict(
-                    box3d_lidar=boxes3d, scores=scores, label_preds=labels)
+                ret = dict(bboxes=boxes3d, scores=scores, labels=labels)
                 ret_task.append(ret)
             rets.append(ret_task)
 
@@ -811,15 +811,18 @@ class CenterHead(nn.Module):
 
         ret_list = []
         for i in range(num_samples):
-            ret = {}
             for k in rets[0][i].keys():
-                if k in ['box3d_lidar', 'scores']:
-                    ret[k] = torch.cat([ret[i][k] for ret in rets])
-                elif k in ['label_preds']:
+                if k == 'bboxes':
+                    bboxes = img_metas[i]['box_type_3d'](torch.cat([
+                        ret[i][k] for ret in rets
+                    ]), self.bbox_coder.code_size)
+                elif k == 'scores':
+                    scores = torch.cat([ret[i][k] for ret in rets])
+                elif k == 'labels':
                     flag = 0
                     for j, num_class in enumerate(self.num_classes):
                         rets[j][i][k] += flag
                         flag += num_class
-                    ret[k] = torch.cat([ret[i][k] for ret in rets])
-            ret_list.append(ret)
+                    labels = torch.cat([ret[i][k] for ret in rets])
+            ret_list.append([bboxes, scores, labels])
         return ret_list

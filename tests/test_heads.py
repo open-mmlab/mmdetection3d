@@ -475,7 +475,7 @@ def test_center_head():
         K=500,
         score_threshold=0.1,
         pc_range=[-51.2, -51.2],
-        out_size_factor=4,
+        out_size_factor=8,
         voxel_size=[0.2, 0.2])
     train_cfg = dict(
         grid_size=[1024, 1024, 40],
@@ -495,7 +495,7 @@ def test_center_head():
         post_max_size=83,
         score_threshold=0.1,
         pc_range=[-51.2, -51.2],
-        out_size_factor=4,
+        out_size_factor=8,
         voxel_size=[0.2, 0.2],
         circle_nms=True,
         no_log=False)
@@ -534,11 +534,15 @@ def test_center_head():
             [2, tasks[i]['num_class'], 128, 128])
 
     # test get_bboxes
-    ret_lists = center_head.get_bboxes(output)
+    img_metas = [
+        dict(box_type_3d=LiDARInstance3DBoxes),
+        dict(box_type_3d=LiDARInstance3DBoxes)
+    ]
+    ret_lists = center_head.get_bboxes(output, img_metas)
     for ret_list in ret_lists:
-        assert ret_list['box3d_lidar'].shape[0] <= 500
-        assert ret_list['scores'].shape[0] <= 500
-        assert ret_list['label_preds'].shape[0] <= 500
+        assert ret_list[0].tensor.shape[0] <= 500
+        assert ret_list[1].shape[0] <= 500
+        assert ret_list[2].shape[0] <= 500
 
 
 def test_dcn_center_head():
@@ -559,7 +563,7 @@ def test_dcn_center_head():
         K=500,
         score_threshold=0.1,
         pc_range=[-51.2, -51.2],
-        out_size_factor=4,
+        out_size_factor=8,
         voxel_size=[0.2, 0.2])
     train_cfg = dict(
         grid_size=[1024, 1024, 40],
@@ -579,7 +583,7 @@ def test_dcn_center_head():
         post_max_size=83,
         score_threshold=0.1,
         pc_range=[-51.2, -51.2],
-        out_size_factor=4,
+        out_size_factor=8,
         voxel_size=[0.2, 0.2],
         circle_nms=True,
         no_log=False)
@@ -634,8 +638,12 @@ def test_dcn_center_head():
                 assert torch.all(loss[key][i] >= 0)
 
     # test get_bboxes
-    ret_lists = dcn_center_head.get_bboxes(output)
+    img_metas = [
+        dict(box_type_3d=LiDARInstance3DBoxes),
+        dict(box_type_3d=LiDARInstance3DBoxes)
+    ]
+    ret_lists = dcn_center_head.get_bboxes(output, img_metas)
     for ret_list in ret_lists:
-        assert ret_list['box3d_lidar'].shape[0] <= 500
-        assert ret_list['scores'].shape[0] <= 500
-        assert ret_list['label_preds'].shape[0] <= 500
+        assert ret_list[0].tensor.shape[0] <= 500
+        assert ret_list[1].shape[0] <= 500
+        assert ret_list[2].shape[0] <= 500
