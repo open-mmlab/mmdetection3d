@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 
@@ -67,6 +68,6 @@ def test_circle_nms():
                           [4.7768, -13.0409, 0.7810], [5.6621, 9.0422, 0.7753],
                           [-10.5561, 18.9627, 0.7518],
                           [-10.5643, 13.2293, 0.7200]])
-    keep = circle_nms(boxes, 0.175)
-    expected_keep = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    assert torch.all(keep == expected_keep)
+    keep = circle_nms(boxes.numpy(), 0.175)
+    expected_keep = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    assert np.all(keep == expected_keep)
