@@ -46,15 +46,15 @@ class MultiBackbone(nn.Module):
 
         out_channels = 0
 
-        for bb_cfg in backbones:
-            assert 'suffix' in bb_cfg.keys()
+        for backbone_cfg in backbones:
+            assert 'suffix' in backbone_cfg.keys()
             # assert 'collector' in bb_cfg.keys()
 
-            self.suffix_list.append(bb_cfg['suffix'])
-            bb_cfg.pop('suffix')
+            self.suffix_list.append(backbone_cfg['suffix'])
+            backbone_cfg.pop('suffix')
 
-            out_channels += bb_cfg['fp_channels'][-1][-1]
-            self.backbone_list.append(build_backbone(bb_cfg))
+            out_channels += backbone_cfg['fp_channels'][-1][-1]
+            self.backbone_list.append(build_backbone(backbone_cfg))
 
         # Feature aggregation layers
         if aggregation_mlp_channels is None:
