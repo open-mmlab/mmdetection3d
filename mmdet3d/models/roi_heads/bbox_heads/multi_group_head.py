@@ -821,10 +821,12 @@ class CenterHead(nn.Module):
                     labels = temp[i]['labels']
                     centers = boxes3d[:, [0, 1]]
                     boxes = torch.cat([centers, scores.view(-1, 1)], dim=1)
-                    keep = circle_nms(
-                        boxes,
-                        self.test_cfg['min_radius'][task_id],
-                        post_max_size=self.test_cfg['post_max_size'])
+                    keep = torch.tensor(
+                        circle_nms(
+                            boxes.detach().cpu().numpy(),
+                            self.test_cfg['min_radius'][task_id],
+                            post_max_size=self.test_cfg['post_max_size']),
+                        device=boxes.device)
 
                     boxes3d = boxes3d[keep]
                     scores = scores[keep]

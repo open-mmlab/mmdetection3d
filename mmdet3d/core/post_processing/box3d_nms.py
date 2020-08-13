@@ -1,3 +1,5 @@
+import numba
+import numpy as np
 import torch
 
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
@@ -135,6 +137,7 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
     return indices
 
 
+@numba.jit(nopython=True)
 def circle_nms(dets, thresh, post_max_size=83):
     """Circular NMS.
 
@@ -153,10 +156,9 @@ def circle_nms(dets, thresh, post_max_size=83):
     x1 = dets[:, 0]
     y1 = dets[:, 1]
     scores = dets[:, 2]
-    index = [i for i in range(scores.size(0) - 1, -1, -1)]
-    order = scores.argsort()[index].to(torch.int32)  # highest->lowest
+    order = scores.argsort()[::-1].astype(np.int32)  # highest->lowest
     ndets = dets.shape[0]
-    suppressed = dets.new_zeros((ndets), dtype=torch.int32)
+    suppressed = np.zeros((ndets), dtype=np.int32)
     keep = []
     for _i in range(ndets):
         i = order[_i]  # start with highest score box
@@ -174,5 +176,4 @@ def circle_nms(dets, thresh, post_max_size=83):
             # ovr = inter / areas[j]
             if dist <= thresh:
                 suppressed[j] = 1
-    return torch.tensor(
-        keep, dtype=torch.long, device=dets.device)[:post_max_size]
+    return keep[:post_max_size]
