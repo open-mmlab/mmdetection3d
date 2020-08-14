@@ -14,7 +14,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         voxel_size (list[float]): Size of voxel.
         post_center_range (list[float]): Limit of the center.
             Default: None.
-        K (int): Max number to be kept. Default: 100.
+        max_num (int): Max number to be kept. Default: 100.
         score_threshold (float): Threshold to filter boxes based on score.
             Default: None.
     """
@@ -24,7 +24,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                  out_size_factor,
                  voxel_size,
                  post_center_range=None,
-                 K=100,
+                 max_num=100,
                  score_threshold=None,
                  code_size=9):
 
@@ -32,30 +32,30 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         self.out_size_factor = out_size_factor
         self.voxel_size = voxel_size
         self.post_center_range = post_center_range
-        self.K = K
+        self.K = max_num
         self.score_threshold = score_threshold
         self.code_size = code_size
 
-    def _gather_feat(self, feat, ind, mask=None):
+    def _gather_feat(self, feats, inds, feat_masks=None):
         """Given feats and indexes, returns the gathered feats.
 
         Args:
-            feat (torch.Tensor): Features to be transposed and gathered
+            feats (torch.Tensor): Features to be transposed and gathered
                 with the shape of [B, 2, W, H].
-            ind (torch.Tensor): Indexes with the shape of [B, N].
-            mask (torch.Tensor): Mask of the feats. Default: None.
+            inds (torch.Tensor): Indexes with the shape of [B, N].
+            feat_masks (torch.Tensor): Mask of the feats. Default: None.
 
         Returns:
             torch.Tensor: Gathered feats.
         """
-        dim = feat.size(2)
-        ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
-        feat = feat.gather(1, ind)
-        if mask is not None:
-            mask = mask.unsqueeze(2).expand_as(feat)
-            feat = feat[mask]
-            feat = feat.view(-1, dim)
-        return feat
+        dim = feats.size(2)
+        inds = inds.unsqueeze(2).expand(inds.size(0), inds.size(1), dim)
+        feats = feats.gather(1, inds)
+        if feat_masks is not None:
+            feat_masks = feat_masks.unsqueeze(2).expand_as(feats)
+            feats = feats[feat_masks]
+            feats = feats.view(-1, dim)
+        return feats
 
     def _topk(self, scores, K=40):
         """Get indexes based on scores.
@@ -65,11 +65,12 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             K (int): Number to be kept.
 
         Returns:
-            torch.Tensor: Selected scores with the shape of [B, K].
-            torch.Tensor: Selected indexes with the shape of [B, K].
-            torch.Tensor: Selected classes with the shape of [B, K].
-            torch.Tensor: Selected y coord with the shape of [B, K].
-            torch.Tensor: Selected x coord with the shape of [B, K].
+            tuple[torch.Tensor]
+                torch.Tensor: Selected scores with the shape of [B, K].
+                torch.Tensor: Selected indexes with the shape of [B, K].
+                torch.Tensor: Selected classes with the shape of [B, K].
+                torch.Tensor: Selected y coord with the shape of [B, K].
+                torch.Tensor: Selected x coord with the shape of [B, K].
         """
         batch, cat, height, width = scores.size()
 

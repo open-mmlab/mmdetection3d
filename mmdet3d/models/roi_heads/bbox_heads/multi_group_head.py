@@ -5,31 +5,11 @@ from collections import defaultdict
 from mmcv.cnn import build_conv_layer, build_norm_layer, kaiming_init
 from torch import nn
 
-from mmdet3d.core import circle_nms
+from mmdet3d.core import circle_nms, xywhr2xyxyr
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import FeatureAdaption
 from ...builder import HEADS, build_loss
-
-
-def boxes3d_to_bevboxes_lidar_torch(boxes3d):
-    """Change 3d bboxes to bev.
-
-    Args:
-        boxes3d (torch.Tensor): 3d boxes.
-
-    Returns:
-        torch.Tensor: Boxes in bev.
-    """
-    boxes_bev = boxes3d.new(torch.Size((boxes3d.shape[0], 5)))
-
-    cu, cv = boxes3d[:, 0], boxes3d[:, 1]
-
-    half_w, half_l = boxes3d[:, 3] / 2, boxes3d[:, 4] / 2
-    boxes_bev[:, 0], boxes_bev[:, 1] = cu - half_w, cv - half_l
-    boxes_bev[:, 2], boxes_bev[:, 3] = cu + half_w, cv + half_l
-    boxes_bev[:, 4] = boxes3d[:, -1]
-    return boxes_bev
 
 
 def gaussian2D(shape, sigma=1):
@@ -826,6 +806,7 @@ class CenterHead(nn.Module):
                             boxes.detach().cpu().numpy(),
                             self.test_cfg['min_radius'][task_id],
                             post_max_size=self.test_cfg['post_max_size']),
+                        dtype=torch.long,
                         device=boxes.device)
 
                     boxes3d = boxes3d[keep]
@@ -838,7 +819,7 @@ class CenterHead(nn.Module):
                 rets.append(
                     self.get_task_detections(num_class_with_bg,
                                              batch_cls_preds, batch_reg_preds,
-                                             batch_cls_labels))
+                                             batch_cls_labels, img_metas))
 
         # Merge branches results
         num_samples = len(rets[0])
@@ -861,13 +842,8 @@ class CenterHead(nn.Module):
             ret_list.append([bboxes, scores, labels])
         return ret_list
 
-    def get_task_detections(
-        self,
-        num_class_with_bg,
-        batch_cls_preds,
-        batch_reg_preds,
-        batch_cls_labels,
-    ):
+    def get_task_detections(self, num_class_with_bg, batch_cls_preds,
+                            batch_reg_preds, batch_cls_labels, img_metas):
         predictions_dicts = []
         post_center_range = self.test_cfg['post_center_limit_range']
         if len(post_center_range) > 0:
@@ -877,9 +853,8 @@ class CenterHead(nn.Module):
                 device=batch_reg_preds[0].device,
             )
 
-        for box_preds, cls_preds, cls_labels in zip(batch_reg_preds,
-                                                    batch_cls_preds,
-                                                    batch_cls_labels):
+        for i, (box_preds, cls_preds, cls_labels) in enumerate(
+                zip(batch_reg_preds, batch_cls_preds, batch_cls_labels)):
 
             box_preds = box_preds.float()
             cls_preds = cls_preds.float()
@@ -924,7 +899,8 @@ class CenterHead(nn.Module):
                 # boxes_for_nms = box_preds[:, [0, 1, 3, 4, -1]]
 
                 # GPU NMS from PCDet(https://github.com/sshaoshuai/PCDet)
-                boxes_for_nms = boxes3d_to_bevboxes_lidar_torch(box_preds)
+                boxes_for_nms = xywhr2xyxyr(img_metas[i]['box_type_3d'](
+                    box_preds, self.bbox_coder.code_size).bev)
                 # the nms in 3d detection just remove overlap boxes.
 
                 selected = nms_gpu(
