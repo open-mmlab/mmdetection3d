@@ -4,11 +4,14 @@ from . import iou3d_cuda
 
 
 def boxes_iou_bev(boxes_a, boxes_b):
-    """
-    :param boxes_a: (M, 5)
-    :param boxes_b: (N, 5)
-    :return:
-        ans_iou: (M, N)
+    """Get iou of the bev boxes.
+
+    Args:
+        boxes_a (torch.Tensor): Input boxes a with the shape of [M, 5].
+        boxes_b (torch.Tensor): Input boxes b with the shape of [M, 5].
+
+    Returns:
+        torch.Tensor: Result iou with the shaoe of [M, N].
     """
 
     ans_iou = torch.cuda.FloatTensor(
@@ -21,14 +24,18 @@ def boxes_iou_bev(boxes_a, boxes_b):
 
 
 def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
-    """
-    :param boxes: (N, 5) [x1, y1, x2, y2, ry]
-    :param scores: (N)
-    :param thresh:
-    :param pre_maxsize:
-    :param post_max_size:
+    """Nms function with gpu implementation.
 
-    :return:
+    Args:
+        boxes (torch.Tensor): Input boxes with the shape of [N, 5]
+            ([x1, y1, x2, y2, ry]).
+        scores (torch.Tensor): Scores of boxes with the shape of [N].
+        thresh (int): Threshold.
+        pre_maxsize (int): Max size of boxes before nms. Default: None.
+        post_maxsize (int): Max size of boxes after nms. Default: None.
+
+    Returns:
+        torch.Tensor: Indexes after nms.
     """
     # areas = (x2 - x1) * (y2 - y1)
     order = scores.sort(0, descending=True)[1]
@@ -45,11 +52,16 @@ def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
 
 
 def nms_normal_gpu(boxes, scores, thresh):
-    """
-    :param boxes: (N, 5) [x1, y1, x2, y2, ry]
-    :param scores: (N)
-    :param thresh:
-    :return:
+    """Normal nms function with gpu implementation.
+
+    Args:
+        boxes (torch.Tensor): Input boxes with the shape of [N, 5]
+            ([x1, y1, x2, y2, ry]).
+        scores (torch.Tensor): Scores of boxes with the shape of [N].
+        thresh (int): Threshold.
+
+    Returns:
+        torch.Tensor: Indexes after nms.
     """
     # areas = (x2 - x1) * (y2 - y1)
     order = scores.sort(0, descending=True)[1]

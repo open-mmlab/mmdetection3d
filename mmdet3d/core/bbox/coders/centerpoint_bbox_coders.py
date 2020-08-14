@@ -212,6 +212,6 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         else:
             raise NotImplementedError(
                 'Need to reorganize output as a batch so only '
-                'the first if part is supported for now!')
+                'support post_center_range is not None for now!')
 
         return predictions_dicts

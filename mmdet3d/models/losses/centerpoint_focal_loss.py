@@ -23,6 +23,9 @@ class CenterPointFocalLoss(nn.Module):
             of [b x c x h x w].
           gt_regr (torch.Tensor): Ground truth of the predicition
             results with the shape of (batch x c x h x w).
+
+        Returns:
+            torch.Tensor: Computed loss.
         """
         pos_inds = gt.eq(1).float()
         neg_inds = gt.lt(1).float()

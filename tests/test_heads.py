@@ -472,7 +472,7 @@ def test_center_head():
     bbox_cfg = dict(
         type='CenterPointBBoxCoder',
         post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-        K=500,
+        max_num=500,
         score_threshold=0.1,
         pc_range=[-51.2, -51.2],
         out_size_factor=8,
@@ -560,7 +560,7 @@ def test_dcn_center_head():
     bbox_cfg = dict(
         type='CenterPointBBoxCoder',
         post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-        K=500,
+        max_num=500,
         score_threshold=0.1,
         pc_range=[-51.2, -51.2],
         out_size_factor=8,

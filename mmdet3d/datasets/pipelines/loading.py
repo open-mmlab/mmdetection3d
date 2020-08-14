@@ -71,8 +71,9 @@ class LoadPointsFromMultiSweeps(object):
     This is usually used for nuScenes dataset to utilize previous sweeps.
 
     Args:
-        sweeps_num (int): number of sweeps. Defaults to 10.
-        load_dim (int): dimension number of the loaded points. Defaults to 5.
+        sweeps_num (int): Number of sweeps. Defaults to 10.
+        load_dim (int): Dimension number of the loaded points. Defaults to 5.
+        use_dim (list[int]): Which dimension to use. Default: [0, 1, 2, 4].
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
