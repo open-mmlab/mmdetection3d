@@ -30,7 +30,7 @@ def gaussian2D(shape, sigma=1):
     return h
 
 
-def draw_umich_gaussian(heatmap, center, radius, k=1):
+def draw_heatmap_gaussian(heatmap, center, radius, k=1):
     """Get gaussian masked heatmap.
 
     Args:
@@ -149,17 +149,15 @@ class SepHead(nn.Module):
             Default: dict(type='BN2d').
     """
 
-    def __init__(
-            self,
-            in_channels,
-            heads,
-            head_conv=64,
-            final_kernel=1,
-            init_bias=-2.19,
-            conv_cfg=dict(type='Conv2d'),
-            norm_cfg=dict(type='BN2d'),
-            **kwargs,
-    ):
+    def __init__(self,
+                 in_channels,
+                 heads,
+                 head_conv=64,
+                 final_kernel=1,
+                 init_bias=-2.19,
+                 conv_cfg=dict(type='Conv2d'),
+                 norm_cfg=dict(type='BN2d'),
+                 **kwargs):
         super(SepHead, self).__init__(**kwargs)
 
         self.heads = heads
@@ -179,7 +177,7 @@ class SepHead(nn.Module):
                         bias=True))
                 if norm_cfg:
                     fc_layers.append(build_norm_layer(norm_cfg, head_conv)[1])
-                fc_layers.append(nn.ReLU())
+                fc_layers.append(nn.ReLU(inplace=True))
 
             fc_layers.append(
                 build_conv_layer(
@@ -289,11 +287,14 @@ class DCNSepHead(nn.Module):
                 bias=True)
         ]
         self.cls_head = nn.Sequential(*cls_head)
-        self.cls_head[-1].bias.data.fill_(init_bias)
-
+        self.init_bias = init_bias
         # other regression target
         self.task_head = SepHead(
             in_channels, heads, head_conv=head_conv, final_kernel=final_kernel)
+
+    def init_weights(self):
+
+        self.cls_head[-1].bias.data.fill_(self.init_bias)
 
     def forward(self, x):
         """Forward function for DCNSepHead.
@@ -303,7 +304,8 @@ class DCNSepHead(nn.Module):
                 [B, 512, 128, 128].
 
         Returns:
-            dict:   -reg （torch.Tensor): 2D regression value with the
+            dict[str: torch.Tensor]: contains the following keys:
+                    -reg （torch.Tensor): 2D regression value with the
                         shape of [B, 2, H, W].
                     -height (torch.Tensor): Height value with the
                         shape of [B, 1, H, W].
@@ -357,29 +359,25 @@ class CenterHead(nn.Module):
             Default: dict(type='BN2d').
     """
 
-    def __init__(
-            self,
-            mode='3d',
-            in_channels=[
-                128,
-            ],
-            tasks=[],
-            train_cfg=None,
-            test_cfg=None,
-            bbox_coder=None,
-            dataset='nuscenes',
-            weight=0.25,
-            code_weights=[],
-            common_heads=dict(),
-            crit=dict(type='CenterPointFocalLoss'),
-            crit_reg=dict(type='L1Loss', reduction='none'),
-            init_bias=-2.19,
-            share_conv_channel=64,
-            num_hm_conv=2,
-            dcn_head=False,
-            conv_cfg=dict(type='Conv2d'),
-            norm_cfg=dict(type='BN2d'),
-    ):
+    def __init__(self,
+                 mode='3d',
+                 in_channels=[128],
+                 tasks=[],
+                 train_cfg=None,
+                 test_cfg=None,
+                 bbox_coder=None,
+                 dataset='nuscenes',
+                 weight=0.25,
+                 code_weights=[],
+                 common_heads=dict(),
+                 crit=dict(type='CenterPointFocalLoss'),
+                 crit_reg=dict(type='L1Loss', reduction='none'),
+                 init_bias=-2.19,
+                 share_conv_channel=64,
+                 num_hm_conv=2,
+                 dcn_head=False,
+                 conv_cfg=dict(type='Conv2d'),
+                 norm_cfg=dict(type='BN2d')):
         super(CenterHead, self).__init__()
 
         num_classes = [len(t['class_names']) for t in tasks]
@@ -398,10 +396,7 @@ class CenterHead(nn.Module):
         self.crit_reg = build_loss(crit_reg)
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_aux = None
-        if dataset == 'nuscenes':
-            self.box_n_dim = 9
-        else:
-            raise NotImplementedError
+        assert dataset == 'nuscenes'
         self.num_anchor_per_locs = [n for n in num_classes]
         self.use_direction_classifier = False
 
@@ -420,10 +415,6 @@ class CenterHead(nn.Module):
             nn.ReLU(inplace=True))
 
         self.tasks = nn.ModuleList()
-        print('Use HM Bias: ', init_bias)
-
-        if dcn_head:
-            print('Use Deformable Convolution in the CenterHead!')
 
         for num_cls in num_classes:
             heads = copy.deepcopy(common_heads)
@@ -590,7 +581,7 @@ class CenterHead(nn.Module):
             task_boxes.append(torch.cat(task_box, axis=0).to(device))
             task_classes.append(torch.cat(task_class).to(device))
             flag2 += len(mask)
-        draw_gaussian = draw_umich_gaussian
+        draw_gaussian = draw_heatmap_gaussian
 
         hms, anno_boxes, inds, masks = [], [], [], []
 
@@ -947,7 +938,7 @@ class CenterHead(nn.Module):
                 device = batch_reg_preds[0].device
                 predictions_dict = {
                     'bboxes':
-                    torch.zeros([0, self.box_n_dim],
+                    torch.zeros([0, self.bbox_coder.code_size],
                                 dtype=dtype,
                                 device=device),
                     'scores':
