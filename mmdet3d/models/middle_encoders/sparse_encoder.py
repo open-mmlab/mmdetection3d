@@ -18,6 +18,7 @@ class SparseEncoder(nn.Module):
         encoder_channels (tuple[tuple[int]]):
             Convolutional channels of each encode block.
         encoder_paddings (tuple[tuple[int]]): Paddings of each encode block.
+        block_type (str): Type of the block to use.
     """
 
     def __init__(self,
@@ -33,6 +34,7 @@ class SparseEncoder(nn.Module):
                                                                  1)),
                  block_type='submblock'):
         super().__init__()
+        assert block_type in ['submblock', 'basicblock']
         self.sparse_shape = sparse_shape
         self.in_channels = in_channels
         self.order = order

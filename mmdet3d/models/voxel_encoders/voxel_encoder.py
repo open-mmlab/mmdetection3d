@@ -13,6 +13,9 @@ class HardSimpleVFE(nn.Module):
     """Simple voxel feature encoder used in SECOND.
 
     It simply averages the values of points in a voxel.
+
+    Args:
+        num_features (int): Number of features to use. Default: 4.
     """
 
     def __init__(self, num_features=4):

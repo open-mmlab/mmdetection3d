@@ -47,11 +47,6 @@ class SECONDFPN(nn.Module):
                     out_channels=out_channel,
                     kernel_size=upsample_strides[i],
                     stride=upsample_strides[i])
-                deblock = nn.Sequential(
-                    upsample_layer,
-                    build_norm_layer(norm_cfg, out_channel)[1],
-                    nn.ReLU(inplace=True))
-                deblocks.append(deblock)
             else:
                 stride = np.round(1 / stride).astype(np.int64)
                 upsample_layer = build_conv_layer(
@@ -60,11 +55,11 @@ class SECONDFPN(nn.Module):
                     out_channels=out_channel,
                     kernel_size=stride,
                     stride=stride)
-                deblock = nn.Sequential(
-                    upsample_layer,
-                    build_norm_layer(norm_cfg, out_channel)[1],
-                    nn.ReLU(inplace=True))
-                deblocks.append(deblock)
+
+            deblock = nn.Sequential(upsample_layer,
+                                    build_norm_layer(norm_cfg, out_channel)[1],
+                                    nn.ReLU(inplace=True))
+            deblocks.append(deblock)
         self.deblocks = nn.ModuleList(deblocks)
 
     def init_weights(self):
