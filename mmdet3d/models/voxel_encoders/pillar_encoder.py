@@ -48,7 +48,7 @@ class PillarFeatureNet(nn.Module):
                  legacy=False):
         super(PillarFeatureNet, self).__init__()
         assert len(feat_channels) > 0
-        self.egacy = legacy
+        self.legacy = legacy
         if with_cluster_center:
             in_channels += 3
         if with_voxel_center:
