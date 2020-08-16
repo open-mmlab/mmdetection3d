@@ -19,6 +19,8 @@ class MultiBackbone(nn.Module):
         conv_cfg (dict): Config dict of convolutional layers
         norm_cfg (dict): Config dict of normalization layers
         act_cfg (dict): Config dict of activation layers
+        suffixes (list): A list of suffixes to rename the return dict
+            for each backbone.
     """
 
     def __init__(self,
@@ -28,6 +30,7 @@ class MultiBackbone(nn.Module):
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.01),
                  act_cfg=dict(type='ReLU'),
+                 suffixes=['net0', 'net1'],
                  **kwargs):
         super().__init__()
         assert isinstance(backbones, dict) or isinstance(backbones, list)
@@ -35,24 +38,18 @@ class MultiBackbone(nn.Module):
             backbones_list = []
             for ind in range(num_streams):
                 backbones_list.append(copy.deepcopy(backbones))
-                backbones_list[-1]['suffix'] = 'net{}'.format(ind)
             backbones = backbones_list
 
         assert len(backbones) == num_streams
+        assert len(suffixes) == num_streams
 
         self.backbone_list = nn.ModuleList()
         # Rename the ret_dict with different suffixs.
-        self.suffix_list = []
+        self.suffixes = suffixes
 
         out_channels = 0
 
         for backbone_cfg in backbones:
-            assert 'suffix' in backbone_cfg.keys()
-            # assert 'collector' in bb_cfg.keys()
-
-            self.suffix_list.append(backbone_cfg['suffix'])
-            backbone_cfg.pop('suffix')
-
             out_channels += backbone_cfg['fp_channels'][-1][-1]
             self.backbone_list.append(build_backbone(backbone_cfg))
 
@@ -97,11 +94,12 @@ class MultiBackbone(nn.Module):
 
         Returns:
             dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
-                - fp_xyz (list[torch.Tensor]): The coordinates of
+
+                - fp_xyz[suffix] (list[torch.Tensor]): The coordinates of
                     each fp features.
-                - fp_features (list[torch.Tensor]): The features
+                - fp_features[suffix] (list[torch.Tensor]): The features
                     from each Feature Propagate Layers.
-                - fp_indices (list[torch.Tensor]): Indices of the
+                - fp_indices[suffix] (list[torch.Tensor]): Indices of the
                     input points.
                 - hd_feature (torch.Tensor): The aggregation feature
                     from multiple backbones.
@@ -110,7 +108,7 @@ class MultiBackbone(nn.Module):
         fp_features = []
         for ind in range(len(self.backbone_list)):
             cur_ret = self.backbone_list[ind](points)
-            cur_suffix = self.suffix_list[ind]
+            cur_suffix = self.suffixes[ind]
             fp_features.append(cur_ret['fp_features'][-1])
             if cur_suffix != '':
                 for k in cur_ret.keys():
