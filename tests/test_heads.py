@@ -591,14 +591,9 @@ def test_h3d_head():
         sem_scores=sem_scores,
         dir_class=dir_class,
         dir_res=dir_res,
-        aggregated_features=aggregated_features)
-
-    ret_dict = self(input_dict, 'vote')
-
-    # test loss
-    points = torch.rand([1, 1024, 3], dtype=torch.float32).cuda()
-    ret_dict['seed_points'] = fp_xyz[0]
-    ret_dict['seed_indices'] = fp_indices[0]
+        aggregated_features=aggregated_features,
+        seed_points=fp_xyz[0],
+        seed_indices=fp_indices[0])
 
     from mmdet3d.core.bbox import DepthInstance3DBoxes
     gt_bboxes_3d = [
@@ -611,8 +606,43 @@ def test_h3d_head():
     pts_semantic_mask = [pts_semantic_mask[0]]
     pts_instance_mask = torch.randint(0, 4, [1, 1024]).cuda()
     pts_instance_mask = [pts_instance_mask[0]]
+    points = torch.rand([1, 1024, 3], dtype=torch.float32).cuda()
 
-    loss_dict = self.loss(ret_dict, points, gt_bboxes_3d, gt_labels_3d,
-                          pts_semantic_mask, pts_instance_mask)
+    vote_targets = torch.rand([1, 1024, 9], dtype=torch.float32).cuda()
+    vote_target_masks = torch.rand([1, 1024], dtype=torch.float32).cuda()
+    size_class_targets = torch.rand([1, 256],
+                                    dtype=torch.float32).cuda().long()
+    size_res_targets = torch.rand([1, 256, 3], dtype=torch.float32).cuda()
+    dir_class_targets = torch.rand([1, 256], dtype=torch.float32).cuda().long()
+    dir_res_targets = torch.rand([1, 256], dtype=torch.float32).cuda()
+    center_targets = torch.rand([1, 4, 3], dtype=torch.float32).cuda()
+    mask_targets = torch.rand([1, 256], dtype=torch.float32).cuda().long()
+    valid_gt_masks = torch.rand([1, 4], dtype=torch.float32).cuda()
+    objectness_targets = torch.rand([1, 256],
+                                    dtype=torch.float32).cuda().long()
+    objectness_weights = torch.rand([1, 256], dtype=torch.float32).cuda()
+    box_loss_weights = torch.rand([1, 256], dtype=torch.float32).cuda()
+    valid_gt_weights = torch.rand([1, 4], dtype=torch.float32).cuda()
+    targets = (vote_targets, vote_target_masks, size_class_targets,
+               size_res_targets, dir_class_targets, dir_res_targets,
+               center_targets, mask_targets, valid_gt_masks,
+               objectness_targets, objectness_weights, box_loss_weights,
+               valid_gt_weights)
+    input_dict['targets'] = targets
+    ret_dict = self.forward_train(
+        input_dict,
+        'vote',
+        points=points,
+        gt_bboxes_3d=gt_bboxes_3d,
+        gt_labels_3d=gt_labels_3d,
+        pts_semantic_mask=pts_semantic_mask,
+        pts_instance_mask=pts_instance_mask,
+        img_metas=None)
 
-    assert loss_dict['primitive_centroid_reg_loss_potential'] >= 0
+    assert ret_dict['flag_loss_z'] >= 0
+    assert ret_dict['vote_loss_z'] >= 0
+    assert ret_dict['center_loss_z'] >= 0
+    assert ret_dict['size_loss_z'] >= 0
+    assert ret_dict['sem_loss_z'] >= 0
+    assert ret_dict['objectness_loss_opt'] >= 0
+    assert ret_dict['objectness_loss_sem_potential'] >= 0

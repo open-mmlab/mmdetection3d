@@ -45,7 +45,8 @@ model = dict(
     type='H3DNet',
     backbone=dict(
         type='MultiBackbone',
-        num_stream=4,
+        suffixes=['net0', 'net1', 'net2', 'net3'],
+        num_streams=4,
         conv_cfg=dict(type='Conv1d'),
         norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.01),
         act_cfg=dict(type='ReLU'),
@@ -59,8 +60,7 @@ model = dict(
                          (128, 128, 256)),
             fp_channels=((256, 256), (256, 256)),
             norm_cfg=dict(type='BN2d'),
-            pool_mod='max',
-            suffix='')),
+            pool_mod='max')),
     rpn_head=dict(
         type='VoteHead',
         vote_moudule_cfg=dict(
@@ -108,34 +108,36 @@ model = dict(
         semantic_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
     roi_head=dict(
-        type='H3dHead',
-        gt_per_seed=3,
-        num_proposal=256,
-        proposal_module_cfg=proposal_module_cfg,
-        feat_channels=(128, 128),
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
-        objectness_loss=dict(
-            type='CrossEntropyLoss',
-            class_weight=[0.2, 0.8],
-            reduction='sum',
-            loss_weight=5.0),
-        center_loss=dict(
-            type='ChamferDistance',
-            mode='l2',
-            reduction='sum',
-            loss_src_weight=10.0,
-            loss_dst_weight=10.0),
-        dir_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
-        dir_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-        size_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
-        size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-        semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=0.1)))
+        type='H3DRoIHead',
+        bbox_head=dict(
+            type='H3dHead',
+            gt_per_seed=3,
+            num_proposal=256,
+            proposal_module_cfg=proposal_module_cfg,
+            feat_channels=(128, 128),
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            objectness_loss=dict(
+                type='CrossEntropyLoss',
+                class_weight=[0.2, 0.8],
+                reduction='sum',
+                loss_weight=5.0),
+            center_loss=dict(
+                type='ChamferDistance',
+                mode='l2',
+                reduction='sum',
+                loss_src_weight=10.0,
+                loss_dst_weight=10.0),
+            dir_class_loss=dict(
+                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
+            dir_res_loss=dict(
+                type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+            size_class_loss=dict(
+                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
+            size_res_loss=dict(
+                type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+            semantic_loss=dict(
+                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1))))
 
 # model training and testing settings
 train_cfg = dict(

@@ -16,7 +16,8 @@ class PrimitiveHead(nn.Module):
     Args:
         num_dim (int): The dimension of primitive.
         num_classes (int): The number of class.
-        primitive_mode (str): The mode of primitive.
+        primitive_mode (str): The mode of primitive module,
+            avaliable mode ['z', 'xy', 'line'].
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
         train_cfg (dict): Config for training.
@@ -47,6 +48,7 @@ class PrimitiveHead(nn.Module):
                  center_loss=None,
                  semantic_loss=None):
         super(PrimitiveHead, self).__init__()
+        assert primitive_mode in ['z', 'xy', 'line']
         self.num_dim = num_dim
         self.num_classes = num_classes
         self.primitive_mode = primitive_mode
@@ -62,7 +64,7 @@ class PrimitiveHead(nn.Module):
         assert vote_aggregation_cfg['mlp_channels'][0] == vote_moudule_cfg[
             'in_channels']
 
-        # Existence flag prediction
+        # Primitive existence flag prediction
         self.flag_conv = ConvModule(
             vote_moudule_cfg['conv_channels'][-1],
             vote_moudule_cfg['conv_channels'][-1] // 2,
@@ -169,7 +171,7 @@ class PrimitiveHead(nn.Module):
 
         # 4. decode predictions
         newcenter, decode_res = self.primitive_decode_scores(
-            predictions, results, self.num_classes, mode=self.primitive_mode)
+            predictions, aggregated_points, mode=self.primitive_mode)
         results.update(decode_res)
 
         return results
@@ -208,8 +210,12 @@ class PrimitiveHead(nn.Module):
         (point_mask, point_sem, point_offset) = targets
 
         losses = {}
-        flag_loss = self.compute_flag_loss(
-            bbox_preds, point_mask, mode=self.primitive_mode)
+
+        # Compute the loss of primitive existence flag
+        seed_inds = bbox_preds['seed_indices'].long()
+        sem_cls_label = torch.gather(point_mask, 1, seed_inds)
+        pred_flag = bbox_preds['pred_flag_' + self.primitive_mode]
+        flag_loss = self.objectness_loss(pred_flag, sem_cls_label.long())
         losses['flag_loss_' + self.primitive_mode] = flag_loss
 
         # calculate vote loss
@@ -674,25 +680,42 @@ class PrimitiveHead(nn.Module):
         else:
             NotImplementedError
 
-    def primitive_decode_scores(self, net, end_points, num_class, mode=''):
-        # (batch_size, 1024, ..)
-        net_transposed = net.transpose(2, 1)
-        # (batch_size, num_proposal, 3)
-        base_xyz = end_points['aggregated_points_' + mode]
-        # (batch_size, num_proposal, 3)
-        center = base_xyz + net_transposed[:, :, 0:3]
-        end_points['center_' + mode] = center
+    def primitive_decode_scores(self, preds, aggregated_points, mode=''):
+        """Decode the outputs of primitive module.
+
+        Args:
+            preds (torch.Tensor): primitive pridictions of each batch.
+            aggregated_points (torch.Tensor): The aggregated points
+                of vote stage.
+            mode (string): The type of primitive module.
+
+        Returns:
+            Dict: Targets of center, size and semantic.
+        """
+        ret_dict = {}
+        net_transposed = preds.transpose(2, 1)
+
+        center = aggregated_points + net_transposed[:, :, 0:3]
+        ret_dict['center_' + mode] = center
 
         if mode in ['z', 'xy']:
-            end_points['size_residuals_' + mode] = net_transposed[:, :, 3:3 +
-                                                                  self.num_dim]
+            ret_dict['size_residuals_' + mode] = net_transposed[:, :, 3:3 +
+                                                                self.num_dim]
 
-        end_points['sem_cls_scores_' + mode] = net_transposed[:, :, 3 +
-                                                              self.num_dim:]
+        ret_dict['sem_cls_scores_' + mode] = net_transposed[:, :,
+                                                            3 + self.num_dim:]
 
-        return center, end_points
+        return center, ret_dict
 
     def check_upright(self, para_points):
+        """Check whether is upright corrdinate.
+
+        Args:
+            para_points (torch.Tensor): Points of input.
+
+        Returns:
+            Bool: Flag of result.
+        """
         return (para_points[0][-1] == para_points[1][-1]) and (
             para_points[1][-1]
             == para_points[2][-1]) and (para_points[2][-1]
@@ -703,28 +726,23 @@ class PrimitiveHead(nn.Module):
                          plane_equ[-1]) / 4.0 < self.train_cfg['lower_thresh']
 
     def match_point2line(self, points, xmin, xmax, ymin, ymax):
+        """Match points to corresponding edge.
+
+        Args:
+            points (torch.Tensor): Points of input.
+            xmin (float): Min of X-axis.
+            xmax (float): Max of X-axis.
+            ymin (float): Min of Y-axis.
+            ymax (float): Max of Y-axis.
+
+        Returns:
+            Tuple: Flag of matching correspondence.
+        """
         sel1 = torch.abs(points[:, 0] - xmin) < self.train_cfg['line_thresh']
         sel2 = torch.abs(points[:, 0] - xmax) < self.train_cfg['line_thresh']
         sel3 = torch.abs(points[:, 1] - ymin) < self.train_cfg['line_thresh']
         sel4 = torch.abs(points[:, 1] - ymax) < self.train_cfg['line_thresh']
         return sel1, sel2, sel3, sel4
-
-    def compute_flag_loss(self, end_points, point_mask, mode):
-        # Compute existence flag for face and edge centers
-        # Load ground truth votes and assign them to seed points
-        seed_inds = end_points['seed_indices'].long()
-
-        seed_gt_votes_mask = torch.gather(point_mask, 1, seed_inds).float()
-        end_points['sem_mask'] = seed_gt_votes_mask
-
-        sem_cls_label = torch.gather(point_mask, 1, seed_inds)
-        end_points['sub_point_sem_cls_label_' + mode] = sem_cls_label
-
-        pred_flag = end_points['pred_flag_' + mode]
-
-        sem_loss = self.objectness_loss(pred_flag, sem_cls_label.long())
-
-        return sem_loss
 
     def compute_primitivesem_loss(self,
                                   end_points,
@@ -732,7 +750,19 @@ class PrimitiveHead(nn.Module):
                                   point_offset,
                                   point_sem,
                                   mode=''):
-        """Compute final geometric primitive center and semantic."""
+        """Compute loss of primitive module.
+
+        Args:
+            end_points (Dict): Pridictions of primitive module.
+            point_mask (torch.Tensor): Validation of each points.
+            point_offset (torch.Tensor): Ground truth of center offset.
+            point_sem (torch.Tensor): Ground truth of semantic.
+
+        Returns:
+            Tuple: Loss of primitive module.
+        """
+
+        # Compute final geometric primitive center and semantic.
         # Load ground truth votes and assign them to seed points
         batch_size = end_points['seed_points'].shape[0]
         num_seed = end_points['seed_points'].shape[1]
@@ -751,10 +781,6 @@ class PrimitiveHead(nn.Module):
         seed_gt_votes = torch.gather(point_offset, 1, seed_inds_expand)
         seed_gt_sem = torch.gather(point_sem, 1, seed_inds_expand_sem)
         seed_gt_votes += end_points['seed_points']
-
-        end_points['surface_center_gt_' + mode] = seed_gt_votes
-        end_points['surface_sem_gt_' + mode] = seed_gt_sem
-        end_points['surface_mask_gt_' + mode] = seed_gt_votes_mask
 
         # Compute the min of min of distance
         vote_xyz_reshape = vote_xyz.view(batch_size * num_proposal, -1, 3)
@@ -792,7 +818,7 @@ class PrimitiveHead(nn.Module):
 
         # Semantic cls loss
         sem_cls_label = seed_gt_sem[:, :, -1].long()
-        end_points['supp_sem_' + mode] = sem_cls_label
+        # end_points['supp_sem_' + mode] = sem_cls_label
         sem_cls_loss = self.semantic_loss(
             end_points['sem_cls_scores_' + mode].transpose(2, 1),
             sem_cls_label)

@@ -7,7 +7,7 @@ from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS, build_head
+from mmdet.models import HEADS
 from .proposal_refine_module import ProposalRefineModule
 
 
@@ -19,7 +19,6 @@ class H3dHead(nn.Module):
         num_classes (int): The number of classes.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
-        primitive_list (list[dict]): Configs of primitive head.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
         gt_per_seed (int): Number of ground truth votes generated
@@ -38,25 +37,26 @@ class H3dHead(nn.Module):
         semantic_loss (dict): Config of point-wise semantic segmentation loss.
     """
 
-    def __init__(self,
-                 num_classes,
-                 bbox_coder,
-                 primitive_list,
-                 train_cfg=None,
-                 test_cfg=None,
-                 proposal_module_cfg=None,
-                 gt_per_seed=1,
-                 num_proposal=256,
-                 feat_channels=(128, 128),
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 objectness_loss=None,
-                 center_loss=None,
-                 dir_class_loss=None,
-                 dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 semantic_loss=None):
+    def __init__(
+            self,
+            num_classes,
+            bbox_coder,
+            # primitive_list,
+            train_cfg=None,
+            test_cfg=None,
+            proposal_module_cfg=None,
+            gt_per_seed=1,
+            num_proposal=256,
+            feat_channels=(128, 128),
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            objectness_loss=None,
+            center_loss=None,
+            dir_class_loss=None,
+            dir_res_loss=None,
+            size_class_loss=None,
+            size_res_loss=None,
+            semantic_loss=None):
         super(H3dHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -75,12 +75,6 @@ class H3dHead(nn.Module):
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
-
-        assert len(primitive_list) == 3
-        # Primitive module
-        self.prim_z = build_head(primitive_list[0])
-        self.prim_xy = build_head(primitive_list[1])
-        self.prim_line = build_head(primitive_list[2])
 
         self.pnet_final = ProposalRefineModule(
             num_classes=num_classes,
@@ -103,14 +97,6 @@ class H3dHead(nn.Module):
     def forward(self, feat_dict, sample_mod):
         """Forward pass.
 
-        Note:
-            The forward of VoteHead is devided into 4 steps:
-
-                1. Generate vote_points from seed_points.
-                2. Aggregate vote_points.
-                3. Predict bbox and score.
-                4. Decode predictions.
-
         Args:
             feat_dict (dict): Feature dict from backbone.
             sample_mod (str): Sample mode for vote aggregation layer.
@@ -119,22 +105,13 @@ class H3dHead(nn.Module):
         Returns:
             dict: Predictions of vote head.
         """
-        assert sample_mod in ['vote', 'seed', 'random']
-        result_z = self.prim_z(feat_dict, sample_mod)
-        feat_dict.update(result_z)
-        result_xy = self.prim_xy(feat_dict, sample_mod)
-        feat_dict.update(result_xy)
-        result_line = self.prim_line(feat_dict, sample_mod)
-        feat_dict.update(result_line)
-
         aggregated_points = feat_dict['aggregated_points']
         refine_predictions, refine_dict = self.pnet_final(feat_dict)
-        feat_dict.update(refine_dict)
         refine_decode_res = self.bbox_coder.split_pred(refine_predictions,
                                                        aggregated_points)
         for key in refine_decode_res.keys():
-            feat_dict[key + '_opt'] = refine_decode_res[key]
-        return feat_dict
+            refine_dict[key + '_opt'] = refine_decode_res[key]
+        return refine_dict
 
     def loss(self,
              bbox_preds,
@@ -144,6 +121,7 @@ class H3dHead(nn.Module):
              pts_semantic_mask=None,
              pts_instance_mask=None,
              img_metas=None,
+             targets=None,
              gt_bboxes_ignore=None):
         """Compute loss.
 
@@ -158,16 +136,13 @@ class H3dHead(nn.Module):
             pts_instance_mask (None | list[torch.Tensor]): Point-wise
                 instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
+            targets (Tuple) : Targets generated by rpn head.
             gt_bboxes_ignore (None | list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
             dict: Losses of H3dnet.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   pts_semantic_mask, pts_instance_mask,
-                                   bbox_preds)
-
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
          dir_class_targets, dir_res_targets, center_targets, mask_targets,
          valid_gt_masks, objectness_targets, objectness_weights,
@@ -177,12 +152,6 @@ class H3dHead(nn.Module):
                        pts_semantic_mask, pts_instance_mask, img_metas,
                        gt_bboxes_ignore)
         losses = {}
-        loss_z = self.prim_z.loss(*loss_inputs)
-        loss_xy = self.prim_xy.loss(*loss_inputs)
-        loss_line = self.prim_line.loss(*loss_inputs)
-        losses.update(loss_z)
-        losses.update(loss_xy)
-        losses.update(loss_line)
 
         # calculate refined proposal loss
         refined_proposal_loss = self.get_proposal_stage_loss(
