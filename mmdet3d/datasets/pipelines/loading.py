@@ -131,11 +131,10 @@ class LoadPointsFromMultiSweeps(object):
         Returns:
             np.ndarray: Points after removing.
         """
-        points_T = points.T
-        x_filt = np.abs(points_T[0, :]) < radius
-        y_filt = np.abs(points_T[1, :]) < radius
+        x_filt = np.abs(points[:, 0]) < radius
+        y_filt = np.abs(points[:, 1]) < radius
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
-        return points_T[:, not_close].T
+        return points[not_close, :]
 
     def __call__(self, results):
         """Call function to load multi-sweep point clouds from files.
@@ -162,10 +161,10 @@ class LoadPointsFromMultiSweeps(object):
                     sweep_points_list.append(points)
         else:
             if len(results['sweeps']) <= self.sweeps_num:
-                choices = [i for i in range(len(results['sweeps']))]
+                choices = np.arange(len(results['sweeps']))
             else:
                 choices = np.random.choice(
-                    len(results['sweeps']), self.sweeps_num)
+                    len(results['sweeps']), self.sweeps_num, replace=False)
             for idx in choices:
                 sweep = results['sweeps'][idx]
                 points_sweep = self._load_points(sweep['data_path'])

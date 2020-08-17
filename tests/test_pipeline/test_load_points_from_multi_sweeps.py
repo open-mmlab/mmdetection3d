@@ -33,3 +33,7 @@ def test_load_points_from_multi_sweeps():
 
     results = load_points_from_multi_sweeps(results)
     assert results['points'].shape == (451, 5)
+
+    results = dict(points=points, sweeps=[sweep] * 10, timestamp=1.0)
+    results = load_points_from_multi_sweeps(results)
+    assert results['points'].shape == (3259, 5)
