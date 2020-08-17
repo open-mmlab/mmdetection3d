@@ -557,4 +557,3 @@ def test_primitive_head():
     assert losses_dict['center_loss_z'] >= 0
     assert losses_dict['size_loss_z'] >= 0
     assert losses_dict['sem_loss_z'] >= 0
-    assert losses_dict['surface_loss_z'] >= 0
