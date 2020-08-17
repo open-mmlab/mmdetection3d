@@ -48,9 +48,16 @@ class H3DRoIHead(Base3DRoIHead):
         """Initialize assigner and sampler."""
         pass
 
-    def forward_train(self, feats_dict, sample_mod, img_metas, points,
-                      gt_bboxes_3d, gt_labels_3d, pts_semantic_mask,
-                      pts_instance_mask, gt_bboxes_ignore):
+    def forward_train(self,
+                      feats_dict,
+                      sample_mod,
+                      img_metas,
+                      points,
+                      gt_bboxes_3d,
+                      gt_labels_3d,
+                      pts_semantic_mask,
+                      pts_instance_mask,
+                      gt_bboxes_ignore=None):
         """Training forward function of PartAggregationROIHead.
 
         Args:
@@ -99,6 +106,7 @@ class H3DRoIHead(Base3DRoIHead):
         losses.update(loss_line)
 
         targets = feats_dict.pop('targets')
+
         bbox_results = self.bbox_head(feats_dict, sample_mod)
 
         feats_dict.update(bbox_results)

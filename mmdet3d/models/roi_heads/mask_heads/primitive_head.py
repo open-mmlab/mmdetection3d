@@ -14,7 +14,7 @@ class PrimitiveHead(nn.Module):
     r"""Bbox head of `H3dnet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
-        num_dim (int): The dimension of primitive.
+        num_dim (int): The dimension of primitive semantic information.
         num_classes (int): The number of class.
         primitive_mode (str): The mode of primitive module,
             avaliable mode ['z', 'xy', 'line'].
@@ -49,6 +49,7 @@ class PrimitiveHead(nn.Module):
                  semantic_loss=None):
         super(PrimitiveHead, self).__init__()
         assert primitive_mode in ['z', 'xy', 'line']
+        # The dimension of primitive semantic information.
         self.num_dim = num_dim
         self.num_classes = num_classes
         self.primitive_mode = primitive_mode
@@ -106,14 +107,6 @@ class PrimitiveHead(nn.Module):
 
     def forward(self, feat_dict, sample_mod):
         """Forward pass.
-
-        Note:
-            The forward of VoteHead is devided into 4 steps:
-
-                1. Generate vote_points from seed_points.
-                2. Aggregate vote_points.
-                3. Predict primitive cue and score.
-                4. Decode predictions.
 
         Args:
             feat_dict (dict): Feature dict from backbone.
@@ -205,17 +198,16 @@ class PrimitiveHead(nn.Module):
             dict: Losses of Votenet.
         """
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   pts_semantic_mask, pts_instance_mask)
+                                   pts_semantic_mask, pts_instance_mask,
+                                   bbox_preds)
 
-        (point_mask, point_sem, point_offset) = targets
+        (point_mask, point_offset, gt_primitive_center, gt_primitive_semantic,
+         gt_sem_cls_label, gt_primitive_mask) = targets
 
         losses = {}
-
         # Compute the loss of primitive existence flag
-        seed_inds = bbox_preds['seed_indices'].long()
-        sem_cls_label = torch.gather(point_mask, 1, seed_inds)
         pred_flag = bbox_preds['pred_flag_' + self.primitive_mode]
-        flag_loss = self.objectness_loss(pred_flag, sem_cls_label.long())
+        flag_loss = self.objectness_loss(pred_flag, gt_primitive_mask.long())
         losses['flag_loss_' + self.primitive_mode] = flag_loss
 
         # calculate vote loss
@@ -225,12 +217,20 @@ class PrimitiveHead(nn.Module):
             bbox_preds['seed_indices'], point_mask, point_offset)
         losses['vote_loss_' + self.primitive_mode] = vote_loss
 
+        num_proposal = bbox_preds['aggregated_points_' +
+                                  self.primitive_mode].shape[1]
+        primitive_center = bbox_preds['center_' + self.primitive_mode]
+        if self.primitive_mode != 'line':
+            primitive_semantic = bbox_preds['size_residuals_' +
+                                            self.primitive_mode].contiguous()
+        else:
+            primitive_semantic = None
+        semancitc_scores = bbox_preds['sem_cls_scores_' +
+                                      self.primitive_mode].transpose(2, 1)
         center_loss, size_loss, sem_cls_loss = self.compute_primitivesem_loss(
-            bbox_preds,
-            point_mask,
-            point_offset,
-            point_sem,
-            mode=self.primitive_mode)
+            primitive_center, primitive_semantic, semancitc_scores,
+            num_proposal, gt_primitive_center, gt_primitive_semantic,
+            gt_sem_cls_label, gt_primitive_mask)
         losses['center_loss_' + self.primitive_mode] = center_loss
         losses['size_loss_' + self.primitive_mode] = size_loss
         losses['sem_loss_' + self.primitive_mode] = sem_cls_loss
@@ -255,7 +255,7 @@ class PrimitiveHead(nn.Module):
                 label of each batch.
             pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
                 label of each batch.
-            bbox_preds (torch.Tensor): Predictions of primitive head.
+            bbox_preds (dict): Predictions from forward of primitive head.
 
         Returns:
             tuple[torch.Tensor]: Targets of primitive head.
@@ -288,7 +288,30 @@ class PrimitiveHead(nn.Module):
         point_sem = torch.stack(point_sem)
         point_offset = torch.stack(point_offset)
 
-        return (point_mask, point_sem, point_offset)
+        batch_size = point_mask.shape[0]
+        num_proposal = bbox_preds['aggregated_points_' +
+                                  self.primitive_mode].shape[1]
+        num_seed = bbox_preds['seed_points'].shape[1]
+        seed_inds = bbox_preds['seed_indices'].long()
+        seed_inds_expand = seed_inds.view(batch_size, num_seed,
+                                          1).repeat(1, 1, 3)
+        seed_gt_votes = torch.gather(point_offset, 1, seed_inds_expand)
+        seed_gt_votes += bbox_preds['seed_points']
+        gt_primitive_center = seed_gt_votes.view(batch_size * num_proposal, 1,
+                                                 3)
+
+        seed_inds_expand_sem = seed_inds.view(batch_size, num_seed, 1).repeat(
+            1, 1, 4 + self.num_dim)
+        seed_gt_sem = torch.gather(point_sem, 1, seed_inds_expand_sem)
+        gt_primitive_semantic = seed_gt_sem[:, :, 3:3 + self.num_dim].view(
+            batch_size * num_proposal, 1, self.num_dim).contiguous()
+
+        gt_sem_cls_label = seed_gt_sem[:, :, -1].long()
+
+        gt_votes_mask = torch.gather(point_mask, 1, seed_inds)
+
+        return (point_mask, point_offset, gt_primitive_center,
+                gt_primitive_semantic, gt_sem_cls_label, gt_votes_mask)
 
     def get_targets_single(self,
                            points,
@@ -373,42 +396,42 @@ class PrimitiveHead(nn.Module):
             if self.primitive_mode == 'line':
                 if torch.sum(line_sel1) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel1]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel1], axis=0)
-                    linecenter[1] = (ymin + ymax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel1], axis=0)
+                    line_center[1] = (ymin + ymax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel1]] = linecenter - x[sel][line_sel1]
+                        ind[sel][line_sel1]] = line_center - x[sel][line_sel1]
                     point_line_sem[ind[sel][line_sel1]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         pts_semantic_mask[ind][0]
                     ])
                 if torch.sum(line_sel2) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel2]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel2], axis=0)
-                    linecenter[1] = (ymin + ymax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel2], axis=0)
+                    line_center[1] = (ymin + ymax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel2]] = linecenter - x[sel][line_sel2]
+                        ind[sel][line_sel2]] = line_center - x[sel][line_sel2]
                     point_line_sem[ind[sel][line_sel2]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         pts_semantic_mask[ind][0]
                     ])
                 if torch.sum(line_sel3) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel3]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel3], axis=0)
-                    linecenter[0] = (xmin + xmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel3], axis=0)
+                    line_center[0] = (xmin + xmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel3]] = linecenter - x[sel][line_sel3]
+                        ind[sel][line_sel3]] = line_center - x[sel][line_sel3]
                     point_line_sem[ind[sel][line_sel3]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         pts_semantic_mask[ind][0]
                     ])
                 if torch.sum(line_sel4) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel4]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel4], axis=0)
-                    linecenter[0] = (xmin + xmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel4], axis=0)
+                    line_center[0] = (xmin + xmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel4]] = linecenter - x[sel][line_sel4]
+                        ind[sel][line_sel4]] = line_center - x[sel][line_sel4]
                     point_line_sem[ind[sel][line_sel4]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
 
@@ -440,42 +463,42 @@ class PrimitiveHead(nn.Module):
             if self.primitive_mode == 'line':
                 if torch.sum(line_sel1) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel1]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel1], axis=0)
-                    linecenter[1] = (ymin + ymax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel1], axis=0)
+                    line_center[1] = (ymin + ymax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel1]] = linecenter - x[sel][line_sel1]
+                        ind[sel][line_sel1]] = line_center - x[sel][line_sel1]
                     point_line_sem[ind[sel][line_sel1]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
                 if torch.sum(line_sel2) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel2]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel2], axis=0)
-                    linecenter[1] = (ymin + ymax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel2], axis=0)
+                    line_center[1] = (ymin + ymax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel2]] = linecenter - x[sel][line_sel2]
+                        ind[sel][line_sel2]] = line_center - x[sel][line_sel2]
                     point_line_sem[ind[sel][line_sel2]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
                 if torch.sum(line_sel3) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel3]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel3], axis=0)
-                    linecenter[0] = (xmin + xmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel3], axis=0)
+                    line_center[0] = (xmin + xmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel3]] = linecenter - x[sel][line_sel3]
+                        ind[sel][line_sel3]] = line_center - x[sel][line_sel3]
                     point_line_sem[ind[sel][line_sel3]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
                 if torch.sum(line_sel4) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel4]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel4], axis=0)
-                    linecenter[0] = (xmin + xmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel4], axis=0)
+                    line_center[0] = (xmin + xmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel4]] = linecenter - x[sel][line_sel4]
+                        ind[sel][line_sel4]] = line_center - x[sel][line_sel4]
                     point_line_sem[ind[sel][line_sel4]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
 
@@ -529,22 +552,22 @@ class PrimitiveHead(nn.Module):
             if self.primitive_mode == 'line':
                 if torch.sum(line_sel1) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel1]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel1], axis=0)
-                    linecenter[2] = (zmin + zmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel1], axis=0)
+                    line_center[2] = (zmin + zmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel1]] = linecenter - x[sel][line_sel1]
+                        ind[sel][line_sel1]] = line_center - x[sel][line_sel1]
                     point_line_sem[ind[sel][line_sel1]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
                 if torch.sum(line_sel2) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel2]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel2], axis=0)
-                    linecenter[2] = (zmin + zmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel2], axis=0)
+                    line_center[2] = (zmin + zmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel2]] = linecenter - x[sel][line_sel2]
+                        ind[sel][line_sel2]] = line_center - x[sel][line_sel2]
                     point_line_sem[ind[sel][line_sel2]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
 
@@ -574,22 +597,22 @@ class PrimitiveHead(nn.Module):
             if self.primitive_mode == 'line':
                 if torch.sum(line_sel1) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel1]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel1], axis=0)
-                    linecenter[2] = (zmin + zmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel1], axis=0)
+                    line_center[2] = (zmin + zmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel1]] = linecenter - x[sel][line_sel1]
+                        ind[sel][line_sel1]] = line_center - x[sel][line_sel1]
                     point_line_sem[ind[sel][line_sel1]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
                 if torch.sum(line_sel2) > self.train_cfg['num_point_line']:
                     point_line_mask[ind[sel][line_sel2]] = 1.0
-                    linecenter = torch.mean(x[sel][line_sel2], axis=0)
-                    linecenter[2] = (zmin + zmax) / 2.0
+                    line_center = torch.mean(x[sel][line_sel2], axis=0)
+                    line_center[2] = (zmin + zmax) / 2.0
                     point_line_offset[
-                        ind[sel][line_sel2]] = linecenter - x[sel][line_sel2]
+                        ind[sel][line_sel2]] = line_center - x[sel][line_sel2]
                     point_line_sem[ind[sel][line_sel2]] = points.new_tensor([
-                        linecenter[0], linecenter[1], linecenter[2],
+                        line_center[0], line_center[1], line_center[2],
                         (pts_semantic_mask[ind][0])
                     ])
 
@@ -678,9 +701,9 @@ class PrimitiveHead(nn.Module):
         elif self.primitive_mode == 'line':
             return (point_line_mask, point_line_sem, point_line_offset)
         else:
-            NotImplementedError
+            raise NotImplementedError
 
-    def primitive_decode_scores(self, preds, aggregated_points, mode=''):
+    def primitive_decode_scores(self, preds, aggregated_points, mode='z'):
         """Decode the outputs of primitive module.
 
         Args:
@@ -744,85 +767,55 @@ class PrimitiveHead(nn.Module):
         sel4 = torch.abs(points[:, 1] - ymax) < self.train_cfg['line_thresh']
         return sel1, sel2, sel3, sel4
 
-    def compute_primitivesem_loss(self,
-                                  end_points,
-                                  point_mask,
-                                  point_offset,
-                                  point_sem,
-                                  mode=''):
+    def compute_primitivesem_loss(self, primitive_center, primitive_semantic,
+                                  semantic_scores, num_proposal,
+                                  gt_primitive_center, gt_primitive_semantic,
+                                  gt_sem_cls_label, gt_primitive_mask):
         """Compute loss of primitive module.
 
         Args:
-            end_points (Dict): Pridictions of primitive module.
-            point_mask (torch.Tensor): Validation of each points.
-            point_offset (torch.Tensor): Ground truth of center offset.
-            point_sem (torch.Tensor): Ground truth of semantic.
+            primitive_center (torch.Tensor): Pridictions of primitive center.
+            primitive_semantic (torch.Tensor): Pridictions of primitive
+                semantic.
+            semantic_scores (torch.Tensor): Pridictions of primitive
+                semantic scores.
+            num_proposal (int): The number of primitive proposal.
+            gt_primitive_center (torch.Tensor): Ground truth of
+                primitive center.
+            gt_votes_sem (torch.Tensor): Ground truth of primitive semantic.
+            gt_sem_cls_label (torch.Tensor): Ground truth of primitive
+                semantic class.
+            gt_primitive_mask (torch.Tensor): Ground truth of primitive mask.
 
         Returns:
             Tuple: Loss of primitive module.
         """
-
-        # Compute final geometric primitive center and semantic.
-        # Load ground truth votes and assign them to seed points
-        batch_size = end_points['seed_points'].shape[0]
-        num_seed = end_points['seed_points'].shape[1]
-        vote_xyz = end_points['center_' + mode]
-        seed_inds = end_points['seed_indices'].long()
-
-        num_proposal = end_points['aggregated_points_' + mode].shape[1]
-
-        seed_gt_votes_mask = torch.gather(point_mask, 1, seed_inds)
-        seed_inds_expand = seed_inds.view(batch_size, num_seed,
-                                          1).repeat(1, 1, 3)
-
-        seed_inds_expand_sem = seed_inds.view(batch_size, num_seed, 1).repeat(
-            1, 1, 4 + self.num_dim)
-
-        seed_gt_votes = torch.gather(point_offset, 1, seed_inds_expand)
-        seed_gt_sem = torch.gather(point_sem, 1, seed_inds_expand_sem)
-        seed_gt_votes += end_points['seed_points']
-
-        # Compute the min of min of distance
-        vote_xyz_reshape = vote_xyz.view(batch_size * num_proposal, -1, 3)
-        seed_gt_votes_reshape = seed_gt_votes.view(batch_size * num_proposal,
-                                                   1, 3)
-        # A predicted vote to no where is not penalized as long as there is a
-        # good vote near the GT vote.
+        batch_size = primitive_center.shape[0]
+        vote_xyz_reshape = primitive_center.view(batch_size * num_proposal, -1,
+                                                 3)
         center_loss = self.center_loss(
             vote_xyz_reshape,
-            seed_gt_votes_reshape,
-            dst_weight=seed_gt_votes_mask.view(batch_size * num_proposal,
-                                               1))[1]
+            gt_primitive_center,
+            dst_weight=gt_primitive_mask.view(batch_size * num_proposal, 1))[1]
         center_loss = center_loss.sum() / (
-            torch.sum(seed_gt_votes_mask.float()) + 1e-6)
+            torch.sum(gt_primitive_mask.float()) + 1e-6)
 
-        # Compute the min of min of distance
-        # Need to remove this soon
-        if mode != 'line':
-            size_xyz = end_points['size_residuals_' + mode].contiguous()
-            size_xyz_reshape = size_xyz.view(batch_size * num_proposal, -1,
-                                             self.num_dim).contiguous()
-            seed_gt_votes_reshape = seed_gt_sem[:, :, 3:3 + self.num_dim].view(
-                batch_size * num_proposal, 1, self.num_dim).contiguous()
-            # A predicted vote to no where is not penalized as long as
-            # there is a good vote near the GT vote.
+        if self.primitive_mode != 'line':
+            size_xyz_reshape = primitive_semantic.view(
+                batch_size * num_proposal, -1, self.num_dim).contiguous()
             size_loss = self.center_loss(
                 size_xyz_reshape,
-                seed_gt_votes_reshape,
-                dst_weight=seed_gt_votes_mask.view(batch_size * num_proposal,
-                                                   1))[1]
+                gt_primitive_semantic,
+                dst_weight=gt_primitive_mask.view(batch_size * num_proposal,
+                                                  1))[1]
             size_loss = size_loss.sum() / (
-                torch.sum(seed_gt_votes_mask.float()) + 1e-6)
+                torch.sum(gt_primitive_mask.float()) + 1e-6)
         else:
             size_loss = torch.tensor(0).float().to(center_loss.device)
 
         # Semantic cls loss
-        sem_cls_label = seed_gt_sem[:, :, -1].long()
-        # end_points['supp_sem_' + mode] = sem_cls_label
-        sem_cls_loss = self.semantic_loss(
-            end_points['sem_cls_scores_' + mode].transpose(2, 1),
-            sem_cls_label)
-        sem_cls_loss = torch.sum(sem_cls_loss * seed_gt_votes_mask.float()) / (
-            torch.sum(seed_gt_votes_mask.float()) + 1e-6)
+        sem_cls_loss = self.semantic_loss(semantic_scores, gt_sem_cls_label)
+        sem_cls_loss = torch.sum(sem_cls_loss * gt_primitive_mask.float()) / (
+            torch.sum(gt_primitive_mask.float()) + 1e-6)
 
         return center_loss, size_loss, sem_cls_loss
