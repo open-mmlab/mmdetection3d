@@ -184,7 +184,8 @@ class VoteHead(nn.Module):
              pts_semantic_mask=None,
              pts_instance_mask=None,
              img_metas=None,
-             gt_bboxes_ignore=None):
+             gt_bboxes_ignore=None,
+             ret_target=False):
         """Compute loss.
 
         Args:
@@ -200,6 +201,7 @@ class VoteHead(nn.Module):
             img_metas (list[dict]): Contain pcd and img's meta info.
             gt_bboxes_ignore (None | list[torch.Tensor]): Specify
                 which bounding.
+            ret_target (Bool): Return targets or not.
 
         Returns:
             dict: Losses of Votenet.
@@ -284,6 +286,10 @@ class VoteHead(nn.Module):
             dir_res_loss=dir_res_loss,
             size_class_loss=size_class_loss,
             size_res_loss=size_res_loss)
+
+        if ret_target:
+            losses['targets'] = targets
+
         return losses
 
     def get_targets(self,
@@ -492,7 +498,12 @@ class VoteHead(nn.Module):
                 dir_class_targets, dir_res_targets, center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
-    def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
+    def get_bboxes(self,
+                   points,
+                   bbox_preds,
+                   input_metas,
+                   rescale=False,
+                   with_nms=True):
         """Generate bboxes from vote head predictions.
 
         Args:
@@ -500,6 +511,7 @@ class VoteHead(nn.Module):
             bbox_preds (dict): Predictions from vote head.
             input_metas (list[dict]): Point cloud and image's meta info.
             rescale (bool): Whether to rescale bboxes.
+            with_nms (bool): Whether to apply NMS.
 
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
@@ -509,19 +521,23 @@ class VoteHead(nn.Module):
         sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
-        batch_size = bbox3d.shape[0]
-        results = list()
-        for b in range(batch_size):
-            bbox_selected, score_selected, labels = self.multiclass_nms_single(
-                obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
-                input_metas[b])
-            bbox = input_metas[b]['box_type_3d'](
-                bbox_selected,
-                box_dim=bbox_selected.shape[-1],
-                with_yaw=self.bbox_coder.with_rot)
-            results.append((bbox, score_selected, labels))
+        if with_nms:
+            batch_size = bbox3d.shape[0]
+            results = list()
+            for b in range(batch_size):
+                bbox_selected, score_selected, labels = \
+                    self.multiclass_nms_single(obj_scores[b], sem_scores[b],
+                                               bbox3d[b], points[b, ..., :3],
+                                               input_metas[b])
+                bbox = input_metas[b]['box_type_3d'](
+                    bbox_selected,
+                    box_dim=bbox_selected.shape[-1],
+                    with_yaw=self.bbox_coder.with_rot)
+                results.append((bbox, score_selected, labels))
 
-        return results
+            return results
+        else:
+            return bbox3d
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta):

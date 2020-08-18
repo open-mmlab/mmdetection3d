@@ -569,32 +569,29 @@ def test_h3d_head():
     h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x8_scannet-3d-18class.py')
     self = build_head(h3d_head_cfg).cuda()
 
-    # test forward
+    # prepare roi outputs
     fp_xyz = [torch.rand([1, 1024, 3], dtype=torch.float32).cuda()]
     hd_features = torch.rand([1, 256, 1024], dtype=torch.float32).cuda()
     fp_indices = [torch.randint(0, 128, [1, 1024]).cuda()]
-    center = torch.rand([1, 256, 3], dtype=torch.float32).cuda()
-    size_res = torch.rand([1, 256, 18, 3], dtype=torch.float32).cuda()
-    sem_scores = torch.rand([1, 256, 18], dtype=torch.float32).cuda()
-    dir_class = torch.rand([1, 256, 24], dtype=torch.float32).cuda()
-    dir_res = torch.rand([1, 256, 24], dtype=torch.float32).cuda()
     aggregated_points = torch.rand([1, 256, 3], dtype=torch.float32).cuda()
     aggregated_features = torch.rand([1, 128, 256], dtype=torch.float32).cuda()
+    rpn_proposals = torch.cat([
+        torch.rand([1, 256, 3], dtype=torch.float32).cuda() * 4 - 2,
+        torch.rand([1, 256, 3], dtype=torch.float32).cuda() * 4,
+        torch.zeros([1, 256, 1]).cuda()
+    ],
+                              dim=-1)
 
     input_dict = dict(
         fp_xyz_net0=fp_xyz,
         hd_feature=hd_features,
-        fp_indices_net0=fp_indices,
         aggregated_points=aggregated_points,
-        center=center,
-        size_res=size_res,
-        sem_scores=sem_scores,
-        dir_class=dir_class,
-        dir_res=dir_res,
         aggregated_features=aggregated_features,
         seed_points=fp_xyz[0],
-        seed_indices=fp_indices[0])
+        seed_indices=fp_indices[0],
+        rpn_proposals=rpn_proposals)
 
+    # prepare gt label
     from mmdet3d.core.bbox import DepthInstance3DBoxes
     gt_bboxes_3d = [
         DepthInstance3DBoxes(torch.rand([4, 7], dtype=torch.float32).cuda()),
@@ -608,6 +605,7 @@ def test_h3d_head():
     pts_instance_mask = [pts_instance_mask[0]]
     points = torch.rand([1, 1024, 3], dtype=torch.float32).cuda()
 
+    # prepare rpn targets
     vote_targets = torch.rand([1, 1024, 9], dtype=torch.float32).cuda()
     vote_target_masks = torch.rand([1, 1024], dtype=torch.float32).cuda()
     size_class_targets = torch.rand([1, 256],
@@ -623,12 +621,16 @@ def test_h3d_head():
     objectness_weights = torch.rand([1, 256], dtype=torch.float32).cuda()
     box_loss_weights = torch.rand([1, 256], dtype=torch.float32).cuda()
     valid_gt_weights = torch.rand([1, 4], dtype=torch.float32).cuda()
+
     targets = (vote_targets, vote_target_masks, size_class_targets,
                size_res_targets, dir_class_targets, dir_res_targets,
                center_targets, mask_targets, valid_gt_masks,
                objectness_targets, objectness_weights, box_loss_weights,
                valid_gt_weights)
+
     input_dict['targets'] = targets
+
+    # train forward
     ret_dict = self.forward_train(
         input_dict,
         'vote',
@@ -645,4 +647,4 @@ def test_h3d_head():
     assert ret_dict['size_loss_z'] >= 0
     assert ret_dict['sem_loss_z'] >= 0
     assert ret_dict['objectness_loss_opt'] >= 0
-    assert ret_dict['objectness_loss_sem_potential'] >= 0
+    assert ret_dict['primitive_sem_matching_loss'] >= 0

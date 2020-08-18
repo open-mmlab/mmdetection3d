@@ -24,9 +24,9 @@ class H3DRoIHead(Base3DRoIHead):
             bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
         # Primitive module
         assert len(primitive_list) == 3
-        self.prim_z = build_head(primitive_list[0])
-        self.prim_xy = build_head(primitive_list[1])
-        self.prim_line = build_head(primitive_list[2])
+        self.primitive_z = build_head(primitive_list[0])
+        self.primitive_xy = build_head(primitive_list[1])
+        self.primitive_line = build_head(primitive_list[2])
 
     def init_weights(self, pretrained):
         """Initialize weights, skip since ``H3DROIHead`` does not need to
@@ -82,13 +82,13 @@ class H3DRoIHead(Base3DRoIHead):
         losses = dict()
 
         assert sample_mod in ['vote', 'seed', 'random']
-        result_z = self.prim_z(feats_dict, sample_mod)
+        result_z = self.primitive_z(feats_dict, sample_mod)
         feats_dict.update(result_z)
 
-        result_xy = self.prim_xy(feats_dict, sample_mod)
+        result_xy = self.primitive_xy(feats_dict, sample_mod)
         feats_dict.update(result_xy)
 
-        result_line = self.prim_line(feats_dict, sample_mod)
+        result_line = self.primitive_line(feats_dict, sample_mod)
         feats_dict.update(result_line)
 
         primitive_loss_inputs = (feats_dict, points, gt_bboxes_3d,
@@ -96,13 +96,13 @@ class H3DRoIHead(Base3DRoIHead):
                                  pts_instance_mask, img_metas,
                                  gt_bboxes_ignore)
 
-        loss_z = self.prim_z.loss(*primitive_loss_inputs)
+        loss_z = self.primitive_z.loss(*primitive_loss_inputs)
         losses.update(loss_z)
 
-        loss_xy = self.prim_xy.loss(*primitive_loss_inputs)
+        loss_xy = self.primitive_xy.loss(*primitive_loss_inputs)
         losses.update(loss_xy)
 
-        loss_line = self.prim_line.loss(*primitive_loss_inputs)
+        loss_line = self.primitive_line.loss(*primitive_loss_inputs)
         losses.update(loss_line)
 
         targets = feats_dict.pop('targets')
@@ -134,20 +134,20 @@ class H3DRoIHead(Base3DRoIHead):
             sample_mod (str): Sample mode for vote aggregation layer.
                 valid modes are "vote", "seed" and "random".
             img_metas (list[dict]): Contain pcd and img's meta info.
-            points (list[torch.Tensor]): Input points.
+            points (torch.Tensor): Input points.
             rescale (bool): Whether to rescale results.
 
         Returns:
             dict: Bbox results of one frame.
         """
         assert sample_mod in ['vote', 'seed', 'random']
-        result_z = self.prim_z(feats_dict, sample_mod)
+        result_z = self.primitive_z(feats_dict, sample_mod)
         feats_dict.update(result_z)
 
-        result_xy = self.prim_xy(feats_dict, sample_mod)
+        result_xy = self.primitive_xy(feats_dict, sample_mod)
         feats_dict.update(result_xy)
 
-        result_line = self.prim_line(feats_dict, sample_mod)
+        result_line = self.primitive_line(feats_dict, sample_mod)
         feats_dict.update(result_line)
 
         bbox_preds = self.bbox_head(feats_dict, sample_mod)

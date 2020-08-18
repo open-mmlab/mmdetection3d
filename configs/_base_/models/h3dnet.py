@@ -39,7 +39,8 @@ proposal_module_cfg = dict(
         class_weight=[0.2, 0.8],
         reduction='none',
         loss_weight=5.0),
-)
+    primitive_center_loss=dict(
+        type='MSELoss', reduction='none', loss_weight=1.0))
 
 model = dict(
     type='H3DNet',
