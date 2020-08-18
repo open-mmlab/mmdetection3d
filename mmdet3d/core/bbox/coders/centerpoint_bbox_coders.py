@@ -32,7 +32,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         self.out_size_factor = out_size_factor
         self.voxel_size = voxel_size
         self.post_center_range = post_center_range
-        self.K = max_num
+        self.max_num = max_num
         self.score_threshold = score_threshold
         self.code_size = code_size
 
@@ -133,49 +133,49 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         """
         batch, cat, _, _ = heat.size()
 
-        scores, inds, clses, ys, xs = self._topk(heat, K=self.K)
+        scores, inds, clses, ys, xs = self._topk(heat, K=self.max_num)
 
         if reg is not None:
             reg = self._transpose_and_gather_feat(reg, inds)
-            reg = reg.view(batch, self.K, 2)
-            xs = xs.view(batch, self.K, 1) + reg[:, :, 0:1]
-            ys = ys.view(batch, self.K, 1) + reg[:, :, 1:2]
+            reg = reg.view(batch, self.max_num, 2)
+            xs = xs.view(batch, self.max_num, 1) + reg[:, :, 0:1]
+            ys = ys.view(batch, self.max_num, 1) + reg[:, :, 1:2]
         else:
-            xs = xs.view(batch, self.K, 1) + 0.5
-            ys = ys.view(batch, self.K, 1) + 0.5
+            xs = xs.view(batch, self.max_num, 1) + 0.5
+            ys = ys.view(batch, self.max_num, 1) + 0.5
 
         # rotation value and direction label
         rots = self._transpose_and_gather_feat(rots, inds)
-        rots = rots.view(batch, self.K, 1)
+        rots = rots.view(batch, self.max_num, 1)
 
         rotc = self._transpose_and_gather_feat(rotc, inds)
-        rotc = rotc.view(batch, self.K, 1)
+        rotc = rotc.view(batch, self.max_num, 1)
         rot = torch.atan2(rots, rotc)
 
         # height in the bev
         hei = self._transpose_and_gather_feat(hei, inds)
-        hei = hei.view(batch, self.K, 1)
+        hei = hei.view(batch, self.max_num, 1)
 
         # dim of the box
         dim = self._transpose_and_gather_feat(dim, inds)
-        dim = dim.view(batch, self.K, 3)
+        dim = dim.view(batch, self.max_num, 3)
 
         # class label
-        clses = clses.view(batch, self.K).float()
-        scores = scores.view(batch, self.K)
+        clses = clses.view(batch, self.max_num).float()
+        scores = scores.view(batch, self.max_num)
 
         xs = xs.view(
-            batch, self.K,
+            batch, self.max_num,
             1) * self.out_size_factor * self.voxel_size[0] + self.pc_range[0]
         ys = ys.view(
-            batch, self.K,
+            batch, self.max_num,
             1) * self.out_size_factor * self.voxel_size[1] + self.pc_range[1]
 
         if vel is None:  # KITTI FORMAT
             final_box_preds = torch.cat([xs, ys, hei, dim, rot], dim=2)
         else:  # exist velocity, nuscene format
             vel = self._transpose_and_gather_feat(vel, inds)
-            vel = vel.view(batch, self.K, 2)
+            vel = vel.view(batch, self.max_num, 2)
             final_box_preds = torch.cat([xs, ys, hei, dim, vel, rot], dim=2)
 
         final_scores = scores
