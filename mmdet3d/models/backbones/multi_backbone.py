@@ -30,7 +30,7 @@ class MultiBackbone(nn.Module):
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.01),
                  act_cfg=dict(type='ReLU'),
-                 suffixes=['net0', 'net1'],
+                 suffixes=('net0', 'net1'),
                  **kwargs):
         super().__init__()
         assert isinstance(backbones, dict) or isinstance(backbones, list)
@@ -116,8 +116,7 @@ class MultiBackbone(nn.Module):
             ret.update(cur_ret)
 
         # Combine the feature here
-        features_hd_discriptor = torch.cat(fp_features, dim=1)
-        features_hd_discriptor = self.aggregation_layers(
-            features_hd_discriptor)
-        ret['hd_feature'] = features_hd_discriptor
+        hd_feature = torch.cat(fp_features, dim=1)
+        hd_feature = self.aggregation_layers(hd_feature)
+        ret['hd_feature'] = hd_feature
         return ret
