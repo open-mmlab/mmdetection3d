@@ -3,7 +3,8 @@ import torch
 from mmdet3d.models.builder import build_backbone, build_neck
 
 
-def test_centerpoint_rpn():
+def test_centerpoint_fpn():
+
     second_cfg = dict(
         type='SECOND',
         in_channels=64,
@@ -15,6 +16,7 @@ def test_centerpoint_rpn():
 
     second = build_backbone(second_cfg)
 
+    # centerpoint usage of fpn
     centerpoint_fpn_cfg = dict(
         type='SECONDFPN',
         in_channels=[64, 128, 256],
@@ -24,9 +26,20 @@ def test_centerpoint_rpn():
         upsample_cfg=dict(type='deconv', bias=False),
         use_conv_for_no_stride=True)
 
-    second_fpn = build_neck(centerpoint_fpn_cfg)
+    # original usage of fpn
+    fpn_cfg = dict(
+        type='SECONDFPN',
+        in_channels=[64, 128, 256],
+        upsample_strides=[1, 2, 4],
+        out_channels=[128, 128, 128])
+
+    second_fpn = build_neck(fpn_cfg)
+
+    centerpoint_second_fpn = build_neck(centerpoint_fpn_cfg)
 
     input = torch.rand([4, 64, 512, 512])
     sec_output = second(input)
-    output = second_fpn(sec_output)
-    assert output[0].shape == torch.Size([4, 384, 128, 128])
+    centerpoint_output = centerpoint_second_fpn(sec_output)
+    second_output = second_fpn(sec_output)
+    assert centerpoint_output[0].shape == torch.Size([4, 384, 128, 128])
+    assert second_output[0].shape == torch.Size([4, 384, 256, 256])

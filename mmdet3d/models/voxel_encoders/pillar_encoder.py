@@ -32,7 +32,7 @@ class PillarFeatureNet(nn.Module):
         mode (str, optional): The mode to gather point features. Options are
             'max' or 'avg'. Defaults to 'max'.
         legacy (bool): Whether to use the new behavior or
-            the original behavior.
+            the original behavior. Defaults to True.
     """
 
     def __init__(self,
@@ -45,7 +45,7 @@ class PillarFeatureNet(nn.Module):
                  point_cloud_range=(0, -40, -3, 70.4, 40, 1),
                  norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
                  mode='max',
-                 legacy=False):
+                 legacy=True):
         super(PillarFeatureNet, self).__init__()
         assert len(feat_channels) > 0
         self.legacy = legacy
@@ -110,7 +110,7 @@ class PillarFeatureNet(nn.Module):
         # Find distance of x, y, and z from pillar center
         dtype = features.dtype
         if self._with_voxel_center:
-            if self.legacy:
+            if not self.legacy:
                 f_center = torch.zeros_like(features[:, :, :2])
                 f_center[:, :, 0] = features[:, :, 0] - (
                     coors[:, 3].to(dtype).unsqueeze(1) * self.vx +
