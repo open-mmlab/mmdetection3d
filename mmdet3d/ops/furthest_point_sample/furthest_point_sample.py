@@ -76,13 +76,3 @@ class FurthestPointSamplingWithDist(Function):
 
 furthest_point_sample = FurthestPointSampling.apply
 furthest_point_sample_with_dist = FurthestPointSamplingWithDist.apply
-
-if __name__ == '__main__':
-    import numpy as np
-    fps_idx = np.load('fps_idx.npy')
-    features_for_fps_distance = np.load('features_for_fps_distance.npy')
-    fps_idx = torch.from_numpy(fps_idx).cuda()
-    features_for_fps_distance = torch.from_numpy(
-        features_for_fps_distance).cuda()
-    fps_idx_t = furthest_point_sample_with_dist(features_for_fps_distance, 512)
-    assert (fps_idx_t - fps_idx).sum() == 0

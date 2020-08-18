@@ -332,3 +332,13 @@ def test_fps_with_dist():
                         xyz.unsqueeze(dim=2))**2).sum(-1)
     idx = furthest_point_sample_with_dist(xyz_square_dist, 3)
     assert torch.all(idx == expected_idx)
+
+    import numpy as np
+    fps_idx = np.load('tests/data/ops/fps_idx.npy')
+    features_for_fps_distance = np.load(
+        'tests/data/ops/features_for_fps_distance.npy')
+    expected_idx = torch.from_numpy(fps_idx).cuda()
+    features_for_fps_distance = torch.from_numpy(
+        features_for_fps_distance).cuda()
+    idx = furthest_point_sample_with_dist(features_for_fps_distance, 32)
+    assert torch.all(idx == expected_idx)

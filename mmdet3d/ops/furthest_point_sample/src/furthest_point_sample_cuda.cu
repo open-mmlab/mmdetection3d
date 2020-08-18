@@ -333,7 +333,7 @@ void furthest_point_sampling_with_dist_kernel_launcher(int b, int n, int m,
                                                        float *temp, int *idxs,
                                                        cudaStream_t stream) {
   // dataset: (B, N, N)
-  // tmp: (B, N)
+  // temp: (B, N)
   // output:
   //      idx: (B, M)
 
