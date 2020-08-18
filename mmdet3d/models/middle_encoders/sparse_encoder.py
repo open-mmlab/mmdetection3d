@@ -12,12 +12,18 @@ class SparseEncoder(nn.Module):
     Args:
         in_channels (int): The number of input channels.
         sparse_shape (list[int]): The sparse shape of input tensor.
-        norm_cfg (dict): Config of normalization layer.
+        order (list[str]): Order of conv module. Defaults to ('conv',
+            'norm', 'act').
+        norm_cfg (dict): Config of normalization layer. Defaults to
+            dict(type='BN1d', eps=1e-3, momentum=0.01).
         base_channels (int): Out channels for conv_input layer.
+            Defaults to 16.
         output_channels (int): Out channels for conv_out layer.
+            Defaults to 128.
         encoder_channels (tuple[tuple[int]]):
             Convolutional channels of each encode block.
         encoder_paddings (tuple[tuple[int]]): Paddings of each encode block.
+            Defaults to ((16, ), (32, 32, 32), (64, 64, 64), (64, 64, 64)).
         block_type (str): Type of the block to use. Defaults to 'conv_module'.
     """
 
