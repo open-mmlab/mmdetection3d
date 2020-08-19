@@ -500,11 +500,17 @@ def test_primitive_head():
         center_loss=dict(
             type='ChamferDistance',
             mode='l1',
-            reduction='none',
+            reduction='sum',
             loss_src_weight=1.0,
             loss_dst_weight=1.0),
-        semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='none', loss_weight=1.0),
+        semantic_reg_loss=dict(
+            type='ChamferDistance',
+            mode='l1',
+            reduction='sum',
+            loss_src_weight=1.0,
+            loss_dst_weight=1.0),
+        semantic_cls_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         train_cfg=dict(
             dist_thresh=0.2,
             var_thresh=1e-2,
@@ -512,6 +518,7 @@ def test_primitive_head():
             num_point=100,
             num_point_line=10,
             line_thresh=0.2))
+
     self = build_head(primitive_head_cfg).cuda()
     fp_xyz = [torch.rand([2, 64, 3], dtype=torch.float32).cuda()]
     hd_features = torch.rand([2, 256, 64], dtype=torch.float32).cuda()
