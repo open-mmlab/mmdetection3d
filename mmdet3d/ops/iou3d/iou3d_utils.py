@@ -4,13 +4,15 @@ from . import iou3d_cuda
 
 
 def boxes_iou_bev(boxes_a, boxes_b):
-    """
-    :param boxes_a: (M, 5)
-    :param boxes_b: (N, 5)
-    :return:
-        ans_iou: (M, N)
-    """
+    """Calculate boxes IoU in the bird view.
 
+    Args:
+        boxes_a (torch.Tensor): Input boxes a with shape (M, 5). 
+        boxes_b (torch.Tensor): Input boxes b with shape (N, 5).
+
+    Returns:
+        ans_iou (torch.Tensor): IoU result with shape (M, N).
+    """
     ans_iou = torch.cuda.FloatTensor(
         torch.Size((boxes_a.shape[0], boxes_b.shape[0]))).zero_()
 
@@ -21,11 +23,15 @@ def boxes_iou_bev(boxes_a, boxes_b):
 
 
 def nms_gpu(boxes, scores, thresh):
-    """
-    :param boxes: (N, 5) [x1, y1, x2, y2, ry]
-    :param scores: (N)
-    :param thresh:
-    :return:
+    """Non maximum suppression on GPU.
+
+    Args:
+        boxes (torch.Tensor): Input boxes with shape (N, 5).
+        scores (torch.Tensor): Scores of predicted boxes with shape (N).
+        thresh (torch.Tensor): Threshold of non maximum suppression.
+
+    Returns:
+        torch.Tensor: Remaining indices with scores in descending order.
     """
     # areas = (x2 - x1) * (y2 - y1)
     order = scores.sort(0, descending=True)[1]
@@ -33,16 +39,20 @@ def nms_gpu(boxes, scores, thresh):
     boxes = boxes[order].contiguous()
 
     keep = torch.LongTensor(boxes.size(0))
-    num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh)
-    return order[keep[:num_out].cuda()].contiguous()
+    num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh, boxes.device.index)
+    return order[keep[:num_out].cuda(boxes.device)].contiguous()
 
 
 def nms_normal_gpu(boxes, scores, thresh):
-    """
-    :param boxes: (N, 5) [x1, y1, x2, y2, ry]
-    :param scores: (N)
-    :param thresh:
-    :return:
+    """Normal non maximum suppression on GPU.
+
+    Args:
+        boxes (torch.Tensor): Input boxes with shape (N, 5).
+        scores (torch.Tensor): Scores of predicted boxes with shape (N).
+        thresh (torch.Tensor): Threshold of non maximum suppression.
+
+    Returns:
+        torch.Tensor: Remaining indices with scores in descending order.
     """
     # areas = (x2 - x1) * (y2 - y1)
     order = scores.sort(0, descending=True)[1]
@@ -50,5 +60,6 @@ def nms_normal_gpu(boxes, scores, thresh):
     boxes = boxes[order].contiguous()
 
     keep = torch.LongTensor(boxes.size(0))
-    num_out = iou3d_cuda.nms_normal_gpu(boxes, keep, thresh)
-    return order[keep[:num_out].cuda()].contiguous()
+    num_out = iou3d_cuda.nms_normal_gpu(
+        boxes, keep, thresh, boxes.device.index)
+    return order[keep[:num_out].cuda(boxes.device)].contiguous()
