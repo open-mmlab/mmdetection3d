@@ -142,14 +142,17 @@ def test_multi_backbone():
     assert ret_dict['fp_xyz_net0'][-1].shape == torch.Size([1, 128, 3])
     assert ret_dict['fp_features_net0'][-1].shape == torch.Size([1, 256, 128])
 
+    # Length of backbone configs list should be equal to num_streams
     with pytest.raises(AssertionError):
         cfg_list['num_streams'] = 3
         build_backbone(cfg_list)
 
+    # Length of suffixes list should be equal to num_streams
     with pytest.raises(AssertionError):
         cfg_dict['suffixes'] = ['net0', 'net1', 'net2']
         build_backbone(cfg_dict)
 
+    # Type of 'backbones' should be Dict or List[Dict].
     with pytest.raises(AssertionError):
         cfg_dict['backbones'] = 'PointNet2SASSG'
         build_backbone(cfg_dict)
