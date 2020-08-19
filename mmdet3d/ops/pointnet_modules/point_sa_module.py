@@ -143,8 +143,11 @@ class PointSAModuleMSG(nn.Module):
                     indices.append(
                         furthest_point_sample(cur_points_xyz, npoint))
                 elif fps_method == 'F-FPS':
-                    raise NotImplementedError
-                    furthest_point_sample_with_dist()
+                    # raise NotImplementedError
+                    feat_dist = calc_square_dist(cur_points_xyz,
+                                                 cur_points_xyz)
+                    indices.append(
+                        furthest_point_sample_with_dist(feat_dist, npoint))
                 elif fps_method == 'FS':
                     raise NotImplementedError
                 else:
@@ -225,3 +228,27 @@ class PointSAModule(PointSAModuleMSG):
             fps_mod=fps_mod,
             fps_sample_range_list=fps_sample_range_list,
             normalize_xyz=normalize_xyz)
+
+
+def calc_square_dist(a, b, norm=True):
+    """
+    Calculating square distance between a and b
+    a: [bs, n, c]
+    b: [bs, m, c]
+    """
+    n = a.shape[1]
+    m = b.shape[1]
+    num_channel = a.shape[-1]
+    a_square = a.unsqueeze(dim=2)  # [bs, n, 1, c]
+    b_square = b.unsqueeze(dim=1)  # [bs, 1, m, c]
+    a_square = torch.sum(a_square * a_square, dim=-1)  # [bs, n, 1]
+    b_square = torch.sum(b_square * b_square, dim=-1)  # [bs, 1, m]
+    a_square = a_square.repeat((1, 1, m))  # [bs, n, m]
+    b_square = b_square.repeat((1, n, 1))  # [bs, n, m]
+
+    coor = torch.matmul(a, b.transpose(1, 2))  # [bs, n, m]
+
+    dist = a_square + b_square - 2 * coor
+    if norm:
+        dist = torch.sqrt(dist) / num_channel
+    return dist
