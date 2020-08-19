@@ -19,7 +19,7 @@ def test_getitem():
             file_client_args=file_client_args),
         dict(
             type='LoadPointsFromMultiSweeps',
-            sweeps_num=10,
+            sweeps_num=2,
             file_client_args=file_client_args),
         dict(
             type='MultiScaleFlipAug3D',

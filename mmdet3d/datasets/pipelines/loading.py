@@ -81,6 +81,9 @@ class LoadPointsFromMultiSweeps(object):
             sweeps is empty. Defaults to False.
         remove_close (bool): Whether to remove close points.
             Defaults to False.
+        test_mode (bool): If test_model=True used for testing, it will not
+            randomly sample sweeps but select the nearest N frames.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -89,7 +92,8 @@ class LoadPointsFromMultiSweeps(object):
                  use_dim=[0, 1, 2, 4],
                  file_client_args=dict(backend='disk'),
                  pad_empty_sweeps=False,
-                 remove_close=False):
+                 remove_close=False,
+                 test_mode=False):
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
         self.use_dim = use_dim
@@ -97,6 +101,7 @@ class LoadPointsFromMultiSweeps(object):
         self.file_client = None
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
+        self.test_mode = test_mode
 
     def _load_points(self, pts_filename):
         """Private function to load point clouds data.
@@ -162,6 +167,8 @@ class LoadPointsFromMultiSweeps(object):
         else:
             if len(results['sweeps']) <= self.sweeps_num:
                 choices = np.arange(len(results['sweeps']))
+            elif self.test_mode:
+                choices = np.arange(self.sweeps_num)
             else:
                 choices = np.random.choice(
                     len(results['sweeps']), self.sweeps_num, replace=False)
