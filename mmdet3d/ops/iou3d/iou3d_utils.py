@@ -7,7 +7,7 @@ def boxes_iou_bev(boxes_a, boxes_b):
     """Calculate boxes IoU in the bird view.
 
     Args:
-        boxes_a (torch.Tensor): Input boxes a with shape (M, 5). 
+        boxes_a (torch.Tensor): Input boxes a with shape (M, 5).
         boxes_b (torch.Tensor): Input boxes b with shape (N, 5).
 
     Returns:
