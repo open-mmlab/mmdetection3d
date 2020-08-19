@@ -302,7 +302,6 @@ class CenterHead(nn.Module):
         self.weight = weight  # weight between hm loss and loc loss
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.code_weights = self.train_cfg.get('code_weight', [])
         self.encode_background_as_zeros = True
         self.use_sigmoid_score = True
         self.in_channels = in_channels
@@ -610,9 +609,8 @@ class CenterHead(nn.Module):
             mask = torch.unsqueeze(masks[task_id], -1).expand(pred.size())
             box_loss = torch.sum(self.loss_reg(pred, target_box, mask), 1) / (
                 masks[task_id].float().sum() + 1e-4)
-
-            loc_loss = (box_loss *
-                        box_loss.new_tensor(self.code_weights)).sum()
+            code_weights = self.train_cfg.get('code_weight', [])
+            loc_loss = (box_loss * box_loss.new_tensor(code_weights)).sum()
 
             loss = hm_loss + self.weight * loc_loss
 
