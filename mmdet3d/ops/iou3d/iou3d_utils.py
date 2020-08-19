@@ -58,6 +58,6 @@ def nms_normal_gpu(boxes, scores, thresh):
     boxes = boxes[order].contiguous()
 
     keep = torch.LongTensor(boxes.size(0))
-    num_out = iou3d_cuda.nms_normal_gpu(
-        boxes, keep, thresh, boxes.device.index)
+    num_out = iou3d_cuda.nms_normal_gpu(boxes, keep, thresh,
+                                        boxes.device.index)
     return order[keep[:num_out].cuda(boxes.device)].contiguous()
