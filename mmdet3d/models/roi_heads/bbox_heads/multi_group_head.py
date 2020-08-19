@@ -7,6 +7,7 @@ from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
                           xywhr2xyxyr)
+from mmdet3d.models.utils import clip_sigmoid
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import FeatureAdaption
@@ -164,18 +165,16 @@ class DCNSepHead(nn.Module):
             Default: dict(type='BN2d').
     """
 
-    def __init__(
-            self,
-            in_channels,
-            num_cls,
-            heads,
-            head_conv=64,
-            final_kernel=1,
-            init_bias=-2.19,
-            conv_cfg=dict(type='Conv2d'),
-            norm_cfg=dict(type='BN2d'),
-            **kwargs,
-    ):
+    def __init__(self,
+                 in_channels,
+                 num_cls,
+                 heads,
+                 head_conv=64,
+                 final_kernel=1,
+                 init_bias=-2.19,
+                 conv_cfg=dict(type='Conv2d'),
+                 norm_cfg=dict(type='BN2d'),
+                 **kwargs):
         super(DCNSepHead, self).__init__(**kwargs)
 
         # feature adaptation with dcn
@@ -213,7 +212,7 @@ class DCNSepHead(nn.Module):
             in_channels, heads, head_conv=head_conv, final_kernel=final_kernel)
 
     def init_weights(self):
-
+        """Initialize weights."""
         self.cls_head[-1].bias.data.fill_(self.init_bias)
 
     def forward(self, x):
@@ -263,9 +262,9 @@ class CenterHead(nn.Module):
         code_weights (list[int]): Code weights for location loss. Default: [].
         common_heads (dict): Conv information for common heads.
             Default: dict().
-        crit (dict): Config of classification loss function.
+        loss_cls (dict): Config of classification loss function.
             Default: dict(type='CenterPointFocalLoss').
-        crit_reg (dict): Config of regression loss function.
+        loss_reg (dict): Config of regression loss function.
             Default: dict(type='L1Loss', reduction='none').
         init_bias (float): Initial bias. Default: -2.19.
         share_conv_channel (int): Output channels for share_conv_layer.
@@ -286,12 +285,10 @@ class CenterHead(nn.Module):
                  train_cfg=None,
                  test_cfg=None,
                  bbox_coder=None,
-                 dataset='nuscenes',
                  weight=0.25,
-                 code_weights=[],
                  common_heads=dict(),
-                 crit=dict(type='CenterPointFocalLoss'),
-                 crit_reg=dict(type='L1Loss', reduction='none'),
+                 loss_cls=dict(type='CenterPointFocalLoss'),
+                 loss_reg=dict(type='L1Loss', reduction='none'),
                  init_bias=-2.19,
                  share_conv_channel=64,
                  num_hm_conv=2,
@@ -302,21 +299,19 @@ class CenterHead(nn.Module):
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
-        self.code_weights = code_weights
         self.weight = weight  # weight between hm loss and loc loss
-        self.dataset = dataset
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+        self.code_weights = self.train_cfg.get('code_weight', [])
         self.encode_background_as_zeros = True
         self.use_sigmoid_score = True
         self.in_channels = in_channels
         self.num_classes = num_classes
 
-        self.crit = build_loss(crit)
-        self.crit_reg = build_loss(crit_reg)
+        self.loss_cls = build_loss(loss_cls)
+        self.loss_reg = build_loss(loss_reg)
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_aux = None
-        assert dataset == 'nuscenes'
         self.num_anchor_per_locs = [n for n in num_classes]
         self.use_direction_classifier = False
 
@@ -388,18 +383,6 @@ class CenterHead(nn.Module):
             tuple(list[dict]): Output results for tasks.
         """
         return multi_apply(self.forward_single, feats)
-
-    def _sigmoid(self, x):
-        """Sigmoid function for input feature.
-
-        Args:
-            x (torch.Tensor): Input feature map with the shape of [B, N, H, W].
-
-        Returns:
-            torch.Tensor: Feature map after sigmoid.
-        """
-        y = torch.clamp(x.sigmoid_(), min=1e-4, max=1 - 1e-4)
-        return y
 
     def _gather_feat(self, feat, ind, mask=None):
         """Gather feature map.
@@ -559,11 +542,8 @@ class CenterHead(nn.Module):
                     new_idx = k
                     x, y = ct_int[0], ct_int[1]
 
-                    if not (y * feature_map_size[0] + x <
-                            feature_map_size[0] * feature_map_size[1]):
-                        # a double check, should never happen
-                        print(x, y, y * feature_map_size[0] + x)
-                        assert False
+                    assert (y * feature_map_size[0] + x <
+                            feature_map_size[0] * feature_map_size[1])
 
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
@@ -573,21 +553,20 @@ class CenterHead(nn.Module):
                     if not self.train_cfg['no_log']:
                         anno_box[new_idx] = torch.cat([
                             ct - torch.tensor([x, y], device=device),
-                            torch.unsqueeze(z, dim=0),
-                            torch.log(task_boxes[idx][k][3:6]),
-                            torch.unsqueeze(vx, dim=0),
-                            torch.unsqueeze(vy, dim=0),
-                            torch.unsqueeze(torch.sin(rot), dim=0),
-                            torch.unsqueeze(torch.cos(rot), dim=0)
+                            z.unsqueeze(0), task_boxes[idx][k][3:6].log(),
+                            vx.unsqueeze(0),
+                            vy.unsqueeze(0),
+                            torch.sin(rot).unsqueeze(0),
+                            torch.cos(rot).unsqueeze(0)
                         ])
                     else:
                         anno_box[new_idx] = torch.cat([
                             ct - torch.tensor([x, y], device=device),
-                            torch.unsqueeze(z, dim=0), task_boxes[idx][k][3:6],
-                            torch.unsqueeze(vx, dim=0),
-                            torch.unsqueeze(vy, dim=0),
-                            torch.unsqueeze(torch.sin(rot), dim=0),
-                            torch.unsqueeze(torch.cos(rot), dim=0)
+                            z.unsqueeze(0), task_boxes[idx][k][3:6],
+                            vx.unsqueeze(0),
+                            vy.unsqueeze(0),
+                            torch.sin(rot).unsqueeze(0),
+                            torch.cos(rot).unsqueeze(0)
                         ],
                                                       dim=0)
 
@@ -612,22 +591,16 @@ class CenterHead(nn.Module):
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
-            preds_dict[0]['hm'] = self._sigmoid(preds_dict[0]['hm'])
-            hm_loss = self.crit(preds_dict[0]['hm'], hms[task_id])
+            preds_dict[0]['hm'] = clip_sigmoid(preds_dict[0]['hm'])
+            hm_loss = self.loss_cls(preds_dict[0]['hm'], hms[task_id])
 
             target_box = anno_boxes[task_id]
             # reconstruct the anno_box from multiple reg heads
-            if self.dataset == 'nuscenes':
-                preds_dict[0]['anno_box'] = torch.cat(
-                    (preds_dict[0]['reg'], preds_dict[0]['height'],
-                     preds_dict[0]['dim'], preds_dict[0]['vel'],
-                     preds_dict[0]['rot']),
-                    dim=1)
-            else:
-                raise NotImplementedError()
-
-            loss = 0
-            ret = {}
+            preds_dict[0]['anno_box'] = torch.cat(
+                (preds_dict[0]['reg'], preds_dict[0]['height'],
+                 preds_dict[0]['dim'], preds_dict[0]['vel'],
+                 preds_dict[0]['rot']),
+                dim=1)
 
             # Regression loss for dimension, offset, height, rotation
             ind = inds[task_id]
@@ -635,21 +608,20 @@ class CenterHead(nn.Module):
             pred = pred.view(pred.size(0), -1, pred.size(3))
             pred = self._gather_feat(pred, ind)
             mask = torch.unsqueeze(masks[task_id], -1).expand(pred.size())
-            box_loss = torch.sum(self.crit_reg(pred, target_box, mask), 1) / (
+            box_loss = torch.sum(self.loss_reg(pred, target_box, mask), 1) / (
                 masks[task_id].float().sum() + 1e-4)
 
             loc_loss = (box_loss *
                         box_loss.new_tensor(self.code_weights)).sum()
 
-            loss += hm_loss + self.weight * loc_loss
+            loss = hm_loss + self.weight * loc_loss
 
-            ret.update({
-                'loss': loss,
-                'hm_loss': hm_loss.detach().cpu(),
-                'loc_loss': loc_loss,
-                'loc_loss_elem': box_loss.detach().cpu(),
-                'num_positive': masks[task_id].float().sum()
-            })
+            ret = dict(
+                loss=loss,
+                hm_loss=hm_loss.detach().cpu(),
+                loc_loss=loc_loss,
+                loc_loss_elem=box_loss.detach().cpu(),
+                num_positive=masks[task_id].float().sum())
 
             rets.append(ret)
         # convert batch-key to key-batch
@@ -761,8 +733,7 @@ class CenterHead(nn.Module):
             post_center_range = torch.tensor(
                 post_center_range,
                 dtype=batch_reg_preds[0].dtype,
-                device=batch_reg_preds[0].device,
-            )
+                device=batch_reg_preds[0].device)
 
         for i, (box_preds, cls_preds, cls_labels) in enumerate(
                 zip(batch_reg_preds, batch_cls_preds, batch_cls_labels)):
@@ -809,7 +780,6 @@ class CenterHead(nn.Module):
                     top_labels = top_labels[top_scores_keep]
                 # boxes_for_nms = box_preds[:, [0, 1, 3, 4, -1]]
 
-                # GPU NMS from PCDet(https://github.com/sshaoshuai/PCDet)
                 boxes_for_nms = xywhr2xyxyr(img_metas[i]['box_type_3d'](
                     box_preds, self.bbox_coder.code_size).bev)
                 # the nms in 3d detection just remove overlap boxes.
@@ -842,30 +812,26 @@ class CenterHead(nn.Module):
                             post_center_range[:3]).all(1)
                     mask &= (final_box_preds[:, :3] <=
                              post_center_range[3:]).all(1)
-                    predictions_dict = {
-                        'bboxes': final_box_preds[mask],
-                        'scores': final_scores[mask],
-                        'labels': final_labels[mask]
-                    }
+                    predictions_dict = dict(
+                        bboxes=final_box_preds[mask],
+                        scores=final_scores[mask],
+                        labels=final_labels[mask])
                 else:
-                    predictions_dict = {
-                        'bboxes': final_box_preds,
-                        'scores': final_scores,
-                        'labels': final_labels
-                    }
+                    predictions_dict = dict(
+                        bboxes=final_box_preds,
+                        scores=final_scores,
+                        labels=final_labels)
             else:
                 dtype = batch_reg_preds[0].dtype
                 device = batch_reg_preds[0].device
-                predictions_dict = {
-                    'bboxes':
-                    torch.zeros([0, self.bbox_coder.code_size],
-                                dtype=dtype,
-                                device=device),
-                    'scores':
-                    torch.zeros([0], dtype=dtype, device=device),
-                    'labels':
-                    torch.zeros([0], dtype=top_labels.dtype, device=device)
-                }
+                predictions_dict = dict(
+                    bboxes=torch.zeros([0, self.bbox_coder.code_size],
+                                       dtype=dtype,
+                                       device=device),
+                    scores=torch.zeros([0], dtype=dtype, device=device),
+                    labels=torch.zeros([0],
+                                       dtype=top_labels.dtype,
+                                       device=device))
 
             predictions_dicts.append(predictions_dict)
         return predictions_dicts
