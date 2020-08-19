@@ -260,6 +260,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """
         obj_size = self.dims
         center = self.gravity_center
+        batch_size = center.shape[0]
 
         rot_sin = torch.sin(self.yaw)
         rot_cos = torch.cos(self.yaw)
@@ -270,48 +271,23 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         rot_mat_T[..., 1, 1] = rot_cos
         rot_mat_T[..., 2, 2] = 1
 
-        offset_x = torch.zeros_like(obj_size)
-        offset_y = torch.zeros_like(obj_size)
-        offset_z = torch.zeros_like(obj_size)
-        offset_x[:, 0] = 0.5  # obj_size[:,0] / 2.0
-        offset_y[:, 1] = 0.5  # obj_size[:,1] / 2.0
-        offset_z[:, 2] = 0.5  # obj_size[:,2] / 2.0
+        # Get the object surface center
+        offset = obj_size.new_tensor([[0, 0, 1], [0, 0, -1], [0, 1, 0],
+                                      [0, -1, 0], [1, 0, 0], [-1, 0, 0]])
+        offset = offset.view(1, 6, 3) / 2
+        surface_3d = (offset * obj_size.view(batch_size, 1, 3).repeat(
+            1, 6, 1)).transpose(0, 1).reshape(-1, 3)
 
-        obj_upper_surface_center = offset_z * obj_size
-        obj_lower_surface_center = -offset_z * obj_size
+        # Get the object line center
+        offset = obj_size.new_tensor([[1, 0, 1], [-1, 0, 1], [0, 1, 1],
+                                      [0, -1, 1], [1, 0, -1], [-1, 0, -1],
+                                      [0, 1, -1], [0, -1, -1], [1, 1, 0],
+                                      [1, -1, 0], [-1, 1, 0], [-1, -1, 0]])
+        offset = offset.view(1, 12, 3) / 2
 
-        obj_front_surface_center = offset_y * obj_size
-        obj_back_surface_center = -offset_y * obj_size
-
-        obj_left_surface_center = offset_x * obj_size
-        obj_right_surface_center = -offset_x * obj_size
-        surface_3d = torch.cat(
-            (obj_upper_surface_center, obj_lower_surface_center,
-             obj_front_surface_center, obj_back_surface_center,
-             obj_left_surface_center, obj_right_surface_center),
-            dim=0)
-
-        # Get the object line center here
-        obj_line_center_0 = offset_z * obj_size + offset_x * obj_size
-        obj_line_center_1 = offset_z * obj_size - offset_x * obj_size
-        obj_line_center_2 = offset_z * obj_size + offset_y * obj_size
-        obj_line_center_3 = offset_z * obj_size - offset_y * obj_size
-
-        obj_line_center_4 = -offset_z * obj_size + offset_x * obj_size
-        obj_line_center_5 = -offset_z * obj_size - offset_x * obj_size
-        obj_line_center_6 = -offset_z * obj_size + offset_y * obj_size
-        obj_line_center_7 = -offset_z * obj_size - offset_y * obj_size
-
-        obj_line_center_8 = offset_x * obj_size + offset_y * obj_size
-        obj_line_center_9 = offset_x * obj_size - offset_y * obj_size
-        obj_line_center_10 = -offset_x * obj_size + offset_y * obj_size
-        obj_line_center_11 = -offset_x * obj_size - offset_y * obj_size
-        line_3d = torch.cat(
-            (obj_line_center_0, obj_line_center_1, obj_line_center_2,
-             obj_line_center_3, obj_line_center_4, obj_line_center_5,
-             obj_line_center_6, obj_line_center_7, obj_line_center_8,
-             obj_line_center_9, obj_line_center_10, obj_line_center_11),
-            dim=0)
+        line_3d = (offset *
+                   obj_size.view(batch_size, 1, 3).repeat(1, 12, 1)).transpose(
+                       0, 1).reshape(-1, 3)
 
         surface_rot = rot_mat_T.repeat(6, 1, 1)
         surface_3d = torch.matmul(

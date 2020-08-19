@@ -503,7 +503,7 @@ class VoteHead(nn.Module):
                    bbox_preds,
                    input_metas,
                    rescale=False,
-                   with_nms=True):
+                   use_nms=True):
         """Generate bboxes from vote head predictions.
 
         Args:
@@ -511,7 +511,7 @@ class VoteHead(nn.Module):
             bbox_preds (dict): Predictions from vote head.
             input_metas (list[dict]): Point cloud and image's meta info.
             rescale (bool): Whether to rescale bboxes.
-            with_nms (bool): Whether to apply NMS.
+            use_nms (bool): Whether to apply NMS.
 
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
@@ -521,7 +521,7 @@ class VoteHead(nn.Module):
         sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
-        if with_nms:
+        if use_nms:
             batch_size = bbox3d.shape[0]
             results = list()
             for b in range(batch_size):

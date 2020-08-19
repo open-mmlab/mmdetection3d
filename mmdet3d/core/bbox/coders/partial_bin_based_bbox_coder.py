@@ -66,6 +66,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
                 - dir_res: predicted bbox direction residual.
                 - size_class: predicted bbox size class.
                 - size_res: predicted bbox size residual.
+            suffix (str): Decode predictions with specific suffix.
 
         Returns:
             torch.Tensor: Decoded bbox3d with shape (batch, n, 7).

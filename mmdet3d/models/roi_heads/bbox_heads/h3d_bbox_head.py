@@ -13,8 +13,8 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class H3dHead(nn.Module):
-    r"""Bbox head of `H3dnet <https://arxiv.org/abs/2006.05682>`_.
+class H3DBboxHead(nn.Module):
+    r"""Bbox head of `H3DNet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
         num_classes (int): The number of classes.
@@ -56,7 +56,7 @@ class H3dHead(nn.Module):
                  size_class_loss=None,
                  size_res_loss=None,
                  semantic_loss=None):
-        super(H3dHead, self).__init__()
+        super(H3DBboxHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -109,7 +109,7 @@ class H3dHead(nn.Module):
         refine_decode_res = self.bbox_coder.split_pred(refine_predictions,
                                                        aggregated_points)
         for key in refine_decode_res.keys():
-            refine_dict[key + '_opt'] = refine_decode_res[key]
+            refine_dict[key + '_optimized'] = refine_decode_res[key]
         return refine_dict
 
     def loss(self,
@@ -165,12 +165,13 @@ class H3dHead(nn.Module):
             objectness_weights,
             box_loss_weights,
             valid_gt_weights,
-            suffix='_opt')
+            suffix='_optimized')
         for key in refined_proposal_loss.keys():
-            losses[key + '_opt'] = refined_proposal_loss[key]
+            losses[key + '_optimized'] = refined_proposal_loss[key]
 
-        bbox3d_opt = self.bbox_coder.decode(bbox_preds, suffix='_opt')
-        refined_loss = self.refine_module.loss(bbox3d_opt, *loss_inputs)
+        bbox3d_optimized = self.bbox_coder.decode(
+            bbox_preds, suffix='_optimized')
+        refined_loss = self.refine_module.loss(bbox3d_optimized, *loss_inputs)
         losses.update(refined_loss)
 
         return losses
@@ -321,7 +322,6 @@ class H3dHead(nn.Module):
         Returns:
             dict: Losses of aggregation module.
         """
-        device = bbox_preds['dir_res_norm' + suffix].device
         # calculate objectness loss
         objectness_loss = self.objectness_loss(
             bbox_preds['obj_scores' + suffix].transpose(2, 1),
@@ -344,8 +344,8 @@ class H3dHead(nn.Module):
 
         # calculate direction residual loss
         batch_size, proposal_num = size_class_targets.shape[:2]
-        heading_label_one_hot = torch.zeros(
-            (batch_size, proposal_num, self.num_dir_bins)).to(device)
+        heading_label_one_hot = dir_class_targets.new_zeros(
+            (batch_size, proposal_num, self.num_dir_bins))
         heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1), 1)
         dir_res_norm = torch.sum(
             bbox_preds['dir_res_norm' + suffix] * heading_label_one_hot, -1)
@@ -359,8 +359,8 @@ class H3dHead(nn.Module):
             weight=box_loss_weights)
 
         # calculate size residual loss
-        one_hot_size_targets = torch.zeros(
-            (batch_size, proposal_num, self.num_sizes)).to(device)
+        one_hot_size_targets = box_loss_weights.new_zeros(
+            (batch_size, proposal_num, self.num_sizes))
         one_hot_size_targets.scatter_(2, size_class_targets.unsqueeze(-1), 1)
         one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
             -1).repeat(1, 1, 1, 3)
@@ -546,8 +546,6 @@ class ProposalRefineModule(nn.Module):
                             num_size_cluster * 4 + self.num_classes)
         self.proposal_pred.append(nn.Conv1d(prev_channel, conv_out_channel, 1))
 
-        self.softmax_normal = torch.nn.Softmax(dim=1)
-
     def forward(self, feat_dict):
         """Forward pass.
 
@@ -586,7 +584,7 @@ class ProposalRefineModule(nn.Module):
         line_center = feat_dict['pred_line_center']
 
         # Extract the surface and line centers of rpn proposals
-        rpn_proposals = feat_dict['rpn_proposals'].float()
+        rpn_proposals = feat_dict['proposal_list'].float()
         rpn_proposals_bbox = DepthInstance3DBoxes(
             rpn_proposals.reshape(-1, 7).clone(),
             box_dim=rpn_proposals.shape[-1],
@@ -702,7 +700,7 @@ class ProposalRefineModule(nn.Module):
             weight=cues_mask,
             avg_factor=cues_mask.sum() + 1e-6)
 
-        objectness_scores = preds_dict['obj_scores_opt']
+        objectness_scores = preds_dict['obj_scores_optimized']
         objectness_loss_refine = self.proposal_objectness_loss(
             objectness_scores.transpose(2, 1), proposal_objectness_label)
         primitive_matching_loss = torch.sum(
