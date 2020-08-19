@@ -9,7 +9,7 @@ from mmdet.models import BACKBONES, build_backbone
 
 @BACKBONES.register_module()
 class MultiBackbone(nn.Module):
-    """MultiBackbone with different config. '''.
+    """MultiBackbone with different config.
 
     Args:
         num_streams (int): The number of backbones.
@@ -93,7 +93,7 @@ class MultiBackbone(nn.Module):
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
+            dict[str, list[torch.Tensor]]: Outputs from multiple backbones.
 
                 - fp_xyz[suffix] (list[torch.Tensor]): The coordinates of
                     each fp features.
