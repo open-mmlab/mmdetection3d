@@ -33,7 +33,6 @@ def nms_gpu(boxes, scores, thresh):
     Returns:
         torch.Tensor: Remaining indices with scores in descending order.
     """
-    # areas = (x2 - x1) * (y2 - y1)
     order = scores.sort(0, descending=True)[1]
 
     boxes = boxes[order].contiguous()
@@ -54,7 +53,6 @@ def nms_normal_gpu(boxes, scores, thresh):
     Returns:
         torch.Tensor: Remaining indices with scores in descending order.
     """
-    # areas = (x2 - x1) * (y2 - y1)
     order = scores.sort(0, descending=True)[1]
 
     boxes = boxes[order].contiguous()
