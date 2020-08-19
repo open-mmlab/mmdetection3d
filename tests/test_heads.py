@@ -466,7 +466,7 @@ def test_primitive_head():
 
     primitive_head_cfg = dict(
         type='PrimitiveHead',
-        num_dim=2,
+        num_dims=2,
         num_classes=18,
         primitive_mode='z',
         vote_moudule_cfg=dict(
@@ -564,3 +564,8 @@ def test_primitive_head():
     assert losses_dict['center_loss_z'] >= 0
     assert losses_dict['size_loss_z'] >= 0
     assert losses_dict['sem_loss_z'] >= 0
+
+    # 'Primitive_mode' should be one of ['z', 'xy', 'line']
+    with pytest.raises(AssertionError):
+        primitive_head_cfg['vote_moudule_cfg']['in_channels'] = 'xyz'
+        build_head(primitive_head_cfg)
