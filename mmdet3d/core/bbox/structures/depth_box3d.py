@@ -262,8 +262,8 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         center = self.gravity_center
         batch_size = center.shape[0]
 
-        rot_sin = torch.sin(self.yaw)
-        rot_cos = torch.cos(self.yaw)
+        rot_sin = torch.sin(-self.yaw)
+        rot_cos = torch.cos(-self.yaw)
         rot_mat_T = self.yaw.new_zeros(tuple(list(self.yaw.shape) + [3, 3]))
         rot_mat_T[..., 0, 0] = rot_cos
         rot_mat_T[..., 0, 1] = -rot_sin
