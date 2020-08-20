@@ -13,8 +13,9 @@ def boxes_iou_bev(boxes_a, boxes_b):
     Returns:
         ans_iou (torch.Tensor): IoU result with shape (M, N).
     """
-    ans_iou = boxes_a.new_zeros(
-        torch.Size((boxes_a.shape[0], boxes_b.shape[0])))
+    ans_iou = torch.FloatTensor(
+        torch.Size((boxes_a.shape[0], boxes_b.shape[0]))).zero_().to(
+        boxes_a.device)
 
     iou3d_cuda.boxes_iou_bev_gpu(boxes_a.contiguous(), boxes_b.contiguous(),
                                  ans_iou)
@@ -37,7 +38,7 @@ def nms_gpu(boxes, scores, thresh):
 
     boxes = boxes[order].contiguous()
 
-    keep = boxes.new_zeros(boxes.size(0))
+    keep = torch.LongTensor(boxes.size(0))
     num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh, boxes.device.index)
     return order[keep[:num_out].cuda(boxes.device)].contiguous()
 
@@ -57,7 +58,7 @@ def nms_normal_gpu(boxes, scores, thresh):
 
     boxes = boxes[order].contiguous()
 
-    keep = boxes.new_zeros(boxes.size(0))
+    keep = torch.LongTensor(boxes.size(0))
     num_out = iou3d_cuda.nms_normal_gpu(boxes, keep, thresh,
                                         boxes.device.index)
     return order[keep[:num_out].cuda(boxes.device)].contiguous()
