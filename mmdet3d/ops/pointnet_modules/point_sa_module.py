@@ -111,6 +111,7 @@ class PointSAModuleMSG(nn.Module):
             indices (Tensor): (B, num_point) Index of the features.
                 Default: None.
             target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
+
         Returns:
             Tensor: (B, M, 3) where M is the number of points.
                 New features xyz.
@@ -258,23 +259,29 @@ class PointSAModule(PointSAModuleMSG):
             normalize_xyz=normalize_xyz)
 
 
-def calc_square_dist(a, b, norm=True):
+def calc_square_dist(point_feat_a, point_feat_b, norm=True):
+    """Calculating square distance between a and b.
+
+    Args:
+        a (Tensor): (B, N, C) Feature vector of each point.
+        b (Tensor): (B, M, C) Feature vector of each point.
+        norm (Bool): Whether to normalize the distance.
+            Default: True.
+
+    Returns:
+        Tensor: (B, N, M) Distance between each pair points.
     """
-    Calculating square distance between a and b
-    a: [bs, n, c]
-    b: [bs, m, c]
-    """
-    n = a.shape[1]
-    m = b.shape[1]
-    num_channel = a.shape[-1]
-    a_square = a.unsqueeze(dim=2)  # [bs, n, 1, c]
-    b_square = b.unsqueeze(dim=1)  # [bs, 1, m, c]
+    n = point_feat_a.shape[1]
+    m = point_feat_b.shape[1]
+    num_channel = point_feat_a.shape[-1]
+    a_square = point_feat_a.unsqueeze(dim=2)  # [bs, n, 1, c]
+    b_square = point_feat_b.unsqueeze(dim=1)  # [bs, 1, m, c]
     a_square = torch.sum(a_square * a_square, dim=-1)  # [bs, n, 1]
     b_square = torch.sum(b_square * b_square, dim=-1)  # [bs, 1, m]
     a_square = a_square.repeat((1, 1, m))  # [bs, n, m]
     b_square = b_square.repeat((1, n, 1))  # [bs, n, m]
 
-    coor = torch.matmul(a, b.transpose(1, 2))  # [bs, n, m]
+    coor = torch.matmul(point_feat_a, point_feat_b.transpose(1, 2))
 
     dist = a_square + b_square - 2 * coor
     if norm:
