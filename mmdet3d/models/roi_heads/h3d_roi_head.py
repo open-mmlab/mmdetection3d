@@ -153,7 +153,11 @@ class H3DRoIHead(Base3DRoIHead):
         bbox_preds = self.bbox_head(feats_dict, sample_mod)
         feats_dict.update(bbox_preds)
         bbox_list = self.bbox_head.get_bboxes(
-            points, feats_dict, img_metas, rescale=rescale, suffix='_opt')
+            points,
+            feats_dict,
+            img_metas,
+            rescale=rescale,
+            suffix='_optimized')
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list

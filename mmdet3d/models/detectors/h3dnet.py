@@ -56,15 +56,15 @@ class H3DNet(TwoStage3DDetector):
         """
         points_cat = torch.stack(points)
 
-        x = self.extract_feat(points_cat)
-        x['fp_xyz'] = [x['fp_xyz_net0'][-1]]
-        x['fp_features'] = [x['hd_feature']]
-        x['fp_indices'] = [x['fp_indices_net0'][-1]]
+        feats_dict = self.extract_feat(points_cat)
+        feats_dict['fp_xyz'] = [feats_dict['fp_xyz_net0'][-1]]
+        feats_dict['fp_features'] = [feats_dict['hd_feature']]
+        feats_dict['fp_indices'] = [feats_dict['fp_indices_net0'][-1]]
 
         losses = dict()
         if self.with_rpn:
-            rpn_outs = self.rpn_head(x, self.train_cfg.rpn.sample_mod)
-            x.update(rpn_outs)
+            rpn_outs = self.rpn_head(feats_dict, self.train_cfg.rpn.sample_mod)
+            feats_dict.update(rpn_outs)
 
             rpn_loss_inputs = (points, gt_bboxes_3d, gt_labels_3d,
                                pts_semantic_mask, pts_instance_mask, img_metas)
@@ -73,20 +73,21 @@ class H3DNet(TwoStage3DDetector):
                 *rpn_loss_inputs,
                 gt_bboxes_ignore=gt_bboxes_ignore,
                 ret_target=True)
-            rpn_targets = rpn_losses.pop('targets')
+            feats_dict['targets'] = rpn_losses.pop('targets')
             losses.update(rpn_losses)
 
-            x['targets'] = rpn_targets
             # Generate rpn proposals
-            rpn_proposals = self.rpn_head.get_bboxes(
-                points, rpn_outs, img_metas, with_nms=False)
-            x['rpn_proposals'] = rpn_proposals
+            proposal_cfg = self.train_cfg.get('rpn_proposal',
+                                              self.test_cfg.rpn)
+            proposal_list = self.rpn_head.get_bboxes(
+                points, rpn_outs, img_metas, use_nms=proposal_cfg.use_nms)
+            feats_dict['proposal_list'] = proposal_list
         else:
             raise NotImplementedError
 
         roi_losses = self.roi_head.forward_train(
-            x, self.train_cfg.rcnn.sample_mod, img_metas, points, gt_bboxes_3d,
-            gt_labels_3d, pts_semantic_mask, pts_instance_mask,
+            feats_dict, self.train_cfg.rcnn.sample_mod, img_metas, points,
+            gt_bboxes_3d, gt_labels_3d, pts_semantic_mask, pts_instance_mask,
             gt_bboxes_ignore)
         losses.update(roi_losses)
 
@@ -105,23 +106,24 @@ class H3DNet(TwoStage3DDetector):
         """
         points_cat = torch.stack(points)
 
-        x = self.extract_feat(points_cat)
-        x['fp_xyz'] = [x['fp_xyz_net0'][-1]]
-        x['fp_features'] = [x['hd_feature']]
-        x['fp_indices'] = [x['fp_indices_net0'][-1]]
+        feats_dict = self.extract_feat(points_cat)
+        feats_dict['fp_xyz'] = [feats_dict['fp_xyz_net0'][-1]]
+        feats_dict['fp_features'] = [feats_dict['hd_feature']]
+        feats_dict['fp_indices'] = [feats_dict['fp_indices_net0'][-1]]
 
         if self.with_rpn:
-            rpn_outs = self.rpn_head(x, self.test_cfg.rpn.sample_mod)
-            x.update(rpn_outs)
+            proposal_cfg = self.test_cfg.rpn
+            rpn_outs = self.rpn_head(feats_dict, proposal_cfg.sample_mod)
+            feats_dict.update(rpn_outs)
             # Generate rpn proposals
-            rpn_proposals = self.rpn_head.get_bboxes(
-                points, rpn_outs, img_metas, with_nms=False)
-            x['rpn_proposals'] = rpn_proposals
+            proposal_list = self.rpn_head.get_bboxes(
+                points, rpn_outs, img_metas, use_nms=proposal_cfg.use_nms)
+            feats_dict['proposal_list'] = proposal_list
         else:
             raise NotImplementedError
 
         return self.roi_head.simple_test(
-            x,
+            feats_dict,
             self.test_cfg.rcnn.sample_mod,
             img_metas,
             points_cat,
@@ -130,22 +132,23 @@ class H3DNet(TwoStage3DDetector):
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test with augmentation."""
         points_cat = [torch.stack(pts) for pts in points]
-        feats = self.extract_feats(points_cat, img_metas)
-        for x in feats:
+        feats_dict = self.extract_feats(points_cat, img_metas)
+        for x in feats_dict:
             x['fp_xyz'] = [x['fp_xyz_net0'][-1]]
             x['fp_features'] = [x['hd_feature']]
             x['fp_indices'] = [x['fp_indices_net0'][-1]]
 
         # only support aug_test for one sample
         aug_bboxes = []
-        for x, pts_cat, img_meta in zip(feats, points_cat, img_metas):
+        for x, pts_cat, img_meta in zip(feats_dict, points_cat, img_metas):
             if self.with_rpn:
-                rpn_outs = self.rpn_head(x, self.test_cfg.rpn.sample_mod)
+                proposal_cfg = self.test_cfg.rpn
+                rpn_outs = self.rpn_head(x, proposal_cfg.sample_mod)
                 x.update(rpn_outs)
                 # Generate rpn proposals
-                rpn_proposals = self.rpn_head.get_bboxes(
-                    points, rpn_outs, img_metas, with_nms=False)
-                x['rpn_proposals'] = rpn_proposals
+                proposal_list = self.rpn_head.get_bboxes(
+                    points, rpn_outs, img_metas, use_nms=proposal_cfg.use_nms)
+                x['proposal_list'] = proposal_list
             else:
                 raise NotImplementedError
 
