@@ -621,11 +621,7 @@ class CenterHead(nn.Module):
             loss = hm_loss + self.weight * loc_loss
 
             ret = dict(
-                loss=loss,
-                hm_loss=hm_loss.detach().cpu(),
-                loc_loss=loc_loss,
-                loc_loss_elem=box_loss.detach().cpu(),
-                num_positive=masks[task_id].float().sum())
+                loss=loss, hm_loss=hm_loss.detach().cpu(), loc_loss=loc_loss)
 
             rets.append(ret)
         # convert batch-key to key-batch
