@@ -140,7 +140,7 @@ class FreeAnchor3DHead(Anchor3DHead):
                 box_cls_prob = torch.sparse.sum(
                     object_cls_box_prob, dim=0).to_dense()
 
-                indices = torch.nonzero(box_cls_prob).t_()
+                indices = torch.nonzero(box_cls_prob, as_tuple=False).t_()
                 if indices.numel() == 0:
                     image_box_prob = torch.zeros(
                         anchors_.size(0),
