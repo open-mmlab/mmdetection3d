@@ -47,11 +47,14 @@ class PointSAModuleMSG(nn.Module):
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
         assert pool_mod in ['max', 'avg']
+        assert isinstance(fps_mod, list) or isinstance(fps_mod, tuple)
+        assert isinstance(fps_sample_range_list, list) or isinstance(
+            fps_sample_range_list, tuple)
         assert len(fps_mod) == len(fps_sample_range_list)
 
         if isinstance(num_point, int):
             self.num_point = [num_point]
-        elif isinstance(num_point, list):
+        elif isinstance(num_point, list) or isinstance(num_point, tuple):
             self.num_point = num_point
         else:
             raise NotImplementedError
@@ -133,27 +136,52 @@ class PointSAModuleMSG(nn.Module):
                     self.fps_sample_range_list, self.fps_mod_list,
                     self.num_point):
                 assert fps_method in ['D-FPS', 'F-FPS', 'FS']
+
                 if fps_sample_range == -1:
-                    cur_points_xyz = points_xyz[:, last_fps_end_index:]
+                    sample_points_xyz = points_xyz[:, last_fps_end_index:]
                 else:
-                    cur_points_xyz = \
+                    sample_points_xyz = \
                         points_xyz[:, last_fps_end_index:fps_sample_range]
 
+                if fps_sample_range == -1:
+                    sample_features = features[:, :, last_fps_end_index:]
+                else:
+                    sample_features = \
+                        features[:, :, last_fps_end_index:fps_sample_range]
+
                 if fps_method == 'D-FPS':
-                    indices.append(
-                        furthest_point_sample(cur_points_xyz, npoint))
+                    fps_idx = furthest_point_sample(sample_points_xyz, npoint)
+
                 elif fps_method == 'F-FPS':
-                    # raise NotImplementedError
-                    feat_dist = calc_square_dist(cur_points_xyz,
-                                                 cur_points_xyz)
-                    indices.append(
-                        furthest_point_sample_with_dist(feat_dist, npoint))
+                    features_for_fps = torch.cat(
+                        [sample_points_xyz,
+                         sample_features.transpose(1, 2)],
+                        dim=2)
+                    features_dist = calc_square_dist(
+                        features_for_fps, features_for_fps, norm=False)
+                    fps_idx = furthest_point_sample_with_dist(
+                        features_dist, npoint)
+
                 elif fps_method == 'FS':
-                    raise NotImplementedError
+                    features_for_fps = torch.cat(
+                        [sample_points_xyz,
+                         sample_features.transpose(1, 2)],
+                        dim=2)
+                    features_dist = calc_square_dist(
+                        features_for_fps, features_for_fps, norm=False)
+                    fps_idx_ffps = furthest_point_sample_with_dist(
+                        features_dist, npoint)
+                    fps_idx_dfps = furthest_point_sample(
+                        sample_points_xyz, npoint)
+                    fps_idx = torch.cat([fps_idx_ffps, fps_idx_dfps], dim=1)
+
                 else:
                     raise NotImplementedError
 
-            indices = torch.cat(indices, 1)
+                indices.append(fps_idx + last_fps_end_index)
+                last_fps_end_index += fps_sample_range
+
+            indices = torch.cat(indices, dim=1)
             new_xyz = gather_points(xyz_flipped, indices).transpose(
                 1, 2).contiguous() if self.num_point is not None else None
 
