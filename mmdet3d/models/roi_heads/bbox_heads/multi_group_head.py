@@ -82,6 +82,7 @@ class SepHead(nn.Module):
         super(SepHead, self).__init__(**kwargs)
 
         self.heads = heads
+        self.init_bias = init_bias
         for head in self.heads:
             classes, num_conv = self.heads[head]
 
@@ -110,14 +111,17 @@ class SepHead(nn.Module):
                     padding=final_kernel // 2,
                     bias=True))
             fc = nn.Sequential(*fc_layers)
-            if 'hm' in head:
-                fc[-1].bias.data.fill_(init_bias)
-            else:
-                for m in fc.modules():
-                    if isinstance(m, nn.Conv2d):
-                        kaiming_init(m)
 
             self.__setattr__(head, fc)
+
+    def init_weights(self):
+        for head in self.heads:
+            if head == 'hm':
+                self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
+            else:
+                for m in self.__getattr__(head).modules():
+                    if isinstance(m, nn.Conv2d):
+                        kaiming_init(m)
 
     def forward(self, x):
         """Forward function for SepHead.
@@ -214,6 +218,7 @@ class DCNSepHead(nn.Module):
     def init_weights(self):
         """Initialize weights."""
         self.cls_head[-1].bias.data.fill_(self.init_bias)
+        self.task_head.init_weights()
 
     def forward(self, x):
         """Forward function for DCNSepHead.
@@ -350,7 +355,8 @@ class CenterHead(nn.Module):
                         final_kernel=3))
 
     def init_weights(self):
-        pass
+        for task in self.tasks:
+            task.init_weights()
 
     def forward_single(self, x):
         """Forward function for CenterPoint.
