@@ -260,7 +260,8 @@ class PartAggregationROIHead(Base3DRoIHead):
                     # gather assign_results in different class into one result
                     batch_num_gts += cur_assign_res.num_gts
                     # gt inds (1-based)
-                    gt_inds_arange_pad = gt_per_cls.nonzero().view(-1) + 1
+                    gt_inds_arange_pad = gt_per_cls.nonzero(
+                        as_tuple=False).view(-1) + 1
                     # pad 0 for indice unassigned
                     gt_inds_arange_pad = F.pad(
                         gt_inds_arange_pad, (1, 0), mode='constant', value=0)
