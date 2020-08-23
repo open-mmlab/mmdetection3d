@@ -156,8 +156,9 @@ class NuScenesDataset(Custom3DDataset):
             data_infos = list(
                 sorted(data['infos'], key=lambda e: e['timestamp']))
             data_infos = data_infos[::self.load_interval]
-        elif not self.test_mode:  # if training
-
+        else:  # if training
+            assert self.test_mode is False, 'Should not use balance_class ' \
+                                            'option under test mode.'
             _cls_infos = {name: [] for name in self.CLASSES}
             for info in data['infos']:
                 if self.use_valid_flag:
@@ -183,13 +184,7 @@ class NuScenesDataset(Custom3DDataset):
                 #     cls_infos, int(len(cls_infos) * ratio)
                 # ).tolist()
                 data_infos += cls_infos[:int(len(cls_infos) * ratio)]
-        else:
-            if isinstance(data['infos'], dict):
-                data_infos = []
-                for v in data['infos'].values():
-                    data_infos.extend(v)
-            else:
-                data_infos = data['infos']
+
         self.metadata = data['metadata']
         self.version = self.metadata['version']
         return data_infos
