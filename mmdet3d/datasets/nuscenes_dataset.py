@@ -113,9 +113,11 @@ class NuScenesDataset(Custom3DDataset):
                  test_mode=False,
                  bottom2gravity=False,
                  eval_version='detection_cvpr_2019',
-                 balance_class=False):
+                 balance_class=False,
+                 use_valid_flag=False):
         self.load_interval = load_interval
         self.balance_class = balance_class
+        self.use_valid_flag = use_valid_flag
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -158,7 +160,12 @@ class NuScenesDataset(Custom3DDataset):
 
             _cls_infos = {name: [] for name in self.CLASSES}
             for info in data['infos']:
-                for name in set(info['gt_names']):
+                if self.use_valid_flag:
+                    mask = info['valid_flag']
+                    gt_names = set(info['gt_names'][mask])
+                else:
+                    gt_names = set(info['gt_names'])
+                for name in gt_names:
                     if name in self.CLASSES:
                         _cls_infos[name].append(info)
             duplicated_samples = sum([len(v) for _, v in _cls_infos.items()])
@@ -262,7 +269,10 @@ class NuScenesDataset(Custom3DDataset):
         """
         info = self.data_infos[index]
         # filter out bbox containing no points
-        mask = info['num_lidar_pts'] > 0
+        if self.use_valid_flag:
+            mask = info['valid_flag']
+        else:
+            mask = info['num_lidar_pts'] > 0
         gt_bboxes_3d = info['gt_boxes'][mask]
         gt_names_3d = info['gt_names'][mask]
         gt_labels_3d = []
