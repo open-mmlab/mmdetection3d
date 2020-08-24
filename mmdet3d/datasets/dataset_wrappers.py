@@ -70,15 +70,9 @@ class ClassSampledDataset(object):
         Returns:
             dict: Data dictionary of the corresponding index.
         """
-        # pdb.set_trace()
         ori_idx = self.repeat_indices[idx]
         return self.dataset[ori_idx]
 
     def __len__(self):
-        """Return the length of data infos.
-
-        Returns:
-            int: Length of data infos.
-        """
-        # pdb.set_trace()
+        """Length after repetition."""
         return len(self.repeat_indices)
