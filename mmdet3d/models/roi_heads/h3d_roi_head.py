@@ -50,7 +50,6 @@ class H3DRoIHead(Base3DRoIHead):
 
     def forward_train(self,
                       feats_dict,
-                      sample_mod,
                       img_metas,
                       points,
                       gt_bboxes_3d,
@@ -62,8 +61,6 @@ class H3DRoIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            sample_mod (str): Sample mode for vote aggregation layer.
-                valid modes are "vote", "seed" and "random".
             img_metas (list[dict]): Contain pcd and img's meta info.
             points (list[torch.Tensor]): Input points.
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
@@ -81,6 +78,7 @@ class H3DRoIHead(Base3DRoIHead):
         """
         losses = dict()
 
+        sample_mod = self.train_cfg.sample_mod
         assert sample_mod in ['vote', 'seed', 'random']
         result_z = self.primitive_z(feats_dict, sample_mod)
         feats_dict.update(result_z)
@@ -118,12 +116,7 @@ class H3DRoIHead(Base3DRoIHead):
 
         return losses
 
-    def simple_test(self,
-                    feats_dict,
-                    sample_mod,
-                    img_metas,
-                    points,
-                    rescale=False):
+    def simple_test(self, feats_dict, img_metas, points, rescale=False):
         """Simple testing forward function of PartAggregationROIHead.
 
         Note:
@@ -131,8 +124,6 @@ class H3DRoIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            sample_mod (str): Sample mode for vote aggregation layer.
-                valid modes are "vote", "seed" and "random".
             img_metas (list[dict]): Contain pcd and img's meta info.
             points (torch.Tensor): Input points.
             rescale (bool): Whether to rescale results.
@@ -140,7 +131,9 @@ class H3DRoIHead(Base3DRoIHead):
         Returns:
             dict: Bbox results of one frame.
         """
+        sample_mod = self.test.sample_mod
         assert sample_mod in ['vote', 'seed', 'random']
+
         result_z = self.primitive_z(feats_dict, sample_mod)
         feats_dict.update(result_z)
 

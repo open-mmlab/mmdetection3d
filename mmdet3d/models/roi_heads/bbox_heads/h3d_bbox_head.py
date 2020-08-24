@@ -129,7 +129,7 @@ class H3DBboxHead(nn.Module):
             norm_cfg=norm_cfg,
             bias=True,
             inplace=True)
-        self.matching_pred = torch.nn.Conv1d(matching_feat_dims, 2, 1)
+        self.matching_pred = nn.Conv1d(matching_feat_dims, 2, 1)
 
         # Compute the semantic matching scores
         self.semantic_matching_conv = ConvModule(
@@ -141,7 +141,7 @@ class H3DBboxHead(nn.Module):
             norm_cfg=norm_cfg,
             bias=True,
             inplace=True)
-        self.semantic_matching_pred = torch.nn.Conv1d(matching_feat_dims, 2, 1)
+        self.semantic_matching_pred = nn.Conv1d(matching_feat_dims, 2, 1)
 
         # Surface feature aggregation
         self.surface_feats_aggregation = list()
@@ -248,12 +248,14 @@ class H3DBboxHead(nn.Module):
             box_dim=rpn_proposals.shape[-1],
             with_yaw=self.with_angle,
             origin=(0.5, 0.5, 0.5))
+
         obj_surface_center, obj_line_center = \
             rpn_proposals_bbox.get_surface_line_center()
         obj_surface_center = obj_surface_center.reshape(
-            batch_size, object_proposal * 6, 3)
-        obj_line_center = obj_line_center.reshape(batch_size,
-                                                  object_proposal * 12, 3)
+            batch_size, -1, 6, 3).transpose(1, 2).reshape(batch_size, -1, 3)
+        obj_line_center = obj_line_center.reshape(batch_size, -1, 12,
+                                                  3).transpose(1, 2).reshape(
+                                                      batch_size, -1, 3)
         ret_dict['surface_center_object'] = obj_surface_center
         ret_dict['line_center_object'] = obj_line_center
 
@@ -264,6 +266,7 @@ class H3DBboxHead(nn.Module):
                 (batch_size, 6, surface_center_feature_pred.shape[2])),
              surface_center_feature_pred),
             dim=1)
+
         surface_xyz, surface_features, _ = self.surface_center_matcher(
             surface_center_pred,
             surface_center_feature_pred,
@@ -301,10 +304,10 @@ class H3DBboxHead(nn.Module):
         combine_feature = torch.cat((surface_features, line_features), dim=1)
 
         # Final bbox predictions
-        predictions = self.bbox_pred[0](combine_feature)
-        predictions += original_feature
+        bbox_predictions = self.bbox_pred[0](combine_feature)
+        bbox_predictions += original_feature
         for conv_module in self.bbox_pred[1:]:
-            bbox_predictions = conv_module(predictions)
+            bbox_predictions = conv_module(bbox_predictions)
 
         refine_decode_res = self.bbox_coder.split_pred(bbox_predictions,
                                                        aggregated_points)
@@ -415,9 +418,9 @@ class H3DBboxHead(nn.Module):
         pred_obj_surface_center, pred_obj_line_center = \
             refined_bbox.get_surface_line_center()
         pred_obj_surface_center = pred_obj_surface_center.reshape(
-            batch_size, object_proposal * 6, 3)
+            batch_size, -1, 6, 3).transpose(1, 2).reshape(batch_size, -1, 3)
         pred_obj_line_center = pred_obj_line_center.reshape(
-            batch_size, object_proposal * 12, 3)
+            batch_size, -1, 12, 3).transpose(1, 2).reshape(batch_size, -1, 3)
         pred_surface_line_center = torch.cat(
             (pred_obj_surface_center, pred_obj_line_center), 1)
 
@@ -818,10 +821,13 @@ class H3DBboxHead(nn.Module):
 
         obj_surface_center, obj_line_center = \
             gt_bboxes_3d.get_surface_line_center()
-        obj_surface_center = obj_surface_center.reshape(
-            6, -1, 3)[:, object_assignment].reshape(1, -1, 3)
-        obj_line_center = obj_line_center.reshape(
-            12, -1, 3)[:, object_assignment].reshape(1, -1, 3)
+        obj_surface_center = obj_surface_center.reshape(-1, 6,
+                                                        3).transpose(0, 1)
+        obj_line_center = obj_line_center.reshape(-1, 12, 3).transpose(0, 1)
+        obj_surface_center = obj_surface_center[:, object_assignment].reshape(
+            1, -1, 3)
+        obj_line_center = obj_line_center[:,
+                                          object_assignment].reshape(1, -1, 3)
 
         surface_sem = torch.argmax(pred_surface_sem, dim=1).float()
         line_sem = torch.argmax(pred_line_sem, dim=1).float()
