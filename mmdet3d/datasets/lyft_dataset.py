@@ -433,8 +433,7 @@ class LyftDataset(Custom3DDataset):
             json_path (str): Path of the result json file.
             csv_savepath (str): Path to save the csv file.
         """
-        with open(json_path, 'r') as f:
-            results = mmcv.load(f)['results']
+        results = mmcv.load(json_path)['results']
         csv_nopred = 'data/lyft/sample_submission.csv'
         data = pd.read_csv(csv_nopred)
         Id_list = list(data['Id'])
