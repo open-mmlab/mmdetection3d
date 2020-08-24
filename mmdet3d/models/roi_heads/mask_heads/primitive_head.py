@@ -414,7 +414,7 @@ class PrimitiveHead(nn.Module):
                                                         cur_cls_label,
                                                         point2_lines_matching,
                                                         cur_corners,
-                                                        [0, 0, 1, 1])
+                                                        [1, 1, 0, 0])
 
             # Set the surface labels here
             if self.primitive_mode == 'z' and \
