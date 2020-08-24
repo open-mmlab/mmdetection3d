@@ -18,12 +18,14 @@ class ClassSampledDataset(object):
     def __init__(self, dataset, ann_file):
         self.dataset = dataset
         self.CLASSES = dataset.CLASSES
+        self.repeat_indices = self._get_repeat_indices(ann_file)
+        # self.dataset.data_infos = self.data_infos
         if hasattr(self.dataset, 'flag'):
-            self.flag = self.dataset.flag
-        self._ori_len = len(self.dataset)
-        self.dataset.data_infos = self.load_annotations(ann_file)
+            self.flag = np.array(
+                [self.dataset.flag[ind] for ind in self.repeat_indices],
+                dtype=np.uint8)
 
-    def load_annotations(self, ann_file):
+    def _get_repeat_indices(self, ann_file):
         """Load annotations from ann_file.
 
         Args:
@@ -33,8 +35,8 @@ class ClassSampledDataset(object):
             list[dict]: List of annotations after class sampling.
         """
         data = mmcv.load(ann_file)
-        _cls_infos = {name: [] for name in self.CLASSES}
-        for info in data['infos']:
+        _cls_inds = {name: [] for name in self.CLASSES}
+        for idx, info in enumerate(data['infos']):
             if self.dataset.use_valid_flag:
                 mask = info['valid_flag']
                 gt_names = set(info['gt_names'][mask])
@@ -42,33 +44,25 @@ class ClassSampledDataset(object):
                 gt_names = set(info['gt_names'])
             for name in gt_names:
                 if name in self.CLASSES:
-                    _cls_infos[name].append(info)
-        duplicated_samples = sum([len(v) for _, v in _cls_infos.items()])
+                    _cls_inds[name].append(idx)
+        duplicated_samples = sum([len(v) for _, v in _cls_inds.items()])
         _cls_dist = {
             k: len(v) / duplicated_samples
-            for k, v in _cls_infos.items()
+            for k, v in _cls_inds.items()
         }
 
-        data_infos = []
+        repeat_indices = []
 
         frac = 1.0 / len(self.CLASSES)
         ratios = [frac / v for v in _cls_dist.values()]
-        for cls_infos, ratio in zip(list(_cls_infos.values()), ratios):
-            data_infos += np.random.choice(cls_infos,
-                                           int(len(cls_infos) *
-                                               ratio)).tolist()
+        for cls_infos, ratio in zip(list(_cls_inds.values()), ratios):
+            repeat_indices += np.random.choice(cls_infos,
+                                               int(len(cls_infos) *
+                                                   ratio)).tolist()
 
         self.metadata = data['metadata']
         self.version = self.metadata['version']
-        return data_infos
-
-    def __len__(self):
-        """Return the length of data infos.
-
-        Returns:
-            int: Length of data infos.
-        """
-        return len(self.dataset)
+        return repeat_indices
 
     def __getitem__(self, idx):
         """Get item from infos according to the given index.
@@ -76,4 +70,15 @@ class ClassSampledDataset(object):
         Returns:
             dict: Data dictionary of the corresponding index.
         """
-        return self.dataset[idx]
+        # pdb.set_trace()
+        ori_idx = self.repeat_indices[idx]
+        return self.dataset[ori_idx]
+
+    def __len__(self):
+        """Return the length of data infos.
+
+        Returns:
+            int: Length of data infos.
+        """
+        # pdb.set_trace()
+        return len(self.repeat_indices)
