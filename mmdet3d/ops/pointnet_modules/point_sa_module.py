@@ -26,6 +26,9 @@ class PointSAModuleMSG(nn.Module):
             Default: 'max_pool'.
         fps_mod (list[str]: Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
+            F-FPS: using feature distances for FPS.
+            D-FPS: using Euclidean distances of points for FPS.
+            FS: using F-FPS and D-FPS simultaneously.
         fps_sample_range_list (list[int]): Range of points to apply FPS.
             Default: [-1].
         normalize_xyz (bool): Whether to normalize local XYZ with radius.
@@ -57,7 +60,7 @@ class PointSAModuleMSG(nn.Module):
         elif isinstance(num_point, list) or isinstance(num_point, tuple):
             self.num_point = num_point
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Error type of num_point!')
 
         self.pool_mod = pool_mod
         self.groupers = nn.ModuleList()
