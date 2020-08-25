@@ -58,8 +58,7 @@ def build_dataset(cfg, default_args=None):
             build_dataset(cfg['dataset'], default_args), cfg['oversample_thr'])
     elif cfg['type'] == 'ClassSampledDataset':
         dataset = ClassSampledDataset(
-            build_dataset(cfg['dataset'], default_args),
-            cfg['dataset']['ann_file'])
+            build_dataset(cfg['dataset'], default_args))
     elif isinstance(cfg.get('ann_file'), (list, tuple)):
         dataset = _concat_dataset(cfg, default_args)
     else:
