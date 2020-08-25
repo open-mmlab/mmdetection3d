@@ -425,8 +425,7 @@ class LyftDataset(Custom3DDataset):
             pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
 
-    @staticmethod
-    def json2csv(json_path, csv_savepath):
+    def json2csv(self, json_path, csv_savepath):
         """Convert the json file to csv format for submission.
 
         Args:
@@ -434,8 +433,8 @@ class LyftDataset(Custom3DDataset):
             csv_savepath (str): Path to save the csv file.
         """
         results = mmcv.load(json_path)['results']
-        csv_nopred = 'data/lyft/sample_submission.csv'
-        data = pd.read_csv(csv_nopred)
+        sample_list_path = osp.join(self.data_root, 'sample_submission.csv')
+        data = pd.read_csv(sample_list_path)
         Id_list = list(data['Id'])
         pred_list = list(data['PredictionString'])
         cnt = 0
