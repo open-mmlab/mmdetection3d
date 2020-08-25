@@ -8,7 +8,7 @@ from mmdet.models import BACKBONES
 
 @BACKBONES.register_module()
 class SSDSAMSG(nn.Module):
-    """PointNet2 with Single-scale grouping.
+    """PointNet2 with Multi-scale grouping.
 
     Args:
         in_channels (int): Input channels of point cloud.
@@ -18,6 +18,11 @@ class SSDSAMSG(nn.Module):
         num_samples (tuple[int]): The number of samples for ball
             query in each SA module.
         sa_channels (tuple[tuple[int]]): Out channels of each mlp in SA module.
+        aggregation_channels (tuple[int]): Out channels of aggregation
+            multi-scale grouping features.
+        fps_mods (tuple[int]): Mod of FPS for each SA module.
+        fps_sample_range_lists (tuple[tuple[int]]): The number of sampling
+            points which each SA module samples.
         norm_cfg (dict): Config of normalization layer.
         pool_mod (str): Pool method ('max' or 'avg') for SA modules.
         use_xyz (bool): Whether to use xyz as a part of features.
@@ -129,13 +134,12 @@ class SSDSAMSG(nn.Module):
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
+            dict[str, torch.Tensor]: Outputs of the last SA module.
 
-                - fp_xyz (list[torch.Tensor]): The coordinates of \
-                    each fp features.
-                - fp_features (list[torch.Tensor]): The features \
-                    from each Feature Propagate Layers.
-                - fp_indices (list[torch.Tensor]): Indices of the \
+                - sa_xyz (torch.Tensor): The coordinates of sa features.
+                - sa_features (torch.Tensor): The features from the
+                    last Set Aggregation Layers.
+                - sa_indices (torch.Tensor): Indices of the \
                     input points.
         """
         xyz, features = self._split_point_feats(points)

@@ -10,13 +10,13 @@ class AnchorFreeBBoxCoder(BaseBBoxCoder):
     """Bbox Coder for 3D boxes.
 
     Args:
-        code_size (int): The dimension of boxes to be encoded.
+        num_dir_bins (int): Number of bins to encode direction angle.
+        with_rot (bool): Whether the bbox is with rotation.
     """
 
-    def __init__(self, num_dir_bins, num_regressions, with_rot=True):
+    def __init__(self, num_dir_bins, with_rot=True):
         super(AnchorFreeBBoxCoder, self).__init__()
         self.num_dir_bins = num_dir_bins
-        self.num_regressions = num_regressions
         self.with_rot = with_rot
 
     def encode(self, gt_bboxes_3d, gt_labels_3d):
@@ -57,8 +57,7 @@ class AnchorFreeBBoxCoder(BaseBBoxCoder):
                 - center: predicted bottom center of bboxes.
                 - dir_class: predicted bbox direction class.
                 - dir_res: predicted bbox direction residual.
-                - size_class: predicted bbox size class.
-                - size_res: predicted bbox size residual.
+                - size: predicted bbox size.
 
         Returns:
             torch.Tensor: Decoded bbox3d with shape (batch, n, 7).

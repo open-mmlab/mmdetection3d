@@ -132,10 +132,7 @@ model = dict(
     bbox_head=dict(
         num_classes=1,
         bbox_coder=dict(
-            type='AnchorFreeBBoxCoder',
-            num_dir_bins=12,
-            num_regressions=1,
-            with_rot=True)))
+            type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)))
 
 # optimizer
 # yapf:disable

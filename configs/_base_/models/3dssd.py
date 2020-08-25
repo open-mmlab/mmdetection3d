@@ -1,5 +1,5 @@
 model = dict(
-    type='VoteNet',
+    type='SSD3DNet',
     backbone=dict(
         type='SSDSAMSG',
         in_channels=4,
@@ -41,13 +41,8 @@ model = dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
-        size_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
+            type='SmoothL1Loss', reduction='sum', loss_weight=1.0)))
 # model training and testing settings
-train_cfg = dict(pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')
-test_cfg = dict(
-    sample_mod='seed', nms_thr=0.25, score_thr=0.05, per_class_proposal=True)
+train_cfg = dict(pos_distance_thr=10.0)
+test_cfg = dict(nms_thr=0.1, score_thr=0.05, per_class_proposal=True)

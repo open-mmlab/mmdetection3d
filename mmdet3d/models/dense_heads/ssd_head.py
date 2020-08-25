@@ -15,27 +15,33 @@ from mmdet.models import HEADS
 
 @HEADS.register_module()
 class SSD3DHead(nn.Module):
-    r"""Bbox head of `Votenet <https://arxiv.org/abs/1904.09664>`_.
+    r"""Bbox head of `3DSSD <https://arxiv.org/abs/2002.10187>`_.
 
     Args:
         num_classes (int): The number of class.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
+        num_candidates (int): The number of candidate points.
+        in_channels (int): The number of input feature channel.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
-        vote_moudule_cfg (dict): Config of VoteModule for point-wise votes.
         vote_aggregation_cfg (dict): Config of vote aggregation layer.
-        feat_channels (tuple[int]): Convolution channels of
+        candidate_points_mlps (tuple[int]): Config of mlps for generating
+            candidate points.
+        feat_channels (tuple[int]): Convolution channels for aggregation
+            multi-scale grouping features.
+        cls_pred_mlps (tuple[int]): Convolution channels of class
+            prediction layer.
+        reg_pred_mlps (tuple[int]): Convolution channels of regression
             prediction layer.
         conv_cfg (dict): Config of convolution in prediction layer.
         norm_cfg (dict): Config of BN in prediction layer.
+        act_cfg (dict): Config of activation in prediction layer.
         objectness_loss (dict): Config of objectness loss.
         center_loss (dict): Config of center loss.
         dir_class_loss (dict): Config of direction classification loss.
         dir_res_loss (dict): Config of direction residual regression loss.
-        size_class_loss (dict): Config of size classification loss.
         size_res_loss (dict): Config of size residual regression loss.
-        semantic_loss (dict): Config of point-wise semantic segmentation loss.
     """
 
     def __init__(self,
@@ -57,9 +63,7 @@ class SSD3DHead(nn.Module):
                  center_loss=None,
                  dir_class_loss=None,
                  dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 semantic_loss=None):
+                 size_res_loss=None):
         super(SSD3DHead, self).__init__()
         self.num_classes = num_classes
         self.num_candidates = num_candidates
@@ -71,12 +75,9 @@ class SSD3DHead(nn.Module):
         self.center_loss = build_loss(center_loss)
         self.dir_class_loss = build_loss(dir_class_loss)
         self.dir_res_loss = build_loss(dir_res_loss)
-        self.size_class_loss = build_loss(size_class_loss)
         self.size_res_loss = build_loss(size_res_loss)
-        self.semantic_loss = build_loss(semantic_loss)
 
         self.bbox_coder = build_bbox_coder(bbox_coder)
-        self.num_regressions = self.bbox_coder.num_regressions
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
         candidate_points_mlps = [in_channels] + list(candidate_points_mlps)
@@ -152,9 +153,8 @@ class SSD3DHead(nn.Module):
             prev_channel = reg_pred_mlps[k]
         self.reg_pred = nn.Sequential(*regression_pred_list)
         # (center residual (3), size regression (3)
-        # heading class+residual (num_dir_bins*2)) * num_regressions,
-        conv_out_channel = self.num_regressions * \
-            (3 + 3 + self.num_dir_bins * 2)
+        # heading class+residual (num_dir_bins*2)),
+        conv_out_channel = (3 + 3 + self.num_dir_bins * 2)
         self.reg_pred.add_module('reg_pred',
                                  nn.Conv1d(prev_channel, conv_out_channel, 1))
 
@@ -162,27 +162,23 @@ class SSD3DHead(nn.Module):
         """Initialize weights of VoteHead."""
         pass
 
-    def forward(self, feat_dict, sample_mod):
+    def forward(self, feat_dict):
         """Forward pass.
 
         Note:
-            The forward of VoteHead is devided into 4 steps:
+            The forward of SSDHead is devided into 4 steps:
 
                 1. Generate candidate points from seed_points.
-                2. Aggregate vote_points.
+                2. Aggregate candidate points and features.
                 3. Predict bbox and score.
                 4. Decode predictions.
 
         Args:
             feat_dict (dict): Feature dict from backbone.
-            sample_mod (str): Sample mode for vote aggregation layer.
-                valid modes are "vote", "seed" and "random".
 
         Returns:
             dict: Predictions of vote head.
         """
-        assert sample_mod in ['vote', 'seed', 'random']
-
         seed_points = feat_dict['sa_xyz']
         seed_features = feat_dict['sa_features']
         seed_indices = feat_dict['sa_indices']
@@ -251,20 +247,15 @@ class SSD3DHead(nn.Module):
                                    pts_semantic_mask, pts_instance_mask,
                                    bbox_preds)
         (center_targets, size_res_targets, dir_class_targets, dir_res_targets,
-         mask_targets, centerness_targets, positive_mask,
-         negative_mask) = targets
-        # import pdb
-        # pdb.set_trace()
+         mask_targets, centerness_targets, positive_mask, negative_mask,
+         centerness_weights, box_loss_weights) = targets
+
         # calculate centerness loss
-        centerness_weights = (positive_mask +
-                              negative_mask).unsqueeze(-1).repeat(
-                                  1, 1, self.num_classes)
         centerness_loss = self.objectness_loss(
             bbox_preds['obj_scores'].transpose(2, 1),
             centerness_targets,
-            weight=centerness_weights / (centerness_weights.sum() + 1e-6))
+            weight=centerness_weights)
 
-        box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)
         # calculate center loss
         center_loss = self.center_loss(
             bbox_preds['center'],
@@ -282,8 +273,6 @@ class SSD3DHead(nn.Module):
         heading_label_one_hot = dir_class_targets.new_zeros(
             (batch_size, proposal_num, self.num_dir_bins))
         heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1), 1)
-        assert dir_class_targets.max() < self.num_dir_bins
-        assert dir_class_targets.min() >= 0
 
         dir_res_norm = torch.sum(
             bbox_preds['dir_res_norm'] * heading_label_one_hot, -1)
@@ -328,21 +317,12 @@ class SSD3DHead(nn.Module):
             tuple[torch.Tensor]: Targets of vote head.
         """
         # find empty example
-        valid_gt_masks = list()
-        gt_num = list()
         for index in range(len(gt_labels_3d)):
             if len(gt_labels_3d[index]) == 0:
                 fake_box = gt_bboxes_3d[index].tensor.new_zeros(
                     1, gt_bboxes_3d[index].tensor.shape[-1])
                 gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
                 gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
-                valid_gt_masks.append(gt_labels_3d[index].new_zeros(1))
-                gt_num.append(1)
-            else:
-                valid_gt_masks.append(gt_labels_3d[index].new_ones(
-                    gt_labels_3d[index].shape))
-                gt_num.append(gt_labels_3d[index].shape[0])
-        max_gt_num = max(gt_num)
 
         if pts_semantic_mask is None:
             pts_semantic_mask = [None for i in range(len(gt_labels_3d))]
@@ -360,32 +340,27 @@ class SSD3DHead(nn.Module):
                                       pts_semantic_mask, pts_instance_mask,
                                       aggregated_points)
 
-        # pad targets as original code of votenet.
-        for index in range(len(gt_labels_3d)):
-            pad_num = max_gt_num - gt_labels_3d[index].shape[0]
-            # center_targets[index] = F.pad(center_targets[index],
-            #                               (0, 0, 0, pad_num))
-            valid_gt_masks[index] = F.pad(valid_gt_masks[index], (0, pad_num))
-
         center_targets = torch.stack(center_targets)
-        valid_gt_masks = torch.stack(valid_gt_masks)
-
         positive_mask = torch.stack(positive_mask)
         negative_mask = torch.stack(negative_mask)
-        # objectness_weights /= (torch.sum(objectness_weights) + 1e-6)
-        # box_loss_weights = objectness_targets.float() / (
-        #     torch.sum(objectness_targets).float() + 1e-6)
-        # valid_gt_weights = valid_gt_masks.float() / (
-        #     torch.sum(valid_gt_masks.float()) + 1e-6)
         dir_class_targets = torch.stack(dir_class_targets)
         dir_res_targets = torch.stack(dir_res_targets)
         size_res_targets = torch.stack(size_res_targets)
         mask_targets = torch.stack(mask_targets)
         centerness_targets = torch.stack(centerness_targets)
 
+        centerness_weights = (positive_mask +
+                              negative_mask).unsqueeze(-1).repeat(
+                                  1, 1, self.num_classes)
+        centerness_weights = centerness_weights / \
+            (centerness_weights.sum() + 1e-6)
+
+        box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)
+
         return (center_targets, size_res_targets, dir_class_targets,
                 dir_res_targets, mask_targets, centerness_targets,
-                positive_mask, negative_mask)
+                positive_mask, negative_mask, centerness_weights,
+                box_loss_weights)
 
     def get_targets_single(self,
                            points,
@@ -414,8 +389,7 @@ class SSD3DHead(nn.Module):
         assert self.bbox_coder.with_rot or pts_semantic_mask is not None
 
         gt_bboxes_3d = gt_bboxes_3d.to(points.device)
-        # import pdb
-        # pdb.set_trace()
+
         valid_gt = gt_labels_3d != -1
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
@@ -429,8 +403,6 @@ class SSD3DHead(nn.Module):
             points_mask = assignment.new_zeros(
                 [assignment.shape[0], num_gt + 1])
             assignment[assignment == -1] = num_gt
-            assert assignment.max() < num_gt + 1
-            assert assignment.min() >= 0
             points_mask.scatter_(1, assignment.unsqueeze(1), 1)
             points_mask = points_mask[:, :-1]
             assignment[assignment == num_gt] = num_gt - 1
@@ -447,7 +419,7 @@ class SSD3DHead(nn.Module):
         dir_res_targets = dir_res_targets[assignment]
 
         dist = torch.norm(aggregated_points - center_targets, dim=1)
-        dist_mask = dist < 10
+        dist_mask = dist < self.train_cfg.pos_distance_thr
         positive_mask = (points_mask.max(1)[0] > 0) * dist_mask
         negative_mask = (points_mask.max(1)[0] == 0)
 
@@ -475,10 +447,6 @@ class SSD3DHead(nn.Module):
         proposal_num = centerness_targets.shape[0]
         one_hot_centerness_targets = centerness_targets.new_zeros(
             (proposal_num, self.num_classes))
-        assert mask_targets.max() < self.num_classes
-        if mask_targets.min() < 0:
-            import pdb
-            pdb.set_trace()
         one_hot_centerness_targets.scatter_(1, mask_targets.unsqueeze(-1), 1)
         centerness_targets = centerness_targets.unsqueeze(
             1) * one_hot_centerness_targets
