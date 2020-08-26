@@ -606,6 +606,16 @@ class SSD3DHead(nn.Module):
         return bbox_selected, score_selected, labels
 
     def _assign_targets_by_points_inside(self, bboxes_3d, points):
+        """Compute assignment by checking whether point is inside bbox.
+
+        Args:
+            bboxes_3d (BaseInstance3DBoxes): Instance of bounding boxes.
+            points (torch.Tensor): Points of a batch.
+
+        Returns:
+            tuple[torch.Tensor]: Flags indicating whether each point is
+                inside bbox and the index of box where each point are in.
+        """
         num_bbox = bboxes_3d.tensor.shape[0]
         if isinstance(bboxes_3d, LiDARInstance3DBoxes):
             assignment = bboxes_3d.points_in_boxes(points).long()
