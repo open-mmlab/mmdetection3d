@@ -155,7 +155,6 @@ class PointSAModuleMSG(nn.Module):
 
                 if fps_method == 'D-FPS':
                     fps_idx = furthest_point_sample(sample_points_xyz, npoint)
-
                 elif fps_method == 'F-FPS':
                     features_for_fps = torch.cat(
                         [sample_points_xyz,
@@ -165,7 +164,6 @@ class PointSAModuleMSG(nn.Module):
                         features_for_fps, features_for_fps, norm=False)
                     fps_idx = furthest_point_sample_with_dist(
                         features_dist, npoint)
-
                 elif fps_method == 'FS':
                     features_for_fps = torch.cat(
                         [sample_points_xyz,
@@ -178,9 +176,8 @@ class PointSAModuleMSG(nn.Module):
                     fps_idx_dfps = furthest_point_sample(
                         sample_points_xyz, npoint)
                     fps_idx = torch.cat([fps_idx_ffps, fps_idx_dfps], dim=1)
-
                 else:
-                    raise NotImplementedError
+                    raise NotImplementedError('Unsupported FPS mod!')
 
                 indices.append(fps_idx + last_fps_end_index)
                 last_fps_end_index += fps_sample_range
@@ -274,15 +271,15 @@ def calc_square_dist(point_feat_a, point_feat_b, norm=True):
     Returns:
         Tensor: (B, N, M) Distance between each pair points.
     """
-    n = point_feat_a.shape[1]
-    m = point_feat_b.shape[1]
+    length_a = point_feat_a.shape[1]
+    length_b = point_feat_b.shape[1]
     num_channel = point_feat_a.shape[-1]
-    a_square = point_feat_a.unsqueeze(dim=2)  # [bs, n, 1, c]
-    b_square = point_feat_b.unsqueeze(dim=1)  # [bs, 1, m, c]
-    a_square = torch.sum(a_square * a_square, dim=-1)  # [bs, n, 1]
-    b_square = torch.sum(b_square * b_square, dim=-1)  # [bs, 1, m]
-    a_square = a_square.repeat((1, 1, m))  # [bs, n, m]
-    b_square = b_square.repeat((1, n, 1))  # [bs, n, m]
+    # [bs, n, 1]
+    a_square = torch.sum(point_feat_a.unsqueeze(dim=2).pow(2), dim=-1)
+    # [bs, 1, m]
+    b_square = torch.sum(point_feat_b.unsqueeze(dim=1).pow(2), dim=-1)
+    a_square = a_square.repeat((1, 1, length_b))  # [bs, n, m]
+    b_square = b_square.repeat((1, length_a, 1))  # [bs, n, m]
 
     coor = torch.matmul(point_feat_a, point_feat_b.transpose(1, 2))
 
