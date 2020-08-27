@@ -1,7 +1,6 @@
 import copy
 import numpy as np
 import torch
-from collections import defaultdict
 from mmcv.cnn import build_conv_layer, build_norm_layer, kaiming_init
 from torch import nn
 
@@ -457,9 +456,10 @@ class CenterHead(nn.Module):
                 are valid.
         """
         device = gt_labels_3d.device
-        gt_bboxes_3d.limit_yaw(offset=0.5, period=np.pi * 2)
-        gt_bboxes_3d = gt_bboxes_3d.tensor[:, [0, 1, 2, 3, 4, 5, 7, 8, 6]].to(
-            device)
+        gt_bboxes_3d = torch.cat((gt_bboxes_3d.gravity_center,
+                                  gt_bboxes_3d.tensor[:, [3, 4, 5, 7, 8, 6]]),
+                                 dim=1).to(device)
+        gt_labels_3d += 1
         max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
         grid_size = np.array(self.train_cfg['grid_size'])
         pc_range = np.array(self.train_cfg['point_cloud_range'])
@@ -487,10 +487,9 @@ class CenterHead(nn.Module):
                 task_box.append(gt_bboxes_3d[m])
                 task_class.append(gt_labels_3d[m] - flag2)
             task_boxes.append(torch.cat(task_box, axis=0).to(device))
-            task_classes.append(torch.cat(task_class).to(device))
+            task_classes.append(torch.cat(task_class).long().to(device))
             flag2 += len(mask)
         draw_gaussian = draw_heatmap_gaussian
-
         hms, anno_boxes, inds, masks = [], [], [], []
 
         for idx, task in enumerate(self.tasks):
@@ -579,7 +578,6 @@ class CenterHead(nn.Module):
             anno_boxes.append(anno_box)
             masks.append(mask)
             inds.append(ind)
-
         return hms, anno_boxes, inds, masks
 
     def loss(self, gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs):
@@ -593,7 +591,7 @@ class CenterHead(nn.Module):
         """
         hms, anno_boxes, inds, masks = self.get_targets(
             gt_bboxes_3d, gt_labels_3d)
-        rets = []
+        loss_dict = dict()
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
             preds_dict[0]['hm'] = clip_sigmoid(preds_dict[0]['hm'])
@@ -609,28 +607,23 @@ class CenterHead(nn.Module):
 
             # Regression loss for dimension, offset, height, rotation
             ind = inds[task_id]
+            num = masks[task_id].float().sum()
             pred = preds_dict[0]['anno_box'].permute(0, 2, 3, 1).contiguous()
             pred = pred.view(pred.size(0), -1, pred.size(3))
             pred = self._gather_feat(pred, ind)
-            mask = torch.unsqueeze(masks[task_id], -1).expand(pred.size())
+            mask = masks[task_id].unsqueeze(2).expand_as(target_box).float()
+            isnotnan = (~torch.isnan(target_box)).float()
+            mask *= isnotnan
             box_loss = torch.sum(self.loss_reg(pred, target_box, mask), 1) / (
-                masks[task_id].float().sum() + 1e-4)
+                num + 1e-4)
             code_weights = self.train_cfg.get('code_weights', [])
             loc_loss = (box_loss * box_loss.new_tensor(code_weights)).sum()
-
             loss = hm_loss + self.weight * loc_loss
+            loss_dict[f'loss_task{task_id}'] = loss
+            loss_dict[f'hm_loss_task{task_id}'] = hm_loss.detach()
+            loss_dict[f'loc_loss_task{task_id}'] = loc_loss
 
-            ret = dict(
-                loss=loss, hm_loss=hm_loss.detach().cpu(), loc_loss=loc_loss)
-
-            rets.append(ret)
-        # convert batch-key to key-batch
-        rets_merged = defaultdict(list)
-        for ret in rets:
-            for k, v in ret.items():
-                rets_merged[k].append(v)
-
-        return rets_merged
+        return loss_dict
 
     def get_bboxes(self, preds_dicts, img_metas, img=None, rescale=False):
         """Generate bboxes from bbox head predictions.
