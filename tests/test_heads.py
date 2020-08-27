@@ -8,6 +8,7 @@ from os.path import dirname, exists, join
 from mmdet3d.core.bbox import (Box3DMode, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes)
 from mmdet3d.models.builder import build_head
+from mmdet.apis import set_random_seed
 
 
 def _setup_seed(seed):
@@ -548,6 +549,7 @@ def test_dcn_center_head():
     # TODO: Change to read config from file.
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and CUDA')
+    set_random_seed(0)
     tasks = [
         dict(num_class=1, class_names=['car']),
         dict(num_class=2, class_names=['truck', 'construction_vehicle']),
@@ -556,43 +558,19 @@ def test_dcn_center_head():
         dict(num_class=2, class_names=['motorcycle', 'bicycle']),
         dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
     ]
-    bbox_cfg = dict(
-        type='CenterPointBBoxCoder',
-        post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-        max_num=500,
-        score_threshold=0.1,
-        pc_range=[-51.2, -51.2],
-        out_size_factor=8,
-        voxel_size=[0.2, 0.2])
-    train_cfg = dict(
-        grid_size=[1024, 1024, 40],
-        point_cloud_range=[-51.2, -51.2, -5., 51.2, 51.2, 3.],
-        voxel_size=[0.1, 0.1, 0.2],
-        out_size_factor=8,
-        dense_reg=1,
-        gaussian_overlap=0.1,
-        max_objs=500,
-        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
-        min_radius=2,
-        no_log=False)
-    test_cfg = dict(
-        post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-        max_per_img=500,
-        max_pool_nms=False,
-        min_radius=[4, 12, 10, 1, 0.85, 0.175],
-        post_max_size=83,
-        score_threshold=0.1,
-        pc_range=[-51.2, -51.2],
-        out_size_factor=8,
-        voxel_size=[0.2, 0.2],
-        nms_type='circle',
-        no_log=False)
-
+    voxel_size = [0.2, 0.2, 8]
     dcn_center_head_cfg = dict(
         type='CenterHead',
         mode='3d',
-        in_channels=sum([256, 256]),
-        tasks=tasks,
+        in_channels=sum([128, 128, 128]),
+        tasks=[
+            dict(num_class=1, class_names=['car']),
+            dict(num_class=2, class_names=['truck', 'construction_vehicle']),
+            dict(num_class=2, class_names=['bus', 'trailer']),
+            dict(num_class=1, class_names=['barrier']),
+            dict(num_class=2, class_names=['motorcycle', 'bicycle']),
+            dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
+        ],
         weight=0.25,
         common_heads={
             'reg': (2, 2),
@@ -601,15 +579,47 @@ def test_dcn_center_head():
             'rot': (2, 2),
             'vel': (2, 2)
         },
-        train_cfg=train_cfg,
-        bbox_coder=bbox_cfg,
-        test_cfg=test_cfg,
         share_conv_channel=64,
+        bbox_coder=dict(
+            type='CenterPointBBoxCoder',
+            post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+            max_num=500,
+            score_threshold=0.1,
+            pc_range=[-51.2, -51.2],
+            out_size_factor=4,
+            voxel_size=voxel_size[:2],
+            code_size=9),
         dcn_head=True)
+    # model training and testing settings
+    train_cfg = dict(
+        grid_size=[512, 512, 1],
+        point_cloud_range=[-51.2, -51.2, -5., 51.2, 51.2, 3.],
+        voxel_size=voxel_size,
+        out_size_factor=4,
+        dense_reg=1,
+        gaussian_overlap=0.1,
+        max_objs=500,
+        min_radius=2,
+        no_log=False,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0])
+
+    test_cfg = dict(
+        post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+        max_per_img=500,
+        max_pool_nms=False,
+        min_radius=[4, 12, 10, 1, 0.85, 0.175],
+        post_max_size=83,
+        score_threshold=0.1,
+        pc_range=[-51.2, -51.2],
+        out_size_factor=4,
+        voxel_size=voxel_size[:2],
+        nms_type='circle',
+        no_log=False)
+    dcn_center_head_cfg.update(train_cfg=train_cfg, test_cfg=test_cfg)
 
     dcn_center_head = build_head(dcn_center_head_cfg).cuda()
 
-    x = torch.rand([2, 512, 128, 128]).cuda()
+    x = torch.ones([2, 384, 128, 128]).cuda()
     output = dcn_center_head([x])
     for i in range(6):
         assert output[i][0]['reg'].shape == torch.Size([2, 2, 128, 128])
@@ -620,20 +630,21 @@ def test_dcn_center_head():
         assert output[i][0]['hm'].shape == torch.Size(
             [2, tasks[i]['num_class'], 128, 128])
 
-        # Test loss.
-        gt_bboxes_0 = LiDARInstance3DBoxes(
-            torch.rand([10, 9]).cuda(), box_dim=9)
-        gt_bboxes_1 = LiDARInstance3DBoxes(
-            torch.rand([20, 9]).cuda(), box_dim=9)
-        gt_labels_0 = torch.randint(1, 11, [10]).cuda()
-        gt_labels_1 = torch.randint(1, 11, [20]).cuda()
-        gt_bboxes_3d = [gt_bboxes_0, gt_bboxes_1]
-        gt_labels_3d = [gt_labels_0, gt_labels_1]
-        loss = dcn_center_head.loss(gt_bboxes_3d, gt_labels_3d, output)
+    # Test loss.
+    gt_bboxes_0 = LiDARInstance3DBoxes(torch.rand([10, 9]).cuda(), box_dim=9)
+    gt_bboxes_1 = LiDARInstance3DBoxes(torch.rand([20, 9]).cuda(), box_dim=9)
+    gt_labels_0 = torch.randint(1, 11, [10]).cuda()
+    gt_labels_1 = torch.randint(1, 11, [20]).cuda()
+    gt_bboxes_3d = [gt_bboxes_0, gt_bboxes_1]
+    gt_labels_3d = [gt_labels_0, gt_labels_1]
+    loss = dcn_center_head.loss(gt_bboxes_3d, gt_labels_3d, output)
 
-        for key in loss.keys():
-            for i in range(len(loss[key])):
-                assert torch.all(loss[key][i] >= 0)
+    assert torch.isclose(loss['loss_task0'], torch.tensor(5959.6978))
+    assert torch.isclose(loss['loss_task1'], torch.tensor(3898.6650))
+    assert torch.isclose(loss['loss_task2'], torch.tensor(1835.9578))
+    assert torch.isclose(loss['loss_task3'], torch.tensor(1761.9911))
+    assert torch.isclose(loss['loss_task4'], torch.tensor(3231.6331))
+    assert torch.isclose(loss['loss_task5'], torch.tensor(4147.2969))
 
     # test get_bboxes
     img_metas = [
@@ -645,52 +656,3 @@ def test_dcn_center_head():
         assert ret_list[0].tensor.shape[0] <= 500
         assert ret_list[1].shape[0] <= 500
         assert ret_list[2].shape[0] <= 500
-
-    # test get_task_detections
-    test_cfg = dict(
-        post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-        max_per_img=500,
-        max_pool_nms=False,
-        min_radius=[4, 12, 10, 1, 0.85, 0.175],
-        post_max_size=83,
-        score_threshold=0.1,
-        pc_range=[-51.2, -51.2],
-        out_size_factor=8,
-        voxel_size=[0.2, 0.2],
-        nms_type='rotate',
-        nms_pre_max_size=1000,
-        nms_post_max_size=83,
-        nms_iou_threshold=0.2,
-        no_log=False)
-    dcn_center_head_cfg = dict(
-        type='CenterHead',
-        mode='3d',
-        in_channels=sum([256, 256]),
-        tasks=tasks,
-        weight=0.25,
-        common_heads={
-            'reg': (2, 2),
-            'height': (1, 2),
-            'dim': (3, 2),
-            'rot': (2, 2),
-            'vel': (2, 2)
-        },
-        train_cfg=train_cfg,
-        bbox_coder=bbox_cfg,
-        test_cfg=test_cfg,
-        share_conv_channel=64,
-        dcn_head=True)
-
-    dcn_center_head = build_head(dcn_center_head_cfg).cuda()
-
-    batch_cls_labels = torch.zeros([100]).cuda()
-    batch_cls_preds = torch.rand([100]).cuda()
-    batch_reg_preds = torch.rand([100, 9]).cuda()
-    img_metas = [dict(box_type_3d=LiDARInstance3DBoxes) for _ in range(100)]
-    predictions_dicts = dcn_center_head.get_task_detections(
-        1, [batch_cls_preds], [batch_reg_preds], [batch_cls_labels], img_metas)
-    bboxes = predictions_dicts[0]['bboxes']
-    scores = predictions_dicts[0]['scores']
-    labels = predictions_dicts[0]['labels']
-
-    assert bboxes.shape[0] == scores.shape[0] == labels.shape[0]
