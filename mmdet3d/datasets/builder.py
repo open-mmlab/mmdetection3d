@@ -14,7 +14,7 @@ if platform.system() != 'Windows':
 
 
 def build_dataset(cfg, default_args=None):
-    from mmdet3d.datasets.dataset_wrappers import ClassSampledDataset
+    from mmdet3d.datasets.dataset_wrappers import CBGSDataset
     from mmdet.datasets.dataset_wrappers import (ClassBalancedDataset,
                                                  ConcatDataset, RepeatDataset)
     if isinstance(cfg, (list, tuple)):
@@ -29,9 +29,8 @@ def build_dataset(cfg, default_args=None):
     elif cfg['type'] == 'ClassBalancedDataset':
         dataset = ClassBalancedDataset(
             build_dataset(cfg['dataset'], default_args), cfg['oversample_thr'])
-    elif cfg['type'] == 'ClassSampledDataset':
-        dataset = ClassSampledDataset(
-            build_dataset(cfg['dataset'], default_args))
+    elif cfg['type'] == 'CBGSDataset':
+        dataset = CBGSDataset(build_dataset(cfg['dataset'], default_args))
     elif isinstance(cfg.get('ann_file'), (list, tuple)):
         dataset = _concat_dataset(cfg, default_args)
     else:
