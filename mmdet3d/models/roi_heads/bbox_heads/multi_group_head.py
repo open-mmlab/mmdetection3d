@@ -289,10 +289,10 @@ class CenterHead(nn.Module):
                  train_cfg=None,
                  test_cfg=None,
                  bbox_coder=None,
-                 weight=0.25,
                  common_heads=dict(),
                  loss_cls=dict(type='CenterPointFocalLoss'),
-                 loss_reg=dict(type='L1Loss', reduction='none'),
+                 loss_reg=dict(
+                     type='L1Loss', reduction='none', loss_weight=0.25),
                  init_bias=-2.19,
                  share_conv_channel=64,
                  num_hm_conv=2,
@@ -303,7 +303,6 @@ class CenterHead(nn.Module):
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
-        self.weight = weight  # weight between hm loss and loc loss
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self.encode_background_as_zeros = True
@@ -618,9 +617,7 @@ class CenterHead(nn.Module):
                 num + 1e-4)
             code_weights = self.train_cfg.get('code_weights', [])
             loc_loss = (box_loss * box_loss.new_tensor(code_weights)).sum()
-            loss = hm_loss + self.weight * loc_loss
-            loss_dict[f'loss_task{task_id}'] = loss
-            loss_dict[f'hm_loss_task{task_id}'] = hm_loss.detach()
+            loss_dict[f'hm_loss_task{task_id}'] = hm_loss
             loss_dict[f'loc_loss_task{task_id}'] = loc_loss
 
         return loss_dict
