@@ -208,6 +208,8 @@ void furthest_point_sampling_kernel_launcher(int b, int n, int m,
   }
 }
 
+// Modified from
+// https://github.com/qiqihaer/3DSSD-pytorch/blob/master/lib/pointnet2/src/sampling_gpu.cu
 template <unsigned int block_size>
 __global__ void furthest_point_sampling_with_dist_kernel(
     int b, int n, int m, const float *__restrict__ dataset,

@@ -18,12 +18,6 @@ class PointSAModuleMSG(nn.Module):
         sample_nums (list[int]): Number of samples in each ball query.
         mlp_channels (list[int]): Specify of the pointnet before
             the global pooling for each scale.
-        norm_cfg (dict): Type of normalization method.
-            Default: dict(type='BN2d').
-        use_xyz (bool): Whether to use xyz.
-            Default: True.
-        pool_mod (str): Type of pooling method.
-            Default: 'max_pool'.
         fps_mod (list[str]: Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
             F-FPS: using feature distances for FPS.
@@ -31,6 +25,12 @@ class PointSAModuleMSG(nn.Module):
             FS: using F-FPS and D-FPS simultaneously.
         fps_sample_range_list (list[int]): Range of points to apply FPS.
             Default: [-1].
+        norm_cfg (dict): Type of normalization method.
+            Default: dict(type='BN2d').
+        use_xyz (bool): Whether to use xyz.
+            Default: True.
+        pool_mod (str): Type of pooling method.
+            Default: 'max_pool'.
         normalize_xyz (bool): Whether to normalize local XYZ with radius.
             Default: False.
     """
@@ -40,12 +40,13 @@ class PointSAModuleMSG(nn.Module):
                  radii: List[float],
                  sample_nums: List[int],
                  mlp_channels: List[List[int]],
+                 fps_mod: List[str] = ['D-FPS'],
+                 fps_sample_range_list: List[int] = [-1],
                  norm_cfg: dict = dict(type='BN2d'),
                  use_xyz: bool = True,
                  pool_mod='max',
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 normalize_xyz: bool = False):
+                 normalize_xyz: bool = False,
+                 bias='auto'):
         super().__init__()
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
@@ -54,6 +55,9 @@ class PointSAModuleMSG(nn.Module):
         assert isinstance(fps_sample_range_list, list) or isinstance(
             fps_sample_range_list, tuple)
         assert len(fps_mod) == len(fps_sample_range_list)
+
+        if isinstance(mlp_channels, tuple):
+            mlp_channels = list(map(list, mlp_channels))
 
         if isinstance(num_point, int):
             self.num_point = [num_point]
@@ -95,7 +99,8 @@ class PointSAModuleMSG(nn.Module):
                         kernel_size=(1, 1),
                         stride=(1, 1),
                         conv_cfg=dict(type='Conv2d'),
-                        norm_cfg=norm_cfg))
+                        norm_cfg=norm_cfg,
+                        bias=bias))
             self.mlps.append(mlp)
 
     def forward(
@@ -140,21 +145,20 @@ class PointSAModuleMSG(nn.Module):
                     self.fps_sample_range_list, self.fps_mod_list,
                     self.num_point):
                 assert fps_method in ['D-FPS', 'F-FPS', 'FS']
+                assert fps_sample_range < points_xyz.shape[1]
 
                 if fps_sample_range == -1:
                     sample_points_xyz = points_xyz[:, last_fps_end_index:]
+                    sample_features = features[:, :, last_fps_end_index:]
                 else:
                     sample_points_xyz = \
                         points_xyz[:, last_fps_end_index:fps_sample_range]
-
-                if fps_sample_range == -1:
-                    sample_features = features[:, :, last_fps_end_index:]
-                else:
                     sample_features = \
                         features[:, :, last_fps_end_index:fps_sample_range]
 
                 if fps_method == 'D-FPS':
-                    fps_idx = furthest_point_sample(sample_points_xyz, npoint)
+                    fps_idx = furthest_point_sample(
+                        sample_points_xyz.contiguous(), npoint)
                 elif fps_method == 'F-FPS':
                     features_for_fps = torch.cat(
                         [sample_points_xyz,
