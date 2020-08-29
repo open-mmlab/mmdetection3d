@@ -230,6 +230,10 @@ def _fill_trainval_infos(nusc,
                              for b in boxes]).reshape(-1, 1)
             velocity = np.array(
                 [nusc.box_velocity(token)[:2] for token in sample['anns']])
+            valid_flag = np.array(
+                [(anno['num_lidar_pts'] + anno['num_radar_pts']) > 0
+                 for anno in annotations],
+                dtype=bool).reshape(-1)
             # convert velo from global to lidar
             for i in range(len(boxes)):
                 velo = np.array([*velocity[i], 0.0])
@@ -253,6 +257,7 @@ def _fill_trainval_infos(nusc,
                 [a['num_lidar_pts'] for a in annotations])
             info['num_radar_pts'] = np.array(
                 [a['num_radar_pts'] for a in annotations])
+            info['valid_flag'] = valid_flag
 
         if sample['scene_token'] in train_scenes:
             train_nusc_infos.append(info)
