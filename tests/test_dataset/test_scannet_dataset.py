@@ -162,3 +162,50 @@ def test_evaluate():
     assert abs(ret_dict['window_AP_0.25'] - 1.0) < 0.01
     assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
     assert abs(ret_dict['curtain_AP_0.25'] - 1.0) < 0.01
+
+
+def test_show():
+    import mmcv
+    import tempfile
+    from os import path as osp
+
+    from mmdet3d.core.bbox import DepthInstance3DBoxes
+    temp_dir = tempfile.mkdtemp()
+    root_path = './tests/data/scannet'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    scannet_dataset = ScanNetDataset(root_path, ann_file)
+    boxes_3d = DepthInstance3DBoxes(
+        torch.tensor([[
+            -2.4053e+00, 9.2295e-01, 8.0661e-02, 2.4054e+00, 2.1468e+00,
+            8.5990e-01, 0.0000e+00
+        ],
+                      [
+                          -1.9341e+00, -2.0741e+00, 3.0698e-03, 3.2206e-01,
+                          2.5322e-01, 3.5144e-01, 0.0000e+00
+                      ],
+                      [
+                          -3.6908e+00, 8.0684e-03, 2.6201e-01, 4.1515e-01,
+                          7.6489e-01, 5.3585e-01, 0.0000e+00
+                      ],
+                      [
+                          2.6332e+00, 8.5143e-01, -4.9964e-03, 3.0367e-01,
+                          1.3448e+00, 1.8329e+00, 0.0000e+00
+                      ],
+                      [
+                          2.0221e-02, 2.6153e+00, 1.5109e-02, 7.3335e-01,
+                          1.0429e+00, 1.0251e+00, 0.0000e+00
+                      ]]))
+    scores_3d = torch.tensor(
+        [1.2058e-04, 2.3012e-03, 6.2324e-06, 6.6139e-06, 6.7965e-05])
+    labels_3d = torch.tensor([0, 0, 0, 0, 0])
+    result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
+    results = [result]
+    scannet_dataset.show(results, temp_dir)
+    pts_file_path = osp.join(temp_dir, 'scene0000_00',
+                             'scene0000_00_points.obj')
+    gt_file_path = osp.join(temp_dir, 'scene0000_00', 'scene0000_00_gt.ply')
+    pred_file_path = osp.join(temp_dir, 'scene0000_00',
+                              'scene0000_00_pred.ply')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)

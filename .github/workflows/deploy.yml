@@ -12,6 +12,8 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.7
+      - name: Install torch
+        run: pip install torch
       - name: Build MMDet3D
         run: python setup.py sdist
       - name: Publish distribution to PyPI

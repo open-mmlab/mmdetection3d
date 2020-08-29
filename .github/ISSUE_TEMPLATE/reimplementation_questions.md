@@ -12,7 +12,7 @@ assignees: ''
 There are several common situations in the reimplementation issues as below
 1. Reimplement a model in the model zoo using the provided configs
 2. Reimplement a model in the model zoo on other dataset (e.g., custom datasets)
-3. Reimplement a custom model but all the components are implemented in MMDetection
+3. Reimplement a custom model but all the components are implemented in MMDetection3D
 4. Reimplement a custom model with new modules implemented by yourself
 
 There are several things to do for different cases as below.
@@ -42,7 +42,7 @@ A placeholder for the config.
 
 **Environment**
 
-1. Please run `python mmdet/utils/collect_env.py` to collect necessary environment infomation and paste it here.
+1. Please run `python mmdet3d/utils/collect_env.py` to collect necessary environment infomation and paste it here.
 2. You may add addition that may be helpful for locating the problem, such as
     - How you installed PyTorch [e.g., pip, conda, source]
     - Other environment variables that may be related (such as `$PATH`, `$LD_LIBRARY_PATH`, `$PYTHONPATH`, etc.)

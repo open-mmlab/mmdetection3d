@@ -409,7 +409,8 @@ class VoteHead(nn.Module):
             box_indices_all = gt_bboxes_3d.points_in_boxes(points)
             for i in range(gt_labels_3d.shape[0]):
                 box_indices = box_indices_all[:, i]
-                indices = torch.nonzero(box_indices).squeeze(-1)
+                indices = torch.nonzero(
+                    box_indices, as_tuple=False).squeeze(-1)
                 selected_points = points[indices]
                 vote_target_masks[indices] = 1
                 vote_targets_tmp = vote_targets[indices]
@@ -418,7 +419,8 @@ class VoteHead(nn.Module):
 
                 for j in range(self.gt_per_seed):
                     column_indices = torch.nonzero(
-                        vote_target_idx[indices] == j).squeeze(-1)
+                        vote_target_idx[indices] == j,
+                        as_tuple=False).squeeze(-1)
                     vote_targets_tmp[column_indices,
                                      int(j * 3):int(j * 3 +
                                                     3)] = votes[column_indices]
@@ -435,7 +437,8 @@ class VoteHead(nn.Module):
                                                  dtype=torch.long)
 
             for i in torch.unique(pts_instance_mask):
-                indices = torch.nonzero(pts_instance_mask == i).squeeze(-1)
+                indices = torch.nonzero(
+                    pts_instance_mask == i, as_tuple=False).squeeze(-1)
                 if pts_semantic_mask[indices[0]] < self.num_classes:
                     selected_points = points[indices, :3]
                     center = 0.5 * (
@@ -558,7 +561,8 @@ class VoteHead(nn.Module):
 
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores > self.test_cfg.score_thr)
-        nonempty_box_inds = torch.nonzero(nonempty_box_mask).flatten()
+        nonempty_box_inds = torch.nonzero(
+            nonempty_box_mask, as_tuple=False).flatten()
         nonempty_mask = torch.zeros_like(bbox_classes).scatter(
             0, nonempty_box_inds[nms_selected], 1)
         selected = (nonempty_mask.bool() & scores_mask.bool())

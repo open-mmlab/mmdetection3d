@@ -123,16 +123,15 @@ def test_indoor_eval():
         box_type_3d=DepthInstance3DBoxes,
         box_mode_3d=Box3DMode.DEPTH)
 
-    assert abs(ret_value['cabinet_AP_0.25'] - 0.666667) < 1e-3
-    assert abs(ret_value['bed_AP_0.25'] - 1.0) < 1e-3
-    assert abs(ret_value['chair_AP_0.25'] - 0.5) < 1e-3
-    assert abs(ret_value['mAP_0.25'] - 0.708333) < 1e-3
-    assert abs(ret_value['mAR_0.25'] - 0.833333) < 1e-3
+    assert np.isclose(ret_value['cabinet_AP_0.25'], 0.666667)
+    assert np.isclose(ret_value['bed_AP_0.25'], 1.0)
+    assert np.isclose(ret_value['chair_AP_0.25'], 0.5)
+    assert np.isclose(ret_value['mAP_0.25'], 0.708333)
+    assert np.isclose(ret_value['mAR_0.25'], 0.833333)
 
 
 def test_average_precision():
     ap = average_precision(
         np.array([[0.25, 0.5, 0.75], [0.25, 0.5, 0.75]]),
         np.array([[1., 1., 1.], [1., 1., 1.]]), '11points')
-    print(ap[0])
     assert abs(ap[0] - 0.06611571) < 0.001

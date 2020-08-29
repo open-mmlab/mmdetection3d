@@ -76,8 +76,9 @@ def inference_detector(model, pcd):
         # scatter to specified GPU
         data = scatter(data, [device.index])[0]
     else:
-        raise NotImplementedError('Not support cpu-only currently')
-
+        # this is a workaround to avoid the bug of MMDataParallel
+        data['img_metas'] = data['img_metas'][0].data
+        data['points'] = data['points'][0].data
     # forward the model
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)

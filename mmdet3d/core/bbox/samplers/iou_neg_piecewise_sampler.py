@@ -55,7 +55,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
 
     def _sample_neg(self, assign_result, num_expected, **kwargs):
         """Randomly sample some negative samples."""
-        neg_inds = torch.nonzero(assign_result.gt_inds == 0)
+        neg_inds = torch.nonzero(assign_result.gt_inds == 0, as_tuple=False)
         if neg_inds.numel() != 0:
             neg_inds = neg_inds.squeeze(1)
         if len(neg_inds) <= num_expected:
@@ -80,7 +80,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
                 max_iou_thr = self.neg_iou_thr[piece_inds]
                 piece_neg_inds = torch.nonzero(
                     (max_overlaps >= min_iou_thr)
-                    & (max_overlaps < max_iou_thr)).view(-1)
+                    & (max_overlaps < max_iou_thr),
+                    as_tuple=False).view(-1)
 
                 if len(piece_neg_inds) < piece_expected_num:
                     neg_inds_choice = torch.cat(

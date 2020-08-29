@@ -110,6 +110,6 @@ class MultiScaleFlipAug3D(object):
         repr_str = self.__class__.__name__
         repr_str += f'(transforms={self.transforms}, '
         repr_str += f'img_scale={self.img_scale}, flip={self.flip}, '
-        repr_str += f'pts_scale_ratio={self.pts_scale_raio}, '
+        repr_str += f'pts_scale_ratio={self.pts_scale_ratio}, '
         repr_str += f'flip_direction={self.flip_direction})'
         return repr_str

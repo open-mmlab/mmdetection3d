@@ -120,3 +120,34 @@ def test_evaluate():
     assert abs(bed_precision_25 - 1) < 0.01
     assert abs(dresser_precision_25 - 1) < 0.01
     assert abs(night_stand_precision_25 - 1) < 0.01
+
+
+def test_show():
+    import mmcv
+    import tempfile
+    from os import path as osp
+
+    from mmdet3d.core.bbox import DepthInstance3DBoxes
+    temp_dir = tempfile.mkdtemp()
+    root_path = './tests/data/sunrgbd'
+    ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
+    sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file)
+    boxes_3d = DepthInstance3DBoxes(
+        torch.tensor(
+            [[1.1500, 4.2614, -1.0669, 1.3219, 2.1593, 1.0267, 1.6473],
+             [-0.9583, 2.1916, -1.0881, 0.6213, 1.3022, 1.6275, -3.0720],
+             [2.5697, 4.8152, -1.1157, 0.5421, 0.7019, 0.7896, 1.6712],
+             [0.7283, 2.5448, -1.0356, 0.7691, 0.9056, 0.5771, 1.7121],
+             [-0.9860, 3.2413, -1.2349, 0.5110, 0.9940, 1.1245, 0.3295]]))
+    scores_3d = torch.tensor(
+        [1.5280e-01, 1.6682e-03, 6.2811e-04, 1.2860e-03, 9.4229e-06])
+    labels_3d = torch.tensor([0, 0, 0, 0, 0])
+    result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
+    results = [result]
+    sunrgbd_dataset.show(results, temp_dir)
+    pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
+    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.ply')
+    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.ply')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
