@@ -77,7 +77,7 @@ jobs:
         run: pip install Pillow==6.2.2
         if: ${{matrix.torchvision < 0.5}}
       - name: Install PyTorch
-        run: pip install https://download.pytorch.org/whl/cu101/${{matrix.torchlink}}-cp37-cp37m-linux_x86_64.whl
+        run: pip install https://download.pytorch.org/whl/cu101/torch-${{matrix.torchlink}}-cp37-cp37m-linux_x86_64.whl
       - name: Install TorchVision
         run: pip install torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
