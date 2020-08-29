@@ -15,7 +15,7 @@ def get_sampler_type(sampler_type):
             The valid value are "D-FPS", "F-FPS", or "FS".
 
     Returns:
-        tuple: Box type and box mode.
+        class: Points sampler type.
     """
     if sampler_type == 'D-FPS':
         sampler = DFPS_Sampler
