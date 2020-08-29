@@ -35,7 +35,7 @@ class CBGSDataset(object):
             list[dict]: List of annotations after class sampling.
         """
         class_sample_idxs = {name: [] for name in self.CLASSES}
-        for idx in range(len(self.dataset.data_infos)):
+        for idx in range(len(self.dataset)):
             class_sample_idx = self.dataset.get_cat_ids(idx)
             for key in class_sample_idxs.keys():
                 class_sample_idxs[key] += class_sample_idx[key]
