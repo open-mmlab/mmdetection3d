@@ -139,6 +139,29 @@ class NuScenesDataset(Custom3DDataset):
                 use_external=False,
             )
 
+    def get_cat_ids(self, idx):
+        """Get category distribution of single scene.
+
+        Args:
+            idx (int): Index of the data_info.
+
+        Returns:
+            dict[list]: for each category, if the current scene
+                contains such boxes, store a list containing idx,
+                otherwise, store empty list.
+        """
+        class_sample_idx = {name: [] for name in self.CLASSES}
+        info = self.data_infos[idx]
+        if self.use_valid_flag:
+            mask = info['valid_flag']
+            gt_names = set(info['gt_names'][mask])
+        else:
+            gt_names = set(info['gt_names'])
+        for name in gt_names:
+            if name in self.CLASSES:
+                class_sample_idx[name].append(idx)
+        return class_sample_idx
+
     def load_annotations(self, ann_file):
         """Load annotations from ann_file.
 
