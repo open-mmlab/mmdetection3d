@@ -4,8 +4,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 from typing import List
 
-from mmdet3d.ops import (GroupAll, QueryAndGroup, furthest_point_sample,
-                         furthest_point_sample_with_dist, gather_points)
+from mmdet3d.ops import GroupAll, Points_Sampler, QueryAndGroup, gather_points
 
 
 class PointSAModuleMSG(nn.Module):
@@ -71,6 +70,9 @@ class PointSAModuleMSG(nn.Module):
         self.mlps = nn.ModuleList()
         self.fps_mod_list = fps_mod
         self.fps_sample_range_list = fps_sample_range_list
+
+        self.points_sampler = Points_Sampler(self.num_point, self.fps_mod_list,
+                                             self.fps_sample_range_list)
 
         for i in range(len(radii)):
             radius = radii[i]
@@ -138,55 +140,7 @@ class PointSAModuleMSG(nn.Module):
         elif target_xyz is not None:
             new_xyz = target_xyz.contiguous()
         else:
-            indices = []
-            last_fps_end_index = 0
-
-            for fps_sample_range, fps_method, npoint in zip(
-                    self.fps_sample_range_list, self.fps_mod_list,
-                    self.num_point):
-                assert fps_method in ['D-FPS', 'F-FPS', 'FS']
-                assert fps_sample_range < points_xyz.shape[1]
-
-                if fps_sample_range == -1:
-                    sample_points_xyz = points_xyz[:, last_fps_end_index:]
-                    sample_features = features[:, :, last_fps_end_index:]
-                else:
-                    sample_points_xyz = \
-                        points_xyz[:, last_fps_end_index:fps_sample_range]
-                    sample_features = \
-                        features[:, :, last_fps_end_index:fps_sample_range]
-
-                if fps_method == 'D-FPS':
-                    fps_idx = furthest_point_sample(
-                        sample_points_xyz.contiguous(), npoint)
-                elif fps_method == 'F-FPS':
-                    features_for_fps = torch.cat(
-                        [sample_points_xyz,
-                         sample_features.transpose(1, 2)],
-                        dim=2)
-                    features_dist = calc_square_dist(
-                        features_for_fps, features_for_fps, norm=False)
-                    fps_idx = furthest_point_sample_with_dist(
-                        features_dist, npoint)
-                elif fps_method == 'FS':
-                    features_for_fps = torch.cat(
-                        [sample_points_xyz,
-                         sample_features.transpose(1, 2)],
-                        dim=2)
-                    features_dist = calc_square_dist(
-                        features_for_fps, features_for_fps, norm=False)
-                    fps_idx_ffps = furthest_point_sample_with_dist(
-                        features_dist, npoint)
-                    fps_idx_dfps = furthest_point_sample(
-                        sample_points_xyz, npoint)
-                    fps_idx = torch.cat([fps_idx_ffps, fps_idx_dfps], dim=1)
-                else:
-                    raise NotImplementedError('Unsupported FPS mod!')
-
-                indices.append(fps_idx + last_fps_end_index)
-                last_fps_end_index += fps_sample_range
-
-            indices = torch.cat(indices, dim=1)
+            indices = self.points_sampler(points_xyz, features)
             new_xyz = gather_points(xyz_flipped, indices).transpose(
                 1, 2).contiguous() if self.num_point is not None else None
 
@@ -261,33 +215,3 @@ class PointSAModule(PointSAModuleMSG):
             fps_mod=fps_mod,
             fps_sample_range_list=fps_sample_range_list,
             normalize_xyz=normalize_xyz)
-
-
-def calc_square_dist(point_feat_a, point_feat_b, norm=True):
-    """Calculating square distance between a and b.
-
-    Args:
-        a (Tensor): (B, N, C) Feature vector of each point.
-        b (Tensor): (B, M, C) Feature vector of each point.
-        norm (Bool): Whether to normalize the distance.
-            Default: True.
-
-    Returns:
-        Tensor: (B, N, M) Distance between each pair points.
-    """
-    length_a = point_feat_a.shape[1]
-    length_b = point_feat_b.shape[1]
-    num_channel = point_feat_a.shape[-1]
-    # [bs, n, 1]
-    a_square = torch.sum(point_feat_a.unsqueeze(dim=2).pow(2), dim=-1)
-    # [bs, 1, m]
-    b_square = torch.sum(point_feat_b.unsqueeze(dim=1).pow(2), dim=-1)
-    a_square = a_square.repeat((1, 1, length_b))  # [bs, n, m]
-    b_square = b_square.repeat((1, length_a, 1))  # [bs, n, m]
-
-    coor = torch.matmul(point_feat_a, point_feat_b.transpose(1, 2))
-
-    dist = a_square + b_square - 2 * coor
-    if norm:
-        dist = torch.sqrt(dist) / num_channel
-    return dist
