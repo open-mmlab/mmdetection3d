@@ -34,7 +34,7 @@ class Points_Sampler(nn.Module):
     """Points sampling.
 
     Args:
-        num_point (list[int]): Number of points.
+        num_point (list[int]): Number of sample points.
         fps_mod_list (list[str]: Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
             F-FPS: using feature distances for FPS.
@@ -49,6 +49,11 @@ class Points_Sampler(nn.Module):
                  fps_mod_list: List[str] = ['D-FPS'],
                  fps_sample_range_list: List[int] = [-1]):
         super(Points_Sampler, self).__init__()
+        # FPS would be applied to different fps_mod in the list,
+        # so the length of the num_point should be equal to
+        # fps_mod_list and fps_sample_range_list.
+        assert len(num_point) == len(fps_mod_list) == len(
+            fps_sample_range_list)
         self.num_point = num_point
         self.fps_sample_range_list = fps_sample_range_list
         self.samplers = nn.ModuleList()
