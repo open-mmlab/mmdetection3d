@@ -65,8 +65,7 @@ def test_chamfer_disrance():
 
     assert torch.allclose(loss_source, torch.tensor(219.5936))
     assert torch.allclose(loss_target, torch.tensor(22.3705))
-    assert (indices1 == indices1.new_tensor([[0, 4, 4, 4, 4, 2, 4, 4, 4, 3],
-                                             [0, 1, 0, 1, 0, 4, 2, 0, 0,
-                                              1]])).all()
+    assert (torch.equal(indices1, indices1.new_tensor(expected_inds1))
+            or torch.equal(indices1, indices1.new_tensor(expected_inds2)))
     assert (indices2 == indices2.new_tensor([[0, 0, 0, 0, 0], [0, 3, 6, 0,
                                                                0]])).all()
