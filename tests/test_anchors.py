@@ -6,9 +6,43 @@ CommandLine:
 """
 import torch
 
+from mmdet3d.core.anchor import build_anchor_generator
+
+
+def test_anchor_3d_range_generator():
+    if torch.cuda.is_available():
+        device = 'cuda'
+    else:
+        device = 'cpu'
+    anchor_generator_cfg = dict(
+        type='Anchor3DRangeGenerator',
+        ranges=[
+            [0, -39.68, -0.6, 70.4, 39.68, -0.6],
+            [0, -39.68, -0.6, 70.4, 39.68, -0.6],
+            [0, -39.68, -1.78, 70.4, 39.68, -1.78],
+        ],
+        sizes=[[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]],
+        rotations=[0, 1.57],
+        reshape_out=False)
+
+    anchor_generator = build_anchor_generator(anchor_generator_cfg)
+    repr_str = repr(anchor_generator)
+    expected_repr_str = 'Anchor3DRangeGenerator(anchor_range=' \
+                        '[[0, -39.68, -0.6, 70.4, 39.68, -0.6], ' \
+                        '[0, -39.68, -0.6, 70.4, 39.68, -0.6], ' \
+                        '[0, -39.68, -1.78, 70.4, 39.68, -1.78]],' \
+                        '\nscales=[1],\nsizes=[[0.6, 0.8, 1.73], ' \
+                        '[0.6, 1.76, 1.73], [1.6, 3.9, 1.56]],' \
+                        '\nrotations=[0, 1.57],\nreshape_out=False,' \
+                        '\nsize_per_range=True)'
+    assert repr_str == expected_repr_str
+    featmap_size = (256, 256)
+    mr_anchors = anchor_generator.single_level_grid_anchors(
+        featmap_size, 1.1, device=device)
+    assert mr_anchors.shape == torch.Size([1, 256, 256, 3, 2, 7])
+
 
 def test_aligned_anchor_generator():
-    from mmdet3d.core.anchor import build_anchor_generator
     if torch.cuda.is_available():
         device = 'cuda'
     else:
