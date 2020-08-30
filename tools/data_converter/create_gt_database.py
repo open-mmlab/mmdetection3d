@@ -182,6 +182,31 @@ def create_groundtruth_database(dataset_class_name,
                 with_bbox_3d=True,
                 with_label_3d=True)
         ])
+
+    elif dataset_class_name == 'WaymoDataset':
+        file_client_args = dict(backend='disk')
+        dataset_cfg.update(
+            test_mode=False,
+            split='training',
+            modality=dict(
+                use_lidar=True,
+                use_depth=False,
+                use_lidar_intensity=True,
+                use_camera=False,
+            ),
+            pipeline=[
+                dict(
+                    type='LoadPointsFromFile',
+                    load_dim=6,
+                    use_dim=5,
+                    file_client_args=file_client_args),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True,
+                    file_client_args=file_client_args)
+            ])
+
     dataset = build_dataset(dataset_cfg)
 
     if database_save_path is None:

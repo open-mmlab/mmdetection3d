@@ -5,8 +5,9 @@ import torch
 def scatter_nd(indices, updates, shape):
     """pytorch edition of tensorflow scatter_nd.
 
-    this function don't contain except handle code. so use this carefully when
-    indice repeats, don't support repeat add which is supported in tensorflow.
+    this function don't contain except handle code. so use this
+    carefully when indice repeats, don't support repeat add which is
+    supported in tensorflow.
     """
     ret = torch.zeros(*shape, dtype=updates.dtype, device=updates.device)
     ndim = indices.shape[-1]

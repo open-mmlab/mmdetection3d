@@ -8,9 +8,8 @@
 """
 
 import csv
-import os
-
 import numpy as np
+import os
 from plyfile import PlyData
 
 
