@@ -17,6 +17,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         max_num (int): Max number to be kept. Default: 100.
         score_threshold (float): Threshold to filter boxes based on score.
             Default: None.
+        code_size (int): Code size of bboxes.
     """
 
     def __init__(self,
@@ -62,7 +63,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
 
         Args:
             scores (torch.Tensor): scores with the shape of [B, N, W, H].
-            K (int): Number to be kept.
+            K (int): Number to be kept. Defaults to 40.
 
         Returns:
             tuple[torch.Tensor]

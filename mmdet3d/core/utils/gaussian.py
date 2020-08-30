@@ -8,6 +8,7 @@ def gaussian_2d(shape, sigma=1):
     Args:
         shape (list[int]): Shape of the map.
         sigma (float): Sigma to generate gaussian map.
+            Defaults to 1.
 
     Returns:
         np.ndarray: Generated gaussian map.
@@ -27,7 +28,7 @@ def draw_heatmap_gaussian(heatmap, center, radius, k=1):
         heatmap (torch.Tensor): Heatmap to be masked.
         center (torch.Tensor): Center coord of the heatmap.
         radius (int): Radius of gausian.
-        K (int): Multiple of masked_gaussian.
+        K (int): Multiple of masked_gaussian. Defaults to 1.
 
     Returns:
         torch.Tensor: Masked heatmap.
@@ -57,7 +58,7 @@ def gaussian_radius(det_size, min_overlap=0.5):
 
     Args:
         det_size (tuple[torch.Tensor]): Size of the detection result.
-        min_overlap (float): Gaussian_overlap.
+        min_overlap (float): Gaussian_overlap. Defaults to 0.5.
 
     Returns:
         torch.Tensor: Computed radius.
