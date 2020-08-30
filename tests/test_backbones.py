@@ -49,7 +49,7 @@ def test_pointnet2_sa_msg():
         type='PointNet2SAMSG',
         in_channels=4,
         num_points=(256, 64, (32, 32)),
-        radius=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
+        radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((8, 8, 16), (8, 8, 16), (8, 8, 8)),
         sa_channels=(((8, 8, 16), (8, 8, 16),
                       (8, 8, 16)), ((16, 16, 32), (16, 16, 32), (16, 24, 32)),
@@ -79,3 +79,23 @@ def test_pointnet2_sa_msg():
     assert sa_xyz.shape == torch.Size([1, 64, 3])
     assert sa_features.shape == torch.Size([1, 64, 64])
     assert sa_indices.shape == torch.Size([1, 64])
+
+    # out_indices should smaller than the length of SA Modules.
+    with pytest.raises(AssertionError):
+        build_backbone(
+            dict(
+                type='PointNet2SAMSG',
+                in_channels=4,
+                num_points=(256, 64, (32, 32)),
+                radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
+                num_samples=((8, 8, 16), (8, 8, 16), (8, 8, 8)),
+                sa_channels=(((8, 8, 16), (8, 8, 16), (8, 8, 16)),
+                             ((16, 16, 32), (16, 16, 32), (16, 24, 32)),
+                             ((32, 32, 64), (32, 24, 64), (32, 64, 64))),
+                aggregation_channels=(16, 32, 64),
+                fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+                fps_sample_range_lists=((-1), (-1), (64, -1)),
+                out_indices=(2, 3),
+                norm_cfg=dict(type='BN2d'),
+                pool_mod='max',
+                normalize_xyz=False))
