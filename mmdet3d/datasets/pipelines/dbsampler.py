@@ -86,6 +86,8 @@ class DataBaseSampler(object):
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
         classes (list[str]): List of classes. Default: None.
+        use_dim (int): Number of point features to be used. Default: 4.
+        load_dim (int): Number of point features to be loaded. Default: 4.
     """
 
     def __init__(self,
@@ -94,7 +96,9 @@ class DataBaseSampler(object):
                  rate,
                  prepare,
                  sample_groups,
-                 classes=None):
+                 classes=None,
+                 use_dim=4,
+                 load_dim=4):
         super().__init__()
         self.data_root = data_root
         self.info_path = info_path
@@ -103,6 +107,8 @@ class DataBaseSampler(object):
         self.classes = classes
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
+        self.use_dim = use_dim
+        self.load_dim = load_dim
 
         with open(info_path, 'rb') as f:
             db_infos = pickle.load(f)
@@ -245,7 +251,8 @@ class DataBaseSampler(object):
                     self.data_root,
                     info['path']) if self.data_root else info['path']
                 s_points = np.fromfile(
-                    file_path, dtype=np.float32).reshape([-1, 4])
+                    file_path, dtype=np.float32).reshape([-1, self.load_dim])
+                s_points = s_points[:, :self.use_dim]
                 s_points[:, :3] += info['box3d_lidar'][:3]
 
                 count += 1

@@ -1,12 +1,11 @@
 import argparse
 import glob
 import json
-import os.path as osp
+import mmcv
 import shutil
 import subprocess
-
-import mmcv
 import torch
+from os import path as osp
 
 # build schedule look-up table to automatically find the final model
 SCHEDULES_LUT = {
