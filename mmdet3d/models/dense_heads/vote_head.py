@@ -511,7 +511,8 @@ class VoteHead(nn.Module):
             bbox_preds (dict): Predictions from vote head.
             input_metas (list[dict]): Point cloud and image's meta info.
             rescale (bool): Whether to rescale bboxes.
-            use_nms (bool): Whether to apply NMS.
+            use_nms (bool): Whether to apply NMS, skip nms postprocessing
+                while using vote head in rpn stage.
 
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
