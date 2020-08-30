@@ -157,9 +157,12 @@ def waymo_data_prep(root_path,
             save_dir = osp.join(out_dir, 'kitti_format', 'training')
         else:
             save_dir = osp.join(out_dir, 'kitti_format', split)
-        converter = waymo.Waymo2KITTI(load_dir, save_dir, prefix=str(i),
-                                      num_proc=workers,
-                                      test_mode=(split == 'test'))
+        converter = waymo.Waymo2KITTI(
+            load_dir,
+            save_dir,
+            prefix=str(i),
+            num_proc=workers,
+            test_mode=(split == 'test'))
         converter.convert()
     # Generate waymo infos
     out_dir = osp.join(out_dir, 'kitti_format')

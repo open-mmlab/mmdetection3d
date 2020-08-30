@@ -593,8 +593,14 @@ def do_eval(gt_annos,
     mAP_bbox = None
     mAP_aos = None
     if 'bbox' in eval_types:
-        ret = eval_class(gt_annos, dt_annos, current_classes, difficultys, 0,
-                         min_overlaps, compute_aos=('aos' in eval_types))
+        ret = eval_class(
+            gt_annos,
+            dt_annos,
+            current_classes,
+            difficultys,
+            0,
+            min_overlaps,
+            compute_aos=('aos' in eval_types))
         # ret: [num_class, num_diff, num_minoverlap, num_sample_points]
         mAP_bbox = get_mAP(ret['precision'])
         if 'aos' in eval_types:
@@ -691,6 +697,8 @@ def kitti_eval(gt_annos,
             valid_alpha_gt = True
             break
     compute_aos = (pred_alpha and valid_alpha_gt)
+    if compute_aos:
+        eval_types.append('aos')
 
     mAPbbox, mAPbev, mAP3d, mAPaos = do_eval(gt_annos, dt_annos,
                                              current_classes, min_overlaps,

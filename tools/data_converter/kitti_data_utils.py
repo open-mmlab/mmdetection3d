@@ -320,10 +320,13 @@ def get_waymo_image_info(path,
             points = np.copy(points).reshape(-1, pc_info['num_features'])
             info['timestamp'] = np.int64(points[0, -1])
             # values of the last dim are all the timestamp
-        image_info['image_path'] = get_image_path(idx, path, training,
-                                                  relative_path,
-                                                  info_type='image_0',
-                                                  use_prefix_id=True)
+        image_info['image_path'] = get_image_path(
+            idx,
+            path,
+            training,
+            relative_path,
+            info_type='image_0',
+            use_prefix_id=True)
         if with_imageshape:
             img_path = image_info['image_path']
             if relative_path:
@@ -331,9 +334,13 @@ def get_waymo_image_info(path,
             image_info['image_shape'] = np.array(
                 io.imread(img_path).shape[:2], dtype=np.int32)
         if label_info:
-            label_path = get_label_path(idx, path, training, relative_path,
-                                        info_type='label_all',
-                                        use_prefix_id=True)
+            label_path = get_label_path(
+                idx,
+                path,
+                training,
+                relative_path,
+                info_type='label_all',
+                use_prefix_id=True)
             if relative_path:
                 label_path = str(root_path / label_path)
             annotations = get_label_anno(label_path)
@@ -399,7 +406,11 @@ def get_waymo_image_info(path,
             prev_info = {}
             prev_idx -= 1
             prev_info['velodyne_path'] = get_velodyne_path(
-                prev_idx, path, training, relative_path, exist_check=False,
+                prev_idx,
+                path,
+                training,
+                relative_path,
+                exist_check=False,
                 use_prefix_id=True)
             if_prev_exists = osp.exists(
                 Path(path) / prev_info['velodyne_path'])
@@ -410,7 +421,10 @@ def get_waymo_image_info(path,
                     -1, pc_info['num_features'])
                 prev_info['timestamp'] = np.int64(prev_points[0, -1])
                 prev_pose_path = get_pose_path(
-                    prev_idx, path, training, relative_path=False,
+                    prev_idx,
+                    path,
+                    training,
+                    relative_path=False,
                     use_prefix_id=True)
                 prev_info['pose'] = np.loadtxt(prev_pose_path)
                 sweeps.append(prev_info)

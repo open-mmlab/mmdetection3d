@@ -45,7 +45,7 @@ class KittiDataset(Custom3DDataset):
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
         pcd_limit_range (list): The range of point cloud used to filter
-            invalid predicted boxes. Default: [0, -40, -3, 70.4, 40, 0.0]. 
+            invalid predicted boxes. Default: [0, -40, -3, 70.4, 40, 0.0].
     """
     CLASSES = ('car', 'pedestrian', 'cyclist')
 
@@ -60,7 +60,7 @@ class KittiDataset(Custom3DDataset):
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
                  test_mode=False,
-                 pcd_limit_range = [0, -40, -3, 70.4, 40, 0.0]):
+                 pcd_limit_range=[0, -40, -3, 70.4, 40, 0.0]):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -375,7 +375,7 @@ class KittiDataset(Custom3DDataset):
             list[dict]: A list of dictionaries with the kitti format.
         """
         assert len(net_outputs) == len(self.data_infos), \
-            f'invalid list length of network outputs'
+            'invalid list length of network outputs'
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
 
@@ -491,7 +491,7 @@ class KittiDataset(Custom3DDataset):
             list[dict]: A list of dictionaries have the kitti format
         """
         assert len(net_outputs) == len(self.data_infos), \
-            f'invalid list length of network outputs'
+            'invalid list length of network outputs'
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
