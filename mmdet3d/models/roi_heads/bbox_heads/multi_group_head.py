@@ -85,9 +85,9 @@ class SepHead(nn.Module):
         for head in self.heads:
             classes, num_conv = self.heads[head]
 
-            fc_layers = []
+            conv_layers = []
             for i in range(num_conv - 1):
-                fc_layers.append(
+                conv_layers.append(
                     build_conv_layer(
                         conv_cfg,
                         in_channels,
@@ -97,10 +97,11 @@ class SepHead(nn.Module):
                         padding=final_kernel // 2,
                         bias=True))
                 if norm_cfg:
-                    fc_layers.append(build_norm_layer(norm_cfg, head_conv)[1])
-                fc_layers.append(nn.ReLU(inplace=True))
+                    conv_layers.append(
+                        build_norm_layer(norm_cfg, head_conv)[1])
+                conv_layers.append(nn.ReLU(inplace=True))
 
-            fc_layers.append(
+            conv_layers.append(
                 build_conv_layer(
                     conv_cfg,
                     head_conv,
@@ -109,7 +110,7 @@ class SepHead(nn.Module):
                     stride=1,
                     padding=final_kernel // 2,
                     bias=True))
-            fc = nn.Sequential(*fc_layers)
+            fc = nn.Sequential(*conv_layers)
 
             self.__setattr__(head, fc)
 
@@ -228,6 +229,7 @@ class DCNSepHead(nn.Module):
 
         Returns:
             dict[str: torch.Tensor]: contains the following keys:
+
                     -reg （torch.Tensor): 2D regression value with the
                         shape of [B, 2, H, W].
                     -height (torch.Tensor): Height value with the
@@ -273,7 +275,7 @@ class CenterHead(nn.Module):
         init_bias (float): Initial bias. Default: -2.19.
         share_conv_channel (int): Output channels for share_conv_layer.
             Default: 64.
-        num_hm_conv (int): Number of conv layers for heatmap conv layer.
+        num_heatmap_convs (int): Number of conv layers for heatmap conv layer.
             Default: 2.
         dcn_head (bool): Whether to use dcn_head. Default: False.
         conv_cfg (dict): Config of conv layer.
@@ -295,7 +297,7 @@ class CenterHead(nn.Module):
                      type='L1Loss', reduction='none', loss_weight=0.25),
                  init_bias=-2.19,
                  share_conv_channel=64,
-                 num_hm_conv=2,
+                 num_heatmap_convs=2,
                  dcn_head=False,
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d')):
@@ -336,7 +338,7 @@ class CenterHead(nn.Module):
         for num_cls in num_classes:
             heads = copy.deepcopy(common_heads)
             if not dcn_head:
-                heads.update(dict(hm=(num_cls, num_hm_conv)))
+                heads.update(dict(hm=(num_cls, num_heatmap_convs)))
                 self.tasks.append(
                     SepHead(
                         share_conv_channel,
@@ -427,17 +429,17 @@ class CenterHead(nn.Module):
                 position of the valid boxes.
             list[torch.Tensor]: Masks indicating which boxes are valid.
         """
-        hms, anno_boxes, inds, masks = multi_apply(self.get_targets_single,
-                                                   gt_bboxes_3d, gt_labels_3d)
-        hms = np.array(hms).transpose(1, 0).tolist()
-        hms = [torch.stack(hms_) for hms_ in hms]
+        heatmaps, anno_boxes, inds, masks = multi_apply(
+            self.get_targets_single, gt_bboxes_3d, gt_labels_3d)
+        heatmaps = np.array(heatmaps).transpose(1, 0).tolist()
+        heatmaps = [torch.stack(hms_) for hms_ in heatmaps]
         anno_boxes = np.array(anno_boxes).transpose(1, 0).tolist()
         anno_boxes = [torch.stack(anno_boxes_) for anno_boxes_ in anno_boxes]
         inds = np.array(inds).transpose(1, 0).tolist()
         inds = [torch.stack(inds_) for inds_ in inds]
         masks = np.array(masks).transpose(1, 0).tolist()
         masks = [torch.stack(masks_) for masks_ in masks]
-        return hms, anno_boxes, inds, masks
+        return heatmaps, anno_boxes, inds, masks
 
     def get_targets_single(self, gt_bboxes_3d, gt_labels_3d):
         """Generate training targets for a single sample.
@@ -595,7 +597,9 @@ class CenterHead(nn.Module):
             # heatmap focal loss
             preds_dict[0]['hm'] = clip_sigmoid(preds_dict[0]['hm'])
             hm_loss = self.loss_cls(preds_dict[0]['hm'], hms[task_id])
-
+            num_pos = hms[task_id].eq(1).float().sum()
+            if num_pos > 0:
+                hm_loss /= num_pos
             target_box = anno_boxes[task_id]
             # reconstruct the anno_box from multiple reg heads
             preds_dict[0]['anno_box'] = torch.cat(

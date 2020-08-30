@@ -571,7 +571,6 @@ def test_dcn_center_head():
             dict(num_class=2, class_names=['motorcycle', 'bicycle']),
             dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
         ],
-        weight=0.25,
         common_heads={
             'reg': (2, 2),
             'height': (1, 2),
@@ -589,7 +588,9 @@ def test_dcn_center_head():
             out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=9),
-        dcn_head=True)
+        dcn_head=True,
+        loss_cls=dict(type='GaussianFocalLoss', reduction='sum'),
+        loss_reg=dict(type='L1Loss', reduction='none', loss_weight=0.25))
     # model training and testing settings
     train_cfg = dict(
         grid_size=[512, 512, 1],
@@ -639,12 +640,22 @@ def test_dcn_center_head():
     gt_labels_3d = [gt_labels_0, gt_labels_1]
     loss = dcn_center_head.loss(gt_bboxes_3d, gt_labels_3d, output)
 
-    assert torch.isclose(loss['loss_task0'], torch.tensor(5959.6978))
-    assert torch.isclose(loss['loss_task1'], torch.tensor(3898.6650))
-    assert torch.isclose(loss['loss_task2'], torch.tensor(1835.9578))
-    assert torch.isclose(loss['loss_task3'], torch.tensor(1761.9911))
-    assert torch.isclose(loss['loss_task4'], torch.tensor(3231.6331))
-    assert torch.isclose(loss['loss_task5'], torch.tensor(4147.2969))
+    assert torch.isclose(loss['hm_loss_task0'], torch.tensor(5959.6978))
+    assert torch.isclose(loss['loc_loss_task0'], torch.tensor(0.0))
+    assert torch.isclose(loss['hm_loss_task1'], torch.tensor(3896.3828))
+    assert torch.isclose(loss['loc_loss_task1'], torch.tensor(2.2823))
+    assert torch.isclose(loss['hm_loss_task2'], torch.tensor(1834.4219))
+    assert torch.isclose(
+        loss['loc_loss_task2'], torch.tensor(1.5358), atol=1e-3)
+    assert torch.isclose(loss['hm_loss_task3'], torch.tensor(1760.4966))
+    assert torch.isclose(
+        loss['loc_loss_task3'], torch.tensor(1.4945), atol=1e-3)
+    assert torch.isclose(loss['hm_loss_task4'], torch.tensor(3230.2371))
+    assert torch.isclose(
+        loss['loc_loss_task4'], torch.tensor(1.3959), atol=1e-3)
+    assert torch.isclose(loss['hm_loss_task5'], torch.tensor(4145.6714))
+    assert torch.isclose(
+        loss['loc_loss_task5'], torch.tensor(1.6254), atol=1e-3)
 
     # test get_bboxes
     img_metas = [
