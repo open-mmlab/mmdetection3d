@@ -159,7 +159,7 @@ class PrimitiveHead(nn.Module):
                 dtype=torch.int32,
                 device=seed_points.device)
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Unsupported sample mod!')
 
         vote_aggregation_ret = self.vote_aggregation(vote_points,
                                                      vote_features,
@@ -279,20 +279,12 @@ class PrimitiveHead(nn.Module):
         Returns:
             tuple[torch.Tensor]: Targets of primitive head.
         """
-        valid_gt_masks = list()
-        gt_num = list()
         for index in range(len(gt_labels_3d)):
             if len(gt_labels_3d[index]) == 0:
                 fake_box = gt_bboxes_3d[index].tensor.new_zeros(
                     1, gt_bboxes_3d[index].tensor.shape[-1])
                 gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
                 gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
-                valid_gt_masks.append(gt_labels_3d[index].new_zeros(1))
-                gt_num.append(1)
-            else:
-                valid_gt_masks.append(gt_labels_3d[index].new_ones(
-                    gt_labels_3d[index].shape))
-                gt_num.append(gt_labels_3d[index].shape[0])
 
         if pts_semantic_mask is None:
             pts_semantic_mask = [None for i in range(len(gt_labels_3d))]
@@ -423,13 +415,13 @@ class PrimitiveHead(nn.Module):
                     self.train_cfg['var_thresh']:
 
                 point_mask, point_offset, point_sem = \
-                    self._assign_primitive_z_targets(point_mask,
-                                                     point_offset,
-                                                     point_sem,
-                                                     coords[selected],
-                                                     indices[selected],
-                                                     cur_cls_label,
-                                                     cur_corners)
+                    self._assign_primitive_surface_targets(point_mask,
+                                                           point_offset,
+                                                           point_sem,
+                                                           coords[selected],
+                                                           indices[selected],
+                                                           cur_cls_label,
+                                                           cur_corners)
 
             # Get the boundary points here
             point2plane_dist, selected = self.match_point2plane(
@@ -457,13 +449,13 @@ class PrimitiveHead(nn.Module):
                     self.train_cfg['var_thresh']:
 
                 point_mask, point_offset, point_sem = \
-                    self._assign_primitive_z_targets(point_mask,
-                                                     point_offset,
-                                                     point_sem,
-                                                     coords[selected],
-                                                     indices[selected],
-                                                     cur_cls_label,
-                                                     cur_corners)
+                    self._assign_primitive_surface_targets(point_mask,
+                                                           point_offset,
+                                                           point_sem,
+                                                           coords[selected],
+                                                           indices[selected],
+                                                           cur_cls_label,
+                                                           cur_corners)
 
             # Get left two lines
             plane_left_temp = self._get_plane_fomulation(
@@ -509,13 +501,13 @@ class PrimitiveHead(nn.Module):
                     self.train_cfg['var_thresh']:
 
                 point_mask, point_offset, point_sem = \
-                    self._assign_primitive_xy_targets(point_mask,
-                                                      point_offset,
-                                                      point_sem,
-                                                      coords[selected],
-                                                      indices[selected],
-                                                      cur_cls_label,
-                                                      cur_corners)
+                    self._assign_primitive_surface_targets(point_mask,
+                                                           point_offset,
+                                                           point_sem,
+                                                           coords[selected],
+                                                           indices[selected],
+                                                           cur_cls_label,
+                                                           cur_corners)
 
             # Get the boundary points here
             point2plane_dist, selected = self.match_point2plane(
@@ -542,13 +534,13 @@ class PrimitiveHead(nn.Module):
                     self.train_cfg['var_thresh']:
 
                 point_mask, point_offset, point_sem = \
-                    self._assign_primitive_xy_targets(point_mask,
-                                                      point_offset,
-                                                      point_sem,
-                                                      coords[selected],
-                                                      indices[selected],
-                                                      cur_cls_label,
-                                                      cur_corners)
+                    self._assign_primitive_surface_targets(point_mask,
+                                                           point_offset,
+                                                           point_sem,
+                                                           coords[selected],
+                                                           indices[selected],
+                                                           cur_cls_label,
+                                                           cur_corners)
 
             plane_front_temp = self._get_plane_fomulation(
                 cur_corners[0] - cur_corners[4],
@@ -578,13 +570,13 @@ class PrimitiveHead(nn.Module):
                     self.train_cfg['var_thresh']:
 
                 point_mask, point_offset, point_sem = \
-                    self._assign_primitive_xy_targets(point_mask,
-                                                      point_offset,
-                                                      point_sem,
-                                                      coords[selected],
-                                                      indices[selected],
-                                                      cur_cls_label,
-                                                      cur_corners)
+                    self._assign_primitive_surface_targets(point_mask,
+                                                           point_offset,
+                                                           point_sem,
+                                                           coords[selected],
+                                                           indices[selected],
+                                                           cur_cls_label,
+                                                           cur_corners)
 
             # Get the boundary points here
             point2plane_dist, selected = self.match_point2plane(
@@ -596,13 +588,13 @@ class PrimitiveHead(nn.Module):
                     self.train_cfg['var_thresh']:
 
                 point_mask, point_offset, point_sem = \
-                    self._assign_primitive_xy_targets(point_mask,
-                                                      point_offset,
-                                                      point_sem,
-                                                      coords[selected],
-                                                      indices[selected],
-                                                      cur_cls_label,
-                                                      cur_corners)
+                    self._assign_primitive_surface_targets(point_mask,
+                                                           point_offset,
+                                                           point_sem,
+                                                           coords[selected],
+                                                           indices[selected],
+                                                           cur_cls_label,
+                                                           cur_corners)
 
         return (point_mask, point_sem, point_offset)
 
@@ -620,17 +612,17 @@ class PrimitiveHead(nn.Module):
         """
 
         ret_dict = {}
-        net_transposed = predictions.transpose(2, 1)
+        pred_transposed = predictions.transpose(2, 1)
 
-        center = aggregated_points + net_transposed[:, :, 0:3]
+        center = aggregated_points + pred_transposed[:, :, 0:3]
         ret_dict['center_' + self.primitive_mode] = center
 
         if self.primitive_mode in ['z', 'xy']:
             ret_dict['size_residuals_' + self.primitive_mode] = \
-                net_transposed[:, :, 3:3 + self.num_dims]
+                pred_transposed[:, :, 3:3 + self.num_dims]
 
         ret_dict['sem_cls_scores_' + self.primitive_mode] = \
-            net_transposed[:, :, 3 + self.num_dims:]
+            pred_transposed[:, :, 3 + self.num_dims:]
 
         return ret_dict
 
@@ -738,13 +730,11 @@ class PrimitiveHead(nn.Module):
                 dst_weight=gt_primitive_mask.view(batch_size * num_proposal,
                                                   1))[1]
         else:
-            size_loss = torch.tensor(0).float().to(center_loss.device)
+            size_loss = center_loss.new_tensor(0.0)
 
         # Semantic cls loss
         sem_cls_loss = self.semantic_cls_loss(
-            semantic_scores,
-            gt_sem_cls_label,
-            weight=gt_primitive_mask.float())
+            semantic_scores, gt_sem_cls_label, weight=gt_primitive_mask)
 
         return center_loss, size_loss, sem_cls_loss
 
@@ -805,9 +795,10 @@ class PrimitiveHead(nn.Module):
                                           line_center[2], cls_label])
         return point_mask, point_offset, point_sem
 
-    def _assign_primitive_z_targets(self, point_mask, point_offset, point_sem,
-                                    coords, indices, cls_label, corners):
-        """Generate targets of center primitive.
+    def _assign_primitive_surface_targets(self, point_mask, point_offset,
+                                          point_sem, coords, indices,
+                                          cls_label, corners):
+        """Generate targets for primitive z and primitive xy.
 
         Args:
             point_mask (torch.Tensor): Tensor to store the ground
@@ -824,43 +815,25 @@ class PrimitiveHead(nn.Module):
         Returns:
             Tuple: Targets of the center primitive.
         """
-        center = point_mask.new_tensor(
-            [corners[:, 0].mean(), corners[:, 1].mean(), coords[:, 2].mean()])
         point_mask[indices] = 1.0
-        point_sem[indices] = point_sem.new_tensor([
-            center[0], center[1], center[2],
-            corners[:, 0].max() - corners[:, 0].min(),
-            corners[:, 1].max() - corners[:, 1].min(), cls_label
-        ])
-        point_offset[indices] = center - coords
-        return point_mask, point_offset, point_sem
-
-    def _assign_primitive_xy_targets(self, point_mask, point_offset, point_sem,
-                                     coords, indices, cls_label, corners):
-        """Generate targets of surface primitive.
-
-        Args:
-            point_mask (torch.Tensor): Tensor to store the ground
-                truth of mask.
-            point_offset (torch.Tensor): Tensor to store the ground
-                truth of offset.
-            point_sem (torch.Tensor): Tensor to store the ground
-                truth of semantic.
-            coords (torch.Tensor): The selected points.
-            indices (torch.Tensor): Indices of the selected points.
-            cls_label (int): Class label of the ground truth bounding box.
-            corners (torch.Tensor): Corners of the ground truth bounding box.
-
-        Returns:
-            Tuple: Targets of the surface primitive.
-        """
-        center = point_mask.new_tensor(
-            [coords[:, 0].mean(), coords[:, 1].mean(), corners[:, 2].mean()])
-        point_mask[indices] = 1.0
-        point_sem[indices] = point_sem.new_tensor([
-            center[0], center[1], center[2],
-            corners[:, 2].max() - corners[:, 2].min(), cls_label
-        ])
+        if self.primitive_mode == 'z':
+            center = point_mask.new_tensor([
+                corners[:, 0].mean(), corners[:, 1].mean(), coords[:,
+                                                                   2].mean()
+            ])
+            point_sem[indices] = point_sem.new_tensor([
+                center[0], center[1], center[2],
+                corners[:, 0].max() - corners[:, 0].min(),
+                corners[:, 1].max() - corners[:, 1].min(), cls_label
+            ])
+        elif self.primitive_mode == 'xy':
+            center = point_mask.new_tensor([
+                coords[:, 0].mean(), coords[:, 1].mean(), corners[:, 2].mean()
+            ])
+            point_sem[indices] = point_sem.new_tensor([
+                center[0], center[1], center[2],
+                corners[:, 2].max() - corners[:, 2].min(), cls_label
+            ])
         point_offset[indices] = center - coords
         return point_mask, point_offset, point_sem
 
