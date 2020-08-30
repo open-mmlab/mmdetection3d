@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from mmdet.core.bbox import PartialBinBasedBBoxCoder
 from mmdet.core.bbox.builder import BBOX_CODERS
+from .partial_bin_based_bbox_coder import PartialBinBasedBBoxCoder
 
 
 @BBOX_CODERS.register_module()
