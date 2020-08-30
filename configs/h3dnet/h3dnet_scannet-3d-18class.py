@@ -57,15 +57,7 @@ model = dict(
                             [1.1511526, 1.0546296, 0.49706793],
                             [0.47535285, 0.49249494, 0.5802117]]))))
 
-data = dict(samples_per_gpu=1, workers_per_gpu=1)
-
-# optimizer
-lr = 0.01  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[16, 28, 40, 48])
-# runtime settings
-total_epochs = 48
+data = dict(samples_per_gpu=3, workers_per_gpu=2)
 
 # optimizer
 # yapf:disable
