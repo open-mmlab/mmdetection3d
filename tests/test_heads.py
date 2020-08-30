@@ -658,3 +658,57 @@ def test_h3d_head():
     assert ret_dict['sem_loss_z'] >= 0
     assert ret_dict['objectness_loss_opt'] >= 0
     assert ret_dict['primitive_sem_matching_loss'] >= 0
+
+
+def test_ssd_3d_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    ssd_3d_head_cfg = _get_vote_head_cfg('3dssd/3dssd_kitti-3d-car.py')
+    self = build_head(ssd_3d_head_cfg).cuda()
+    sa_xyz = torch.rand([2, 256, 3], dtype=torch.float32).cuda()
+    sa_features = torch.rand([2, 256, 256], dtype=torch.float32).cuda()
+    sa_indices = torch.randint(0, 128, [2, 256]).cuda()
+
+    input_dict = dict(
+        sa_xyz=sa_xyz, sa_features=sa_features, sa_indices=sa_indices)
+    # test forward
+    ret_dict = self(input_dict)
+
+    assert ret_dict['center'].shape == torch.Size([2, 256, 3])
+    assert ret_dict['obj_scores'].shape == torch.Size([2, 1, 256])
+    assert ret_dict['size'].shape == torch.Size([2, 256, 3])
+    assert ret_dict['dir_res'].shape == torch.Size([2, 256, 12])
+
+    # test loss
+    points = [torch.rand([16384, 4], device='cuda') for i in range(2)]
+    gt_bbox1 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bbox2 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bboxes = [gt_bbox1, gt_bbox2]
+    gt_labels = [
+        torch.zeros([10], dtype=torch.long, device='cuda') for i in range(2)
+    ]
+    aggregated_points = torch.rand([2, 256, 3], dtype=torch.float32).cuda()
+    seed_points = torch.rand([2, 256, 3], dtype=torch.float32).cuda()
+    box_type_3d = LiDARInstance3DBoxes
+    img_metas = [dict(box_type_3d=box_type_3d) for i in range(2)]
+    ret_dict['aggregated_points'] = aggregated_points
+    ret_dict['seed_points'] = seed_points
+
+    losses = self.loss(
+        ret_dict, points, gt_bboxes, gt_labels, img_metas=img_metas)
+    assert losses['centerness_loss'] >= 0
+    assert losses['center_loss'] >= 0
+    assert losses['dir_class_loss'] >= 0
+    assert losses['dir_res_loss'] >= 0
+    assert losses['size_res_loss'] >= 0
+    assert losses['corner_loss'] >= 0
+    assert losses['vote_loss'] >= 0
+
+    # test get_boxes
+    points = torch.stack(points, dim=0)
+    results = self.get_bboxes(points, ret_dict, img_metas)
+    assert results[0][0].tensor.shape[0] >= 0
+    assert results[0][0].tensor.shape[1] == 7
+    assert results[0][1].shape[0] >= 0
+    assert results[0][2].shape[0] >= 0
