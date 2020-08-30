@@ -164,6 +164,7 @@ class VoteHead(nn.Module):
                                                      sample_indices)
         aggregated_points, features, aggregated_indices = vote_aggregation_ret
         results['aggregated_points'] = aggregated_points
+        results['aggregated_features'] = features
         results['aggregated_indices'] = aggregated_indices
 
         # 3. predict bbox and score
@@ -183,7 +184,8 @@ class VoteHead(nn.Module):
              pts_semantic_mask=None,
              pts_instance_mask=None,
              img_metas=None,
-             gt_bboxes_ignore=None):
+             gt_bboxes_ignore=None,
+             ret_target=False):
         """Compute loss.
 
         Args:
@@ -199,6 +201,7 @@ class VoteHead(nn.Module):
             img_metas (list[dict]): Contain pcd and img's meta info.
             gt_bboxes_ignore (None | list[torch.Tensor]): Specify
                 which bounding.
+            ret_target (Bool): Return targets or not.
 
         Returns:
             dict: Losses of Votenet.
@@ -283,6 +286,10 @@ class VoteHead(nn.Module):
             dir_res_loss=dir_res_loss,
             size_class_loss=size_class_loss,
             size_res_loss=size_res_loss)
+
+        if ret_target:
+            losses['targets'] = targets
+
         return losses
 
     def get_targets(self,
@@ -409,7 +416,8 @@ class VoteHead(nn.Module):
             box_indices_all = gt_bboxes_3d.points_in_boxes(points)
             for i in range(gt_labels_3d.shape[0]):
                 box_indices = box_indices_all[:, i]
-                indices = torch.nonzero(box_indices).squeeze(-1)
+                indices = torch.nonzero(
+                    box_indices, as_tuple=False).squeeze(-1)
                 selected_points = points[indices]
                 vote_target_masks[indices] = 1
                 vote_targets_tmp = vote_targets[indices]
@@ -418,7 +426,8 @@ class VoteHead(nn.Module):
 
                 for j in range(self.gt_per_seed):
                     column_indices = torch.nonzero(
-                        vote_target_idx[indices] == j).squeeze(-1)
+                        vote_target_idx[indices] == j,
+                        as_tuple=False).squeeze(-1)
                     vote_targets_tmp[column_indices,
                                      int(j * 3):int(j * 3 +
                                                     3)] = votes[column_indices]
@@ -435,7 +444,8 @@ class VoteHead(nn.Module):
                                                  dtype=torch.long)
 
             for i in torch.unique(pts_instance_mask):
-                indices = torch.nonzero(pts_instance_mask == i).squeeze(-1)
+                indices = torch.nonzero(
+                    pts_instance_mask == i, as_tuple=False).squeeze(-1)
                 if pts_semantic_mask[indices[0]] < self.num_classes:
                     selected_points = points[indices, :3]
                     center = 0.5 * (
@@ -491,7 +501,12 @@ class VoteHead(nn.Module):
                 dir_class_targets, dir_res_targets, center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
-    def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
+    def get_bboxes(self,
+                   points,
+                   bbox_preds,
+                   input_metas,
+                   rescale=False,
+                   use_nms=True):
         """Generate bboxes from vote head predictions.
 
         Args:
@@ -499,6 +514,8 @@ class VoteHead(nn.Module):
             bbox_preds (dict): Predictions from vote head.
             input_metas (list[dict]): Point cloud and image's meta info.
             rescale (bool): Whether to rescale bboxes.
+            use_nms (bool): Whether to apply NMS, skip nms postprocessing
+                while using vote head in rpn stage.
 
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
@@ -508,19 +525,23 @@ class VoteHead(nn.Module):
         sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
-        batch_size = bbox3d.shape[0]
-        results = list()
-        for b in range(batch_size):
-            bbox_selected, score_selected, labels = self.multiclass_nms_single(
-                obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
-                input_metas[b])
-            bbox = input_metas[b]['box_type_3d'](
-                bbox_selected,
-                box_dim=bbox_selected.shape[-1],
-                with_yaw=self.bbox_coder.with_rot)
-            results.append((bbox, score_selected, labels))
+        if use_nms:
+            batch_size = bbox3d.shape[0]
+            results = list()
+            for b in range(batch_size):
+                bbox_selected, score_selected, labels = \
+                    self.multiclass_nms_single(obj_scores[b], sem_scores[b],
+                                               bbox3d[b], points[b, ..., :3],
+                                               input_metas[b])
+                bbox = input_metas[b]['box_type_3d'](
+                    bbox_selected,
+                    box_dim=bbox_selected.shape[-1],
+                    with_yaw=self.bbox_coder.with_rot)
+                results.append((bbox, score_selected, labels))
 
-        return results
+            return results
+        else:
+            return bbox3d
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta):
@@ -558,7 +579,8 @@ class VoteHead(nn.Module):
 
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores > self.test_cfg.score_thr)
-        nonempty_box_inds = torch.nonzero(nonempty_box_mask).flatten()
+        nonempty_box_inds = torch.nonzero(
+            nonempty_box_mask, as_tuple=False).flatten()
         nonempty_mask = torch.zeros_like(bbox_classes).scatter(
             0, nonempty_box_inds[nms_selected], 1)
         selected = (nonempty_mask.bool() & scores_mask.bool())

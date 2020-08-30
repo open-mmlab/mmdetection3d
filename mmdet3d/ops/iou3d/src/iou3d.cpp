@@ -92,12 +92,14 @@ int boxes_iou_bev_gpu(at::Tensor boxes_a, at::Tensor boxes_b,
   return 1;
 }
 
-int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
+int nms_gpu(at::Tensor boxes, at::Tensor keep,
+	    float nms_overlap_thresh, int device_id) {
   // params boxes: (N, 5) [x1, y1, x2, y2, ry]
   // params keep: (N)
 
   CHECK_INPUT(boxes);
   CHECK_CONTIGUOUS(keep);
+  cudaSetDevice(device_id);
 
   int boxes_num = boxes.size(0);
   const float *boxes_data = boxes.data_ptr<float>();
@@ -145,12 +147,13 @@ int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
 }
 
 int nms_normal_gpu(at::Tensor boxes, at::Tensor keep,
-                   float nms_overlap_thresh) {
+                   float nms_overlap_thresh, int device_id) {
   // params boxes: (N, 5) [x1, y1, x2, y2, ry]
   // params keep: (N)
 
   CHECK_INPUT(boxes);
   CHECK_CONTIGUOUS(keep);
+  cudaSetDevice(device_id);
 
   int boxes_num = boxes.size(0);
   const float *boxes_data = boxes.data_ptr<float>();

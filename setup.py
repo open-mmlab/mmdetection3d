@@ -206,6 +206,7 @@ if __name__ == '__main__':
         description=("OpenMMLab's next-generation platform"
                      'for general 3D object detection.'),
         long_description=readme(),
+        long_description_content_type='text/markdown',
         author='OpenMMLab',
         author_email='zwwdev@gmail.com',
         keywords='computer vision, 3D object detection',

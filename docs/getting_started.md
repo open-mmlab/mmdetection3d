@@ -211,10 +211,31 @@ python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device 
 Examples:
 
 ```shell
-python demo/pcd_demo.py demo/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py \
-    checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth
+python demo/pcd_demo.py demo/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
+If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
+Note that you need to install pandas and plyfile before using this script. This function can also be used for data preprocessing for training ```ply data```.
+```python
+import numpy as np
+import pandas as pd
+from plyfile import PlyData
 
+def conver_ply(input_path, output_path):
+    plydata = PlyData.read(input_path)  # read file
+    data = plydata.elements[0].data  # read data
+    data_pd = pd.DataFrame(data)  # convert to DataFrame
+    data_np = np.zeros(data_pd.shape, dtype=np.float)  # initialize array to store data
+    property_names = data[0].dtype.names  # read names of properties
+    for i, name in enumerate(
+            property_names):  # read data by property
+        data_np[:, i] = data_pd[name]
+    data_np.astype(np.float32).tofile(output_path)
+```
+Examples:
+
+```python
+convert_ply('./test.ply', './test.bin')
+```
 
 ### High-level APIs for testing point clouds
 

@@ -36,8 +36,7 @@ class NuScenesDataset(Custom3DDataset):
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes
-
+            Defaults to 'LiDAR' in this dataset. Available options includes.
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
@@ -47,6 +46,8 @@ class NuScenesDataset(Custom3DDataset):
             Defaults to False.
         eval_version (bool, optional): Configuration version of evaluation.
             Defaults to  'detection_cvpr_2019'.
+        use_valid_flag (bool): Whether to use `use_valid_flag` key in the info
+            file as mask to filter gt_boxes and gt_names. Defaults to False.
     """
     NameMapping = {
         'movable_object.barrier': 'barrier',
@@ -111,8 +112,10 @@ class NuScenesDataset(Custom3DDataset):
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
                  test_mode=False,
-                 eval_version='detection_cvpr_2019'):
+                 eval_version='detection_cvpr_2019',
+                 use_valid_flag=False):
         self.load_interval = load_interval
+        self.use_valid_flag = use_valid_flag
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -127,7 +130,6 @@ class NuScenesDataset(Custom3DDataset):
         self.eval_version = eval_version
         from nuscenes.eval.detection.config import config_factory
         self.eval_detection_configs = config_factory(self.eval_version)
-
         if self.modality is None:
             self.modality = dict(
                 use_camera=False,
@@ -136,6 +138,29 @@ class NuScenesDataset(Custom3DDataset):
                 use_map=False,
                 use_external=False,
             )
+
+    def get_cat_ids(self, idx):
+        """Get category distribution of single scene.
+
+        Args:
+            idx (int): Index of the data_info.
+
+        Returns:
+            dict[list]: for each category, if the current scene
+                contains such boxes, store a list containing idx,
+                otherwise, store empty list.
+        """
+        class_sample_idx = {name: [] for name in self.CLASSES}
+        info = self.data_infos[idx]
+        if self.use_valid_flag:
+            mask = info['valid_flag']
+            gt_names = set(info['gt_names'][mask])
+        else:
+            gt_names = set(info['gt_names'])
+        for name in gt_names:
+            if name in self.CLASSES:
+                class_sample_idx[name].append(idx)
+        return class_sample_idx
 
     def load_annotations(self, ann_file):
         """Load annotations from ann_file.
@@ -173,7 +198,6 @@ class NuScenesDataset(Custom3DDataset):
                 - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
-
         # standard protocal modified from SECOND.Pytorch
         input_dict = dict(
             sample_idx=info['token'],
@@ -228,7 +252,10 @@ class NuScenesDataset(Custom3DDataset):
         """
         info = self.data_infos[index]
         # filter out bbox containing no points
-        mask = info['num_lidar_pts'] > 0
+        if self.use_valid_flag:
+            mask = info['valid_flag']
+        else:
+            mask = info['num_lidar_pts'] > 0
         gt_bboxes_3d = info['gt_boxes'][mask]
         gt_names_3d = info['gt_names'][mask]
         gt_labels_3d = []

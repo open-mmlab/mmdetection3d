@@ -104,9 +104,7 @@ class RandomFlip3D(RandomFlip):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(sync_2d={},'.format(self.sync_2d)
-        repr_str += '(flip_ratio_bev_horizontal={},'.format(
-            self.flip_ratio_bev_horizontal)
-        repr_str += '(flip_ratio_bev_vertical={},'.format(
+        repr_str += 'flip_ratio_bev_vertical={})'.format(
             self.flip_ratio_bev_vertical)
         return repr_str
 

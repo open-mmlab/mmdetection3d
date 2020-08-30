@@ -93,22 +93,3 @@ We appreciate all contributions to improve MMDetection3D. Please refer to [CONTR
 
 MMDetection3D is an open source project that is contributed by researchers and engineers from various colleges and companies. We appreciate all the contributors as well as users who give valuable feedbacks.
 We wish that the toolbox and benchmark could serve the growing research community by providing a flexible toolkit to reimplement existing methods and develop their own new 3D detectors.
-
-## Citation
-
-If you use this toolbox or benchmark in your research, please cite this project.
-
-```
-@misc{mmdetection3d_2020,
-  title   = {{MMDetection3D}},
-  author  = {Zhang, Wenwei and Wu, Yuefeng and Wang, Tai and Li, Yinhao and
-             Lin, Kwan-Yee and Wang, Zhe and Shi, Jianping and Qian, Chen and
-             Chen, Kai, and Lin, Dahua and Loy, Chen Change},
-  howpublished = {\url{https://github.com/open-mmlab/mmdetection3d}},
-  year =         {2020}
-}
-```
-
-## Contact
-
-This repo is currently maintained by Wenwei Zhang ([@ZwwWayne](https://github.com/ZwwWayne)), Yuefeng Wu ([@xavierwu95](https://github.com/xavierwu95)), Tai Wang ([@Tai-Wang](https://github.com/Tai-Wang)), and Yinhao Li ([@yinchimaoliang](https://github.com/yinchimaoliang)).
