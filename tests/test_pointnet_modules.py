@@ -120,6 +120,19 @@ def test_pointnet_sa_module_msg():
             fps_mod=['F-FPS', 'D-FPS'],
             fps_sample_range_list=[-1]).cuda()
 
+    # length of 'num_point' should be same as 'fps_sample_range_list'
+    with pytest.raises(AssertionError):
+        PointSAModuleMSG(
+            num_point=[8, 8],
+            radii=[0.2, 0.4],
+            sample_nums=[4, 8],
+            mlp_channels=[[12, 16], [12, 32]],
+            norm_cfg=dict(type='BN2d'),
+            use_xyz=False,
+            pool_mod='max',
+            fps_mod=['F-FPS'],
+            fps_sample_range_list=[-1]).cuda()
+
 
 def test_pointnet_sa_module():
     if not torch.cuda.is_available():
