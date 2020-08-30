@@ -1,4 +1,3 @@
-import copy
 import mmcv
 import numpy as np
 import os
@@ -8,8 +7,7 @@ from mmcv.utils import print_log
 from os import path as osp
 
 from mmdet.datasets import DATASETS
-from ..core import show_result
-from ..core.bbox import Box3DMode, CameraInstance3DBoxes, points_cam2img
+from ..core.bbox import Box3DMode, points_cam2img
 from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import KITTI2Waymo
 from .kitti_dataset import KittiDataset
 
@@ -66,7 +64,7 @@ class WaymoDataset(KittiDataset):
                  filter_empty_gt=True,
                  test_mode=False,
                  load_interval=1,
-                 pcd_limit_range = [-85, -85, -5, 85, 85, 5]):
+                 pcd_limit_range=[-85, -85, -5, 85, 85, 5]):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -78,7 +76,7 @@ class WaymoDataset(KittiDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
-            pcd_limit_range = pcd_limit_range)
+            pcd_limit_range=pcd_limit_range)
 
         # to load a subset, just set the load_interval in the dataset config
         self.data_infos = self.data_infos[::load_interval]
@@ -177,9 +175,9 @@ class WaymoDataset(KittiDataset):
                     submission_prefix_ = f'{submission_prefix}_{name}'
                 else:
                     submission_prefix_ = None
-                result_files_ = self.bbox2result_kitti(
-                    results_, self.CLASSES, pklfile_prefix_,
-                    submission_prefix_)
+                result_files_ = self.bbox2result_kitti(results_, self.CLASSES,
+                                                       pklfile_prefix_,
+                                                       submission_prefix_)
                 result_files[name] = result_files_
         else:
             result_files = self.bbox2result_kitti(outputs, self.CLASSES,
@@ -188,10 +186,10 @@ class WaymoDataset(KittiDataset):
         if 'waymo' in data_format:
             waymo_root = osp.join(
                 self.data_root.split('kitti_format')[0], 'waymo_format')
-            if self.split is 'training':
+            if self.split == 'training':
                 waymo_tfrecords_dir = osp.join(waymo_root, 'validation')
                 prefix = '1'
-            elif self.split is 'testing':
+            elif self.split == 'testing':
                 waymo_tfrecords_dir = osp.join(waymo_root, 'testing')
                 prefix = '2'
             else:
@@ -203,14 +201,11 @@ class WaymoDataset(KittiDataset):
                 converter = KITTI2Waymo(result_files['pts_bbox'],
                                         waymo_tfrecords_dir,
                                         waymo_results_save_dir,
-                                        waymo_results_final_path,
-                                        prefix)
+                                        waymo_results_final_path, prefix)
             else:
-                converter = KITTI2Waymo(result_files,
-                                        waymo_tfrecords_dir,
+                converter = KITTI2Waymo(result_files, waymo_tfrecords_dir,
                                         waymo_results_save_dir,
-                                        waymo_results_final_path,
-                                        prefix)
+                                        waymo_results_final_path, prefix)
             converter.convert()
             save_tmp_dir.cleanup()
 
@@ -228,7 +223,7 @@ class WaymoDataset(KittiDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated. 
+            metric (str | list[str]): Metrics to be evaluated.
                 Default: 'waymo'. Another supported metric is 'kitti'.
             logger (logging.Logger | str | None): Logger used for printing
                 related information during evaluation. Default: None.
@@ -249,7 +244,10 @@ class WaymoDataset(KittiDataset):
             f'invalid metric {metric}'
         if 'kitti' in metric:
             result_files, tmp_dir = self.format_results(
-                results, pklfile_prefix, submission_prefix, data_format='kitti')
+                results,
+                pklfile_prefix,
+                submission_prefix,
+                data_format='kitti')
             from mmdet3d.core.evaluation import kitti_eval
             gt_annos = [info['annos'] for info in self.data_infos]
 
@@ -263,15 +261,18 @@ class WaymoDataset(KittiDataset):
                         self.CLASSES,
                         eval_types=eval_types)
                     for ap_type, ap in ap_dict_.items():
-                        ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
+                        ap_dict[f'{name}/{ap_type}'] = float(
+                            '{:.4f}'.format(ap))
 
                     print_log(
                         f'Results of {name}:\n' + ap_result_str, logger=logger)
 
             else:
-                ap_result_str, ap_dict = kitti_eval(gt_annos, result_files,
-                                                    self.CLASSES,
-                                                    eval_types=['bev', '3d'])
+                ap_result_str, ap_dict = kitti_eval(
+                    gt_annos,
+                    result_files,
+                    self.CLASSES,
+                    eval_types=['bev', '3d'])
                 print_log('\n' + ap_result_str, logger=logger)
         if 'waymo' in metric:
             waymo_root = osp.join(
@@ -282,32 +283,45 @@ class WaymoDataset(KittiDataset):
             else:
                 eval_tmp_dir = None
             result_files, tmp_dir = self.format_results(
-                results, pklfile_prefix, submission_prefix, data_format='waymo')
+                results,
+                pklfile_prefix,
+                submission_prefix,
+                data_format='waymo')
             import subprocess
             ret_bytes = subprocess.check_output(
-                'mmdet3d/core/evaluation/waymo_utils/' + \
-                f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
-                f'{waymo_root}/gt.bin', shell=True)
+                'mmdet3d/core/evaluation/waymo_utils/' +
+                f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
+                f'{waymo_root}/gt.bin',
+                shell=True)
             ret_texts = ret_bytes.decode('utf-8')
             print_log(ret_texts)
             # parse the text to get ap_dict
             ap_dict = {
-                'Vehicle/L1 mAP': 0, 'Vehicle/L1 mAPH': 0,
-                'Vehicle/L2 mAP': 0, 'Vehicle/L2 mAPH': 0,
-                'Pedestrian/L1 mAP': 0, 'Pedestrian/L1 mAPH': 0,
-                'Pedestrian/L2 mAP': 0, 'Pedestrian/L2 mAPH': 0,
-                'Sign/L1 mAP': 0, 'Sign/L1 mAPH': 0,
-                'Sign/L2 mAP': 0, 'Sign/L2 mAPH': 0,
-                'Cyclist/L1 mAP': 0, 'Cyclist/L1 mAPH': 0,
-                'Cyclist/L2 mAP': 0, 'Cyclist/L2 mAPH': 0
+                'Vehicle/L1 mAP': 0,
+                'Vehicle/L1 mAPH': 0,
+                'Vehicle/L2 mAP': 0,
+                'Vehicle/L2 mAPH': 0,
+                'Pedestrian/L1 mAP': 0,
+                'Pedestrian/L1 mAPH': 0,
+                'Pedestrian/L2 mAP': 0,
+                'Pedestrian/L2 mAPH': 0,
+                'Sign/L1 mAP': 0,
+                'Sign/L1 mAPH': 0,
+                'Sign/L2 mAP': 0,
+                'Sign/L2 mAPH': 0,
+                'Cyclist/L1 mAP': 0,
+                'Cyclist/L1 mAPH': 0,
+                'Cyclist/L2 mAP': 0,
+                'Cyclist/L2 mAPH': 0
             }
             mAP_splits = ret_texts.split('mAP ')
             mAPH_splits = ret_texts.split('mAPH ')
             for idx, key in enumerate(ap_dict.keys()):
+                split_idx = int(idx / 2) + 1
                 if idx % 2 == 0:  # mAP
-                    ap_dict[key] = float(mAP_splits[idx+1].split(']')[0])
+                    ap_dict[key] = float(mAP_splits[split_idx].split(']')[0])
                 else:  # mAPH
-                    ap_dict[key] = float(mAPH_splits[idx+1].split(']')[0])
+                    ap_dict[key] = float(mAPH_splits[split_idx].split(']')[0])
             if eval_tmp_dir is not None:
                 eval_tmp_dir.cleanup()
 
@@ -336,7 +350,7 @@ class WaymoDataset(KittiDataset):
             List[dict]: A list of dict have the kitti 3d format
         """
         assert len(net_outputs) == len(self.data_infos), \
-            f'invalid list length of network outputs'
+            'invalid list length of network outputs'
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
 
@@ -452,7 +466,7 @@ class WaymoDataset(KittiDataset):
                 - box3d_lidar (np.ndarray): 3D boxes in lidar coordinates.
                 - scores (np.ndarray): Scores of predicted boxes.
                 - label_preds (np.ndarray): Class labels of predicted boxes.
-                - sample_idx (np.ndarray): Sample index. 
+                - sample_idx (np.ndarray): Sample index.
         """
         # TODO: refactor this function
         box_preds = box_dict['boxes_3d']
@@ -474,7 +488,6 @@ class WaymoDataset(KittiDataset):
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
         P0 = info['calib']['P0'].astype(np.float32)
-        img_shape = info['image']['image_shape']
         P0 = box_preds.tensor.new_tensor(P0)
 
         box_preds_camera = box_preds.convert_to(Box3DMode.CAM, rect @ Trv2c)
@@ -486,8 +499,6 @@ class WaymoDataset(KittiDataset):
         maxxy = torch.max(box_corners_in_image, dim=1)[0]
         box_2d_preds = torch.cat([minxy, maxxy], dim=1)
         # Post-processing
-        # check box_preds_camera
-        image_shape = box_preds.tensor.new_tensor(img_shape)
         # check box_preds
         limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
         valid_pcd_inds = ((box_preds.center > limit_range[:3]) &

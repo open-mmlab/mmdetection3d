@@ -2,15 +2,11 @@ r"""Adapted from `Waymo to KITTI converter
     <https://github.com/caizhongang/waymo_kitti_converter>`_.
 """
 
-import cv2
-import math
 import mmcv
 import numpy as np
-import os
 import tensorflow as tf
 from glob import glob
-from matplotlib import pyplot as plt
-from os.path import isdir, join
+from os.path import join
 from waymo_open_dataset import dataset_pb2
 from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset.utils import range_image_utils, transform_utils
@@ -32,15 +28,17 @@ class Waymo2KITTI(object):
         workers (str): Number of workers for the parallel process.
         test_mode (bool): Whether in the test_mode. Default: False.
     """
-    def __init__(self, load_dir, save_dir, prefix, workers=64, test_mode=False):
+
+    def __init__(self,
+                 load_dir,
+                 save_dir,
+                 prefix,
+                 workers=64,
+                 test_mode=False):
         self.filter_empty_3dboxes = True
         self.filter_no_label_zone_points = True
 
-        self.selected_waymo_classes = [
-            'VEHICLE',
-            'PEDESTRIAN',
-            'CYCLIST'
-        ]
+        self.selected_waymo_classes = ['VEHICLE', 'PEDESTRIAN', 'CYCLIST']
 
         # Only data collected in specific locations will be converted
         # If set None, this filter is disabled
@@ -52,10 +50,13 @@ class Waymo2KITTI(object):
         if int(tf.__version__.split('.')[0]) < 2:
             tf.enable_eager_execution()
 
-        self.lidar_list = ['_FRONT', '_FRONT_RIGHT', '_FRONT_LEFT',
-                           '_SIDE_RIGHT', '_SIDE_LEFT']
-        self.type_list = ['UNKNOWN', 'VEHICLE', 'PEDESTRIAN',
-                          'SIGN', 'CYCLIST']
+        self.lidar_list = [
+            '_FRONT', '_FRONT_RIGHT', '_FRONT_LEFT', '_SIDE_RIGHT',
+            '_SIDE_LEFT'
+        ]
+        self.type_list = [
+            'UNKNOWN', 'VEHICLE', 'PEDESTRIAN', 'SIGN', 'CYCLIST'
+        ]
         self.waymo_to_kitti_class_map = {
             'UNKNOWN': 'DontCare',
             'PEDESTRIAN': 'Pedestrian',
@@ -85,8 +86,8 @@ class Waymo2KITTI(object):
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmcv.track_parallel_progress(
-            self.convert_one, range(len(self)), self.workers)
+        mmcv.track_parallel_progress(self.convert_one, range(len(self)),
+                                     self.workers)
         print('\nFinished ...')
 
     def convert_one(self, file_idx):
@@ -102,9 +103,9 @@ class Waymo2KITTI(object):
 
             frame = open_dataset.Frame()
             frame.ParseFromString(bytearray(data.numpy()))
-            if (self.selected_waymo_locations is not None and
-                    frame.context.stats.location not in
-                    self.selected_waymo_locations):
+            if (self.selected_waymo_locations is not None
+                    and frame.context.stats.location
+                    not in self.selected_waymo_locations):
                 continue
 
             self.save_image(frame, file_idx, frame_idx)
@@ -143,11 +144,8 @@ class Waymo2KITTI(object):
             frame_idx (int): Current frame index.
         """
         # waymo front camera to kitti reference camera
-        T_front_cam_to_ref = np.array([
-            [0.0, -1.0, 0.0],
-            [0.0, 0.0, -1.0],
-            [1.0, 0.0, 0.0]
-        ])
+        T_front_cam_to_ref = np.array([[0.0, -1.0, 0.0], [0.0, 0.0, -1.0],
+                                       [1.0, 0.0, 0.0]])
         camera_calibs = []
         R0_rect = [f'{i:e}' for i in np.eye(3).flatten()]
         Tr_velo_to_cams = []
@@ -155,14 +153,14 @@ class Waymo2KITTI(object):
 
         for camera in frame.context.camera_calibrations:
             # extrinsic parameters
-            T_cam_to_vehicle = np.array(
-                camera.extrinsic.transform).reshape(4, 4)
+            T_cam_to_vehicle = np.array(camera.extrinsic.transform).reshape(
+                4, 4)
             T_vehicle_to_cam = np.linalg.inv(T_cam_to_vehicle)
             Tr_velo_to_cam = \
                 self.cart_to_homo(T_front_cam_to_ref) @ T_vehicle_to_cam
             if camera.name == 1:  # FRONT = 1, see dataset.proto for details
                 self.T_velo_to_front_cam = Tr_velo_to_cam.copy()
-            Tr_velo_to_cam = Tr_velo_to_cam[:3, :].reshape((12,))
+            Tr_velo_to_cam = Tr_velo_to_cam[:3, :].reshape((12, ))
             Tr_velo_to_cams.append([f'{i:e}' for i in Tr_velo_to_cam])
 
             # intrinsic parameters
@@ -186,9 +184,10 @@ class Waymo2KITTI(object):
             calib_context += 'Tr_velo_to_cam_' + str(i) + ': ' + \
                 ' '.join(Tr_velo_to_cams[i]) + '\n'
 
-        with open(f'{self.calib_save_dir}/{self.prefix}' + \
-                  f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt',
-                  'w+') as fp_calib:
+        with open(
+                f'{self.calib_save_dir}/{self.prefix}' +
+                f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt',
+                'w+') as fp_calib:
             fp_calib.write(calib_context)
             fp_calib.close()
 
@@ -232,7 +231,7 @@ class Waymo2KITTI(object):
         points = np.concatenate([points_0, points_1], axis=0)
         intensity = np.concatenate([intensity_0, intensity_1], axis=0)
         elongation = np.concatenate([elongation_0, elongation_1], axis=0)
-        timestamp = frame.timestamp_micros*np.ones_like(intensity)
+        timestamp = frame.timestamp_micros * np.ones_like(intensity)
 
         # concatenate x,y,z, intensity, elongation, timestamp (6-dim)
         point_cloud = np.column_stack(
@@ -256,7 +255,7 @@ class Waymo2KITTI(object):
             frame_idx (int): Current frame index.
         """
         fp_label_all = open(
-            f'{self.label_all_save_dir}/{self.prefix}' + \
+            f'{self.label_all_save_dir}/{self.prefix}' +
             f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt', 'w+')
         id_to_bbox = dict()
         id_to_name = dict()
@@ -264,10 +263,12 @@ class Waymo2KITTI(object):
             name = labels.name
             for label in labels.labels:
                 # TODO: need a workaround as bbox may not belong to front cam
-                bbox = [label.box.center_x - label.box.length / 2,
-                        label.box.center_y - label.box.width / 2,
-                        label.box.center_x + label.box.length / 2,
-                        label.box.center_y + label.box.width / 2]
+                bbox = [
+                    label.box.center_x - label.box.length / 2,
+                    label.box.center_y - label.box.width / 2,
+                    label.box.center_x + label.box.length / 2,
+                    label.box.center_y + label.box.width / 2
+                ]
                 id_to_bbox[label.id] = bbox
                 id_to_name[label.id] = name - 1
 
@@ -331,7 +332,7 @@ class Waymo2KITTI(object):
                 line_all = line[:-1] + ' ' + name + '\n'
 
             fp_label = open(
-                f'{self.label_save_dir}{name}/{self.prefix}' + \
+                f'{self.label_save_dir}{name}/{self.prefix}' +
                 f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt', 'a')
             fp_label.write(line)
             fp_label.close()
@@ -355,19 +356,23 @@ class Waymo2KITTI(object):
         """
         pose = np.array(frame.pose.transform).reshape(4, 4)
         np.savetxt(
-            join(f'{self.pose_save_dir}/{self.prefix}' + \
+            join(f'{self.pose_save_dir}/{self.prefix}' +
                  f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'),
-                 pose)
+            pose)
 
     def create_folder(self):
         """Create folder for data preprocessing."""
         if not self.test_mode:
-            dir_list1 = [self.label_all_save_dir, self.calib_save_dir,
-                         self.point_cloud_save_dir, self.pose_save_dir]
+            dir_list1 = [
+                self.label_all_save_dir, self.calib_save_dir,
+                self.point_cloud_save_dir, self.pose_save_dir
+            ]
             dir_list2 = [self.label_save_dir, self.image_save_dir]
         else:
-            dir_list1 = [self.calib_save_dir, self.point_cloud_save_dir,
-                         self.pose_save_dir]
+            dir_list1 = [
+                self.calib_save_dir, self.point_cloud_save_dir,
+                self.pose_save_dir
+            ]
             dir_list2 = [self.image_save_dir]
         for d in dir_list1:
             mmcv.mkdir_or_exist(d)
@@ -428,8 +433,8 @@ class Waymo2KITTI(object):
             range_image = range_images[c.name][ri_index]
             if len(c.beam_inclinations) == 0:
                 beam_inclinations = range_image_utils.compute_inclination(
-                    tf.constant([c.beam_inclination_min,
-                                 c.beam_inclination_max]),
+                    tf.constant(
+                        [c.beam_inclination_min, c.beam_inclination_max]),
                     height=range_image.shape.dims[0])
             else:
                 beam_inclinations = tf.constant(c.beam_inclinations)
