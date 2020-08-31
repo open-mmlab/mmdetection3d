@@ -167,8 +167,8 @@ def test_pointnet2_sa_msg():
         num_points=(256, 64, (32, 32)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((8, 8, 16), (8, 8, 16), (8, 8, 8)),
-        sa_channels=(((8, 8, 16), (8, 8, 16), (8, 8, 16)),
-                     ((16, 16, 32), (16, 16, 32), (16, 24, 32)),
+        sa_channels=(((8, 8, 16), (8, 8, 16),
+                      (8, 8, 16)), ((16, 16, 32), (16, 16, 32), (16, 24, 32)),
                      ((32, 32, 64), (32, 24, 64), (32, 64, 64))),
         aggregation_channels=(16, 32, 64),
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
@@ -187,7 +187,7 @@ def test_pointnet2_sa_msg():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
-    ret_dict = self(xyz[:,:,:4])
+    ret_dict = self(xyz[:, :, :4])
     sa_xyz = ret_dict['sa_xyz']
     sa_features = ret_dict['sa_features']
     sa_indices = ret_dict['sa_indices']
@@ -198,19 +198,20 @@ def test_pointnet2_sa_msg():
 
     # out_indices should smaller than the length of SA Modules.
     with pytest.raises(AssertionError):
-        build_backbone(dict(
-        type='PointNet2SAMSG',
-        in_channels=4,
-        num_points=(256, 64, (32, 32)),
-        radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
-        num_samples=((8, 8, 16), (8, 8, 16), (8, 8, 8)),
-        sa_channels=(((8, 8, 16), (8, 8, 16), (8, 8, 16)),
-                     ((16, 16, 32), (16, 16, 32), (16, 24, 32)),
-                     ((32, 32, 64), (32, 24, 64), (32, 64, 64))),
-        aggregation_channels=(16, 32, 64),
-        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        fps_sample_range_lists=((-1), (-1), (64, -1)),
-        out_indices=(2, 3),
-        norm_cfg=dict(type='BN2d'),
-        pool_mod='max',
-        normalize_xyz=False))
+        build_backbone(
+            dict(
+                type='PointNet2SAMSG',
+                in_channels=4,
+                num_points=(256, 64, (32, 32)),
+                radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
+                num_samples=((8, 8, 16), (8, 8, 16), (8, 8, 8)),
+                sa_channels=(((8, 8, 16), (8, 8, 16), (8, 8, 16)),
+                             ((16, 16, 32), (16, 16, 32), (16, 24, 32)),
+                             ((32, 32, 64), (32, 24, 64), (32, 64, 64))),
+                aggregation_channels=(16, 32, 64),
+                fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+                fps_sample_range_lists=((-1), (-1), (64, -1)),
+                out_indices=(2, 3),
+                norm_cfg=dict(type='BN2d'),
+                pool_mod='max',
+                normalize_xyz=False))
