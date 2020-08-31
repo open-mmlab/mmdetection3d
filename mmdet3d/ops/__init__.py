@@ -9,7 +9,8 @@ from .group_points import (GroupAll, QueryAndGroup, group_points,
                            grouping_operation)
 from .interpolate import three_interpolate, three_nn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
-from .pointnet_modules import PointFPModule, PointSAModule, PointSAModuleMSG
+from .pointnet_modules import (PointFPModule, PointSAModule, PointSAModuleMSG,
+                               build_sa_module)
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
                               points_in_boxes_cpu, points_in_boxes_gpu)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
@@ -29,5 +30,5 @@ __all__ = [
     'gather_points', 'grouping_operation', 'group_points', 'GroupAll',
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
     'points_in_boxes_batch', 'get_compiler_version',
-    'get_compiling_cuda_version', 'Points_Sampler'
+    'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module'
 ]

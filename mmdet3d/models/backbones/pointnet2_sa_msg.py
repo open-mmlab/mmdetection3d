@@ -1,14 +1,14 @@
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import load_checkpoint
 from torch import nn as nn
 
-from mmdet3d.ops import PointSAModuleMSG
+from mmdet3d.ops import build_sa_module
 from mmdet.models import BACKBONES
+from .base_pointnet import BasePointNet
 
 
 @BACKBONES.register_module()
-class PointNet2SAMSG(nn.Module):
+class PointNet2SAMSG(BasePointNet):
     """PointNet2 with Multi-scale grouping.
 
     Args:
@@ -26,10 +26,13 @@ class PointNet2SAMSG(nn.Module):
             points which each SA module samples.
         out_indices (Sequence[int]): Output from which stages.
         norm_cfg (dict): Config of normalization layer.
-        pool_mod (str): Pool method ('max' or 'avg') for SA modules.
-        use_xyz (bool): Whether to use xyz as a part of features.
-        normalize_xyz (bool): Whether to normalize xyz with radii in
-            each SA module.
+        sa_cfg (dict): Config of set abstraction module, which may contain
+            the following keys and values:
+
+            - pool_mod (str): Pool method ('max' or 'avg') for SA modules.
+            - use_xyz (bool): Whether to use xyz as a part of features.
+            - normalize_xyz (bool): Whether to normalize xyz with radii in
+              each SA module.
     """
 
     def __init__(self,
@@ -46,17 +49,17 @@ class PointNet2SAMSG(nn.Module):
                  fps_sample_range_lists=((-1), (-1), (512, -1)),
                  out_indices=(2, ),
                  norm_cfg=dict(type='BN2d'),
-                 pool_mod='max',
-                 use_xyz=True,
-                 normalize_xyz=True):
+                 sa_cfg=dict(
+                     type='PointSAModuleMSG',
+                     pool_mod='max',
+                     use_xyz=True,
+                     normalize_xyz=True)):
         super().__init__()
-
         self.num_sa = len(sa_channels)
         self.out_indices = out_indices
         assert max(out_indices) < self.num_sa
         assert len(num_points) == len(radii) == len(num_samples) == len(
             sa_channels) == len(aggregation_channels)
-        assert pool_mod in ['max', 'avg']
 
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
@@ -84,7 +87,7 @@ class PointNet2SAMSG(nn.Module):
                     [fps_sample_range_lists[sa_index]])
 
             self.SA_modules.append(
-                PointSAModuleMSG(
+                build_sa_module(
                     num_point=num_points[sa_index],
                     radii=radii[sa_index],
                     sample_nums=num_samples[sa_index],
@@ -92,9 +95,7 @@ class PointNet2SAMSG(nn.Module):
                     fps_mod=cur_fps_mod,
                     fps_sample_range_list=cur_fps_sample_range_list,
                     norm_cfg=norm_cfg,
-                    use_xyz=use_xyz,
-                    pool_mod=pool_mod,
-                    normalize_xyz=normalize_xyz,
+                    cfg=sa_cfg,
                     bias=True))
             skip_channel_list.append(sa_out_channel)
             self.aggregation_mlps.append(
@@ -106,35 +107,6 @@ class PointNet2SAMSG(nn.Module):
                     kernel_size=1,
                     bias=True))
             sa_in_channel = aggregation_channels[sa_index]
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights of PointNet backbone."""
-        # Do not initialize the conv layers
-        # to follow the original implementation
-        if isinstance(pretrained, str):
-            from mmdet3d.utils import get_root_logger
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
-
-    @staticmethod
-    def _split_point_feats(points):
-        """Split coordinates and features of input points.
-
-        Args:
-            points (torch.Tensor): Point coordinates with features,
-                with shape (B, N, 3 + input_feature_dim).
-
-        Returns:
-            torch.Tensor: Coordinates of input points.
-            torch.Tensor: Features of input points.
-        """
-        xyz = points[..., 0:3].contiguous()
-        if points.size(-1) > 3:
-            features = points[..., 3:].transpose(1, 2).contiguous()
-        else:
-            features = None
-
-        return xyz, features
 
     def forward(self, points):
         """Forward pass.
@@ -178,13 +150,7 @@ class PointNet2SAMSG(nn.Module):
                 out_sa_features.append(sa_features[-1])
                 out_sa_indices.append(sa_indices[-1])
 
-        if len(self.out_indices) == 1:
-            return dict(
-                sa_xyz=out_sa_xyz[-1],
-                sa_features=out_sa_features[-1],
-                sa_indices=out_sa_indices[-1])
-        else:
-            return dict(
-                sa_xyz=out_sa_xyz,
-                sa_features=out_sa_features,
-                sa_indices=out_sa_indices)
+        return dict(
+            sa_xyz=out_sa_xyz,
+            sa_features=out_sa_features,
+            sa_indices=out_sa_indices)

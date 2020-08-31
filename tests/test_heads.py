@@ -483,6 +483,7 @@ def test_primitive_head():
                 reduction='none',
                 loss_dst_weight=10.0)),
         vote_aggregation_cfg=dict(
+            type='PointSAModule',
             num_point=64,
             radius=0.3,
             num_sample=16,
@@ -576,7 +577,7 @@ def test_h3d_head():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
 
-    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x8_scannet-3d-18class.py')
+    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x3_scannet-3d-18class.py')
     self = build_head(h3d_head_cfg).cuda()
 
     # prepare roi outputs

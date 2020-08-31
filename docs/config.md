@@ -58,7 +58,11 @@ model = dict(
                      (128, 128, 256)),  # Out channels of each mlp in SA module
         fp_channels=((256, 256), (256, 256)),  # Out channels of each mlp in FP module
         norm_cfg=dict(type='BN2d'),  # Config of normalization layer
-        pool_mod='max'),  # Pool method ('max' or 'avg') for SA modules
+        sa_cfg=dict(  # Config of point set abstraction (SA) module
+            type='PointSAModule',  # type of SA module
+            pool_mod='max',  # Pool method ('max' or 'avg') for SA modules
+            use_xyz=True,  # Whether to use xyz as features during feature gathering
+            normalize_xyz=True)),  # Whether to use normalized xyz as feature during feature gathering
     bbox_head=dict(
         type='VoteHead',  # The type of bbox head, refer to mmdet3d.models.dense_heads for more details
         num_classes=18,  # Number of classes for classification
@@ -99,6 +103,7 @@ model = dict(
                 reduction='none',  # Specifies the reduction to apply to the output
                 loss_dst_weight=10.0)),  # Destination loss weight of the voting branch
         vote_aggregation_cfg=dict(  # Config to vote aggregation branch
+            type='PointSAModule',  # type of vote aggregation module
             num_point=256,  # Number of points for the set abstraction layer in vote aggregation branch
             radius=0.3,  # Radius for the set abstraction layer in vote aggregation branch
             num_sample=16,  # Number of samples for the set abstraction layer in vote aggregation branch

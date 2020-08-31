@@ -61,8 +61,7 @@ def test_multi_backbone():
                 sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
                              (128, 128, 256)),
                 fp_channels=((256, 256), (256, 256)),
-                norm_cfg=dict(type='BN2d'),
-                pool_mod='max'),
+                norm_cfg=dict(type='BN2d')),
             dict(
                 type='PointNet2SASSG',
                 in_channels=4,
@@ -72,8 +71,7 @@ def test_multi_backbone():
                 sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
                              (128, 128, 256)),
                 fp_channels=((256, 256), (256, 256)),
-                norm_cfg=dict(type='BN2d'),
-                pool_mod='max'),
+                norm_cfg=dict(type='BN2d')),
             dict(
                 type='PointNet2SASSG',
                 in_channels=4,
@@ -83,8 +81,7 @@ def test_multi_backbone():
                 sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
                              (128, 128, 256)),
                 fp_channels=((256, 256), (256, 256)),
-                norm_cfg=dict(type='BN2d'),
-                pool_mod='max'),
+                norm_cfg=dict(type='BN2d')),
             dict(
                 type='PointNet2SASSG',
                 in_channels=4,
@@ -94,8 +91,7 @@ def test_multi_backbone():
                 sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
                              (128, 128, 256)),
                 fp_channels=((256, 256), (256, 256)),
-                norm_cfg=dict(type='BN2d'),
-                pool_mod='max')
+                norm_cfg=dict(type='BN2d'))
         ])
 
     self = build_backbone(cfg_list)
@@ -127,8 +123,7 @@ def test_multi_backbone():
             sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
                          (128, 128, 256)),
             fp_channels=((256, 256), (256, 256)),
-            norm_cfg=dict(type='BN2d'),
-            pool_mod='max'))
+            norm_cfg=dict(type='BN2d')))
 
     self = build_backbone(cfg_dict)
     self.cuda()
@@ -174,8 +169,11 @@ def test_pointnet2_sa_msg():
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         fps_sample_range_lists=((-1), (-1), (64, -1)),
         norm_cfg=dict(type='BN2d'),
-        pool_mod='max',
-        normalize_xyz=False)
+        sa_cfg=dict(
+            type='PointSAModuleMSG',
+            pool_mod='max',
+            use_xyz=True,
+            normalize_xyz=False))
 
     self = build_backbone(cfg)
     self.cuda()
@@ -188,9 +186,9 @@ def test_pointnet2_sa_msg():
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
     ret_dict = self(xyz[:, :, :4])
-    sa_xyz = ret_dict['sa_xyz']
-    sa_features = ret_dict['sa_features']
-    sa_indices = ret_dict['sa_indices']
+    sa_xyz = ret_dict['sa_xyz'][-1]
+    sa_features = ret_dict['sa_features'][-1]
+    sa_indices = ret_dict['sa_indices'][-1]
 
     assert sa_xyz.shape == torch.Size([1, 64, 3])
     assert sa_features.shape == torch.Size([1, 64, 64])
@@ -213,5 +211,8 @@ def test_pointnet2_sa_msg():
                 fps_sample_range_lists=((-1), (-1), (64, -1)),
                 out_indices=(2, 3),
                 norm_cfg=dict(type='BN2d'),
-                pool_mod='max',
-                normalize_xyz=False))
+                sa_cfg=dict(
+                    type='PointSAModuleMSG',
+                    pool_mod='max',
+                    use_xyz=True,
+                    normalize_xyz=False)))

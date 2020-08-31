@@ -10,7 +10,11 @@ model = dict(
                      (128, 128, 256)),
         fp_channels=((256, 256), (256, 256)),
         norm_cfg=dict(type='BN2d'),
-        pool_mod='max'),
+        sa_cfg=dict(
+            type='PointSAModule',
+            pool_mod='max',
+            use_xyz=True,
+            normalize_xyz=True)),
     bbox_head=dict(
         type='VoteHead',
         vote_moudule_cfg=dict(
@@ -27,6 +31,7 @@ model = dict(
                 reduction='none',
                 loss_dst_weight=10.0)),
         vote_aggregation_cfg=dict(
+            type='PointSAModule',
             num_point=256,
             radius=0.3,
             num_sample=16,

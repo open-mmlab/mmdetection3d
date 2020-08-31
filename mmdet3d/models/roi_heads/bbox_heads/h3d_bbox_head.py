@@ -7,7 +7,7 @@ from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
-from mmdet3d.ops import PointSAModule
+from mmdet3d.ops import build_sa_module
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
@@ -114,9 +114,9 @@ class H3DBboxHead(nn.Module):
             line_matching_cfg['mlp_channels'][-1]
 
         # surface center matching
-        self.surface_center_matcher = PointSAModule(**suface_matching_cfg)
+        self.surface_center_matcher = build_sa_module(suface_matching_cfg)
         # line center matching
-        self.line_center_matcher = PointSAModule(**line_matching_cfg)
+        self.line_center_matcher = build_sa_module(line_matching_cfg)
 
         # Compute the matching scores
         matching_feat_dims = suface_matching_cfg['mlp_channels'][-1]
