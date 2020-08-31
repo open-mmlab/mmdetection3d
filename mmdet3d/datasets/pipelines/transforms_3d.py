@@ -1,4 +1,5 @@
 import numpy as np
+from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
 from mmdet3d.core.bbox import box_np_ops
@@ -641,10 +642,15 @@ class BackgroundPointsFilter(object):
     """Filter background points near the bounding box.
 
     Args:
-        bbox_enlarge_range (list[float]): Point cloud range.
+        bbox_enlarge_range (tuple[float] or float): Bbox enlarge range.
     """
 
     def __init__(self, bbox_enlarge_range):
+        assert (is_tuple_of(bbox_enlarge_range, float)
+                and len(bbox_enlarge_range) == 3) or isinstance(
+                    bbox_enlarge_range, float)
+        if isinstance(bbox_enlarge_range, float):
+            bbox_enlarge_range = [bbox_enlarge_range] * 3
         self.bbox_enlarge_range = np.array(
             bbox_enlarge_range, dtype=np.float32)[np.newaxis, :]
 

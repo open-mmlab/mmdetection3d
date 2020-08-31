@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
@@ -222,3 +223,10 @@ def test_background_points_filter():
     assert repr_str == expected_repr_str
     assert points.shape == (800, 4)
     assert np.allclose(orig_points, points)
+
+    # test single float config
+    BackgroundPointsFilter(0.5)
+
+    # The length of bbox_enlarge_range should be 3
+    with pytest.raises(AssertionError):
+        BackgroundPointsFilter((0.5, 2.0))
