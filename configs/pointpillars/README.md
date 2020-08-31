@@ -37,3 +37,16 @@ We implement PointPillars and provide the results and checkpoints on KITTI and n
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
 |[SECFPN](./hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d.py)|2x|||13.4|13.4||
 |[FPN](./hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d.py)|2x|||14.0|14.2||
+
+### Waymo
+
+|  Backbone | Load Interval | Class | Lr schd | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 |  mAP@L2 | mAPH@L2 | Download |
+| :-------: | :-----------: |:-----:| :------:| :------: | :------------: | :----: | :-----: | :-----: | :-----: | :------: |
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car.py)|5|Car|2x|||70.4|69.8|62.8|62.2||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Car|2x|||69.0|68.4|60.6|60.1||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Ped|2x|||67.7|51.1|59.9|45.1||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Cyc|2x|||55.9|52.8|53.8|50.8||
+
+Here we provide 2 baselines for waymo dataset, which are adapted from the original pointpillars implementation. Specifically, we basically follow the implementation in the [paper](https://arxiv.org/pdf/1912.04838.pdf) in terms of the network architecture (having a
+stride of 1 for the first convolutional block). Different settings of voxelization, data augmentation and hyper parameters make these baselines outperform those in the paper by about 7 mAP for car and 4 mAP for pedestrian with only a subset (1/5) of the whole dataset.
+Note that using the complete dataset can boost the performance a lot, especially for the detection of pedestrian and cyclist, where more than 5 mAP improvement can be expected. A more complete benchmark with more models and methods is coming soon.
