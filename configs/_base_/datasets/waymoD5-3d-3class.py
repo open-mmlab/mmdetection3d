@@ -95,8 +95,8 @@ data = dict(
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
-            load_interval=5)),
             # load one frame every five frames
+            load_interval=5)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -119,4 +119,3 @@ data = dict(
         box_type_3d='LiDAR'))
 
 evaluation = dict(interval=24)
-

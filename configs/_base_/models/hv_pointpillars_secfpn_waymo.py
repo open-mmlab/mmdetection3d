@@ -108,4 +108,3 @@ test_cfg = dict(
         score_thr=0.1,
         min_bbox_size=0,
         max_num=500))
-

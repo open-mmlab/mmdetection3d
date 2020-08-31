@@ -33,4 +33,3 @@ train_cfg = dict(
         code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         pos_weight=-1,
         debug=False))
-
