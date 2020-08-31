@@ -642,13 +642,15 @@ class BackgroundPointsFilter(object):
     """Filter background points near the bounding box.
 
     Args:
-        bbox_enlarge_range (tuple[float] or float): Bbox enlarge range.
+        bbox_enlarge_range (tuple[float], float): Bbox enlarge range.
     """
 
     def __init__(self, bbox_enlarge_range):
         assert (is_tuple_of(bbox_enlarge_range, float)
-                and len(bbox_enlarge_range) == 3) or isinstance(
-                    bbox_enlarge_range, float)
+                and len(bbox_enlarge_range) == 3) \
+            or isinstance(bbox_enlarge_range, float), \
+            f'Invalid arguments bbox_enlarge_range {bbox_enlarge_range}'
+
         if isinstance(bbox_enlarge_range, float):
             bbox_enlarge_range = [bbox_enlarge_range] * 3
         self.bbox_enlarge_range = np.array(
