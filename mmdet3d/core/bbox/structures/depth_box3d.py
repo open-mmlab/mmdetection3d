@@ -251,3 +251,52 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         box_idxs_of_pts = points_in_boxes_batch(points_lidar, boxes_lidar)
 
         return box_idxs_of_pts.squeeze(0)
+
+    def get_surface_line_center(self):
+        """Compute surface and line center of bounding boxes.
+
+        Returns:
+            torch.Tensor: Surface and line center of bounding boxes.
+        """
+        obj_size = self.dims
+        center = self.gravity_center
+        batch_size = center.shape[0]
+
+        rot_sin = torch.sin(-self.yaw)
+        rot_cos = torch.cos(-self.yaw)
+        rot_mat_T = self.yaw.new_zeros(tuple(list(self.yaw.shape) + [3, 3]))
+        rot_mat_T[..., 0, 0] = rot_cos
+        rot_mat_T[..., 0, 1] = -rot_sin
+        rot_mat_T[..., 1, 0] = rot_sin
+        rot_mat_T[..., 1, 1] = rot_cos
+        rot_mat_T[..., 2, 2] = 1
+
+        # Get the object surface center
+        offset = obj_size.new_tensor([[0, 0, 1], [0, 0, -1], [0, 1, 0],
+                                      [0, -1, 0], [1, 0, 0], [-1, 0, 0]])
+        offset = offset.view(1, 6, 3) / 2
+        surface_3d = (offset * obj_size.view(batch_size, 1, 3).repeat(
+            1, 6, 1)).transpose(0, 1).reshape(-1, 3)
+
+        # Get the object line center
+        offset = obj_size.new_tensor([[1, 0, 1], [-1, 0, 1], [0, 1, 1],
+                                      [0, -1, 1], [1, 0, -1], [-1, 0, -1],
+                                      [0, 1, -1], [0, -1, -1], [1, 1, 0],
+                                      [1, -1, 0], [-1, 1, 0], [-1, -1, 0]])
+        offset = offset.view(1, 12, 3) / 2
+
+        line_3d = (offset *
+                   obj_size.view(batch_size, 1, 3).repeat(1, 12, 1)).transpose(
+                       0, 1).reshape(-1, 3)
+
+        surface_rot = rot_mat_T.repeat(6, 1, 1)
+        surface_3d = torch.matmul(
+            surface_3d.unsqueeze(-2), surface_rot.transpose(2, 1)).squeeze(-2)
+        surface_center = center.repeat(6, 1) + surface_3d
+
+        line_rot = rot_mat_T.repeat(12, 1, 1)
+        line_3d = torch.matmul(
+            line_3d.unsqueeze(-2), line_rot.transpose(2, 1)).squeeze(-2)
+        line_center = center.repeat(12, 1) + line_3d
+
+        return surface_center, line_center
