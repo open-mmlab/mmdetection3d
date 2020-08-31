@@ -36,9 +36,11 @@ train_pipeline = [
         with_label_3d=True,
         file_client_args=file_client_args),
     dict(type='ObjectSample', db_sampler=db_sampler),
-    dict(type='RandomFlip3D', sync_2d=False,
-         flip_ratio_bev_horizontal=0.5,
-         flip_ratio_bev_vertical=0.5),
+    dict(
+        type='RandomFlip3D',
+        sync_2d=False,
+        flip_ratio_bev_horizontal=0.5,
+        flip_ratio_bev_vertical=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
