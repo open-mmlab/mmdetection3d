@@ -58,7 +58,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             feats = feats.view(-1, dim)
         return feats
 
-    def _topk(self, scores, K=40):
+    def _topk(self, scores, K=80):
         """Get indexes based on scores.
 
         Args:
