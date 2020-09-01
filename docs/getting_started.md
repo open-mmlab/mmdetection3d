@@ -1,6 +1,6 @@
 # Getting Started
 
-This page provides basic tutorials about the usage of MMDetection.
+This page provides basic tutorials about the usage of MMDetection3D.
 For installation instructions, please see [install.md](install.md).
 
 ## Prepare datasets

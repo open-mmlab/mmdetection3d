@@ -2,16 +2,14 @@ r"""Adapted from `Waymo to KITTI converter
     <https://github.com/caizhongang/waymo_kitti_converter>`_.
 """
 
-from os import makedirs
-from os.path import join
-import tensorflow as tf
-from glob import glob
 import mmcv
 import numpy as np
-
+import tensorflow as tf
+from glob import glob
+from os.path import join
+from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset import label_pb2
 from waymo_open_dataset.protos import metrics_pb2
-from waymo_open_dataset import dataset_pb2 as open_dataset
 
 
 class KITTI2Waymo(object):
@@ -31,9 +29,14 @@ class KITTI2Waymo(object):
             validation and 2 for testing.
         workers (str): Number of parallel processes.
     """
-    def __init__(self, kitti_result_files, waymo_tfrecords_dir,
-                 waymo_results_save_dir, waymo_results_final_path,
-                 prefix, workers=64):
+
+    def __init__(self,
+                 kitti_result_files,
+                 waymo_tfrecords_dir,
+                 waymo_results_save_dir,
+                 waymo_results_final_path,
+                 prefix,
+                 workers=64):
 
         self.kitti_result_files = kitti_result_files
         self.waymo_tfrecords_dir = waymo_tfrecords_dir
@@ -57,26 +60,26 @@ class KITTI2Waymo(object):
             'Cyclist': label_pb2.Label.TYPE_CYCLIST,
         }
 
-        self.T_ref_to_front_cam = np.array([
-            [0.0, 0.0, 1.0, 0.0],
-            [-1.0, 0.0, 0.0, 0.0],
-            [0.0, -1.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0]
-        ])
+        self.T_ref_to_front_cam = np.array([[0.0, 0.0, 1.0, 0.0],
+                                            [-1.0, 0.0, 0.0, 0.0],
+                                            [0.0, -1.0, 0.0, 0.0],
+                                            [0.0, 0.0, 0.0, 1.0]])
 
         self.get_file_names()
         self.create_folder()
 
     def get_file_names(self):
         """Get file names of waymo raw data."""
-        self.waymo_tfrecord_pathnames = sorted(glob(join(self.waymo_tfrecords_dir, '*.tfrecord')))
+        self.waymo_tfrecord_pathnames = sorted(
+            glob(join(self.waymo_tfrecords_dir, '*.tfrecord')))
         print(len(self.waymo_tfrecord_pathnames), 'tfrecords found.')
 
     def create_folder(self):
         """Create folder for data conversion."""
         mmcv.mkdir_or_exist(self.waymo_results_save_dir)
 
-    def parse_objects(self, kitti_result, T_k2w, context_name, frame_timestamp_micros):
+    def parse_objects(self, kitti_result, T_k2w, context_name,
+                      frame_timestamp_micros):
         """Parse one prediction with several instances in kitti format and
         convert them to `Object` proto.
 
@@ -95,6 +98,7 @@ class KITTI2Waymo(object):
         Returns:
             :obj:`Object`: Predictions in waymo dataset Object proto.
         """
+
         def parse_one_object(instance_idx):
             """Parse one instance in kitti format and convert them to
             `Object` proto.
@@ -103,28 +107,31 @@ class KITTI2Waymo(object):
                 instance_idx (int): Index of the instance to be converted.
 
             Returns:
-                :obj:`Object`: Predicted instance in waymo dataset Object proto.
+                :obj:`Object`: Predicted instance in waymo dataset \
+                    Object proto.
             """
             cls = kitti_result['name'][instance_idx]
             length = round(kitti_result['dimensions'][instance_idx, 0], 4)
             height = round(kitti_result['dimensions'][instance_idx, 1], 4)
             width = round(kitti_result['dimensions'][instance_idx, 2], 4)
-            x = round(kitti_result['location'][instance_idx, 0], 4) 
+            x = round(kitti_result['location'][instance_idx, 0], 4)
             y = round(kitti_result['location'][instance_idx, 1], 4)
             z = round(kitti_result['location'][instance_idx, 2], 4)
             rotation_y = round(kitti_result['rotation_y'][instance_idx], 4)
             score = round(kitti_result['score'][instance_idx], 4)
 
-            # y: downwards; move box origin from bottom center (kitti) to true center (waymo)
+            # y: downwards; move box origin from bottom center (kitti) to
+            # true center (waymo)
             y -= height / 2
-            x, y, z = self.transform(T_k2w, x, y, z)  # frame transformation: kitti -> waymo
+            # frame transformation: kitti -> waymo
+            x, y, z = self.transform(T_k2w, x, y, z)
 
             # different conventions
-            heading = - (rotation_y + np.pi / 2)
+            heading = -(rotation_y + np.pi / 2)
             while heading < -np.pi:
-                heading += 2*np.pi
+                heading += 2 * np.pi
             while heading > np.pi:
-                heading -= 2*np.pi
+                heading -= 2 * np.pi
 
             box = label_pb2.Label.Box()
             box.center_x = x
@@ -169,28 +176,35 @@ class KITTI2Waymo(object):
             filename = f'{self.prefix}{file_idx:03d}{frame_num:03d}'
 
             for camera in frame.context.camera_calibrations:
-                if camera.name == 1:  # FRONT = 1, see dataset.proto for details
-                    T_front_cam_to_vehicle = np.array(camera.extrinsic.transform).reshape(4, 4)
+                # FRONT = 1, see dataset.proto for details
+                if camera.name == 1:
+                    T_front_cam_to_vehicle = np.array(
+                        camera.extrinsic.transform).reshape(4, 4)
 
             T_k2w = T_front_cam_to_vehicle @ self.T_ref_to_front_cam
 
             context_name = frame.context.name
             frame_timestamp_micros = frame.timestamp_micros
 
-            try:
-                kitti_result = self.kitti_result_files[self.name2idx[filename]]
-                objects = self.parse_objects(kitti_result, T_k2w, context_name, frame_timestamp_micros)
-            except:
+            if filename in self.name2idx:
+                kitti_result = \
+                    self.kitti_result_files[self.name2idx[filename]]
+                objects = self.parse_objects(kitti_result, T_k2w, context_name,
+                                             frame_timestamp_micros)
+            else:
                 print(filename, 'not found.')
                 objects = metrics_pb2.Objects()
 
-            with open(join(self.waymo_results_save_dir, f'{filename}.bin'), 'wb') as f:
+            with open(
+                    join(self.waymo_results_save_dir, f'{filename}.bin'),
+                    'wb') as f:
                 f.write(objects.SerializeToString())
 
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmcv.track_parallel_progress(self.convert_one, range(len(self)), self.workers)
+        mmcv.track_parallel_progress(self.convert_one, range(len(self)),
+                                     self.workers)
         print('\nFinished ...')
 
         # combine all files into one .bin
@@ -216,7 +230,7 @@ class KITTI2Waymo(object):
         Returns:
             list: Coordinates after transformation.
         """
-        pt_bef = np.array([x, y, z, 1.0]).reshape(4,1)
+        pt_bef = np.array([x, y, z, 1.0]).reshape(4, 1)
         pt_aft = np.matmul(T, pt_bef)
         return pt_aft[:3].flatten().tolist()
 
@@ -239,4 +253,3 @@ class KITTI2Waymo(object):
                 combined.objects.append(o)
 
         return combined
-

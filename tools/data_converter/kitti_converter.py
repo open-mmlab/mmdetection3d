@@ -1,5 +1,5 @@
-import numpy as np
 import mmcv
+import numpy as np
 from pathlib import Path
 
 from mmdet3d.core.bbox import box_np_ops
@@ -177,7 +177,10 @@ def create_waymo_info_file(data_path,
         relative_path=relative_path,
         max_sweeps=max_sweeps)
     _calculate_num_points_in_gt(
-        data_path, waymo_infos_train, relative_path, num_features=6,
+        data_path,
+        waymo_infos_train,
+        relative_path,
+        num_features=6,
         remove_outside=False)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Waymo info train file is saved to {filename}')
@@ -192,7 +195,10 @@ def create_waymo_info_file(data_path,
         relative_path=relative_path,
         max_sweeps=max_sweeps)
     _calculate_num_points_in_gt(
-        data_path, waymo_infos_val, relative_path, num_features=6,
+        data_path,
+        waymo_infos_val,
+        relative_path,
+        num_features=6,
         remove_outside=False)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Waymo info val file is saved to {filename}')
@@ -242,8 +248,8 @@ def _create_reduced_point_cloud(data_path,
         v_path = pc_info['velodyne_path']
         v_path = Path(data_path) / v_path
         points_v = np.fromfile(
-            str(v_path), dtype=np.float32, count=-1).reshape(
-            [-1, num_features])
+            str(v_path), dtype=np.float32,
+            count=-1).reshape([-1, num_features])
         rect = calib['R0_rect']
         if front_camera_id == 2:
             P2 = calib['P2']
