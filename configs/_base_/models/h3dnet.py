@@ -19,6 +19,7 @@ primitive_z_cfg = dict(
             reduction='none',
             loss_dst_weight=10.0)),
     vote_aggregation_cfg=dict(
+        type='PointSAModule',
         num_point=1024,
         radius=0.3,
         num_sample=16,
@@ -76,6 +77,7 @@ primitive_xy_cfg = dict(
             reduction='none',
             loss_dst_weight=10.0)),
     vote_aggregation_cfg=dict(
+        type='PointSAModule',
         num_point=1024,
         radius=0.3,
         num_sample=16,
@@ -133,6 +135,7 @@ primitive_line_cfg = dict(
             reduction='none',
             loss_dst_weight=10.0)),
     vote_aggregation_cfg=dict(
+        type='PointSAModule',
         num_point=1024,
         radius=0.3,
         num_sample=16,
@@ -169,50 +172,6 @@ primitive_line_cfg = dict(
         num_point_line=10,
         line_thresh=0.2))
 
-proposal_module_cfg = dict(
-    suface_matching_cfg=dict(
-        num_point=256 * 6,
-        radius=0.5,
-        num_sample=32,
-        mlp_channels=[128 + 6, 128, 64, 32],
-        use_xyz=True,
-        normalize_xyz=True),
-    line_matching_cfg=dict(
-        num_point=256 * 12,
-        radius=0.5,
-        num_sample=32,
-        mlp_channels=[128 + 12, 128, 64, 32],
-        use_xyz=True,
-        normalize_xyz=True),
-    primitive_refine_channels=[128, 128, 128],
-    upper_thresh=100.0,
-    surface_thresh=0.5,
-    line_thresh=0.5,
-    train_cfg=dict(
-        far_threshold=0.6,
-        near_threshold=0.3,
-        mask_surface_threshold=0.3,
-        label_surface_threshold=0.3,
-        mask_line_threshold=0.3,
-        label_line_threshold=0.3),
-    cues_objectness_loss=dict(
-        type='CrossEntropyLoss',
-        class_weight=[0.3, 0.7],
-        reduction='mean',
-        loss_weight=5.0),
-    cues_semantic_loss=dict(
-        type='CrossEntropyLoss',
-        class_weight=[0.3, 0.7],
-        reduction='mean',
-        loss_weight=5.0),
-    proposal_objectness_loss=dict(
-        type='CrossEntropyLoss',
-        class_weight=[0.2, 0.8],
-        reduction='none',
-        loss_weight=5.0),
-    primitive_center_loss=dict(
-        type='MSELoss', reduction='none', loss_weight=1.0))
-
 model = dict(
     type='H3DNet',
     backbone=dict(
@@ -232,7 +191,11 @@ model = dict(
                          (128, 128, 256)),
             fp_channels=((256, 256), (256, 256)),
             norm_cfg=dict(type='BN2d'),
-            pool_mod='max')),
+            sa_cfg=dict(
+                type='PointSAModule',
+                pool_mod='max',
+                use_xyz=True,
+                normalize_xyz=True))),
     rpn_head=dict(
         type='VoteHead',
         vote_moudule_cfg=dict(
@@ -249,6 +212,7 @@ model = dict(
                 reduction='none',
                 loss_dst_weight=10.0)),
         vote_aggregation_cfg=dict(
+            type='PointSAModule',
             num_point=256,
             radius=0.3,
             num_sample=16,
@@ -286,8 +250,27 @@ model = dict(
             type='H3DBboxHead',
             gt_per_seed=3,
             num_proposal=256,
-            proposal_module_cfg=proposal_module_cfg,
+            suface_matching_cfg=dict(
+                type='PointSAModule',
+                num_point=256 * 6,
+                radius=0.5,
+                num_sample=32,
+                mlp_channels=[128 + 6, 128, 64, 32],
+                use_xyz=True,
+                normalize_xyz=True),
+            line_matching_cfg=dict(
+                type='PointSAModule',
+                num_point=256 * 12,
+                radius=0.5,
+                num_sample=32,
+                mlp_channels=[128 + 12, 128, 64, 32],
+                use_xyz=True,
+                normalize_xyz=True),
             feat_channels=(128, 128),
+            primitive_refine_channels=[128, 128, 128],
+            upper_thresh=100.0,
+            surface_thresh=0.5,
+            line_thresh=0.5,
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d'),
             objectness_loss=dict(
@@ -310,13 +293,39 @@ model = dict(
             size_res_loss=dict(
                 type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
             semantic_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1))))
+                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
+            cues_objectness_loss=dict(
+                type='CrossEntropyLoss',
+                class_weight=[0.3, 0.7],
+                reduction='mean',
+                loss_weight=5.0),
+            cues_semantic_loss=dict(
+                type='CrossEntropyLoss',
+                class_weight=[0.3, 0.7],
+                reduction='mean',
+                loss_weight=5.0),
+            proposal_objectness_loss=dict(
+                type='CrossEntropyLoss',
+                class_weight=[0.2, 0.8],
+                reduction='none',
+                loss_weight=5.0),
+            primitive_center_loss=dict(
+                type='MSELoss', reduction='none', loss_weight=1.0))))
 
 # model training and testing settings
 train_cfg = dict(
     rpn=dict(pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote'),
     rpn_proposal=dict(use_nms=False),
-    rcnn=dict(pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote'))
+    rcnn=dict(
+        pos_distance_thr=0.3,
+        neg_distance_thr=0.6,
+        sample_mod='vote',
+        far_threshold=0.6,
+        near_threshold=0.3,
+        mask_surface_threshold=0.3,
+        label_surface_threshold=0.3,
+        mask_line_threshold=0.3,
+        label_line_threshold=0.3))
 
 test_cfg = dict(
     rpn=dict(

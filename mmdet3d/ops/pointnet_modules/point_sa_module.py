@@ -5,8 +5,10 @@ from torch.nn import functional as F
 from typing import List
 
 from mmdet3d.ops import GroupAll, Points_Sampler, QueryAndGroup, gather_points
+from .registry import SA_MODULES
 
 
+@SA_MODULES.register_module()
 class PointSAModuleMSG(nn.Module):
     """Point set abstraction module with multi-scale grouping used in
     Pointnets.
@@ -167,6 +169,7 @@ class PointSAModuleMSG(nn.Module):
         return new_xyz, torch.cat(new_features_list, dim=1), indices
 
 
+@SA_MODULES.register_module()
 class PointSAModule(PointSAModuleMSG):
     """Point set abstraction module used in Pointnets.
 
