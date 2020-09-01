@@ -37,16 +37,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7]
-        torch: [1.3.1, 1.5.0+cu101, 1.6.0+cu101]
+        python-version: [3.6, 3.7]
+        torch: [1.3.0, 1.5.0+cu101, 1.6.0+cu101]
         include:
-          - torch: 1.3.1
-            torchvision: 0.6.0
+          - torch: 1.3.0
+            torchvision: 0.4.2
+            mmcv: 1.3.0+cu101
             cuda_arch: "6.0"
           - torch: 1.5.0+cu101
             torchvision: 0.6.0+cu101
+            mmcv: 1.5.0+cu101
             cuda_arch: "7.0"
           - torch: 1.6.0+cu101
+            mmcv: 1.6.0+cu101
             torchvision: 0.7.0+cu101
             cuda_arch: "7.0"
 
@@ -79,7 +82,7 @@ jobs:
         run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          pip install mmcv-full==latest+torch${{matrix.torch}} -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+          pip install mmcv-full==latest+torch${{matrix.mmcv}} -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
           pip install -q git+https://github.com/open-mmlab/mmdetection.git
           pip install -r requirements.txt
       - name: Build and install
