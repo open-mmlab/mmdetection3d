@@ -60,7 +60,6 @@ class H3DBboxHead(nn.Module):
                  bbox_coder,
                  train_cfg=None,
                  test_cfg=None,
-                 proposal_module_cfg=None,
                  gt_per_seed=1,
                  num_proposal=256,
                  feat_channels=(128, 128),

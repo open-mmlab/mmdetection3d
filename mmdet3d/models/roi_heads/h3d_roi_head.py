@@ -131,7 +131,7 @@ class H3DRoIHead(Base3DRoIHead):
         Returns:
             dict: Bbox results of one frame.
         """
-        sample_mod = self.test.sample_mod
+        sample_mod = self.test_cfg.sample_mod
         assert sample_mod in ['vote', 'seed', 'random']
 
         result_z = self.primitive_z(feats_dict, sample_mod)

@@ -74,6 +74,7 @@ class MultiBackbone(nn.Module):
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg,
+                    bias=True,
                     inplace=True))
 
     def init_weights(self, pretrained=None):
