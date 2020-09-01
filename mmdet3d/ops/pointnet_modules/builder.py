@@ -14,7 +14,7 @@ def build_sa_module(cfg, *args, **kwargs):
             method of the corresponding SA module .
 
     Returns:
-        nn.Module: Created conv layer.
+        nn.Module: Created SA module.
     """
     if cfg is None:
         cfg_ = dict(type='PointSAModule')
@@ -27,7 +27,7 @@ def build_sa_module(cfg, *args, **kwargs):
 
     module_type = cfg_.pop('type')
     if module_type not in SA_MODULES:
-        raise KeyError(f'Unrecognized norm type {module_type}')
+        raise KeyError(f'Unrecognized module type {module_type}')
     else:
         sa_module = SA_MODULES.get(module_type)
 
