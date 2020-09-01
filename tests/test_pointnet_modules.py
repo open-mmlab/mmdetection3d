@@ -25,7 +25,7 @@ def test_pointnet_sa_module_msg():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
-    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
+    xyz = torch.from_numpy(xyz).view(1, -1, 3).cuda()
     # (B, C, N)
     features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
 
@@ -35,20 +35,119 @@ def test_pointnet_sa_module_msg():
     assert new_features.shape == torch.Size([1, 48, 16])
     assert inds.shape == torch.Size([1, 16])
 
+    # test D-FPS mod
+    self = PointSAModuleMSG(
+        num_point=16,
+        radii=[0.2, 0.4],
+        sample_nums=[4, 8],
+        mlp_channels=[[12, 16], [12, 32]],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=False,
+        pool_mod='max',
+        fps_mod=['D-FPS'],
+        fps_sample_range_list=[-1]).cuda()
+
+    # test forward
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 16, 3])
+    assert new_features.shape == torch.Size([1, 48, 16])
+    assert inds.shape == torch.Size([1, 16])
+
+    # test F-FPS mod
+    self = PointSAModuleMSG(
+        num_point=16,
+        radii=[0.2, 0.4],
+        sample_nums=[4, 8],
+        mlp_channels=[[12, 16], [12, 32]],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=False,
+        pool_mod='max',
+        fps_mod=['F-FPS'],
+        fps_sample_range_list=[-1]).cuda()
+
+    # test forward
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 16, 3])
+    assert new_features.shape == torch.Size([1, 48, 16])
+    assert inds.shape == torch.Size([1, 16])
+
+    # test FS mod
+    self = PointSAModuleMSG(
+        num_point=8,
+        radii=[0.2, 0.4],
+        sample_nums=[4, 8],
+        mlp_channels=[[12, 16], [12, 32]],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=False,
+        pool_mod='max',
+        fps_mod=['FS'],
+        fps_sample_range_list=[-1]).cuda()
+
+    # test forward
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 16, 3])
+    assert new_features.shape == torch.Size([1, 48, 16])
+    assert inds.shape == torch.Size([1, 16])
+
+    # test using F-FPS mod and D-FPS mod simultaneously
+    self = PointSAModuleMSG(
+        num_point=[8, 12],
+        radii=[0.2, 0.4],
+        sample_nums=[4, 8],
+        mlp_channels=[[12, 16], [12, 32]],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=False,
+        pool_mod='max',
+        fps_mod=['F-FPS', 'D-FPS'],
+        fps_sample_range_list=[64, -1]).cuda()
+
+    # test forward
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 20, 3])
+    assert new_features.shape == torch.Size([1, 48, 20])
+    assert inds.shape == torch.Size([1, 20])
+
+    # length of 'fps_mod' should be same as 'fps_sample_range_list'
+    with pytest.raises(AssertionError):
+        PointSAModuleMSG(
+            num_point=8,
+            radii=[0.2, 0.4],
+            sample_nums=[4, 8],
+            mlp_channels=[[12, 16], [12, 32]],
+            norm_cfg=dict(type='BN2d'),
+            use_xyz=False,
+            pool_mod='max',
+            fps_mod=['F-FPS', 'D-FPS'],
+            fps_sample_range_list=[-1]).cuda()
+
+    # length of 'num_point' should be same as 'fps_sample_range_list'
+    with pytest.raises(AssertionError):
+        PointSAModuleMSG(
+            num_point=[8, 8],
+            radii=[0.2, 0.4],
+            sample_nums=[4, 8],
+            mlp_channels=[[12, 16], [12, 32]],
+            norm_cfg=dict(type='BN2d'),
+            use_xyz=False,
+            pool_mod='max',
+            fps_mod=['F-FPS'],
+            fps_sample_range_list=[-1]).cuda()
+
 
 def test_pointnet_sa_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PointSAModule
-
-    self = PointSAModule(
+    from mmdet3d.ops import build_sa_module
+    sa_cfg = dict(
+        type='PointSAModule',
         num_point=16,
         radius=0.2,
         num_sample=8,
         mlp_channels=[12, 32],
         norm_cfg=dict(type='BN2d'),
         use_xyz=True,
-        pool_mod='max').cuda()
+        pool_mod='max')
+    self = build_sa_module(sa_cfg).cuda()
 
     assert self.mlps[0].layer0.conv.in_channels == 15
     assert self.mlps[0].layer0.conv.out_channels == 32

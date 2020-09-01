@@ -55,7 +55,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         return (center_target, size_class_target, size_res_target,
                 dir_class_target, dir_res_target)
 
-    def decode(self, bbox_out):
+    def decode(self, bbox_out, suffix=''):
         """Decode predicted parts to bbox3d.
 
         Args:
@@ -66,17 +66,18 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
                 - dir_res: predicted bbox direction residual.
                 - size_class: predicted bbox size class.
                 - size_res: predicted bbox size residual.
+            suffix (str): Decode predictions with specific suffix.
 
         Returns:
             torch.Tensor: Decoded bbox3d with shape (batch, n, 7).
         """
-        center = bbox_out['center']
+        center = bbox_out['center' + suffix]
         batch_size, num_proposal = center.shape[:2]
 
         # decode heading angle
         if self.with_rot:
-            dir_class = torch.argmax(bbox_out['dir_class'], -1)
-            dir_res = torch.gather(bbox_out['dir_res'], 2,
+            dir_class = torch.argmax(bbox_out['dir_class' + suffix], -1)
+            dir_res = torch.gather(bbox_out['dir_res' + suffix], 2,
                                    dir_class.unsqueeze(-1))
             dir_res.squeeze_(2)
             dir_angle = self.class2angle(dir_class, dir_res).reshape(
@@ -85,8 +86,9 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
             dir_angle = center.new_zeros(batch_size, num_proposal, 1)
 
         # decode bbox size
-        size_class = torch.argmax(bbox_out['size_class'], -1, keepdim=True)
-        size_res = torch.gather(bbox_out['size_res'], 2,
+        size_class = torch.argmax(
+            bbox_out['size_class' + suffix], -1, keepdim=True)
+        size_res = torch.gather(bbox_out['size_res' + suffix], 2,
                                 size_class.unsqueeze(-1).repeat(1, 1, 1, 3))
         mean_sizes = center.new_tensor(self.mean_sizes)
         size_base = torch.index_select(mean_sizes, 0, size_class.reshape(-1))
@@ -112,22 +114,22 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
 
         # decode objectness score
         end += 2
-        results['obj_scores'] = preds_trans[..., start:end]
+        results['obj_scores'] = preds_trans[..., start:end].contiguous()
         start = end
 
         # decode center
         end += 3
         # (batch_size, num_proposal, 3)
-        results['center'] = base_xyz + preds_trans[..., start:end]
+        results['center'] = base_xyz + preds_trans[..., start:end].contiguous()
         start = end
 
         # decode direction
         end += self.num_dir_bins
-        results['dir_class'] = preds_trans[..., start:end]
+        results['dir_class'] = preds_trans[..., start:end].contiguous()
         start = end
 
         end += self.num_dir_bins
-        dir_res_norm = preds_trans[..., start:end]
+        dir_res_norm = preds_trans[..., start:end].contiguous()
         start = end
 
         results['dir_res_norm'] = dir_res_norm
@@ -135,7 +137,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
 
         # decode size
         end += self.num_sizes
-        results['size_class'] = preds_trans[..., start:end]
+        results['size_class'] = preds_trans[..., start:end].contiguous()
         start = end
 
         end += self.num_sizes * 3
@@ -145,13 +147,13 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
             [batch_size, num_proposal, self.num_sizes, 3])
         start = end
 
-        results['size_res_norm'] = size_res_norm
+        results['size_res_norm'] = size_res_norm.contiguous()
         mean_sizes = preds.new_tensor(self.mean_sizes)
         results['size_res'] = (
             size_res_norm * mean_sizes.unsqueeze(0).unsqueeze(0))
 
         # decode semantic score
-        results['sem_scores'] = preds_trans[..., start:]
+        results['sem_scores'] = preds_trans[..., start:].contiguous()
 
         return results
 
