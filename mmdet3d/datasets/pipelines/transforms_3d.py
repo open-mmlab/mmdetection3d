@@ -1,4 +1,5 @@
 import numpy as np
+from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
 from mmdet3d.core.bbox import box_np_ops
@@ -633,4 +634,66 @@ class IndoorPointSample(object):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(num_points={})'.format(self.num_points)
+        return repr_str
+
+
+@PIPELINES.register_module()
+class BackgroundPointsFilter(object):
+    """Filter background points near the bounding box.
+
+    Args:
+        bbox_enlarge_range (tuple[float], float): Bbox enlarge range.
+    """
+
+    def __init__(self, bbox_enlarge_range):
+        assert (is_tuple_of(bbox_enlarge_range, float)
+                and len(bbox_enlarge_range) == 3) \
+            or isinstance(bbox_enlarge_range, float), \
+            f'Invalid arguments bbox_enlarge_range {bbox_enlarge_range}'
+
+        if isinstance(bbox_enlarge_range, float):
+            bbox_enlarge_range = [bbox_enlarge_range] * 3
+        self.bbox_enlarge_range = np.array(
+            bbox_enlarge_range, dtype=np.float32)[np.newaxis, :]
+
+    def __call__(self, input_dict):
+        """Call function to filter points by the range.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after filtering, 'points' keys are updated \
+                in the result dict.
+        """
+        points = input_dict['points']
+        gt_bboxes_3d = input_dict['gt_bboxes_3d']
+
+        gt_bboxes_3d_np = gt_bboxes_3d.tensor.numpy()
+        gt_bboxes_3d_np[:, :3] = gt_bboxes_3d.gravity_center.numpy()
+        enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
+        enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
+        foreground_masks = box_np_ops.points_in_rbbox(points, gt_bboxes_3d_np)
+        enlarge_foreground_masks = box_np_ops.points_in_rbbox(
+            points, enlarged_gt_bboxes_3d)
+        foreground_masks = foreground_masks.max(1)
+        enlarge_foreground_masks = enlarge_foreground_masks.max(1)
+        valid_masks = ~np.logical_and(~foreground_masks,
+                                      enlarge_foreground_masks)
+
+        input_dict['points'] = points[valid_masks]
+        pts_instance_mask = input_dict.get('pts_instance_mask', None)
+        if pts_instance_mask is not None:
+            input_dict['pts_instance_mask'] = pts_instance_mask[valid_masks]
+
+        pts_semantic_mask = input_dict.get('pts_semantic_mask', None)
+        if pts_semantic_mask is not None:
+            input_dict['pts_semantic_mask'] = pts_semantic_mask[valid_masks]
+        return input_dict
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += '(bbox_enlarge_range={})'.format(
+            self.bbox_enlarge_range.tolist())
         return repr_str

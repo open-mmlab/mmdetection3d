@@ -88,13 +88,13 @@ class VoteModule(nn.Module):
 
         votes = votes.transpose(2, 1).view(batch_size, num_seed,
                                            self.vote_per_seed, -1)
-        offset = votes[:, :, :, 0:3]
-        res_feats = votes[:, :, :, 3:]
+        offset = votes[:, :, :, 0:3].contiguous()
+        res_feats = votes[:, :, :, 3:].contiguous()
 
-        vote_points = (seed_points.unsqueeze(2) + offset).contiguous()
+        vote_points = seed_points.unsqueeze(2) + offset
         vote_points = vote_points.view(batch_size, num_vote, 3)
-        vote_feats = (seed_feats.transpose(2, 1).unsqueeze(2) +
-                      res_feats).contiguous()
+        vote_feats = seed_feats.permute(
+            0, 2, 1).unsqueeze(2).contiguous() + res_feats
         vote_feats = vote_feats.view(batch_size, num_vote,
                                      feat_channels).transpose(2,
                                                               1).contiguous()
