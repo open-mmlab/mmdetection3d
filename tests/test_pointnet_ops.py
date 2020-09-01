@@ -340,5 +340,5 @@ def test_fps_with_dist():
     expected_idx = torch.from_numpy(fps_idx).cuda()
     features_for_fps_distance = torch.from_numpy(
         features_for_fps_distance).cuda()
-    idx = furthest_point_sample_with_dist(features_for_fps_distance, 128)
+    idx = furthest_point_sample_with_dist(features_for_fps_distance, 16)
     assert torch.all(idx == expected_idx)
