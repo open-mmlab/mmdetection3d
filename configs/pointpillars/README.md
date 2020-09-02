@@ -42,10 +42,10 @@ We implement PointPillars and provide the results and checkpoints on KITTI and n
 
 |  Backbone | Load Interval | Class | Lr schd | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 |  mAP@L2 | mAPH@L2 | Download |
 | :-------: | :-----------: |:-----:| :------:| :------: | :------------: | :----: | :-----: | :-----: | :-----: | :------: |
-| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car.py)|5|Car|2x|||70.4|69.8|62.8|62.2||
-| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Car|2x|||69.0|68.4|60.6|60.1||
-| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Ped|2x|||67.7|51.1|59.9|45.1||
-| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Cyc|2x|||55.9|52.8|53.8|50.8||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car.py)|5|Car|2x|7.76||70.2|69.6|62.6|62.1||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Car|2x|8.12||68.5|67.9|60.1|59.6||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Ped|2x|8.12||67.8|50.6|59.6|44.3||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class-Cyc|2x|8.12||57.7|54.4|55.5|52.4||
 
 Here we provide 2 baselines for waymo dataset, which are adapted from the original pointpillars implementation. Specifically, we basically follow the implementation in the [paper](https://arxiv.org/pdf/1912.04838.pdf) in terms of the network architecture (having a
 stride of 1 for the first convolutional block). Different settings of voxelization, data augmentation and hyper parameters make these baselines outperform those in the paper by about 7 mAP for car and 4 mAP for pedestrian with only a subset (1/5) of the whole dataset.
