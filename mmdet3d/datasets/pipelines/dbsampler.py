@@ -106,6 +106,8 @@ class DataBaseSampler(object):
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
         self.load_dim = load_dim
+        if isinstance(use_dim, int):
+            use_dim = list(range(use_dim))
         self.use_dim = use_dim
 
         with open(info_path, 'rb') as f:
