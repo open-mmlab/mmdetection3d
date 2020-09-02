@@ -94,7 +94,9 @@ class DataBaseSampler(object):
                  rate,
                  prepare,
                  sample_groups,
-                 classes=None):
+                 classes=None,
+                 load_dim=4,
+                 use_dim=[0, 1, 2, 3]):
         super().__init__()
         self.data_root = data_root
         self.info_path = info_path
@@ -103,6 +105,8 @@ class DataBaseSampler(object):
         self.classes = classes
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
+        self.load_dim = load_dim
+        self.use_dim = use_dim
 
         with open(info_path, 'rb') as f:
             db_infos = pickle.load(f)
@@ -245,7 +249,9 @@ class DataBaseSampler(object):
                     self.data_root,
                     info['path']) if self.data_root else info['path']
                 s_points = np.fromfile(
-                    file_path, dtype=np.float32).reshape([-1, 4])
+                    file_path,
+                    dtype=np.float32).reshape([-1,
+                                               self.load_dim])[:, self.use_dim]
                 s_points[:, :3] += info['box3d_lidar'][:3]
 
                 count += 1
