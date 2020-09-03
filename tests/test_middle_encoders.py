@@ -16,7 +16,7 @@ def test_sparse_encoder():
                                                                       128)),
         encoder_paddings=((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1,
                                                                        1)),
-        option='basicblock')
+        block_type='basicblock')
 
     sparse_encoder = build_middle_encoder(sparse_encoder_cfg).cuda()
     voxel_features = torch.rand([207842, 5]).cuda()

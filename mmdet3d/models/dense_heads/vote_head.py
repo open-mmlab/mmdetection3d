@@ -8,7 +8,7 @@ from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
-from mmdet3d.ops import PointSAModule, furthest_point_sample
+from mmdet3d.ops import build_sa_module, furthest_point_sample
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
@@ -78,7 +78,7 @@ class VoteHead(nn.Module):
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
         self.vote_module = VoteModule(**vote_moudule_cfg)
-        self.vote_aggregation = PointSAModule(**vote_aggregation_cfg)
+        self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         prev_channel = vote_aggregation_cfg['mlp_channels'][-1]
         conv_pred_list = list()
@@ -157,7 +157,8 @@ class VoteHead(nn.Module):
                 torch.randint(0, num_seed, (batch_size, self.num_proposal)),
                 dtype=torch.int32)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f'Sample mode {sample_mod} is not supported!')
 
         vote_aggregation_ret = self.vote_aggregation(vote_points,
                                                      vote_features,
@@ -261,7 +262,7 @@ class VoteHead(nn.Module):
             (batch_size, proposal_num, self.num_sizes))
         one_hot_size_targets.scatter_(2, size_class_targets.unsqueeze(-1), 1)
         one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
-            -1).repeat(1, 1, 1, 3)
+            -1).repeat(1, 1, 1, 3).contiguous()
         size_residual_norm = torch.sum(
             bbox_preds['size_res_norm'] * one_hot_size_targets_expand, 2)
         box_loss_weights_expand = box_loss_weights.unsqueeze(-1).repeat(

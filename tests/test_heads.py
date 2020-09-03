@@ -483,6 +483,7 @@ def test_primitive_head():
                 reduction='none',
                 loss_dst_weight=10.0)),
         vote_aggregation_cfg=dict(
+            type='PointSAModule',
             num_point=64,
             radius=0.3,
             num_sample=16,
@@ -576,7 +577,7 @@ def test_h3d_head():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
 
-    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x8_scannet-3d-18class.py')
+    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x3_scannet-3d-18class.py')
     self = build_head(h3d_head_cfg).cuda()
 
     # prepare roi outputs
@@ -585,7 +586,7 @@ def test_h3d_head():
     fp_indices = [torch.randint(0, 128, [1, 1024]).cuda()]
     aggregated_points = torch.rand([1, 256, 3], dtype=torch.float32).cuda()
     aggregated_features = torch.rand([1, 128, 256], dtype=torch.float32).cuda()
-    rpn_proposals = torch.cat([
+    proposal_list = torch.cat([
         torch.rand([1, 256, 3], dtype=torch.float32).cuda() * 4 - 2,
         torch.rand([1, 256, 3], dtype=torch.float32).cuda() * 4,
         torch.zeros([1, 256, 1]).cuda()
@@ -599,7 +600,7 @@ def test_h3d_head():
         aggregated_features=aggregated_features,
         seed_points=fp_xyz[0],
         seed_indices=fp_indices[0],
-        rpn_proposals=rpn_proposals)
+        proposal_list=proposal_list)
 
     # prepare gt label
     from mmdet3d.core.bbox import DepthInstance3DBoxes
@@ -643,7 +644,6 @@ def test_h3d_head():
     # train forward
     ret_dict = self.forward_train(
         input_dict,
-        'vote',
         points=points,
         gt_bboxes_3d=gt_bboxes_3d,
         gt_labels_3d=gt_labels_3d,
@@ -656,5 +656,5 @@ def test_h3d_head():
     assert ret_dict['center_loss_z'] >= 0
     assert ret_dict['size_loss_z'] >= 0
     assert ret_dict['sem_loss_z'] >= 0
-    assert ret_dict['objectness_loss_opt'] >= 0
+    assert ret_dict['objectness_loss_optimized'] >= 0
     assert ret_dict['primitive_sem_matching_loss'] >= 0

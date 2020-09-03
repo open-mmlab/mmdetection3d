@@ -1,9 +1,11 @@
 import mmcv
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
-from mmdet3d.datasets import ObjectNoise, ObjectSample, RandomFlip3D
+from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
+                              ObjectSample, RandomFlip3D)
 
 
 def test_remove_points_in_boxes():
@@ -186,3 +188,45 @@ def test_random_flip_3d():
     assert np.allclose(points, expected_points)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert repr_str == expected_repr_str
+
+
+def test_background_points_filter():
+    np.random.seed(0)
+    background_points_filter = BackgroundPointsFilter((0.5, 2.0, 0.5))
+    points = np.fromfile(
+        './tests/data/kitti/training/velodyne_reduced/000000.bin',
+        np.float32).reshape(-1, 4)
+    orig_points = points.copy()
+    annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
+    info = annos[0]
+    rect = info['calib']['R0_rect'].astype(np.float32)
+    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+    annos = info['annos']
+    loc = annos['location']
+    dims = annos['dimensions']
+    rots = annos['rotation_y']
+    gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
+                                  axis=1).astype(np.float32)
+    gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
+        Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
+    extra_points = gt_bboxes_3d.corners.reshape(8, 3)[[1, 2, 5, 6], :]
+    extra_points[:, 2] += 0.1
+    extra_points = torch.cat([extra_points, extra_points.new_zeros(4, 1)], 1)
+    points = np.concatenate([points, extra_points.numpy()], 0)
+    input_dict = dict(points=points, gt_bboxes_3d=gt_bboxes_3d)
+    input_dict = background_points_filter(input_dict)
+
+    points = input_dict['points']
+    repr_str = repr(background_points_filter)
+    expected_repr_str = 'BackgroundPointsFilter(bbox_enlarge_range=' \
+                        '[[0.5, 2.0, 0.5]])'
+    assert repr_str == expected_repr_str
+    assert points.shape == (800, 4)
+    assert np.allclose(orig_points, points)
+
+    # test single float config
+    BackgroundPointsFilter(0.5)
+
+    # The length of bbox_enlarge_range should be 3
+    with pytest.raises(AssertionError):
+        BackgroundPointsFilter((0.5, 2.0))
