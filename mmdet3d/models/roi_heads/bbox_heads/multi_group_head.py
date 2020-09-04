@@ -262,7 +262,7 @@ class CenterHead(nn.Module):
         in_channels (list[int] | int): Channels of the input feature map.
             Default: [128].
         tasks (list[dict]): Task information including class number
-            and class names. Default: [].
+            and class names. Default: None.
         dataset (str): Name of the dataset. Default: 'nuscenes'.
         weight (float): Weight for location loss. Default: 0.25.
         code_weights (list[int]): Code weights for location loss. Default: [].
@@ -287,7 +287,7 @@ class CenterHead(nn.Module):
     def __init__(self,
                  mode='3d',
                  in_channels=[128],
-                 tasks=[],
+                 tasks=None,
                  train_cfg=None,
                  test_cfg=None,
                  bbox_coder=None,
@@ -552,7 +552,7 @@ class CenterHead(nn.Module):
 
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
-
+                    # TODO: support other outdoor dataset
                     vx, vy = task_boxes[idx][k][6:8]
                     rot = task_boxes[idx][k][8]
                     if not self.train_cfg['no_log']:

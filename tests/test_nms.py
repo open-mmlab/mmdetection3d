@@ -60,7 +60,8 @@ def test_aligned_3d_nms():
 
 def test_circle_nms():
     from mmdet3d.core.post_processing import circle_nms
-    boxes = torch.tensor([[5.6631, 3.5377, 0.8952], [-11.2810, 2.2422, 0.8914],
+    boxes = torch.tensor([[-11.1100, 2.1300, 0.8823],
+                          [-11.2810, 2.2422, 0.8914],
                           [-10.3966, -0.3198, 0.8643],
                           [-10.2906, -13.3159,
                            0.8401], [5.6518, 9.9791, 0.8271],
@@ -69,5 +70,5 @@ def test_circle_nms():
                           [-10.5561, 18.9627, 0.7518],
                           [-10.5643, 13.2293, 0.7200]])
     keep = circle_nms(boxes.numpy(), 0.175)
-    expected_keep = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    expected_keep = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert np.all(keep == expected_keep)
