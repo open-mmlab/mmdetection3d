@@ -86,6 +86,9 @@ class DataBaseSampler(object):
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
         classes (list[str]): List of classes. Default: None.
+        load_dim (int): Dimension number of the loaded points. Defaults to 4.
+        use_dim (list[int] | int): Which dimension to use. Defaults to
+            [0, 1, 2, 3].
     """
 
     def __init__(self,
