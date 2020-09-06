@@ -27,7 +27,7 @@ def parse_args():
         default='./data/nuimages/annotations/',
         required=False,
         help='path to save the exported json')
-    parser.add_argument('--extra-tag', type=str, default='nuimage')
+    parser.add_argument('--extra-tag', type=str, default='nuimages')
     args = parser.parse_args()
     return args
 
