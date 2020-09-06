@@ -38,16 +38,16 @@ def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
     """
     order = scores.sort(0, descending=True)[1]
 
+    if pre_maxsize is not None:
+        order = order[:pre_maxsize]
     boxes = boxes[order].contiguous()
 
     keep = torch.zeros(boxes.size(0), dtype=torch.long)
-    if pre_maxsize is not None:
-        order = order[:pre_maxsize]
     num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh, boxes.device.index)
-
+    keep = order[keep[:num_out].cuda(boxes.device)].contiguous()
     if post_max_size is not None:
         keep = keep[:post_max_size]
-    return order[keep[:num_out].cuda(boxes.device)].contiguous()
+    return keep
 
 
 def nms_normal_gpu(boxes, scores, thresh):
