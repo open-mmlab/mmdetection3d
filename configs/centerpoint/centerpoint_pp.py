@@ -51,8 +51,11 @@ db_sampler = dict(
         pedestrian=2,
         traffic_cone=2,
     ),
-    load_dim=5,
-    use_dim=[0, 1, 2, 3, 4])
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=[0, 1, 2, 3, 4],
+        file_client_args=file_client_args))
 
 train_pipeline = [
     dict(
