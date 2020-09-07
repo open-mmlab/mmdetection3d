@@ -1,10 +1,11 @@
 import copy
+import mmcv
 import numpy as np
 import os
-import pickle
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils
+from mmdet.datasets import PIPELINES
 from ..registry import OBJECTSAMPLERS
 
 
@@ -86,9 +87,8 @@ class DataBaseSampler(object):
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
         classes (list[str]): List of classes. Default: None.
-        load_dim (int): Dimension number of the loaded points. Defaults to 4.
-        use_dim (list[int] | int): Which dimension to use. Defaults to
-            [0, 1, 2, 3].
+        points_loader(dict): Config of points loader. Default: dict(
+            type='LoadPointsFromFile', load_dim=4, use_dim=[0,1,2,3])
     """
 
     def __init__(self,
@@ -98,8 +98,10 @@ class DataBaseSampler(object):
                  prepare,
                  sample_groups,
                  classes=None,
-                 load_dim=4,
-                 use_dim=[0, 1, 2, 3]):
+                 points_loader=dict(
+                     type='LoadPointsFromFile',
+                     load_dim=4,
+                     use_dim=[0, 1, 2, 3])):
         super().__init__()
         self.data_root = data_root
         self.info_path = info_path
@@ -108,13 +110,11 @@ class DataBaseSampler(object):
         self.classes = classes
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
-        self.load_dim = load_dim
-        if isinstance(use_dim, int):
-            use_dim = list(range(use_dim))
-        self.use_dim = use_dim
+        self.points_loader = mmcv.build_from_cfg(points_loader, PIPELINES)
 
-        with open(info_path, 'rb') as f:
-            db_infos = pickle.load(f)
+        db_infos = mmcv.load(info_path)
+        # with open(info_path, 'rb') as f:
+        #     db_infos = pickle.load(f)
 
         # filter database infos
         from mmdet3d.utils import get_root_logger
@@ -253,10 +253,9 @@ class DataBaseSampler(object):
                 file_path = os.path.join(
                     self.data_root,
                     info['path']) if self.data_root else info['path']
-                s_points = np.fromfile(
-                    file_path,
-                    dtype=np.float32).reshape([-1,
-                                               self.load_dim])[:, self.use_dim]
+
+                results = dict(pts_filename=file_path)
+                s_points = self.points_loader(results)['points']
                 s_points[:, :3] += info['box3d_lidar'][:3]
 
                 count += 1
