@@ -2,9 +2,9 @@
 
 ## Introduction
 
-We implement [nuImages dataset](https://www.nuscenes.org/nuimages) and provide some baseline results on nuImages dataset.
+We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
-The baseline results includes object detection and instance segmentation using ResNets and RegNets.
+The baseline results includes instance segmentation models, e.g., Mask R-CNN and Cascade Mask R-CNN.
 We will support panoptic segmentation models in the future.
 
 
