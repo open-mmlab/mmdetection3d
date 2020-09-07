@@ -593,6 +593,22 @@ class CenterHead(nn.Module):
                 truth gt boxes.
             gt_labels_3d (list[torch.Tensor]): Labels of boxes.
             preds_dicts (dict): Output of forward function.
+
+        Returns:
+            dict: Computed losses.
+
+                - hm_loss_task0 (torch.Tensor): Loss of heatmap for task0.
+                - loc_loss_task0 (torch.Tensor): Loss of location for task0.
+                - hm_loss_task1 (torch.Tensor): Loss of heatmap for task1.
+                - loc_loss_task1 (torch.Tensor): Loss of location for task1.
+                - hm_loss_task2 (torch.Tensor): Loss of heatmap for task2.
+                - loc_loss_task2 (torch.Tensor): Loss of location for task2.
+                - hm_loss_task3 (torch.Tensor): Loss of heatmap for task3.
+                - loc_loss_task3 (torch.Tensor): Loss of location for task3.
+                - hm_loss_task4 (torch.Tensor): Loss of heatmap for task4.
+                - loc_loss_task4 (torch.Tensor): Loss of location for task4.
+                - hm_loss_task5 (torch.Tensor): Loss of heatmap for task5.
+                - loc_loss_task5 (torch.Tensor): Loss of location for task5.
         """
         hms, anno_boxes, inds, masks = self.get_targets(
             gt_bboxes_3d, gt_labels_3d)
@@ -729,6 +745,28 @@ class CenterHead(nn.Module):
 
     def get_task_detections(self, num_class_with_bg, batch_cls_preds,
                             batch_reg_preds, batch_cls_labels, img_metas):
+        """Rotate nms for each task.
+
+        Args:
+            num_class_with_bg (int): Number of classes for the current task.
+            batch_cls_preds (list[torch.Tensor]): Prediction score with the
+                shape of [N].
+            batch_reg_preds (list[torch.Tensor]): Prediction bbox with the
+                shape of [N, 9].
+            batch_cls_labels (list[torch.Tensor]): Prediction label with the
+                shape of [N].
+            img_metas (list[dict]): Meta information of each sample.
+
+        Returns:
+            list[dict[str: torch.Tensor]]: contains the following keys:
+
+                -bboxes (torch.Tensor): Prediction bboxes after nms with the
+                    shape of [N, 9].
+                -scores (torch.Tensor): Prediction scores after nms with the
+                    shape of [N].
+                -labels (torch.Tensor): Prediction labels after nms with the
+                    shape of [N].
+        """
         predictions_dicts = []
         post_center_range = self.test_cfg['post_center_limit_range']
         if len(post_center_range) > 0:
