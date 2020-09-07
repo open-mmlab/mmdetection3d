@@ -17,7 +17,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         max_num (int): Max number to be kept. Default: 100.
         score_threshold (float): Threshold to filter boxes based on score.
             Default: None.
-        code_size (int): Code size of bboxes.
+        code_size (int): Code size of bboxes. Default: 9
     """
 
     def __init__(self,
@@ -63,7 +63,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
 
         Args:
             scores (torch.Tensor): scores with the shape of [B, N, W, H].
-            K (int): Number to be kept. Defaults to 40.
+            K (int): Number to be kept. Defaults to 80.
 
         Returns:
             tuple[torch.Tensor]
@@ -212,7 +212,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                 predictions_dicts.append(predictions_dict)
         else:
             raise NotImplementedError(
-                'Need to reorganize output as a batch so only '
+                'Need to reorganize output as a batch, only '
                 'support post_center_range is not None for now!')
 
         return predictions_dicts

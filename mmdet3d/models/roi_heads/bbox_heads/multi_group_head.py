@@ -23,8 +23,8 @@ class CenterPointFeatureAdaption(FeatureAdaption):
     Args:
         in_channels (int): Number of channels in the input feature map.
         out_channels (int): Number of channels in the output feature map.
-        kernel_size (int): Deformable conv kernel size.
-        deform_groups (int): Deformable conv group size.
+        kernel_size (int): Deformable conv kernel size. Default: 3
+        deform_groups (int): Deformable conv group size. Default: 4
     """
 
     def __init__(self,
@@ -115,6 +115,7 @@ class SepHead(nn.Module):
             self.__setattr__(head, fc)
 
     def init_weights(self):
+        """Initialize weights."""
         for head in self.heads:
             if head == 'hm':
                 self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
@@ -131,7 +132,9 @@ class SepHead(nn.Module):
                 [B, 512, 128, 128].
 
         Returns:
-            dict:   -reg （torch.Tensor): 2D regression value with the
+            dict[str: torch.Tensor]: contains the following keys:
+
+                    -reg （torch.Tensor): 2D regression value with the
                         shape of [B, 2, H, W].
                     -height (torch.Tensor): Height value with the
                         shape of [B, 1, H, W].
@@ -355,6 +358,7 @@ class CenterHead(nn.Module):
                         final_kernel=3))
 
     def init_weights(self):
+        """Initialize weights."""
         for task in self.tasks:
             task.init_weights()
 
