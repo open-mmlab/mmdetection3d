@@ -274,7 +274,7 @@ class CenterHead(nn.Module):
         common_heads (dict): Conv information for common heads.
             Default: dict().
         loss_cls (dict): Config of classification loss function.
-            Default: dict(type='GaussianFocalLoss', reduction='sum').
+            Default: dict(type='GaussianFocalLoss', reduction='mean').
         loss_reg (dict): Config of regression loss function.
             Default: dict(type='L1Loss', reduction='none').
         init_bias (float): Initial bias. Default: -2.19.
@@ -297,7 +297,7 @@ class CenterHead(nn.Module):
                  test_cfg=None,
                  bbox_coder=None,
                  common_heads=dict(),
-                 loss_cls=dict(type='GaussianFocalLoss', reduction='sum'),
+                 loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
                  loss_reg=dict(
                      type='L1Loss', reduction='none', loss_weight=0.25),
                  init_bias=-2.19,
@@ -598,17 +598,17 @@ class CenterHead(nn.Module):
         Returns:
             dict: Computed losses.
 
-                - task0.loss_cls (torch.Tensor): Loss of heatmap for task0.
+                - task0.loss_heatmap (torch.Tensor): Loss of heatmap for task0.
                 - task0.loss_bbox (torch.Tensor): Loss of location for task0.
-                - task1.loss_cls (torch.Tensor): Loss of heatmap for task1.
+                - task1.loss_heatmap (torch.Tensor): Loss of heatmap for task1.
                 - task1.loss_bbox (torch.Tensor): Loss of location for task1.
-                - task2.loss_cls (torch.Tensor): Loss of heatmap for task2.
+                - task2.loss_heatmap (torch.Tensor): Loss of heatmap for task2.
                 - task2.loss_bbox (torch.Tensor): Loss of location for task2.
-                - task3.loss_cls (torch.Tensor): Loss of heatmap for task3.
+                - task3.loss_heatmap (torch.Tensor): Loss of heatmap for task3.
                 - task3.loss_bbox (torch.Tensor): Loss of location for task3.
-                - task4.loss_cls (torch.Tensor): Loss of heatmap for task4.
+                - task4.loss_heatmap (torch.Tensor): Loss of heatmap for task4.
                 - task4.loss_bbox (torch.Tensor): Loss of location for task4.
-                - task5.loss_cls (torch.Tensor): Loss of heatmap for task5.
+                - task5.loss_heatmap (torch.Tensor): Loss of heatmap for task5.
                 - task5.loss_bbox (torch.Tensor): Loss of location for task5.
         """
         heatmaps, anno_boxes, inds, masks = self.get_targets(
@@ -618,8 +618,10 @@ class CenterHead(nn.Module):
             # heatmap focal loss
             preds_dict[0]['heatmap'] = clip_sigmoid(preds_dict[0]['heatmap'])
             num_pos = heatmaps[task_id].eq(1).float().sum().item()
-            loss_cls = self.loss_cls(preds_dict[0]['heatmap'],
-                                     heatmaps[task_id]) / max(num_pos, 1)
+            loss_heatmap = self.loss_cls(
+                preds_dict[0]['heatmap'],
+                heatmaps[task_id],
+                avg_factor=max(num_pos, 1))
             target_box = anno_boxes[task_id]
             # reconstruct the anno_box from multiple reg heads
             preds_dict[0]['anno_box'] = torch.cat(
@@ -641,7 +643,7 @@ class CenterHead(nn.Module):
                 num + 1e-4)
             code_weights = self.train_cfg.get('code_weights', [])
             loss_bbox = (box_loss * box_loss.new_tensor(code_weights)).sum()
-            loss_dict[f'task{task_id}.loss_cls'] = loss_cls
+            loss_dict[f'task{task_id}.loss_heatmap'] = loss_heatmap
             loss_dict[f'task{task_id}.loss_bbox'] = loss_bbox
 
         return loss_dict
