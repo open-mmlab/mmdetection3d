@@ -4,7 +4,7 @@
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
-The baseline results includes instance segmentation models, e.g., Mask R-CNN and Cascade Mask R-CNN.
+The baseline results include instance segmentation models, e.g., Mask R-CNN and Cascade Mask R-CNN.
 We will support panoptic segmentation models in the future.
 
 
@@ -28,5 +28,5 @@ We report Mask R-CNN and Cascade Mask R-CNN results on nuimages.
 
 **Note**:
 1. `IN` means only using ImageNet pre-trained backbone. `IN+COCO-Nx` means the backbone is first pre-trained on ImageNet, and then the detector is pre-trained on COCO train2017 dataset by `Nx` schedules.
-2. All the training hyper-parameters follows the standard 1x schedules on COCO dataset except that the images are resized from
+2. All the training hyper-parameters follow the standard 1x schedules on COCO dataset except that the images are resized from
 1280 x 720 to 1920 x 1080 (relative ratio 0.8 to 1.2) since the images are in size 1600 x 900.
