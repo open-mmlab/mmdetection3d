@@ -249,6 +249,7 @@ total_epochs = 40
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = None
-load_from = './pretrain_mmdet/mvx_faster_rcnn_detectron2-caffe_20e_coco-pretrain_gt-sample_kitti-3-class_moderate-79.3_20200207-a4a6a3c7.pth'  # noqa
+# You may need to download the model first is the network is unstable
+load_from = 'https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/pretrain_models/mvx_faster_rcnn_detectron2-caffe_20e_coco-pretrain_gt-sample_kitti-3-class_moderate-79.3_20200207-a4a6a3c7.pth'  # noqa
 resume_from = None
 workflow = [('train', 1)]

@@ -246,7 +246,7 @@ class PartA2BboxHead(nn.Module):
         # transform to sparse tensors
         sparse_shape = part_feats.shape[1:4]
         # (non_empty_num, 4) ==> [bs_idx, x_idx, y_idx, z_idx]
-        sparse_idx = part_feats.sum(dim=-1).nonzero()
+        sparse_idx = part_feats.sum(dim=-1).nonzero(as_tuple=False)
 
         part_features = part_feats[sparse_idx[:, 0], sparse_idx[:, 1],
                                    sparse_idx[:, 2], sparse_idx[:, 3]]
@@ -600,7 +600,8 @@ class PartA2BboxHead(nn.Module):
             class_scores_keep = box_probs[:, k] >= score_thresh[k]
 
             if class_scores_keep.int().sum() > 0:
-                original_idxs = class_scores_keep.nonzero().view(-1)
+                original_idxs = class_scores_keep.nonzero(
+                    as_tuple=False).view(-1)
                 cur_boxes_for_nms = boxes_for_nms[class_scores_keep]
                 cur_rank_scores = box_probs[class_scores_keep, k]
 
