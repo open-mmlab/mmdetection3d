@@ -11,7 +11,7 @@ model = dict(
     pts_middle_encoder=dict(
         type='SparseEncoder',
         in_channels=5,
-        sparse_shape=[41, 1440, 1440],
+        sparse_shape=[41, 1024, 1024],
         output_channels=128,
         order=('conv', 'norm', 'act'),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
@@ -69,7 +69,7 @@ model = dict(
 # model training and testing settings
 train_cfg = dict(
     pts=dict(
-        grid_size=[1440, 1440, 40],
+        grid_size=[1024, 1024, 40],
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
         out_size_factor=8,
