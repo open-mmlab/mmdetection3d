@@ -383,9 +383,9 @@ def test_part_aggregation_ROI_head():
 
     voxels = torch.tensor(
         features['voxels'], dtype=torch.float32, device='cuda')
-    num_points = torch.ones([2000], device='cuda')
-    coors = torch.zeros([2000, 4], device='cuda')
-    voxel_centers = torch.zeros([2000, 3], device='cuda')
+    num_points = torch.ones([500], device='cuda')
+    coors = torch.zeros([500, 4], device='cuda')
+    voxel_centers = torch.zeros([500, 3], device='cuda')
     box_type_3d = LiDARInstance3DBoxes
     img_metas = [dict(box_type_3d=box_type_3d)]
     voxels_dict = dict(
