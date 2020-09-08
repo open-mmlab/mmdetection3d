@@ -377,15 +377,12 @@ def test_part_aggregation_ROI_head():
     self = build_head(roi_head_cfg).cuda()
 
     features = np.load('./tests/test_samples/parta2_roihead_inputs.npz')
-    spatial_features = torch.from_numpy(features['spatial_features']).cuda()
-    seg_features = torch.from_numpy(features['seg_features']).cuda()
-    neck_features = [torch.from_numpy(features['neck_features']).cuda()]
-    feats_dict = dict(
-        spatial_features=spatial_features,
-        seg_features=seg_features,
-        neck_features=neck_features)
+    seg_features = torch.tensor(
+        features['seg_features'], dtype=torch.float32, device='cuda')
+    feats_dict = dict(seg_features=seg_features)
 
-    voxels = torch.from_numpy(features['voxels']).cuda()
+    voxels = torch.tensor(
+        features['voxels'], dtype=torch.float32, device='cuda')
     num_points = torch.ones([2000], device='cuda')
     coors = torch.zeros([2000, 4], device='cuda')
     voxel_centers = torch.zeros([2000, 3], device='cuda')
