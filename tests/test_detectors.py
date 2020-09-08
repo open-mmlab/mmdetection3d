@@ -113,9 +113,9 @@ def test_voxel_net():
 
     # test simple_test
     results = self.simple_test(points, img_metas)
-    boxes_3d = results['boxes_3d']
-    scores_3d = results['scores_3d']
-    labels_3d = results['labels_3d']
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
     assert boxes_3d.tensor.shape == (50, 7)
     assert scores_3d.shape == torch.Size([50])
     assert labels_3d.shape == torch.Size([50])
@@ -155,9 +155,9 @@ def test_vote_net():
 
     # test simple_test
     results = self.simple_test(points, img_metas)
-    boxes_3d = results['boxes_3d']
-    scores_3d = results['scores_3d']
-    labels_3d = results['labels_3d']
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
     assert boxes_3d.tensor.shape[0] >= 0
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
@@ -197,9 +197,9 @@ def test_parta2():
 
     # test_simple_test
     results = self.simple_test(points, img_metas)
-    boxes_3d = results['boxes_3d']
-    scores_3d = results['scores_3d']
-    labels_3d = results['labels_3d']
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
     assert boxes_3d.tensor.shape[0] >= 0
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
