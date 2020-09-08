@@ -1,10 +1,10 @@
-# PointPillars: Fast Encoders for Object Detection from Point Clouds
+# NuImages Results
 
 ## Introduction
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
-The baseline results includes instance segmentation models, e.g., Mask R-CNN and Cascade Mask R-CNN.
+The baseline results include instance segmentation models, e.g., Mask R-CNN and Cascade Mask R-CNN.
 We will support panoptic segmentation models in the future.
 
 
@@ -14,8 +14,8 @@ We will support panoptic segmentation models in the future.
 
 We report Mask R-CNN and Cascade Mask R-CNN results on nuimages.
 
-|Method |  |Backbone| Lr schd | Mem (GB) | Box AP  | Mask AP  |Download |
-| :---------: |:---------: | :---------: | :-----: |:-----: | :------: | :------------: | :----: | :------: |
+|Method | Backbone|Pretraining | Lr schd | Mem (GB) | Box AP  | Mask AP  |Download |
+| :---------: |:---------: | :---------: | :-----: |:-----: | :------: | :------------: | :----: |
 | Mask R-CNN| [R-50](./mask_rcnn_r50_fpn_1x_nuim.py) |IN|1x|7.4|47.8 |38.4|[model](https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/v0.1.0_models/nuimages/mask_rcnn_r50_fpn_1x_nuim/mask_rcnn_r50_fpn_1x_nuim_20200906_114546-902bb808.pth) &#124; [log](https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/v0.1.0_models/nuimages/mask_rcnn_r50_fpn_1x_nuim/mask_rcnn_r50_fpn_1x_nuim_20200906_114546.log.json)|
 | Mask R-CNN| [R-50](./mask_rcnn_r50_fpn_coco-2x_1x_nuim.py) |IN+COCO-2x|1x|7.4|49.6|40.0|[model](https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/v0.1.0_models/nuimages/mask_rcnn_r50_fpn_coco-2x_1x_nuim/mask_rcnn_r50_fpn_coco-2x_1x_nuim_20200905_234546-01b6b9ba.pth) &#124; [log](https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/v0.1.0_models/nuimages/mask_rcnn_r50_fpn_coco-2x_1x_nuim/mask_rcnn_r50_fpn_coco-2x_1x_nuim_20200905_234546.log.json)|
 | Mask R-CNN| [R-50-CAFFE](./mask_rcnn_r50_caffe_fpn_1x_nuim.py) |IN|1x|7.0|47.7|38.2|[model](https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/v0.1.0_models/nuimages/mask_rcnn_r50_caffe_fpn_1x_nuim/mask_rcnn_r50_caffe_fpn_1x_nuim_20200906_120052-733905fa.pth) &#124; [log](https://openmmlab.oss-accelerate.aliyuncs.com/mmdetection3d/v0.1.0_models/nuimages/mask_rcnn_r50_caffe_fpn_1x_nuim/mask_rcnn_r50_caffe_fpn_1x_nuim_20200906_120052.log.json)|
@@ -28,5 +28,5 @@ We report Mask R-CNN and Cascade Mask R-CNN results on nuimages.
 
 **Note**:
 1. `IN` means only using ImageNet pre-trained backbone. `IN+COCO-Nx` means the backbone is first pre-trained on ImageNet, and then the detector is pre-trained on COCO train2017 dataset by `Nx` schedules.
-2. All the training hyper-parameters follows the standard 1x schedules on COCO dataset except that the images are resized from
+2. All the training hyper-parameters follow the standard 1x schedules on COCO dataset except that the images are resized from
 1280 x 720 to 1920 x 1080 (relative ratio 0.8 to 1.2) since the images are in size 1600 x 900.
