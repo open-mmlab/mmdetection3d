@@ -123,4 +123,4 @@ class VoxelNet(SingleStage3DDetector):
         merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
                                             self.bbox_head.test_cfg)
 
-        return merged_bboxes
+        return [merged_bboxes]
