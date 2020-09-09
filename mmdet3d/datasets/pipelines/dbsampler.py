@@ -113,8 +113,6 @@ class DataBaseSampler(object):
         self.points_loader = mmcv.build_from_cfg(points_loader, PIPELINES)
 
         db_infos = mmcv.load(info_path)
-        # with open(info_path, 'rb') as f:
-        #     db_infos = pickle.load(f)
 
         # filter database infos
         from mmdet3d.utils import get_root_logger
