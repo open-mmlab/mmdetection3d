@@ -11,11 +11,12 @@ class BallQuery(Function):
     """
 
     @staticmethod
-    def forward(ctx, radius: float, sample_num: int, xyz: torch.Tensor,
-                center_xyz: torch.Tensor) -> torch.Tensor:
+    def forward(ctx, min_radius: float, radius: float, sample_num: int,
+                xyz: torch.Tensor, center_xyz: torch.Tensor) -> torch.Tensor:
         """forward.
 
         Args:
+            min_radius (float): minimum radius of the balls.
             radius (float): radius of the balls.
             sample_num (int): maximum number of features in the balls.
             xyz (Tensor): (B, N, 3) xyz coordinates of the features.
@@ -32,8 +33,8 @@ class BallQuery(Function):
         npoint = center_xyz.size(1)
         idx = torch.cuda.IntTensor(B, npoint, sample_num).zero_()
 
-        ball_query_ext.ball_query_wrapper(B, N, npoint, radius, sample_num,
-                                          center_xyz, xyz, idx)
+        ball_query_ext.ball_query_wrapper(B, N, npoint, min_radius, radius,
+                                          sample_num, center_xyz, xyz, idx)
         ctx.mark_non_differentiable(idx)
         return idx
 

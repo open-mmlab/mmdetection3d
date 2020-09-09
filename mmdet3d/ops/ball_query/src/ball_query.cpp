@@ -19,15 +19,15 @@ extern THCState *state;
   CHECK_CUDA(x);       \
   CHECK_CONTIGUOUS(x)
 
-int ball_query_wrapper(int b, int n, int m, float radius, int nsample,
+int ball_query_wrapper(int b, int n, int m, float min_radius, float radius, int nsample,
                        at::Tensor new_xyz_tensor, at::Tensor xyz_tensor,
                        at::Tensor idx_tensor);
 
-void ball_query_kernel_launcher(int b, int n, int m, float radius, int nsample,
-                                const float *xyz, const float *new_xyz,
+void ball_query_kernel_launcher(int b, int n, int m, float min_radius, float radius,
+                                int nsample, const float *xyz, const float *new_xyz,
                                 int *idx, cudaStream_t stream);
 
-int ball_query_wrapper(int b, int n, int m, float radius, int nsample,
+int ball_query_wrapper(int b, int n, int m, float min_radius, float radius, int nsample,
                        at::Tensor new_xyz_tensor, at::Tensor xyz_tensor,
                        at::Tensor idx_tensor) {
   CHECK_INPUT(new_xyz_tensor);
@@ -37,8 +37,8 @@ int ball_query_wrapper(int b, int n, int m, float radius, int nsample,
   int *idx = idx_tensor.data_ptr<int>();
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
-  ball_query_kernel_launcher(b, n, m, radius, nsample, new_xyz, xyz, idx,
-                             stream);
+  ball_query_kernel_launcher(b, n, m, min_radius, radius,
+                             nsample, new_xyz, xyz, idx, stream);
   return 1;
 }
 

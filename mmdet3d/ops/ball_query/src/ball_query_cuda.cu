@@ -8,7 +8,9 @@
 #define THREADS_PER_BLOCK 256
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
-__global__ void ball_query_kernel(int b, int n, int m, float radius,
+__global__ void ball_query_kernel(int b, int n, int m,
+                                  float min_radius,
+                                  float radius,
                                   int nsample,
                                   const float *__restrict__ new_xyz,
                                   const float *__restrict__ xyz,
@@ -26,6 +28,7 @@ __global__ void ball_query_kernel(int b, int n, int m, float radius,
   idx += bs_idx * m * nsample + pt_idx * nsample;
 
   float radius2 = radius * radius;
+  float min_radius2 = min_radius * min_radius;
   float new_x = new_xyz[0];
   float new_y = new_xyz[1];
   float new_z = new_xyz[2];
@@ -37,7 +40,7 @@ __global__ void ball_query_kernel(int b, int n, int m, float radius,
     float z = xyz[k * 3 + 2];
     float d2 = (new_x - x) * (new_x - x) + (new_y - y) * (new_y - y) +
                (new_z - z) * (new_z - z);
-    if (d2 < radius2) {
+    if (d2 == 0 || (d2 >= min_radius2 && d2 < radius2)) {
       if (cnt == 0) {
         for (int l = 0; l < nsample; ++l) {
           idx[l] = k;
@@ -50,8 +53,8 @@ __global__ void ball_query_kernel(int b, int n, int m, float radius,
   }
 }
 
-void ball_query_kernel_launcher(int b, int n, int m, float radius, int nsample,
-                                const float *new_xyz, const float *xyz,
+void ball_query_kernel_launcher(int b, int n, int m, float min_radius, float radius,
+                                int nsample, const float *new_xyz, const float *xyz,
                                 int *idx, cudaStream_t stream) {
   // new_xyz: (B, M, 3)
   // xyz: (B, N, 3)
@@ -64,8 +67,8 @@ void ball_query_kernel_launcher(int b, int n, int m, float radius, int nsample,
               b);  // blockIdx.x(col), blockIdx.y(row)
   dim3 threads(THREADS_PER_BLOCK);
 
-  ball_query_kernel<<<blocks, threads, 0, stream>>>(b, n, m, radius, nsample,
-                                                    new_xyz, xyz, idx);
+  ball_query_kernel<<<blocks, threads, 0, stream>>>(b, n, m, min_radius, radius,
+                                                    nsample, new_xyz, xyz, idx);
   // cudaDeviceSynchronize();  // for using printf in kernel function
   err = cudaGetLastError();
   if (cudaSuccess != err) {
