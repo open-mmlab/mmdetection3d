@@ -78,7 +78,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         topk_scores, topk_inds = torch.topk(scores.view(batch, cat, -1), K)
 
         topk_inds = topk_inds % (height * width)
-        topk_ys = (topk_inds / width).int().float()
+        topk_ys = torch.div(topk_inds, width).int().float()
         topk_xs = (topk_inds % width).int().float()
 
         topk_score, topk_ind = torch.topk(topk_scores.view(batch, -1), K)

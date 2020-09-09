@@ -709,7 +709,6 @@ def test_center_head():
         train_cfg=train_cfg,
         test_cfg=test_cfg,
         bbox_coder=bbox_cfg,
-        weight=0.25,
         common_heads={
             'reg': (2, 2),
             'height': (1, 2),
@@ -730,7 +729,7 @@ def test_center_head():
         assert output[i][0]['dim'].shape == torch.Size([2, 3, 128, 128])
         assert output[i][0]['rot'].shape == torch.Size([2, 2, 128, 128])
         assert output[i][0]['vel'].shape == torch.Size([2, 2, 128, 128])
-        assert output[i][0]['hm'].shape == torch.Size(
+        assert output[i][0]['heatmap'].shape == torch.Size(
             [2, tasks[i]['num_class'], 128, 128])
 
     # test get_bboxes
@@ -788,7 +787,7 @@ def test_dcn_center_head():
             voxel_size=voxel_size[:2],
             code_size=9),
         dcn_head=True,
-        loss_cls=dict(type='GaussianFocalLoss', reduction='sum'),
+        loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
         loss_reg=dict(type='L1Loss', reduction='none', loss_weight=0.25))
     # model training and testing settings
     train_cfg = dict(
@@ -827,7 +826,7 @@ def test_dcn_center_head():
         assert output[i][0]['dim'].shape == torch.Size([2, 3, 128, 128])
         assert output[i][0]['rot'].shape == torch.Size([2, 2, 128, 128])
         assert output[i][0]['vel'].shape == torch.Size([2, 2, 128, 128])
-        assert output[i][0]['hm'].shape == torch.Size(
+        assert output[i][0]['heatmap'].shape == torch.Size(
             [2, tasks[i]['num_class'], 128, 128])
 
     # Test loss.
@@ -839,22 +838,21 @@ def test_dcn_center_head():
     gt_labels_3d = [gt_labels_0, gt_labels_1]
     loss = dcn_center_head.loss(gt_bboxes_3d, gt_labels_3d, output)
 
-    assert torch.isclose(loss['hm_loss_task0'], torch.tensor(5959.6978))
-    assert torch.isclose(loss['loc_loss_task0'], torch.tensor(0.0))
-    assert torch.isclose(loss['hm_loss_task1'], torch.tensor(3896.3828))
-    assert torch.isclose(loss['loc_loss_task1'], torch.tensor(2.2823))
-    assert torch.isclose(loss['hm_loss_task2'], torch.tensor(1834.4219))
+    assert torch.isclose(loss['task0.loss_heatmap'], torch.tensor(8184.2622))
+    assert torch.isclose(loss['task0.loss_bbox'], torch.tensor(0.0))
+    assert torch.isclose(loss['task1.loss_heatmap'], torch.tensor(13474.9395))
+    assert torch.isclose(loss['task1.loss_bbox'], torch.tensor(1.6903))
+    assert torch.isclose(loss['task2.loss_heatmap'], torch.tensor(14120.4512))
+    assert torch.isclose(loss['task2.loss_bbox'], torch.tensor(1.7906))
+    assert torch.isclose(loss['task3.loss_heatmap'], torch.tensor(5636.5244))
     assert torch.isclose(
-        loss['loc_loss_task2'], torch.tensor(1.5358), atol=1e-3)
-    assert torch.isclose(loss['hm_loss_task3'], torch.tensor(1760.4966))
+        loss['task3.loss_bbox'], torch.tensor(1.3798), atol=1e-3)
+    assert torch.isclose(loss['task4.loss_heatmap'], torch.tensor(12947.4551))
     assert torch.isclose(
-        loss['loc_loss_task3'], torch.tensor(1.4945), atol=1e-3)
-    assert torch.isclose(loss['hm_loss_task4'], torch.tensor(3230.2371))
+        loss['task4.loss_bbox'], torch.tensor(1.6523), atol=1e-3)
+    assert torch.isclose(loss['task5.loss_heatmap'], torch.tensor(13911.4648))
     assert torch.isclose(
-        loss['loc_loss_task4'], torch.tensor(1.3959), atol=1e-3)
-    assert torch.isclose(loss['hm_loss_task5'], torch.tensor(4145.6714))
-    assert torch.isclose(
-        loss['loc_loss_task5'], torch.tensor(1.6254), atol=1e-3)
+        loss['task5.loss_bbox'], torch.tensor(1.4800), atol=1e-3)
 
     # test get_bboxes
     img_metas = [
