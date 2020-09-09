@@ -35,9 +35,6 @@ class Base3DDetector(BaseDetector):
             raise ValueError(
                 'num of augmentations ({}) != num of image meta ({})'.format(
                     len(points), len(img_metas)))
-        # TODO: remove the restriction of imgs_per_gpu == 1 when prepared
-        samples_per_gpu = len(points[0])
-        assert samples_per_gpu == 1
 
         if num_augs == 1:
             img = [img] if img is None else img

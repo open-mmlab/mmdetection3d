@@ -101,7 +101,6 @@ def main():
         set_random_seed(args.seed, deterministic=args.deterministic)
 
     # build the dataloader
-    # TODO: support multiple images per gpu (only minor changes are needed)
     samples_per_gpu = cfg.data.test.pop('samples_per_gpu', 1)
     dataset = build_dataset(cfg.data.test)
     data_loader = build_dataloader(
