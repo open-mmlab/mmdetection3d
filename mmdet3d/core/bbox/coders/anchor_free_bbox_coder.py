@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from mmdet.core.bbox import PartialBinBasedBBoxCoder
 from mmdet.core.bbox.builder import BBOX_CODERS
+from .partial_bin_based_bbox_coder import PartialBinBasedBBoxCoder
 
 
 @BBOX_CODERS.register_module()
@@ -42,6 +42,7 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         if self.with_rot:
             (dir_class_target,
              dir_res_target) = self.angle2class(gt_bboxes_3d.yaw)
+            dir_res_target /= (2 * np.pi / self.num_dir_bins)
         else:
             dir_class_target = gt_labels_3d.new_zeros(box_num)
             dir_res_target = gt_bboxes_3d.tensor.new_zeros(box_num)
@@ -78,7 +79,7 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
             dir_angle = center.new_zeros(batch_size, num_proposal, 1)
 
         # decode bbox size
-        bbox_size = bbox_out['size'] * 2
+        bbox_size = torch.clamp(bbox_out['size'] * 2, min=0.1)
 
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
@@ -100,7 +101,8 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         # decode center
         end += 3
         # (batch_size, num_proposal, 3)
-        results['center'] = base_xyz + preds_trans[..., start:end]
+        results['center_offset'] = preds_trans[..., start:end]
+        results['center'] = base_xyz.detach() + preds_trans[..., start:end]
         start = end
 
         # decode center
@@ -119,6 +121,6 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         start = end
 
         results['dir_res_norm'] = dir_res_norm
-        results['dir_res'] = dir_res_norm * (np.pi / self.num_dir_bins)
+        results['dir_res'] = dir_res_norm * (2 * np.pi / self.num_dir_bins)
 
         return results

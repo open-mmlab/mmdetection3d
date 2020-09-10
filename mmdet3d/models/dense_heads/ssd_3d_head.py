@@ -6,9 +6,9 @@ from torch.nn import functional as F
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes,
                                           rotation_3d_in_axis)
-from mmdet3d.core.post_processing import aligned_3d_nms
+from mmdet3d.core.post_processing import aligned_bev_nms
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import PointSAModuleMSG
+from mmdet3d.ops import build_sa_module
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
@@ -104,7 +104,7 @@ class SSD3DHead(nn.Module):
         self.candidate_points_layers.add_module(
             'pred', nn.Conv1d(candidate_points_mlps[-1], 3, 1))
 
-        self.vote_aggregation = PointSAModuleMSG(**vote_aggregation_cfg)
+        self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         prev_channel = sum(
             [_[-1] for _ in vote_aggregation_cfg['mlp_channels']])
@@ -183,21 +183,22 @@ class SSD3DHead(nn.Module):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            dict: Predictions of vote head.
+            dict: Predictions of SSD3D head.
         """
-        seed_points = feat_dict['sa_xyz']
-        seed_features = feat_dict['sa_features']
-        seed_indices = feat_dict['sa_indices']
+        seed_points = feat_dict['sa_xyz'][-1]
+        seed_features = feat_dict['sa_features'][-1]
+        seed_indices = feat_dict['sa_indices'][-1]
 
         # 1. generate candidate points from seed_points
         candidate_offset = self.candidate_points_layers(
             seed_features[:, :, :self.num_candidates])
 
-        limited_candidate_offset = candidate_offset.clone().transpose(1, 2)
+        limited_candidate_offset = []
         for axis in range(len(self.test_cfg.max_translate_range)):
-            limited_candidate_offset[..., axis].clamp(
+            limited_candidate_offset.append(candidate_offset[:, axis].clamp(
                 min=-self.test_cfg.max_translate_range[axis],
-                max=self.test_cfg.max_translate_range[axis])
+                max=self.test_cfg.max_translate_range[axis]))
+        limited_candidate_offset = torch.stack(limited_candidate_offset, -1)
 
         candidate_points = seed_points[:, :self.num_candidates] + \
             limited_candidate_offset
@@ -272,7 +273,7 @@ class SSD3DHead(nn.Module):
 
         # calculate center loss
         center_loss = self.center_loss(
-            bbox_preds['center'],
+            bbox_preds['center_offset'],
             center_targets,
             weight=box_loss_weights.unsqueeze(-1))
 
@@ -284,7 +285,7 @@ class SSD3DHead(nn.Module):
 
         # calculate direction residual loss
         dir_res_loss = self.dir_res_loss(
-            bbox_preds['dir_res'],
+            bbox_preds['dir_res_norm'],
             dir_res_targets.unsqueeze(-1).repeat(1, 1, self.num_dir_bins),
             weight=heading_res_loss_weight)
 
@@ -295,8 +296,19 @@ class SSD3DHead(nn.Module):
             weight=box_loss_weights.unsqueeze(-1))
 
         # calculate corner loss
-        pred_bbox3d = self.bbox_coder.decode(bbox_preds)
+        one_hot_dir_class_targets = dir_class_targets.new_zeros(
+            bbox_preds['dir_class'].shape)
+        one_hot_dir_class_targets.scatter_(2, dir_class_targets.unsqueeze(-1),
+                                           1)
+        # bbox_preds
+        pred_bbox3d = self.bbox_coder.decode(
+            dict(
+                center=bbox_preds['center'],
+                dir_res=bbox_preds['dir_res'],
+                dir_class=one_hot_dir_class_targets,
+                size=bbox_preds['size']))
         pred_bbox3d = pred_bbox3d.reshape(-1, pred_bbox3d.shape[-1])
+
         pred_bbox3d = img_metas[0]['box_type_3d'](
             pred_bbox3d.clone(),
             box_dim=pred_bbox3d.shape[-1],
@@ -361,7 +373,7 @@ class SSD3DHead(nn.Module):
             pts_instance_mask = [None for i in range(len(gt_labels_3d))]
 
         aggregated_points = [
-            bbox_preds['aggregated_points'][i].detach()
+            bbox_preds['aggregated_points'][i]
             for i in range(len(gt_labels_3d))
         ]
 
@@ -384,10 +396,12 @@ class SSD3DHead(nn.Module):
         dir_res_targets = torch.stack(dir_res_targets)
         size_res_targets = torch.stack(size_res_targets)
         mask_targets = torch.stack(mask_targets)
-        centerness_targets = torch.stack(centerness_targets)
+        centerness_targets = torch.stack(centerness_targets).detach()
         corner3d_targets = torch.stack(corner3d_targets)
         vote_targets = torch.stack(vote_targets)
         vote_mask = torch.stack(vote_mask)
+
+        center_targets -= bbox_preds['aggregated_points']
 
         centerness_weights = (positive_mask +
                               negative_mask).unsqueeze(-1).repeat(
@@ -457,7 +471,10 @@ class SSD3DHead(nn.Module):
         dir_res_targets = dir_res_targets[assignment]
         corner3d_targets = gt_corner3d[assignment]
 
-        dist = torch.norm(aggregated_points - center_targets, dim=1)
+        top_center_targets = center_targets.clone()
+        top_center_targets[:, 2] += size_res_targets[:, 2]
+        dist = torch.norm(aggregated_points - top_center_targets, dim=1)
+
         dist_mask = dist < self.train_cfg.pos_distance_thr
         positive_mask = (points_mask.max(1)[0] > 0) * dist_mask
         negative_mask = (points_mask.max(1)[0] == 0)
@@ -505,10 +522,11 @@ class SSD3DHead(nn.Module):
         # Vote loss targets
         enlarged_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(
             self.train_cfg.expand_dims_length)
+        enlarged_gt_bboxes_3d.tensor[:, 2] -= self.train_cfg.expand_dims_length
         vote_mask, vote_assignment = self._assign_targets_by_points_inside(
             enlarged_gt_bboxes_3d, seed_points)
 
-        vote_targets = enlarged_gt_bboxes_3d.gravity_center
+        vote_targets = gt_bboxes_3d.gravity_center
         vote_targets = vote_targets[vote_assignment] - seed_points
         vote_mask = vote_mask.max(1)[0] > 0
 
@@ -531,15 +549,18 @@ class SSD3DHead(nn.Module):
         """
         # decode boxes
         sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
+        sem_scores = bbox_preds['obj_scores'].transpose(1, 2)
         obj_scores = sem_scores.max(-1)[0]
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
         batch_size = bbox3d.shape[0]
         results = list()
+
         for b in range(batch_size):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
                 input_metas[b])
+
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -568,6 +589,7 @@ class SSD3DHead(nn.Module):
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
             origin=(0.5, 0.5, 1.0))
+
         if isinstance(bbox, LiDARInstance3DBoxes):
             box_idx = bbox.points_in_boxes(points)
             box_indices = box_idx.new_zeros([num_bbox + 1])
@@ -575,10 +597,10 @@ class SSD3DHead(nn.Module):
             box_indices.scatter_add_(0, box_idx.long(),
                                      box_idx.new_ones(box_idx.shape))
             box_indices = box_indices[:-1]
-            nonempty_box_mask = box_indices > 0
+            nonempty_box_mask = box_indices >= 0
         elif isinstance(bbox, DepthInstance3DBoxes):
             box_indices = bbox.points_in_boxes(points)
-            nonempty_box_mask = box_indices.T.sum(1) > 0
+            nonempty_box_mask = box_indices.T.sum(1) >= 0
         else:
             raise NotImplementedError('Unsupported bbox type!')
 
@@ -588,13 +610,16 @@ class SSD3DHead(nn.Module):
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
         bbox_classes = torch.argmax(sem_scores, -1)
-        nms_selected = aligned_3d_nms(minmax_box3d[nonempty_box_mask],
-                                      obj_scores[nonempty_box_mask],
-                                      bbox_classes[nonempty_box_mask],
-                                      self.test_cfg.nms_thr)
+        nms_selected = aligned_bev_nms(minmax_box3d[nonempty_box_mask],
+                                       obj_scores[nonempty_box_mask],
+                                       bbox_classes[nonempty_box_mask],
+                                       self.test_cfg.nms_thr)
+
+        if nms_selected.shape[0] > self.test_cfg.max_output_num:
+            nms_selected = nms_selected[:self.test_cfg.max_output_num]
 
         # filter empty boxes and boxes with low score
-        scores_mask = (obj_scores > self.test_cfg.score_thr)
+        scores_mask = (obj_scores >= self.test_cfg.score_thr)
         nonempty_box_inds = torch.nonzero(nonempty_box_mask).flatten()
         nonempty_mask = torch.zeros_like(bbox_classes).scatter(
             0, nonempty_box_inds[nms_selected], 1)
@@ -604,8 +629,7 @@ class SSD3DHead(nn.Module):
             bbox_selected, score_selected, labels = [], [], []
             for k in range(sem_scores.shape[-1]):
                 bbox_selected.append(bbox[selected].tensor)
-                score_selected.append(obj_scores[selected] *
-                                      sem_scores[selected][:, k])
+                score_selected.append(obj_scores[selected])
                 labels.append(
                     torch.zeros_like(bbox_classes[selected]).fill_(k))
             bbox_selected = torch.cat(bbox_selected, 0)

@@ -134,3 +134,47 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
 
     indices = boxes.new_tensor(pick, dtype=torch.long)
     return indices
+
+
+def aligned_bev_nms(boxes, scores, classes, thresh):
+    """bev nms for aligned boxes.
+
+    Args:
+        boxes (torch.Tensor): Aligned box with shape [n, 6].
+        scores (torch.Tensor): Scores of each box.
+        classes (torch.Tensor): Class of each box.
+        thresh (float): Iou threshold for nms.
+
+    Returns:
+        torch.Tensor: Indices of selected boxes.
+    """
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 3]
+    y2 = boxes[:, 4]
+    area = (x2 - x1) * (y2 - y1)
+    zero = boxes.new_zeros(1, )
+
+    score_sorted = torch.argsort(scores)
+    pick = []
+    while (score_sorted.shape[0] != 0):
+        last = score_sorted.shape[0]
+        i = score_sorted[-1]
+        pick.append(i)
+
+        xx1 = torch.max(x1[i], x1[score_sorted[:last - 1]])
+        yy1 = torch.max(y1[i], y1[score_sorted[:last - 1]])
+        xx2 = torch.min(x2[i], x2[score_sorted[:last - 1]])
+        yy2 = torch.min(y2[i], y2[score_sorted[:last - 1]])
+        classes1 = classes[i]
+        classes2 = classes[score_sorted[:last - 1]]
+        inter_l = torch.max(zero, xx2 - xx1)
+        inter_w = torch.max(zero, yy2 - yy1)
+
+        inter = inter_l * inter_w
+        iou = inter / (area[i] + area[score_sorted[:last - 1]] - inter)
+        iou = iou * (classes1 == classes2).float()
+        score_sorted = score_sorted[torch.nonzero(iou <= thresh).flatten()]
+
+    indices = boxes.new_tensor(pick, dtype=torch.long)
+    return indices
