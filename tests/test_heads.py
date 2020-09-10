@@ -712,6 +712,3 @@ def test_ssd_3d_head():
     assert results[0][0].tensor.shape[1] == 7
     assert results[0][1].shape[0] >= 0
     assert results[0][2].shape[0] >= 0
-
-
-test_ssd_3d_head()
