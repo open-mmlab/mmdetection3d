@@ -90,4 +90,4 @@ data = dict(
         times=2,
         dataset=dict(pipeline=train_pipeline, classes=class_names)),
     val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(samples_per_gpu=6, pipeline=test_pipeline, classes=class_names))
+    test=dict(pipeline=test_pipeline, classes=class_names))
