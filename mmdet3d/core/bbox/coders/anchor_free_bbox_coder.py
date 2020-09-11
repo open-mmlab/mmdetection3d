@@ -84,40 +84,43 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
 
-    def split_pred(self, preds, base_xyz):
+    def split_pred(self, cls_preds, reg_preds, base_xyz):
         """Split predicted features to specific parts.
 
         Args:
-            preds (torch.Tensor): Predicted features to split.
+            cls_preds (torch.Tensor): Class predicted features to split.
+            reg_preds (torch.Tensor): Regression predicted features to split.
             base_xyz (torch.Tensor): Coordinates of points.
 
         Returns:
             dict[str, torch.Tensor]: Split results.
         """
         results = {}
+        results['obj_scores'] = cls_preds
+
         start, end = 0, 0
-        preds_trans = preds.transpose(2, 1)
+        reg_preds_trans = reg_preds.transpose(2, 1)
 
         # decode center
         end += 3
         # (batch_size, num_proposal, 3)
-        results['center_offset'] = preds_trans[..., start:end]
-        results['center'] = base_xyz.detach() + preds_trans[..., start:end]
+        results['center_offset'] = reg_preds_trans[..., start:end]
+        results['center'] = base_xyz.detach() + reg_preds_trans[..., start:end]
         start = end
 
         # decode center
         end += 3
         # (batch_size, num_proposal, 3)
-        results['size'] = preds_trans[..., start:end]
+        results['size'] = reg_preds_trans[..., start:end]
         start = end
 
         # decode direction
         end += self.num_dir_bins
-        results['dir_class'] = preds_trans[..., start:end]
+        results['dir_class'] = reg_preds_trans[..., start:end]
         start = end
 
         end += self.num_dir_bins
-        dir_res_norm = preds_trans[..., start:end]
+        dir_res_norm = reg_preds_trans[..., start:end]
         start = end
 
         results['dir_res_norm'] = dir_res_norm

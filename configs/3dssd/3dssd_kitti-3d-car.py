@@ -12,7 +12,8 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
     classes=class_names,
-    sample_groups=dict(Car=15))
+    sample_groups=dict(Car=15),
+    enlarge_range=[0.5, 0.5, 2.0])
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -32,25 +33,26 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         file_client_args=file_client_args),
-    dict(type='ObjectSample', db_sampler=db_sampler),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectSample', db_sampler=db_sampler, use_plane=True),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='ObjectNoise',
         num_try=100,
-        translation_std=[1.0, 1.0, 0.5],
+        translation_std=[1.0, 1.0, 0],
         global_rot_range=[0.0, 0.0],
-        rot_range=[-0.78539816, 0.78539816]),
-    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+        rot_range=[-1.0471975511965976, 1.0471975511965976]),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.9, 1.1]),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='BackgroundPointsFilter', bbox_enlarge_range=(0.5, 2.0, 0.5)),
     dict(type='IndoorPointSample', num_points=16384),
-    dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
+
 test_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -81,8 +83,8 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=1,
+    samples_per_gpu=4,
+    workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
         times=2,
@@ -122,7 +124,7 @@ data = dict(
         test_mode=True,
         box_type_3d='LiDAR'))
 
-evaluation = dict(interval=10)
+evaluation = dict(interval=5)
 
 # model settings
 model = dict(

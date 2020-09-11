@@ -1,6 +1,4 @@
 import torch
-from mmcv.cnn import ConvModule
-from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
@@ -8,32 +6,26 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           rotation_3d_in_axis)
 from mmdet3d.core.post_processing import aligned_bev_nms
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import build_sa_module
-from mmdet.core import build_bbox_coder, multi_apply
+from mmdet.core import multi_apply
 from mmdet.models import HEADS
+from .vote_head import VoteHead
 
 
 @HEADS.register_module()
-class SSD3DHead(nn.Module):
+class SSD3DHead(VoteHead):
     r"""Bbox head of `3DSSD <https://arxiv.org/abs/2002.10187>`_.
 
     Args:
         num_classes (int): The number of class.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
-        num_candidates (int): The number of candidate points.
         in_channels (int): The number of input feature channel.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
+        vote_moudule_cfg (dict): Config of VoteModule for point-wise votes.
         vote_aggregation_cfg (dict): Config of vote aggregation layer.
-        candidate_points_mlps (tuple[int]): Config of mlps for generating
-            candidate points.
-        feat_channels (tuple[int]): Convolution channels for aggregation
-            multi-scale grouping features.
-        cls_pred_mlps (tuple[int]): Convolution channels of class
-            prediction layer.
-        reg_pred_mlps (tuple[int]): Convolution channels of regression
-            prediction layer.
+        pred_layer_cfg (dict): Config of classfication and regression
+            prediction layers.
         conv_cfg (dict): Config of convolution in prediction layer.
         norm_cfg (dict): Config of BN in prediction layer.
         act_cfg (dict): Config of activation in prediction layer.
@@ -49,15 +41,12 @@ class SSD3DHead(nn.Module):
     def __init__(self,
                  num_classes,
                  bbox_coder,
-                 num_candidates=256,
                  in_channels=256,
                  train_cfg=None,
                  test_cfg=None,
+                 vote_moudule_cfg=None,
                  vote_aggregation_cfg=None,
-                 candidate_points_mlps=[128],
-                 feat_channels=(128, ),
-                 cls_pred_mlps=(128, ),
-                 reg_pred_mlps=(128, ),
+                 pred_layer_cfg=None,
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
                  act_cfg=dict(type='ReLU'),
@@ -68,166 +57,56 @@ class SSD3DHead(nn.Module):
                  size_res_loss=None,
                  corner_loss=None,
                  vote_loss=None):
-        super(SSD3DHead, self).__init__()
-        self.num_classes = num_classes
-        self.num_candidates = num_candidates
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
-        self.num_proposal = vote_aggregation_cfg['num_point']
+        super(SSD3DHead, self).__init__(
+            num_classes,
+            bbox_coder,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            vote_moudule_cfg=vote_moudule_cfg,
+            vote_aggregation_cfg=vote_aggregation_cfg,
+            pred_layer_cfg=pred_layer_cfg,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            objectness_loss=objectness_loss,
+            center_loss=center_loss,
+            dir_class_loss=dir_class_loss,
+            dir_res_loss=dir_res_loss,
+            size_class_loss=None,
+            size_res_loss=size_res_loss,
+            semantic_loss=None)
 
-        self.objectness_loss = build_loss(objectness_loss)
-        self.center_loss = build_loss(center_loss)
-        self.dir_class_loss = build_loss(dir_class_loss)
-        self.dir_res_loss = build_loss(dir_res_loss)
-        self.size_res_loss = build_loss(size_res_loss)
         self.corner_loss = build_loss(corner_loss)
         self.vote_loss = build_loss(vote_loss)
+        self.num_candidates = vote_moudule_cfg['num_points']
 
-        self.bbox_coder = build_bbox_coder(bbox_coder)
-        self.num_dir_bins = self.bbox_coder.num_dir_bins
+    def _get_cls_out_channels(self):
+        """Return the channel number of classification outputs."""
+        # Class numbers (k) + objectness (1)
+        return self.num_classes
 
-        candidate_points_mlps = [in_channels] + list(candidate_points_mlps)
-        self.candidate_points_layers = nn.Sequential()
-        for i in range(len(candidate_points_mlps) - 1):
-            self.candidate_points_layers.add_module(
-                f'layer{i}',
-                ConvModule(
-                    candidate_points_mlps[i],
-                    candidate_points_mlps[i + 1],
-                    1,
-                    padding=0,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg,
-                    bias=True,
-                    inplace=True))
-        self.candidate_points_layers.add_module(
-            'pred', nn.Conv1d(candidate_points_mlps[-1], 3, 1))
-
-        self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
-
-        prev_channel = sum(
-            [_[-1] for _ in vote_aggregation_cfg['mlp_channels']])
-        feats_aggregation_list = list()
-        for k in range(len(feat_channels)):
-            feats_aggregation_list.append(
-                ConvModule(
-                    prev_channel,
-                    feat_channels[k],
-                    1,
-                    padding=0,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    bias=True,
-                    inplace=True))
-            prev_channel = feat_channels[k]
-        self.feats_aggregation_layers = nn.Sequential(*feats_aggregation_list)
-
-        # Bbox classification
-        prev_channel = feat_channels[-1]
-        cls_pred_list = list()
-        for k in range(len(cls_pred_mlps)):
-            cls_pred_list.append(
-                ConvModule(
-                    prev_channel,
-                    cls_pred_mlps[k],
-                    1,
-                    padding=0,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    bias=True,
-                    inplace=True))
-            prev_channel = cls_pred_mlps[k]
-        self.cls_pred = nn.Sequential(*cls_pred_list)
-        self.cls_pred.add_module('cls_pred',
-                                 nn.Conv1d(prev_channel, num_classes, 1))
-
-        # Bbox regression
-        prev_channel = feat_channels[-1]
-        regression_pred_list = list()
-        for k in range(len(reg_pred_mlps)):
-            regression_pred_list.append(
-                ConvModule(
-                    prev_channel,
-                    reg_pred_mlps[k],
-                    1,
-                    padding=0,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    bias=True,
-                    inplace=True))
-            prev_channel = reg_pred_mlps[k]
-        self.reg_pred = nn.Sequential(*regression_pred_list)
+    def _get_reg_out_channels(self):
+        """Return the channel number of regression outputs."""
+        # Bbox classification and regression
         # (center residual (3), size regression (3)
         # heading class+residual (num_dir_bins*2)),
-        conv_out_channel = (3 + 3 + self.num_dir_bins * 2)
-        self.reg_pred.add_module('reg_pred',
-                                 nn.Conv1d(prev_channel, conv_out_channel, 1))
+        return 3 + 3 + self.num_dir_bins * 2
 
-    def init_weights(self):
-        """Initialize weights of VoteHead."""
-        pass
-
-    def forward(self, feat_dict):
-        """Forward pass.
-
-        Note:
-            The forward of SSDHead is devided into 4 steps:
-
-                1. Generate candidate points from seed_points.
-                2. Aggregate candidate points and features.
-                3. Predict bbox and score.
-                4. Decode predictions.
+    def _extract_input(self, feat_dict):
+        """Extract inputs from features dictionary.
 
         Args:
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            dict: Predictions of SSD3D head.
+            torch.Tensor: Coordinates of input points.
+            torch.Tensor: Features of input points.
+            torch.Tensor: Indices of input points.
         """
         seed_points = feat_dict['sa_xyz'][-1]
         seed_features = feat_dict['sa_features'][-1]
         seed_indices = feat_dict['sa_indices'][-1]
 
-        # 1. generate candidate points from seed_points
-        candidate_offset = self.candidate_points_layers(
-            seed_features[:, :, :self.num_candidates])
-
-        limited_candidate_offset = []
-        for axis in range(len(self.test_cfg.max_translate_range)):
-            limited_candidate_offset.append(candidate_offset[:, axis].clamp(
-                min=-self.test_cfg.max_translate_range[axis],
-                max=self.test_cfg.max_translate_range[axis]))
-        limited_candidate_offset = torch.stack(limited_candidate_offset, -1)
-
-        candidate_points = seed_points[:, :self.num_candidates] + \
-            limited_candidate_offset
-
-        results = dict(
-            seed_points=seed_points[:, :self.num_candidates],
-            seed_indices=seed_indices,
-            candidate_points=candidate_points,
-            candidate_offset=candidate_offset)
-
-        # 2. aggregate vote_points
-        vote_aggregation_ret = self.vote_aggregation(
-            seed_points, seed_features, target_xyz=candidate_points)
-        aggregated_points, features, aggregated_indices = vote_aggregation_ret
-        results['aggregated_points'] = aggregated_points
-        results['aggregated_indices'] = aggregated_indices
-
-        # 3. predict bbox and score
-        features = self.feats_aggregation_layers(features)
-        cls_predictions = self.cls_pred(features)
-        reg_predictions = self.reg_pred(features)
-        results['obj_scores'] = cls_predictions
-
-        # 4. decode predictions
-        decode_res = self.bbox_coder.split_pred(reg_predictions,
-                                                aggregated_points)
-        results.update(decode_res)
-
-        return results
+        return seed_points, seed_features, seed_indices
 
     def loss(self,
              bbox_preds,
@@ -241,7 +120,7 @@ class SSD3DHead(nn.Module):
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of vote head.
+            bbox_preds (dict): Predictions from forward of SSD3DHead.
             points (list[torch.Tensor]): Input points.
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each sample.
@@ -255,7 +134,7 @@ class SSD3DHead(nn.Module):
                 which bounding.
 
         Returns:
-            dict: Losses of Votenet.
+            dict: Losses of 3DSSD.
         """
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    pts_semantic_mask, pts_instance_mask,
@@ -300,7 +179,6 @@ class SSD3DHead(nn.Module):
             bbox_preds['dir_class'].shape)
         one_hot_dir_class_targets.scatter_(2, dir_class_targets.unsqueeze(-1),
                                            1)
-        # bbox_preds
         pred_bbox3d = self.bbox_coder.decode(
             dict(
                 center=bbox_preds['center'],
@@ -308,7 +186,6 @@ class SSD3DHead(nn.Module):
                 dir_class=one_hot_dir_class_targets,
                 size=bbox_preds['size']))
         pred_bbox3d = pred_bbox3d.reshape(-1, pred_bbox3d.shape[-1])
-
         pred_bbox3d = img_metas[0]['box_type_3d'](
             pred_bbox3d.clone(),
             box_dim=pred_bbox3d.shape[-1],
@@ -322,7 +199,7 @@ class SSD3DHead(nn.Module):
 
         # calculate vote loss
         vote_loss = self.vote_loss(
-            bbox_preds['candidate_offset'].transpose(1, 2),
+            bbox_preds['vote_offset'].transpose(1, 2),
             vote_targets,
             weight=vote_mask.unsqueeze(-1))
 
@@ -344,7 +221,7 @@ class SSD3DHead(nn.Module):
                     pts_semantic_mask=None,
                     pts_instance_mask=None,
                     bbox_preds=None):
-        """Generate targets of vote head.
+        """Generate targets of ssd3d head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
@@ -355,10 +232,10 @@ class SSD3DHead(nn.Module):
                 label of each batch.
             pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
                 label of each batch.
-            bbox_preds (torch.Tensor): Bounding box predictions of vote head.
+            bbox_preds (torch.Tensor): Bounding box predictions of ssd3d head.
 
         Returns:
-            tuple[torch.Tensor]: Targets of vote head.
+            tuple[torch.Tensor]: Targets of ssd3d head.
         """
         # find empty example
         for index in range(len(gt_labels_3d)):
@@ -378,7 +255,7 @@ class SSD3DHead(nn.Module):
         ]
 
         seed_points = [
-            bbox_preds['seed_points'][i].detach()
+            bbox_preds['seed_points'][i, :self.num_candidates].detach()
             for i in range(len(gt_labels_3d))
         ]
 
@@ -433,7 +310,7 @@ class SSD3DHead(nn.Module):
                            pts_instance_mask=None,
                            aggregated_points=None,
                            seed_points=None):
-        """Generate targets of vote head for single batch.
+        """Generate targets of ssd3d head for single batch.
 
         Args:
             points (torch.Tensor): Points of each batch.
@@ -449,7 +326,7 @@ class SSD3DHead(nn.Module):
             seed_points (torch.Tensor): Seed points of candidate points.
 
         Returns:
-            tuple[torch.Tensor]: Targets of vote head.
+            tuple[torch.Tensor]: Targets of ssd3d head.
         """
         assert self.bbox_coder.with_rot or pts_semantic_mask is not None
         gt_bboxes_3d = gt_bboxes_3d.to(points.device)
@@ -474,7 +351,6 @@ class SSD3DHead(nn.Module):
         top_center_targets = center_targets.clone()
         top_center_targets[:, 2] += size_res_targets[:, 2]
         dist = torch.norm(aggregated_points - top_center_targets, dim=1)
-
         dist_mask = dist < self.train_cfg.pos_distance_thr
         positive_mask = (points_mask.max(1)[0] > 0) * dist_mask
         negative_mask = (points_mask.max(1)[0] == 0)
@@ -482,9 +358,8 @@ class SSD3DHead(nn.Module):
         # Centerness loss targets
         canonical_xyz = aggregated_points - center_targets
         if self.bbox_coder.with_rot:
-            # TODO:
-            # Align LiDARInstance3DBoxes and DepthInstance3DBoxes
-            # for points rotation
+            # TODO: Align points rotation implementation of
+            # LiDARInstance3DBoxes and DepthInstance3DBoxes
             canonical_xyz = rotation_3d_in_axis(
                 canonical_xyz.unsqueeze(0).transpose(0, 1),
                 -gt_bboxes_3d.yaw[assignment], 2).squeeze(1)
@@ -536,11 +411,11 @@ class SSD3DHead(nn.Module):
                 negative_mask)
 
     def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
-        """Generate bboxes from sdd 3d head predictions.
+        """Generate bboxes from sdd3d head predictions.
 
         Args:
             points (torch.Tensor): Input points.
-            bbox_preds (dict): Predictions from sdd 3d head.
+            bbox_preds (dict): Predictions from sdd3d head.
             input_metas (list[dict]): Point cloud and image's meta info.
             rescale (bool): Whether to rescale bboxes.
 
@@ -549,7 +424,6 @@ class SSD3DHead(nn.Module):
         """
         # decode boxes
         sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
-        sem_scores = bbox_preds['obj_scores'].transpose(1, 2)
         obj_scores = sem_scores.max(-1)[0]
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
@@ -560,7 +434,6 @@ class SSD3DHead(nn.Module):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
                 input_metas[b])
-
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -668,4 +541,5 @@ class SSD3DHead(nn.Module):
             assignment = points_mask.argmax(dim=-1)
         else:
             raise NotImplementedError('Unsupported bbox type!')
+
         return points_mask, assignment

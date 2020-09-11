@@ -16,6 +16,6 @@ def test_vote_module():
         [2, 8, 64], dtype=torch.float32)  # (b, in_channels, npoints)
 
     # test forward
-    vote_xyz, vote_features = self(seed_xyz, seed_features)
+    vote_xyz, vote_features, _ = self(seed_xyz, seed_features)
     assert vote_xyz.shape == torch.Size([2, 192, 3])
     assert vote_features.shape == torch.Size([2, 8, 192])

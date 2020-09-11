@@ -5,7 +5,7 @@ from torch.nn import functional as F
 
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.model_utils import VoteModule
-from mmdet3d.ops import PointSAModule, furthest_point_sample
+from mmdet3d.ops import build_sa_module, furthest_point_sample
 from mmdet.core import multi_apply
 from mmdet.models import HEADS
 
@@ -88,7 +88,7 @@ class PrimitiveHead(nn.Module):
             vote_moudule_cfg['conv_channels'][-1] // 2, 2, 1)
 
         self.vote_module = VoteModule(**vote_moudule_cfg)
-        self.vote_aggregation = PointSAModule(**vote_aggregation_cfg)
+        self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         prev_channel = vote_aggregation_cfg['mlp_channels'][-1]
         conv_pred_list = list()
@@ -137,8 +137,8 @@ class PrimitiveHead(nn.Module):
         results['pred_flag_' + self.primitive_mode] = primitive_flag
 
         # 1. generate vote_points from seed_points
-        vote_points, vote_features = self.vote_module(seed_points,
-                                                      seed_features)
+        vote_points, vote_features, _ = self.vote_module(
+            seed_points, seed_features)
         results['vote_' + self.primitive_mode] = vote_points
         results['vote_features_' + self.primitive_mode] = vote_features
 

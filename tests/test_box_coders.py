@@ -194,9 +194,10 @@ def test_partial_bin_based_box_coder():
     assert torch.allclose(bbox3d, expected_bbox3d, atol=1e-4)
 
     # test split_pred
-    box_preds = torch.rand(2, 79, 256)
+    cls_preds = torch.rand(2, 12, 256)
+    reg_preds = torch.rand(2, 67, 256)
     base_xyz = torch.rand(2, 256, 3)
-    results = box_coder.split_pred(box_preds, base_xyz)
+    results = box_coder.split_pred(cls_preds, reg_preds, base_xyz)
     obj_scores = results['obj_scores']
     center = results['center']
     dir_class = results['dir_class']
