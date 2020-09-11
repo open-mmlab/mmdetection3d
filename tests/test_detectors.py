@@ -171,8 +171,8 @@ def test_parta2():
     parta2 = _get_detector_cfg(
         'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
     self = build_detector(parta2).cuda()
-    points_0 = torch.rand([2000, 4], device='cuda')
-    points_1 = torch.rand([2000, 4], device='cuda')
+    points_0 = torch.rand([1000, 4], device='cuda')
+    points_1 = torch.rand([1000, 4], device='cuda')
     points = [points_0, points_1]
     img_meta_0 = dict(box_type_3d=LiDARInstance3DBoxes)
     img_meta_1 = dict(box_type_3d=LiDARInstance3DBoxes)
