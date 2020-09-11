@@ -372,22 +372,20 @@ def test_part_aggregation_ROI_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
-    _setup_seed(0)
     roi_head_cfg = _get_roi_head_cfg(
         'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
     self = build_head(roi_head_cfg).cuda()
-    spatial_features = torch.rand([1, 256, 200, 176], device='cuda')
-    seg_features = torch.rand([32000, 16], device='cuda')
-    neck_features = [torch.rand([1, 512, 200, 176], device='cuda')]
-    feats_dict = dict(
-        spatial_features=spatial_features,
-        seg_features=seg_features,
-        neck_features=neck_features)
 
-    voxels = torch.rand([32000, 5, 4], device='cuda')
-    num_points = torch.ones([32000], device='cuda')
-    coors = torch.zeros([32000, 4], device='cuda')
-    voxel_centers = torch.zeros([32000, 3], device='cuda')
+    features = np.load('./tests/test_samples/parta2_roihead_inputs.npz')
+    seg_features = torch.tensor(
+        features['seg_features'], dtype=torch.float32, device='cuda')
+    feats_dict = dict(seg_features=seg_features)
+
+    voxels = torch.tensor(
+        features['voxels'], dtype=torch.float32, device='cuda')
+    num_points = torch.ones([500], device='cuda')
+    coors = torch.zeros([500, 4], device='cuda')
+    voxel_centers = torch.zeros([500, 3], device='cuda')
     box_type_3d = LiDARInstance3DBoxes
     img_metas = [dict(box_type_3d=box_type_3d)]
     voxels_dict = dict(
@@ -396,10 +394,27 @@ def test_part_aggregation_ROI_head():
         coors=coors,
         voxel_centers=voxel_centers)
 
-    pred_bboxes = LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
-    pred_scores = torch.rand([5], device='cuda')
-    pred_labels = torch.randint(0, 3, [5], device='cuda')
-    pred_clses = torch.rand([5, 3], device='cuda')
+    pred_bboxes = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[0.3990, 0.5167, 0.0249, 0.9401, 0.9459, 0.7967, 0.4150],
+             [0.8203, 0.2290, 0.9096, 0.1183, 0.0752, 0.4092, 0.9601],
+             [0.2093, 0.1940, 0.8909, 0.4387, 0.3570, 0.5454, 0.8299],
+             [0.2099, 0.7684, 0.4290, 0.2117, 0.6606, 0.1654, 0.4250],
+             [0.9927, 0.6964, 0.2472, 0.7028, 0.7494, 0.9303, 0.0494]],
+            dtype=torch.float32,
+            device='cuda'))
+    pred_scores = torch.tensor([0.9722, 0.7910, 0.4690, 0.3300, 0.3345],
+                               dtype=torch.float32,
+                               device='cuda')
+    pred_labels = torch.tensor([0, 1, 0, 2, 1],
+                               dtype=torch.int64,
+                               device='cuda')
+    pred_clses = torch.tensor(
+        [[0.7874, 0.1344, 0.2190], [0.8193, 0.6969, 0.7304],
+         [0.2328, 0.9028, 0.3900], [0.6177, 0.5012, 0.2330],
+         [0.8985, 0.4894, 0.7152]],
+        dtype=torch.float32,
+        device='cuda')
     proposal = dict(
         boxes_3d=pred_bboxes,
         scores_3d=pred_scores,
@@ -419,12 +434,12 @@ def test_part_aggregation_ROI_head():
 
     bbox_results = self.simple_test(feats_dict, voxels_dict, img_metas,
                                     proposal_list)
-    boxes_3d = bbox_results['boxes_3d']
-    scores_3d = bbox_results['scores_3d']
-    labels_3d = bbox_results['labels_3d']
-    assert boxes_3d.tensor.shape == (6, 7)
-    assert scores_3d.shape == (6, )
-    assert labels_3d.shape == (6, )
+    boxes_3d = bbox_results[0]['boxes_3d']
+    scores_3d = bbox_results[0]['scores_3d']
+    labels_3d = bbox_results[0]['labels_3d']
+    assert boxes_3d.tensor.shape == (12, 7)
+    assert scores_3d.shape == (12, )
+    assert labels_3d.shape == (12, )
 
 
 def test_free_anchor_3D_head():
