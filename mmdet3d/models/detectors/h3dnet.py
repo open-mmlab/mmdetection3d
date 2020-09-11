@@ -163,7 +163,7 @@ class H3DNet(TwoStage3DDetector):
         merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
                                             self.bbox_head.test_cfg)
 
-        return merged_bboxes
+        return [merged_bboxes]
 
     def extract_feats(self, points, img_metas):
         """Extract features of multiple samples."""
