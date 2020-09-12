@@ -26,6 +26,8 @@ class PointSAModuleMSG(nn.Module):
             FS: using F-FPS and D-FPS simultaneously.
         fps_sample_range_list (list[int]): Range of points to apply FPS.
             Default: [-1].
+        dilated_group (bool): Whether to use dilated ball query.
+            Default: False.
         norm_cfg (dict): Type of normalization method.
             Default: dict(type='BN2d').
         use_xyz (bool): Whether to use xyz.
@@ -34,6 +36,9 @@ class PointSAModuleMSG(nn.Module):
             Default: 'max_pool'.
         normalize_xyz (bool): Whether to normalize local XYZ with radius.
             Default: False.
+        bias (bool | str): If specified as `auto`, it will be decided by the
+            norm_cfg. Bias will be set as True if `norm_cfg` is None, otherwise
+            False. Default: "auto".
     """
 
     def __init__(self,
@@ -43,6 +48,7 @@ class PointSAModuleMSG(nn.Module):
                  mlp_channels: List[List[int]],
                  fps_mod: List[str] = ['D-FPS'],
                  fps_sample_range_list: List[int] = [-1],
+                 dilated_group: bool = False,
                  norm_cfg: dict = dict(type='BN2d'),
                  use_xyz: bool = True,
                  pool_mod='max',
@@ -80,9 +86,14 @@ class PointSAModuleMSG(nn.Module):
             radius = radii[i]
             sample_num = sample_nums[i]
             if num_point is not None:
+                if dilated_group and i != 0:
+                    min_radius = radii[i - 1]
+                else:
+                    min_radius = 0
                 grouper = QueryAndGroup(
                     radius,
                     sample_num,
+                    min_radius=min_radius,
                     use_xyz=use_xyz,
                     normalize_xyz=normalize_xyz)
             else:
