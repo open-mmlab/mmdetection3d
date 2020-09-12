@@ -12,8 +12,7 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
     classes=class_names,
-    sample_groups=dict(Car=15),
-    enlarge_range=[0.5, 0.5, 2.0])
+    sample_groups=dict(Car=15))
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -134,6 +133,15 @@ model = dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)))
 
 # optimizer
+# This schedule is mainly used by models on indoor dataset,
+# e.g., VoteNet on SUNRGBD and ScanNet
+lr = 0.002  # max learning rate
+optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+lr_config = dict(policy='step', warmup=None, step=[80, 120])
+# runtime settings
+total_epochs = 150
+
 # yapf:disable
 log_config = dict(
     interval=30,
