@@ -161,7 +161,7 @@ def waymo_data_prep(root_path,
             load_dir,
             save_dir,
             prefix=str(i),
-            num_proc=workers,
+            workers=workers,
             test_mode=(split == 'test'))
         converter.convert()
     # Generate waymo infos
