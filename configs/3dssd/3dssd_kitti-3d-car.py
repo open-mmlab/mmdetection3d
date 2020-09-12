@@ -35,7 +35,7 @@ train_pipeline = [
         file_client_args=file_client_args),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectSample', db_sampler=db_sampler, use_plane=True),
+    dict(type='ObjectSample', db_sampler=db_sampler),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='ObjectNoise',

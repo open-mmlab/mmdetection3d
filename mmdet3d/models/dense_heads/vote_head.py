@@ -23,7 +23,7 @@ class VoteHead(nn.Module):
             decoding boxes.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
-        vote_moudule_cfg (dict): Config of VoteModule for point-wise votes.
+        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
         vote_aggregation_cfg (dict): Config of vote aggregation layer.
         pred_layer_cfg (dict): Config of classfication and regression
             prediction layers.
@@ -43,7 +43,7 @@ class VoteHead(nn.Module):
                  bbox_coder,
                  train_cfg=None,
                  test_cfg=None,
-                 vote_moudule_cfg=None,
+                 vote_module_cfg=None,
                  vote_aggregation_cfg=None,
                  pred_layer_cfg=None,
                  conv_cfg=dict(type='Conv1d'),
@@ -59,7 +59,7 @@ class VoteHead(nn.Module):
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.gt_per_seed = vote_moudule_cfg['gt_per_seed']
+        self.gt_per_seed = vote_module_cfg['gt_per_seed']
         self.num_proposal = vote_aggregation_cfg['num_point']
 
         self.objectness_loss = build_loss(objectness_loss)
@@ -76,7 +76,7 @@ class VoteHead(nn.Module):
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
-        self.vote_module = VoteModule(**vote_moudule_cfg)
+        self.vote_module = VoteModule(**vote_module_cfg)
         self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         # Bbox classification and regression
@@ -199,6 +199,7 @@ class VoteHead(nn.Module):
         decode_res = self.bbox_coder.split_pred(cls_predictions,
                                                 reg_predictions,
                                                 aggregated_points)
+
         results.update(decode_res)
 
         return results

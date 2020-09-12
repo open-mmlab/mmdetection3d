@@ -22,7 +22,7 @@ class SSD3DHead(VoteHead):
         in_channels (int): The number of input feature channel.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
-        vote_moudule_cfg (dict): Config of VoteModule for point-wise votes.
+        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
         vote_aggregation_cfg (dict): Config of vote aggregation layer.
         pred_layer_cfg (dict): Config of classfication and regression
             prediction layers.
@@ -44,7 +44,7 @@ class SSD3DHead(VoteHead):
                  in_channels=256,
                  train_cfg=None,
                  test_cfg=None,
-                 vote_moudule_cfg=None,
+                 vote_module_cfg=None,
                  vote_aggregation_cfg=None,
                  pred_layer_cfg=None,
                  conv_cfg=dict(type='Conv1d'),
@@ -62,7 +62,7 @@ class SSD3DHead(VoteHead):
             bbox_coder,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            vote_moudule_cfg=vote_moudule_cfg,
+            vote_module_cfg=vote_module_cfg,
             vote_aggregation_cfg=vote_aggregation_cfg,
             pred_layer_cfg=pred_layer_cfg,
             conv_cfg=conv_cfg,
@@ -77,7 +77,7 @@ class SSD3DHead(VoteHead):
 
         self.corner_loss = build_loss(corner_loss)
         self.vote_loss = build_loss(vote_loss)
-        self.num_candidates = vote_moudule_cfg['num_points']
+        self.num_candidates = vote_module_cfg['num_points']
 
     def _get_cls_out_channels(self):
         """Return the channel number of classification outputs."""

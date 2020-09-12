@@ -1,4 +1,5 @@
 import torch
+from mmcv import is_tuple_of
 from mmcv.cnn import ConvModule
 from torch import nn as nn
 
@@ -50,7 +51,10 @@ class VoteModule(nn.Module):
         self.num_points = num_points
         self.norm_feats = norm_feats
         self.with_feat_residual = with_feat_residual
+
+        assert clip_xyz_offset is None or is_tuple_of(clip_xyz_offset, float)
         self.clip_xyz_offset = clip_xyz_offset
+
         if vote_loss is not None:
             self.vote_loss = build_loss(vote_loss)
 
@@ -125,7 +129,7 @@ class VoteModule(nn.Module):
         else:
             vote_points = (seed_points.unsqueeze(2) + offset).contiguous()
         vote_points = vote_points.view(batch_size, num_vote, 3)
-        offset = offset.view(batch_size, num_vote, 3).transpose(2, 1)
+        offset = offset.reshape(batch_size, num_vote, 3).transpose(2, 1)
 
         if self.with_feat_residual:
             res_feats = votes[:, :, :, 3:]
