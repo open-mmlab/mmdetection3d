@@ -107,6 +107,7 @@ class VoteHead(nn.Module):
         Args:
             feat_dict (dict): Feature dict from backbone.
 
+
         Returns:
             torch.Tensor: Coordinates of input points.
             torch.Tensor: Features of input points.

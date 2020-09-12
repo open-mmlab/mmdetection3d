@@ -111,6 +111,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """
         results = {}
         start, end = 0, 0
+
         cls_preds_trans = cls_preds.transpose(2, 1)
         reg_preds_trans = reg_preds.transpose(2, 1)
 

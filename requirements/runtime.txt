@@ -2,7 +2,7 @@ lyft_dataset_sdk
 networkx>=2.2,<2.3
 # we may unlock the verion of numba in the future
 numba==0.48.0
-nuscenes-devkit==1.0.5
+nuscenes-devkit
 plyfile
 # by default we also use tensorboard to log results
 tensorboard

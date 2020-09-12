@@ -61,6 +61,8 @@ def test_config_build_detector():
             head_config = config_mod.model['roi_head']
             if head_config.type == 'PartAggregationROIHead':
                 check_parta2_roi_head(head_config, detector.roi_head)
+            elif head_config.type == 'H3DRoIHead':
+                check_h3d_roi_head(head_config, detector.roi_head)
             else:
                 _check_roi_head(head_config, detector.roi_head)
         # else:
@@ -137,8 +139,8 @@ def _check_roi_extractor(config, roi_extractor, prev_roi_extractor=None):
     assert (len(config.featmap_strides) == len(roi_extractor.roi_layers))
     assert (config.out_channels == roi_extractor.out_channels)
     from torch.nn.modules.utils import _pair
-    assert (_pair(
-        config.roi_layer.out_size) == roi_extractor.roi_layers[0].out_size)
+    assert (_pair(config.roi_layer.output_size) ==
+            roi_extractor.roi_layers[0].output_size)
 
     if 'use_torchvision' in config.roi_layer:
         assert (config.roi_layer.use_torchvision ==
@@ -235,3 +237,41 @@ def _check_parta2_bbox_head(bbox_cfg, bbox_head):
         assert bbox_cfg.seg_in_channels == bbox_head.seg_conv[0][0].in_channels
         assert bbox_cfg.part_in_channels == bbox_head.part_conv[0][
             0].in_channels
+
+
+def check_h3d_roi_head(config, head):
+    assert config['type'] == head.__class__.__name__
+
+    # check seg_roi_extractor
+    primitive_z_cfg = config.primitive_list[0]
+    primitive_z_extractor = head.primitive_z
+    _check_primitive_extractor(primitive_z_cfg, primitive_z_extractor)
+
+    primitive_xy_cfg = config.primitive_list[1]
+    primitive_xy_extractor = head.primitive_xy
+    _check_primitive_extractor(primitive_xy_cfg, primitive_xy_extractor)
+
+    primitive_line_cfg = config.primitive_list[2]
+    primitive_line_extractor = head.primitive_line
+    _check_primitive_extractor(primitive_line_cfg, primitive_line_extractor)
+
+    # check bbox head infos
+    bbox_cfg = config.bbox_head
+    bbox_head = head.bbox_head
+    _check_h3d_bbox_head(bbox_cfg, bbox_head)
+
+
+def _check_primitive_extractor(config, primitive_extractor):
+    assert config['type'] == primitive_extractor.__class__.__name__
+    assert (config.num_dims == primitive_extractor.num_dims)
+    assert (config.num_classes == primitive_extractor.num_classes)
+
+
+def _check_h3d_bbox_head(bbox_cfg, bbox_head):
+    assert bbox_cfg['type'] == bbox_head.__class__.__name__
+    assert bbox_cfg.num_proposal * \
+        6 == bbox_head.surface_center_matcher.num_point[0]
+    assert bbox_cfg.num_proposal * \
+        12 == bbox_head.line_center_matcher.num_point[0]
+    assert bbox_cfg.suface_matching_cfg.mlp_channels[-1] * \
+        18 == bbox_head.bbox_pred[0].in_channels

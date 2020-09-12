@@ -137,16 +137,17 @@ def test_pointnet_sa_module_msg():
 def test_pointnet_sa_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PointSAModule
-
-    self = PointSAModule(
+    from mmdet3d.ops import build_sa_module
+    sa_cfg = dict(
+        type='PointSAModule',
         num_point=16,
         radius=0.2,
         num_sample=8,
         mlp_channels=[12, 32],
         norm_cfg=dict(type='BN2d'),
         use_xyz=True,
-        pool_mod='max').cuda()
+        pool_mod='max')
+    self = build_sa_module(sa_cfg).cuda()
 
     assert self.mlps[0].layer0.conv.in_channels == 15
     assert self.mlps[0].layer0.conv.out_channels == 32
