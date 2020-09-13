@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/centerpoint_01_voxel_circle_nms.py',
+    '../_base_/models/centerpoint_01voxel_second_secfpn_circlenms_nus.py',
     '../_base_/default_runtime.py'
 ]
 

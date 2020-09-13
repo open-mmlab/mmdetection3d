@@ -1,5 +1,5 @@
-voxel_size = [0.1, 0.1, 0.2]
-point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+voxel_size = [0.075, 0.075, 0.2]
+point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 model = dict(
     type='CenterPoint',
     pts_voxel_layer=dict(
@@ -11,7 +11,7 @@ model = dict(
     pts_middle_encoder=dict(
         type='SparseEncoder',
         in_channels=5,
-        sparse_shape=[41, 1024, 1024],
+        sparse_shape=[41, 1440, 1440],
         output_channels=128,
         order=('conv', 'norm', 'act'),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
@@ -65,11 +65,11 @@ model = dict(
             code_size=9),
         dcn_head=True,
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_reg=dict(type='L1Loss', reduction='none', loss_weight=0.25)))
+        loss_bbox=dict(type='L1Loss', reduction='none', loss_weight=0.25)))
 # model training and testing settings
 train_cfg = dict(
     pts=dict(
-        grid_size=[1024, 1024, 40],
+        grid_size=[1440, 1440, 40],
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
         out_size_factor=8,
@@ -90,8 +90,5 @@ test_cfg = dict(
         pc_range=point_cloud_range[:2],
         out_size_factor=8,
         voxel_size=voxel_size[:2],
-        nms_type='rotate',
-        nms_pre_max_size=1000,
-        nms_post_max_size=83,
-        nms_iou_threshold=0.2,
+        nms_type='circle',
         no_log=False))

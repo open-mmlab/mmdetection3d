@@ -1,10 +1,11 @@
 _base_ = [
-    '../_base_/models/centerpoint_pp_dcn.py', '../_base_/default_runtime.py'
+    '../_base_/models/centerpoint_0075voxel_second_secfpn_circlenms_nus.py',
+    '../_base_/default_runtime.py'
 ]
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
-point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -53,8 +54,11 @@ db_sampler = dict(
         pedestrian=2,
         traffic_cone=2,
     ),
-    load_dim=5,
-    use_dim=[0, 1, 2, 3, 4])
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=[0, 1, 2, 3, 4],
+        file_client_args=file_client_args))
 
 train_pipeline = [
     dict(
@@ -70,7 +74,7 @@ train_pipeline = [
         pad_empty_sweeps=True,
         remove_close=True),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    # dict(type='ObjectSample', db_sampler=db_sampler),
+    dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.3925, 0.3925],
@@ -113,6 +117,8 @@ test_pipeline = [
                 scale_ratio_range=[1., 1.],
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
@@ -160,7 +166,8 @@ data = dict(
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not
 # use a default schedule.
-
+# optimizer
+# This schedule is mainly used by models on nuScenes dataset
 optimizer = dict(type='AdamW', lr=1e-4, weight_decay=0.01)
 # max_norm=10 is better for SECOND
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))

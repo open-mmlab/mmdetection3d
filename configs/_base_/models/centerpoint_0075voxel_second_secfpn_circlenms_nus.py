@@ -65,7 +65,7 @@ model = dict(
             code_size=9),
         dcn_head=False,
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_reg=dict(type='L1Loss', reduction='none', loss_weight=0.25)))
+        loss_bbox=dict(type='L1Loss', reduction='none', loss_weight=0.25)))
 # model training and testing settings
 train_cfg = dict(
     pts=dict(
@@ -90,8 +90,5 @@ test_cfg = dict(
         pc_range=point_cloud_range[:2],
         out_size_factor=8,
         voxel_size=voxel_size[:2],
-        nms_type='rotate',
-        nms_pre_max_size=1000,
-        nms_post_max_size=83,
-        nms_iou_threshold=0.2,
+        nms_type='circle',
         no_log=False))

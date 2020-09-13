@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/centerpoint_pp_circle_nms.py',
+    '../_base_/models/centerpoint_01voxel_second_secfpn_dcn_nus.py',
     '../_base_/default_runtime.py'
 ]
 
@@ -118,6 +118,8 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
@@ -164,7 +166,8 @@ data = dict(
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not
 # use a default schedule.
-
+# optimizer
+# This schedule is mainly used by models on nuScenes dataset
 optimizer = dict(type='AdamW', lr=1e-4, weight_decay=0.01)
 # max_norm=10 is better for SECOND
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))

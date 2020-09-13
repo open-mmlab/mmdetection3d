@@ -1,11 +1,11 @@
 _base_ = [
-    '../_base_/models/centerpoint_0075_voxel.py',
+    '../_base_/models/centerpoint_pillar_second_secfpn_dcn_circlenms_nus.py',
     '../_base_/default_runtime.py'
 ]
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
-point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
+point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -54,11 +54,8 @@ db_sampler = dict(
         pedestrian=2,
         traffic_cone=2,
     ),
-    points_loader=dict(
-        type='LoadPointsFromFile',
-        load_dim=5,
-        use_dim=[0, 1, 2, 3, 4],
-        file_client_args=file_client_args))
+    load_dim=5,
+    use_dim=[0, 1, 2, 3, 4])
 
 train_pipeline = [
     dict(
@@ -118,8 +115,6 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
@@ -166,8 +161,7 @@ data = dict(
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not
 # use a default schedule.
-# optimizer
-# This schedule is mainly used by models on nuScenes dataset
+
 optimizer = dict(type='AdamW', lr=1e-4, weight_decay=0.01)
 # max_norm=10 is better for SECOND
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
