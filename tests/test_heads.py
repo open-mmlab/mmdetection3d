@@ -613,7 +613,9 @@ def test_h3d_head():
     proposal_list = torch.cat([
         torch.rand([1, num_proposal, 3], dtype=torch.float32).cuda() * 4 - 2,
         torch.rand([1, num_proposal, 3], dtype=torch.float32).cuda() * 4,
-        torch.zeros([1, num_proposal, 1]).cuda()], dim=-1)
+        torch.zeros([1, num_proposal, 1]).cuda()
+    ],
+                              dim=-1)
 
     input_dict = dict(
         fp_xyz_net0=fp_xyz,
