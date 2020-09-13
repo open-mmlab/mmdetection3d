@@ -1,4 +1,7 @@
-_base_ = ['../_base_/models/3dssd.py', '../_base_/default_runtime.py']
+_base_ = [
+    '../_base_/models/3dssd.py', '../_base_/datasets/kitti-3d-car.py',
+    '../_base_/default_runtime.py'
+]
 
 # dataset settings
 dataset_type = 'KittiDataset'
@@ -81,49 +84,9 @@ test_pipeline = [
         ])
 ]
 
-data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
-    train=dict(
-        type='RepeatDataset',
-        times=2,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'kitti_infos_train.pkl',
-            split='training',
-            pts_prefix='velodyne_reduced',
-            pipeline=train_pipeline,
-            modality=input_modality,
-            classes=class_names,
-            test_mode=False,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
-    val=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='LiDAR'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='LiDAR'))
+data = dict(samples_per_gpu=4, workers_per_gpu=4)
 
-evaluation = dict(interval=5)
+evaluation = dict(interval=2)
 
 # model settings
 model = dict(
@@ -133,8 +96,6 @@ model = dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)))
 
 # optimizer
-# This schedule is mainly used by models on indoor dataset,
-# e.g., VoteNet on SUNRGBD and ScanNet
 lr = 0.002  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
