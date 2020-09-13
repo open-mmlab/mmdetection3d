@@ -4,51 +4,12 @@ import torch
 from mmcv.cnn import ConvModule, build_conv_layer, kaiming_init
 from torch import nn
 
-from mmdet3d.core import circle_nms, xywhr2xyxyr
+from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
+                          xywhr2xyxyr)
 from mmdet3d.models.utils import clip_sigmoid
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import FeatureAdaption
-from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from ...builder import HEADS, build_loss
-
-
-class CenterPointFeatureAdaption(FeatureAdaption):
-    """Feature Adaption Module.
-
-    Feature Adaption Module is implemented based on DCN v1.
-    It uses anchor shape prediction rather than feature map to
-    predict offsets of deform conv layer.
-
-    Args:
-        in_channels (int): Number of channels in the input feature map.
-        out_channels (int): Number of channels in the output feature map.
-        kernel_size (int): Deformable conv kernel size. Default: 3
-        deform_groups (int): Deformable conv group size. Default: 4
-    """
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size=3,
-                 deform_groups=4):
-        super().__init__(in_channels, out_channels, kernel_size, deform_groups)
-        offset_channels = kernel_size * kernel_size * 2
-        self.conv_offset = nn.Conv2d(
-            in_channels, deform_groups * offset_channels, 1, bias=True)
-
-    def forward(self, x):
-        """Forward function for CenterPointFeatureAdaption.
-
-        Args:
-            x (torch.Tensor): Input feature with the shape of [B, 64, W, H].
-
-        Returns:
-            torch.Tensor: Output feature with the same shape of input feature.
-        """
-        offset = self.conv_offset(x)
-        x = self.relu(self.conv_adaption(x, offset))
-        return x
 
 
 @HEADS.register_module()
@@ -174,6 +135,7 @@ class DCNSeperateHead(nn.Module):
                  in_channels,
                  num_cls,
                  heads,
+                 dcn_config,
                  head_conv=64,
                  final_kernel=1,
                  init_bias=-2.19,
@@ -185,11 +147,9 @@ class DCNSeperateHead(nn.Module):
 
         # feature adaptation with dcn
         # use separate features for classification / regression
-        self.feature_adapt_cls = CenterPointFeatureAdaption(
-            in_channels, in_channels, kernel_size=3, deform_groups=4)
+        self.feature_adapt_cls = build_conv_layer(dcn_config)
 
-        self.feature_adapt_reg = CenterPointFeatureAdaption(
-            in_channels, in_channels, kernel_size=3, deform_groups=4)
+        self.feature_adapt_reg = build_conv_layer(dcn_config)
 
         # heatmap prediction head
         cls_head = [
@@ -275,7 +235,7 @@ class CenterHead(nn.Module):
             Default: dict().
         loss_cls (dict): Config of classification loss function.
             Default: dict(type='GaussianFocalLoss', reduction='mean').
-        loss_reg (dict): Config of regression loss function.
+        loss_bbox (dict): Config of regression loss function.
             Default: dict(type='L1Loss', reduction='none').
         init_bias (float): Initial bias. Default: -2.19.
         share_conv_channel (int): Output channels for share_conv_layer.
@@ -298,7 +258,7 @@ class CenterHead(nn.Module):
                  bbox_coder=None,
                  common_heads=dict(),
                  loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-                 loss_reg=dict(
+                 loss_bbox=dict(
                      type='L1Loss', reduction='none', loss_weight=0.25),
                  init_bias=-2.19,
                  share_conv_channel=64,
@@ -319,7 +279,7 @@ class CenterHead(nn.Module):
         self.num_classes = num_classes
 
         self.loss_cls = build_loss(loss_cls)
-        self.loss_reg = build_loss(loss_reg)
+        self.loss_bbox = build_loss(loss_bbox)
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_aux = None
         self.num_anchor_per_locs = [n for n in num_classes]
@@ -355,6 +315,14 @@ class CenterHead(nn.Module):
                         share_conv_channel,
                         num_cls,
                         heads,
+                        dcn_config=dict(
+                            type='DCN',
+                            in_channels=share_conv_channel,
+                            out_channels=share_conv_channel,
+                            kernel_size=3,
+                            padding=1,
+                            groups=4,
+                            bias=True),
                         init_bias=init_bias,
                         final_kernel=3))
 
@@ -495,7 +463,7 @@ class CenterHead(nn.Module):
             task_boxes.append(torch.cat(task_box, axis=0).to(device))
             task_classes.append(torch.cat(task_class).long().to(device))
             flag2 += len(mask)
-        draw_gaussian = gen_gaussian_target
+        draw_gaussian = draw_heatmap_gaussian
         heatmaps, anno_boxes, inds, masks = [], [], [], []
 
         for idx, task in enumerate(self.tasks):
@@ -639,10 +607,12 @@ class CenterHead(nn.Module):
             mask = masks[task_id].unsqueeze(2).expand_as(target_box).float()
             isnotnan = (~torch.isnan(target_box)).float()
             mask *= isnotnan
-            box_loss = torch.sum(self.loss_reg(pred, target_box, mask), 1) / (
-                num + 1e-4)
-            code_weights = self.train_cfg.get('code_weights', [])
-            loss_bbox = (box_loss * box_loss.new_tensor(code_weights)).sum()
+
+            code_weights = self.train_cfg.get('code_weights', None)
+            bbox_weights = mask * mask.new_tensor(code_weights)
+            loss_bbox = (
+                torch.sum(self.loss_bbox(pred, target_box, bbox_weights), 1) /
+                (num + 1e-4)).sum()
             loss_dict[f'task{task_id}.loss_heatmap'] = loss_heatmap
             loss_dict[f'task{task_id}.loss_bbox'] = loss_bbox
 
@@ -662,7 +632,7 @@ class CenterHead(nn.Module):
         for task_id, preds_dict in enumerate(preds_dicts):
             num_class_with_bg = self.num_classes[task_id]
             batch_size = preds_dict[0]['heatmap'].shape[0]
-            batch_heatmap = preds_dict[0]['heatmap'].sigmoid_()
+            batch_heatmap = preds_dict[0]['heatmap'].sigmoid()
 
             batch_reg = preds_dict[0]['reg']
             batch_hei = preds_dict[0]['height']
@@ -727,10 +697,7 @@ class CenterHead(nn.Module):
         for i in range(num_samples):
             for k in rets[0][i].keys():
                 if k == 'bboxes':
-                    bboxes = torch.cat([
-                        ret[i][k][:, [0, 1, 2, 3, 4, 5, 8, 6, 7]]
-                        for ret in rets
-                    ])
+                    bboxes = torch.cat([ret[i][k] for ret in rets])
                     bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 5] * 0.5
                     bboxes = img_metas[i]['box_type_3d'](
                         bboxes, self.bbox_coder.code_size)

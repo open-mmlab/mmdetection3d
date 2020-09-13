@@ -112,14 +112,22 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
     def encode(self):
         pass
 
-    def decode(self, heat, rots, rotc, hei, dim, vel, reg=None, task_id=-1):
+    def decode(self,
+               heat,
+               rot_sine,
+               rot_cosine,
+               hei,
+               dim,
+               vel,
+               reg=None,
+               task_id=-1):
         """Decode bboxes.
 
         Args:
             heat (torch.Tensor): Heatmap with the shape of [B, N, W, H].
-            rots (torch.Tensor): Sin of rotation with the shape of
+            rot_sine (torch.Tensor): Sine of rotation with the shape of
                 [B, 1, W, H].
-            rotc (torch.Tensor): Cos of rotation with the shape of
+            rot_cosine (torch.Tensor): Cosine of rotation with the shape of
                 [B, 1, W, H].
             hei (torch.Tensor): Height of the boxes with the shape
                 of [B, 1, W, H].
@@ -147,12 +155,12 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             ys = ys.view(batch, self.max_num, 1) + 0.5
 
         # rotation value and direction label
-        rots = self._transpose_and_gather_feat(rots, inds)
-        rots = rots.view(batch, self.max_num, 1)
+        rot_sine = self._transpose_and_gather_feat(rot_sine, inds)
+        rot_sine = rot_sine.view(batch, self.max_num, 1)
 
-        rotc = self._transpose_and_gather_feat(rotc, inds)
-        rotc = rotc.view(batch, self.max_num, 1)
-        rot = torch.atan2(rots, rotc)
+        rot_cosine = self._transpose_and_gather_feat(rot_cosine, inds)
+        rot_cosine = rot_cosine.view(batch, self.max_num, 1)
+        rot = torch.atan2(rot_sine, rot_cosine)
 
         # height in the bev
         hei = self._transpose_and_gather_feat(hei, inds)
@@ -178,7 +186,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         else:  # exist velocity, nuscene format
             vel = self._transpose_and_gather_feat(vel, inds)
             vel = vel.view(batch, self.max_num, 2)
-            final_box_preds = torch.cat([xs, ys, hei, dim, vel, rot], dim=2)
+            final_box_preds = torch.cat([xs, ys, hei, dim, rot, vel], dim=2)
 
         final_scores = scores
         final_preds = clses

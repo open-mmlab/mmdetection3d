@@ -788,7 +788,7 @@ def test_dcn_center_head():
             code_size=9),
         dcn_head=True,
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_reg=dict(type='L1Loss', reduction='none', loss_weight=0.25))
+        loss_bbox=dict(type='L1Loss', reduction='none', loss_weight=0.25))
     # model training and testing settings
     train_cfg = dict(
         grid_size=[512, 512, 1],
@@ -837,22 +837,8 @@ def test_dcn_center_head():
     gt_bboxes_3d = [gt_bboxes_0, gt_bboxes_1]
     gt_labels_3d = [gt_labels_0, gt_labels_1]
     loss = dcn_center_head.loss(gt_bboxes_3d, gt_labels_3d, output)
-
-    assert torch.isclose(loss['task0.loss_heatmap'], torch.tensor(8184.2622))
-    assert torch.isclose(loss['task0.loss_bbox'], torch.tensor(0.0))
-    assert torch.isclose(loss['task1.loss_heatmap'], torch.tensor(13474.9395))
-    assert torch.isclose(loss['task1.loss_bbox'], torch.tensor(1.6903))
-    assert torch.isclose(loss['task2.loss_heatmap'], torch.tensor(14120.4512))
-    assert torch.isclose(loss['task2.loss_bbox'], torch.tensor(1.7906))
-    assert torch.isclose(loss['task3.loss_heatmap'], torch.tensor(5636.5244))
-    assert torch.isclose(
-        loss['task3.loss_bbox'], torch.tensor(1.3798), atol=1e-3)
-    assert torch.isclose(loss['task4.loss_heatmap'], torch.tensor(12947.4551))
-    assert torch.isclose(
-        loss['task4.loss_bbox'], torch.tensor(1.6523), atol=1e-3)
-    assert torch.isclose(loss['task5.loss_heatmap'], torch.tensor(13911.4648))
-    assert torch.isclose(
-        loss['task5.loss_bbox'], torch.tensor(1.4800), atol=1e-3)
+    loss_sum = torch.sum(torch.stack([item for _, item in loss.items()]))
+    assert torch.isclose(loss_sum, torch.tensor(64317.9141))
 
     # test get_bboxes
     img_metas = [
