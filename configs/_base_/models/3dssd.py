@@ -42,9 +42,9 @@ model = dict(
             bias=True),
         pred_layer_cfg=dict(
             in_channels=1536,
-            shared_mlp_channels=(512, 128),
-            cls_mlp_channels=(128, ),
-            reg_mlp_channels=(128, ),
+            shared_conv_layers=(512, 128),
+            cls_conv_layers=(128, ),
+            reg_conv_layers=(128, ),
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
