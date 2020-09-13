@@ -27,7 +27,7 @@ class VoteModule(nn.Module):
             Default: True.
         with_res_feat (bool): Whether to predict residual features.
             Default: True.
-        clip_xyz_offset (list[float], None): The range of points translation.
+        vote_xyz_range (list[float], None): The range of points translation.
         vote_loss (dict): Config of vote loss.
     """
 
@@ -42,7 +42,7 @@ class VoteModule(nn.Module):
                  act_cfg=dict(type='ReLU'),
                  norm_feats=True,
                  with_res_feat=True,
-                 clip_xyz_offset=None,
+                 vote_xyz_range=None,
                  vote_loss=None):
         super().__init__()
         self.in_channels = in_channels
@@ -52,8 +52,8 @@ class VoteModule(nn.Module):
         self.norm_feats = norm_feats
         self.with_res_feat = with_res_feat
 
-        assert clip_xyz_offset is None or is_tuple_of(clip_xyz_offset, float)
-        self.clip_xyz_offset = clip_xyz_offset
+        assert vote_xyz_range is None or is_tuple_of(vote_xyz_range, float)
+        self.vote_xyz_range = vote_xyz_range
 
         if vote_loss is not None:
             self.vote_loss = build_loss(vote_loss)
@@ -117,12 +117,12 @@ class VoteModule(nn.Module):
                                            self.vote_per_seed, -1)
 
         offset = votes[:, :, :, 0:3]
-        if self.clip_xyz_offset is not None:
+        if self.vote_xyz_range is not None:
             limited_offset_list = []
-            for axis in range(len(self.clip_xyz_offset)):
+            for axis in range(len(self.vote_xyz_range)):
                 limited_offset_list.append(offset[..., axis].clamp(
-                    min=-self.clip_xyz_offset[axis],
-                    max=self.clip_xyz_offset[axis]))
+                    min=-self.vote_xyz_range[axis],
+                    max=self.vote_xyz_range[axis]))
             limited_offset = torch.stack(limited_offset_list, -1)
             vote_points = (seed_points.unsqueeze(2) +
                            limited_offset).contiguous()

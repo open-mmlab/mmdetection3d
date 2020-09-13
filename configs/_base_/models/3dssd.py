@@ -29,7 +29,7 @@ model = dict(
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             with_res_feat=False,
-            clip_xyz_offset=(3.0, 3.0, 2.0)),
+            vote_xyz_range=(3.0, 3.0, 2.0)),
         vote_aggregation_cfg=dict(
             type='PointSAModuleMSG',
             num_point=256,
