@@ -146,6 +146,7 @@ class VoteModule(nn.Module):
             vote_feats = seed_feats
         return vote_points, vote_feats, offset
 
+
     def get_loss(self, seed_points, vote_points, seed_indices,
                  vote_targets_mask, vote_targets):
         """Calculate loss of voting module.

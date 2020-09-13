@@ -38,13 +38,15 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7]
-        torch: [1.3.0, 1.5.0]
+        torch: [1.5.0+cu101, 1.6.0+cu101]
         include:
-          - torch: 1.3.0
-            torchvision: 0.4.2
-            cuda_arch: "6.0"
-          - torch: 1.5.0
-            torchvision: 0.6.0
+          - torch: 1.5.0+cu101
+            torchvision: 0.6.0+cu101
+            mmcv: 1.5.0+cu101
+            cuda_arch: "7.0"
+          - torch: 1.6.0+cu101
+            mmcv: 1.6.0+cu101
+            torchvision: 0.7.0+cu101
             cuda_arch: "7.0"
 
     steps:
@@ -63,6 +65,8 @@ jobs:
           sudo apt update -qq
           sudo apt install -y cuda-${CUDA_SHORT/./-} cuda-cufft-dev-${CUDA_SHORT/./-}
           sudo apt clean
+          sudo cp /usr/local/cuda-10.2/include/* /usr/local/cuda/include
+          sudo cp -r /usr/local/cuda-10.2/lib64/* /usr/local/cuda/lib64/
           export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
           export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/include:${LD_LIBRARY_PATH}
           export PATH=${CUDA_HOME}/bin:${PATH}
@@ -74,7 +78,7 @@ jobs:
         run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          pip install mmcv-full==latest+torch${{matrix.torch}}+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+          pip install mmcv-full==latest+torch${{matrix.mmcv}} -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
           pip install -q git+https://github.com/open-mmlab/mmdetection.git
           pip install -r requirements.txt
       - name: Build and install

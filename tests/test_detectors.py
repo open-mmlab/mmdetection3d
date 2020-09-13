@@ -113,9 +113,9 @@ def test_voxel_net():
 
     # test simple_test
     results = self.simple_test(points, img_metas)
-    boxes_3d = results['boxes_3d']
-    scores_3d = results['scores_3d']
-    labels_3d = results['labels_3d']
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
     assert boxes_3d.tensor.shape == (50, 7)
     assert scores_3d.shape == torch.Size([50])
     assert labels_3d.shape == torch.Size([50])
@@ -155,9 +155,9 @@ def test_vote_net():
 
     # test simple_test
     results = self.simple_test(points, img_metas)
-    boxes_3d = results['boxes_3d']
-    scores_3d = results['scores_3d']
-    labels_3d = results['labels_3d']
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
     assert boxes_3d.tensor.shape[0] >= 0
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
@@ -171,8 +171,8 @@ def test_parta2():
     parta2 = _get_detector_cfg(
         'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
     self = build_detector(parta2).cuda()
-    points_0 = torch.rand([2000, 4], device='cuda')
-    points_1 = torch.rand([2000, 4], device='cuda')
+    points_0 = torch.rand([1000, 4], device='cuda')
+    points_1 = torch.rand([1000, 4], device='cuda')
     points = [points_0, points_1]
     img_meta_0 = dict(box_type_3d=LiDARInstance3DBoxes)
     img_meta_1 = dict(box_type_3d=LiDARInstance3DBoxes)
@@ -197,9 +197,9 @@ def test_parta2():
 
     # test_simple_test
     results = self.simple_test(points, img_metas)
-    boxes_3d = results['boxes_3d']
-    scores_3d = results['scores_3d']
-    labels_3d = results['labels_3d']
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
     assert boxes_3d.tensor.shape[0] >= 0
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
