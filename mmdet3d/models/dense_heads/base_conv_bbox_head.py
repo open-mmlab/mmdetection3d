@@ -6,7 +6,7 @@ from mmdet.models.builder import HEADS
 
 
 @HEADS.register_module()
-class MLPBBoxHead(nn.Module):
+class BaseConvBboxHead(nn.Module):
     r"""More general bbox head, with shared mlp layers and two optional
     separated branches.
 
@@ -30,7 +30,7 @@ class MLPBBoxHead(nn.Module):
                  bias='auto',
                  *args,
                  **kwargs):
-        super(MLPBBoxHead, self).__init__(*args, **kwargs)
+        super(BaseConvBboxHead, self).__init__(*args, **kwargs)
         assert in_channels > 0
         assert num_cls_out_channels > 0
         assert num_reg_out_channels > 0

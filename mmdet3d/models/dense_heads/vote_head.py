@@ -10,7 +10,7 @@ from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import build_sa_module, furthest_point_sample
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
-from .mlp_bbox_head import MLPBBoxHead
+from .base_conv_bbox_head import BaseConvBboxHead
 
 
 @HEADS.register_module()
@@ -80,7 +80,7 @@ class VoteHead(nn.Module):
         self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         # Bbox classification and regression
-        self.conv_pred = MLPBBoxHead(
+        self.conv_pred = BaseConvBboxHead(
             **pred_layer_cfg,
             num_cls_out_channels=self._get_cls_out_channels(),
             num_reg_out_channels=self._get_reg_out_channels())
@@ -106,7 +106,6 @@ class VoteHead(nn.Module):
 
         Args:
             feat_dict (dict): Feature dict from backbone.
-
 
         Returns:
             torch.Tensor: Coordinates of input points.
