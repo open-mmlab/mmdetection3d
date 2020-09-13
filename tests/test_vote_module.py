@@ -26,8 +26,8 @@ def test_vote_module():
         vote_per_seed=1,
         in_channels=8,
         num_points=32,
-        with_feat_residual=False,
-        clip_xyz_offset=(2.0, 2.0, 2.0))
+        with_res_feat=False,
+        vote_xyz_range=(2.0, 2.0, 2.0))
 
     vote_xyz, vote_features, vote_offset = self(seed_xyz, seed_features)
     assert vote_xyz.shape == torch.Size([2, 32, 3])
