@@ -98,11 +98,12 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
 
-    def split_pred(self, preds, base_xyz):
+    def split_pred(self, cls_preds, reg_preds, base_xyz):
         """Split predicted features to specific parts.
 
         Args:
-            preds (torch.Tensor): Predicted features to split.
+            cls_preds (torch.Tensor): Class predicted features to split.
+            reg_preds (torch.Tensor): Regression predicted features to split.
             base_xyz (torch.Tensor): Coordinates of points.
 
         Returns:
@@ -110,26 +111,24 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """
         results = {}
         start, end = 0, 0
-        preds_trans = preds.transpose(2, 1)
 
-        # decode objectness score
-        end += 2
-        results['obj_scores'] = preds_trans[..., start:end].contiguous()
-        start = end
+        cls_preds_trans = cls_preds.transpose(2, 1)
+        reg_preds_trans = reg_preds.transpose(2, 1)
 
         # decode center
         end += 3
         # (batch_size, num_proposal, 3)
-        results['center'] = base_xyz + preds_trans[..., start:end].contiguous()
+        results['center'] = base_xyz + \
+            reg_preds_trans[..., start:end].contiguous()
         start = end
 
         # decode direction
         end += self.num_dir_bins
-        results['dir_class'] = preds_trans[..., start:end].contiguous()
+        results['dir_class'] = reg_preds_trans[..., start:end].contiguous()
         start = end
 
         end += self.num_dir_bins
-        dir_res_norm = preds_trans[..., start:end].contiguous()
+        dir_res_norm = reg_preds_trans[..., start:end].contiguous()
         start = end
 
         results['dir_res_norm'] = dir_res_norm
@@ -137,23 +136,29 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
 
         # decode size
         end += self.num_sizes
-        results['size_class'] = preds_trans[..., start:end].contiguous()
+        results['size_class'] = reg_preds_trans[..., start:end].contiguous()
         start = end
 
         end += self.num_sizes * 3
-        size_res_norm = preds_trans[..., start:end]
-        batch_size, num_proposal = preds_trans.shape[:2]
+        size_res_norm = reg_preds_trans[..., start:end]
+        batch_size, num_proposal = reg_preds_trans.shape[:2]
         size_res_norm = size_res_norm.view(
             [batch_size, num_proposal, self.num_sizes, 3])
         start = end
 
         results['size_res_norm'] = size_res_norm.contiguous()
-        mean_sizes = preds.new_tensor(self.mean_sizes)
+        mean_sizes = reg_preds.new_tensor(self.mean_sizes)
         results['size_res'] = (
             size_res_norm * mean_sizes.unsqueeze(0).unsqueeze(0))
 
+        # decode objectness score
+        start = 0
+        end = 2
+        results['obj_scores'] = cls_preds_trans[..., start:end].contiguous()
+        start = end
+
         # decode semantic score
-        results['sem_scores'] = preds_trans[..., start:].contiguous()
+        results['sem_scores'] = cls_preds_trans[..., start:].contiguous()
 
         return results
 

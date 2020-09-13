@@ -17,7 +17,7 @@ model = dict(
             normalize_xyz=True)),
     bbox_head=dict(
         type='VoteHead',
-        vote_moudule_cfg=dict(
+        vote_module_cfg=dict(
             in_channels=256,
             vote_per_seed=1,
             gt_per_seed=3,
@@ -38,7 +38,7 @@ model = dict(
             mlp_channels=[256, 128, 128, 128],
             use_xyz=True,
             normalize_xyz=True),
-        feat_channels=(128, 128),
+        pred_layer_cfg=dict(in_channels=128, shared_conv_channels=(128, 128)),
         conv_cfg=dict(type='Conv1d'),
         norm_cfg=dict(type='BN1d'),
         objectness_loss=dict(
