@@ -20,9 +20,9 @@ class BaseConvBboxHead(nn.Module):
     def __init__(self,
                  in_channels=0,
                  shared_conv_channels=(),
-                 cls_conv_layers=(),
+                 cls_conv_channels=(),
                  num_cls_out_channels=0,
-                 reg_conv_layers=(),
+                 reg_conv_channels=(),
                  num_reg_out_channels=0,
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
@@ -36,9 +36,9 @@ class BaseConvBboxHead(nn.Module):
         assert num_reg_out_channels > 0
         self.in_channels = in_channels
         self.shared_conv_channels = shared_conv_channels
-        self.cls_conv_layers = cls_conv_layers
+        self.cls_conv_channels = cls_conv_channels
         self.num_cls_out_channels = num_cls_out_channels
-        self.reg_conv_layers = reg_conv_layers
+        self.reg_conv_channels = reg_conv_channels
         self.num_reg_out_channels = num_reg_out_channels
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
@@ -55,24 +55,24 @@ class BaseConvBboxHead(nn.Module):
 
         # add cls specific branch
         prev_channel = out_channels
-        if len(self.cls_conv_layers) > 0:
+        if len(self.cls_conv_channels) > 0:
             self.cls_convs = self._add_conv_branch(prev_channel,
-                                                   self.cls_conv_layers)
-            prev_channel = self.cls_conv_layers[-1]
+                                                   self.cls_conv_channels)
+            prev_channel = self.cls_conv_channels[-1]
 
-        self.cls_pred = build_conv_layer(
+        self.conv_cls = build_conv_layer(
             conv_cfg,
             in_channels=prev_channel,
             out_channels=num_cls_out_channels,
             kernel_size=1)
         # add reg specific branch
         prev_channel = out_channels
-        if len(self.reg_conv_layers) > 0:
+        if len(self.reg_conv_channels) > 0:
             self.reg_convs = self._add_conv_branch(prev_channel,
-                                                   self.reg_conv_layers)
-            prev_channel = self.reg_conv_layers[-1]
+                                                   self.reg_conv_channels)
+            prev_channel = self.reg_conv_channels[-1]
 
-        self.reg_pred = build_conv_layer(
+        self.conv_reg = build_conv_layer(
             conv_cfg,
             in_channels=prev_channel,
             out_channels=num_reg_out_channels,
@@ -120,12 +120,12 @@ class BaseConvBboxHead(nn.Module):
         x_cls = x
         x_reg = x
 
-        if len(self.cls_conv_layers) > 0:
+        if len(self.cls_conv_channels) > 0:
             x_cls = self.cls_convs(x_cls)
-        cls_score = self.cls_pred(x_cls)
+        cls_score = self.conv_cls(x_cls)
 
-        if len(self.reg_conv_layers) > 0:
+        if len(self.reg_conv_channels) > 0:
             x_reg = self.reg_convs(x_reg)
-        bbox_pred = self.reg_pred(x_reg)
+        bbox_pred = self.conv_reg(x_reg)
 
         return cls_score, bbox_pred
