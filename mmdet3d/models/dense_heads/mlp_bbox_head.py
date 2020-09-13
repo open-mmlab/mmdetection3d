@@ -1,4 +1,5 @@
 from mmcv.cnn import ConvModule
+from mmcv.cnn.bricks import build_conv_layer
 from torch import nn as nn
 
 from mmdet.models.builder import HEADS
@@ -59,8 +60,11 @@ class MLPBBoxHead(nn.Module):
                                                  self.cls_mlp_channels)
             prev_channel = self.cls_mlp_channels[-1]
 
-        self.cls_pred = nn.Conv1d(prev_channel, num_cls_out_channels, 1)
-
+        self.cls_pred = build_conv_layer(
+            conv_cfg,
+            in_channels=prev_channel,
+            out_channels=num_cls_out_channels,
+            kernel_size=1)
         # add reg specific branch
         prev_channel = out_channels
         if len(self.reg_mlp_channels) > 0:
@@ -68,7 +72,11 @@ class MLPBBoxHead(nn.Module):
                                                  self.reg_mlp_channels)
             prev_channel = self.reg_mlp_channels[-1]
 
-        self.reg_pred = nn.Conv1d(prev_channel, num_reg_out_channels, 1)
+        self.reg_pred = build_conv_layer(
+            conv_cfg,
+            in_channels=prev_channel,
+            out_channels=num_reg_out_channels,
+            kernel_size=1)
 
     def _add_mlp_branch(self, in_channels, mlp_channels):
         """Add shared or separable branch."""

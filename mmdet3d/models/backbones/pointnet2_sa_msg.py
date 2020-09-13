@@ -106,7 +106,7 @@ class PointNet2SAMSG(BasePointNet):
                     sa_out_channel,
                     aggregation_channels[sa_index],
                     conv_cfg=dict(type='Conv1d'),
-                    norm_cfg=dict(type='BN1d', eps=1e-3),
+                    norm_cfg=dict(type='BN1d'),
                     kernel_size=1,
                     bias=True))
             sa_in_channel = aggregation_channels[sa_index]

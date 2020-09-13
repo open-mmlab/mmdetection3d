@@ -21,14 +21,14 @@ model = dict(
     bbox_head=dict(
         type='SSD3DHead',
         in_channels=256,
-        vote_moudule_cfg=dict(
+        vote_module_cfg=dict(
             in_channels=256,
             num_points=256,
             gt_per_seed=1,
             conv_channels=(128, ),
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
-            with_feat_residual=False,
+            with_res_feat=False,
             clip_xyz_offset=(3.0, 3.0, 2.0)),
         vote_aggregation_cfg=dict(
             type='PointSAModuleMSG',
@@ -71,8 +71,8 @@ model = dict(
 train_cfg = dict(
     sample_mod='spec', pos_distance_thr=10.0, expand_dims_length=0.05)
 test_cfg = dict(
+    nms_cfg=dict(type='nms', iou_thr=0.1),
     sample_mod='spec',
-    nms_thr=0.1,
     score_thr=0.0,
     per_class_proposal=True,
     max_output_num=100)

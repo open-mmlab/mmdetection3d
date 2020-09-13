@@ -1,10 +1,10 @@
 import torch
+from mmcv.ops.nms import batched_nms
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes,
                                           rotation_3d_in_axis)
-from mmdet3d.core.post_processing import aligned_bev_nms
 from mmdet3d.models.builder import build_loss
 from mmdet.core import multi_apply
 from mmdet.models import HEADS
@@ -483,10 +483,10 @@ class SSD3DHead(VoteHead):
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
         bbox_classes = torch.argmax(sem_scores, -1)
-        nms_selected = aligned_bev_nms(minmax_box3d[nonempty_box_mask],
-                                       obj_scores[nonempty_box_mask],
-                                       bbox_classes[nonempty_box_mask],
-                                       self.test_cfg.nms_thr)
+        nms_selected = batched_nms(
+            minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]],
+            obj_scores[nonempty_box_mask], bbox_classes[nonempty_box_mask],
+            self.test_cfg.nms_cfg)[1]
 
         if nms_selected.shape[0] > self.test_cfg.max_output_num:
             nms_selected = nms_selected[:self.test_cfg.max_output_num]

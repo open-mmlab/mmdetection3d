@@ -25,7 +25,7 @@ class VoteModule(nn.Module):
             Default: dict(type='BN1d').
         norm_feats (bool): Whether to normalize features.
             Default: True.
-        with_feat_residual (bool): Whether to predict residual features.
+        with_res_feat (bool): Whether to predict residual features.
             Default: True.
         clip_xyz_offset (list[float], None): The range of points translation.
         vote_loss (dict): Config of vote loss.
@@ -41,7 +41,7 @@ class VoteModule(nn.Module):
                  norm_cfg=dict(type='BN1d'),
                  act_cfg=dict(type='ReLU'),
                  norm_feats=True,
-                 with_feat_residual=True,
+                 with_res_feat=True,
                  clip_xyz_offset=None,
                  vote_loss=None):
         super().__init__()
@@ -50,7 +50,7 @@ class VoteModule(nn.Module):
         self.gt_per_seed = gt_per_seed
         self.num_points = num_points
         self.norm_feats = norm_feats
-        self.with_feat_residual = with_feat_residual
+        self.with_res_feat = with_res_feat
 
         assert clip_xyz_offset is None or is_tuple_of(clip_xyz_offset, float)
         self.clip_xyz_offset = clip_xyz_offset
@@ -76,7 +76,7 @@ class VoteModule(nn.Module):
         self.vote_conv = nn.Sequential(*vote_conv_list)
 
         # conv_out predicts coordinate and residual features
-        if with_feat_residual:
+        if with_res_feat:
             out_channel = (3 + in_channels) * self.vote_per_seed
         else:
             out_channel = 3 * self.vote_per_seed
@@ -131,7 +131,7 @@ class VoteModule(nn.Module):
         vote_points = vote_points.view(batch_size, num_vote, 3)
         offset = offset.reshape(batch_size, num_vote, 3).transpose(2, 1)
 
-        if self.with_feat_residual:
+        if self.with_res_feat:
             res_feats = votes[:, :, :, 3:]
             vote_feats = (seed_feats.transpose(2, 1).unsqueeze(2) +
                           res_feats).contiguous()
