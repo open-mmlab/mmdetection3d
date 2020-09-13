@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/centerpoint_01voxel_second_secfpn_dcn_circlenms_nus.py',
+    '../_base_/models/centerpoint_01voxel_second_secfpn_nus.py',
     '../_base_/default_runtime.py'
 ]
 
@@ -162,6 +162,10 @@ data = dict(
         modality=input_modality,
         test_mode=True,
         box_type_3d='LiDAR'))
+
+model = dict(pts_bbox_head=dict(dcn_head=True))
+
+test_cfg = dict(pts=dict(nms_type='circle'))
 # For nuScenes dataset, we usually evaluate the model at the end of training.
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not

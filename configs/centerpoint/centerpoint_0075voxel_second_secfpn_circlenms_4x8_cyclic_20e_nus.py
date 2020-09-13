@@ -1,10 +1,11 @@
 _base_ = [
-    '../_base_/models/centerpoint_0075voxel_second_secfpn_circlenms_nus.py',
+    '../_base_/models/centerpoint_01voxel_second_secfpn_nus.py',
     '../_base_/default_runtime.py'
 ]
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
+voxel_size = [0.075, 0.075, 0.2]
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 # For nuScenes we usually do 10-class detection
 class_names = [
@@ -162,6 +163,25 @@ data = dict(
         modality=input_modality,
         test_mode=True,
         box_type_3d='LiDAR'))
+
+model = dict(
+    pts_voxel_layer=dict(voxel_size=voxel_size),
+    pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
+    pts_bbox_head=dict(
+        bbox_coder=dict(
+            voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2])))
+
+train_cfg = dict(
+    pts=dict(
+        grid_size=[1440, 1440, 40],
+        voxel_size=voxel_size,
+        point_cloud_range=point_cloud_range))
+
+test_cfg = dict(
+    pts=dict(
+        nms_type='circle',
+        voxel_size=voxel_size[:2],
+        pc_range=point_cloud_range[:2]))
 # For nuScenes dataset, we usually evaluate the model at the end of training.
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not

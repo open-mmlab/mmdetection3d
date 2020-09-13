@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/centerpoint_pillar_second_secfpn_dcn_circlenms_nus.py',
+    '../_base_/models/centerpoint_02pillar_second_secfpn_dcn_nus.py',
     '../_base_/default_runtime.py'
 ]
 
@@ -54,8 +54,11 @@ db_sampler = dict(
         pedestrian=2,
         traffic_cone=2,
     ),
-    load_dim=5,
-    use_dim=[0, 1, 2, 3, 4])
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=[0, 1, 2, 3, 4],
+        file_client_args=file_client_args))
 
 train_pipeline = [
     dict(
@@ -71,7 +74,7 @@ train_pipeline = [
         pad_empty_sweeps=True,
         remove_close=True),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    dict(type='ObjectSample', db_sampler=db_sampler),
+    # dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.3925, 0.3925],
@@ -157,6 +160,8 @@ data = dict(
         modality=input_modality,
         test_mode=True,
         box_type_3d='LiDAR'))
+
+model = dict(pts_bbox_head=dict(dcn_head=True))
 # For nuScenes dataset, we usually evaluate the model at the end of training.
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not

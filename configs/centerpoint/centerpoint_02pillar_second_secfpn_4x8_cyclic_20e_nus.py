@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/centerpoint_pillar_second_secfpn_nus.py',
+    '../_base_/models/centerpoint_02pillar_second_secfpn_nus.py',
     '../_base_/default_runtime.py'
 ]
 
