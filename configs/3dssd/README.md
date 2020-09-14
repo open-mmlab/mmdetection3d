@@ -16,4 +16,4 @@ We implement 3DSSD and provide the result and checkpoints on KITTI datasets.
 ### KITTI
 |  Backbone   |Class| Lr schd | Mem (GB) | Inf time (fps) | mAP |Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [SECFPN](./3dssd_kitti-3d-car.py)| Car |AdamW 72e|4.7||78.35||
+|    [PointNet2SAMSG](./3dssd_kitti-3d-car.py)| Car |AdamW 72e|4.7||78.35||
