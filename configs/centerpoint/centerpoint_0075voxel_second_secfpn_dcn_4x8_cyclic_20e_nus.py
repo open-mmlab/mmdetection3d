@@ -1,7 +1,4 @@
-_base_ = [
-    '../_base_/models/centerpoint_01voxel_second_secfpn_nus.py',
-    '../_base_/default_runtime.py'
-]
+_base_ = ['./centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus.py']
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
@@ -129,40 +126,9 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
-    train=dict(
-        type='CBGSDataset',
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'nuscenes_infos_train.pkl',
-            pipeline=train_pipeline,
-            classes=class_names,
-            modality=input_modality,
-            test_mode=False,
-            use_valid_flag=True,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
-    val=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=True,
-        box_type_3d='LiDAR'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=True,
-        box_type_3d='LiDAR'))
+    train=dict(dataset=dict(pipeline=train_pipeline)),
+    val=dict(pipeline=test_pipeline),
+    test=dict(pipeline=test_pipeline))
 
 model = dict(
     pts_voxel_layer=dict(voxel_size=voxel_size),
@@ -180,28 +146,3 @@ train_cfg = dict(
 
 test_cfg = dict(
     pts=dict(voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2]))
-
-# For nuScenes dataset, we usually evaluate the model at the end of training.
-# Since the models are trained by 24 epochs by default, we set evaluation
-# interval to be 24. Please change the interval accordingly if you do not
-# use a default schedule.
-# optimizer
-# This schedule is mainly used by models on nuScenes dataset
-optimizer = dict(type='AdamW', lr=1e-4, weight_decay=0.01)
-# max_norm=10 is better for SECOND
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(
-    policy='cyclic',
-    target_ratio=(10, 1e-4),
-    cyclic_times=1,
-    step_ratio_up=0.4,
-)
-momentum_config = dict(
-    policy='cyclic',
-    target_ratio=(0.85 / 0.95, 1),
-    cyclic_times=1,
-    step_ratio_up=0.4,
-)
-
-# runtime settings
-total_epochs = 20
