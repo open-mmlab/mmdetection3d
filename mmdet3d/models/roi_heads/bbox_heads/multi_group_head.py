@@ -404,12 +404,29 @@ class CenterHead(nn.Module):
         """
         heatmaps, anno_boxes, inds, masks = multi_apply(
             self.get_targets_single, gt_bboxes_3d, gt_labels_3d)
-        heatmaps = np.array(heatmaps).transpose(1, 0).tolist()
-        heatmaps = [torch.stack(heatmaps_) for heatmaps_ in heatmaps]
-        anno_boxes = np.array(anno_boxes).transpose(1, 0).tolist()
-        anno_boxes = [torch.stack(anno_boxes_) for anno_boxes_ in anno_boxes]
-        inds = np.array(inds).transpose(1, 0).tolist()
-        inds = [torch.stack(inds_) for inds_ in inds]
+
+        # transpose heatmaps
+        heatmaps_transed = [[] for _ in range(6)]
+        for i in range(len(heatmaps)):
+            for j in range(len(heatmaps[i])):
+                heatmaps_transed[j].append(heatmaps[i][j])
+        heatmaps = [torch.stack(heatmaps_) for heatmaps_ in heatmaps_transed]
+
+        # transpose anno_boxes
+        anno_boxes_transed = [[] for _ in range(6)]
+        for i in range(len(anno_boxes)):
+            for j in range(len(anno_boxes[i])):
+                anno_boxes_transed[j].append(anno_boxes[i][j])
+        anno_boxes = [
+            torch.stack(anno_boxes_) for anno_boxes_ in anno_boxes_transed
+        ]
+
+        # transpose inds
+        inds_transed = [[] for _ in range(6)]
+        for i in range(len(inds)):
+            for j in range(len(inds[i])):
+                inds_transed[j].append(inds[i][j])
+        inds = [torch.stack(inds_) for inds_ in inds_transed]
         masks = np.array(masks).transpose(1, 0).tolist()
         masks = [torch.stack(masks_) for masks_ in masks]
         return heatmaps, anno_boxes, inds, masks
@@ -435,9 +452,9 @@ class CenterHead(nn.Module):
                                  dim=1).to(device)
         gt_labels_3d += 1
         max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
-        grid_size = np.array(self.train_cfg['grid_size'])
-        pc_range = np.array(self.train_cfg['point_cloud_range'])
-        voxel_size = np.array(self.train_cfg['voxel_size'])
+        grid_size = torch.tensor(self.train_cfg['grid_size'])
+        pc_range = torch.tensor(self.train_cfg['point_cloud_range'])
+        voxel_size = torch.tensor(self.train_cfg['voxel_size'])
 
         feature_map_size = grid_size[:2] // self.train_cfg['out_size_factor']
 
