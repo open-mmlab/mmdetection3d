@@ -28,6 +28,7 @@ class SeparateHead(nn.Module):
             Default: dict(type='Conv2d')
         norm_cfg (dict): Config of norm layer.
             Default: dict(type='BN2d').
+        bias (str): Type of bias. Default: 'auto'.
     """
 
     def __init__(self,
@@ -120,6 +121,7 @@ class DCNSeperateHead(nn.Module):
     Args:
         in_channels (int): Input channels for conv_layer.
         heads (dict): Conv information.
+        dcn_config (dict): Config of dcn layer.
         num_cls (int): Output channels.
             Default: 64.
         final_kernal (int): Kernal size for the last conv layer.
@@ -129,6 +131,7 @@ class DCNSeperateHead(nn.Module):
             Default: dict(type='Conv2d')
         norm_cfg (dict): Config of norm layer.
             Default: dict(type='BN2d').
+        bias (str): Type of bias. Default: 'auto'.
     """
 
     def __init__(self,
@@ -247,6 +250,7 @@ class CenterHead(nn.Module):
             Default: dict(type='Conv2d')
         norm_cfg (dict): Config of norm layer.
             Default: dict(type='BN2d').
+        bias (str): Type of bias. Default: 'auto'.
     """
 
     def __init__(self,
