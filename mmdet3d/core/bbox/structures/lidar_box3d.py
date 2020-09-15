@@ -32,6 +32,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             boxes.
     """
 
+    rotate_axis = 2
+
     @property
     def gravity_center(self):
         """torch.Tensor: A tensor with center of each box."""

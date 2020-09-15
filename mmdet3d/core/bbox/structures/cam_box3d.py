@@ -34,6 +34,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             boxes.
     """
 
+    rotate_axis = 1
+
     @property
     def height(self):
         """torch.Tensor: A vector with height of each box."""
