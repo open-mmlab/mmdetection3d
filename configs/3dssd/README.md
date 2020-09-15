@@ -2,6 +2,7 @@
 
 ## Introduction
 We implement 3DSSD and provide the result and checkpoints on KITTI datasets.
+
 ```
 @inproceedings{yang20203dssd,
     author = {Zetong Yang and Yanan Sun and Shu Liu and Jiaya Jia},
@@ -16,4 +17,6 @@ We implement 3DSSD and provide the result and checkpoints on KITTI datasets.
 ### KITTI
 |  Backbone   |Class| Lr schd | Mem (GB) | Inf time (fps) | mAP |Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [PointNet2SAMSG](./3dssd_kitti-3d-car.py)| Car |AdamW 72e|4.7||78.35||
+|    [PointNet2SAMSG](./3dssd_kitti-3d-car.py)| Car |72e|4.7||78.35(80.42)<sup>1</sup>||
+
+[1]: We report two different 3D object detection performance here. 78.35mAP is evaluated by our evaluation code and 80.42mAP is evaluated by the official development kit （so as that used in the paper and official code of 3DSSD ）. We found that the commonly used Python implementation of [`rotate_iou`](https://github.com/traveller59/second.pytorch/blob/e42e4a0e17262ab7d180ee96a0a36427f2c20a44/second/core/non_max_suppression/nms_gpu.py#L605) which is used in our KITTI dataset evaluation, is different from the official implemention in [KITTI BENCHMARK](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d).
