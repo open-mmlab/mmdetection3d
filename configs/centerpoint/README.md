@@ -37,17 +37,17 @@ We follow the below style to name config files. Contributors are advised to foll
 
 ### CenterPoint
 
-|Backbone|  Voxel type   |Dcn|Circular nms| Mem (GB) | Inf time (fps) | mAP |NDS| Download |
+|Backbone|  Voxel type (voxel size)   |Dcn|Circular nms| Mem (GB) | Inf time (fps) | mAP |NDS| Download |
 | :---------: |:-----: |:-----: | :------: | :------------: | :----: |:----: | :------: |:------: |
-|[SECFPN](./centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus.py)|01voxel|✗|✗||||||
-|[SECFPN](./centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|01voxel|✗|✓||||||
-|[SECFPN](./centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|01voxel|✓|✗||||||
-|[SECFPN](./centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|01voxel|✓|✓||||||
-|[SECFPN](./centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus.py)|0075voxel|✗|✗||||||
-|[SECFPN](./centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|0075voxel|✗|✓||||||
-|[SECFPN](./centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|0075voxel|✓|✗||||||
-|[SECFPN](./centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|0075voxel|✓|✓||||||
-|[SECFPN](./centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py)|02pillar|✗|✗||||||
-|[SECFPN](./centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|02pillar|✗|✓||||||
-|[SECFPN](./centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|02pillar|✓|✗||||||
-|[SECFPN](./centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|02pillar|✓|✓||||||
+|[SECFPN](./centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus.py)|voxel (0.1)|✗|✗||||||
+|[SECFPN](./centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|voxel (0.1)|✗|✓||||||
+|[SECFPN](./centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|voxel (0.1)|✓|✗||||||
+|[SECFPN](./centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|voxel (0.1)|✓|✓||||||
+|[SECFPN](./centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus.py)|voxel (0.075)|✗|✗||||||
+|[SECFPN](./centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|voxel (0.075)|✗|✓||||||
+|[SECFPN](./centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|voxel (0.075)|✓|✗||||||
+|[SECFPN](./centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|voxel (0.075)|✓|✓||||||
+|[SECFPN](./centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py)|pillar (0.2)|✗|✗||||||
+|[SECFPN](./centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|pillar (0.2)|✗|✓||||||
+|[SECFPN](./centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|pillar (0.2)|✓|✗||||||
+|[SECFPN](./centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|pillar (0.2)|✓|✓||||||

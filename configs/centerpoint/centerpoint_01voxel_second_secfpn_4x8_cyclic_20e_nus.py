@@ -1,4 +1,5 @@
 _base_ = [
+    '../_base_/datasets/nus-3d.py',
     '../_base_/models/centerpoint_01voxel_second_secfpn_nus.py',
     '../_base_/default_runtime.py'
 ]
@@ -128,8 +129,6 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
     train=dict(
         type='CBGSDataset',
         dataset=dict(
@@ -144,24 +143,15 @@ data = dict(
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')),
-    val=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=True,
-        box_type_3d='LiDAR'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=True,
-        box_type_3d='LiDAR'))
+    val=dict(pipeline=test_pipeline, classes=class_names),
+    test=dict(pipeline=test_pipeline, classes=class_names))
+
+model = dict(
+    pts_voxel_layer=dict(point_cloud_range=point_cloud_range),
+    pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])))
+# model training and testing settings
+train_cfg = dict(pts=dict(point_cloud_range=point_cloud_range))
+test_cfg = dict(pts=dict(pc_range=point_cloud_range[:2]))
 # For nuScenes dataset, we usually evaluate the model at the end of training.
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not

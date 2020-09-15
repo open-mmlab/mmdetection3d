@@ -2,17 +2,13 @@ voxel_size = [0.2, 0.2, 8]
 model = dict(
     type='CenterPoint',
     pts_voxel_layer=dict(
-        max_num_points=20,
-        point_cloud_range=[-51.2, -51.2, -5.0, 51.2, 51.2, 3.0],
-        voxel_size=voxel_size,
-        max_voxels=(30000, 40000)),
+        max_num_points=20, voxel_size=voxel_size, max_voxels=(30000, 40000)),
     pts_voxel_encoder=dict(
         type='PillarFeatureNet',
         in_channels=5,
         feat_channels=[64],
         with_distance=False,
         voxel_size=(0.2, 0.2, 8),
-        point_cloud_range=(-51.2, -51.2, -5.0, 51.2, 51.2, 3.0),
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
         legacy=False),
     pts_middle_encoder=dict(
@@ -45,20 +41,14 @@ model = dict(
             dict(num_class=2, class_names=['motorcycle', 'bicycle']),
             dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
         ],
-        common_heads={
-            'reg': (2, 2),
-            'height': (1, 2),
-            'dim': (3, 2),
-            'rot': (2, 2),
-            'vel': (2, 2)
-        },
+        common_heads=dict(
+            reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), vel=(2, 2)),
         share_conv_channel=64,
         bbox_coder=dict(
             type='CenterPointBBoxCoder',
             post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
             max_num=500,
             score_threshold=0.1,
-            pc_range=[-51.2, -51.2],
             out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=9),
@@ -69,7 +59,6 @@ model = dict(
 train_cfg = dict(
     pts=dict(
         grid_size=[512, 512, 1],
-        point_cloud_range=[-51.2, -51.2, -5., 51.2, 51.2, 3.],
         voxel_size=voxel_size,
         out_size_factor=4,
         dense_reg=1,
