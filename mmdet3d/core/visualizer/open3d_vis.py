@@ -121,6 +121,7 @@ def show_pts_boxes(points,
     # TODO: support image
     assert 0 <= rot_axis <= 2
 
+    # init visualizer
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     mesh_frame = geometry.TriangleMesh.create_coordinate_frame(
