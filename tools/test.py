@@ -1,4 +1,9 @@
 import argparse
+
+# isort: off
+# must import open3d before import torch
+import open3d  # noqa: F401
+# isort: on
 import mmcv
 import os
 import torch

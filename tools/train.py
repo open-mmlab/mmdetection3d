@@ -1,5 +1,9 @@
 from __future__ import division
 
+# isort: off
+# must import open3d before import torch
+import open3d  # noqa: F401
+# isort: on
 import argparse
 import copy
 import logging
