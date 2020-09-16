@@ -52,7 +52,7 @@ def show(points,
         in_box_color = np.array(points_in_box_color)
         for i in range(len(bbox3d)):
             yaw = np.zeros(3)
-            yaw[rot_axis] = 180 * bbox3d[i, -1] / np.pi
+            yaw[rot_axis] = 180 * bbox3d[i, -1] / np.pi  # radian to angle
             rot_mat = geometry.get_rotation_matrix_from_xyz(yaw)
             center = bbox3d[i, 0:3]
             dim = bbox3d[i, 3:6]
