@@ -252,6 +252,21 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
         return box_idxs_of_pts.squeeze(0)
 
+    def enlarged_box(self, extra_width):
+        """Enlarge the length, width and height boxes.
+
+        Args:
+            extra_width (float | torch.Tensor): Extra width to enlarge the box.
+
+        Returns:
+            :obj:`LiDARInstance3DBoxes`: Enlarged boxes.
+        """
+        enlarged_boxes = self.tensor.clone()
+        enlarged_boxes[:, 3:6] += extra_width * 2
+        # bottom center z minus extra_width
+        enlarged_boxes[:, 2] -= extra_width
+        return self.new_box(enlarged_boxes)
+
     def get_surface_line_center(self):
         """Compute surface and line center of bounding boxes.
 
@@ -259,7 +274,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             torch.Tensor: Surface and line center of bounding boxes.
         """
         obj_size = self.dims
-        center = self.gravity_center
+        center = self.gravity_center.view(-1, 1, 3)
         batch_size = center.shape[0]
 
         rot_sin = torch.sin(-self.yaw)
@@ -275,8 +290,9 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         offset = obj_size.new_tensor([[0, 0, 1], [0, 0, -1], [0, 1, 0],
                                       [0, -1, 0], [1, 0, 0], [-1, 0, 0]])
         offset = offset.view(1, 6, 3) / 2
-        surface_3d = (offset * obj_size.view(batch_size, 1, 3).repeat(
-            1, 6, 1)).transpose(0, 1).reshape(-1, 3)
+        surface_3d = (offset *
+                      obj_size.view(batch_size, 1, 3).repeat(1, 6, 1)).reshape(
+                          -1, 3)
 
         # Get the object line center
         offset = obj_size.new_tensor([[1, 0, 1], [-1, 0, 1], [0, 1, 1],
@@ -286,17 +302,17 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         offset = offset.view(1, 12, 3) / 2
 
         line_3d = (offset *
-                   obj_size.view(batch_size, 1, 3).repeat(1, 12, 1)).transpose(
-                       0, 1).reshape(-1, 3)
+                   obj_size.view(batch_size, 1, 3).repeat(1, 12, 1)).reshape(
+                       -1, 3)
 
         surface_rot = rot_mat_T.repeat(6, 1, 1)
         surface_3d = torch.matmul(
             surface_3d.unsqueeze(-2), surface_rot.transpose(2, 1)).squeeze(-2)
-        surface_center = center.repeat(6, 1) + surface_3d
+        surface_center = center.repeat(1, 6, 1).reshape(-1, 3) + surface_3d
 
         line_rot = rot_mat_T.repeat(12, 1, 1)
         line_3d = torch.matmul(
             line_3d.unsqueeze(-2), line_rot.transpose(2, 1)).squeeze(-2)
-        line_center = center.repeat(12, 1) + line_3d
+        line_center = center.repeat(1, 12, 1).reshape(-1, 3) + line_3d
 
         return surface_center, line_center

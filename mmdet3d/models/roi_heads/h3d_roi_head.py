@@ -155,4 +155,4 @@ class H3DRoIHead(Base3DRoIHead):
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
-        return bbox_results[0]
+        return bbox_results

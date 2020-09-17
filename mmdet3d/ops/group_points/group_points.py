@@ -13,8 +13,9 @@ class QueryAndGroup(nn.Module):
     Groups with a ball query of radius
 
     Args:
-        radius (float): radius of the balls.
+        max_radius (float): The maximum radius of the balls.
         sample_num (int): Maximum number of features to gather in the ball.
+        min_radius (float): The minimum radius of the balls.
         use_xyz (bool): Whether to use xyz.
             Default: True.
         return_grouped_xyz (bool): Whether to return grouped xyz.
@@ -29,15 +30,17 @@ class QueryAndGroup(nn.Module):
     """
 
     def __init__(self,
-                 radius,
+                 max_radius,
                  sample_num,
+                 min_radius=0,
                  use_xyz=True,
                  return_grouped_xyz=False,
                  normalize_xyz=False,
                  uniform_sample=False,
                  return_unique_cnt=False):
         super(QueryAndGroup, self).__init__()
-        self.radius = radius
+        self.max_radius = max_radius
+        self.min_radius = min_radius
         self.sample_num = sample_num
         self.use_xyz = use_xyz
         self.return_grouped_xyz = return_grouped_xyz
@@ -58,7 +61,8 @@ class QueryAndGroup(nn.Module):
         Return：
             Tensor: (B, 3 + C, npoint, sample_num) Grouped feature.
         """
-        idx = ball_query(self.radius, self.sample_num, points_xyz, center_xyz)
+        idx = ball_query(self.min_radius, self.max_radius, self.sample_num,
+                         points_xyz, center_xyz)
 
         if self.uniform_sample:
             unique_cnt = torch.zeros((idx.shape[0], idx.shape[1]))
@@ -79,7 +83,7 @@ class QueryAndGroup(nn.Module):
         grouped_xyz = grouping_operation(xyz_trans, idx)
         grouped_xyz -= center_xyz.transpose(1, 2).unsqueeze(-1)
         if self.normalize_xyz:
-            grouped_xyz /= self.radius
+            grouped_xyz /= self.max_radius
 
         if features is not None:
             grouped_features = grouping_operation(features, idx)
