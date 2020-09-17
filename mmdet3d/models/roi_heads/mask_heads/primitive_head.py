@@ -23,7 +23,7 @@ class PrimitiveHead(nn.Module):
             decoding boxes.
         train_cfg (dict): Config for training.
         test_cfg (dict): Config for testing.
-        vote_moudule_cfg (dict): Config of VoteModule for point-wise votes.
+        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
         vote_aggregation_cfg (dict): Config of vote aggregation layer.
         feat_channels (tuple[int]): Convolution channels of
             prediction layer.
@@ -42,7 +42,7 @@ class PrimitiveHead(nn.Module):
                  primitive_mode,
                  train_cfg=None,
                  test_cfg=None,
-                 vote_moudule_cfg=None,
+                 vote_module_cfg=None,
                  vote_aggregation_cfg=None,
                  feat_channels=(128, 128),
                  upper_thresh=100.0,
@@ -61,7 +61,7 @@ class PrimitiveHead(nn.Module):
         self.primitive_mode = primitive_mode
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.gt_per_seed = vote_moudule_cfg['gt_per_seed']
+        self.gt_per_seed = vote_module_cfg['gt_per_seed']
         self.num_proposal = vote_aggregation_cfg['num_point']
         self.upper_thresh = upper_thresh
         self.surface_thresh = surface_thresh
@@ -71,13 +71,13 @@ class PrimitiveHead(nn.Module):
         self.semantic_reg_loss = build_loss(semantic_reg_loss)
         self.semantic_cls_loss = build_loss(semantic_cls_loss)
 
-        assert vote_aggregation_cfg['mlp_channels'][0] == vote_moudule_cfg[
+        assert vote_aggregation_cfg['mlp_channels'][0] == vote_module_cfg[
             'in_channels']
 
         # Primitive existence flag prediction
         self.flag_conv = ConvModule(
-            vote_moudule_cfg['conv_channels'][-1],
-            vote_moudule_cfg['conv_channels'][-1] // 2,
+            vote_module_cfg['conv_channels'][-1],
+            vote_module_cfg['conv_channels'][-1] // 2,
             1,
             padding=0,
             conv_cfg=conv_cfg,
@@ -85,9 +85,9 @@ class PrimitiveHead(nn.Module):
             bias=True,
             inplace=True)
         self.flag_pred = torch.nn.Conv1d(
-            vote_moudule_cfg['conv_channels'][-1] // 2, 2, 1)
+            vote_module_cfg['conv_channels'][-1] // 2, 2, 1)
 
-        self.vote_module = VoteModule(**vote_moudule_cfg)
+        self.vote_module = VoteModule(**vote_module_cfg)
         self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         prev_channel = vote_aggregation_cfg['mlp_channels'][-1]
@@ -137,8 +137,8 @@ class PrimitiveHead(nn.Module):
         results['pred_flag_' + self.primitive_mode] = primitive_flag
 
         # 1. generate vote_points from seed_points
-        vote_points, vote_features = self.vote_module(seed_points,
-                                                      seed_features)
+        vote_points, vote_features, _ = self.vote_module(
+            seed_points, seed_features)
         results['vote_' + self.primitive_mode] = vote_points
         results['vote_features_' + self.primitive_mode] = vote_features
 

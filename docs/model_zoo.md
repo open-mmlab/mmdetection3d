@@ -35,3 +35,6 @@ Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master
 
 ### RegNetX
 Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details.
+
+### nuImages
+We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details.

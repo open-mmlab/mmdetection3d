@@ -53,14 +53,23 @@ def test_ball_query():
                          [0.3220, 1.4447, 0.3548], [-0.9744, 2.3856,
                                                     -1.2000]]]).cuda()
 
-    idx = ball_query(0.2, 5, xyz, new_xyz)
+    idx = ball_query(0, 0.2, 5, xyz, new_xyz)
     expected_idx = torch.tensor([[[0, 0, 0, 0, 0], [6, 6, 6, 6, 6],
                                   [2, 2, 2, 2, 2], [0, 0, 0, 0, 0],
                                   [0, 0, 0, 0, 0]],
                                  [[0, 0, 0, 0, 0], [2, 2, 2, 2, 2],
                                   [7, 7, 7, 7, 7], [0, 0, 0, 0, 0],
                                   [0, 0, 0, 0, 0]]]).cuda()
+    assert torch.all(idx == expected_idx)
 
+    # test dilated ball query
+    idx = ball_query(0.2, 0.4, 5, xyz, new_xyz)
+    expected_idx = torch.tensor([[[0, 5, 7, 0, 0], [6, 6, 6, 6, 6],
+                                  [2, 3, 2, 2, 2], [0, 5, 7, 0, 0],
+                                  [0, 5, 7, 0, 0]],
+                                 [[0, 0, 0, 0, 0], [2, 2, 2, 2, 2],
+                                  [7, 7, 7, 7, 7], [0, 0, 0, 0, 0],
+                                  [0, 0, 0, 0, 0]]]).cuda()
     assert torch.all(idx == expected_idx)
 
 
@@ -340,5 +349,6 @@ def test_fps_with_dist():
     expected_idx = torch.from_numpy(fps_idx).cuda()
     features_for_fps_distance = torch.from_numpy(
         features_for_fps_distance).cuda()
+
     idx = furthest_point_sample_with_dist(features_for_fps_distance, 16)
     assert torch.all(idx == expected_idx)

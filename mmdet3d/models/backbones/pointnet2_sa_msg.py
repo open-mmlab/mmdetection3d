@@ -24,6 +24,7 @@ class PointNet2SAMSG(BasePointNet):
         fps_mods (tuple[int]): Mod of FPS for each SA module.
         fps_sample_range_lists (tuple[tuple[int]]): The number of sampling
             points which each SA module samples.
+        dilated_group (tuple[bool]): Whether to use dilated ball query for
         out_indices (Sequence[int]): Output from which stages.
         norm_cfg (dict): Config of normalization layer.
         sa_cfg (dict): Config of set abstraction module, which may contain
@@ -47,13 +48,14 @@ class PointNet2SAMSG(BasePointNet):
                  aggregation_channels=(64, 128, 256),
                  fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
                  fps_sample_range_lists=((-1), (-1), (512, -1)),
+                 dilated_group=(True, True, True),
                  out_indices=(2, ),
                  norm_cfg=dict(type='BN2d'),
                  sa_cfg=dict(
                      type='PointSAModuleMSG',
                      pool_mod='max',
                      use_xyz=True,
-                     normalize_xyz=True)):
+                     normalize_xyz=False)):
         super().__init__()
         self.num_sa = len(sa_channels)
         self.out_indices = out_indices
@@ -94,6 +96,7 @@ class PointNet2SAMSG(BasePointNet):
                     mlp_channels=cur_sa_mlps,
                     fps_mod=cur_fps_mod,
                     fps_sample_range_list=cur_fps_sample_range_list,
+                    dilated_group=dilated_group[sa_index],
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
                     bias=True))
@@ -137,6 +140,7 @@ class PointNet2SAMSG(BasePointNet):
         out_sa_xyz = []
         out_sa_features = []
         out_sa_indices = []
+
         for i in range(self.num_sa):
             cur_xyz, cur_features, cur_indices = self.SA_modules[i](
                 sa_xyz[i], sa_features[i])

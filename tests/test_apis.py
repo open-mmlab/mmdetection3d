@@ -38,9 +38,9 @@ def test_inference_detector():
                    '6x8_160e_kitti-3d-3class.py'
     detector = init_detector(detector_cfg, device='cpu')
     results = inference_detector(detector, pcd)
-    bboxes_3d = results[0]['boxes_3d']
-    scores_3d = results[0]['scores_3d']
-    labels_3d = results[0]['labels_3d']
+    bboxes_3d = results[0][0]['boxes_3d']
+    scores_3d = results[0][0]['scores_3d']
+    labels_3d = results[0][0]['labels_3d']
     assert bboxes_3d.tensor.shape[0] >= 0
     assert bboxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0

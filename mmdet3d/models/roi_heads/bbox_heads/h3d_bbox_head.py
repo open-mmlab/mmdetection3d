@@ -308,8 +308,9 @@ class H3DBboxHead(nn.Module):
         for conv_module in self.bbox_pred[1:]:
             bbox_predictions = conv_module(bbox_predictions)
 
-        refine_decode_res = self.bbox_coder.split_pred(bbox_predictions,
-                                                       aggregated_points)
+        refine_decode_res = self.bbox_coder.split_pred(
+            bbox_predictions[:, :self.num_classes + 2],
+            bbox_predictions[:, self.num_classes + 2:], aggregated_points)
         for key in refine_decode_res.keys():
             ret_dict[key + '_optimized'] = refine_decode_res[key]
         return ret_dict
