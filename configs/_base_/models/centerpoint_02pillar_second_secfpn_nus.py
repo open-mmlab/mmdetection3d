@@ -52,9 +52,11 @@ model = dict(
             out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=9),
-        dcn_head=False,
+        seperate_head=dict(
+            type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_bbox=dict(type='L1Loss', reduction='none', loss_weight=0.25)))
+        loss_bbox=dict(type='L1Loss', reduction='none', loss_weight=0.25),
+        norm_bbox=True))
 # model training and testing settings
 train_cfg = dict(
     pts=dict(
@@ -65,7 +67,6 @@ train_cfg = dict(
         gaussian_overlap=0.1,
         max_objs=500,
         min_radius=2,
-        no_log=False,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0]))
 test_cfg = dict(
     pts=dict(
@@ -81,5 +82,4 @@ test_cfg = dict(
         nms_type='rotate',
         nms_pre_max_size=1000,
         nms_post_max_size=83,
-        nms_iou_threshold=0.2,
-        no_log=False))
+        nms_iou_threshold=0.2))

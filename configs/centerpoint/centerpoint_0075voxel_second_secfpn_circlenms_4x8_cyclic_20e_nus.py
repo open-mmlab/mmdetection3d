@@ -131,7 +131,8 @@ data = dict(
     test=dict(pipeline=test_pipeline))
 
 model = dict(
-    pts_voxel_layer=dict(voxel_size=voxel_size),
+    pts_voxel_layer=dict(
+        voxel_size=voxel_size, point_cloud_range=point_cloud_range),
     pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
     pts_bbox_head=dict(
         bbox_coder=dict(

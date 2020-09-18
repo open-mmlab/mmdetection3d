@@ -131,12 +131,24 @@ data = dict(
     test=dict(pipeline=test_pipeline))
 
 model = dict(
-    pts_voxel_layer=dict(voxel_size=voxel_size),
+    pts_voxel_layer=dict(
+        voxel_size=voxel_size, point_cloud_range=point_cloud_range),
     pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
     pts_bbox_head=dict(
         bbox_coder=dict(
             voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2]),
-        dcn_head=True))
+        seperate_head=dict(
+            type='DCNSeperateHead',
+            dcn_config=dict(
+                type='DCN',
+                in_channels=64,
+                out_channels=64,
+                kernel_size=3,
+                padding=1,
+                groups=4,
+                bias=True),
+            init_bias=-2.19,
+            final_kernel=3)))
 
 train_cfg = dict(
     pts=dict(
