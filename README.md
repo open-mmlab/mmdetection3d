@@ -70,6 +70,8 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 | PointPillars       | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| H3DNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| 3DSSD            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 

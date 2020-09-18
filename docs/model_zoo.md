@@ -38,3 +38,11 @@ Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master
 
 ### nuImages
 We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details.
+
+### H3DNet
+
+Please refer to [H3DNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/h3dnet) for details.
+
+### 3DSSD
+
+Please refer to [3DSSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/3dssd) for details.
