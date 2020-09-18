@@ -1,7 +1,7 @@
 # 3DSSD: Point-based 3D Single Stage Object Detector
 
 ## Introduction
-We implement 3DSSD and provide the result and checkpoints on KITTI datasets.
+We implement 3DSSD and provide the results and checkpoints on KITTI datasets.
 
 ```
 @inproceedings{yang20203dssd,
@@ -13,11 +13,11 @@ We implement 3DSSD and provide the result and checkpoints on KITTI datasets.
 ```
 
 ### Experiment details on KITTI datasets
-Some experiment settings are different from our implementation and the 3DSSD official code and we found that these differences do no harm to the performance on KITTI datasets. The differences are listed as follows:
-1. We keep the scenes that without any object while the official code remove those scenes while preprocessing the dataset.
-2. We do not use the 'batch normalization ' decay in training procedure.
-3. While using [`DataBaseSampler` ](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/dbsampler.py#L80) for data augmentation, the official code uses road planes as reference to place the sampled objects while we ignore the this extra information.
-4. We use LIDAR coordinates while the official code uses Camera coordinates for input points.
+Some settings in our implementation are different from the [official implementation](https://github.com/Jia-Research-Lab/3DSSD), which bring marginal differences to the performance on KITTI datasets in our experiments. To simplify and unify the implementation, we skip them in our implementation. These differences are listed as follows:
+1. We keep the scenes without any object while the official code skips these scenes in training (about 500 samples are threw for car detection).
+2. We do not modify the decay of `batch normalization` during training.
+3. While using [`DataBaseSampler` ](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/dbsampler.py#L80) for data augmentation, the official code uses road planes as reference to place the sampled objects while we do not use road plane.
+4. We use LIDAR coordinates while the official code uses camera coordinates for input points.
 
 ## Results
 
