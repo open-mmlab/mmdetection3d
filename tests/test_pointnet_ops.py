@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from mmdet3d.ops import (ball_query, furthest_point_sample,
+from mmdet3d.ops import (ball_query, calc_feat_distance, furthest_point_sample,
                          furthest_point_sample_with_dist, gather_points,
                          grouping_operation, three_interpolate, three_nn)
 
@@ -352,3 +352,42 @@ def test_fps_with_dist():
 
     idx = furthest_point_sample_with_dist(features_for_fps_distance, 16)
     assert torch.all(idx == expected_idx)
+
+
+def test_calc_feat_distance():
+    if not torch.cuda.is_available():
+        pytest.skip()
+    features = torch.tensor([[[
+        -1.6095, -0.1029, -0.8876, -1.2447, -2.4031, 0.3708, -1.1586, -1.4967,
+        -0.4800, 0.2252
+    ],
+                              [
+                                  1.9138, 3.4979, 1.6854, 1.5631, 3.6776,
+                                  3.1154, 2.1705, 2.5221, 2.0411, 3.1446
+                              ],
+                              [
+                                  -1.4173, 0.3073, -1.4339, -1.4340, -1.2770,
+                                  -0.2867, -1.4162, -1.4044, -1.4245, -1.4074
+                              ]],
+                             [[
+                                 0.2160, 0.0842, 0.3661, -0.2749, -0.4909,
+                                 -0.6066, -0.8773, -0.0745, -0.9496, 0.1434
+                             ],
+                              [
+                                  1.3644, 1.8087, 1.6855, 1.9563, 1.2746,
+                                  1.9662, 0.9566, 1.8778, 1.1437, 1.3639
+                              ],
+                              [
+                                  -0.7172, 0.1692, 0.2241, 0.0721, -0.7540,
+                                  0.0462, -0.6227, 0.3223, -0.6944, -0.5294
+                              ]]]).cuda()
+
+    output = calc_feat_distance(features, features)
+    expected_output = torch.tensor([[[0.0000, 126.5037, 5.8722],
+                                     [126.5037, 0.0000, 137.1241],
+                                     [5.8722, 137.1241, 0.0000]],
+                                    [[0.0000, 33.7943, 2.2541],
+                                     [33.7943, 0.0000, 32.3855],
+                                     [2.2541, 32.3855, 0.0000]]]).cuda()
+
+    assert torch.allclose(output, expected_output)
