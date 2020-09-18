@@ -40,8 +40,7 @@ db_sampler = dict(
             barrier=5,
             motorcycle=5,
             bicycle=5,
-            pedestrian=5,
-        )),
+            pedestrian=5)),
     classes=class_names,
     sample_groups=dict(
         car=2,
@@ -53,8 +52,7 @@ db_sampler = dict(
         motorcycle=6,
         bicycle=6,
         pedestrian=2,
-        traffic_cone=2,
-    ),
+        traffic_cone=2),
     points_loader=dict(
         type='LoadPointsFromFile',
         load_dim=5,

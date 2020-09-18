@@ -31,7 +31,6 @@ model = dict(
         use_conv_for_no_stride=True),
     pts_bbox_head=dict(
         type='CenterHead',
-        mode='3d',
         in_channels=sum([128, 128, 128]),
         tasks=[
             dict(num_class=1, class_names=['car']),
@@ -55,7 +54,7 @@ model = dict(
         seperate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_bbox=dict(type='L1Loss', reduction='none', loss_weight=0.25),
+        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),
         norm_bbox=True))
 # model training and testing settings
 train_cfg = dict(
