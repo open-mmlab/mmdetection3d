@@ -100,7 +100,7 @@ For evaluation on waymo, please follow the [instruction](https://github.com/waym
    bazel clean
 
    bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
-   cp waymo_open_dataset/metrics/tools/compute_detection_metrics_main mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+   cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
    ```
 
 Then you can evaluate your models on waymo. An example to evaluate PointPillars on waymo with 8 GPUs with waymo metrics is as follows.
@@ -138,13 +138,13 @@ After generating the bin file, you can simply build the binary file `create_subm
    ```shell
    cd ../waymo-od/
    bazel build waymo_open_dataset/metrics/tools/create_submission
-   cp waymo_open_dataset/metrics/tools/compute_detection_metrics_main mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+   cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
    vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
-   cp waymo_open_dataset/metrics/tools/submission.txtpb mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+   cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
 
-   cd mmdetection3d
-   mkdir results/waymo-car/submission
-   mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdetection3d/mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
+   cd ../mmdetection3d
+   # suppose the result bin is in `results/waymo-car/submission`
+   mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
 
    tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
    gzip results/waymo-car/submission/my_model.tar
