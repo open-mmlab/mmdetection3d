@@ -1,4 +1,5 @@
-from mmcv.ops import (RoIAlign, SigmoidFocalLoss, nms, roi_align,
+from mmcv.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
+                      get_compiling_cuda_version, nms, roi_align,
                       sigmoid_focal_loss)
 
 from .ball_query import ball_query
@@ -15,7 +16,6 @@ from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
                               points_in_boxes_cpu, points_in_boxes_gpu)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
-from .utils import get_compiler_version, get_compiling_cuda_version
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
 
 __all__ = [
