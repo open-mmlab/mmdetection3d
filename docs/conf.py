@@ -42,13 +42,25 @@ extensions = [
 ]
 
 autodoc_mock_imports = [
-    'cv2', 'matplotlib', 'nuscenes', 'PIL', 'pycocotools', 'pyquaternion',
-    'terminaltables', 'mmcv', 'mmdet', 'mmdet3d.version',
-    'mmdet3d.ops.ball_query', 'mmdet3d.ops.furthest_point_sample',
-    'mmdet3d.ops.gather_points', 'mmdet3d.ops.group_points',
-    'mmdet3d.ops.interpolate', 'mmdet3d.ops.roiaware_pool3d',
-    'mmdet3d.ops.spconv', 'mmdet3d.ops.voxel.voxel_layer', 'mmdet3d.ops.iou3d',
-    'mmdet3d.ops.utils'
+    'cv2',
+    'matplotlib',
+    'nuscenes',
+    'PIL',
+    'pycocotools',
+    'pyquaternion',
+    'terminaltables',
+    'mmcv',
+    'mmdet',
+    'mmdet3d.version',
+    'mmdet3d.ops.ball_query',
+    'mmdet3d.ops.furthest_point_sample',
+    'mmdet3d.ops.gather_points',
+    'mmdet3d.ops.group_points',
+    'mmdet3d.ops.interpolate',
+    'mmdet3d.ops.roiaware_pool3d',
+    'mmdet3d.ops.spconv',
+    'mmdet3d.ops.voxel.voxel_layer',
+    'mmdet3d.ops.iou3d',
 ]
 autosectionlabel_prefix_document = True
 
