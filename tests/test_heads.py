@@ -730,7 +730,6 @@ def test_center_head():
         nms_type='circle')
     center_head_cfg = dict(
         type='CenterHead',
-        mode='3d',
         in_channels=sum([256, 256]),
         tasks=tasks,
         train_cfg=train_cfg,
