@@ -14,14 +14,6 @@ class_names = [
 ]
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
-# Input modality for nuScenes dataset, this is consistent with the submission
-# format which requires the information in input_modality.
-input_modality = dict(
-    use_lidar=True,
-    use_camera=False,
-    use_radar=False,
-    use_map=False,
-    use_external=False)
 file_client_args = dict(backend='disk')
 
 db_sampler = dict(
@@ -135,7 +127,6 @@ data = dict(
             ann_file=data_root + 'nuscenes_infos_train.pkl',
             pipeline=train_pipeline,
             classes=class_names,
-            modality=input_modality,
             test_mode=False,
             use_valid_flag=True,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
