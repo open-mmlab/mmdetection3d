@@ -12,6 +12,15 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
+
+model = dict(
+    pts_voxel_layer=dict(point_cloud_range=point_cloud_range),
+    pts_voxel_encoder=dict(point_cloud_range=point_cloud_range),
+    pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])))
+# model training and testing settings
+train_cfg = dict(pts=dict(point_cloud_range=point_cloud_range))
+test_cfg = dict(pts=dict(pc_range=point_cloud_range[:2]))
+
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
 file_client_args = dict(backend='disk')
@@ -135,13 +144,6 @@ data = dict(
     val=dict(pipeline=test_pipeline, classes=class_names),
     test=dict(pipeline=test_pipeline, classes=class_names))
 
-model = dict(
-    pts_voxel_layer=dict(point_cloud_range=point_cloud_range),
-    pts_voxel_encoder=dict(point_cloud_range=point_cloud_range),
-    pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])))
-# model training and testing settings
-train_cfg = dict(pts=dict(point_cloud_range=point_cloud_range))
-test_cfg = dict(pts=dict(pc_range=point_cloud_range[:2]))
 # For nuScenes dataset, we usually evaluate the model at the end of training.
 # Since the models are trained by 24 epochs by default, we set evaluation
 # interval to be 24. Please change the interval accordingly if you do not

@@ -9,6 +9,24 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
+
+model = dict(
+    pts_voxel_layer=dict(
+        voxel_size=voxel_size, point_cloud_range=point_cloud_range),
+    pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
+    pts_bbox_head=dict(
+        bbox_coder=dict(
+            voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2])))
+
+train_cfg = dict(
+    pts=dict(
+        grid_size=[1440, 1440, 40],
+        voxel_size=voxel_size,
+        point_cloud_range=point_cloud_range))
+
+test_cfg = dict(
+    pts=dict(voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2]))
+
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
 file_client_args = dict(backend='disk')
@@ -121,20 +139,3 @@ data = dict(
     train=dict(dataset=dict(pipeline=train_pipeline)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
-
-model = dict(
-    pts_voxel_layer=dict(
-        voxel_size=voxel_size, point_cloud_range=point_cloud_range),
-    pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
-    pts_bbox_head=dict(
-        bbox_coder=dict(
-            voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2])))
-
-train_cfg = dict(
-    pts=dict(
-        grid_size=[1440, 1440, 40],
-        voxel_size=voxel_size,
-        point_cloud_range=point_cloud_range))
-
-test_cfg = dict(
-    pts=dict(voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2]))

@@ -1,6 +1,5 @@
 _base_ = ['./centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py']
 
-test_cfg = dict(pts=dict(nms_type='circle'))
 model = dict(
     pts_bbox_head=dict(
         seperate_head=dict(
@@ -15,3 +14,5 @@ model = dict(
                 bias=True),
             init_bias=-2.19,
             final_kernel=3)))
+
+test_cfg = dict(pts=dict(nms_type='circle'))
