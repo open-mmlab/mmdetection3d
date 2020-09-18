@@ -42,7 +42,7 @@ class SeparateHead(nn.Module):
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
                  **kwargs):
-        super(SeparateHead, self).__init__(**kwargs)
+        super(SeparateHead, self).__init__()
 
         self.heads = heads
         self.init_bias = init_bias
