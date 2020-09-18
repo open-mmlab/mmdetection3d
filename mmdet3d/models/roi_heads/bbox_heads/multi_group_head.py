@@ -117,10 +117,12 @@ class SeparateHead(nn.Module):
 
 @HEADS.register_module()
 class DCNSeperateHead(nn.Module):
-    """DCNSeperateHead for CenterHead.
+    r"""DCNSeperateHead for CenterHead.
 
-    0 -----> DCN for getmap task -----> heatmap task.
-    | -----> DCN for other tasks -----> other tasks
+    .. code-block:: none
+            /-----> DCN for heatmap task -----> heatmap task.
+    feature
+            \-----> DCN for regression tasks -----> regression tasks
 
     Args:
         in_channels (int): Input channels for conv_layer.
@@ -136,7 +138,7 @@ class DCNSeperateHead(nn.Module):
         norm_cfg (dict): Config of norm layer.
             Default: dict(type='BN2d').
         bias (str): Type of bias. Default: 'auto'.
-    """
+    """  # noqa: W605
 
     def __init__(self,
                  in_channels,
@@ -234,7 +236,7 @@ class CenterHead(nn.Module):
         mode (str): Mode of the head. Default: '3d'.
         in_channels (list[int] | int): Channels of the input feature map.
             Default: [128].
-        tasks (list[dict]): Task information including class number \
+        tasks (list[dict]): Task information including class number
             and class names. Default: None.
         dataset (str): Name of the dataset. Default: 'nuscenes'.
         weight (float): Weight for location loss. Default: 0.25.
@@ -245,7 +247,7 @@ class CenterHead(nn.Module):
             Default: dict(type='GaussianFocalLoss', reduction='mean').
         loss_bbox (dict): Config of regression loss function.
             Default: dict(type='L1Loss', reduction='none').
-        seperate_head (dict): Config of seperate head. Default: dict( \
+        seperate_head (dict): Config of seperate head. Default: dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3)
         share_conv_channel (int): Output channels for share_conv_layer.
             Default: 64.
@@ -259,7 +261,6 @@ class CenterHead(nn.Module):
     """
 
     def __init__(self,
-                 mode='3d',
                  in_channels=[128],
                  tasks=None,
                  train_cfg=None,
@@ -324,7 +325,7 @@ class CenterHead(nn.Module):
         """Forward function for CenterPoint.
 
         Args:
-            x (torch.Tensor): Input feature map with the shape of \
+            x (torch.Tensor): Input feature map with the shape of
                 [B, 512, 128, 128].
 
         Returns:
@@ -343,7 +344,7 @@ class CenterHead(nn.Module):
         """Forward pass.
 
         Args:
-            feats (list[torch.Tensor]): Multi-level features, e.g., \
+            feats (list[torch.Tensor]): Multi-level features, e.g.,
                 features produced by FPN.
 
         Returns:
@@ -358,9 +359,9 @@ class CenterHead(nn.Module):
 
         Args:
             feat (torch.tensor): Feature map with the shape of [B, H*W, 10].
-            ind (torch.Tensor): Index of the ground truth boxes with the \
+            ind (torch.Tensor): Index of the ground truth boxes with the
                 shape of [B, max_obj].
-            mask (torch.Tensor): Mask of the feature map with the shape \
+            mask (torch.Tensor): Mask of the feature map with the shape
                 of [B, max_obj]. Default: None.
 
         Returns:
@@ -380,7 +381,7 @@ class CenterHead(nn.Module):
         """Generate targets.
 
         Args:
-            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground \
+            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
                 truth gt boxes.
             gt_labels_3d (list[torch.Tensor]): Labels of boxes.
 
@@ -500,27 +501,28 @@ class CenterHead(nn.Module):
                     x, y, z = task_boxes[idx][k][0], task_boxes[idx][k][
                         1], task_boxes[idx][k][2]
 
-                    coor_x, coor_y = (
+                    coor_x = (
                         x - pc_range[0]
-                    ) / voxel_size[0] / self.train_cfg['out_size_factor'], (
+                    ) / voxel_size[0] / self.train_cfg['out_size_factor']
+                    coor_y = (
                         y - pc_range[1]
                     ) / voxel_size[1] / self.train_cfg['out_size_factor']
 
-                    ct = torch.tensor([coor_x, coor_y],
-                                      dtype=torch.float32,
-                                      device=device)
-                    ct_int = ct.to(torch.int32)
+                    center = torch.tensor([coor_x, coor_y],
+                                          dtype=torch.float32,
+                                          device=device)
+                    center_int = center.to(torch.int32)
 
                     # throw out not in range objects to avoid out of array
                     # area when creating the heatmap
-                    if not (0 <= ct_int[0] < feature_map_size[0]
-                            and 0 <= ct_int[1] < feature_map_size[1]):
+                    if not (0 <= center_int[0] < feature_map_size[0]
+                            and 0 <= center_int[1] < feature_map_size[1]):
                         continue
 
-                    draw_gaussian(heatmap[cls_id], ct_int, radius)
+                    draw_gaussian(heatmap[cls_id], center_int, radius)
 
                     new_idx = k
-                    x, y = ct_int[0], ct_int[1]
+                    x, y = center_int[0], center_int[1]
 
                     assert (y * feature_map_size[0] + x <
                             feature_map_size[0] * feature_map_size[1])
@@ -534,7 +536,7 @@ class CenterHead(nn.Module):
                     if self.norm_bbox:
                         box_dim = box_dim.log()
                     anno_box[new_idx] = torch.cat([
-                        ct - torch.tensor([x, y], device=device),
+                        center - torch.tensor([x, y], device=device),
                         z.unsqueeze(0), box_dim,
                         torch.sin(rot).unsqueeze(0),
                         torch.cos(rot).unsqueeze(0),
@@ -552,7 +554,7 @@ class CenterHead(nn.Module):
         """Loss function for CenterHead.
 
         Args:
-            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground \
+            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
                 truth gt boxes.
             gt_labels_3d (list[torch.Tensor]): Labels of boxes.
             preds_dicts (dict): Output of forward function.
@@ -591,12 +593,10 @@ class CenterHead(nn.Module):
 
             code_weights = self.train_cfg.get('code_weights', None)
             bbox_weights = mask * mask.new_tensor(code_weights)
-            loss_bbox = (
-                torch.sum(self.loss_bbox(pred, target_box, bbox_weights), 1) /
-                (num + 1e-4)).sum()
+            loss_bbox = self.loss_bbox(
+                pred, target_box, bbox_weights, avg_factor=(num + 1e-4))
             loss_dict[f'task{task_id}.loss_heatmap'] = loss_heatmap
             loss_dict[f'task{task_id}.loss_bbox'] = loss_bbox
-
         return loss_dict
 
     def get_bboxes(self, preds_dicts, img_metas, img=None, rescale=False):
@@ -699,11 +699,11 @@ class CenterHead(nn.Module):
 
         Args:
             num_class_with_bg (int): Number of classes for the current task.
-            batch_cls_preds (list[torch.Tensor]): Prediction score with the \
+            batch_cls_preds (list[torch.Tensor]): Prediction score with the
                 shape of [N].
-            batch_reg_preds (list[torch.Tensor]): Prediction bbox with the \
+            batch_reg_preds (list[torch.Tensor]): Prediction bbox with the
                 shape of [N, 9].
-            batch_cls_labels (list[torch.Tensor]): Prediction label with the \
+            batch_cls_labels (list[torch.Tensor]): Prediction label with the
                 shape of [N].
             img_metas (list[dict]): Meta information of each sample.
 
@@ -749,8 +749,7 @@ class CenterHead(nn.Module):
                 top_labels = torch.zeros(
                     total_scores.shape[0],
                     device=total_scores.device,
-                    dtype=torch.long,
-                )
+                    dtype=torch.long)
 
             else:
                 top_labels = cls_labels.long()
