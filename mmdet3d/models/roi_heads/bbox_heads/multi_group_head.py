@@ -485,11 +485,13 @@ class CenterHead(nn.Module):
             for k in range(num_objs):
                 cls_id = task_classes[idx][k] - 1
 
-                width, length, _ = task_boxes[idx][k][3], task_boxes[idx][k][
-                    4], task_boxes[idx][k][5]
-                width, length = width / voxel_size[0] / self.train_cfg[
-                    'out_size_factor'], length / voxel_size[
-                        1] / self.train_cfg['out_size_factor']
+                width = task_boxes[idx][k][3]
+                length = task_boxes[idx][k][4]
+                width = width / voxel_size[0] / self.train_cfg[
+                    'out_size_factor']
+                length = length / voxel_size[1] / self.train_cfg[
+                    'out_size_factor']
+
                 if width > 0 and length > 0:
                     radius = gaussian_radius(
                         (length, width),
@@ -754,7 +756,6 @@ class CenterHead(nn.Module):
             else:
                 top_labels = cls_labels.long()
                 top_scores = total_scores.squeeze(-1)
-                # top_scores, top_labels = torch.max(total_scores, dim=-1)
 
             if self.test_cfg['score_threshold'] > 0.0:
                 thresh = torch.tensor(
@@ -767,7 +768,6 @@ class CenterHead(nn.Module):
                 if self.test_cfg['score_threshold'] > 0.0:
                     box_preds = box_preds[top_scores_keep]
                     top_labels = top_labels[top_scores_keep]
-                # boxes_for_nms = box_preds[:, [0, 1, 3, 4, -1]]
 
                 boxes_for_nms = xywhr2xyxyr(img_metas[i]['box_type_3d'](
                     box_preds[:, [0, 1, 2, 3, 4, 5, 8, 6, 7]],
@@ -789,7 +789,6 @@ class CenterHead(nn.Module):
             selected_scores = top_scores[selected]
 
             # finally generate predictions.
-            # self.logger.info(f"selected boxes: {selected_boxes.shape}")
             if selected_boxes.shape[0] != 0:
                 box_preds = selected_boxes
                 scores = selected_scores
