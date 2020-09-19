@@ -726,31 +726,25 @@ class CenterHead(nn.Module):
         for i, (box_preds, cls_preds, cls_labels) in enumerate(
                 zip(batch_reg_preds, batch_cls_preds, batch_cls_labels)):
 
-            box_preds = box_preds.float()
-            cls_preds = cls_preds.float()
-
-            # total_scores = torch.sigmoid(cls_preds)
-            total_scores = cls_preds
-
             # Apply NMS in birdeye view
 
             # get highest score per prediction, than apply nms
             # to remove overlapped box.
             if num_class_with_bg == 1:
-                top_scores = total_scores.squeeze(-1)
+                top_scores = cls_preds.squeeze(-1)
                 top_labels = torch.zeros(
-                    total_scores.shape[0],
-                    device=total_scores.device,
+                    cls_preds.shape[0],
+                    device=cls_preds.device,
                     dtype=torch.long)
 
             else:
                 top_labels = cls_labels.long()
-                top_scores = total_scores.squeeze(-1)
+                top_scores = cls_preds.squeeze(-1)
 
             if self.test_cfg['score_threshold'] > 0.0:
                 thresh = torch.tensor(
                     [self.test_cfg['score_threshold']],
-                    device=total_scores.device).type_as(total_scores)
+                    device=cls_preds.device).type_as(cls_preds)
                 top_scores_keep = top_scores >= thresh
                 top_scores = top_scores.masked_select(top_scores_keep)
 
