@@ -6,11 +6,11 @@ from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
                           xywhr2xyxyr)
+from mmdet3d.models import builder
+from mmdet3d.models.builder import HEADS, build_loss
 from mmdet3d.models.utils import clip_sigmoid
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
-from ... import builder
-from ...builder import HEADS, build_loss
 
 
 @HEADS.register_module()
