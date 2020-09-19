@@ -259,9 +259,9 @@ class DataBaseSampler(object):
                 count += 1
 
                 s_points_list.append(s_points)
-            # gt_names = np.array([s['name'] for s in sampled]),
-            # gt_labels = np.array([self.cat2label(s) for s in gt_names])
-            gt_labels = np.array([self.cat2label[s['name']] for s in sampled])
+
+            gt_labels = np.array([self.cat2label[s['name']] for s in sampled],
+                                 dtype=np.long)
             ret = {
                 'gt_labels_3d':
                 gt_labels,
