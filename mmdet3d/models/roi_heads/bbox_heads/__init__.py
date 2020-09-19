@@ -3,10 +3,11 @@ from mmdet.models.roi_heads.bbox_heads import (BBoxHead, ConvFCBBoxHead,
                                                Shared2FCBBoxHead,
                                                Shared4Conv1FCBBoxHead)
 from .h3d_bbox_head import H3DBboxHead
+from .multi_group_head import CenterHead
 from .parta2_bbox_head import PartA2BboxHead
 
 __all__ = [
     'BBoxHead', 'ConvFCBBoxHead', 'Shared2FCBBoxHead',
-    'Shared4Conv1FCBBoxHead', 'DoubleConvFCBBoxHead', 'H3DBboxHead',
-    'PartA2BboxHead'
+    'Shared4Conv1FCBBoxHead', 'DoubleConvFCBBoxHead', 'PartA2BboxHead',
+    'H3DBboxHead', 'CenterHead'
 ]
