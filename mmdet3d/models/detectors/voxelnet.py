@@ -101,7 +101,7 @@ class VoxelNet(SingleStage3DDetector):
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
-        return bbox_results[0]
+        return bbox_results
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
@@ -123,4 +123,4 @@ class VoxelNet(SingleStage3DDetector):
         merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
                                             self.bbox_head.test_cfg)
 
-        return merged_bboxes
+        return [merged_bboxes]

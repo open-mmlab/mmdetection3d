@@ -57,6 +57,7 @@ class Custom3DDataset(Dataset):
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
         self.CLASSES = self.get_classes(classes)
+        self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
         self.data_infos = self.load_annotations(self.ann_file)
 
         if pipeline is not None:
@@ -300,7 +301,7 @@ class Custom3DDataset(Dataset):
         """Set flag according to image aspect ratio.
 
         Images with aspect ratio greater than 1 will be set as group 1,
-        otherwise group 0. In 3D datasets, they are all the same, thus
-        are all zeros.
+        otherwise group 0. In 3D datasets, they are all the same, thus are all
+        zeros.
         """
         self.flag = np.zeros(len(self), dtype=np.uint8)

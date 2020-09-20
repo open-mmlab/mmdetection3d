@@ -15,8 +15,11 @@ db_sampler = dict(
         filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
     classes=class_names,
     sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10),
-    load_dim=5,
-    use_dim=5)
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        load_dim=5,
+        use_dim=[0, 1, 2, 3, 4],
+        file_client_args=file_client_args))
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.

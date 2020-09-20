@@ -5,9 +5,7 @@ We follow the procedure in [votenet](https://github.com/facebookresearch/votenet
 
 2. Enter the `matlab` folder, Extract point clouds and annotations by running `extract_split.m`, `extract_rgbd_data_v2.m` and `extract_rgbd_data_v1.m`.
 
-3. Back to this directory, prepare data by running `python sunrgbd_data.py --gen_v1_data`.
-
-4. Enter the project root directory, Generate training data by running
+3. Enter the project root directory, Generate training data by running
 ```bash
 python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd
 ```
@@ -18,10 +16,8 @@ cd matlab
 matlab -nosplash -nodesktop -r 'extract_split;quit;'
 matlab -nosplash -nodesktop -r 'extract_rgbd_data_v2;quit;'
 matlab -nosplash -nodesktop -r 'extract_rgbd_data_v1;quit;'
-cd ..
-python sunrgbd_data.py --gen_v1_data
-cd ../..
-python tools/create_data.py sunrgbd --root-path ./data/sunrgbd --out-dir ./data/sunrgbd --extra-tag sunrgbd
+cd ../../..
+python tools/create_data.py sunrgbd --root-path ./data/sunrgbd  --out-dir ./data/sunrgbd --extra-tag sunrgbd
 ```
 
 NOTE: SUNRGBDtoolbox.zip should have MD5 hash `18d22e1761d36352f37232cba102f91f` (you can check the hash with `md5 SUNRGBDtoolbox.zip` on Mac OS or `md5sum SUNRGBDtoolbox.zip` on Linux)
@@ -29,8 +25,6 @@ NOTE: SUNRGBDtoolbox.zip should have MD5 hash `18d22e1761d36352f37232cba102f91f`
 The directory structure after pre-processing should be as below
 ```
 sunrgbd
-├── sunrgbd_utils.py
-├── sunrgbd_data.py
 ├── README.md
 ├── matlab
 │   ├── extract_rgbd_data_v1.m
@@ -50,8 +44,6 @@ sunrgbd
 │   ├── label
 │   ├── seg_label
 │   ├── val_data_idx.txt
-├── sunrgbd_pc_bbox_votes_50k_v1_train
-├── sunrgbd_pc_bbox_votes_50k_v1_val
 ├── points
 ├── sunrgbd_infos_train.pkl
 ├── sunrgbd_infos_val.pkl

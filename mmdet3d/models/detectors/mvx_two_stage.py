@@ -389,22 +389,24 @@ class MVXTwoStageDetector(Base3DDetector):
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
-        return bbox_results[0]
+        return bbox_results
 
     def simple_test(self, points, img_metas, img=None, rescale=False):
         """Test function without augmentaiton."""
         img_feats, pts_feats = self.extract_feat(
             points, img=img, img_metas=img_metas)
 
-        bbox_list = dict()
+        bbox_list = [dict() for i in range(len(img_metas))]
         if pts_feats and self.with_pts_bbox:
             bbox_pts = self.simple_test_pts(
                 pts_feats, img_metas, rescale=rescale)
-            bbox_list.update(pts_bbox=bbox_pts)
+            for result_dict, pts_bbox in zip(bbox_list, bbox_pts):
+                result_dict['pts_bbox'] = pts_bbox
         if img_feats and self.with_img_bbox:
             bbox_img = self.simple_test_img(
                 img_feats, img_metas, rescale=rescale)
-            bbox_list.update(img_bbox=bbox_img)
+            for result_dict, img_bbox in zip(bbox_list, bbox_img):
+                result_dict['img_bbox'] = img_bbox
         return bbox_list
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
@@ -415,7 +417,7 @@ class MVXTwoStageDetector(Base3DDetector):
         if pts_feats and self.with_pts_bbox:
             bbox_pts = self.aug_test_pts(pts_feats, img_metas, rescale)
             bbox_list.update(pts_bbox=bbox_pts)
-        return bbox_list
+        return [bbox_list]
 
     def extract_feats(self, points, img_metas, imgs=None):
         """Extract point and image features of multiple samples."""

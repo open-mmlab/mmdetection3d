@@ -97,13 +97,13 @@ class MultiBackbone(nn.Module):
             dict[str, list[torch.Tensor]]: Outputs from multiple backbones.
 
                 - fp_xyz[suffix] (list[torch.Tensor]): The coordinates of
-                    each fp features.
+                  each fp features.
                 - fp_features[suffix] (list[torch.Tensor]): The features
-                    from each Feature Propagate Layers.
+                  from each Feature Propagate Layers.
                 - fp_indices[suffix] (list[torch.Tensor]): Indices of the
-                    input points.
+                  input points.
                 - hd_feature (torch.Tensor): The aggregation feature
-                    from multiple backbones.
+                  from multiple backbones.
         """
         ret = {}
         fp_features = []

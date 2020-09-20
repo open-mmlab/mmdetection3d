@@ -30,6 +30,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 - **Support indoor/outdoor 3D detection out of box**
 
   It directly supports popular indoor and outdoor 3D detection datasets, including ScanNet, SUNRGB-D, nuScenes, Lyft, and KITTI.
+  For nuScenes dataset, we also support nuImages dataset.
 
 - **Natural integration with 2D detection**
 
@@ -69,6 +70,8 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 | PointPillars       | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| H3DNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| 3DSSD            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 

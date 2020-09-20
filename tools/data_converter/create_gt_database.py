@@ -142,10 +142,7 @@ def create_groundtruth_database(dataset_class_name,
     """
     print(f'Create GT Database of {dataset_class_name}')
     dataset_cfg = dict(
-        type=dataset_class_name,
-        data_root=data_path,
-        ann_file=info_path,
-    )
+        type=dataset_class_name, data_root=data_path, ann_file=info_path)
     if dataset_class_name == 'KittiDataset':
         file_client_args = dict(backend='disk')
         dataset_cfg.update(
@@ -171,17 +168,21 @@ def create_groundtruth_database(dataset_class_name,
             ])
 
     elif dataset_class_name == 'NuScenesDataset':
-        dataset_cfg.update(pipeline=[
-            dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
-            dict(
-                type='LoadPointsFromMultiSweeps',
-                sweeps_num=10,
-            ),
-            dict(
-                type='LoadAnnotations3D',
-                with_bbox_3d=True,
-                with_label_3d=True)
-        ])
+        dataset_cfg.update(
+            use_valid_flag=True,
+            pipeline=[
+                dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
+                dict(
+                    type='LoadPointsFromMultiSweeps',
+                    sweeps_num=10,
+                    use_dim=[0, 1, 2, 3, 4],
+                    pad_empty_sweeps=True,
+                    remove_close=True),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True)
+            ])
 
     elif dataset_class_name == 'WaymoDataset':
         file_client_args = dict(backend='disk')
@@ -216,7 +217,6 @@ def create_groundtruth_database(dataset_class_name,
                                      f'{info_prefix}_dbinfos_train.pkl')
     mmcv.mkdir_or_exist(database_save_path)
     all_db_infos = dict()
-
     if with_mask:
         coco = COCO(osp.join(data_path, mask_anno_path))
         imgIds = coco.getImgIds()
