@@ -3,6 +3,13 @@
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
 data_root = 'data/waymo/kitti_format/'
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel', path_mapping=dict(data='s3://waymo_data/'))
+
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
 input_modality = dict(use_lidar=True, use_camera=False)
@@ -20,13 +27,6 @@ db_sampler = dict(
         load_dim=5,
         use_dim=[0, 1, 2, 3, 4],
         file_client_args=file_client_args))
-
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
 
 train_pipeline = [
     dict(
