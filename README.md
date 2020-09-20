@@ -74,6 +74,7 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 | 3DSSD            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
+| CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/carafe/README.md)
