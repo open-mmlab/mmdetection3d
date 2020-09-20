@@ -1,12 +1,16 @@
 import numpy as np
 from collections import OrderedDict
 from concurrent import futures as futures
+from os import path as osp
 from pathlib import Path
 from skimage import io
 
 
-def get_image_index_str(img_idx):
-    return '{:06d}'.format(img_idx)
+def get_image_index_str(img_idx, use_prefix_id=False):
+    if use_prefix_id:
+        return '{:07d}'.format(img_idx)
+    else:
+        return '{:06d}'.format(img_idx)
 
 
 def get_kitti_info_path(idx,
@@ -15,8 +19,9 @@ def get_kitti_info_path(idx,
                         file_tail='.png',
                         training=True,
                         relative_path=True,
-                        exist_check=True):
-    img_idx_str = get_image_index_str(idx)
+                        exist_check=True,
+                        use_prefix_id=False):
+    img_idx_str = get_image_index_str(idx, use_prefix_id)
     img_idx_str += file_tail
     prefix = Path(prefix)
     if training:
@@ -35,36 +40,52 @@ def get_image_path(idx,
                    prefix,
                    training=True,
                    relative_path=True,
-                   exist_check=True):
-    return get_kitti_info_path(idx, prefix, 'image_2', '.png', training,
-                               relative_path, exist_check)
+                   exist_check=True,
+                   info_type='image_2',
+                   use_prefix_id=False):
+    return get_kitti_info_path(idx, prefix, info_type, '.png', training,
+                               relative_path, exist_check, use_prefix_id)
 
 
 def get_label_path(idx,
                    prefix,
                    training=True,
                    relative_path=True,
-                   exist_check=True):
-    return get_kitti_info_path(idx, prefix, 'label_2', '.txt', training,
-                               relative_path, exist_check)
+                   exist_check=True,
+                   info_type='label_2',
+                   use_prefix_id=False):
+    return get_kitti_info_path(idx, prefix, info_type, '.txt', training,
+                               relative_path, exist_check, use_prefix_id)
 
 
 def get_velodyne_path(idx,
                       prefix,
                       training=True,
                       relative_path=True,
-                      exist_check=True):
+                      exist_check=True,
+                      use_prefix_id=False):
     return get_kitti_info_path(idx, prefix, 'velodyne', '.bin', training,
-                               relative_path, exist_check)
+                               relative_path, exist_check, use_prefix_id)
 
 
 def get_calib_path(idx,
                    prefix,
                    training=True,
                    relative_path=True,
-                   exist_check=True):
+                   exist_check=True,
+                   use_prefix_id=False):
     return get_kitti_info_path(idx, prefix, 'calib', '.txt', training,
-                               relative_path, exist_check)
+                               relative_path, exist_check, use_prefix_id)
+
+
+def get_pose_path(idx,
+                  prefix,
+                  training=True,
+                  relative_path=True,
+                  exist_check=True,
+                  use_prefix_id=False):
+    return get_kitti_info_path(idx, prefix, 'pose', '.txt', training,
+                               relative_path, exist_check, use_prefix_id)
 
 
 def get_label_anno(label_path):
@@ -126,7 +147,6 @@ def get_kitti_image_info(path,
                          num_worker=8,
                          relative_path=True,
                          with_imageshape=True):
-    # image_infos = []
     """
     KITTI annotation format version 2:
     {
@@ -233,6 +253,185 @@ def get_kitti_image_info(path,
         if annotations is not None:
             info['annos'] = annotations
             add_difficulty_to_annos(info)
+        return info
+
+    with futures.ThreadPoolExecutor(num_worker) as executor:
+        image_infos = executor.map(map_func, image_ids)
+
+    return list(image_infos)
+
+
+def get_waymo_image_info(path,
+                         training=True,
+                         label_info=True,
+                         velodyne=False,
+                         calib=False,
+                         pose=False,
+                         image_ids=7481,
+                         extend_matrix=True,
+                         num_worker=8,
+                         relative_path=True,
+                         with_imageshape=True,
+                         max_sweeps=5):
+    """
+    Waymo annotation format version like KITTI:
+    {
+        [optional]points: [N, 3+] point cloud
+        [optional, for kitti]image: {
+            image_idx: ...
+            image_path: ...
+            image_shape: ...
+        }
+        point_cloud: {
+            num_features: 6
+            velodyne_path: ...
+        }
+        [optional, for kitti]calib: {
+            R0_rect: ...
+            Tr_velo_to_cam0: ...
+            P0: ...
+        }
+        annos: {
+            location: [num_gt, 3] array
+            dimensions: [num_gt, 3] array
+            rotation_y: [num_gt] angle array
+            name: [num_gt] ground truth name array
+            [optional]difficulty: kitti difficulty
+            [optional]group_ids: used for multi-part object
+        }
+    }
+    """
+    root_path = Path(path)
+    if not isinstance(image_ids, list):
+        image_ids = list(range(image_ids))
+
+    def map_func(idx):
+        info = {}
+        pc_info = {'num_features': 6}
+        calib_info = {}
+
+        image_info = {'image_idx': idx}
+        annotations = None
+        if velodyne:
+            pc_info['velodyne_path'] = get_velodyne_path(
+                idx, path, training, relative_path, use_prefix_id=True)
+            points = np.fromfile(
+                Path(path) / pc_info['velodyne_path'], dtype=np.float32)
+            points = np.copy(points).reshape(-1, pc_info['num_features'])
+            info['timestamp'] = np.int64(points[0, -1])
+            # values of the last dim are all the timestamp
+        image_info['image_path'] = get_image_path(
+            idx,
+            path,
+            training,
+            relative_path,
+            info_type='image_0',
+            use_prefix_id=True)
+        if with_imageshape:
+            img_path = image_info['image_path']
+            if relative_path:
+                img_path = str(root_path / img_path)
+            image_info['image_shape'] = np.array(
+                io.imread(img_path).shape[:2], dtype=np.int32)
+        if label_info:
+            label_path = get_label_path(
+                idx,
+                path,
+                training,
+                relative_path,
+                info_type='label_all',
+                use_prefix_id=True)
+            if relative_path:
+                label_path = str(root_path / label_path)
+            annotations = get_label_anno(label_path)
+        info['image'] = image_info
+        info['point_cloud'] = pc_info
+        if calib:
+            calib_path = get_calib_path(
+                idx, path, training, relative_path=False, use_prefix_id=True)
+            with open(calib_path, 'r') as f:
+                lines = f.readlines()
+            P0 = np.array([float(info) for info in lines[0].split(' ')[1:13]
+                           ]).reshape([3, 4])
+            P1 = np.array([float(info) for info in lines[1].split(' ')[1:13]
+                           ]).reshape([3, 4])
+            P2 = np.array([float(info) for info in lines[2].split(' ')[1:13]
+                           ]).reshape([3, 4])
+            P3 = np.array([float(info) for info in lines[3].split(' ')[1:13]
+                           ]).reshape([3, 4])
+            P4 = np.array([float(info) for info in lines[4].split(' ')[1:13]
+                           ]).reshape([3, 4])
+            if extend_matrix:
+                P0 = _extend_matrix(P0)
+                P1 = _extend_matrix(P1)
+                P2 = _extend_matrix(P2)
+                P3 = _extend_matrix(P3)
+                P4 = _extend_matrix(P4)
+            R0_rect = np.array([
+                float(info) for info in lines[5].split(' ')[1:10]
+            ]).reshape([3, 3])
+            if extend_matrix:
+                rect_4x4 = np.zeros([4, 4], dtype=R0_rect.dtype)
+                rect_4x4[3, 3] = 1.
+                rect_4x4[:3, :3] = R0_rect
+            else:
+                rect_4x4 = R0_rect
+
+            Tr_velo_to_cam = np.array([
+                float(info) for info in lines[6].split(' ')[1:13]
+            ]).reshape([3, 4])
+            if extend_matrix:
+                Tr_velo_to_cam = _extend_matrix(Tr_velo_to_cam)
+            calib_info['P0'] = P0
+            calib_info['P1'] = P1
+            calib_info['P2'] = P2
+            calib_info['P3'] = P3
+            calib_info['P4'] = P4
+            calib_info['R0_rect'] = rect_4x4
+            calib_info['Tr_velo_to_cam'] = Tr_velo_to_cam
+            info['calib'] = calib_info
+        if pose:
+            pose_path = get_pose_path(
+                idx, path, training, relative_path=False, use_prefix_id=True)
+            info['pose'] = np.loadtxt(pose_path)
+
+        if annotations is not None:
+            info['annos'] = annotations
+            info['annos']['camera_id'] = info['annos'].pop('score')
+            add_difficulty_to_annos(info)
+
+        sweeps = []
+        prev_idx = idx
+        while len(sweeps) < max_sweeps:
+            prev_info = {}
+            prev_idx -= 1
+            prev_info['velodyne_path'] = get_velodyne_path(
+                prev_idx,
+                path,
+                training,
+                relative_path,
+                exist_check=False,
+                use_prefix_id=True)
+            if_prev_exists = osp.exists(
+                Path(path) / prev_info['velodyne_path'])
+            if if_prev_exists:
+                prev_points = np.fromfile(
+                    Path(path) / prev_info['velodyne_path'], dtype=np.float32)
+                prev_points = np.copy(prev_points).reshape(
+                    -1, pc_info['num_features'])
+                prev_info['timestamp'] = np.int64(prev_points[0, -1])
+                prev_pose_path = get_pose_path(
+                    prev_idx,
+                    path,
+                    training,
+                    relative_path=False,
+                    use_prefix_id=True)
+                prev_info['pose'] = np.loadtxt(prev_pose_path)
+                sweeps.append(prev_info)
+            else:
+                break
+        info['sweeps'] = sweeps
+
         return info
 
     with futures.ThreadPoolExecutor(num_worker) as executor:

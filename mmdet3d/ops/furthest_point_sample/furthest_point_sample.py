@@ -7,8 +7,8 @@ from . import furthest_point_sample_ext
 class FurthestPointSampling(Function):
     """Furthest Point Sampling.
 
-    Uses iterative furthest point sampling to select a set of features whose
-    corresponding points have the furthest distance.
+    Uses iterative furthest point sampling to select a set of features
+    whose corresponding points have the furthest distance.
     """
 
     @staticmethod

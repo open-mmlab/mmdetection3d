@@ -591,19 +591,21 @@ def do_eval(gt_annos,
             eval_types=['bbox', 'bev', '3d']):
     # min_overlaps: [num_minoverlap, metric, num_class]
     difficultys = [0, 1, 2]
-    ret = eval_class(
-        gt_annos,
-        dt_annos,
-        current_classes,
-        difficultys,
-        0,
-        min_overlaps,
-        compute_aos=('aos' in eval_types))
-    # ret: [num_class, num_diff, num_minoverlap, num_sample_points]
-    mAP_bbox = get_mAP(ret['precision'])
+    mAP_bbox = None
     mAP_aos = None
-    if 'aos' in eval_types:
-        mAP_aos = get_mAP(ret['orientation'])
+    if 'bbox' in eval_types:
+        ret = eval_class(
+            gt_annos,
+            dt_annos,
+            current_classes,
+            difficultys,
+            0,
+            min_overlaps,
+            compute_aos=('aos' in eval_types))
+        # ret: [num_class, num_diff, num_minoverlap, num_sample_points]
+        mAP_bbox = get_mAP(ret['precision'])
+        if 'aos' in eval_types:
+            mAP_aos = get_mAP(ret['orientation'])
 
     mAP_bev = None
     if 'bev' in eval_types:
@@ -654,7 +656,9 @@ def kitti_eval(gt_annos,
     Returns:
         tuple: String and dict of evaluation results.
     """
-    assert 'bbox' in eval_types, 'must evaluate bbox at least'
+    assert len(eval_types) > 0, 'must contain at least one evaluation type'
+    if 'aos' in eval_types:
+        assert 'bbox' in eval_types, 'must evaluate bbox when evaluating aos'
     overlap_0_7 = np.array([[0.7, 0.5, 0.5, 0.7,
                              0.5], [0.7, 0.5, 0.5, 0.7, 0.5],
                             [0.7, 0.5, 0.5, 0.7, 0.5]])
@@ -683,12 +687,19 @@ def kitti_eval(gt_annos,
     result = ''
     # check whether alpha is valid
     compute_aos = False
+    pred_alpha = False
+    valid_alpha_gt = False
     for anno in dt_annos:
         if anno['alpha'].shape[0] != 0:
-            if anno['alpha'][0] != -10:
-                compute_aos = True
-                eval_types.append('aos')
+            pred_alpha = True
             break
+    for anno in gt_annos:
+        if anno['alpha'][0] != -10:
+            valid_alpha_gt = True
+            break
+    compute_aos = (pred_alpha and valid_alpha_gt)
+    if compute_aos:
+        eval_types.append('aos')
 
     mAPbbox, mAPbev, mAP3d, mAPaos = do_eval(gt_annos, dt_annos,
                                              current_classes, min_overlaps,

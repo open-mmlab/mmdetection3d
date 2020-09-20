@@ -1,6 +1,6 @@
 # Getting Started
 
-This page provides basic tutorials about the usage of MMDetection.
+This page provides basic tutorials about the usage of MMDetection3D.
 For installation instructions, please see [install.md](install.md).
 
 ## Prepare datasets
@@ -31,6 +31,14 @@ mmdetection3d
 │   │   │   ├── image_2
 │   │   │   ├── label_2
 │   │   │   ├── velodyne
+│   ├── waymo
+│   │   ├── waymo_format
+│   │   │   ├── training
+│   │   │   ├── validation
+│   │   │   ├── testing
+│   │   │   ├── gt.bin
+│   │   ├── kitti_format
+│   │   │   ├── ImageSets
 │   ├── lyft
 │   │   ├── v1.01-train
 │   │   │   ├── v1.01-train (train_data)
@@ -62,12 +70,6 @@ mmdetection3d
 
 ```
 
-Download nuScenes V1.0 full dataset data [HERE]( https://www.nuscenes.org/download). Prepare nuscenes data by running
-
-```bash
-python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
-```
-
 Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare kitti data by running
 
 ```bash
@@ -80,6 +82,20 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
 
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
+```
+
+Download Waymo open dataset V1.2 [HERE](https://waymo.com/open/download/) and its data split [HERE](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing). Then put tfrecord files into corresponding folders in `data/waymo/waymo_format/` and put the data split txt files into `data/waymo/kitti_format/ImageSets`. Download ground truth bin file for validation set [HERE](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects) and put it into `data/waymo/waymo_format/`. A tip is that you can use `gsutil` to download the large-scale dataset with commands. You can take this [tool](https://github.com/RalphMao/Waymo-Dataset-Tool) as an example for more details. Subsequently, prepare waymo data by running
+
+```bash
+python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
+```
+
+Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
+
+Download nuScenes V1.0 full dataset data [HERE]( https://www.nuscenes.org/download). Prepare nuscenes data by running
+
+```bash
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
 Download Lyft 3D detection data [HERE](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data). Prepare Lyft data by running
@@ -179,6 +195,39 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```
 
    The generated results be under `./second_kitti_results` directory.
+
+7. Test PointPillars on Lyft with 8 GPUs, generate the pkl files and make a submission to the leaderboard.
+
+   ```shell
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d.py \
+       checkpoints/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d_latest.pth --out results/pp_lyft/results_challenge.pkl \
+       --format-only --options 'jsonfile_prefix=results/pp_lyft/results_challenge' \
+       'csv_path=results/pp_lyft/results_challenge.csv'
+   ```
+
+   **Notice**: To generate submissions on Lyft, `csv_path` must be given in the options. After generating the csv file, you can make a submission with kaggle commands given on the [website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit).
+
+7. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
+
+   ```shell
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
+       --eval waymo --options 'pklfile_prefix=results/waymo-car/kitti_results' \
+       'submission_prefix=results/waymo-car/kitti_results'
+   ```
+
+   **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the options for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
+
+8. Test PointPillars on waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
+
+   ```shell
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
+       --format-only --options 'pklfile_prefix=results/waymo-car/kitti_results' \
+       'submission_prefix=results/waymo-car/kitti_results'
+   ```
+
+   **Notice**: After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md). For evaluation on the validation set with the eval server, you can also use the same way to generate a submission.
 
 ### Visualization
 

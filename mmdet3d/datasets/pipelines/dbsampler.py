@@ -251,7 +251,6 @@ class DataBaseSampler(object):
                 file_path = os.path.join(
                     self.data_root,
                     info['path']) if self.data_root else info['path']
-
                 results = dict(pts_filename=file_path)
                 s_points = self.points_loader(results)['points']
                 s_points[:, :3] += info['box3d_lidar'][:3]
