@@ -36,7 +36,7 @@
 - Support dilated ball query used in [3DSSD](https://arxiv.org/abs/2002.10187) (#96)
 - Support [3DSSD](https://arxiv.org/abs/2002.10187) and release models on KITTI dataset (#83, #100, #104)
 - Support [CenterPoint](https://arxiv.org/abs/2006.11275) and release models on nuScenes dataset (#49, #92)
-- Support [Waymo](https://waymo.com/open/) dataset and release PointPillars baseline models
+- Support [Waymo](https://waymo.com/open/) dataset and release PointPillars baseline models (#118)
 - Allow `LoadPointsFromMultiSweeps` to pad empty sweeps and select multiple sweeps randomly (#67)
 
 #### Improvements
