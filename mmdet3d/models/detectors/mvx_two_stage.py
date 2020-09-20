@@ -1,3 +1,4 @@
+import copy
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
@@ -454,37 +455,43 @@ class MVXTwoStageDetector(Base3DDetector):
             result (dict): Prediction results.
             out_dir (str): Output directory of visualization result.
         """
-        if isinstance(data['points'][0], DC):
-            points = data['points'][0]._data[0][0].numpy()
-        elif mmcv.is_list_of(data['points'][0], torch.Tensor):
-            points = data['points'][0][0]
-        else:
-            ValueError(f"Unsupported data type {type(data['points'][0])} "
-                       f'for visualization!')
-        if isinstance(data['img_metas'][0], DC):
-            pts_filename = data['img_metas'][0]._data[0][0]['pts_filename']
-            box_mode_3d = data['img_metas'][0]._data[0][0]['box_mode_3d']
-        elif mmcv.is_list_of(data['img_metas'][0], dict):
-            pts_filename = data['img_metas'][0][0]['pts_filename']
-            box_mode_3d = data['img_metas'][0][0]['box_mode_3d']
-        else:
-            ValueError(f"Unsupported data type {type(data['img_metas'][0])} "
-                       f'for visualization!')
-        file_name = osp.split(pts_filename)[-1].split('.')[0]
+        for batch_id in range(len(result)):
+            if isinstance(data['points'][0], DC):
+                points = data['points'][0]._data[0][batch_id].numpy()
+            elif mmcv.is_list_of(data['points'][0], torch.Tensor):
+                points = data['points'][0][batch_id]
+            else:
+                ValueError(f"Unsupported data type {type(data['points'][0])} "
+                           f'for visualization!')
+            if isinstance(data['img_metas'][0], DC):
+                pts_filename = data['img_metas'][0]._data[0][batch_id][
+                    'pts_filename']
+                box_mode_3d = data['img_metas'][0]._data[0][batch_id][
+                    'box_mode_3d']
+            elif mmcv.is_list_of(data['img_metas'][0], dict):
+                pts_filename = data['img_metas'][0][batch_id]['pts_filename']
+                box_mode_3d = data['img_metas'][0][batch_id]['box_mode_3d']
+            else:
+                ValueError(
+                    f"Unsupported data type {type(data['img_metas'][0])} "
+                    f'for visualization!')
+            file_name = osp.split(pts_filename)[-1].split('.')[0]
 
-        assert out_dir is not None, 'Expect out_dir, got none.'
-        inds = result['pts_bbox']['scores_3d'] > 0.1
-        pred_bboxes = result['pts_bbox']['boxes_3d'][inds].tensor.numpy()
-        # for now we convert points into depth mode
-        if box_mode_3d == Box3DMode.DEPTH:
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-        elif box_mode_3d == Box3DMode.CAM or box_mode_3d == Box3DMode.LIDAR:
-            points = points[..., [1, 0, 2]]
-            points[..., 0] *= -1
-            pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
-                                            Box3DMode.DEPTH)
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-        else:
-            ValueError(
-                f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
-        show_result(points, None, pred_bboxes, out_dir, file_name)
+            assert out_dir is not None, 'Expect out_dir, got none.'
+            inds = result[batch_id]['pts_bbox']['scores_3d'] > 0.1
+            pred_bboxes = copy.deepcopy(
+                result[batch_id]['pts_bbox']['boxes_3d'][inds].tensor.numpy())
+            # for now we convert points into depth mode
+            if box_mode_3d == Box3DMode.DEPTH:
+                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            elif (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
+                                                    == Box3DMode.LIDAR):
+                points = points[..., [1, 0, 2]]
+                points[..., 0] *= -1
+                pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
+                                                Box3DMode.DEPTH)
+                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            else:
+                ValueError(
+                    f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
+            show_result(points, None, pred_bboxes, out_dir, file_name)
