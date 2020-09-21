@@ -8,7 +8,6 @@ from os import path as osp
 
 from mmdet.datasets import DATASETS
 from ..core.bbox import Box3DMode, points_cam2img
-from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import KITTI2Waymo
 from .kitti_dataset import KittiDataset
 
 
@@ -184,6 +183,8 @@ class WaymoDataset(KittiDataset):
                                                   pklfile_prefix,
                                                   submission_prefix)
         if 'waymo' in data_format:
+            from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import \
+                KITTI2Waymo  # noqa
             waymo_root = osp.join(
                 self.data_root.split('kitti_format')[0], 'waymo_format')
             if self.split == 'training':
