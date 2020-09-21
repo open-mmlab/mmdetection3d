@@ -48,8 +48,8 @@ class Base3DDetector(BaseDetector):
 
         Note this setting will change the expected inputs. When
         `return_loss=True`, img and img_metas are single-nested (i.e.
-        torch.Tensor and list[dict]), and when `resturn_loss=False`, img
-        and img_metas should be double nested (i.e.  list[torch.Tensor],
+        torch.Tensor and list[dict]), and when `resturn_loss=False`, img and
+        img_metas should be double nested (i.e.  list[torch.Tensor],
         list[list[dict]]), with the outer list indicating test time
         augmentations.
         """
@@ -62,42 +62,48 @@ class Base3DDetector(BaseDetector):
         """Results visualization.
 
         Args:
-            data (dict): Input points and the information of the sample.
-            result (dict): Prediction results.
+            data (list[dict]): Input points and the information of the sample.
+            result (list[dict]): Prediction results.
             out_dir (str): Output directory of visualization result.
         """
-        if isinstance(data['points'][0], DC):
-            points = data['points'][0]._data[0][0].numpy()
-        elif mmcv.is_list_of(data['points'][0], torch.Tensor):
-            points = data['points'][0][0]
-        else:
-            ValueError(f"Unsupported data type {type(data['points'][0])} "
-                       f'for visualization!')
-        if isinstance(data['img_metas'][0], DC):
-            pts_filename = data['img_metas'][0]._data[0][0]['pts_filename']
-            box_mode_3d = data['img_metas'][0]._data[0][0]['box_mode_3d']
-        elif mmcv.is_list_of(data['img_metas'][0], dict):
-            pts_filename = data['img_metas'][0][0]['pts_filename']
-            box_mode_3d = data['img_metas'][0][0]['box_mode_3d']
-        else:
-            ValueError(f"Unsupported data type {type(data['img_metas'][0])} "
-                       f'for visualization!')
-        file_name = osp.split(pts_filename)[-1].split('.')[0]
+        for batch_id in range(len(result)):
+            if isinstance(data['points'][0], DC):
+                points = data['points'][0]._data[0][batch_id].numpy()
+            elif mmcv.is_list_of(data['points'][0], torch.Tensor):
+                points = data['points'][0][batch_id]
+            else:
+                ValueError(f"Unsupported data type {type(data['points'][0])} "
+                           f'for visualization!')
+            if isinstance(data['img_metas'][0], DC):
+                pts_filename = data['img_metas'][0]._data[0][batch_id][
+                    'pts_filename']
+                box_mode_3d = data['img_metas'][0]._data[0][batch_id][
+                    'box_mode_3d']
+            elif mmcv.is_list_of(data['img_metas'][0], dict):
+                pts_filename = data['img_metas'][0][batch_id]['pts_filename']
+                box_mode_3d = data['img_metas'][0][batch_id]['box_mode_3d']
+            else:
+                ValueError(
+                    f"Unsupported data type {type(data['img_metas'][0])} "
+                    f'for visualization!')
+            file_name = osp.split(pts_filename)[-1].split('.')[0]
 
-        assert out_dir is not None, 'Expect out_dir, got none.'
+            assert out_dir is not None, 'Expect out_dir, got none.'
 
-        pred_bboxes = copy.deepcopy(result['boxes_3d'].tensor.numpy())
-        # for now we convert points into depth mode
-        if box_mode_3d == Box3DMode.DEPTH:
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-        elif box_mode_3d == Box3DMode.CAM or box_mode_3d == Box3DMode.LIDAR:
-            points = points[..., [1, 0, 2]]
-            points[..., 0] *= -1
-            pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
-                                            Box3DMode.DEPTH)
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-        else:
-            ValueError(
-                f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
+            pred_bboxes = copy.deepcopy(
+                result[batch_id]['boxes_3d'].tensor.numpy())
+            # for now we convert points into depth mode
+            if box_mode_3d == Box3DMode.DEPTH:
+                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            elif (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
+                                                    == Box3DMode.LIDAR):
+                points = points[..., [1, 0, 2]]
+                points[..., 0] *= -1
+                pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
+                                                Box3DMode.DEPTH)
+                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+            else:
+                ValueError(
+                    f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
 
-        show_result(points, None, pred_bboxes, out_dir, file_name)
+            show_result(points, None, pred_bboxes, out_dir, file_name)
