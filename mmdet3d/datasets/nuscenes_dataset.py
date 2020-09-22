@@ -150,18 +150,17 @@ class NuScenesDataset(Custom3DDataset):
                 contains such boxes, store a list containing idx,
                 otherwise, store empty list.
         """
+        class_sample_idx = {name: [] for name in self.CLASSES}
         info = self.data_infos[idx]
         if self.use_valid_flag:
             mask = info['valid_flag']
             gt_names = set(info['gt_names'][mask])
         else:
             gt_names = set(info['gt_names'])
-
-        cat_ids = []
         for name in gt_names:
             if name in self.CLASSES:
-                cat_ids.append(self.cat2id[name])
-        return cat_ids
+                class_sample_idx[name].append(idx)
+        return class_sample_idx
 
     def load_annotations(self, ann_file):
         """Load annotations from ann_file.
@@ -435,6 +434,8 @@ class NuScenesDataset(Custom3DDataset):
             tmp_dir = None
 
         if not isinstance(results[0], dict):
+            result_files = self._format_bbox(results, jsonfile_prefix)
+        elif isinstance(results[0], dict) and 'boxes_3d' in results[0].keys():
             result_files = self._format_bbox(results, jsonfile_prefix)
         else:
             result_files = dict()

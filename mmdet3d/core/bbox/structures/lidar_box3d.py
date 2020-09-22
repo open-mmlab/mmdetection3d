@@ -243,5 +243,5 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         """
         box_idx = points_in_boxes_gpu(
             points.unsqueeze(0),
-            self.tensor.unsqueeze(0).to(points.device)).squeeze(0)
+            self.tensor[:, :7].unsqueeze(0).to(points.device)).squeeze(0)
         return box_idx

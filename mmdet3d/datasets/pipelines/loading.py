@@ -157,6 +157,7 @@ class LoadPointsFromMultiSweeps(object):
         points = results['points']
         points[:, 4] = 0
         sweep_points_list = [points]
+        results['cur_points_num'] = points.shape[0]
         ts = results['timestamp']
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
             for i in range(self.sweeps_num):

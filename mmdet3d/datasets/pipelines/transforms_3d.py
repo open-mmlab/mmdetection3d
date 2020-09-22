@@ -198,7 +198,7 @@ class ObjectSample(object):
                 input_dict['img'] = sampled_dict['img']
 
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-        input_dict['gt_labels_3d'] = gt_labels_3d.astype(np.long)
+        input_dict['gt_labels_3d'] = gt_labels_3d
         input_dict['points'] = points
 
         return input_dict
@@ -514,6 +514,9 @@ class PointsRangeFilter(object):
         points_mask = points_mask[:, 0] & points_mask[:, 1] & points_mask[:, 2]
         clean_points = points[points_mask, :]
         input_dict['points'] = clean_points
+        if 'cur_points_num' in input_dict.keys():
+            input_dict['cur_points_num'] = points_mask[:input_dict[
+                'cur_points_num']].sum()
         return input_dict
 
     def __repr__(self):
