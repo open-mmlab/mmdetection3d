@@ -2,6 +2,7 @@ import numpy as np
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
+from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import box_np_ops
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
@@ -198,7 +199,7 @@ class ObjectSample(object):
                 input_dict['img'] = sampled_dict['img']
 
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-        input_dict['gt_labels_3d'] = gt_labels_3d
+        input_dict['gt_labels_3d'] = gt_labels_3d.astype(np.long)
         input_dict['points'] = points
 
         return input_dict
@@ -509,8 +510,8 @@ class PointsRangeFilter(object):
                 in the result dict.
         """
         points = input_dict['points']
-        points_mask = ((points[:, :3] >= self.pcd_range[:, :3])
-                       & (points[:, :3] < self.pcd_range[:, 3:]))
+        points_mask = ((points[:, :3] >= self.pcd_range[:, :3]) &
+                       (points[:, :3] < self.pcd_range[:, 3:]))
         points_mask = points_mask[:, 0] & points_mask[:, 1] & points_mask[:, 2]
         clean_points = points[points_mask, :]
         input_dict['points'] = clean_points
@@ -649,8 +650,8 @@ class BackgroundPointsFilter(object):
     """
 
     def __init__(self, bbox_enlarge_range):
-        assert (is_tuple_of(bbox_enlarge_range, float)
-                and len(bbox_enlarge_range) == 3) \
+        assert (is_tuple_of(bbox_enlarge_range, float) and
+                len(bbox_enlarge_range) == 3) \
             or isinstance(bbox_enlarge_range, float), \
             f'Invalid arguments bbox_enlarge_range {bbox_enlarge_range}'
 
@@ -699,4 +700,67 @@ class BackgroundPointsFilter(object):
         repr_str = self.__class__.__name__
         repr_str += '(bbox_enlarge_range={})'.format(
             self.bbox_enlarge_range.tolist())
+        return repr_str
+
+
+@PIPELINES.register_module()
+class SweepPointSample(object):
+    """Sweep point voxel sample.
+
+    Apply voxel sampling to multiple sweep points.
+
+    Args:
+        name (str): Name of the dataset.
+        num_points (int): Number of points to be sampled.
+    """
+
+    def __init__(self, cur_sweep_cfg, prev_sweep_cfg):
+        self.cur_sweep_sampler = VoxelGenerator(**cur_sweep_cfg)
+        self.prev_sweep_sampler = VoxelGenerator(**prev_sweep_cfg)
+
+    def __call__(self, results):
+        """Call function to sample points from multiple sweeps.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after sampling, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
+        """
+        points = results['points']
+        cur_points_num = results['cur_points_num']
+        cur_sweep_points = points[:cur_points_num]
+        prev_sweeps_points = points[cur_points_num:]
+
+        voxels, coors, num_points_per_voxel = self.cur_sweep_sampler.generate(
+            cur_sweep_points)
+        max_voxels = self.cur_sweep_sampler._max_voxels
+        if voxels.shape[0] >= max_voxels:
+            cur_sweep_points = voxels[:max_voxels]
+        else:
+            choices = np.random.choice(
+                voxels.shape[0], max_voxels, replace=True)
+            cur_sweep_points = voxels[choices]
+
+        voxels, coors, num_points_per_voxel = self.prev_sweep_sampler.generate(
+            prev_sweeps_points)
+        max_voxels = self.prev_sweep_sampler._max_voxels
+        if voxels.shape[0] >= max_voxels:
+            prev_sweeps_points = voxels[:max_voxels]
+        else:
+            choices = np.random.choice(
+                voxels.shape[0], max_voxels, replace=True)
+            prev_sweeps_points = voxels[choices]
+        points = np.concatenate([cur_sweep_points, prev_sweeps_points],
+                                0).squeeze(1)
+        results['points'] = points
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += '(num_cur_sweep={0}, num_prev_sweep={1})'.format(
+            self.cur_sweep_sampler._max_voxels,
+            self.prev_sweep_sampler._max_voxels)
         return repr_str
