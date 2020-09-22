@@ -5,7 +5,7 @@ import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
-                              ObjectSample, RandomFlip3D)
+                              ObjectSample, RandomFlip3D, SweepPointSample)
 
 
 def test_remove_points_in_boxes():
@@ -78,7 +78,6 @@ def test_object_sample():
             gt_labels.append(CLASSES.index(cat))
         else:
             gt_labels.append(-1)
-    gt_labels = np.array(gt_labels, dtype=np.long)
     input_dict = dict(
         points=points, gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels)
     input_dict = object_sample(input_dict)
@@ -231,3 +230,37 @@ def test_background_points_filter():
     # The length of bbox_enlarge_range should be 3
     with pytest.raises(AssertionError):
         BackgroundPointsFilter((0.5, 2.0))
+
+
+def test_sweep_points_filter():
+    np.random.seed(0)
+    cur_sweep_cfg = dict(
+        voxel_size=[0.1, 0.1, 0.1],
+        point_cloud_range=[-50, -50, -4, 50, 50, 2],
+        max_num_points=1,
+        max_voxels=1024)
+    prev_sweep_cfg = dict(
+        voxel_size=[0.1, 0.1, 0.1],
+        point_cloud_range=[-50, -50, -4, 50, 50, 2],
+        max_num_points=1,
+        max_voxels=1024)
+    sweep_points_filter = SweepPointSample(cur_sweep_cfg, prev_sweep_cfg)
+    points = np.stack([
+        np.random.rand(4096) * 120 - 60,
+        np.random.rand(4096) * 120 - 60,
+        np.random.rand(4096) * 10 - 6
+    ],
+                      axis=-1)
+
+    input_dict = dict(points=points, cur_points_num=2048)
+    input_dict = sweep_points_filter(input_dict)
+
+    points = input_dict['points']
+    repr_str = repr(sweep_points_filter)
+    expected_repr_str = 'SweepPointSample(num_cur_sweep=1024,'\
+                        'num_prev_sweep=1024)'
+
+    assert repr_str == expected_repr_str
+    assert points.shape == (2048, 3)
+    assert (points.min(0) < cur_sweep_cfg['point_cloud_range'][0:3]).sum() == 0
+    assert (points.max(0) > cur_sweep_cfg['point_cloud_range'][3:6]).sum() == 0
