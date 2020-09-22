@@ -51,7 +51,7 @@ c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).
 The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
 
 ```shell
-pip install mmcv-full==latest+torch1.5.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+pip install mmcv-full==latest+torch1.5.0+cu101 -f http://download.openmmlab.com/mmcv/dist/index.html
 ```
 
 Optionally, you could also build the full version from source:
