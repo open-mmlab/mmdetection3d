@@ -199,7 +199,7 @@ class ObjectSample(object):
                 input_dict['img'] = sampled_dict['img']
 
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-        input_dict['gt_labels_3d'] = gt_labels_3d
+        input_dict['gt_labels_3d'] = gt_labels_3d.astype(np.long)
         input_dict['points'] = points
 
         return input_dict
@@ -510,14 +510,11 @@ class PointsRangeFilter(object):
                 in the result dict.
         """
         points = input_dict['points']
-        points_mask = ((points[:, :3] >= self.pcd_range[:, :3]) &
-                       (points[:, :3] < self.pcd_range[:, 3:]))
+        points_mask = ((points[:, :3] >= self.pcd_range[:, :3])
+                       & (points[:, :3] < self.pcd_range[:, 3:]))
         points_mask = points_mask[:, 0] & points_mask[:, 1] & points_mask[:, 2]
         clean_points = points[points_mask, :]
         input_dict['points'] = clean_points
-        if 'cur_points_num' in input_dict.keys():
-            input_dict['cur_points_num'] = points_mask[:input_dict[
-                'cur_points_num']].sum()
         return input_dict
 
     def __repr__(self):
@@ -650,8 +647,8 @@ class BackgroundPointsFilter(object):
     """
 
     def __init__(self, bbox_enlarge_range):
-        assert (is_tuple_of(bbox_enlarge_range, float) and
-                len(bbox_enlarge_range) == 3) \
+        assert (is_tuple_of(bbox_enlarge_range, float)
+                and len(bbox_enlarge_range) == 3) \
             or isinstance(bbox_enlarge_range, float), \
             f'Invalid arguments bbox_enlarge_range {bbox_enlarge_range}'
 

@@ -12,6 +12,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalRotScaleTrans,
                         RandomFlip3D, SweepPointSample)
 from .scannet_dataset import ScanNetDataset
 from .sunrgbd_dataset import SUNRGBDDataset
+from .waymo_dataset import WaymoDataset
 
 __all__ = [
     'KittiDataset', 'GroupSampler', 'DistributedGroupSampler',
@@ -21,5 +22,6 @@ __all__ = [
     'ObjectRangeFilter', 'PointsRangeFilter', 'Collect3D',
     'LoadPointsFromFile', 'NormalizePointsColor', 'IndoorPointSample',
     'LoadAnnotations3D', 'SUNRGBDDataset', 'ScanNetDataset', 'Custom3DDataset',
-    'LoadPointsFromMultiSweeps', 'BackgroundPointsFilter', 'SweepPointSample'
+    'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
+    'SweepPointSample'
 ]

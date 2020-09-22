@@ -78,6 +78,7 @@ def test_object_sample():
             gt_labels.append(CLASSES.index(cat))
         else:
             gt_labels.append(-1)
+    gt_labels = np.array(gt_labels, dtype=np.long)
     input_dict = dict(
         points=points, gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels)
     input_dict = object_sample(input_dict)
