@@ -1,10 +1,9 @@
+import mmcv
 import numpy as np
-import pickle
-from mmcv import track_iter_progress
 from pathlib import Path
 
 from mmdet3d.core.bbox import box_np_ops
-from .kitti_data_utils import get_kitti_image_info
+from .kitti_data_utils import get_kitti_image_info, get_waymo_image_info
 
 
 def convert_to_kitti_info_version2(info):
@@ -43,7 +42,7 @@ def _calculate_num_points_in_gt(data_path,
                                 relative_path,
                                 remove_outside=True,
                                 num_features=4):
-    for info in track_iter_progress(infos):
+    for info in mmcv.track_iter_progress(infos):
         pc_info = info['point_cloud']
         image_info = info['image']
         calib = info['calib']
@@ -80,7 +79,7 @@ def _calculate_num_points_in_gt(data_path,
 
 
 def create_kitti_info_file(data_path,
-                           pkl_prefix='kitti_',
+                           pkl_prefix='kitti',
                            save_path=None,
                            relative_path=True):
     """Create info file of KITTI dataset.
@@ -113,8 +112,7 @@ def create_kitti_info_file(data_path,
     _calculate_num_points_in_gt(data_path, kitti_infos_train, relative_path)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Kitti info train file is saved to {filename}')
-    with open(filename, 'wb') as f:
-        pickle.dump(kitti_infos_train, f)
+    mmcv.dump(kitti_infos_train, filename)
     kitti_infos_val = get_kitti_image_info(
         data_path,
         training=True,
@@ -125,12 +123,10 @@ def create_kitti_info_file(data_path,
     _calculate_num_points_in_gt(data_path, kitti_infos_val, relative_path)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Kitti info val file is saved to {filename}')
-    with open(filename, 'wb') as f:
-        pickle.dump(kitti_infos_val, f)
+    mmcv.dump(kitti_infos_val, filename)
     filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
     print(f'Kitti info trainval file is saved to {filename}')
-    with open(filename, 'wb') as f:
-        pickle.dump(kitti_infos_train + kitti_infos_val, f)
+    mmcv.dump(kitti_infos_train + kitti_infos_val, filename)
 
     kitti_infos_test = get_kitti_image_info(
         data_path,
@@ -142,18 +138,109 @@ def create_kitti_info_file(data_path,
         relative_path=relative_path)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'Kitti info test file is saved to {filename}')
-    with open(filename, 'wb') as f:
-        pickle.dump(kitti_infos_test, f)
+    mmcv.dump(kitti_infos_test, filename)
+
+
+def create_waymo_info_file(data_path,
+                           pkl_prefix='waymo',
+                           save_path=None,
+                           relative_path=True,
+                           max_sweeps=5):
+    """Create info file of waymo dataset.
+
+    Given the raw data, generate its related info file in pkl format.
+
+    Args:
+        data_path (str): Path of the data root.
+        pkl_prefix (str): Prefix of the info file to be generated.
+        save_path (str | None): Path to save the info file.
+        relative_path (bool): Whether to use relative path.
+        max_sweeps (int): Max sweeps before the detection frame to be used.
+    """
+    imageset_folder = Path(data_path) / 'ImageSets'
+    train_img_ids = _read_imageset_file(str(imageset_folder / 'train.txt'))
+    val_img_ids = _read_imageset_file(str(imageset_folder / 'val.txt'))
+    test_img_ids = _read_imageset_file(str(imageset_folder / 'test.txt'))
+
+    print('Generate info. this may take several minutes.')
+    if save_path is None:
+        save_path = Path(data_path)
+    else:
+        save_path = Path(save_path)
+    waymo_infos_train = get_waymo_image_info(
+        data_path,
+        training=True,
+        velodyne=True,
+        calib=True,
+        pose=True,
+        image_ids=train_img_ids,
+        relative_path=relative_path,
+        max_sweeps=max_sweeps)
+    _calculate_num_points_in_gt(
+        data_path,
+        waymo_infos_train,
+        relative_path,
+        num_features=6,
+        remove_outside=False)
+    filename = save_path / f'{pkl_prefix}_infos_train.pkl'
+    print(f'Waymo info train file is saved to {filename}')
+    mmcv.dump(waymo_infos_train, filename)
+    waymo_infos_val = get_waymo_image_info(
+        data_path,
+        training=True,
+        velodyne=True,
+        calib=True,
+        pose=True,
+        image_ids=val_img_ids,
+        relative_path=relative_path,
+        max_sweeps=max_sweeps)
+    _calculate_num_points_in_gt(
+        data_path,
+        waymo_infos_val,
+        relative_path,
+        num_features=6,
+        remove_outside=False)
+    filename = save_path / f'{pkl_prefix}_infos_val.pkl'
+    print(f'Waymo info val file is saved to {filename}')
+    mmcv.dump(waymo_infos_val, filename)
+    filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
+    print(f'Waymo info trainval file is saved to {filename}')
+    mmcv.dump(waymo_infos_train + waymo_infos_val, filename)
+    waymo_infos_test = get_waymo_image_info(
+        data_path,
+        training=False,
+        label_info=False,
+        velodyne=True,
+        calib=True,
+        pose=True,
+        image_ids=test_img_ids,
+        relative_path=relative_path,
+        max_sweeps=max_sweeps)
+    filename = save_path / f'{pkl_prefix}_infos_test.pkl'
+    print(f'Waymo info test file is saved to {filename}')
+    mmcv.dump(waymo_infos_test, filename)
 
 
 def _create_reduced_point_cloud(data_path,
                                 info_path,
                                 save_path=None,
-                                back=False):
-    with open(info_path, 'rb') as f:
-        kitti_infos = pickle.load(f)
+                                back=False,
+                                num_features=4,
+                                front_camera_id=2):
+    """Create reduced point clouds for given info.
 
-    for info in track_iter_progress(kitti_infos):
+    Args:
+        data_path (str): Path of original data.
+        info_path (str): Path of data info.
+        save_path (str | None): Path to save reduced point cloud data.
+            Default: None.
+        back (bool): Whether to flip the points to back.
+        num_features (int): Number of point features. Default: 4.
+        front_camera_id (int): The referenced/front camera ID. Default: 2.
+    """
+    kitti_infos = mmcv.load(info_path)
+
+    for info in mmcv.track_iter_progress(kitti_infos):
         pc_info = info['point_cloud']
         image_info = info['image']
         calib = info['calib']
@@ -161,9 +248,13 @@ def _create_reduced_point_cloud(data_path,
         v_path = pc_info['velodyne_path']
         v_path = Path(data_path) / v_path
         points_v = np.fromfile(
-            str(v_path), dtype=np.float32, count=-1).reshape([-1, 4])
+            str(v_path), dtype=np.float32,
+            count=-1).reshape([-1, num_features])
         rect = calib['R0_rect']
-        P2 = calib['P2']
+        if front_camera_id == 2:
+            P2 = calib['P2']
+        else:
+            P2 = calib[f'P{str(front_camera_id)}']
         Trv2c = calib['Tr_velo_to_cam']
         # first remove z < 0 points
         # keep = points_v[:, -1] > 0
@@ -196,10 +287,10 @@ def create_reduced_point_cloud(data_path,
                                test_info_path=None,
                                save_path=None,
                                with_back=False):
-    """Create reduced point cloud info file.
+    """Create reduced point clouds for training/validation/testing.
 
     Args:
-        data_path (str): Path of original infos.
+        data_path (str): Path of original data.
         pkl_prefix (str): Prefix of info files.
         train_info_path (str | None): Path of training set info.
             Default: None.
@@ -207,8 +298,8 @@ def create_reduced_point_cloud(data_path,
             Default: None.
         test_info_path (str | None): Path of test set info.
             Default: None.
-        save_path (str | None): Path to save reduced info.
-        with_back (bool | None): Whether to create backup info.
+        save_path (str | None): Path to save reduced point cloud data.
+        with_back (bool): Whether to flip the points to back.
     """
     if train_info_path is None:
         train_info_path = Path(data_path) / f'{pkl_prefix}_infos_train.pkl'
@@ -219,7 +310,7 @@ def create_reduced_point_cloud(data_path,
 
     print('create reduced point cloud for training set')
     _create_reduced_point_cloud(data_path, train_info_path, save_path)
-    print('create reduced point cloud for validatin set')
+    print('create reduced point cloud for validation set')
     _create_reduced_point_cloud(data_path, val_info_path, save_path)
     print('create reduced point cloud for testing set')
     _create_reduced_point_cloud(data_path, test_info_path, save_path)

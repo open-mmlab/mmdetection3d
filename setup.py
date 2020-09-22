@@ -1,8 +1,6 @@
 from setuptools import find_packages, setup
 
 import os
-import subprocess
-import time
 import torch
 from torch.utils.cpp_extension import (BuildExtension, CppExtension,
                                        CUDAExtension)
@@ -15,67 +13,6 @@ def readme():
 
 
 version_file = 'mmdet3d/version.py'
-
-
-def get_git_hash():
-
-    def _minimal_ext_cmd(cmd):
-        # construct minimal environment
-        env = {}
-        for k in ['SYSTEMROOT', 'PATH', 'HOME']:
-            v = os.environ.get(k)
-            if v is not None:
-                env[k] = v
-        # LANGUAGE is used on win32
-        env['LANGUAGE'] = 'C'
-        env['LANG'] = 'C'
-        env['LC_ALL'] = 'C'
-        out = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
-        return out
-
-    try:
-        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
-        sha = out.strip().decode('ascii')
-    except OSError:
-        sha = 'unknown'
-
-    return sha
-
-
-def get_hash():
-    if os.path.exists('.git'):
-        sha = get_git_hash()[:7]
-    elif os.path.exists(version_file):
-        try:
-            from mmdet3d.version import __version__
-            sha = __version__.split('+')[-1]
-        except ImportError:
-            raise ImportError('Unable to get git version')
-    else:
-        sha = 'unknown'
-
-    return sha
-
-
-def write_version_py():
-    content = """# GENERATED VERSION FILE
-# TIME: {}
-__version__ = '{}'
-short_version = '{}'
-version_info = ({})
-"""
-    sha = get_hash()
-    with open('mmdet3d/VERSION', 'r') as f:
-        SHORT_VERSION = f.read().strip()
-    VERSION_INFO = ', '.join(
-        [x if x.isdigit() else f'"{x}"' for x in SHORT_VERSION.split('.')])
-    VERSION = SHORT_VERSION + '+' + sha
-
-    version_file_str = content.format(time.asctime(), VERSION, SHORT_VERSION,
-                                      VERSION_INFO)
-    with open(version_file, 'w') as f:
-        f.write(version_file_str)
 
 
 def get_version():
@@ -199,7 +136,6 @@ def parse_requirements(fname='requirements.txt', with_version=True):
 
 
 if __name__ == '__main__':
-    write_version_py()
     setup(
         name='mmdet3d',
         version=get_version(),
@@ -232,10 +168,6 @@ if __name__ == '__main__':
             'optional': parse_requirements('requirements/optional.txt'),
         },
         ext_modules=[
-            make_cuda_ext(
-                name='compiling_info',
-                module='mmdet3d.ops.utils',
-                sources=['src/compiling_info.cpp']),
             make_cuda_ext(
                 name='sparse_conv_ext',
                 module='mmdet3d.ops.spconv',

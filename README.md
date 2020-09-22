@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.1.0.
+**News**: We released the codebase v0.6.0.
 
 Documentation: https://mmdetection3d.readthedocs.io/
 
@@ -29,7 +29,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 
 - **Support indoor/outdoor 3D detection out of box**
 
-  It directly supports popular indoor and outdoor 3D detection datasets, including ScanNet, SUNRGB-D, nuScenes, Lyft, and KITTI.
+  It directly supports popular indoor and outdoor 3D detection datasets, including ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
   For nuScenes dataset, we also support nuImages dataset.
 
 - **Natural integration with 2D detection**
@@ -56,7 +56,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.1.0 was released in 9/7/2020.
+v0.6.0 was released in 20/9/2020.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
@@ -70,8 +70,11 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 | PointPillars       | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| H3DNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| 3DSSD            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
+| CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/carafe/README.md)

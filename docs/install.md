@@ -49,6 +49,7 @@ c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).
 *mmcv-full* is necessary since MMDetection3D relies on MMDetection, CUDA ops in *mmcv-full* are required.
 
 The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
+
 ```shell
 pip install mmcv-full==latest+torch1.5.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
 ```
@@ -74,11 +75,16 @@ pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
-If you build mmdetection on macOS, replace the last command with
+**Important**:
 
-```
-CC=clang CXX=clang++ CFLAGS='-stdlib=libc++' pip install -e .
-```
+1. The required versions of MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMCV and MMDetection to avoid installation issues.
+
+| MMDetection3D version | MMDetection version |    MMCV version     |
+|:-------------------:|:-------------------:|:-------------------:|
+| master              | mmdet>=2.4.0        | mmcv-full>=1.1.1, <=1.2|
+| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.1, <=1.2|
+| 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
+
 
 e. Clone the MMDetection3D repository.
 
@@ -100,7 +106,7 @@ It is recommended that you run step d each time you pull some updates from githu
 
     > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
 
-    ```
+    ```shell
     pip uninstall mmdet3d
     rm -rf ./build
     find . -name "*.so" | xargs rm
@@ -114,7 +120,6 @@ you can install it before installing MMCV.
 4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
-
 
 ### A from-scratch setup script
 

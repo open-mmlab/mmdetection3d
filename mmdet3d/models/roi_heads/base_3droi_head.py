@@ -93,7 +93,7 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
     def aug_test(self, x, proposal_list, img_metas, rescale=False, **kwargs):
         """Test with augmentations.
 
-        If rescale is False, then returned bboxes and masks will fit the scale
-        of imgs[0].
+        If rescale is False, then returned bboxes and masks will fit the
+        scale of imgs[0].
         """
         pass

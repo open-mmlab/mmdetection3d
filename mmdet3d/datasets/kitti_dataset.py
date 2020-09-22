@@ -44,6 +44,8 @@ class KittiDataset(Custom3DDataset):
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
+        pcd_limit_range (list): The range of point cloud used to filter
+            invalid predicted boxes. Default: [0, -40, -3, 70.4, 40, 0.0].
     """
     CLASSES = ('car', 'pedestrian', 'cyclist')
 
@@ -57,7 +59,8 @@ class KittiDataset(Custom3DDataset):
                  modality=None,
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 pcd_limit_range=[0, -40, -3, 70.4, 40, 0.0]):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -68,9 +71,10 @@ class KittiDataset(Custom3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
 
+        self.split = split
         self.root_split = os.path.join(self.data_root, split)
         assert self.modality is not None
-        self.pcd_limit_range = [0, -40, -3, 70.4, 40, 0.0]
+        self.pcd_limit_range = pcd_limit_range
         self.pts_prefix = pts_prefix
 
     def _get_pts_filename(self, idx):
@@ -157,7 +161,6 @@ class KittiDataset(Custom3DDataset):
         dims = annos['dimensions']
         rots = annos['rotation_y']
         gt_names = annos['name']
-        # print(gt_names, len(loc))
         gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
                                       axis=1).astype(np.float32)
 
@@ -167,7 +170,6 @@ class KittiDataset(Custom3DDataset):
         gt_bboxes = annos['bbox']
 
         selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
-        # gt_bboxes_3d = gt_bboxes_3d[selected].astype('float32')
         gt_bboxes = gt_bboxes[selected].astype('float32')
         gt_names = gt_names[selected]
 
@@ -177,7 +179,7 @@ class KittiDataset(Custom3DDataset):
                 gt_labels.append(self.CLASSES.index(cat))
             else:
                 gt_labels.append(-1)
-        gt_labels = np.array(gt_labels)
+        gt_labels = np.array(gt_labels).astype(np.int64)
         gt_labels_3d = copy.deepcopy(gt_labels)
 
         anns_results = dict(
@@ -372,7 +374,8 @@ class KittiDataset(Custom3DDataset):
         Returns:
             list[dict]: A list of dictionaries with the kitti format.
         """
-        assert len(net_outputs) == len(self.data_infos)
+        assert len(net_outputs) == len(self.data_infos), \
+            'invalid list length of network outputs'
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
 
@@ -465,7 +468,7 @@ class KittiDataset(Custom3DDataset):
             if not pklfile_prefix.endswith(('.pkl', '.pickle')):
                 out = f'{pklfile_prefix}.pkl'
             mmcv.dump(det_annos, out)
-            print('Result is saved to %s' % out)
+            print(f'Result is saved to {out}.')
 
         return det_annos
 
@@ -487,8 +490,8 @@ class KittiDataset(Custom3DDataset):
         Returns:
             list[dict]: A list of dictionaries have the kitti format
         """
-        assert len(net_outputs) == len(self.data_infos)
-
+        assert len(net_outputs) == len(self.data_infos), \
+            'invalid list length of network outputs'
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
