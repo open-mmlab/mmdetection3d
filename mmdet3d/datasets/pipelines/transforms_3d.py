@@ -707,7 +707,7 @@ class BackgroundPointsFilter(object):
 class SweepPointSample(object):
     """Sweep point voxel sample.
 
-    Apply voxel ampling to multiple sweep points.
+    Apply voxel sampling to multiple sweep points.
 
     Args:
         name (str): Name of the dataset.
