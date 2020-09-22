@@ -33,6 +33,15 @@ class SSD3DNet(VoteNet):
                 **test_cfg.voxel_sampler_cfg[1])
 
     def _points_voxel_sampling(self, cur_points, sweeps_points):
+        """Apply voxel sampling to sample input points.
+
+        Args:
+            cur_points (torch.Tensor): Input points from current sweep.
+            sweeps_points (torch.Tensor): Input points from previous sweeps.
+
+        Returns:
+            torch.Tensor: Input points sampled by voxel sampling.
+        """
         voxels, coors, num_points_per_voxel = self.cur_sweep_sampler(
             cur_points)
         max_voxels = self.test_cfg.voxel_sampler_cfg[0].max_voxels
@@ -42,9 +51,9 @@ class SSD3DNet(VoteNet):
             choices = np.random.choice(
                 voxels.shape[0], max_voxels, replace=True)
             cur_points = voxels[choices]
+
         voxels, coors, num_points_per_voxel = self.prev_sweep_sampler(
             sweeps_points)
-
         max_voxels = self.test_cfg.voxel_sampler_cfg[1].max_voxels
         if voxels.shape[0] >= max_voxels:
             sweeps_points = voxels[:max_voxels]
