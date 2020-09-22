@@ -258,7 +258,7 @@ def test_sweep_points_filter():
 
     points = input_dict['points']
     repr_str = repr(sweep_points_filter)
-    expected_repr_str = 'SweepPointSample(num_cur_sweep=1024,'\
+    expected_repr_str = 'SweepPointSample(num_cur_sweep=1024, '\
                         'num_prev_sweep=1024)'
 
     assert repr_str == expected_repr_str
