@@ -13,6 +13,7 @@ Welcome to MMDetection3D's documentation!
    tutorials/new_dataset.md
    tutorials/data_pipeline.md
    tutorials/new_modules.md
+   tutorials/waymo.md
    api.rst
 
 
