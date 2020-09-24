@@ -1,4 +1,4 @@
-# A Brief Tutorial for Waymo Dataset
+# Tutorial 5: Waymo Dataset
 
 This page provides specific tutorials about the usage of MMDetection3D for waymo dataset.
 
@@ -116,7 +116,7 @@ Then you can evaluate your models on waymo. An example to evaluate PointPillars 
 
 **Notice**:
 
-1. Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file. 
+1. Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.
 
 2. Considering it takes a little long time to evaluate once, we recommend to evaluate only once at the end of model training.
 
