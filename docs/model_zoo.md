@@ -14,7 +14,7 @@ Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master
 
 ### PointPillars
 
-Please refer to [PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) for details. We provide pointpillars baselines on KITTI, nuScenes, Lyft and Waymo.
+Please refer to [PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) for details. We provide pointpillars baselines on KITTI, nuScenes, Lyft, and Waymo datasets.
 
 ### Part-A2
 
@@ -22,7 +22,7 @@ Please refer to [Part-A2](https://github.com/open-mmlab/mmdetection3d/blob/maste
 
 ### VoteNet
 
-Please refer to [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet) for details. We provide VoteNet baselines on ScanNet and SUNRGBD.
+Please refer to [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet) for details. We provide VoteNet baselines on ScanNet and SUNRGBD datasets.
 
 ### Dynamic Voxelization
 
@@ -33,7 +33,7 @@ Please refer to [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection
 Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/mvxnet) for details.
 
 ### RegNetX
-Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft currently.
+Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
 
 ### nuImages
 We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN and Cascade Mask R-CNN results currently.

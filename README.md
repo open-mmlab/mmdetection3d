@@ -87,7 +87,7 @@ Please refer to [install.md](docs/install.md) for installation and dataset prepa
 
 ## Get Started
 
-Please see [getting_started.md](docs/getting_started.md) for the basic usage of MMDetection3D. There are also tutorials for [finetuning models](docs/tutorials/finetune.md), [adding new dataset](docs/tutorials/new_dataset.md), [designing data pipeline](docs/tutorials/data_pipeline.md), [adding new modules](docs/tutorials/new_modules.md) and [waymo dataset](docs/tutorials/waymo.md).
+Please see [getting_started.md](docs/getting_started.md) for the basic usage of MMDetection3D. There are also tutorials for [finetuning models](docs/tutorials/finetune.md), [adding new dataset](docs/tutorials/new_dataset.md), [designing data pipeline](docs/tutorials/data_pipeline.md), [adding new modules](docs/tutorials/new_modules.md), and [waymo dataset](docs/tutorials/waymo.md).
 
 ## Contributing
 
