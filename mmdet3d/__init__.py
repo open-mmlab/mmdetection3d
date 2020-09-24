@@ -16,7 +16,7 @@ def digit_version(version_str):
     return digit_version
 
 
-mmcv_minimum_version = '1.1.1'
+mmcv_minimum_version = '1.1.3'
 mmdet_maximum_version = '1.2'
 mmcv_version = digit_version(mmcv.__version__)
 

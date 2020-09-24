@@ -81,8 +81,8 @@ pip install -v -e .  # or "python setup.py develop"
 
 | MMDetection3D version | MMDetection version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.4.0        | mmcv-full>=1.1.1, <=1.2|
-| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.1, <=1.2|
+| master              | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
+| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
 | 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
 
 
