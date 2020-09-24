@@ -4,7 +4,7 @@ This page provides specific tutorials about the usage of MMDetection3D for waymo
 
 ## Prepare datasets
 
-Before preparing waymo dataset, please install its official package at first by running
+Before preparing waymo dataset, if you only installed requirements in `requirements/build.txt` and `requirements/runtime.txt` before, please install the official package for this dataset at first by running
 
 ```
 # tf 2.1.0.
@@ -13,6 +13,12 @@ pip install waymo-open-dataset-tf-2-1-0==1.2.0
 # pip install waymo-open-dataset-tf-2-0-0==1.2.0
 # tf 1.15.0
 # pip install waymo-open-dataset-tf-1-15-0==1.2.0
+```
+
+or
+
+```
+pip install -r requirements/optional.txt
 ```
 
 Like the general way to prepare dataset, it is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
