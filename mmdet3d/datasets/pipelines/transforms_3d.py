@@ -701,8 +701,8 @@ class BackgroundPointsFilter(object):
 
 
 @PIPELINES.register_module()
-class SweepPointSample(object):
-    """Sweep point voxel sample.
+class VoxelBasedPointSampler(object):
+    """Voxel based point sampler.
 
     Apply voxel sampling to multiple sweep points.
 
@@ -711,9 +711,14 @@ class SweepPointSample(object):
         num_points (int): Number of points to be sampled.
     """
 
-    def __init__(self, cur_sweep_cfg, prev_sweep_cfg):
+    def __init__(self, cur_sweep_cfg, prev_sweep_cfg=None):
+        self.cur_voxel_num = cur_sweep_cfg.pop('random_voxel_num')
         self.cur_sweep_sampler = VoxelGenerator(**cur_sweep_cfg)
-        self.prev_sweep_sampler = VoxelGenerator(**prev_sweep_cfg)
+        if prev_sweep_cfg is not None:
+            self.prev_voxel_num = prev_sweep_cfg.pop('random_voxel_num')
+            self.prev_sweep_sampler = VoxelGenerator(**prev_sweep_cfg)
+        else:
+            self.prev_voxel_num = 0
 
     def __call__(self, results):
         """Call function to sample points from multiple sweeps.
@@ -732,7 +737,7 @@ class SweepPointSample(object):
 
         voxels, coors, num_points_per_voxel = self.cur_sweep_sampler.generate(
             cur_sweep_points)
-        max_voxels = self.cur_sweep_sampler._max_voxels
+        max_voxels = self.cur_voxel_num
         if voxels.shape[0] >= max_voxels:
             cur_sweep_points = voxels[:max_voxels]
         else:
@@ -740,24 +745,27 @@ class SweepPointSample(object):
                 voxels.shape[0], max_voxels, replace=True)
             cur_sweep_points = voxels[choices]
 
-        voxels, coors, num_points_per_voxel = self.prev_sweep_sampler.generate(
-            prev_sweeps_points)
-        max_voxels = self.prev_sweep_sampler._max_voxels
-        if voxels.shape[0] >= max_voxels:
-            prev_sweeps_points = voxels[:max_voxels]
+        if self.prev_voxel_num > 0:
+            voxels, coors, num_points_per_voxel = \
+                self.prev_sweep_sampler.generate(prev_sweeps_points)
+            max_voxels = self.prev_voxel_num
+            if voxels.shape[0] >= max_voxels:
+                prev_sweeps_points = voxels[:max_voxels]
+            else:
+                choices = np.random.choice(
+                    voxels.shape[0], max_voxels, replace=True)
+                prev_sweeps_points = voxels[choices]
+            points = np.concatenate([cur_sweep_points, prev_sweeps_points],
+                                    0).squeeze(1)
+            results['points'] = points
         else:
-            choices = np.random.choice(
-                voxels.shape[0], max_voxels, replace=True)
-            prev_sweeps_points = voxels[choices]
-        points = np.concatenate([cur_sweep_points, prev_sweeps_points],
-                                0).squeeze(1)
-        results['points'] = points
+            results['points'] = cur_sweep_points
+
         return results
 
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += '(num_cur_sweep={0}, num_prev_sweep={1})'.format(
-            self.cur_sweep_sampler._max_voxels,
-            self.prev_sweep_sampler._max_voxels)
+            self.cur_voxel_num, self.prev_voxel_num)
         return repr_str

@@ -5,7 +5,8 @@ import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
-                              ObjectSample, RandomFlip3D, SweepPointSample)
+                              ObjectSample, RandomFlip3D,
+                              VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -233,19 +234,22 @@ def test_background_points_filter():
         BackgroundPointsFilter((0.5, 2.0))
 
 
-def test_sweep_points_filter():
+def test_voxel_based_point_filter():
     np.random.seed(0)
     cur_sweep_cfg = dict(
         voxel_size=[0.1, 0.1, 0.1],
         point_cloud_range=[-50, -50, -4, 50, 50, 2],
+        random_voxel_num=1024,
         max_num_points=1,
-        max_voxels=1024)
+        max_voxels=9999)
     prev_sweep_cfg = dict(
         voxel_size=[0.1, 0.1, 0.1],
         point_cloud_range=[-50, -50, -4, 50, 50, 2],
+        random_voxel_num=1024,
         max_num_points=1,
-        max_voxels=1024)
-    sweep_points_filter = SweepPointSample(cur_sweep_cfg, prev_sweep_cfg)
+        max_voxels=9999)
+    voxel_based_points_filter = VoxelBasedPointSampler(cur_sweep_cfg,
+                                                       prev_sweep_cfg)
     points = np.stack([
         np.random.rand(4096) * 120 - 60,
         np.random.rand(4096) * 120 - 60,
@@ -254,11 +258,11 @@ def test_sweep_points_filter():
                       axis=-1)
 
     input_dict = dict(points=points, cur_points_num=2048)
-    input_dict = sweep_points_filter(input_dict)
+    input_dict = voxel_based_points_filter(input_dict)
 
     points = input_dict['points']
-    repr_str = repr(sweep_points_filter)
-    expected_repr_str = 'SweepPointSample(num_cur_sweep=1024, '\
+    repr_str = repr(voxel_based_points_filter)
+    expected_repr_str = 'VoxelBasedPointSampler(num_cur_sweep=1024, '\
                         'num_prev_sweep=1024)'
 
     assert repr_str == expected_repr_str

@@ -9,7 +9,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalRotScaleTrans,
                         LoadPointsFromFile, LoadPointsFromMultiSweeps,
                         NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointShuffle, PointsRangeFilter,
-                        RandomFlip3D, SweepPointSample)
+                        RandomFlip3D, VoxelBasedPointSampler)
 from .scannet_dataset import ScanNetDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 from .waymo_dataset import WaymoDataset
@@ -23,5 +23,5 @@ __all__ = [
     'LoadPointsFromFile', 'NormalizePointsColor', 'IndoorPointSample',
     'LoadAnnotations3D', 'SUNRGBDDataset', 'ScanNetDataset', 'Custom3DDataset',
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
-    'SweepPointSample'
+    'VoxelBasedPointSampler'
 ]
