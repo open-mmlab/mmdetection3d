@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import build_norm_layer
+from mmcv.runner import auto_fp16
 from torch import nn
 
 from mmdet3d.ops import DynamicScatter
@@ -22,6 +23,7 @@ class HardSimpleVFE(nn.Module):
         super(HardSimpleVFE, self).__init__()
         self.num_features = num_features
 
+    @auto_fp16()
     def forward(self, features, num_points, coors):
         """Forward function.
 
@@ -59,6 +61,7 @@ class DynamicSimpleVFE(nn.Module):
         super(DynamicSimpleVFE, self).__init__()
         self.scatter = DynamicScatter(voxel_size, point_cloud_range, True)
 
+    @auto_fp16()
     @torch.no_grad()
     def forward(self, features, coors):
         """Forward function.
@@ -209,6 +212,7 @@ class DynamicVFE(nn.Module):
         center_per_point = voxel_mean[voxel_inds, ...]
         return center_per_point
 
+    @auto_fp16()
     def forward(self,
                 features,
                 coors,
@@ -372,6 +376,7 @@ class HardVFE(nn.Module):
         if fusion_layer is not None:
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
 
+    @auto_fp16()
     def forward(self,
                 features,
                 num_points,

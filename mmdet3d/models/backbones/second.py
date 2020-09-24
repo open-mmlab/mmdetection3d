@@ -1,5 +1,5 @@
 from mmcv.cnn import build_conv_layer, build_norm_layer
-from mmcv.runner import load_checkpoint
+from mmcv.runner import auto_fp16, load_checkpoint
 from torch import nn as nn
 
 from mmdet.models import BACKBONES
@@ -70,6 +70,7 @@ class SECOND(nn.Module):
             logger = get_root_logger()
             load_checkpoint(self, pretrained, strict=False, logger=logger)
 
+    @auto_fp16()
     def forward(self, x):
         """Forward function.
 

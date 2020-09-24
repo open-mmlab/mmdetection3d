@@ -1,4 +1,5 @@
 import torch
+from mmcv.runner import force_fp32
 from torch import nn as nn
 from typing import List
 
@@ -59,7 +60,9 @@ class Points_Sampler(nn.Module):
         self.samplers = nn.ModuleList()
         for fps_mod in fps_mod_list:
             self.samplers.append(get_sampler_type(fps_mod)())
+        self.fp16_enabled = False
 
+    @force_fp32(apply_to=('points_xyz', 'features'))
     def forward(self, points_xyz, features):
         """forward.
 

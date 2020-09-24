@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from mmcv.cnn import bias_init_with_prob, normal_init
+from mmcv.runner import force_fp32
 from torch import nn as nn
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
@@ -79,6 +80,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         self.assign_per_class = assign_per_class
         self.dir_offset = dir_offset
         self.dir_limit_offset = dir_limit_offset
+        self.fp16_enabled = False
 
         # build anchor generator
         self.anchor_generator = build_anchor_generator(anchor_generator)
@@ -270,6 +272,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                            dim=-1)
         return boxes1, boxes2
 
+    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
     def loss(self,
              cls_scores,
              bbox_preds,

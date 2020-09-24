@@ -8,6 +8,7 @@ class BasePointNet(nn.Module, metaclass=ABCMeta):
 
     def __init__(self):
         super(BasePointNet, self).__init__()
+        self.fp16_enabled = False
 
     def init_weights(self, pretrained=None):
         """Initialize the weights of PointNet backbone."""

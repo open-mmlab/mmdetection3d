@@ -1,3 +1,5 @@
+from mmcv.runner import auto_fp16
+
 from mmdet.models.backbones import RegNet
 from ..builder import BACKBONES
 
@@ -65,6 +67,7 @@ class NoStemRegNet(RegNet):
         since 3D detector's voxel encoder works like a stem layer."""
         return
 
+    @auto_fp16()
     def forward(self, x):
         """Forward function of backbone.
 
