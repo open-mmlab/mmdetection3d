@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import NORM_LAYERS
+from mmcv.runner import force_fp32
 from torch import distributed as dist
 from torch import nn as nn
 from torch.autograd.function import Function
@@ -42,10 +43,14 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         It is slower than `nn.SyncBatchNorm`.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fp16_enabled = False
+
+    @force_fp32(out_fp16=True)
     def forward(self, input):
         if dist.get_world_size() == 1 or not self.training:
             return super().forward(input)
-
         assert input.shape[0] > 0, 'SyncBN does not support empty inputs'
         C = input.shape[1]
         mean = torch.mean(input, dim=[0, 2])
@@ -87,6 +92,11 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
         It is slower than `nn.SyncBatchNorm`.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fp16_enabled = False
+
+    @force_fp32(out_fp16=True)
     def forward(self, input):
         if dist.get_world_size() == 1 or not self.training:
             return super().forward(input)

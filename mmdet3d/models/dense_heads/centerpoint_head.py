@@ -229,7 +229,7 @@ class DCNSeperateHead(nn.Module):
         return ret
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class CenterHead(nn.Module):
     """CenterHead for CenterPoint.
 

@@ -87,7 +87,7 @@ class PillarFeatureNet(nn.Module):
         self.y_offset = self.vy / 2 + point_cloud_range[1]
         self.point_cloud_range = point_cloud_range
 
-    @auto_fp16()
+    @auto_fp16(apply_to=('features', ))
     def forward(self, features, num_points, coors):
         """Forward function.
 
@@ -259,7 +259,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         center_per_point = canvas[:, voxel_index.long()].t()
         return center_per_point
 
-    @auto_fp16()
+    @auto_fp16(apply_to=('features', ))
     def forward(self, features, coors):
         """Forward function.
 
