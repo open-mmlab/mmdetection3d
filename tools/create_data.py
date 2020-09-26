@@ -5,7 +5,6 @@ from tools.data_converter import indoor_converter as indoor
 from tools.data_converter import kitti_converter as kitti
 from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
-from tools.data_converter import waymo_converter as waymo
 from tools.data_converter.create_gt_database import create_groundtruth_database
 
 
@@ -150,6 +149,8 @@ def waymo_data_prep(root_path,
         max_sweeps (int): Number of input consecutive frames. Default: 5 \
             Here we store pose information of these frames for later use.
     """
+    from tools.data_converter import waymo_converter as waymo
+
     splits = ['training', 'validation', 'testing']
     for i, split in enumerate(splits):
         load_dir = osp.join(root_path, 'waymo_format', split)

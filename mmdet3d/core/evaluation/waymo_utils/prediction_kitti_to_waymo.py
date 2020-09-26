@@ -2,12 +2,18 @@ r"""Adapted from `Waymo to KITTI converter
     <https://github.com/caizhongang/waymo_kitti_converter>`_.
 """
 
+try:
+    from waymo_open_dataset import dataset_pb2 as open_dataset
+except ImportError:
+    raise ImportError(
+        'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
+        'to install the official devkit first.')
+
 import mmcv
 import numpy as np
 import tensorflow as tf
 from glob import glob
 from os.path import join
-from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset import label_pb2
 from waymo_open_dataset.protos import metrics_pb2
 
@@ -100,8 +106,8 @@ class KITTI2Waymo(object):
         """
 
         def parse_one_object(instance_idx):
-            """Parse one instance in kitti format and convert them to
-            `Object` proto.
+            """Parse one instance in kitti format and convert them to `Object`
+            proto.
 
             Args:
                 instance_idx (int): Index of the instance to be converted.

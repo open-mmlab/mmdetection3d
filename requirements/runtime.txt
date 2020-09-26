@@ -4,8 +4,7 @@ networkx>=2.2,<2.3
 numba==0.48.0
 nuscenes-devkit
 plyfile
+scikit-image
 # by default we also use tensorboard to log results
 tensorboard
 trimesh>=2.35.39,<2.35.40
-scikit-image
-waymo-open-dataset-tf-2-1-0==1.2.0
