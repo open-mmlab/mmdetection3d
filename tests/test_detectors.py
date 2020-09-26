@@ -231,3 +231,20 @@ def test_centerpoint():
     losses = self.forward_train(points, img_metas, gt_bboxes, gt_labels)
     for key, value in losses.items():
         assert value >= 0
+
+    # test_simple_test
+    results = self.simple_test(points, img_metas)
+    boxes_3d_0 = results[0]['pts_bbox']['boxes_3d']
+    scores_3d_0 = results[0]['pts_bbox']['scores_3d']
+    labels_3d_0 = results[0]['pts_bbox']['labels_3d']
+    assert boxes_3d_0.tensor.shape[0] >= 0
+    assert boxes_3d_0.tensor.shape[1] == 9
+    assert scores_3d_0.shape[0] >= 0
+    assert labels_3d_0.shape[0] >= 0
+    boxes_3d_1 = results[1]['pts_bbox']['boxes_3d']
+    scores_3d_1 = results[1]['pts_bbox']['scores_3d']
+    labels_3d_1 = results[1]['pts_bbox']['labels_3d']
+    assert boxes_3d_1.tensor.shape[0] >= 0
+    assert boxes_3d_1.tensor.shape[1] == 9
+    assert scores_3d_1.shape[0] >= 0
+    assert labels_3d_1.shape[0] >= 0
