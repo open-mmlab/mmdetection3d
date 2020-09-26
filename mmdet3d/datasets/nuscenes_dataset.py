@@ -436,6 +436,8 @@ class NuScenesDataset(Custom3DDataset):
 
         if not isinstance(results[0], dict):
             result_files = self._format_bbox(results, jsonfile_prefix)
+        elif isinstance(results[0], dict) and 'boxes_3d' in results[0].keys():
+            result_files = self._format_bbox(results, jsonfile_prefix)
         else:
             result_files = dict()
             for name in results[0]:
