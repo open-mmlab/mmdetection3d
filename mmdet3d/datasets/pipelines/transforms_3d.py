@@ -771,8 +771,8 @@ class VoxelBasedPointSampler(object):
                 self.cur_sweep_sampler._max_num_points == 1:
             instance_dim = points.shape[-1]
             pts_instance_mask = results['pts_instance_mask']
-            points = np.concatenate(
-                [points, pts_instance_mask.unsqueeze(-1)], axis=-1)
+            points = np.concatenate([points, pts_instance_mask[..., None]],
+                                    axis=-1)
         else:
             instance_dim = -1
 
@@ -780,8 +780,8 @@ class VoxelBasedPointSampler(object):
                 self.cur_sweep_sampler._max_num_points == 1:
             semantic_dim = points.shape[-1]
             pts_semantic_mask = results['pts_semantic_mask']
-            points = np.concatenate(
-                [points, pts_semantic_mask.unsqueeze(-1)], axis=-1)
+            points = np.concatenate([points, pts_semantic_mask[..., None]],
+                                    axis=-1)
         else:
             semantic_dim = -1
 
