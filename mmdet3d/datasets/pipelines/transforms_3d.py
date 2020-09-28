@@ -707,18 +707,50 @@ class VoxelBasedPointSampler(object):
     Apply voxel sampling to multiple sweep points.
 
     Args:
-        name (str): Name of the dataset.
-        num_points (int): Number of points to be sampled.
+        cur_sweep_cfg (dict): Config for sampling current points.
+        prev_sweep_cfg (dict): Config for sampling previous points.
+        time_dim (int): Index that indicate the time dimention
+            for input points.
     """
 
-    def __init__(self, cur_sweep_cfg, prev_sweep_cfg=None):
-        self.cur_voxel_num = cur_sweep_cfg.pop('random_voxel_num')
+    def __init__(self, cur_sweep_cfg, prev_sweep_cfg=None, time_dim=3):
         self.cur_sweep_sampler = VoxelGenerator(**cur_sweep_cfg)
+        self.cur_voxel_num = self.cur_sweep_sampler._max_voxels
+        self.time_dim = time_dim
         if prev_sweep_cfg is not None:
-            self.prev_voxel_num = prev_sweep_cfg.pop('random_voxel_num')
+            assert prev_sweep_cfg['max_num_points'] == \
+                cur_sweep_cfg['max_num_points']
             self.prev_sweep_sampler = VoxelGenerator(**prev_sweep_cfg)
+            self.prev_voxel_num = self.prev_sweep_sampler._max_voxels
         else:
+            self.prev_sweep_sampler = None
             self.prev_voxel_num = 0
+
+    def _sample_points(self, points, sampler, point_dim):
+        """Sample points for each points subset.
+
+        Args:
+            points (np.ndarray): Points subset to be sampled.
+            sampler (VoxelGenerator): Voxel based sampler for
+                each points subset.
+            point_dim (int): The dimention of each points
+
+        Returns:
+            np.ndarray: Sampled points.
+        """
+        voxels, coors, num_points_per_voxel = sampler.generate(points)
+        if voxels.shape[0] < sampler._max_voxels:
+            padding_points = np.zeros([
+                sampler._max_voxels - voxels.shape[0], sampler._max_num_points,
+                point_dim
+            ],
+                                      dtype=points.dtype)
+            padding_points[:] = voxels[0]
+            sample_points = np.concatenate([voxels, padding_points], axis=0)
+        else:
+            sample_points = voxels
+
+        return sample_points
 
     def __call__(self, results):
         """Call function to sample points from multiple sweeps.
@@ -731,35 +763,61 @@ class VoxelBasedPointSampler(object):
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
-        cur_points_num = results['cur_points_num']
-        cur_sweep_points = points[:cur_points_num]
-        prev_sweeps_points = points[cur_points_num:]
+        original_dim = points.shape[1]
 
-        voxels, coors, num_points_per_voxel = self.cur_sweep_sampler.generate(
-            cur_sweep_points)
-        max_voxels = self.cur_voxel_num
-        if voxels.shape[0] >= max_voxels:
-            cur_sweep_points = voxels[:max_voxels]
+        # TODO: process instance and semantic mask while _max_num_points
+        # is larger than 1
+        if 'pts_instance_mask' in results.keys() and \
+                self.cur_sweep_sampler._max_num_points == 1:
+            instance_dim = points.shape[-1]
+            pts_instance_mask = results['pts_instance_mask']
+            points = np.concatenate(
+                [points, pts_instance_mask.unsqueeze(-1)], axis=-1)
         else:
-            choices = np.random.choice(
-                voxels.shape[0], max_voxels, replace=True)
-            cur_sweep_points = voxels[choices]
+            instance_dim = -1
 
-        if self.prev_voxel_num > 0:
-            voxels, coors, num_points_per_voxel = \
-                self.prev_sweep_sampler.generate(prev_sweeps_points)
-            max_voxels = self.prev_voxel_num
-            if voxels.shape[0] >= max_voxels:
-                prev_sweeps_points = voxels[:max_voxels]
-            else:
-                choices = np.random.choice(
-                    voxels.shape[0], max_voxels, replace=True)
-                prev_sweeps_points = voxels[choices]
-            points = np.concatenate([cur_sweep_points, prev_sweeps_points],
-                                    0).squeeze(1)
-            results['points'] = points
+        if 'pts_semantic_mask' in results.keys() and \
+                self.cur_sweep_sampler._max_num_points == 1:
+            semantic_dim = points.shape[-1]
+            pts_semantic_mask = results['pts_semantic_mask']
+            points = np.concatenate(
+                [points, pts_semantic_mask.unsqueeze(-1)], axis=-1)
         else:
-            results['points'] = cur_sweep_points
+            semantic_dim = -1
+
+        # Split points into two part, current sweep points and
+        # previous sweeps points.
+        # TODO: support different sampling methods for next sweeps points
+        # and previous sweeps points.
+        cur_points_flag = (points[:, self.time_dim] == 0)
+        cur_sweep_points = points[cur_points_flag]
+        prev_sweeps_points = points[~cur_points_flag]
+
+        # Shuffle points before sampling
+        np.random.shuffle(cur_sweep_points)
+        np.random.shuffle(prev_sweeps_points)
+
+        cur_sweep_points = self._sample_points(cur_sweep_points,
+                                               self.cur_sweep_sampler,
+                                               points.shape[1])
+        if self.prev_sweep_sampler is not None:
+            prev_sweeps_points = self._sample_points(prev_sweeps_points,
+                                                     self.prev_sweep_sampler,
+                                                     points.shape[1])
+
+            points = np.concatenate([cur_sweep_points, prev_sweeps_points], 0)
+        else:
+            points = cur_sweep_points
+
+        if self.cur_sweep_sampler._max_num_points == 1:
+            points = points.squeeze(1)
+        results['points'] = points[..., :original_dim]
+
+        if instance_dim != -1:
+            results['pts_instance_mask'] = points[..., instance_dim]
+
+        if semantic_dim != -1:
+            results['pts_semantic_mask'] = points[..., semantic_dim]
 
         return results
 

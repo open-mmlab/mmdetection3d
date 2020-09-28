@@ -239,17 +239,15 @@ def test_voxel_based_point_filter():
     cur_sweep_cfg = dict(
         voxel_size=[0.1, 0.1, 0.1],
         point_cloud_range=[-50, -50, -4, 50, 50, 2],
-        random_voxel_num=1024,
         max_num_points=1,
-        max_voxels=9999)
+        max_voxels=1024)
     prev_sweep_cfg = dict(
         voxel_size=[0.1, 0.1, 0.1],
         point_cloud_range=[-50, -50, -4, 50, 50, 2],
-        random_voxel_num=1024,
         max_num_points=1,
-        max_voxels=9999)
-    voxel_based_points_filter = VoxelBasedPointSampler(cur_sweep_cfg,
-                                                       prev_sweep_cfg)
+        max_voxels=1024)
+    voxel_based_points_filter = VoxelBasedPointSampler(
+        cur_sweep_cfg, prev_sweep_cfg, time_dim=3)
     points = np.stack([
         np.random.rand(4096) * 120 - 60,
         np.random.rand(4096) * 120 - 60,
@@ -257,7 +255,10 @@ def test_voxel_based_point_filter():
     ],
                       axis=-1)
 
-    input_dict = dict(points=points, cur_points_num=2048)
+    input_time = np.concatenate([np.zeros([2048, 1]), np.ones([2048, 1])], 0)
+    input_points = np.concatenate([points, input_time], 1)
+
+    input_dict = dict(points=input_points)
     input_dict = voxel_based_points_filter(input_dict)
 
     points = input_dict['points']
@@ -266,6 +267,23 @@ def test_voxel_based_point_filter():
                         'num_prev_sweep=1024)'
 
     assert repr_str == expected_repr_str
-    assert points.shape == (2048, 3)
-    assert (points.min(0) < cur_sweep_cfg['point_cloud_range'][0:3]).sum() == 0
-    assert (points.max(0) > cur_sweep_cfg['point_cloud_range'][3:6]).sum() == 0
+    assert points.shape == (2048, 4)
+    assert (points[:, :3].min(0) <
+            cur_sweep_cfg['point_cloud_range'][0:3]).sum() == 0
+    assert (points[:, :3].max(0) >
+            cur_sweep_cfg['point_cloud_range'][3:6]).sum() == 0
+
+    # Test instance mask and semantic mask
+    input_dict = dict(points=input_points)
+    input_dict['pts_instance_mask'] = np.random.randint(0, 10, [4096])
+    input_dict['pts_semantic_mask'] = np.random.randint(0, 6, [4096])
+
+    input_dict = voxel_based_points_filter(input_dict)
+    pts_instance_mask = input_dict['pts_instance_mask']
+    pts_semantic_mask = input_dict['pts_semantic_mask']
+    assert pts_instance_mask.shape == (2048, )
+    assert pts_semantic_mask.shape == (2048, )
+    assert pts_instance_mask.max() < 10
+    assert pts_instance_mask.min() >= 0
+    assert pts_semantic_mask.max() < 6
+    assert pts_semantic_mask.min() >= 0
