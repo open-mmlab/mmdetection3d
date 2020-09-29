@@ -789,6 +789,8 @@ class VoxelBasedPointSampler(object):
         cur_points_flag = (points[:, self.time_dim] == 0)
         cur_sweep_points = points[cur_points_flag]
         prev_sweeps_points = points[~cur_points_flag]
+        if prev_sweeps_points.shape[0] == 0:
+            prev_sweeps_points = cur_sweep_points
 
         # Shuffle points before sampling
         np.random.shuffle(cur_sweep_points)
