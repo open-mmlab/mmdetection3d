@@ -58,6 +58,19 @@ class VoxelGenerator(object):
         """np.ndarray: The size of grids."""
         return self._grid_size
 
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        indent = ' ' * (len(repr_str) + 1)
+        repr_str += f'(voxel_size={self._voxel_size},\n'
+        repr_str += indent + 'point_cloud_range='
+        repr_str += f'{self._point_cloud_range.tolist()},\n'
+        repr_str += indent + f'max_num_points={self._max_num_points},\n'
+        repr_str += indent + f'max_voxels={self._max_voxels},\n'
+        repr_str += indent + f'grid_size={self._grid_size.tolist()}'
+        repr_str += ')'
+        return repr_str
+
 
 def points_to_voxel(points,
                     voxel_size,
