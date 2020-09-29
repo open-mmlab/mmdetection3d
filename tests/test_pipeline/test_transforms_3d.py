@@ -258,7 +258,8 @@ def test_voxel_based_point_filter():
     input_time = np.concatenate([np.zeros([2048, 1]), np.ones([2048, 1])], 0)
     input_points = np.concatenate([points, input_time], 1)
 
-    input_dict = dict(points=input_points)
+    input_dict = dict(
+        points=input_points, pts_mask_fields=[], pts_seg_fields=[])
     input_dict = voxel_based_points_filter(input_dict)
 
     points = input_dict['points']
@@ -277,6 +278,8 @@ def test_voxel_based_point_filter():
     input_dict = dict(points=input_points)
     input_dict['pts_instance_mask'] = np.random.randint(0, 10, [4096])
     input_dict['pts_semantic_mask'] = np.random.randint(0, 6, [4096])
+    input_dict['pts_mask_fields'] = ['pts_instance_mask']
+    input_dict['pts_seg_fields'] = ['pts_semantic_mask']
 
     input_dict = voxel_based_points_filter(input_dict)
     pts_instance_mask = input_dict['pts_instance_mask']

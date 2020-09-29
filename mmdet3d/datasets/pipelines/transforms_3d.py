@@ -714,16 +714,16 @@ class VoxelBasedPointSampler(object):
     """
 
     def __init__(self, cur_sweep_cfg, prev_sweep_cfg=None, time_dim=3):
-        self.cur_sweep_sampler = VoxelGenerator(**cur_sweep_cfg)
-        self.cur_voxel_num = self.cur_sweep_sampler._max_voxels
+        self.cur_voxel_generator = VoxelGenerator(**cur_sweep_cfg)
+        self.cur_voxel_num = self.cur_voxel_generator._max_voxels
         self.time_dim = time_dim
         if prev_sweep_cfg is not None:
             assert prev_sweep_cfg['max_num_points'] == \
                 cur_sweep_cfg['max_num_points']
-            self.prev_sweep_sampler = VoxelGenerator(**prev_sweep_cfg)
-            self.prev_voxel_num = self.prev_sweep_sampler._max_voxels
+            self.prev_voxel_generator = VoxelGenerator(**prev_sweep_cfg)
+            self.prev_voxel_num = self.prev_voxel_generator._max_voxels
         else:
-            self.prev_sweep_sampler = None
+            self.prev_voxel_generator = None
             self.prev_voxel_num = 0
 
     def _sample_points(self, points, sampler, point_dim):
@@ -767,23 +767,20 @@ class VoxelBasedPointSampler(object):
 
         # TODO: process instance and semantic mask while _max_num_points
         # is larger than 1
-        if 'pts_instance_mask' in results.keys() and \
-                self.cur_sweep_sampler._max_num_points == 1:
-            instance_dim = points.shape[-1]
-            pts_instance_mask = results['pts_instance_mask']
-            points = np.concatenate([points, pts_instance_mask[..., None]],
-                                    axis=-1)
-        else:
-            instance_dim = -1
+        # Extend points with seg and mask fields
+        map_fields2dim = []
+        start_dim = original_dim
+        extra_channel = [points]
+        for idx, key in enumerate(results['pts_mask_fields']):
+            map_fields2dim.append((key, idx + start_dim))
+            extra_channel.append(results[key][..., None])
 
-        if 'pts_semantic_mask' in results.keys() and \
-                self.cur_sweep_sampler._max_num_points == 1:
-            semantic_dim = points.shape[-1]
-            pts_semantic_mask = results['pts_semantic_mask']
-            points = np.concatenate([points, pts_semantic_mask[..., None]],
-                                    axis=-1)
-        else:
-            semantic_dim = -1
+        start_dim += len(results['pts_mask_fields'])
+        for idx, key in enumerate(results['pts_seg_fields']):
+            map_fields2dim.append((key, idx + start_dim))
+            extra_channel.append(results[key][..., None])
+
+        points = np.concatenate(extra_channel, axis=-1)
 
         # Split points into two part, current sweep points and
         # previous sweeps points.
@@ -798,26 +795,24 @@ class VoxelBasedPointSampler(object):
         np.random.shuffle(prev_sweeps_points)
 
         cur_sweep_points = self._sample_points(cur_sweep_points,
-                                               self.cur_sweep_sampler,
+                                               self.cur_voxel_generator,
                                                points.shape[1])
-        if self.prev_sweep_sampler is not None:
+        if self.prev_voxel_generator is not None:
             prev_sweeps_points = self._sample_points(prev_sweeps_points,
-                                                     self.prev_sweep_sampler,
+                                                     self.prev_voxel_generator,
                                                      points.shape[1])
 
             points = np.concatenate([cur_sweep_points, prev_sweeps_points], 0)
         else:
             points = cur_sweep_points
 
-        if self.cur_sweep_sampler._max_num_points == 1:
+        if self.cur_voxel_generator._max_num_points == 1:
             points = points.squeeze(1)
         results['points'] = points[..., :original_dim]
 
-        if instance_dim != -1:
-            results['pts_instance_mask'] = points[..., instance_dim]
-
-        if semantic_dim != -1:
-            results['pts_semantic_mask'] = points[..., semantic_dim]
+        # Restore the correspoinding seg and mask fields
+        for key, dim_index in map_fields2dim:
+            results[key] = points[..., dim_index]
 
         return results
 
