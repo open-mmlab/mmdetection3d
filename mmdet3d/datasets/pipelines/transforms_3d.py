@@ -820,7 +820,21 @@ class VoxelBasedPointSampler(object):
 
     def __repr__(self):
         """str: Return a string that describes the module."""
+
+        def _auto_indent(repr_str, indent):
+            repr_str = repr_str.split('\n')
+            repr_str = [' ' * indent + t + '\n' for t in repr_str]
+            repr_str = ''.join(repr_str)[:-1]
+            return repr_str
+
         repr_str = self.__class__.__name__
-        repr_str += '(num_cur_sweep={0}, num_prev_sweep={1})'.format(
-            self.cur_voxel_num, self.prev_voxel_num)
+        indent = 4
+        repr_str += '(\n'
+        repr_str += ' ' * indent + f'num_cur_sweep={self.cur_voxel_num},\n'
+        repr_str += ' ' * indent + f'num_prev_sweep={self.prev_voxel_num},\n'
+        repr_str += ' ' * indent + f'time_dim={self.time_dim},\n'
+        repr_str += ' ' * indent + 'cur_voxel_generator=\n'
+        repr_str += f'{_auto_indent(repr(self.cur_voxel_generator), 8)},\n'
+        repr_str += ' ' * indent + 'prev_voxel_generator=\n'
+        repr_str += f'{_auto_indent(repr(self.prev_voxel_generator), 8)})'
         return repr_str

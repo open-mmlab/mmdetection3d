@@ -264,8 +264,22 @@ def test_voxel_based_point_filter():
 
     points = input_dict['points']
     repr_str = repr(voxel_based_points_filter)
-    expected_repr_str = 'VoxelBasedPointSampler(num_cur_sweep=1024, '\
-                        'num_prev_sweep=1024)'
+    expected_repr_str = """VoxelBasedPointSampler(
+    num_cur_sweep=1024,
+    num_prev_sweep=1024,
+    time_dim=3,
+    cur_voxel_generator=
+        VoxelGenerator(voxel_size=[0.1 0.1 0.1],
+                       point_cloud_range=[-50.0, -50.0, -4.0, 50.0, 50.0, 2.0],
+                       max_num_points=1,
+                       max_voxels=1024,
+                       grid_size=[1000, 1000, 60]),
+    prev_voxel_generator=
+        VoxelGenerator(voxel_size=[0.1 0.1 0.1],
+                       point_cloud_range=[-50.0, -50.0, -4.0, 50.0, 50.0, 2.0],
+                       max_num_points=1,
+                       max_voxels=1024,
+                       grid_size=[1000, 1000, 60]))"""
 
     assert repr_str == expected_repr_str
     assert points.shape == (2048, 4)
