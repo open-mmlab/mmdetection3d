@@ -679,7 +679,7 @@ class PrimitiveHead(nn.Module):
         Args:
             points (torch.Tensor): Points of input.
             corners (torch.Tensor): Eight corners of a bounding box.
-            with_yaw (float): Whether the boundind box is with rotation.
+            with_yaw (Bool): Whether the boundind box is with rotation.
             mode (str): Specify which line should be matched, available
                 mode are ('lower', 'upper', 'left', 'right').
 
@@ -828,7 +828,7 @@ class PrimitiveHead(nn.Module):
             corners (torch.Tensor): Corners of the ground truth bounding box.
             center_axises (list[int]): Indicate in which axis the line center
                 should be refined.
-            with_yaw (float): Whether the boundind box is with rotation.
+            with_yaw (Bool): Whether the boundind box is with rotation.
             mode (str): Specify which line should be matched, available
                 mode are ('lower', 'upper', 'left', 'right').
 
@@ -886,7 +886,7 @@ class PrimitiveHead(nn.Module):
             indices (torch.Tensor): Indices of the selected points.
             cls_label (int): Class label of the ground truth bounding box.
             corners (torch.Tensor): Corners of the ground truth bounding box.
-            with_yaw (float): Whether the boundind box is with rotation.
+            with_yaw (Bool): Whether the boundind box is with rotation.
             mode (str): Specify which line should be matched, available
                 mode are ('lower', 'upper', 'left', 'right', 'front', 'back').
 
