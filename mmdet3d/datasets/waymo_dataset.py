@@ -313,7 +313,11 @@ class WaymoDataset(KittiDataset):
                 'Cyclist/L1 mAP': 0,
                 'Cyclist/L1 mAPH': 0,
                 'Cyclist/L2 mAP': 0,
-                'Cyclist/L2 mAPH': 0
+                'Cyclist/L2 mAPH': 0,
+                'Overall/L1 mAP': 0,
+                'Overall/L1 mAPH': 0,
+                'Overall/L2 mAP': 0,
+                'Overall/L2 mAPH': 0
             }
             mAP_splits = ret_texts.split('mAP ')
             mAPH_splits = ret_texts.split('mAPH ')
@@ -323,6 +327,18 @@ class WaymoDataset(KittiDataset):
                     ap_dict[key] = float(mAP_splits[split_idx].split(']')[0])
                 else:  # mAPH
                     ap_dict[key] = float(mAPH_splits[split_idx].split(']')[0])
+            ap_dict['Overall/L1 mAP'] = \
+                (ap_dict['Vehicle/L1 mAP'] + ap_dict['Pedestrian/L1 mAP'] +
+                 ap_dict['Cyclist/L1 mAP']) / 3
+            ap_dict['Overall/L1 mAPH'] = \
+                (ap_dict['Vehicle/L1 mAPH'] + ap_dict['Pedestrian/L1 mAPH'] +
+                 ap_dict['Cyclist/L1 mAPH']) / 3
+            ap_dict['Overall/L2 mAP'] = \
+                (ap_dict['Vehicle/L2 mAP'] + ap_dict['Pedestrian/L2 mAP'] +
+                 ap_dict['Cyclist/L2 mAP']) / 3
+            ap_dict['Overall/L2 mAPH'] = \
+                (ap_dict['Vehicle/L2 mAPH'] + ap_dict['Pedestrian/L2 mAPH'] +
+                 ap_dict['Cyclist/L2 mAPH']) / 3
             if eval_tmp_dir is not None:
                 eval_tmp_dir.cleanup()
 
