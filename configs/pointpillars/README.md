@@ -47,11 +47,15 @@ We implement PointPillars and provide the results and checkpoints on KITTI and n
 | above @ Car|||2x|8.12||68.5|67.9|60.1|59.6| |
 | above @ Pedestrian|||2x|8.12||67.8|50.6|59.6|44.3| |
 | above @ Cyclist|||2x|8.12||57.7|54.4|55.5|52.4| |
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car.py)|1|Car|2x|7.76||72.1|71.5|63.6|63.1||
+| [SECFPN](./hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class.py)|1|3 Class|2x|8.12||68.8|63.3|62.6|57.6||
+| above @ Car|||2x|8.12||71.6|71.0|63.1|62.5| |
+| above @ Pedestrian|||2x|8.12||70.6|56.7|62.9|50.2| |
+| above @ Cyclist|||2x|8.12||64.4|62.3|61.9|59.9| |
 
 Note:
 
 - **Metric**: For model trained with 3 classes, the average APH@L2 (mAPH@L2) of all the categories is reported and used to rank the model. For model trained with only 1 class, the APH@L2 is reported and used to rank the model.
-- **Data Split**: Here we provide several baselines for waymo dataset, which are adapted from the original pointpillars implementation. Specifically, we divide the dataset into 5 folds (denoted as D5 in the config names) for efficient experiments.
-Using the complete dataset can boost the performance a lot, especially for the detection of cyclist and pedestrian, where more than 5 mAP or mAPH improvement can be expected. A more complete benchmark with more models and methods is coming soon.
+- **Data Split**: Here we provide several baselines for waymo dataset, among which D5 means that we divide the dataset into 5 folds and only use one fold for efficient experiments. Using the complete dataset can boost the performance a lot, especially for the detection of cyclist and pedestrian, where more than 5 mAP or mAPH improvement can be expected.
 - **Implementation Details**: We basically follow the implementation in the [paper](https://arxiv.org/pdf/1912.04838.pdf) in terms of the network architecture (having a
-stride of 1 for the first convolutional block). Different settings of voxelization, data augmentation and hyper parameters make these baselines outperform those in the paper by about 7 mAP for car and 4 mAP for pedestrian with only a subset of the whole dataset.
+stride of 1 for the first convolutional block). Different settings of voxelization, data augmentation and hyper parameters make these baselines outperform those in the paper by about 7 mAP for car and 4 mAP for pedestrian with only a subset of the whole dataset. All of these results are achieved without bells-and-whistles, e.g. ensemble, multi-scale training and test augmentation.
