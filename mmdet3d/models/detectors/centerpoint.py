@@ -1,4 +1,4 @@
-from mmdet3d.core import bbox3d2result
+from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet.models import DETECTORS
 from .mvx_two_stage import MVXTwoStageDetector
 
@@ -79,3 +79,22 @@ class CenterPoint(MVXTwoStageDetector):
             for bboxes, scores, labels in bbox_list
         ]
         return bbox_results
+
+    def aug_test_pts(self, feats, img_metas, rescale=False):
+        """Test function of point cloud branch with augmentaiton."""
+        # only support aug_test for one sample
+        aug_bboxes = []
+        for x, img_meta in zip(feats, img_metas):
+            outs = self.pts_bbox_head(x)
+            bbox_list = self.pts_bbox_head.get_bboxes(
+                outs, img_meta, rescale=rescale)
+            bbox_list = [
+                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+                for bboxes, scores, labels in bbox_list
+            ]
+            aug_bboxes.append(bbox_list[0])
+
+        # after merging, bboxes will be rescaled to the original image size
+        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
+                                            self.pts_bbox_head.test_cfg)
+        return merged_bboxes

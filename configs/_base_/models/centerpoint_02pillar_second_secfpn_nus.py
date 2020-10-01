@@ -81,4 +81,4 @@ test_cfg = dict(
         nms_type='rotate',
         nms_pre_max_size=1000,
         nms_post_max_size=83,
-        nms_iou_threshold=0.2))
+        nms_thr=0.2))
