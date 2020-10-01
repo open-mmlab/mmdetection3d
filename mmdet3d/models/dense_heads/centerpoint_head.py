@@ -761,8 +761,8 @@ class CenterHead(nn.Module):
                     boxes_for_nms,
                     top_scores,
                     thresh=self.test_cfg['nms_thr'],
-                    pre_maxsize=self.test_cfg['nms_pre_max_size'],
-                    post_max_size=self.test_cfg['nms_post_max_size'])
+                    pre_maxsize=self.test_cfg['pre_max_size'],
+                    post_max_size=self.test_cfg['post_max_size'])
             else:
                 selected = []
 
