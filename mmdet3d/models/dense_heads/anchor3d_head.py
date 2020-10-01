@@ -213,38 +213,63 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         labels = labels.reshape(-1)
         label_weights = label_weights.reshape(-1)
         cls_score = cls_score.permute(0, 2, 3, 1).reshape(-1, self.num_classes)
+        assert labels.max().item() <= self.num_classes
         loss_cls = self.loss_cls(
             cls_score, labels, label_weights, avg_factor=num_total_samples)
 
         # regression loss
-        bbox_targets = bbox_targets.reshape(-1, self.box_code_size)
-        bbox_weights = bbox_weights.reshape(-1, self.box_code_size)
-        code_weight = self.train_cfg.get('code_weight', None)
-
-        if code_weight:
-            bbox_weights = bbox_weights * bbox_weights.new_tensor(code_weight)
         bbox_pred = bbox_pred.permute(0, 2, 3,
                                       1).reshape(-1, self.box_code_size)
-        if self.diff_rad_by_sin:
-            bbox_pred, bbox_targets = self.add_sin_difference(
-                bbox_pred, bbox_targets)
-        loss_bbox = self.loss_bbox(
-            bbox_pred,
-            bbox_targets,
-            bbox_weights,
-            avg_factor=num_total_samples)
+        bbox_targets = bbox_targets.reshape(-1, self.box_code_size)
+        bbox_weights = bbox_weights.reshape(-1, self.box_code_size)
 
-        # direction classification loss
-        loss_dir = None
+        bg_class_ind = self.num_classes
+        pos_inds = ((labels >= 0)
+                    & (labels < bg_class_ind)).nonzero().reshape(-1)
+        num_pos = len(pos_inds)
+
+        pos_bbox_pred = bbox_pred[pos_inds]
+        pos_bbox_targets = bbox_targets[pos_inds]
+        pos_bbox_weights = bbox_weights[pos_inds]
+
+        # dir loss
         if self.use_direction_classifier:
             dir_cls_preds = dir_cls_preds.permute(0, 2, 3, 1).reshape(-1, 2)
             dir_targets = dir_targets.reshape(-1)
             dir_weights = dir_weights.reshape(-1)
-            loss_dir = self.loss_dir(
-                dir_cls_preds,
-                dir_targets,
-                dir_weights,
+            pos_dir_cls_preds = dir_cls_preds[pos_inds]
+            pos_dir_targets = dir_targets[pos_inds]
+            pos_dir_weights = dir_weights[pos_inds]
+
+        if num_pos > 0:
+            code_weight = self.train_cfg.get('code_weight', None)
+            if code_weight:
+                bbox_weights = bbox_weights * bbox_weights.new_tensor(
+                    code_weight)
+            if self.diff_rad_by_sin:
+                pos_bbox_pred, pos_bbox_targets = self.add_sin_difference(
+                    pos_bbox_pred, pos_bbox_targets)
+            loss_bbox = self.loss_bbox(
+                pos_bbox_pred,
+                pos_bbox_targets,
+                pos_bbox_weights,
                 avg_factor=num_total_samples)
+
+            # direction classification loss
+            loss_dir = None
+            if self.use_direction_classifier:
+                loss_dir = self.loss_dir(
+                    pos_dir_cls_preds,
+                    pos_dir_targets,
+                    pos_dir_weights,
+                    avg_factor=num_total_samples)
+        else:
+            loss_bbox = pos_bbox_pred.sum()
+            if self.use_direction_classifier:
+                loss_dir = pos_dir_cls_preds.sum()
+        if torch.isnan(loss_bbox).any():
+            import pdb
+            pdb.set_trace()
 
         return loss_cls, loss_bbox, loss_dir
 

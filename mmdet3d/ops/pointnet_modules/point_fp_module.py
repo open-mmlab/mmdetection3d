@@ -35,7 +35,7 @@ class PointFPModule(nn.Module):
                     conv_cfg=dict(type='Conv2d'),
                     norm_cfg=norm_cfg))
 
-    @force_fp32(apply_to=('target', 'source', 'target_feats', 'source_feats'))
+    @force_fp32()
     def forward(self, target: torch.Tensor, source: torch.Tensor,
                 target_feats: torch.Tensor,
                 source_feats: torch.Tensor) -> torch.Tensor:

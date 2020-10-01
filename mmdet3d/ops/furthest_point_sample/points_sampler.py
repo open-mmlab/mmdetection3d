@@ -62,7 +62,7 @@ class Points_Sampler(nn.Module):
             self.samplers.append(get_sampler_type(fps_mod)())
         self.fp16_enabled = False
 
-    @force_fp32(apply_to=('points_xyz', 'features'))
+    @force_fp32()
     def forward(self, points_xyz, features):
         """forward.
 
