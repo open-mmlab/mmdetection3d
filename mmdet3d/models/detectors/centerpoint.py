@@ -129,7 +129,5 @@ class CenterPoint(MVXTwoStageDetector):
         bbox_list = dict()
         if pts_feats and self.with_pts_bbox:
             bbox_pts = self.aug_test_pts(pts_feats, img_metas, rescale)
-            bbox_list.update(pts_bbox=bbox_pts)
-        import pdb
-        pdb.set_trace()
-        return [[bbox_list]]
+            bbox_list.update(pts_bbox=bbox_pts[0])
+        return [bbox_list]
