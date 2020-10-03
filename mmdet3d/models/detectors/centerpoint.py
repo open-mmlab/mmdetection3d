@@ -74,15 +74,12 @@ class CenterPoint(MVXTwoStageDetector):
     def simple_test_pts(self, x, img_metas, rescale=False):
         """Test function of point cloud branch."""
         outs = self.pts_bbox_head(x)
-        import pdb
-        pdb.set_trace()
         bbox_list = self.pts_bbox_head.get_bboxes(
             outs, img_metas, rescale=rescale)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
-        pdb.set_trace()
         return bbox_results
 
     def aug_test_pts(self, feats, img_metas, rescale=False):
@@ -96,9 +93,32 @@ class CenterPoint(MVXTwoStageDetector):
                     if img_meta[0]['pcd_horizontal_flip']:
                         outs[task_id][0][key] = torch.flip(
                             outs[task_id][0][key], dims=[2])
+                        if key == 'reg':
+                            outs[task_id][0][key][:, 1, ...] = 1 - outs[
+                                task_id][0][key][:, 1, ...]
+                        elif key == 'rot':
+                            outs[task_id][0][
+                                key][:, 1,
+                                     ...] = -outs[task_id][0][key][:, 1, ...]
+                        elif key == 'vel':
+                            outs[task_id][0][
+                                key][:, 1,
+                                     ...] = -outs[task_id][0][key][:, 1, ...]
                     if img_meta[0]['pcd_vertical_flip']:
                         outs[task_id][0][key] = torch.flip(
                             outs[task_id][0][key], dims=[3])
+                        if key == 'reg':
+                            outs[task_id][0][key][:, 0, ...] = 1 - outs[
+                                task_id][0][key][:, 0, ...]
+                        elif key == 'rot':
+                            outs[task_id][0][
+                                key][:, 0,
+                                     ...] = -outs[task_id][0][key][:, 0, ...]
+                        elif key == 'vel':
+                            outs[task_id][0][
+                                key][:, 0,
+                                     ...] = -outs[task_id][0][key][:, 0, ...]
+
             outs_list.append(outs)
 
         preds_dict = outs_list[0]
@@ -124,8 +144,6 @@ class CenterPoint(MVXTwoStageDetector):
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
         img_feats, pts_feats = self.extract_feats(points, img_metas, imgs)
-        # import pdb
-        # pdb.set_trace()
         bbox_list = dict()
         if pts_feats and self.with_pts_bbox:
             bbox_pts = self.aug_test_pts(pts_feats, img_metas, rescale)
