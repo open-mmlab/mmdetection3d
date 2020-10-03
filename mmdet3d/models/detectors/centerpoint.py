@@ -90,6 +90,9 @@ class CenterPoint(MVXTwoStageDetector):
             outs = self.pts_bbox_head(x)
             for task_id, out in enumerate(outs):
                 for key in out[0].keys():
+                    pcd_scale_factor = img_meta[0]['pcd_scale_factor']
+                    if key != 'rot':
+                        outs[task_id][0][key] *= (1 / pcd_scale_factor)
                     if img_meta[0]['pcd_horizontal_flip']:
                         outs[task_id][0][key] = torch.flip(
                             outs[task_id][0][key], dims=[2])
