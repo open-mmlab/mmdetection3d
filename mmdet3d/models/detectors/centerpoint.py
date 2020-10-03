@@ -131,7 +131,7 @@ class CenterPoint(MVXTwoStageDetector):
                         preds_dict[task_id][0][key] += out[0][key]
         for task_id, pred_dict in enumerate(preds_dict):
             for key in pred_dict[0].keys():
-                preds_dict[task_id][0][key] /= 4
+                preds_dict[task_id][0][key] /= len(outs_list)
 
         bbox_list = self.pts_bbox_head.get_bboxes(
             preds_dict, img_metas[0], rescale=rescale)

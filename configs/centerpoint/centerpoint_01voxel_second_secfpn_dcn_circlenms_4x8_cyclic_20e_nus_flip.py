@@ -1,8 +1,8 @@
 _base_ = [
-    './centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py'
+    './centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py'
 ]
 
-point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
+point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 file_client_args = dict(backend='disk')
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
