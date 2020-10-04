@@ -1,6 +1,6 @@
 import torch
 
-from mmdet3d.core import bbox3d2result
+from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet.models import DETECTORS
 from .mvx_two_stage import MVXTwoStageDetector
 
@@ -90,9 +90,6 @@ class CenterPoint(MVXTwoStageDetector):
             outs = self.pts_bbox_head(x)
             for task_id, out in enumerate(outs):
                 for key in out[0].keys():
-                    pcd_scale_factor = img_meta[0]['pcd_scale_factor']
-                    if key != 'rot':
-                        outs[task_id][0][key] *= (1 / pcd_scale_factor)
                     if img_meta[0]['pcd_horizontal_flip']:
                         outs[task_id][0][key] = torch.flip(
                             outs[task_id][0][key], dims=[2])
@@ -124,25 +121,36 @@ class CenterPoint(MVXTwoStageDetector):
 
             outs_list.append(outs)
 
-        preds_dict = outs_list[0]
-        for i, outs in enumerate(outs_list):
-            if i == 0:
-                preds_dict = outs
+        preds_dicts = dict()
+        scale_img_metas = []
+
+        for i, (img_meta, outs) in enumerate(zip(img_metas, outs_list)):
+            pcd_scale_factor = img_meta[0]['pcd_scale_factor']
+            if pcd_scale_factor not in preds_dicts.keys():
+                preds_dicts[pcd_scale_factor] = outs
+                scale_img_metas.append(img_meta)
             else:
                 for task_id, out in enumerate(outs):
                     for key in out[0].keys():
-                        preds_dict[task_id][0][key] += out[0][key]
-        for task_id, pred_dict in enumerate(preds_dict):
-            for key in pred_dict[0].keys():
-                preds_dict[task_id][0][key] /= len(outs_list)
+                        preds_dicts[pcd_scale_factor][task_id][0][key] += out[
+                            0][key]
 
-        bbox_list = self.pts_bbox_head.get_bboxes(
-            preds_dict, img_metas[0], rescale=rescale)
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
-        return bbox_results
+        aug_bboxes = []
+        for pcd_scale_factor, preds_dict in preds_dicts.items():
+            for task_id, pred_dict in enumerate(preds_dict):
+                for key in pred_dict[0].keys():
+                    preds_dict[task_id][0][key] /= len(outs_list) / len(
+                        preds_dicts.keys())
+            bbox_list = self.pts_bbox_head.get_bboxes(
+                preds_dict, img_metas[0], rescale=rescale)
+            bbox_list = [
+                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+                for bboxes, scores, labels in bbox_list
+            ]
+            aug_bboxes.append(bbox_list[0])
+        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, scale_img_metas,
+                                            self.pts_bbox_head.test_cfg)
+        return merged_bboxes
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
@@ -150,5 +158,5 @@ class CenterPoint(MVXTwoStageDetector):
         bbox_list = dict()
         if pts_feats and self.with_pts_bbox:
             bbox_pts = self.aug_test_pts(pts_feats, img_metas, rescale)
-            bbox_list.update(pts_bbox=bbox_pts[0])
+            bbox_list.update(pts_bbox=bbox_pts)
         return [bbox_list]
