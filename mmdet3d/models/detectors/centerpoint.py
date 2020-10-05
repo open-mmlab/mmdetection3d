@@ -88,6 +88,7 @@ class CenterPoint(MVXTwoStageDetector):
         outs_list = []
         for x, img_meta in zip(feats, img_metas):
             outs = self.pts_bbox_head(x)
+            # merge augmented outputs before decoding bboxes
             for task_id, out in enumerate(outs):
                 for key in out[0].keys():
                     if img_meta[0]['pcd_horizontal_flip']:
@@ -124,6 +125,7 @@ class CenterPoint(MVXTwoStageDetector):
         preds_dicts = dict()
         scale_img_metas = []
 
+        # concat outputs sharing the same pcd_scale_factor
         for i, (img_meta, outs) in enumerate(zip(img_metas, outs_list)):
             pcd_scale_factor = img_meta[0]['pcd_scale_factor']
             if pcd_scale_factor not in preds_dicts.keys():
@@ -138,6 +140,7 @@ class CenterPoint(MVXTwoStageDetector):
         aug_bboxes = []
         for pcd_scale_factor, preds_dict in preds_dicts.items():
             for task_id, pred_dict in enumerate(preds_dict):
+                # merge outputs with different flips before decoding bboxes
                 for key in pred_dict[0].keys():
                     preds_dict[task_id][0][key] /= len(outs_list) / len(
                         preds_dicts.keys())
@@ -148,6 +151,7 @@ class CenterPoint(MVXTwoStageDetector):
                 for bboxes, scores, labels in bbox_list
             ]
             aug_bboxes.append(bbox_list[0])
+        # merge outputs with different scales after decoding bboxes
         merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, scale_img_metas,
                                             self.pts_bbox_head.test_cfg)
         return merged_bboxes
@@ -157,6 +161,6 @@ class CenterPoint(MVXTwoStageDetector):
         img_feats, pts_feats = self.extract_feats(points, img_metas, imgs)
         bbox_list = dict()
         if pts_feats and self.with_pts_bbox:
-            bbox_pts = self.aug_test_pts(pts_feats, img_metas, rescale)
-            bbox_list.update(pts_bbox=bbox_pts)
+            pts_bbox = self.aug_test_pts(pts_feats, img_metas, rescale)
+            bbox_list.update(pts_bbox=pts_bbox)
         return [bbox_list]

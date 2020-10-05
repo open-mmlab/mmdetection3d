@@ -1,4 +1,5 @@
-_base_ = ['./centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py']
+_base_ = './centerpoint_02pillar_second_secfpn_dcn_4x8_' \
+         'cyclic_20e_nus.py'
 
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 file_client_args = dict(backend='disk')
