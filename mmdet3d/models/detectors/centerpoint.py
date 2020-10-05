@@ -83,7 +83,14 @@ class CenterPoint(MVXTwoStageDetector):
         return bbox_results
 
     def aug_test_pts(self, feats, img_metas, rescale=False):
-        """Test function of point cloud branch with augmentaiton."""
+        """Test function of point cloud branch with augmentaiton. The function
+        implementation process is as follows:
+
+        - step 1: map features back for double-flip augmentation.
+        - step 2: merge all features and generate boxes.
+        - step 3: map boxes back for scale augmentation.
+        - step 4: merge results.
+        """
         # only support aug_test for one sample
         outs_list = []
         for x, img_meta in zip(feats, img_metas):
