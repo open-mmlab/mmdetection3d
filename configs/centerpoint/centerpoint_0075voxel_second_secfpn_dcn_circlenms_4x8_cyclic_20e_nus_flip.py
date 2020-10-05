@@ -25,7 +25,10 @@ test_pipeline = [
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
         pts_scale_ratio=1,
+        # Add double-flip augmentation
         flip=True,
+        pcd_horizontal_flip=True,
+        pcd_vertical_flip=True,
         transforms=[
             dict(
                 type='GlobalRotScaleTrans',
@@ -40,9 +43,7 @@ test_pipeline = [
                 class_names=class_names,
                 with_label=False),
             dict(type='Collect3D', keys=['points'])
-        ],
-        pcd_horizontal_flip=True,
-        pcd_vertical_flip=True)
+        ])
 ]
 
 data = dict(
