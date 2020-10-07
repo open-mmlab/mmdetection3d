@@ -884,6 +884,15 @@ def test_camera_boxes3d():
     # the pytorch print loses some precision
     assert torch.allclose(boxes.corners, expected_tensor, rtol=1e-4, atol=1e-7)
 
+    # test init with a given origin
+    boxes_origin_given = CameraInstance3DBoxes(
+        th_boxes.clone(), box_dim=7, origin=(0.5, 0.5, 0.5))
+    expected_tensor = th_boxes.clone()
+    expected_tensor[:, :3] = th_boxes[:, :3] + th_boxes[:, 3:6] * (
+        th_boxes.new_tensor((0.5, 1.0, 0.5)) - th_boxes.new_tensor(
+            (0.5, 0.5, 0.5)))
+    assert torch.allclose(boxes_origin_given.tensor, expected_tensor)
+
 
 def test_boxes3d_overlaps():
     """Test the iou calculation of boxes in different modes.
