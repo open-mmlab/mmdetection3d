@@ -44,8 +44,8 @@ def _get_config_module(fname):
 def _get_model_cfg(fname):
     """Grab configs necessary to create a model.
 
-    These are deep copied to allow for safe modification of parameters
-    without influencing other tests.
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
     """
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
@@ -56,8 +56,8 @@ def _get_model_cfg(fname):
 def _get_detector_cfg(fname):
     """Grab configs necessary to create a detector.
 
-    These are deep copied to allow for safe modification of parameters
-    without influencing other tests.
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
     """
     import mmcv
     config = _get_config_module(fname)
@@ -204,3 +204,47 @@ def test_parta2():
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
     assert labels_3d.shape[0] >= 0
+
+
+def test_centerpoint():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    centerpoint = _get_detector_cfg(
+        'centerpoint/centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py')
+    self = build_detector(centerpoint).cuda()
+    points_0 = torch.rand([1000, 5], device='cuda')
+    points_1 = torch.rand([1000, 5], device='cuda')
+    points = [points_0, points_1]
+    img_meta_0 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_meta_1 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_metas = [img_meta_0, img_meta_1]
+    gt_bbox_0 = LiDARInstance3DBoxes(
+        torch.rand([10, 9], device='cuda'), box_dim=9)
+    gt_bbox_1 = LiDARInstance3DBoxes(
+        torch.rand([10, 9], device='cuda'), box_dim=9)
+    gt_bboxes = [gt_bbox_0, gt_bbox_1]
+    gt_labels_0 = torch.randint(0, 3, [10], device='cuda')
+    gt_labels_1 = torch.randint(0, 3, [10], device='cuda')
+    gt_labels = [gt_labels_0, gt_labels_1]
+
+    # test_forward_train
+    losses = self.forward_train(points, img_metas, gt_bboxes, gt_labels)
+    for key, value in losses.items():
+        assert value >= 0
+
+    # test_simple_test
+    results = self.simple_test(points, img_metas)
+    boxes_3d_0 = results[0]['pts_bbox']['boxes_3d']
+    scores_3d_0 = results[0]['pts_bbox']['scores_3d']
+    labels_3d_0 = results[0]['pts_bbox']['labels_3d']
+    assert boxes_3d_0.tensor.shape[0] >= 0
+    assert boxes_3d_0.tensor.shape[1] == 9
+    assert scores_3d_0.shape[0] >= 0
+    assert labels_3d_0.shape[0] >= 0
+    boxes_3d_1 = results[1]['pts_bbox']['boxes_3d']
+    scores_3d_1 = results[1]['pts_bbox']['scores_3d']
+    labels_3d_1 = results[1]['pts_bbox']['labels_3d']
+    assert boxes_3d_1.tensor.shape[0] >= 0
+    assert boxes_3d_1.tensor.shape[1] == 9
+    assert scores_3d_1.shape[0] >= 0
+    assert labels_3d_1.shape[0] >= 0
