@@ -6,6 +6,10 @@ from nuimages import NuImages
 from os import path as osp
 from pycocotools import mask as mask_util
 
+nus_categories = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
+                  'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
+                  'barrier')
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Data converter arg parser')
@@ -52,14 +56,11 @@ def export_nuim_to_coco(nuim, out_dir, extra_tag, version):
 
     print('Process category information')
     categories = []
-    cat2id = dict()
-    for cate_info in mmcv.track_iter_progress(nuim.category):
-        if cate_info['name'] in NameMapping:
-            name = NameMapping[cate_info['name']]
-            if name not in cat2id:
-                idx = len(categories)
-                categories.append(dict(id=idx, name=name))
-                cat2id.update({name: idx})
+    categories = [
+        dict(id=nus_categories.index(cat_name), name=cat_name)
+        for cat_name in nus_categories
+    ]
+    cat2id = {k_v['name']: k_v['id'] for k_v in categories}
 
     images = []
     img2id = dict()
