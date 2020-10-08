@@ -163,7 +163,8 @@ def main():
         model_publish_dir = osp.join(models_out, model['config'].rstrip('.py'))
         mmcv.mkdir_or_exist(model_publish_dir)
 
-        model_name = model_publish_dir + '_' + model['model_time']
+        model_name = model['config'].split('/')[-1].rstrip(
+            '.py') + '_' + model['model_time']
         publish_model_path = osp.join(model_publish_dir, model_name)
         trained_model_path = osp.join(models_root, model['config'],
                                       'epoch_{}.pth'.format(model['epochs']))
