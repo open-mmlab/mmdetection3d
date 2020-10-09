@@ -37,8 +37,10 @@ We follow the below style to name config files. Contributors are advised to foll
 
 ### Test time augmentation
 
-We have supported double-flip and scale augmentation during test time. To use test time augmentation by modifying pipeline and test_cfg in the config.
+We have supported double-flip and scale augmentation during test time. To use test time augmentation, users need to modify the
+test_pipeline and test_cfg in the config.
 For example, we change `centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py` to the following.
+
 ```python
 _base_ = './centerpoint_0075voxel_second_secfpn_circlenms' \
          '_4x8_cyclic_20e_nus.py'
