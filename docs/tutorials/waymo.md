@@ -1,8 +1,25 @@
-# A Brief Tutorial for Waymo Dataset
+# Tutorial 5: Waymo Dataset
 
 This page provides specific tutorials about the usage of MMDetection3D for waymo dataset.
 
 ## Prepare datasets
+
+Before preparing waymo dataset, if you only installed requirements in `requirements/build.txt` and `requirements/runtime.txt` before, please install the official package for this dataset at first by running
+
+```
+# tf 2.1.0.
+pip install waymo-open-dataset-tf-2-1-0==1.2.0
+# tf 2.0.0
+# pip install waymo-open-dataset-tf-2-0-0==1.2.0
+# tf 1.15.0
+# pip install waymo-open-dataset-tf-1-15-0==1.2.0
+```
+
+or
+
+```
+pip install -r requirements/optional.txt
+```
 
 Like the general way to prepare dataset, it is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
 Due to the original waymo data format is based on `tfrecord`, we need to preprocess the raw data for convenient usage in the training and evaluation procedure. Our approach is to convert them into KITTI format.
@@ -116,7 +133,7 @@ Then you can evaluate your models on waymo. An example to evaluate PointPillars 
 
 **Notice**:
 
-1. Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file. 
+1. Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.
 
 2. Considering it takes a little long time to evaluate once, we recommend to evaluate only once at the end of model training.
 

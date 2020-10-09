@@ -51,7 +51,7 @@ c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).
 The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
 
 ```shell
-pip install mmcv-full==latest+torch1.5.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+pip install mmcv-full==latest+torch1.5.0+cu101 -f https://download.openmmlab.com/mmcv/dist/index.html
 ```
 
 Optionally, you could also build the full version from source:
@@ -81,8 +81,8 @@ pip install -v -e .  # or "python setup.py develop"
 
 | MMDetection3D version | MMDetection version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.4.0        | mmcv-full>=1.1.1, <=1.2|
-| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.1, <=1.2|
+| master              | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
+| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
 | 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
 
 

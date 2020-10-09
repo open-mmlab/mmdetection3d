@@ -142,3 +142,5 @@ data = dict(
             box_type_3d='LiDAR')),
     val=dict(pipeline=test_pipeline, classes=class_names),
     test=dict(pipeline=test_pipeline, classes=class_names))
+
+evaluation = dict(interval=20)
