@@ -19,8 +19,10 @@ class BaseShapeHead(nn.Module):
         num_base_anchors (int): Number of anchors per location.
         box_code_size (int): The dimension of boxes to be encoded.
         in_channels (int): Input channels for convolutional layers.
-        out_channels (int): Output channels for shared convolutional layers.
-            Default: 64.
+        shared_conv_channels (tuple): Channels for shared convolutional \
+            layers. Default: (64, 64).
+        shared_conv_strides (tuple): Strides for shared convolutional \
+            layers. Default: (1, 1).
         use_direction_classifier (bool): Whether to use direction classifier.
             Default: True.
         conv_cfg (dict): Config of conv layer.
@@ -35,7 +37,8 @@ class BaseShapeHead(nn.Module):
                  num_base_anchors,
                  box_code_size,
                  in_channels,
-                 out_channels=64,
+                 shared_conv_channels=(64, 64),
+                 shared_conv_strides=(1, 1),
                  use_direction_classifier=True,
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
@@ -46,27 +49,28 @@ class BaseShapeHead(nn.Module):
         self.use_direction_classifier = use_direction_classifier
         self.box_code_size = box_code_size
 
-        shared_conv = [
-            ConvModule(
-                in_channels,
-                out_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                out_channels,
-                out_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-        ]
+        assert len(shared_conv_channels) == len(shared_conv_strides), \
+            'Lengths of channels and strides list should be equal.'
+
+        self.shared_conv_channels = [in_channels] + list(shared_conv_channels)
+        self.shared_conv_strides = list(shared_conv_strides)
+
+        shared_conv = []
+        for i in range(len(self.shared_conv_strides)):
+            shared_conv.append(
+                ConvModule(
+                    self.shared_conv_channels[i],
+                    self.shared_conv_channels[i + 1],
+                    kernel_size=3,
+                    stride=self.shared_conv_strides[i],
+                    padding=1,
+                    conv_cfg=conv_cfg,
+                    bias=bias,
+                    norm_cfg=norm_cfg))
 
         self.shared_conv = nn.Sequential(*shared_conv)
 
+        out_channels = self.shared_conv_channels[-1]
         self.conv_cls = nn.Conv2d(out_channels, num_base_anchors * num_cls, 1)
         self.conv_reg = nn.Conv2d(out_channels,
                                   num_base_anchors * box_code_size, 1)
@@ -86,9 +90,11 @@ class BaseShapeHead(nn.Module):
 
     def forward(self, x):
         """Forward function for SmallHead.
+
         Args:
             x (torch.Tensor): Input feature map with the shape of
                 [B, C, H, W].
+
         Returns:
             dict[torch.Tensor]: Contain score of each class, bbox \
                 regression and direction classification predictions. \
@@ -148,8 +154,10 @@ class LargeHead(BaseShapeHead):
         num_base_anchors (int): Number of anchors per location.
         box_code_size (int): The dimension of boxes to be encoded.
         in_channels (int): Input channels for convolutional layers.
-        out_channels (int): Output channels for shared convolutional layers.
-            Default: 64.
+        shared_conv_channels (tuple): Channels for shared convolutional \
+            layers. Default: (64, 64, 64).
+        shared_conv_strides (tuple): Strides for shared convolutional \
+            layers. Default: (2, 1, 1).
         use_direction_classifier (bool): Whether to use direction classifier.
             Default: True.
         conv_cfg (dict): Config of conv layer.
@@ -164,45 +172,19 @@ class LargeHead(BaseShapeHead):
                  num_base_anchors,
                  box_code_size,
                  in_channels,
-                 out_channels=64,
+                 shared_conv_channels=(64, 64, 64),
+                 shared_conv_strides=(2, 1, 1),
                  use_direction_classifier=True,
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
                  bias=False):
-        super(LargeHead, self).__init__(num_cls, num_base_anchors,
-                                        box_code_size, in_channels,
-                                        out_channels, use_direction_classifier,
-                                        conv_cfg, norm_cfg, bias)
-
         # Heavier head and smaller feature map than SmallHead
-        shared_conv = [
-            ConvModule(
-                in_channels,
-                out_channels,
-                kernel_size=3,
-                stride=2,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                out_channels,
-                out_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                out_channels,
-                out_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg)
-        ]
-        self.shared_conv = nn.Sequential(*shared_conv)
+        # Achieved by adding more shared conv layers
+        super(LargeHead,
+              self).__init__(num_cls, num_base_anchors, box_code_size,
+                             in_channels, shared_conv_channels,
+                             shared_conv_strides, use_direction_classifier,
+                             conv_cfg, norm_cfg, bias)
 
 
 @HEADS.register_module()
@@ -214,10 +196,10 @@ class HugeHead(BaseShapeHead):
         num_base_anchors (int): Number of anchors per location.
         box_code_size (int): The dimension of boxes to be encoded.
         in_channels (int): Input channels for convolutional layers.
-        inter_channels (int): Intermediate channels of shared convolutional
-            layers. Default: 128.
-        out_channels (int): Output channels for shared convolutional layers.
-            Default: 64.
+        shared_conv_channels (tuple): Channels for shared convolutional \
+            layers. Default: (128, 128, 64, 64, 64).
+        shared_conv_strides (tuple): Strides for shared convolutional \
+            layers. Default: (2, 1, 2, 1, 1).
         use_direction_classifier (bool): Whether to use direction classifier.
             Default: True.
         conv_cfg (dict): Config of conv layer.
@@ -232,63 +214,19 @@ class HugeHead(BaseShapeHead):
                  num_base_anchors,
                  box_code_size,
                  in_channels,
-                 inter_channels=128,
-                 out_channels=64,
+                 shared_conv_channels=(128, 128, 64, 64, 64),
+                 shared_conv_strides=(2, 1, 2, 1, 1),
                  use_direction_classifier=True,
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
                  bias=False):
-        super(HugeHead, self).__init__(num_cls, num_base_anchors,
-                                       box_code_size, in_channels,
-                                       out_channels, use_direction_classifier,
-                                       conv_cfg, norm_cfg, bias)
-
         # Heavier head and smaller feature map than SmallHead
-        shared_conv = [
-            ConvModule(
-                in_channels,
-                inter_channels,
-                kernel_size=3,
-                stride=2,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                inter_channels,
-                inter_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                inter_channels,
-                out_channels,
-                kernel_size=3,
-                stride=2,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                out_channels,
-                out_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg),
-            ConvModule(
-                out_channels,
-                out_channels,
-                kernel_size=3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                bias=bias,
-                norm_cfg=norm_cfg)
-        ]
-        self.shared_conv = nn.Sequential(*shared_conv)
+        # Achieved by adding more shared conv layers
+        super(HugeHead,
+              self).__init__(num_cls, num_base_anchors, box_code_size,
+                             in_channels, shared_conv_channels,
+                             shared_conv_strides, use_direction_classifier,
+                             conv_cfg, norm_cfg, bias)
 
 
 @HEADS.register_module()
