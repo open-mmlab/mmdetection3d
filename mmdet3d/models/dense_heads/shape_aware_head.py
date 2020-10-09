@@ -365,25 +365,6 @@ class ShapeAwareHead(Anchor3DHead):
 
         return cls_score, bbox_pred, dir_cls_preds
 
-    def get_anchors(self, input_metas, device='cuda'):
-        """Get anchors according to feature map sizes.
-
-        Args:
-            input_metas (list[dict]): contain pcd and img's meta info.
-            device (str): device of current module.
-
-        Returns:
-            list[list[torch.Tensor]]: Anchors of each image, valid flags \
-                of each image.
-        """
-        num_imgs = len(input_metas)
-        # since feature map sizes of all images are the same, we only compute
-        # anchors for one time
-        multi_level_anchors = self.anchor_generator.grid_anchors(
-            self.featmap_sizes, device=device)
-        anchor_list = [multi_level_anchors for _ in range(num_imgs)]
-        return anchor_list
-
     def loss_single(self, cls_score, bbox_pred, dir_cls_preds, labels,
                     label_weights, bbox_targets, bbox_weights, dir_targets,
                     dir_weights, num_total_samples):
@@ -477,7 +458,8 @@ class ShapeAwareHead(Anchor3DHead):
                     losses.
         """
         device = cls_scores[0].device
-        anchor_list = self.get_anchors(input_metas, device=device)
+        anchor_list = self.get_anchors(
+            self.featmap_sizes, input_metas, device=device)
         cls_reg_targets = self.anchor_target_3d(
             anchor_list,
             gt_bboxes,
