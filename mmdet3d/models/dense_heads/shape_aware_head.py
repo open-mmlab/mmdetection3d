@@ -371,6 +371,7 @@ class ShapeAwareHead(Anchor3DHead):
         Args:
             input_metas (list[dict]): contain pcd and img's meta info.
             device (str): device of current module.
+
         Returns:
             list[list[torch.Tensor]]: Anchors of each image, valid flags \
                 of each image.
@@ -400,6 +401,7 @@ class ShapeAwareHead(Anchor3DHead):
             dir_targets (torch.Tensor): Targets of direction predictions.
             dir_weights (torch.Tensor): Weights of direction loss.
             num_total_samples (int): The number of valid samples.
+
         Returns:
             tuple[torch.Tensor]: Losses of class, bbox \
                 and direction, respectively.
@@ -453,6 +455,7 @@ class ShapeAwareHead(Anchor3DHead):
              input_metas,
              gt_bboxes_ignore=None):
         """Calculate losses.
+
         Args:
             cls_scores (list[torch.Tensor]): Multi-level class scores.
             bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
@@ -464,6 +467,7 @@ class ShapeAwareHead(Anchor3DHead):
             input_metas (list[dict]): Contain pcd and img's meta info.
             gt_bboxes_ignore (None | list[torch.Tensor]): Specify
                 which bounding.
+
         Returns:
             dict[str, list[torch.Tensor]]: Classification, bbox, and \
                 direction losses of each level.
@@ -524,6 +528,7 @@ class ShapeAwareHead(Anchor3DHead):
             input_metas (list[dict]): Contain pcd and img's meta info.
             cfg (None | :obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): Whether th rescale bbox.
+
         Returns:
             list[tuple]: Prediction resultes of batches.
         """
@@ -565,6 +570,7 @@ class ShapeAwareHead(Anchor3DHead):
                           cfg=None,
                           rescale=False):
         """Get bboxes of single branch.
+
         Args:
             cls_scores (torch.Tensor): Class score in single batch.
             bbox_preds (torch.Tensor): Bbox prediction in single batch.
@@ -575,6 +581,7 @@ class ShapeAwareHead(Anchor3DHead):
             input_meta (list[dict]): Contain pcd and img's meta info.
             cfg (None | :obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): whether th rescale bbox.
+
         Returns:
             tuple: Contain predictions of single batch.
                 - bboxes (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.

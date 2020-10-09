@@ -331,6 +331,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
 
     This anchor generator generates anchors by the given range for per class.
     Note that feature maps of different classes may be different.
+
     Args:
         kwargs (dict): Arguments are the same as those in \
             :class:`AlignedAnchor3DRangeGenerator`.
@@ -348,6 +349,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
             featmap_sizes (list[tuple]): List of feature map sizes for \
                 different classes in a single feature level.
             device (str): Device where the anchors will be put on.
+
         Returns:
             list[list[torch.Tensor]]: Anchors in multiple feature levels. \
                 Note that in this anchor generator, we currently only \
