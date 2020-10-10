@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import build_norm_layer
+from mmcv.runner import force_fp32
 from torch import nn
 
 from mmdet3d.ops import DynamicScatter
@@ -58,7 +59,7 @@ class PillarFeatureNet(nn.Module):
         self._with_distance = with_distance
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
-
+        self.fp16_enabled = False
         # Create PillarFeatureNet layers
         self.in_channels = in_channels
         feat_channels = [in_channels] + list(feat_channels)
@@ -86,6 +87,7 @@ class PillarFeatureNet(nn.Module):
         self.y_offset = self.vy / 2 + point_cloud_range[1]
         self.point_cloud_range = point_cloud_range
 
+    @force_fp32(out_fp16=True)
     def forward(self, features, num_points, coors):
         """Forward function.
 
@@ -196,7 +198,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
             point_cloud_range=point_cloud_range,
             norm_cfg=norm_cfg,
             mode=mode)
-
+        self.fp16_enabled = False
         feat_channels = [self.in_channels] + list(feat_channels)
         pfn_layers = []
         # TODO: currently only support one PFNLayer
@@ -257,6 +259,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         center_per_point = canvas[:, voxel_index.long()].t()
         return center_per_point
 
+    @force_fp32(out_fp16=True)
     def forward(self, features, coors):
         """Forward function.
 
