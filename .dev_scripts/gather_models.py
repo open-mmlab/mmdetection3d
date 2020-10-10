@@ -1,3 +1,9 @@
+"""Script to gather benchmarked models and prepare them for upload.
+
+Usage:
+python gather_models.py ${root_path} ${out_dir}
+"""
+
 import argparse
 import glob
 import json
