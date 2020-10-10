@@ -267,9 +267,6 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             loss_bbox = pos_bbox_pred.sum()
             if self.use_direction_classifier:
                 loss_dir = pos_dir_cls_preds.sum()
-        if torch.isnan(loss_bbox).any():
-            import pdb
-            pdb.set_trace()
 
         return loss_cls, loss_bbox, loss_dir
 
