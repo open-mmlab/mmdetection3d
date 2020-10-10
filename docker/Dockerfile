@@ -23,3 +23,7 @@ WORKDIR /mmdetection3d
 ENV FORCE_CUDA="1"
 RUN pip install -r requirements/build.txt
 RUN pip install --no-cache-dir -e .
+
+# uninstall pycocotools installed by nuscenes-devkit and reinstall mmpycocotools
+RUN pip uninstall pycocotools --no-cache-dir -y
+RUN pip install mmpycocotools --no-cache-dir --force --no-deps
