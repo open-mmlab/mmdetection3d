@@ -126,7 +126,7 @@ you can install it before installing MMCV.
 We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/master/docker/Dockerfile) to build an image.
 
 ```shell
-# build an image with PyTorch 1.5, CUDA 10.1
+# build an image with PyTorch 1.6, CUDA 10.1
 docker build -t mmdetection3d docker/
 ```
 
