@@ -14,13 +14,21 @@ from .anchor3d_head import Anchor3DHead
 class BaseShapeHead(nn.Module):
     """Base Shape-aware Head in Shape Signature Network.
 
+    Note:
+        This base shape-aware grouping head uses default settings for small
+        objects. For large and huge objects, it is recommended to use
+        heavier heads, like (64, 64, 64) and (128, 128, 64, 64, 64) in
+        shared conv channels, (2, 1, 1) and (2, 1, 2, 1, 1) in shared
+        conv strides. For tiny objects, we can use smaller heads, like
+        (32, 32) channels and (1, 1) strides.
+
     Args:
         num_cls (int): Number of classes.
         num_base_anchors (int): Number of anchors per location.
         box_code_size (int): The dimension of boxes to be encoded.
         in_channels (int): Input channels for convolutional layers.
         shared_conv_channels (tuple): Channels for shared convolutional \
-            layers. Default: (64, 64).
+            layers. Default: (64, 64). \
         shared_conv_strides (tuple): Strides for shared convolutional \
             layers. Default: (1, 1).
         use_direction_classifier (bool): Whether to use direction classifier.
@@ -133,103 +141,6 @@ class BaseShapeHead(nn.Module):
 
 
 @HEADS.register_module()
-class SmallHead(BaseShapeHead):
-    """Head for small objects in Shape Signature Network.
-
-    Args:
-        kwargs (dict): Arguments are the same as those in \
-            :class:`BaseShapeHead`.
-    """
-
-    def __init__(self, **kwargs):
-        super(SmallHead, self).__init__(**kwargs)
-
-
-@HEADS.register_module()
-class LargeHead(BaseShapeHead):
-    """Head for large objects in Shape Signature Network.
-
-    Args:
-        num_cls (int): Number of classes.
-        num_base_anchors (int): Number of anchors per location.
-        box_code_size (int): The dimension of boxes to be encoded.
-        in_channels (int): Input channels for convolutional layers.
-        shared_conv_channels (tuple): Channels for shared convolutional \
-            layers. Default: (64, 64, 64).
-        shared_conv_strides (tuple): Strides for shared convolutional \
-            layers. Default: (2, 1, 1).
-        use_direction_classifier (bool): Whether to use direction classifier.
-            Default: True.
-        conv_cfg (dict): Config of conv layer.
-            Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer.
-            Default: dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01).
-        bias (bool|str): Type of bias. Default: False.
-    """
-
-    def __init__(self,
-                 num_cls,
-                 num_base_anchors,
-                 box_code_size,
-                 in_channels,
-                 shared_conv_channels=(64, 64, 64),
-                 shared_conv_strides=(2, 1, 1),
-                 use_direction_classifier=True,
-                 conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
-                 bias=False):
-        # Heavier head and smaller feature map than SmallHead
-        # Achieved by adding more shared conv layers
-        super(LargeHead,
-              self).__init__(num_cls, num_base_anchors, box_code_size,
-                             in_channels, shared_conv_channels,
-                             shared_conv_strides, use_direction_classifier,
-                             conv_cfg, norm_cfg, bias)
-
-
-@HEADS.register_module()
-class HugeHead(BaseShapeHead):
-    """Head for huge objects in Shape Signature Network.
-
-    Args:
-        num_cls (int): Number of classes.
-        num_base_anchors (int): Number of anchors per location.
-        box_code_size (int): The dimension of boxes to be encoded.
-        in_channels (int): Input channels for convolutional layers.
-        shared_conv_channels (tuple): Channels for shared convolutional \
-            layers. Default: (128, 128, 64, 64, 64).
-        shared_conv_strides (tuple): Strides for shared convolutional \
-            layers. Default: (2, 1, 2, 1, 1).
-        use_direction_classifier (bool): Whether to use direction classifier.
-            Default: True.
-        conv_cfg (dict): Config of conv layer.
-            Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer.
-            Default: dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01).
-        bias (bool|str): Type of bias. Default: False.
-    """
-
-    def __init__(self,
-                 num_cls,
-                 num_base_anchors,
-                 box_code_size,
-                 in_channels,
-                 shared_conv_channels=(128, 128, 64, 64, 64),
-                 shared_conv_strides=(2, 1, 2, 1, 1),
-                 use_direction_classifier=True,
-                 conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
-                 bias=False):
-        # Heavier head and smaller feature map than SmallHead
-        # Achieved by adding more shared conv layers
-        super(HugeHead,
-              self).__init__(num_cls, num_base_anchors, box_code_size,
-                             in_channels, shared_conv_channels,
-                             shared_conv_strides, use_direction_classifier,
-                             conv_cfg, norm_cfg, bias)
-
-
-@HEADS.register_module()
 class ShapeAwareHead(Anchor3DHead):
     """Shape-aware grouping head for SSN.
 
@@ -257,11 +168,13 @@ class ShapeAwareHead(Anchor3DHead):
             num_rot = len(self.anchor_generator.rotations)
             num_base_anchors = num_rot * num_size
             branch = dict(
-                type=task['type'],
+                type='BaseShapeHead',
                 num_cls=self.num_classes,
                 num_base_anchors=num_base_anchors,
                 box_code_size=self.box_code_size,
-                in_channels=self.in_channels)
+                in_channels=self.in_channels,
+                shared_conv_channels=task['shared_conv_channels'],
+                shared_conv_strides=task['shared_conv_strides'])
             self.heads.append(build_head(branch))
             cls_ptr += task['num_class']
 
