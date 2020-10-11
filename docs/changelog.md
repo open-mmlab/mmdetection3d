@@ -18,6 +18,7 @@
 - Fix origin initialization in `CameraInstance3DBoxes` (#148, #150)
 - Correct documentation link in the getting_started.md (#159)
 - Fix model save path bug in gather_models.py (#153)
+- Fix image padding shape bug in `PointFusion` (#162)
 
 #### New Features
 
