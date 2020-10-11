@@ -7,6 +7,7 @@
 - Support mixed precision training of voxel-based methods
 - Support docker with pytorch 1.6.0
 - Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
+- Switch model zoo to download.openmmlab.com
 
 #### Bug Fixes
 
@@ -27,7 +28,7 @@
 #### Improvements
 
 - Reduce requirements for the case exclusive of Waymo (#121)
-- Update links in model zoo (#126)
+- Switch model zoo to download.openmmlab.com (#126)
 - Update docs related to Waymo (#128)
 - Add version assertion in the [init file](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/__init__.py) (#129)
 - Add evaluation interval setting for CenterPoint (#131)
