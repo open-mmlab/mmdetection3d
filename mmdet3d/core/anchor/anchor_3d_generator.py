@@ -368,12 +368,14 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         with different feature map sizes.
 
         This function is usually called by method ``self.grid_anchors``.
+
         Args:
             featmap_sizes (list[tuple]): List of feature map sizes for \
                 different classes in a single feature level.
             scale (float): Scale factor of the anchors in the current level.
             device (str, optional): Device the tensor will be put on.
                 Defaults to 'cuda'.
+
         Returns:
             torch.Tensor: Anchors in the overall feature map.
         """
