@@ -21,8 +21,8 @@
 #### New Features
 
 - Support dataset pipeline `VoxelBasedPointSampler` to sample multi-sweep points based on voxelization. (#125)
-- Support training with FP16 (#132)
-- Support docker (#160)
+- Support mixed precision training of voxel-based methods (#132)
+- Support docker with pytorch 1.6.0 (#160)
 
 #### Improvements
 
