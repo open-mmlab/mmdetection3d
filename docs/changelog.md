@@ -1,5 +1,40 @@
 ## Changelog
 
+### v0.6.1 (11/10/2020)
+
+#### Highlights
+
+- Support training with FP16
+- Support docker
+- Update baseline configs and results (CenterPoint on nuScenes and PointPillars on Waymo with full dataset)
+
+#### Bug Fixes
+
+- Fix a bug of visualization in multi-batch case (#120)
+- Fix bugs in dcn unit test (#130)
+- Fix dcn bias bug in centerpoint (#137)
+- Fix dataset mapping in the evaluation of nuScenes mini dataset (#140)
+- Fix origin initialization in cam_box3d (#148, #150)
+- Fix missing page in the `getting started` section of documentation
+- Fix gather_models script (#153)
+
+#### New Features
+
+- Support dataset pipeline `SweepPointSample` (#125)
+- Support training with FP16 (#132)
+- Support docker (#160)
+
+#### Improvements
+
+- Reduce requirements for the case exclusive of Waymo (#121)
+- Update links in model zoo (#126)
+- Update docs related to Waymo (#128)
+- Add version assertion in the init file (#129)
+- Add evaluation interval setting for centerpoint (#131)
+- Add unit test for centerpoint (#133)
+- Update PointPillars baselines on Waymo with full dataset (#142)
+- Update CenterPoint results with models and logs (#154)
+
 ### v0.6.0 (20/9/2020)
 
 #### Highlights
