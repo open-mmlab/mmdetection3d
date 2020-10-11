@@ -2,6 +2,7 @@ import copy
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
+from mmcv.runner import force_fp32
 from os import path as osp
 from torch import nn as nn
 from torch.nn import functional as F
@@ -203,6 +204,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return (img_feats, pts_feats)
 
     @torch.no_grad()
+    @force_fp32()
     def voxelize(self, points):
         """Apply dynamic voxelization to points.
 

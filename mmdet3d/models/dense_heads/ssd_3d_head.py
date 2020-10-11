@@ -1,5 +1,6 @@
 import torch
 from mmcv.ops.nms import batched_nms
+from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
@@ -108,6 +109,7 @@ class SSD3DHead(VoteHead):
 
         return seed_points, seed_features, seed_indices
 
+    @force_fp32(apply_to=('bbox_preds', ))
     def loss(self,
              bbox_preds,
              points,

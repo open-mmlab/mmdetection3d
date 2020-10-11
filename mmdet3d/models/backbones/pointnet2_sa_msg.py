@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import build_sa_module
@@ -111,6 +112,7 @@ class PointNet2SAMSG(BasePointNet):
                     bias=True))
             sa_in_channel = aggregation_channels[sa_index]
 
+    @auto_fp16(apply_to=('points', ))
     def forward(self, points):
         """Forward pass.
 

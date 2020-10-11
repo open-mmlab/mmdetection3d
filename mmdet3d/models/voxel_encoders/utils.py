@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import build_norm_layer
+from mmcv.runner import auto_fp16
 from torch import nn
 from torch.nn import functional as F
 
@@ -51,6 +52,7 @@ class VFELayer(nn.Module):
                  max_out=True,
                  cat_max=True):
         super(VFELayer, self).__init__()
+        self.fp16_enabled = False
         self.cat_max = cat_max
         self.max_out = max_out
         # self.units = int(out_channels / 2)
@@ -58,6 +60,7 @@ class VFELayer(nn.Module):
         self.norm = build_norm_layer(norm_cfg, out_channels)[1]
         self.linear = nn.Linear(in_channels, out_channels, bias=False)
 
+    @auto_fp16(apply_to=('inputs'), out_fp32=True)
     def forward(self, inputs):
         """Forward function.
 
@@ -78,6 +81,7 @@ class VFELayer(nn.Module):
         """
         # [K, T, 7] tensordot [7, units] = [K, T, units]
         voxel_count = inputs.shape[1]
+
         x = self.linear(inputs)
         x = self.norm(x.permute(0, 2, 1).contiguous()).permute(0, 2,
                                                                1).contiguous()
@@ -123,6 +127,7 @@ class PFNLayer(nn.Module):
                  mode='max'):
 
         super().__init__()
+        self.fp16_enabled = False
         self.name = 'PFNLayer'
         self.last_vfe = last_layer
         if not self.last_vfe:
@@ -135,6 +140,7 @@ class PFNLayer(nn.Module):
         assert mode in ['max', 'avg']
         self.mode = mode
 
+    @auto_fp16(apply_to=('inputs'), out_fp32=True)
     def forward(self, inputs, num_voxels=None, aligned_distance=None):
         """Forward function.
 
