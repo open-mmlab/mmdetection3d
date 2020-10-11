@@ -170,7 +170,12 @@ class MVXTwoStageDetector(Base3DDetector):
 
     def extract_img_feat(self, img, img_metas):
         """Extract features of images."""
-        if self.with_img_backbone:
+        if self.with_img_backbone and img is not None:
+            input_shape = img.shape[-2:]
+            # update real input shape of each single img
+            for img_meta in img_metas:
+                img_meta.update(input_shape=input_shape)
+
             if img.dim() == 5 and img.size(0) == 1:
                 img.squeeze_()
             elif img.dim() == 5 and img.size(0) > 1:
