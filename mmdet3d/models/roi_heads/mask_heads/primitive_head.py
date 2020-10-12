@@ -405,10 +405,10 @@ class PrimitiveHead(nn.Module):
             point2plane_dist, selected = self.match_point2plane(
                 plane_lower, coords)
 
-            # Get lower four lines
+            # Get bottom four lines
             if self.primitive_mode == 'line':
                 point2line_matching = self.match_point2line(
-                    coords[selected], cur_corners, with_yaw, mode='lower')
+                    coords[selected], cur_corners, with_yaw, mode='bottom')
 
                 point_mask, point_offset, point_sem = \
                     self._assign_primitive_line_targets(point_mask,
@@ -421,7 +421,7 @@ class PrimitiveHead(nn.Module):
                                                         cur_corners,
                                                         [1, 1, 0, 0],
                                                         with_yaw,
-                                                        mode='lower')
+                                                        mode='bottom')
 
             # Set the surface labels here
             if self.primitive_mode == 'z' and \
@@ -438,16 +438,16 @@ class PrimitiveHead(nn.Module):
                                                            cur_cls_label,
                                                            cur_corners,
                                                            with_yaw,
-                                                           mode='lower')
+                                                           mode='bottom')
 
             # Get the boundary points here
             point2plane_dist, selected = self.match_point2plane(
                 plane_upper, coords)
 
-            # Get upper four lines
+            # Get top four lines
             if self.primitive_mode == 'line':
                 point2line_matching = self.match_point2line(
-                    coords[selected], cur_corners, with_yaw, mode='upper')
+                    coords[selected], cur_corners, with_yaw, mode='top')
 
                 point_mask, point_offset, point_sem = \
                     self._assign_primitive_line_targets(point_mask,
@@ -460,7 +460,7 @@ class PrimitiveHead(nn.Module):
                                                         cur_corners,
                                                         [1, 1, 0, 0],
                                                         with_yaw,
-                                                        mode='upper')
+                                                        mode='top')
 
             if self.primitive_mode == 'z' and \
                     selected.sum() > self.train_cfg['num_point'] and \
@@ -476,7 +476,7 @@ class PrimitiveHead(nn.Module):
                                                            cur_cls_label,
                                                            cur_corners,
                                                            with_yaw,
-                                                           mode='upper')
+                                                           mode='top')
 
             # Get left two lines
             plane_left_temp = self._get_plane_fomulation(
@@ -673,7 +673,7 @@ class PrimitiveHead(nn.Module):
 
         return dist
 
-    def match_point2line(self, points, corners, with_yaw, mode='lower'):
+    def match_point2line(self, points, corners, with_yaw, mode='bottom'):
         """Match points to corresponding line.
 
         Args:
@@ -681,15 +681,15 @@ class PrimitiveHead(nn.Module):
             corners (torch.Tensor): Eight corners of a bounding box.
             with_yaw (Bool): Whether the boundind box is with rotation.
             mode (str): Specify which line should be matched, available
-                mode are ('lower', 'upper', 'left', 'right').
+                mode are ('bottom', 'top', 'left', 'right').
 
         Returns:
             Tuple: Flag of matching correspondence.
         """
         if with_yaw:
             corners_pair = {
-                'lower': [[0, 3], [4, 7], [0, 4], [3, 7]],
-                'upper': [[1, 2], [5, 6], [1, 5], [2, 6]],
+                'bottom': [[0, 3], [4, 7], [0, 4], [3, 7]],
+                'top': [[1, 2], [5, 6], [1, 5], [2, 6]],
                 'left': [[0, 1], [3, 2], [0, 1], [3, 2]],
                 'right': [[4, 5], [7, 6], [4, 5], [7, 6]]
             }
@@ -810,7 +810,7 @@ class PrimitiveHead(nn.Module):
                                        corners,
                                        center_axises,
                                        with_yaw,
-                                       mode='lower'):
+                                       mode='bottom'):
         """Generate targets of line primitive.
 
         Args:
@@ -830,14 +830,14 @@ class PrimitiveHead(nn.Module):
                 should be refined.
             with_yaw (Bool): Whether the boundind box is with rotation.
             mode (str): Specify which line should be matched, available
-                mode are ('lower', 'upper', 'left', 'right').
+                mode are ('bottom', 'top', 'left', 'right').
 
         Returns:
             Tuple: Targets of the line primitive.
         """
         corners_pair = {
-            'lower': [[0, 3], [4, 7], [0, 4], [3, 7]],
-            'upper': [[1, 2], [5, 6], [1, 5], [2, 6]],
+            'bottom': [[0, 3], [4, 7], [0, 4], [3, 7]],
+            'top': [[1, 2], [5, 6], [1, 5], [2, 6]],
             'left': [[0, 1], [3, 2]],
             'right': [[4, 5], [7, 6]]
         }
@@ -872,7 +872,7 @@ class PrimitiveHead(nn.Module):
                                           cls_label,
                                           corners,
                                           with_yaw,
-                                          mode='lower'):
+                                          mode='bottom'):
         """Generate targets for primitive z and primitive xy.
 
         Args:
@@ -888,15 +888,15 @@ class PrimitiveHead(nn.Module):
             corners (torch.Tensor): Corners of the ground truth bounding box.
             with_yaw (Bool): Whether the boundind box is with rotation.
             mode (str): Specify which line should be matched, available
-                mode are ('lower', 'upper', 'left', 'right', 'front', 'back').
+                mode are ('bottom', 'top', 'left', 'right', 'front', 'back').
 
         Returns:
             Tuple: Targets of the center primitive.
         """
         point_mask[indices] = 1.0
         corners_pair = {
-            'lower': [0, 7],
-            'upper': [1, 6],
+            'bottom': [0, 7],
+            'top': [1, 6],
             'left': [0, 1],
             'right': [4, 5],
             'front': [0, 1],
