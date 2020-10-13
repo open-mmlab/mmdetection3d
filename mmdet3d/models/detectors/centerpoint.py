@@ -155,7 +155,10 @@ class CenterPoint(MVXTwoStageDetector):
             bbox_list = self.pts_bbox_head.get_bboxes(
                 preds_dict, img_metas[0], rescale=rescale)
             bbox_list = [
-                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+                dict(
+                    boxes_3d=bboxes.to('cpu'),
+                    scores_3d=scores.cpu(),
+                    labels_3d=labels.cpu())
                 for bboxes, scores, labels in bbox_list
             ]
             aug_bboxes.append(bbox_list[0])
