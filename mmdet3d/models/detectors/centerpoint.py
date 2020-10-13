@@ -145,6 +145,7 @@ class CenterPoint(MVXTwoStageDetector):
                             0][key]
 
         aug_bboxes = []
+
         for pcd_scale_factor, preds_dict in preds_dicts.items():
             for task_id, pred_dict in enumerate(preds_dict):
                 # merge outputs with different flips before decoding bboxes
@@ -158,13 +159,19 @@ class CenterPoint(MVXTwoStageDetector):
                 for bboxes, scores, labels in bbox_list
             ]
             aug_bboxes.append(bbox_list[0])
-        # merge outputs with different scales after decoding bboxes
-        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, scale_img_metas,
-                                            self.pts_bbox_head.test_cfg)
-        return merged_bboxes
+
+        if len(preds_dicts.keys()) > 1:
+            # merge outputs with different scales after decoding bboxes
+            merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, scale_img_metas,
+                                                self.pts_bbox_head.test_cfg)
+            return merged_bboxes
+        else:
+            return bbox_list[0]
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
+        # import pdb
+        # pdb.set_trace()
         img_feats, pts_feats = self.extract_feats(points, img_metas, imgs)
         bbox_list = dict()
         if pts_feats and self.with_pts_bbox:
