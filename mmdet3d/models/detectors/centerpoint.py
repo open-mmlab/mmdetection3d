@@ -155,10 +155,7 @@ class CenterPoint(MVXTwoStageDetector):
             bbox_list = self.pts_bbox_head.get_bboxes(
                 preds_dict, img_metas[0], rescale=rescale)
             bbox_list = [
-                dict(
-                    boxes_3d=bboxes.to('cpu'),
-                    scores_3d=scores.cpu(),
-                    labels_3d=labels.cpu())
+                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
                 for bboxes, scores, labels in bbox_list
             ]
             aug_bboxes.append(bbox_list[0])
@@ -169,6 +166,9 @@ class CenterPoint(MVXTwoStageDetector):
                                                 self.pts_bbox_head.test_cfg)
             return merged_bboxes
         else:
+            for key in bbox_list[0].keys():
+                bbox_list[0][key] = bbox_list[0][key].to('cpu')
+
             return bbox_list[0]
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
