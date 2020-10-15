@@ -1,4 +1,5 @@
 import torch
+from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
 from mmdet.models import DETECTORS
@@ -21,6 +22,7 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
         super(DynamicMVXFasterRCNN, self).__init__(**kwargs)
 
     @torch.no_grad()
+    @force_fp32()
     def voxelize(self, points):
         """Apply dynamic voxelization to points.
 

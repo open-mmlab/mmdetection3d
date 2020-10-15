@@ -1,4 +1,5 @@
 import torch
+from mmcv.runner import auto_fp16
 from torch import nn
 
 from ..registry import MIDDLE_ENCODERS
@@ -21,7 +22,9 @@ class PointPillarsScatter(nn.Module):
         self.ny = output_shape[0]
         self.nx = output_shape[1]
         self.in_channels = in_channels
+        self.fp16_enabled = False
 
+    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size=None):
         """Foraward function to scatter features."""
         # TODO: rewrite the function in a batch manner

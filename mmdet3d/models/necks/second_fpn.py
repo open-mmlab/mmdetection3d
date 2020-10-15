@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
                       constant_init, is_norm, kaiming_init)
+from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet.models import NECKS
@@ -36,6 +37,7 @@ class SECONDFPN(nn.Module):
         assert len(out_channels) == len(upsample_strides) == len(in_channels)
         self.in_channels = in_channels
         self.out_channels = out_channels
+        self.fp16_enabled = False
 
         deblocks = []
         for i, out_channel in enumerate(out_channels):
@@ -70,6 +72,7 @@ class SECONDFPN(nn.Module):
             elif is_norm(m):
                 constant_init(m, 1)
 
+    @auto_fp16()
     def forward(self, x):
         """Forward function.
 

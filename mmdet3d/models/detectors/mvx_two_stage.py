@@ -2,6 +2,7 @@ import copy
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
+from mmcv.runner import force_fp32
 from os import path as osp
 from torch import nn as nn
 from torch.nn import functional as F
@@ -169,7 +170,12 @@ class MVXTwoStageDetector(Base3DDetector):
 
     def extract_img_feat(self, img, img_metas):
         """Extract features of images."""
-        if self.with_img_backbone:
+        if self.with_img_backbone and img is not None:
+            input_shape = img.shape[-2:]
+            # update real input shape of each single img
+            for img_meta in img_metas:
+                img_meta.update(input_shape=input_shape)
+
             if img.dim() == 5 and img.size(0) == 1:
                 img.squeeze_()
             elif img.dim() == 5 and img.size(0) > 1:
@@ -203,6 +209,7 @@ class MVXTwoStageDetector(Base3DDetector):
         return (img_feats, pts_feats)
 
     @torch.no_grad()
+    @force_fp32()
     def voxelize(self, points):
         """Apply dynamic voxelization to points.
 
