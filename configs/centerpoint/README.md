@@ -38,7 +38,7 @@ We follow the below style to name config files. Contributors are advised to foll
 ### Test time augmentation
 
 We have supported double-flip and scale augmentation during test time. To use test time augmentation, users need to modify the
-test_pipeline and test_cfg in the config.
+`test_pipeline` and `test_cfg` in the config.
 For example, we change `centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py` to the following.
 
 ```python
@@ -113,6 +113,9 @@ data = dict(
 |above w/o circle nms|voxel (0.075)|✗|✗| | |57.63|65.39| |
 |[SECFPN](./centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py)|voxel (0.075)|✓|✓|8.5| |57.27|65.58|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20200930_201619-67c8496f.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20200930_201619.log.json)|
 |above w/o circle nms|voxel (0.075)|✓|✗| | |57.43|65.63||
+|above w/ double flip|voxel (0.075)|✓|✗| | |59.73|67.39||
+|above w/ scale tta|voxel (0.075)|✓|✗| | |60.43|67.65||
+|above w/ circle nms w/o scale tta|voxel (0.075)|✓|✗| | |59.52|67.24||
 |[SECFPN](./centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py)|pillar (0.2)|✗|✓|4.4| |49.07|59.66|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20201004_170716-a134a233.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20201004_170716.log.json)|
 |above w/o circle nms|pillar (0.2)|✗|✗| | |49.12|59.66||
 |[SECFPN](./centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|pillar (0.2)|✓|✗| 4.6| |48.8 |59.67 |[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20200930_103722-3bb135f2.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20200930_103722.log.json)|
