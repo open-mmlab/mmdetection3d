@@ -173,8 +173,6 @@ class CenterPoint(MVXTwoStageDetector):
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
-        # import pdb
-        # pdb.set_trace()
         img_feats, pts_feats = self.extract_feats(points, img_metas, imgs)
         bbox_list = dict()
         if pts_feats and self.with_pts_bbox:

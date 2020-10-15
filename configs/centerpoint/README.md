@@ -75,6 +75,8 @@ test_pipeline = [
         img_scale=(1333, 800),
         pts_scale_ratio=[0.95, 1.0, 1.05],
         flip=True,
+        pcd_horizontal_flip=True,
+        pcd_vertical_flip=True,
         transforms=[
             dict(
                 type='GlobalRotScaleTrans',
@@ -89,9 +91,7 @@ test_pipeline = [
                 class_names=class_names,
                 with_label=False),
             dict(type='Collect3D', keys=['points'])
-        ],
-        pcd_horizontal_flip=True,
-        pcd_vertical_flip=True)
+        ])
 ]
 
 data = dict(
