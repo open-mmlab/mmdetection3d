@@ -33,10 +33,8 @@ class BaseShapeHead(nn.Module):
             layers. Default: (1, 1).
         use_direction_classifier (bool): Whether to use direction classifier.
             Default: True.
-        conv_cfg (dict): Config of conv layer.
-            Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer.
-            Default: dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01).
+        conv_cfg (dict): Config of conv layer. Default: dict(type='Conv2d')
+        norm_cfg (dict): Config of norm layer. Default: dict(type='BN2d').
         bias (bool|str): Type of bias. Default: False.
     """
 
@@ -49,7 +47,7 @@ class BaseShapeHead(nn.Module):
                  shared_conv_strides=(1, 1),
                  use_direction_classifier=True,
                  conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
+                 norm_cfg=dict(type='BN2d'),
                  bias=False):
         super().__init__()
         self.num_cls = num_cls

@@ -945,3 +945,37 @@ def test_ssd3d_head():
     assert results[0][0].tensor.shape[1] == 7
     assert results[0][1].shape[0] >= 0
     assert results[0][2].shape[0] >= 0
+
+
+def test_shape_aware_head_getboxes():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    bbox_head_cfg = _get_pts_bbox_head_cfg(
+        'ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py')
+    # modify bn config to avoid bugs caused by syncbn
+    for task in bbox_head_cfg['tasks']:
+        task['norm_cfg'] = dict(type='BN2d')
+
+    from mmdet3d.models.builder import build_head
+    self = build_head(bbox_head_cfg)
+    self.cuda()
+
+    feats = list()
+    feats.append(torch.rand([2, 384, 200, 200], dtype=torch.float32).cuda())
+    # fake input_metas
+    input_metas = [{
+        'sample_idx': 1234,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
+    }, {
+        'sample_idx': 2345,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
+    }]
+    (cls_score, bbox_pred, dir_cls_preds) = self.forward(feats)
+
+    # test get_boxes
+    cls_score[0] -= 1.5  # too many positive samples may cause cuda oom
+    result_list = self.get_bboxes(cls_score, bbox_pred, dir_cls_preds,
+                                  input_metas)
+    assert (result_list[0][1] > 0.3).all()
