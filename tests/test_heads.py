@@ -947,6 +947,70 @@ def test_ssd3d_head():
     assert results[0][2].shape[0] >= 0
 
 
+def test_shape_aware_head_loss():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    bbox_head_cfg = _get_pts_bbox_head_cfg(
+        'ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py')
+    # modify bn config to avoid bugs caused by syncbn
+    for task in bbox_head_cfg['tasks']:
+        task['norm_cfg'] = dict(type='BN2d')
+
+    from mmdet3d.models.builder import build_head
+    self = build_head(bbox_head_cfg)
+    self.cuda()
+    assert len(self.heads) == 4
+    assert isinstance(self.heads[0].conv_cls, torch.nn.modules.conv.Conv2d)
+    assert self.heads[0].conv_cls.in_channels == 64
+    assert self.heads[0].conv_cls.out_channels == 36
+    assert self.heads[0].conv_reg.out_channels == 28
+    assert self.heads[0].conv_dir_cls.out_channels == 8
+
+    # test forward
+    feats = list()
+    feats.append(torch.rand([2, 384, 200, 200], dtype=torch.float32).cuda())
+    (cls_score, bbox_pred, dir_cls_preds) = self.forward(feats)
+    assert cls_score[0].shape == torch.Size([2, 420000, 9])
+    assert bbox_pred[0].shape == torch.Size([2, 420000, 7])
+    assert dir_cls_preds[0].shape == torch.Size([2, 420000, 2])
+
+    # test loss
+    gt_bboxes = [
+        LiDARInstance3DBoxes(
+            torch.tensor(
+                [[-14.5695, -6.4169, -2.1054, 1.8830, 4.6720, 1.4840, 1.5587],
+                 [25.7215, 3.4581, -1.3456, 1.6720, 4.4090, 1.5830, 1.5301]],
+                dtype=torch.float32).cuda()),
+        LiDARInstance3DBoxes(
+            torch.tensor(
+                [[-50.763, -3.5517, -0.99658, 1.7430, 4.4020, 1.6990, 1.7874],
+                 [-68.720, 0.033, -0.75276, 1.7860, 4.9100, 1.6610, 1.7525]],
+                dtype=torch.float32).cuda())
+    ]
+    gt_labels = list(torch.tensor([[4, 4], [4, 4]], dtype=torch.int64).cuda())
+    input_metas = [{
+        'sample_idx': 1234
+    }, {
+        'sample_idx': 2345
+    }]  # fake input_metas
+
+    losses = self.loss(cls_score, bbox_pred, dir_cls_preds, gt_bboxes,
+                       gt_labels, input_metas)
+
+    assert losses['loss_cls'][0] > 0
+    assert losses['loss_bbox'][0] > 0
+    assert losses['loss_dir'][0] > 0
+
+    # test empty ground truth case
+    gt_bboxes = list(torch.empty((2, 0, 7)).cuda())
+    gt_labels = list(torch.empty((2, 0)).cuda())
+    empty_gt_losses = self.loss(cls_score, bbox_pred, dir_cls_preds, gt_bboxes,
+                                gt_labels, input_metas)
+    assert empty_gt_losses['loss_cls'][0] > 0
+    assert empty_gt_losses['loss_bbox'][0] == 0
+    assert empty_gt_losses['loss_dir'][0] == 0
+
+
 def test_shape_aware_head_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
