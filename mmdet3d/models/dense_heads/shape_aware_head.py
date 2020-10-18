@@ -31,11 +31,11 @@ class BaseShapeHead(nn.Module):
             layers. Default: (64, 64). \
         shared_conv_strides (tuple): Strides for shared convolutional \
             layers. Default: (1, 1).
-        use_direction_classifier (bool): Whether to use direction classifier.
-            Default: True.
+        use_direction_classifier (bool, optional): Whether to use direction \
+            classifier. Default: True.
         conv_cfg (dict): Config of conv layer. Default: dict(type='Conv2d')
         norm_cfg (dict): Config of norm layer. Default: dict(type='BN2d').
-        bias (bool|str): Type of bias. Default: False.
+        bias (bool|str, optional): Type of bias. Default: False.
     """
 
     def __init__(self,
@@ -129,12 +129,11 @@ class BaseShapeHead(nn.Module):
             dir_cls_preds = dir_cls_preds.view(-1, self.num_base_anchors, 2, H,
                                                W).permute(0, 1, 3, 4,
                                                           2).reshape(B, -1, 2)
-        ret = {
-            'cls_score': cls_score,
-            'bbox_pred': bbox_pred,
-            'dir_cls_preds': dir_cls_preds,
-            'featmap_size': featmap_size
-        }
+        ret = dict(
+            cls_score=cls_score,
+            bbox_pred=bbox_pred,
+            dir_cls_preds=dir_cls_preds,
+            featmap_size=featmap_size)
         return ret
 
 
@@ -144,8 +143,8 @@ class ShapeAwareHead(Anchor3DHead):
 
     Args:
         tasks (dict): Shape-aware groups of multi-class objects.
-        assign_per_class (bool): Whether to do assignment for each class.
-            Default: True.
+        assign_per_class (bool, optional): Whether to do assignment for each \
+            class. Default: True.
         kwargs (dict): Other arguments are the same as those in \
             :class:`Anchor3DHead`.
     """
@@ -301,6 +300,7 @@ class ShapeAwareHead(Anchor3DHead):
         Returns:
             dict[str, list[torch.Tensor]]: Classification, bbox, and \
                 direction losses of each level.
+
                 - loss_cls (list[torch.Tensor]): Classification losses.
                 - loss_bbox (list[torch.Tensor]): Box regression losses.
                 - loss_dir (list[torch.Tensor]): Direction classification \
@@ -358,7 +358,9 @@ class ShapeAwareHead(Anchor3DHead):
                 class predictions.
             input_metas (list[dict]): Contain pcd and img's meta info.
             cfg (None | :obj:`ConfigDict`): Training or testing config.
-            rescale (list[torch.Tensor]): Whether th rescale bbox.
+                Default: None.
+            rescale (list[torch.Tensor], optional): Whether to rescale bbox.
+                Default: False.
 
         Returns:
             list[tuple]: Prediction resultes of batches.
@@ -411,10 +413,12 @@ class ShapeAwareHead(Anchor3DHead):
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
             cfg (None | :obj:`ConfigDict`): Training or testing config.
-            rescale (list[torch.Tensor]): whether th rescale bbox.
+            rescale (list[torch.Tensor], optional): whether to rescale bbox. \
+                Default: False.
 
         Returns:
             tuple: Contain predictions of single batch.
+
                 - bboxes (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
                 - scores (torch.Tensor): Class score of each bbox.
                 - labels (torch.Tensor): Label of each bbox.
