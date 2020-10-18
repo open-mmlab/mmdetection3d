@@ -83,13 +83,26 @@ class CenterPoint(MVXTwoStageDetector):
         return bbox_results
 
     def aug_test_pts(self, feats, img_metas, rescale=False):
-        """Test function of point cloud branch with augmentaiton. The function
-        implementation process is as follows:
+        """Test function of point cloud branch with augmentaiton.
 
-        - step 1: map features back for double-flip augmentation.
-        - step 2: merge all features and generate boxes.
-        - step 3: map boxes back for scale augmentation.
-        - step 4: merge results.
+        The function implementation process is as follows:
+
+            - step 1: map features back for double-flip augmentation.
+            - step 2: merge all features and generate boxes.
+            - step 3: map boxes back for scale augmentation.
+            - step 4: merge results.
+
+        Args:
+            feats (list[torch.Tensor]): Feature of point cloud.
+            img_metas (list[dict]): Meta information of samples.
+            rescale (bool): Whether to rescale bboxes. Default: False.
+
+        Returns:
+            dict: Returned bboxes consists of the following keys:
+
+                - boxes_3d (:obj:`LiDARInstance3DBoxes`): Predicted bboxes.
+                - scores_3d (torch.Tensor): Scores of predicted boxes.
+                - labels_3d (torch.Tensor): Labels of predicted boxes.
         """
         # only support aug_test for one sample
         outs_list = []
@@ -168,7 +181,8 @@ class CenterPoint(MVXTwoStageDetector):
         else:
             for key in bbox_list[0].keys():
                 bbox_list[0][key] = bbox_list[0][key].to('cpu')
-
+            import pdb
+            pdb.set_trace()
             return bbox_list[0]
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
