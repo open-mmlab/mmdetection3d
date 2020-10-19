@@ -1042,4 +1042,5 @@ def test_shape_aware_head_getboxes():
     cls_score[0] -= 1.5  # too many positive samples may cause cuda oom
     result_list = self.get_bboxes(cls_score, bbox_pred, dir_cls_preds,
                                   input_metas)
+    assert len(result_list[0][1]) > 0  # ensure not all boxes are filtered
     assert (result_list[0][1] > 0.3).all()
