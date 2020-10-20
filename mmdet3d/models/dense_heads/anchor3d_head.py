@@ -244,7 +244,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         if num_pos > 0:
             code_weight = self.train_cfg.get('code_weight', None)
             if code_weight:
-                bbox_weights = bbox_weights * bbox_weights.new_tensor(
+                pos_bbox_weights = pos_bbox_weights * bbox_weights.new_tensor(
                     code_weight)
             if self.diff_rad_by_sin:
                 pos_bbox_pred, pos_bbox_targets = self.add_sin_difference(
