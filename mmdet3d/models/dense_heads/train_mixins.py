@@ -40,14 +40,24 @@ class AnchorTrainMixin(object):
         num_imgs = len(input_metas)
         assert len(anchor_list) == num_imgs
 
-        # anchor number of multi levels
-        num_level_anchors = [
-            anchors.view(-1, self.box_code_size).size(0)
-            for anchors in anchor_list[0]
-        ]
-        # concat all level anchors and flags to a single tensor
-        for i in range(num_imgs):
-            anchor_list[i] = torch.cat(anchor_list[i])
+        if isinstance(anchor_list[0][0], list):
+            # sizes of anchors are different
+            # anchor number of a single level
+            num_level_anchors = [
+                sum([anchor.size(0) for anchor in anchors])
+                for anchors in anchor_list[0]
+            ]
+            for i in range(num_imgs):
+                anchor_list[i] = anchor_list[i][0]
+        else:
+            # anchor number of multi levels
+            num_level_anchors = [
+                anchors.view(-1, self.box_code_size).size(0)
+                for anchors in anchor_list[0]
+            ]
+            # concat all level anchors and flags to a single tensor
+            for i in range(num_imgs):
+                anchor_list[i] = torch.cat(anchor_list[i])
 
         # compute targets for each image
         if gt_bboxes_ignore_list is None:
@@ -112,7 +122,8 @@ class AnchorTrainMixin(object):
         Returns:
             tuple[torch.Tensor]: Anchor targets.
         """
-        if isinstance(self.bbox_assigner, list):
+        if isinstance(self.bbox_assigner,
+                      list) and (not isinstance(anchors, list)):
             feat_size = anchors.size(0) * anchors.size(1) * anchors.size(2)
             rot_angles = anchors.size(-2)
             assert len(self.bbox_assigner) == anchors.size(-3)
@@ -129,12 +140,11 @@ class AnchorTrainMixin(object):
                     anchor_targets = self.anchor_target_single_assigner(
                         assigner, current_anchors, gt_bboxes[gt_per_cls, :],
                         gt_bboxes_ignore, gt_labels[gt_per_cls], input_meta,
-                        label_channels, num_classes, sampling)
+                        num_classes, sampling)
                 else:
                     anchor_targets = self.anchor_target_single_assigner(
                         assigner, current_anchors, gt_bboxes, gt_bboxes_ignore,
-                        gt_labels, input_meta, label_channels, num_classes,
-                        sampling)
+                        gt_labels, input_meta, num_classes, sampling)
 
                 (labels, label_weights, bbox_targets, bbox_weights,
                  dir_targets, dir_weights, pos_inds, neg_inds) = anchor_targets
@@ -170,10 +180,59 @@ class AnchorTrainMixin(object):
             return (total_labels, total_label_weights, total_bbox_targets,
                     total_bbox_weights, total_dir_targets, total_dir_weights,
                     total_pos_inds, total_neg_inds)
+        elif isinstance(self.bbox_assigner, list) and isinstance(
+                anchors, list):
+            # class-aware anchors with different feature map sizes
+            assert len(self.bbox_assigner) == len(anchors), \
+                'The number of bbox assigners and anchors should be the same.'
+            (total_labels, total_label_weights, total_bbox_targets,
+             total_bbox_weights, total_dir_targets, total_dir_weights,
+             total_pos_inds, total_neg_inds) = [], [], [], [], [], [], [], []
+            current_anchor_num = 0
+            for i, assigner in enumerate(self.bbox_assigner):
+                current_anchors = anchors[i]
+                current_anchor_num += current_anchors.size(0)
+                if self.assign_per_class:
+                    gt_per_cls = (gt_labels == i)
+                    anchor_targets = self.anchor_target_single_assigner(
+                        assigner, current_anchors, gt_bboxes[gt_per_cls, :],
+                        gt_bboxes_ignore, gt_labels[gt_per_cls], input_meta,
+                        num_classes, sampling)
+                else:
+                    anchor_targets = self.anchor_target_single_assigner(
+                        assigner, current_anchors, gt_bboxes, gt_bboxes_ignore,
+                        gt_labels, input_meta, num_classes, sampling)
+
+                (labels, label_weights, bbox_targets, bbox_weights,
+                 dir_targets, dir_weights, pos_inds, neg_inds) = anchor_targets
+                total_labels.append(labels)
+                total_label_weights.append(label_weights)
+                total_bbox_targets.append(
+                    bbox_targets.reshape(-1, anchors[i].size(-1)))
+                total_bbox_weights.append(
+                    bbox_weights.reshape(-1, anchors[i].size(-1)))
+                total_dir_targets.append(dir_targets)
+                total_dir_weights.append(dir_weights)
+                total_pos_inds.append(pos_inds)
+                total_neg_inds.append(neg_inds)
+
+            total_labels = torch.cat(total_labels, dim=0)
+            total_label_weights = torch.cat(total_label_weights, dim=0)
+            total_bbox_targets = torch.cat(total_bbox_targets, dim=0)
+            total_bbox_weights = torch.cat(total_bbox_weights, dim=0)
+            total_dir_targets = torch.cat(total_dir_targets, dim=0)
+            total_dir_weights = torch.cat(total_dir_weights, dim=0)
+            total_pos_inds = torch.cat(total_pos_inds, dim=0)
+            total_neg_inds = torch.cat(total_neg_inds, dim=0)
+            return (total_labels, total_label_weights, total_bbox_targets,
+                    total_bbox_weights, total_dir_targets, total_dir_weights,
+                    total_pos_inds, total_neg_inds)
         else:
-            return self.anchor_target_single_assigner(
-                self.bbox_assigner, anchors, gt_bboxes, gt_bboxes_ignore,
-                gt_labels, input_meta, label_channels, num_classes, sampling)
+            return self.anchor_target_single_assigner(self.bbox_assigner,
+                                                      anchors, gt_bboxes,
+                                                      gt_bboxes_ignore,
+                                                      gt_labels, input_meta,
+                                                      num_classes, sampling)
 
     def anchor_target_single_assigner(self,
                                       bbox_assigner,
@@ -182,7 +241,6 @@ class AnchorTrainMixin(object):
                                       gt_bboxes_ignore,
                                       gt_labels,
                                       input_meta,
-                                      label_channels=1,
                                       num_classes=1,
                                       sampling=True):
         """Assign anchors and encode positive anchors.
@@ -194,7 +252,6 @@ class AnchorTrainMixin(object):
             gt_bboxes_ignore (torch.Tensor): Ignored gt bboxes.
             gt_labels (torch.Tensor): Gt class labels.
             input_meta (dict): Meta info of each image.
-            label_channels (int): The channel of labels.
             num_classes (int): The number of classes.
             sampling (bool): Whether to sample anchors.
 
