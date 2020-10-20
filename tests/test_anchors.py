@@ -181,3 +181,58 @@ def test_aligned_anchor_generator():
         # set [:56:7] thus it could cover 8 (len(size) * len(rotations))
         # anchors on 8 location
         assert single_level_anchor[:56:7].allclose(expected_grid_anchors[i])
+
+
+def test_aligned_anchor_generator_per_cls():
+    if torch.cuda.is_available():
+        device = 'cuda'
+    else:
+        device = 'cpu'
+
+    anchor_generator_cfg = dict(
+        type='AlignedAnchor3DRangeGeneratorPerCls',
+        ranges=[[-100, -100, -1.80, 100, 100, -1.80],
+                [-100, -100, -1.30, 100, 100, -1.30]],
+        sizes=[[0.63, 1.76, 1.44], [0.96, 2.35, 1.59]],
+        custom_values=[0, 0],
+        rotations=[0, 1.57],
+        reshape_out=False)
+
+    featmap_sizes = [(100, 100), (50, 50)]
+    anchor_generator = build_anchor_generator(anchor_generator_cfg)
+
+    # check base anchors
+    expected_grid_anchors = [[
+        torch.tensor([[
+            -99.0000, -99.0000, -1.8000, 0.6300, 1.7600, 1.4400, 0.0000,
+            0.0000, 0.0000
+        ],
+                      [
+                          -99.0000, -99.0000, -1.8000, 0.6300, 1.7600, 1.4400,
+                          1.5700, 0.0000, 0.0000
+                      ]],
+                     device=device),
+        torch.tensor([[
+            -98.0000, -98.0000, -1.3000, 0.9600, 2.3500, 1.5900, 0.0000,
+            0.0000, 0.0000
+        ],
+                      [
+                          -98.0000, -98.0000, -1.3000, 0.9600, 2.3500, 1.5900,
+                          1.5700, 0.0000, 0.0000
+                      ]],
+                     device=device)
+    ]]
+    multi_level_anchors = anchor_generator.grid_anchors(
+        featmap_sizes, device=device)
+    expected_multi_level_shapes = [[
+        torch.Size([20000, 9]), torch.Size([5000, 9])
+    ]]
+    for i, single_level_anchor in enumerate(multi_level_anchors):
+        assert len(single_level_anchor) == len(expected_multi_level_shapes[i])
+        # set [:2*interval:interval] thus it could cover
+        # 2 (len(size) * len(rotations)) anchors on 2 location
+        # Note that len(size) for each class is always 1 in this case
+        for j in range(len(single_level_anchor)):
+            interval = int(expected_multi_level_shapes[i][j][0] / 2)
+            assert single_level_anchor[j][:2 * interval:interval].allclose(
+                expected_grid_anchors[i][j])
