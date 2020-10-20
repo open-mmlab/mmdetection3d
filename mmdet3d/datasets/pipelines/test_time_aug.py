@@ -73,6 +73,10 @@ class MultiScaleFlipAug3D(object):
                 different scales and flips.
         """
         aug_data = []
+
+        # modified from `flip_aug = [False, True] if self.flip else [False]`
+        # to reduce unnecessary scenes when using double flip augmentation
+        # during test time
         flip_aug = [True] if self.flip else [False]
         pcd_horizontal_flip_aug = [False, True] \
             if self.flip and self.pcd_horizontal_flip else [False]
