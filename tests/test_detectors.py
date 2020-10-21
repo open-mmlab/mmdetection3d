@@ -210,13 +210,22 @@ def test_centerpoint():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     centerpoint = _get_detector_cfg(
-        'centerpoint/centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py')
+        'centerpoint/centerpoint_0075voxel_second_secfpn_'
+        'dcn_4x8_cyclic_flip-tta_20e_nus.py')
     self = build_detector(centerpoint).cuda()
     points_0 = torch.rand([1000, 5], device='cuda')
     points_1 = torch.rand([1000, 5], device='cuda')
     points = [points_0, points_1]
-    img_meta_0 = dict(box_type_3d=LiDARInstance3DBoxes)
-    img_meta_1 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_meta_0 = dict(
+        box_type_3d=LiDARInstance3DBoxes,
+        flip=True,
+        pcd_horizontal_flip=True,
+        pcd_vertical_flip=False)
+    img_meta_1 = dict(
+        box_type_3d=LiDARInstance3DBoxes,
+        flip=True,
+        pcd_horizontal_flip=False,
+        pcd_vertical_flip=True)
     img_metas = [img_meta_0, img_meta_1]
     gt_bbox_0 = LiDARInstance3DBoxes(
         torch.rand([10, 9], device='cuda'), box_dim=9)
@@ -248,3 +257,22 @@ def test_centerpoint():
     assert boxes_3d_1.tensor.shape[1] == 9
     assert scores_3d_1.shape[0] >= 0
     assert labels_3d_1.shape[0] >= 0
+
+    # test_aug_test
+    points = [[torch.rand([1000, 5], device='cuda')]]
+    img_metas = [[
+        dict(
+            box_type_3d=LiDARInstance3DBoxes,
+            pcd_scale_factor=1.0,
+            flip=True,
+            pcd_horizontal_flip=True,
+            pcd_vertical_flip=False)
+    ]]
+    results = self.aug_test(points, img_metas)
+    boxes_3d_0 = results[0]['pts_bbox']['boxes_3d']
+    scores_3d_0 = results[0]['pts_bbox']['scores_3d']
+    labels_3d_0 = results[0]['pts_bbox']['labels_3d']
+    assert boxes_3d_0.tensor.shape[0] >= 0
+    assert boxes_3d_0.tensor.shape[1] == 9
+    assert scores_3d_0.shape[0] >= 0
+    assert labels_3d_0.shape[0] >= 0

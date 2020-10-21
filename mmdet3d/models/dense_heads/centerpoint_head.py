@@ -690,7 +690,7 @@ class CenterHead(nn.Module):
                     for j, num_class in enumerate(self.num_classes):
                         rets[j][i][k] += flag
                         flag += num_class
-                    labels = torch.cat([ret[i][k] for ret in rets])
+                    labels = torch.cat([ret[i][k].int() for ret in rets])
             ret_list.append([bboxes, scores, labels])
         return ret_list
 
@@ -763,9 +763,9 @@ class CenterHead(nn.Module):
                 selected = nms_gpu(
                     boxes_for_nms,
                     top_scores,
-                    thresh=self.test_cfg['nms_iou_threshold'],
-                    pre_maxsize=self.test_cfg['nms_pre_max_size'],
-                    post_max_size=self.test_cfg['nms_post_max_size'])
+                    thresh=self.test_cfg['nms_thr'],
+                    pre_maxsize=self.test_cfg['pre_max_size'],
+                    post_max_size=self.test_cfg['post_max_size'])
             else:
                 selected = []
 
