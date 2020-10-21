@@ -67,6 +67,12 @@ def parse_config(config_strings):
 
 
 def main():
+    """Convert keys in checkpoints for VoteNet.
+
+    There can be some breaking changes during the development of mmdetection3d,
+    and this tool is used for upgrading checkpoints trained with old versions
+    (before v0.6.0) to the latest one.
+    """
     args = parse_args()
     checkpoint = torch.load(args.checkpoint)
     cfg = parse_config(checkpoint['meta']['config'])
