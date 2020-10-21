@@ -2,7 +2,7 @@
 
 ## Introduction
 
-We implement PointPillars and provide the results and checkpoints on KITTI and nuScenes datasets.
+We implement PointPillars and provide the results and checkpoints on KITTI, nuScenes, Lyft and Waymo datasets.
 
 ```
 @inproceedings{lang2019pointpillars,
