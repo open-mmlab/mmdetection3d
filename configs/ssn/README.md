@@ -21,7 +21,7 @@ We implement PointPillars with Shape-aware grouping heads used in the SSN and pr
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | Private Score | Public Score | Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
 |[SECFPN](../pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d.py)|2x|||13.4|13.4||
-|[SSN](./hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py)|2x|8.30||17.4|17.5||
+|[SSN](./hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py)|2x|8.30||17.4|17.5|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d_20201016_220844-3058d9fc.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d_20201016_220844.log.json)|
 
 Note:
 
