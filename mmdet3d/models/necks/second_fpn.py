@@ -89,5 +89,4 @@ class SECONDFPN(nn.Module):
             out = torch.cat(ups, dim=1)
         else:
             out = ups[0]
-
         return [out]

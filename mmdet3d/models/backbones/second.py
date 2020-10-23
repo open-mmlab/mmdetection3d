@@ -83,5 +83,4 @@ class SECOND(nn.Module):
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
             outs.append(x)
-
         return tuple(outs)
