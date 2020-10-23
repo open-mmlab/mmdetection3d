@@ -81,7 +81,6 @@ class VFELayer(nn.Module):
         """
         # [K, T, 7] tensordot [7, units] = [K, T, units]
         voxel_count = inputs.shape[1]
-
         x = self.linear(inputs)
         x = self.norm(x.permute(0, 2, 1).contiguous()).permute(0, 2,
                                                                1).contiguous()
