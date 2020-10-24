@@ -145,7 +145,6 @@ class PointSAModuleMSG(nn.Module):
         """
         new_features_list = []
         xyz_flipped = points_xyz.transpose(1, 2).contiguous()
-
         if indices is not None:
             assert (indices.shape[1] == self.num_point[0])
             new_xyz = gather_points(xyz_flipped, indices).transpose(

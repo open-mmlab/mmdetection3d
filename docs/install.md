@@ -121,6 +121,21 @@ you can install it before installing MMCV.
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
+### Another option: Docker Image
+
+We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/master/docker/Dockerfile) to build an image.
+
+```shell
+# build an image with PyTorch 1.6, CUDA 10.1
+docker build -t mmdetection3d docker/
+```
+
+Run it with
+
+```shell
+docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
+```
+
 ### A from-scratch setup script
 
 Here is a full script for setting up mmdetection with conda.

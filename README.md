@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.6.0.
+**News**: We released the codebase v0.6.1.
 
 Documentation: https://mmdetection3d.readthedocs.io/
 
@@ -56,7 +56,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.6.0 was released in 20/9/2020.
+v0.6.1 was released in 11/10/2020.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
@@ -75,6 +75,7 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
+| SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✗        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/carafe/README.md)

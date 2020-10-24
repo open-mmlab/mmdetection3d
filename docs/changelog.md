@@ -1,5 +1,42 @@
 ## Changelog
 
+### v0.6.1 (11/10/2020)
+
+#### Highlights
+
+- Support mixed precision training of voxel-based methods
+- Support docker with pytorch 1.6.0
+- Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
+- Switch model zoo to download.openmmlab.com
+
+#### Bug Fixes
+
+- Fix a bug of visualization in multi-batch case (#120)
+- Fix bugs in dcn unit test (#130)
+- Fix dcn bias bug in centerpoint (#137)
+- Fix dataset mapping in the evaluation of nuScenes mini dataset (#140)
+- Fix origin initialization in `CameraInstance3DBoxes` (#148, #150)
+- Correct documentation link in the getting_started.md (#159)
+- Fix model save path bug in gather_models.py (#153)
+- Fix image padding shape bug in `PointFusion` (#162)
+
+#### New Features
+
+- Support dataset pipeline `VoxelBasedPointSampler` to sample multi-sweep points based on voxelization. (#125)
+- Support mixed precision training of voxel-based methods (#132)
+- Support docker with pytorch 1.6.0 (#160)
+
+#### Improvements
+
+- Reduce requirements for the case exclusive of Waymo (#121)
+- Switch model zoo to download.openmmlab.com (#126)
+- Update docs related to Waymo (#128)
+- Add version assertion in the [init file](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/__init__.py) (#129)
+- Add evaluation interval setting for CenterPoint (#131)
+- Add unit test for CenterPoint (#133)
+- Update [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) baselines on Waymo with full dataset (#142)
+- Update [CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) results with models and logs (#154)
+
 ### v0.6.0 (20/9/2020)
 
 #### Highlights
