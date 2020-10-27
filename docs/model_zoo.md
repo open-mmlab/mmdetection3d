@@ -10,7 +10,7 @@
 
 ### SECOND
 
-Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/second) for details.
+Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/second) for details. We provide SECOND baselines on KITTI and Waymo datasets.
 
 ### PointPillars
 

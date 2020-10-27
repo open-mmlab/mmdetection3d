@@ -25,7 +25,7 @@ We implement SECOND and provide the results and checkpoints on KITTI dataset.
 
 |  Backbone | Load Interval | Class | Lr schd | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 |  mAP@L2 | **mAPH@L2** | Download |
 | :-------: | :-----------: |:-----:| :------:| :------: | :------------: | :----: | :-----: | :-----: | :-----: | :------: |
-| [SECFPN](./hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class|2x|8.12||58.0|53.5|51.5|48.3|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class_20201003_105141-4cc0bb58.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class_20201003_105141.log.json)|
+| [SECFPN](./hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)|5|3 Class|2x|8.12||58.0|53.5|51.5|48.3|[log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class_20201003_105141.log.json)|
 | above @ Car|||2x|8.12||58.5|57.9|51.6|51.1| |
 | above @ Pedestrian|||2x|8.12||63.9|54.9|56.0|48.0| |
 | above @ Cyclist|||2x|8.12||48.6|47.6|46.8|45.8| |
