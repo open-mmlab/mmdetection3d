@@ -75,7 +75,7 @@ Results and models are available in the [model zoo](docs/model_zoo.md).
 | Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✗        | ☐     |
+| SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/carafe/README.md)
