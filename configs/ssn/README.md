@@ -2,7 +2,7 @@
 
 ## Introduction
 
-We implement PointPillars with Shape-aware grouping heads used in the SSN and provide the results and checkpoints on Lyft datasets.
+We implement PointPillars with Shape-aware grouping heads used in the SSN and provide the results and checkpoints on the nuScenes and Lyft dataset.
 
 ```
 @inproceedings{zhu2020ssn,
@@ -15,6 +15,15 @@ We implement PointPillars with Shape-aware grouping heads used in the SSN and pr
 ```
 
 ## Results
+
+### NuScenes
+
+|  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP | NDS | Download |
+| :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
+|[SECFPN](../pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py)|2x|16.4||35.17|49.76|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230725-0817d270.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230725.log.json)|
+|[SSN](./hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py)|2x|||41.56|54.83||
+[RegNetX-400MF-SECFPN](./hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py)|2x|16.4||41.15|55.20|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230334-53044f32.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230334.log.json)|
+|[RegNetX-400MF-SSN](./hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d.py)|2x|||46.95|58.24||
 
 ### Lyft
 
