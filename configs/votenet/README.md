@@ -35,4 +35,6 @@ python ./tools/convert_votenet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=
 
 Then you can use the converted checkpoints following [getting_started.md](../../docs/getting_started.md).
 
-Also, since test data preparation consists of random downsampling, and the test script uses fixed random seeds while during training the random seeds before each round of validation aren't fixed, the test results may differ to some extent from the numbers reported above.
+## Undeterminism
+
+Since test data preparation consists of random downsampling, and the test script uses fixed random seeds while during training the random seeds before each round of validation aren't fixed, the test results may differ to some extent from the numbers reported above.
