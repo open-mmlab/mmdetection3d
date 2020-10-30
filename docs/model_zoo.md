@@ -52,4 +52,4 @@ Please refer to [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/m
 
 ### SSN
 
-Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on Lyft datasets currently.
+Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft dataset currently.
