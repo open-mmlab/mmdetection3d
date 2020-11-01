@@ -36,7 +36,7 @@ Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master
 Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
 
 ### nuImages
-We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN and Cascade Mask R-CNN results currently.
+We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN, Cascade Mask R-CNN and HTC results currently.
 
 ### H3DNet
 
