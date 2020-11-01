@@ -1,5 +1,31 @@
 ## Changelog
 
+### v0.7.0 (1/11/2020)
+
+#### Highlights
+
+- Support a new method [SSN](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123700579.pdf) with benchmarks on nuScenes and Lyft datasets.
+- Update benchmarks for SECOND on Waymo, CenterPoint with TTA on nuScenes and models with mixed precision training on KITTI and nuScenes.
+- Support semantic segmentation on nuImages and provide [HTC](https://arxiv.org/abs/1901.07518) models with configurations and performance for reference.
+
+#### Bug Fixes
+
+- Fix incorrect code weights in anchor3d_head when introducing mixed precision training (#173)
+- Fix the incorrect label mapping on nuImages dataset (#155)
+
+#### New Features
+
+- Modified primitive head which can support the setting on SUN-RGBD dataset (#136)
+- Support semantic segmentation and [HTC](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/nuimages) with models for reference on nuImages dataset (#155)
+- Support [SSN](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/ssn) on nuScenes and Lyft datasets (#147, #174, #166, #182)
+- Support double flip for test time augmentation of CenterPoint with updated benchmark (#143)
+
+#### Improvements
+
+- Update [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark with configurations for reference on Waymo (#166)
+- Delete checkpoints on Waymo to comply its specific license agreement (#180)
+- Update models and instructions with [mixed precision training](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fp16) on KITTI and nuScenes (#178)
+
 ### v0.6.1 (11/10/2020)
 
 #### Highlights
