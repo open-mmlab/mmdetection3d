@@ -2,6 +2,7 @@ import copy
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer, kaiming_init
+from mmcv.runner import force_fp32
 from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
@@ -228,7 +229,7 @@ class DCNSeperateHead(nn.Module):
         return ret
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class CenterHead(nn.Module):
     """CenterHead for CenterPoint.
 
@@ -292,6 +293,7 @@ class CenterHead(nn.Module):
         self.loss_bbox = build_loss(loss_bbox)
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.num_anchor_per_locs = [n for n in num_classes]
+        self.fp16_enabled = False
 
         # a shared convolution
         self.shared_conv = ConvModule(
@@ -548,6 +550,7 @@ class CenterHead(nn.Module):
             inds.append(ind)
         return heatmaps, anno_boxes, inds, masks
 
+    @force_fp32(apply_to=('preds_dicts'))
     def loss(self, gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs):
         """Loss function for CenterHead.
 
@@ -687,7 +690,7 @@ class CenterHead(nn.Module):
                     for j, num_class in enumerate(self.num_classes):
                         rets[j][i][k] += flag
                         flag += num_class
-                    labels = torch.cat([ret[i][k] for ret in rets])
+                    labels = torch.cat([ret[i][k].int() for ret in rets])
             ret_list.append([bboxes, scores, labels])
         return ret_list
 
@@ -760,9 +763,9 @@ class CenterHead(nn.Module):
                 selected = nms_gpu(
                     boxes_for_nms,
                     top_scores,
-                    thresh=self.test_cfg['nms_iou_threshold'],
-                    pre_maxsize=self.test_cfg['nms_pre_max_size'],
-                    post_max_size=self.test_cfg['nms_post_max_size'])
+                    thresh=self.test_cfg['nms_thr'],
+                    pre_maxsize=self.test_cfg['pre_max_size'],
+                    post_max_size=self.test_cfg['post_max_size'])
             else:
                 selected = []
 

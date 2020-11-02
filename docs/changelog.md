@@ -1,5 +1,68 @@
 ## Changelog
 
+### v0.7.0 (1/11/2020)
+
+#### Highlights
+
+- Support a new method [SSN](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123700579.pdf) with benchmarks on nuScenes and Lyft datasets.
+- Update benchmarks for SECOND on Waymo, CenterPoint with TTA on nuScenes and models with mixed precision training on KITTI and nuScenes.
+- Support semantic segmentation on nuImages and provide [HTC](https://arxiv.org/abs/1901.07518) models with configurations and performance for reference.
+
+#### Bug Fixes
+
+- Fix incorrect code weights in anchor3d_head when introducing mixed precision training (#173)
+- Fix the incorrect label mapping on nuImages dataset (#155)
+
+#### New Features
+
+- Modified primitive head which can support the setting on SUN-RGBD dataset (#136)
+- Support semantic segmentation and [HTC](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/nuimages) with models for reference on nuImages dataset (#155)
+- Support [SSN](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/ssn) on nuScenes and Lyft datasets (#147, #174, #166, #182)
+- Support double flip for test time augmentation of CenterPoint with updated benchmark (#143)
+
+#### Improvements
+
+- Update [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark with configurations for reference on Waymo (#166)
+- Delete checkpoints on Waymo to comply its specific license agreement (#180)
+- Update models and instructions with [mixed precision training](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fp16) on KITTI and nuScenes (#178)
+
+### v0.6.1 (11/10/2020)
+
+#### Highlights
+
+- Support mixed precision training of voxel-based methods
+- Support docker with pytorch 1.6.0
+- Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
+- Switch model zoo to download.openmmlab.com
+
+#### Bug Fixes
+
+- Fix a bug of visualization in multi-batch case (#120)
+- Fix bugs in dcn unit test (#130)
+- Fix dcn bias bug in centerpoint (#137)
+- Fix dataset mapping in the evaluation of nuScenes mini dataset (#140)
+- Fix origin initialization in `CameraInstance3DBoxes` (#148, #150)
+- Correct documentation link in the getting_started.md (#159)
+- Fix model save path bug in gather_models.py (#153)
+- Fix image padding shape bug in `PointFusion` (#162)
+
+#### New Features
+
+- Support dataset pipeline `VoxelBasedPointSampler` to sample multi-sweep points based on voxelization. (#125)
+- Support mixed precision training of voxel-based methods (#132)
+- Support docker with pytorch 1.6.0 (#160)
+
+#### Improvements
+
+- Reduce requirements for the case exclusive of Waymo (#121)
+- Switch model zoo to download.openmmlab.com (#126)
+- Update docs related to Waymo (#128)
+- Add version assertion in the [init file](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/__init__.py) (#129)
+- Add evaluation interval setting for CenterPoint (#131)
+- Add unit test for CenterPoint (#133)
+- Update [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) baselines on Waymo with full dataset (#142)
+- Update [CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) results with models and logs (#154)
+
 ### v0.6.0 (20/9/2020)
 
 #### Highlights

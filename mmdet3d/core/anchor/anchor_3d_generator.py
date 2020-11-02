@@ -323,3 +323,81 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             # custom[:] = self.custom_values
             ret = torch.cat([ret, custom], dim=-1)
         return ret
+
+
+@ANCHOR_GENERATORS.register_module()
+class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
+    """3D Anchor Generator by range for per class.
+
+    This anchor generator generates anchors by the given range for per class.
+    Note that feature maps of different classes may be different.
+
+    Args:
+        kwargs (dict): Arguments are the same as those in \
+            :class:`AlignedAnchor3DRangeGenerator`.
+    """
+
+    def __init__(self, **kwargs):
+        super(AlignedAnchor3DRangeGeneratorPerCls, self).__init__(**kwargs)
+        assert len(self.scales) == 1, 'Multi-scale feature map levels are' + \
+            ' not supported currently in this kind of anchor generator.'
+
+    def grid_anchors(self, featmap_sizes, device='cuda'):
+        """Generate grid anchors in multiple feature levels.
+
+        Args:
+            featmap_sizes (list[tuple]): List of feature map sizes for \
+                different classes in a single feature level.
+            device (str): Device where the anchors will be put on.
+
+        Returns:
+            list[list[torch.Tensor]]: Anchors in multiple feature levels. \
+                Note that in this anchor generator, we currently only \
+                support single feature level. The sizes of each tensor \
+                should be [num_sizes/ranges*num_rots*featmap_size, \
+                box_code_size].
+        """
+        multi_level_anchors = []
+        anchors = self.multi_cls_grid_anchors(
+            featmap_sizes, self.scales[0], device=device)
+        multi_level_anchors.append(anchors)
+        return multi_level_anchors
+
+    def multi_cls_grid_anchors(self, featmap_sizes, scale, device='cuda'):
+        """Generate grid anchors of a single level feature map for multi-class
+        with different feature map sizes.
+
+        This function is usually called by method ``self.grid_anchors``.
+
+        Args:
+            featmap_sizes (list[tuple]): List of feature map sizes for \
+                different classes in a single feature level.
+            scale (float): Scale factor of the anchors in the current level.
+            device (str, optional): Device the tensor will be put on.
+                Defaults to 'cuda'.
+
+        Returns:
+            torch.Tensor: Anchors in the overall feature map.
+        """
+        assert len(featmap_sizes) == len(self.sizes) == len(self.ranges), \
+            'The number of different feature map sizes anchor sizes and ' + \
+            'ranges should be the same.'
+
+        multi_cls_anchors = []
+        for i in range(len(featmap_sizes)):
+            anchors = self.anchors_single_range(
+                featmap_sizes[i],
+                self.ranges[i],
+                scale,
+                self.sizes[i],
+                self.rotations,
+                device=device)
+            # [*featmap_size, num_sizes/ranges, num_rots, box_code_size]
+            ndim = len(featmap_sizes[i])
+            anchors = anchors.view(*featmap_sizes[i], -1, anchors.size(-1))
+            # [*featmap_size, num_sizes/ranges*num_rots, box_code_size]
+            anchors = anchors.permute(ndim, *range(0, ndim), ndim + 1)
+            # [num_sizes/ranges*num_rots, *featmap_size, box_code_size]
+            multi_cls_anchors.append(anchors.reshape(-1, anchors.size(-1)))
+            # [num_sizes/ranges*num_rots*featmap_size, box_code_size]
+        return multi_cls_anchors

@@ -1,3 +1,4 @@
+from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
@@ -49,6 +50,7 @@ class SparseEncoder(nn.Module):
         self.encoder_channels = encoder_channels
         self.encoder_paddings = encoder_paddings
         self.stage_num = len(self.encoder_channels)
+        self.fp16_enabled = False
         # Spconv init all weight on its own
 
         assert isinstance(order, tuple) and len(order) == 3
@@ -90,6 +92,7 @@ class SparseEncoder(nn.Module):
             indice_key='spconv_down2',
             conv_type='SparseConv3d')
 
+    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseEncoder.
 

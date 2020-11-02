@@ -10,7 +10,7 @@
 
 ### SECOND
 
-Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/second) for details.
+Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/second) for details. We provide SECOND baselines on KITTI and Waymo datasets.
 
 ### PointPillars
 
@@ -36,7 +36,7 @@ Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master
 Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
 
 ### nuImages
-We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN and Cascade Mask R-CNN results currently.
+We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN, Cascade Mask R-CNN and HTC results currently.
 
 ### H3DNet
 
@@ -49,3 +49,7 @@ Please refer to [3DSSD](https://github.com/open-mmlab/mmdetection3d/blob/master/
 ### CenterPoint
 
 Please refer to [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint) for details.
+
+### SSN
+
+Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft dataset currently.

@@ -2,6 +2,7 @@ from __future__ import division
 
 import numpy as np
 import torch
+from mmcv.runner import force_fp32
 
 from mmdet3d.core import limit_period, xywhr2xyxyr
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
@@ -81,6 +82,7 @@ class PartA2RPNHead(Anchor3DHead):
                          diff_rad_by_sin, dir_offset, dir_limit_offset,
                          bbox_coder, loss_cls, loss_bbox, loss_dir)
 
+    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
     def loss(self,
              cls_scores,
              bbox_preds,

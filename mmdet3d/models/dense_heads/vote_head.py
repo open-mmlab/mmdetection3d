@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from mmcv.runner import force_fp32
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -78,6 +79,7 @@ class VoteHead(nn.Module):
 
         self.vote_module = VoteModule(**vote_module_cfg)
         self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
+        self.fp16_enabled = False
 
         # Bbox classification and regression
         self.conv_pred = BaseConvBboxHead(
@@ -204,6 +206,7 @@ class VoteHead(nn.Module):
 
         return results
 
+    @force_fp32(apply_to=('bbox_preds', ))
     def loss(self,
              bbox_preds,
              points,

@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import force_fp32
 from torch import nn as nn
 from typing import List
 
@@ -21,7 +22,7 @@ class PointFPModule(nn.Module):
                  mlp_channels: List[int],
                  norm_cfg: dict = dict(type='BN2d')):
         super().__init__()
-
+        self.fp16_enabled = False
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
             self.mlps.add_module(
@@ -34,6 +35,7 @@ class PointFPModule(nn.Module):
                     conv_cfg=dict(type='Conv2d'),
                     norm_cfg=norm_cfg))
 
+    @force_fp32()
     def forward(self, target: torch.Tensor, source: torch.Tensor,
                 target_feats: torch.Tensor,
                 source_feats: torch.Tensor) -> torch.Tensor:
