@@ -39,23 +39,26 @@ class VoteHead(nn.Module):
         semantic_loss (dict): Config of point-wise semantic segmentation loss.
     """
 
-    def __init__(self,
-                 num_classes,
-                 bbox_coder,
-                 train_cfg=None,
-                 test_cfg=None,
-                 vote_module_cfg=None,
-                 vote_aggregation_cfg=None,
-                 pred_layer_cfg=None,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 objectness_loss=None,
-                 center_loss=None,
-                 dir_class_loss=None,
-                 dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 semantic_loss=None):
+    def __init__(
+        self,
+        num_classes,
+        bbox_coder,
+        train_cfg=None,
+        test_cfg=None,
+        vote_module_cfg=None,
+        vote_aggregation_cfg=None,
+        pred_layer_cfg=None,
+        conv_cfg=dict(type='Conv1d'),
+        norm_cfg=dict(type='BN1d'),
+        objectness_loss=None,
+        center_loss=None,
+        dir_class_loss=None,
+        dir_res_loss=None,
+        size_class_loss=None,
+        size_res_loss=None,
+        semantic_loss=None,
+        iou_loss=None,
+    ):
         super(VoteHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -72,6 +75,10 @@ class VoteHead(nn.Module):
             self.size_class_loss = build_loss(size_class_loss)
         if semantic_loss is not None:
             self.semantic_loss = build_loss(semantic_loss)
+        if iou_loss is not None:
+            self.iou_loss = build_loss(iou_loss)
+        else:
+            self.iou_loss = None
 
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.num_sizes = self.bbox_coder.num_sizes
@@ -241,9 +248,10 @@ class VoteHead(nn.Module):
                                    pts_semantic_mask, pts_instance_mask,
                                    bbox_preds)
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
-         dir_class_targets, dir_res_targets, center_targets, mask_targets,
-         valid_gt_masks, objectness_targets, objectness_weights,
-         box_loss_weights, valid_gt_weights) = targets
+         dir_class_targets, dir_res_targets, center_targets,
+         assigned_center_targets, mask_targets, valid_gt_masks,
+         objectness_targets, objectness_weights, box_loss_weights,
+         valid_gt_weights) = targets
 
         # calculate vote loss
         vote_loss = self.vote_module.get_loss(bbox_preds['seed_points'],
@@ -316,7 +324,23 @@ class VoteHead(nn.Module):
             dir_class_loss=dir_class_loss,
             dir_res_loss=dir_res_loss,
             size_class_loss=size_class_loss,
-            size_res_loss=size_res_loss)
+            size_res_loss=size_res_loss,
+        )
+
+        if self.iou_loss:
+            mean_sizes = size_res_targets.new_tensor(
+                self.bbox_coder.mean_sizes)[None]
+            mean_sizes = torch.sum(mean_sizes * one_hot_size_targets_expand, 2)
+            size_preds = (size_residual_norm + 1) * mean_sizes
+            size_targets = (size_res_targets + 1) * mean_sizes
+            center_preds = bbox_preds['center']
+            iou_loss = self.iou_loss(
+                center_preds,
+                size_preds,
+                assigned_center_targets,
+                size_targets,
+                weight=box_loss_weights)
+            losses['iou_loss'] = iou_loss
 
         if ret_target:
             losses['targets'] = targets
@@ -373,10 +397,12 @@ class VoteHead(nn.Module):
         ]
 
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
-         dir_class_targets, dir_res_targets, center_targets, mask_targets,
-         objectness_targets, objectness_masks) = multi_apply(
-             self.get_targets_single, points, gt_bboxes_3d, gt_labels_3d,
-             pts_semantic_mask, pts_instance_mask, aggregated_points)
+         dir_class_targets, dir_res_targets, center_targets,
+         assigned_center_targets, mask_targets, objectness_targets,
+         objectness_masks) = multi_apply(self.get_targets_single, points,
+                                         gt_bboxes_3d, gt_labels_3d,
+                                         pts_semantic_mask, pts_instance_mask,
+                                         aggregated_points)
 
         # pad targets as original code of votenet.
         for index in range(len(gt_labels_3d)):
@@ -390,6 +416,7 @@ class VoteHead(nn.Module):
         center_targets = torch.stack(center_targets)
         valid_gt_masks = torch.stack(valid_gt_masks)
 
+        assigned_center_targets = torch.stack(assigned_center_targets)
         objectness_targets = torch.stack(objectness_targets)
         objectness_weights = torch.stack(objectness_masks)
         objectness_weights /= (torch.sum(objectness_weights) + 1e-6)
@@ -405,9 +432,9 @@ class VoteHead(nn.Module):
 
         return (vote_targets, vote_target_masks, size_class_targets,
                 size_res_targets, dir_class_targets, dir_res_targets,
-                center_targets, mask_targets, valid_gt_masks,
-                objectness_targets, objectness_weights, box_loss_weights,
-                valid_gt_weights)
+                center_targets, assigned_center_targets, mask_targets,
+                valid_gt_masks, objectness_targets, objectness_weights,
+                box_loss_weights, valid_gt_weights)
 
     def get_targets_single(self,
                            points,
@@ -526,10 +553,11 @@ class VoteHead(nn.Module):
         size_res_targets /= pos_mean_sizes
 
         mask_targets = gt_labels_3d[assignment]
+        center_all_targets = center_targets[assignment]
 
         return (vote_targets, vote_target_masks, size_class_targets,
-                size_res_targets,
-                dir_class_targets, dir_res_targets, center_targets,
+                size_res_targets, dir_class_targets,
+                dir_res_targets, center_targets, center_all_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
     def get_bboxes(self,
