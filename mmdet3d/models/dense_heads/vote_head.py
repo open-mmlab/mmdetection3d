@@ -39,26 +39,24 @@ class VoteHead(nn.Module):
         semantic_loss (dict): Config of point-wise semantic segmentation loss.
     """
 
-    def __init__(
-        self,
-        num_classes,
-        bbox_coder,
-        train_cfg=None,
-        test_cfg=None,
-        vote_module_cfg=None,
-        vote_aggregation_cfg=None,
-        pred_layer_cfg=None,
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
-        objectness_loss=None,
-        center_loss=None,
-        dir_class_loss=None,
-        dir_res_loss=None,
-        size_class_loss=None,
-        size_res_loss=None,
-        semantic_loss=None,
-        iou_loss=None,
-    ):
+    def __init__(self,
+                 num_classes,
+                 bbox_coder,
+                 train_cfg=None,
+                 test_cfg=None,
+                 vote_module_cfg=None,
+                 vote_aggregation_cfg=None,
+                 pred_layer_cfg=None,
+                 conv_cfg=dict(type='Conv1d'),
+                 norm_cfg=dict(type='BN1d'),
+                 objectness_loss=None,
+                 center_loss=None,
+                 dir_class_loss=None,
+                 dir_res_loss=None,
+                 size_class_loss=None,
+                 size_res_loss=None,
+                 semantic_loss=None,
+                 iou_loss=None):
         super(VoteHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -324,22 +322,25 @@ class VoteHead(nn.Module):
             dir_class_loss=dir_class_loss,
             dir_res_loss=dir_res_loss,
             size_class_loss=size_class_loss,
-            size_res_loss=size_res_loss,
-        )
+            size_res_loss=size_res_loss)
 
         if self.iou_loss:
             mean_sizes = size_res_targets.new_tensor(
                 self.bbox_coder.mean_sizes)[None]
             mean_sizes = torch.sum(mean_sizes * one_hot_size_targets_expand, 2)
-            size_preds = (size_residual_norm + 1) * mean_sizes
-            size_targets = (size_res_targets + 1) * mean_sizes
-            center_preds = bbox_preds['center']
-            iou_loss = self.iou_loss(
-                center_preds,
-                size_preds,
-                assigned_center_targets,
-                size_targets,
-                weight=box_loss_weights)
+            size_pred = (size_residual_norm + 1) * mean_sizes
+            size_target = (size_res_targets + 1) * mean_sizes
+            center_pred = bbox_preds['center']
+            size_pred = torch.clamp(size_pred, 0)
+            pred = torch.cat(
+                [center_pred - size_pred / 2, center_pred + size_pred / 2],
+                dim=-1)
+            target = torch.cat([
+                assigned_center_targets - size_target / 2,
+                assigned_center_targets + size_target / 2
+            ],
+                               dim=-1)
+            iou_loss = self.iou_loss(pred, target, weight=box_loss_weights)
             losses['iou_loss'] = iou_loss
 
         if ret_target:

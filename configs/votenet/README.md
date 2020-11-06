@@ -45,6 +45,6 @@ Adding IoU loss (simply =1-IoU) boosts VoteNet's performance.
 
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | AP@0.25 |AP@0.5| Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [PointNet++](./votenet_8x8_scannet-3d-18class_withiouloss.py)     |  3x    |4.1||63.81|44.21|/|
+|    [PointNet++](./votenet_iouloss_8x8_scannet-3d-18class.py)     |  3x    |4.1||63.81|44.21|/|
 
-Please refer to [votenet_8x8_scannet-3d-18class_withiouloss.py](./votenet_8x8_scannet-3d-18class_withiouloss.py) for the added loss term. Currently we only support calculating IoU loss for axis-aligned bounding boxes since the general IoU calculation CUDA op doesn't support a backward method. Therefore IoU loss is correctly implemented for ScanNet dataset only.
+Please refer to [votenet_iouloss_8x8_scannet-3d-18class.py](./votenet_iouloss_8x8_scannet-3d-18class.py) for the added loss term. Currently we only support calculating IoU loss for axis-aligned bounding boxes since the general IoU calculation CUDA op doesn't support a backward method. Therefore IoU loss is correctly implemented for ScanNet dataset only.

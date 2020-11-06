@@ -2,14 +2,11 @@ import torch
 from torch import nn as nn
 
 from mmdet.models.builder import LOSSES
+from mmdet.models.losses.utils import weighted_loss
 
 
-def iou_loss_axis_aligned(center_preds,
-                          size_preds,
-                          center_targets,
-                          size_targets,
-                          weight=1.0,
-                          reduction='mean'):
+@weighted_loss
+def iou_loss_axis_aligned(pred, target, eps=1e-6):
     """Calculate the IoU loss (1-IoU) of two axis aligned bounding boxes.
 
     Args:
@@ -18,37 +15,27 @@ def iou_loss_axis_aligned(center_preds,
         center_targets (torch.Tensor): Center targets (gt) \
             with shape [B, N, 3].
         size_targets (torch.Tensor): Size targets with shape [B, N, 3].
-        weight (torch.Tensor or float): Weight of loss.
         reduction (str): Method to reduce losses.
             The valid reduction method are 'none', 'sum' or 'mean'.
 
     Returns:
         torch.Tensor: IoU loss between predictions and targets.
     """
-    size_preds = torch.clamp(size_preds, 0)
-    max_a = center_preds + size_preds / 2
-    max_b = center_targets + size_targets / 2
-    min_a = center_preds - size_preds / 2
-    min_b = center_targets - size_targets / 2
+
+    (min_a, max_a) = torch.split(pred, 3, dim=-1)
+    (min_b, max_b) = torch.split(target, 3, dim=-1)
 
     max_min = torch.max(min_a, min_b)
     min_max = torch.min(max_a, max_b)
-    vol_a = size_preds.prod(dim=2)
-    vol_b = size_targets.prod(dim=2)
+    vol_a = (max_a - min_a).prod(dim=2)
+    vol_b = (max_b - min_b).prod(dim=2)
     diff = torch.clamp(min_max - max_min, min=0)
     intersection = diff.prod(dim=2)
     union = vol_a + vol_b - intersection
-    iou_axis_aligned = 1.0 * intersection / (union + 1e-8)
+    eps = union.new_tensor([eps])
+    iou_axis_aligned = intersection / torch.max(union, eps)
 
-    iou_loss = (1 - iou_axis_aligned) * weight
-    if reduction == 'sum':
-        iou_loss = torch.sum(iou_loss)
-    elif reduction == 'mean':
-        iou_loss = torch.mean(iou_loss)
-    elif reduction == 'none':
-        pass
-    else:
-        raise NotImplementedError
+    iou_loss = 1 - iou_axis_aligned
     return iou_loss
 
 
@@ -59,25 +46,20 @@ class IoULossAxisAligned(nn.Module):
     Args:
         reduction (str): Method to reduce losses.
             The valid reduction method are none, sum or mean.
-        loss_weight (float): Weight of loss.
+        loss_weight (float, optional): Weight of loss. Defaults to 1.0.
     """
 
-    def __init__(
-        self,
-        reduction='mean',
-        loss_weight=1.0,
-    ):
+    def __init__(self, reduction='mean', loss_weight=1.0):
         super(IoULossAxisAligned, self).__init__()
         assert reduction in ['none', 'sum', 'mean']
         self.reduction = reduction
         self.loss_weight = loss_weight
 
     def forward(self,
-                center_preds,
-                size_preds,
-                center_targets,
-                size_targets,
-                weight=1.0,
+                pred,
+                target,
+                weight=None,
+                avg_factor=None,
                 reduction_override=None,
                 **kwargs):
         """Forward function of loss calculation.
@@ -89,7 +71,8 @@ class IoULossAxisAligned(nn.Module):
             center_targets (torch.Tensor): Center targets (gt) \
                 with shape [B, N, 3].
             size_targets (torch.Tensor): Size targets with shape [B, N, 3].
-            weight (torch.Tensor or float): Weight of loss.
+            weight (torch.Tensor|float, optional): Weight of loss. \
+                Defaults to 1.0.
             reduction_override (str, optional): Method to reduce losses.
                 The valid reduction method are 'none', 'sum' or 'mean'.
                 Defaults to None.
@@ -100,10 +83,12 @@ class IoULossAxisAligned(nn.Module):
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
             reduction_override if reduction_override else self.reduction)
+        if (weight is not None) and (not torch.any(weight > 0)) and (
+                reduction != 'none'):
+            return (pred * weight).sum()
         return iou_loss_axis_aligned(
-            center_preds,
-            size_preds,
-            center_targets,
-            size_targets,
+            pred,
+            target,
             weight=weight,
+            avg_factor=avg_factor,
             reduction=reduction) * self.loss_weight
