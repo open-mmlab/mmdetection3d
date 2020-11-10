@@ -47,6 +47,17 @@ class ImVoteNet(SingleStage3DDetector):
             img_feats = self.img_neck(img_feats)
         return img_feats
 
+    def extract_pts_feat(self, pts, img_feats, img_metas):
+        """Extract features of points."""
+        x = self.backbone(pts)
+        return x
+
+    def extract_feat(self, points, img, img_metas):
+        """Extract features from images and points."""
+        img_feats = self.extract_img_feat(img, img_metas)
+        pts_feats = self.extract_pts_feat(points, img_feats, img_metas)
+        return (img_feats, pts_feats)
+
     def forward_train(self,
                       points,
                       img_metas,
@@ -75,7 +86,7 @@ class ImVoteNet(SingleStage3DDetector):
         """
         points_cat = torch.stack(points)
 
-        x = self.extract_feat(points_cat)
+        x = self.extract_feat(points_cat, img, img_metas)
         bbox_preds = self.bbox_head(x, self.train_cfg.sample_mod)
         loss_inputs = (points, gt_bboxes_3d, gt_labels_3d, pts_semantic_mask,
                        pts_instance_mask, img_metas)
@@ -94,10 +105,9 @@ class ImVoteNet(SingleStage3DDetector):
         Returns:
             list: Predicted 3d boxes.
         """
-        self.extract_img_feat(img, img_metas)
         points_cat = torch.stack(points)
 
-        x = self.extract_feat(points_cat)
+        x = self.extract_feat(points_cat, img, img_metas)
         bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
         bbox_list = self.bbox_head.get_bboxes(
             points_cat, bbox_preds, img_metas, rescale=rescale)
@@ -109,9 +119,8 @@ class ImVoteNet(SingleStage3DDetector):
 
     def aug_test(self, points, img_metas, img=None, rescale=False):
         """Test with augmentation."""
-        self.extract_img_feat(img, img_metas)
         points_cat = [torch.stack(pts) for pts in points]
-        feats = self.extract_feats(points_cat, img_metas)
+        feats = self.extract_feats(points_cat, img, img_metas)
 
         # only support aug_test for one sample
         aug_bboxes = []
