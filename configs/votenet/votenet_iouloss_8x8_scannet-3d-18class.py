@@ -31,7 +31,7 @@ model = dict(
                         [1.1511526, 1.0546296, 0.49706793],
                         [0.47535285, 0.49249494, 0.5802117]]),
         iou_loss=dict(
-            type='IoULossAxisAligned', reduction='sum', loss_weight=10.0 /
+            type='AxisAlignedIoULoss', reduction='sum', loss_weight=10.0 /
             3.0)))
 
 # optimizer
