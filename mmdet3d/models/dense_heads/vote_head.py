@@ -332,14 +332,15 @@ class VoteHead(nn.Module):
             size_target = (size_res_targets + 1) * mean_sizes
             center_pred = bbox_preds['center']
             size_pred = torch.clamp(size_pred, 0)
-            pred = torch.cat(
-                [center_pred - size_pred / 2, center_pred + size_pred / 2],
-                dim=-1)
-            target = torch.cat([
-                assigned_center_targets - size_target / 2,
-                assigned_center_targets + size_target / 2
-            ],
-                               dim=-1)
+            center_target = assigned_center_targets
+            half_size_pred = size_pred / 2
+            half_size_target = size_target / 2
+            corner1_pred = center_pred - half_size_pred
+            corner2_pred = center_pred + half_size_pred
+            corner1_target = center_target - half_size_target
+            corner2_target = center_target + half_size_target
+            pred = torch.cat([corner1_pred, corner2_pred], dim=-1)
+            target = torch.cat([corner1_target, corner2_target], dim=-1)
             iou_loss = self.iou_loss(pred, target, weight=box_loss_weights)
             losses['iou_loss'] = iou_loss
 
@@ -554,11 +555,11 @@ class VoteHead(nn.Module):
         size_res_targets /= pos_mean_sizes
 
         mask_targets = gt_labels_3d[assignment]
-        center_all_targets = center_targets[assignment]
+        assigned_center_targets = center_targets[assignment]
 
         return (vote_targets, vote_target_masks, size_class_targets,
                 size_res_targets, dir_class_targets,
-                dir_res_targets, center_targets, center_all_targets,
+                dir_res_targets, center_targets, assigned_center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
     def get_bboxes(self,

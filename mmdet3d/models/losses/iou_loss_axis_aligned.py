@@ -6,7 +6,7 @@ from mmdet.models.losses.utils import weighted_loss
 
 
 @weighted_loss
-def iou_loss_axis_aligned(pred, target, eps=1e-6):
+def axis_aligned_iou_loss(pred, target, eps=1e-6):
     """Calculate the IoU loss (1-IoU) of two set of axis aligned bounding
     boxes. Note that predictions and targets are one-to-one corresponded.
 
@@ -29,14 +29,14 @@ def iou_loss_axis_aligned(pred, target, eps=1e-6):
     intersection = diff.prod(dim=-1)
     union = vol_a + vol_b - intersection
     eps = union.new_tensor([eps])
-    iou_axis_aligned = intersection / torch.max(union, eps)
+    axis_aligned_iou = intersection / torch.max(union, eps)
 
-    iou_loss = 1 - iou_axis_aligned
+    iou_loss = 1 - axis_aligned_iou
     return iou_loss
 
 
 @LOSSES.register_module()
-class IoULossAxisAligned(nn.Module):
+class AxisAlignedIoULoss(nn.Module):
     """Calculate the IoU loss (1-IoU) of axis aligned bounding boxes.
 
     Args:
@@ -46,7 +46,7 @@ class IoULossAxisAligned(nn.Module):
     """
 
     def __init__(self, reduction='mean', loss_weight=1.0):
-        super(IoULossAxisAligned, self).__init__()
+        super(AxisAlignedIoULoss, self).__init__()
         assert reduction in ['none', 'sum', 'mean']
         self.reduction = reduction
         self.loss_weight = loss_weight
@@ -80,7 +80,7 @@ class IoULossAxisAligned(nn.Module):
         if (weight is not None) and (not torch.any(weight > 0)) and (
                 reduction != 'none'):
             return (pred * weight).sum()
-        return iou_loss_axis_aligned(
+        return axis_aligned_iou_loss(
             pred,
             target,
             weight=weight,
