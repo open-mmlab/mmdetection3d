@@ -7,9 +7,7 @@ from .single_stage import SingleStage3DDetector
 
 @DETECTORS.register_module()
 class ImVoteNet(SingleStage3DDetector):
-    """ImVoteNet model.
-
-    https://arxiv.org/pdf/2001.10692.pdf
+    r"""ImVoteNet `<https://arxiv.org/pdf/2001.10692.pdf>`_ for 3D detection.
     """
 
     def __init__(self,
@@ -27,24 +25,17 @@ class ImVoteNet(SingleStage3DDetector):
 
     def extract_img_feat(self, img, img_metas):
         """Extract features of images."""
-        print(img, img_metas)  # test
-        assert False
-        if self.with_img_backbone and img is not None:
-            input_shape = img.shape[-2:]
-            # update real input shape of each single img
-            for img_meta in img_metas:
-                img_meta.update(input_shape=input_shape)
+        input_shape = img.shape[-2:]
+        # update real input shape of each single img
+        for img_meta in img_metas:
+            img_meta.update(input_shape=input_shape)
 
-            if img.dim() == 5 and img.size(0) == 1:
-                img.squeeze_()
-            elif img.dim() == 5 and img.size(0) > 1:
-                B, N, C, H, W = img.size()
-                img = img.view(B * N, C, H, W)
-            img_feats = self.img_backbone(img)
-        else:
-            return None
-        if self.with_img_neck:
-            img_feats = self.img_neck(img_feats)
+        if img.dim() == 5 and img.size(0) == 1:
+            img.squeeze_()
+        elif img.dim() == 5 and img.size(0) > 1:
+            B, N, C, H, W = img.size()
+            img = img.view(B * N, C, H, W)
+        img_feats = self.img_backbone(img)
         return img_feats
 
     def forward_train(self,
