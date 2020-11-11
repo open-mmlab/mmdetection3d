@@ -1,7 +1,7 @@
-from .base_points import BaseInstancePoints
+from .base_points import BasePoints
 
 
-class DepthInstancePoints(BaseInstancePoints):
+class DepthPoints(BasePoints):
     """Points of instances in DEPTH coordinates.
 
     Args:
@@ -20,7 +20,7 @@ class DepthInstancePoints(BaseInstancePoints):
     """
 
     def __init__(self, tensor, points_dim=3, attribute_dims=None):
-        super(DepthInstancePoints, self).__init__(
+        super(DepthPoints, self).__init__(
             tensor, points_dim=points_dim, attribute_dims=attribute_dims)
 
     def flip(self, bev_direction='horizontal'):
@@ -59,7 +59,7 @@ class DepthInstancePoints(BaseInstancePoints):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstancePoints`: The converted point of the same type \
+            :obj:`BasePoints`: The converted point of the same type \
                 in the `dst` mode.
         """
         from mmdet3d.core.bbox import Coord3DMode

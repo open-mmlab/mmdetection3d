@@ -2,31 +2,22 @@ import torch
 from abc import abstractmethod
 
 
-class BaseInstancePoints(object):
+class BasePoints(object):
     """Base class for Points.
 
-    Note:
-        The box is bottom centered, i.e. the relative position of origin in
-        the box is (0.5, 0.5, 0).
-
     Args:
-        tensor (torch.Tensor | np.ndarray | list): a N x box_dim matrix.
-        box_dim (int): Number of the dimension of a box.
-            Each row is (x, y, z, x_size, y_size, z_size, yaw).
-            Default to 7.
-        with_yaw (bool): Whether the box is with yaw rotation.
-            If False, the value of yaw will be set to 0 as minmax boxes.
-            Default to True.
-        origin (tuple[float]): The relative position of origin in the box.
-            Default to (0.5, 0.5, 0). This will guide the box be converted to
-            (0.5, 0.5, 0) mode.
+        tensor (torch.Tensor | np.ndarray | list): a N x points_dim matrix.
+        points_dim (int): Number of the dimension of a point.
+            Each row is (x, y, z). Default to 3.
+        attribute_dims (dict): Dictinory to indicate the meaning of extra
+            dimension. Default to None.
 
     Attributes:
-        tensor (torch.Tensor): Float matrix of N x box_dim.
-        box_dim (int): Integer indicating the dimension of a box.
-            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
-            boxes.
+        tensor (torch.Tensor): Float matrix of N x points_dim.
+        points_dim (int): Integer indicating the dimension of a point.
+            Each row is (x, y, z, ...).
+        attribute_dims (bool): Dictinory to indicate the meaning of extra
+            dimension. Default to None.
     """
 
     def __init__(self, tensor, points_dim=3, attribute_dims=None):
@@ -75,15 +66,41 @@ class BaseInstancePoints(object):
         self.tensor = self.tensor[torch.randperm(
             self.__len__(), device=self.tensor.device)]
 
-    def rotate(self, rot_mat_T):
-        """Rotate points with the given rotation matrix.
+    def rotate(self, rotation, axis=2):
+        """Rotate points with the given rotation matrix or angle.
 
         Args:
-            rot_mat_T (np.ndarray, torch.Tensor): Rotation matrix.
+            rotation (float, np.ndarray, torch.Tensor): Rotation matrix
+                or angle.
+            axis (int): Axis to rotate at. Defaults to 2.
         """
-        if not isinstance(rot_mat_T, torch.Tensor):
-            rot_mat_T = self.tensor.new_tensor(rot_mat_T)
-        assert rot_mat_T.shape == torch.Size([3, 3])
+        if not isinstance(rotation, torch.Tensor):
+            rotation = self.tensor.new_tensor(rotation)
+        assert rotation.shape == torch.Size([3, 3]) or \
+            rotation.numel() == 1
+
+        if rotation.numel() == 1:
+            rot_sin = torch.sin(rotation)
+            rot_cos = torch.cos(rotation)
+            if axis == 1:
+                rot_mat_T = rotation.new_tensor([[rot_cos, 0, -rot_sin],
+                                                 [0, 1, 0],
+                                                 [rot_sin, 0, rot_cos]])
+            elif axis == 2 or axis == -1:
+                rot_mat_T = rotation.new_tensor([[rot_cos, -rot_sin, 0],
+                                                 [rot_sin, rot_cos, 0],
+                                                 [0, 0, 1]])
+            elif axis == 0:
+                rot_mat_T = rotation.new_tensor([[0, rot_cos, -rot_sin],
+                                                 [0, rot_sin, rot_cos],
+                                                 [1, 0, 0]])
+            else:
+                raise ValueError('axis should in range')
+            rot_mat_T = rot_mat_T.T
+        elif rotation.numel() == 9:
+            rot_mat_T = rotation
+        else:
+            raise NotImplementedError
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
 
     @abstractmethod
@@ -244,7 +261,7 @@ class BaseInstancePoints(object):
             device (str | :obj:`torch.device`): The name of the device.
 
         Returns:
-            :obj:`BaseInstancePoints`: A new boxes object on the \
+            :obj:`BasePoints`: A new boxes object on the \
                 specific device.
         """
         original_type = type(self)
@@ -257,7 +274,7 @@ class BaseInstancePoints(object):
         """Clone the Points.
 
         Returns:
-            :obj:`BaseInstancePoints`: Box object with the same properties \
+            :obj:`BasePoints`: Box object with the same properties \
                 as self.
         """
         original_type = type(self)
@@ -289,7 +306,7 @@ class BaseInstancePoints(object):
             data (torch.Tensor | numpy.array | list): Data to be copied.
 
         Returns:
-            :obj:`BaseInstancePoints`: A new point object with ``data``, \
+            :obj:`BasePoints`: A new point object with ``data``, \
                 the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \

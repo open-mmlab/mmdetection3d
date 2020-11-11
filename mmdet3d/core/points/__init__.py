@@ -1,9 +1,6 @@
-from .base_points import BaseInstancePoints
-from .cam_points import CameraInstancePoints
-from .depth_points import DepthInstancePoints
-from .lidar_points import LiDARInstancePoints
+from .base_points import BasePoints
+from .cam_points import CameraPoints
+from .depth_points import DepthPoints
+from .lidar_points import LiDARPoints
 
-__all__ = [
-    'BaseInstancePoints', 'CameraInstancePoints', 'DepthInstancePoints',
-    'LiDARInstancePoints'
-]
+__all__ = ['BasePoints', 'CameraPoints', 'DepthPoints', 'LiDARPoints']

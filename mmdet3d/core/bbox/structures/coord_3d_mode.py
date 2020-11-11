@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from enum import IntEnum, unique
 
-from mmdet3d.core.points import (BaseInstancePoints, CameraInstancePoints,
-                                 DepthInstancePoints, LiDARInstancePoints)
+from mmdet3d.core.points import (BasePoints, CameraPoints, DepthPoints,
+                                 LiDARPoints)
 from .base_box3d import BaseInstance3DBoxes
 from .cam_box3d import CameraInstance3DBoxes
 from .depth_box3d import DepthInstance3DBoxes
@@ -66,9 +66,9 @@ class Coord3DMode(IntEnum):
     def convert(input, src, dst, rt_mat=None):
         """Convert boxes or points from `src` mode to `dst` mode."""
         if isinstance(input, BaseInstance3DBoxes):
-            Coord3DMode.convert_box(input, src, dst, rt_mat=rt_mat)
-        elif isinstance(input, BaseInstancePoints):
-            Coord3DMode.convert_point(input, src, dst, rt_mat=rt_mat)
+            return Coord3DMode.convert_box(input, src, dst, rt_mat=rt_mat)
+        elif isinstance(input, BasePoints):
+            return Coord3DMode.convert_point(input, src, dst, rt_mat=rt_mat)
         else:
             raise NotImplementedError
 
@@ -183,7 +183,7 @@ class Coord3DMode(IntEnum):
 
         Args:
             box (tuple | list | np.dnarray |
-                torch.Tensor | BaseInstancePoints):
+                torch.Tensor | BasePoints):
                 Can be a k-tuple, k-list or an Nxk array/tensor.
             src (:obj:`CoordMode`): The src Point mode.
             dst (:obj:`CoordMode`): The target Point mode.
@@ -194,14 +194,14 @@ class Coord3DMode(IntEnum):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.dnarray | torch.Tensor | BaseInstancePoints): \
+            (tuple | list | np.dnarray | torch.Tensor | BasePoints): \
                 The converted point of the same type.
         """
         if src == dst:
             return point
 
         is_numpy = isinstance(point, np.ndarray)
-        is_InstancePoints = isinstance(point, BaseInstancePoints)
+        is_InstancePoints = isinstance(point, BasePoints)
         single_point = isinstance(point, (list, tuple))
         if single_point:
             assert len(point) >= 3, (
@@ -256,11 +256,11 @@ class Coord3DMode(IntEnum):
             return arr.numpy()
         elif is_InstancePoints:
             if dst == Coord3DMode.CAM:
-                target_type = CameraInstancePoints
+                target_type = CameraPoints
             elif dst == Coord3DMode.LIDAR:
-                target_type = LiDARInstancePoints
+                target_type = LiDARPoints
             elif dst == Coord3DMode.DEPTH:
-                target_type = DepthInstancePoints
+                target_type = DepthPoints
             else:
                 raise NotImplementedError(
                     f'Conversion to {dst} through {original_type}'
