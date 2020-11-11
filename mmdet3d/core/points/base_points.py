@@ -180,7 +180,7 @@ class BasePoints(object):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: The converted box of the same type \
+            :obj:`BasePoints`: The converted box of the same type \
                 in the `dst` mode.
         """
         pass
