@@ -46,7 +46,7 @@ class SUNRGBDDataset(Custom3DDataset):
                  ann_file,
                  pipeline=None,
                  classes=None,
-                 modality=None,
+                 modality='pconly',
                  box_type_3d='Depth',
                  filter_empty_gt=True,
                  test_mode=False):
@@ -59,6 +59,7 @@ class SUNRGBDDataset(Custom3DDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
+        assert modality in ['pconly', 'pc+img']
 
     def get_data_info(self, index):
         """Get data info according to the given index.
@@ -79,16 +80,19 @@ class SUNRGBDDataset(Custom3DDataset):
         assert info['point_cloud']['lidar_idx'] == info['image']['image_idx']
         sample_idx = info['point_cloud']['lidar_idx']
         pts_filename = osp.join(self.data_root, info['pts_path'])
-        img_filename = osp.join(self.data_root, info['image']['image_path'])
-        calib = info['calib']
 
         input_dict = dict(
             sample_idx=sample_idx,
             pts_filename=pts_filename,
-            img_prefix=None,
-            img_info=dict(filename=img_filename),
-            file_name=pts_filename,
-            calib=calib)
+            file_name=pts_filename)
+
+        if self.modality == 'pc+img':
+            img_filename = osp.join(self.data_root,
+                                    info['image']['image_path'])
+            calib = info['calib']
+            input_dict['img_prefix'] = None
+            input_dict['img_info'] = dict(filename=img_filename)
+            input_dict['calib'] = calib
 
         if not self.test_mode:
             annos = self.get_ann_info(index)
