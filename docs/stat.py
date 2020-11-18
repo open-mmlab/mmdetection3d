@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glob
-import os.path as osp
 import re
+from os import path as osp
 
 url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/master/'
 
