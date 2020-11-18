@@ -87,7 +87,12 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 
+def builder_inited_handler(app):
+    subprocess.run(['./stat.py'])
+
+
 def setup(app):
+    app.connect('builder-inited', builder_inited_handler)
     app.add_config_value('no_underscore_emphasis', False, 'env')
     app.add_config_value('m2r_parse_relative_links', False, 'env')
     app.add_config_value('m2r_anonymous_references', False, 'env')
@@ -98,3 +103,4 @@ def setup(app):
         'enable_eval_rst': True,
     }, True)
     app.add_transform(AutoStructify)
+
