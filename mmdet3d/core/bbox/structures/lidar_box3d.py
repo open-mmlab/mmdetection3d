@@ -144,7 +144,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 rot_mat_T = rot_mat_T.numpy()
                 points[:, :3] = np.dot(points[:, :3], rot_mat_T)
             elif isinstance(points, BasePoints):
-                points.rotate(angle)
+                # clockwise
+                points.rotate(-angle)
             else:
                 raise ValueError
             return points, rot_mat_T
