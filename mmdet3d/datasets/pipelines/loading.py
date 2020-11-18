@@ -1,6 +1,7 @@
 import mmcv
 import numpy as np
 
+from mmdet3d.core.points import get_points_type
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations
 
@@ -297,6 +298,7 @@ class LoadPointsFromFile(object):
     """
 
     def __init__(self,
+                 coord_type,
                  load_dim=6,
                  use_dim=[0, 1, 2],
                  shift_height=False,
@@ -306,7 +308,9 @@ class LoadPointsFromFile(object):
             use_dim = list(range(use_dim))
         assert max(use_dim) < load_dim, \
             f'Expect all used dimensions < {load_dim}, got {use_dim}'
+        assert coord_type in ['CAMERA', 'LIDAR', 'DEPTH']
 
+        self.coord_type = coord_type
         self.load_dim = load_dim
         self.use_dim = use_dim
         self.file_client_args = file_client_args.copy()
@@ -332,6 +336,7 @@ class LoadPointsFromFile(object):
                 points = np.load(pts_filename)
             else:
                 points = np.fromfile(pts_filename, dtype=np.float32)
+
         return points
 
     def __call__(self, results):
@@ -350,12 +355,20 @@ class LoadPointsFromFile(object):
         points = self._load_points(pts_filename)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
+        attribute_dims = None
 
         if self.shift_height:
             floor_height = np.percentile(points[:, 2], 0.99)
             height = points[:, 2] - floor_height
             points = np.concatenate([points, np.expand_dims(height, 1)], 1)
+            attribute_dims = dict(height=3)
+
+        points_class = get_points_type(self.coord_type)
+        points = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
         results['points'] = points
+        # results['points_instance'] = points_instance
+
         return results
 
     def __repr__(self):

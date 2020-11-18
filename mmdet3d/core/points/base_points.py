@@ -37,6 +37,7 @@ class BasePoints(object):
         self.tensor = tensor
         self.points_dim = points_dim
         self.attribute_dims = attribute_dims
+        self.rotation_axis = 0
 
     @property
     def coord(self):
@@ -61,23 +62,31 @@ class BasePoints(object):
         else:
             return None
 
+    @property
+    def shape(self):
+        """torch.Shape: Shape of points."""
+        return self.tensor.shape
+
     def shuffle(self):
         """Shuffle the points."""
         self.tensor = self.tensor[torch.randperm(
             self.__len__(), device=self.tensor.device)]
 
-    def rotate(self, rotation, axis=2):
+    def rotate(self, rotation, axis=None):
         """Rotate points with the given rotation matrix or angle.
 
         Args:
             rotation (float, np.ndarray, torch.Tensor): Rotation matrix
                 or angle.
-            axis (int): Axis to rotate at. Defaults to 2.
+            axis (int): Axis to rotate at. Defaults to None.
         """
         if not isinstance(rotation, torch.Tensor):
             rotation = self.tensor.new_tensor(rotation)
         assert rotation.shape == torch.Size([3, 3]) or \
             rotation.numel() == 1
+
+        if axis is None:
+            axis = self.rotation_axis
 
         if rotation.numel() == 1:
             rot_sin = torch.sin(rotation)
@@ -192,6 +201,9 @@ class BasePoints(object):
             scale_factors (float): Scale factors to scale the points.
         """
         self.tensor[:, :3] *= scale_factor
+        if self.attribute_dims is not None and \
+                'height' in self.attribute_dims.keys():
+            self.tensor[:, self.attribute_dims['height']] *= scale_factor
 
     def __getitem__(self, item):
         """

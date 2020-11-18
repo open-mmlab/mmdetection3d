@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from mmdet3d.core.points import BasePoints
 from mmdet3d.ops.roiaware_pool3d import points_in_boxes_gpu
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
@@ -142,6 +143,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             elif isinstance(points, np.ndarray):
                 rot_mat_T = rot_mat_T.numpy()
                 points[:, :3] = np.dot(points[:, :3], rot_mat_T)
+            elif isinstance(points, BasePoints):
+                points.rotate(angle)
             else:
                 raise ValueError
             return points, rot_mat_T
@@ -170,11 +173,12 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 self.tensor[:, 6] = -self.tensor[:, 6]
 
         if points is not None:
-            assert isinstance(points, (torch.Tensor, np.ndarray))
-            if bev_direction == 'horizontal':
-                points[:, 1] = -points[:, 1]
-            elif bev_direction == 'vertical':
-                points[:, 0] = -points[:, 0]
+            # assert isinstance(points, (torch.Tensor, np.ndarray))
+            # if bev_direction == 'horizontal':
+            #     points[:, 1] = -points[:, 1]
+            # elif bev_direction == 'vertical':
+            #     points[:, 0] = -points[:, 0]
+            points.flip(bev_direction)
             return points
 
     def in_range_bev(self, box_range):

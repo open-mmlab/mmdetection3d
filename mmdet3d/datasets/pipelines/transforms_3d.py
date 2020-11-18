@@ -67,6 +67,7 @@ class RandomFlip3D(RandomFlip):
         for key in input_dict['bbox3d_fields']:
             input_dict['points'] = input_dict[key].flip(
                 direction, points=input_dict['points'])
+        # input_dict['points_instance'].flip(direction)
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \
@@ -329,7 +330,8 @@ class GlobalRotScaleTrans(object):
         translation_std = np.array(translation_std, dtype=np.float32)
         trans_factor = np.random.normal(scale=translation_std, size=3).T
 
-        input_dict['points'][:, :3] += trans_factor
+        # input_dict['points'][:, :3] += trans_factor
+        input_dict['points'].translate(trans_factor)
         input_dict['pcd_trans'] = trans_factor
         for key in input_dict['bbox3d_fields']:
             input_dict[key].translate(trans_factor)
@@ -356,6 +358,7 @@ class GlobalRotScaleTrans(object):
                     noise_rotation, input_dict['points'])
                 input_dict['points'] = points
                 input_dict['pcd_rotation'] = rot_mat_T
+        # input_dict['points_instance'].rotate(noise_rotation)
 
     def _scale_bbox_points(self, input_dict):
         """Private function to scale bounding boxes and points.
@@ -368,9 +371,11 @@ class GlobalRotScaleTrans(object):
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
-        input_dict['points'][:, :3] *= scale
-        if self.shift_height:
-            input_dict['points'][:, -1] *= scale
+        # input_dict['points'][:, :3] *= scale
+
+        # if self.shift_height:
+        #     input_dict['points'][:, -1] *= scale
+        input_dict['points'].scale(scale)
 
         for key in input_dict['bbox3d_fields']:
             input_dict[key].scale(scale)
@@ -619,6 +624,8 @@ class IndoorPointSample(object):
         points = results['points']
         points, choices = self.points_random_sampling(
             points, self.num_points, return_choices=True)
+        # results['points_instance'] = results['points_instance'][choices]
+
         pts_instance_mask = results.get('pts_instance_mask', None)
         pts_semantic_mask = results.get('pts_semantic_mask', None)
         results['points'] = points

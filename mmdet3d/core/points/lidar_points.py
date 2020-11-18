@@ -22,6 +22,7 @@ class LiDARPoints(BasePoints):
     def __init__(self, tensor, points_dim=3, attribute_dims=None):
         super(LiDARPoints, self).__init__(
             tensor, points_dim=points_dim, attribute_dims=attribute_dims)
+        self.rotation_axis = 2
 
     def flip(self, bev_direction='horizontal'):
         """Flip the boxes in BEV along given BEV direction."""
