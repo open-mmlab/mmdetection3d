@@ -6,7 +6,6 @@ Welcome to MMDetection3D's documentation!
 
    install.md
    getting_started.md
-   modelzoo_statistics.md
    model_zoo.md
 
 .. toctree::
