@@ -31,12 +31,12 @@ for f in files:
 msglist = '\n'.join(x for _, _, x in stats)
 
 modelzoo = f"""
-# Model Zoo Statistics
+\n## Model Zoo Statistics
 
 * Number of papers: {len(titles)}
 * Number of checkpoints: {num_ckpts}
 {msglist}
 """
 
-with open('modelzoo_statistics.md', 'w') as f:
+with open('model_zoo.md', 'a') as f:
     f.write(modelzoo)
