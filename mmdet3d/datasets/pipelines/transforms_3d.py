@@ -141,7 +141,7 @@ class ObjectSample(object):
         Returns:
             np.ndarray: Points with those in the boxes removed.
         """
-        masks = box_np_ops.points_in_rbbox(points, boxes)
+        masks = box_np_ops.points_in_rbbox(points.coord.numpy(), boxes)
         points = points[np.logical_not(masks.any(-1))]
         return points
 
@@ -187,9 +187,10 @@ class ObjectSample(object):
 
             points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
             # check the points dimension
-            dim_inds = points.shape[-1]
-            points = np.concatenate([sampled_points[:, :dim_inds], points],
-                                    axis=0)
+            # dim_inds = points.shape[-1]
+            # points = np.concatenate([sampled_points[:, :dim_inds], points],
+            #                         axis=0)
+            points = points.cat([sampled_points, points])
 
             if self.sample_2d:
                 sampled_gt_bboxes_2d = sampled_dict['gt_bboxes_2d']
@@ -259,16 +260,18 @@ class ObjectNoise(object):
 
         # TODO: check this inplace function
         numpy_box = gt_bboxes_3d.tensor.numpy()
+        numpy_points = points.tensor.numpy()
+
         noise_per_object_v3_(
             numpy_box,
-            points,
+            numpy_points,
             rotation_perturb=self.rot_range,
             center_noise_std=self.translation_std,
             global_random_rot_range=self.global_rot_range,
             num_try=self.num_try)
 
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d.new_box(numpy_box)
-        input_dict['points'] = points
+        input_dict['points'] = points.new_point(numpy_points)
         return input_dict
 
     def __repr__(self):
@@ -439,7 +442,8 @@ class PointShuffle(object):
             dict: Results after filtering, 'points' keys are updated \
                 in the result dict.
         """
-        np.random.shuffle(input_dict['points'])
+        # np.random.shuffle(input_dict['points'])
+        input_dict['points'].shuffle()
         return input_dict
 
     def __repr__(self):
@@ -501,8 +505,7 @@ class PointsRangeFilter(object):
     """
 
     def __init__(self, point_cloud_range):
-        self.pcd_range = np.array(
-            point_cloud_range, dtype=np.float32)[np.newaxis, :]
+        self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
 
     def __call__(self, input_dict):
         """Call function to filter points by the range.
@@ -515,10 +518,13 @@ class PointsRangeFilter(object):
                 in the result dict.
         """
         points = input_dict['points']
-        points_mask = ((points[:, :3] >= self.pcd_range[:, :3])
-                       & (points[:, :3] < self.pcd_range[:, 3:]))
-        points_mask = points_mask[:, 0] & points_mask[:, 1] & points_mask[:, 2]
-        clean_points = points[points_mask, :]
+        # points_mask = ((points[:, :3] >= self.pcd_range[:, :3])
+        #                & (points[:, :3] < self.pcd_range[:, 3:]))
+        # points_mask = points_mask[:, 0] & points_mask[:, 1] & \
+        #               points_mask[:, 2]
+        # clean_points = points[points_mask, :]
+        points_mask = points.in_range_3d(self.pcd_range)
+        clean_points = points[points_mask]
         input_dict['points'] = clean_points
         return input_dict
 

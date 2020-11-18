@@ -248,10 +248,10 @@ class BasePoints(object):
         """Concatenate a list of Points into a single Points.
 
         Args:
-            points_list (list[:obj:`BaseInstancesPoints`]): List of points.
+            points_list (list[:obj:`BasePoints`]): List of points.
 
         Returns:
-            :obj:`BaseInstancesPoints`: The concatenated Points.
+            :obj:`BasePoints`: The concatenated Points.
         """
         assert isinstance(points_list, (list, tuple))
         if len(points_list) == 0:
