@@ -1,7 +1,7 @@
 import mmcv
 import numpy as np
 
-from mmdet3d.core.points import get_points_type
+from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations
 
@@ -137,10 +137,16 @@ class LoadPointsFromMultiSweeps(object):
         Returns:
             np.ndarray: Points after removing.
         """
-        x_filt = np.abs(points[:, 0]) < radius
-        y_filt = np.abs(points[:, 1]) < radius
+        if isinstance(points, np.ndarray):
+            points_t = points
+        elif isinstance(points, BasePoints):
+            points_t = points.tensor.numpy()
+        else:
+            raise NotImplementedError
+        x_filt = np.abs(points_t[:, 0]) < radius
+        y_filt = np.abs(points_t[:, 1]) < radius
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
-        return points[not_close, :]
+        return points[not_close]
 
     def __call__(self, results):
         """Call function to load multi-sweep point clouds from files.
@@ -156,7 +162,8 @@ class LoadPointsFromMultiSweeps(object):
                 - points (np.ndarray): Multi-sweep point cloud arrays.
         """
         points = results['points']
-        points[:, 4] = 0
+        points.tensor[:, 4] = 0
+        # sweep_points_list = []
         sweep_points_list = [points]
         ts = results['timestamp']
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
@@ -184,9 +191,16 @@ class LoadPointsFromMultiSweeps(object):
                     'sensor2lidar_rotation'].T
                 points_sweep[:, :3] += sweep['sensor2lidar_translation']
                 points_sweep[:, 4] = ts - sweep_ts
+                points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
 
-        points = np.concatenate(sweep_points_list, axis=0)[:, self.use_dim]
+        # points = np.concatenate(sweep_points_list, axis=0)[:, self.use_dim]
+        # import pdb
+        # pdb.set_trace()
+        # sweep_points = np.concatenate(sweep_points_list, axis=0)[
+        #     :, self.use_dim]
+        # sweep_points = points.new_point(sweep_points)
+        points = points.cat(sweep_points_list)
         results['points'] = points
         return results
 
