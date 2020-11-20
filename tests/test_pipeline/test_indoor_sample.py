@@ -1,5 +1,6 @@
 import numpy as np
 
+from mmdet3d.core.points import DepthPoints
 from mmdet3d.datasets.pipelines import IndoorPointSample
 
 
@@ -17,14 +18,15 @@ def test_indoor_sample():
                                [1.1188195, -0.99211365, 2.5551798, 2.6340485],
                                [-0.9186557, -1.7041215, 2.0562649, 2.1351335],
                                [-1.0128691, -1.3394243, 0.040936, 0.1198047]])
-    scannet_results['points'] = scannet_points
+    scannet_results['points'] = DepthPoints(
+        scannet_points, points_dim=4, attribute_dims=dict(height=3))
     scannet_pts_instance_mask = np.array(
         [15, 12, 11, 38, 0, 18, 17, 12, 17, 0])
     scannet_results['pts_instance_mask'] = scannet_pts_instance_mask
     scannet_pts_semantic_mask = np.array([38, 1, 1, 40, 0, 40, 1, 1, 1, 0])
     scannet_results['pts_semantic_mask'] = scannet_pts_semantic_mask
     scannet_results = scannet_sample_points(scannet_results)
-    scannet_points_result = scannet_results['points']
+    scannet_points_result = scannet_results['points'].tensor.numpy()
     scannet_instance_labels_result = scannet_results['pts_instance_mask']
     scannet_semantic_labels_result = scannet_results['pts_semantic_mask']
     scannet_choices = np.array([2, 8, 4, 9, 1])
@@ -48,10 +50,11 @@ def test_indoor_sample():
          [-0.74624217, 1.5244724, -0.8678476, 0.41810507],
          [0.56485355, 1.5747732, -0.804522, 0.4814307],
          [-0.0913099, 1.3673826, -1.2800645, 0.00588822]])
-    sunrgbd_results['points'] = sunrgbd_point_cloud
+    sunrgbd_results['points'] = DepthPoints(
+        sunrgbd_point_cloud, points_dim=4, attribute_dims=dict(height=3))
     sunrgbd_results = sunrgbd_sample_points(sunrgbd_results)
     sunrgbd_choices = np.array([2, 8, 4, 9, 1])
-    sunrgbd_points_result = sunrgbd_results['points']
+    sunrgbd_points_result = sunrgbd_results['points'].tensor.numpy()
     repr_str = repr(sunrgbd_sample_points)
     expected_repr_str = 'IndoorPointSample(num_points=5)'
     assert repr_str == expected_repr_str

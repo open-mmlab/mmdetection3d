@@ -17,6 +17,7 @@ def test_scannet_pipeline():
     pipelines = [
         dict(
             type='LoadPointsFromFile',
+            coord_type='DEPTH',
             shift_height=True,
             load_dim=6,
             use_dim=[0, 1, 2]),
@@ -110,6 +111,7 @@ def test_sunrgbd_pipeline():
     pipelines = [
         dict(
             type='LoadPointsFromFile',
+            coord_type='DEPTH',
             shift_height=True,
             load_dim=6,
             use_dim=[0, 1, 2]),
