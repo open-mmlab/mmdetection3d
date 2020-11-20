@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from abc import abstractmethod
 
@@ -258,7 +259,7 @@ class BasePoints(object):
                         attribute_dims.pop(key)
             else:
                 attribute_dims = None
-        elif isinstance(item, (slice, torch.Tensor)):
+        elif isinstance(item, (slice, np.ndarray, torch.Tensor)):
             p = self.tensor[item]
             attribute_dims = self.attribute_dims
         else:
