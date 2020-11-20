@@ -1,10 +1,12 @@
 import numpy as np
+import torch
 
 from mmdet3d.datasets.builder import build_dataset
 
 
 def test_getitem():
-    np.random.seed(0)
+    np.random.seed(1)
+    torch.manual_seed(1)
     point_cloud_range = [-50, -50, -5, 50, 50, 3]
     file_client_args = dict(backend='disk')
     class_names = [
@@ -14,6 +16,7 @@ def test_getitem():
     pipeline = [
         dict(
             type='LoadPointsFromFile',
+            coord_type='LIDAR',
             load_dim=5,
             use_dim=5,
             file_client_args=file_client_args),
@@ -63,12 +66,13 @@ def test_getitem():
             box_type_3d='LiDAR'))
     nus_dataset = build_dataset(dataset_cfg)
     assert len(nus_dataset) == 20
-    data = nus_dataset[0]
-    assert data['img_metas'].data['flip'] is False
-    assert data['img_metas'].data['pcd_horizontal_flip'] is False
-    assert data['points']._data.shape == (901, 5)
 
-    data = nus_dataset[1]
+    data = nus_dataset[0]
     assert data['img_metas'].data['flip'] is True
     assert data['img_metas'].data['pcd_horizontal_flip'] is True
     assert data['points']._data.shape == (537, 5)
+
+    data = nus_dataset[2]
+    assert data['img_metas'].data['flip'] is False
+    assert data['img_metas'].data['pcd_horizontal_flip'] is False
+    assert data['points']._data.shape == (901, 5)

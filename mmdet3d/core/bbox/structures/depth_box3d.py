@@ -180,12 +180,14 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 self.tensor[:, 6] = -self.tensor[:, 6]
 
         if points is not None:
-            # assert isinstance(points, (torch.Tensor, np.ndarray))
-            # if bev_direction == 'horizontal':
-            #     points[:, 0] = -points[:, 0]
-            # elif bev_direction == 'vertical':
-            #     points[:, 1] = -points[:, 1]
-            points.flip(bev_direction)
+            assert isinstance(points, (torch.Tensor, np.ndarray, BasePoints))
+            if isinstance(points, (torch.Tensor, np.ndarray)):
+                if bev_direction == 'horizontal':
+                    points[:, 0] = -points[:, 0]
+                elif bev_direction == 'vertical':
+                    points[:, 1] = -points[:, 1]
+            elif isinstance(points, BasePoints):
+                points.flip(bev_direction)
             return points
 
     def in_range_bev(self, box_range):

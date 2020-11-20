@@ -202,9 +202,6 @@ class BasePoints(object):
             scale_factors (float): Scale factors to scale the points.
         """
         self.tensor[:, :3] *= scale_factor
-        if self.attribute_dims is not None and \
-                'height' in self.attribute_dims.keys():
-            self.tensor[:, self.attribute_dims['height']] *= scale_factor
 
     def __getitem__(self, item):
         """

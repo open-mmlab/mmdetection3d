@@ -369,10 +369,12 @@ class GlobalRotScaleTrans(object):
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
-
+        points = input_dict['points']
+        points.scale(scale)
         if self.shift_height:
-            assert 'height' in input_dict['points'].attribute_dims.keys()
-        input_dict['points'].scale(scale)
+            assert 'height' in points.attribute_dims.keys()
+            points.tensor[:, points.attribute_dims['height']] *= scale
+        input_dict['points'] = points
 
         for key in input_dict['bbox3d_fields']:
             input_dict[key].scale(scale)
