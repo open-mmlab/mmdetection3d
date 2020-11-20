@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core.points import LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
                               ObjectSample, RandomFlip3D,
                               VoxelBasedPointSampler)
@@ -257,6 +258,7 @@ def test_voxel_based_point_filter():
 
     input_time = np.concatenate([np.zeros([2048, 1]), np.ones([2048, 1])], 0)
     input_points = np.concatenate([points, input_time], 1)
+    input_points = LiDARPoints(input_points, points_dim=4)
 
     input_dict = dict(
         points=input_points, pts_mask_fields=[], pts_seg_fields=[])
@@ -283,9 +285,9 @@ def test_voxel_based_point_filter():
 
     assert repr_str == expected_repr_str
     assert points.shape == (2048, 4)
-    assert (points[:, :3].min(0) <
+    assert (points.tensor[:, :3].min(0)[0].numpy() <
             cur_sweep_cfg['point_cloud_range'][0:3]).sum() == 0
-    assert (points[:, :3].max(0) >
+    assert (points.tensor[:, :3].max(0)[0].numpy() >
             cur_sweep_cfg['point_cloud_range'][3:6]).sum() == 0
 
     # Test instance mask and semantic mask

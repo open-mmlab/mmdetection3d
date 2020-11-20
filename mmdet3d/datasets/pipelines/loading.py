@@ -375,7 +375,6 @@ class LoadPointsFromFile(object):
         points = points_class(
             points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
         results['points'] = points
-        # results['points_instance'] = points_instance
 
         return results
 

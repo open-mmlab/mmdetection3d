@@ -67,7 +67,6 @@ class RandomFlip3D(RandomFlip):
         for key in input_dict['bbox3d_fields']:
             input_dict['points'] = input_dict[key].flip(
                 direction, points=input_dict['points'])
-        # input_dict['points_instance'].flip(direction)
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \
@@ -187,9 +186,6 @@ class ObjectSample(object):
 
             points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
             # check the points dimension
-            # dim_inds = points.shape[-1]
-            # points = np.concatenate([sampled_points[:, :dim_inds], points],
-            #                         axis=0)
             points = points.cat([sampled_points, points])
 
             if self.sample_2d:
@@ -333,7 +329,6 @@ class GlobalRotScaleTrans(object):
         translation_std = np.array(translation_std, dtype=np.float32)
         trans_factor = np.random.normal(scale=translation_std, size=3).T
 
-        # input_dict['points'][:, :3] += trans_factor
         input_dict['points'].translate(trans_factor)
         input_dict['pcd_trans'] = trans_factor
         for key in input_dict['bbox3d_fields']:
@@ -374,10 +369,9 @@ class GlobalRotScaleTrans(object):
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
-        # input_dict['points'][:, :3] *= scale
 
-        # if self.shift_height:
-        #     input_dict['points'][:, -1] *= scale
+        if self.shift_height:
+            assert 'height' in input_dict['points'].attribute_dims.keys()
         input_dict['points'].scale(scale)
 
         for key in input_dict['bbox3d_fields']:
@@ -442,7 +436,6 @@ class PointShuffle(object):
             dict: Results after filtering, 'points' keys are updated \
                 in the result dict.
         """
-        # np.random.shuffle(input_dict['points'])
         input_dict['points'].shuffle()
         return input_dict
 
@@ -518,11 +511,6 @@ class PointsRangeFilter(object):
                 in the result dict.
         """
         points = input_dict['points']
-        # points_mask = ((points[:, :3] >= self.pcd_range[:, :3])
-        #                & (points[:, :3] < self.pcd_range[:, 3:]))
-        # points_mask = points_mask[:, 0] & points_mask[:, 1] & \
-        #               points_mask[:, 2]
-        # clean_points = points[points_mask, :]
         points_mask = points.in_range_3d(self.pcd_range)
         clean_points = points[points_mask]
         input_dict['points'] = clean_points
@@ -784,7 +772,8 @@ class VoxelBasedPointSampler(object):
         # Extend points with seg and mask fields
         map_fields2dim = []
         start_dim = original_dim
-        extra_channel = [points]
+        points_numpy = points.tensor.numpy()
+        extra_channel = [points_numpy]
         for idx, key in enumerate(results['pts_mask_fields']):
             map_fields2dim.append((key, idx + start_dim))
             extra_channel.append(results[key][..., None])
@@ -794,15 +783,15 @@ class VoxelBasedPointSampler(object):
             map_fields2dim.append((key, idx + start_dim))
             extra_channel.append(results[key][..., None])
 
-        points = np.concatenate(extra_channel, axis=-1)
+        points_numpy = np.concatenate(extra_channel, axis=-1)
 
         # Split points into two part, current sweep points and
         # previous sweeps points.
         # TODO: support different sampling methods for next sweeps points
         # and previous sweeps points.
-        cur_points_flag = (points[:, self.time_dim] == 0)
-        cur_sweep_points = points[cur_points_flag]
-        prev_sweeps_points = points[~cur_points_flag]
+        cur_points_flag = (points_numpy[:, self.time_dim] == 0)
+        cur_sweep_points = points_numpy[cur_points_flag]
+        prev_sweeps_points = points_numpy[~cur_points_flag]
         if prev_sweeps_points.shape[0] == 0:
             prev_sweeps_points = cur_sweep_points
 
@@ -812,23 +801,24 @@ class VoxelBasedPointSampler(object):
 
         cur_sweep_points = self._sample_points(cur_sweep_points,
                                                self.cur_voxel_generator,
-                                               points.shape[1])
+                                               points_numpy.shape[1])
         if self.prev_voxel_generator is not None:
             prev_sweeps_points = self._sample_points(prev_sweeps_points,
                                                      self.prev_voxel_generator,
-                                                     points.shape[1])
+                                                     points_numpy.shape[1])
 
-            points = np.concatenate([cur_sweep_points, prev_sweeps_points], 0)
+            points_numpy = np.concatenate(
+                [cur_sweep_points, prev_sweeps_points], 0)
         else:
-            points = cur_sweep_points
+            points_numpy = cur_sweep_points
 
         if self.cur_voxel_generator._max_num_points == 1:
-            points = points.squeeze(1)
-        results['points'] = points[..., :original_dim]
+            points_numpy = points_numpy.squeeze(1)
+        results['points'] = points.new_point(points_numpy[..., :original_dim])
 
         # Restore the correspoinding seg and mask fields
         for key, dim_index in map_fields2dim:
-            results[key] = points[..., dim_index]
+            results[key] = points_numpy[..., dim_index]
 
         return results
 
