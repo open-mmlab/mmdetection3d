@@ -170,8 +170,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             angle (float, torch.Tensor): Rotation angle.
-            points (torch.Tensor, numpy.ndarray, optional): Points to rotate.
-                Defaults to None.
+            points (torch.Tensor, numpy.ndarray, BasePoints, optional): Points
+                to rotate. Defaults to None.
 
         Returns:
             tuple or None: When ``points`` is None, the function returns \
@@ -208,8 +208,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             bev_direction (str): Flip direction (horizontal or vertical).
-            points (torch.Tensor, numpy.ndarray, None): Points to flip.
-                Defaults to None.
+            points (torch.Tensor, numpy.ndarray, BasePoints, None): Points
+                to flip. Defaults to None.
 
         Returns:
             torch.Tensor, numpy.ndarray or None: Flipped points.

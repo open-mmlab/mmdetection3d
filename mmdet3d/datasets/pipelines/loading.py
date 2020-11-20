@@ -138,13 +138,13 @@ class LoadPointsFromMultiSweeps(object):
             np.ndarray: Points after removing.
         """
         if isinstance(points, np.ndarray):
-            points_t = points
+            points_numpy = points
         elif isinstance(points, BasePoints):
-            points_t = points.tensor.numpy()
+            points_numpy = points.tensor.numpy()
         else:
             raise NotImplementedError
-        x_filt = np.abs(points_t[:, 0]) < radius
-        y_filt = np.abs(points_t[:, 1]) < radius
+        x_filt = np.abs(points_numpy[:, 0]) < radius
+        y_filt = np.abs(points_numpy[:, 1]) < radius
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
         return points[not_close]
 
@@ -296,6 +296,11 @@ class LoadPointsFromFile(object):
     Args:
         load_dim (int): The dimension of the loaded points.
             Defaults to 6.
+        coord_type (str): The type of coordinates of points cloud.
+            Available options includes:
+            - 'LIDAR': Points in LiDAR coordinates.
+            - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
+            - 'CAMERA': Points in camera coordinates.
         use_dim (list[int]): Which dimensions of the points to be used.
             Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.

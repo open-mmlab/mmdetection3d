@@ -17,6 +17,7 @@ class DepthPoints(BasePoints):
             Each row is (x, y, z, ...).
         attribute_dims (bool): Dictinory to indicate the meaning of extra
             dimension. Default to None.
+        rotation_axis (int): Default rotation axis for points rotation.
     """
 
     def __init__(self, tensor, points_dim=3, attribute_dims=None):
