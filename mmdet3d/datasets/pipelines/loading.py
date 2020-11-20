@@ -163,7 +163,6 @@ class LoadPointsFromMultiSweeps(object):
         """
         points = results['points']
         points.tensor[:, 4] = 0
-        # sweep_points_list = []
         sweep_points_list = [points]
         ts = results['timestamp']
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
@@ -194,13 +193,8 @@ class LoadPointsFromMultiSweeps(object):
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
 
-        # points = np.concatenate(sweep_points_list, axis=0)[:, self.use_dim]
-        # import pdb
-        # pdb.set_trace()
-        # sweep_points = np.concatenate(sweep_points_list, axis=0)[
-        #     :, self.use_dim]
-        # sweep_points = points.new_point(sweep_points)
         points = points.cat(sweep_points_list)
+        points = points[:, self.use_dim]
         results['points'] = points
         return results
 

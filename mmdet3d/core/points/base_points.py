@@ -216,12 +216,14 @@ class BasePoints(object):
             3. `new_points = points[vector]`:
                 where vector is a torch.BoolTensor with `length = len(points)`.
                 Nonzero elements in the vector will be selected.
+            4. `new_points = points[3:11, vector]`:
+                return a slice of points and attribute dims.
             Note that the returned Points might share storage with this Points,
             subject to Pytorch's indexing semantics.
 
         Returns:
-            :obj:`BaseInstancesPints`: A new object of  \
-                :class:`BaseInstancesPints` after indexing.
+            :obj:`BasePoints`: A new object of  \
+                :class:`BasePoints` after indexing.
         """
         original_type = type(self)
         if isinstance(item, int):
@@ -229,11 +231,43 @@ class BasePoints(object):
                 self.tensor[item].view(1, -1),
                 points_dim=self.points_dim,
                 attribute_dims=self.attribute_dims)
-        p = self.tensor[item]
+        elif isinstance(item, tuple) and len(item) == 2:
+            if isinstance(item[1], slice):
+                start = 0 if item[1].start is None else item[1].start
+                stop = self.tensor.shape[1] + \
+                    1 if item[1].stop is None else item[1].stop
+                step = 1 if item[1].step is None else item[1].step
+                item[1] = list(range(start, stop, step))
+            p = self.tensor[item[0], item[1]]
+
+            keep_dims = list(
+                set(item[1]).intersection(set(range(3, self.tensor.shape[1]))))
+            if self.attribute_dims is not None:
+                attribute_dims = self.attribute_dims.copy()
+                for key in self.attribute_dims.keys():
+                    cur_attribute_dim = attribute_dims[key]
+                    if isinstance(cur_attribute_dim, int):
+                        cur_attribute_dims = [cur_attribute_dim]
+                    intersect_attr = list(
+                        set(cur_attribute_dims).intersection(set(keep_dims)))
+                    if len(intersect_attr) == 1:
+                        attribute_dims[key] = intersect_attr[0]
+                    elif len(intersect_attr) > 1:
+                        attribute_dims[key] = intersect_attr
+                    else:
+                        attribute_dims.pop(key)
+            else:
+                attribute_dims = None
+        elif isinstance(item, (slice, torch.Tensor)):
+            p = self.tensor[item]
+            attribute_dims = self.attribute_dims
+        else:
+            raise NotImplementedError(f'Invalid slice {item}!')
+
         assert p.dim() == 2, \
             f'Indexing on Points with {item} failed to return a matrix!'
         return original_type(
-            p, points_dim=self.points_dim, attribute_dims=self.attribute_dims)
+            p, points_dim=p.shape[1], attribute_dims=attribute_dims)
 
     def __len__(self):
         """int: Number of points in the current object."""
