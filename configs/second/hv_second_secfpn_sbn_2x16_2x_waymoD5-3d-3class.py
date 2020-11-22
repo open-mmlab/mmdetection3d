@@ -17,9 +17,9 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
+        filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
     classes=class_names,
-    sample_groups=dict(Car=6, Pedestrian=8, Cyclist=10),
+    sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10),
     points_loader=dict(
         type='LoadPointsFromFile', load_dim=5, use_dim=[0, 1, 2, 3, 4]))
 
@@ -68,7 +68,7 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=2,
+    samples_per_gpu=4,
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
