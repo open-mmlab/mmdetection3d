@@ -22,6 +22,7 @@ db_sampler = dict(
     sample_groups=dict(Car=15),
     points_loader=dict(
         type='LoadPointsFromFile',
+        coord_type='LIDAR',
         load_dim=5,
         use_dim=[0, 1, 2, 3, 4],
         file_client_args=file_client_args))
