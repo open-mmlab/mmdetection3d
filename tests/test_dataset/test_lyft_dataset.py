@@ -114,6 +114,3 @@ def test_evaluate():
     ap_dict = lyft_dataset.evaluate(results, 'bbox')
     car_precision = ap_dict['pts_bbox_Lyft/car_AP']
     assert car_precision == 0.6
-
-
-test_getitem()
