@@ -7,10 +7,7 @@ from .single_stage import SingleStage3DDetector
 
 @DETECTORS.register_module()
 class VoteNet(SingleStage3DDetector):
-    """VoteNet model.
-
-    https://arxiv.org/pdf/1904.09664.pdf
-    """
+    r"""`VoteNet <https://arxiv.org/pdf/1904.09664.pdf>`_ for 3D detection."""
 
     def __init__(self,
                  backbone,
