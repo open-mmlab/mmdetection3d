@@ -59,6 +59,12 @@ class SUNRGBDDataset(Custom3DDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
+        if self.modality is None:
+            self.modality = dict(
+                use_camera=True,
+                use_lidar=True,
+            )
+        assert self.modality['use_camera'] or self.modality['use_lidar']
 
     def get_data_info(self, index):
         """Get data info according to the given index.
@@ -71,24 +77,30 @@ class SUNRGBDDataset(Custom3DDataset):
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): Sample index.
-                - pts_filename (str): Filename of point clouds.
-                - file_name (str): Filename of point clouds.
+                - pts_filename (str, optional): Filename of point clouds.
+                - file_name (str, optional): Filename of point clouds.
+                - img_prefix (str | None, optional): Prefix of image files.
+                - img_info (dict, optional): Image info.
+                - calib (dict, optional): Camera calibration info.
                 - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
-        assert info['point_cloud']['lidar_idx'] == info['image']['image_idx']
         sample_idx = info['point_cloud']['lidar_idx']
-        pts_filename = osp.join(self.data_root, info['pts_path'])
-        img_filename = osp.join(self.data_root, info['image']['image_path'])
-        calib = info['calib']
+        assert info['point_cloud']['lidar_idx'] == info['image']['image_idx']
+        input_dict = dict(sample_idx=sample_idx)
 
-        input_dict = dict(
-            sample_idx=sample_idx,
-            pts_filename=pts_filename,
-            img_prefix=None,
-            img_info=dict(filename=img_filename),
-            file_name=pts_filename,
-            calib=calib)
+        if self.modality['use_lidar']:
+            pts_filename = osp.join(self.data_root, info['pts_path'])
+            input_dict['pts_filename'] = pts_filename
+            input_dict['file_name'] = pts_filename
+
+        if self.modality['use_camera']:
+            img_filename = osp.join(self.data_root,
+                                    info['image']['image_path'])
+            input_dict['img_prefix'] = None
+            input_dict['img_info'] = dict(filename=img_filename)
+            calib = info['calib']
+            input_dict['calib'] = calib
 
         if not self.test_mode:
             annos = self.get_ann_info(index)
