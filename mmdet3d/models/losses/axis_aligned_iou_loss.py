@@ -3,10 +3,11 @@ from torch import nn as nn
 
 from mmdet.models.builder import LOSSES
 from mmdet.models.losses.utils import weighted_loss
+from ...core.bbox import AxisAlignedBboxOverlaps3D
 
 
 @weighted_loss
-def axis_aligned_iou_loss(pred, target, eps=1e-6):
+def axis_aligned_iou_loss(pred, target):
     """Calculate the IoU loss (1-IoU) of two set of axis aligned bounding
     boxes. Note that predictions and targets are one-to-one corresponded.
 
@@ -18,19 +19,8 @@ def axis_aligned_iou_loss(pred, target, eps=1e-6):
         torch.Tensor: IoU loss between predictions and targets.
     """
 
-    (min_a, max_a) = torch.split(pred, 3, dim=-1)
-    (min_b, max_b) = torch.split(target, 3, dim=-1)
-
-    max_min = torch.max(min_a, min_b)
-    min_max = torch.min(max_a, max_b)
-    vol_a = (max_a - min_a).prod(dim=-1)
-    vol_b = (max_b - min_b).prod(dim=-1)
-    diff = torch.clamp(min_max - max_min, min=0)
-    intersection = diff.prod(dim=-1)
-    union = vol_a + vol_b - intersection
-    eps = union.new_tensor([eps])
-    axis_aligned_iou = intersection / torch.max(union, eps)
-
+    axis_aligned_iou = AxisAlignedBboxOverlaps3D()(
+        pred, target, is_aligned=True)
     iou_loss = 1 - axis_aligned_iou
     return iou_loss
 
