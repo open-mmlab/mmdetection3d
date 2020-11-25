@@ -98,6 +98,44 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
 
+    def decode_corners(self, center, size_res, size_class):
+        """Decode center, size residuals and class to corners. Only useful for
+        axis-aligned bounding boxes, so angle isn't considered.
+
+        Args:
+            center (torch.Tensor): Shape [B, N, 3]
+            size_res (torch.Tensor): Shape [B, N, 3] or [B, N, C, 3]
+            size_class (torch.Tensor): Shape: [B, N] or [B, N, 1]
+            or [B, N, C, 3]
+
+        Returns:
+            torch.Tensor: Corners with shape [B, N, 6]
+        """
+        if len(size_class.shape) == 2 or size_class.shape[-1] == 1:
+            batch_size, proposal_num = size_class.shape[:2]
+            one_hot_size_class = size_res.new_zeros(
+                (batch_size, proposal_num, self.num_sizes))
+            if len(size_class.shape) == 2:
+                size_class = size_class.unsqueeze(-1)
+            one_hot_size_class.scatter_(2, size_class, 1)
+            one_hot_size_class_expand = one_hot_size_class.unsqueeze(
+                -1).repeat(1, 1, 1, 3).contiguous()
+        else:
+            one_hot_size_class_expand = size_class
+
+        if len(size_res.shape) == 4:
+            size_res = torch.sum(size_res * one_hot_size_class_expand, 2)
+
+        mean_sizes = size_res.new_tensor(self.mean_sizes)
+        mean_sizes = torch.sum(mean_sizes * one_hot_size_class_expand, 2)
+        size_full = (size_res + 1) * mean_sizes
+        size_full = torch.clamp(size_full, 0)
+        half_size_full = size_full / 2
+        corner1 = center - half_size_full
+        corner2 = center + half_size_full
+        corners = torch.cat([corner1, corner2], dim=-1)
+        return corners
+
     def split_pred(self, cls_preds, reg_preds, base_xyz):
         """Split predicted features to specific parts.
 

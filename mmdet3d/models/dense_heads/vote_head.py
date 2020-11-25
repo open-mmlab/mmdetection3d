@@ -325,23 +325,14 @@ class VoteHead(nn.Module):
             size_res_loss=size_res_loss)
 
         if self.iou_loss:
-            mean_sizes = size_res_targets.new_tensor(
-                self.bbox_coder.mean_sizes)[None]
-            mean_sizes = torch.sum(mean_sizes * one_hot_size_targets_expand, 2)
-            size_pred = (size_residual_norm + 1) * mean_sizes
-            size_target = (size_res_targets + 1) * mean_sizes
-            center_pred = bbox_preds['center']
-            size_pred = torch.clamp(size_pred, 0)
-            center_target = assigned_center_targets
-            half_size_pred = size_pred / 2
-            half_size_target = size_target / 2
-            corner1_pred = center_pred - half_size_pred
-            corner2_pred = center_pred + half_size_pred
-            corner1_target = center_target - half_size_target
-            corner2_target = center_target + half_size_target
-            pred = torch.cat([corner1_pred, corner2_pred], dim=-1)
-            target = torch.cat([corner1_target, corner2_target], dim=-1)
-            iou_loss = self.iou_loss(pred, target, weight=box_loss_weights)
+            corners_pred = self.bbox_coder.decode_corners(
+                bbox_preds['center'], size_residual_norm,
+                one_hot_size_targets_expand)
+            corners_target = self.bbox_coder.decode_corners(
+                assigned_center_targets, size_res_targets,
+                one_hot_size_targets_expand)
+            iou_loss = self.iou_loss(
+                corners_pred, corners_target, weight=box_loss_weights)
             losses['iou_loss'] = iou_loss
 
         if ret_target:
