@@ -203,10 +203,11 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
                                   mode='iou',
                                   is_aligned=False,
                                   eps=1e-6):
-    """Calculate overlap between two set of axis aligned 3D bboxes.
-    If ``is_aligned `` is ``False``, then calculate the overlaps between each
-    bbox of bboxes1 and bboxes2, otherwise the overlaps between each aligned
-    pair of bboxes1 and bboxes2.
+    """Calculate overlap between two set of axis aligned 3D bboxes. If
+    ``is_aligned `` is ``False``, then calculate the overlaps between each bbox
+    of bboxes1 and bboxes2, otherwise the overlaps between each aligned pair of
+    bboxes1 and bboxes2.
+
     Args:
         bboxes1 (Tensor): shape (B, m, 6) in <x1, y1, z1, x2, y2, z2>
         format or empty.
@@ -220,8 +221,10 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
             Default False.
         eps (float, optional): A value added to the denominator for numerical
             stability. Default 1e-6.
+
     Returns:
         Tensor: shape (m, n) if ``is_aligned `` is False else shape (m,)
+
     Example:
         >>> bboxes1 = torch.FloatTensor([
         >>>     [0, 0, 0, 10, 10, 10],
