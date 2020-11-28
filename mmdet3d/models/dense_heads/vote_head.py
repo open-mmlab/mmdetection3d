@@ -55,7 +55,8 @@ class VoteHead(nn.Module):
                  dir_res_loss=None,
                  size_class_loss=None,
                  size_res_loss=None,
-                 semantic_loss=None):
+                 semantic_loss=None,
+                 iou_loss=None):
         super(VoteHead, self).__init__()
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -72,6 +73,10 @@ class VoteHead(nn.Module):
             self.size_class_loss = build_loss(size_class_loss)
         if semantic_loss is not None:
             self.semantic_loss = build_loss(semantic_loss)
+        if iou_loss is not None:
+            self.iou_loss = build_loss(iou_loss)
+        else:
+            self.iou_loss = None
 
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.num_sizes = self.bbox_coder.num_sizes
@@ -241,9 +246,10 @@ class VoteHead(nn.Module):
                                    pts_semantic_mask, pts_instance_mask,
                                    bbox_preds)
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
-         dir_class_targets, dir_res_targets, center_targets, mask_targets,
-         valid_gt_masks, objectness_targets, objectness_weights,
-         box_loss_weights, valid_gt_weights) = targets
+         dir_class_targets, dir_res_targets, center_targets,
+         assigned_center_targets, mask_targets, valid_gt_masks,
+         objectness_targets, objectness_weights, box_loss_weights,
+         valid_gt_weights) = targets
 
         # calculate vote loss
         vote_loss = self.vote_module.get_loss(bbox_preds['seed_points'],
@@ -318,6 +324,17 @@ class VoteHead(nn.Module):
             size_class_loss=size_class_loss,
             size_res_loss=size_res_loss)
 
+        if self.iou_loss:
+            corners_pred = self.bbox_coder.decode_corners(
+                bbox_preds['center'], size_residual_norm,
+                one_hot_size_targets_expand)
+            corners_target = self.bbox_coder.decode_corners(
+                assigned_center_targets, size_res_targets,
+                one_hot_size_targets_expand)
+            iou_loss = self.iou_loss(
+                corners_pred, corners_target, weight=box_loss_weights)
+            losses['iou_loss'] = iou_loss
+
         if ret_target:
             losses['targets'] = targets
 
@@ -373,10 +390,12 @@ class VoteHead(nn.Module):
         ]
 
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
-         dir_class_targets, dir_res_targets, center_targets, mask_targets,
-         objectness_targets, objectness_masks) = multi_apply(
-             self.get_targets_single, points, gt_bboxes_3d, gt_labels_3d,
-             pts_semantic_mask, pts_instance_mask, aggregated_points)
+         dir_class_targets, dir_res_targets, center_targets,
+         assigned_center_targets, mask_targets, objectness_targets,
+         objectness_masks) = multi_apply(self.get_targets_single, points,
+                                         gt_bboxes_3d, gt_labels_3d,
+                                         pts_semantic_mask, pts_instance_mask,
+                                         aggregated_points)
 
         # pad targets as original code of votenet.
         for index in range(len(gt_labels_3d)):
@@ -390,6 +409,7 @@ class VoteHead(nn.Module):
         center_targets = torch.stack(center_targets)
         valid_gt_masks = torch.stack(valid_gt_masks)
 
+        assigned_center_targets = torch.stack(assigned_center_targets)
         objectness_targets = torch.stack(objectness_targets)
         objectness_weights = torch.stack(objectness_masks)
         objectness_weights /= (torch.sum(objectness_weights) + 1e-6)
@@ -405,9 +425,9 @@ class VoteHead(nn.Module):
 
         return (vote_targets, vote_target_masks, size_class_targets,
                 size_res_targets, dir_class_targets, dir_res_targets,
-                center_targets, mask_targets, valid_gt_masks,
-                objectness_targets, objectness_weights, box_loss_weights,
-                valid_gt_weights)
+                center_targets, assigned_center_targets, mask_targets,
+                valid_gt_masks, objectness_targets, objectness_weights,
+                box_loss_weights, valid_gt_weights)
 
     def get_targets_single(self,
                            points,
@@ -526,10 +546,11 @@ class VoteHead(nn.Module):
         size_res_targets /= pos_mean_sizes
 
         mask_targets = gt_labels_3d[assignment]
+        assigned_center_targets = center_targets[assignment]
 
         return (vote_targets, vote_target_masks, size_class_targets,
-                size_res_targets,
-                dir_class_targets, dir_res_targets, center_targets,
+                size_res_targets, dir_class_targets,
+                dir_res_targets, center_targets, assigned_center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
     def get_bboxes(self,
