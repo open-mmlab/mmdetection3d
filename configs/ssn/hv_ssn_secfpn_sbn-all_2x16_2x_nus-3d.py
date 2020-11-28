@@ -13,7 +13,7 @@ class_names = [
 ]
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
     dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
@@ -33,7 +33,7 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
     dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(
         type='MultiScaleFlipAug3D',

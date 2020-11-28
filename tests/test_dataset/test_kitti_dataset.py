@@ -14,6 +14,7 @@ def test_getitem():
     pts_prefix = 'velodyne_reduced'
     pipeline = [{
         'type': 'LoadPointsFromFile',
+        'coord_type': 'LIDAR',
         'load_dim': 4,
         'use_dim': 4,
         'file_client_args': {
@@ -97,6 +98,7 @@ def test_evaluate():
     pts_prefix = 'velodyne_reduced'
     pipeline = [{
         'type': 'LoadPointsFromFile',
+        'coord_type': 'LIDAR',
         'load_dim': 4,
         'use_dim': 4,
         'file_client_args': {
@@ -172,6 +174,7 @@ def test_show():
     pipeline = [
         dict(
             type='LoadPointsFromFile',
+            coord_type='LIDAR',
             load_dim=4,
             use_dim=4,
             file_client_args=file_client_args),
@@ -227,6 +230,7 @@ def test_format_results():
     pts_prefix = 'velodyne_reduced'
     pipeline = [{
         'type': 'LoadPointsFromFile',
+        'coord_type': 'LIDAR',
         'load_dim': 4,
         'use_dim': 4,
         'file_client_args': {
@@ -309,6 +313,7 @@ def test_bbox2result_kitti2d():
     pts_prefix = 'velodyne_reduced'
     pipeline = [{
         'type': 'LoadPointsFromFile',
+        'coord_type': 'LIDAR',
         'load_dim': 4,
         'use_dim': 4,
         'file_client_args': {

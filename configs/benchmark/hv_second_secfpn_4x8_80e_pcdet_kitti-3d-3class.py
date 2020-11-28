@@ -119,6 +119,7 @@ file_client_args = dict(backend='disk')
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
         file_client_args=file_client_args),
@@ -142,6 +143,7 @@ train_pipeline = [
 test_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
         file_client_args=file_client_args),

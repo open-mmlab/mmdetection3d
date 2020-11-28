@@ -1049,9 +1049,3 @@ def test_depth_points():
                                         3.2690e-01
                                     ]])
     assert torch.allclose(expected_tensor, depth_points.tensor, 1e-4)
-
-
-test_base_points()
-test_cam_points()
-test_depth_points()
-test_lidar_points()

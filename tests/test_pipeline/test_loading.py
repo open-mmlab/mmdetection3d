@@ -4,24 +4,27 @@ import pytest
 from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
+from mmdet3d.core.points import LiDARPoints
 from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
                                         LoadPointsFromMultiSweeps)
 
 
 def test_load_points_from_indoor_file():
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
-    sunrgbd_load_points_from_file = LoadPointsFromFile(6, shift_height=True)
+    sunrgbd_load_points_from_file = LoadPointsFromFile(
+        coord_type='DEPTH', load_dim=6, shift_height=True)
     sunrgbd_results = dict()
     data_path = './tests/data/sunrgbd'
     sunrgbd_info = sunrgbd_info[0]
     sunrgbd_results['pts_filename'] = osp.join(data_path,
                                                sunrgbd_info['pts_path'])
     sunrgbd_results = sunrgbd_load_points_from_file(sunrgbd_results)
-    sunrgbd_point_cloud = sunrgbd_results['points']
+    sunrgbd_point_cloud = sunrgbd_results['points'].tensor.numpy()
     assert sunrgbd_point_cloud.shape == (100, 4)
 
     scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')
-    scannet_load_data = LoadPointsFromFile(shift_height=True)
+    scannet_load_data = LoadPointsFromFile(
+        coord_type='DEPTH', shift_height=True)
     scannet_results = dict()
     data_path = './tests/data/scannet'
     scannet_info = scannet_info[0]
@@ -29,7 +32,7 @@ def test_load_points_from_indoor_file():
     scannet_results['pts_filename'] = osp.join(data_path,
                                                scannet_info['pts_path'])
     scannet_results = scannet_load_data(scannet_results)
-    scannet_point_cloud = scannet_results['points']
+    scannet_point_cloud = scannet_results['points'].tensor.numpy()
     repr_str = repr(scannet_load_data)
     expected_repr_str = 'LoadPointsFromFile(shift_height=True, ' \
                         'file_client_args={\'backend\': \'disk\'}), ' \
@@ -40,25 +43,27 @@ def test_load_points_from_indoor_file():
 
 def test_load_points_from_outdoor_file():
     data_path = 'tests/data/kitti/a.bin'
-    load_points_from_file = LoadPointsFromFile(4, 4)
+    load_points_from_file = LoadPointsFromFile(
+        coord_type='LIDAR', load_dim=4, use_dim=4)
     results = dict()
     results['pts_filename'] = data_path
     results = load_points_from_file(results)
-    points = results['points']
+    points = results['points'].tensor.numpy()
     assert points.shape == (50, 4)
     assert np.allclose(points.sum(), 2637.479)
 
-    load_points_from_file = LoadPointsFromFile(4, [0, 1, 2, 3])
+    load_points_from_file = LoadPointsFromFile(
+        coord_type='LIDAR', load_dim=4, use_dim=[0, 1, 2, 3])
     results = dict()
     results['pts_filename'] = data_path
     results = load_points_from_file(results)
-    new_points = results['points']
+    new_points = results['points'].tensor.numpy()
     assert new_points.shape == (50, 4)
     assert np.allclose(points.sum(), 2637.479)
     np.equal(points, new_points)
 
     with pytest.raises(AssertionError):
-        LoadPointsFromFile(4, 5)
+        LoadPointsFromFile(coord_type='LIDAR', load_dim=4, use_dim=5)
 
 
 def test_load_annotations3D():
@@ -123,14 +128,14 @@ def test_load_points_from_multi_sweeps():
             [[9.99979347e-01, 3.99870769e-04, 6.41441690e-03],
              [-4.42034222e-04, 9.99978299e-01, 6.57316197e-03],
              [-6.41164929e-03, -6.57586161e-03, 9.99957824e-01]]))
-    results = dict(
-        points=np.array([[1., 2., 3., 4., 5.], [1., 2., 3., 4., 5.],
-                         [1., 2., 3., 4., 5.]]),
-        timestamp=1537290014899034,
-        sweeps=[sweep])
+    points = LiDARPoints(
+        np.array([[1., 2., 3., 4., 5.], [1., 2., 3., 4., 5.],
+                  [1., 2., 3., 4., 5.]]),
+        points_dim=5)
+    results = dict(points=points, timestamp=1537290014899034, sweeps=[sweep])
 
     results = load_points_from_multi_sweeps(results)
-    points = results['points']
+    points = results['points'].tensor.numpy()
     repr_str = repr(load_points_from_multi_sweeps)
     expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
     assert repr_str == expected_repr_str
