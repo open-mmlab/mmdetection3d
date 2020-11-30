@@ -1,5 +1,23 @@
 ## Changelog
 
+### v0.8.0 (30/11/2020)
+
+#### Highlights
+
+- Refactor points structure with more constructive and clearer implementation.
+- Support axis-aligned IoU loss for VoteNet with better performance.
+- Update and enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo.
+
+#### New Features
+
+- Support axis-aligned IoU loss for VoteNet. (#194)
+- Support points structure for consistent processing of all the point related representation. (#196, #204)
+
+#### Improvements
+
+- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#166)
+- Add model zoo statistics and polish the documentation. (#201)
+
 ### v0.7.0 (1/11/2020)
 
 #### Highlights
