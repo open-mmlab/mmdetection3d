@@ -236,7 +236,9 @@ class BasePoints(object):
                 stop = self.tensor.shape[1] + \
                     1 if item[1].stop is None else item[1].stop
                 step = 1 if item[1].step is None else item[1].step
+                item = list(item)
                 item[1] = list(range(start, stop, step))
+                item = tuple(item)
             p = self.tensor[item[0], item[1]]
 
             keep_dims = list(

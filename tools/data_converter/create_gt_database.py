@@ -157,6 +157,7 @@ def create_groundtruth_database(dataset_class_name,
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
+                    coord_type='LIDAR',
                     load_dim=4,
                     use_dim=4,
                     file_client_args=file_client_args),
@@ -174,6 +175,7 @@ def create_groundtruth_database(dataset_class_name,
                 dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
                 dict(
                     type='LoadPointsFromMultiSweeps',
+                    coord_type='LIDAR',
                     sweeps_num=10,
                     use_dim=[0, 1, 2, 3, 4],
                     pad_empty_sweeps=True,
@@ -198,6 +200,7 @@ def create_groundtruth_database(dataset_class_name,
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
+                    coord_type='LIDAR',
                     load_dim=6,
                     use_dim=5,
                     file_client_args=file_client_args),
@@ -232,7 +235,7 @@ def create_groundtruth_database(dataset_class_name,
         example = dataset.pipeline(input_dict)
         annos = example['ann_info']
         image_idx = example['sample_idx']
-        points = example['points']
+        points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
         names = annos['gt_names']
         group_dict = dict()
