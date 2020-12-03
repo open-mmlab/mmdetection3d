@@ -193,9 +193,9 @@ class SUNRGBDDataset(Custom3DDataset):
         # evaluate 2D detection performance
         else:
             eval_results = OrderedDict()
-            assert isinstance(iou_thr_2d, list) or isinstance(
-                iou_thr_2d, tuple)
             annotations = [self.get_ann_info(i) for i in range(len(self))]
+            iou_thr_2d = (iou_thr_2d) if isinstance(iou_thr_2d,
+                                                    float) else iou_thr_2d
             for iou_thr_2d_single in iou_thr_2d:
                 mean_ap, _ = eval_map(
                     results,

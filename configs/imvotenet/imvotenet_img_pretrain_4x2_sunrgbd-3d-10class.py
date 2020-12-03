@@ -293,3 +293,4 @@ poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
 
 resume_from = None
 workflow = [('train', 1)]
+find_unused_parameters = True
