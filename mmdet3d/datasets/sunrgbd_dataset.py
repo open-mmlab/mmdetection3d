@@ -1,8 +1,10 @@
 import numpy as np
+from collections import OrderedDict
 from os import path as osp
 
 from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
+from mmdet.core import eval_map
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
 
@@ -140,6 +142,15 @@ class SUNRGBDDataset(Custom3DDataset):
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d)
+
+        if self.modality['use_camera']:
+            if info['annos']['gt_num'] != 0:
+                gt_bboxes_2d = info['annos']['bbox'].astype(np.float32)
+            else:
+                gt_bboxes_2d = np.zeros((0, 4), dtype=np.float32)
+            anns_results['bboxes'] = gt_bboxes_2d
+            anns_results['labels'] = gt_labels_3d
+
         return anns_results
 
     def show(self, results, out_dir):
@@ -165,3 +176,33 @@ class SUNRGBDDataset(Custom3DDataset):
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+
+    def evaluate(self,
+                 results,
+                 metric=None,
+                 iou_thr=(0.25, 0.5),
+                 iou_thr_2d=(0.5),
+                 logger=None,
+                 show=False,
+                 out_dir=None):
+
+        # evaluate 3D detection performance
+        if isinstance(results[0], dict):
+            return super().evaluate(results, metric, iou_thr, logger, show,
+                                    out_dir)
+        # evaluate 2D detection performance
+        else:
+            eval_results = OrderedDict()
+            annotations = [self.get_ann_info(i) for i in range(len(self))]
+            iou_thr_2d = (iou_thr_2d) if isinstance(iou_thr_2d,
+                                                    float) else iou_thr_2d
+            for iou_thr_2d_single in iou_thr_2d:
+                mean_ap, _ = eval_map(
+                    results,
+                    annotations,
+                    scale_ranges=None,
+                    iou_thr=iou_thr_2d_single,
+                    dataset=self.CLASSES,
+                    logger=logger)
+                eval_results['mAP_' + str(iou_thr_2d_single)] = mean_ap
+            return eval_results
