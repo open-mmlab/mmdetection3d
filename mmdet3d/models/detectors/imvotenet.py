@@ -88,6 +88,49 @@ class ImVoteNet(Base3DDetector):
         if self.with_pts_bbox:
             self.pts_bbox_head.init_weights()
 
+    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
+                              missing_keys, unexpected_keys, error_msgs):
+        # version = local_metadata.get('version', None)
+
+        # if version is None or version < 2:
+        #     # the key is different in early versions
+        #     # In version < 2, DeformConvPack loads previous benchmark models.
+        #     if (prefix + 'conv_offset.weight' not in state_dict
+        #             and prefix[:-1] + '_offset.weight' in state_dict):
+        #         state_dict[prefix + 'conv_offset.weight'] = state_dict.pop(
+        #             prefix[:-1] + '_offset.weight')
+        #     if (prefix + 'conv_offset.bias' not in state_dict
+        #             and prefix[:-1] + '_offset.bias' in state_dict):
+        #         state_dict[prefix +
+        #                    'conv_offset.bias'] = state_dict.pop(prefix[:-1] +
+        #                                                         '_offset.bias')
+
+        # if version is not None and version > 1:
+        #     print_log(
+        #         f'DeformConv2dPack {prefix.rstrip(".")} is upgraded to '
+        #         'version 2.',
+        #         logger='root')
+        # print('))))))))))))))))))))))))))))))))))', prefix)
+        module_names = ['backbone', 'neck', 'roi_head', 'rpn_head']
+        for key in list(state_dict):
+            for module_name in module_names:
+                if key.startswith(module_name) and ('img_' +
+                                                    key) not in state_dict:
+                    state_dict['img_' + key] = state_dict.pop(key)
+        # if (prefix + 'conv_offset.weight' not in state_dict
+        #         and prefix[:-1] + '_offset.weight' in state_dict):
+        #     state_dict[prefix + 'conv_offset.weight'] = state_dict.pop(
+        #         prefix[:-1] + '_offset.weight')
+        # if (prefix + 'conv_offset.bias' not in state_dict
+        #         and prefix[:-1] + '_offset.bias' in state_dict):
+        #     state_dict[prefix +
+        #                 'conv_offset.bias'] = state_dict.pop(prefix[:-1] +
+        #                                                         '_offset.bias')
+
+        super()._load_from_state_dict(state_dict, prefix, local_metadata,
+                                      strict, missing_keys, unexpected_keys,
+                                      error_msgs)
+
     @property
     def with_img_shared_head(self):
         """bool: Whether the detector has a shared head in image branch."""

@@ -1,8 +1,10 @@
 import numpy as np
+from collections import OrderedDict
 from os import path as osp
 
 from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
+from mmdet.core import eval_map
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
 
@@ -186,6 +188,20 @@ class SUNRGBDDataset(Custom3DDataset):
         if isinstance(results[0], dict):
             return super().evaluate(results, metric, iou_thr, logger, show,
                                     out_dir)
+        else:
+            iou_thr = 0.5
+            eval_results = OrderedDict()
+            assert isinstance(iou_thr, float)
+            annotations = [self.get_ann_info(i) for i in range(len(self))]
+            mean_ap, _ = eval_map(
+                results,
+                annotations,
+                scale_ranges=None,
+                iou_thr=iou_thr,
+                dataset=self.CLASSES,
+                logger=logger)
+            eval_results['mAP'] = mean_ap
+            return eval_results
 
         # iou_thrs = (0.5)
         # jsonfile_prefix = None,
