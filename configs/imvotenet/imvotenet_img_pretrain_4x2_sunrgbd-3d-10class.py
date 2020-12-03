@@ -1,15 +1,13 @@
 model = dict(
     type='ImVoteNet',
-    # pretrained='torchvision://resnet50',
     img_backbone=dict(
         type='ResNet',
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=False),  # True),
+        norm_cfg=dict(type='BN', requires_grad=False),
         norm_eval=True,
-        # style='pytorch',
         style='caffe'),
     img_neck=dict(
         type='FPN',
@@ -204,12 +202,10 @@ data_root = 'data/sunrgbd/'
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
-# model = dict(
-#     pretrained='open-mmlab://detectron2/resnet50_caffe',
-#     backbone=dict(norm_cfg=dict(requires_grad=False), style='caffe'))
 # use caffe img_norm
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
+
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
@@ -240,27 +236,18 @@ test_pipeline = [
             dict(type='Collect', keys=['img']),
         ])
 ]
-# data = dict(
-#     train=dict(pipeline=train_pipeline),
-#     val=dict(pipeline=test_pipeline),
-#     test=dict(pipeline=test_pipeline))
 
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
-        type='RepeatDataset',
-        times=1,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'sunrgbd_infos_train.pkl',
-            pipeline=train_pipeline,
-            classes=class_names,
-            filter_empty_gt=False,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')),
+        type=dataset_type,
+        data_root=data_root,
+        ann_file=data_root + 'sunrgbd_infos_train.pkl',
+        pipeline=train_pipeline,
+        classes=class_names,
+        filter_empty_gt=False,
+        box_type_3d='Depth'),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -296,102 +283,13 @@ log_config = dict(
     interval=50,
     hooks=[
         dict(type='TextLoggerHook'),
-        # dict(type='TensorboardLoggerHook')
+        dict(type='TensorboardLoggerHook')
     ])
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-load_from = 'data/ckpts/mask_rcnn_r50_caffe_fpn_mstrain- \
-    poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
+load_from = 'data/ckpts/mask_rcnn_r50_caffe_fpn_mstrain-\
+poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
 
 resume_from = None
 workflow = [('train', 1)]
-
-# img_norm_cfg = dict(
-#     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
-# train_pipeline = [
-#     dict(type='LoadImageFromFile'),
-#     dict(type='LoadAnnotations', with_bbox=True),
-#     dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
-#     dict(type='RandomFlip', flip_ratio=0.5),
-#     dict(type='Normalize', **img_norm_cfg),
-#     dict(type='Pad', size_divisor=32),
-#     dict(type='DefaultFormatBundle'),
-#     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
-# ]
-# test_pipeline = [
-#     dict(type='LoadImageFromFile'),
-#     dict(
-#         type='MultiScaleFlipAug',
-#         img_scale=(1333, 800),
-#         flip=False,
-#         transforms=[
-#             dict(type='Resize', keep_ratio=True),
-#             dict(type='RandomFlip'),
-#             dict(type='Normalize', **img_norm_cfg),
-#             dict(type='Pad', size_divisor=32),
-#             dict(type='ImageToTensor', keys=['img']),
-#             dict(type='Collect', keys=['img']),
-#         ])
-# ]
-
-# data = dict(
-#     samples_per_gpu=4,
-#     workers_per_gpu=2,
-#     train=dict(
-#         type='RepeatDataset',
-#         times=5,
-#         dataset=dict(
-#             type=dataset_type,
-#             data_root=data_root,
-#             ann_file=data_root + 'sunrgbd_infos_train.pkl',
-#             pipeline=train_pipeline,
-#             classes=class_names,
-#             filter_empty_gt=False,
-#             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-#             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-#             box_type_3d='Depth')),
-#     val=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         ann_file=data_root + 'sunrgbd_infos_val.pkl',
-#         pipeline=test_pipeline,
-#         classes=class_names,
-#         test_mode=True,
-#         box_type_3d='Depth'),
-#     test=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         ann_file=data_root + 'sunrgbd_infos_val.pkl',
-#         pipeline=test_pipeline,
-#         classes=class_names,
-#         test_mode=True,
-#         box_type_3d='Depth'))
-
-# # optimizer
-# optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-# optimizer_config = dict(grad_clip=None)
-# # learning policy
-# lr_config = dict(
-#     policy='step',
-#     warmup='linear',
-#     warmup_iters=500,
-#     warmup_ratio=0.001,
-#     step=[8, 11])
-# total_epochs = 12
-
-# checkpoint_config = dict(interval=1)
-# # yapf:disable
-# log_config = dict(
-#     interval=50,
-#     hooks=[
-#         dict(type='TextLoggerHook'),
-#         # dict(type='TensorboardLoggerHook')
-#     ])
-# # yapf:enable
-# dist_params = dict(backend='nccl')
-# log_level = 'INFO'
-# load_from =  'data/ckpts/faster_rcnn_r50_caffe_fpn_
-# mstrain_3x_coco_bbox_mAP-0.398_20200504_163323-30042637.pth'
-# resume_from = None
-# workflow = [('train', 1)]
