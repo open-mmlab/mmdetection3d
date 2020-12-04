@@ -1,6 +1,9 @@
+import numpy as np
+import torch
 from torch import nn as nn
 
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
+from tools.data_converter.sunrgbd_data_utils import SUNRGBD_Calibration
 from .base import Base3DDetector
 
 
@@ -158,9 +161,9 @@ class ImVoteNet(Base3DDetector):
 
     def extract_pts_feat(self, pts):
         """Extract features of points."""
-        x = self.backbone(pts)
-        if self.with_neck:
-            x = self.neck(x)
+        x = self.pts_backbone(pts)
+        if self.with_pts_neck:
+            x = self.pts_neck(x)
         return x
 
     def extract_feat(self, pts, img):
@@ -168,6 +171,143 @@ class ImVoteNet(Base3DDetector):
         img_feats = self.extract_img_feat(img)
         pts_feats = self.extract_pts_feat(pts)
         return (img_feats, pts_feats)
+
+    def cal_image_vote(self, seed_3d, bboxes_2d, calib, img_metas):
+        print(img_metas)
+
+        for i in range(len(seed_3d)):
+            img_meta = img_metas[i]
+            pts = seed_3d[i]
+            img_shape = img_meta['img_shape']
+            pcd_scale_factor = (
+                img_meta['pcd_scale_factor']
+                if 'pcd_scale_factor' in img_meta.keys() else 1)
+            pcd_trans_factor = (
+                pts.new_tensor(img_meta['pcd_trans'])
+                if 'pcd_trans' in img_meta.keys() else 0)
+            pcd_rotate_mat = (
+                pts.new_tensor(img_meta['pcd_rotation'])
+                if 'pcd_rotation' in img_meta.keys() else
+                torch.eye(3).type_as(pts).to(pts.device))
+            img_scale_factor = (
+                pts.new_tensor(img_meta['scale_factor'][:2])
+                if 'scale_factor' in img_meta.keys() else 1)
+            pcd_horizontal_flip = img_meta[
+                'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
+                img_meta.keys() else False
+            pcd_vertical_flip = img_meta[
+                'pcd_vertical_flip'] if 'pcd_vertical_flip' in \
+                img_meta.keys() else False
+            # print(pcd_flip)
+            img_flip = img_meta['flip'] if 'flip' in \
+                img_meta.keys() else False
+            img_crop_offset = (
+                pts.new_tensor(img_meta['img_crop_offset'])
+                if 'img_crop_offset' in img_meta.keys() else 0)
+
+            pts -= pcd_trans_factor
+            # the points should be scaled to the original scale in
+            # velo coordinate
+            pts /= pcd_scale_factor
+            # the points should be rotated back
+            # pcd_rotate_mat @ pcd_rotate_mat.inverse() is not
+            # exactly an identity
+            # matrix, use angle to create the inverse rot matrix neither.
+            pts = pts @ pcd_rotate_mat.inverse()
+
+            if pcd_horizontal_flip:
+                pts = img_meta['box_type_3d'].flip('horizontal', pts)
+                # if the points are flipped, flip them back first
+                # pts[:, 0] = -pts[:, 0]
+
+            if pcd_vertical_flip:
+                pts = img_meta['box_type_3d'].flip('vertical', pts)
+                # if the points are flipped, flip them back first
+                # pts[:, 1] = -pts[:, 1]
+
+            # # project points from velo coordinate to camera coordinate
+            # num_points = points.shape[0]
+            # pts_4d = torch.cat([points, points.
+            # new_ones(size=(num_points, 1))], dim=-1)
+            # pts_2d = pts_4d @ lidar2img_rt.t()
+
+            # # cam_points is Tensor of Nx4 whose last column is 1
+            # # transform camera coordinate to image coordinate
+
+            # pts_2d[:, 2] = torch.clamp(pts_2d[:, 2], min=1e-5)
+            # pts_2d[:, 0] /= pts_2d[:, 2]
+            # pts_2d[:, 1] /= pts_2d[:, 2]
+
+            # # img transformation: scale -> crop -> flip
+            # # the image is resized by img_scale_factor
+            # img_coors = pts_2d[:, 0:2] * img_scale_factor  # Nx2
+            # img_coors -= img_crop_offset
+
+            sun_calib = SUNRGBD_Calibration(Rt=calib['Rt'][i], K=calib['K'][i])
+            # print(sun_calib.Rt, sun_calib.K)
+            # self.print_structure(seed_3d)
+            a, b = sun_calib.project_upright_depth_to_image(pts.cpu().numpy())
+            a = seed_3d.new_tensor(a)
+
+            a -= 0.5
+
+            a[:, 0] = a[:, 0] * img_scale_factor[1]
+            a[:, 1] = a[:, 1] * img_scale_factor[0]
+            a -= img_crop_offset
+
+            orig_h, orig_w, _ = img_shape
+            if img_flip:
+                # by default we take it as horizontal flip
+                # use img_shape before padding for flip
+
+                a[:, 0] = orig_w - a[:, 0]
+            # print(a[:, 0].max(), a[:, 1].max(), a[:, 0].min(),
+            # a[:, 1].min(), orig_h, orig_w)
+            # print('pos', (a>=0).all())
+            # print('w', (a[:, 0]<=orig_w).all())
+            # print('h', (a[:, 1]<=orig_h).all())
+
+            # self.print_structure(a)
+            # self.print_structure(b)
+            # print('a', a)
+            # print('b', b)
+
+    def print_structure(self, item):
+        if isinstance(item, list) or isinstance(item, tuple):
+            print(len(item))
+            for i in item:
+                self.print_structure(i)
+        elif isinstance(item, dict):
+            for i in item.keys():
+                print(i)
+                self.print_structure(item[i])
+        elif isinstance(item, str):
+            print(item)
+        else:
+            print(item.shape)
+
+    def extract_bboxes_2d(self, img, img_metas, **kwargs):
+        x = self.extract_img_feat(img)
+        proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
+        rets = self.img_roi_head.simple_test(
+            x, proposal_list, img_metas, rescale=False)
+        # self.print_structure(x)
+        rets_processed = []
+        for ret in rets:
+            sem_class = []
+            for i, bboxes in enumerate(ret):
+                sem_class.extend([i] * len(bboxes))
+            sem_class = np.array(sem_class)
+            ret = np.concatenate(ret, axis=0)
+            ret = np.concatenate([ret, sem_class[:, None]], axis=-1)
+            ret = torch.from_numpy(ret).cuda()
+            inds = torch.argsort(ret[:, 4], descending=True)
+            ret = ret.index_select(0, inds)
+            # print(ret[:, :4].min())
+            rets_processed.append(ret)
+        return rets_processed
+        # self.print_structure(img)
+        # self.print_structure(ret)
 
     def forward_train(self,
                       points=None,
@@ -178,6 +318,7 @@ class ImVoteNet(Base3DDetector):
                       gt_bboxes_ignore=None,
                       gt_masks=None,
                       proposals=None,
+                      calib=None,
                       **kwargs):
         """
         Args:
@@ -226,6 +367,13 @@ class ImVoteNet(Base3DDetector):
             losses.update(roi_losses)
             return losses
         else:
+            with torch.no_grad():
+                bboxes_2d = self.extract_bboxes_2d(img, img_metas, **kwargs)
+            points = torch.stack(points)
+            pts_feats = self.extract_pts_feat(points)
+            seed_points, seed_features, seed_indices = \
+                self.pts_bbox_head._extract_input(pts_feats)
+            self.cal_image_vote(seed_points, bboxes_2d, calib, img_metas)
             return None
 
     def forward_test(self, points=None, img_metas=None, img=None, **kwargs):
