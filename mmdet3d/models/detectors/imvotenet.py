@@ -36,13 +36,15 @@ class ImVoteNet(Base3DDetector):
         if img_neck is not None:
             self.img_neck = build_neck(img_neck)
         if img_rpn_head is not None:
-            rpn_train_cfg = train_cfg.rpn if train_cfg is not None else None
+            rpn_train_cfg = train_cfg.img_rpn if train_cfg \
+                is not None else None
             img_rpn_head_ = img_rpn_head.copy()
             img_rpn_head_.update(
                 train_cfg=rpn_train_cfg, test_cfg=test_cfg.rpn)
             self.img_rpn_head = build_head(img_rpn_head_)
         if img_roi_head is not None:
-            rcnn_train_cfg = train_cfg.rcnn if train_cfg is not None else None
+            rcnn_train_cfg = train_cfg.img_rcnn if train_cfg \
+                is not None else None
             img_roi_head.update(
                 train_cfg=rcnn_train_cfg, test_cfg=test_cfg.rcnn)
             self.img_roi_head = build_head(img_roi_head)
@@ -207,7 +209,7 @@ class ImVoteNet(Base3DDetector):
 
             # RPN forward and loss
             if self.with_img_rpn:
-                proposal_cfg = self.train_cfg.get('rpn_proposal',
+                proposal_cfg = self.train_cfg.get('img_rpn_proposal',
                                                   self.test_cfg.rpn)
                 rpn_losses, proposal_list = self.img_rpn_head.forward_train(
                     x,

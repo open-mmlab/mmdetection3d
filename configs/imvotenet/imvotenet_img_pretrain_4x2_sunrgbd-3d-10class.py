@@ -134,7 +134,7 @@ model = dict(
 
 # model training and testing settings
 train_cfg = dict(
-    rpn=dict(
+    img_rpn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
             pos_iou_thr=0.7,
@@ -151,14 +151,14 @@ train_cfg = dict(
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
-    rpn_proposal=dict(
+    img_rpn_proposal=dict(
         nms_across_levels=False,
         nms_pre=2000,
         nms_post=1000,
         max_num=1000,
         nms_thr=0.7,
         min_bbox_size=0),
-    rcnn=dict(
+    img_rcnn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
             pos_iou_thr=0.5,
@@ -288,8 +288,10 @@ log_config = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-load_from = 'data/ckpts/mask_rcnn_r50_caffe_fpn_mstrain-\
-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
+load_from = 'http://download.openmmlab.com/mmdetection/v2.0/\
+mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/\
+mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408\
+__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
 
 resume_from = None
 workflow = [('train', 1)]
