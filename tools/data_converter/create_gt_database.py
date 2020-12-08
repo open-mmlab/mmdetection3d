@@ -172,10 +172,13 @@ def create_groundtruth_database(dataset_class_name,
         dataset_cfg.update(
             use_valid_flag=True,
             pipeline=[
-                dict(type='LoadPointsFromFile', load_dim=5, use_dim=5),
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='LIDAR',
+                    load_dim=5,
+                    use_dim=5),
                 dict(
                     type='LoadPointsFromMultiSweeps',
-                    coord_type='LIDAR',
                     sweeps_num=10,
                     use_dim=[0, 1, 2, 3, 4],
                     pad_empty_sweeps=True,
