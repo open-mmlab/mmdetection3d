@@ -6,10 +6,7 @@ from .base import Base3DDetector
 
 @DETECTORS.register_module()
 class ImVoteNet(Base3DDetector):
-    """ImVoteNet model.
-
-    https://arxiv.org/pdf/2001.10692.pdf
-    """
+    r"""`ImVoteNet <https://arxiv.org/abs/2001.10692>`_ for 3D detection."""
 
     def __init__(self,
                  pts_backbone,
@@ -40,13 +37,13 @@ class ImVoteNet(Base3DDetector):
                 is not None else None
             img_rpn_head_ = img_rpn_head.copy()
             img_rpn_head_.update(
-                train_cfg=rpn_train_cfg, test_cfg=test_cfg.rpn)
+                train_cfg=rpn_train_cfg, test_cfg=test_cfg.img_rpn)
             self.img_rpn_head = build_head(img_rpn_head_)
         if img_roi_head is not None:
             rcnn_train_cfg = train_cfg.img_rcnn if train_cfg \
                 is not None else None
             img_roi_head.update(
-                train_cfg=rcnn_train_cfg, test_cfg=test_cfg.rcnn)
+                train_cfg=rcnn_train_cfg, test_cfg=test_cfg.img_rcnn)
             self.img_roi_head = build_head(img_roi_head)
 
         self.train_cfg = train_cfg
@@ -181,7 +178,7 @@ class ImVoteNet(Base3DDetector):
                       gt_masks=None,
                       proposals=None,
                       **kwargs):
-        """
+        """ Forward of training for image only or image and points.
         Args:
             img (Tensor): of shape (N, C, H, W) encoding input images.
                 Typically these should be mean centered and std scaled.
@@ -199,6 +196,7 @@ class ImVoteNet(Base3DDetector):
                 used if the architecture supports a segmentation task.
             proposals : override rpn proposals with custom proposals. Use when
                 `with_rpn` is False.
+
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
