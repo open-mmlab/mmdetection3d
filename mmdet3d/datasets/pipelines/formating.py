@@ -48,7 +48,8 @@ class DefaultFormatBundle(object):
                 results['img'] = DC(to_tensor(imgs), stack=True)
             else:
                 # move rgb dimension to front
-                # (h x w x rgb x multi_imgs) -> (rgb x h x w x rgb x multi_imgs)
+                # (h x w x rgb x multi_imgs)
+                # to (rgb x h x w x rgb x multi_imgs)
                 # last dim is  optional
                 img = np.ascontiguousarray(np.moveaxis(results['img'], 2, 0))
                 results['img'] = DC(to_tensor(img), stack=True)
