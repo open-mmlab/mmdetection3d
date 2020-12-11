@@ -47,7 +47,10 @@ class DefaultFormatBundle(object):
                 imgs = np.ascontiguousarray(np.stack(imgs, axis=0))
                 results['img'] = DC(to_tensor(imgs), stack=True)
             else:
-                img = np.ascontiguousarray(results['img'].transpose(2, 0, 1))
+                # move rgb dimension to front
+                # (h x w x rgb x multi_imgs) -> (rgb x h x w x rgb x multi_imgs)
+                # last dim is  optional
+                img = np.ascontiguousarray(np.moveaxis(results['img'], 2, 0))
                 results['img'] = DC(to_tensor(img), stack=True)
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
