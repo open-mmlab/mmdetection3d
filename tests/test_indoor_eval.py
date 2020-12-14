@@ -141,7 +141,7 @@ def test_indoor_eval_less_classes():
         DepthInstance3DBoxes(torch.tensor([[1., 1., 1., 1., 1., 1., 1.]])),
         'scores_3d':
         torch.tensor([.5])
-    }] + [{
+    }, {
         'labels_3d':
         torch.tensor([1]),
         'boxes_3d':
@@ -150,22 +150,15 @@ def test_indoor_eval_less_classes():
         torch.tensor([.5])
     }]
 
-    label2cat = {
-        0: 'cabinet',
-        1: 'bed',
-        2: 'chair'
-    }
+    label2cat = {0: 'cabinet', 1: 'bed', 2: 'chair'}
     gt_annos = [{
         'gt_num':
         2,
         'gt_boxes_upright_depth':
-        np.array([
-            [0., 0., 0., 1., 1., 1., 1.],
-            [1., 1., 1., 1., 1., 1., 1.]
-        ]),
+        np.array([[0., 0., 0., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1., 1.]]),
         'class':
         np.array([2, 0])
-    }] + [{
+    }, {
         'gt_num':
         1,
         'gt_boxes_upright_depth':

@@ -181,8 +181,8 @@ def eval_map_recall(pred, gt, ovthresh=None):
     ret_values = {}
     for classname in gt.keys():
         if classname in pred:
-            ret_values[classname] = eval_det_cls(
-                pred[classname], gt[classname], ovthresh)
+            ret_values[classname] = eval_det_cls(pred[classname],
+                                                 gt[classname], ovthresh)
     recall = [{} for i in ovthresh]
     precision = [{} for i in ovthresh]
     ap = [{} for i in ovthresh]
