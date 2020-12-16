@@ -1,6 +1,9 @@
+import numpy as np
+import torch
 from torch import nn as nn
 
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
+from tools.data_converter.sunrgbd_data_utils import SUNRGBD_Calibration
 from .base import Base3DDetector
 
 
@@ -49,6 +52,7 @@ class ImVoteNet(Base3DDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self.init_weights(pretrained=pretrained)
+        self.num_classes = img_roi_head.bbox_head.num_classes
 
     def init_weights(self, pretrained=None):
         """Initialize model weights."""
@@ -157,9 +161,9 @@ class ImVoteNet(Base3DDetector):
 
     def extract_pts_feat(self, pts):
         """Extract features of points."""
-        x = self.backbone(pts)
-        if self.with_neck:
-            x = self.neck(x)
+        x = self.pts_backbone(pts)
+        if self.with_pts_neck:
+            x = self.pts_neck(x)
         return x
 
     def extract_feat(self, pts, img):
@@ -167,6 +171,258 @@ class ImVoteNet(Base3DDetector):
         img_feats = self.extract_img_feat(img)
         pts_feats = self.extract_pts_feat(pts)
         return (img_feats, pts_feats)
+
+    def cal_image_vote(self, seed_3d, bboxes_2d, calib, img_metas):
+        print(img_metas)
+
+        seeds_2d_trans = []
+        seeds_3d_origin = []
+        seeds_2d_origin = []
+        bboxes_2d_origin = []
+        for i in range(len(seed_3d)):
+            img_meta = img_metas[i]
+            pts = seed_3d[i]
+            img_shape = img_meta['img_shape']
+            pcd_scale_factor = (
+                img_meta['pcd_scale_factor']
+                if 'pcd_scale_factor' in img_meta.keys() else 1)
+            pcd_trans_factor = (
+                pts.new_tensor(img_meta['pcd_trans'])
+                if 'pcd_trans' in img_meta.keys() else 0)
+            pcd_rotate_mat = (
+                pts.new_tensor(img_meta['pcd_rotation'])
+                if 'pcd_rotation' in img_meta.keys() else
+                torch.eye(3).type_as(pts).to(pts.device))
+            img_scale_factor = (
+                pts.new_tensor(img_meta['scale_factor'][:2])
+                if 'scale_factor' in img_meta.keys() else 1)
+            pcd_horizontal_flip = img_meta[
+                'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
+                img_meta.keys() else False
+            pcd_vertical_flip = img_meta[
+                'pcd_vertical_flip'] if 'pcd_vertical_flip' in \
+                img_meta.keys() else False
+            # print(pcd_flip)
+            img_flip = img_meta['flip'] if 'flip' in \
+                img_meta.keys() else False
+            img_crop_offset = (
+                pts.new_tensor(img_meta['img_crop_offset'])
+                if 'img_crop_offset' in img_meta.keys() else 0)
+
+            pts -= pcd_trans_factor
+            # the points should be scaled to the original scale in
+            # velo coordinate
+            pts /= pcd_scale_factor
+            # the points should be rotated back
+            # pcd_rotate_mat @ pcd_rotate_mat.inverse() is not
+            # exactly an identity
+            # matrix, use angle to create the inverse rot matrix neither.
+            pts = pts @ pcd_rotate_mat.inverse()
+
+            if pcd_horizontal_flip:
+                pts = img_meta['box_type_3d'].flip('horizontal', pts)
+                # if the points are flipped, flip them back first
+                # pts[:, 0] = -pts[:, 0]
+
+            if pcd_vertical_flip:
+                pts = img_meta['box_type_3d'].flip('vertical', pts)
+                # if the points are flipped, flip them back first
+                # pts[:, 1] = -pts[:, 1]
+
+            # # project points from velo coordinate to camera coordinate
+            # num_points = points.shape[0]
+            # pts_4d = torch.cat([points, points.
+            # new_ones(size=(num_points, 1))], dim=-1)
+            # pts_2d = pts_4d @ lidar2img_rt.t()
+
+            # # cam_points is Tensor of Nx4 whose last column is 1
+            # # transform camera coordinate to image coordinate
+
+            # pts_2d[:, 2] = torch.clamp(pts_2d[:, 2], min=1e-5)
+            # pts_2d[:, 0] /= pts_2d[:, 2]
+            # pts_2d[:, 1] /= pts_2d[:, 2]
+
+            # # img transformation: scale -> crop -> flip
+            # # the image is resized by img_scale_factor
+            # img_coors = pts_2d[:, 0:2] * img_scale_factor  # Nx2
+            # img_coors -= img_crop_offset
+
+            sun_calib = SUNRGBD_Calibration(Rt=calib['Rt'][i], K=calib['K'][i])
+            # print(sun_calib.Rt, sun_calib.K)
+            # self.print_structure(seed_3d)
+            origin_img, origin_pc = sun_calib.project_upright_depth_to_image(
+                pts.cpu().numpy())
+            origin_pc = seed_3d.new_tensor(origin_pc)
+            origin_img = seed_3d.new_tensor(origin_img)
+            # origin_img = origin_img - 0.5
+            # print('origin_img', origin_img[0].max(), origin_img[1].max())
+            trans_img = origin_img.clone()
+
+            trans_img[:, 0] = trans_img[:, 0] * img_scale_factor[0]  # w, h
+            trans_img[:, 1] = trans_img[:, 1] * img_scale_factor[1]
+
+            trans_img -= img_crop_offset
+            bbox_2d = bboxes_2d[i]
+            bbox_2d_origin = bbox_2d.clone()
+
+            orig_h, orig_w, _ = img_shape
+            if img_flip:
+                # by default we take it as horizontal flip
+                # use img_shape before padding for flip
+
+                trans_img[:, 0] = orig_w - trans_img[:, 0]
+
+                bbox_2d_origin_r = orig_w - bbox_2d_origin[:, 0]
+                bbox_2d_origin_l = orig_w - bbox_2d_origin[:, 2]
+                bbox_2d_origin[:, 0] = bbox_2d_origin_l
+                bbox_2d_origin[:, 2] = bbox_2d_origin_r
+            bbox_2d_origin[:, 0] = bbox_2d_origin[:, 0] / img_scale_factor[0]
+            bbox_2d_origin[:, 2] = bbox_2d_origin[:, 2] / img_scale_factor[0]
+            bbox_2d_origin[:, 1] = bbox_2d_origin[:, 1] / img_scale_factor[1]
+            bbox_2d_origin[:, 3] = bbox_2d_origin[:, 3] / img_scale_factor[1]
+            bboxes_2d_origin.append(bbox_2d_origin)
+
+            print(trans_img[:, 0].max(), trans_img[:, 1].max(),
+                  trans_img[:, 0].min(), trans_img[:, 1].min(), orig_h, orig_w)
+            # print('pos', (a>=0).all())
+            # print('w', (a[:, 0]<=orig_w).all())
+            # print('h', (a[:, 1]<=orig_h).all())
+
+            # self.print_structure(a)
+            # self.print_structure(b)
+            # print('a', a)
+            # print('b', b)
+            seeds_2d_trans.append(trans_img)
+            seeds_2d_origin.append(origin_img)
+            seeds_3d_origin.append(origin_pc)
+        return (seeds_3d_origin, seeds_2d_origin, seeds_2d_trans,
+                bboxes_2d_origin)
+
+    def print_structure(self, item):
+        if isinstance(item, list) or isinstance(item, tuple):
+            print(len(item))
+            for i in item:
+                self.print_structure(i)
+        elif isinstance(item, dict):
+            for i in item.keys():
+                print(i)
+                self.print_structure(item[i])
+        elif isinstance(item, str):
+            print(item)
+        else:
+            print(item.shape)
+
+    def extract_bboxes_2d(self, img, img_metas, **kwargs):
+        x = self.extract_img_feat(img)
+        proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
+        rets = self.img_roi_head.simple_test(
+            x, proposal_list, img_metas, rescale=False)
+        # self.print_structure(x)
+        rets_processed = []
+        for ret in rets:
+            sem_class = []
+            for i, bboxes in enumerate(ret):
+                sem_class.extend([i] * len(bboxes))
+            sem_class = np.array(sem_class)
+            ret = np.concatenate(ret, axis=0)
+            ret = np.concatenate([ret, sem_class[:, None]], axis=-1)
+            ret = torch.from_numpy(ret).cuda()
+            inds = torch.argsort(ret[:, 4], descending=True)
+            ret = ret.index_select(0, inds)
+            # print(ret[:, :4].min())
+            rets_processed.append(ret)
+            print(ret[:, 2].max(), ret[:, 3].max())
+        return rets_processed
+        # self.print_structure(img)
+        # self.print_structure(ret)
+
+    def fuse_image_feats(self, bboxes_2d, seeds_3d_origin, seeds_2d_origin,
+                         seeds_2d_trans, bboxes_2d_origin, origin_feat_map,
+                         img_metas, calib):
+        # self.print_structure(bboxes_2d)
+        # self.print_structure(seeds_3d_proj)
+        # exit(0)
+        for i, data in enumerate(
+                zip(bboxes_2d, bboxes_2d_origin, seeds_3d_origin,
+                    seeds_2d_origin, seeds_2d_trans)):
+            bbox, bbox_origin, seed_3d, seed_2d, seed_2d_trans = data
+            bbox_num = bbox.shape[0]
+            seed_num = seed_2d_trans.shape[0]
+            bbox_expanded = bbox_origin.view(1, bbox_num,
+                                             -1).expand(seed_num, -1, -1)
+            # bbox_expanded = bbox.view(1, bbox_num, -1).
+            # expand(seed_num, -1, -1)
+            seed_expanded = seed_2d.view(seed_num, 1,
+                                         -1).expand(-1, bbox_num, -1)
+            seed_3d_expanded = seed_3d.view(seed_num, 1,
+                                            -1).expand(-1, bbox_num, -1)
+            seed_expanded_x, seed_expanded_y = seed_expanded.split(1, dim=-1)
+            bbox_expanded_l, bbox_expanded_t, bbox_expanded_r, \
+                bbox_expanded_b, bbox_expanded_conf, bbox_expanded_cls = \
+                bbox_expanded.split(1, dim=-1)
+            bbox_expanded_midx = (bbox_expanded_l + bbox_expanded_r) / 2
+            bbox_expanded_midy = (bbox_expanded_t + bbox_expanded_b) / 2
+            seed_in_bbox_x = (seed_expanded_x > bbox_expanded_l) * \
+                (seed_expanded_x < bbox_expanded_r)
+            seed_in_bbox_y = (seed_expanded_y > bbox_expanded_t) * \
+                (seed_expanded_y < bbox_expanded_b)
+            seed_in_bbox = seed_in_bbox_x * seed_in_bbox_y
+            sem_cues = torch.zeros_like(bbox_expanded_conf).expand(
+                -1, -1, self.num_classes)
+            sem_cues = sem_cues.scatter(-1, bbox_expanded_cls.long(),
+                                        bbox_expanded_conf)
+            # for x in sem_cues:
+            # print(x)
+            # print(sem_cues[0])
+            raw_img = origin_feat_map[i]
+            # print(raw_img.sum(0))
+            # print(raw_img.sum(0)[-10:])
+            # print(raw_img.sum(0)[:, -10:])
+            img_shape = img_metas[i]['img_shape']
+            raw_img_flatten = raw_img.view(3, -1)
+            seed_trans_flatten = seed_2d_trans[:, 1] * img_shape[
+                1] + seed_2d_trans[:, 0]
+            txt_cues = torch.gather(
+                raw_img_flatten,
+                dim=-1,
+                index=seed_trans_flatten.unsqueeze(0).expand(3, -1).long())
+            txt_cues = txt_cues.transpose(1, 0)
+            print(txt_cues.shape)
+            # txt_cues = None # TODO
+            # vec_to_ctr = torch.cat(
+            #     [bbox_expanded_midx - seed_expanded_x,
+            #     bbox_expanded_midy - seed_expanded_y], dim=-1)
+            delta_u = bbox_expanded_midx - seed_expanded_x
+            delta_v = bbox_expanded_midy - seed_expanded_y
+            x_3d, y_3d, z_3d = seed_3d_expanded.split(1, dim=-1)
+
+            sun_calib = SUNRGBD_Calibration(Rt=calib['Rt'][i], K=calib['K'][i])
+            assert sun_calib.f_u == sun_calib.f_v
+            z_div_f = z_3d / sun_calib.f_u
+            print(delta_v.shape, z_div_f.shape)
+            geo_0 = delta_u * z_div_f
+            geo_1 = delta_v * z_div_f
+            geo_2 = geo_0 + x_3d
+            geo_3 = geo_1 + y_3d
+            geo_4 = z_3d.double()
+            geo_xy = torch.cat([geo_2, geo_3, torch.zeros_like(geo_2)], dim=-1)
+            geo_xy = sun_calib.project_camera_to_upright_depth(
+                geo_xy.cpu().numpy())
+            geo_xy = geo_0.new_tensor(geo_xy)
+            geo_vec = torch.cat([geo_2, geo_3, geo_4], dim=-1)
+            geo_vec = sun_calib.project_camera_to_upright_depth(
+                geo_vec.cpu().numpy())
+            geo_vec = geo_0.new_tensor(geo_vec)
+            geo_vec_norm = geo_vec.norm(dim=-1, keepdim=True)
+            geo_vec = geo_vec / geo_vec_norm
+            geo_cues = torch.cat([geo_xy[:, :, :2], geo_vec], dim=-1)
+            print(geo_cues)
+            pos_img_votes = None  # TODO
+            neg_img_votes = torch.zeros_like(pos_img_votes)
+            seed_in_bbox_expanded = seed_in_bbox.expand(-1, -1, 2)
+            img_votes = torch.where(seed_in_bbox_expanded, pos_img_votes,
+                                    neg_img_votes)
+            print('img_votes', img_votes)
 
     def forward_train(self,
                       points=None,
@@ -177,6 +433,7 @@ class ImVoteNet(Base3DDetector):
                       gt_bboxes_ignore=None,
                       gt_masks=None,
                       proposals=None,
+                      calib=None,
                       **kwargs):
         """ Forward of training for image only or image and points.
         Args:
@@ -226,7 +483,19 @@ class ImVoteNet(Base3DDetector):
             losses.update(roi_losses)
             return losses
         else:
-            return None
+            with torch.no_grad():
+                bboxes_2d = self.extract_bboxes_2d(img, img_metas, **kwargs)
+            points = torch.stack(points)
+            pts_feats = self.extract_pts_feat(points)
+            seed_points, seed_features, seed_indices = \
+                self.pts_bbox_head._extract_input(pts_feats)
+            seeds_3d_origin, seeds_2d_origin, seeds_2d_trans, \
+                bboxes_2d_origin = \
+                self.cal_image_vote(seed_points, bboxes_2d, calib, img_metas)
+            self.fuse_image_feats(bboxes_2d, seeds_3d_origin, seeds_2d_origin,
+                                  seeds_2d_trans, bboxes_2d_origin, img,
+                                  img_metas, calib)
+            return dict()
 
     def forward_test(self, points=None, img_metas=None, img=None, **kwargs):
         """

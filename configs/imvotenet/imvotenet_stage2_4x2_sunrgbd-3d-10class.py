@@ -129,11 +129,12 @@ model = dict(
         size_res_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
         semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+)
 
 # model training and testing settings
 train_cfg = dict(
-    img_rpn=dict(
+    rpn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
             pos_iou_thr=0.7,
@@ -150,14 +151,14 @@ train_cfg = dict(
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
-    img_rpn_proposal=dict(
+    rpn_proposal=dict(
         nms_across_levels=False,
         nms_pre=2000,
         nms_post=1000,
         max_num=1000,
         nms_thr=0.7,
         min_bbox_size=0),
-    img_rcnn=dict(
+    rcnn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
             pos_iou_thr=0.5,
@@ -178,24 +179,23 @@ train_cfg = dict(
     sample_mod='vote')
 
 test_cfg = dict(
-    img_rpn=dict(
+    rpn=dict(
         nms_across_levels=False,
         nms_pre=1000,
         nms_post=1000,
         max_num=1000,
         nms_thr=0.7,
         min_bbox_size=0),
-    img_rcnn=dict(
+    rcnn=dict(
         score_thr=0.05,
         nms=dict(type='nms', iou_threshold=0.5),
         max_per_img=100),
     # soft-nms is also supported for rcnn testing
     # e.g., nms=dict(type='soft_nms', iou_threshold=0.5, min_score=0.05)
-    pts=dict(
-        sample_mod='seed',
-        nms_thr=0.25,
-        score_thr=0.05,
-        per_class_proposal=True))
+    sample_mod='seed',
+    nms_thr=0.25,
+    score_thr=0.05,
+    per_class_proposal=True)
 
 dataset_type = 'SUNRGBDDataset'
 data_root = 'data/sunrgbd/'
@@ -207,19 +207,44 @@ img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 
 train_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        shift_height=True,
+        load_dim=6,
+        use_dim=[0, 1, 2]),
     dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Resize',
-        img_scale=[(1333, 480), (1333, 504), (1333, 528), (1333, 552),
-                   (1333, 576), (1333, 600)],
+        img_scale=(1333, 600),
         multiscale_mode='value',
         keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    dict(
+        type='RandomFlip3D',
+        sync_2d=False,  # False
+        flip_ratio_bev_horizontal=0.5,
+    ),
+    dict(
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.523599, 0.523599],
+        scale_ratio_range=[0.85, 1.15],
+        shift_height=True),
+    dict(type='IndoorPointSample', num_points=20000),
+    dict(type='DefaultFormatBundle3D', class_names=class_names),
+    # dict(type='DefaultFormatBundle'),
+
+    # dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels',
+    # 'points', 'gt_bboxes_3d', 'gt_labels_3d', 'calib']),
+    dict(
+        type='Collect3D',
+        keys=[
+            'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
+            'gt_labels_3d', 'calib'
+        ])
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -274,8 +299,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.001,
-    step=[6])
-total_epochs = 8
+    step=[80, 120])
+total_epochs = 140
 
 checkpoint_config = dict(interval=1)
 # yapf:disable
@@ -288,10 +313,7 @@ log_config = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-load_from = 'http://download.openmmlab.com/mmdetection/v2.0/\
-mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/\
-mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408\
-__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
+load_from = 'work_dirs/imvotenet3/latest.pth'
 
 resume_from = None
 workflow = [('train', 1)]

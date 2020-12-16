@@ -1,10 +1,9 @@
-from torch import nn as nn
-
 from mmdet.models import HEADS
+from .vote_head import VoteHead
 
 
 @HEADS.register_module()
-class ImVoteHead(nn.Module):
+class ImVoteHead(VoteHead):
 
     def __init__(self,
                  num_classes,

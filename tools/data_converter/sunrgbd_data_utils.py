@@ -217,3 +217,107 @@ class SUNRGBDData(object):
         with futures.ThreadPoolExecutor(num_workers) as executor:
             infos = executor.map(process_single_scene, sample_id_list)
         return list(infos)
+
+
+class SUNRGBD_Calibration(object):
+    """Calibration matrices and utils We define five coordinate system in SUN
+    RGBD dataset camera coodinate: Z is forward, Y is downward, X is rightward
+    depth coordinate: Just change axis order and flip up-down axis from camera
+    coord upright depth coordinate: tilted depth coordinate by Rtilt such that
+    Z is gravity direction, Z is up-axis, Y is forward, X is right-ward upright
+    camera coordinate: Just change axis order and flip up-down axis from
+    upright depth coordinate image coordinate:
+
+        ----> x-axis (u)
+       |
+       v
+        y-axis (v)
+    depth points are stored in upright depth coordinate.
+    labels for 3d box (basis, centroid, size) are in upright depth coordinate.
+    2d boxes are in image coordinate
+    We generate frustum point cloud and 3d box in upright camera coordinate
+    """
+
+    def __init__(self, calib_filepath=None, K=None, Rt=None):
+        if calib_filepath is not None:
+            lines = [line.rstrip() for line in open(calib_filepath)]
+            Rtilt = np.array([float(x) for x in lines[0].split(' ')])
+            K = np.array([float(x) for x in lines[1].split(' ')])
+            self.Rtilt = np.reshape(Rtilt, (3, 3), order='F')
+            self.K = np.reshape(K, (3, 3), order='F')
+        else:
+            self.Rtilt = Rt.cpu().numpy()
+            # self.Rtilt = np.reshape(Rtilt, (3,3), order='F')
+            K = K.cpu().numpy()
+            self.K = np.reshape(K, (3, 3), order='F')
+        self.f_u = self.K[0, 0]
+        self.f_v = self.K[1, 1]
+        self.c_u = self.K[0, 2]
+        self.c_v = self.K[1, 2]
+
+    def project_upright_depth_to_camera(self, pc):
+        ''' project point cloud from depth coord to camera coordinate
+            Input: (N,3) Output: (N,3)
+        '''
+        # Project upright depth to depth coordinate
+        pc2 = np.dot(np.transpose(self.Rtilt), np.transpose(pc[:,
+                                                               0:3]))  # (3,n)
+        return flip_axis_to_camera(np.transpose(pc2))
+
+    def project_camera_to_upright_depth(self, pc):
+        ''' project point cloud from camera coordinate to upright depth coord
+            Input: (N,3) Output: (N,3)
+        '''
+        # Project upright depth to depth coordinate
+        pc = flip_axis_to_depth(pc)
+
+        pc2 = np.dot(self.Rtilt, np.transpose(pc[:, 0:3]))  # (3,n)
+        return np.transpose(pc2)
+
+    def project_upright_depth_to_image(self, pc):
+        ''' Input: (N,3) Output: (N,2) UV and (N,3) pc in camera coords '''
+        pc2 = self.project_upright_depth_to_camera(pc)
+        uv = np.dot(pc2, np.transpose(self.K))  # (n,3)
+        uv[:, 0] /= uv[:, 2]
+        uv[:, 1] /= uv[:, 2]
+        return uv[:, 0:2], pc2
+
+    def project_upright_depth_to_upright_camera(self, pc):
+        return flip_axis_to_camera(pc)
+
+    def project_upright_camera_to_upright_depth(self, pc):
+        return flip_axis_to_depth(pc)
+
+    def project_image_to_camera(self, uv_depth):
+        n = uv_depth.shape[0]
+        x = ((uv_depth[:, 0] - self.c_u) * uv_depth[:, 2]) / self.f_u
+        y = ((uv_depth[:, 1] - self.c_v) * uv_depth[:, 2]) / self.f_v
+        pts_3d_camera = np.zeros((n, 3))
+        pts_3d_camera[:, 0] = x
+        pts_3d_camera[:, 1] = y
+        pts_3d_camera[:, 2] = uv_depth[:, 2]
+        return pts_3d_camera
+
+    def project_image_to_upright_camera(self, uv_depth):
+        pts_3d_camera = self.project_image_to_camera(uv_depth)
+        pts_3d_depth = flip_axis_to_depth(pts_3d_camera)
+        pts_3d_upright_depth = np.transpose(
+            np.dot(self.Rtilt, np.transpose(pts_3d_depth)))
+        return self.project_upright_depth_to_upright_camera(
+            pts_3d_upright_depth)
+
+
+def flip_axis_to_camera(pc):
+    """Flip X-right,Y-forward,Z-up to X-right,Y-down,Z-forward Input and output
+    are both (N,3) array."""
+    pc2 = np.copy(pc)
+    pc2[:, [0, 1, 2]] = pc2[:, [0, 2, 1]]  # cam X,Y,Z = depth X,-Z,Y
+    pc2[:, 1] *= -1
+    return pc2
+
+
+def flip_axis_to_depth(pc):
+    pc2 = np.copy(pc)
+    pc2[:, [0, 1, 2]] = pc2[:, [0, 2, 1]]  # depth X,Y,Z = cam X,Z,-Y
+    pc2[:, 2] *= -1
+    return pc2
