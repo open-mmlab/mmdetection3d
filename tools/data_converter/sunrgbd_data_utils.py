@@ -264,13 +264,23 @@ class SUNRGBD_Calibration(object):
                                                                0:3]))  # (3,n)
         return flip_axis_to_camera(np.transpose(pc2))
 
+    def project_camera_to_upright_depth(self, pc):
+        ''' project point cloud from camera coordinate to upright depth coord
+            Input: (N,3) Output: (N,3)
+        '''
+        # Project upright depth to depth coordinate
+        pc = flip_axis_to_depth(pc)
+
+        pc2 = np.dot(self.Rtilt, np.transpose(pc[:, 0:3]))  # (3,n)
+        return np.transpose(pc2)
+
     def project_upright_depth_to_image(self, pc):
-        ''' Input: (N,3) Output: (N,2) UV and (N,) depth '''
+        ''' Input: (N,3) Output: (N,2) UV and (N,3) pc in camera coords '''
         pc2 = self.project_upright_depth_to_camera(pc)
         uv = np.dot(pc2, np.transpose(self.K))  # (n,3)
         uv[:, 0] /= uv[:, 2]
         uv[:, 1] /= uv[:, 2]
-        return uv[:, 0:2], pc2[:, 2]
+        return uv[:, 0:2], pc2
 
     def project_upright_depth_to_upright_camera(self, pc):
         return flip_axis_to_camera(pc)
