@@ -67,7 +67,7 @@ model = dict(
             use_xyz=True,
             normalize_xyz=True)),
     pts_bbox_head=dict(
-        type='VoteHead',
+        type='ImVoteHead',
         num_classes=10,
         bbox_coder=dict(
             type='PartialBinBasedBBoxCoder',
@@ -130,11 +130,13 @@ model = dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
         semantic_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+    fusion_layer=dict(
+        type='VoteFusion', num_classes=10, txt_sample_mode='bilinear'),
 )
 
 # model training and testing settings
 train_cfg = dict(
-    rpn=dict(
+    img_rpn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
             pos_iou_thr=0.7,
@@ -151,14 +153,14 @@ train_cfg = dict(
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
-    rpn_proposal=dict(
+    img_rpn_proposal=dict(
         nms_across_levels=False,
         nms_pre=2000,
         nms_post=1000,
         max_num=1000,
         nms_thr=0.7,
         min_bbox_size=0),
-    rcnn=dict(
+    img_rcnn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
             pos_iou_thr=0.5,
@@ -179,23 +181,24 @@ train_cfg = dict(
     sample_mod='vote')
 
 test_cfg = dict(
-    rpn=dict(
+    img_rpn=dict(
         nms_across_levels=False,
         nms_pre=1000,
         nms_post=1000,
         max_num=1000,
         nms_thr=0.7,
         min_bbox_size=0),
-    rcnn=dict(
+    img_rcnn=dict(
         score_thr=0.05,
         nms=dict(type='nms', iou_threshold=0.5),
         max_per_img=100),
     # soft-nms is also supported for rcnn testing
     # e.g., nms=dict(type='soft_nms', iou_threshold=0.5, min_score=0.05)
-    sample_mod='seed',
-    nms_thr=0.25,
-    score_thr=0.05,
-    per_class_proposal=True)
+    pts=dict(
+        sample_mod='seed',
+        nms_thr=0.25,
+        score_thr=0.05,
+        per_class_proposal=True))
 
 dataset_type = 'SUNRGBDDataset'
 data_root = 'data/sunrgbd/'
