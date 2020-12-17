@@ -1,3 +1,12 @@
+dataset_type = 'SUNRGBDDataset'
+data_root = 'data/sunrgbd/'
+class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
+               'night_stand', 'bookshelf', 'bathtub')
+
+# use caffe img_norm
+img_norm_cfg = dict(
+    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
+
 model = dict(
     type='ImVoteNet',
     img_backbone=dict(
@@ -85,10 +94,10 @@ model = dict(
                         [0.404671, 1.071108, 1.688889],
                         [0.76584, 1.398258, 0.472728]]),
         vote_module_cfg=dict(
-            in_channels=256,
+            in_channels=256 + 18,
             vote_per_seed=1,
             gt_per_seed=3,
-            conv_channels=(256, 256),
+            conv_channels=(256 + 18, 256),
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d'),
             norm_feats=True,
@@ -102,7 +111,7 @@ model = dict(
             num_point=256,
             radius=0.3,
             num_sample=16,
-            mlp_channels=[256, 128, 128, 128],
+            mlp_channels=[256 + 18, 128, 128, 128],
             use_xyz=True,
             normalize_xyz=True),
         pred_layer_cfg=dict(
@@ -131,7 +140,10 @@ model = dict(
         semantic_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
     fusion_layer=dict(
-        type='VoteFusion', num_classes=10, txt_sample_mode='bilinear'),
+        type='VoteFusion',
+        num_classes=len(class_names),
+        txt_sample_mode='bilinear',
+        img_norm_cfg=img_norm_cfg),
 )
 
 # model training and testing settings
@@ -200,15 +212,6 @@ test_cfg = dict(
         score_thr=0.05,
         per_class_proposal=True))
 
-dataset_type = 'SUNRGBDDataset'
-data_root = 'data/sunrgbd/'
-class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
-               'night_stand', 'bookshelf', 'bathtub')
-
-# use caffe img_norm
-img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
-
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -238,10 +241,6 @@ train_pipeline = [
         shift_height=True),
     dict(type='IndoorPointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    # dict(type='DefaultFormatBundle'),
-
-    # dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels',
-    # 'points', 'gt_bboxes_3d', 'gt_labels_3d', 'calib']),
     dict(
         type='Collect3D',
         keys=[
@@ -294,15 +293,10 @@ data = dict(
         box_type_3d='Depth'))
 
 # optimizer
-optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='Adam', lr=0.001)
 optimizer_config = dict(grad_clip=None)
 # learning policy
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=0.001,
-    step=[80, 120])
+lr_config = dict(policy='step', step=[80, 120])
 total_epochs = 140
 
 checkpoint_config = dict(interval=1)

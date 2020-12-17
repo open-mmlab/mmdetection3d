@@ -173,26 +173,12 @@ class ImVoteNet(Base3DDetector):
         pts_feats = self.extract_pts_feat(pts)
         return (img_feats, pts_feats)
 
-    def print_structure(self, item):
-        if isinstance(item, list) or isinstance(item, tuple):
-            print(len(item))
-            for i in item:
-                self.print_structure(i)
-        elif isinstance(item, dict):
-            for i in item.keys():
-                print(i)
-                self.print_structure(item[i])
-        elif isinstance(item, str):
-            print(item)
-        else:
-            print(item.shape)
-
     def extract_bboxes_2d(self, img, img_metas, **kwargs):
+        """Extract bounding boxes from 2d detector."""
         x = self.extract_img_feat(img)
         proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
         rets = self.img_roi_head.simple_test(
             x, proposal_list, img_metas, rescale=False)
-        # self.print_structure(x)
         rets_processed = []
         for ret in rets:
             sem_class = []
@@ -204,9 +190,7 @@ class ImVoteNet(Base3DDetector):
             ret = torch.from_numpy(ret).cuda()
             inds = torch.argsort(ret[:, 4], descending=True)
             ret = ret.index_select(0, inds)
-            # print(ret[:, :4].min())
             rets_processed.append(ret)
-            print(ret[:, 2].max(), ret[:, 3].max())
         return rets_processed
 
     def forward_train(self,
@@ -281,12 +265,13 @@ class ImVoteNet(Base3DDetector):
             img_features = self.fusion_layer(img, bboxes_2d, seeds_3d,
                                              seed_3d_features, calib,
                                              img_metas)
-            fused_features = torch.cat([pts_feats, img_features], dim=-1)
+            fused_features = torch.cat([seed_3d_features, img_features], dim=1)
             feat_dict = dict(
                 seed_points=seeds_3d,
                 seed_features=fused_features,
                 seed_indices=seed_indices)
-            bbox_preds = self.bbox_head(feat_dict, self.train_cfg.sample_mod)
+            bbox_preds = self.pts_bbox_head(feat_dict,
+                                            self.train_cfg.sample_mod)
             loss_inputs = (points, gt_bboxes_3d, gt_labels_3d,
                            pts_semantic_mask, pts_instance_mask, img_metas)
             losses = self.pts_bbox_head.loss(
