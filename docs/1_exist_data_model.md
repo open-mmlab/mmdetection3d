@@ -1,4 +1,4 @@
-# 1. Inference and train with existing models and standard datasets
+# 1: Inference and train with existing models and standard datasets
 
 ## Inference with existing models
 
