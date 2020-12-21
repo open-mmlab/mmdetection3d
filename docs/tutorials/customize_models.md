@@ -1,14 +1,72 @@
 # Tutorial 4: Customize Models
 
-We basically categorize model components into 5 types.
+We basically categorize model components into 6 types.
 
-- backbone: usually an FCN network to extract feature maps, e.g., ResNet, MobileNet.
-- neck: the component between backbones and heads, e.g., FPN, PAFPN.
+- encoder: including voxel layer, voxel encoder and middle encoder used in voxel-based methods before backbone, e.g., HardVFE and PointPillarsScatter.
+- backbone: usually an FCN network to extract feature maps, e.g., ResNet, SECOND.
+- neck: the component between backbones and heads, e.g., FPN, SECONDFPN.
 - head: the component for specific tasks, e.g., bbox prediction and mask prediction.
-- roi extractor: the part for extracting RoI features from feature maps, e.g., RoI Align.
+- roi extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
 - loss: the component in head for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
 
 ## Develop new components
+
+### Add a new encoder
+
+Here we show how to develop new components with an example of HardVFE.
+
+#### 1. Define a new voxel encoder (e.g. HardVFE)
+
+Create a new file `mmdet3d/models/voxel_encoders/voxel_encoder.py`.
+
+```python
+import torch.nn as nn
+
+from ..builder import VOXEL_ENCODERS
+
+
+@VOXEL_ENCODERS.register_module()
+class HardVFE(nn.Module):
+
+    def __init__(self, arg1, arg2):
+        pass
+
+    def forward(self, x):  # should return a tuple
+        pass
+
+    def init_weights(self, pretrained=None):
+        pass
+```
+
+#### 2. Import the module
+
+You can either add the following line to `mmdet3d/models/voxel_encoders/__init__.py`
+
+```python
+from .voxel_encoder import HardVFE
+```
+
+or alternatively add
+
+```python
+custom_imports = dict(
+    imports=['mmdet3d.models.voxel_encoders.HardVFE'],
+    allow_failed_imports=False)
+```
+
+to the config file to avoid modifying the original code.
+
+#### 3. Use the backbone in your config file
+
+```python
+model = dict(
+    ...
+    voxel_encoder=dict(
+        type='HardVFE',
+        arg1=xxx,
+        arg2=xxx),
+    ...
+```
 
 ### Add a new backbone
 
