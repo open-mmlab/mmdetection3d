@@ -73,6 +73,8 @@ After downloading the data, we need to implement a function to convert both the 
 
 Specifically, we implement a waymo [converter](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/waymo_converter.py) to convert Waymo data into KITTI format and a waymo dataset [class](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/waymo_dataset.py) to process it. Because we preprocess the raw data and reorganize it like KITTI, the dataset class could be implemented more easily by inheriting from KittiDataset. The last thing needed to be noted is the evaluation protocol you would like to use. Because Waymo has its own evaluation approach, we further incorporate it into our dataset class. Afterwards, users can successfully convert the data format and use `WaymoDataset` to train and evaluate the model.
 
+For more details about the intermediate results of preprocessing of Waymo dataset, please refer to its [tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/tutorials/waymo.md).
+
 ## Prepare a config
 
 The second step is to prepare configs such that the dataset could be successfully loaded. In addition, adjusting hyperparameters is usually necessary to obtain decent performance in 3D detection.
