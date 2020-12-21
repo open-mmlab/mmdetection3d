@@ -6,8 +6,8 @@ Welcome to MMDetection3D's documentation!
    :caption: Get Started
 
    getting_started.md
-   data_preparation.md
    model_zoo.md
+   data_preparation.md
    
 .. toctree::
    :maxdepth: 2
