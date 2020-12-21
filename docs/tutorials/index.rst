@@ -1,8 +1,9 @@
 .. toctree::
    :maxdepth: 2
 
-   finetune.md
-   new_dataset.md
+   config.md
+   customize_dataset.md
    data_pipeline.md
-   new_modules.md
+   customize_model.md
+   customize_runtime.md
    waymo.md
