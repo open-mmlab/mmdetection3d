@@ -642,10 +642,9 @@ class KittiDataset(Custom3DDataset):
         # Post-processing
         # check box_preds_camera
         image_shape = box_preds.tensor.new_tensor(img_shape)
-        valid_cam_inds = ((box_preds_camera.tensor[:, 0] < image_shape[1]) &
-                          (box_preds_camera.tensor[:, 1] < image_shape[0]) &
-                          (box_preds_camera.tensor[:, 2] > 0) &
-                          (box_preds_camera.tensor[:, 3] > 0))
+        valid_cam_inds = ((box_2d_preds[:, 2] < image_shape[1]) &
+                          (box_2d_preds[:, 3] < image_shape[0]) &
+                          (box_2d_preds[:, 0] > 0) & (box_2d_preds[:, 1] > 0))
         # check box_preds
         limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
         valid_pcd_inds = ((box_preds.center > limit_range[:3]) &
