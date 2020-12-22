@@ -70,7 +70,7 @@ You can use 3D visualization software such as the [MeshLab](http://www.meshlab.n
 
 ## Model Complexity
 
-`tools/get_flops.py` is a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch) to compute the FLOPs and params of a given model.
+You can use `tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
 
 ```shell
 python tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
@@ -108,7 +108,7 @@ python tools/regnet2mmdet.py ${SRC} ${DST} [-h]
 
 ### Detectron ResNet to Pytorch
 
-`tools/detectron2pytorch.py` converts keys in the original detectron pretrained
+`tools/detectron2pytorch.py` in MMDetection could convert keys in the original detectron pretrained
  ResNet models to PyTorch style.
 
 ```shell
