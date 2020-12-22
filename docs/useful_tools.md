@@ -1,8 +1,6 @@
-# Useful Tools and Scripts
-
 We provide lots of useful tools under `tools/` directory.
 
-## Log Analysis
+# Log Analysis
 
 You can plot loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
 
@@ -48,7 +46,7 @@ time std over epochs is 0.0028
 average iter time: 1.1959 s/iter
 ```
 
-## Visualization
+# Visualization
 
 To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
 
@@ -68,7 +66,7 @@ You can use 3D visualization software such as the [MeshLab](http://www.meshlab.n
 
 **Notice**: The visualization API is a little unstable since we plan to refactor these parts together with MMDetection in the future.
 
-## Model Complexity
+# Model Complexity
 
 You can use `tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
 
@@ -95,9 +93,9 @@ Params: 37.74 M
 2. Some operators are not counted into FLOPs like GN and custom operators. Refer to [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py) for details.
 3. The FLOPs of two-stage detectors is dependent on the number of proposals.
 
-## Model Conversion
+# Model Conversion
 
-### RegNet model to MMDetection
+## RegNet model to MMDetection
 
 `tools/regnet2mmdet.py` convert keys in pycls pretrained RegNet models to
  MMDetection style.
@@ -106,7 +104,7 @@ Params: 37.74 M
 python tools/regnet2mmdet.py ${SRC} ${DST} [-h]
 ```
 
-### Detectron ResNet to Pytorch
+## Detectron ResNet to Pytorch
 
 `tools/detectron2pytorch.py` in MMDetection could convert keys in the original detectron pretrained
  ResNet models to PyTorch style.
@@ -115,7 +113,7 @@ python tools/regnet2mmdet.py ${SRC} ${DST} [-h]
 python tools/detectron2pytorch.py ${SRC} ${DST} ${DEPTH} [-h]
 ```
 
-### Prepare a model for publishing
+## Prepare a model for publishing
 
 `tools/publish_model.py` helps users to prepare their model for publishing.
 
@@ -138,13 +136,13 @@ python tools/publish_model.py work_dirs/faster_rcnn/latest.pth faster_rcnn_r50_f
 
 The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`.
 
-## Dataset Conversion
+# Dataset Conversion
 
 TBD
 
-## Miscellaneous
+# Miscellaneous
 
-### Print the entire config
+## Print the entire config
 
 `tools/print_config.py` prints the whole config verbatim, expanding all its
  imports.
