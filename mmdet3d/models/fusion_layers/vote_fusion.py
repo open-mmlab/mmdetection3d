@@ -2,7 +2,6 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.core.bbox import Coord3DMode, points_cam2img
-from tools.data_converter.sunrgbd_data_utils import SUNRGBD_Calibration
 from ..registry import FUSION_LAYERS
 
 
@@ -79,8 +78,6 @@ class VoteFusion(nn.Module):
                 seed_2d_trans, seed_3d_origin, seed_3d_trans = data
             raw_img = imgs[i]
             img_shape = img_metas[i]['img_shape']
-            sun_calib = SUNRGBD_Calibration(
-                Rt=calibs['Rt'][i], K=calibs['K'][i])
             bbox_num = bbox_trans.shape[0]
             seed_num = seed_2d_trans.shape[0]
             bbox_expanded = bbox_origin.view(1, bbox_num,
@@ -137,8 +134,8 @@ class VoteFusion(nn.Module):
             delta_v = bbox_expanded_midy - seed_2d_expanded_y
             x_3d, y_3d, z_3d = seed_3d_expanded.split(1, dim=-1)
 
-            z_div_f_u = z_3d / sun_calib.f_u
-            z_div_f_v = z_3d / sun_calib.f_v
+            z_div_f_u = z_3d / calibs['K'][i, 0, 0]
+            z_div_f_v = z_3d / calibs['K'][i, 1, 1]
 
             geo_0 = delta_u * z_div_f_u
             geo_1 = delta_v * z_div_f_v
@@ -158,9 +155,12 @@ class VoteFusion(nn.Module):
             geo_xy = geo_xy * ratio[:, :, None]
 
             geo_vec = torch.cat([geo_2, geo_3, geo_4], dim=-1)
-            geo_vec = sun_calib.project_camera_to_upright_depth(
-                geo_vec.view((-1, 3)).cpu().numpy())
-            geo_vec = geo_0.new_tensor(geo_vec).view(seed_num, -1, 3)
+            geo_vec = Coord3DMode.convert_point(
+                geo_vec.view((-1, 3)).double(),
+                Coord3DMode.CAM,
+                Coord3DMode.DEPTH,
+                rt_mat=calibs['Rt'][i]).float()
+            geo_vec = geo_vec.view(seed_num, -1, 3)
             geo_vec_norm = geo_vec.norm(dim=-1, keepdim=True)
             geo_vec = geo_vec / geo_vec_norm
             geo_cue = torch.cat([geo_xy[:, :, [0, 2]], geo_vec], dim=-1)
