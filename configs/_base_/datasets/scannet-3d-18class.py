@@ -8,6 +8,7 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
@@ -43,6 +44,7 @@ train_pipeline = [
 test_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
