@@ -1,6 +1,7 @@
 import torch
 from torch import nn as nn
 
+from mmdet3d.core.bbox import Coord3DMode, points_cam2img
 from tools.data_converter.sunrgbd_data_utils import SUNRGBD_Calibration
 from ..registry import FUSION_LAYERS
 
@@ -236,6 +237,20 @@ class VoteFusion(nn.Module):
             # origin_pts means the pts in the not upright camera coordinate
             origin_pix, origin_pts = sun_calib.project_upright_depth_to_image(
                 pts.cpu().numpy())
+            print(calibs['Rt'][i])
+            origin_pts_2 = Coord3DMode.convert_point(
+                pts,
+                Coord3DMode.DEPTH,
+                Coord3DMode.CAM,
+                rt_mat=calibs['Rt'][i].float().transpose(1, 0)
+                @ pts.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]]).transpose(
+                    1, 0))
+            origin_pix_2 = points_cam2img(origin_pts_2, calibs['K'][i].float())
+            print(origin_pts_2.cpu().numpy() - origin_pts)
+            # print(origin_pts_2[0], origin_pts[0])
+            print(origin_pix_2.cpu().numpy() - origin_pix)
+            assert False
+
             origin_pts = pts.new_tensor(origin_pts)
             origin_pix = pts.new_tensor(origin_pix)
 

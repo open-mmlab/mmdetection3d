@@ -182,7 +182,7 @@ class Coord3DMode(IntEnum):
         """Convert points from `src` mode to `dst` mode.
 
         Args:
-            box (tuple | list | np.dnarray |
+            point (tuple | list | np.dnarray |
                 torch.Tensor | BasePoints):
                 Can be a k-tuple, k-list or an Nxk array/tensor.
             src (:obj:`CoordMode`): The src Point mode.
@@ -221,22 +221,22 @@ class Coord3DMode(IntEnum):
         if rt_mat is not None:
             if not isinstance(rt_mat, torch.Tensor):
                 rt_mat = arr.new_tensor(rt_mat)
-        if src == Coord3DMode.LIDAR and dst == Coord3DMode.CAM:
-            rt_mat = arr.new_tensor([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
-        elif src == Coord3DMode.CAM and dst == Coord3DMode.LIDAR:
-            rt_mat = arr.new_tensor([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
-        elif src == Coord3DMode.DEPTH and dst == Coord3DMode.CAM:
-            rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
-        elif src == Coord3DMode.CAM and dst == Coord3DMode.DEPTH:
-            rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
-        elif src == Coord3DMode.LIDAR and dst == Coord3DMode.DEPTH:
-            rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
-        elif src == Coord3DMode.DEPTH and dst == Coord3DMode.LIDAR:
-            rt_mat = arr.new_tensor([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
-        else:
-            raise NotImplementedError(
-                f'Conversion from Coord3DMode {src} to {dst} '
-                'is not supported yet')
+        # if src == Coord3DMode.LIDAR and dst == Coord3DMode.CAM:
+        #     rt_mat = arr.new_tensor([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
+        # elif src == Coord3DMode.CAM and dst == Coord3DMode.LIDAR:
+        #     rt_mat = arr.new_tensor([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
+        # elif src == Coord3DMode.DEPTH and dst == Coord3DMode.CAM:
+        #     rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
+        # elif src == Coord3DMode.CAM and dst == Coord3DMode.DEPTH:
+        #     rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+        # elif src == Coord3DMode.LIDAR and dst == Coord3DMode.DEPTH:
+        #     rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+        # elif src == Coord3DMode.DEPTH and dst == Coord3DMode.LIDAR:
+        #     rt_mat = arr.new_tensor([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        # else:
+        #     raise NotImplementedError(
+        #         f'Conversion from Coord3DMode {src} to {dst} '
+        #         'is not supported yet')
 
         if rt_mat.size(1) == 4:
             extended_xyz = torch.cat(
