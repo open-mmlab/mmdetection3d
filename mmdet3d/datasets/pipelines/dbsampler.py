@@ -100,6 +100,7 @@ class DataBaseSampler(object):
                  classes=None,
                  points_loader=dict(
                      type='LoadPointsFromFile',
+                     coord_type='LIDAR',
                      load_dim=4,
                      use_dim=[0, 1, 2, 3])):
         super().__init__()
@@ -253,7 +254,7 @@ class DataBaseSampler(object):
                     info['path']) if self.data_root else info['path']
                 results = dict(pts_filename=file_path)
                 s_points = self.points_loader(results)['points']
-                s_points[:, :3] += info['box3d_lidar'][:3]
+                s_points.translate(info['box3d_lidar'][:3])
 
                 count += 1
 
@@ -267,7 +268,7 @@ class DataBaseSampler(object):
                 'gt_bboxes_3d':
                 sampled_gt_bboxes,
                 'points':
-                np.concatenate(s_points_list, axis=0),
+                s_points_list[0].cat(s_points_list),
                 'group_ids':
                 np.arange(gt_bboxes.shape[0],
                           gt_bboxes.shape[0] + len(sampled))

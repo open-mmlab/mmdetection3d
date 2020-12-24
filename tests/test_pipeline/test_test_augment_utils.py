@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from mmdet3d.core.points import DepthPoints
 from mmdet3d.datasets.pipelines import MultiScaleFlipAug3D
 
 
@@ -42,6 +43,7 @@ def test_multi_scale_flip_aug_3D():
                        [1.5090443, 3.2764456, -1.1913797, 0.02097607],
                        [-1.373904, 3.8711405, 0.8524302, 2.064786],
                        [-1.8139812, 3.538856, -1.0056694, 0.20668638]])
+    points = DepthPoints(points, points_dim=4, attribute_dims=dict(height=3))
     results = dict(
         points=points,
         pts_file_name=pts_file_name,
@@ -53,6 +55,7 @@ def test_multi_scale_flip_aug_3D():
         [[-2.2095, 3.3160, -0.7707, 0.4417], [-1.3739, 3.8711, 0.8524, 2.0648],
          [-1.8140, 3.5389, -1.0057, 0.2067], [0.2040, 1.4268, -1.0504, 0.1620],
          [1.5090, 3.2764, -1.1914, 0.0210]],
-        dtype=torch.float64)
+        dtype=torch.float32)
+
     assert torch.allclose(
         results['points'][0]._data, expected_points, atol=1e-4)

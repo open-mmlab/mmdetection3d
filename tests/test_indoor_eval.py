@@ -130,6 +130,56 @@ def test_indoor_eval():
     assert np.isclose(ret_value['mAR_0.25'], 0.833333)
 
 
+def test_indoor_eval_less_classes():
+    if not torch.cuda.is_available():
+        pytest.skip()
+    from mmdet3d.core.bbox.structures import Box3DMode, DepthInstance3DBoxes
+    det_infos = [{
+        'labels_3d':
+        torch.tensor([0]),
+        'boxes_3d':
+        DepthInstance3DBoxes(torch.tensor([[1., 1., 1., 1., 1., 1., 1.]])),
+        'scores_3d':
+        torch.tensor([.5])
+    }, {
+        'labels_3d':
+        torch.tensor([1]),
+        'boxes_3d':
+        DepthInstance3DBoxes(torch.tensor([[1., 1., 1., 1., 1., 1., 1.]])),
+        'scores_3d':
+        torch.tensor([.5])
+    }]
+
+    label2cat = {0: 'cabinet', 1: 'bed', 2: 'chair'}
+    gt_annos = [{
+        'gt_num':
+        2,
+        'gt_boxes_upright_depth':
+        np.array([[0., 0., 0., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1., 1.]]),
+        'class':
+        np.array([2, 0])
+    }, {
+        'gt_num':
+        1,
+        'gt_boxes_upright_depth':
+        np.array([
+            [1., 1., 1., 1., 1., 1., 1.],
+        ]),
+        'class':
+        np.array([1])
+    }]
+
+    ret_value = indoor_eval(
+        gt_annos,
+        det_infos, [0.25, 0.5],
+        label2cat,
+        box_type_3d=DepthInstance3DBoxes,
+        box_mode_3d=Box3DMode.DEPTH)
+
+    assert np.isclose(ret_value['mAP_0.25'], 0.666667)
+    assert np.isclose(ret_value['mAR_0.25'], 0.666667)
+
+
 def test_average_precision():
     ap = average_precision(
         np.array([[0.25, 0.5, 0.75], [0.25, 0.5, 0.75]]),

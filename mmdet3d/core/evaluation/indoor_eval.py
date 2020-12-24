@@ -178,20 +178,20 @@ def eval_map_recall(pred, gt, ovthresh=None):
         tuple[dict]: dict results of recall, AP, and precision for all classes.
     """
 
-    ret_values = []
+    ret_values = {}
     for classname in gt.keys():
         if classname in pred:
-            ret_values.append(
-                eval_det_cls(pred[classname], gt[classname], ovthresh))
+            ret_values[classname] = eval_det_cls(pred[classname],
+                                                 gt[classname], ovthresh)
     recall = [{} for i in ovthresh]
     precision = [{} for i in ovthresh]
     ap = [{} for i in ovthresh]
 
-    for i, label in enumerate(gt.keys()):
+    for label in gt.keys():
         for iou_idx, thresh in enumerate(ovthresh):
             if label in pred:
                 recall[iou_idx][label], precision[iou_idx][label], ap[iou_idx][
-                    label] = ret_values[i][iou_idx]
+                    label] = ret_values[label][iou_idx]
             else:
                 recall[iou_idx][label] = np.zeros(1)
                 precision[iou_idx][label] = np.zeros(1)

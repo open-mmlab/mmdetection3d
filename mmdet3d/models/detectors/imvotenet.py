@@ -25,7 +25,6 @@ class ImVoteNet(Base3DDetector):
                  pretrained=None):
 
         super(ImVoteNet, self).__init__()
-
         self.pts_backbone = builder.build_backbone(pts_backbone)
         if pts_neck is not None:
             self.pts_neck = builder.build_neck(pts_neck)

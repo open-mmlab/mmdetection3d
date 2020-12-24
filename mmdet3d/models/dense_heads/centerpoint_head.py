@@ -51,10 +51,11 @@ class SeparateHead(nn.Module):
             classes, num_conv = self.heads[head]
 
             conv_layers = []
+            c_in = in_channels
             for i in range(num_conv - 1):
                 conv_layers.append(
                     ConvModule(
-                        in_channels,
+                        c_in,
                         head_conv,
                         kernel_size=final_kernel,
                         stride=1,
@@ -62,6 +63,7 @@ class SeparateHead(nn.Module):
                         bias=bias,
                         conv_cfg=conv_cfg,
                         norm_cfg=norm_cfg))
+                c_in = head_conv
 
             conv_layers.append(
                 build_conv_layer(
