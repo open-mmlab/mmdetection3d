@@ -28,7 +28,7 @@ __global__ void scatter_point_to_voxel_kernel(
   int num = point_to_voxelidx[index];
   int voxelidx = coor_to_voxelidx[index];
   if (num > -1 && voxelidx > -1) {
-    const int feature_per_thread = num_features / 4;
+    const int feature_per_thread = 1;
 
     int start = threadIdx.y * feature_per_thread;
     auto voxels_offset =
@@ -55,7 +55,7 @@ __global__ void map_voxel_to_point_kernel(
   if (index >= num_points) return;
   auto num = point_to_voxelidx[index];
   if (num > -1) {
-    const int feature_per_thread = num_features / 4;
+    const int feature_per_thread = 1;
     auto voxelidx = coor_to_voxelidx[index];
 
     int start = threadIdx.y * feature_per_thread;
@@ -225,7 +225,7 @@ std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
                                 points.options());
 
   // copy point features to voxels
-  dim3 cp_threads(threadsPerBlock, 4);
+  dim3 cp_threads(threadsPerBlock, num_features);
   cudaStream_t cp_stream = at::cuda::getCurrentCUDAStream();
   AT_DISPATCH_ALL_TYPES(
       points.scalar_type(), "scatter_point_to_voxel", ([&] {
@@ -263,7 +263,7 @@ void dynamic_point_to_voxel_backward_gpu(at::Tensor& grad_input_points,
   // copy voxel grad to points
   int col_blocks = at::cuda::ATenCeilDiv(num_points, threadsPerBlock);
   dim3 blocks(col_blocks);
-  dim3 cp_threads(threadsPerBlock, 4);
+  dim3 cp_threads(threadsPerBlock, num_features);
   cudaStream_t cp_stream = at::cuda::getCurrentCUDAStream();
   AT_DISPATCH_ALL_TYPES(grad_input_points.scalar_type(),
                         "scatter_point_to_voxel", ([&] {
