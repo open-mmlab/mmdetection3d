@@ -113,6 +113,7 @@ class SUNRGBDData(object):
         Rt = np.array([float(x) for x in lines[0].split(' ')])
         Rt = np.reshape(Rt, (3, 3), order='F')
         K = np.array([float(x) for x in lines[1].split(' ')])
+        K = np.reshape(Rt, (3, 3), order='F')
         return K, Rt
 
     def get_label_objects(self, idx):

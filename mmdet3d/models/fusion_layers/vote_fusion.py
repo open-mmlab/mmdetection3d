@@ -146,9 +146,12 @@ class VoteFusion(nn.Module):
             geo_3 = geo_1 + y_3d
             geo_4 = z_3d
             geo_xy = torch.cat([geo_0, geo_1, torch.zeros_like(geo_0)], dim=-1)
-            geo_xy = sun_calib.project_camera_to_upright_depth(
-                geo_xy.view((-1, 3)).cpu().numpy())
-            geo_xy = geo_0.new_tensor(geo_xy).view(seed_num, -1, 3)
+            geo_xy = Coord3DMode.convert_point(
+                geo_xy.view((-1, 3)).double(),
+                Coord3DMode.CAM,
+                Coord3DMode.DEPTH,
+                rt_mat=calibs['Rt'][i]).float()
+            geo_xy = geo_xy.view(seed_num, -1, 3)
             seed_depth = seed_3d_trans[:, None, 1]
             delta_depth = geo_xy[:, :, 1]
             ratio = seed_depth / (seed_depth + delta_depth)
@@ -201,8 +204,6 @@ class VoteFusion(nn.Module):
             img_meta = img_metas[i]
             pts = seeds_3d[i]
             bbox_2d = bboxes_2d[i].float()
-            sun_calib = SUNRGBD_Calibration(
-                Rt=calibs['Rt'][i], K=calibs['K'][i])
             img_shape = img_meta['img_shape']
             ori_shape = img_meta['ori_shape']
             pcd_scale_factor = (
@@ -235,24 +236,13 @@ class VoteFusion(nn.Module):
                 pts[..., 0] = -pts[..., 0]
 
             # origin_pts means the pts in the not upright camera coordinate
-            origin_pix, origin_pts = sun_calib.project_upright_depth_to_image(
-                pts.cpu().numpy())
-            print(calibs['Rt'][i])
-            origin_pts_2 = Coord3DMode.convert_point(
-                pts,
+            origin_pts = Coord3DMode.convert_point(
+                pts.double(),
                 Coord3DMode.DEPTH,
                 Coord3DMode.CAM,
-                rt_mat=calibs['Rt'][i].float().transpose(1, 0)
-                @ pts.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]]).transpose(
-                    1, 0))
-            origin_pix_2 = points_cam2img(origin_pts_2, calibs['K'][i].float())
-            print(origin_pts_2.cpu().numpy() - origin_pts)
-            # print(origin_pts_2[0], origin_pts[0])
-            print(origin_pix_2.cpu().numpy() - origin_pix)
-            assert False
-
-            origin_pts = pts.new_tensor(origin_pts)
-            origin_pix = pts.new_tensor(origin_pix)
+                rt_mat=calibs['Rt'][i])
+            origin_pix = points_cam2img(origin_pts, calibs['K'][i]).float()
+            origin_pts = origin_pts.float()
 
             # transformed pixel coordinates
             trans_pix = origin_pix.clone()

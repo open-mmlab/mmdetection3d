@@ -122,7 +122,14 @@ def points_cam2img(points_3d, proj_mat):
         torch.Tensor: Points in image coordinates with shape [N, 2].
     """
     points_num = list(points_3d.shape)[:-1]
+
     points_shape = np.concatenate([points_num, [1]], axis=0).tolist()
+    if proj_mat.shape[1] == 3:
+        proj_mat_expanded = torch.eye(
+            4, device=proj_mat.device, dtype=proj_mat.dtype)
+        proj_mat_expanded[:3, :3] = proj_mat
+        proj_mat = proj_mat_expanded
+
     # previous implementation use new_zeros, new_one yeilds better results
     points_4 = torch.cat(
         [points_3d, points_3d.new_ones(*points_shape)], dim=-1)
