@@ -138,7 +138,22 @@ The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth
 
 # Dataset Conversion
 
-TBD
+`tools/data_converter/` contains tools to convert datasets to other formats. Most of them convert datasets to pickle based info files, like kitti, nuscenes and lyft. Waymo converter is used to reorganize waymo raw data like KITTI style. Users could refer to them for our approach to converting data format. It is also convenient to modify them to use as scripts like nuImages converter.
+
+To convert the nuImages dataset into COCO format, please use the command below:
+
+```shell
+python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERIONS} \
+                                                    --out-dir ${OUT_DIR} --nproc ${NUM_WORKERS} --extra-tag ${TAG}
+```
+
+- `--data-root`: the root of the dataset, defaults to `./data/nuimages`.
+- `--version`: the version of the dataset, defaults to `v1.0-mini`. To get the full dataset, please use `--version v1.0-train v1.0-val v1.0-mini`
+- `--out-dir`: the output directory of annotations and semantic masks, defaults to `./data/nuimages/annotations/`.
+- `--nproc`: number of workers for data preparation, defaults to `4`. Larger number could reduce the preparation time as images are processed in parallel.
+- `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
+
+More details could be referred to the [doc](data_preparation.md) for dataset preparation and [README](../configs/nuimages/README.md) for nuImages dataset.
 
 # Miscellaneous
 
