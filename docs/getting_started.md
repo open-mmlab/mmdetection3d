@@ -172,11 +172,9 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 # Verification
 
-TBD
+## Demo
 
-# Demo
-
-## Point cloud demo
+### Point cloud demo
 
 We provide a demo script to test a single sample.
 
@@ -233,5 +231,3 @@ result, data = inference_detector(model, point_cloud)
 # visualize the results and save the results in 'results' folder
 model.show_results(data, result, out_dir='results')
 ```
-
-A notebook demo can be found in [demo/inference_demo.ipynb](https://github.com/open-mmlab/mmdetection/blob/master/demo/inference_demo.ipynb).
