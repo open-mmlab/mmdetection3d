@@ -64,76 +64,100 @@ like [KittiDataset](../../mmdet3d/datasets/kitti_dataset.py) and [ScanNetDataset
 
 ### An example of customized dataset
 
-Here we provide an example of customized dataset for image input like MMDetection. The same principle applies to the case in MMDetection3D.
+Here we provide an example of customized dataset.
 
-Assume the annotation is in a new format in text files.
-The bounding boxes annotations are stored in text file `annotation.txt` as the following
+Assume the annotation has been reorganized into a list of dict in pickle files like ScanNet.
+The bounding boxes annotations are stored in `annotation.pkl` as the following
 
 ```
-#
-000001.jpg
-1280 720
-2
-10 20 40 60 1
-20 40 50 60 2
-#
-000002.jpg
-1280 720
-3
-50 20 40 60 2
-20 40 30 45 2
-30 40 50 60 3
+{'point_cloud': {'num_features': 6, 'lidar_idx': 'scene0000_00'}, 'pts_path': 'points/scene0000_00.bin',
+ 'pts_instance_mask_path': 'instance_mask/scene0000_00.bin', 'pts_semantic_mask_path': 'semantic_mask/scene0000_00.bin',
+ 'annos': {'gt_num': 27, 'name': array(['window', 'window', 'table', 'counter', 'curtain', 'curtain',
+       'desk', 'cabinet', 'sink', 'garbagebin', 'garbagebin',
+       'garbagebin', 'sofa', 'refrigerator', 'table', 'table', 'toilet',
+       'bed', 'cabinet', 'cabinet', 'cabinet', 'cabinet', 'cabinet',
+       'cabinet', 'door', 'door', 'door'], dtype='<U12'),
+       'location': array([[ 1.48129511,  3.52074146,  1.85652947],
+       [ 2.90395617, -3.48033905,  1.52682471]]),
+       'dimensions': array([[1.74445975, 0.23195696, 0.57235193],
+       [0.66077662, 0.17072392, 0.67153597]]),
+       'gt_boxes_upright_depth': array([
+       [ 1.48129511,  3.52074146,  1.85652947,  1.74445975,  0.23195696,
+         0.57235193],
+       [ 2.90395617, -3.48033905,  1.52682471,  0.66077662,  0.17072392,
+         0.67153597]]),
+       'index': array([ 0,  1 ], dtype=int32),
+       'class': array([ 6,  6 ])}}
 ```
 
-We can create a new dataset in `mmdet/datasets/my_dataset.py` to load the data.
+We can create a new dataset in `mmdet3d/datasets/my_dataset.py` to load the data.
 
 ```python
-import mmcv
 import numpy as np
+from os import path as osp
 
-from .builder import DATASETS
-from .custom import CustomDataset
+from mmdet3d.core import show_result
+from mmdet3d.core.bbox import DepthInstance3DBoxes
+from mmdet.datasets import DATASETS
+from .custom_3d import Custom3DDataset
 
 
 @DATASETS.register_module()
-class MyDataset(CustomDataset):
+class MyDataset(Custom3DDataset):
+    """
+    CLASSES = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+               'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+               'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+               'garbagebin')
 
-    CLASSES = ('person', 'bicycle', 'car', 'motorcycle')
+    def __init__(self,
+                 data_root,
+                 ann_file,
+                 pipeline=None,
+                 classes=None,
+                 modality=None,
+                 box_type_3d='Depth',
+                 filter_empty_gt=True,
+                 test_mode=False):
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
+            classes=classes,
+            modality=modality,
+            box_type_3d=box_type_3d,
+            filter_empty_gt=filter_empty_gt,
+            test_mode=test_mode)
 
-    def load_annotations(self, ann_file):
-        ann_list = mmcv.list_from_file(ann_file)
+    def get_ann_info(self, index):
+        # Use index to get the annos, thus the evalhook could also use this api
+        info = self.data_infos[index]
+        if info['annos']['gt_num'] != 0:
+            gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
+                np.float32)  # k, 6
+            gt_labels_3d = info['annos']['class'].astype(np.long)
+        else:
+            gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
+            gt_labels_3d = np.zeros((0, ), dtype=np.long)
 
-        data_infos = []
-        for i, ann_line in enumerate(ann_list):
-            if ann_line != '#':
-                continue
+        # to target box structure
+        gt_bboxes_3d = DepthInstance3DBoxes(
+            gt_bboxes_3d,
+            box_dim=gt_bboxes_3d.shape[-1],
+            with_yaw=False,
+            origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
-            img_shape = ann_list[i + 2].split(' ')
-            width = int(img_shape[0])
-            height = int(img_shape[1])
-            bbox_number = int(ann_list[i + 3])
+        pts_instance_mask_path = osp.join(self.data_root,
+                                          info['pts_instance_mask_path'])
+        pts_semantic_mask_path = osp.join(self.data_root,
+                                          info['pts_semantic_mask_path'])
 
-            anns = ann_line.split(' ')
-            bboxes = []
-            labels = []
-            for anns in ann_list[i + 4:i + 4 + bbox_number]:
-                bboxes.append([float(ann) for ann in anns[:4]])
-                labels.append(int(anns[4]))
-
-            data_infos.append(
-                dict(
-                    filename=ann_list[i + 1],
-                    width=width,
-                    height=height,
-                    ann=dict(
-                        bboxes=np.array(bboxes).astype(np.float32),
-                        labels=np.array(labels).astype(np.int64))
-                ))
-
-        return data_infos
-
-    def get_ann_info(self, idx):
-        return self.data_infos[idx]['ann']
+        anns_results = dict(
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=gt_labels_3d,
+            pts_instance_mask_path=pts_instance_mask_path,
+            pts_semantic_mask_path=pts_semantic_mask_path)
+        return anns_results
 
 ```
 
@@ -142,7 +166,7 @@ Then in the config, to use `MyDataset` you can modify the config as the followin
 ```python
 dataset_A_train = dict(
     type='MyDataset',
-    ann_file = 'image_list.txt',
+    ann_file = 'annotation.pkl',
     pipeline=train_pipeline
 )
 ```
