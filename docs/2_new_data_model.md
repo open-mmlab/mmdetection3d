@@ -12,7 +12,7 @@ The basic steps are as below:
 
 There are three ways to support a new dataset in MMDetection3D:
 
-1. reorganize the dataset into existed format.
+1. reorganize the dataset into existing format.
 2. reorganize the dataset into a middle format.
 3. implement a new dataset.
 
@@ -20,7 +20,7 @@ Usually we recommend to use the first two methods which are usually easier than 
 
 In this note, we give an example for converting the data into KITTI format.
 
-**Note**: We take Waymo as the example here considering its format is totally different from other existed formats. For other datasets using similar methods to organize data, like Lyft compared to nuScenes, it would be easier to directly implement the new dataset inherited from an existed one.
+**Note**: We take Waymo as the example here considering its format is totally different from other existing formats. For other datasets using similar methods to organize data, like Lyft compared to nuScenes, it would be easier to directly implement the new data converter (for the second approach above) instead of converting it to another format (for the first approach above).
 
 ### KITTI dataset format
 
