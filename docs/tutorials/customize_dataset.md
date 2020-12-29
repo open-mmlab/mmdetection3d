@@ -3,22 +3,22 @@
 ## Support new data format
 
 To support a new data format, you can either convert them to existing formats or directly convert them to the middle format. You could also choose to convert them offline (before training by a script) or online (implement a new dataset and do the conversion at training). In MMDetection3D, for the data that is inconvenient to read directly online, we recommend to convert it into KITTI format and do the conversion offline, thus you only need to modify the config's data annotation paths and classes after the conversion.
-For data sharing similar format with existed datasets, like Lyft compared to nuScenes, we recommend to directly implement data converter and dataset class. During the procedure, inheritation could be taken into consideration to reduce the implementation workload.
+For data sharing similar format with existing datasets, like Lyft compared to nuScenes, we recommend to directly implement data converter and dataset class. During the procedure, inheritation could be taken into consideration to reduce the implementation workload.
 
 ### Reorganize new data formats to existing format
 
 For data that is inconvenient to read directly online, the simplest way is to convert your dataset to existing dataset formats.
 
-Typically we need a data converter to reorganize the raw data and convert the annotation format into KITTI style. Then a new dataset class inherited from existed ones is sometimes necessary for dealing with some specific differences between datasets. Finally, the users need to further modify the config files to use the dataset. An [example](../2_new_data_model.md) training predefined models on Waymo dataset by converting it into KITTI style can be taken for reference.
+Typically we need a data converter to reorganize the raw data and convert the annotation format into KITTI style. Then a new dataset class inherited from existing ones is sometimes necessary for dealing with some specific differences between datasets. Finally, the users need to further modify the config files to use the dataset. An [example](../2_new_data_model.md) training predefined models on Waymo dataset by converting it into KITTI style can be taken for reference.
 
 ### Reorganize new data format to middle format
 
-It is also fine if you do not want to convert the annotation format to existed formats.
+It is also fine if you do not want to convert the annotation format to existing formats.
 Actually, we convert all the supported datasets into pickle files, which summarize useful information for model training and inference.
 
 The annotation of a dataset is a list of dict, each dict corresponds to a frame.
 A basic example (used in KITTI) is as follows. A frame consists of several keys, like `image`, `point_cloud`, `calib` and `annos`.
-As long as we could directly read data according to these information, the organization of raw data could also be different from existed ones.
+As long as we could directly read data according to these information, the organization of raw data could also be different from existing ones.
 With this design, we provide an alternative choice for customizing datasets.
 
 ```python
