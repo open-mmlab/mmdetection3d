@@ -115,9 +115,9 @@ Note that we follow the original folder names for clear organization. Please ren
 
 ### ScanNet and SUN RGB-D
 
-To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md).
+To prepare scannet data, please see [scannet](../data/scannet/README.md).
 
-To prepare sunrgbd data, please see [sunrgbd](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md).
+To prepare sunrgbd data, please see [sunrgbd](../data/sunrgbd/README.md).
 
 ### Customized Datasets
 
