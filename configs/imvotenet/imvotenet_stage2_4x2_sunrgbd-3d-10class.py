@@ -143,8 +143,7 @@ model = dict(
         type='VoteFusion',
         num_classes=len(class_names),
         txt_sample_mode='bilinear',
-        img_norm_cfg=img_norm_cfg),
-)
+        img_norm_cfg=img_norm_cfg))
 
 # model training and testing settings
 train_cfg = dict(
