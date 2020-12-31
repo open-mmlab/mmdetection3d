@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.8.0.
+**News**: We released the codebase v0.9.0.
 
 Documentation: https://mmdetection3d.readthedocs.io/
 
@@ -56,7 +56,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.8.0 was released in 30/11/2020.
+v0.9.0 was released in 31/12/2020.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
