@@ -10,6 +10,8 @@
 
 **News**: We released the codebase v0.9.0.
 
+In the nuScenes detection challenge of 5th AI Driving Olympics, we obtains best PKL award/3rd place by multi-modality entry and best vision-only results. Code and models will be released soon!
+
 Documentation: https://mmdetection3d.readthedocs.io/
 
 ## Introduction
