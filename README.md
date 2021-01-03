@@ -86,11 +86,11 @@ Other features
 
 ## Installation
 
-Please refer to [install.md](docs/install.md) for installation and dataset preparation.
+Please refer to [getting_started.md](docs/getting_started.md) for installation.
 
 ## Get Started
 
-Please see [getting_started.md](docs/getting_started.md) for the basic usage of MMDetection3D. There are also tutorials for [finetuning models](docs/tutorials/finetune.md), [adding new dataset](docs/tutorials/new_dataset.md), [designing data pipeline](docs/tutorials/data_pipeline.md), [adding new modules](docs/tutorials/new_modules.md), and [waymo dataset](docs/tutorials/waymo.md).
+Please see [getting_started.md](docs/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/1_exist_data_model.md) and [with customized dataset](docs/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/tutorials/config.md), [adding new dataset](docs/tutorials/customize_dataset.md), [designing data pipeline](docs/tutorials/data_pipeline.md), [customizing models](docs/tutorials/customize_models.md), [customizing runtime settings](docs/tutorials/customize_runtime.md) and [waymo dataset](docs/tutorials/waymo.md).
 
 ## Contributing
 
