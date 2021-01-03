@@ -10,7 +10,7 @@
 
 **News**: We released the codebase v0.9.0.
 
-In the recent NeurIPS 2020 [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of 5th AI Driving Olympics, we obtained best PKL award/3rd place by multi-modality entry and best vision-only results. Code and models will be released soon!
+In the recent [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results. Code and models will be released soon!
 
 Documentation: https://mmdetection3d.readthedocs.io/
 

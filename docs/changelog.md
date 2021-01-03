@@ -4,8 +4,8 @@
 
 #### Highlights
 
-- Documentation refactor with better structure, especially updates related to how to implement new models and customized datasets.
-- More compatible with refactored point structure thanks to bug fixes related to ground truth sampling.
+- Documentation refactoring with better structure, especially about how to implement new models and customized datasets.
+- More compatible with refactored point structure by bug fixes in ground truth sampling.
 
 #### Bug Fixes
 
@@ -18,7 +18,7 @@
 
 #### Improvements
 
-- Documentation refactor (#242)
+- Documentation refactoring (#242)
 
 ### v0.8.0 (30/11/2020)
 
