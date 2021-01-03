@@ -9,7 +9,7 @@
 
 # Installation
 
-## Install mmdetection
+## Install MMDetection3D
 
 a. Create a conda virtual environment and activate it.
 
