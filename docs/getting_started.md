@@ -9,7 +9,7 @@
 
 # Installation
 
-## Install mmdetection
+## Install MMDetection3D
 
 a. Create a conda virtual environment and activate it.
 
@@ -80,7 +80,8 @@ pip install -v -e .  # or "python setup.py develop"
 
 | MMDetection3D version | MMDetection version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
+| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
 | 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
 | 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
 | 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
