@@ -336,7 +336,7 @@ class SSD3DHead(VoteHead):
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
 
-        # Generage fake GT for empty scene
+        # Generate fake GT for empty scene
         if valid_gt.sum() == 0:
             vote_targets = points.new_zeros(self.num_candidates, 3)
             center_targets = points.new_zeros(self.num_candidates, 3)
