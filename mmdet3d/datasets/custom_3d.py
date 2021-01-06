@@ -105,7 +105,7 @@ class Custom3DDataset(Dataset):
         if not self.test_mode:
             annos = self.get_ann_info(index)
             input_dict['ann_info'] = annos
-            if self.filter_empty_gt and len(annos['gt_bboxes_3d']) == 0:
+            if self.filter_empty_gt and ~(annos['gt_labels_3d'] != -1).any():
                 return None
         return input_dict
 
@@ -149,8 +149,9 @@ class Custom3DDataset(Dataset):
             return None
         self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
-        if self.filter_empty_gt and (example is None or len(
-                example['gt_bboxes_3d']._data) == 0):
+        if self.filter_empty_gt and \
+                (example is None or
+                    ~(example['gt_labels_3d']._data != -1).any()):
             return None
         return example
 
