@@ -1,6 +1,7 @@
 import mmcv
 import numpy as np
 
+from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations
 
@@ -136,10 +137,16 @@ class LoadPointsFromMultiSweeps(object):
         Returns:
             np.ndarray: Points after removing.
         """
-        x_filt = np.abs(points[:, 0]) < radius
-        y_filt = np.abs(points[:, 1]) < radius
+        if isinstance(points, np.ndarray):
+            points_numpy = points
+        elif isinstance(points, BasePoints):
+            points_numpy = points.tensor.numpy()
+        else:
+            raise NotImplementedError
+        x_filt = np.abs(points_numpy[:, 0]) < radius
+        y_filt = np.abs(points_numpy[:, 1]) < radius
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
-        return points[not_close, :]
+        return points[not_close]
 
     def __call__(self, results):
         """Call function to load multi-sweep point clouds from files.
@@ -155,7 +162,7 @@ class LoadPointsFromMultiSweeps(object):
                 - points (np.ndarray): Multi-sweep point cloud arrays.
         """
         points = results['points']
-        points[:, 4] = 0
+        points.tensor[:, 4] = 0
         sweep_points_list = [points]
         ts = results['timestamp']
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
@@ -183,9 +190,11 @@ class LoadPointsFromMultiSweeps(object):
                     'sensor2lidar_rotation'].T
                 points_sweep[:, :3] += sweep['sensor2lidar_translation']
                 points_sweep[:, 4] = ts - sweep_ts
+                points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
 
-        points = np.concatenate(sweep_points_list, axis=0)[:, self.use_dim]
+        points = points.cat(sweep_points_list)
+        points = points[:, self.use_dim]
         results['points'] = points
         return results
 
@@ -287,6 +296,11 @@ class LoadPointsFromFile(object):
     Args:
         load_dim (int): The dimension of the loaded points.
             Defaults to 6.
+        coord_type (str): The type of coordinates of points cloud.
+            Available options includes:
+            - 'LIDAR': Points in LiDAR coordinates.
+            - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
+            - 'CAMERA': Points in camera coordinates.
         use_dim (list[int]): Which dimensions of the points to be used.
             Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
@@ -297,6 +311,7 @@ class LoadPointsFromFile(object):
     """
 
     def __init__(self,
+                 coord_type,
                  load_dim=6,
                  use_dim=[0, 1, 2],
                  shift_height=False,
@@ -306,7 +321,9 @@ class LoadPointsFromFile(object):
             use_dim = list(range(use_dim))
         assert max(use_dim) < load_dim, \
             f'Expect all used dimensions < {load_dim}, got {use_dim}'
+        assert coord_type in ['CAMERA', 'LIDAR', 'DEPTH']
 
+        self.coord_type = coord_type
         self.load_dim = load_dim
         self.use_dim = use_dim
         self.file_client_args = file_client_args.copy()
@@ -332,6 +349,7 @@ class LoadPointsFromFile(object):
                 points = np.load(pts_filename)
             else:
                 points = np.fromfile(pts_filename, dtype=np.float32)
+
         return points
 
     def __call__(self, results):
@@ -350,12 +368,19 @@ class LoadPointsFromFile(object):
         points = self._load_points(pts_filename)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
+        attribute_dims = None
 
         if self.shift_height:
             floor_height = np.percentile(points[:, 2], 0.99)
             height = points[:, 2] - floor_height
             points = np.concatenate([points, np.expand_dims(height, 1)], 1)
+            attribute_dims = dict(height=3)
+
+        points_class = get_points_type(self.coord_type)
+        points = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
         results['points'] = points
+
         return results
 
     def __repr__(self):

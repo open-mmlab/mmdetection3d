@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from mmdet3d.core.points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -96,7 +97,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def corners(self):
-        """torch.Tensor: Coordinates of corners of all the boxes in shape (N, 8, 3).
+        """torch.Tensor: Coordinates of corners of all the boxes in
+                         shape (N, 8, 3).
 
         Convert the boxes to  in clockwise order, in the form of
         (x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)
@@ -168,8 +170,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             angle (float, torch.Tensor): Rotation angle.
-            points (torch.Tensor, numpy.ndarray, optional): Points to rotate.
-                Defaults to None.
+            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, optional):
+                Points to rotate. Defaults to None.
 
         Returns:
             tuple or None: When ``points`` is None, the function returns \
@@ -192,6 +194,9 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             elif isinstance(points, np.ndarray):
                 rot_mat_T = rot_mat_T.numpy()
                 points[:, :3] = np.dot(points[:, :3], rot_mat_T)
+            elif isinstance(points, BasePoints):
+                # clockwise
+                points.rotate(-angle)
             else:
                 raise ValueError
             return points, rot_mat_T
@@ -203,8 +208,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             bev_direction (str): Flip direction (horizontal or vertical).
-            points (torch.Tensor, numpy.ndarray, None): Points to flip.
-                Defaults to None.
+            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, None):
+                Points to flip. Defaults to None.
 
         Returns:
             torch.Tensor, numpy.ndarray or None: Flipped points.
@@ -220,11 +225,14 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 self.tensor[:, 6] = -self.tensor[:, 6]
 
         if points is not None:
-            assert isinstance(points, (torch.Tensor, np.ndarray))
-            if bev_direction == 'horizontal':
-                points[:, 0] = -points[:, 0]
-            elif bev_direction == 'vertical':
-                points[:, 2] = -points[:, 2]
+            assert isinstance(points, (torch.Tensor, np.ndarray, BasePoints))
+            if isinstance(points, (torch.Tensor, np.ndarray)):
+                if bev_direction == 'horizontal':
+                    points[:, 0] = -points[:, 0]
+                elif bev_direction == 'vertical':
+                    points[:, 2] = -points[:, 2]
+            elif isinstance(points, BasePoints):
+                points.flip(bev_direction)
             return points
 
     def in_range_bev(self, box_range):

@@ -2,6 +2,7 @@ import numpy as np
 from mmcv.parallel import DataContainer as DC
 
 from mmdet3d.core.bbox import BaseInstance3DBoxes
+from mmdet3d.core.points import BasePoints
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import to_tensor
 
@@ -71,6 +72,7 @@ class DefaultFormatBundle(object):
         if 'gt_semantic_seg' in results:
             results['gt_semantic_seg'] = DC(
                 to_tensor(results['gt_semantic_seg'][None, ...]), stack=True)
+
         return results
 
     def __repr__(self):
@@ -202,9 +204,11 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
                 default bundle.
         """
         # Format 3D data
-        for key in [
-                'voxels', 'coors', 'voxel_centers', 'num_points', 'points'
-        ]:
+        if 'points' in results:
+            assert isinstance(results['points'], BasePoints)
+            results['points'] = DC(results['points'].tensor)
+
+        for key in ['voxels', 'coors', 'voxel_centers', 'num_points']:
             if key not in results:
                 continue
             results[key] = DC(to_tensor(results[key]), stack=False)

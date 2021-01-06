@@ -1,5 +1,6 @@
 import numpy as np
 
+from mmdet3d.core.points import LiDARPoints
 from mmdet3d.datasets.pipelines.loading import LoadPointsFromMultiSweeps
 
 
@@ -28,14 +29,14 @@ def test_load_points_from_multi_sweeps():
         test_mode=True)
 
     points = np.random.random([100, 5]) * 2
-
+    points = LiDARPoints(points, points_dim=5)
     input_results = dict(points=points, sweeps=[], timestamp=None)
     results = load_points_from_multi_sweeps_1(input_results)
-    assert results['points'].shape == (100, 5)
+    assert results['points'].tensor.numpy().shape == (100, 5)
 
     input_results = dict(points=points, sweeps=[], timestamp=None)
     results = load_points_from_multi_sweeps_2(input_results)
-    assert results['points'].shape == (775, 5)
+    assert results['points'].tensor.numpy().shape == (775, 5)
 
     sensor2lidar_rotation = np.array(
         [[9.99999967e-01, 1.13183067e-05, 2.56845368e-04],
@@ -52,16 +53,16 @@ def test_load_points_from_multi_sweeps():
 
     input_results = dict(points=points, sweeps=[sweep], timestamp=1.0)
     results = load_points_from_multi_sweeps_1(input_results)
-    assert results['points'].shape == (500, 5)
+    assert results['points'].tensor.numpy().shape == (500, 5)
 
     input_results = dict(points=points, sweeps=[sweep], timestamp=1.0)
     results = load_points_from_multi_sweeps_2(input_results)
-    assert results['points'].shape == (451, 5)
+    assert results['points'].tensor.numpy().shape == (451, 5)
 
     input_results = dict(points=points, sweeps=[sweep] * 10, timestamp=1.0)
     results = load_points_from_multi_sweeps_2(input_results)
-    assert results['points'].shape == (3259, 5)
+    assert results['points'].tensor.numpy().shape == (3259, 5)
 
     input_results = dict(points=points, sweeps=[sweep] * 10, timestamp=1.0)
     results = load_points_from_multi_sweeps_3(input_results)
-    assert results['points'].shape == (3259, 5)
+    assert results['points'].tensor.numpy().shape == (3259, 5)

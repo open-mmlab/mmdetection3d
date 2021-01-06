@@ -7,6 +7,7 @@ from mmdet3d.datasets import LyftDataset
 
 def test_getitem():
     np.random.seed(0)
+    torch.manual_seed(0)
     root_path = './tests/data/lyft'
     ann_file = './tests/data/lyft/lyft_infos.pkl'
     class_names = ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
@@ -15,6 +16,7 @@ def test_getitem():
     pipelines = [
         dict(
             type='LoadPointsFromFile',
+            coord_type='LIDAR',
             load_dim=5,
             use_dim=5,
             file_client_args=dict(backend='disk')),
@@ -56,27 +58,28 @@ def test_getitem():
     assert np.allclose(pcd_rotation, pcd_rotation_expected, 1e-3)
     assert sample_idx == \
         'b98a05255ba2632e957884758cb31f0e6fcc8d3cd6ee76b6d0ba55b72f08fc54'
-    expected_points = torch.tensor([[59.1695, -1.2910, 7.0296, 0.2000],
-                                    [52.4867, -4.0315, 6.7057, 0.0000],
-                                    [52.5683, -4.2178, 6.7179, 0.0000],
+    expected_points = torch.tensor([[61.4785, -3.7393, 6.7699, 0.4001],
                                     [47.7904, -3.9887, 6.0926, 0.0000],
-                                    [59.8226, -1.5522, 6.5867, 0.4001],
-                                    [53.0842, -3.7064, 6.7811, 0.0000],
-                                    [49.9896, -4.5202, 5.8823, 0.2000],
+                                    [52.5683, -4.2178, 6.7179, 0.0000],
+                                    [52.4867, -4.0315, 6.7057, 0.0000],
                                     [59.8372, -1.7366, 6.5864, 0.4001],
-                                    [61.4597, -4.6402, 7.3340, 0.2000],
-                                    [61.4785, -3.7393, 6.7699, 0.4001],
-                                    [53.0702, -3.8868, 6.7807, 0.0000],
-                                    [59.8244, -1.3499, 6.5895, 0.4001],
+                                    [53.0842, -3.7064, 6.7811, 0.0000],
                                     [60.5549, -3.4978, 6.6578, 0.4001],
+                                    [59.1695, -1.2910, 7.0296, 0.2000],
+                                    [53.0702, -3.8868, 6.7807, 0.0000],
                                     [47.9579, -4.1648, 5.6219, 0.2000],
-                                    [61.2858, -4.2254, 7.3089, 0.2000]])
+                                    [59.8226, -1.5522, 6.5867, 0.4001],
+                                    [61.2858, -4.2254, 7.3089, 0.2000],
+                                    [49.9896, -4.5202, 5.8823, 0.2000],
+                                    [61.4597, -4.6402, 7.3340, 0.2000],
+                                    [59.8244, -1.3499, 6.5895, 0.4001]])
     expected_gt_bboxes_3d = torch.tensor(
         [[63.2257, 17.5206, -0.6307, 2.0109, 5.1652, 1.9471, -1.5868],
          [-25.3804, 27.4598, -2.3297, 2.7412, 8.4792, 3.4343, -1.5939],
          [-15.2098, -7.0109, -2.2566, 0.7931, 0.8410, 1.7916, 1.5090]])
     expected_gt_labels = np.array([0, 4, 7])
     original_classes = lyft_dataset.CLASSES
+
     assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
