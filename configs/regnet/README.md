@@ -2,6 +2,8 @@
 
 ## Introduction
 
+[BACKBONE]
+
 We implement RegNetX models in 3D detection systems and provide their first results with PointPillars on nuScenes dataset.
 
 The pre-trained modles are converted from [model zoo of pycls](https://github.com/facebookresearch/pycls/blob/master/MODEL_ZOO.md) and maintained in [mmcv](https://github.com/open-mmlab/mmcv).
