@@ -2,6 +2,8 @@
 
 ## Introduction
 
+[ALGORITHM]
+
 We implement SECOND and provide the results and checkpoints on KITTI dataset.
 ```
 @article{yan2018second,

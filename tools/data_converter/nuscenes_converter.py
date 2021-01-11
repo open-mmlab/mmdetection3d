@@ -127,10 +127,6 @@ def get_available_scenes(nusc):
                 break
             else:
                 break
-            if not sd_rec['next'] == '':
-                sd_rec = nusc.get('sample_data', sd_rec['next'])
-            else:
-                has_more_frames = False
         if scene_not_exist:
             continue
         available_scenes.append(scene)

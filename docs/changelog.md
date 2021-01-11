@@ -1,5 +1,25 @@
 ## Changelog
 
+### v0.9.0 (31/12/2020)
+
+#### Highlights
+
+- Documentation refactoring with better structure, especially about how to implement new models and customized datasets.
+- More compatible with refactored point structure by bug fixes in ground truth sampling.
+
+#### Bug Fixes
+
+- Fix point structure related bugs in ground truth sampling (#211)
+- Fix loading points in ground truth sampling augmentation on nuScenes (#221)
+- Fix channel setting in the SeparateHead of CenterPoint (#228)
+- Fix evaluation for indoors 3D detection in case of less classes in prediction (#231)
+- Remove unreachable lines in nuScenes data converter (#235)
+- Minor adjustments of numpy implementation for perspective projection and prediction filtering criterion in KITTI evaluation (#241)
+
+#### Improvements
+
+- Documentation refactoring (#242)
+
 ### v0.8.0 (30/11/2020)
 
 #### Highlights
