@@ -61,30 +61,17 @@ def inference_detector(model, pcd):
     test_pipeline = deepcopy(cfg.data.test.pipeline)
     test_pipeline = Compose(test_pipeline)
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
-    # data = dict(
-    #     pts_filename=pcd,
-    #     box_type_3d=box_type_3d,
-    #     box_mode_3d=box_mode_3d,
-    #     img_fields=[],
-    #     bbox3d_fields=[],
-    #     pts_mask_fields=[],
-    #     pts_seg_fields=[],
-    #     bbox_fields=[],
-    #     mask_fields=[],
-    #     seg_fields=[])
     data = dict(
         pts_filename=pcd,
         box_type_3d=box_type_3d,
         box_mode_3d=box_mode_3d,
-        timestamp = [0],
-        sweeps = [],
         img_fields=[],
         bbox3d_fields=[],
         pts_mask_fields=[],
         pts_seg_fields=[],
         bbox_fields=[],
         mask_fields=[],
-        seg_fields=[])    
+        seg_fields=[])
     data = test_pipeline(data)
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
@@ -99,8 +86,8 @@ def inference_detector(model, pcd):
         result = model(return_loss=False, rescale=True, **data)
     return result, data
 
-def inference_nuscenes_detector(model, dataset_path):
-    """Inference nuscenes_dataset v1.0_mini with the detector.
+def inference_nuscenes_detector(model, pcd):
+    """Inference NuScenes dataset point cloud with the detector.
 
     Args:
         model (nn.Module): The loaded detector.
@@ -115,23 +102,11 @@ def inference_nuscenes_detector(model, dataset_path):
     test_pipeline = deepcopy(cfg.data.test.pipeline)
     test_pipeline = Compose(test_pipeline)
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
-    # load the need meta data
-    nusc = NuScenes(version='v1.0-mini', dataroot='/data/sets/nuscenes',
-                    verbose=True)
-    my_scene = nusc.scene[0]
-    # print(nusc.calibrated_sensor[0])
-    first_sample_token = my_scene['first_sample_token']
-    my_sample = nusc.get('sample', first_sample_token)
-    lidar_top_data = nusc.get('sample_data', my_sample['data']['LIDAR_TOP'])
-    pcd = dataset_path + '/v1.0-mini/' + lidar_top_data['filename']
-    timestamp = lidar_top_data['timestamp']
-    # print(test_pipeline)
-
     data = dict(
         pts_filename=pcd,
         box_type_3d=box_type_3d,
         box_mode_3d=box_mode_3d,
-        timestamp = timestamp,
+        timestamp = 0,
         sweeps = [],
         img_fields=[],
         bbox3d_fields=[],
@@ -144,14 +119,12 @@ def inference_nuscenes_detector(model, dataset_path):
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
         # scatter to specified GPU
-        print("--------------------------------")
         data = scatter(data, [device.index])[0]
     else:
         # this is a workaround to avoid the bug of MMDataParallel
         data['img_metas'] = data['img_metas'][0].data
         data['points'] = data['points'][0].data
     # forward the model
-    # print(data)
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)
     return result, data

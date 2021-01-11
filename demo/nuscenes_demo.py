@@ -1,16 +1,14 @@
 from argparse import ArgumentParser
 
-from mmdet3d.apis import inference_nuscenes_detector, init_detector, show_result_meshlab \
-     ,show_nuscenes_result_meshlab
+from mmdet3d.apis import inference_nuscenes_detector, init_detector, \
+     show_nuscenes_result_meshlab
 
-
-from torch import distributed as dist
 import torch
 
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('data_root', help='NuScenes Dataset root path')
+    parser.add_argument('pcd', help='NuScenes Dataset root path')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
@@ -25,14 +23,10 @@ def main():
     torch.cuda.set_device(args.device)
     torch.distributed.init_process_group(backend='nccl',
                                              init_method='env://')
-    world_size = torch.distributed.get_world_size()
-
     # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)
     # test a single image
-    # result, data = inference_detector(model, args.pcd)
-    result, data = inference_nuscenes_detector(model,args.data_root)
-    print(result[0]['pts_bbox']['boxes_3d'])
+    result, data = inference_nuscenes_detector(model,args.pcd)
     # show the results
     show_nuscenes_result_meshlab(data, result, args.out_dir)
 
