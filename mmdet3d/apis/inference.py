@@ -9,8 +9,6 @@ from mmdet3d.core import Box3DMode, show_result
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_detector
-from mmdet3d.datasets import build_dataset
-from nuscenes.nuscenes import NuScenes
 
 
 def init_detector(config, checkpoint=None, device='cuda:0'):
