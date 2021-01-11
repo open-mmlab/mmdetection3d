@@ -21,8 +21,8 @@ def convert_SyncBN(config):
                 else:
                     return
             else:
-                convert_SyncBN(config[item]) 
-    return        
+                convert_SyncBN(config[item])
+    return
 
 
 
