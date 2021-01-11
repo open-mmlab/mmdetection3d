@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGOTITHM]
+[ALGORITHM]
 
 We implement SECOND and provide the results and checkpoints on KITTI dataset.
 ```

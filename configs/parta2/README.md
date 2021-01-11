@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGOTITHM]
+[ALGORITHM]
 
 We implement Part-A^2 and provide its results and checkpoints on KITTI dataset.
 
