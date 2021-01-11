@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+[OTHERS]
 
 We implement mixed precision training and apply it to VoxelNets (e.g., SECOND and PointPillars).
 The results are in the following tables.
