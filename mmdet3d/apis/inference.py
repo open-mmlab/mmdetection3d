@@ -10,8 +10,9 @@ from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_detector
 
+
 def convert_SyncBN(config):
-    if isinstance(config,dict):
+    if isinstance(config, dict):
         for item in config:
             if item == 'norm_cfg':
                 if config[item]['type'] == 'naiveSyncBN1d':
@@ -23,7 +24,6 @@ def convert_SyncBN(config):
             else:
                 convert_SyncBN(config[item])
     return
-
 
 
 def init_detector(config, checkpoint=None, device='cuda:0'):
@@ -79,8 +79,8 @@ def inference_detector(model, pcd):
         pts_filename=pcd,
         box_type_3d=box_type_3d,
         box_mode_3d=box_mode_3d,
-        timestamp = 0,
-        sweeps = [],
+        timestamp=0,
+        sweeps=[],
         img_fields=[],
         bbox3d_fields=[],
         pts_mask_fields=[],
@@ -101,6 +101,7 @@ def inference_detector(model, pcd):
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)
     return result, data
+
 
 def show_result_meshlab(data, result, out_dir):
     """Show result by meshlab.
