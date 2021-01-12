@@ -3,7 +3,8 @@ import torch
 from mmcv.parallel import MMDataParallel
 from os.path import dirname, exists, join
 
-from mmdet3d.apis import inference_detector, init_detector, single_gpu_test
+from mmdet3d.apis import (convert_SyncBN, inference_detector, init_detector,
+                          single_gpu_test)
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_detector
 
@@ -30,6 +31,16 @@ def _get_config_module(fname):
     config_fpath = join(config_dpath, fname)
     config_mod = Config.fromfile(config_fpath)
     return config_mod
+
+
+def test_convert_SyncBN():
+    cfg = _get_config_module(
+        'pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py')
+    model_cfg = cfg.model
+    convert_SyncBN(model_cfg)
+    assert model_cfg['pts_voxel_encoder']['norm_cfg']['type'] == 'BN1d'
+    assert model_cfg['pts_backbone']['norm_cfg']['type'] == 'BN2d'
+    assert model_cfg['pts_neck']['norm_cfg']['type'] == 'BN2d'
 
 
 def test_inference_detector():
