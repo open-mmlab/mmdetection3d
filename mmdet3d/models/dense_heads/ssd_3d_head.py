@@ -335,6 +335,30 @@ class SSD3DHead(VoteHead):
         valid_gt = gt_labels_3d != -1
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
+
+        # Generate fake GT for empty scene
+        if valid_gt.sum() == 0:
+            vote_targets = points.new_zeros(self.num_candidates, 3)
+            center_targets = points.new_zeros(self.num_candidates, 3)
+            size_res_targets = points.new_zeros(self.num_candidates, 3)
+            dir_class_targets = points.new_zeros(
+                self.num_candidates, dtype=torch.int64)
+            dir_res_targets = points.new_zeros(self.num_candidates)
+            mask_targets = points.new_zeros(
+                self.num_candidates, dtype=torch.int64)
+            centerness_targets = points.new_zeros(self.num_candidates,
+                                                  self.num_classes)
+            corner3d_targets = points.new_zeros(self.num_candidates, 8, 3)
+            vote_mask = points.new_zeros(self.num_candidates, dtype=torch.bool)
+            positive_mask = points.new_zeros(
+                self.num_candidates, dtype=torch.bool)
+            negative_mask = points.new_ones(
+                self.num_candidates, dtype=torch.bool)
+            return (vote_targets, center_targets, size_res_targets,
+                    dir_class_targets, dir_res_targets, mask_targets,
+                    centerness_targets, corner3d_targets, vote_mask,
+                    positive_mask, negative_mask)
+
         gt_corner3d = gt_bboxes_3d.corners
 
         (center_targets, size_targets, dir_class_targets,
