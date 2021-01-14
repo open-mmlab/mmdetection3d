@@ -6,7 +6,8 @@
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
-The baseline results include instance segmentation models, e.g., Mask R-CNN and Cascade Mask R-CNN.
+The convert script can be found [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuimage_converter.py).
+The baseline results include instance segmentation models, e.g., Mask R-CNN, Cascade Mask R-CNN, and HTC.
 We will support panoptic segmentation models in the future.
 
 The dataset converted by the script of v0.6.0 only supports instance segmentation. Since v0.7.0, we also support to produce semantic segmentation mask of each image; thus, we can train HTC or semantic segmentation models using the dataset. To convert the nuImages dataset into COCO format, please use the command below:
