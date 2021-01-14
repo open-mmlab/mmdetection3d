@@ -6,7 +6,7 @@
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
-The converter script can be found [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuimage_converter.py).
+The convert script can be found [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuimage_converter.py).
 The baseline results include instance segmentation models, e.g., Mask R-CNN, Cascade Mask R-CNN, and HTC.
 We will support panoptic segmentation models in the future.
 
