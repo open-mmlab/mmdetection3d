@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.ops.voxel.voxelize import Voxelization
@@ -60,6 +61,8 @@ def test_voxelization():
     assert _get_invalid_voxel_num(coors) == 6
     assert coors.shape == (1006, 3)
 
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
     # test hard_voxelization on gpu
     points = points.to(device='cuda:0')
     coors, voxels, num_points_per_voxel = hard_voxelization.forward(points)
