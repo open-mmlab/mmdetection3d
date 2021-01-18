@@ -85,7 +85,7 @@ def test_single_gpu_test():
 
 
 def test_show_result_meshlab():
-    pcd = 'tests/data/nuscenes/samples/LIDAR_TOP/n015-2018-08-02-17-16-3+' \
+    pcd = 'tests/data/nuscenes/samples/LIDAR_TOP/n015-2018-08-02-17-16-37+' \
           '0800__LIDAR_TOP__1533201470948018.pcd.bin'
     detector_cfg = 'configs/pointpillars/hv_pointpillars_' \
                    'fpn_sbn-all_4x8_2x_nus-3d.py'
