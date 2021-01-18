@@ -82,3 +82,14 @@ def test_single_gpu_test():
     assert bboxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
     assert labels_3d.shape[0] >= 0
+
+
+def test_show_result_meshlab():
+    pcd = 'tests/data/nuscenes/samples/LIDAR_TOP/n015-2018-08-02-17-16-3+' \
+          '0800__LIDAR_TOP__1533201470948018.pcd.bin'
+    detector_cfg = 'configs/pointpillars/hv_pointpillars_' \
+                   'fpn_sbn-all_4x8_2x_nus-3d.py'
+    model = init_detector(detector_cfg, device='cpu')
+    # test a single image
+    result, data = inference_detector(model, pcd)
+    assert 'pts_bbox' in result[0].keys()

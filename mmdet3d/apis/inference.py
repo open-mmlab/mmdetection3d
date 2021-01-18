@@ -15,12 +15,8 @@ def convert_SyncBN(config):
     if isinstance(config, dict):
         for item in config:
             if item == 'norm_cfg':
-                if config[item]['type'] == 'naiveSyncBN1d':
-                    config[item]['type'] = 'BN1d'
-                elif config[item]['type'] == 'naiveSyncBN2d':
-                    config[item]['type'] = 'BN2d'
-                else:
-                    return
+                config[item]['type'] = config[item]['type']. \
+                                       replace('naiveSyncBN', 'BN')
             else:
                 convert_SyncBN(config[item])
     return
@@ -46,6 +42,7 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
                         f'but got {type(config)}')
     config.model.pretrained = None
     convert_SyncBN(config.model)
+    print(config.model)
     model = build_detector(config.model, test_cfg=config.test_cfg)
     if checkpoint is not None:
         checkpoint = load_checkpoint(model, checkpoint)
