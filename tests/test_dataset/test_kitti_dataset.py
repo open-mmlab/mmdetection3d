@@ -305,6 +305,87 @@ def test_format_results():
     assert np.allclose(result_files[0]['score'], expected_score)
     assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
 
+    boxes_3d = LiDARInstance3DBoxes(torch.tensor([]))
+    labels_3d = torch.tensor([])
+    scores_3d = torch.tensor([])
+    empty_result = dict(
+        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    results = [empty_result]
+    result_files, _ = self.format_results(results)
+    expected_result_files_length = 1
+    assert len(result_files) == expected_result_files_length
+
+
+def test_bbox2result_kitti():
+    data_root = 'tests/data/kitti'
+    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
+    classes = ['Pedestrian', 'Cyclist', 'Car']
+    pts_prefix = 'velodyne_reduced'
+    pipeline = [{
+        'type': 'LoadPointsFromFile',
+        'coord_type': 'LIDAR',
+        'load_dim': 4,
+        'use_dim': 4,
+        'file_client_args': {
+            'backend': 'disk'
+        }
+    }, {
+        'type':
+        'MultiScaleFlipAug3D',
+        'img_scale': (1333, 800),
+        'pts_scale_ratio':
+        1,
+        'flip':
+        False,
+        'transforms': [{
+            'type': 'GlobalRotScaleTrans',
+            'rot_range': [-0.1, 0.1],
+            'scale_ratio_range': [0.9, 1.1],
+            'translation_std': [0, 0, 0]
+        }, {
+            'type': 'RandomFlip3D'
+        }, {
+            'type': 'PointsRangeFilter',
+            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
+        }, {
+            'type': 'DefaultFormatBundle3D',
+            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
+            'with_label': False
+        }, {
+            'type': 'Collect3D',
+            'keys': ['points']
+        }]
+    }]
+    modality = {'use_lidar': True, 'use_camera': False}
+    split = 'training'
+    self = KittiDataset(
+        data_root,
+        ann_file,
+        split,
+        pts_prefix,
+        pipeline,
+        classes,
+        modality,
+    )
+    boxes_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
+    labels_3d = torch.tensor([
+        0,
+    ])
+    scores_3d = torch.tensor([0.5])
+    result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    results = [result]
+    det_annos = self.bbox2result_kitti(results, classes)
+    expected_name = np.array(['Pedestrian'])
+    expected_dimensions = np.array([1.2000, 1.8900, 0.4800])
+    expected_rotation_y = np.array([0.0100]) - np.pi
+    expected_score = np.array([0.5])
+    assert np.all(det_annos[0]['name'] == expected_name)
+    assert np.allclose(det_annos[0]['rotation_y'], expected_rotation_y)
+    assert np.allclose(det_annos[0]['score'], expected_score)
+    assert np.allclose(det_annos[0]['dimensions'], expected_dimensions)
+
 
 def test_bbox2result_kitti2d():
     data_root = 'tests/data/kitti'
@@ -372,3 +453,11 @@ def test_bbox2result_kitti2d():
     assert np.all(det_annos[0]['name'] == expected_name)
     assert np.allclose(det_annos[0]['bbox'], expected_bbox)
     assert np.allclose(det_annos[0]['score'], expected_score)
+
+
+def main():
+    test_bbox2result_kitti()
+
+
+if __name__ == '__main__':
+    main()
