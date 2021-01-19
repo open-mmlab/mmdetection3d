@@ -453,11 +453,3 @@ def test_bbox2result_kitti2d():
     assert np.all(det_annos[0]['name'] == expected_name)
     assert np.allclose(det_annos[0]['bbox'], expected_bbox)
     assert np.allclose(det_annos[0]['score'], expected_score)
-
-
-def main():
-    test_bbox2result_kitti()
-
-
-if __name__ == '__main__':
-    main()
