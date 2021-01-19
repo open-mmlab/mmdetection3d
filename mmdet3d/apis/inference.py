@@ -42,7 +42,6 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
                         f'but got {type(config)}')
     config.model.pretrained = None
     convert_SyncBN(config.model)
-    print(config.model)
     model = build_detector(config.model, test_cfg=config.test_cfg)
     if checkpoint is not None:
         checkpoint = load_checkpoint(model, checkpoint)
