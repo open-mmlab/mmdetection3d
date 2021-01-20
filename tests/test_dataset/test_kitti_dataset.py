@@ -1,5 +1,7 @@
 import numpy as np
+import os
 import pytest
+import tempfile
 import torch
 
 from mmdet3d.core.bbox import LiDARInstance3DBoxes
@@ -305,16 +307,6 @@ def test_format_results():
     assert np.allclose(result_files[0]['score'], expected_score)
     assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
 
-    boxes_3d = LiDARInstance3DBoxes(torch.tensor([]))
-    labels_3d = torch.tensor([])
-    scores_3d = torch.tensor([])
-    empty_result = dict(
-        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
-    results = [empty_result]
-    result_files, _ = self.format_results(results)
-    expected_result_files_length = 1
-    assert len(result_files) == expected_result_files_length
-
 
 def test_bbox2result_kitti():
     data_root = 'tests/data/kitti'
@@ -376,7 +368,11 @@ def test_bbox2result_kitti():
     scores_3d = torch.tensor([0.5])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     results = [result]
-    det_annos = self.bbox2result_kitti(results, classes)
+    temp_kitti_result_dir = tempfile.mkdtemp()
+    print(temp_kitti_result_dir)
+    det_annos = self.bbox2result_kitti(
+        results, classes, submission_prefix=temp_kitti_result_dir)
+    expected_file_path = os.path.join(temp_kitti_result_dir, '000000.txt')
     expected_name = np.array(['Pedestrian'])
     expected_dimensions = np.array([1.2000, 1.8900, 0.4800])
     expected_rotation_y = np.array([0.0100]) - np.pi
@@ -385,6 +381,23 @@ def test_bbox2result_kitti():
     assert np.allclose(det_annos[0]['rotation_y'], expected_rotation_y)
     assert np.allclose(det_annos[0]['score'], expected_score)
     assert np.allclose(det_annos[0]['dimensions'], expected_dimensions)
+    assert os.path.exists(expected_file_path)
+    os.remove(expected_file_path)
+    os.removedirs(temp_kitti_result_dir)
+
+    temp_kitti_result_dir = tempfile.mkdtemp()
+    boxes_3d = LiDARInstance3DBoxes(torch.tensor([]))
+    labels_3d = torch.tensor([])
+    scores_3d = torch.tensor([])
+    empty_result = dict(
+        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    results = [empty_result]
+    det_annos = self.bbox2result_kitti(
+        results, classes, submission_prefix=temp_kitti_result_dir)
+    expected_file_path = os.path.join(temp_kitti_result_dir, '000000.txt')
+    assert os.path.exists(expected_file_path)
+    os.remove(expected_file_path)
+    os.removedirs(temp_kitti_result_dir)
 
 
 def test_bbox2result_kitti2d():

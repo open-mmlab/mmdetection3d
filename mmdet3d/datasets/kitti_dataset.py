@@ -440,6 +440,7 @@ class KittiDataset(Custom3DDataset):
 
             if submission_prefix is not None:
                 curr_file = f'{submission_prefix}/{sample_idx:06d}.txt'
+                print(curr_file)
                 with open(curr_file, 'w') as f:
                     bbox = anno['bbox']
                     loc = anno['location']
