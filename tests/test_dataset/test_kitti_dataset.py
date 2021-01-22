@@ -14,67 +14,54 @@ def test_getitem():
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
     pts_prefix = 'velodyne_reduced'
-    pipeline = [{
-        'type': 'LoadPointsFromFile',
-        'coord_type': 'LIDAR',
-        'load_dim': 4,
-        'use_dim': 4,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type': 'LoadAnnotations3D',
-        'with_bbox_3d': True,
-        'with_label_3d': True,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type': 'ObjectSample',
-        'db_sampler': {
-            'data_root': 'tests/data/kitti/',
-            'info_path': 'tests/data/kitti/kitti_dbinfos_train.pkl',
-            'rate': 1.0,
-            'prepare': {
-                'filter_by_difficulty': [-1],
-                'filter_by_min_points': {
-                    'Pedestrian': 10
-                }
-            },
-            'classes': ['Pedestrian', 'Cyclist', 'Car'],
-            'sample_groups': {
-                'Pedestrian': 6
-            }
-        }
-    }, {
-        'type': 'ObjectNoise',
-        'num_try': 100,
-        'translation_std': [1.0, 1.0, 0.5],
-        'global_rot_range': [0.0, 0.0],
-        'rot_range': [-0.78539816, 0.78539816]
-    }, {
-        'type': 'RandomFlip3D',
-        'flip_ratio_bev_horizontal': 0.5
-    }, {
-        'type': 'GlobalRotScaleTrans',
-        'rot_range': [-0.78539816, 0.78539816],
-        'scale_ratio_range': [0.95, 1.05]
-    }, {
-        'type': 'PointsRangeFilter',
-        'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
-    }, {
-        'type': 'ObjectRangeFilter',
-        'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
-    }, {
-        'type': 'PointShuffle'
-    }, {
-        'type': 'DefaultFormatBundle3D',
-        'class_names': ['Pedestrian', 'Cyclist', 'Car']
-    }, {
-        'type': 'Collect3D',
-        'keys': ['points', 'gt_bboxes_3d', 'gt_labels_3d']
-    }]
-    modality = {'use_lidar': True, 'use_camera': False}
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=True,
+            with_label_3d=True,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='ObjectSample',
+            db_sampler=dict(
+                data_root='tests/data/kitti/',
+                info_path='tests/data/kitti/kitti_dbinfos_train.pkl',
+                rate=1.0,
+                prepare=dict(
+                    filter_by_difficulty=[-1],
+                    filter_by_min_points=dict(Pedestrian=10)),
+                classes=['Pedestrian', 'Cyclist', 'Car'],
+                sample_groups=dict(Pedestrian=6))),
+        dict(
+            type='ObjectNoise',
+            num_try=100,
+            translation_std=[1.0, 1.0, 0.5],
+            global_rot_range=[0.0, 0.0],
+            rot_range=[-0.78539816, 0.78539816]),
+        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.78539816, 0.78539816],
+            scale_ratio_range=[0.95, 1.05]),
+        dict(
+            type='PointsRangeFilter',
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+        dict(
+            type='ObjectRangeFilter',
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+        dict(type='PointShuffle'),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=['Pedestrian', 'Cyclist', 'Car']),
+        dict(
+            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    ]
+    modality = dict(use_lidar=True, use_camera=False)
     split = 'training'
     self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
                         classes, modality)
@@ -98,52 +85,39 @@ def test_evaluate():
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
     pts_prefix = 'velodyne_reduced'
-    pipeline = [{
-        'type': 'LoadPointsFromFile',
-        'coord_type': 'LIDAR',
-        'load_dim': 4,
-        'use_dim': 4,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type':
-        'MultiScaleFlipAug3D',
-        'img_scale': (1333, 800),
-        'pts_scale_ratio':
-        1,
-        'flip':
-        False,
-        'transforms': [{
-            'type': 'GlobalRotScaleTrans',
-            'rot_range': [0, 0],
-            'scale_ratio_range': [1.0, 1.0],
-            'translation_std': [0, 0, 0]
-        }, {
-            'type': 'RandomFlip3D'
-        }, {
-            'type': 'PointsRangeFilter',
-            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
-        }, {
-            'type': 'DefaultFormatBundle3D',
-            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
-            'with_label': False
-        }, {
-            'type': 'Collect3D',
-            'keys': ['points']
-        }]
-    }]
-    modality = {'use_lidar': True, 'use_camera': False}
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='MultiScaleFlipAug3D',
+            img_scale=(1333, 800),
+            pts_scale_ratio=1,
+            flip=False,
+            transforms=[
+                dict(
+                    type='GlobalRotScaleTrans',
+                    rot_range=[0, 0],
+                    scale_ratio_range=[1.0, 1.0],
+                    translation_std=[0, 0, 0]),
+                dict(type='RandomFlip3D'),
+                dict(
+                    type='PointsRangeFilter',
+                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=['Pedestrian', 'Cyclist', 'Car'],
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ])
+    ]
+    modality = dict(use_lidar=True, use_camera=False)
     split = 'training'
-    self = KittiDataset(
-        data_root,
-        ann_file,
-        split,
-        pts_prefix,
-        pipeline,
-        classes,
-        modality,
-    )
+    self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
+                        classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
             [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
@@ -168,7 +142,7 @@ def test_show():
     temp_dir = tempfile.mkdtemp()
     data_root = 'tests/data/kitti'
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
-    modality = {'use_lidar': True, 'use_camera': False}
+    modality = dict(use_lidar=True, use_camera=False)
     split = 'training'
     file_client_args = dict(backend='disk')
     point_cloud_range = [0, -40, -3, 70.4, 40, 1]
@@ -230,52 +204,39 @@ def test_format_results():
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
     pts_prefix = 'velodyne_reduced'
-    pipeline = [{
-        'type': 'LoadPointsFromFile',
-        'coord_type': 'LIDAR',
-        'load_dim': 4,
-        'use_dim': 4,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type':
-        'MultiScaleFlipAug3D',
-        'img_scale': (1333, 800),
-        'pts_scale_ratio':
-        1,
-        'flip':
-        False,
-        'transforms': [{
-            'type': 'GlobalRotScaleTrans',
-            'rot_range': [0, 0],
-            'scale_ratio_range': [1.0, 1.0],
-            'translation_std': [0, 0, 0]
-        }, {
-            'type': 'RandomFlip3D'
-        }, {
-            'type': 'PointsRangeFilter',
-            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
-        }, {
-            'type': 'DefaultFormatBundle3D',
-            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
-            'with_label': False
-        }, {
-            'type': 'Collect3D',
-            'keys': ['points']
-        }]
-    }]
-    modality = {'use_lidar': True, 'use_camera': False}
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='MultiScaleFlipAug3D',
+            img_scale=(1333, 800),
+            pts_scale_ratio=1,
+            flip=False,
+            transforms=[
+                dict(
+                    type='GlobalRotScaleTrans',
+                    rot_range=[0, 0],
+                    scale_ratio_range=[1.0, 1.0],
+                    translation_std=[0, 0, 0]),
+                dict(type='RandomFlip3D'),
+                dict(
+                    type='PointsRangeFilter',
+                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=['Pedestrian', 'Cyclist', 'Car'],
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ])
+    ]
+    modality = dict(use_lidar=True, use_camera=False)
     split = 'training'
-    self = KittiDataset(
-        data_root,
-        ann_file,
-        split,
-        pts_prefix,
-        pipeline,
-        classes,
-        modality,
-    )
+    self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
+                        classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
             [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
@@ -313,52 +274,39 @@ def test_bbox2result_kitti():
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
     pts_prefix = 'velodyne_reduced'
-    pipeline = [{
-        'type': 'LoadPointsFromFile',
-        'coord_type': 'LIDAR',
-        'load_dim': 4,
-        'use_dim': 4,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type':
-        'MultiScaleFlipAug3D',
-        'img_scale': (1333, 800),
-        'pts_scale_ratio':
-        1,
-        'flip':
-        False,
-        'transforms': [{
-            'type': 'GlobalRotScaleTrans',
-            'rot_range': [-0.1, 0.1],
-            'scale_ratio_range': [0.9, 1.1],
-            'translation_std': [0, 0, 0]
-        }, {
-            'type': 'RandomFlip3D'
-        }, {
-            'type': 'PointsRangeFilter',
-            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
-        }, {
-            'type': 'DefaultFormatBundle3D',
-            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
-            'with_label': False
-        }, {
-            'type': 'Collect3D',
-            'keys': ['points']
-        }]
-    }]
-    modality = {'use_lidar': True, 'use_camera': False}
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='MultiScaleFlipAug3D',
+            img_scale=(1333, 800),
+            pts_scale_ratio=1,
+            flip=False,
+            transforms=[
+                dict(
+                    type='GlobalRotScaleTrans',
+                    rot_range=[-0.1, 0.1],
+                    scale_ratio_range=[0.9, 1.1],
+                    translation_std=[0, 0, 0]),
+                dict(type='RandomFlip3D'),
+                dict(
+                    type='PointsRangeFilter',
+                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=['Pedestrian', 'Cyclist', 'Car'],
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ])
+    ]
+    modality = dict(use_lidar=True, use_camera=False)
     split = 'training'
-    self = KittiDataset(
-        data_root,
-        ann_file,
-        split,
-        pts_prefix,
-        pipeline,
-        classes,
-        modality,
-    )
+    self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
+                        classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
             [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
@@ -405,52 +353,39 @@ def test_bbox2result_kitti2d():
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
     pts_prefix = 'velodyne_reduced'
-    pipeline = [{
-        'type': 'LoadPointsFromFile',
-        'coord_type': 'LIDAR',
-        'load_dim': 4,
-        'use_dim': 4,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type':
-        'MultiScaleFlipAug3D',
-        'img_scale': (1333, 800),
-        'pts_scale_ratio':
-        1,
-        'flip':
-        False,
-        'transforms': [{
-            'type': 'GlobalRotScaleTrans',
-            'rot_range': [-0.1, 0.1],
-            'scale_ratio_range': [0.9, 1.1],
-            'translation_std': [0, 0, 0]
-        }, {
-            'type': 'RandomFlip3D'
-        }, {
-            'type': 'PointsRangeFilter',
-            'point_cloud_range': [0, -40, -3, 70.4, 40, 1]
-        }, {
-            'type': 'DefaultFormatBundle3D',
-            'class_names': ['Pedestrian', 'Cyclist', 'Car'],
-            'with_label': False
-        }, {
-            'type': 'Collect3D',
-            'keys': ['points']
-        }]
-    }]
-    modality = {'use_lidar': True, 'use_camera': False}
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='MultiScaleFlipAug3D',
+            img_scale=(1333, 800),
+            pts_scale_ratio=1,
+            flip=False,
+            transforms=[
+                dict(
+                    type='GlobalRotScaleTrans',
+                    rot_range=[-0.1, 0.1],
+                    scale_ratio_range=[0.9, 1.1],
+                    translation_std=[0, 0, 0]),
+                dict(type='RandomFlip3D'),
+                dict(
+                    type='PointsRangeFilter',
+                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=['Pedestrian', 'Cyclist', 'Car'],
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ])
+    ]
+    modality = dict(use_lidar=True, use_camera=False)
     split = 'training'
-    self = KittiDataset(
-        data_root,
-        ann_file,
-        split,
-        pts_prefix,
-        pipeline,
-        classes,
-        modality,
-    )
+    self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
+                        classes, modality)
     bboxes = np.array([[[46.1218, -4.6496, -0.9275, 0.5316, 0.5],
                         [33.3189, 0.1981, 0.3136, 0.5656, 0.5]],
                        [[46.1366, -4.6404, -0.9510, 0.5162, 0.5],
