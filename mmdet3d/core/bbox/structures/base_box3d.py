@@ -57,7 +57,7 @@ class BaseInstance3DBoxes(object):
         else:
             self.box_dim = box_dim
             self.with_yaw = with_yaw
-        self.tensor = tensor
+        self.tensor = tensor.clone()
 
         if origin != (0.5, 0.5, 0):
             dst = self.tensor.new_tensor((0.5, 0.5, 0))
