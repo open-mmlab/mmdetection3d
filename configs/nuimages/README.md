@@ -10,6 +10,8 @@ The convert script can be found [here](https://github.com/open-mmlab/mmdetection
 The baseline results include instance segmentation models, e.g., Mask R-CNN, Cascade Mask R-CNN, and HTC.
 We will support panoptic segmentation models in the future.
 
+![demo image](../../resources/nuimages_demo.gif)
+
 The dataset converted by the script of v0.6.0 only supports instance segmentation. Since v0.7.0, we also support to produce semantic segmentation mask of each image; thus, we can train HTC or semantic segmentation models using the dataset. To convert the nuImages dataset into COCO format, please use the command below:
 
 ```shell
