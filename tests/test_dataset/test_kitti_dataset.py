@@ -219,7 +219,6 @@ def test_bbox2result_kitti():
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     results = [result]
     temp_kitti_result_dir = tempfile.mkdtemp()
-    print(temp_kitti_result_dir)
     det_annos = self.bbox2result_kitti(
         results, classes, submission_prefix=temp_kitti_result_dir)
     expected_file_path = os.path.join(temp_kitti_result_dir, '000000.txt')
