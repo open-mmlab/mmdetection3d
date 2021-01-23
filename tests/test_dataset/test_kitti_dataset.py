@@ -8,12 +8,49 @@ from mmdet3d.core.bbox import LiDARInstance3DBoxes
 from mmdet3d.datasets import KittiDataset
 
 
-def test_getitem():
-    np.random.seed(0)
+def _generate_kitti_dataset_config():
     data_root = 'tests/data/kitti'
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     classes = ['Pedestrian', 'Cyclist', 'Car']
     pts_prefix = 'velodyne_reduced'
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='MultiScaleFlipAug3D',
+            img_scale=(1333, 800),
+            pts_scale_ratio=1,
+            flip=False,
+            transforms=[
+                dict(
+                    type='GlobalRotScaleTrans',
+                    rot_range=[0, 0],
+                    scale_ratio_range=[1.0, 1.0],
+                    translation_std=[0, 0, 0]),
+                dict(type='RandomFlip3D'),
+                dict(
+                    type='PointsRangeFilter',
+                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=['Pedestrian', 'Cyclist', 'Car'],
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ])
+    ]
+    modality = dict(use_lidar=True, use_camera=False)
+    split = 'training'
+    return data_root, ann_file, classes, pts_prefix, pipeline, modality, split
+
+
+def test_getitem():
+    np.random.seed(0)
+    data_root, ann_file, classes, pts_prefix,\
+        pipeline, modality, split = _generate_kitti_dataset_config()
     pipeline = [
         dict(
             type='LoadPointsFromFile',
@@ -61,8 +98,6 @@ def test_getitem():
         dict(
             type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
     ]
-    modality = dict(use_lidar=True, use_camera=False)
-    split = 'training'
     self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
                         classes, modality)
     data = self[0]
@@ -81,41 +116,8 @@ def test_getitem():
 def test_evaluate():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
-    data_root = 'tests/data/kitti'
-    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
-    classes = ['Pedestrian', 'Cyclist', 'Car']
-    pts_prefix = 'velodyne_reduced'
-    pipeline = [
-        dict(
-            type='LoadPointsFromFile',
-            coord_type='LIDAR',
-            load_dim=4,
-            use_dim=4,
-            file_client_args=dict(backend='disk')),
-        dict(
-            type='MultiScaleFlipAug3D',
-            img_scale=(1333, 800),
-            pts_scale_ratio=1,
-            flip=False,
-            transforms=[
-                dict(
-                    type='GlobalRotScaleTrans',
-                    rot_range=[0, 0],
-                    scale_ratio_range=[1.0, 1.0],
-                    translation_std=[0, 0, 0]),
-                dict(type='RandomFlip3D'),
-                dict(
-                    type='PointsRangeFilter',
-                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=['Pedestrian', 'Cyclist', 'Car'],
-                    with_label=False),
-                dict(type='Collect3D', keys=['points'])
-            ])
-    ]
-    modality = dict(use_lidar=True, use_camera=False)
-    split = 'training'
+    data_root, ann_file, classes, pts_prefix,\
+        pipeline, modality, split = _generate_kitti_dataset_config()
     self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
                         classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
@@ -140,42 +142,8 @@ def test_show():
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
     temp_dir = tempfile.mkdtemp()
-    data_root = 'tests/data/kitti'
-    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
-    modality = dict(use_lidar=True, use_camera=False)
-    split = 'training'
-    file_client_args = dict(backend='disk')
-    point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-    class_names = ['Pedestrian', 'Cyclist', 'Car']
-    pipeline = [
-        dict(
-            type='LoadPointsFromFile',
-            coord_type='LIDAR',
-            load_dim=4,
-            use_dim=4,
-            file_client_args=file_client_args),
-        dict(
-            type='MultiScaleFlipAug3D',
-            img_scale=(1333, 800),
-            pts_scale_ratio=1,
-            flip=False,
-            transforms=[
-                dict(
-                    type='GlobalRotScaleTrans',
-                    rot_range=[0, 0],
-                    scale_ratio_range=[1., 1.],
-                    translation_std=[0, 0, 0]),
-                dict(type='RandomFlip3D'),
-                dict(
-                    type='PointsRangeFilter',
-                    point_cloud_range=point_cloud_range),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=class_names,
-                    with_label=False),
-                dict(type='Collect3D', keys=['points'])
-            ])
-    ]
+    data_root, ann_file, classes, pts_prefix,\
+        pipeline, modality, split = _generate_kitti_dataset_config()
     kitti_dataset = KittiDataset(
         data_root, ann_file, split=split, modality=modality, pipeline=pipeline)
     boxes_3d = LiDARInstance3DBoxes(
@@ -200,41 +168,8 @@ def test_show():
 
 def test_format_results():
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
-    data_root = 'tests/data/kitti'
-    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
-    classes = ['Pedestrian', 'Cyclist', 'Car']
-    pts_prefix = 'velodyne_reduced'
-    pipeline = [
-        dict(
-            type='LoadPointsFromFile',
-            coord_type='LIDAR',
-            load_dim=4,
-            use_dim=4,
-            file_client_args=dict(backend='disk')),
-        dict(
-            type='MultiScaleFlipAug3D',
-            img_scale=(1333, 800),
-            pts_scale_ratio=1,
-            flip=False,
-            transforms=[
-                dict(
-                    type='GlobalRotScaleTrans',
-                    rot_range=[0, 0],
-                    scale_ratio_range=[1.0, 1.0],
-                    translation_std=[0, 0, 0]),
-                dict(type='RandomFlip3D'),
-                dict(
-                    type='PointsRangeFilter',
-                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=['Pedestrian', 'Cyclist', 'Car'],
-                    with_label=False),
-                dict(type='Collect3D', keys=['points'])
-            ])
-    ]
-    modality = dict(use_lidar=True, use_camera=False)
-    split = 'training'
+    data_root, ann_file, classes, pts_prefix,\
+        pipeline, modality, split = _generate_kitti_dataset_config()
     self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
                         classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
@@ -270,41 +205,8 @@ def test_format_results():
 
 
 def test_bbox2result_kitti():
-    data_root = 'tests/data/kitti'
-    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
-    classes = ['Pedestrian', 'Cyclist', 'Car']
-    pts_prefix = 'velodyne_reduced'
-    pipeline = [
-        dict(
-            type='LoadPointsFromFile',
-            coord_type='LIDAR',
-            load_dim=4,
-            use_dim=4,
-            file_client_args=dict(backend='disk')),
-        dict(
-            type='MultiScaleFlipAug3D',
-            img_scale=(1333, 800),
-            pts_scale_ratio=1,
-            flip=False,
-            transforms=[
-                dict(
-                    type='GlobalRotScaleTrans',
-                    rot_range=[-0.1, 0.1],
-                    scale_ratio_range=[0.9, 1.1],
-                    translation_std=[0, 0, 0]),
-                dict(type='RandomFlip3D'),
-                dict(
-                    type='PointsRangeFilter',
-                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=['Pedestrian', 'Cyclist', 'Car'],
-                    with_label=False),
-                dict(type='Collect3D', keys=['points'])
-            ])
-    ]
-    modality = dict(use_lidar=True, use_camera=False)
-    split = 'training'
+    data_root, ann_file, classes, pts_prefix,\
+        pipeline, modality, split = _generate_kitti_dataset_config()
     self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
                         classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
@@ -349,41 +251,8 @@ def test_bbox2result_kitti():
 
 
 def test_bbox2result_kitti2d():
-    data_root = 'tests/data/kitti'
-    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
-    classes = ['Pedestrian', 'Cyclist', 'Car']
-    pts_prefix = 'velodyne_reduced'
-    pipeline = [
-        dict(
-            type='LoadPointsFromFile',
-            coord_type='LIDAR',
-            load_dim=4,
-            use_dim=4,
-            file_client_args=dict(backend='disk')),
-        dict(
-            type='MultiScaleFlipAug3D',
-            img_scale=(1333, 800),
-            pts_scale_ratio=1,
-            flip=False,
-            transforms=[
-                dict(
-                    type='GlobalRotScaleTrans',
-                    rot_range=[-0.1, 0.1],
-                    scale_ratio_range=[0.9, 1.1],
-                    translation_std=[0, 0, 0]),
-                dict(type='RandomFlip3D'),
-                dict(
-                    type='PointsRangeFilter',
-                    point_cloud_range=[0, -40, -3, 70.4, 40, 1]),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=['Pedestrian', 'Cyclist', 'Car'],
-                    with_label=False),
-                dict(type='Collect3D', keys=['points'])
-            ])
-    ]
-    modality = dict(use_lidar=True, use_camera=False)
-    split = 'training'
+    data_root, ann_file, classes, pts_prefix,\
+        pipeline, modality, split = _generate_kitti_dataset_config()
     self = KittiDataset(data_root, ann_file, split, pts_prefix, pipeline,
                         classes, modality)
     bboxes = np.array([[[46.1218, -4.6496, -0.9275, 0.5316, 0.5],
