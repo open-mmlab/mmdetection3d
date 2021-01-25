@@ -3,6 +3,8 @@ import numpy as np
 import trimesh
 from os import path as osp
 
+from .open3d_vis import Visualizer
+
 
 def _write_ply(points, out_filename):
     """Write points into ``ply`` format for meshlab visualization.
@@ -78,6 +80,17 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
     """
+    vis = Visualizer(points)
+    if pred_bboxes is not None:
+        pred_bboxes[..., 2] -= pred_bboxes[..., 5] / 2
+        pred_bboxes[..., 6] *= -1
+        vis.add_bboxes(bbox3d=pred_bboxes)
+    if gt_bboxes is not None:
+        pred_bboxes[..., 2] -= pred_bboxes[..., 5] / 2
+        pred_bboxes[..., 6] *= -1
+        vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
+    vis.show()
+
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
 
