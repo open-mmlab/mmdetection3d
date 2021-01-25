@@ -375,7 +375,7 @@ def project_bbox3d_on_img(bboxes3d,
 
 
 class Visualizer(object):
-    r"""Bbox head of `H3DNet <https://arxiv.org/abs/2006.05682>`_.
+    r"""Online visualizer implemented with Open3d.
 
     Args:
         points (numpy.array, shape=[N, 3+C]): Points to visualize. The Points
