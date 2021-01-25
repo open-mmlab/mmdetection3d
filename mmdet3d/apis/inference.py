@@ -92,15 +92,10 @@ def inference_detector(model, pcd=None, data_root=None, version=None):
         data = get_nuscenes_lidar_top_data(data_root, sample_num, pkl_name,
                                            cfg.data.test.pipeline)
     else:
-        lidar_path = pcd
-        timestamp = []
-        sweeps = []
         data = dict(
-            pts_filename=lidar_path,
+            pts_filename=pcd,
             box_type_3d=box_type_3d,
             box_mode_3d=box_mode_3d,
-            timestamp=timestamp,
-            sweeps=sweeps,
             img_fields=[],
             bbox3d_fields=[],
             pts_mask_fields=[],
