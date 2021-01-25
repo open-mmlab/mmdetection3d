@@ -1,4 +1,5 @@
 import mmcv
+import numpy as np
 import torch
 from copy import deepcopy
 from mmcv.parallel import collate, scatter
@@ -7,6 +8,7 @@ from os import path as osp
 
 from mmdet3d.core import Box3DMode, show_result
 from mmdet3d.core.bbox import get_box_type
+from mmdet3d.datasets import NuScenesDataset
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_detector
 
@@ -20,6 +22,13 @@ def convert_SyncBN(config):
             else:
                 convert_SyncBN(config[item])
     return
+
+
+def get_nuscenes_lidar_top_data(root_path, samples_num, pkl_name, pipeline):
+    nus_dataset = NuScenesDataset(
+        pkl_name, pipeline, root_path, test_mode=True)
+    data = nus_dataset[samples_num]
+    return data
 
 
 def init_detector(config, checkpoint=None, device='cuda:0'):
@@ -55,7 +64,7 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
     return model
 
 
-def inference_detector(model, pcd):
+def inference_detector(model, pcd=None, data_root=None, version=None):
     """Inference point cloud with the detector.
 
     Args:
@@ -71,20 +80,35 @@ def inference_detector(model, pcd):
     test_pipeline = deepcopy(cfg.data.test.pipeline)
     test_pipeline = Compose(test_pipeline)
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
-    data = dict(
-        pts_filename=pcd,
-        box_type_3d=box_type_3d,
-        box_mode_3d=box_mode_3d,
-        timestamp=0,
-        sweeps=[],
-        img_fields=[],
-        bbox3d_fields=[],
-        pts_mask_fields=[],
-        pts_seg_fields=[],
-        bbox_fields=[],
-        mask_fields=[],
-        seg_fields=[])
-    data = test_pipeline(data)
+
+    if pcd is None:
+        if version is None:
+            # for unittest or modified nuscenes dataset structure
+            pkl_name = 'nus_info.pkl'
+        else:
+            pkl_name = 'nuscenes-' + version + '_infos_train.pkl'
+        pkl_name = osp.join(data_root, pkl_name)
+        sample_num = 1
+        data = get_nuscenes_lidar_top_data(data_root, sample_num, pkl_name,
+                                           cfg.data.test.pipeline)
+    else:
+        lidar_path = pcd
+        timestamp = []
+        sweeps = []
+        data = dict(
+            pts_filename=lidar_path,
+            box_type_3d=box_type_3d,
+            box_mode_3d=box_mode_3d,
+            timestamp=timestamp,
+            sweeps=sweeps,
+            img_fields=[],
+            bbox3d_fields=[],
+            pts_mask_fields=[],
+            pts_seg_fields=[],
+            bbox_fields=[],
+            mask_fields=[],
+            seg_fields=[])
+        data = test_pipeline(data)
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
         # scatter to specified GPU
@@ -110,10 +134,12 @@ def show_result_meshlab(data, result, out_dir):
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
     file_name = osp.split(pts_filename)[-1].split('.')[0]
-
     assert out_dir is not None, 'Expect out_dir, got none.'
     if 'pts_bbox' in result[0].keys():
         pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
+        # we should visualise the origin pointcloud
+        origin_points_indices = np.equal(points[:, 3], 0)
+        points = points[origin_points_indices]
     else:
         pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
     # for now we convert points into depth mode
@@ -127,3 +153,4 @@ def show_result_meshlab(data, result, out_dir):
     else:
         pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
     show_result(points, None, pred_bboxes, out_dir, file_name)
+    return points, pred_bboxes, out_dir, file_name
