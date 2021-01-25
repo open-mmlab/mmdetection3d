@@ -374,7 +374,7 @@ class PartAggregationROIHead(Base3DRoIHead):
         return bbox_results
 ```
 
-Here we omit more details related to other functions. Please see the [code](mmdet3d/models/roi_heads/part_aggregation_roi_head.py) for more details.
+Here we omit more details related to other functions. Please see the [code](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/part_aggregation_roi_head.py) for more details.
 
 Last, the users need to add the module in
 `mmdet3d/models/bbox_heads/__init__.py` and `mmdet3d/models/roi_heads/__init__.py` thus the corresponding registry could find and load them.
