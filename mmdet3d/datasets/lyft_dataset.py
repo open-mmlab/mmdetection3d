@@ -145,7 +145,7 @@ class LyftDataset(Custom3DDataset):
             sample_idx=info['token'],
             pts_filename=info['lidar_path'],
             sweeps=info['sweeps'],
-            timestamp=info['timestamp'] / 1e6,
+            timestamp=info['timestamp'],
         )
 
         if self.modality['use_camera']:

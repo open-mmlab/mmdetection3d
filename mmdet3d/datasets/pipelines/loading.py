@@ -164,7 +164,7 @@ class LoadPointsFromMultiSweeps(object):
         points = results['points']
         points.tensor[:, 4] = 0
         sweep_points_list = [points]
-        ts = results['timestamp']
+        ts = results['timestamp'] / 1e6
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
             for i in range(self.sweeps_num):
                 if self.remove_close:

@@ -51,11 +51,17 @@ def test_getitem():
         'tests/data/nuscenes',
         test_mode=True)
     data = nus_dataset[0]
+    points = data['points'][0]._data.detach().numpy()
     assert data['img_metas'][0].data['flip'] is False
     assert data['img_metas'][0].data['pcd_horizontal_flip'] is False
     assert data['points'][0]._data.shape == (100, 4)
+    assert np.all(points[:, 3] == 0)
 
     data = nus_dataset[1]
+    points = data['points'][0]._data.detach().numpy()
     assert data['img_metas'][0].data['flip'] is False
     assert data['img_metas'][0].data['pcd_horizontal_flip'] is False
     assert data['points'][0]._data.shape == (597, 4)
+    assert np.all(points[:100, 3] == 0)
+    assert np.all(abs(points[100:497, 3] - 0.05) < 0.001)
+    assert np.all(abs(points[497:597, 3] - 0.1) < 0.001)

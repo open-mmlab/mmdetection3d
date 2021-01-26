@@ -35,8 +35,6 @@ def main():
     else:
         print('Error!!! Please input the correct file or dir')
         exit(0)
-    # show the results
-    show_result_meshlab(data, result, args.out_dir)
 
 
 if __name__ == '__main__':
