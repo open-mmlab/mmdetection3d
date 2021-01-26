@@ -49,7 +49,3 @@ def test_getitem():
     data = semantickitti_dataset[0]
     assert data['points']._data.shape[0] == data[
         'pts_semantic_mask']._data.shape[0]
-
-
-if __name__ == '__main__':
-    test_getitem()
