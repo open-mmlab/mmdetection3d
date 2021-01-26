@@ -9,7 +9,7 @@ For data sharing similar format with existing datasets, like Lyft compared to nu
 
 For data that is inconvenient to read directly online, the simplest way is to convert your dataset to existing dataset formats.
 
-Typically we need a data converter to reorganize the raw data and convert the annotation format into KITTI style. Then a new dataset class inherited from existing ones is sometimes necessary for dealing with some specific differences between datasets. Finally, the users need to further modify the config files to use the dataset. An [example](../2_new_data_model.md) training predefined models on Waymo dataset by converting it into KITTI style can be taken for reference.
+Typically we need a data converter to reorganize the raw data and convert the annotation format into KITTI style. Then a new dataset class inherited from existing ones is sometimes necessary for dealing with some specific differences between datasets. Finally, the users need to further modify the config files to use the dataset. An [example](https://mmdetection3d.readthedocs.io/en/latest/2_new_data_model.html) training predefined models on Waymo dataset by converting it into KITTI style can be taken for reference.
 
 ### Reorganize new data format to middle format
 
@@ -60,7 +60,7 @@ With this design, we provide an alternative choice for customizing datasets.
 ```
 
 On top of this you can write a new Dataset class inherited from `Custom3DDataset`, and overwrite related methods,
-like [KittiDataset](../../mmdet3d/datasets/kitti_dataset.py) and [ScanNetDataset](../../mmdet3d/datasets/scannet_dataset.py).
+like [KittiDataset](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py) and [ScanNetDataset](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/scannet_dataset.py).
 
 ### An example of customized dataset
 

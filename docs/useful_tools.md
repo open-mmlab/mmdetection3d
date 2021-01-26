@@ -153,7 +153,7 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
 - `--nproc`: number of workers for data preparation, defaults to `4`. Larger number could reduce the preparation time as images are processed in parallel.
 - `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
 
-More details could be referred to the [doc](data_preparation.md) for dataset preparation and [README](../configs/nuimages/README.md) for nuImages dataset.
+More details could be referred to the [doc](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html) for dataset preparation and [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md) for nuImages dataset.
 
 # Miscellaneous
 
