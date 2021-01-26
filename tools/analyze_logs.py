@@ -48,14 +48,14 @@ def plot_curve(log_dicts, args):
         epochs = list(log_dict.keys())
         for j, metric in enumerate(metrics):
             print(f'plot curve of {args.json_logs[i]}, metric is {metric}')
-            if metric not in log_dict[epochs[0]]:
+            if metric not in log_dict[epochs[args.interval - 1]]:
                 raise KeyError(
                     f'{args.json_logs[i]} does not contain metric {metric}')
 
-            if 'mAP' in metric:
-                xs = np.arange(1, max(epochs) + 1)
+            if args.mode == 'eval':
+                xs = np.arange(args.interval, max(epochs) + 1, args.interval)
                 ys = []
-                for epoch in epochs:
+                for epoch in epochs[args.interval - 1::args.interval]:
                     ys += log_dict[epoch][metric]
                 ax = plt.gca()
                 ax.set_xticks(xs)
@@ -64,8 +64,9 @@ def plot_curve(log_dicts, args):
             else:
                 xs = []
                 ys = []
-                num_iters_per_epoch = log_dict[epochs[0]]['iter'][-1]
-                for epoch in epochs:
+                num_iters_per_epoch = \
+                    log_dict[epochs[args.interval-1]]['iter'][-1]
+                for epoch in epochs[args.interval - 1::args.interval]:
                     iters = log_dict[epoch]['iter']
                     if log_dict[epoch]['mode'][-1] == 'val':
                         iters = iters[:-1]
@@ -114,6 +115,8 @@ def add_plot_parser(subparsers):
     parser_plt.add_argument(
         '--style', type=str, default='dark', help='style of plt')
     parser_plt.add_argument('--out', type=str, default=None)
+    parser_plt.add_argument('--mode', type=str, default='train')
+    parser_plt.add_argument('--interval', type=int, default=1)
 
 
 def add_time_parser(subparsers):
