@@ -30,11 +30,11 @@ def test_load_points_from_multi_sweeps():
 
     points = np.random.random([100, 5]) * 2
     points = LiDARPoints(points, points_dim=5)
-    input_results = dict(points=points, sweeps=[], timestamp=None)
+    input_results = dict(points=points, sweeps=[], timestamp=1.0)
     results = load_points_from_multi_sweeps_1(input_results)
     assert results['points'].tensor.numpy().shape == (100, 5)
 
-    input_results = dict(points=points, sweeps=[], timestamp=None)
+    input_results = dict(points=points, sweeps=[], timestamp=1.0)
     results = load_points_from_multi_sweeps_2(input_results)
     assert results['points'].tensor.numpy().shape == (775, 5)
 
