@@ -6,7 +6,7 @@ from mmdet3d.datasets import SemanticKittiDataset
 def test_getitem():
     np.random.seed(0)
     root_path = './tests/data/semantickitti/'
-    ann_file = './tests/data/semantickitti/semantickitty_infos.pkl'
+    ann_file = './tests/data/semantickitti/semantickitti_infos.pkl'
     class_names = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
                    'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
                    'sidewalk', 'other-ground', 'building', 'fence',
