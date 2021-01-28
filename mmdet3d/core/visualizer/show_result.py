@@ -82,12 +82,8 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
     """
     vis = Visualizer(points)
     if pred_bboxes is not None:
-        pred_bboxes[..., 2] -= pred_bboxes[..., 5] / 2
-        pred_bboxes[..., 6] *= -1
         vis.add_bboxes(bbox3d=pred_bboxes)
     if gt_bboxes is not None:
-        pred_bboxes[..., 2] -= pred_bboxes[..., 5] / 2
-        pred_bboxes[..., 6] *= -1
         vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
     vis.show()
 
@@ -102,6 +98,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
         _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if pred_bboxes is not None:
+        pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
         pred_bboxes[:, 6] *= -1
         _write_oriented_bbox(pred_bboxes,
                              osp.join(result_path, f'{filename}_pred.ply'))

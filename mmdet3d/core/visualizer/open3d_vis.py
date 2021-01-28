@@ -19,6 +19,7 @@ def _draw_points(points,
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
         points_size (int): the size of points to show on visualizer.
         point_color (tuple[float]): the color of points.
+
     Returns:
         tuple: points, color of each point.
     """
@@ -79,7 +80,7 @@ def _draw_bboxes(bbox3d,
         # TODO: fix problem of current coordinate system
         # dim[0], dim[1] = dim[1], dim[0]  # for current coordinate
         # yaw[rot_axis] = -(bbox3d[i, 6] - 0.5 * np.pi)
-        yaw[rot_axis] = bbox3d[i, 6]
+        yaw[rot_axis] = -bbox3d[i, 6]
         rot_mat = geometry.get_rotation_matrix_from_xyz(yaw)
         if center_mode == 'lidar_bottom':
             center[rot_axis] += dim[
@@ -202,7 +203,7 @@ def _draw_bboxes_ind(bbox3d,
         # TODO: fix problem of current coordinate system
         # dim[0], dim[1] = dim[1], dim[0]  # for current coordinate
         # yaw[rot_axis] = -(bbox3d[i, 6] - 0.5 * np.pi)
-        yaw[rot_axis] = bbox3d[i, 6]
+        yaw[rot_axis] = -bbox3d[i, 6]
         rot_mat = geometry.get_rotation_matrix_from_xyz(yaw)
         if bottom_center:
             center[2] += dim[2] / 2  # bottom center to gravity center
@@ -464,49 +465,3 @@ class Visualizer(object):
 
         self.o3d_visualizer.destroy_window()
         return
-
-
-if __name__ == '__main__':
-    from mmdet3d.datasets import KittiDataset
-
-    data_root = 'data/kitti'
-    ann_file = 'data/kitti/kitti_infos_train.pkl'
-    classes = ['Pedestrian', 'Cyclist', 'Car']
-    pts_prefix = 'velodyne_reduced'
-    pipeline = [{
-        'type': 'LoadPointsFromFile',
-        'load_dim': 4,
-        'use_dim': 4,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }, {
-        'type': 'LoadImageFromFile'
-    }, {
-        'type': 'LoadAnnotations3D',
-        'with_bbox_3d': True,
-        'with_label_3d': True,
-        'file_client_args': {
-            'backend': 'disk'
-        }
-    }]
-    modality = {'use_lidar': True, 'use_camera': True}
-    split = 'training'
-    self = KittiDataset(
-        data_root,
-        ann_file,
-        split,
-        pts_prefix,
-        pipeline,
-        classes,
-        modality,
-        filter_empty_gt=False)
-
-    infos = self.data_infos
-    for i in range(500):
-        data, info = self[i], infos[i]
-        points, gt_bboxes = data['points'], data['gt_bboxes_3d']
-        img = data['img']
-        lidar2img_rt = data['lidar2img']
-        project_pts_on_img(points, img, lidar2img_rt)
-        project_bbox3d_on_img(gt_bboxes, img, lidar2img_rt)
