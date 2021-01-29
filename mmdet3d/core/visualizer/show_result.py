@@ -70,7 +70,7 @@ def _write_oriented_bbox(scene_bbox, out_filename):
     return
 
 
-def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
+def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -79,13 +79,15 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename):
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
+        show (bool): Visualize the results online.
     """
-    vis = Visualizer(points)
-    if pred_bboxes is not None:
-        vis.add_bboxes(bbox3d=pred_bboxes)
-    if gt_bboxes is not None:
-        vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
-    vis.show()
+    if show:
+        vis = Visualizer(points)
+        if pred_bboxes is not None:
+            vis.add_bboxes(bbox3d=pred_bboxes)
+        if gt_bboxes is not None:
+            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
+        vis.show()
 
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)

@@ -106,12 +106,13 @@ class ScanNetDataset(Custom3DDataset):
             pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self, results, out_dir):
+    def show(self, results, out_dir, show=True):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
@@ -125,4 +126,5 @@ class ScanNetDataset(Custom3DDataset):
                                ((0, 0), (0, 1)), 'constant')
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
+                        show)

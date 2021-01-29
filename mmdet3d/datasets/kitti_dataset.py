@@ -669,12 +669,13 @@ class KittiDataset(Custom3DDataset):
                 sample_idx=sample_idx,
             )
 
-    def show(self, results, out_dir):
+    def show(self, results, out_dir, show=True):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
