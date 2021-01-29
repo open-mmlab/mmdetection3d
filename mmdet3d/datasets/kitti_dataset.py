@@ -695,4 +695,5 @@ class KittiDataset(Custom3DDataset):
             pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
                                             Box3DMode.DEPTH)
             pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
+                        show)
