@@ -23,7 +23,8 @@ def test_getitem():
             with_bbox_3d=False,
             with_label_3d=False,
             with_mask_3d=False,
-            with_seg_3d=True),
+            with_seg_3d=True,
+            seg_3d_labels_dtype=np.int32),
         dict(
             type='RandomFlip3D',
             sync_2d=False,
