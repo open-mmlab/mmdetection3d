@@ -6,7 +6,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class SemanticKITTIDataset(Custom3DDataset):
-    r"""KITTI Dataset.
+    r"""SemanticKITTI Dataset.
 
     This class serves as the API for experiments on the SemanticKITTI Dataset
     Please refer to <http://www.semantic-kitti.org/dataset.html>`_
