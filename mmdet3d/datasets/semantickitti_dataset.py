@@ -5,11 +5,12 @@ from .custom_3d import Custom3DDataset
 
 
 @DATASETS.register_module()
-class SemanticKittiDataset(Custom3DDataset):
+class SemanticKITTIDataset(Custom3DDataset):
     r"""KITTI Dataset.
 
-    This class serves as the API for experiments on the `KITTI Dataset
-    <http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d>`_.
+    This class serves as the API for experiments on the SemanticKITTI Dataset
+    Please refer to <http://www.semantic-kitti.org/dataset.html>`_
+    for data downloading
 
     Args:
         data_root (str): Path of dataset root.

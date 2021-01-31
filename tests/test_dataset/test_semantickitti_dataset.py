@@ -1,6 +1,6 @@
 import numpy as np
 
-from mmdet3d.datasets import SemanticKittiDataset
+from mmdet3d.datasets import SemanticKITTIDataset
 
 
 def test_getitem():
@@ -45,8 +45,11 @@ def test_getitem():
             meta_keys=['file_name', 'sample_idx', 'pcd_rotation']),
     ]
 
-    semantickitti_dataset = SemanticKittiDataset(root_path, ann_file,
+    semantickitti_dataset = SemanticKITTIDataset(root_path, ann_file,
                                                  pipelines)
     data = semantickitti_dataset[0]
     assert data['points']._data.shape[0] == data[
         'pts_semantic_mask']._data.shape[0]
+
+
+test_getitem()
