@@ -4,6 +4,7 @@
 
 #### Highlights
 
+- Preliminary release of API for SemanticKITTI dataset.
 - Documentation and demo enhancement for better user experience.
 - Fix a number of underlying minor bugs and add some corresponding important unit tests.
 
@@ -18,6 +19,10 @@
 - Fix the bug about missing text files when testing on KITTI (#278)
 - Fix issues caused by inplace modification of tensors in `BaseInstance3DBoxes` (#283)
 - Fix log analysis for evaluation and adjust the documentation accordingly (#285)
+
+#### New Features
+
+- Support SemanticKITTI dataset preliminarily (#287)
 
 #### Improvements
 
