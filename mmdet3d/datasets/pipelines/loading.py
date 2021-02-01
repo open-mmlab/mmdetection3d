@@ -436,7 +436,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_mask=False,
                  with_seg=False,
                  poly2mask=True,
-                 seg_3d_labels_dtype='int',
+                 seg_3d_dtype='int',
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
@@ -449,7 +449,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_label_3d = with_label_3d
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
-        self.seg_3d_labels_dtype = seg_3d_labels_dtype
+        self.seg_3d_dtype = seg_3d_dtype
 
     def _load_bboxes_3d(self, results):
         """Private function to load 3D bounding box annotations.
@@ -518,7 +518,7 @@ class LoadAnnotations3D(LoadAnnotations):
             mask_bytes = self.file_client.get(pts_semantic_mask_path)
             # add .copy() to fix read-only bug
             pts_semantic_mask = np.frombuffer(
-                mask_bytes, dtype=self.seg_3d_labels_dtype).copy()
+                mask_bytes, dtype=self.seg_3d_dtype).copy()
         except ConnectionError:
             mmcv.check_file_exist(pts_semantic_mask_path)
             pts_semantic_mask = np.fromfile(

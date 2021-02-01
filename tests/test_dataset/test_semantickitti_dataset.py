@@ -24,7 +24,7 @@ def test_getitem():
             with_label_3d=False,
             with_mask_3d=False,
             with_seg_3d=True,
-            seg_3d_labels_dtype=np.int32),
+            seg_3d_dtype=np.int32),
         dict(
             type='RandomFlip3D',
             sync_2d=False,
@@ -50,6 +50,3 @@ def test_getitem():
     data = semantickitti_dataset[0]
     assert data['points']._data.shape[0] == data[
         'pts_semantic_mask']._data.shape[0]
-
-
-test_getitem()
