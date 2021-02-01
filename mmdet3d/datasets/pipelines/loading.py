@@ -420,7 +420,7 @@ class LoadAnnotations3D(LoadAnnotations):
         poly2mask (bool, optional): Whether to convert polygon annotations
             to bitmasks. Defaults to True.
         seg_3d_labels_dtype (dtype, optional): Dtype of 3D semantic masks.
-            Defaults to np.int
+            Defaults to int64
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details.
@@ -436,7 +436,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_mask=False,
                  with_seg=False,
                  poly2mask=True,
-                 seg_3d_labels_dtype=np.int,
+                 seg_3d_labels_dtype='int',
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
