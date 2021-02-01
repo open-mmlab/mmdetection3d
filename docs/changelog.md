@@ -23,9 +23,7 @@
 
 - Add tag to README in configurations for specifying different uses (#262)
 - Update instructions for evaluation metrics in the documentation (#265)
-- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) (#266)
-- Update the statistics tool to classify papers (#267)
-- Add nuimages gif demo (#268)
+- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
 - Add unit test for voxelization (#275)
 
 ### v0.9.0 (31/12/2020)
