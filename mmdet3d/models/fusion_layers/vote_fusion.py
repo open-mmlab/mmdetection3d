@@ -1,0 +1,265 @@
+import torch
+from torch import nn as nn
+
+from mmdet3d.core.bbox import Coord3DMode, points_cam2img
+from ..registry import FUSION_LAYERS
+
+
+@FUSION_LAYERS.register_module()
+class VoteFusion(nn.Module):
+    """Fuse 2d features from 3d seeds.
+
+    Args:
+        num_classes (int): number of classes.
+        img_norm_cfg (dict): image normalization config.
+        max_imvote_per_pixel (int): max number of imvotes.
+    """
+
+    def __init__(self,
+                 num_classes=10,
+                 img_norm_cfg=None,
+                 max_imvote_per_pixel=3):
+        super(VoteFusion, self).__init__()
+        self.num_classes = num_classes
+        self.img_norm_cfg = img_norm_cfg
+        self.max_imvote_per_pixel = max_imvote_per_pixel
+        assert isinstance(self.img_norm_cfg, dict)
+        assert 'mean' in self.img_norm_cfg.keys()
+
+    def forward(self, imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas,
+                calibs):
+        """Forward function.
+
+        Args:
+            imgs (list[torch.Tensor]): Image features.
+            bboxes_2d_rescaled (list[torch.Tensor]): 2D bboxes.
+            seeds_3d_depth (torch.Tensor): 3D seeds.
+            img_metas (list[dict]): Meta information of images.
+            calibs: Camera calibration information of the images.
+
+        Returns:
+            torch.Tensor: Concatenated cues of each point.
+            torch.Tensor: Validity mask of each feature.
+        """
+        img_features = []
+        masks = []
+        for i, data in enumerate(
+                zip(imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas)):
+            img, bbox_2d_rescaled, seed_3d_depth, img_meta = data
+            bbox_num = bbox_2d_rescaled.shape[0]
+            seed_num = seed_3d_depth.shape[0]
+
+            xyz_depth = seed_3d_depth.clone()
+            bbox_2d_origin = bbox_2d_rescaled.clone().float()
+            img_shape = img_meta['img_shape']
+            ori_shape = img_meta['ori_shape']
+            # origin bboxes
+            img_h, img_w, _ = img_shape
+            ori_h, ori_w, _ = ori_shape
+
+            pcd_scale_factor = (
+                img_meta['pcd_scale_factor']
+                if 'pcd_scale_factor' in img_meta.keys() else 1)
+            pcd_rotate_mat = (
+                xyz_depth.new_tensor(img_meta['pcd_rotation'])
+                if 'pcd_rotation' in img_meta.keys() else
+                torch.eye(3).type_as(xyz_depth).to(xyz_depth.device))
+            img_scale_factor = (
+                xyz_depth.new_tensor(img_meta['scale_factor'][:2])
+                if 'scale_factor' in img_meta.keys() else [1.0, 1.0])
+            pcd_horizontal_flip = img_meta[
+                'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
+                img_meta.keys() else False
+            pcd_trans_factor = (
+                xyz_depth.new_tensor(img_meta['pcd_trans'])
+                if 'pcd_trans' in img_meta.keys() else 0)
+            img_flip = img_meta['flip'] if 'flip' in \
+                img_meta.keys() else False
+            img_crop_offset = (
+                xyz_depth.new_tensor(img_meta['img_crop_offset'])
+                if 'img_crop_offset' in img_meta.keys() else 0)
+
+            # first reverse the data transformations
+            xyz_depth -= pcd_trans_factor
+            xyz_depth /= pcd_scale_factor
+            xyz_depth = xyz_depth @ pcd_rotate_mat.inverse()
+            if pcd_horizontal_flip:
+                xyz_depth[..., 0] = -xyz_depth[..., 0]
+
+            # then convert from depth coords to camera coords
+            xyz_cam = Coord3DMode.convert_point(
+                xyz_depth.double(),
+                Coord3DMode.DEPTH,
+                Coord3DMode.CAM,
+                rt_mat=calibs['Rt'][i])
+
+            # project to 2d to get image coords (uv)
+            uv_origin = points_cam2img(xyz_cam, calibs['K'][i]).float()
+            uv_origin = (uv_origin - 1).round()
+
+            # rescale uv coordinates
+            uv_rescaled = uv_origin.clone().float()
+            uv_rescaled[:, 0] = uv_rescaled[:, 0] * img_scale_factor[0]
+            uv_rescaled[:, 1] = uv_rescaled[:, 1] * img_scale_factor[1]
+            uv_rescaled += img_crop_offset
+
+            # flip uv coordinates and bbox
+            if img_flip:
+                uv_rescaled[:, 0] = img_w - uv_rescaled[:, 0]
+                bbox_2d_origin_r = img_w - bbox_2d_origin[:, 0]
+                bbox_2d_origin_l = img_w - bbox_2d_origin[:, 2]
+                bbox_2d_origin[:, 0] = bbox_2d_origin_l
+                bbox_2d_origin[:, 2] = bbox_2d_origin_r
+
+            # rescale bbox
+            bbox_2d_origin[:, 0] = bbox_2d_origin[:, 0] / img_scale_factor[0]
+            bbox_2d_origin[:, 2] = bbox_2d_origin[:, 2] / img_scale_factor[0]
+            bbox_2d_origin[:, 1] = bbox_2d_origin[:, 1] / img_scale_factor[1]
+            bbox_2d_origin[:, 3] = bbox_2d_origin[:, 3] / img_scale_factor[1]
+
+            if bbox_num == 0:
+                imvote_num = seed_num * self.max_imvote_per_pixel
+
+                # use zero features
+                two_cues = torch.zeros((15, imvote_num),
+                                       device=seed_3d_depth.device)
+                mask_zero = torch.zeros(
+                    imvote_num - seed_num, device=seed_3d_depth.device).bool()
+                mask_one = torch.ones(
+                    seed_num, device=seed_3d_depth.device).bool()
+                mask = torch.cat([mask_one, mask_zero], dim=0)
+            else:
+                # expand bboxes and seeds
+                bbox_expanded = bbox_2d_origin.view(1, bbox_num, -1).expand(
+                    seed_num, -1, -1)
+                seed_2d_expanded = uv_origin.view(seed_num, 1,
+                                                  -1).expand(-1, bbox_num, -1)
+                seed_2d_expanded_x, seed_2d_expanded_y = \
+                    seed_2d_expanded.split(1, dim=-1)
+                bbox_expanded_l, bbox_expanded_t, bbox_expanded_r, \
+                    bbox_expanded_b, bbox_expanded_conf, bbox_expanded_cls = \
+                    bbox_expanded.split(1, dim=-1)
+                bbox_expanded_midx = (bbox_expanded_l + bbox_expanded_r) / 2
+                bbox_expanded_midy = (bbox_expanded_t + bbox_expanded_b) / 2
+                seed_2d_in_bbox_x = (seed_2d_expanded_x > bbox_expanded_l) * \
+                    (seed_2d_expanded_x < bbox_expanded_r)
+                seed_2d_in_bbox_y = (seed_2d_expanded_y > bbox_expanded_t) * \
+                    (seed_2d_expanded_y < bbox_expanded_b)
+                seed_2d_in_bbox = seed_2d_in_bbox_x * seed_2d_in_bbox_y
+
+                # semantic cues, dim=class_num
+                sem_cue = torch.zeros_like(bbox_expanded_conf).expand(
+                    -1, -1, self.num_classes)
+                sem_cue = sem_cue.scatter(-1, bbox_expanded_cls.long(),
+                                          bbox_expanded_conf)
+
+                # bbox center - uv
+                delta_u = bbox_expanded_midx - seed_2d_expanded_x
+                delta_v = bbox_expanded_midy - seed_2d_expanded_y
+
+                seed_3d_expanded = seed_3d_depth.view(seed_num, 1, -1).expand(
+                    -1, bbox_num, -1)
+
+                z_cam = xyz_cam[..., 2:3].view(seed_num, 1,
+                                               1).expand(-1, bbox_num, -1)
+
+                delta_u = delta_u * z_cam / calibs['K'][i, 0, 0]
+                delta_v = delta_v * z_cam / calibs['K'][i, 0, 0]
+
+                imvote = torch.cat(
+                    [delta_u, delta_v,
+                     torch.zeros_like(delta_v)], dim=-1).reshape(-1, 3)
+
+                # convert from camera coords to depth coords
+                imvote = Coord3DMode.convert_point(
+                    imvote.view((-1, 3)).double(),
+                    Coord3DMode.CAM,
+                    Coord3DMode.DEPTH,
+                    rt_mat=calibs['Rt'][i]).float()
+
+                # apply transformation
+                if pcd_horizontal_flip:
+                    imvote[..., 0] = -imvote[..., 0]
+                imvote = imvote @ pcd_rotate_mat
+                imvote *= pcd_scale_factor
+                imvote += pcd_trans_factor
+
+                seed_3d_expanded = seed_3d_expanded.reshape(imvote.shape)
+
+                # ray angle
+                ray_angle = seed_3d_expanded + imvote
+                ray_angle /= torch.sqrt(torch.sum(ray_angle**2, -1) +
+                                        1e-6).unsqueeze(-1)
+
+                # imvote lifted to 3d
+                xz = ray_angle[:, [0, 2]] / (ray_angle[:, 1] + 1e-6) \
+                    * seed_3d_expanded[:, 1] - seed_3d_expanded[:, [0, 2]]
+
+                # geometric cues, dim=5
+                geo_cue = torch.cat([xz, ray_angle],
+                                    dim=-1).reshape(seed_num, -1, 5)
+
+                two_cues = torch.cat([geo_cue, sem_cue], dim=-1)
+                # mask to 0 if seed not in bbox
+                two_cues = two_cues * seed_2d_in_bbox.float()
+
+                feature_size = two_cues.shape[-1]
+                # if bbox number is too small, append zeros
+                if bbox_num < self.max_imvote_per_pixel:
+                    append_num = self.max_imvote_per_pixel - bbox_num
+                    append_zeros = torch.zeros(
+                        (seed_num, append_num, 1),
+                        device=seed_2d_in_bbox.device).bool()
+                    seed_2d_in_bbox = torch.cat(
+                        [seed_2d_in_bbox, append_zeros], dim=1)
+                    append_zeros = torch.zeros(
+                        (seed_num, append_num, feature_size),
+                        device=two_cues.device)
+                    two_cues = torch.cat([two_cues, append_zeros], dim=1)
+                    append_zeros = torch.zeros((seed_num, append_num, 1),
+                                               device=two_cues.device)
+                    bbox_expanded_conf = torch.cat(
+                        [bbox_expanded_conf, append_zeros], dim=1)
+
+                # sort the valid seed-bbox pair according to confidence
+                pair_score = seed_2d_in_bbox.float() + bbox_expanded_conf
+                # and find the largests
+                mask, indices = pair_score.topk(
+                    self.max_imvote_per_pixel,
+                    dim=1,
+                    largest=True,
+                    sorted=True)
+
+                indices_img = indices.repeat(1, 1, feature_size)
+                two_cues = two_cues.gather(dim=1, index=indices_img)
+                two_cues = two_cues.transpose(1, 0)
+                two_cues = two_cues.reshape(-1, feature_size).transpose(
+                    1, 0).contiguous()
+
+                # since conf is ~ (0, 1), floor gives us validity
+                mask = mask.floor().int()
+                mask = mask.transpose(1, 0).reshape(-1).bool()
+
+            # clear the padding
+            img = img[:, :img_shape[0], :img_shape[1]]
+            img_flatten = img.reshape(3, -1).float()
+            img_flatten += torch.tensor(
+                self.img_norm_cfg['mean'], device=img.device).unsqueeze(-1)
+            img_flatten = img_flatten - 128.0
+            img_flatten = img_flatten / 255.0
+
+            # take the normalized pixel value as texture cue
+            uv_flatten = uv_rescaled[:, 1].round().long() * \
+                img_shape[1] + uv_rescaled[:, 0].round().long()
+            uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1).long()
+            txt_cue = torch.gather(img_flatten, dim=-1, index=uv_expanded)
+            txt_cue = txt_cue.unsqueeze(1).expand(-1,
+                                                  self.max_imvote_per_pixel,
+                                                  -1).reshape(3, -1)
+
+            # append texture cue
+            img_feature = torch.cat([two_cues, txt_cue], dim=0)
+            img_features.append(img_feature)
+            masks.append(mask)
+
+        return torch.stack(img_features, 0), torch.stack(masks, 0)
