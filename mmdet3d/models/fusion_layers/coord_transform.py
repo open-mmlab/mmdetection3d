@@ -7,6 +7,29 @@ from mmdet3d.core.points import get_points_type
 class Coord3DTransformation():
     r"""3D Coord transformation for 3D-2D fusion.
     Use the operations in data augmentation pipeline.
+
+    Args:
+        dtype (torch.dtype): Dtype of matrix and vector.
+        device (torch.device): Device to save matrix and vector.
+        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'
+        img_meta (dict): Meta info regarding data transformation.
+        pcd_rotate_mat (torch.Tensor): Point cloud rotation matrix.
+        pcd_scale_factor (float): Point cloud scale factor.
+        pcd_trans_factor (torch.Tensor): Point cloud translation vector.
+        pcd_horizontal_flip (bool):
+            Whether flip point cloud along horizontal direction.
+        pcd_vertical_flip (bool):
+            Whether flip point cloud along vertical direction.
+
+    Attributes:
+        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'
+        pcd_rotate_mat (torch.Tensor): Point cloud rotation matrix.
+        pcd_scale_factor (float): Point cloud scale factor.
+        pcd_trans_factor (torch.Tensor): Point cloud translation vector.
+        pcd_horizontal_flip (bool):
+            Whether flip point cloud along horizontal direction.
+        pcd_vertical_flip (bool):
+            Whether flip point cloud along vertical direction.
     """
 
     def __init__(self,
@@ -14,23 +37,19 @@ class Coord3DTransformation():
                  device,
                  coords_type,
                  img_meta=None,
-                 pcd_scale_factor=None,
                  pcd_rotate_mat=None,
+                 pcd_scale_factor=None,
+                 pcd_trans_factor=None,
                  pcd_horizontal_flip=None,
-                 pcd_vertical_flip=None,
-                 pcd_trans_factor=None):
+                 pcd_vertical_flip=None):
         assert not (img_meta is None and
-                    pcd_scale_factor is None and
                     pcd_rotate_mat is None and
+                    pcd_scale_factor is None and
+                    pcd_trans_factor is None and
                     pcd_horizontal_flip is None and
-                    pcd_trans_factor is None), \
-            'Not enough transformation info provided.'
-        if pcd_scale_factor is None:
-            self.pcd_scale_factor = (
-                img_meta['pcd_scale_factor']
-                if 'pcd_scale_factor' in img_meta.keys() else 1)
-        else:
-            self.pcd_scale_factor = pcd_scale_factor
+                    pcd_vertical_flip is None), \
+            'No transformation info provided.'
+
         if pcd_rotate_mat is None:
             self.pcd_rotate_mat = (
                 torch.tensor(
@@ -39,18 +58,14 @@ class Coord3DTransformation():
                     3, dtype=dtype, device=device))
         else:
             self.pcd_rotate_mat = pcd_rotate_mat
-        if pcd_horizontal_flip is None:
-            self.pcd_horizontal_flip = img_meta[
-                'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
-                img_meta.keys() else False
+
+        if pcd_scale_factor is None:
+            self.pcd_scale_factor = (
+                img_meta['pcd_scale_factor']
+                if 'pcd_scale_factor' in img_meta.keys() else 1)
         else:
-            self.pcd_horizontal_flip = pcd_horizontal_flip
-        if pcd_vertical_flip is None:
-            self.pcd_vertical_flip = img_meta[
-                'pcd_vertical_flip'] if 'pcd_vertical_flip' in \
-                img_meta.keys() else False
-        else:
-            self.pcd_vertical_flip = pcd_vertical_flip
+            self.pcd_scale_factor = pcd_scale_factor
+
         if pcd_trans_factor is None:
             self.pcd_trans_factor = (
                 torch.tensor(
@@ -59,6 +74,21 @@ class Coord3DTransformation():
                     (3), dtype=dtype, device=device))
         else:
             self.pcd_trans_factor = pcd_trans_factor
+
+        if pcd_horizontal_flip is None:
+            self.pcd_horizontal_flip = img_meta[
+                'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
+                img_meta.keys() else False
+        else:
+            self.pcd_horizontal_flip = pcd_horizontal_flip
+
+        if pcd_vertical_flip is None:
+            self.pcd_vertical_flip = img_meta[
+                'pcd_vertical_flip'] if 'pcd_vertical_flip' in \
+                img_meta.keys() else False
+        else:
+            self.pcd_vertical_flip = pcd_vertical_flip
+
         self.coords_type = coords_type
 
     def apply_transformation(self, pcd, pipeline, reverse=False):

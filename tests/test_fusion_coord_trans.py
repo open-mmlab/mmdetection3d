@@ -1,8 +1,7 @@
 """Tests coords transformation in fusion modules.
 
 CommandLine:
-    pytest tests/test_assigner.py
-    xdoctest tests/test_assigner.py zero
+    pytest tests/test_fusion_coord_trans.py
 """
 
 import torch

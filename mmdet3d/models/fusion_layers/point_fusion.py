@@ -47,6 +47,7 @@ def point_sample(
     Returns:
         torch.Tensor: NxC image features sampled by point coordinates.
     """
+
     # aug order: flip -> trans -> scale -> rot
     # The transformation follows the augmentation order in data pipeline
     # set up coords transformation
