@@ -3,6 +3,7 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox import Coord3DMode, points_cam2img
 from ..registry import FUSION_LAYERS
+from . import Coord3DTransformation
 
 
 @FUSION_LAYERS.register_module()
@@ -49,7 +50,7 @@ class VoteFusion(nn.Module):
             bbox_num = bbox_2d_rescaled.shape[0]
             seed_num = seed_3d_depth.shape[0]
 
-            xyz_depth = seed_3d_depth.clone()
+            # xyz_depth = seed_3d_depth.clone()
             bbox_2d_origin = bbox_2d_rescaled.clone().float()
             img_shape = img_meta['img_shape']
             ori_shape = img_meta['ori_shape']
@@ -57,34 +58,23 @@ class VoteFusion(nn.Module):
             img_h, img_w, _ = img_shape
             ori_h, ori_w, _ = ori_shape
 
-            pcd_scale_factor = (
-                img_meta['pcd_scale_factor']
-                if 'pcd_scale_factor' in img_meta.keys() else 1)
-            pcd_rotate_mat = (
-                xyz_depth.new_tensor(img_meta['pcd_rotation'])
-                if 'pcd_rotation' in img_meta.keys() else
-                torch.eye(3).type_as(xyz_depth).to(xyz_depth.device))
+            # set up coords transformation
+            coords_trans = Coord3DTransformation(seed_3d_depth.dtype,
+                                                 seed_3d_depth.device, 'DEPTH',
+                                                 img_meta)
+
             img_scale_factor = (
-                xyz_depth.new_tensor(img_meta['scale_factor'][:2])
+                seed_3d_depth.new_tensor(img_meta['scale_factor'][:2])
                 if 'scale_factor' in img_meta.keys() else [1.0, 1.0])
-            pcd_horizontal_flip = img_meta[
-                'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
-                img_meta.keys() else False
-            pcd_trans_factor = (
-                xyz_depth.new_tensor(img_meta['pcd_trans'])
-                if 'pcd_trans' in img_meta.keys() else 0)
+
             img_flip = img_meta['flip'] if 'flip' in \
                 img_meta.keys() else False
             img_crop_offset = (
-                xyz_depth.new_tensor(img_meta['img_crop_offset'])
+                seed_3d_depth.new_tensor(img_meta['img_crop_offset'])
                 if 'img_crop_offset' in img_meta.keys() else 0)
 
             # first reverse the data transformations
-            xyz_depth -= pcd_trans_factor
-            xyz_depth /= pcd_scale_factor
-            xyz_depth = xyz_depth @ pcd_rotate_mat.inverse()
-            if pcd_horizontal_flip:
-                xyz_depth[..., 0] = -xyz_depth[..., 0]
+            xyz_depth = coords_trans(seeds_3d_depth, 'HTSR', reverse=True)
 
             # then convert from depth coords to camera coords
             xyz_cam = Coord3DMode.convert_point(
@@ -177,12 +167,8 @@ class VoteFusion(nn.Module):
                     Coord3DMode.DEPTH,
                     rt_mat=calibs['Rt'][i]).float()
 
-                # apply transformation
-                if pcd_horizontal_flip:
-                    imvote[..., 0] = -imvote[..., 0]
-                imvote = imvote @ pcd_rotate_mat
-                imvote *= pcd_scale_factor
-                imvote += pcd_trans_factor
+                # apply transformation to lifted imvotes
+                imvote = coords_trans(imvote, 'RSTH', reverse=False)
 
                 seed_3d_expanded = seed_3d_expanded.reshape(imvote.shape)
 
