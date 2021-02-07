@@ -9,7 +9,7 @@ def _get_config_directory():
     except NameError:
         # For IPython development when this __file__ is not defined
         import mmdet3d
-        repo_dpath = dirname(dirname(mmdet.__file__))
+        repo_dpath = dirname(dirname(mmdet3d.__file__))
     config_dpath = join(repo_dpath, 'configs')
     if not exists(config_dpath):
         raise Exception('Cannot find config path')
