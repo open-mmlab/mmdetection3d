@@ -5,10 +5,10 @@ def _get_config_directory():
     """Find the predefined detector config directory."""
     try:
         # Assume we are running in the source mmdetection repo
-        repo_dpath = dirname(dirname(__file__))
+        repo_dpath = dirname(dirname(dirname(__file__)))
     except NameError:
         # For IPython development when this __file__ is not defined
-        import mmdet
+        import mmdet3d
         repo_dpath = dirname(dirname(mmdet.__file__))
     config_dpath = join(repo_dpath, 'configs')
     if not exists(config_dpath):
