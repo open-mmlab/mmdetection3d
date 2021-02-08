@@ -20,7 +20,7 @@ def _setup_seed(seed):
 def _get_config_directory():
     """Find the predefined detector config directory."""
     try:
-        # Assume we are running in the source mmdetection repo
+        # Assume we are running in the source mmdetection3d repo
         repo_dpath = dirname(dirname(dirname(__file__)))
     except NameError:
         # For IPython development when this __file__ is not defined
