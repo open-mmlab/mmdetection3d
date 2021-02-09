@@ -122,9 +122,7 @@ class ScanNetDataset(Custom3DDataset):
             points = np.fromfile(
                 osp.join(self.data_root, pts_path),
                 dtype=np.float32).reshape(-1, 6)
-            gt_bboxes = np.pad(data_info['annos']['gt_boxes_upright_depth'],
-                               ((0, 0), (0, 1)), 'constant')
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
             pred_bboxes = result['boxes_3d'].tensor.numpy()
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
                         show)
