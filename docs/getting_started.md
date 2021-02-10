@@ -1,253 +1,179 @@
-# Getting Started
+# Prerequisites
 
-This page provides basic tutorials about the usage of MMDetection3D.
-For installation instructions, please see [install.md](install.md).
+- Linux or macOS (Windows is not currently officially supported)
+- Python 3.6+
+- PyTorch 1.3+
+- CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
+- GCC 5+
+- [mmcv](https://github.com/open-mmlab/mmcv)
 
-## Prepare datasets
+# Installation
 
-It is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
-If your folder structure is different from the following, you may need to change the corresponding paths in config files.
+## Install MMDetection3D
 
-```
-mmdetection3d
-├── mmdet3d
-├── tools
-├── configs
-├── data
-│   ├── nuscenes
-│   │   ├── maps
-│   │   ├── samples
-│   │   ├── sweeps
-│   │   ├── v1.0-test
-|   |   ├── v1.0-trainval
-│   ├── kitti
-│   │   ├── ImageSets
-│   │   ├── testing
-│   │   │   ├── calib
-│   │   │   ├── image_2
-│   │   │   ├── velodyne
-│   │   ├── training
-│   │   │   ├── calib
-│   │   │   ├── image_2
-│   │   │   ├── label_2
-│   │   │   ├── velodyne
-│   ├── waymo
-│   │   ├── waymo_format
-│   │   │   ├── training
-│   │   │   ├── validation
-│   │   │   ├── testing
-│   │   │   ├── gt.bin
-│   │   ├── kitti_format
-│   │   │   ├── ImageSets
-│   ├── lyft
-│   │   ├── v1.01-train
-│   │   │   ├── v1.01-train (train_data)
-│   │   │   ├── lidar (train_lidar)
-│   │   │   ├── images (train_images)
-│   │   │   ├── maps (train_maps)
-│   │   ├── v1.01-test
-│   │   │   ├── v1.01-test (test_data)
-│   │   │   ├── lidar (test_lidar)
-│   │   │   ├── images (test_images)
-│   │   │   ├── maps (test_maps)
-│   │   ├── train.txt
-│   │   ├── val.txt
-│   │   ├── test.txt
-│   │   ├── sample_submission.csv
-│   ├── scannet
-│   │   ├── meta_data
-│   │   ├── scans
-│   │   ├── batch_load_scannet_data.py
-│   │   ├── load_scannet_data.py
-│   │   ├── scannet_utils.py
-│   │   ├── README.md
-│   ├── sunrgbd
-│   │   ├── OFFICIAL_SUNRGBD
-│   │   ├── matlab
-│   │   ├── sunrgbd_data.py
-│   │   ├── sunrgbd_utils.py
-│   │   ├── README.md
-
-```
-
-Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare kitti data by running
-
-```bash
-mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
-
-# Download data split
-wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/test.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/test.txt
-wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/train.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/train.txt
-wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
-wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
-
-python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
-```
-
-Download Waymo open dataset V1.2 [HERE](https://waymo.com/open/download/) and its data split [HERE](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing). Then put tfrecord files into corresponding folders in `data/waymo/waymo_format/` and put the data split txt files into `data/waymo/kitti_format/ImageSets`. Download ground truth bin file for validation set [HERE](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects) and put it into `data/waymo/waymo_format/`. A tip is that you can use `gsutil` to download the large-scale dataset with commands. You can take this [tool](https://github.com/RalphMao/Waymo-Dataset-Tool) as an example for more details. Subsequently, prepare waymo data by running
-
-```bash
-python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
-```
-
-Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
-
-Download nuScenes V1.0 full dataset data [HERE]( https://www.nuscenes.org/download). Prepare nuscenes data by running
-
-```bash
-python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
-```
-
-Download Lyft 3D detection data [HERE](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data). Prepare Lyft data by running
-
-```bash
-python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
-```
-
-Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above.
-
-To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md).
-
-To prepare sunrgbd data, please see [sunrgbd](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md).
-
-For using custom datasets, please refer to [Tutorials 2: Adding New Dataset](tutorials/new_dataset.md).
-
-## Inference with pretrained models
-
-We provide testing scripts to evaluate a whole dataset (SUNRGBD, ScanNet, KITTI, etc.),
-and also some high-level apis for easier integration to other projects.
-
-### Test a dataset
-
-- single GPU
-- single node multiple GPU
-- multiple node
-
-You can use the following commands to test a dataset.
+**a. Create a conda virtual environment and activate it.**
 
 ```shell
-# single-gpu testing
-python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show]
-
-# multi-gpu testing
-./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}]
+conda create -n open-mmlab python=3.7 -y
+conda activate open-mmlab
 ```
 
-Optional arguments:
-- `RESULT_FILE`: Filename of the output results in pickle format. If not specified, the results will not be saved to a file.
-- `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset, e.g., `proposal_fast`, `proposal`, `bbox`, `segm` are available for COCO, `mAP`, `recall` for PASCAL VOC. Cityscapes could be evaluated by `cityscapes` as well as all COCO metrics.
-- `--show`: If specified, detection results will be plotted in the silient mode. It is only applicable to single GPU testing and used for debugging and visualization. This should be used with `--show-dir`.
-- `--show-dir`: If specified, detection results will be plotted on the `***_points.obj` and `***_pred.ply` files in the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option.
+**b. Install PyTorch and torchvision following the [official instructions](https://pytorch.org/).**
 
-Examples:
-
-Assume that you have already downloaded the checkpoints to the directory `checkpoints/`.
-
-1. Test votenet on ScanNet and save the points and prediction visualization results.
-
-   ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
-       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
-       --show --show-dir ./data/scannet/show_results
-   ```
-
-2. Test votenet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
-
-   ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
-       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
-       --eval mAP
-       --options 'show=True' 'out_dir=./data/scannet/show_results'
-   ```
-
-3. Test votenet on ScanNet (without saving the test results) and evaluate the mAP.
-
-   ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
-       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
-       --eval mAP
-   ```
-
-4. Test SECOND with 8 GPUs, and evaluate the mAP.
-
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
-       checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
-       --out results.pkl --eval mAP
-   ```
-
-5. Test PointPillars on nuscenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
-
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
-       checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
-       --format-only --options 'jsonfile_prefix=./pointpillars_nuscenes_results'
-   ```
-
-   The generated results be under `./pointpillars_nuscenes_results` directory.
-
-6. Test SECOND on KITTI with 8 GPUs, and generate the pkl files and submission datas to be submit to the official evaluation server.
-
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
-       checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
-       --format-only --options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
-   ```
-
-   The generated results be under `./second_kitti_results` directory.
-
-7. Test PointPillars on Lyft with 8 GPUs, generate the pkl files and make a submission to the leaderboard.
-
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d.py \
-       checkpoints/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d_latest.pth --out results/pp_lyft/results_challenge.pkl \
-       --format-only --options 'jsonfile_prefix=results/pp_lyft/results_challenge' \
-       'csv_path=results/pp_lyft/results_challenge.csv'
-   ```
-
-   **Notice**: To generate submissions on Lyft, `csv_path` must be given in the options. After generating the csv file, you can make a submission with kaggle commands given on the [website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit).
-
-7. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
-
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --eval waymo --options 'pklfile_prefix=results/waymo-car/kitti_results' \
-       'submission_prefix=results/waymo-car/kitti_results'
-   ```
-
-   **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the options for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
-
-8. Test PointPillars on waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
-
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --format-only --options 'pklfile_prefix=results/waymo-car/kitti_results' \
-       'submission_prefix=results/waymo-car/kitti_results'
-   ```
-
-   **Notice**: After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md). For evaluation on the validation set with the eval server, you can also use the same way to generate a submission.
-
-### Visualization
-
-To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
-
-```bash
-python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
+```shell
+conda install pytorch torchvision -c pytorch
 ```
 
-Aftering running this command, plotted results ***_points.obj and ***_pred.ply files in `${SHOW_DIR}`.
+Note: Make sure that your compilation CUDA version and runtime CUDA version match.
+You can check the supported CUDA version for precompiled packages on the [PyTorch website](https://pytorch.org/).
 
-To see the points, detection results and ground truth of SUNRGBD, ScanNet or KITTI during evaluation time, you can run the following command
-```bash
-python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options 'show=True' 'out_dir=${SHOW_DIR}'
+`E.g. 1` If you have CUDA 10.1 installed under `/usr/local/cuda` and would like to install
+PyTorch 1.5, you need to install the prebuilt PyTorch with CUDA 10.1.
+
+```python
+conda install pytorch==1.5.0 cudatoolkit=10.1 torchvision==0.6.0 -c pytorch
 ```
-After running this command, you will obtain ***_points.ob, ***_pred.ply files and ***_gt.ply in `${SHOW_DIR}`.
 
-You can use 3D visualization software such as the [MeshLab](http://www.meshlab.net/) to open the these files under `${SHOW_DIR}` to see the 3D detection output. Specifically, open `***_points.obj` to see the input point cloud and open `***_pred.ply` to see the predicted 3D bounding boxes. This allows the inference and results generation be done in remote server and the users can open them on their host with GUI.
+`E.g. 2` If you have CUDA 9.2 installed under `/usr/local/cuda` and would like to install
+PyTorch 1.3.1., you need to install the prebuilt PyTorch with CUDA 9.2.
 
-**Notice**: The visualization API is a little unstable since we plan to refactor these parts together with MMDetection in the future.
+```python
+conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
+```
+
+If you build PyTorch from source instead of installing the prebuilt pacakge,
+you can use more CUDA versions such as 9.0.
+
+**c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).**
+*mmcv-full* is necessary since MMDetection3D relies on MMDetection, CUDA ops in *mmcv-full* are required. 
+
+`e.g.` The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
+
+```shell
+pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.5.0/index.html
+```
+
+Optionally, you could also build the full version from source:
+
+```shell
+pip install mmcv-full # need a long time
+```
+
+**d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).**
+
+```shell
+pip install git+https://github.com/open-mmlab/mmdetection.git
+```
+
+Optionally, you could also build MMDetection from source in case you want to modify the code:
+
+```shell
+git clone https://github.com/open-mmlab/mmdetection.git
+cd mmdetection
+pip install -r requirements/build.txt
+pip install -v -e .  # or "python setup.py develop"
+```
+
+**Important**:
+
+1. The required versions of MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMCV and MMDetection to avoid installation issues.
+
+| MMDetection3D version | MMDetection version |    MMCV version     |
+|:-------------------:|:-------------------:|:-------------------:|
+| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
+| 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
+| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
+| 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
+
+**e. Clone the MMDetection3D repository.**
+
+```shell
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+```
+
+**f.Install build requirements and then install MMDetection3D.**
+
+```shell
+pip install -v -e .  # or "python setup.py develop"
+```
+
+Note:
+
+1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
+It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
+
+    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
+
+    ```shell
+    pip uninstall mmdet3d
+    rm -rf ./build
+    find . -name "*.so" | xargs rm
+    ```
+
+2. Following the above instructions, mmdetection is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
+
+3. If you would like to use `opencv-python-headless` instead of `opencv-python`,
+you can install it before installing MMCV.
+
+4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
+
+5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
+
+## Another option: Docker Image
+
+We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/master/docker/Dockerfile) to build an image.
+
+```shell
+# build an image with PyTorch 1.6, CUDA 10.1
+docker build -t mmdetection3d docker/
+```
+
+Run it with
+
+```shell
+docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
+```
+
+## A from-scratch setup script
+
+Here is a full script for setting up mmdetection with conda.
+
+```shell
+conda create -n open-mmlab python=3.7 -y
+conda activate open-mmlab
+
+# install latest pytorch prebuilt with the default prebuilt CUDA version (usually the latest)
+conda install -c pytorch pytorch torchvision -y
+
+# install mmcv
+pip install mmcv-full
+
+# install mmdetection
+pip install git+https://github.com/open-mmlab/mmdetection.git
+
+# install mmdetection3d
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+pip install -v -e .
+```
+
+## Using multiple MMDetection3D versions
+
+The train and test scripts already modify the `PYTHONPATH` to ensure the script use the MMDetection3D in the current directory.
+
+To use the default MMDetection3D installed in the environment rather than that you are working with, you can remove the following line in those scripts
+
+```shell
+PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
+```
+
+# Verification
+
+## Demo
 
 ### Point cloud demo
 
@@ -286,9 +212,9 @@ Examples:
 convert_ply('./test.ply', './test.bin')
 ```
 
-### High-level APIs for testing point clouds
+## High-level APIs for testing point clouds
 
-#### Synchronous interface
+### Synchronous interface
 Here is an example of building the model and test given point clouds.
 
 ```python
@@ -306,182 +232,3 @@ result, data = inference_detector(model, point_cloud)
 # visualize the results and save the results in 'results' folder
 model.show_results(data, result, out_dir='results')
 ```
-
-A notebook demo can be found in [demo/inference_demo.ipynb](https://github.com/open-mmlab/mmdetection/blob/master/demo/inference_demo.ipynb).
-
-## Train a model
-
-MMDetection implements distributed training and non-distributed training,
-which uses `MMDistributedDataParallel` and `MMDataParallel` respectively.
-
-All outputs (log files and checkpoints) will be saved to the working directory,
-which is specified by `work_dir` in the config file.
-
-By default we evaluate the model on the validation set after each epoch, you can change the evaluation interval by adding the interval argument in the training config.
-```python
-evaluation = dict(interval=12)  # This evaluate the model per 12 epoch.
-```
-
-**Important**: The default learning rate in config files is for 8 GPUs and the exact batch size is marked by the config's file name, e.g. '2x8' means 2 samples per GPU using 8 GPUs.
-According to the [Linear Scaling Rule](https://arxiv.org/abs/1706.02677), you need to set the learning rate proportional to the batch size if you use different GPUs or images per GPU, e.g., lr=0.01 for 4 GPUs * 2 img/gpu and lr=0.08 for 16 GPUs * 4 img/gpu. However, since most of the models in this repo use ADAM rather than SGD for optimization, the rule may not hold and users need to tune the learning rate by themselves.
-
-### Train with a single GPU
-
-```shell
-python tools/train.py ${CONFIG_FILE} [optional arguments]
-```
-
-If you want to specify the working directory in the command, you can add an argument `--work_dir ${YOUR_WORK_DIR}`.
-
-### Train with multiple GPUs
-
-```shell
-./tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM} [optional arguments]
-```
-
-Optional arguments are:
-
-- `--no-validate` (**not suggested**): By default, the codebase will perform evaluation at every k (default value is 1, which can be modified like [this](https://github.com/open-mmlab/mmdetection/blob/master/configs/mask_rcnn/mask_rcnn_r50_fpn_1x_coco.py#L174)) epochs during the training. To disable this behavior, use `--no-validate`.
-- `--work-dir ${WORK_DIR}`: Override the working directory specified in the config file.
-- `--resume-from ${CHECKPOINT_FILE}`: Resume from a previous checkpoint file.
-- `--options 'Key=value'`: Overide some settings in the used config.
-
-Difference between `resume-from` and `load-from`:
-`resume-from` loads both the model weights and optimizer status, and the epoch is also inherited from the specified checkpoint. It is usually used for resuming the training process that is interrupted accidentally.
-`load-from` only loads the model weights and the training epoch starts from 0. It is usually used for finetuning.
-
-### Train with multiple machines
-
-If you run MMDetection on a cluster managed with [slurm](https://slurm.schedmd.com/), you can use the script `slurm_train.sh`. (This script also supports single machine training.)
-
-```shell
-[GPUS=${GPUS}] ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} ${CONFIG_FILE} ${WORK_DIR}
-```
-
-Here is an example of using 16 GPUs to train Mask R-CNN on the dev partition.
-
-```shell
-GPUS=16 ./tools/slurm_train.sh dev mask_r50_1x configs/mask_rcnn_r50_fpn_1x_coco.py /nfs/xxxx/mask_rcnn_r50_fpn_1x
-```
-
-You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
-
-If you have just multiple machines connected with ethernet, you can refer to
-PyTorch [launch utility](https://pytorch.org/docs/stable/distributed_deprecated.html#launch-utility).
-Usually it is slow if you do not have high speed networking like InfiniBand.
-
-### Launch multiple jobs on a single machine
-
-If you launch multiple jobs on a single machine, e.g., 2 jobs of 4-GPU training on a machine with 8 GPUs,
-you need to specify different ports (29500 by default) for each job to avoid communication conflict.
-
-If you use `dist_train.sh` to launch training jobs, you can set the port in commands.
-
-```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG_FILE} 4
-CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29501 ./tools/dist_train.sh ${CONFIG_FILE} 4
-```
-
-If you use launch training jobs with Slurm, there are two ways to specify the ports.
-
-1. Set the port through `--options`. This is more recommended since it does not change the original configs.
-
-   ```shell
-   CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR} --options 'dist_params.port=29500'
-   CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR} --options 'dist_params.port=29501'
-   ```
-
-2. Modify the config files (usually the 6th line from the bottom in config files) to set different communication ports.
-
-   In `config1.py`,
-
-   ```python
-   dist_params = dict(backend='nccl', port=29500)
-   ```
-
-   In `config2.py`,
-
-   ```python
-   dist_params = dict(backend='nccl', port=29501)
-   ```
-
-   Then you can launch two jobs with `config1.py` ang `config2.py`.
-
-   ```shell
-   CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR}
-   CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR}
-   ```
-
-## Useful tools
-
-We provide lots of useful tools under `tools/` directory.
-
-### Analyze logs
-
-You can plot loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
-
-![loss curve image](../resources/loss_curve.png)
-
-```shell
-python tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}]
-```
-
-Examples:
-
-- Plot the classification loss of some run.
-
-  ```shell
-  python tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
-  ```
-
-- Plot the classification and regression loss of some run, and save the figure to a pdf.
-
-  ```shell
-  python tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
-  ```
-
-- Compare the bbox mAP of two runs in the same figure.
-
-  ```shell
-  python tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
-  ```
-
-You can also compute the average training speed.
-
-```shell
-python tools/analyze_logs.py cal_train_time log.json [--include-outliers]
-```
-
-The output is expected to be like the following.
-
-```
------Analyze train time of work_dirs/some_exp/20190611_192040.log.json-----
-slowest epoch 11, average time is 1.2024
-fastest epoch 1, average time is 1.1909
-time std over epochs is 0.0028
-average iter time: 1.1959 s/iter
-
-```
-
-### Publish a model
-
-Before you upload a model to AWS, you may want to
-(1) convert model weights to CPU tensors, (2) delete the optimizer states and
-(3) compute the hash of the checkpoint file and append the hash id to the filename.
-
-```shell
-python tools/publish_model.py ${INPUT_FILENAME} ${OUTPUT_FILENAME}
-```
-
-E.g.,
-
-```shell
-python tools/publish_model.py work_dirs/faster_rcnn/latest.pth faster_rcnn_r50_fpn_1x_20190801.pth
-```
-
-The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`.
-
-## Tutorials
-
-Currently, we provide four tutorials for users to [finetune models](tutorials/finetune.md), [add new dataset](tutorials/new_dataset.md), [design data pipeline](tutorials/data_pipeline.md) and [add new modules](tutorials/new_modules.md).
-We also provide a full description about the [config system](config.md).

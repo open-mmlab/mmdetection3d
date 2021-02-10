@@ -78,7 +78,7 @@ jobs:
         run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          pip install mmcv-full==latest+torch${{matrix.mmcv}} -f https://download.openmmlab.com/mmcv/dist/index.html
+          pip install mmcv-full==latest+torch${{matrix.mmcv}} -f https://download.openmmlab.com/mmcv/dist/index.html --use-deprecated=legacy-resolver
           pip install -q git+https://github.com/open-mmlab/mmdetection.git
           pip install -r requirements.txt
       - name: Build and install
