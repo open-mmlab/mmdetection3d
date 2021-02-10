@@ -2,6 +2,8 @@
 
 ## Introduction
 
+[ALGORITHM]
+
 We implement PointPillars with Shape-aware grouping heads used in the SSN and provide the results and checkpoints on the nuScenes and Lyft dataset.
 
 ```

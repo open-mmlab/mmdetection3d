@@ -2,6 +2,8 @@
 
 ## Introduction
 
+[ALGORITHM]
+
 We implement CenterPoint and provide the result and checkpoints on nuScenes dataset.
 
 We follow the below style to name config files. Contributors are advised to follow the same style.

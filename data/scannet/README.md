@@ -28,8 +28,11 @@ scannet
 ├── scans
 ├── scannet_train_instance_data
 ├── points
+│   ├── xxxxx.bin
 ├── instance_mask
+│   ├── xxxxx.bin
 ├── semantic_mask
+│   ├── xxxxx.bin
 ├── scannet_infos_train.pkl
 ├── scannet_infos_val.pkl
 

@@ -2,6 +2,8 @@
 
 ## Introduction
 
+[ALGORITHM]
+
 We implement Dynamic Voxelization proposed in  and provide its results and models on KITTI dataset.
 ```
 @article{zhou2019endtoend,
