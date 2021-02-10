@@ -3,7 +3,7 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox import Coord3DMode, points_cam2img
 from ..registry import FUSION_LAYERS
-from . import Coord3DTransformation
+from . import apply_3d_transformation
 
 
 @FUSION_LAYERS.register_module()
@@ -58,11 +58,6 @@ class VoteFusion(nn.Module):
             img_h, img_w, _ = img_shape
             ori_h, ori_w, _ = ori_shape
 
-            # set up coords transformation
-            coords_trans = Coord3DTransformation(seed_3d_depth.dtype,
-                                                 seed_3d_depth.device, 'DEPTH',
-                                                 img_meta)
-
             img_scale_factor = (
                 seed_3d_depth.new_tensor(img_meta['scale_factor'][:2])
                 if 'scale_factor' in img_meta.keys() else [1.0, 1.0])
@@ -74,7 +69,8 @@ class VoteFusion(nn.Module):
                 if 'img_crop_offset' in img_meta.keys() else 0)
 
             # first reverse the data transformations
-            xyz_depth = coords_trans(seeds_3d_depth, 'HTSR', reverse=True)
+            xyz_depth = apply_3d_transformation(
+                seeds_3d_depth, 'DEPTH', img_meta, reverse=True)
 
             # then convert from depth coords to camera coords
             xyz_cam = Coord3DMode.convert_point(
@@ -168,7 +164,8 @@ class VoteFusion(nn.Module):
                     rt_mat=calibs['Rt'][i]).float()
 
                 # apply transformation to lifted imvotes
-                imvote = coords_trans(imvote, 'RSTH', reverse=False)
+                imvote = apply_3d_transformation(
+                    imvote, 'DEPTH', img_meta, reverse=False)
 
                 seed_3d_expanded = seed_3d_expanded.reshape(imvote.shape)
 

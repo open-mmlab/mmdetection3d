@@ -1,12 +1,12 @@
 """Tests coords transformation in fusion modules.
 
 CommandLine:
-    pytest tests/test_fusion_coord_trans.py
+    pytest tests/test_models/test_fusion_coord_trans.py
 """
 
 import torch
 
-from mmdet3d.models.fusion_layers import Coord3DTransformation
+from mmdet3d.models.fusion_layers import apply_3d_transformation
 
 
 def test_coords_transformation():
@@ -20,7 +20,9 @@ def test_coords_transformation():
                          [0, 0, 1.0e+00]],
         'pcd_trans': [1.111e-02, -8.88e-03, 0.0],
         'pcd_horizontal_flip':
-        True
+        True,
+        'transformation_3d_pipeline':
+        'HRST'
     }
 
     pcd = torch.tensor([[-5.2422e+00, -2.9757e-01, 4.0021e+01],
@@ -28,10 +30,8 @@ def test_coords_transformation():
                         [2.0089e-01, 5.8098e+00, -3.5409e+01],
                         [-1.9461e-01, 3.1309e+01, -1.0901e+00]])
 
-    trans = Coord3DTransformation(
-        pcd.dtype, pcd.device, coords_type='DEPTH', img_meta=img_meta)
-
-    pcd_transformed = trans.apply_transformation(pcd, 'HRST', reverse=False)
+    pcd_transformed = apply_3d_transformation(
+        pcd, 'DEPTH', img_meta, reverse=False)
 
     expected_tensor = torch.tensor(
         [[5.78332345e+00, 2.900697e+00, 4.92698531e+01],
@@ -50,17 +50,17 @@ def test_coords_transformation():
                          [0.0, 0.0, 1.0e+00]],
         'pcd_trans': [0.0, 0.0, 0.0],
         'pcd_horizontal_flip':
-        False
+        False,
+        'transformation_3d_pipeline':
+        'HRST'
     }
 
     pcd = torch.tensor([[-5.2422e+00, -2.9757e-01, 4.0021e+01],
                         [-9.1435e+01, 2.6675e+01, -5.5950e+00],
                         [6.061661e+00, -0.0, -1.0e+02]])
 
-    trans = Coord3DTransformation(
-        pcd.dtype, pcd.device, coords_type='DEPTH', img_meta=img_meta)
-
-    pcd_transformed = trans.apply_transformation(pcd, 'TSRH', reverse=True)
+    pcd_transformed = apply_3d_transformation(
+        pcd, 'DEPTH', img_meta, reverse=True)
 
     expected_tensor = torch.tensor(
         [[-5.53977e+00, 4.94463e+00, 5.65982409e+01],
@@ -77,17 +77,17 @@ def test_coords_transformation():
                          [-7.07106781e-01, 0.0, 7.07106781e-01]],
         'pcd_trans': [1.0e+00, -1.0e+00, 0.0],
         'pcd_horizontal_flip':
-        True
+        True,
+        'transformation_3d_pipeline':
+        'HSRT'
     }
 
     pcd = torch.tensor([[-5.2422e+00, 4.0021e+01, -2.9757e-01],
                         [-9.1435e+01, -5.5950e+00, 2.6675e+01],
                         [6.061661e+00, -1.0e+02, -0.0]])
 
-    trans = Coord3DTransformation(
-        pcd.dtype, pcd.device, coords_type='CAMERA', img_meta=img_meta)
-
-    pcd_transformed = trans.apply_transformation(pcd, 'HSRT', reverse=False)
+    pcd_transformed = apply_3d_transformation(
+        pcd, 'CAMERA', img_meta, reverse=False)
 
     expected_tensor = torch.tensor(
         [[6.53977e+00, 5.55982409e+01, 4.94463e+00],
@@ -97,12 +97,10 @@ def test_coords_transformation():
     assert torch.allclose(expected_tensor, pcd_transformed, 1e-4)
 
     # V, reverse, camera
-    img_meta = {'pcd_vertical_flip': True}
+    img_meta = {'pcd_vertical_flip': True, 'transformation_3d_pipeline': 'V'}
 
-    trans = Coord3DTransformation(
-        pcd.dtype, pcd.device, coords_type='CAMERA', img_meta=img_meta)
-
-    pcd_transformed = trans.apply_transformation(pcd, 'V', reverse=True)
+    pcd_transformed = apply_3d_transformation(
+        pcd, 'CAMERA', img_meta, reverse=True)
 
     expected_tensor = torch.tensor([[-5.2422e+00, 4.0021e+01, 2.9757e-01],
                                     [-9.1435e+01, -5.5950e+00, -2.6675e+01],
@@ -110,13 +108,15 @@ def test_coords_transformation():
 
     assert torch.allclose(expected_tensor, pcd_transformed, 1e-4)
 
-    # V+H (empty S+R+T), not reverse, depth
-    img_meta = {'pcd_vertical_flip': True, 'pcd_horizontal_flip': True}
+    # V+H, not reverse, depth
+    img_meta = {
+        'pcd_vertical_flip': True,
+        'pcd_horizontal_flip': True,
+        'transformation_3d_pipeline': 'VH'
+    }
 
-    trans = Coord3DTransformation(
-        pcd.dtype, pcd.device, coords_type='DEPTH', img_meta=img_meta)
-
-    pcd_transformed = trans.apply_transformation(pcd, 'VHSRT', reverse=False)
+    pcd_transformed = apply_3d_transformation(
+        pcd, 'DEPTH', img_meta, reverse=False)
 
     expected_tensor = torch.tensor([[5.2422e+00, -4.0021e+01, -2.9757e-01],
                                     [9.1435e+01, 5.5950e+00, 2.6675e+01],
@@ -124,14 +124,16 @@ def test_coords_transformation():
     assert torch.allclose(expected_tensor, pcd_transformed, 1e-4)
 
     # V+H, reverse, lidar
-    img_meta = {'pcd_vertical_flip': True, 'pcd_horizontal_flip': True}
+    img_meta = {
+        'pcd_vertical_flip': True,
+        'pcd_horizontal_flip': True,
+        'transformation_3d_pipeline': 'VH'
+    }
 
-    trans = Coord3DTransformation(
-        pcd.dtype, pcd.device, coords_type='LIDAR', img_meta=img_meta)
+    pcd_transformed = apply_3d_transformation(
+        pcd, 'LIDAR', img_meta, reverse=True)
 
-    pcd_transformed = trans.apply_transformation(pcd, 'HV', reverse=True)
-
-    expected_tensor = torch.tensor([[5.2422e+00, 4.0021e+01, 2.9757e-01],
-                                    [9.1435e+01, -5.5950e+00, -2.6675e+01],
-                                    [-6.061661e+00, -1.0e+02, -0.0]])
+    expected_tensor = torch.tensor([[5.2422e+00, -4.0021e+01, -2.9757e-01],
+                                    [9.1435e+01, 5.5950e+00, 2.6675e+01],
+                                    [-6.061661e+00, 1.0e+02, 0.0]])
     assert torch.allclose(expected_tensor, pcd_transformed, 1e-4)

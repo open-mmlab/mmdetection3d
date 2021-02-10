@@ -4,7 +4,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from ..registry import FUSION_LAYERS
-from . import Coord3DTransformation
+from . import apply_3d_transformation
 
 
 def point_sample(
@@ -48,12 +48,8 @@ def point_sample(
         torch.Tensor: NxC image features sampled by point coordinates.
     """
 
-    # aug order: flip -> trans -> scale -> rot
-    # The transformation follows the augmentation order in data pipeline
-    # set up coords transformation
-    coords_trans = Coord3DTransformation(points.dtype, points.device, 'LIDAR',
-                                         img_meta)
-    points = coords_trans(points, 'HTSR', reverse=True)
+    # apply transformation based on info in img_meta
+    points = apply_3d_transformation(points, 'LIDAR', img_meta, reverse=True)
 
     # project points from velo coordinate to camera coordinate
     num_points = points.shape[0]
