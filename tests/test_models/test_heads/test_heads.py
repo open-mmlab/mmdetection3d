@@ -815,7 +815,7 @@ def test_dcn_center_head():
                 kernel_size=3,
                 padding=1,
                 groups=4,
-                bias=True),
+                bias=False),  # mmcv 1.2.6 doesn't support bias=True anymore
             init_bias=-2.19,
             final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
