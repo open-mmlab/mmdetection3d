@@ -7,7 +7,7 @@ You can plot loss/mAP curves given a training log file. Run `pip install seaborn
 ![loss curve image](../resources/loss_curve.png)
 
 ```shell
-python tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}]
+python tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}] [--mode ${MODE}] [--interval ${INTERVAL}]
 ```
 
 Examples:
@@ -27,7 +27,10 @@ Examples:
 - Compare the bbox mAP of two runs in the same figure.
 
   ```shell
-  python tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
+  # evaluate PartA2 and second on KITTI according to Car_3D_moderate_strict
+  python tools/analyze_logs.py plot_curve tools/logs/PartA2.log.json tools/logs/second.log.json --keys KITTI/Car_3D_moderate_strict --legend PartA2 second --mode eval --interval 1
+  # evaluate PointPillars for car and 3 classes on KITTI according to Car_3D_moderate_strict
+  python tools/analyze_logs.py plot_curve tools/logs/pp-3class.log.json tools/logs/pp.log.json --keys KITTI/Car_3D_moderate_strict --legend pp-3class pp --mode eval --interval 2
   ```
 
 You can also compute the average training speed.
