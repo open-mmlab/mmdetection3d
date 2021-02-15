@@ -87,45 +87,45 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
-# model training and testing settings
-train_cfg = dict(
-    pts=dict(
-        assigner=[
-            dict(  # for Pedestrian
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.35,
-                neg_iou_thr=0.2,
-                min_pos_iou=0.2,
-                ignore_iof_thr=-1),
-            dict(  # for Cyclist
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.35,
-                neg_iou_thr=0.2,
-                min_pos_iou=0.2,
-                ignore_iof_thr=-1),
-            dict(  # for Car
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
-                ignore_iof_thr=-1),
-        ],
-        allowed_border=0,
-        pos_weight=-1,
-        debug=False))
-test_cfg = dict(
-    pts=dict(
-        use_rotate_nms=True,
-        nms_across_levels=False,
-        nms_thr=0.01,
-        score_thr=0.1,
-        min_bbox_size=0,
-        nms_pre=100,
-        max_num=50))
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+    # model training and testing settings
+    train_cfg=dict(
+        pts=dict(
+            assigner=[
+                dict(  # for Pedestrian
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.35,
+                    neg_iou_thr=0.2,
+                    min_pos_iou=0.2,
+                    ignore_iof_thr=-1),
+                dict(  # for Cyclist
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.35,
+                    neg_iou_thr=0.2,
+                    min_pos_iou=0.2,
+                    ignore_iof_thr=-1),
+                dict(  # for Car
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.6,
+                    neg_iou_thr=0.45,
+                    min_pos_iou=0.45,
+                    ignore_iof_thr=-1),
+            ],
+            allowed_border=0,
+            pos_weight=-1,
+            debug=False)),
+    test_cfg=dict(
+        pts=dict(
+            use_rotate_nms=True,
+            nms_across_levels=False,
+            nms_thr=0.01,
+            score_thr=0.1,
+            min_bbox_size=0,
+            nms_pre=100,
+            max_num=50)))
 
 # dataset settings
 dataset_type = 'KittiDataset'
