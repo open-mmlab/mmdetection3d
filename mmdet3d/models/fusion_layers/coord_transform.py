@@ -27,7 +27,8 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
             3, dtype=dtype, device=device))
 
     pcd_scale_factor = (
-        img_meta['pcd_scale_factor'] if 'pcd_scale_factor' in meta_keys else 1)
+        img_meta['pcd_scale_factor']
+        if 'pcd_scale_factor' in meta_keys else 1.)
 
     pcd_trans_factor = (
         torch.tensor(img_meta['pcd_trans'], dtype=dtype, device=device)
