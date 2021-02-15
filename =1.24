@@ -1,7 +1,0 @@
-Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple, http://pavi.parrots.sensetime.com/simple/
-Requirement already satisfied: mmcv-full in /mnt/lustre/congyezhen1/anaconda3/envs/pt14-share/lib/python3.7/site-packages (1.1.5)
-Requirement already satisfied: numpy in /mnt/lustre/congyezhen1/anaconda3/envs/pt14-share/lib/python3.7/site-packages (from mmcv-full) (1.19.2)
-Requirement already satisfied: opencv-python>=3 in /mnt/lustre/congyezhen1/anaconda3/envs/pt14-share/lib/python3.7/site-packages (from mmcv-full) (4.2.0.32)
-Requirement already satisfied: yapf in /mnt/lustre/congyezhen1/anaconda3/envs/pt14-share/lib/python3.7/site-packages (from mmcv-full) (0.30.0)
-Requirement already satisfied: pyyaml in /mnt/lustre/congyezhen1/anaconda3/envs/pt14-share/lib/python3.7/site-packages (from mmcv-full) (5.3.1)
-Requirement already satisfied: addict in /mnt/lustre/congyezhen1/anaconda3/envs/pt14-share/lib/python3.7/site-packages (from mmcv-full) (2.2.1)
