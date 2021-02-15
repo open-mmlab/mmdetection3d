@@ -49,7 +49,7 @@ def test_config_build_detector():
         detector = build_detector(
             config_mod.model,
             train_cfg=config_mod.model.train_cfg,
-            test_cfg=config_mod.test_cfg)
+            test_cfg=config_mod.model.test_cfg)
         assert detector is not None
 
         if 'roi_head' in config_mod.model.keys():
