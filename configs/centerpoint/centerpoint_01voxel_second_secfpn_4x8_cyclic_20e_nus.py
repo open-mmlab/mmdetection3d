@@ -15,10 +15,10 @@ class_names = [
 
 model = dict(
     pts_voxel_layer=dict(point_cloud_range=point_cloud_range),
-    pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])))
-# model training and testing settings
-train_cfg = dict(pts=dict(point_cloud_range=point_cloud_range))
-test_cfg = dict(pts=dict(pc_range=point_cloud_range[:2]))
+    pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])),
+    # model training and testing settings
+    train_cfg=dict(pts=dict(point_cloud_range=point_cloud_range)),
+    test_cfg=dict(pts=dict(pc_range=point_cloud_range[:2])))
 
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
