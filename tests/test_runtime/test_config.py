@@ -38,8 +38,8 @@ def test_config_build_detector():
         config_mod = Config.fromfile(config_fpath)
 
         config_mod.model
-        config_mod.train_cfg
-        config_mod.test_cfg
+        config_mod.model.train_cfg
+        config_mod.model.test_cfg
         print('Building detector, config_fpath = {!r}'.format(config_fpath))
 
         # Remove pretrained keys to allow for testing in an offline environment
@@ -48,8 +48,8 @@ def test_config_build_detector():
 
         detector = build_detector(
             config_mod.model,
-            train_cfg=config_mod.train_cfg,
-            test_cfg=config_mod.test_cfg)
+            train_cfg=config_mod.model.train_cfg,
+            test_cfg=config_mod.model.test_cfg)
         assert detector is not None
 
         if 'roi_head' in config_mod.model.keys():

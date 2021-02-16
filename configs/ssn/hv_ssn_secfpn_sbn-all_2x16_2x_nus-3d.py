@@ -155,85 +155,84 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)))
-
-# model training and testing settings
-train_cfg = dict(
-    _delete_=True,
-    pts=dict(
-        assigner=[
-            dict(  # bicycle
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
-                ignore_iof_thr=-1),
-            dict(  # motorcycle
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.3,
-                min_pos_iou=0.3,
-                ignore_iof_thr=-1),
-            dict(  # pedestrian
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.4,
-                min_pos_iou=0.4,
-                ignore_iof_thr=-1),
-            dict(  # traffic cone
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.4,
-                min_pos_iou=0.4,
-                ignore_iof_thr=-1),
-            dict(  # barrier
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.55,
-                neg_iou_thr=0.4,
-                min_pos_iou=0.4,
-                ignore_iof_thr=-1),
-            dict(  # car
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
-                ignore_iof_thr=-1),
-            dict(  # truck
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.55,
-                neg_iou_thr=0.4,
-                min_pos_iou=0.4,
-                ignore_iof_thr=-1),
-            dict(  # trailer
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
-                ignore_iof_thr=-1),
-            dict(  # bus
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.55,
-                neg_iou_thr=0.4,
-                min_pos_iou=0.4,
-                ignore_iof_thr=-1),
-            dict(  # construction vehicle
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
-                ignore_iof_thr=-1)
-        ],
-        allowed_border=0,
-        code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
-        pos_weight=-1,
-        debug=False))
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+    # model training and testing settings
+    train_cfg=dict(
+        _delete_=True,
+        pts=dict(
+            assigner=[
+                dict(  # bicycle
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.5,
+                    neg_iou_thr=0.35,
+                    min_pos_iou=0.35,
+                    ignore_iof_thr=-1),
+                dict(  # motorcycle
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.5,
+                    neg_iou_thr=0.3,
+                    min_pos_iou=0.3,
+                    ignore_iof_thr=-1),
+                dict(  # pedestrian
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.6,
+                    neg_iou_thr=0.4,
+                    min_pos_iou=0.4,
+                    ignore_iof_thr=-1),
+                dict(  # traffic cone
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.6,
+                    neg_iou_thr=0.4,
+                    min_pos_iou=0.4,
+                    ignore_iof_thr=-1),
+                dict(  # barrier
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.4,
+                    min_pos_iou=0.4,
+                    ignore_iof_thr=-1),
+                dict(  # car
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.6,
+                    neg_iou_thr=0.45,
+                    min_pos_iou=0.45,
+                    ignore_iof_thr=-1),
+                dict(  # truck
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.4,
+                    min_pos_iou=0.4,
+                    ignore_iof_thr=-1),
+                dict(  # trailer
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.5,
+                    neg_iou_thr=0.35,
+                    min_pos_iou=0.35,
+                    ignore_iof_thr=-1),
+                dict(  # bus
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.4,
+                    min_pos_iou=0.4,
+                    ignore_iof_thr=-1),
+                dict(  # construction vehicle
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.5,
+                    neg_iou_thr=0.35,
+                    min_pos_iou=0.35,
+                    ignore_iof_thr=-1)
+            ],
+            allowed_border=0,
+            code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
+            pos_weight=-1,
+            debug=False)))

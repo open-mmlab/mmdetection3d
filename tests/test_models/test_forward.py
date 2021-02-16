@@ -43,8 +43,8 @@ def _get_detector_cfg(fname):
     import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
-    train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg))
-    test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg))
+    train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
+    test_cfg = mmcv.Config(copy.deepcopy(config.model.test_cfg))
     return model, train_cfg, test_cfg
 
 
