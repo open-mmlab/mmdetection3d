@@ -806,8 +806,8 @@ def test_dcn_center_head():
             out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=9),
-        seperate_head=dict(
-            type='DCNSeperateHead',
+        separate_head=dict(
+            type='DCNSeparateHead',
             dcn_config=dict(
                 type='DCN',
                 in_channels=64,
