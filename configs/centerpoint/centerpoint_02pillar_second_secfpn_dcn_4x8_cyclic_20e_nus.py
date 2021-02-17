@@ -2,8 +2,8 @@ _base_ = ['./centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py']
 
 model = dict(
     pts_bbox_head=dict(
-        seperate_head=dict(
-            type='DCNSeperateHead',
+        separate_head=dict(
+            type='DCNSeparateHead',
             dcn_config=dict(
                 type='DCN',
                 in_channels=64,
