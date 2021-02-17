@@ -192,7 +192,7 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 ### Point cloud demo
 
-We provide a demo script to test a single sample.
+We provide a demo script and to test a single sample, and if you want to use our pre-trained model, you can download them from [model zoo](model_zoo.md)
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]

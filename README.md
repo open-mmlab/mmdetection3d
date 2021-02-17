@@ -71,6 +71,7 @@ Support backbones:
 - [x] PointNet (CVPR'2017)
 - [x] PointNet++ (NeurIPS'2017)
 - [x] RegNet (CVPR'2020)
+- [x] MultiBackbone(ECCV'2020)
 
 Support methods
 
