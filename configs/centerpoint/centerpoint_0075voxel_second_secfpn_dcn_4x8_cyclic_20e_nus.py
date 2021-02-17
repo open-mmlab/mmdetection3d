@@ -8,10 +8,8 @@ model = dict(
         voxel_size=voxel_size, point_cloud_range=point_cloud_range),
     pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
     pts_bbox_head=dict(
-        bbox_coder=dict(
-            voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2]),
-        seperate_head=dict(
-            type='DCNSeperateHead',
+        separate_head=dict(
+            type='DCNSeparateHead',
             dcn_config=dict(
                 type='DCN',
                 in_channels=64,

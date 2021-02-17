@@ -1,8 +1,8 @@
 """Test model forward process.
 
 CommandLine:
-    pytest tests/test_forward.py
-    xdoctest tests/test_forward.py zero
+    pytest tests/test_models/test_forward.py
+    xdoctest tests/test_models/test_forward.py zero
 """
 import copy
 import numpy as np

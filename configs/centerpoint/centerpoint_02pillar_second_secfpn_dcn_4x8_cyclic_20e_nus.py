@@ -5,8 +5,8 @@ model = dict(
     pts_voxel_layer=dict(point_cloud_range=point_cloud_range),
     pts_voxel_encoder=dict(point_cloud_range=point_cloud_range),
     pts_bbox_head=dict(
-        seperate_head=dict(
-            type='DCNSeperateHead',
+        separate_head=dict(
+            type='DCNSeparateHead',
             dcn_config=dict(
                 type='DCN',
                 in_channels=64,
