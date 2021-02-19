@@ -71,7 +71,6 @@ Support backbones:
 - [x] PointNet (CVPR'2017)
 - [x] PointNet++ (NeurIPS'2017)
 - [x] RegNet (CVPR'2020)
-- [x] MultiBackbone(ECCV'2020)
 
 Support methods
 
@@ -83,7 +82,7 @@ Support methods
 - [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
 - [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
 - [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
-- [x] [CenterPoint (arxiv'2020)](configs/centerpoint/README.md)
+- [x] [CenterPoint (Arxiv'2020)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
