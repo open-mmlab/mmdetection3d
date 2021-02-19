@@ -81,6 +81,7 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
         'V': vertical_flip_func
     }
     for op in list(pipeline):
+        assert op in pipeline_mapping.keys()
         func = pipeline_mapping[op]
         func()
 

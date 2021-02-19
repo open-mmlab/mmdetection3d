@@ -50,7 +50,6 @@ class VoteFusion(nn.Module):
             bbox_num = bbox_2d_rescaled.shape[0]
             seed_num = seed_3d_depth.shape[0]
 
-            # xyz_depth = seed_3d_depth.clone()
             bbox_2d_origin = bbox_2d_rescaled.clone().float()
             img_shape = img_meta['img_shape']
             ori_shape = img_meta['ori_shape']
@@ -226,10 +225,12 @@ class VoteFusion(nn.Module):
             # clear the padding
             img = img[:, :img_shape[0], :img_shape[1]]
             img_flatten = img.reshape(3, -1).float()
+
+            # normalization
+            # in accordance with the official implementation
             img_flatten += torch.tensor(
                 self.img_norm_cfg['mean'], device=img.device).unsqueeze(-1)
-            img_flatten = img_flatten - 128.0
-            img_flatten = img_flatten / 255.0
+            img_flatten = (img_flatten - 128.0) / 255.0
 
             # take the normalized pixel value as texture cue
             uv_flatten = uv_rescaled[:, 1].round().long() * \
