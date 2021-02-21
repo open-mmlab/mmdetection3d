@@ -144,16 +144,16 @@ model = dict(
         semantic_loss=dict(  # Config to semantic loss
             type='CrossEntropyLoss',  # Type of loss
             reduction='sum',  # Specifies the reduction to apply to the output
-            loss_weight=1.0)))  # Loss weight of the semantic loss
-train_cfg = dict(  # Config of training hyperparameters for votenet
-    pos_distance_thr=0.3,  # distance >= threshold 0.3 will be taken as positive samples
-    neg_distance_thr=0.6,  # distance < threshold 0.6 will be taken as positive samples
-    sample_mod='vote')  # Mode of the sampling method
-test_cfg = dict(  # Config of testing hyperparameters for votenet
-    sample_mod='seed',  # Mode of the sampling method
-    nms_thr=0.25,  # The threshold to be used during NMS
-    score_thr=0.8,  # Threshold to filter out boxes
-    per_class_proposal=False)  # Whether to use per_class_proposal
+            loss_weight=1.0)),  # Loss weight of the semantic loss
+    train_cfg = dict(  # Config of training hyperparameters for votenet
+        pos_distance_thr=0.3,  # distance >= threshold 0.3 will be taken as positive samples
+        neg_distance_thr=0.6,  # distance < threshold 0.6 will be taken as positive samples
+        sample_mod='vote')  # Mode of the sampling method
+    test_cfg = dict(  # Config of testing hyperparameters for votenet
+        sample_mod='seed',  # Mode of the sampling method
+        nms_thr=0.25,  # The threshold to be used during NMS
+        score_thr=0.8,  # Threshold to filter out boxes
+        per_class_proposal=False))  # Whether to use per_class_proposal
 dataset_type = 'ScanNetDataset'  # Type of the dataset
 data_root = './data/scannet/'  # Root path of the data
 class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
