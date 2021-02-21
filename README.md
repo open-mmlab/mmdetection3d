@@ -66,6 +66,25 @@ Please refer to [changelog.md](docs/changelog.md) for details and release histor
 Supported methods and backbones are shown in the below table.
 Results and models are available in the [model zoo](docs/model_zoo.md).
 
+Support backbones:
+
+- [x] PointNet (CVPR'2017)
+- [x] PointNet++ (NeurIPS'2017)
+- [x] RegNet (CVPR'2020)
+
+Support methods
+
+- [x] [SECOND (Sensor'2018)](configs/second/README.md)
+- [x] [PointPillars (CVPR'2019)](configs/pointpillars/README.md)
+- [x] [FreeAnchor (NeurIPS'2019)](configs/free_anchor/README.md)
+- [x] [VoteNet (ICCV'2019)](configs/votenet/README.md)
+- [x] [H3DNet (ECCV'2020)](configs/h3dnet/README.md)
+- [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
+- [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
+- [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
+- [x] [CenterPoint (Arxiv'2020)](configs/centerpoint/README.md)
+- [x] [SSN (ECCV'2020)](configs/ssn/README.md)
+
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
 | SECOND             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
