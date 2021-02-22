@@ -77,7 +77,7 @@ def main():
     checkpoint = torch.load(args.checkpoint)
     cfg = parse_config(checkpoint['meta']['config'])
     # Build the model and load checkpoint
-    model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
+    model = build_detector(cfg.model)
     orig_ckpt = checkpoint['state_dict']
     converted_ckpt = orig_ckpt.copy()
 

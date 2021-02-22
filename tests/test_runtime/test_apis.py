@@ -51,7 +51,7 @@ def test_single_gpu_test():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     cfg = _get_config_module('votenet/votenet_16x8_sunrgbd-3d-10class.py')
-    model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
+    model = build_detector(cfg.model)
     dataset_cfg = cfg.data.test
     dataset_cfg.data_root = './tests/data/sunrgbd'
     dataset_cfg.ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
