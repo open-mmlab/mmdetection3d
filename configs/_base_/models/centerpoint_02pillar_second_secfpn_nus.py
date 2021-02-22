@@ -51,7 +51,7 @@ model = dict(
             out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=9),
-        seperate_head=dict(
+        separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
         loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),

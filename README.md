@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.9.0.
+**News**: We released the codebase v0.10.0.
 
 In the recent [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results. Code and models will be released soon!
 
@@ -58,13 +58,32 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.9.0 was released in 31/12/2020.
+v0.10.0 was released in 1/2/2021.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
 
 Supported methods and backbones are shown in the below table.
 Results and models are available in the [model zoo](docs/model_zoo.md).
+
+Support backbones:
+
+- [x] PointNet (CVPR'2017)
+- [x] PointNet++ (NeurIPS'2017)
+- [x] RegNet (CVPR'2020)
+
+Support methods
+
+- [x] [SECOND (Sensor'2018)](configs/second/README.md)
+- [x] [PointPillars (CVPR'2019)](configs/pointpillars/README.md)
+- [x] [FreeAnchor (NeurIPS'2019)](configs/free_anchor/README.md)
+- [x] [VoteNet (ICCV'2019)](configs/votenet/README.md)
+- [x] [H3DNet (ECCV'2020)](configs/h3dnet/README.md)
+- [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
+- [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
+- [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
+- [x] [CenterPoint (Arxiv'2020)](configs/centerpoint/README.md)
+- [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|

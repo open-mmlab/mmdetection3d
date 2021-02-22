@@ -1,5 +1,36 @@
 ## Changelog
 
+### v0.10.0 (1/2/2021)
+
+#### Highlights
+
+- Preliminary release of API for SemanticKITTI dataset.
+- Documentation and demo enhancement for better user experience.
+- Fix a number of underlying minor bugs and add some corresponding important unit tests.
+
+#### Bug Fixes
+
+- Fixed the issue of unpacking size in [furthest_point_sample.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/furthest_point_sample/furthest_point_sample.py) (#248)
+- Fix bugs for 3DSSD triggered by empty ground truths (#258)
+- Remove models without checkpoints in model zoo statistics of documentation (#259)
+- Fix some unclear installation instructions in [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md) (#269)
+- Fix relative paths/links in the documentation (#271)
+- Fix a minor bug in [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) when num_features != 4 (#275)
+- Fix the bug about missing text files when testing on KITTI (#278)
+- Fix issues caused by inplace modification of tensors in `BaseInstance3DBoxes` (#283)
+- Fix log analysis for evaluation and adjust the documentation accordingly (#285)
+
+#### New Features
+
+- Support SemanticKITTI dataset preliminarily (#287)
+
+#### Improvements
+
+- Add tag to README in configurations for specifying different uses (#262)
+- Update instructions for evaluation metrics in the documentation (#265)
+- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
+- Add unit test for voxelization (#275)
+
 ### v0.9.0 (31/12/2020)
 
 #### Highlights

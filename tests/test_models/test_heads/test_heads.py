@@ -22,12 +22,12 @@ def _setup_seed(seed):
 def _get_config_directory():
     """Find the predefined detector config directory."""
     try:
-        # Assume we are running in the source mmdetection repo
-        repo_dpath = dirname(dirname(__file__))
+        # Assume we are running in the source mmdetection3d repo
+        repo_dpath = dirname(dirname(dirname(dirname(__file__))))
     except NameError:
         # For IPython development when this __file__ is not defined
-        import mmdet
-        repo_dpath = dirname(dirname(mmdet.__file__))
+        import mmdet3d
+        repo_dpath = dirname(dirname(mmdet3d.__file__))
     config_dpath = join(repo_dpath, 'configs')
     if not exists(config_dpath):
         raise Exception('Cannot find config path')
@@ -806,8 +806,8 @@ def test_dcn_center_head():
             out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=9),
-        seperate_head=dict(
-            type='DCNSeperateHead',
+        separate_head=dict(
+            type='DCNSeparateHead',
             dcn_config=dict(
                 type='DCN',
                 in_channels=64,
@@ -815,7 +815,7 @@ def test_dcn_center_head():
                 kernel_size=3,
                 padding=1,
                 groups=4,
-                bias=True),
+                bias=False),  # mmcv 1.2.6 doesn't support bias=True anymore
             init_bias=-2.19,
             final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
