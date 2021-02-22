@@ -44,6 +44,32 @@ For `1x`/`2x`, initial learning rate decays by a factor of 10 at the 8/16th and 
 For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
 - `{dataset}`: dataset like `nus-3d`, `kitti-3d`, `lyft-3d`, `scannet-3d`, `sunrgbd-3d`. We also indicate the number of classes we are using if there exist multiple settings, e.g., `kitti-3d-3class` and `kitti-3d-car` means training on KITTI dataset with 3 classes and single class, respectively.
 
+## Deprecated train_cfg/test_cfg
+
+The `train_cfg` and `test_cfg` are deprecated in config file, please specify them in the model config. The original config structure is as below.
+
+```python
+# deprecated
+model = dict(
+   type=...,
+   ...
+)
+train_cfg=dict(...)
+test_cfg=dict(...)
+```
+
+The migration example is as below.
+
+```python
+# recommended
+model = dict(
+   type=...,
+   ...
+   train_cfg=dict(...),
+   test_cfg=dict(...),
+)
+```
+
 ## An example of VoteNet
 
 ```python
