@@ -46,10 +46,7 @@ def test_config_build_detector():
         if 'pretrained' in config_mod.model:
             config_mod.model['pretrained'] = None
 
-        detector = build_detector(
-            config_mod.model,
-            train_cfg=config_mod.model.train_cfg,
-            test_cfg=config_mod.model.test_cfg)
+        detector = build_detector(config_mod.model)
         assert detector is not None
 
         if 'roi_head' in config_mod.model.keys():
