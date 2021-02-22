@@ -12,8 +12,6 @@
 
 在第五届 AI Driving Olympics, NeurIPS 2020里的[nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)中，我们获得了最佳PKL奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
-In the recent [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results. Code and models will be released soon!
-
 文档: https://mmdetection3d.readthedocs.io/
 
 ## 简介
