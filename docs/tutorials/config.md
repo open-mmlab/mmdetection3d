@@ -46,7 +46,7 @@ For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th e
 
 ## Deprecated train_cfg/test_cfg
 
-The `train_cfg` and `test_cfg` are deprecated in config file, please specify them in the model config. The original config structure is as below.
+Following MMDetection, the `train_cfg` and `test_cfg` are deprecated in config file, please specify them in the model config. The original config structure is as below.
 
 ```python
 # deprecated
@@ -66,7 +66,7 @@ model = dict(
    type=...,
    ...
    train_cfg=dict(...),
-   test_cfg=dict(...),
+   test_cfg=dict(...)
 )
 ```
 
@@ -174,7 +174,7 @@ model = dict(
     train_cfg = dict(  # Config of training hyperparameters for votenet
         pos_distance_thr=0.3,  # distance >= threshold 0.3 will be taken as positive samples
         neg_distance_thr=0.6,  # distance < threshold 0.6 will be taken as positive samples
-        sample_mod='vote')  # Mode of the sampling method
+        sample_mod='vote'),  # Mode of the sampling method
     test_cfg = dict(  # Config of testing hyperparameters for votenet
         sample_mod='seed',  # Mode of the sampling method
         nms_thr=0.25,  # The threshold to be used during NMS
