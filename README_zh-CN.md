@@ -20,7 +20,7 @@
 
 主分支代码目前支持 PyTorch 1.3 以上的版本。
 
-MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 它是OpenMMlab项目的一部分，这个项目由[多媒体实验室](http://mmlab.ie.cuhk.edu.hk/)发起.
+MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 它是OpenMMlab项目的一部分，这个项目由[香港中文大学多媒体实验室](http://mmlab.ie.cuhk.edu.hk/)发起.
 
 ![demo image](resources/mmdet3d_outdoor_demo.gif)
 
@@ -42,7 +42,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 - **性能高**
 
-  它比其他代码库训练的更快。下表可见主要的对比结果。更多的细节可见 [基准测评文档](./docs/benchmarks.md)。我们对比了每秒训练的样本数（值越高越好）。其他代码库不支持的模型被标记为`×`。
+   训练速度比其他代码库更快。下表可见主要的对比结果。更多的细节可见 [基准测评文档](./docs/benchmarks.md)。我们对比了每秒训练的样本数（值越高越好）。其他代码库不支持的模型被标记为`×`。
 
   | Methods | MMDetection3D | [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) |[votenet](https://github.com/facebookresearch/votenet)| [Det3D](https://github.com/poodarchu/Det3D) |
   |:-------:|:-------------:|:---------:|:-----:|:-----:|
