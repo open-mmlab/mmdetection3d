@@ -32,13 +32,13 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 - **支持户内/户外的数据集**
 
-  它支持户内/户外的3D检测数据集，包括ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
+  它支持室内/室外的3D检测数据集，包括ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
 
   对于 nuScenes 数据集, 我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/nuimages).
 
 - **与 2D 检测器的自然整合**
 
-   [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) 支持的**50+ 算法, 300+ 模型**, 和相关模块都可以在此代码库中训练或使用。
+   [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) 支持的**300+个模型 , 40+的论文算法**, 和相关模块都可以在此代码库中训练或使用。
 
 - **性能高**
 
@@ -100,9 +100,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 
 其他特性
-- [x] [动态体素化](configs/carafe/README.md)
+- [x] [动态体素化](configs/dynamic_voxelization/README.md)
 
-**注意：** [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md)支持的基于2D检测的**300个模型 , 40+的论文算法**都可以被训练或使用。
+**注意：** [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md)支持的基于2D检测的**300+个模型 , 40+的论文算法**都可以被训练或使用。
 
 ## 安装
 

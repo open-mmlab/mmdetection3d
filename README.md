@@ -38,7 +38,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 
 - **Natural integration with 2D detection**
 
-  All the about **50+ methods, 300+ models**, and modules supported in [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) can be trained or used in this codebase.
+  All the about **300+ models, methods of 40+ papers**, and modules supported in [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) can be trained or used in this codebase.
 
 - **High efficiency**
 
@@ -101,9 +101,9 @@ Support methods
 | SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 
 Other features
-- [x] [Dynamic Voxelization](configs/carafe/README.md)
+- [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
 
-**Note:** All the about **300 models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) can be trained or used in this codebase.
+**Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
 
