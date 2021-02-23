@@ -20,7 +20,7 @@
 
 主分支代码目前支持 PyTorch 1.3 以上的版本。
 
-MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 这个项目由[香港中文大学多媒体实验室](http://mmlab.ie.cuhk.edu.hk/)发起.
+MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 它是OpenMMlab项目的一部分，这个项目由[多媒体实验室](http://mmlab.ie.cuhk.edu.hk/)发起.
 
 ![demo image](resources/mmdet3d_outdoor_demo.gif)
 
@@ -28,11 +28,11 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 - **支持多模态/单模态的检测器**
 
-  它支持多模态/单模态检测器，包括MVXNet，VoteNet，PointPillars等。
+  支持多模态/单模态检测器，包括MVXNet，VoteNet，PointPillars等。
 
 - **支持户内/户外的数据集**
 
-  它支持室内/室外的3D检测数据集，包括ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
+  支持室内/室外的3D检测数据集，包括ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
 
   对于 nuScenes 数据集, 我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/nuimages).
 
