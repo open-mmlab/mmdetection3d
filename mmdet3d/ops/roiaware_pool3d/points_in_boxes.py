@@ -21,6 +21,13 @@ def points_in_boxes_gpu(points, boxes):
 
     box_idxs_of_pts = points.new_zeros((batch_size, num_points),
                                        dtype=torch.int).fill_(-1)
+
+    points_device = points.get_device()
+    assert points_device == boxes.get_device(), \
+        'Points and boxes should be put on the same device'
+    if torch.cuda.current_device() != points_device:
+        torch.cuda.set_device(points_device)
+
     roiaware_pool3d_ext.points_in_boxes_gpu(boxes.contiguous(),
                                             points.contiguous(),
                                             box_idxs_of_pts)
@@ -75,6 +82,13 @@ def points_in_boxes_batch(points, boxes):
 
     box_idxs_of_pts = points.new_zeros((batch_size, num_points, num_boxes),
                                        dtype=torch.int).fill_(0)
+
+    points_device = points.get_device()
+    assert points_device == boxes.get_device(), \
+        'Points and boxes should be put on the same device'
+    if torch.cuda.current_device() != points_device:
+        torch.cuda.set_device(points_device)
+
     roiaware_pool3d_ext.points_in_boxes_batch(boxes.contiguous(),
                                               points.contiguous(),
                                               box_idxs_of_pts)
