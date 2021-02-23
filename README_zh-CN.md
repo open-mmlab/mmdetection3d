@@ -10,7 +10,7 @@
 
 **新闻**: 我们发布了版本v0.10.0.
 
-在第五届 AI Driving Olympics, NeurIPS 2020里的[nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)中，我们获得了最佳PKL奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
+在第五届 AI Driving Olympics, NeurIPS 2020里的[ nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
 文档: https://mmdetection3d.readthedocs.io/
 
@@ -20,7 +20,7 @@
 
 主分支代码目前支持 PyTorch 1.3 以上的版本。
 
-MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 它是OpenMMlab项目的一部分，这个项目由[香港中文大学多媒体实验室](http://mmlab.ie.cuhk.edu.hk/)发起.
+MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 它是 OpenMMlab 项目的一部分，这个项目由[香港中文大学多媒体实验室](http://mmlab.ie.cuhk.edu.hk/)发起.
 
 ![demo image](resources/mmdet3d_outdoor_demo.gif)
 
@@ -28,11 +28,11 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 - **支持多模态/单模态的检测器**
 
-  支持多模态/单模态检测器，包括MVXNet，VoteNet，PointPillars等。
+  支持多模态/单模态检测器，包括 MVXNet，VoteNet，PointPillars 等。
 
 - **支持户内/户外的数据集**
 
-  支持室内/室外的3D检测数据集，包括ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
+  支持室内/室外的3D检测数据集，包括 ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
 
   对于 nuScenes 数据集, 我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/nuimages).
 
@@ -42,7 +42,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 - **性能高**
 
-   训练速度比其他代码库更快。下表可见主要的对比结果。更多的细节可见 [基准测评文档](./docs/benchmarks.md)。我们对比了每秒训练的样本数（值越高越好）。其他代码库不支持的模型被标记为`×`。
+   训练速度比其他代码库更快。下表可见主要的对比结果。更多的细节可见 [基准测评文档](./docs/benchmarks.md)。我们对比了每秒训练的样本数（值越高越好）。其他代码库不支持的模型被标记为 `×`。
 
   | Methods | MMDetection3D | [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) |[votenet](https://github.com/facebookresearch/votenet)| [Det3D](https://github.com/poodarchu/Det3D) |
   |:-------:|:-------------:|:---------:|:-----:|:-----:|
@@ -110,7 +110,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 快速入门
 
-请参考[快速入门文档](docs/get_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对于[已有数据集](docs/1_exist_data_model.md)和[新数据集](docs/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/tutorials/config.md), [增加数据集支持](docs/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/tutorials/data_pipeline.md), [增加自定义模型](docs/tutorials/customize_models.md), [增加自定义的运行时配置](docs/tutorials/customize_runtime.md) and [waymo 数据集](docs/tutorials/waymo.md).
+请参考[快速入门文档](docs/get_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对于[已有数据集](docs/1_exist_data_model.md)和[新数据集](docs/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/tutorials/config.md), [增加数据集支持](docs/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/tutorials/data_pipeline.md), [增加自定义模型](docs/tutorials/customize_models.md), [增加自定义的运行时配置](docs/tutorials/customize_runtime.md) 和 [waymo 数据集](docs/tutorials/waymo.md).
 
 ## 贡献指南
 
