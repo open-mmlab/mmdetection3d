@@ -73,13 +73,13 @@ class VoteFusion(nn.Module):
 
             # then convert from depth coords to camera coords
             xyz_cam = Coord3DMode.convert_point(
-                xyz_depth.double(),
+                xyz_depth,
                 Coord3DMode.DEPTH,
                 Coord3DMode.CAM,
                 rt_mat=calibs['Rt'][i])
 
             # project to 2d to get image coords (uv)
-            uv_origin = points_cam2img(xyz_cam, calibs['K'][i]).float()
+            uv_origin = points_cam2img(xyz_cam, calibs['K'][i])
             uv_origin = (uv_origin - 1).round()
 
             # rescale uv coordinates
@@ -157,10 +157,10 @@ class VoteFusion(nn.Module):
 
                 # convert from camera coords to depth coords
                 imvote = Coord3DMode.convert_point(
-                    imvote.view((-1, 3)).double(),
+                    imvote.view((-1, 3)),
                     Coord3DMode.CAM,
                     Coord3DMode.DEPTH,
-                    rt_mat=calibs['Rt'][i]).float()
+                    rt_mat=calibs['Rt'][i])
 
                 # apply transformation to lifted imvotes
                 imvote = apply_3d_transformation(
@@ -228,8 +228,8 @@ class VoteFusion(nn.Module):
 
             # normalization
             # in accordance with the official implementation
-            img_flatten += torch.tensor(
-                self.img_norm_cfg['mean'], device=img.device).unsqueeze(-1)
+            img_flatten += img.new_tensor(
+                self.img_norm_cfg['mean']).unsqueeze(-1)
             img_flatten = (img_flatten - 128.0) / 255.0
 
             # take the normalized pixel value as texture cue
