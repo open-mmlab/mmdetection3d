@@ -10,7 +10,7 @@
   CHECK_CONTIGUOUS(x)
 
 namespace {
-int const threadsPerBlock = 1024;
+int const threadsPerBlock = 512;
 int const maxGridDim = 50000;
 } // namespace
 
@@ -147,38 +147,23 @@ feats_reduce_kernel(const T *feats, const T_int *coors, int32_t *coors_map,
 }
 
 template <typename T>
-__global__ void
-reduce_traceback_kernel(T *grad_feats, const T *grad_reduced_feats,
-                        const T *feats, const T *reduced_feats,
-                        const int32_t *coors_map, const int32_t *reduce_count,
-                        const int num_input, const int num_feats,
-                        const reduce_t reduce_type) {
+__global__ void add_reduce_traceback_grad_kernel(
+    T *grad_feats, const T *grad_reduced_feats, const int32_t *coors_map,
+    const int32_t *reduce_count, const int num_input, const int num_feats,
+    const reduce_t reduce_type) {
   for (int x = blockIdx.x * blockDim.x + threadIdx.x; x < num_input;
        x += gridDim.x * blockDim.x) {
     int32_t reduce_to = coors_map[x];
-
-    const int input_offset = x * num_feats;
-    T *grad_feats_offset = grad_feats + input_offset;
-    const T *feats_offset = feats + input_offset;
-
     if (reduce_to == -1) {
-      for (int i = 0; i < num_feats; i++) {
-        grad_feats_offset[i] = static_cast<T>(0);
-      }
       return;
     }
 
+    const int input_offset = x * num_feats;
+    T *grad_feats_offset = grad_feats + input_offset;
     const int reduced_offset = reduce_to * num_feats;
     const T *grad_reduced_feats_offset = grad_reduced_feats + reduced_offset;
-    const T *reduced_feats_offset = reduced_feats + reduced_offset;
 
-    if (reduce_type == reduce_t::MAX) {
-      for (int i = 0; i < num_feats; i++) {
-        grad_feats_offset[i] = (feats_offset[i] == reduced_feats_offset[i]
-                                    ? grad_reduced_feats_offset[i]
-                                    : static_cast<T>(0));
-      }
-    } else if (reduce_type == reduce_t::SUM) {
+    if (reduce_type == reduce_t::SUM) {
       for (int i = 0; i < num_feats; i++) {
         grad_feats_offset[i] = grad_reduced_feats_offset[i];
       }
@@ -191,6 +176,52 @@ reduce_traceback_kernel(T *grad_feats, const T *grad_reduced_feats,
   }
 }
 
+template <typename T>
+__global__ void max_reduce_traceback_scatter_idx_kernel(
+    const T *feats, const T *reduced_feats, int32_t *reduce_from,
+    const int32_t *coors_map, const int num_input, const int num_feats) {
+  for (int x = blockIdx.x * blockDim.x + threadIdx.x; x < num_input;
+       x += gridDim.x * blockDim.x) {
+    int32_t reduce_to = coors_map[x];
+
+    const int input_offset = x * num_feats;
+    const T *feats_offset = feats + input_offset;
+
+    if (reduce_to == -1) {
+      return;
+    }
+
+    const int reduced_offset = reduce_to * num_feats;
+    const T *reduced_feats_offset = reduced_feats + reduced_offset;
+    int32_t *reduce_from_offset = reduce_from + reduced_offset;
+
+    for (int i = 0; i < num_feats; i++) {
+      if (feats_offset[i] == reduced_feats_offset[i]) {
+        atomicMin(&reduce_from_offset[i], static_cast<int32_t>(x));
+      }
+    }
+  }
+}
+
+template <typename T>
+__global__ void
+max_reduce_scatter_grad_kernel(T *grad_feats, const T *grad_reduced_feats,
+                               const int32_t *reduce_from,
+                               const int num_reduced, const int num_feats) {
+  for (int x = blockIdx.x * blockDim.x + threadIdx.x; x < num_reduced;
+       x += gridDim.x * blockDim.x) {
+
+    const int reduced_offset = x * num_feats;
+    const int32_t *scatter_to_offset = reduce_from + reduced_offset;
+    const T *grad_reduced_feats_offset = grad_reduced_feats + reduced_offset;
+
+    for (int i = 0; i < num_feats; i++) {
+      grad_feats[scatter_to_offset[i] * num_feats + i] =
+          grad_reduced_feats_offset[i];
+    }
+  }
+}
+
 namespace voxelization {
 
 std::vector<torch::Tensor>
@@ -198,6 +229,7 @@ dynamic_point_to_voxel_forward_gpu(const torch::Tensor &feats,
                                    const torch::Tensor &coors,
                                    const reduce_t reduce_type) {
   CHECK_INPUT(feats);
+  CHECK_INPUT(coors);
 
   const int NDim = coors.size(1);
   const int num_input = feats.size(0);
@@ -288,23 +320,53 @@ void dynamic_point_to_voxel_backward_gpu(
   CHECK_INPUT(reduce_count);
 
   const int num_input = feats.size(0);
+  const int num_reduced = reduced_feats.size(0);
   const int num_feats = feats.size(1);
 
+  grad_feats.fill_(0);
   // copy voxel grad to points
-  dim3 blocks(std::min(DIVUP(num_input, threadsPerBlock), maxGridDim));
-  dim3 threads(threadsPerBlock);
 
-  AT_DISPATCH_FLOATING_TYPES(
-      grad_reduced_feats.scalar_type(), "reduce_traceback_kernel", ([&] {
-        reduce_traceback_kernel<<<blocks, threads>>>(
-            grad_feats.data_ptr<scalar_t>(),
-            grad_reduced_feats.data_ptr<scalar_t>(), feats.data_ptr<scalar_t>(),
-            reduced_feats.data_ptr<scalar_t>(), coors_map.data_ptr<int32_t>(),
-            reduce_count.data_ptr<int32_t>(), num_input, num_feats,
-            reduce_type);
-      }));
-  AT_CUDA_CHECK(cudaGetLastError());
+  if (reduce_type == reduce_t::MEAN || reduce_type == reduce_t::SUM) {
+    AT_DISPATCH_FLOATING_TYPES(
+        grad_reduced_feats.scalar_type(), "add_reduce_traceback_grad_kernel",
+        ([&] {
+          dim3 blocks(std::min(DIVUP(num_input, threadsPerBlock), maxGridDim));
+          dim3 threads(threadsPerBlock);
+          add_reduce_traceback_grad_kernel<<<blocks, threads>>>(
+              grad_feats.data_ptr<scalar_t>(),
+              grad_reduced_feats.data_ptr<scalar_t>(),
+              coors_map.data_ptr<int32_t>(), reduce_count.data_ptr<int32_t>(),
+              num_input, num_feats, reduce_type);
+        }));
+    AT_CUDA_CHECK(cudaGetLastError());
+  } else {
+    auto reduce_from = torch::full({num_reduced, num_feats}, num_input,
+                                   coors_map.options().dtype(torch::kI32));
+    AT_DISPATCH_FLOATING_TYPES(
+        grad_reduced_feats.scalar_type(),
+        "max_reduce_traceback_scatter_idx_kernel", ([&] {
+          dim3 blocks(std::min(DIVUP(num_input, threadsPerBlock), maxGridDim));
+          dim3 threads(threadsPerBlock);
+          max_reduce_traceback_scatter_idx_kernel<<<blocks, threads>>>(
+              feats.data_ptr<scalar_t>(), reduced_feats.data_ptr<scalar_t>(),
+              reduce_from.data_ptr<int32_t>(), coors_map.data_ptr<int32_t>(),
+              num_input, num_feats);
+        }));
+    AT_CUDA_CHECK(cudaGetLastError());
 
+    AT_DISPATCH_FLOATING_TYPES(
+        grad_reduced_feats.scalar_type(),
+        "max_reduce_traceback_scatter_idx_kernel", ([&] {
+          dim3 blocks(
+              std::min(DIVUP(num_reduced, threadsPerBlock), maxGridDim));
+          dim3 threads(threadsPerBlock);
+          max_reduce_scatter_grad_kernel<<<blocks, threads>>>(
+              grad_feats.data_ptr<scalar_t>(),
+              grad_reduced_feats.data_ptr<scalar_t>(),
+              reduce_from.data_ptr<int32_t>(), num_reduced, num_feats);
+        }));
+    AT_CUDA_CHECK(cudaGetLastError());
+  }
   return;
 }
 
