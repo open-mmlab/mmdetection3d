@@ -1,5 +1,5 @@
 import argparse
-import pickle
+import mmcv
 from mmcv import Config
 
 from mmdet3d.datasets import build_dataset
@@ -29,7 +29,7 @@ def main():
 
     # build the dataset
     dataset = build_dataset(cfg.data.test)
-    results = pickle.load(open(args.result, 'rb'))
+    results = mmcv.load(args.result)
 
     if getattr(dataset, 'show', None) is not None:
         dataset.show(results, args.show_dir)

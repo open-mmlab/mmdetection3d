@@ -96,7 +96,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if gt_bboxes is not None:
-        # the positive direction for yaw in meshlab is clockwise
+        # bottom center to gravity center
         gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
         # the positive direction for yaw in meshlab is clockwise
         gt_bboxes[:, 6] *= -1
