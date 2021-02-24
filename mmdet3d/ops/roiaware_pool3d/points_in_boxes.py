@@ -22,6 +22,14 @@ def points_in_boxes_gpu(points, boxes):
     box_idxs_of_pts = points.new_zeros((batch_size, num_points),
                                        dtype=torch.int).fill_(-1)
 
+    # If manually put the tensor 'points' or 'boxes' on a device
+    # which is not the current device, some temporary variables
+    # will be created on the current device in the cuda op,
+    # and the output will be incorrect.
+    # Therefore, we force the current device to be the same
+    # as the device of the tensors if it was not.
+    # Please refer to https://github.com/open-mmlab/mmdetection3d/issues/305
+    # for the incorrect output before the fix.
     points_device = points.get_device()
     assert points_device == boxes.get_device(), \
         'Points and boxes should be put on the same device'
@@ -83,6 +91,7 @@ def points_in_boxes_batch(points, boxes):
     box_idxs_of_pts = points.new_zeros((batch_size, num_points, num_boxes),
                                        dtype=torch.int).fill_(0)
 
+    # Same reason as line 25-32
     points_device = points.get_device()
     assert points_device == boxes.get_device(), \
         'Points and boxes should be put on the same device'
