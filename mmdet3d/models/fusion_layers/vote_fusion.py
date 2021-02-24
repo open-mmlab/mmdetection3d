@@ -69,7 +69,7 @@ class VoteFusion(nn.Module):
 
             # first reverse the data transformations
             xyz_depth = apply_3d_transformation(
-                seeds_3d_depth, 'DEPTH', img_meta, reverse=True)
+                seed_3d_depth, 'DEPTH', img_meta, reverse=True)
 
             # then convert from depth coords to camera coords
             xyz_cam = Coord3DMode.convert_point(
@@ -121,11 +121,13 @@ class VoteFusion(nn.Module):
                                                   -1).expand(-1, bbox_num, -1)
                 seed_2d_expanded_x, seed_2d_expanded_y = \
                     seed_2d_expanded.split(1, dim=-1)
+
                 bbox_expanded_l, bbox_expanded_t, bbox_expanded_r, \
                     bbox_expanded_b, bbox_expanded_conf, bbox_expanded_cls = \
                     bbox_expanded.split(1, dim=-1)
                 bbox_expanded_midx = (bbox_expanded_l + bbox_expanded_r) / 2
                 bbox_expanded_midy = (bbox_expanded_t + bbox_expanded_b) / 2
+
                 seed_2d_in_bbox_x = (seed_2d_expanded_x > bbox_expanded_l) * \
                     (seed_2d_expanded_x < bbox_expanded_r)
                 seed_2d_in_bbox_y = (seed_2d_expanded_y > bbox_expanded_t) * \
@@ -174,8 +176,9 @@ class VoteFusion(nn.Module):
                                         1e-6).unsqueeze(-1)
 
                 # imvote lifted to 3d
-                xz = ray_angle[:, [0, 2]] / (ray_angle[:, 1] + 1e-6) \
-                    * seed_3d_expanded[:, 1] - seed_3d_expanded[:, [0, 2]]
+                xz = ray_angle[:, [0, 2]] / (ray_angle[:, [1]] + 1e-6) \
+                    * seed_3d_expanded[:, [1]] - seed_3d_expanded[:, [0, 2]]
+                print(xz.shape)
 
                 # geometric cues, dim=5
                 geo_cue = torch.cat([xz, ray_angle],
@@ -184,6 +187,7 @@ class VoteFusion(nn.Module):
                 two_cues = torch.cat([geo_cue, sem_cue], dim=-1)
                 # mask to 0 if seed not in bbox
                 two_cues = two_cues * seed_2d_in_bbox.float()
+                print(two_cues.shape)
 
                 feature_size = two_cues.shape[-1]
                 # if bbox number is too small, append zeros
@@ -205,6 +209,7 @@ class VoteFusion(nn.Module):
 
                 # sort the valid seed-bbox pair according to confidence
                 pair_score = seed_2d_in_bbox.float() + bbox_expanded_conf
+                print(pair_score.shape)
                 # and find the largests
                 mask, indices = pair_score.topk(
                     self.max_imvote_per_pixel,
@@ -219,6 +224,7 @@ class VoteFusion(nn.Module):
                     1, 0).contiguous()
 
                 # since conf is ~ (0, 1), floor gives us validity
+                print(mask.shape)
                 mask = mask.floor().int()
                 mask = mask.transpose(1, 0).reshape(-1).bool()
 
@@ -228,14 +234,17 @@ class VoteFusion(nn.Module):
 
             # normalization
             # in accordance with the official implementation
-            img_flatten += img.new_tensor(
-                self.img_norm_cfg['mean']).unsqueeze(-1)
-            img_flatten = (img_flatten - 128.0) / 255.0
+            # img_flatten += img.new_tensor(
+            #     self.img_norm_cfg['mean']).unsqueeze(-1)
+            # img_flatten = (img_flatten - 128.0) / 255.0
+            img_flatten /= 255.
 
             # take the normalized pixel value as texture cue
-            uv_flatten = uv_rescaled[:, 1].round().long() * \
-                img_shape[1] + uv_rescaled[:, 0].round().long()
-            uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1).long()
+            uv_flatten = uv_rescaled[:, 1].round() * \
+                img_shape[1] + uv_rescaled[:, 0].round()
+            uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1)
+            print(uv_flatten, uv_rescaled)
+            print(img_flatten.shape)
             txt_cue = torch.gather(img_flatten, dim=-1, index=uv_expanded)
             txt_cue = txt_cue.unsqueeze(1).expand(-1,
                                                   self.max_imvote_per_pixel,
@@ -245,5 +254,7 @@ class VoteFusion(nn.Module):
             img_feature = torch.cat([two_cues, txt_cue], dim=0)
             img_features.append(img_feature)
             masks.append(mask)
+            print(mask, )
+            print(img_feature)
 
         return torch.stack(img_features, 0), torch.stack(masks, 0)
