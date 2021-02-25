@@ -242,7 +242,7 @@ class VoteFusion(nn.Module):
             # take the normalized pixel value as texture cue
             uv_flatten = uv_rescaled[:, 1].round() * \
                 img_shape[1] + uv_rescaled[:, 0].round()
-            uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1)
+            uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1).long()
             print(uv_flatten, uv_rescaled)
             print(img_flatten.shape)
             txt_cue = torch.gather(img_flatten, dim=-1, index=uv_expanded)
