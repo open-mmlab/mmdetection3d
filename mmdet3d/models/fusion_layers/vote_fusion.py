@@ -16,16 +16,10 @@ class VoteFusion(nn.Module):
         max_imvote_per_pixel (int): max number of imvotes.
     """
 
-    def __init__(self,
-                 num_classes=10,
-                 img_norm_cfg=None,
-                 max_imvote_per_pixel=3):
+    def __init__(self, num_classes=10, max_imvote_per_pixel=3):
         super(VoteFusion, self).__init__()
         self.num_classes = num_classes
-        self.img_norm_cfg = img_norm_cfg
         self.max_imvote_per_pixel = max_imvote_per_pixel
-        assert isinstance(self.img_norm_cfg, dict)
-        assert 'mean' in self.img_norm_cfg.keys()
 
     def forward(self, imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas,
                 calibs):
@@ -178,7 +172,6 @@ class VoteFusion(nn.Module):
                 # imvote lifted to 3d
                 xz = ray_angle[:, [0, 2]] / (ray_angle[:, [1]] + 1e-6) \
                     * seed_3d_expanded[:, [1]] - seed_3d_expanded[:, [0, 2]]
-                print(xz.shape)
 
                 # geometric cues, dim=5
                 geo_cue = torch.cat([xz, ray_angle],
@@ -187,7 +180,6 @@ class VoteFusion(nn.Module):
                 two_cues = torch.cat([geo_cue, sem_cue], dim=-1)
                 # mask to 0 if seed not in bbox
                 two_cues = two_cues * seed_2d_in_bbox.float()
-                print(two_cues.shape)
 
                 feature_size = two_cues.shape[-1]
                 # if bbox number is too small, append zeros
@@ -209,7 +201,6 @@ class VoteFusion(nn.Module):
 
                 # sort the valid seed-bbox pair according to confidence
                 pair_score = seed_2d_in_bbox.float() + bbox_expanded_conf
-                print(pair_score.shape)
                 # and find the largests
                 mask, indices = pair_score.topk(
                     self.max_imvote_per_pixel,
@@ -224,27 +215,18 @@ class VoteFusion(nn.Module):
                     1, 0).contiguous()
 
                 # since conf is ~ (0, 1), floor gives us validity
-                print(mask.shape)
                 mask = mask.floor().int()
                 mask = mask.transpose(1, 0).reshape(-1).bool()
 
             # clear the padding
             img = img[:, :img_shape[0], :img_shape[1]]
             img_flatten = img.reshape(3, -1).float()
-
-            # normalization
-            # in accordance with the official implementation
-            # img_flatten += img.new_tensor(
-            #     self.img_norm_cfg['mean']).unsqueeze(-1)
-            # img_flatten = (img_flatten - 128.0) / 255.0
             img_flatten /= 255.
 
             # take the normalized pixel value as texture cue
             uv_flatten = uv_rescaled[:, 1].round() * \
                 img_shape[1] + uv_rescaled[:, 0].round()
             uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1).long()
-            print(uv_flatten, uv_rescaled)
-            print(img_flatten.shape)
             txt_cue = torch.gather(img_flatten, dim=-1, index=uv_expanded)
             txt_cue = txt_cue.unsqueeze(1).expand(-1,
                                                   self.max_imvote_per_pixel,
@@ -254,7 +236,5 @@ class VoteFusion(nn.Module):
             img_feature = torch.cat([two_cues, txt_cue], dim=0)
             img_features.append(img_feature)
             masks.append(mask)
-            print(mask, )
-            print(img_feature)
 
         return torch.stack(img_features, 0), torch.stack(masks, 0)
