@@ -36,7 +36,7 @@ __device__ __forceinline__ static void reduceMax(double *address, double val) {
   } while (assumed != old || __longlong_as_double(old) < val);
 }
 
-// get ride of meaningless warnings when compiling host code
+// get rid of meaningless warnings when compiling host code
 #ifdef __CUDA_ARCH__
 __device__ __forceinline__ static void reduceAdd(float *address, float val) {
 #if (__CUDA_ARCH__ < 200)
