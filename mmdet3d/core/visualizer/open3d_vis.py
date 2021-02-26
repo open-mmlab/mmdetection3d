@@ -1,9 +1,14 @@
 import cv2
 import numpy as np
-import open3d as o3d
 import torch
 from matplotlib import pyplot as plt
-from open3d import geometry
+
+try:
+    import open3d as o3d
+    from open3d import geometry
+except ImportError:
+    raise ImportError(
+        'Please run "pip install open3d to install open3d first." ')
 
 
 def _draw_points(points,
