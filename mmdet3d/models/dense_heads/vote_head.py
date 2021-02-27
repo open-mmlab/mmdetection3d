@@ -119,9 +119,9 @@ class VoteHead(nn.Module):
             torch.Tensor: Features of input points.
             torch.Tensor: Indices of input points.
         """
-        seed_points = feat_dict['fp_xyz'][-1]
-        seed_features = feat_dict['fp_features'][-1]
-        seed_indices = feat_dict['fp_indices'][-1]
+        seed_points = feat_dict['seed_points']
+        seed_features = feat_dict['seed_features']
+        seed_indices = feat_dict['seed_indices']
 
         return seed_points, seed_features, seed_indices
 
