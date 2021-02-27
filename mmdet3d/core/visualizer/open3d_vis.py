@@ -8,7 +8,7 @@ try:
     from open3d import geometry
 except ImportError:
     raise ImportError(
-        'Please run "pip install open3d to install open3d first." ')
+        'Please run "pip install open3d" to install open3d first.')
 
 
 def _draw_points(points,
