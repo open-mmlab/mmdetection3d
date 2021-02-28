@@ -66,7 +66,6 @@ __device__ __forceinline__ static void reduceAdd(double *address, double val) {
     old = atomicCAS(address_as_ull, assumed,
                     __double_as_longlong(val + __longlong_as_double(assumed)));
   } while (assumed != old);
-  return __longlong_as_double(old);
 #else
   atomicAdd(address, val);
 #endif
@@ -103,7 +102,7 @@ __global__ void coors_map_init_kernel(const int64_t *coors_id,
       } else {
         coors_map[0] = 0;
       }
-      return;
+      continue;
     }
     auto left = coors_id[coors_id_argsort[x - 1]];
     coors_map[x] = (left < here) ? 1 : 0;
@@ -121,7 +120,7 @@ feats_reduce_kernel(const T *feats, const T_int *coors, int32_t *coors_map,
        x += gridDim.x * blockDim.x) {
     int32_t reduce_to = coors_map[x];
     if (reduce_to == -1)
-      return;
+      continue;
 
     const T_int *coors_offset = coors + x * NDim;
     T_int *out_coors_offset = out_coors + reduce_to * NDim;
@@ -155,7 +154,7 @@ __global__ void add_reduce_traceback_grad_kernel(
        x += gridDim.x * blockDim.x) {
     int32_t reduce_to = coors_map[x];
     if (reduce_to == -1) {
-      return;
+      continue;
     }
 
     const int input_offset = x * num_feats;
@@ -188,7 +187,7 @@ __global__ void max_reduce_traceback_scatter_idx_kernel(
     const T *feats_offset = feats + input_offset;
 
     if (reduce_to == -1) {
-      return;
+      continue;
     }
 
     const int reduced_offset = reduce_to * num_feats;
