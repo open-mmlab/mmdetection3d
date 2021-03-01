@@ -5,7 +5,6 @@ interrogate
 isort
 # Note: used for kwarray.group_items, this may be ported to mmcv in the future.
 kwarray
-open3d
 pytest
 pytest-cov
 pytest-runner
