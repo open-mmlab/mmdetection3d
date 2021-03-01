@@ -25,7 +25,7 @@ class HardSimpleVFE(nn.Module):
         self.fp16_enabled = False
 
     @force_fp32(out_fp16=True)
-    def forward(self, features, num_points, coors):
+    def forward(self, features, num_points, coors, *args, **kwargs):
         """Forward function.
 
         Args:
@@ -65,7 +65,7 @@ class DynamicSimpleVFE(nn.Module):
 
     @torch.no_grad()
     @force_fp32(out_fp16=True)
-    def forward(self, features, coors):
+    def forward(self, features, coors, *args, **kwargs):
         """Forward function.
 
         Args:

@@ -500,3 +500,32 @@ class MVXTwoStageDetector(Base3DDetector):
 
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
             show_result(points, None, pred_bboxes, out_dir, file_name)
+
+    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
+                              missing_keys, unexpected_keys, error_msgs):
+        # override the _load_from_state_dict function
+        # convert the backbone weights pre-trained in Mask R-CNN
+        # use list(state_dict.keys()) to avoid
+        # RuntimeError: OrderedDict mutated during iteration
+        for key_name in list(state_dict.keys()):
+            key_changed = True
+            if key_name.startswith('backbone.'):
+                new_key_name = f'img_backbone{key_name[8:]}'
+            elif key_name.startswith('neck.'):
+                new_key_name = f'img_neck{key_name[4:]}'
+            elif key_name.startswith('rpn_head.'):
+                new_key_name = f'img_rpn_head{key_name[8:]}'
+            elif key_name.startswith('roi_head.'):
+                new_key_name = f'img_roi_head{key_name[8:]}'
+            else:
+                key_changed = False
+
+            if key_changed:
+                logger = get_root_logger()
+                print_log(
+                    f'{key_name} renamed to be {new_key_name}', logger=logger)
+                state_dict[new_key_name] = state_dict.pop(key_name)
+
+        super()._load_from_state_dict(state_dict, prefix, local_metadata,
+                                      strict, missing_keys, unexpected_keys,
+                                      error_msgs)

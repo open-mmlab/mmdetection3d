@@ -15,7 +15,8 @@ class MultiScaleFlipAug3D(object):
         img_scale (tuple | list[tuple]: Images scales for resizing.
         pts_scale_ratio (float | list[float]): Points scale ratios for
             resizing.
-        flip (bool): Whether apply flip augmentation. Defaults to False.
+        flip (bool): Whether apply flip augmentation to images.
+            Defaults to False.
         flip_direction (str | list[str]): Flip augmentation directions
             for images, options are "horizontal" and "vertical".
             If flip_direction is list, multiple flip augmentations will
@@ -77,11 +78,11 @@ class MultiScaleFlipAug3D(object):
         # modified from `flip_aug = [False, True] if self.flip else [False]`
         # to reduce unnecessary scenes when using double flip augmentation
         # during test time
-        flip_aug = [True] if self.flip else [False]
+        flip_aug = [False, True] if self.flip else [False]
         pcd_horizontal_flip_aug = [False, True] \
-            if self.flip and self.pcd_horizontal_flip else [False]
+            if self.pcd_horizontal_flip else [False]
         pcd_vertical_flip_aug = [False, True] \
-            if self.flip and self.pcd_vertical_flip else [False]
+            if self.pcd_vertical_flip else [False]
         for scale in self.img_scale:
             for pts_scale_ratio in self.pts_scale_ratio:
                 for flip in flip_aug:

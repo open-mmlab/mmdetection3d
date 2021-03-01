@@ -15,7 +15,7 @@ def point_sample(
     img_crop_offset,
     pcd_trans_factor,
     pcd_scale_factor,
-    pcd_flip,
+    pcd_horizontal_flip,
     img_flip,
     img_pad_shape,
     img_shape,
@@ -38,7 +38,7 @@ def point_sample(
         pcd_trans_factor ([type]): Translation of points in augmentation.
         pcd_scale_factor (float): Scale factor of points during.
             data augmentation
-        pcd_flip (bool): Whether the points are flipped.
+        pcd_horizontal_flip (bool): Whether the points are horizontally flipped.
         img_flip (bool): Whether the image is flipped.
         img_pad_shape (tuple[int]): int tuple indicates the h & w after
             padding, this is necessary to obtain features in feature map.
@@ -56,7 +56,7 @@ def point_sample(
     """
     # aug order: flip -> trans -> scale -> rot
     # The transformation follows the augmentation order in data pipeline
-    if pcd_flip:
+    if pcd_horizontal_flip:
         # if the points are flipped, flip them back first
         points[:, 1] = -points[:, 1]
 
@@ -310,7 +310,7 @@ class PointFusion(nn.Module):
         img_scale_factor = (
             pts.new_tensor(img_meta['scale_factor'][:2])
             if 'scale_factor' in img_meta.keys() else 1)
-        pcd_flip = img_meta['pcd_flip'] if 'pcd_flip' in img_meta.keys(
+        pcd_horizontal_flip = img_meta['pcd_horizontal_flip'] if 'pcd_horizontal_flip' in img_meta.keys(
         ) else False
         img_flip = img_meta['flip'] if 'flip' in img_meta.keys() else False
         img_crop_offset = (
@@ -325,7 +325,7 @@ class PointFusion(nn.Module):
             img_crop_offset,
             pcd_trans_factor,
             pcd_scale_factor,
-            pcd_flip=pcd_flip,
+            pcd_horizontal_flip=pcd_horizontal_flip,
             img_flip=img_flip,
             img_pad_shape=img_meta['input_shape'][:2],
             img_shape=img_meta['img_shape'][:2],

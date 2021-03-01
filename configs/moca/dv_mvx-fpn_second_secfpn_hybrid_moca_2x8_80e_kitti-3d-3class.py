@@ -1,6 +1,5 @@
-# model settings
 _base_ = '../_base_/models/mvx-fpn_second.py'
-
+# model settings
 voxel_size = [0.05, 0.05, 0.1]
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
@@ -10,11 +9,33 @@ data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
+
+db_sampler = dict(
+    type='MMDataBaseSampler',
+    data_root=data_root,
+    info_path=data_root + 'kitti_mm_dbinfos_train.pkl',
+    rate=1.0,
+    blending_type=['box', 'gaussian', 'poisson'],
+    depth_consistent=True,
+    check_2D_collision=True,
+    collision_thr=[0, 0.3, 0.5, 0.7],
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
+    classes=class_names,
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6))
+
 input_modality = dict(use_lidar=True, use_camera=True)
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=True,
+        with_label_3d=True,
+        with_bbox=True,
+        with_label=True),
+    dict(type='ObjectSample', db_sampler=db_sampler, sample_2d=True),
     dict(
         type='Resize',
         img_scale=[(640, 192), (2560, 768)],
@@ -101,8 +122,20 @@ data = dict(
         classes=class_names,
         test_mode=True))
 # Training settings
-optimizer = dict(type='AdamW', lr=0.003, betas=(0.95, 0.99), weight_decay=0.01)
-# max_norm=10 is better for SECOND
+optimizer = dict(
+    constructor='HybridOptimizerConstructor',
+    pts=dict(
+        type='AdamW',
+        lr=0.003,
+        betas=(0.95, 0.99),
+        weight_decay=0.01,
+        step_interval=1),
+    img=dict(
+        type='SGD',
+        lr=0.02,
+        momentum=0.9,
+        weight_decay=0.0001,
+        step_interval=1))
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(
     policy='CosineAnnealing',
