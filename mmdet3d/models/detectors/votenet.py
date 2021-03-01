@@ -22,6 +22,28 @@ class VoteNet(SingleStage3DDetector):
             test_cfg=test_cfg,
             pretrained=pretrained)
 
+    def extract_feat(self, points, img_metas=None):
+        """Directly extract features from the backbone+neck.
+
+        Args:
+            points (torch.Tensor): Input points.
+        """
+        x = self.backbone(points)
+        if self.with_neck:
+            x = self.neck(x)
+
+        seed_points = x['fp_xyz'][-1]
+        seed_features = x['fp_features'][-1]
+        seed_indices = x['fp_indices'][-1]
+
+        feat_dict = {
+            'seed_points': seed_points,
+            'seed_features': seed_features,
+            'seed_indices': seed_indices
+        }
+
+        return feat_dict
+
     def forward_train(self,
                       points,
                       img_metas,
