@@ -79,11 +79,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         filename (str): Filename of the current frame.
         show (bool): Visualize the results online.
     """
-    try:
-        from .open3d_vis import Visualizer
-    except ImportError:
-        raise ImportError(
-            'Please run "pip install open3d" to install open3d first.')
+    from .open3d_vis import Visualizer
 
     if show:
         vis = Visualizer(points)
