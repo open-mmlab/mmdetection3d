@@ -1,2 +1,3 @@
 open3d==0.9.0.0
+# The latest open3d need the support of file 'GLIBC_2.27', which only exist in Ubuntu 18.04, not in Ubuntu 16.04
 waymo-open-dataset-tf-2-1-0==1.2.0
