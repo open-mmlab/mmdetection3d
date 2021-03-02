@@ -30,6 +30,7 @@ class _dynamic_scatter(Function):
         ctx.reduce_type = reduce_type
         ctx.save_for_backward(feats, voxel_feats, point2voxel_map,
                               voxel_points_count)
+        ctx.mark_non_differentiable(voxel_coors)
         return voxel_feats, voxel_coors
 
     @staticmethod
