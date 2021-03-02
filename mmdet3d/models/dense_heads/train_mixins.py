@@ -277,11 +277,11 @@ class AnchorTrainMixin(object):
             neg_inds = sampling_result.neg_inds
         else:
             pos_inds = torch.nonzero(
-                anchors.new_zeros((anchors.shape[0], ), dtype=torch.bool) > 0, as_tuple=False
-            ).squeeze(-1).unique()
+                anchors.new_zeros((anchors.shape[0], ), dtype=torch.bool) > 0,
+                as_tuple=False).squeeze(-1).unique()
             neg_inds = torch.nonzero(
-                anchors.new_zeros((anchors.shape[0], ), dtype=torch.bool) == 0, as_tuple=False
-            ).squeeze(-1).unique()
+                anchors.new_zeros((anchors.shape[0], ), dtype=torch.bool) == 0,
+                as_tuple=False).squeeze(-1).unique()
 
         if gt_labels is not None:
             labels += num_classes
