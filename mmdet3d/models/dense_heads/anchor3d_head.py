@@ -225,7 +225,8 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
 
         bg_class_ind = self.num_classes
         pos_inds = ((labels >= 0)
-                    & (labels < bg_class_ind)).nonzero(as_tuple=False).reshape(-1)
+                    & (labels < bg_class_ind)).nonzero(
+                        as_tuple=False).reshape(-1)
         num_pos = len(pos_inds)
 
         pos_bbox_pred = bbox_pred[pos_inds]
