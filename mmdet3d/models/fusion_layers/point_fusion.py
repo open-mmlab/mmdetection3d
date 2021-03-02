@@ -291,7 +291,7 @@ class PointFusion(nn.Module):
 
         Args:
             img_feats (torch.Tensor): Image feature map in shape
-                (N, C, H, W).
+                (1, C, H, W).
             pts (torch.Tensor): Points of a single sample.
             img_meta (dict): Meta information of the single sample.
 

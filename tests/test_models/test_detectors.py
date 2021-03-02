@@ -20,12 +20,12 @@ def _setup_seed(seed):
 def _get_config_directory():
     """Find the predefined detector config directory."""
     try:
-        # Assume we are running in the source mmdetection repo
-        repo_dpath = dirname(dirname(__file__))
+        # Assume we are running in the source mmdetection3d repo
+        repo_dpath = dirname(dirname(dirname(__file__)))
     except NameError:
         # For IPython development when this __file__ is not defined
-        import mmdet
-        repo_dpath = dirname(dirname(mmdet.__file__))
+        import mmdet3d
+        repo_dpath = dirname(dirname(mmdet3d.__file__))
     config_dpath = join(repo_dpath, 'configs')
     if not exists(config_dpath):
         raise Exception('Cannot find config path')
@@ -62,8 +62,8 @@ def _get_detector_cfg(fname):
     import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
-    train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg))
-    test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg))
+    train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
+    test_cfg = mmcv.Config(copy.deepcopy(config.model.test_cfg))
 
     model.update(train_cfg=train_cfg)
     model.update(test_cfg=test_cfg)

@@ -4,12 +4,12 @@ from os.path import dirname, exists, join, relpath
 def _get_config_directory():
     """Find the predefined detector config directory."""
     try:
-        # Assume we are running in the source mmdetection repo
-        repo_dpath = dirname(dirname(__file__))
+        # Assume we are running in the source mmdetection3d repo
+        repo_dpath = dirname(dirname(dirname(__file__)))
     except NameError:
         # For IPython development when this __file__ is not defined
-        import mmdet
-        repo_dpath = dirname(dirname(mmdet.__file__))
+        import mmdet3d
+        repo_dpath = dirname(dirname(mmdet3d.__file__))
     config_dpath = join(repo_dpath, 'configs')
     if not exists(config_dpath):
         raise Exception('Cannot find config path')
@@ -38,18 +38,15 @@ def test_config_build_detector():
         config_mod = Config.fromfile(config_fpath)
 
         config_mod.model
-        config_mod.train_cfg
-        config_mod.test_cfg
+        config_mod.model.train_cfg
+        config_mod.model.test_cfg
         print('Building detector, config_fpath = {!r}'.format(config_fpath))
 
         # Remove pretrained keys to allow for testing in an offline environment
         if 'pretrained' in config_mod.model:
             config_mod.model['pretrained'] = None
 
-        detector = build_detector(
-            config_mod.model,
-            train_cfg=config_mod.train_cfg,
-            test_cfg=config_mod.test_cfg)
+        detector = build_detector(config_mod.model)
         assert detector is not None
 
         if 'roi_head' in config_mod.model.keys():

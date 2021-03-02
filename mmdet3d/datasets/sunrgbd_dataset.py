@@ -93,12 +93,13 @@ class SUNRGBDDataset(Custom3DDataset):
             gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d)
         return anns_results
 
-    def show(self, results, out_dir):
+    def show(self, results, out_dir, show=True):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
@@ -109,10 +110,7 @@ class SUNRGBDDataset(Custom3DDataset):
                 osp.join(self.data_root, pts_path),
                 dtype=np.float32).reshape(-1, 6)
             points[:, 3:] *= 255
-            if data_info['annos']['gt_num'] > 0:
-                gt_bboxes = data_info['annos']['gt_boxes_upright_depth']
-            else:
-                gt_bboxes = np.zeros((0, 7))
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
             pred_bboxes = result['boxes_3d'].tensor.numpy()
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
+                        show)

@@ -1,8 +1,8 @@
 """Test model forward process.
 
 CommandLine:
-    pytest tests/test_forward.py
-    xdoctest tests/test_forward.py zero
+    pytest tests/test_models/test_forward.py
+    xdoctest tests/test_models/test_forward.py zero
 """
 import copy
 import numpy as np
@@ -13,12 +13,12 @@ from os.path import dirname, exists, join
 def _get_config_directory():
     """Find the predefined detector config directory."""
     try:
-        # Assume we are running in the source mmdetection repo
-        repo_dpath = dirname(dirname(__file__))
+        # Assume we are running in the source mmdetection3d repo
+        repo_dpath = dirname(dirname(dirname(__file__)))
     except NameError:
         # For IPython development when this __file__ is not defined
-        import mmdet
-        repo_dpath = dirname(dirname(mmdet.__file__))
+        import mmdet3d
+        repo_dpath = dirname(dirname(mmdet3d.__file__))
     config_dpath = join(repo_dpath, 'configs')
     if not exists(config_dpath):
         raise Exception('Cannot find config path')
@@ -40,20 +40,17 @@ def _get_detector_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
-    train_cfg = mmcv.Config(copy.deepcopy(config.train_cfg))
-    test_cfg = mmcv.Config(copy.deepcopy(config.test_cfg))
-    return model, train_cfg, test_cfg
+    return model
 
 
 def _test_two_stage_forward(cfg_file):
-    model, train_cfg, test_cfg = _get_detector_cfg(cfg_file)
+    model = _get_detector_cfg(cfg_file)
     model['pretrained'] = None
 
     from mmdet.models import build_detector
-    detector = build_detector(model, train_cfg=train_cfg, test_cfg=test_cfg)
+    detector = build_detector(model)
 
     input_shape = (1, 3, 256, 256)
 
@@ -107,11 +104,11 @@ def _test_two_stage_forward(cfg_file):
 
 
 def _test_single_stage_forward(cfg_file):
-    model, train_cfg, test_cfg = _get_detector_cfg(cfg_file)
+    model = _get_detector_cfg(cfg_file)
     model['pretrained'] = None
 
     from mmdet.models import build_detector
-    detector = build_detector(model, train_cfg=train_cfg, test_cfg=test_cfg)
+    detector = build_detector(model)
 
     input_shape = (1, 3, 300, 300)
     mm_inputs = _demo_mm_inputs(input_shape)

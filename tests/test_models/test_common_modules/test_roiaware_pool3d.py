@@ -63,6 +63,14 @@ def test_points_in_boxes_gpu():
     assert point_indices.shape == torch.Size([2, 8])
     assert (point_indices == expected_point_indices).all()
 
+    if torch.cuda.device_count() > 1:
+        pts = pts.to('cuda:1')
+        boxes = boxes.to('cuda:1')
+        expected_point_indices = expected_point_indices.to('cuda:1')
+        point_indices = points_in_boxes_gpu(points=pts, boxes=boxes)
+        assert point_indices.shape == torch.Size([2, 8])
+        assert (point_indices == expected_point_indices).all()
+
 
 def test_points_in_boxes_cpu():
     boxes = torch.tensor(
@@ -110,3 +118,11 @@ def test_points_in_boxes_batch():
         dtype=torch.int32).cuda()
     assert point_indices.shape == torch.Size([1, 15, 2])
     assert (point_indices == expected_point_indices).all()
+
+    if torch.cuda.device_count() > 1:
+        pts = pts.to('cuda:1')
+        boxes = boxes.to('cuda:1')
+        expected_point_indices = expected_point_indices.to('cuda:1')
+        point_indices = points_in_boxes_batch(points=pts, boxes=boxes)
+        assert point_indices.shape == torch.Size([1, 15, 2])
+        assert (point_indices == expected_point_indices).all()

@@ -5,7 +5,20 @@
 - PyTorch 1.3+
 - CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
 - GCC 5+
-- [mmcv](https://github.com/open-mmlab/mmcv)
+- [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
+
+
+The required versions of MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMCV and MMDetection to avoid installation issues.
+
+| MMDetection3D version | MMDetection version |    MMCV version     |
+|:-------------------:|:-------------------:|:-------------------:|
+| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
+| 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
+| 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
+| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
+| 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
 
 # Installation
 
@@ -45,18 +58,34 @@ If you build PyTorch from source instead of installing the prebuilt pacakge,
 you can use more CUDA versions such as 9.0.
 
 **c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).**
-*mmcv-full* is necessary since MMDetection3D relies on MMDetection, CUDA ops in *mmcv-full* are required. 
+*mmcv-full* is necessary since MMDetection3D relies on MMDetection, CUDA ops in *mmcv-full* are required.
 
 `e.g.` The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
 
-```shell
-pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.5.0/index.html
+ ```shell
+pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/{cu_version}/{torch_version}/index.html
 ```
 
+Please replace `{cu_version}` and `{torch_version}` in the url to your desired one. For example, to install the latest `mmcv-full` with `CUDA 11` and `PyTorch 1.7.0`, use the following command:
+
+```shell
+pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu110/torch1.7.0/index.html
+```
+
+See [here](https://github.com/open-mmlab/mmcv#install-with-pip) for different versions of MMCV compatible to different PyTorch and CUDA versions.
 Optionally, you could also build the full version from source:
 
 ```shell
-pip install mmcv-full # need a long time
+git clone https://github.com/open-mmlab/mmcv.git
+cd mmcv
+MMCV_WITH_OPS=1 pip install -e .  # package mmcv-full will be installed after this step
+cd ..
+```
+
+Or directly run
+
+```shell
+pip install mmcv-full
 ```
 
 **d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).**
@@ -73,20 +102,6 @@ cd mmdetection
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
-
-**Important**:
-
-1. The required versions of MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMCV and MMDetection to avoid installation issues.
-
-| MMDetection3D version | MMDetection version |    MMCV version     |
-|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
-| 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
-| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
-| 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
 
 **e. Clone the MMDetection3D repository.**
 
@@ -177,7 +192,7 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 ### Point cloud demo
 
-We provide a demo script to test a single sample.
+We provide a demo script to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md)
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
