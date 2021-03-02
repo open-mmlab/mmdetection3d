@@ -7,7 +7,6 @@
 - Support more friendly visualization interfaces based on open3d
 - Support a faster and more memory-efficient implementation of DynamicScatter
 - Refactor unit tests and details of configs
-- Documentation and Readme enhancement
 
 #### Bug Fixes
 
