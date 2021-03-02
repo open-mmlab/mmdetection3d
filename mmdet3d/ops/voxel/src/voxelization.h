@@ -1,8 +1,7 @@
 #pragma once
 #include <torch/extension.h>
 
-typedef enum { SUM, MEAN, MAX } reduce_t;
-#define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
+typedef enum { SUM = 0, MEAN = 1, MAX = 2 } reduce_t;
 
 namespace voxelization {
 
