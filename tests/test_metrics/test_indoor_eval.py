@@ -185,3 +185,6 @@ def test_average_precision():
         np.array([[0.25, 0.5, 0.75], [0.25, 0.5, 0.75]]),
         np.array([[1., 1., 1.], [1., 1., 1.]]), '11points')
     assert abs(ap[0] - 0.06611571) < 0.001
+
+
+test_indoor_eval()
