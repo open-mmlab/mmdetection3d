@@ -13,38 +13,43 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
         img_meta(dict): Meta info regarding data transformation.
         reverse (bool): Reversed transformation or not.
 
+    Note:
+        "T" stands for translation;
+        "S" stands for scale;
+        "R" stands for rotation;
+        "HF" stands for horizontal flip;
+        "VF" stands for vertical flip.
+
     Returns:
         (torch.Tensor): The transformed point cloud.
     """
 
     dtype = pcd.dtype
     device = pcd.device
-    meta_keys = img_meta.keys()
 
     pcd_rotate_mat = (
         torch.tensor(img_meta['pcd_rotation'], dtype=dtype, device=device)
-        if 'pcd_rotation' in meta_keys else torch.eye(
+        if 'pcd_rotation' in img_meta else torch.eye(
             3, dtype=dtype, device=device))
 
     pcd_scale_factor = (
-        img_meta['pcd_scale_factor']
-        if 'pcd_scale_factor' in meta_keys else 1.)
+        img_meta['pcd_scale_factor'] if 'pcd_scale_factor' in img_meta else 1.)
 
     pcd_trans_factor = (
         torch.tensor(img_meta['pcd_trans'], dtype=dtype, device=device)
-        if 'pcd_trans' in meta_keys else torch.zeros(
+        if 'pcd_trans' in img_meta else torch.zeros(
             (3), dtype=dtype, device=device))
 
     pcd_horizontal_flip = img_meta[
         'pcd_horizontal_flip'] if 'pcd_horizontal_flip' in \
-        meta_keys else False
+        img_meta else False
 
     pcd_vertical_flip = img_meta[
         'pcd_vertical_flip'] if 'pcd_vertical_flip' in \
-        meta_keys else False
+        img_meta else False
 
-    pipeline = img_meta['transformation_3d_pipeline'] \
-        if 'transformation_3d_pipeline' in meta_keys else ''
+    flow = img_meta['transformation_3d_flow'] \
+        if 'transformation_3d_flow' in img_meta else []
 
     pcd = pcd.clone()  # prevent inplace modification
     pcd = get_points_type(coords_type)(pcd)
@@ -62,28 +67,23 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
         rotate_func = partial(pcd.rotate, rotation=pcd_rotate_mat.inverse())
 
         # reverse the pipeline
-        pipeline = pipeline[::-1]
+        flow = flow[::-1]
     else:
         scale_func = partial(pcd.scale, scale_factor=pcd_scale_factor)
         translate_func = partial(pcd.translate, trans_vector=pcd_trans_factor)
         rotate_func = partial(pcd.rotate, rotation=pcd_rotate_mat)
 
-    # "T" stands for translation;
-    # "S" stands for scale;
-    # "R" stands for rotation;
-    # "H" stands for horizontal flip;
-    # "V" stands for vertical flip.
-    pipeline_mapping = {
+    flow_mapping = {
         'T': translate_func,
         'S': scale_func,
         'R': rotate_func,
-        'H': horizontal_flip_func,
-        'V': vertical_flip_func
+        'HF': horizontal_flip_func,
+        'VF': vertical_flip_func
     }
-    for op in list(pipeline):
-        assert op in pipeline_mapping.keys(), 'This data '\
-            'transformation op (%s) is not supported' % op
-        func = pipeline_mapping[op]
+    for op in flow:
+        assert op in flow_mapping, f'This 3D data '\
+            f'transformation op ({op}) is not supported'
+        func = flow_mapping[op]
         func()
 
     return pcd.coord
