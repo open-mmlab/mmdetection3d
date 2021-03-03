@@ -14,6 +14,7 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
         reverse (bool): Reversed transformation or not.
 
     Note:
+        The elements in img_meta['transformation_3d_flow']:
         "T" stands for translation;
         "S" stands for scale;
         "R" stands for rotation;
