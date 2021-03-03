@@ -83,8 +83,8 @@ def seg_eval(gt_labels, seg_preds, label2cat, logger=None):
     hist_list = []
     for i in range(len(seg_preds)):
         hist_list.append(
-            fast_hist(seg_preds[i].numpy(), gt_labels[i].numpy(),
-                      len(label2cat)))
+            fast_hist(seg_preds[i].numpy().astype(int),
+                      gt_labels[i].numpy().astype(int), len(label2cat)))
     iou = per_class_iou(sum(hist_list))
     miou = np.nanmean(iou)
     acc = get_acc(sum(hist_list))
@@ -101,14 +101,14 @@ def seg_eval(gt_labels, seg_preds, label2cat, logger=None):
     table_columns = [['results']]
     for i in range(len(label2cat)):
         ret_dict[label2cat[i]] = float(iou[i])
-        table_columns.append(list(f'{iou[i]:.4f}'))
+        table_columns.append([f'{iou[i]:.4f}'])
     ret_dict['miou'] = float(miou)
     ret_dict['acc'] = float(acc)
     ret_dict['acc_cls'] = float(acc_cls)
 
-    table_columns.append(list(f'{miou:.4f}'))
-    table_columns.append(list(f'{acc:.4f}'))
-    table_columns.append(list(f'{acc_cls:.4f}'))
+    table_columns.append([f'{miou:.4f}'])
+    table_columns.append([f'{acc:.4f}'])
+    table_columns.append([f'{acc_cls:.4f}'])
 
     table_data = [header]
     table_rows = list(zip(*table_columns))
