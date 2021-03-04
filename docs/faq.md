@@ -1,0 +1,17 @@
+We list some potential troubles encountered by users and developers, along with their corresponding solutions. Feel free to enrich the list if you find any frequent issues and contribute your solutions to solve them. If you have any trouble with environment configuration, model training, etc, please create an issue using the [provided templates](https://github.com/open-mmlab/mmdetection/blob/master/.github/ISSUE_TEMPLATE/error-report.md) and fill in all required information in the template.
+
+## MMCV/MMDet/MMDet3D Installation
+
+- If you faced the error shown below when import open3d: 
+
+  ``OSError: /lib/x86_64-linux-gnu/libm.so.6: version 'GLIBC_2.27' not found``
+
+  please downgrade open3d to 0.9.0.0, because the latest open3d need the support of file 'GLIBC_2.27', which only exist in Ubuntu 18.04, not in Ubuntu 16.04
+
+- If you have any trouble when import pycocotools, please follow the steps below:
+
+  i. pip uninstall pycocotools mmpycocotools
+
+  ii. pip install mmpycocotools
+
+
