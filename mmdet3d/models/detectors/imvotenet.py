@@ -9,7 +9,7 @@ class ImVoteNet(Base3DDetector):
     r"""`ImVoteNet <https://arxiv.org/abs/2001.10692>`_ for 3D detection."""
 
     def __init__(self,
-                 pts_backbone,
+                 pts_backbone=None,
                  pts_bbox_head=None,
                  pts_neck=None,
                  img_backbone=None,
@@ -21,12 +21,13 @@ class ImVoteNet(Base3DDetector):
                  pretrained=None):
 
         super(ImVoteNet, self).__init__()
-
-        self.pts_backbone = build_backbone(pts_backbone)
+        if pts_backbone is not None:
+            self.pts_backbone = build_backbone(pts_backbone)
         if pts_neck is not None:
             self.pts_neck = build_neck(pts_neck)
-        pts_bbox_head.update(train_cfg=train_cfg, test_cfg=test_cfg)
-        self.pts_bbox_head = build_head(pts_bbox_head)
+        if pts_bbox_head is not None:
+            pts_bbox_head.update(train_cfg=train_cfg, test_cfg=test_cfg)
+            self.pts_bbox_head = build_head(pts_bbox_head)
 
         if img_backbone:
             self.img_backbone = build_backbone(img_backbone)
