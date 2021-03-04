@@ -29,25 +29,25 @@ class ImageMLPModule(nn.Module):
 
 def sample_valid_seeds(mask, num_sampled_seed=1024):
     device = mask.device
-    mask = mask.cpu().detach().numpy()  # B,N
     batch_size = mask.shape[0]
-    sample_inds = np.zeros((batch_size, num_sampled_seed))
+    sample_inds = torch.zeros((batch_size, num_sampled_seed), device=device)
     for bidx in range(batch_size):
         # return index of non zero elements
-        valid_inds = np.arange(len(mask[bidx, :]))
+        valid_inds = torch.arange(len(mask[bidx, :]))
         if len(valid_inds) < num_sampled_seed:
             assert (num_sampled_seed <= 1024)
             rand_inds = np.random.choice(
                 list(set(np.arange(1024)) - set(np.mod(valid_inds, 1024))),
                 num_sampled_seed - len(valid_inds),
                 replace=False)
-            cur_sample_inds = np.concatenate((valid_inds, rand_inds))
+            rand_inds = torch.from_numpy(rand_inds, device=device)
+            cur_sample_inds = torch.cat((valid_inds, rand_inds))
         else:
             cur_sample_inds = np.random.choice(
                 valid_inds, num_sampled_seed, replace=False)
+            cur_sample_inds = torch.from_numpy(cur_sample_inds, device=device)
         sample_inds[bidx, :] = cur_sample_inds
-    sample_inds = torch.from_numpy(sample_inds).long().to(device)
-    return sample_inds
+    return sample_inds.long()
 
 
 @DETECTORS.register_module()
@@ -276,7 +276,7 @@ class ImVoteNet(Base3DDetector):
                 sem_class = np.array(sem_class)
                 ret = np.concatenate(ret, axis=0)
                 ret = np.concatenate([ret, sem_class[:, None]], axis=-1)
-                ret = torch.from_numpy(ret).to(img.device)
+                ret = torch.new_tensor(ret, device=img.device)
                 inds = torch.argsort(ret[:, 4], descending=True)
                 if len(inds) > 100:
                     inds = inds[:100]
@@ -287,6 +287,7 @@ class ImVoteNet(Base3DDetector):
                     rand_drop = np.random.choice(
                         len(ret), (len(ret) + 1) // 2, replace=False)
                     rand_drop = np.sort(rand_drop)
+                    rand_drop = torch.new_tensor(rand_drop, device=img.device)
                     ret = ret[rand_drop]
 
                 rets_processed.append(ret.float())
@@ -298,8 +299,7 @@ class ImVoteNet(Base3DDetector):
                     rand_drop = np.random.choice(
                         len(ret), (len(ret) + 1) // 2, replace=False)
                     rand_drop = np.sort(rand_drop)
-                    rand_drop = torch.from_numpy(rand_drop).to(img.device)
-
+                    rand_drop = torch.new_tensor(rand_drop, device=img.device)
                     ret = ret[rand_drop]
                 rets_processed.append(ret.float())
             return rets_processed
