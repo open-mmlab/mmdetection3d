@@ -1,3 +1,9 @@
+"""Tests the core function of vote fusion.
+
+CommandLine:
+    pytest tests/test_models/test_fusion/test_vote_fusion.py
+"""
+
 import torch
 
 from mmdet3d.models.fusion_layers import VoteFusion
@@ -23,8 +29,7 @@ def test_vote_fusion():
         'pcd_rotation':
         torch.tensor([[0.9747, 0.2234, 0.0000], [-0.2234, 0.9747, 0.0000],
                       [0.0000, 0.0000, 1.0000]]),
-        'transformation_3d_pipeline':
-        'HRST'
+        'transformation_3d_flow': ['HF', 'R', 'S', 'T']
     }
 
     calibs = {

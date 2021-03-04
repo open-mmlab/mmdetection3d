@@ -1,7 +1,7 @@
 """Tests coords transformation in fusion modules.
 
 CommandLine:
-    pytest tests/test_models/test_fusion_coord_trans.py
+    pytest tests/test_models/test_fusion/test_fusion_coord_trans.py
 """
 
 import torch
@@ -21,8 +21,7 @@ def test_coords_transformation():
         'pcd_trans': [1.111e-02, -8.88e-03, 0.0],
         'pcd_horizontal_flip':
         True,
-        'transformation_3d_pipeline':
-        'HRST'
+        'transformation_3d_flow': ['HF', 'R', 'S', 'T']
     }
 
     pcd = torch.tensor([[-5.2422e+00, -2.9757e-01, 4.0021e+01],
@@ -51,8 +50,7 @@ def test_coords_transformation():
         'pcd_trans': [0.0, 0.0, 0.0],
         'pcd_horizontal_flip':
         False,
-        'transformation_3d_pipeline':
-        'HRST'
+        'transformation_3d_flow': ['HF', 'R', 'S', 'T']
     }
 
     pcd = torch.tensor([[-5.2422e+00, -2.9757e-01, 4.0021e+01],
@@ -78,8 +76,7 @@ def test_coords_transformation():
         'pcd_trans': [1.0e+00, -1.0e+00, 0.0],
         'pcd_horizontal_flip':
         True,
-        'transformation_3d_pipeline':
-        'HSRT'
+        'transformation_3d_flow': ['HF', 'S', 'R', 'T']
     }
 
     pcd = torch.tensor([[-5.2422e+00, 4.0021e+01, -2.9757e-01],
@@ -97,7 +94,7 @@ def test_coords_transformation():
     assert torch.allclose(expected_tensor, pcd_transformed, 1e-4)
 
     # V, reverse, camera
-    img_meta = {'pcd_vertical_flip': True, 'transformation_3d_pipeline': 'V'}
+    img_meta = {'pcd_vertical_flip': True, 'transformation_3d_flow': ['VF']}
 
     pcd_transformed = apply_3d_transformation(
         pcd, 'CAMERA', img_meta, reverse=True)
@@ -112,7 +109,7 @@ def test_coords_transformation():
     img_meta = {
         'pcd_vertical_flip': True,
         'pcd_horizontal_flip': True,
-        'transformation_3d_pipeline': 'VH'
+        'transformation_3d_flow': ['VF', 'HF']
     }
 
     pcd_transformed = apply_3d_transformation(
@@ -127,7 +124,7 @@ def test_coords_transformation():
     img_meta = {
         'pcd_vertical_flip': True,
         'pcd_horizontal_flip': True,
-        'transformation_3d_pipeline': 'VH'
+        'transformation_3d_flow': ['VF', 'HF']
     }
 
     pcd_transformed = apply_3d_transformation(

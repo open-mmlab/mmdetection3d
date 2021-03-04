@@ -1,3 +1,9 @@
+"""Tests the core function of point fusion.
+
+CommandLine:
+    pytest tests/test_models/test_fusion/test_point_fusion.py
+"""
+
 import torch
 
 from mmdet3d.models.fusion_layers import PointFusion
@@ -14,7 +20,7 @@ def test_sample_single():
 
     #  all use default
     img_meta = {
-        'transformation_3d_pipeline': 'RSTH',
+        'transformation_3d_flow': ['R', 'S', 'T', 'HF'],
         'input_shape': [370, 1224],
         'img_shape': [370, 1224],
         'lidar2img': lidar2img,
