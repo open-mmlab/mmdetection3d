@@ -35,17 +35,18 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
         # return index of non zero elements
         valid_inds = torch.arange(len(mask[bidx, :]))
         if len(valid_inds) < num_sampled_seed:
-            assert (num_sampled_seed <= 1024)
             rand_inds = np.random.choice(
-                list(set(np.arange(1024)) - set(np.mod(valid_inds, 1024))),
+                list(
+                    set(np.arange(num_sampled_seed)) -
+                    set(np.mod(valid_inds, num_sampled_seed))),
                 num_sampled_seed - len(valid_inds),
                 replace=False)
-            rand_inds = torch.from_numpy(rand_inds, device=device)
+            rand_inds = torch.new_tensor(rand_inds, device=device)
             cur_sample_inds = torch.cat((valid_inds, rand_inds))
         else:
             cur_sample_inds = np.random.choice(
                 valid_inds, num_sampled_seed, replace=False)
-            cur_sample_inds = torch.from_numpy(cur_sample_inds, device=device)
+            cur_sample_inds = torch.new_tensor(cur_sample_inds, device=device)
         sample_inds[bidx, :] = cur_sample_inds
     return sample_inds.long()
 
@@ -66,6 +67,7 @@ class ImVoteNet(Base3DDetector):
                  img_rpn_head=None,
                  img_mlp=None,
                  fusion_layer=None,
+                 num_sampled_seed=None,
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
@@ -73,6 +75,7 @@ class ImVoteNet(Base3DDetector):
         super(ImVoteNet, self).__init__()
 
         self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
+        self.num_sampled_seed = num_sampled_seed
 
         if pts_backbone is not None:
             self.pts_backbone = builder.build_backbone(pts_backbone)
@@ -185,18 +188,6 @@ class ImVoteNet(Base3DDetector):
                                       error_msgs)
 
     @property
-    def with_img_shared_head(self):
-        """bool: Whether the detector has a shared head in image branch."""
-        return hasattr(self,
-                       'img_shared_head') and self.img_shared_head is not None
-
-    @property
-    def with_pts_bbox(self):
-        """bool: Whether the detector has a 3D box head."""
-        return hasattr(self,
-                       'pts_bbox_head') and self.pts_bbox_head is not None
-
-    @property
     def with_img_bbox(self):
         """bool: Whether the detector has a 2D image box head."""
         return ((hasattr(self, 'img_roi_head') and self.img_roi_head.with_bbox)
@@ -209,19 +200,9 @@ class ImVoteNet(Base3DDetector):
         return hasattr(self, 'img_backbone') and self.img_backbone is not None
 
     @property
-    def with_pts_backbone(self):
-        """bool: Whether the detector has a 3D backbone."""
-        return hasattr(self, 'pts_backbone') and self.pts_backbone is not None
-
-    @property
     def with_img_neck(self):
         """bool: Whether the detector has a neck in image branch."""
         return hasattr(self, 'img_neck') and self.img_neck is not None
-
-    @property
-    def with_pts_neck(self):
-        """bool: Whether the detector has a neck in 3D detector branch."""
-        return hasattr(self, 'pts_neck') and self.pts_neck is not None
 
     @property
     def with_img_rpn(self):
@@ -233,12 +214,40 @@ class ImVoteNet(Base3DDetector):
         """bool: Whether the detector has a RoI Head in image branch."""
         return hasattr(self, 'img_roi_head') and self.img_roi_head is not None
 
+    @property
+    def with_pts_bbox(self):
+        """bool: Whether the detector has a 3D box head."""
+        return hasattr(self,
+                       'pts_bbox_head') and self.pts_bbox_head is not None
+
+    @property
+    def with_pts_backbone(self):
+        """bool: Whether the detector has a 3D backbone."""
+        return hasattr(self, 'pts_backbone') and self.pts_backbone is not None
+
+    @property
+    def with_pts_neck(self):
+        """bool: Whether the detector has a neck in 3D detector branch."""
+        return hasattr(self, 'pts_neck') and self.pts_neck is not None
+
     def extract_img_feat(self, img):
         """Directly extract features from the backbone+neck."""
         x = self.img_backbone(img)
         if self.with_img_neck:
             x = self.img_neck(x)
         return x
+
+    def extract_img_feats(self, imgs):
+        """Extract features from multiple images.
+
+        Args:
+            imgs (list[torch.Tensor]): A list of images. The images are
+                augmented from the same image but in different ways.
+        Returns:
+            list[torch.Tensor]: Features of different images
+        """
+        assert isinstance(imgs, list)
+        return [self.extract_img_feat(img) for img in imgs]
 
     def extract_pts_feat(self, pts):
         """Extract features of points."""
@@ -392,7 +401,7 @@ class ImVoteNet(Base3DDetector):
             seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
             seed_indices = seed_indices.gather(1, inds)
 
-            img_features = self.image_mlp(img_features)
+            img_features = self.image_mlp(img_features, self.num_sampled_seed)
             fused_features = torch.cat([seed_3d_features, img_features], dim=1)
 
             feat_dict_joint = dict(
@@ -445,6 +454,8 @@ class ImVoteNet(Base3DDetector):
                         losses_towers[2][loss_term] * \
                         self.pts_bbox_heads[2].loss_weight
                 else:
+                    # only save the metric of the joint head
+                    # if it is not a loss
                     combined_losses[loss_term] = \
                         losses_towers[0][loss_term]
 
@@ -457,7 +468,8 @@ class ImVoteNet(Base3DDetector):
                      calib=None,
                      bboxes_2d=None,
                      **kwargs):
-        """
+        """Forwarding of test.
+
         Args:
             points (list[torch.Tensor]): the outer list indicates test-time
                 augmentations and inner torch.Tensor should have a shape NxC,
@@ -469,6 +481,7 @@ class ImVoteNet(Base3DDetector):
                 list indicates test-time augmentations and inner
                 torch.Tensor should have a shape NxCxHxW, which contains
                 all images in the batch. Defaults to None.
+            calib ()
         """
         if points is None:
             for var, name in [(img, 'img'), (img_metas, 'img_metas')]:
@@ -489,15 +502,19 @@ class ImVoteNet(Base3DDetector):
                 # proposals.
                 if 'proposals' in kwargs:
                     kwargs['proposals'] = kwargs['proposals'][0]
-                return self.simple_test(
-                    img=img[0], img_metas=img_metas[0], **kwargs)
+                return self.simple_test_img_only(
+                    img=img[0],
+                    img_metas=img_metas[0],
+                    rescale=False,
+                    **kwargs)
             else:
                 assert img[0].size(0) == 1, 'aug test does not support ' \
                                          'inference with batch size ' \
                                          f'{img[0].size(0)}'
                 # TODO: support test augmentation for predefined proposals
                 assert 'proposals' not in kwargs
-                return self.aug_test(img=img, img_metas=img_metas, **kwargs)
+                return self.aug_test_img_only(
+                    img=img, img_metas=img_metas, **kwargs)
 
         else:
             for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
@@ -513,7 +530,7 @@ class ImVoteNet(Base3DDetector):
 
             if num_augs == 1:
                 img = [img] if img is None else img
-                return self.simple_test(
+                return self.simple_test_both(
                     points[0],
                     img_metas[0],
                     img[0],
@@ -521,47 +538,19 @@ class ImVoteNet(Base3DDetector):
                     bboxes_2d=bboxes_2d[0] if bboxes_2d is not None else None,
                     **kwargs)
             else:
-                return self.aug_test(points, img_metas, img, **kwargs)
-
-    def simple_test(self,
-                    points=None,
-                    img_metas=None,
-                    img=None,
-                    calib=None,
-                    bboxes_2d=None,
-                    rescale=False,
-                    **kwargs):
-        """Forward of testing.
-
-        Args:
-            points (list[torch.Tensor]): Points of each sample.
-            img_metas (list): Image metas.
-            img (list[torch.Tensor]): Images of each sample.
-            rescale (bool): Whether to rescale results.
-
-        Returns:
-            list: Predicted 3d boxes.
-        """
-        if points is None:
-            return self.simple_test_img_only(
-                img, img_metas, rescale=rescale, **kwargs)
-        else:
-            return self.simple_test_both(
-                points,
-                img_metas,
-                img,
-                rescale=rescale,
-                calib=calib,
-                bboxes_2d=bboxes_2d,
-                **kwargs)
+                return self.aug_test(points, img_metas, img, calib, bboxes_2d,
+                                     **kwargs)
 
     def simple_test_img_only(self,
                              img,
                              img_metas,
                              proposals=None,
                              rescale=False):
-        """Test without augmentation."""
-        assert self.with_img_bbox, 'Bbox head must be implemented.'
+        """Test without augmentation, image network pretrain."""
+        assert self.with_img_bbox, 'Img bbox head must be implemented.'
+        assert self.with_img_backbone, 'Img backbone must be implemented.'
+        assert self.with_img_rpn, 'Img rpn must be implemented.'
+        assert self.with_img_roi_head, 'Img roi head must be implemented.'
 
         x = self.extract_img_feat(img)
 
@@ -583,17 +572,7 @@ class ImVoteNet(Base3DDetector):
                          calib=None,
                          bboxes_2d=None,
                          **kwargs):
-        """Forward of testing.
-
-        Args:
-            points (list[torch.Tensor]): Points of each sample.
-            img_metas (list): Image metas.
-            img (list[torch.Tensor]): Images of each sample.
-            rescale (bool): Whether to rescale results.
-
-        Returns:
-            list: Predicted 3d boxes.
-        """
+        """Test without augmentation, stage 2."""
         bboxes_2d = self.extract_bboxes_2d(
             img, img_metas, train=False, bboxes_2d=bboxes_2d, **kwargs)
 
@@ -617,7 +596,7 @@ class ImVoteNet(Base3DDetector):
         seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
         seed_indices = seed_indices.gather(1, inds)
 
-        img_features = self.image_mlp(img_features)
+        img_features = self.image_mlp(img_features, self.num_sampled_seed)
 
         fused_features = torch.cat([seed_3d_features, img_features], dim=1)
 
@@ -635,36 +614,20 @@ class ImVoteNet(Base3DDetector):
         ]
         return bbox_results
 
-    def aug_test(self,
-                 points=None,
-                 img_metas=None,
-                 imgs=None,
-                 calib=None,
-                 bboxes_2d=None,
-                 rescale=False,
-                 **kwargs):
-        """Test function with augmentaiton."""
-        if points is None:
-            return self.aug_test_img_only(
-                imgs, img_metas, rescale=rescale, **kwargs)
-        else:
-            return self.aug_test_both(
-                points,
-                img_metas,
-                imgs,
-                calib=calib,
-                bboxes_2d=bboxes_2d,
-                rescale=rescale,
-                **kwargs)
-
-    def aug_test_img_only(self, img, img_metas, proposals=None, rescale=False):
-        """Test with augmentations.
+    def aug_test_img_only(self, img, img_metas, rescale=False):
+        """Test function with augmentation, image network pretrain.
 
         If rescale is False, then returned bboxes and masks will fit the scale
         of imgs[0].
         """
+        assert self.with_img_bbox, 'Img bbox head must be implemented.'
+        assert self.with_img_backbone, 'Img backbone must be implemented.'
+        assert self.with_img_rpn, 'Img rpn must be implemented.'
+        assert self.with_img_roi_head, 'Img roi head must be implemented.'
+
         x = self.extract_img_feats(img)
         proposal_list = self.img_rpn_head.aug_test_rpn(x, img_metas)
+
         return self.img_roi_head.aug_test(
             x, proposal_list, img_metas, rescale=rescale)
 
@@ -674,17 +637,6 @@ class ImVoteNet(Base3DDetector):
                       img=None,
                       calib=None,
                       bboxes_2d=None,
-                      rescale=False,
                       **kwargs):
-        """Forward of testing.
-
-        Args:
-            points (list[torch.Tensor]): Points of each sample.
-            img_metas (list): Image metas.
-            img (list[torch.Tensor]): Images of each sample.
-            rescale (bool): Whether to rescale results.
-
-        Returns:
-            list: Predicted 3d boxes.
-        """
+        """Test function with augmentation, stage 2."""
         raise NotImplementedError('Aug test not supported for ImVoteNet')
