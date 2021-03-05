@@ -10,7 +10,7 @@ We list some potential troubles encountered by users and developers, along with 
 
 - If you faced the error when importing pycocotools, this is because nuscenes-devkit installs pycocotools but mmdet relies on mmpycocotools. The current workaround is as below. We will migrate to use pycocotools in the future.
 
-  ```bash
+  ```shell
   pip uninstall pycocotools mmpycocotools
   pip install mmpycocotools
   ```
