@@ -3,7 +3,7 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import bbox3d2result
+from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet.models import DETECTORS
 from .. import builder
 from .base import Base3DDetector
@@ -129,15 +129,6 @@ class ImVoteNet(Base3DDetector):
         self.test_cfg = test_cfg
         self.init_weights(pretrained=pretrained)
 
-        for param in self.img_backbone.parameters():
-            param.requires_grad = False
-        for param in self.img_neck.parameters():
-            param.requires_grad = False
-        for param in self.img_roi_head.parameters():
-            param.requires_grad = False
-        for param in self.img_rpn_head.parameters():
-            param.requires_grad = False
-
     def init_weights(self, pretrained=None):
         """Initialize model weights."""
         super(ImVoteNet, self).init_weights(pretrained)
@@ -174,6 +165,18 @@ class ImVoteNet(Base3DDetector):
             else:
                 self.pts_neck.init_weights()
 
+    def set_img_branch_eval_mode(self):
+        if self.with_img_bbox_head:
+            self.img_bbox_head.eval()
+        if self.with_img_backbone:
+            self.img_backbone.eval()
+        if self.with_img_neck:
+            self.img_neck.eval()
+        if self.with_img_rpn:
+            self.img_rpn_head.eval()
+        if self.with_img_roi_head:
+            self.img_roi_head.eval()
+
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                               missing_keys, unexpected_keys, error_msgs):
         module_names = ['backbone', 'neck', 'roi_head', 'rpn_head']
@@ -193,6 +196,12 @@ class ImVoteNet(Base3DDetector):
         return ((hasattr(self, 'img_roi_head') and self.img_roi_head.with_bbox)
                 or (hasattr(self, 'img_bbox_head')
                     and self.img_bbox_head is not None))
+
+    @property
+    def with_img_bbox_head(self):
+        """bool: Whether the detector has a 2D image box head (not roi)."""
+        return hasattr(self,
+                       'img_bbox_head') and self.img_bbox_head is not None
 
     @property
     def with_img_backbone(self):
@@ -259,7 +268,11 @@ class ImVoteNet(Base3DDetector):
         seed_features = x['fp_features'][-1]
         seed_indices = x['fp_indices'][-1]
 
-        return seed_points, seed_features, seed_indices
+        return (seed_points, seed_features, seed_indices)
+
+    def extract_pts_feats(self, pts):
+        """Extract features of points from multiple samples."""
+        return [self.extract_pts_feat(pt) for pt in pts]
 
     def extract_bboxes_2d(self,
                           img,
@@ -269,10 +282,8 @@ class ImVoteNet(Base3DDetector):
                           **kwargs):
         """Extract bounding boxes from 2d detector."""
         if bboxes_2d is None:
-            self.img_backbone.eval()
-            self.img_neck.eval()
-            self.img_rpn_head.eval()
-            self.img_roi_head.eval()
+            self.set_img_branch_eval_mode()
+
             x = self.extract_img_feat(img)
             proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
             rets = self.img_roi_head.simple_test(
@@ -287,9 +298,6 @@ class ImVoteNet(Base3DDetector):
                 ret = np.concatenate([ret, sem_class[:, None]], axis=-1)
                 ret = torch.new_tensor(ret, device=img.device)
                 inds = torch.argsort(ret[:, 4], descending=True)
-                if len(inds) > 100:
-                    inds = inds[:100]
-
                 ret = ret.index_select(0, inds)
 
                 if train:
@@ -568,9 +576,9 @@ class ImVoteNet(Base3DDetector):
                          points=None,
                          img_metas=None,
                          img=None,
-                         rescale=False,
                          calib=None,
                          bboxes_2d=None,
+                         rescale=False,
                          **kwargs):
         """Test without augmentation, stage 2."""
         bboxes_2d = self.extract_bboxes_2d(
@@ -634,9 +642,64 @@ class ImVoteNet(Base3DDetector):
     def aug_test_both(self,
                       points=None,
                       img_metas=None,
-                      img=None,
-                      calib=None,
+                      imgs=None,
+                      calibs=None,
                       bboxes_2d=None,
+                      rescale=False,
                       **kwargs):
         """Test function with augmentation, stage 2."""
-        raise NotImplementedError('Aug test not supported for ImVoteNet')
+
+        points_cat = [torch.stack(pts) for pts in points]
+        feats = self.extract_pts_feats(points_cat, img_metas)
+
+        # only support aug_test for one sample
+        aug_bboxes = []
+        for x, pts_cat, img_meta, bbox_2d, img, calib in zip(
+                feats, points_cat, img_metas, bboxes_2d, imgs, calibs):
+
+            bbox_2d = self.extract_bboxes_2d(
+                img, img_metas, train=False, bboxes_2d=bbox_2d, **kwargs)
+
+            seeds_3d, seed_3d_features, seed_indices = x
+
+            img_features, masks = self.fusion_layer(img, bbox_2d, seeds_3d,
+                                                    calib, img_metas)
+
+            inds = sample_valid_seeds(masks)
+            batch_size, img_feat_size = img_features.shape[:2]
+            pts_feat_size = seed_3d_features.shape[1]
+            inds_img = inds.reshape(batch_size, 1,
+                                    -1).repeat(1, img_feat_size, 1)
+            img_features = img_features.gather(-1, inds_img)
+            inds = inds % inds.shape[1]
+            inds_seed_xyz = inds.reshape(batch_size, -1, 1).repeat(1, 1, 3)
+            seeds_3d = seeds_3d.gather(1, inds_seed_xyz)
+            inds_seed_feats = inds.reshape(batch_size, 1,
+                                           -1).repeat(1, pts_feat_size, 1)
+            seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
+            seed_indices = seed_indices.gather(1, inds)
+
+            img_features = self.image_mlp(img_features, self.num_sampled_seed)
+
+            fused_features = torch.cat([seed_3d_features, img_features], dim=1)
+
+            feat_dict = dict(
+                seed_points=seeds_3d,
+                seed_features=fused_features,
+                seed_indices=seed_indices)
+            bbox_preds = self.pts_bbox_head_joint(feat_dict,
+                                                  self.test_cfg.pts.sample_mod)
+            bbox_list = self.pts_bbox_head_joint.get_bboxes(
+                pts_cat, bbox_preds, img_metas, rescale=rescale)
+
+            bbox_list = [
+                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+                for bboxes, scores, labels in bbox_list
+            ]
+            aug_bboxes.append(bbox_list[0])
+
+        # after merging, bboxes will be rescaled to the original image size
+        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
+                                            self.bbox_head.test_cfg)
+
+        return [merged_bboxes]
