@@ -2,7 +2,7 @@ We list some potential troubles encountered by users and developers, along with 
 
 ## MMCV/MMDet/MMDet3D Installation
 
-- If you faced the error shown below when importing open3d: 
+- If you faced the error shown below when importing open3d:
 
   ``OSError: /lib/x86_64-linux-gnu/libm.so.6: version 'GLIBC_2.27' not found``
 
@@ -10,7 +10,7 @@ We list some potential troubles encountered by users and developers, along with 
 
 - If you faced the error when importing pycocotools, this is because nuscenes-devkit installs pycocotools but mmdet relies on mmpycocotools. The current workaround is as below. We will migrate to use pycocotools in the future.
 
-  ```
+  ```bash
   pip uninstall pycocotools mmpycocotools
   pip install mmpycocotools
   ```
