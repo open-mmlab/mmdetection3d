@@ -1,52 +1,38 @@
 import numpy as np
 import torch
 from torch import nn as nn
-from torch.nn import functional as F
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
+from mmdet3d.models.model_utils import ImageMLPModule
 from mmdet.models import DETECTORS
 from .. import builder
 from .base import Base3DDetector
 
 
-class ImageMLPModule(nn.Module):
-
-    def __init__(self, input_dim=18, image_hidden_dim=256):
-        super().__init__()
-        self.img_feat_conv1 = nn.Conv1d(input_dim, image_hidden_dim, 1)
-        self.img_feat_conv2 = nn.Conv1d(image_hidden_dim, image_hidden_dim, 1)
-        self.img_feat_bn1 = nn.BatchNorm1d(image_hidden_dim)
-        self.img_feat_bn2 = nn.BatchNorm1d(image_hidden_dim)
-
-    def forward(self, img_features):
-        img_features = F.relu(
-            self.img_feat_bn1(self.img_feat_conv1(img_features)))
-        img_features = F.relu(
-            self.img_feat_bn2(self.img_feat_conv2(img_features)))
-
-        return img_features
-
-
 def sample_valid_seeds(mask, num_sampled_seed=1024):
     device = mask.device
     batch_size = mask.shape[0]
-    sample_inds = torch.zeros((batch_size, num_sampled_seed), device=device)
+    sample_inds = mask.new_zeros((batch_size, num_sampled_seed))
     for bidx in range(batch_size):
         # return index of non zero elements
-        valid_inds = torch.arange(len(mask[bidx, :]))
+        valid_inds = torch.nonzero(mask[bidx, :]).squeeze(-1)
         if len(valid_inds) < num_sampled_seed:
-            rand_inds = np.random.choice(
-                list(
-                    set(np.arange(num_sampled_seed)) -
-                    set(np.mod(valid_inds, num_sampled_seed))),
-                num_sampled_seed - len(valid_inds),
-                replace=False)
-            rand_inds = torch.new_tensor(rand_inds, device=device)
-            cur_sample_inds = torch.cat((valid_inds, rand_inds))
+            # compute set t1 - t2
+            t1 = torch.arange(num_sampled_seed, device=device)
+            t2 = valid_inds % num_sampled_seed
+            combined = torch.cat((t1, t2))
+            uniques, counts = combined.unique(return_counts=True)
+            difference = uniques[counts == 1]
+
+            rand_inds = torch.randperm(
+                len(difference),
+                device=device)[:num_sampled_seed - len(valid_inds)]
+            cur_sample_inds = difference[rand_inds]
+            cur_sample_inds = torch.cat((valid_inds, cur_sample_inds))
         else:
-            cur_sample_inds = np.random.choice(
-                valid_inds, num_sampled_seed, replace=False)
-            cur_sample_inds = torch.new_tensor(cur_sample_inds, device=device)
+            rand_inds = torch.randperm(
+                len(valid_inds), device=device)[:num_sampled_seed]
+            cur_sample_inds = valid_inds[rand_inds]
         sample_inds[bidx, :] = cur_sample_inds
     return sample_inds.long()
 
@@ -57,9 +43,7 @@ class ImVoteNet(Base3DDetector):
 
     def __init__(self,
                  pts_backbone=None,
-                 pts_bbox_head_joint=None,
-                 pts_bbox_head_pts=None,
-                 pts_bbox_head_img=None,
+                 pts_bbox_heads=None,
                  pts_neck=None,
                  img_backbone=None,
                  img_neck=None,
@@ -74,33 +58,32 @@ class ImVoteNet(Base3DDetector):
 
         super(ImVoteNet, self).__init__()
 
-        self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
-        self.num_sampled_seed = num_sampled_seed
-
+        # point branch
         if pts_backbone is not None:
             self.pts_backbone = builder.build_backbone(pts_backbone)
         if pts_neck is not None:
             self.pts_neck = builder.build_neck(pts_neck)
-        if pts_bbox_head_joint is not None:
-            pts_bbox_head_joint.update(
+        if pts_bbox_heads is not None:
+            pts_bbox_head_common = pts_bbox_heads.common
+            pts_bbox_head_common.update(
                 train_cfg=train_cfg.pts if train_cfg is not None else None)
-            pts_bbox_head_joint.update(test_cfg=test_cfg.pts)
+            pts_bbox_head_common.update(test_cfg=test_cfg.pts)
+            pts_bbox_head_joint = pts_bbox_head_common.copy()
+            pts_bbox_head_joint.update(pts_bbox_heads.joint)
+            pts_bbox_head_pts = pts_bbox_head_common.copy()
+            pts_bbox_head_pts.update(pts_bbox_heads.pts)
+            pts_bbox_head_img = pts_bbox_head_common.copy()
+            pts_bbox_head_img.update(pts_bbox_heads.img)
+
             self.pts_bbox_head_joint = builder.build_head(pts_bbox_head_joint)
-        if pts_bbox_head_pts is not None:
-            pts_bbox_head_pts.update(
-                train_cfg=train_cfg.pts if train_cfg is not None else None)
-            pts_bbox_head_pts.update(test_cfg=test_cfg.pts)
             self.pts_bbox_head_pts = builder.build_head(pts_bbox_head_pts)
-        if pts_bbox_head_img is not None:
-            pts_bbox_head_img.update(
-                train_cfg=train_cfg.pts if train_cfg is not None else None)
-            pts_bbox_head_img.update(test_cfg=test_cfg.pts)
             self.pts_bbox_head_img = builder.build_head(pts_bbox_head_img)
             self.pts_bbox_heads = [
                 self.pts_bbox_head_joint, self.pts_bbox_head_pts,
                 self.pts_bbox_head_img
             ]
 
+        # image branch
         if img_backbone:
             self.img_backbone = builder.build_backbone(img_backbone)
         if img_neck is not None:
@@ -118,12 +101,14 @@ class ImVoteNet(Base3DDetector):
             img_roi_head.update(
                 train_cfg=rcnn_train_cfg, test_cfg=test_cfg.img_rcnn)
             self.img_roi_head = builder.build_head(img_roi_head)
+
+        # fusion
         if fusion_layer is not None:
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
-
+            self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
         if img_mlp is not None:
-            self.img_mlp = ImageMLPModule(img_mlp.input_dim,
-                                          img_mlp.image_hidden_dim)
+            self.img_mlp = ImageMLPModule(img_mlp)
+        self.num_sampled_seed = num_sampled_seed
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -239,6 +224,10 @@ class ImVoteNet(Base3DDetector):
         """bool: Whether the detector has a neck in 3D detector branch."""
         return hasattr(self, 'pts_neck') and self.pts_neck is not None
 
+    def extract_feat(self, imgs):
+        """Just to inherit from abstract method."""
+        pass
+
     def extract_img_feat(self, img):
         """Directly extract features from the backbone+neck."""
         x = self.img_backbone(img)
@@ -290,21 +279,20 @@ class ImVoteNet(Base3DDetector):
                 x, proposal_list, img_metas, rescale=False)
             rets_processed = []
             for ret in rets:
-                sem_class = []
+                tmp = np.concatenate(ret, axis=0)
+                sem_class = img.new_zeros((len(tmp)))
+                start = 0
                 for i, bboxes in enumerate(ret):
-                    sem_class.extend([i] * len(bboxes))
-                sem_class = np.array(sem_class)
-                ret = np.concatenate(ret, axis=0)
-                ret = np.concatenate([ret, sem_class[:, None]], axis=-1)
-                ret = torch.new_tensor(ret, device=img.device)
+                    sem_class[start:start + len(bboxes)] = i
+                    start += len(bboxes)
+                ret = img.new_tensor(tmp)
+                ret = torch.cat([ret, sem_class[:, None]], dim=-1)
                 inds = torch.argsort(ret[:, 4], descending=True)
                 ret = ret.index_select(0, inds)
 
                 if train:
-                    rand_drop = np.random.choice(
-                        len(ret), (len(ret) + 1) // 2, replace=False)
-                    rand_drop = np.sort(rand_drop)
-                    rand_drop = torch.new_tensor(rand_drop, device=img.device)
+                    rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
+                    rand_drop = torch.sort(rand_drop)
                     ret = ret[rand_drop]
 
                 rets_processed.append(ret.float())
@@ -313,10 +301,8 @@ class ImVoteNet(Base3DDetector):
             rets_processed = []
             for ret in bboxes_2d:
                 if len(ret) > 0 and train:
-                    rand_drop = np.random.choice(
-                        len(ret), (len(ret) + 1) // 2, replace=False)
-                    rand_drop = np.sort(rand_drop)
-                    rand_drop = torch.new_tensor(rand_drop, device=img.device)
+                    rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
+                    rand_drop = torch.sort(rand_drop)
                     ret = ret[rand_drop]
                 rets_processed.append(ret.float())
             return rets_processed
@@ -538,7 +524,7 @@ class ImVoteNet(Base3DDetector):
 
             if num_augs == 1:
                 img = [img] if img is None else img
-                return self.simple_test_both(
+                return self.simple_test(
                     points[0],
                     img_metas[0],
                     img[0],
@@ -572,14 +558,14 @@ class ImVoteNet(Base3DDetector):
 
         return ret
 
-    def simple_test_both(self,
-                         points=None,
-                         img_metas=None,
-                         img=None,
-                         calib=None,
-                         bboxes_2d=None,
-                         rescale=False,
-                         **kwargs):
+    def simple_test(self,
+                    points=None,
+                    img_metas=None,
+                    img=None,
+                    calib=None,
+                    bboxes_2d=None,
+                    rescale=False,
+                    **kwargs):
         """Test without augmentation, stage 2."""
         bboxes_2d = self.extract_bboxes_2d(
             img, img_metas, train=False, bboxes_2d=bboxes_2d, **kwargs)
@@ -639,14 +625,14 @@ class ImVoteNet(Base3DDetector):
         return self.img_roi_head.aug_test(
             x, proposal_list, img_metas, rescale=rescale)
 
-    def aug_test_both(self,
-                      points=None,
-                      img_metas=None,
-                      imgs=None,
-                      calibs=None,
-                      bboxes_2d=None,
-                      rescale=False,
-                      **kwargs):
+    def aug_test(self,
+                 points=None,
+                 img_metas=None,
+                 imgs=None,
+                 calibs=None,
+                 bboxes_2d=None,
+                 rescale=False,
+                 **kwargs):
         """Test function with augmentation, stage 2."""
 
         points_cat = [torch.stack(pts) for pts in points]
