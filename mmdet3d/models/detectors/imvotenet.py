@@ -94,6 +94,7 @@ class ImVoteNet(Base3DDetector):
                 self.pts_bbox_head_joint, self.pts_bbox_head_pts,
                 self.pts_bbox_head_img
             ]
+            self.loss_weights = pts_bbox_heads.loss_weights
 
         # image branch
         if img_backbone:
@@ -119,7 +120,7 @@ class ImVoteNet(Base3DDetector):
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
         if img_mlp is not None:
-            self.img_mlp = ImageMLPModule(img_mlp)
+            self.img_mlp = ImageMLPModule(**img_mlp)
         self.num_sampled_seed = num_sampled_seed
 
         self.train_cfg = train_cfg
@@ -261,9 +262,9 @@ class ImVoteNet(Base3DDetector):
 
     def extract_pts_feat(self, pts):
         """Extract features of points."""
-        x = self.backbone(pts)
+        x = self.pts_backbone(pts)
         if self.with_neck:
-            x = self.neck(x)
+            x = self.pts_neck(x)
 
         seed_points = x['fp_xyz'][-1]
         seed_features = x['fp_features'][-1]
@@ -289,6 +290,7 @@ class ImVoteNet(Base3DDetector):
             proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
             rets = self.img_roi_head.simple_test(
                 x, proposal_list, img_metas, rescale=False)
+
             rets_processed = []
             for ret in rets:
                 tmp = np.concatenate(ret, axis=0)
@@ -298,13 +300,16 @@ class ImVoteNet(Base3DDetector):
                     sem_class[start:start + len(bboxes)] = i
                     start += len(bboxes)
                 ret = img.new_tensor(tmp)
+
+                # append class index
                 ret = torch.cat([ret, sem_class[:, None]], dim=-1)
                 inds = torch.argsort(ret[:, 4], descending=True)
                 ret = ret.index_select(0, inds)
 
+                # drop half bboxes during training for better generalization
                 if train:
                     rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
-                    rand_drop = torch.sort(rand_drop)
+                    rand_drop = torch.sort(rand_drop)[0]
                     ret = ret[rand_drop]
 
                 rets_processed.append(ret.float())
@@ -314,7 +319,7 @@ class ImVoteNet(Base3DDetector):
             for ret in bboxes_2d:
                 if len(ret) > 0 and train:
                     rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
-                    rand_drop = torch.sort(rand_drop)
+                    rand_drop = torch.sort(rand_drop)[0]
                     ret = ret[rand_drop]
                 rets_processed.append(ret.float())
             return rets_processed
@@ -386,14 +391,15 @@ class ImVoteNet(Base3DDetector):
             with torch.no_grad():
                 bboxes_2d = self.extract_bboxes_2d(
                     img, img_metas, bboxes_2d=bboxes_2d, **kwargs)
+
             points = torch.stack(points)
             seeds_3d, seed_3d_features, seed_indices = \
                 self.extract_pts_feat(points)
 
             img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                    calib, img_metas)
+                                                    img_metas, calib)
 
-            inds = sample_valid_seeds(masks)
+            inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
             pts_feat_size = seed_3d_features.shape[1]
             inds_img = inds.reshape(batch_size, 1,
@@ -407,7 +413,7 @@ class ImVoteNet(Base3DDetector):
             seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
             seed_indices = seed_indices.gather(1, inds)
 
-            img_features = self.image_mlp(img_features, self.num_sampled_seed)
+            img_features = self.img_mlp(img_features)
             fused_features = torch.cat([seed_3d_features, img_features], dim=1)
 
             feat_dict_joint = dict(
@@ -450,15 +456,11 @@ class ImVoteNet(Base3DDetector):
             combined_losses = dict()
             for loss_term in losses_towers[0].keys():
                 if 'loss' in loss_term:
-                    combined_losses[loss_term] = \
-                        losses_towers[0][loss_term] * \
-                        self.pts_bbox_heads[0].loss_weight
-                    combined_losses[loss_term] += \
-                        losses_towers[1][loss_term] * \
-                        self.pts_bbox_heads[1].loss_weight
-                    combined_losses[loss_term] += \
-                        losses_towers[2][loss_term] * \
-                        self.pts_bbox_heads[2].loss_weight
+                    combined_losses[loss_term] = 0
+                    for i in range(len(losses_towers)):
+                        combined_losses[loss_term] += \
+                            losses_towers[i][loss_term] * \
+                            self.loss_weights[i]
                 else:
                     # only save the metric of the joint head
                     # if it is not a loss
@@ -589,7 +591,7 @@ class ImVoteNet(Base3DDetector):
         img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
                                                 calib, img_metas)
 
-        inds = sample_valid_seeds(masks)
+        inds = sample_valid_seeds(masks, self.num_sampled_seed)
         batch_size, img_feat_size = img_features.shape[:2]
         pts_feat_size = seed_3d_features.shape[1]
         inds_img = inds.reshape(batch_size, 1, -1).repeat(1, img_feat_size, 1)
@@ -602,7 +604,7 @@ class ImVoteNet(Base3DDetector):
         seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
         seed_indices = seed_indices.gather(1, inds)
 
-        img_features = self.image_mlp(img_features, self.num_sampled_seed)
+        img_features = self.img_mlp(img_features)
 
         fused_features = torch.cat([seed_3d_features, img_features], dim=1)
 
@@ -663,7 +665,7 @@ class ImVoteNet(Base3DDetector):
             img_features, masks = self.fusion_layer(img, bbox_2d, seeds_3d,
                                                     calib, img_metas)
 
-            inds = sample_valid_seeds(masks)
+            inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
             pts_feat_size = seed_3d_features.shape[1]
             inds_img = inds.reshape(batch_size, 1,
@@ -677,7 +679,7 @@ class ImVoteNet(Base3DDetector):
             seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
             seed_indices = seed_indices.gather(1, inds)
 
-            img_features = self.image_mlp(img_features, self.num_sampled_seed)
+            img_features = self.img_mlp(img_features)
 
             fused_features = torch.cat([seed_3d_features, img_features], dim=1)
 
