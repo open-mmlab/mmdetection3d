@@ -28,7 +28,6 @@ class ImageMLPModule(nn.Module):
                  act_cfg=dict(type='ReLU')):
         super().__init__()
         self.mlp = nn.Sequential()
-        print(in_channel, conv_channels)
         prev_channels = in_channel
         for i, conv_channel in enumerate(conv_channels):
             self.mlp.add_module(

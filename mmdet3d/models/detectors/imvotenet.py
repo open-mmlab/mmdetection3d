@@ -290,6 +290,7 @@ class ImVoteNet(Base3DDetector):
             proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
             rets = self.img_roi_head.simple_test(
                 x, proposal_list, img_metas, rescale=False)
+
             rets_processed = []
             for ret in rets:
                 tmp = np.concatenate(ret, axis=0)
@@ -299,10 +300,13 @@ class ImVoteNet(Base3DDetector):
                     sem_class[start:start + len(bboxes)] = i
                     start += len(bboxes)
                 ret = img.new_tensor(tmp)
+
+                # append class index
                 ret = torch.cat([ret, sem_class[:, None]], dim=-1)
                 inds = torch.argsort(ret[:, 4], descending=True)
                 ret = ret.index_select(0, inds)
 
+                # drop half bboxes during training for better generalization
                 if train:
                     rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
                     rand_drop = torch.sort(rand_drop)[0]
@@ -384,11 +388,10 @@ class ImVoteNet(Base3DDetector):
             losses.update(roi_losses)
             return losses
         else:
-            calib['Rt'] = calib['Rt'].float()
-            calib['K'] = calib['K'].float()
             with torch.no_grad():
                 bboxes_2d = self.extract_bboxes_2d(
                     img, img_metas, bboxes_2d=bboxes_2d, **kwargs)
+
             points = torch.stack(points)
             seeds_3d, seed_3d_features, seed_indices = \
                 self.extract_pts_feat(points)
@@ -453,15 +456,11 @@ class ImVoteNet(Base3DDetector):
             combined_losses = dict()
             for loss_term in losses_towers[0].keys():
                 if 'loss' in loss_term:
-                    combined_losses[loss_term] = \
-                        losses_towers[0][loss_term] * \
-                        self.loss_weights[0]
-                    combined_losses[loss_term] += \
-                        losses_towers[1][loss_term] * \
-                        self.loss_weights[1]
-                    combined_losses[loss_term] += \
-                        losses_towers[2][loss_term] * \
-                        self.loss_weights[2]
+                    combined_losses[loss_term] = 0
+                    for i in range(len(losses_towers)):
+                        combined_losses[loss_term] += \
+                            losses_towers[i][loss_term] * \
+                            self.loss_weights[i]
                 else:
                     # only save the metric of the joint head
                     # if it is not a loss
