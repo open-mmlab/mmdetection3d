@@ -79,7 +79,6 @@ model = dict(
         common=dict(
             type='VoteHead',
             num_classes=10,
-            loss_weight=0.4,
             bbox_coder=dict(
                 type='PartialBinBasedBBoxCoder',
                 num_sizes=10,
@@ -121,7 +120,6 @@ model = dict(
             semantic_loss=dict(
                 type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
         joint=dict(
-            loss_weight=0.4,
             vote_module_cfg=dict(
                 in_channels=512,
                 vote_per_seed=1,
@@ -144,7 +142,6 @@ model = dict(
                 use_xyz=True,
                 normalize_xyz=True)),
         pts=dict(
-            loss_weight=0.3,
             vote_module_cfg=dict(
                 in_channels=256,
                 vote_per_seed=1,
@@ -167,7 +164,6 @@ model = dict(
                 use_xyz=True,
                 normalize_xyz=True)),
         img=dict(
-            loss_weight=0.3,
             vote_module_cfg=dict(
                 in_channels=256,
                 vote_per_seed=1,
@@ -189,8 +185,8 @@ model = dict(
                 mlp_channels=[256, 128, 128, 128],
                 use_xyz=True,
                 normalize_xyz=True)),
-    ),
-    image_mlp=dict(
+        loss_weights=[0.4, 0.3, 0.3]),
+    img_mlp=dict(
         in_channel=18,
         conv_channels=(256, ),
         conv_cfg=dict(type='Conv1d'),
@@ -199,7 +195,8 @@ model = dict(
     fusion_layer=dict(
         type='VoteFusion',
         num_classes=len(class_names),
-        max_imvote_per_pixel=3))
+        max_imvote_per_pixel=3),
+    num_sampled_seed=1024)
 
 # model training and testing settings
 train_cfg = dict(
@@ -273,7 +270,7 @@ train_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2]),
     dict(type='LoadImageFromFile'),
-    dict(type='LoadImageRawFromFile'),
+    # dict(type='LoadImageRawFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
@@ -300,14 +297,19 @@ train_pipeline = [
     dict(
         type='Collect3D',
         keys=[
-            'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-            'gt_labels_3d', 'calib', 'bbox_2d'
+            'img',
+            'gt_bboxes',
+            'gt_labels',
+            'points',
+            'gt_bboxes_3d',
+            'gt_labels_3d',
+            'calib'  # , 'bbox_2d'
         ])
 ]
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadImageRawFromFile'),
+    # dict(type='LoadImageRawFromFile'),
     dict(
         type='LoadPointsFromFile',
         coord_type='DEPTH',
@@ -340,7 +342,13 @@ test_pipeline = [
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
-            dict(type='Collect3D', keys=['img', 'points', 'calib', 'bbox_2d'])
+            dict(
+                type='Collect3D',
+                keys=[
+                    'img',
+                    'points',
+                    'calib'  # , 'bbox_2d'
+                ])
         ]),
     # dict(
     #     type='MultiScaleFlipAug3D',
@@ -380,7 +388,7 @@ data = dict(
             pipeline=train_pipeline,
             classes=class_names,
             filter_empty_gt=False,
-            use_bbox=True,
+            # use_bbox=True,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='Depth')),
@@ -391,7 +399,7 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        use_bbox=True,
+        # use_bbox=True,
         box_type_3d='Depth'),
     test=dict(
         type=dataset_type,
@@ -400,7 +408,7 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        use_bbox=True,
+        # use_bbox=True,
         box_type_3d='Depth'))
 
 lr = 0.008  # max learning rate
