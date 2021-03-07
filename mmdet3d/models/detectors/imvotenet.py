@@ -10,6 +10,18 @@ from .base import Base3DDetector
 
 
 def sample_valid_seeds(mask, num_sampled_seed=1024):
+    """Randomly sample seeds from all imvotes.
+
+    Args:
+        mask (torch.Tensor): Bool tensor in shape (
+            seed_num*max_imvote_per_pixel), indicates
+            whether this imvote corresponds to a 2D bbox.
+        num_sampled_seed (int): How many to sample from all imvotes.
+
+    Returns:
+        torch.Tensor: Indices with shape (num_sampled_seed).
+    """
+
     device = mask.device
     batch_size = mask.shape[0]
     sample_inds = mask.new_zeros((batch_size, num_sampled_seed))
