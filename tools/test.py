@@ -1,6 +1,8 @@
 import argparse
-import mmcv
 import os
+import warnings
+
+import mmcv
 import torch
 import warnings
 from mmcv import Config, DictAction
@@ -10,7 +12,7 @@ from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
                          wrap_fp16_model)
 
 from mmdet3d.apis import single_gpu_test
-from mmdet3d.datasets import build_dataloader, build_dataset
+from mmdet3d.datasets import build_dataloader, build_dataset, replace_ImageToTensor
 from mmdet3d.models import build_detector
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
