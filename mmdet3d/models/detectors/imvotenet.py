@@ -537,7 +537,6 @@ class ImVoteNet(Base3DDetector):
                     format(len(points), len(img_metas)))
 
             if num_augs == 1:
-                img = [img] if img is None else img
                 return self.simple_test(
                     points[0],
                     img_metas[0],
@@ -581,6 +580,7 @@ class ImVoteNet(Base3DDetector):
                     rescale=False,
                     **kwargs):
         """Test without augmentation, stage 2."""
+
         bboxes_2d = self.extract_bboxes_2d(
             img, img_metas, train=False, bboxes_2d=bboxes_2d, **kwargs)
 
@@ -589,7 +589,7 @@ class ImVoteNet(Base3DDetector):
             self.extract_pts_feat(points)
 
         img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                calib, img_metas)
+                                                img_metas, calib)
 
         inds = sample_valid_seeds(masks, self.num_sampled_seed)
         batch_size, img_feat_size = img_features.shape[:2]
@@ -663,7 +663,7 @@ class ImVoteNet(Base3DDetector):
             seeds_3d, seed_3d_features, seed_indices = x
 
             img_features, masks = self.fusion_layer(img, bbox_2d, seeds_3d,
-                                                    calib, img_metas)
+                                                    img_metas, calib)
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
