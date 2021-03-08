@@ -24,7 +24,8 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
 
     device = mask.device
     batch_size = mask.shape[0]
-    sample_inds = mask.new_zeros((batch_size, num_sampled_seed))
+    sample_inds = mask.new_zeros((batch_size, num_sampled_seed),
+                                 dtype=torch.int64)
     for bidx in range(batch_size):
         # return index of non zero elements
         valid_inds = torch.nonzero(mask[bidx, :]).squeeze(-1)
@@ -46,7 +47,7 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
                 len(valid_inds), device=device)[:num_sampled_seed]
             cur_sample_inds = valid_inds[rand_inds]
         sample_inds[bidx, :] = cur_sample_inds
-    return sample_inds.long()
+    return sample_inds
 
 
 @DETECTORS.register_module()
@@ -263,7 +264,7 @@ class ImVoteNet(Base3DDetector):
     def extract_pts_feat(self, pts):
         """Extract features of points."""
         x = self.pts_backbone(pts)
-        if self.with_neck:
+        if self.with_pts_neck:
             x = self.pts_neck(x)
 
         seed_points = x['fp_xyz'][-1]
@@ -274,6 +275,7 @@ class ImVoteNet(Base3DDetector):
 
     def extract_pts_feats(self, pts):
         """Extract features of points from multiple samples."""
+        assert isinstance(pts, list)
         return [self.extract_pts_feat(pt) for pt in pts]
 
     def extract_bboxes_2d(self,
@@ -454,7 +456,7 @@ class ImVoteNet(Base3DDetector):
             losses_towers.append(losses_pts)
             losses_towers.append(losses_img)
             combined_losses = dict()
-            for loss_term in losses_towers[0].keys():
+            for loss_term in losses_joint:
                 if 'loss' in loss_term:
                     combined_losses[loss_term] = 0
                     for i in range(len(losses_towers)):
