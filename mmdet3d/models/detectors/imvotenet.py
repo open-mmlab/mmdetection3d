@@ -388,8 +388,6 @@ class ImVoteNet(Base3DDetector):
             losses.update(roi_losses)
             return losses
         else:
-            calib['Rt'] = calib['Rt'].float()
-            calib['K'] = calib['K'].float()
             with torch.no_grad():
                 bboxes_2d = self.extract_bboxes_2d(
                     img, img_metas, bboxes_2d=bboxes_2d, **kwargs)
@@ -582,8 +580,6 @@ class ImVoteNet(Base3DDetector):
                     rescale=False,
                     **kwargs):
         """Test without augmentation, stage 2."""
-        calib['Rt'] = calib['Rt'].float()
-        calib['K'] = calib['K'].float()
 
         bboxes_2d = self.extract_bboxes_2d(
             img, img_metas, train=False, bboxes_2d=bboxes_2d, **kwargs)
