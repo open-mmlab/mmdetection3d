@@ -188,7 +188,7 @@ model = dict(
         loss_weights=[0.4, 0.3, 0.3]),
     img_mlp=dict(
         in_channel=18,
-        conv_channels=(256, ),
+        conv_channels=(256, 256),
         conv_cfg=dict(type='Conv1d'),
         norm_cfg=dict(type='BN1d'),
         act_cfg=dict(type='ReLU')),

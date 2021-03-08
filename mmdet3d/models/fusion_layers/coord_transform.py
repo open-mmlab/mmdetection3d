@@ -52,8 +52,8 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
     flow = img_meta['transformation_3d_flow'] \
         if 'transformation_3d_flow' in img_meta else []
 
-    pcd = pcd.clone()  # prevent inplace modification
-    pcd = get_points_type(coords_type)(pcd)
+    pcd_ = pcd.clone()  # prevent inplace modification
+    pcd = get_points_type(coords_type)(pcd_)
 
     horizontal_flip_func = partial(pcd.flip, bev_direction='horizontal') \
         if pcd_horizontal_flip else lambda: None
