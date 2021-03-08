@@ -13,6 +13,7 @@ SRUN_ARGS=${SRUN_ARGS:-""}
 PY_ARGS=${@:5}
 
 PYTHONPATH="$(dirname $0)/..":$PYTHONPATH \
+mkdir -p $4
 srun -p ${PARTITION} \
     --job-name=${JOB_NAME} \
     --gres=gpu:${GPUS_PER_NODE} \
@@ -21,4 +22,4 @@ srun -p ${PARTITION} \
     --cpus-per-task=${CPUS_PER_TASK} \
     --kill-on-bad-exit=1 \
     ${SRUN_ARGS} \
-    python -u tools/train.py ${CONFIG} --work-dir=${WORK_DIR} --launcher="slurm" ${PY_ARGS}
+    python -u tools/train.py ${CONFIG} --work-dir=${WORK_DIR} --launcher="slurm" ${PY_ARGS} 2>&1|tee $4/LOG_ALL.log &
