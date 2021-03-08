@@ -33,3 +33,6 @@ def test_indoor_eval():
     assert np.isclose(ret_value['acc'], 0.7)
     assert np.isclose(ret_value['acc_cls'], 0.7)
     assert np.isclose(ret_value['miou'], 0.547619048)
+
+
+test_indoor_eval()

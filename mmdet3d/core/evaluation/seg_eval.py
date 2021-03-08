@@ -30,6 +30,7 @@ def per_class_iou(hist):
     Args:
         hist(np.ndarray):  Overall confusion martix
         (num_classes, num_classes ).
+
     Returns:
         np.ndarray: Calculated per class iou
     """
@@ -43,6 +44,7 @@ def get_acc(hist):
     Args:
         hist(np.ndarray):  Overall confusion martix
         (num_classes, num_classes ).
+
     Returns:
         float: Calculated overall acc
     """
@@ -56,6 +58,7 @@ def get_acc_cls(hist):
     Args:
         hist(np.ndarray):  Overall confusion martix
         (num_classes, num_classes ).
+
     Returns:
         float: Calculated class average acc
     """
@@ -69,7 +72,7 @@ def seg_eval(gt_labels, seg_preds, label2cat, logger=None):
      Evaluate the result of the Semantic Segmentation.
 
      Args:
-         gt_labels (list[torch. Tensor]): Ground truth labels.
+         gt_labels (list[torch.Tensor]): Ground truth labels.
          seg_preds  (list[torch.Tensor]): Predtictions
          label2cat (dict): Map from label to category.
          logger (logging.Logger | str | None): The way to print the mAP
