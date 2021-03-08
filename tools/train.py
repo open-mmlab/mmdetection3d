@@ -10,7 +10,6 @@ import torch
 import warnings
 from mmcv import Config, DictAction
 from mmcv.runner import get_dist_info, init_dist
-from mmcv.utils import get_git_hash
 from os import path as osp
 
 from mmdet3d import __version__
