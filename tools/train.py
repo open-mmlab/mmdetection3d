@@ -2,13 +2,10 @@ from __future__ import division
 
 import argparse
 import copy
+import logging
+import mmcv
 import os
 import time
-import logging
-import warnings
-from os import path as osp
-
-import mmcv
 import torch
 import warnings
 from mmcv import Config, DictAction

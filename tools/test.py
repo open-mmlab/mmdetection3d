@@ -1,8 +1,6 @@
 import argparse
-import os
-import warnings
-
 import mmcv
+import os
 import torch
 import warnings
 from mmcv import Config, DictAction
