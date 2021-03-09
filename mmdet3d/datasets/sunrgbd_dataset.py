@@ -181,7 +181,7 @@ class SUNRGBDDataset(Custom3DDataset):
                  results,
                  metric=None,
                  iou_thr=(0.25, 0.5),
-                 iou_thr_2d=(0.5),
+                 iou_thr_2d=(0.5, ),
                  logger=None,
                  show=False,
                  out_dir=None):
