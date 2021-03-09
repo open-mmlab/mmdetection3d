@@ -120,6 +120,24 @@ class ImVoteNet(Base3DDetector):
         if fusion_layer is not None:
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
+
+            # fusion layer exists -> stage 2 training -> freeze img branch
+            if self.with_img_bbox_head:
+                for param in self.img_bbox_head.parameters():
+                    param.requires_grad = False
+            if self.with_img_backbone:
+                for param in self.img_backbone.parameters():
+                    param.requires_grad = False
+            if self.with_img_neck:
+                for param in self.img_neck.parameters():
+                    param.requires_grad = False
+            if self.with_img_rpn:
+                for param in self.img_rpn_head.parameters():
+                    param.requires_grad = False
+            if self.with_img_roi_head:
+                for param in self.img_roi_head.parameters():
+                    param.requires_grad = False
+
         if img_mlp is not None:
             self.img_mlp = ImageMLPModule(**img_mlp)
         self.num_sampled_seed = num_sampled_seed
@@ -372,7 +390,7 @@ class ImVoteNet(Base3DDetector):
             # RPN forward and loss
             if self.with_img_rpn:
                 proposal_cfg = self.train_cfg.get('img_rpn_proposal',
-                                                  self.test_cfg.rpn)
+                                                  self.test_cfg.img_rpn)
                 rpn_losses, proposal_list = self.img_rpn_head.forward_train(
                     x,
                     img_metas,
@@ -513,10 +531,7 @@ class ImVoteNet(Base3DDetector):
                 if 'proposals' in kwargs:
                     kwargs['proposals'] = kwargs['proposals'][0]
                 return self.simple_test_img_only(
-                    img=img[0],
-                    img_metas=img_metas[0],
-                    rescale=False,
-                    **kwargs)
+                    img=img[0], img_metas=img_metas[0], **kwargs)
             else:
                 assert img[0].size(0) == 1, 'aug test does not support ' \
                                          'inference with batch size ' \
