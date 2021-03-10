@@ -96,9 +96,7 @@ def seg_eval(gt_labels, seg_preds, label2cat, logger=None):
     header = ['classes']
     for i in range(len(label2cat)):
         header.append(label2cat[i])
-    header.append('miou')
-    header.append('acc')
-    header.append('acc_cls')
+    header.extend(['miou', 'acc', 'acc_cls'])
 
     ret_dict = dict()
     table_columns = [['results']]
