@@ -201,7 +201,7 @@ def test_show():
     labels_3d = torch.tensor([0, 0, 0, 0, 0])
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
     results = [result]
-    scannet_dataset.show(results, temp_dir)
+    scannet_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, 'scene0000_00',
                              'scene0000_00_points.obj')
     gt_file_path = osp.join(temp_dir, 'scene0000_00', 'scene0000_00_gt.ply')
