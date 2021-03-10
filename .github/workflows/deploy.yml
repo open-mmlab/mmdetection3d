@@ -4,7 +4,7 @@ on: push
 
 jobs:
   build-n-publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - uses: actions/checkout@v2
