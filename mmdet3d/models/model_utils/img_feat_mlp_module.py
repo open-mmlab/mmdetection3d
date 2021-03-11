@@ -11,7 +11,7 @@ class ImageMLPModule(nn.Module):
         in_channels (int): Number of channels of image vote features.
             Default: 18.
         conv_channels (tuple[int]): Out channels of the convolution.
-            Default: (256,).
+            Default: (256, 256).
         conv_cfg (dict): Config of convolution.
             Default: dict(type='Conv1d').
         norm_cfg (dict): Config of normalization.
@@ -22,7 +22,7 @@ class ImageMLPModule(nn.Module):
 
     def __init__(self,
                  in_channel=18,
-                 conv_channels=(256, ),
+                 conv_channels=(256, 256),
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
                  act_cfg=dict(type='ReLU')):
