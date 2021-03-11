@@ -369,7 +369,7 @@ class PrimitiveHead(nn.Module):
                 pts_instance_mask[background_mask] = gt_labels_3d.shape[0]
 
         instance_flag = torch.nonzero(
-            pts_semantic_mask != self.num_classes).squeeze(1)
+            pts_semantic_mask != self.num_classes, as_tuple=False).squeeze(1)
         instance_labels = pts_instance_mask[instance_flag].unique()
 
         with_yaw = gt_bboxes_3d.with_yaw

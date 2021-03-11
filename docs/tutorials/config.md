@@ -24,7 +24,7 @@ Please refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#config) 
 We follow the below style to name config files. Contributors are advised to follow the same style.
 
 ```
-{model}_[model setting]_{backbone}_{neck}_[norm setting]_[misc]_[gpu x batch_per_gpu]_{schedule}_{dataset}
+{model}_[model setting]_{backbone}_{neck}_[norm setting]_[misc]_[batch_per_gpu x gpu]_{schedule}_{dataset}
 ```
 
 `{xxx}` is required field and `[yyy]` is optional.
@@ -36,13 +36,39 @@ We follow the below style to name config files. Contributors are advised to foll
 - `[norm_setting]`: `bn` (Batch Normalization) is used unless specified, other norm layer type could be `gn` (Group Normalization), `sbn` (Synchronized Batch Normalization).
 `gn-head`/`gn-neck` indicates GN is applied in head/neck only, while `gn-all` means GN is applied in the entire model, e.g. backbone, neck, head.
 - `[misc]`: miscellaneous setting/plugins of model, e.g. `strong-aug` means using stronger augmentation strategies for training.
-- `[batch_per_gpu x gpu]`: GPUs and samples per GPU, `4x8` is used by default.
+- `[batch_per_gpu x gpu]`: samples per GPU and GPUs, `4x8` is used by default.
 - `{schedule}`: training schedule, options are `1x`, `2x`, `20e`, etc.
 `1x` and `2x` means 12 epochs and 24 epochs respectively.
 `20e` is adopted in cascade models, which denotes 20 epochs.
 For `1x`/`2x`, initial learning rate decays by a factor of 10 at the 8/16th and 11/22th epochs.
 For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
 - `{dataset}`: dataset like `nus-3d`, `kitti-3d`, `lyft-3d`, `scannet-3d`, `sunrgbd-3d`. We also indicate the number of classes we are using if there exist multiple settings, e.g., `kitti-3d-3class` and `kitti-3d-car` means training on KITTI dataset with 3 classes and single class, respectively.
+
+## Deprecated train_cfg/test_cfg
+
+Following MMDetection, the `train_cfg` and `test_cfg` are deprecated in config file, please specify them in the model config. The original config structure is as below.
+
+```python
+# deprecated
+model = dict(
+   type=...,
+   ...
+)
+train_cfg=dict(...)
+test_cfg=dict(...)
+```
+
+The migration example is as below.
+
+```python
+# recommended
+model = dict(
+   type=...,
+   ...
+   train_cfg=dict(...),
+   test_cfg=dict(...)
+)
+```
 
 ## An example of VoteNet
 
@@ -144,16 +170,16 @@ model = dict(
         semantic_loss=dict(  # Config to semantic loss
             type='CrossEntropyLoss',  # Type of loss
             reduction='sum',  # Specifies the reduction to apply to the output
-            loss_weight=1.0)))  # Loss weight of the semantic loss
-train_cfg = dict(  # Config of training hyperparameters for votenet
-    pos_distance_thr=0.3,  # distance >= threshold 0.3 will be taken as positive samples
-    neg_distance_thr=0.6,  # distance < threshold 0.6 will be taken as positive samples
-    sample_mod='vote')  # Mode of the sampling method
-test_cfg = dict(  # Config of testing hyperparameters for votenet
-    sample_mod='seed',  # Mode of the sampling method
-    nms_thr=0.25,  # The threshold to be used during NMS
-    score_thr=0.8,  # Threshold to filter out boxes
-    per_class_proposal=False)  # Whether to use per_class_proposal
+            loss_weight=1.0)),  # Loss weight of the semantic loss
+    train_cfg = dict(  # Config of training hyperparameters for votenet
+        pos_distance_thr=0.3,  # distance >= threshold 0.3 will be taken as positive samples
+        neg_distance_thr=0.6,  # distance < threshold 0.6 will be taken as positive samples
+        sample_mod='vote'),  # Mode of the sampling method
+    test_cfg = dict(  # Config of testing hyperparameters for votenet
+        sample_mod='seed',  # Mode of the sampling method
+        nms_thr=0.25,  # The threshold to be used during NMS
+        score_thr=0.8,  # Threshold to filter out boxes
+        per_class_proposal=False))  # Whether to use per_class_proposal
 dataset_type = 'ScanNetDataset'  # Type of the dataset
 data_root = './data/scannet/'  # Root path of the data
 class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
