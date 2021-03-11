@@ -17,6 +17,7 @@ def points_in_boxes_gpu(points, boxes):
     """
     assert boxes.shape[0] == points.shape[0]
     assert boxes.shape[2] == 7
+    assert points.shape[2] == 3
     batch_size, num_points, _ = points.shape
 
     box_idxs_of_pts = points.new_zeros((batch_size, num_points),
@@ -85,6 +86,7 @@ def points_in_boxes_batch(points, boxes):
     """
     assert boxes.shape[0] == points.shape[0]
     assert boxes.shape[2] == 7
+    assert points.shape[2] == 3
     batch_size, num_points, _ = points.shape
     num_boxes = boxes.shape[1]
 
