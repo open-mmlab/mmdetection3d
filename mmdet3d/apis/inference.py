@@ -125,7 +125,4 @@ def show_result_meshlab(data, result, out_dir):
         pred_bboxes = Box3DMode.convert(pred_bboxes,
                                         data['img_metas'][0][0]['box_mode_3d'],
                                         Box3DMode.DEPTH)
-        pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-    else:
-        pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-    show_result(points, None, pred_bboxes, out_dir, file_name)
+    show_result(points, None, pred_bboxes, out_dir, file_name, show=False)

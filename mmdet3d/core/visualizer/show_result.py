@@ -79,9 +79,9 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         filename (str): Filename of the current frame.
         show (bool): Visualize the results online.
     """
-    from .open3d_vis import Visualizer
-
     if show:
+        from .open3d_vis import Visualizer
+
         vis = Visualizer(points)
         if pred_bboxes is not None:
             vis.add_bboxes(bbox3d=pred_bboxes)
