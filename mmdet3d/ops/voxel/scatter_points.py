@@ -9,57 +9,42 @@ from .voxel_layer import (dynamic_point_to_voxel_backward,
 class _dynamic_scatter(Function):
 
     @staticmethod
-    def forward(ctx, points, coors, voxel_size, coors_range):
+    def forward(ctx, feats, coors, reduce_type='max'):
         """convert kitti points(N, >=3) to voxels.
 
         Args:
-            points: [N, ndim] float tensor. points[:, :3] contain xyz
-                points and points[:, 3:] contain other information
-                such as reflectivity.
-            voxel_size: [3] list/tuple or array, float. xyz, indicate
-                voxel size
-            coors_range: [6] list/tuple or array, float. indicate voxel range.
-                format: xyzxyz, minmax
-            max_points: int. indicate maximum points contained in a voxel.
-                if  max_points=-1, it means using dynamic_voxelize
-            max_voxels: int. indicate maximum voxels this function create.
-                for second, 20000 is a good choice. you should shuffle
-                points before call this function because max_voxels may
-                drop some points.
+            feats: [N, C] float tensor. points features to be reduced
+                into voxels.
+            coors: [N, ndim] int tensor. corresponding voxel coordinates
+                (specifically multi-dim voxel index) of each points.
+            reduce_type: str. reduce op. support 'max', 'sum' and 'mean'
         Returns:
             tuple
-            voxels: [M, max_points, ndim] float tensor. only contain points
-                    and returned when max_points != -1.
-            coordinates: [M, 3] int32 tensor, always returned.
-            num_points_per_voxel: [M] int32 tensor. Only returned when
-            max_points != -1.
+            voxel_feats: [M, C] float tensor. reduced features. input features
+                that shares the same voxel coordinates are reduced to one row
+            coordinates: [M, ndim] int tensor, voxel coordinates.
         """
-        results = dynamic_point_to_voxel_forward(points, coors, voxel_size,
-                                                 coors_range)
-        (voxels, voxel_coors, num_points_per_voxel, point_to_voxelidx,
-         coor_to_voxelidx) = results
-        ctx.save_for_backward(num_points_per_voxel, point_to_voxelidx,
-                              coor_to_voxelidx)
-        return voxels, voxel_coors, num_points_per_voxel.float()
+        results = dynamic_point_to_voxel_forward(feats, coors, reduce_type)
+        (voxel_feats, voxel_coors, point2voxel_map,
+         voxel_points_count) = results
+        ctx.reduce_type = reduce_type
+        ctx.save_for_backward(feats, voxel_feats, point2voxel_map,
+                              voxel_points_count)
+        ctx.mark_non_differentiable(voxel_coors)
+        return voxel_feats, voxel_coors
 
     @staticmethod
-    def backward(ctx,
-                 grad_output_voxel,
-                 grad_output_voxel_coors=None,
-                 grad_output_num_points=None):
-        (num_points_per_voxel, point_to_voxelidx,
-         coor_to_voxelidx) = ctx.saved_tensors
-        # grad_output_voxel shape: NxMxC
-        num_points = point_to_voxelidx.size(0)
-        num_features = grad_output_voxel.size(-1)
-        grad_points = grad_output_voxel.new_zeros(
-            size=(num_points, num_features))
+    def backward(ctx, grad_voxel_feats, grad_voxel_coors=None):
+        (feats, voxel_feats, point2voxel_map,
+         voxel_points_count) = ctx.saved_tensors
+        grad_feats = torch.zeros_like(feats)
         # TODO: whether to use index put or use cuda_backward
         # To use index put, need point to voxel index
-        dynamic_point_to_voxel_backward(grad_points,
-                                        grad_output_voxel.contiguous(),
-                                        point_to_voxelidx, coor_to_voxelidx)
-        return grad_points, None, None, None
+        dynamic_point_to_voxel_backward(grad_feats,
+                                        grad_voxel_feats.contiguous(), feats,
+                                        voxel_feats, point2voxel_map,
+                                        voxel_points_count, ctx.reduce_type)
+        return grad_feats, None, None
 
 
 dynamic_scatter = _dynamic_scatter.apply
@@ -87,15 +72,8 @@ class DynamicScatter(nn.Module):
         self.average_points = average_points
 
     def forward_single(self, points, coors):
-        voxels, voxel_coors, num_points = dynamic_scatter(
-            points.contiguous(), coors.contiguous(), self.voxel_size,
-            self.point_cloud_range)
-        if not self.average_points:
-            voxels = torch.max(voxels, dim=1)[0]  # voxels: NxMxC -> NxC
-        else:
-            voxels = (
-                voxels.sum(dim=1, keepdim=False).div(num_points.view(-1, 1)))
-        return voxels, voxel_coors
+        reduce = 'mean' if self.average_points else 'max'
+        return dynamic_scatter(points.contiguous(), coors.contiguous(), reduce)
 
     def forward(self, points, coors):
         """

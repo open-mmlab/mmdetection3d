@@ -65,17 +65,16 @@ model = dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         corner_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        vote_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0)))
-
-# model training and testing settings
-train_cfg = dict(
-    sample_mod='spec', pos_distance_thr=10.0, expand_dims_length=0.05)
-test_cfg = dict(
-    nms_cfg=dict(type='nms', iou_thr=0.1),
-    sample_mod='spec',
-    score_thr=0.0,
-    per_class_proposal=True,
-    max_output_num=100)
+        vote_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0)),
+    # model training and testing settings
+    train_cfg=dict(
+        sample_mod='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
+    test_cfg=dict(
+        nms_cfg=dict(type='nms', iou_thr=0.1),
+        sample_mod='spec',
+        score_thr=0.0,
+        per_class_proposal=True,
+        max_output_num=100))
 
 # optimizer
 # This schedule is mainly used by models on indoor dataset,

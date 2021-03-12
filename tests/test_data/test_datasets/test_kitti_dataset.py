@@ -157,7 +157,7 @@ def test_show():
     labels_3d = torch.tensor([0, 0, 1, 1, 2])
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
     results = [result]
-    kitti_dataset.show(results, temp_dir)
+    kitti_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
     gt_file_path = osp.join(temp_dir, '000000', '000000_gt.ply')
     pred_file_path = osp.join(temp_dir, '000000', '000000_pred.ply')

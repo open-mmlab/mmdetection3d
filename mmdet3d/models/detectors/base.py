@@ -1,11 +1,10 @@
-import copy
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
 from os import path as osp
 
-from mmdet3d.core import Box3DMode, show_result
+from mmdet3d.core import Box3DMode, Coord3DMode, show_result
 from mmdet.models.detectors import BaseDetector
 
 
@@ -92,20 +91,17 @@ class Base3DDetector(BaseDetector):
 
             assert out_dir is not None, 'Expect out_dir, got none.'
 
-            pred_bboxes = copy.deepcopy(
-                result[batch_id]['boxes_3d'].tensor.numpy())
-            # for now we convert points into depth mode
-            if box_mode_3d == Box3DMode.DEPTH:
-                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            elif (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
-                                                    == Box3DMode.LIDAR):
-                points = points[..., [1, 0, 2]]
-                points[..., 0] *= -1
+            pred_bboxes = result[batch_id]['boxes_3d']
+
+            # for now we convert points and bbox into depth mode
+            if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
+                                                  == Box3DMode.LIDAR):
+                points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
+                                                   Coord3DMode.DEPTH)
                 pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
                                                 Box3DMode.DEPTH)
-                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            else:
+            elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
-
+            pred_bboxes = pred_bboxes.tensor.cpu().numpy()
             show_result(points, None, pred_bboxes, out_dir, file_name)

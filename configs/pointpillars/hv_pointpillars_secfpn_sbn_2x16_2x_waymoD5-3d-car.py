@@ -16,20 +16,19 @@ model = dict(
             ranges=[[-74.88, -74.88, -0.0345, 74.88, 74.88, -0.0345]],
             sizes=[[2.08, 4.73, 1.77]],
             rotations=[0, 1.57],
-            reshape_out=True)))
-
-# model training and testing settings
-train_cfg = dict(
-    _delete_=True,
-    pts=dict(
-        assigner=dict(
-            type='MaxIoUAssigner',
-            iou_calculator=dict(type='BboxOverlapsNearest3D'),
-            pos_iou_thr=0.55,
-            neg_iou_thr=0.4,
-            min_pos_iou=0.4,
-            ignore_iof_thr=-1),
-        allowed_border=0,
-        code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        pos_weight=-1,
-        debug=False))
+            reshape_out=True)),
+    # model training and testing settings
+    train_cfg=dict(
+        _delete_=True,
+        pts=dict(
+            assigner=dict(
+                type='MaxIoUAssigner',
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                pos_iou_thr=0.55,
+                neg_iou_thr=0.4,
+                min_pos_iou=0.4,
+                ignore_iof_thr=-1),
+            allowed_border=0,
+            code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            pos_weight=-1,
+            debug=False)))

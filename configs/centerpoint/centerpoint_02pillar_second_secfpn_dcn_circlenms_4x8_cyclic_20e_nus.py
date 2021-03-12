@@ -12,6 +12,5 @@ model = dict(
                 padding=1,
                 groups=4),
             init_bias=-2.19,
-            final_kernel=3)))
-
-test_cfg = dict(pts=dict(nms_type='circle'))
+            final_kernel=3)),
+    test_cfg=dict(pts=dict(nms_type='circle')))

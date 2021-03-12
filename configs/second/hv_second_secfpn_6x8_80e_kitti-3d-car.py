@@ -14,17 +14,17 @@ model = dict(
             ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
             sizes=[[1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
-            reshape_out=True)))
-# model training and testing settings
-train_cfg = dict(
-    _delete_=True,
-    assigner=dict(
-        type='MaxIoUAssigner',
-        iou_calculator=dict(type='BboxOverlapsNearest3D'),
-        pos_iou_thr=0.6,
-        neg_iou_thr=0.45,
-        min_pos_iou=0.45,
-        ignore_iof_thr=-1),
-    allowed_border=0,
-    pos_weight=-1,
-    debug=False)
+            reshape_out=True)),
+    # model training and testing settings
+    train_cfg=dict(
+        _delete_=True,
+        assigner=dict(
+            type='MaxIoUAssigner',
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
+            pos_iou_thr=0.6,
+            neg_iou_thr=0.45,
+            min_pos_iou=0.45,
+            ignore_iof_thr=-1),
+        allowed_border=0,
+        pos_weight=-1,
+        debug=False))
