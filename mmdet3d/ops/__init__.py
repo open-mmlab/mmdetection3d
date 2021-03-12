@@ -9,6 +9,7 @@ from .gather_points import gather_points
 from .group_points import (GroupAll, QueryAndGroup, group_points,
                            grouping_operation)
 from .interpolate import three_interpolate, three_nn
+from .knn import knn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
 from .pointnet_modules import (PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
@@ -25,7 +26,7 @@ __all__ = [
     'dynamic_scatter', 'DynamicScatter', 'sigmoid_focal_loss',
     'SigmoidFocalLoss', 'SparseBasicBlock', 'SparseBottleneck',
     'RoIAwarePool3d', 'points_in_boxes_gpu', 'points_in_boxes_cpu',
-    'make_sparse_convmodule', 'ball_query', 'furthest_point_sample',
+    'make_sparse_convmodule', 'ball_query', 'knn', 'furthest_point_sample',
     'furthest_point_sample_with_dist', 'three_interpolate', 'three_nn',
     'gather_points', 'grouping_operation', 'group_points', 'GroupAll',
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
