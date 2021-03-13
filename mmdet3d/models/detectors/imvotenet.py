@@ -120,6 +120,7 @@ class ImVoteNet(Base3DDetector):
         if fusion_layer is not None:
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
+
             # fusion layer exists -> stage 2 training -> freeze img branch
             if self.with_img_bbox_head:
                 for param in self.img_bbox_head.parameters():
@@ -195,6 +196,7 @@ class ImVoteNet(Base3DDetector):
 
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                               missing_keys, unexpected_keys, error_msgs):
+        # overload in order to load img network ckpts into img branch
         module_names = ['backbone', 'neck', 'roi_head', 'rpn_head']
         for key in list(state_dict):
             for module_name in module_names:
@@ -260,7 +262,7 @@ class ImVoteNet(Base3DDetector):
         pass
 
     def extract_img_feat(self, img):
-        """Directly extract features from the backbone+neck."""
+        """Directly extract features from the img backbone+neck."""
         x = self.img_backbone(img)
         if self.with_img_neck:
             x = self.img_neck(x)
@@ -272,9 +274,11 @@ class ImVoteNet(Base3DDetector):
         Args:
             imgs (list[torch.Tensor]): A list of images. The images are
                 augmented from the same image but in different ways.
+
         Returns:
             list[torch.Tensor]: Features of different images
         """
+
         assert isinstance(imgs, list)
         return [self.extract_img_feat(img) for img in imgs]
 
@@ -301,7 +305,20 @@ class ImVoteNet(Base3DDetector):
                           train=True,
                           bboxes_2d=None,
                           **kwargs):
-        """Extract bounding boxes from 2d detector."""
+        """Extract bounding boxes from 2d detector.
+
+        Args:
+            img (torch.Tensor): of shape (N, C, H, W) encoding input images.
+                Typically these should be mean centered and std scaled.
+            img_metas (list[dict]): Image meta info.
+            train (bool): train-time or not.
+            bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
+                not supported yet.
+
+        Return:
+            list[torch.Tensor]: a list of processed 2d bounding boxes.
+        """
+
         if bboxes_2d is None:
             self.set_img_branch_eval_mode()
 
@@ -352,34 +369,46 @@ class ImVoteNet(Base3DDetector):
                       gt_bboxes_ignore=None,
                       gt_masks=None,
                       proposals=None,
-                      calib=None,
+                      calibs=None,
                       bboxes_2d=None,
                       gt_bboxes_3d=None,
                       gt_labels_3d=None,
                       pts_semantic_mask=None,
                       pts_instance_mask=None,
                       **kwargs):
-        """ Forward of training for image only or image and points.
+        """Forwarding of train for image branch pretrain or stage 2 train.
+
         Args:
-            img (Tensor): of shape (N, C, H, W) encoding input images.
+            points (list[torch.Tensor]): Points of each batch.
+            img (torch.Tensor): of shape (N, C, H, W) encoding input images.
                 Typically these should be mean centered and std scaled.
-            img_metas (list[dict]): list of image info dict where each dict
-                has: 'img_shape', 'scale_factor', 'flip', and may also contain
-                'filename', 'ori_shape', 'pad_shape', and 'img_norm_cfg'.
-                For details on the values of these keys see
-                `mmdet/datasets/pipelines/formatting.py:Collect`.
-            gt_bboxes (list[Tensor]): Ground truth bboxes for each image with
-                shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
-            gt_labels (list[Tensor]): class indices corresponding to each box
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
-                boxes can be ignored when computing the loss.
-            gt_masks (None | Tensor) : true segmentation masks for each box
-                used if the architecture supports a segmentation task.
-            proposals : override rpn proposals with custom proposals. Use when
-                `with_rpn` is False.
+            img_metas (list[dict]): list of image and point cloud meta info
+                dict. For example, keys include 'ori_shape', 'img_norm_cfg',
+                and 'transformation_3d_flow'. For details on the values of
+                the keys see `mmdet/datasets/pipelines/formatting.py:Collect`.
+            gt_bboxes (list[torch.Tensor]): Ground truth bboxes for each image
+                with shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
+            gt_labels (list[torch.Tensor]): class indices for each
+                2d bounding box.
+            gt_bboxes_ignore (None | list[torch.Tensor]): specify which
+                2d bounding boxes can be ignored when computing the loss.
+            gt_masks (None | torch.Tensor): true segmentation masks for each
+                2d bbox, used if the architecture supports a segmentation task.
+            proposals: override rpn proposals (2d) with custom proposals.
+                Use when `with_rpn` is False.
+            calibs (dict[str, torch.Tensor]): camera calibration matrices,
+                Rt and K.
+            bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
+                not supported yet.
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): 3d gt bboxes.
+            gt_labels_3d (list[torch.Tensor]): gt class labels for 3d bboxes.
+            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
+                label of each batch.
+            pts_instance_mask (None | list[torch.Tensor]): point-wise instance
+                label of each batch.
 
         Returns:
-            dict[str, Tensor]: a dictionary of loss components
+            dict[str, torch.Tensor]: a dictionary of loss components.
         """
 
         if points is None:
@@ -416,7 +445,7 @@ class ImVoteNet(Base3DDetector):
                 self.extract_pts_feat(points)
 
             img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                    img_metas, calib)
+                                                    img_metas, calibs)
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
@@ -492,10 +521,10 @@ class ImVoteNet(Base3DDetector):
                      points=None,
                      img_metas=None,
                      img=None,
-                     calib=None,
+                     calibs=None,
                      bboxes_2d=None,
                      **kwargs):
-        """Forwarding of test.
+        """Forwarding of test for image branch pretrain or stage 2 train.
 
         Args:
             points (list[torch.Tensor]): the outer list indicates test-time
@@ -508,8 +537,15 @@ class ImVoteNet(Base3DDetector):
                 list indicates test-time augmentations and inner
                 torch.Tensor should have a shape NxCxHxW, which contains
                 all images in the batch. Defaults to None.
-            calib ()
+            calibs (dict[str, torch.Tensor]): camera calibration matrices,
+                Rt and K.
+            bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
+                not supported yet.
+
+        Returns:
+            list[torch.Tensor]: Predicted 3d boxes.
         """
+
         if points is None:
             for var, name in [(img, 'img'), (img_metas, 'img_metas')]:
                 if not isinstance(var, list):
@@ -557,11 +593,11 @@ class ImVoteNet(Base3DDetector):
                     points[0],
                     img_metas[0],
                     img[0],
-                    calib=calib[0],
+                    calibs=calibs[0],
                     bboxes_2d=bboxes_2d[0] if bboxes_2d is not None else None,
                     **kwargs)
             else:
-                return self.aug_test(points, img_metas, img, calib, bboxes_2d,
+                return self.aug_test(points, img_metas, img, calibs, bboxes_2d,
                                      **kwargs)
 
     def simple_test_img_only(self,
@@ -570,6 +606,7 @@ class ImVoteNet(Base3DDetector):
                              proposals=None,
                              rescale=False):
         """Test without augmentation, image network pretrain."""
+
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'
@@ -591,7 +628,7 @@ class ImVoteNet(Base3DDetector):
                     points=None,
                     img_metas=None,
                     img=None,
-                    calib=None,
+                    calibs=None,
                     bboxes_2d=None,
                     rescale=False,
                     **kwargs):
@@ -605,7 +642,7 @@ class ImVoteNet(Base3DDetector):
             self.extract_pts_feat(points)
 
         img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                img_metas, calib)
+                                                img_metas, calibs)
 
         inds = sample_valid_seeds(masks, self.num_sampled_seed)
         batch_size, img_feat_size = img_features.shape[:2]
@@ -644,6 +681,7 @@ class ImVoteNet(Base3DDetector):
         If rescale is False, then returned bboxes and masks will fit the scale
         of imgs[0].
         """
+
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'

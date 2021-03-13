@@ -9,7 +9,8 @@ from os import path as osp
 
 from mmdet.datasets import DATASETS
 from ..core import show_result
-from ..core.bbox import Box3DMode, CameraInstance3DBoxes, points_cam2img
+from ..core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
+                         points_cam2img)
 from .custom_3d import Custom3DDataset
 
 
@@ -669,12 +670,13 @@ class KittiDataset(Custom3DDataset):
                 sample_idx=sample_idx,
             )
 
-    def show(self, results, out_dir):
+    def show(self, results, out_dir, show=True):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
         for i, result in enumerate(results):
@@ -684,14 +686,13 @@ class KittiDataset(Custom3DDataset):
             file_name = osp.split(pts_path)[-1].split('.')[0]
             # for now we convert points into depth mode
             points = example['points'][0]._data.numpy()
-            points = points[..., [1, 0, 2]]
-            points[..., 0] *= -1
+            points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
+                                               Coord3DMode.DEPTH)
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
             gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
                                           Box3DMode.DEPTH)
-            gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
                                             Box3DMode.DEPTH)
-            pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
+                        show)
