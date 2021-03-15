@@ -1,12 +1,9 @@
 /** Modified from https://github.com/unlimblue/KNN_CUDA
- * which is the modifed version of knn-CUDA
+ * which is the modified version of knn-CUDA
  * from https://github.com/vincentfpgarcia/kNN-CUDA
- * The modifications are
- *      removed texture memory usage
- *      removed split query KNN computation
- *      added feature extraction with bilinear interpolation
- *
  * Last modified by Christopher B. Choy <chrischoy@ai.stanford.edu> 12/23/2016
+ * vincentfpgarcia wrote the original cuda code, Christopher modified it and
+ * set it up for pytorch 0.4, and unlimblue updated it to pytorch >= 1.0
  */
 
 // Includes
@@ -57,7 +54,7 @@ __global__ void cuComputeDistanceGlobal(const float* A, int wA,
   step_B  = BLOCK_DIM * wB;
   end_A   = begin_A + (dim-1) * wA;
 
-    // Conditions
+  // Conditions
   int cond0 = (begin_A + tx < wA); // used to write in shared memory
   int cond1 = (begin_B + tx < wB); // used to write in shared memory & to computations and to write in output matrix
   int cond2 = (begin_A + ty < wA); // used to computations and to write in output matrix

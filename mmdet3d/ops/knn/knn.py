@@ -5,7 +5,7 @@ from . import knn_ext
 
 
 class KNN(Function):
-    """KNN.
+    """KNN (CUDA).
 
     Find k-nearest points.
     """
@@ -43,7 +43,13 @@ class KNN(Function):
         assert center_xyz.is_contiguous()
         assert xyz.is_contiguous()
 
-        idx = torch.cuda.LongTensor(B, k, npoint).zero_()
+        center_xyz_device = center_xyz.get_device()
+        assert center_xyz_device == xyz.get_device(), \
+            'center_xyz and xyz should be put on the same device'
+        if torch.cuda.current_device() != center_xyz_device:
+            torch.cuda.set_device(center_xyz_device)
+
+        idx = center_xyz.new_zeros((B, k, npoint)).long()
 
         for bi in range(B):
             knn_ext.knn_wrapper(xyz[bi], N, center_xyz[bi], npoint, idx[bi], k)
