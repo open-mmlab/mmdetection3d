@@ -92,7 +92,7 @@
 
 #### Improvements
 
-- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#166)
+- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#205)
 - Add model zoo statistics and polish the documentation. (#201)
 
 ### v0.7.0 (1/11/2020)
