@@ -88,3 +88,117 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
         func()
 
     return pcd.coord
+
+
+def extract_2d_info(img_meta, tensor):
+    img_shape = img_meta['img_shape']
+    ori_shape = img_meta['ori_shape']
+    img_h, img_w, _ = img_shape
+    ori_h, ori_w, _ = ori_shape
+
+    img_scale_factor = (
+        tensor.new_tensor(img_meta['scale_factor'][:2])
+        if 'scale_factor' in img_meta else [1.0, 1.0])
+    img_flip = img_meta['flip'] if 'flip' in img_meta else False
+    img_crop_offset = (
+        tensor.new_tensor(img_meta['img_crop_offset'])
+        if 'img_crop_offset' in img_meta else [0.0, 0.0])
+
+    return (img_h, img_w, ori_h, ori_w, img_scale_factor, img_flip,
+            img_crop_offset)
+
+
+def bbox_2d_transform(img_meta, bbox_2d, ori2new):
+    """Transform 2d bbox according to img_meta.
+
+    Args:
+        img_meta(dict): Meta info regarding data transformation.
+        bbox_2d (torch.Tensor): Shape (..., >4)
+            The input 2d bboxes to transform.
+        ori2new (bool): Origin img coord system to new or not.
+
+    Returns:
+        (torch.Tensor): The transformed 2d bboxes.
+    """
+
+    img_h, img_w, ori_h, ori_w, img_scale_factor, img_flip, \
+        img_crop_offset = extract_2d_info(img_meta, bbox_2d)
+
+    bbox_2d_new = bbox_2d.clone()
+
+    if ori2new:
+        bbox_2d_new[:, 0] = bbox_2d_new[:, 0] * img_scale_factor[0]
+        bbox_2d_new[:, 2] = bbox_2d_new[:, 2] * img_scale_factor[0]
+        bbox_2d_new[:, 1] = bbox_2d_new[:, 1] * img_scale_factor[1]
+        bbox_2d_new[:, 3] = bbox_2d_new[:, 3] * img_scale_factor[1]
+
+        bbox_2d_new[:, 0] = bbox_2d_new[:, 0] + img_crop_offset[0]
+        bbox_2d_new[:, 2] = bbox_2d_new[:, 2] + img_crop_offset[0]
+        bbox_2d_new[:, 1] = bbox_2d_new[:, 1] + img_crop_offset[1]
+        bbox_2d_new[:, 3] = bbox_2d_new[:, 3] + img_crop_offset[1]
+
+        if img_flip:
+            bbox_2d_r = img_w - bbox_2d_new[:, 0]
+            bbox_2d_l = img_w - bbox_2d_new[:, 2]
+            bbox_2d_new[:, 0] = bbox_2d_l
+            bbox_2d_new[:, 2] = bbox_2d_r
+    else:
+        if img_flip:
+            bbox_2d_r = img_w - bbox_2d_new[:, 0]
+            bbox_2d_l = img_w - bbox_2d_new[:, 2]
+            bbox_2d_new[:, 0] = bbox_2d_l
+            bbox_2d_new[:, 2] = bbox_2d_r
+
+        bbox_2d_new[:, 0] = bbox_2d_new[:, 0] - img_crop_offset[0]
+        bbox_2d_new[:, 2] = bbox_2d_new[:, 2] - img_crop_offset[0]
+        bbox_2d_new[:, 1] = bbox_2d_new[:, 1] - img_crop_offset[1]
+        bbox_2d_new[:, 3] = bbox_2d_new[:, 3] - img_crop_offset[1]
+
+        bbox_2d_new[:, 0] = bbox_2d_new[:, 0] / img_scale_factor[0]
+        bbox_2d_new[:, 2] = bbox_2d_new[:, 2] / img_scale_factor[0]
+        bbox_2d_new[:, 1] = bbox_2d_new[:, 1] / img_scale_factor[1]
+        bbox_2d_new[:, 3] = bbox_2d_new[:, 3] / img_scale_factor[1]
+
+    return bbox_2d_new
+
+
+def coord_2d_transform(img_meta, coord_2d, ori2new):
+    """Transform 2d pixel coordinates according to img_meta.
+
+    Args:
+        img_meta(dict): Meta info regarding data transformation.
+        coord_2d (torch.Tensor): Shape (..., 2)
+            The input 2d coords to transform.
+        ori2new (bool): Origin img coord system to new or not.
+
+    Returns:
+        (torch.Tensor): The transformed 2d coordinates.
+    """
+
+    img_h, img_w, ori_h, ori_w, img_scale_factor, img_flip, \
+        img_crop_offset = extract_2d_info(img_meta, coord_2d)
+
+    coord_2d_new = coord_2d.clone()
+
+    if ori2new:
+        # TODO here we assume this order of transformation
+        coord_2d_new[..., 0] = coord_2d_new[..., 0] * img_scale_factor[0]
+        coord_2d_new[..., 1] = coord_2d_new[..., 1] * img_scale_factor[1]
+
+        coord_2d_new[..., 0] += img_crop_offset[0]
+        coord_2d_new[..., 1] += img_crop_offset[1]
+
+        # flip uv coordinates and bbox
+        if img_flip:
+            coord_2d_new[..., 0] = img_w - coord_2d_new[..., 0]
+    else:
+        if img_flip:
+            coord_2d_new[..., 0] = img_w - coord_2d_new[..., 0]
+
+        coord_2d_new[..., 0] -= img_crop_offset[0]
+        coord_2d_new[..., 1] -= img_crop_offset[1]
+
+        coord_2d_new[..., 0] = coord_2d_new[..., 0] / img_scale_factor[0]
+        coord_2d_new[..., 1] = coord_2d_new[..., 1] / img_scale_factor[1]
+
+    return coord_2d_new
