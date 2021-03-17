@@ -3,7 +3,7 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox import Coord3DMode, points_cam2img
 from ..registry import FUSION_LAYERS
-from . import apply_3d_transformation
+from . import apply_3d_transformation, bbox_2d_transform, coord_2d_transform
 
 
 @FUSION_LAYERS.register_module()
@@ -49,20 +49,8 @@ class VoteFusion(nn.Module):
             bbox_num = bbox_2d_rescaled.shape[0]
             seed_num = seed_3d_depth.shape[0]
 
-            bbox_2d_origin = bbox_2d_rescaled.clone().float()
             img_shape = img_meta['img_shape']
-            ori_shape = img_meta['ori_shape']
-            # origin bboxes
             img_h, img_w, _ = img_shape
-            ori_h, ori_w, _ = ori_shape
-
-            img_scale_factor = (
-                seed_3d_depth.new_tensor(img_meta['scale_factor'][:2])
-                if 'scale_factor' in img_meta else [1.0, 1.0])
-            img_flip = img_meta['flip'] if 'flip' in img_meta else False
-            img_crop_offset = (
-                seed_3d_depth.new_tensor(img_meta['img_crop_offset'])
-                if 'img_crop_offset' in img_meta else 0)
 
             # first reverse the data transformations
             xyz_depth = apply_3d_transformation(
@@ -79,25 +67,10 @@ class VoteFusion(nn.Module):
             uv_origin = points_cam2img(xyz_cam, calibs['K'][i])
             uv_origin = (uv_origin - 1).round()
 
-            # rescale uv coordinates
-            uv_rescaled = uv_origin.clone().float()
-            uv_rescaled[:, 0] = uv_rescaled[:, 0] * img_scale_factor[0]
-            uv_rescaled[:, 1] = uv_rescaled[:, 1] * img_scale_factor[1]
-            uv_rescaled += img_crop_offset
-
-            # flip uv coordinates and bbox
-            if img_flip:
-                uv_rescaled[:, 0] = img_w - uv_rescaled[:, 0]
-                bbox_2d_origin_r = img_w - bbox_2d_origin[:, 0]
-                bbox_2d_origin_l = img_w - bbox_2d_origin[:, 2]
-                bbox_2d_origin[:, 0] = bbox_2d_origin_l
-                bbox_2d_origin[:, 2] = bbox_2d_origin_r
-
-            # rescale bbox
-            bbox_2d_origin[:, 0] = bbox_2d_origin[:, 0] / img_scale_factor[0]
-            bbox_2d_origin[:, 2] = bbox_2d_origin[:, 2] / img_scale_factor[0]
-            bbox_2d_origin[:, 1] = bbox_2d_origin[:, 1] / img_scale_factor[1]
-            bbox_2d_origin[:, 3] = bbox_2d_origin[:, 3] / img_scale_factor[1]
+            # rescale 2d coordinates and bboxes
+            uv_rescaled = coord_2d_transform(img_meta, uv_origin, True)
+            bbox_2d_origin = bbox_2d_transform(img_meta, bbox_2d_rescaled,
+                                               False)
 
             if bbox_num == 0:
                 imvote_num = seed_num * self.max_imvote_per_pixel

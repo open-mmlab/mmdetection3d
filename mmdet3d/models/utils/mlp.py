@@ -2,13 +2,13 @@ from mmcv.cnn import ConvModule
 from torch import nn as nn
 
 
-class ImageMLPModule(nn.Module):
-    """Image MLP module.
+class MLP(nn.Module):
+    """A simple MLP module.
 
-    Pass the image vote features through an MLP.
+    Pass features (B, C, N) through an MLP.
 
     Args:
-        in_channels (int): Number of channels of image vote features.
+        in_channels (int): Number of channels of input features.
             Default: 18.
         conv_channels (tuple[int]): Out channels of the convolution.
             Default: (256, 256).

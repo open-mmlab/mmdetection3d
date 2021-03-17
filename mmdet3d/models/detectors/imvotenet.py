@@ -3,7 +3,7 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from mmdet3d.models.model_utils import ImageMLPModule
+from mmdet3d.models.utils import MLP
 from mmdet.models import DETECTORS
 from .. import builder
 from .base import Base3DDetector
@@ -63,6 +63,7 @@ class ImVoteNet(Base3DDetector):
                  img_roi_head=None,
                  img_rpn_head=None,
                  img_mlp=None,
+                 freeze_img_branch=False,
                  fusion_layer=None,
                  num_sampled_seed=None,
                  train_cfg=None,
@@ -121,25 +122,12 @@ class ImVoteNet(Base3DDetector):
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
 
-            # fusion layer exists -> stage 2 training -> freeze img branch
-            if self.with_img_bbox_head:
-                for param in self.img_bbox_head.parameters():
-                    param.requires_grad = False
-            if self.with_img_backbone:
-                for param in self.img_backbone.parameters():
-                    param.requires_grad = False
-            if self.with_img_neck:
-                for param in self.img_neck.parameters():
-                    param.requires_grad = False
-            if self.with_img_rpn:
-                for param in self.img_rpn_head.parameters():
-                    param.requires_grad = False
-            if self.with_img_roi_head:
-                for param in self.img_roi_head.parameters():
-                    param.requires_grad = False
+        if freeze_img_branch:
+            self.freeze_img_branch()
 
         if img_mlp is not None:
-            self.img_mlp = ImageMLPModule(**img_mlp)
+            self.img_mlp = MLP(**img_mlp)
+
         self.num_sampled_seed = num_sampled_seed
 
         self.train_cfg = train_cfg
@@ -193,6 +181,23 @@ class ImVoteNet(Base3DDetector):
             self.img_rpn_head.eval()
         if self.with_img_roi_head:
             self.img_roi_head.eval()
+
+    def freeze_img_branch(self):
+        if self.with_img_bbox_head:
+            for param in self.img_bbox_head.parameters():
+                param.requires_grad = False
+        if self.with_img_backbone:
+            for param in self.img_backbone.parameters():
+                param.requires_grad = False
+        if self.with_img_neck:
+            for param in self.img_neck.parameters():
+                param.requires_grad = False
+        if self.with_img_rpn:
+            for param in self.img_rpn_head.parameters():
+                param.requires_grad = False
+        if self.with_img_roi_head:
+            for param in self.img_roi_head.parameters():
+                param.requires_grad = False
 
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                               missing_keys, unexpected_keys, error_msgs):
