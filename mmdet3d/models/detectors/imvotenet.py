@@ -378,7 +378,7 @@ class ImVoteNet(Base3DDetector):
                       gt_bboxes_ignore=None,
                       gt_masks=None,
                       proposals=None,
-                      calibs=None,
+                      calib=None,
                       bboxes_2d=None,
                       gt_bboxes_3d=None,
                       gt_labels_3d=None,
@@ -405,7 +405,7 @@ class ImVoteNet(Base3DDetector):
                 2d bbox, used if the architecture supports a segmentation task.
             proposals: override rpn proposals (2d) with custom proposals.
                 Use when `with_rpn` is False.
-            calibs (dict[str, torch.Tensor]): camera calibration matrices,
+            calib (dict[str, torch.Tensor]): camera calibration matrices,
                 Rt and K.
             bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
                 not supported yet.
@@ -453,7 +453,7 @@ class ImVoteNet(Base3DDetector):
                 self.extract_pts_feat(points)
 
             img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                    img_metas, calibs)
+                                                    img_metas, calib)
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
@@ -529,7 +529,7 @@ class ImVoteNet(Base3DDetector):
                      points=None,
                      img_metas=None,
                      img=None,
-                     calibs=None,
+                     calib=None,
                      bboxes_2d=None,
                      **kwargs):
         """Forwarding of test for image branch pretrain or stage 2 train.
@@ -545,7 +545,7 @@ class ImVoteNet(Base3DDetector):
                 list indicates test-time augmentations and inner
                 torch.Tensor should have a shape NxCxHxW, which contains
                 all images in the batch. Defaults to None.
-            calibs (dict[str, torch.Tensor]): camera calibration matrices,
+            calib (dict[str, torch.Tensor]): camera calibration matrices,
                 Rt and K.
             bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
                 not supported yet.
@@ -601,11 +601,11 @@ class ImVoteNet(Base3DDetector):
                     points[0],
                     img_metas[0],
                     img[0],
-                    calibs=calibs[0],
+                    calibs=calib[0],
                     bboxes_2d=bboxes_2d[0] if bboxes_2d is not None else None,
                     **kwargs)
             else:
-                return self.aug_test(points, img_metas, img, calibs, bboxes_2d,
+                return self.aug_test(points, img_metas, img, calib, bboxes_2d,
                                      **kwargs)
 
     def simple_test_img_only(self,
