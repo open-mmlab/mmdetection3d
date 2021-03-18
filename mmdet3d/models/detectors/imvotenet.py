@@ -304,6 +304,7 @@ class ImVoteNet(Base3DDetector):
         assert isinstance(pts, list)
         return [self.extract_pts_feat(pt) for pt in pts]
 
+    @torch.no_grad()
     def extract_bboxes_2d(self,
                           img,
                           img_metas,
@@ -441,9 +442,8 @@ class ImVoteNet(Base3DDetector):
             losses.update(roi_losses)
             return losses
         else:
-            with torch.no_grad():
-                bboxes_2d = self.extract_bboxes_2d(
-                    img, img_metas, bboxes_2d=bboxes_2d, **kwargs)
+            bboxes_2d = self.extract_bboxes_2d(
+                img, img_metas, bboxes_2d=bboxes_2d, **kwargs)
 
             points = torch.stack(points)
             seeds_3d, seed_3d_features, seed_indices = \
@@ -686,7 +686,6 @@ class ImVoteNet(Base3DDetector):
         If rescale is False, then returned bboxes and masks will fit the scale
         of imgs[0].
         """
-
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'

@@ -12,7 +12,6 @@ class VoteFusion(nn.Module):
 
     Args:
         num_classes (int): number of classes.
-        img_norm_cfg (dict): image normalization config.
         max_imvote_per_pixel (int): max number of imvotes.
     """
 
