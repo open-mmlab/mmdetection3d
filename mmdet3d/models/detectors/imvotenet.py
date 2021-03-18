@@ -331,8 +331,6 @@ class ImVoteNet(Base3DDetector):
         """
 
         if bboxes_2d is None:
-            self.set_img_branch_eval_mode()
-
             x = self.extract_img_feat(img)
             proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
             rets = self.img_roi_head.simple_test(
