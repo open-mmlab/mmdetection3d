@@ -55,21 +55,7 @@ model = dict(
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
             loss_bbox=dict(type='L1Loss', loss_weight=1.0))),
-    pts_backbone=dict(
-        type='PointNet2SASSG',
-        in_channels=4,
-        num_points=(2048, 1024, 512, 256),
-        radius=(0.2, 0.4, 0.8, 1.2),
-        num_samples=(64, 32, 16, 16),
-        sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                     (128, 128, 256)),
-        fp_channels=((256, 256), (256, 256)),
-        norm_cfg=dict(type='BN2d'),
-        sa_cfg=dict(
-            type='PointSAModule',
-            pool_mod='max',
-            use_xyz=True,
-            normalize_xyz=True)),
+
     # model training and testing settings
     train_cfg=dict(
         img_rpn=dict(
@@ -170,7 +156,12 @@ test_pipeline = [
         ])
 ]
 
-data = dict(samples_per_gpu=2, workers_per_gpu=2)
+data = dict(
+    samples_per_gpu=2,
+    workers_per_gpu=2,
+    train=dict(dataset=dict(pipeline=train_pipeline)),
+    val=dict(pipeline=test_pipeline),
+    test=dict(pipeline=test_pipeline))
 
 optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=None)
