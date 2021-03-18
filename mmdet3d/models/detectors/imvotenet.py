@@ -63,7 +63,7 @@ class ImVoteNet(Base3DDetector):
                  img_roi_head=None,
                  img_rpn_head=None,
                  img_mlp=None,
-                 freeze_img_branch=False,
+                 fix_img_branch=False,
                  fusion_layer=None,
                  num_sampled_seed=None,
                  train_cfg=None,
@@ -122,7 +122,8 @@ class ImVoteNet(Base3DDetector):
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
 
-        if freeze_img_branch:
+        self.fix_img_branch = fix_img_branch
+        if fix_img_branch:
             self.freeze_img_branch()
 
         if img_mlp is not None:
@@ -170,19 +171,8 @@ class ImVoteNet(Base3DDetector):
             else:
                 self.pts_neck.init_weights()
 
-    def set_img_branch_eval_mode(self):
-        if self.with_img_bbox_head:
-            self.img_bbox_head.eval()
-        if self.with_img_backbone:
-            self.img_backbone.eval()
-        if self.with_img_neck:
-            self.img_neck.eval()
-        if self.with_img_rpn:
-            self.img_rpn_head.eval()
-        if self.with_img_roi_head:
-            self.img_roi_head.eval()
-
     def freeze_img_branch(self):
+        """Freeze all image branch parameters."""
         if self.with_img_bbox_head:
             for param in self.img_bbox_head.parameters():
                 param.requires_grad = False
@@ -201,7 +191,7 @@ class ImVoteNet(Base3DDetector):
 
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                               missing_keys, unexpected_keys, error_msgs):
-        # overload in order to load img network ckpts into img branch
+        """Overload in order to load img network ckpts into img branch."""
         module_names = ['backbone', 'neck', 'roi_head', 'rpn_head']
         for key in list(state_dict):
             for module_name in module_names:
@@ -212,6 +202,21 @@ class ImVoteNet(Base3DDetector):
         super()._load_from_state_dict(state_dict, prefix, local_metadata,
                                       strict, missing_keys, unexpected_keys,
                                       error_msgs)
+
+    def train(self, mode=True):
+        """Overload in order to keep image branch modules in eval mode."""
+        super(ImVoteNet, self).train(mode)
+        if self.fix_img_branch:
+            if self.with_img_bbox_head:
+                self.img_bbox_head.eval()
+            if self.with_img_backbone:
+                self.img_backbone.eval()
+            if self.with_img_neck:
+                self.img_neck.eval()
+            if self.with_img_rpn:
+                self.img_rpn_head.eval()
+            if self.with_img_roi_head:
+                self.img_roi_head.eval()
 
     @property
     def with_img_bbox(self):
@@ -610,8 +615,23 @@ class ImVoteNet(Base3DDetector):
                              img_metas,
                              proposals=None,
                              rescale=False):
-        """Test without augmentation, image network pretrain."""
+        """Test without augmentation, image network pretrain.
 
+        Args:
+            img (torch.Tensor): the outer
+                list indicates test-time augmentations and inner
+                torch.Tensor should have a shape NxCxHxW, which contains
+                all images in the batch. Defaults to None.
+            img_metas (list[dict]): the outer list indicates test-time
+                augs (multiscale, flip, etc.) and the inner list indicates
+                images in a batch
+            proposals (list[Tensor], optional): camera calibration matrices,
+                Rt and K. Defaults to None.
+            rescale (bool):
+
+        Returns:
+            list[torch.Tensor]: Predicted 2d boxes.
+        """
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'

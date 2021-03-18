@@ -5,6 +5,8 @@ from mmdet3d.core.bbox import Coord3DMode, points_cam2img
 from ..registry import FUSION_LAYERS
 from . import apply_3d_transformation, bbox_2d_transform, coord_2d_transform
 
+EPS = 1e-6
+
 
 @FUSION_LAYERS.register_module()
 class VoteFusion(nn.Module):
@@ -20,13 +22,8 @@ class VoteFusion(nn.Module):
         self.num_classes = num_classes
         self.max_imvote_per_pixel = max_imvote_per_pixel
 
-    def forward(self,
-                imgs,
-                bboxes_2d_rescaled,
-                seeds_3d_depth,
-                img_metas,
-                calibs,
-                eps=1e-6):
+    def forward(self, imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas,
+                calibs):
         """Forward function.
 
         Args:
@@ -142,10 +139,10 @@ class VoteFusion(nn.Module):
                 # ray angle
                 ray_angle = seed_3d_expanded + imvote
                 ray_angle /= torch.sqrt(torch.sum(ray_angle**2, -1) +
-                                        eps).unsqueeze(-1)
+                                        EPS).unsqueeze(-1)
 
                 # imvote lifted to 3d
-                xz = ray_angle[:, [0, 2]] / (ray_angle[:, [1]] + eps) \
+                xz = ray_angle[:, [0, 2]] / (ray_angle[:, [1]] + EPS) \
                     * seed_3d_expanded[:, [1]] - seed_3d_expanded[:, [0, 2]]
 
                 # geometric cues, dim=5
