@@ -97,10 +97,7 @@ model = dict(
                 neg_pos_ub=-1,
                 add_gt_as_proposals=True),
             pos_weight=-1,
-            debug=False),
-        pos_distance_thr=0.3,
-        neg_distance_thr=0.6,
-        sample_mod='vote'),
+            debug=False)),
     test_cfg=dict(
         img_rpn=dict(
             nms_across_levels=False,
@@ -112,14 +109,7 @@ model = dict(
         img_rcnn=dict(
             score_thr=0.05,
             nms=dict(type='nms', iou_threshold=0.5),
-            max_per_img=100),
-        # soft-nms is also supported for rcnn testing
-        # e.g., nms=dict(type='soft_nms', iou_threshold=0.5, min_score=0.05)
-        pts=dict(
-            sample_mod='seed',
-            nms_thr=0.25,
-            score_thr=0.05,
-            per_class_proposal=True)))
+            max_per_img=100)))
 
 # use caffe img_norm
 img_norm_cfg = dict(
@@ -159,7 +149,7 @@ test_pipeline = [
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
-    train=dict(dataset=dict(pipeline=train_pipeline)),
+    train=dict(times=1, dataset=dict(pipeline=train_pipeline)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
 
@@ -174,5 +164,3 @@ lr_config = dict(
 total_epochs = 8
 
 load_from = 'http://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'  # noqa
-
-find_unused_parameters = True
