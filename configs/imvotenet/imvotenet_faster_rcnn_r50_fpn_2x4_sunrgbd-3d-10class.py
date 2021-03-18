@@ -1,3 +1,7 @@
+_base_ = [
+    '../_base_/datasets/sunrgbd-3d-10class.py', '../_base_/default_runtime.py'
+]
+
 model = dict(
     type='ImVoteNet',
     img_backbone=dict(
@@ -51,21 +55,7 @@ model = dict(
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
             loss_bbox=dict(type='L1Loss', loss_weight=1.0))),
-    pts_backbone=dict(
-        type='PointNet2SASSG',
-        in_channels=4,
-        num_points=(2048, 1024, 512, 256),
-        radius=(0.2, 0.4, 0.8, 1.2),
-        num_samples=(64, 32, 16, 16),
-        sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                     (128, 128, 256)),
-        fp_channels=((256, 256), (256, 256)),
-        norm_cfg=dict(type='BN2d'),
-        sa_cfg=dict(
-            type='PointSAModule',
-            pool_mod='max',
-            use_xyz=True,
-            normalize_xyz=True)),
+
     # model training and testing settings
     train_cfg=dict(
         img_rpn=dict(
@@ -131,11 +121,6 @@ model = dict(
             score_thr=0.05,
             per_class_proposal=True)))
 
-dataset_type = 'SUNRGBDDataset'
-data_root = 'data/sunrgbd/'
-class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
-               'night_stand', 'bookshelf', 'bathtub')
-
 # use caffe img_norm
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
@@ -174,35 +159,12 @@ test_pipeline = [
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
-    train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_train.pkl',
-        pipeline=train_pipeline,
-        classes=class_names,
-        filter_empty_gt=False,
-        box_type_3d='Depth'),
-    val=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='Depth'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='Depth'))
+    train=dict(dataset=dict(pipeline=train_pipeline)),
+    val=dict(pipeline=test_pipeline),
+    test=dict(pipeline=test_pipeline))
 
-# optimizer
 optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=None)
-# learning policy
 lr_config = dict(
     policy='step',
     warmup='linear',
@@ -211,22 +173,6 @@ lr_config = dict(
     step=[6])
 total_epochs = 8
 
-checkpoint_config = dict(interval=1)
-# yapf:disable
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-load_from = 'http://download.openmmlab.com/mmdetection/v2.0/\
-mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/\
-mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408\
-__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
+load_from = 'http://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'  # noqa
 
-resume_from = None
-workflow = [('train', 1)]
 find_unused_parameters = True

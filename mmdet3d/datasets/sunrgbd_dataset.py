@@ -62,10 +62,7 @@ class SUNRGBDDataset(Custom3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
         if self.modality is None:
-            self.modality = dict(
-                use_camera=True,
-                use_lidar=True,
-            )
+            self.modality = dict(use_camera=True, use_lidar=True)
         assert self.modality['use_camera'] or self.modality['use_lidar']
 
     def get_data_info(self, index):
