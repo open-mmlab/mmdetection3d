@@ -197,6 +197,7 @@ model = dict(
         num_classes=len(class_names),
         max_imvote_per_pixel=3),
     num_sampled_seed=1024,
+    fix_img_branch=True,
 
     # model training and testing settings
     train_cfg=dict(
