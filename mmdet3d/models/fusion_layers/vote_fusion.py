@@ -121,7 +121,7 @@ class VoteFusion(nn.Module):
 
                 imvote = torch.cat(
                     [delta_u, delta_v,
-                     torch.zeros_like(delta_v)], dim=-1).reshape(-1, 3)
+                     torch.zeros_like(delta_v)], dim=-1).view(-1, 3)
 
                 # convert from camera coords to depth coords
                 imvote = Coord3DMode.convert_point(
@@ -147,7 +147,7 @@ class VoteFusion(nn.Module):
 
                 # geometric cues, dim=5
                 geo_cue = torch.cat([xz, ray_angle],
-                                    dim=-1).reshape(seed_num, -1, 5)
+                                    dim=-1).view(seed_num, -1, 5)
 
                 two_cues = torch.cat([geo_cue, sem_cue], dim=-1)
                 # mask to 0 if seed not in bbox
@@ -180,7 +180,7 @@ class VoteFusion(nn.Module):
                     largest=True,
                     sorted=True)
 
-                indices_img = indices.repeat(1, 1, feature_size)
+                indices_img = indices.expand(-1, -1, feature_size)
                 two_cues = two_cues.gather(dim=1, index=indices_img)
                 two_cues = two_cues.transpose(1, 0)
                 two_cues = two_cues.reshape(-1, feature_size).transpose(
