@@ -1,5 +1,4 @@
 import argparse
-import numpy as np
 from mmcv import Config, mkdir_or_exist, track_iter_progress
 from os import path as osp
 
@@ -49,6 +48,7 @@ def main():
 
         vis.show(save_path)
         del vis
+
 
 if __name__ == '__main__':
     main()
