@@ -21,7 +21,6 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
     Returns:
         torch.Tensor: Indices with shape (num_sampled_seed).
     """
-
     device = mask.device
     batch_size = mask.shape[0]
     sample_inds = mask.new_zeros((batch_size, num_sampled_seed),
@@ -329,7 +328,6 @@ class ImVoteNet(Base3DDetector):
         Return:
             list[torch.Tensor]: a list of processed 2d bounding boxes.
         """
-
         if bboxes_2d is None:
             x = self.extract_img_feat(img)
             proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
@@ -419,7 +417,6 @@ class ImVoteNet(Base3DDetector):
         Returns:
             dict[str, torch.Tensor]: a dictionary of loss components.
         """
-
         if points is None:
             x = self.extract_img_feat(img)
             losses = dict()
@@ -535,25 +532,27 @@ class ImVoteNet(Base3DDetector):
         """Forwarding of test for image branch pretrain or stage 2 train.
 
         Args:
-            points (list[torch.Tensor]): the outer list indicates test-time
-                augmentations and inner torch.Tensor should have a shape NxC,
-                which contains all points in the batch.
-            img_metas (list[list[dict]]): the outer list indicates test-time
-                augs (multiscale, flip, etc.) and the inner list indicates
-                images in a batch
-            img (list[torch.Tensor], optional): the outer
+            points (list[list[torch.Tensor]], optional): the outer
                 list indicates test-time augmentations and inner
-                torch.Tensor should have a shape NxCxHxW, which contains
-                all images in the batch. Defaults to None.
-            calibs (dict[str, torch.Tensor]): camera calibration matrices,
-                Rt and K.
-            bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
-                not supported yet.
+                torch.Tensor should have a shape NxC, which contains
+                all points in the batch. Defaults to None.
+            img_metas (list[list[dict]], optional): the outer list
+                indicates test-time augs (multiscale, flip, etc.)
+                and the inner list indicates images in a batch.
+                Defaults to None.
+            img (list[list[torch.Tensor]], optional): the outer
+                list indicates test-time augmentations and inner Tensor
+                should have a shape NxCxHxW, which contains all images
+                in the batch. Defaults to None. Defaults to None.
+            calibs (list[dict[str, torch.Tensor]], optional): camera
+                calibration matrices, Rt and K.
+                List indicates test-time augs. Defaults to None.
+            bboxes_2d (list[list[torch.Tensor]], optional):
+                Provided 2d bboxes, not supported yet. Defaults to None.
 
         Returns:
-            list[torch.Tensor]: Predicted 3d boxes.
+            list[list[torch.Tensor]]|list[dict]: Predicted 2d or 3d boxes.
         """
-
         if points is None:
             for var, name in [(img, 'img'), (img_metas, 'img_metas')]:
                 if not isinstance(var, list):
@@ -613,22 +612,22 @@ class ImVoteNet(Base3DDetector):
                              img_metas,
                              proposals=None,
                              rescale=False):
-        """Test without augmentation, image network pretrain.
+        """Test without augmentation, image network pretrain. May refer to
+        https://github.com/open-
+        mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py  #
+        noqa.
 
         Args:
-            img (torch.Tensor): the outer
-                list indicates test-time augmentations and inner
-                torch.Tensor should have a shape NxCxHxW, which contains
-                all images in the batch. Defaults to None.
-            img_metas (list[dict]): the outer list indicates test-time
-                augs (multiscale, flip, etc.) and the inner list indicates
-                images in a batch
-            proposals (list[Tensor], optional): camera calibration matrices,
-                Rt and K. Defaults to None.
-            rescale (bool):
+            img (torch.Tensor): Should have a shape NxCxHxW, which contains
+                all images in the batch.
+            img_metas (list[dict]):
+            proposals (list[Tensor], optional): override rpn proposals
+                with custom proposals. Defaults to None.
+            rescale (bool, optional): Whether or not rescale bboxes to the
+                original shape of input image. Defaults to False.
 
         Returns:
-            list[torch.Tensor]: Predicted 2d boxes.
+            list[list[torch.Tensor]]: Predicted 2d boxes.
         """
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
@@ -655,8 +654,26 @@ class ImVoteNet(Base3DDetector):
                     bboxes_2d=None,
                     rescale=False,
                     **kwargs):
-        """Test without augmentation, stage 2."""
+        """Test without augmentation, stage 2.
 
+        Args:
+            points (list[torch.Tensor], optional): Elements in the list
+                should have a shape NxC, the list indicates all point-clouds
+                in the batch. Defaults to None.
+            img_metas (list[dict], optional): List indicates
+                images in a batch. Defaults to None.
+            img (torch.Tensor, optional): Should have a shape NxCxHxW,
+                which contains all images in the batch. Defaults to None.
+            calibs (dict[str, torch.Tensor], optional): camera
+                calibration matrices, Rt and K. Defaults to None.
+            bboxes_2d (list[torch.Tensor], optional):
+                Provided 2d bboxes, not supported yet. Defaults to None.
+            rescale (bool, optional): Whether or not rescale bboxes.
+                Defaults to False.
+
+        Returns:
+            list[dict]: Predicted 3d boxes.
+        """
         bboxes_2d = self.extract_bboxes_2d(
             img, img_metas, train=False, bboxes_2d=bboxes_2d, **kwargs)
 
@@ -699,10 +716,27 @@ class ImVoteNet(Base3DDetector):
         return bbox_results
 
     def aug_test_img_only(self, img, img_metas, rescale=False):
-        """Test function with augmentation, image network pretrain.
+        """Test function with augmentation, image network pretrain. May refer
+        to https://github.com/open-
+        mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py  #
+        noqa.
 
-        If rescale is False, then returned bboxes and masks will fit the scale
-        of imgs[0].
+        Args:
+            img (list[list[torch.Tensor]], optional): the outer
+                list indicates test-time augmentations and inner Tensor
+                should have a shape NxCxHxW, which contains all images
+                in the batch. Defaults to None. Defaults to None.
+            img_metas (list[list[dict]], optional): the outer list
+                indicates test-time augs (multiscale, flip, etc.)
+                and the inner list indicates images in a batch.
+                Defaults to None.
+            rescale (bool, optional): Whether or not rescale bboxes to the
+                original shape of input image. If rescale is False, then
+                returned bboxes and masks will fit the scale of imgs[0].
+                Defaults to None.
+
+        Returns:
+            list[list[torch.Tensor]]: Predicted 2d boxes.
         """
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
@@ -723,8 +757,32 @@ class ImVoteNet(Base3DDetector):
                  bboxes_2d=None,
                  rescale=False,
                  **kwargs):
-        """Test function with augmentation, stage 2."""
+        """Test function with augmentation, stage 2.
 
+        Args:
+            points (list[list[torch.Tensor]], optional): the outer
+                list indicates test-time augmentations and inner
+                torch.Tensor should have a shape NxC, which contains
+                all points in the batch. Defaults to None.
+            img_metas (list[list[dict]], optional): the outer list
+                indicates test-time augs (multiscale, flip, etc.)
+                and the inner list indicates images in a batch.
+                Defaults to None.
+            imgs (list[list[torch.Tensor]], optional): the outer
+                list indicates test-time augmentations and inner Tensor
+                should have a shape NxCxHxW, which contains all images
+                in the batch. Defaults to None. Defaults to None.
+            calibs (list[dict[str, torch.Tensor]], optional): camera
+                calibration matrices, Rt and K.
+                List indicates test-time augs. Defaults to None.
+            bboxes_2d (list[list[torch.Tensor]], optional):
+                Provided 2d bboxes, not supported yet. Defaults to None.
+            rescale (bool, optional): Whether or not rescale bboxes.
+                Defaults to False.
+
+        Returns:
+            list[dict]: Predicted 3d boxes.
+        """
         points_cat = [torch.stack(pts) for pts in points]
         feats = self.extract_pts_feats(points_cat, img_metas)
 
