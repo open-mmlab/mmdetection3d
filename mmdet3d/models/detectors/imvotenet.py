@@ -458,14 +458,14 @@ class ImVoteNet(Base3DDetector):
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
             pts_feat_size = seed_3d_features.shape[1]
-            inds_img = inds.reshape(batch_size, 1,
-                                    -1).repeat(1, img_feat_size, 1)
+            inds_img = inds.view(batch_size, 1,
+                                 -1).expand(-1, img_feat_size, -1)
             img_features = img_features.gather(-1, inds_img)
             inds = inds % inds.shape[1]
-            inds_seed_xyz = inds.reshape(batch_size, -1, 1).repeat(1, 1, 3)
+            inds_seed_xyz = inds.view(batch_size, -1, 1).expand(-1, -1, 3)
             seeds_3d = seeds_3d.gather(1, inds_seed_xyz)
-            inds_seed_feats = inds.reshape(batch_size, 1,
-                                           -1).repeat(1, pts_feat_size, 1)
+            inds_seed_feats = inds.view(batch_size, 1,
+                                        -1).expand(-1, pts_feat_size, -1)
             seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
             seed_indices = seed_indices.gather(1, inds)
 
@@ -670,13 +670,13 @@ class ImVoteNet(Base3DDetector):
         inds = sample_valid_seeds(masks, self.num_sampled_seed)
         batch_size, img_feat_size = img_features.shape[:2]
         pts_feat_size = seed_3d_features.shape[1]
-        inds_img = inds.reshape(batch_size, 1, -1).repeat(1, img_feat_size, 1)
+        inds_img = inds.view(batch_size, 1, -1).expand(-1, img_feat_size, -1)
         img_features = img_features.gather(-1, inds_img)
         inds = inds % inds.shape[1]
-        inds_seed_xyz = inds.reshape(batch_size, -1, 1).repeat(1, 1, 3)
+        inds_seed_xyz = inds.view(batch_size, -1, 1).expand(-1, -1, 3)
         seeds_3d = seeds_3d.gather(1, inds_seed_xyz)
-        inds_seed_feats = inds.reshape(batch_size, 1,
-                                       -1).repeat(1, pts_feat_size, 1)
+        inds_seed_feats = inds.view(batch_size, 1,
+                                    -1).expand(-1, pts_feat_size, -1)
         seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
         seed_indices = seed_indices.gather(1, inds)
 
@@ -744,14 +744,14 @@ class ImVoteNet(Base3DDetector):
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
             pts_feat_size = seed_3d_features.shape[1]
-            inds_img = inds.reshape(batch_size, 1,
-                                    -1).repeat(1, img_feat_size, 1)
+            inds_img = inds.view(batch_size, 1,
+                                 -1).expand(-1, img_feat_size, -1)
             img_features = img_features.gather(-1, inds_img)
             inds = inds % inds.shape[1]
-            inds_seed_xyz = inds.reshape(batch_size, -1, 1).repeat(1, 1, 3)
+            inds_seed_xyz = inds.view(batch_size, -1, 1).expand(-1, -1, 3)
             seeds_3d = seeds_3d.gather(1, inds_seed_xyz)
-            inds_seed_feats = inds.reshape(batch_size, 1,
-                                           -1).repeat(1, pts_feat_size, 1)
+            inds_seed_feats = inds.view(batch_size, 1,
+                                        -1).expand(-1, pts_feat_size, -1)
             seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
             seed_indices = seed_indices.gather(1, inds)
 
