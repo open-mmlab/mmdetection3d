@@ -533,9 +533,9 @@ class ImVoteNet(Base3DDetector):
 
         Args:
             points (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and inner
-                torch.Tensor should have a shape NxC, which contains
-                all points in the batch. Defaults to None.
+                list indicates test-time augmentations and the inner
+                list contains all points in the batch, where each Tensor
+                should have a shape NxC. Defaults to None.
             img_metas (list[list[dict]], optional): the outer list
                 indicates test-time augs (multiscale, flip, etc.)
                 and the inner list indicates images in a batch.
@@ -761,9 +761,9 @@ class ImVoteNet(Base3DDetector):
 
         Args:
             points (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and inner
-                torch.Tensor should have a shape NxC, which contains
-                all points in the batch. Defaults to None.
+                list indicates test-time augmentations and the inner
+                list contains all points in the batch, where each Tensor
+                should have a shape NxC. Defaults to None.
             img_metas (list[list[dict]], optional): the outer list
                 indicates test-time augs (multiscale, flip, etc.)
                 and the inner list indicates images in a batch.
