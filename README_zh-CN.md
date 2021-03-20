@@ -83,7 +83,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
 - [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
 - [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
-- [x] [CenterPoint (Arxiv'2020)](configs/centerpoint/README.md)
+- [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
