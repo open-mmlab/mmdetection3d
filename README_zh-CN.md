@@ -83,7 +83,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
 - [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
 - [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
-- [x] [CenterPoint (Arxiv'2020)](configs/centerpoint/README.md)
+- [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
@@ -112,6 +112,19 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 请参考[快速入门文档](docs/get_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/1_exist_data_model.md)和[新数据集](docs/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/tutorials/config.md), [增加数据集支持](docs/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/tutorials/data_pipeline.md), [增加自定义模型](docs/tutorials/customize_models.md), [增加自定义的运行时配置](docs/tutorials/customize_runtime.md)和 [Waymo 数据集](docs/tutorials/waymo.md).
 
+## 引用
+
+如果你觉得本项目对你的研究工作有所帮助，请参考如下 bibtex 引用 MMdetection3D
+
+```latex
+@misc{mmdet3d2020,
+    title={{MMDetection3D: OpenMMLab} next-generation platform for general 3D object detection},
+    author={MMDetection3D Contributors},
+    howpublished = {\url{https://github.com/open-mmlab/mmdetection3d}},
+    year={2020}
+}
+```
+
 ## 贡献指南
 
 我们感谢所有的贡献者为改进和提升 MMDetection3D 所作出的努力。请参考[贡献指南](.github/CONTRIBUTING.md)来了解参与项目贡献的相关指引。
@@ -119,3 +132,15 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 ## 致谢
 
 MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与贡献的开源项目。我们感谢所有为项目提供算法复现和新功能支持的贡献者，以及提供宝贵反馈的用户。我们希望这个工具箱和基准测试可以为社区提供灵活的代码工具，供用户复现已有算法并开发自己的新的 3D 检测模型。
+
+## OpenMMLab 的其他项目
+
+- [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab 计算机视觉基础库
+- [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab 图像分类工具箱
+- [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab 目标检测工具箱
+- [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab 新一代通用 3D 目标检测平台
+- [MMSegmentation](https://github.com/open-mmlab/mmsegmentation): OpenMMLab 语义分割工具箱
+- [MMAction2](https://github.com/open-mmlab/mmaction2): OpenMMLab 新一代视频理解工具箱
+- [MMTracking](https://github.com/open-mmlab/mmtracking): OpenMMLab 一体化视频目标感知平台
+- [MMPose](https://github.com/open-mmlab/mmpose): OpenMMLab 姿态估计工具箱
+- [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab 图像视频编辑工具箱
