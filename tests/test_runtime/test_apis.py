@@ -54,9 +54,7 @@ def test_show_result_meshlab():
     box_3d = LiDARInstance3DBoxes(
         torch.tensor(
             [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
-    labels_3d = torch.tensor([
-        0,
-    ])
+    labels_3d = torch.tensor([0])
     scores_3d = torch.tensor([0.5])
     points = np.random.rand(100, 4)
     img_meta = dict(
