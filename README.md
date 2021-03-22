@@ -119,7 +119,7 @@ If you find this project useful in your research, please consider cite:
 
 ```latex
 @misc{mmdet3d2020,
-    title={{MMDetection3D}: OpenMMLab next-generation platform for general 3D object detection},
+    title={{MMDetection3D: OpenMMLab} next-generation platform for general 3D object detection},
     author={MMDetection3D Contributors},
     howpublished = {\url{https://github.com/open-mmlab/mmdetection3d}},
     year={2020}
