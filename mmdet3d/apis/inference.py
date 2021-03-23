@@ -12,7 +12,8 @@ from mmdet3d.models import build_detector
 
 
 def convert_SyncBN(config):
-    """Convert config's naiveSyncBN to BN
+    """Convert config's naiveSyncBN to BN.
+
     Args:
          config (str or :obj:`mmcv.Config`): Config file path or the config
             object.
