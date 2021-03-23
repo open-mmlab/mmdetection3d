@@ -62,7 +62,7 @@ class ImVoteNet(Base3DDetector):
                  img_roi_head=None,
                  img_rpn_head=None,
                  img_mlp=None,
-                 fix_img_branch=False,
+                 freeze_img_branch=False,
                  fusion_layer=None,
                  num_sampled_seed=None,
                  train_cfg=None,
@@ -121,9 +121,9 @@ class ImVoteNet(Base3DDetector):
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
 
-        self.fix_img_branch = fix_img_branch
-        if fix_img_branch:
-            self.freeze_img_branch()
+        self.freeze_img_branch = freeze_img_branch
+        if freeze_img_branch:
+            self.freeze_img_branch_params()
 
         if img_mlp is not None:
             self.img_mlp = MLP(**img_mlp)
@@ -170,7 +170,7 @@ class ImVoteNet(Base3DDetector):
             else:
                 self.pts_neck.init_weights()
 
-    def freeze_img_branch(self):
+    def freeze_img_branch_params(self):
         """Freeze all image branch parameters."""
         if self.with_img_bbox_head:
             for param in self.img_bbox_head.parameters():
@@ -205,7 +205,7 @@ class ImVoteNet(Base3DDetector):
     def train(self, mode=True):
         """Overload in order to keep image branch modules in eval mode."""
         super(ImVoteNet, self).train(mode)
-        if self.fix_img_branch:
+        if self.freeze_img_branch:
             if self.with_img_bbox_head:
                 self.img_bbox_head.eval()
             if self.with_img_backbone:
