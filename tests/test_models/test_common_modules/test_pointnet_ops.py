@@ -110,6 +110,11 @@ def test_knn():
     expected_idx = dist.topk(k=5, dim=2, largest=False)[1].transpose(2, 1)
     assert torch.all(idx == expected_idx)
 
+    idx = knn(5,
+              xyz.transpose(1, 2).contiguous(),
+              new_xyz.transpose(1, 2).contiguous(), True)
+    assert torch.all(idx == expected_idx)
+
     idx = knn(5, xyz, xyz)
     xyz_ = xyz.unsqueeze(2).repeat(1, 1, xyz.shape[1], 1)
     xyz__ = xyz.unsqueeze(1).repeat(1, xyz.shape[1], 1, 1)

@@ -25,7 +25,8 @@ class KNN(Function):
             center_xyz (Tensor): (B, npoint, 3) if transposed == False,
                 else (B, 3, npoint). centers of the knn query.
             transposed (bool): whether the input tensors are transposed.
-                defaults to False.
+                defaults to False. Should not expicitly use this keyword
+                when calling knn (=KNN.apply), just add the fourth param.
 
         Returns:
             Tensor: (B, k, npoint) tensor with the indicies of
@@ -33,12 +34,12 @@ class KNN(Function):
         """
         assert k > 0
 
-        B, npoint = center_xyz.shape[:2]
-        N = xyz.shape[1]
-
         if not transposed:
             xyz = xyz.transpose(2, 1).contiguous()
             center_xyz = center_xyz.transpose(2, 1).contiguous()
+
+        B, _, npoint = center_xyz.shape
+        N = xyz.shape[2]
 
         assert center_xyz.is_contiguous()
         assert xyz.is_contiguous()
