@@ -12,12 +12,12 @@ The required versions of MMCV and MMDetection for different versions of MMDetect
 
 | MMDetection3D version | MMDetection version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.11.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.3|
-| 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
-| 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.3|
+| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
+| 0.11.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
+| 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
+| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
+| 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.4|
+| 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.4|
 | 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
 | 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
 
