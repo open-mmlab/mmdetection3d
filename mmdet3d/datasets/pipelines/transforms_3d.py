@@ -96,10 +96,15 @@ class RandomFlip3D(RandomFlip):
                 ) < self.flip_ratio_bev_vertical else False
                 input_dict['pcd_vertical_flip'] = flip_vertical
 
+        if 'transformation_3d_flow' not in input_dict:
+            input_dict['transformation_3d_flow'] = []
+
         if input_dict['pcd_horizontal_flip']:
             self.random_flip_data_3d(input_dict, 'horizontal')
+            input_dict['transformation_3d_flow'].extend(['HF'])
         if input_dict['pcd_vertical_flip']:
             self.random_flip_data_3d(input_dict, 'vertical')
+            input_dict['transformation_3d_flow'].extend(['VF'])
         return input_dict
 
     def __repr__(self):
@@ -405,6 +410,9 @@ class GlobalRotScaleTrans(object):
                 'pcd_scale_factor', 'pcd_trans' and keys in \
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
+        if 'transformation_3d_flow' not in input_dict:
+            input_dict['transformation_3d_flow'] = []
+
         self._rot_bbox_points(input_dict)
 
         if 'pcd_scale_factor' not in input_dict:
@@ -412,6 +420,8 @@ class GlobalRotScaleTrans(object):
         self._scale_bbox_points(input_dict)
 
         self._trans_bbox_points(input_dict)
+
+        input_dict['transformation_3d_flow'].extend(['R', 'S', 'T'])
         return input_dict
 
     def __repr__(self):

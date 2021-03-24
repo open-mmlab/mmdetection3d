@@ -7,10 +7,7 @@ from .single_stage import SingleStage3DDetector
 
 @DETECTORS.register_module()
 class VoteNet(SingleStage3DDetector):
-    """VoteNet model.
-
-    https://arxiv.org/pdf/1904.09664.pdf
-    """
+    r"""`VoteNet <https://arxiv.org/pdf/1904.09664.pdf>`_ for 3D detection."""
 
     def __init__(self,
                  backbone,
@@ -24,6 +21,28 @@ class VoteNet(SingleStage3DDetector):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             pretrained=pretrained)
+
+    def extract_feat(self, points, img_metas=None):
+        """Directly extract features from the backbone+neck.
+
+        Args:
+            points (torch.Tensor): Input points.
+        """
+        x = self.backbone(points)
+        if self.with_neck:
+            x = self.neck(x)
+
+        seed_points = x['fp_xyz'][-1]
+        seed_features = x['fp_features'][-1]
+        seed_indices = x['fp_indices'][-1]
+
+        feat_dict = {
+            'seed_points': seed_points,
+            'seed_features': seed_features,
+            'seed_indices': seed_indices
+        }
+
+        return feat_dict
 
     def forward_train(self,
                       points,

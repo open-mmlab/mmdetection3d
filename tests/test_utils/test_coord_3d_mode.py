@@ -62,21 +62,21 @@ def test_points_conversion():
 
     convert_depth_points = cam_points.convert_to(Coord3DMode.DEPTH)
     expected_tensor = torch.tensor([[
-        -5.2422e+00, -2.9757e-01, 4.0021e+01, 6.6660e-01, 1.9560e-01,
+        -5.2422e+00, 2.9757e-01, -4.0021e+01, 6.6660e-01, 1.9560e-01,
         4.9740e-01, 9.4090e-01
     ],
                                     [
-                                        -2.6675e+01, 9.1435e-01, 5.5950e+00,
+                                        -2.6675e+01, -9.1435e-01, -5.5950e+00,
                                         1.5020e-01, 3.7070e-01, 1.0860e-01,
                                         6.2970e-01
                                     ],
                                     [
-                                        -5.8098e+00, -2.0089e-01, 3.5409e+01,
+                                        -5.8098e+00, 2.0089e-01, -3.5409e+01,
                                         6.5650e-01, 6.2480e-01, 6.9540e-01,
                                         2.5380e-01
                                     ],
                                     [
-                                        -3.1309e+01, 1.9461e-01, 1.0901e+00,
+                                        -3.1309e+01, -1.9461e-01, -1.0901e+00,
                                         2.8030e-01, 2.5800e-02, 4.8960e-01,
                                         3.2690e-01
                                     ]])
@@ -157,21 +157,21 @@ def test_points_conversion():
 
     convert_cam_points = depth_points.convert_to(Coord3DMode.CAM)
     expected_tensor = torch.tensor([[
-        -5.2422e+00, 2.9757e-01, -4.0021e+01, 6.6660e-01, 1.9560e-01,
+        -5.2422e+00, -2.9757e-01, 4.0021e+01, 6.6660e-01, 1.9560e-01,
         4.9740e-01, 9.4090e-01
     ],
                                     [
-                                        -2.6675e+01, -9.1435e-01, -5.5950e+00,
+                                        -2.6675e+01, 9.1435e-01, 5.5950e+00,
                                         1.5020e-01, 3.7070e-01, 1.0860e-01,
                                         6.2970e-01
                                     ],
                                     [
-                                        -5.8098e+00, 2.0089e-01, -3.5409e+01,
+                                        -5.8098e+00, -2.0089e-01, 3.5409e+01,
                                         6.5650e-01, 6.2480e-01, 6.9540e-01,
                                         2.5380e-01
                                     ],
                                     [
-                                        -3.1309e+01, -1.9461e-01, -1.0901e+00,
+                                        -3.1309e+01, 1.9461e-01, 1.0901e+00,
                                         2.8030e-01, 2.5800e-02, 4.8960e-01,
                                         3.2690e-01
                                     ]])
@@ -181,6 +181,22 @@ def test_points_conversion():
                                                  Coord3DMode.CAM)
     assert torch.allclose(expected_tensor, convert_cam_points.tensor, 1e-4)
     assert torch.allclose(cam_point_tensor, convert_cam_points.tensor, 1e-4)
+
+    rt_mat_provided = torch.tensor([[0.99789, -0.012698, -0.063678],
+                                    [-0.012698, 0.92359, -0.38316],
+                                    [0.063678, 0.38316, 0.92148]])
+
+    depth_points_new = torch.cat([
+        depth_points.tensor[:, :3] @ rt_mat_provided.t(),
+        depth_points.tensor[:, 3:]
+    ],
+                                 dim=1)
+    cam_point_tensor_new = Coord3DMode.convert_point(
+        depth_points_new,
+        Coord3DMode.DEPTH,
+        Coord3DMode.CAM,
+        rt_mat=rt_mat_provided)
+    assert torch.allclose(expected_tensor, cam_point_tensor_new, 1e-4)
 
     convert_lidar_points = depth_points.convert_to(Coord3DMode.LIDAR)
     expected_tensor = torch.tensor([[
