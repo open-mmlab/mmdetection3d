@@ -179,7 +179,15 @@ def main():
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:
         val_dataset = copy.deepcopy(cfg.data.val)
-        val_dataset.pipeline = cfg.data.train.pipeline
+        # in case we use a dataset wrapper
+        if 'dataset' in cfg.data.train:
+            val_dataset.pipeline = cfg.data.train.dataset.pipeline
+        else:
+            val_dataset.pipeline = cfg.data.train.pipeline
+        # set test_mode=False here in deep copied config
+        # which do not affect AP/AR calculation later
+        # refer to https://mmdetection3d.readthedocs.io/en/latest/tutorials/customize_runtime.html#customize-workflow  # noqa
+        val_dataset.test_mode = False
         datasets.append(build_dataset(val_dataset))
     if cfg.checkpoint_config is not None:
         # save mmdet version, config file content and class names in
