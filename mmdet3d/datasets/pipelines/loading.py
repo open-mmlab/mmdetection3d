@@ -274,9 +274,11 @@ class NormalizePointsColor(object):
                 - points (np.ndarray): Points after color normalization.
         """
         points = results['points']
-        assert points.shape[1] >= 6,\
+        assert points.shape[1] >= 6, \
             f'Expect points have channel >=6, got {points.shape[1]}'
-        points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
+        if self.color_mean is not None:
+            points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean)
+        points[:, 3:6] = points[:, 3:6] / 255.0
         results['points'] = points
         return results
 
