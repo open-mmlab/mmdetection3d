@@ -222,6 +222,11 @@ if __name__ == '__main__':
                 sources=['src/ball_query.cpp'],
                 sources_cuda=['src/ball_query_cuda.cu']),
             make_cuda_ext(
+                name='knn_ext',
+                module='mmdet3d.ops.knn',
+                sources=['src/knn.cpp'],
+                sources_cuda=['src/knn_cuda.cu']),
+            make_cuda_ext(
                 name='group_points_ext',
                 module='mmdet3d.ops.group_points',
                 sources=['src/group_points.cpp'],
