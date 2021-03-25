@@ -118,6 +118,7 @@ def show_seg_result(points,
                     out_dir,
                     filename,
                     palette,
+                    ignore_index=None,
                     show=False):
     """Convert results into format that is directly readable for meshlab.
 
@@ -128,7 +129,9 @@ def show_seg_result(points,
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
         palette (np.ndarray): Mapping between class labels and colors.
-        show (bool): Visualize the results online.
+        ignore_index (int, optional): The label index to be ignored, e.g. \
+            unannotated points. Defaults to None.
+        show (bool, optional): Visualize the results online. Defaults to False.
     """
     '''
     # TODO: not sure how to draw colors online, maybe we need two frames?
@@ -142,6 +145,14 @@ def show_seg_result(points,
             vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
         vis.show()
     '''
+
+    # filter out ignored points
+    if gt_seg is not None and ignore_index is not None:
+        if points is not None:
+            points = points[gt_seg != ignore_index]
+        if pred_seg is not None:
+            pred_seg = pred_seg[gt_seg != ignore_index]
+        gt_seg = gt_seg[gt_seg != ignore_index]
 
     if gt_seg is not None:
         gt_seg_color = palette[gt_seg]
