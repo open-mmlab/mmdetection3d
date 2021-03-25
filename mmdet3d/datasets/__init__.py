@@ -15,6 +15,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalRotScaleTrans,
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
+from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
 __all__ = [

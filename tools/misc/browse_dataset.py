@@ -4,7 +4,7 @@ from os import path as osp
 
 from mmdet3d.core.bbox import Box3DMode, Coord3DMode
 from mmdet3d.core.visualizer.open3d_vis import Visualizer
-from mmdet3d.datasets import build_dataset
+from mmdet3d.datasets import build_dataset, get_loading_pipeline
 
 
 def parse_args():
@@ -42,16 +42,20 @@ def main():
         mkdir_or_exist(args.output_dir)
 
     cfg = Config.fromfile(args.config)
-    dataset = build_dataset(cfg.data.test)
+    cfg.train_pipeline = get_loading_pipeline(cfg.train_pipeline)
+    dataset = build_dataset(cfg.data.train)
+    # For RepeatDataset type, the infos are stored in dataset.dataset
+    dataset = dataset.dataset
+    data_infos = dataset.data_infos
 
-    for idx, data_info in enumerate(track_iter_progress(dataset.data_infos)):
+    for idx, data_info in enumerate(track_iter_progress(data_infos)):
         pts_path = data_info['point_cloud']['velodyne_path']
         file_name = osp.splitext(osp.basename(pts_path))[0]
         save_path = osp.join(args.output_dir,
                              f'{file_name}.png') if args.output_dir else None
 
-        example = dataset.prepare_test_data(idx)
-        points = example['points'][0]._data.numpy()
+        example = dataset.prepare_train_data(idx)
+        points = example['points']._data.numpy()
         points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                            Coord3DMode.DEPTH)
         gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d'].tensor
