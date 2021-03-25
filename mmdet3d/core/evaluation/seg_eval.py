@@ -91,7 +91,9 @@ def seg_eval(gt_labels,
     assert len(seg_preds) == len(gt_labels)
 
     # filter out ignored points
-    seg_preds_ = [pred[pred != ignore_index] for pred in seg_preds]
+    seg_preds_ = [
+        pred[gt != ignore_index] for pred, gt in zip(seg_preds, gt_labels)
+    ]
     gt_labels_ = [gt[gt != ignore_index] for gt in gt_labels]
 
     hist_list = []
