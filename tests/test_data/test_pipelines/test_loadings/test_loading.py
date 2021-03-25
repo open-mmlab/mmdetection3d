@@ -6,7 +6,8 @@ from os import path as osp
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.points import LiDARPoints
 from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
-                                        LoadPointsFromMultiSweeps)
+                                        LoadPointsFromMultiSweeps,
+                                        PointSegClassMapping)
 
 
 def test_load_points_from_indoor_file():
@@ -115,6 +116,43 @@ def test_load_annotations3D():
     assert scannet_gt_labels.shape == (27, )
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )
+
+
+def test_load_segmentation_mask():
+    # Test loading semantic segmentation mask on ScanNet dataset
+    scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
+    scannet_load_annotations3D = LoadAnnotations3D(
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True)
+    scannet_results = dict()
+    data_path = './tests/data/scannet'
+
+    # prepare input of loading pipeline
+    scannet_results['ann_info'] = dict()
+    scannet_results['ann_info']['pts_semantic_mask_path'] = osp.join(
+        data_path, scannet_info['pts_semantic_mask_path'])
+    scannet_results['pts_seg_fields'] = []
+
+    scannet_results = scannet_load_annotations3D(scannet_results)
+    scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
+    assert scannet_pts_semantic_mask.shape == (100, )
+
+    # Convert class_id to label and assign ignore_index
+    scannet_seg_class_mapping = \
+        PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
+                              24, 28, 33, 34, 36, 39))
+    scannet_results = scannet_seg_class_mapping(scannet_results)
+    scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
+
+    assert np.all(scannet_pts_semantic_mask == np.array([
+        13, 20, 1, 2, 6, 2, 13, 1, 13, 2, 0, 20, 5, 20, 2, 0, 1, 13, 0, 0, 0,
+        20, 6, 20, 13, 20, 2, 20, 20, 2, 16, 5, 13, 5, 13, 0, 20, 0, 0, 1, 7,
+        20, 20, 20, 20, 20, 20, 20, 0, 1, 2, 13, 16, 1, 1, 1, 6, 2, 12, 20, 3,
+        20, 20, 14, 1, 20, 2, 1, 7, 2, 0, 5, 20, 5, 20, 20, 3, 6, 5, 20, 0, 13,
+        12, 2, 20, 0, 0, 13, 20, 1, 20, 5, 3, 0, 13, 1, 2, 2, 2, 1
+    ]))
 
 
 def test_load_points_from_multi_sweeps():
