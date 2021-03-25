@@ -28,5 +28,5 @@ __all__ = [
     'LoadAnnotations3D', 'SUNRGBDDataset', 'ScanNetDataset',
     'ScanNetSegDataset', 'SemanticKITTIDataset', 'Custom3DDataset',
     'Custom3DSegDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
-    'BackgroundPointsFilter', 'VoxelBasedPointSampler'
+    'BackgroundPointsFilter', 'VoxelBasedPointSampler', 'get_loading_pipeline'
 ]
