@@ -110,3 +110,54 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         pred_bboxes[:, 6] *= -1
         _write_oriented_bbox(pred_bboxes,
                              osp.join(result_path, f'{filename}_pred.ply'))
+
+
+def show_seg_result(points,
+                    gt_seg,
+                    pred_seg,
+                    out_dir,
+                    filename,
+                    palette,
+                    show=False):
+    """Convert results into format that is directly readable for meshlab.
+
+    Args:
+        points (np.ndarray): Points.
+        gt_seg (np.ndarray): Ground truth segmentation mask.
+        pred_seg (np.ndarray): Predicted segmentation mask.
+        out_dir (str): Path of output directory
+        filename (str): Filename of the current frame.
+        palette (np.ndarray): Mapping between class labels and colors.
+        show (bool): Visualize the results online.
+    """
+    '''
+    # TODO: not sure how to draw colors online, maybe we need two frames?
+    from .open3d_vis import Visualizer
+
+    if show:
+        vis = Visualizer(points)
+        if pred_bboxes is not None:
+            vis.add_bboxes(bbox3d=pred_bboxes)
+        if gt_bboxes is not None:
+            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
+        vis.show()
+    '''
+
+    if gt_seg is not None:
+        gt_seg_color = palette[gt_seg]
+    if pred_seg is not None:
+        pred_seg_color = palette[pred_seg]
+
+    result_path = osp.join(out_dir, filename)
+    mmcv.mkdir_or_exist(result_path)
+
+    if points is not None:
+        _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
+
+    if gt_seg is not None:
+        gt_seg = np.concatenate([points[:, :3], gt_seg_color], axis=1)
+        _write_ply(gt_seg, osp.join(result_path, f'{filename}_gt.ply'))
+
+    if pred_seg is not None:
+        pred_seg = np.concatenate([points[:, :3], pred_seg_color], axis=1)
+        _write_ply(pred_seg, osp.join(result_path, f'{filename}_pred.ply'))
