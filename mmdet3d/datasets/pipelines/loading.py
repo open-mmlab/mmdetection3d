@@ -296,17 +296,18 @@ class LoadPointsFromFile(object):
     Load sunrgbd and scannet points from file.
 
     Args:
-        load_dim (int): The dimension of the loaded points.
-            Defaults to 6.
         coord_type (str): The type of coordinates of points cloud.
             Available options includes:
             - 'LIDAR': Points in LiDAR coordinates.
             - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
             - 'CAMERA': Points in camera coordinates.
+        load_dim (int): The dimension of the loaded points.
+            Defaults to 6.
         use_dim (list[int]): Which dimensions of the points to be used.
             Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
         shift_height (bool): Whether to use shifted height. Defaults to False.
+        use_color (bool): Whether to use color features. Defaults to False.
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
@@ -317,8 +318,10 @@ class LoadPointsFromFile(object):
                  load_dim=6,
                  use_dim=[0, 1, 2],
                  shift_height=False,
+                 use_color=False,
                  file_client_args=dict(backend='disk')):
         self.shift_height = shift_height
+        self.use_color = use_color
         if isinstance(use_dim, int):
             use_dim = list(range(use_dim))
         assert max(use_dim) < load_dim, \
@@ -375,8 +378,21 @@ class LoadPointsFromFile(object):
         if self.shift_height:
             floor_height = np.percentile(points[:, 2], 0.99)
             height = points[:, 2] - floor_height
-            points = np.concatenate([points, np.expand_dims(height, 1)], 1)
+            points = np.concatenate(
+                [points[:, :3],
+                 np.expand_dims(height, 1), points[:, 3:]], 1)
             attribute_dims = dict(height=3)
+
+        if self.use_color:
+            assert len(self.use_dim) >= 6
+            if attribute_dims is None:
+                attribute_dims = dict()
+            attribute_dims.update(
+                dict(color=[
+                    points.shape[1] - 3,
+                    points.shape[1] - 2,
+                    points.shape[1] - 1,
+                ]))
 
         points_class = get_points_type(self.coord_type)
         points = points_class(
@@ -389,7 +405,8 @@ class LoadPointsFromFile(object):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__ + '('
         repr_str += 'shift_height={}, '.format(self.shift_height)
-        repr_str += 'file_client_args={}), '.format(self.file_client_args)
+        repr_str += 'use_color={}, '.format(self.use_color)
+        repr_str += 'file_client_args={}, '.format(self.file_client_args)
         repr_str += 'load_dim={}, '.format(self.load_dim)
         repr_str += 'use_dim={})'.format(self.use_dim)
         return repr_str

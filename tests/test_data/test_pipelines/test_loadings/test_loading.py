@@ -36,10 +36,32 @@ def test_load_points_from_indoor_file():
     scannet_point_cloud = scannet_results['points'].tensor.numpy()
     repr_str = repr(scannet_load_data)
     expected_repr_str = 'LoadPointsFromFile(shift_height=True, ' \
-                        'file_client_args={\'backend\': \'disk\'}), ' \
+                        'use_color=False, ' \
+                        'file_client_args={\'backend\': \'disk\'}, ' \
                         'load_dim=6, use_dim=[0, 1, 2])'
     assert repr_str == expected_repr_str
     assert scannet_point_cloud.shape == (100, 4)
+
+    # test load point cloud with both shifted height and color
+    scannet_load_data = LoadPointsFromFile(
+        coord_type='DEPTH',
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5],
+        shift_height=True,
+        use_color=True)
+
+    scannet_results = dict()
+
+    scannet_results['pts_filename'] = osp.join(data_path,
+                                               scannet_info['pts_path'])
+    scannet_results = scannet_load_data(scannet_results)
+    scannet_point_cloud = scannet_results['points']
+    assert scannet_point_cloud.points_dim == 7
+    assert scannet_point_cloud.attribute_dims == dict(
+        height=3, color=[4, 5, 6])
+
+    scannet_point_cloud = scannet_point_cloud.tensor.numpy()
+    assert scannet_point_cloud.shape == (100, 7)
 
 
 def test_load_points_from_outdoor_file():
