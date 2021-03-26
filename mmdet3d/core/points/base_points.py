@@ -46,6 +46,13 @@ class BasePoints(object):
         """torch.Tensor: Coordinates of each point with size (N, 3)."""
         return self.tensor[:, :3]
 
+    @coord.setter
+    def coord(self, tensor):
+        """Set the coordinates of each point."""
+        if not isinstance(tensor, torch.Tensor):
+            tensor = self.tensor.new_tensor(tensor)
+        self.tensor[:, :3] = tensor
+
     @property
     def height(self):
         """torch.Tensor: A vector with height of each point."""
@@ -55,6 +62,17 @@ class BasePoints(object):
         else:
             return None
 
+    @height.setter
+    def height(self, tensor):
+        """Set the height of each point."""
+        if self.attribute_dims is not None and \
+                'height' in self.attribute_dims.keys():
+            if not isinstance(tensor, torch.Tensor):
+                tensor = self.tensor.new_tensor(tensor)
+            self.tensor[:, self.attribute_dims['height']] = tensor
+        else:
+            raise KeyError('point does not have height attribute')
+
     @property
     def color(self):
         """torch.Tensor: A vector with color of each point."""
@@ -63,6 +81,17 @@ class BasePoints(object):
             return self.tensor[:, self.attribute_dims['color']]
         else:
             return None
+
+    @color.setter
+    def color(self, tensor):
+        """Set the color of each point."""
+        if self.attribute_dims is not None and \
+                'color' in self.attribute_dims.keys():
+            if not isinstance(tensor, torch.Tensor):
+                tensor = self.tensor.new_tensor(tensor)
+            self.tensor[:, self.attribute_dims['color']] = tensor
+        else:
+            raise KeyError('point does not have color attribute')
 
     @property
     def shape(self):

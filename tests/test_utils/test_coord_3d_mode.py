@@ -231,9 +231,19 @@ def test_points_conversion():
     depth_points = DepthPoints(
         points_np,
         points_dim=7,
-        attribute_dims=dict(color=[3, 4, 5], height=6))
+        attribute_dims=dict(height=3, color=[4, 5, 6]))
     assert torch.all(depth_points[:, 3:].tensor == torch.tensor(points_np[:,
                                                                           3:]))
+
+    # test set and get function for BasePoint color and height
+    assert torch.allclose(depth_points.height,
+                          torch.tensor([0.6666, 0.1502, 0.6565, 0.2803]))
+    assert torch.allclose(
+        depth_points.color,
+        torch.tensor([[0.1956, 0.4974, 0.9409], [0.3707, 0.1086, 0.6297],
+                      [0.6248, 0.6954, 0.2538], [0.0258, 0.4896, 0.3269]]))
+    depth_points.height = np.random.rand(4)
+    depth_points.color = np.random.rand(4, 3)
 
 
 def test_boxes_conversion():
