@@ -227,6 +227,14 @@ def test_points_conversion():
     assert torch.allclose(lidar_point_tensor, convert_lidar_points.tensor,
                           1e-4)
 
+    # test BasePoint indexing
+    depth_points = DepthPoints(
+        points_np,
+        points_dim=7,
+        attribute_dims=dict(color=[3, 4, 5], height=6))
+    assert torch.all(depth_points[:, 3:].tensor == torch.tensor(points_np[:,
+                                                                          3:]))
+
 
 def test_boxes_conversion():
     # test CAM to LIDAR and DEPTH

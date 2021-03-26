@@ -233,8 +233,8 @@ class BasePoints(object):
         elif isinstance(item, tuple) and len(item) == 2:
             if isinstance(item[1], slice):
                 start = 0 if item[1].start is None else item[1].start
-                stop = self.tensor.shape[1] + \
-                    1 if item[1].stop is None else item[1].stop
+                stop = self.tensor.shape[1] if \
+                    item[1].stop is None else item[1].stop
                 step = 1 if item[1].step is None else item[1].step
                 item = list(item)
                 item[1] = list(range(start, stop, step))
@@ -246,9 +246,9 @@ class BasePoints(object):
             if self.attribute_dims is not None:
                 attribute_dims = self.attribute_dims.copy()
                 for key in self.attribute_dims.keys():
-                    cur_attribute_dim = attribute_dims[key]
-                    if isinstance(cur_attribute_dim, int):
-                        cur_attribute_dims = [cur_attribute_dim]
+                    cur_attribute_dims = attribute_dims[key]
+                    if isinstance(cur_attribute_dims, int):
+                        cur_attribute_dims = [cur_attribute_dims]
                     intersect_attr = list(
                         set(cur_attribute_dims).intersection(set(keep_dims)))
                     if len(intersect_attr) == 1:
