@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.datasets import ScanNetDataset
+from mmdet3d.datasets import ScanNetDataset, ScanNetSegDataset
 
 
 def test_getitem():
@@ -200,6 +200,221 @@ def test_show():
         [1.2058e-04, 2.3012e-03, 6.2324e-06, 6.6139e-06, 6.7965e-05])
     labels_3d = torch.tensor([0, 0, 0, 0, 0])
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
+    results = [result]
+    scannet_dataset.show(results, temp_dir, show=False)
+    pts_file_path = osp.join(temp_dir, 'scene0000_00',
+                             'scene0000_00_points.obj')
+    gt_file_path = osp.join(temp_dir, 'scene0000_00', 'scene0000_00_gt.ply')
+    pred_file_path = osp.join(temp_dir, 'scene0000_00',
+                              'scene0000_00_pred.ply')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+
+
+def test_seg_getitem():
+    np.random.seed(0)
+    root_path = './tests/data/scannet/'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
+                   'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'otherfurniture')
+    palette = [
+        [174, 199, 232],
+        [152, 223, 138],
+        [31, 119, 180],
+        [255, 187, 120],
+        [188, 189, 34],
+        [140, 86, 75],
+        [255, 152, 150],
+        [214, 39, 40],
+        [197, 176, 213],
+        [148, 103, 189],
+        [196, 156, 148],
+        [23, 190, 207],
+        [247, 182, 210],
+        [219, 219, 141],
+        [255, 127, 14],
+        [158, 218, 229],
+        [44, 160, 44],
+        [112, 128, 144],
+        [227, 119, 194],
+        [82, 84, 163],
+    ]
+    pipelines = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            use_color=True,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=False,
+            with_label_3d=False,
+            with_mask_3d=False,
+            with_seg_3d=True),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
+                           28, 33, 34, 36, 39)),
+        dict(
+            type='IndoorPatchPointSample',
+            num_points=5,
+            block_size=1.5,
+            sample_rate=1.0,
+            ignore_index=len(class_names),
+            use_normalized_xyz=True,
+            test_mode=False),
+        dict(type='NormalizePointsColor', color_mean=None),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D',
+            keys=['points', 'pts_semantic_mask'],
+            meta_keys=['file_name', 'sample_idx'])
+    ]
+
+    scannet_dataset = ScanNetSegDataset(
+        root_path,
+        ann_file,
+        pipelines,
+        classes=None,
+        palette=None,
+        modality=None,
+        test_mode=False,
+        ignore_index=None,
+        num_points=5,
+        room_idxs=None,
+        label_weight=None)
+
+    data = scannet_dataset[0]
+    points = data['points']._data
+    pts_semantic_mask = data['pts_semantic_mask']._data
+    file_name = data['img_metas']._data['file_name']
+    sample_idx = data['img_metas']._data['sample_idx']
+
+    assert file_name == './tests/data/scannet/points/scene0000_00.bin'
+    assert sample_idx == 'scene0000_00'
+    expected_points = torch.tensor([[
+        0.0000, 0.0000, 1.2427, 0.6118, 0.5529, 0.4471, -0.6462, -1.0046,
+        0.4280
+    ],
+                                    [
+                                        0.1553, -0.0074, 1.6077, 0.5882,
+                                        0.6157, 0.5569, -0.6001, -1.0068,
+                                        0.5537
+                                    ],
+                                    [
+                                        0.1518, 0.6016, 0.6548, 0.1490, 0.1059,
+                                        0.0431, -0.6012, -0.8309, 0.2255
+                                    ],
+                                    [
+                                        -0.7494, 0.1033, 0.6756, 0.5216,
+                                        0.4353, 0.3333, -0.8687, -0.9748,
+                                        0.2327
+                                    ],
+                                    [
+                                        -0.6836, -0.0203, 0.5884, 0.5765,
+                                        0.5020, 0.4510, -0.8491, -1.0105,
+                                        0.2027
+                                    ]])
+    expected_pts_semantic_mask = np.array([13, 13, 12, 2, 0])
+    original_classes = scannet_dataset.CLASSES
+    original_palette = scannet_dataset.PALETTE
+
+    assert scannet_dataset.CLASSES == class_names
+    assert scannet_dataset.ignore_index == 20
+    assert torch.allclose(points, expected_points, 1e-2)
+    assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
+    assert original_classes == class_names
+    assert original_palette == palette
+    assert np.all(scannet_dataset.room_idxs == np.array([0
+                                                         for _ in range(20)]))
+    assert np.allclose(
+        scannet_dataset.label_weight,
+        np.array([
+            3.02494893, 3.11824883, 3.02494893, 4.62974169, 5.48481495,
+            3.85805394, 4.40583308, 4.88052764, 5.48481495, 5.48481495,
+            5.48481495, 5.48481495, 4.88052764, 3.32654916, 5.16335789,
+            5.48481495, 4.88052764, 5.48481495, 5.48481495, 5.48481495
+        ]))
+
+    scannet_dataset = ScanNetSegDataset(
+        root_path, ann_file, pipeline=None, classes=['cabinet', 'chair'])
+
+    label_map = {i: 20 for i in range(41)}
+    label_map.update({3: 0, 5: 1})
+
+    assert scannet_dataset.CLASSES != original_classes
+    assert scannet_dataset.CLASSES == ['cabinet', 'chair']
+    assert scannet_dataset.PALETTE == [palette[2], palette[4]]
+    assert scannet_dataset.VALID_CLASS_IDS == [3, 5]
+    assert scannet_dataset.label_map == label_map
+    assert scannet_dataset.label2cat == {0: 'cabinet', 1: 'chair'}
+
+    # Test load classes from file
+    import tempfile
+    tmp_file = tempfile.NamedTemporaryFile()
+    with open(tmp_file.name, 'w') as f:
+        f.write('cabinet\nchair\n')
+
+    scannet_dataset = ScanNetSegDataset(
+        root_path, ann_file, pipeline=None, classes=tmp_file.name)
+    assert scannet_dataset.CLASSES != original_classes
+    assert scannet_dataset.CLASSES == ['cabinet', 'chair']
+    assert scannet_dataset.PALETTE == [palette[2], palette[4]]
+    assert scannet_dataset.VALID_CLASS_IDS == [3, 5]
+    assert scannet_dataset.label_map == label_map
+    assert scannet_dataset.label2cat == {0: 'cabinet', 1: 'chair'}
+
+    # test mode
+    scannet_dataset = ScanNetSegDataset(
+        root_path, ann_file, pipeline=None, test_mode=True)
+    assert np.all(scannet_dataset.room_idxs == np.array([0]))
+    assert scannet_dataset.label_weight is None
+
+
+def test_seg_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip()
+    root_path = './tests/data/scannet'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    scannet_dataset = ScanNetSegDataset(root_path, ann_file, test_mode=True)
+    results = []
+    pred_sem_mask = dict(
+        semantic_mask=torch.tensor([
+            13, 5, 1, 2, 6, 2, 13, 1, 14, 2, 0, 0, 5, 5, 3, 0, 1, 14, 0, 0, 0,
+            18, 6, 15, 13, 0, 2, 4, 0, 3, 16, 6, 13, 5, 13, 0, 0, 0, 0, 1, 7,
+            3, 19, 12, 8, 0, 11, 0, 0, 1, 2, 13, 17, 1, 1, 1, 6, 2, 13, 19, 4,
+            17, 0, 14, 1, 7, 2, 1, 7, 2, 0, 5, 17, 5, 0, 0, 3, 6, 5, 11, 1, 13,
+            13, 2, 3, 1, 0, 13, 19, 1, 14, 5, 3, 1, 13, 1, 2, 3, 2, 1
+        ]).long())
+    results.append(pred_sem_mask)
+    ret_dict = scannet_dataset.evaluate(results)
+    assert abs(ret_dict['miou'] - 0.5308) < 0.01
+    assert abs(ret_dict['acc'] - 0.8219) < 0.01
+    assert abs(ret_dict['acc_cls'] - 0.7649) < 0.01
+
+
+def test_seg_show():
+    import mmcv
+    import tempfile
+    from os import path as osp
+
+    temp_dir = tempfile.mkdtemp()
+    root_path = './tests/data/scannet'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    scannet_dataset = ScanNetSegDataset(root_path, ann_file)
+    result = dict(
+        semantic_mask=torch.tensor([
+            13, 5, 1, 2, 6, 2, 13, 1, 14, 2, 0, 0, 5, 5, 3, 0, 1, 14, 0, 0, 0,
+            18, 6, 15, 13, 0, 2, 4, 0, 3, 16, 6, 13, 5, 13, 0, 0, 0, 0, 1, 7,
+            3, 19, 12, 8, 0, 11, 0, 0, 1, 2, 13, 17, 1, 1, 1, 6, 2, 13, 19, 4,
+            17, 0, 14, 1, 7, 2, 1, 7, 2, 0, 5, 17, 5, 0, 0, 3, 6, 5, 11, 1, 13,
+            13, 2, 3, 1, 0, 13, 19, 1, 14, 5, 3, 1, 13, 1, 2, 3, 2, 1
+        ]).long())
     results = [result]
     scannet_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, 'scene0000_00',
