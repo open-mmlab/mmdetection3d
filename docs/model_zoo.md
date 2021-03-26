@@ -53,3 +53,7 @@ Please refer to [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/m
 ### SSN
 
 Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft dataset currently.
+
+### ImVoteNet
+
+Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvotenet) for details. We provide VoteNet baselines on SUNRGBD dataset.
