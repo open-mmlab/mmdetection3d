@@ -74,13 +74,13 @@ def test_indoor_seg_sample():
                               24, 28, 33, 34, 36, 39))
     scannet_results = dict()
     scannet_points = np.fromfile(
-        '../../data/scannet/points/scene0000_00.bin',
+        './tests/data/scannet/points/scene0000_00.bin',
         dtype=np.float32).reshape((-1, 6))
     scannet_results['points'] = DepthPoints(
         scannet_points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
 
     scannet_pts_semantic_mask = np.fromfile(
-        '../../data/scannet/semantic_mask/scene0000_00.bin', dtype=np.long)
+        './tests/data/scannet/semantic_mask/scene0000_00.bin', dtype=np.long)
     scannet_results['pts_semantic_mask'] = scannet_pts_semantic_mask
 
     scannet_results = scannet_seg_class_mapping(scannet_results)
@@ -89,8 +89,8 @@ def test_indoor_seg_sample():
     scannet_semantic_labels_result = scannet_results['pts_semantic_mask']
 
     # manually constructed sampled points
-    scannet_choices = np.array([21448, 49851, 37907, 44739, 32031])
-    scannet_center = np.array([2.411763, 0.9092524, 0.498775])
+    scannet_choices = np.array([87, 34, 58, 9, 18])
+    scannet_center = np.array([-2.1772466, -3.4789145, 1.242711])
     scannet_center[2] = 0.0
     scannet_coord_max = np.amax(scannet_points[:, :3], axis=0)
     scannet_input_points = np.concatenate([
@@ -104,9 +104,9 @@ def test_indoor_seg_sample():
     assert scannet_points_result.attribute_dims == dict(
         color=[3, 4, 5], normalized_coord=[6, 7, 8])
     scannet_points_result = scannet_points_result.tensor.numpy()
-    assert np.allclose(scannet_input_points, scannet_points_result)
+    assert np.allclose(scannet_input_points, scannet_points_result, atol=1e-6)
     assert np.all(
-        np.array([2, 19, 14, 0, 14]) == scannet_semantic_labels_result)
+        np.array([13, 13, 12, 2, 0]) == scannet_semantic_labels_result)
 
     repr_str = repr(scannet_patch_sample_points)
     expected_repr_str = 'IndoorPatchPointSample(num_points=5, ' \
@@ -120,10 +120,10 @@ def test_indoor_seg_sample():
     # test the test time behavior of IndoorPatchPointSample
     np.random.seed(0)
     scannet_patch_sample_points = IndoorPatchPointSample(
-        5, 6.0, 0.5, 20, True, test_mode=True)
+        5, 6.5, 0.5, None, True, test_mode=True)
     scannet_results = dict()
     scannet_points = np.fromfile(
-        '../../data/scannet/points/scene0000_00.bin',
+        './tests/data/scannet/points/scene0000_00.bin',
         dtype=np.float32).reshape((-1, 6))[:12]
     scannet_results['points'] = DepthPoints(
         scannet_points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
@@ -131,33 +131,32 @@ def test_indoor_seg_sample():
     scannet_results = scannet_patch_sample_points(scannet_results)
     scannet_points_result = scannet_results['points'].tensor.numpy()
 
-    scannet_choices = np.array(
-        [4, 6, 1, 3, 11, 10, 0, 7, 9, 5, 8, 1, 11, 2, 9, 7, 10, 0, 5, 6])
+    scannet_choices = np.array([[4, 6, 2, 3, 11, 9, 0, 7, 8, 5],
+                                [7, 3, 7, 4, 8, 9, 2, 5, 6, 11],
+                                [1, 11, 4, 5, 2, 7, 3, 8, 4, 0],
+                                [1, 4, 3, 4, 7, 8, 10, 2, 11, 5]])
     scannet_coord_max = np.amax(scannet_points[:, :3], axis=0)
-    scannet_centers = np.array([[0.38149548, 0.06091022, 0.0],
-                                [0.38149548, 0.40726018, 0.0]])
-    scannet_input_points1 = np.concatenate([
-        scannet_points[scannet_choices[:10], :3] - scannet_centers[0],
-        scannet_points[scannet_choices[:10], 3:],
-        scannet_points[scannet_choices[:10], :3] / scannet_coord_max
+    scannet_centers = np.array([[-0.22417498, -0.24210405, 0.0],
+                                [-0.18622923, -0.24210405, 0.0],
+                                [-0.22417498, 0.16635966, 0.0],
+                                [-0.18622923, 0.16635966, 0.0]])
+    scannet_input_points = np.concatenate([
+        np.concatenate([
+            scannet_points[scannet_choices[i], :3] - scannet_centers[i],
+            scannet_points[scannet_choices[i], 3:],
+            scannet_points[scannet_choices[i], :3] / scannet_coord_max
+        ],
+                       axis=1) for i in range(4)
     ],
-                                           axis=1)
-    scannet_input_points2 = np.concatenate([
-        scannet_points[scannet_choices[10:], :3] - scannet_centers[1],
-        scannet_points[scannet_choices[10:], 3:],
-        scannet_points[scannet_choices[10:], :3] / scannet_coord_max
-    ],
-                                           axis=1)
-    scannet_input_points = np.concatenate(
-        [scannet_input_points1, scannet_input_points2], axis=0)
+                                          axis=0)
 
-    assert np.allclose(scannet_input_points, scannet_points_result)
+    assert np.allclose(scannet_input_points, scannet_points_result, atol=1e-6)
 
     repr_str = repr(scannet_patch_sample_points)
     expected_repr_str = 'IndoorPatchPointSample(num_points=5, ' \
-                        'block_size=6.0, ' \
+                        'block_size=6.5, ' \
                         'sample_rate=0.5, ' \
-                        'ignore_index=20, ' \
+                        'ignore_index=None, ' \
                         'use_normalized_xyz=True, ' \
                         'test_mode=True)'
     assert repr_str == expected_repr_str
