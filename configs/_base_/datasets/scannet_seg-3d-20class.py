@@ -10,6 +10,7 @@ train_pipeline = [
         type='LoadPointsFromFile',
         coord_type='DEPTH',
         shift_height=False,
+        use_color=True,
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5]),
     dict(
@@ -26,7 +27,10 @@ train_pipeline = [
         type='IndoorPatchPointSample',
         num_points=8192,
         block_size=1.5,
-        neg_cls=len(class_names)),
+        sample_rate=1.0,
+        ignore_index=len(class_names),
+        use_normalized_xyz=True,
+        test_mode=False),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
@@ -36,9 +40,16 @@ test_pipeline = [
         type='LoadPointsFromFile',
         coord_type='DEPTH',
         shift_height=False,
+        use_color=True,
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5]),
-    # TODO: sliding window sampler for patch testing
+    dict(
+        type='IndoorPatchPointSample',
+        num_points=8192,
+        block_size=1.5,
+        sample_rate=0.5,
+        use_normalized_xyz=True,
+        test_mode=True),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points'])
