@@ -65,7 +65,7 @@ To see the points, detection results and ground truth of SUNRGBD, ScanNet or KIT
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 
-After running this command, you will obtain **_\_points.ob, _**\_pred.ply files and \*\*\*\_gt.ply in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. You need to set `show=False` while running test in remote server withou GUI.
+After running this command, you will obtain **_\_points.obj, _**\_pred.ply files and \*\*\*\_gt.ply in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. You need to set `show=False` while running test in remote server withou GUI.
 
 As for offline visualization, you will have two options.
 To visualize the results with `Open3D` backend, you can run the following command
@@ -82,10 +82,10 @@ Or you can use 3D visualization software such as the [MeshLab](http://www.meshla
 
 # Model Complexity
 
-You can use `tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
+You can use `tools/analysis_tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
 
 ```shell
-python tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
+python tools/analysis_tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
 ```
 
 You will get the results like this.
