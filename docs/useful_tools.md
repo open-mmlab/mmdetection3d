@@ -107,11 +107,11 @@ Params: 37.74 M
 
 ## RegNet model to MMDetection
 
-`tools/regnet2mmdet.py` convert keys in pycls pretrained RegNet models to
+`tools/model_converters/regnet2mmdet.py` convert keys in pycls pretrained RegNet models to
  MMDetection style.
 
 ```shell
-python tools/regnet2mmdet.py ${SRC} ${DST} [-h]
+python tools/model_converters/regnet2mmdet.py ${SRC} ${DST} [-h]
 ```
 
 ## Detectron ResNet to Pytorch
