@@ -1,7 +1,9 @@
 from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
                                         LoadMultiViewImageFromFiles,
                                         LoadPointsFromFile,
-                                        LoadPointsFromMultiSweeps)
+                                        LoadPointsFromMultiSweeps,
+                                        DefaultFormatBundle3D,
+                                        Collect3D)
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadImageFromFile
 
@@ -43,6 +45,9 @@ def get_loading_pipeline(pipeline):
         ...    dict(type='LoadImageFromFile'),
         ...    dict(type='LoadAnnotations3D',
         ...         with_bbox=True, with_label_3d=True),
+        ...    dict(type='DefaultFormatBundle3D', class_names=class_names),
+        ...    dict(type='Collect3D',
+        ...         keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d'])
         ...    ]
         >>> assert expected_pipelines ==\
         ...        get_loading_pipeline(pipelines)
@@ -53,7 +58,8 @@ def get_loading_pipeline(pipeline):
         # TODO：use more elegant way to distinguish loading modules
         if obj_cls is not None and obj_cls in (
                 LoadImageFromFile, LoadPointsFromFile, LoadAnnotations3D,
-                LoadMultiViewImageFromFiles, LoadPointsFromMultiSweeps):
+                LoadMultiViewImageFromFiles, LoadPointsFromMultiSweeps,
+                DefaultFormatBundle3D, Collect3D):
             loading_pipeline_cfg.append(cfg)
     assert len(loading_pipeline_cfg) > 0, \
         'The data pipeline in your config file must include ' \

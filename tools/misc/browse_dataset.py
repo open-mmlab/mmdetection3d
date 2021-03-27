@@ -14,7 +14,7 @@ def parse_args():
         '--skip-type',
         type=str,
         nargs='+',
-        default=['DefaultFormatBundle', 'Normalize', 'Collect'],
+        default=['Normalize'],
         help='skip some useless pipeline')
     parser.add_argument(
         '--output-dir',
@@ -34,6 +34,24 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def retrieve_data_cfg(config_path, skip_type, cfg_options):
+    cfg = Config.fromfile(config_path)
+    if cfg_options is not None:
+        cfg.merge_from_dict(cfg_options)
+    # import modules from string list.
+    if cfg.get('custom_imports', None):
+        from mmcv.utils import import_modules_from_strings
+        import_modules_from_strings(**cfg['custom_imports'])
+    if cfg.data.train['type'] == 'RepeatDataset':
+        train_data_cfg = cfg.data.train.dataset
+    else:
+        train_data_cfg = cfg.data.train
+    train_data_cfg['pipeline'] = [
+        x for x in train_data_cfg.pipeline if x['type'] not in skip_type
+    ]
+
+    return cfg
+
 
 def main():
     args = parse_args()
@@ -41,11 +59,15 @@ def main():
     if args.output_dir is not None:
         mkdir_or_exist(args.output_dir)
 
-    cfg = Config.fromfile(args.config)
-    cfg.train_pipeline = get_loading_pipeline(cfg.train_pipeline)
+    cfg = retrieve_data_cfg(args.config, args.skip_type, args.cfg_options)
+    if cfg.data.train['type'] == 'RepeatDataset':
+        cfg.data.train.dataset['pipeline'] = get_loading_pipeline(cfg.train_pipeline)
+    else:
+        cfg.data.train['pipeline'] = get_loading_pipeline(cfg.train_pipeline)
     dataset = build_dataset(cfg.data.train)
     # For RepeatDataset type, the infos are stored in dataset.dataset
-    dataset = dataset.dataset
+    if cfg.data.train['type'] == 'RepeatDataset':
+        dataset = dataset.dataset
     data_infos = dataset.data_infos
 
     for idx, data_info in enumerate(track_iter_progress(data_infos)):
@@ -63,7 +85,7 @@ def main():
             gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
                                           Box3DMode.DEPTH)
 
-        vis = Visualizer(points)
+        vis = Visualizer(points, save_path='./show.png')
         vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
 
         vis.show(save_path)
