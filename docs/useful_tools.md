@@ -125,7 +125,7 @@ python tools/detectron2pytorch.py ${SRC} ${DST} ${DEPTH} [-h]
 
 ## Prepare a model for publishing
 
-`tools/publish_model.py` helps users to prepare their model for publishing.
+`tools/model_converters/publish_model.py` helps users to prepare their model for publishing.
 
 Before you upload a model to AWS, you may want to
 
@@ -135,13 +135,13 @@ Before you upload a model to AWS, you may want to
  filename.
 
 ```shell
-python tools/publish_model.py ${INPUT_FILENAME} ${OUTPUT_FILENAME}
+python tools/model_converters/publish_model.py ${INPUT_FILENAME} ${OUTPUT_FILENAME}
 ```
 
 E.g.,
 
 ```shell
-python tools/publish_model.py work_dirs/faster_rcnn/latest.pth faster_rcnn_r50_fpn_1x_20190801.pth
+python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth faster_rcnn_r50_fpn_1x_20190801.pth
 ```
 
 The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`.
