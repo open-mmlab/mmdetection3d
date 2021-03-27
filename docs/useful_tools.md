@@ -68,7 +68,7 @@ After running this command, you will obtain ***_points.ob, ***_pred.ply files an
 As for offline visualization, you will have two options.
 To visualize the results with `Open3D` backend, you can run the following command
 ```bash
-python tools/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}'
+python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}'
 ```
 ![Open3D_visualization](../resources/open3d_visual.gif)
 
@@ -169,9 +169,9 @@ More details could be referred to the [doc](https://mmdetection3d.readthedocs.io
 
 ## Print the entire config
 
-`tools/print_config.py` prints the whole config verbatim, expanding all its
+`tools/misc/print_config.py` prints the whole config verbatim, expanding all its
  imports.
 
 ```shell
-python tools/print_config.py ${CONFIG} [-h] [--options ${OPTIONS [OPTIONS...]}]
+python tools/misc/print_config.py ${CONFIG} [-h] [--options ${OPTIONS [OPTIONS...]}]
 ```
