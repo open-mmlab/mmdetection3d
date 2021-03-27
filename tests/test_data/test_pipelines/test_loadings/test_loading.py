@@ -100,7 +100,7 @@ def test_load_annotations3D():
 
     scannet_results = scannet_load_annotations3D(scannet_results)
     scannet_gt_boxes = scannet_results['gt_bboxes_3d']
-    scannet_gt_lbaels = scannet_results['gt_labels_3d']
+    scannet_gt_labels = scannet_results['gt_labels_3d']
 
     scannet_pts_instance_mask = scannet_results['pts_instance_mask']
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
@@ -112,7 +112,7 @@ def test_load_annotations3D():
                         'with_seg=False,     poly2mask=True)'
     assert repr_str == expected_repr_str
     assert scannet_gt_boxes.tensor.shape == (27, 7)
-    assert scannet_gt_lbaels.shape == (27, )
+    assert scannet_gt_labels.shape == (27, )
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )
 
