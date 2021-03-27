@@ -34,6 +34,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def retrieve_data_cfg(config_path, skip_type, cfg_options):
     cfg = Config.fromfile(config_path)
     if cfg_options is not None:
@@ -61,7 +62,8 @@ def main():
 
     cfg = retrieve_data_cfg(args.config, args.skip_type, args.cfg_options)
     if cfg.data.train['type'] == 'RepeatDataset':
-        cfg.data.train.dataset['pipeline'] = get_loading_pipeline(cfg.train_pipeline)
+        cfg.data.train.dataset['pipeline'] = get_loading_pipeline(
+            cfg.train_pipeline)
     else:
         cfg.data.train['pipeline'] = get_loading_pipeline(cfg.train_pipeline)
     dataset = build_dataset(cfg.data.train)

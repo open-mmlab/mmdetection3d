@@ -1,9 +1,8 @@
-from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
+from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
+                                        LoadAnnotations3D,
                                         LoadMultiViewImageFromFiles,
                                         LoadPointsFromFile,
-                                        LoadPointsFromMultiSweeps,
-                                        DefaultFormatBundle3D,
-                                        Collect3D)
+                                        LoadPointsFromMultiSweeps)
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadImageFromFile
 
