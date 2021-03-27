@@ -32,7 +32,7 @@ We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRG
 **Notice**: If your current mmdetection3d version >= 0.6.0, and you are using the checkpoints downloaded from the above links or using checkpoints trained with mmdetection3d version < 0.6.0, the checkpoints have to be first converted via [tools/model_converters/convert_votenet_checkpoints.py](../../tools/model_converters/convert_votenet_checkpoints.py):
 
 ```
-python ./tools/convert_votenet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=${NEW_CHECKPOINT_PATH}
+python ./tools/model_converters/convert_votenet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=${NEW_CHECKPOINT_PATH}
 ```
 
 Then you can use the converted checkpoints following [getting_started.md](../../docs/getting_started.md).
