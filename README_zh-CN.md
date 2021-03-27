@@ -120,7 +120,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ```latex
 @misc{mmdet3d2020,
-    title={{MMDetection3D: OpenMMLab} next-generation platform for general 3D object detection},
+    title={{MMDetection3D: OpenMMLab} next-generation platform for general {3D} object detection},
     author={MMDetection3D Contributors},
     howpublished = {\url{https://github.com/open-mmlab/mmdetection3d}},
     year={2020}
