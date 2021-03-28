@@ -67,7 +67,7 @@ def get_acc_cls(hist):
 
 
 def seg_eval(gt_labels, seg_preds, label2cat, logger=None):
-    """Semantic Segmentation  Evaluation.
+    """Semantic Segmentation Evaluation.
 
      Evaluate the result of the Semantic Segmentation.
 
