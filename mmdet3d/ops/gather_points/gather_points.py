@@ -12,28 +12,28 @@ class GatherPoints(Function):
 
     @staticmethod
     def forward(ctx, features: torch.Tensor,
-                indicies: torch.Tensor) -> torch.Tensor:
+                indices: torch.Tensor) -> torch.Tensor:
         """forward.
 
         Args:
             features (Tensor): (B, C, N) features to gather.
-            indicies (Tensor): (B, M) where M is the number of points.
+            indices (Tensor): (B, M) where M is the number of points.
 
         Returns:
             Tensor: (B, C, M) where M is the number of points.
         """
         assert features.is_contiguous()
-        assert indicies.is_contiguous()
+        assert indices.is_contiguous()
 
-        B, npoint = indicies.size()
+        B, npoint = indices.size()
         _, C, N = features.size()
         output = torch.cuda.FloatTensor(B, C, npoint)
 
         gather_points_ext.gather_points_wrapper(B, C, N, npoint, features,
-                                                indicies, output)
+                                                indices, output)
 
-        ctx.for_backwards = (indicies, C, N)
-        ctx.mark_non_differentiable(indicies)
+        ctx.for_backwards = (indices, C, N)
+        ctx.mark_non_differentiable(indices)
         return output
 
     @staticmethod

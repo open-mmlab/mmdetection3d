@@ -1,5 +1,31 @@
 ## Changelog
 
+### v0.11.0 (1/3/2021)
+
+#### Highlights
+
+- Support more friendly visualization interfaces based on open3d
+- Support a faster and more memory-efficient implementation of DynamicScatter
+- Refactor unit tests and details of configs
+
+#### Bug Fixes
+
+- Fix an unsupported bias setting in the unit test for centerpoint head (#304)
+- Fix errors due to typos in the centerpoint head (#308)
+- Fix a minor bug in [points_in_boxes.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) when tensors are not in the same device. (#317)
+- Fix warning of deprecated usages of nonzero during training with pytorch 1.6 (#330)
+
+#### New Features
+
+- Support new visualization methods based on open3d (#284, #323)
+
+#### Improvements
+
+- Refactor unit tests (#303)
+- Move the key `train_cfg` and `test_cfg` into the model configs (#307)
+- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md). (#310, #316)
+- Support a faster and more memory-efficient implementation of DynamicScatter (#318, #326)
+
 ### v0.10.0 (1/2/2021)
 
 #### Highlights
@@ -66,7 +92,7 @@
 
 #### Improvements
 
-- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#166)
+- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#205)
 - Add model zoo statistics and polish the documentation. (#201)
 
 ### v0.7.0 (1/11/2020)

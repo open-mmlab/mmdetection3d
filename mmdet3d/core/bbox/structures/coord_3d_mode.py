@@ -182,7 +182,7 @@ class Coord3DMode(IntEnum):
         """Convert points from `src` mode to `dst` mode.
 
         Args:
-            box (tuple | list | np.dnarray |
+            point (tuple | list | np.dnarray |
                 torch.Tensor | BasePoints):
                 Can be a k-tuple, k-list or an Nxk array/tensor.
             src (:obj:`CoordMode`): The src Point mode.
@@ -218,17 +218,25 @@ class Coord3DMode(IntEnum):
                 arr = point.clone()
 
         # convert point from `src` mode to `dst` mode.
-        if rt_mat is not None:
-            if not isinstance(rt_mat, torch.Tensor):
-                rt_mat = arr.new_tensor(rt_mat)
+        # TODO: LIDAR
+        # only implemented provided Rt matrix in cam-depth conversion
         if src == Coord3DMode.LIDAR and dst == Coord3DMode.CAM:
             rt_mat = arr.new_tensor([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
         elif src == Coord3DMode.CAM and dst == Coord3DMode.LIDAR:
             rt_mat = arr.new_tensor([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
         elif src == Coord3DMode.DEPTH and dst == Coord3DMode.CAM:
-            rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
+            if rt_mat is None:
+                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+            else:
+                rt_mat = rt_mat.new_tensor(
+                    [[1, 0, 0], [0, 0, -1], [0, 1, 0]]) @ \
+                    rt_mat.transpose(1, 0)
         elif src == Coord3DMode.CAM and dst == Coord3DMode.DEPTH:
-            rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+            if rt_mat is None:
+                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
+            else:
+                rt_mat = rt_mat @ rt_mat.new_tensor([[1, 0, 0], [0, 0, 1],
+                                                     [0, -1, 0]])
         elif src == Coord3DMode.LIDAR and dst == Coord3DMode.DEPTH:
             rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
         elif src == Coord3DMode.DEPTH and dst == Coord3DMode.LIDAR:
@@ -245,7 +253,7 @@ class Coord3DMode(IntEnum):
         else:
             xyz = arr[:, :3] @ rt_mat.t()
 
-        remains = arr[..., 3:]
+        remains = arr[:, 3:]
         arr = torch.cat([xyz[:, :3], remains], dim=-1)
 
         # convert arr to the original type
