@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7]
-        torch: [1.5.0+cu101, 1.6.0+cu101]
+        torch: [1.5.0+cu101, 1.6.0+cu101, 1.7.0+cu101]
         include:
           - torch: 1.5.0+cu101
             torchvision: 0.6.0+cu101
@@ -47,6 +47,10 @@ jobs:
           - torch: 1.6.0+cu101
             mmcv: 1.6.0+cu101
             torchvision: 0.7.0+cu101
+            cuda_arch: "7.0"
+          - torch: 1.7.0+cu101
+            mmcv: 1.7.0+cu101
+            torchvision: 0.8.0+cu101
             cuda_arch: "7.0"
 
     steps:
