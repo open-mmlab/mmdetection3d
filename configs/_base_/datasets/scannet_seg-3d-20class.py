@@ -1,3 +1,5 @@
+import numpy as np
+
 # dataset settings
 dataset_type = 'ScanNetSegDataset'
 data_root = './data/scannet/'
@@ -66,11 +68,11 @@ data = dict(
             data_root=data_root,
             ann_file=data_root + 'scannet_infos_train.pkl',
             pipeline=train_pipeline,
-            filter_empty_gt=False,
             classes=class_names,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')),
+            test_mode=False,
+            ignore_index=len(class_names),
+            num_points=8192,
+            label_weight_func=lambda x: 1.0 / np.log(1.2 + x))),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -78,7 +80,8 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        box_type_3d='Depth'),
+        ignore_index=len(class_names),
+        num_points=8192),
     test=dict(
         type=dataset_type,
         data_root=data_root,
@@ -86,4 +89,5 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        box_type_3d='Depth'))
+        ignore_index=len(class_names),
+        num_points=8192))

@@ -212,7 +212,8 @@ class ScanNetSegDataset(Custom3DDataset):
                  ignore_index=None,
                  num_points=8192,
                  room_idxs=None,
-                 label_weight=None):
+                 label_weight=None,
+                 label_weight_func=None):
 
         self.data_root = data_root
         self.ann_file = ann_file
@@ -220,6 +221,7 @@ class ScanNetSegDataset(Custom3DDataset):
         self.modality = modality
         self.filter_empty_gt = False
         self.box_type_3d, self.box_mode_3d = get_box_type('depth')
+        self.label_weight_func = label_weight_func
 
         self.data_infos = self.load_annotations(self.ann_file)
 
@@ -369,7 +371,7 @@ class ScanNetSegDataset(Custom3DDataset):
             if isinstance(room_idxs, str):
                 room_idxs = np.load(room_idxs).astype(np.int32)
             if isinstance(label_weight, str):
-                label_weight = np.load(label_weight)
+                label_weight = np.load(label_weight).astype(np.float32)
             return room_idxs, label_weight
 
         num_classes = len(self.CLASSES)
@@ -390,9 +392,12 @@ class ScanNetSegDataset(Custom3DDataset):
             room_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
 
         # calculate label weight, adopted from PointNet++
-        label_weight = label_weight[:-1].astype(np.float32)
-        label_weight = label_weight / label_weight.sum()
-        label_weight = 1. / np.log(1.2 + label_weight)
+        if self.label_weight_func is None:
+            label_weight = np.ones(num_classes, dtype=np.float32)
+        else:
+            label_weight = label_weight[:-1].astype(np.float32)
+            label_weight = label_weight / label_weight.sum()
+            label_weight = self.label_weight_func(label_weight)
 
         return np.array(room_idxs), label_weight
 
