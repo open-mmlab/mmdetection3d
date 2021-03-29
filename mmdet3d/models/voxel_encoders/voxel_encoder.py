@@ -163,7 +163,7 @@ class DynamicVFE(nn.Module):
                 nn.Sequential(
                     nn.Linear(in_filters, out_filters, bias=False), norm_layer,
                     nn.ReLU(inplace=True)))
-            self.vfe_layers = nn.ModuleList(vfe_layers)
+        self.vfe_layers = nn.ModuleList(vfe_layers)
         self.num_vfe = len(vfe_layers)
         self.vfe_scatter = DynamicScatter(voxel_size, point_cloud_range,
                                           (mode != 'max'))
