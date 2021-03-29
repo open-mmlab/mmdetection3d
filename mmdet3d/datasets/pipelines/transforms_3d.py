@@ -907,7 +907,10 @@ class IndoorPatchPointSample(object):
             results['points'] = points
             return results
 
-        pts_semantic_mask = results['pts_semantic_mask']
+        pts_semantic_mask = results.get('pts_semantic_mask', None)
+        if pts_semantic_mask is None:
+            raise NotImplementedError(
+                'semantic mask should be provided in training and evaluation')
 
         points, choices = self._patch_points_sampling(points,
                                                       pts_semantic_mask)
