@@ -92,7 +92,13 @@ To browse the KITTI directly without inference, you can run the following comman
 python tools/misc/browse_dataset.py ${CONFIG_FILE} --output-dir ${OUTPUT_DIR}
 ```
 
-Sample config can be found in `configs/_base_/visualization/kitti-3d-3class.py`.
+Sample config can be found in `configs/_base_/datasets/` folder.
+
+E.g.,
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py
+```
 
 **Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing _ESC_ in open3d window.
 

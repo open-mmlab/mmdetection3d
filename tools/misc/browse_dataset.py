@@ -66,7 +66,8 @@ def main():
             cfg.train_pipeline)
     else:
         cfg.data.train['pipeline'] = get_loading_pipeline(cfg.train_pipeline)
-    dataset = build_dataset(cfg.data.train)
+    dataset = build_dataset(
+        cfg.data.train, default_args=dict(filter_empty_gt=False))
     # For RepeatDataset type, the infos are stored in dataset.dataset
     if cfg.data.train['type'] == 'RepeatDataset':
         dataset = dataset.dataset
