@@ -8,14 +8,14 @@ class CameraPoints(BasePoints):
         tensor (torch.Tensor | np.ndarray | list): a N x points_dim matrix.
         points_dim (int): Number of the dimension of a point.
             Each row is (x, y, z). Default to 3.
-        attribute_dims (dict): Dictinory to indicate the meaning of extra
+        attribute_dims (dict): Dictionary to indicate the meaning of extra
             dimension. Default to None.
 
     Attributes:
         tensor (torch.Tensor): Float matrix of N x points_dim.
         points_dim (int): Integer indicating the dimension of a point.
             Each row is (x, y, z, ...).
-        attribute_dims (bool): Dictinory to indicate the meaning of extra
+        attribute_dims (bool): Dictionary to indicate the meaning of extra
             dimension. Default to None.
         rotation_axis (int): Default rotation axis for points rotation.
     """

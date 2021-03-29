@@ -32,6 +32,9 @@ class ThreeNN(Function):
         idx = torch.cuda.IntTensor(B, N, 3)
 
         interpolate_ext.three_nn_wrapper(B, N, m, target, source, dist2, idx)
+
+        ctx.mark_non_differentiable(idx)
+
         return torch.sqrt(dist2), idx
 
     @staticmethod

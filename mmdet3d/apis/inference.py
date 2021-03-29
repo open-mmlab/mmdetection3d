@@ -11,6 +11,22 @@ from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_detector
 
 
+def convert_SyncBN(config):
+    """Convert config's naiveSyncBN to BN.
+
+    Args:
+         config (str or :obj:`mmcv.Config`): Config file path or the config
+            object.
+    """
+    if isinstance(config, dict):
+        for item in config:
+            if item == 'norm_cfg':
+                config[item]['type'] = config[item]['type']. \
+                                    replace('naiveSyncBN', 'BN')
+            else:
+                convert_SyncBN(config[item])
+
+
 def init_detector(config, checkpoint=None, device='cuda:0'):
     """Initialize a detector from config file.
 
@@ -30,6 +46,7 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
         raise TypeError('config must be a filename or Config object, '
                         f'but got {type(config)}')
     config.model.pretrained = None
+    convert_SyncBN(config.model)
     config.model.train_cfg = None
     model = build_detector(config.model, test_cfg=config.get('test_cfg'))
     if checkpoint is not None:
@@ -64,6 +81,9 @@ def inference_detector(model, pcd):
         pts_filename=pcd,
         box_type_3d=box_type_3d,
         box_mode_3d=box_mode_3d,
+        sweeps=[],
+        # set timestamp = 0
+        timestamp=[0],
         img_fields=[],
         bbox3d_fields=[],
         pts_mask_fields=[],
@@ -100,7 +120,10 @@ def show_result_meshlab(data, result, out_dir):
 
     assert out_dir is not None, 'Expect out_dir, got none.'
 
-    pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
+    if 'pts_bbox' in result[0].keys():
+        pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
+    else:
+        pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
     # for now we convert points into depth mode
     if data['img_metas'][0][0]['box_mode_3d'] != Box3DMode.DEPTH:
         points = points[..., [1, 0, 2]]
@@ -108,7 +131,5 @@ def show_result_meshlab(data, result, out_dir):
         pred_bboxes = Box3DMode.convert(pred_bboxes,
                                         data['img_metas'][0][0]['box_mode_3d'],
                                         Box3DMode.DEPTH)
-        pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-    else:
-        pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-    show_result(points, None, pred_bboxes, out_dir, file_name)
+    show_result(points, None, pred_bboxes, out_dir, file_name, show=False)
+    return out_dir, file_name

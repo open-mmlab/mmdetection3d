@@ -111,8 +111,9 @@ class SUNRGBDData(object):
         calib_filepath = osp.join(self.calib_dir, f'{idx:06d}.txt')
         lines = [line.rstrip() for line in open(calib_filepath)]
         Rt = np.array([float(x) for x in lines[0].split(' ')])
-        Rt = np.reshape(Rt, (3, 3), order='F')
+        Rt = np.reshape(Rt, (3, 3), order='F').astype(np.float32)
         K = np.array([float(x) for x in lines[1].split(' ')])
+        K = np.reshape(Rt, (3, 3), order='F').astype(np.float32)
         return K, Rt
 
     def get_label_objects(self, idx):
@@ -155,8 +156,7 @@ class SUNRGBDData(object):
                 osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
 
             info['pts_path'] = osp.join('points', f'{sample_idx:06d}.bin')
-            img_name = osp.join(self.image_dir, f'{sample_idx:06d}')
-            img_path = osp.join(self.image_dir, img_name)
+            img_path = osp.join('image', f'{sample_idx:06d}.jpg')
             image_info = {
                 'image_idx': sample_idx,
                 'image_shape': self.get_image_shape(sample_idx),

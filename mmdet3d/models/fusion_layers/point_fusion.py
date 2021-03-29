@@ -4,18 +4,16 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from ..registry import FUSION_LAYERS
+from . import apply_3d_transformation
 
 
 def point_sample(
+    img_meta,
     img_features,
     points,
     lidar2img_rt,
-    pcd_rotate_mat,
     img_scale_factor,
     img_crop_offset,
-    pcd_trans_factor,
-    pcd_scale_factor,
-    pcd_flip,
     img_flip,
     img_pad_shape,
     img_shape,
@@ -26,19 +24,14 @@ def point_sample(
     """Obtain image features using points.
 
     Args:
+        img_meta (dict): Meta info.
         img_features (torch.Tensor): 1 x C x H x W image features.
         points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
         lidar2img_rt (torch.Tensor): 4x4 transformation matrix.
-        pcd_rotate_mat (torch.Tensor): 3x3 rotation matrix of points
-            during augmentation.
         img_scale_factor (torch.Tensor): Scale factor with shape of \
             (w_scale, h_scale).
         img_crop_offset (torch.Tensor): Crop offset used to crop \
             image during data augmentation with shape of (w_offset, h_offset).
-        pcd_trans_factor ([type]): Translation of points in augmentation.
-        pcd_scale_factor (float): Scale factor of points during.
-            data augmentation
-        pcd_flip (bool): Whether the points are flipped.
         img_flip (bool): Whether the image is flipped.
         img_pad_shape (tuple[int]): int tuple indicates the h & w after
             padding, this is necessary to obtain features in feature map.
@@ -54,19 +47,9 @@ def point_sample(
     Returns:
         torch.Tensor: NxC image features sampled by point coordinates.
     """
-    # aug order: flip -> trans -> scale -> rot
-    # The transformation follows the augmentation order in data pipeline
-    if pcd_flip:
-        # if the points are flipped, flip them back first
-        points[:, 1] = -points[:, 1]
 
-    points -= pcd_trans_factor
-    # the points should be scaled to the original scale in velo coordinate
-    points /= pcd_scale_factor
-    # the points should be rotated back
-    # pcd_rotate_mat @ pcd_rotate_mat.inverse() is not exactly an identity
-    # matrix, use angle to create the inverse rot matrix neither.
-    points = points @ pcd_rotate_mat.inverse()
+    # apply transformation based on info in img_meta
+    points = apply_3d_transformation(points, 'LIDAR', img_meta, reverse=True)
 
     # project points from velo coordinate to camera coordinate
     num_points = points.shape[0]
@@ -298,34 +281,21 @@ class PointFusion(nn.Module):
         Returns:
             torch.Tensor: Single level image features of each point.
         """
-        pcd_scale_factor = (
-            img_meta['pcd_scale_factor']
-            if 'pcd_scale_factor' in img_meta.keys() else 1)
-        pcd_trans_factor = (
-            pts.new_tensor(img_meta['pcd_trans'])
-            if 'pcd_trans' in img_meta.keys() else 0)
-        pcd_rotate_mat = (
-            pts.new_tensor(img_meta['pcd_rotation']) if 'pcd_rotation'
-            in img_meta.keys() else torch.eye(3).type_as(pts).to(pts.device))
+        # TODO: image transformation also extracted
         img_scale_factor = (
             pts.new_tensor(img_meta['scale_factor'][:2])
             if 'scale_factor' in img_meta.keys() else 1)
-        pcd_flip = img_meta['pcd_flip'] if 'pcd_flip' in img_meta.keys(
-        ) else False
         img_flip = img_meta['flip'] if 'flip' in img_meta.keys() else False
         img_crop_offset = (
             pts.new_tensor(img_meta['img_crop_offset'])
             if 'img_crop_offset' in img_meta.keys() else 0)
         img_pts = point_sample(
+            img_meta,
             img_feats,
             pts,
             pts.new_tensor(img_meta['lidar2img']),
-            pcd_rotate_mat,
             img_scale_factor,
             img_crop_offset,
-            pcd_trans_factor,
-            pcd_scale_factor,
-            pcd_flip=pcd_flip,
             img_flip=img_flip,
             img_pad_shape=img_meta['input_shape'][:2],
             img_shape=img_meta['img_shape'][:2],

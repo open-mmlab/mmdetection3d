@@ -29,10 +29,10 @@ We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRG
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
 |    [PointNet++](./votenet_16x8_sunrgbd-3d-10class.py)     |  3x    |8.1||59.07|35.77|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20200620_230238-4483c0c0.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20200620_230238.log.json)|
 
-**Notice**: If your current mmdetection3d version >= 0.6.0, and you are using the checkpoints downloaded from the above links or using checkpoints trained with mmdetection3d version < 0.6.0, the checkpoints have to be first converted via [tools/convert_votenet_checkpoints.py](../../tools/convert_votenet_checkpoints.py):
+**Notice**: If your current mmdetection3d version >= 0.6.0, and you are using the checkpoints downloaded from the above links or using checkpoints trained with mmdetection3d version < 0.6.0, the checkpoints have to be first converted via [tools/model_converters/convert_votenet_checkpoints.py](../../tools/model_converters/convert_votenet_checkpoints.py):
 
 ```
-python ./tools/convert_votenet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=${NEW_CHECKPOINT_PATH}
+python ./tools/model_converters/convert_votenet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=${NEW_CHECKPOINT_PATH}
 ```
 
 Then you can use the converted checkpoints following [getting_started.md](../../docs/getting_started.md).
