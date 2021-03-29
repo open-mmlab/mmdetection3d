@@ -287,7 +287,8 @@ def test_seg_getitem():
         ignore_index=None,
         num_points=5,
         room_idxs=None,
-        label_weight=None)
+        label_weight=None,
+        label_weight_func=lambda x: 1.0 / np.log(1.2 + x))
 
     data = scannet_dataset[0]
     points = data['points']._data
