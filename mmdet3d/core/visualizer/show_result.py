@@ -4,8 +4,8 @@ import trimesh
 from os import path as osp
 
 
-def _write_ply(points, out_filename):
-    """Write points into ``ply`` format for meshlab visualization.
+def _write_obj(points, out_filename):
+    """Write points into ``obj`` format for meshlab visualization.
 
     Args:
         points (np.ndarray): Points in shape (N, dim).
@@ -93,7 +93,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
     mmcv.mkdir_or_exist(result_path)
 
     if points is not None:
-        _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
+        _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if gt_bboxes is not None:
         # bottom center to gravity center
@@ -163,12 +163,12 @@ def show_seg_result(points,
     mmcv.mkdir_or_exist(result_path)
 
     if points is not None:
-        _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
+        _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if gt_seg is not None:
         gt_seg = np.concatenate([points[:, :3], gt_seg_color], axis=1)
-        _write_ply(gt_seg, osp.join(result_path, f'{filename}_gt.ply'))
+        _write_obj(gt_seg, osp.join(result_path, f'{filename}_gt.obj'))
 
     if pred_seg is not None:
         pred_seg = np.concatenate([points[:, :3], pred_seg_color], axis=1)
-        _write_ply(pred_seg, osp.join(result_path, f'{filename}_pred.ply'))
+        _write_obj(pred_seg, osp.join(result_path, f'{filename}_pred.obj'))
