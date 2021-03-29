@@ -78,7 +78,7 @@ def seg_eval(gt_labels,
 
      Args:
         gt_labels (list[torch.Tensor]): Ground truth labels.
-        seg_preds  (list[torch.Tensor]): Predtictions
+        seg_preds  (list[torch.Tensor]): Predictions.
         num_classes (int): Number of categories.
         label2cat (dict): Map from label to category.
         ignore_index (int): Index that will be ignored in evaluation.
