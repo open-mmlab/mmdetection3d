@@ -21,9 +21,4 @@ We list some potential troubles encountered by users and developers, along with 
 
   ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``
 
-  please downgrade numpy to 1.18.0 or install numba == 0.48 from source, because numpy 1.20.0 'np.dtype' now produces subclass. This is an API change. The current workaround is as below.
-
-  ```shell
-  pip uninstall numpy
-  pip install numpy==1.18.0
-  ```
+  please downgrade numpy to < 1.20.0 or install numba == 0.48 from source, because numpy 1.20.0 'np.dtype' now produces subclass. This is an API change. The current workaround is as below.
