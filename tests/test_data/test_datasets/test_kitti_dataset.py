@@ -159,8 +159,8 @@ def test_show():
     results = [result]
     kitti_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
-    gt_file_path = osp.join(temp_dir, '000000', '000000_gt.ply')
-    pred_file_path = osp.join(temp_dir, '000000', '000000_pred.ply')
+    gt_file_path = osp.join(temp_dir, '000000', '000000_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000000', '000000_pred.obj')
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
