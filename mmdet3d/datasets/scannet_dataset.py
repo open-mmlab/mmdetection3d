@@ -300,14 +300,14 @@ class ScanNetSegDataset(Custom3DDataset):
             self.label_map = {
                 cls_id: self.ignore_index
                 for cls_id in self.ALL_CLASS_IDS
-            }
+            }  # map id in the loaded mask to label used for training
             self.label_map.update(
                 {cls_id: i
                  for i, cls_id in enumerate(self.VALID_CLASS_IDS)})
             self.label2cat = {
                 i: cat_name
                 for i, cat_name in enumerate(self.CLASSES)
-            }
+            }  # map label to category name
             return self.CLASSES, self.PALETTE
 
         self.custom_classes = True
@@ -444,7 +444,6 @@ class ScanNetSegDataset(Custom3DDataset):
             gt_sem_masks,
             pred_sem_masks,
             self.label2cat,
-            len(self.CLASSES),
             self.ignore_index,
             logger=logger)
         if show:

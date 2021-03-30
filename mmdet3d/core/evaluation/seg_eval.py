@@ -66,12 +66,7 @@ def get_acc_cls(hist):
     return np.nanmean(np.diag(hist) / hist.sum(axis=1))
 
 
-def seg_eval(gt_labels,
-             seg_preds,
-             label2cat,
-             num_classes,
-             ignore_index,
-             logger=None):
+def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
     """Semantic Segmentation  Evaluation.
 
      Evaluate the result of the Semantic Segmentation.
@@ -79,8 +74,7 @@ def seg_eval(gt_labels,
      Args:
         gt_labels (list[torch.Tensor]): Ground truth labels.
         seg_preds  (list[torch.Tensor]): Predictions.
-        num_classes (int): Number of categories.
-        label2cat (dict): Map from label to category.
+        label2cat (dict): Map from label to category name.
         ignore_index (int): Index that will be ignored in evaluation.
         logger (logging.Logger | str | None): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
@@ -89,6 +83,7 @@ def seg_eval(gt_labels,
         dict[str, float]: Dict of results.
     """
     assert len(seg_preds) == len(gt_labels)
+    num_classes = len(label2cat)
 
     hist_list = []
     for i in range(len(gt_labels)):

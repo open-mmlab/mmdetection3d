@@ -26,8 +26,7 @@ def test_indoor_eval():
         2: 'motorcycle',
         3: 'truck',
     }
-    ret_value = seg_eval(
-        gt_labels, seg_preds, label2cat, len(label2cat), ignore_index=255)
+    ret_value = seg_eval(gt_labels, seg_preds, label2cat, ignore_index=255)
 
     assert np.isclose(ret_value['car'], 0.428571429)
     assert np.isclose(ret_value['bicycle'], 0.428571429)
