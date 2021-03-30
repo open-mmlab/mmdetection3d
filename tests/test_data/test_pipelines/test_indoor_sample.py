@@ -113,7 +113,7 @@ def test_indoor_seg_sample():
                         'block_size=1.5, ' \
                         'sample_rate=1.0, ' \
                         'ignore_index=20, ' \
-                        'use_normalized_xyz=True, ' \
+                        'use_normalized_coord=True, ' \
                         'test_mode=False)'
     assert repr_str == expected_repr_str
 
@@ -157,6 +157,6 @@ def test_indoor_seg_sample():
                         'block_size=6.5, ' \
                         'sample_rate=0.5, ' \
                         'ignore_index=None, ' \
-                        'use_normalized_xyz=True, ' \
+                        'use_normalized_coord=True, ' \
                         'test_mode=True)'
     assert repr_str == expected_repr_str

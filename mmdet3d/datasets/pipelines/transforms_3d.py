@@ -666,7 +666,7 @@ class IndoorPatchPointSample(object):
         ignore_index (int, optional): Label index that won't be used for the
             segmentation task. This is set in PointSegClassMapping as neg_cls.
             Defaults to None.
-        use_normalized_xyz (bool, optional): Whether to use normalized xyz as
+        use_normalized_coord (bool, optional): Whether to use normalized xyz as
             additional features. Defaults to False.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
@@ -677,13 +677,13 @@ class IndoorPatchPointSample(object):
                  block_size=1.5,
                  sample_rate=1.0,
                  ignore_index=None,
-                 use_normalized_xyz=False,
+                 use_normalized_coord=False,
                  test_mode=False):
         self.num_points = num_points
         self.block_size = block_size
         self.sample_rate = sample_rate
         self.ignore_index = ignore_index
-        self.use_normalized_xyz = use_normalized_xyz
+        self.use_normalized_coord = use_normalized_coord
         self.test_mode = test_mode
 
     def _input_generation(self, coords, patch_center, coord_max, attributes,
@@ -710,21 +710,20 @@ class IndoorPatchPointSample(object):
         centered_coords[:, 0] -= patch_center[0]
         centered_coords[:, 1] -= patch_center[1]
 
-        if self.use_normalized_xyz:
-            normalized_xyz = coords / coord_max
+        if self.use_normalized_coord:
+            normalized_coord = coords / coord_max
+            attributes = np.concatenate([attributes, normalized_coord], axis=1)
             if attribute_dims is None:
                 attribute_dims = dict()
             attribute_dims.update(
                 dict(normalized_coord=[
-                    attributes.shape[1] + 3, attributes.shape[1] +
-                    4, attributes.shape[1] + 5
+                    attributes.shape[1], attributes.shape[1] +
+                    1, attributes.shape[1] + 2
                 ]))
-            points = np.concatenate(
-                [centered_coords, attributes, normalized_xyz], axis=1)
-            points = point_type(
-                points,
-                points_dim=points.shape[1],
-                attribute_dims=attribute_dims)
+
+        points = np.concatenate([centered_coords, attributes], axis=1)
+        points = point_type(
+            points, points_dim=points.shape[1], attribute_dims=attribute_dims)
 
         return points
 
@@ -907,10 +906,9 @@ class IndoorPatchPointSample(object):
             results['points'] = points
             return results
 
-        pts_semantic_mask = results.get('pts_semantic_mask', None)
-        if pts_semantic_mask is None:
-            raise NotImplementedError(
-                'semantic mask should be provided in training and evaluation')
+        assert 'pts_semantic_mask' in results.keys(), \
+            'semantic mask should be provided in training and evaluation'
+        pts_semantic_mask = results['pts_semantic_mask']
 
         points, choices = self._patch_points_sampling(points,
                                                       pts_semantic_mask)
@@ -930,7 +928,8 @@ class IndoorPatchPointSample(object):
         repr_str += ' block_size={},'.format(self.block_size)
         repr_str += ' sample_rate={},'.format(self.sample_rate)
         repr_str += ' ignore_index={},'.format(self.ignore_index)
-        repr_str += ' use_normalized_xyz={},'.format(self.use_normalized_xyz)
+        repr_str += ' use_normalized_coord={},'.format(
+            self.use_normalized_coord)
         repr_str += ' test_mode={})'.format(self.test_mode)
         return repr_str
 

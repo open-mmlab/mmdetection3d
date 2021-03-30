@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import pytest
 import torch
@@ -242,6 +243,8 @@ def test_seg_getitem():
         [227, 119, 194],
         [82, 84, 163],
     ]
+
+    # test network inputs are (xyz, rgb, normalized_xyz)
     pipelines = [
         dict(
             type='LoadPointsFromFile',
@@ -266,7 +269,7 @@ def test_seg_getitem():
             block_size=1.5,
             sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_xyz=True,
+            use_normalized_coord=True,
             test_mode=False),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
@@ -342,6 +345,69 @@ def test_seg_getitem():
             5.48481495, 4.88052764, 5.48481495, 5.48481495, 5.48481495
         ]))
 
+    # test network inputs are (xyz, rgb)
+    np.random.seed(0)
+    new_pipelines = copy.deepcopy(pipelines)
+    new_pipelines[3] = dict(
+        type='IndoorPatchPointSample',
+        num_points=5,
+        block_size=1.5,
+        sample_rate=1.0,
+        ignore_index=len(class_names),
+        use_normalized_coord=False,
+        test_mode=False)
+    scannet_dataset = ScanNetSegDataset(
+        root_path, ann_file, new_pipelines, num_points=5)
+
+    data = scannet_dataset[0]
+    points = data['points']._data
+    assert torch.allclose(points, expected_points[:, :6], 1e-2)
+
+    # test network inputs are (xyz, normalized_xyz)
+    np.random.seed(0)
+    new_pipelines = copy.deepcopy(pipelines)
+    new_pipelines[0] = dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=False,
+        load_dim=6,
+        use_dim=[0, 1, 2])
+    new_pipelines.remove(new_pipelines[4])
+    scannet_dataset = ScanNetSegDataset(
+        root_path, ann_file, new_pipelines, num_points=5)
+
+    data = scannet_dataset[0]
+    points = data['points']._data
+    assert torch.allclose(points, expected_points[:, [0, 1, 2, 6, 7, 8]], 1e-2)
+
+    # test network inputs are (xyz,)
+    np.random.seed(0)
+    new_pipelines = copy.deepcopy(pipelines)
+    new_pipelines[0] = dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=False,
+        load_dim=6,
+        use_dim=[0, 1, 2])
+    new_pipelines[3] = dict(
+        type='IndoorPatchPointSample',
+        num_points=5,
+        block_size=1.5,
+        sample_rate=1.0,
+        ignore_index=len(class_names),
+        use_normalized_coord=False,
+        test_mode=False)
+    new_pipelines.remove(new_pipelines[4])
+    scannet_dataset = ScanNetSegDataset(
+        root_path, ann_file, new_pipelines, num_points=5)
+
+    data = scannet_dataset[0]
+    points = data['points']._data
+    assert torch.allclose(points, expected_points[:, :3], 1e-2)
+
+    # test dataset with selected classes
     scannet_dataset = ScanNetSegDataset(
         root_path, ann_file, pipeline=None, classes=['cabinet', 'chair'])
 
