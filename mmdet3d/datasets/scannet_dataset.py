@@ -390,6 +390,8 @@ class ScanNetSegDataset(Custom3DDataset):
 
     def _convert_to_train_label(self, mask):
         """Convert class_id in loaded segmentation mask to label."""
+        # TODO: currently only support loading from local
+        # TODO: may need to consider ceph data storage in the future
         if isinstance(mask, str):
             if mask.endswith('npy'):
                 mask = np.load(mask)
