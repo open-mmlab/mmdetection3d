@@ -1,20 +1,20 @@
-### Prepare ScanNet Data
+### Prepare ScanNet Data for Indoor Detection or Segmentation Task
 We follow the procedure in [votenet](https://github.com/facebookresearch/votenet/).
 
 1. Download ScanNet v2 data [HERE](https://github.com/ScanNet/ScanNet). Link or move the 'scans' folder to this level of directory.
 
-2. In this directory, extract point clouds and annotations by running `python batch_load_scannet_data.py`.
+2. In this directory, extract point clouds and annotations by running `python batch_load_scannet_data.py`. Add the `--max_num_point 50000` flag if you only use the ScanNet data for the detection task. It will downsample the scenes to less points.
 
-3. Enter the project root directory, generate training data by running
+3. Enter the project root directory, generate training data by running the following command depending on the task
 ```bash
-python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
+python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet-det/scannet-seg
 ```
 
-The overall process could be achieved through the following script
+For example, if you want to prepare ScanNet data for both detection and segmentation task, the overall process could be achieved through the following script
 ```bash
 python batch_load_scannet_data.py
 cd ../..
-python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
+python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet-seg
 ```
 
 The directory structure after pre-processing should be as below

@@ -22,8 +22,8 @@ OBJ_CLASS_IDS = np.array(
     [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
 
 
-def export_one_scan(scan_name, output_filename_prefix, label_map_file,
-                    scannet_dir):
+def export_one_scan(scan_name, output_filename_prefix, max_num_point,
+                    label_map_file, scannet_dir):
     mesh_file = osp.join(scannet_dir, scan_name, scan_name + '_vh_clean_2.ply')
     agg_file = osp.join(scannet_dir, scan_name,
                         scan_name + '.aggregation.json')
@@ -47,14 +47,22 @@ def export_one_scan(scan_name, output_filename_prefix, label_map_file,
     instance_bboxes = instance_bboxes[bbox_mask, :]
     print(f'Num of care instances: {instance_bboxes.shape[0]}')
 
+    if max_num_point is not None:
+        N = mesh_vertices.shape[0]
+        if N > max_num_point:
+            choices = np.random.choice(N, max_num_point, replace=False)
+            mesh_vertices = mesh_vertices[choices, :]
+            semantic_labels = semantic_labels[choices]
+            instance_labels = instance_labels[choices]
+
     np.save(f'{output_filename_prefix}_vert.npy', mesh_vertices)
     np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
     np.save(f'{output_filename_prefix}_ins_label.npy', instance_labels)
     np.save(f'{output_filename_prefix}_bbox.npy', instance_bboxes)
 
 
-def batch_export(output_folder, train_scan_names_file, label_map_file,
-                 scannet_dir):
+def batch_export(max_num_point, output_folder, train_scan_names_file,
+                 label_map_file, scannet_dir):
     if not os.path.exists(output_folder):
         print(f'Creating new data folder: {output_folder}')
         os.mkdir(output_folder)
@@ -70,8 +78,8 @@ def batch_export(output_folder, train_scan_names_file, label_map_file,
             print('-' * 20 + 'done')
             continue
         try:
-            export_one_scan(scan_name, output_filename_prefix, label_map_file,
-                            scannet_dir)
+            export_one_scan(scan_name, output_filename_prefix, max_num_point,
+                            label_map_file, scannet_dir)
         except Exception:
             print(f'Failed export scan: {scan_name}')
         print('-' * 20 + 'done')
@@ -79,6 +87,10 @@ def batch_export(output_folder, train_scan_names_file, label_map_file,
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--max_num_point',
+        default=None,
+        help='The maximum number of the points.')
     parser.add_argument(
         '--output_folder',
         default='./scannet_train_instance_data',
@@ -94,8 +106,9 @@ def main():
         default='meta_data/scannet_train.txt',
         help='The path of the file that stores the scan names.')
     args = parser.parse_args()
-    batch_export(args.output_folder, args.train_scan_names_file,
-                 args.label_map_file, args.scannet_dir)
+    batch_export(args.max_num_point, args.output_folder,
+                 args.train_scan_names_file, args.label_map_file,
+                 args.scannet_dir)
 
 
 if __name__ == '__main__':
