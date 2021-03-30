@@ -61,8 +61,8 @@ class LoadMultiViewImageFromFiles(object):
 
     def __repr__(self):
         """str: Return a string that describes the module."""
-        return "{} (to_float32={}, color_type='{}')".format(
-            self.__class__.__name__, self.to_float32, self.color_type)
+        return f'{self.__class__.__name__} (to_float32={self.to_float32}, '\
+            f"color_type='{self.color_type}')"
 
 
 @PIPELINES.register_module()
@@ -246,7 +246,7 @@ class PointSegClassMapping(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(valid_cat_ids={})'.format(self.valid_cat_ids)
+        repr_str += f'(valid_cat_ids={self.valid_cat_ids})'
         return repr_str
 
 
@@ -287,7 +287,7 @@ class NormalizePointsColor(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(color_mean={})'.format(self.color_mean)
+        repr_str += f'(color_mean={self.color_mean})'
         return repr_str
 
 
@@ -406,11 +406,11 @@ class LoadPointsFromFile(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__ + '('
-        repr_str += 'shift_height={}, '.format(self.shift_height)
-        repr_str += 'use_color={}, '.format(self.use_color)
-        repr_str += 'file_client_args={}, '.format(self.file_client_args)
-        repr_str += 'load_dim={}, '.format(self.load_dim)
-        repr_str += 'use_dim={})'.format(self.use_dim)
+        repr_str += f'shift_height={self.shift_height}, '
+        repr_str += f'use_color={self.use_color}, '
+        repr_str += f'file_client_args={self.file_client_args}, '
+        repr_str += f'load_dim={self.load_dim}, '
+        repr_str += f'use_dim={self.use_dim})'
         return repr_str
 
 

@@ -165,8 +165,8 @@ class BasePoints(object):
                 trans_vector.shape[1] == 3
         else:
             raise NotImplementedError(
-                'Unsupported translation vector of shape {}'.format(
-                    trans_vector.shape))
+                f'Unsupported translation vector of shape {trans_vector.shape}'
+            )
         self.tensor[:, :3] += trans_vector
 
     def in_range_3d(self, point_range):

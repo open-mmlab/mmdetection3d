@@ -110,9 +110,8 @@ class RandomFlip3D(RandomFlip):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(sync_2d={},'.format(self.sync_2d)
-        repr_str += 'flip_ratio_bev_vertical={})'.format(
-            self.flip_ratio_bev_vertical)
+        repr_str += f'(sync_2d={self.sync_2d},'
+        repr_str += f'flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
         return repr_str
 
 
@@ -278,10 +277,10 @@ class ObjectNoise(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(num_try={},'.format(self.num_try)
-        repr_str += ' translation_std={},'.format(self.translation_std)
-        repr_str += ' global_rot_range={},'.format(self.global_rot_range)
-        repr_str += ' rot_range={})'.format(self.rot_range)
+        repr_str += f'(num_try={self.num_try},'
+        repr_str += f' translation_std={self.translation_std},'
+        repr_str += f' global_rot_range={self.global_rot_range},'
+        repr_str += f' rot_range={self.rot_range})'
         return repr_str
 
 
@@ -427,10 +426,10 @@ class GlobalRotScaleTrans(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(rot_range={},'.format(self.rot_range)
-        repr_str += ' scale_ratio_range={},'.format(self.scale_ratio_range)
-        repr_str += ' translation_std={})'.format(self.translation_std)
-        repr_str += ' shift_height={})'.format(self.shift_height)
+        repr_str += f'(rot_range={self.rot_range},'
+        repr_str += f' scale_ratio_range={self.scale_ratio_range},'
+        repr_str += f' translation_std={self.translation_std})'
+        repr_str += f' shift_height={self.shift_height})'
         return repr_str
 
 
@@ -497,7 +496,7 @@ class ObjectRangeFilter(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(point_cloud_range={})'.format(self.pcd_range.tolist())
+        repr_str += f'(point_cloud_range={self.pcd_range.tolist()})'
         return repr_str
 
 
@@ -531,7 +530,7 @@ class PointsRangeFilter(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(point_cloud_range={})'.format(self.pcd_range.tolist())
+        repr_str += f'(point_cloud_range={self.pcd_range.tolist()})'
         return repr_str
 
 
@@ -646,14 +645,14 @@ class IndoorPointSample(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(num_points={})'.format(self.num_points)
+        repr_str += f'(num_points={self.num_points})'
         return repr_str
 
 
 @PIPELINES.register_module()
 class IndoorPatchPointSample(object):
-    """Indoor point sample within a patch. Modified from `<https://github.com/c
-    harlesq34/pointnet2/blob/master/scannet/scannet_dataset.py>`_.
+    r"""Indoor point sample within a patch. Modified from `PointNet++ <https://
+    github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py>`_.
 
     Sampling data to a certain number for semantic segmentation.
 
@@ -698,7 +697,7 @@ class IndoorPatchPointSample(object):
             patch_center (np.ndarray): Center coordinate of the selected patch.
             coord_max (np.ndarray): Max coordinate of all 3D Points.
             attributes (np.ndarray): features of input points.
-            attribute_dims (dict): Dictinory to indicate the meaning of extra
+            attribute_dims (dict): Dictionary to indicate the meaning of extra
                 dimension.
             point_type (type): class of input points.
 
@@ -924,13 +923,12 @@ class IndoorPatchPointSample(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(num_points={},'.format(self.num_points)
-        repr_str += ' block_size={},'.format(self.block_size)
-        repr_str += ' sample_rate={},'.format(self.sample_rate)
-        repr_str += ' ignore_index={},'.format(self.ignore_index)
-        repr_str += ' use_normalized_coord={},'.format(
-            self.use_normalized_coord)
-        repr_str += ' test_mode={})'.format(self.test_mode)
+        repr_str += f'(num_points={self.num_points},'
+        repr_str += f' block_size={self.block_size},'
+        repr_str += f' sample_rate={self.sample_rate},'
+        repr_str += f' ignore_index={self.ignore_index},'
+        repr_str += f' use_normalized_coord={self.use_normalized_coord},'
+        repr_str += f' test_mode={self.test_mode})'
         return repr_str
 
 
@@ -993,8 +991,7 @@ class BackgroundPointsFilter(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(bbox_enlarge_range={})'.format(
-            self.bbox_enlarge_range.tolist())
+        repr_str += f'(bbox_enlarge_range={self.bbox_enlarge_range.tolist()})'
         return repr_str
 
 
