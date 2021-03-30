@@ -205,9 +205,9 @@ def test_show():
     scannet_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, 'scene0000_00',
                              'scene0000_00_points.obj')
-    gt_file_path = osp.join(temp_dir, 'scene0000_00', 'scene0000_00_gt.ply')
+    gt_file_path = osp.join(temp_dir, 'scene0000_00', 'scene0000_00_gt.obj')
     pred_file_path = osp.join(temp_dir, 'scene0000_00',
-                              'scene0000_00_pred.ply')
+                              'scene0000_00_pred.obj')
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)

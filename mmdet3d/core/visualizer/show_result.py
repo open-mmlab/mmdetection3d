@@ -62,8 +62,8 @@ def _write_oriented_bbox(scene_bbox, out_filename):
         scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
 
     mesh_list = trimesh.util.concatenate(scene.dump())
-    # save to ply file
-    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
+    # save to obj file
+    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='obj')
 
     return
 
@@ -101,7 +101,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         # the positive direction for yaw in meshlab is clockwise
         gt_bboxes[:, 6] *= -1
         _write_oriented_bbox(gt_bboxes,
-                             osp.join(result_path, f'{filename}_gt.ply'))
+                             osp.join(result_path, f'{filename}_gt.obj'))
 
     if pred_bboxes is not None:
         # bottom center to gravity center
@@ -109,7 +109,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         # the positive direction for yaw in meshlab is clockwise
         pred_bboxes[:, 6] *= -1
         _write_oriented_bbox(pred_bboxes,
-                             osp.join(result_path, f'{filename}_pred.ply'))
+                             osp.join(result_path, f'{filename}_pred.obj'))
 
 
 def show_seg_result(points,
