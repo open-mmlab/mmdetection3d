@@ -1,22 +1,23 @@
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <torch/types.h>
+
 #include <ATen/cuda/CUDAApplyUtils.cuh>
 
 typedef enum { SUM = 0, MEAN = 1, MAX = 2 } reduce_t;
 
-#define CHECK_CUDA(x)                                                          \
+#define CHECK_CUDA(x) \
   TORCH_CHECK(x.device().is_cuda(), #x " must be a CUDA tensor")
-#define CHECK_CONTIGUOUS(x)                                                    \
+#define CHECK_CONTIGUOUS(x) \
   TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
-#define CHECK_INPUT(x)                                                         \
-  CHECK_CUDA(x);                                                               \
+#define CHECK_INPUT(x) \
+  CHECK_CUDA(x);       \
   CHECK_CONTIGUOUS(x)
 
 namespace {
 int const threadsPerBlock = 512;
 int const maxGridDim = 50000;
-} // namespace
+}  // namespace
 
 __device__ __forceinline__ static void reduceMax(float *address, float val) {
   int *address_as_i = reinterpret_cast<int *>(address);
@@ -44,7 +45,7 @@ __device__ __forceinline__ static void reduceMax(double *address, double val) {
 #ifdef __CUDA_ARCH__
 __device__ __forceinline__ static void reduceAdd(float *address, float val) {
 #if (__CUDA_ARCH__ < 200)
-#warning                                                                       \
+#warning \
     "compute capability lower than 2.x. fall back to use CAS version of atomicAdd for float32"
   int *address_as_i = reinterpret_cast<int *>(address);
   int old = *address_as_i, assumed;
@@ -60,7 +61,7 @@ __device__ __forceinline__ static void reduceAdd(float *address, float val) {
 
 __device__ __forceinline__ static void reduceAdd(double *address, double val) {
 #if (__CUDA_ARCH__ < 600)
-#warning                                                                       \
+#warning \
     "compute capability lower than 6.x. fall back to use CAS version of atomicAdd for float64"
   unsigned long long *address_as_ull =
       reinterpret_cast<unsigned long long *>(address);
@@ -101,7 +102,7 @@ __global__ void coors_map_init_kernel(const int64_t *coors_id,
        x += gridDim.x * blockDim.x) {
     auto here = coors_id[coors_id_argsort[x]];
     if (x == 0) {
-      if (here == -1) { // there is invalid points
+      if (here == -1) {  // there is invalid points
         coors_map[0] = -1;
       } else {
         coors_map[0] = 0;
@@ -114,17 +115,16 @@ __global__ void coors_map_init_kernel(const int64_t *coors_id,
 }
 
 template <typename T, typename T_int>
-__global__ void
-feats_reduce_kernel(const T *feats, const T_int *coors, int32_t *coors_map,
-                    int32_t *reduce_count, // shall be 0 at initialization
-                    T *reduced_feats,      // shall be 0 at initialization
-                    T_int *out_coors, const int num_input, const int num_feats,
-                    const int NDim, const reduce_t reduce_type) {
+__global__ void feats_reduce_kernel(
+    const T *feats, const T_int *coors, int32_t *coors_map,
+    int32_t *reduce_count,  // shall be 0 at initialization
+    T *reduced_feats,       // shall be 0 at initialization
+    T_int *out_coors, const int num_input, const int num_feats, const int NDim,
+    const reduce_t reduce_type) {
   for (int x = blockIdx.x * blockDim.x + threadIdx.x; x < num_input;
        x += gridDim.x * blockDim.x) {
     int32_t reduce_to = coors_map[x];
-    if (reduce_to == -1)
-      continue;
+    if (reduce_to == -1) continue;
 
     const T_int *coors_offset = coors + x * NDim;
     T_int *out_coors_offset = out_coors + reduce_to * NDim;
@@ -207,13 +207,13 @@ __global__ void max_reduce_traceback_scatter_idx_kernel(
 }
 
 template <typename T>
-__global__ void
-max_reduce_scatter_grad_kernel(T *grad_feats, const T *grad_reduced_feats,
-                               const int32_t *reduce_from,
-                               const int num_reduced, const int num_feats) {
+__global__ void max_reduce_scatter_grad_kernel(T *grad_feats,
+                                               const T *grad_reduced_feats,
+                                               const int32_t *reduce_from,
+                                               const int num_reduced,
+                                               const int num_feats) {
   for (int x = blockIdx.x * blockDim.x + threadIdx.x; x < num_reduced;
        x += gridDim.x * blockDim.x) {
-
     const int reduced_offset = x * num_feats;
     const int32_t *scatter_to_offset = reduce_from + reduced_offset;
     const T *grad_reduced_feats_offset = grad_reduced_feats + reduced_offset;
@@ -227,10 +227,9 @@ max_reduce_scatter_grad_kernel(T *grad_feats, const T *grad_reduced_feats,
 
 namespace voxelization {
 
-std::vector<at::Tensor>
-dynamic_point_to_voxel_forward_gpu(const at::Tensor &feats,
-                                   const at::Tensor &coors,
-                                   const reduce_t reduce_type) {
+std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
+    const at::Tensor &feats, const at::Tensor &coors,
+    const reduce_t reduce_type) {
   CHECK_INPUT(feats);
   CHECK_INPUT(coors);
 
@@ -239,11 +238,10 @@ dynamic_point_to_voxel_forward_gpu(const at::Tensor &feats,
   const int num_feats = feats.size(1);
 
   auto coors_id = at::empty({num_input}, coors.options().dtype(torch::kInt64));
-  auto coor_space_dim = coors.max_values(0) + 1;
+  auto coor_space_dim = std::get<0>(coors.max(0)) + 1;
   auto coors_map_sorted =
       at::empty({num_input}, coors.options().dtype(torch::kInt32));
-  auto coors_map =
-      at::empty({num_input}, coors.options().dtype(torch::kInt32));
+  auto coors_map = at::empty({num_input}, coors.options().dtype(torch::kInt32));
   auto num_coors = at::zeros({1}, coors.options().dtype(torch::kInt32));
 
   AT_DISPATCH_INTEGRAL_TYPES(
@@ -276,8 +274,7 @@ dynamic_point_to_voxel_forward_gpu(const at::Tensor &feats,
   const int num_coors_cpu =
       coors_map_sorted[-1].cpu().data_ptr<int32_t>()[0] + 1;
   auto out_coors = at::empty({num_coors_cpu, NDim}, coors.options());
-  auto reduced_feats =
-      at::empty({num_coors_cpu, num_feats}, feats.options());
+  auto reduced_feats = at::empty({num_coors_cpu, num_feats}, feats.options());
   auto reduce_count =
       at::zeros({num_coors_cpu}, coors.options().dtype(torch::kInt32));
 
@@ -313,11 +310,13 @@ dynamic_point_to_voxel_forward_gpu(const at::Tensor &feats,
   return {reduced_feats, out_coors, coors_map, reduce_count};
 }
 
-void dynamic_point_to_voxel_backward_gpu(
-    at::Tensor &grad_feats, const at::Tensor &grad_reduced_feats,
-    const at::Tensor &feats, const at::Tensor &reduced_feats,
-    const at::Tensor &coors_map, const at::Tensor &reduce_count,
-    const reduce_t reduce_type) {
+void dynamic_point_to_voxel_backward_gpu(at::Tensor &grad_feats,
+                                         const at::Tensor &grad_reduced_feats,
+                                         const at::Tensor &feats,
+                                         const at::Tensor &reduced_feats,
+                                         const at::Tensor &coors_map,
+                                         const at::Tensor &reduce_count,
+                                         const reduce_t reduce_type) {
   CHECK_INPUT(grad_feats);
   CHECK_INPUT(grad_reduced_feats);
   CHECK_INPUT(feats);
@@ -336,9 +335,8 @@ void dynamic_point_to_voxel_backward_gpu(
     AT_DISPATCH_FLOATING_TYPES(
         grad_reduced_feats.scalar_type(), "add_reduce_traceback_grad_kernel",
         ([&] {
-          dim3 blocks
-              (std::min(at::cuda::ATenCeilDiv(num_input, threadsPerBlock),
-                        maxGridDim));
+          dim3 blocks(std::min(
+              at::cuda::ATenCeilDiv(num_input, threadsPerBlock), maxGridDim));
           dim3 threads(threadsPerBlock);
           add_reduce_traceback_grad_kernel<<<blocks, threads>>>(
               grad_feats.data_ptr<scalar_t>(),
@@ -353,9 +351,8 @@ void dynamic_point_to_voxel_backward_gpu(
     AT_DISPATCH_FLOATING_TYPES(
         grad_reduced_feats.scalar_type(),
         "max_reduce_traceback_scatter_idx_kernel", ([&] {
-          dim3 blocks
-              (std::min(at::cuda::ATenCeilDiv(num_input, threadsPerBlock),
-                        maxGridDim));
+          dim3 blocks(std::min(
+              at::cuda::ATenCeilDiv(num_input, threadsPerBlock), maxGridDim));
           dim3 threads(threadsPerBlock);
           max_reduce_traceback_scatter_idx_kernel<<<blocks, threads>>>(
               feats.data_ptr<scalar_t>(), reduced_feats.data_ptr<scalar_t>(),
@@ -367,9 +364,8 @@ void dynamic_point_to_voxel_backward_gpu(
     AT_DISPATCH_FLOATING_TYPES(
         grad_reduced_feats.scalar_type(),
         "max_reduce_traceback_scatter_idx_kernel", ([&] {
-          dim3 blocks(
-              std::min(at::cuda::ATenCeilDiv(num_reduced, threadsPerBlock),
-                       maxGridDim));
+          dim3 blocks(std::min(
+              at::cuda::ATenCeilDiv(num_reduced, threadsPerBlock), maxGridDim));
           dim3 threads(threadsPerBlock);
           max_reduce_scatter_grad_kernel<<<blocks, threads>>>(
               grad_feats.data_ptr<scalar_t>(),
@@ -381,4 +377,4 @@ void dynamic_point_to_voxel_backward_gpu(
   return;
 }
 
-} // namespace voxelization
+}  // namespace voxelization
