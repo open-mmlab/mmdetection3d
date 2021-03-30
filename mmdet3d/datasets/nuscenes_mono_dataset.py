@@ -23,7 +23,7 @@ from mmdet.datasets import CocoDataset
 
 
 @DATASETS.register_module()
-class NuScenesDatasetMono(CocoDataset):
+class NuScenesMonoDataset(CocoDataset):
     r"""Monocular 3D detection on NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.
@@ -260,7 +260,7 @@ class NuScenesDatasetMono(CocoDataset):
                     AttrMapping_rev2[attr_idx] == 'vehicle.stopped':
                 return AttrMapping_rev2[attr_idx]
             else:
-                return NuScenesDatasetMono.DefaultAttribute[label_name]
+                return NuScenesMonoDataset.DefaultAttribute[label_name]
         elif label_name == 'pedestrian':
             if AttrMapping_rev2[attr_idx] == 'pedestrian.moving' or \
                 AttrMapping_rev2[attr_idx] == 'pedestrian.standing' or \
@@ -268,15 +268,15 @@ class NuScenesDatasetMono(CocoDataset):
                     'pedestrian.sitting_lying_down':
                 return AttrMapping_rev2[attr_idx]
             else:
-                return NuScenesDatasetMono.DefaultAttribute[label_name]
+                return NuScenesMonoDataset.DefaultAttribute[label_name]
         elif label_name == 'bicycle' or label_name == 'motorcycle':
             if AttrMapping_rev2[attr_idx] == 'cycle.with_rider' or \
                     AttrMapping_rev2[attr_idx] == 'cycle.without_rider':
                 return AttrMapping_rev2[attr_idx]
             else:
-                return NuScenesDatasetMono.DefaultAttribute[label_name]
+                return NuScenesMonoDataset.DefaultAttribute[label_name]
         else:
-            return NuScenesDatasetMono.DefaultAttribute[label_name]
+            return NuScenesMonoDataset.DefaultAttribute[label_name]
 
     def _format_bbox(self, results, jsonfile_prefix=None):
         """Convert the results to the standard format.

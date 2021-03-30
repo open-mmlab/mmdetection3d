@@ -62,6 +62,7 @@ def bbox3d2result(bboxes, scores, labels, attrs=None):
             - boxes_3d (torch.Tensor): 3D boxes.
             - scores (torch.Tensor): Prediction scores.
             - labels_3d (torch.Tensor): Box labels.
+            - attrs_3d (torch.Tensor, optional): Box attributes.
     """
     result_dict = dict(
         boxes_3d=bboxes.to('cpu'),
