@@ -1,5 +1,3 @@
-import numpy as np
-
 # dataset settings
 dataset_type = 'ScanNetSegDataset'
 data_root = './data/scannet/'
@@ -7,6 +5,7 @@ class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
                'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
                'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
                'bathtub', 'otherfurniture')
+num_points = 8192
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -27,7 +26,7 @@ train_pipeline = [
                        33, 34, 36, 39)),
     dict(
         type='IndoorPatchPointSample',
-        num_points=8192,
+        num_points=num_points,
         block_size=1.5,
         sample_rate=1.0,
         ignore_index=len(class_names),
@@ -47,7 +46,7 @@ test_pipeline = [
         use_dim=[0, 1, 2, 3, 4, 5]),
     dict(
         type='IndoorPatchPointSample',
-        num_points=8192,
+        num_points=num_points,
         block_size=1.5,
         sample_rate=0.5,
         use_normalized_coord=True,
@@ -70,9 +69,7 @@ data = dict(
             pipeline=train_pipeline,
             classes=class_names,
             test_mode=False,
-            ignore_index=len(class_names),
-            num_points=8192,
-            label_weight_func=lambda x: 1.0 / np.log(1.2 + x))),
+            ignore_index=len(class_names))),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -80,8 +77,7 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        ignore_index=len(class_names),
-        num_points=8192),
+        ignore_index=len(class_names)),
     test=dict(
         type=dataset_type,
         data_root=data_root,
@@ -89,5 +85,4 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        ignore_index=len(class_names),
-        num_points=8192))
+        ignore_index=len(class_names)))

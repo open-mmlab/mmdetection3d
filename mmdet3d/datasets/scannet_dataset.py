@@ -157,8 +157,6 @@ class ScanNetSegDataset(Custom3DDataset):
         ignore_index (int, optional): The label index to be ignored, e.g. \
             unannotated points. If None is given, set to len(self.CLASSES).
             Defaults to None.
-        num_points (int, optional): Number of points in each batch.
-            Defaults to 8192.
         room_idxs (np.ndarray | str, optional): Precomputed index to load data.
             Map data sampling idx to room idx.
             Defaults to None.
@@ -210,10 +208,8 @@ class ScanNetSegDataset(Custom3DDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 num_points=8192,
                  room_idxs=None,
-                 label_weight=None,
-                 label_weight_func=None):
+                 label_weight=None):
 
         self.data_root = data_root
         self.ann_file = ann_file
@@ -221,21 +217,19 @@ class ScanNetSegDataset(Custom3DDataset):
         self.modality = modality
         self.filter_empty_gt = False
         self.box_type_3d, self.box_mode_3d = get_box_type('depth')
-        self.label_weight_func = label_weight_func
 
         self.data_infos = self.load_annotations(self.ann_file)
 
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
 
-        self.num_points = num_points
         self.ignore_index = len(self.CLASSES) if \
             ignore_index is None else ignore_index
 
-        self.CLASSES, self.PALETTE = \
-            self.get_classes_and_palette(classes, palette)
         self.room_idxs, self.label_weight = \
             self._get_room_idxs_and_label_weight(room_idxs, label_weight)
+        self.CLASSES, self.PALETTE = \
+            self.get_classes_and_palette(classes, palette)
 
         # set group flag for the sampler
         if not self.test_mode:
@@ -350,10 +344,17 @@ class ScanNetSegDataset(Custom3DDataset):
                 for i, cat_name in enumerate(class_names)
             }
 
+        # modify palette for visualization
         palette = [
             self.PALETTE[self.CLASSES.index(cls_name)]
             for cls_name in class_names
         ]
+
+        # also need to modify self.label_weight
+        self.label_weight = np.array([
+            self.label_weight[self.CLASSES.index(cls_name)]
+            for cls_name in class_names
+        ]).astype(np.float32)
 
         return class_names, palette
 
@@ -365,41 +366,27 @@ class ScanNetSegDataset(Custom3DDataset):
         inversely proportional to number of class points.
         """
         if self.test_mode:
-            return np.array(range(len(self.data_infos))), None
+            # when testing, we load one whole room every time
+            # and we don't need label weight for loss calculation
+            return np.arange(len(self.data_infos)), None
 
-        if room_idxs is not None:  # precomputed
-            if isinstance(room_idxs, str):
-                room_idxs = np.load(room_idxs).astype(np.int32)
-            if isinstance(label_weight, str):
-                label_weight = np.load(label_weight).astype(np.float32)
-            return room_idxs, label_weight
+        assert room_idxs is not None, \
+            'please provide re-sampled room indexes for training'
 
-        num_classes = len(self.CLASSES)
-        num_point_all = []
-        label_weight = np.zeros((num_classes + 1, ))  # ignore_index
-        for data_info in self.data_infos:
-            label = self._convert_to_train_label(
-                osp.join(self.data_root, data_info['pts_semantic_mask_path']))
-            num_point_all.append(label.shape[0])
-            class_count, _ = np.histogram(label, range(num_classes + 2))
-            label_weight += class_count
-
-        # repeat room_idx for num_room_point // num_sample_point times
-        sample_prob = np.array(num_point_all) / float(np.sum(num_point_all))
-        num_iter = int(np.sum(num_point_all) / float(self.num_points))
-        room_idxs = []
-        for idx in range(len(self.data_infos)):
-            room_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
-
-        # calculate label weight, adopted from PointNet++
-        if self.label_weight_func is None:
-            label_weight = np.ones(num_classes, dtype=np.float32)
+        if isinstance(room_idxs, str):
+            room_idxs = np.load(room_idxs)
         else:
-            label_weight = label_weight[:-1].astype(np.float32)
-            label_weight = label_weight / label_weight.sum()
-            label_weight = self.label_weight_func(label_weight)
+            room_idxs = np.array(room_idxs)
 
-        return np.array(room_idxs), label_weight
+        if label_weight is None:
+            # we don't used label weighting in training
+            label_weight = np.ones(len(self.CLASSES))
+        elif isinstance(label_weight, str):
+            label_weight = np.load(label_weight)
+        else:
+            label_weight = np.array(label_weight)
+
+        return room_idxs.astype(np.int32), label_weight.astype(np.float32)
 
     def _convert_to_train_label(self, mask):
         """Convert class_id in loaded segmentation mask to label."""
