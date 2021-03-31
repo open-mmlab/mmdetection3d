@@ -1,5 +1,47 @@
 ## Changelog
 
+### v0.12.0 (1/4/2021)
+
+#### Highlights
+
+- Support two multi-modality methods, [MoCa](https://arxiv.org/pdf/2012.12741.pdf) and [ImVoteNet](https://arxiv.org/pdf/2001.10692.pdf).
+- Support LiDAR semantic segmentation evaluation metrics
+- Support pytorch 1.7
+- Refactor the structure of tools and [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py)/[test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py)
+
+#### Bug Fixes
+
+- Fix missing keys `coord_type` in database sampler config (#345)
+- Rename H3DNet configs (#349)
+- Fix CI by using ubuntu 18.04 in github workflow (#350)
+- Add assertions to avoid 4-dim points being input to [points_in_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) (#357)
+- Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
+- Fix the incorrect adopted pipeline when adding val to workflow (#370)
+- Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
+- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in pytorch 1.7 (#393)
+
+#### New Features
+
+- Support [MoCa](https://arxiv.org/pdf/2012.12741.pdf) on KITTI (#327)
+- Support LiDAR-based semantic segmentation metrics (#332)
+- Support [ImVoteNet](https://arxiv.org/pdf/2001.10692.pdf) (#352, #384)
+- Support the KNN GPU operation (#360, #371)
+
+#### Improvements
+
+- Add FAQ for common problems in the documentation (#333)
+- Refactor the structure of tools (#339)
+- Refactor [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py) and [test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py) (#343)
+- Support demo on nuScenes (#353)
+- Add 3DSSD checkpoints (#359)
+- Update the Bibtex of CenterPoint (#368)
+- Add citation format and reference to other OpenMMLab projects in the README (#374)
+- Upgrade the mmcv version requirements (#376)
+- Add numba and numpy version requirements in FAQ (#379)
+- Avoid unnecessary for-loop execution of vfe layer creation (#389)
+- Update SUNRGBD dataset documentation to stress the requirements for training ImVoteNet (#391)
+- Modify vote head to support 3DSSD (#396)
+
 ### v0.11.0 (1/3/2021)
 
 #### Highlights
