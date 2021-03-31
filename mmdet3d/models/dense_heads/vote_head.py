@@ -121,9 +121,9 @@ class VoteHead(nn.Module):
         """
 
         # for imvotenet
-        if 'seed_points' in feat_dict.keys() and \
-           'seed_features' in feat_dict.keys() and \
-           'seed_indices' in feat_dict.keys():
+        if 'seed_points' in feat_dict and \
+           'seed_features' in feat_dict and \
+           'seed_indices' in feat_dict:
             seed_points = feat_dict['seed_points']
             seed_features = feat_dict['seed_features']
             seed_indices = feat_dict['seed_indices']
