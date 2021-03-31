@@ -2,8 +2,7 @@ import mmcv
 import numpy as np
 import os
 
-from tools.data_converter.scannet_data_utils import (ScanNetData,
-                                                     ScanNetSegDataset)
+from tools.data_converter.scannet_data_utils import ScanNetData, ScanNetSegData
 from tools.data_converter.sunrgbd_data_utils import SUNRGBDData
 
 
@@ -59,14 +58,14 @@ def create_indoor_info_file(data_path,
     # e.g. re-sampled scene indexes and label weights
     if seg_flag:
         assert pkl_prefix in ['scannet']
-        train_dataset = ScanNetSegDataset(
+        train_dataset = ScanNetSegData(
             data_root=data_path,
             ann_file=train_filename,
             split='train',
             num_points=8192,
             label_weight_func=lambda x: 1.0 / np.log(1.2 + x))
         # TODO: no need to generate on val set?
-        val_dataset = ScanNetSegDataset(
+        val_dataset = ScanNetSegData(
             data_root=data_path,
             ann_file=val_filename,
             split='val',

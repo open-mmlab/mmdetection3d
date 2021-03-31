@@ -129,7 +129,7 @@ class ScanNetData(object):
         return list(infos)
 
 
-class ScanNetSegDataset(object):
+class ScanNetSegData(object):
     """ScanNet dataset used to generate infos for semantic segmentation task.
 
     Args:
