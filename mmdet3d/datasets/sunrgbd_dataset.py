@@ -48,7 +48,7 @@ class SUNRGBDDataset(Custom3DDataset):
                  ann_file,
                  pipeline=None,
                  classes=None,
-                 modality=None,
+                 modality=dict(use_camera=True, use_lidar=True),
                  box_type_3d='Depth',
                  filter_empty_gt=True,
                  test_mode=False):
@@ -61,8 +61,8 @@ class SUNRGBDDataset(Custom3DDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
-        if self.modality is None:
-            self.modality = dict(use_camera=True, use_lidar=True)
+        assert 'use_camera' in self.modality and \
+            'use_lidar' in self.modality
         assert self.modality['use_camera'] or self.modality['use_lidar']
 
     def get_data_info(self, index):
@@ -94,8 +94,9 @@ class SUNRGBDDataset(Custom3DDataset):
             input_dict['file_name'] = pts_filename
 
         if self.modality['use_camera']:
-            img_filename = osp.join(self.data_root,
-                                    info['image']['image_path'])
+            img_filename = osp.join(
+                osp.join(self.data_root, 'sunrgbd_trainval'),
+                info['image']['image_path'])
             input_dict['img_prefix'] = None
             input_dict['img_info'] = dict(filename=img_filename)
             calib = info['calib']
