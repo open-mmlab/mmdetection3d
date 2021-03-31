@@ -168,16 +168,16 @@ class ScanNetSegDataset(object):
             label_weight_func is None else label_weight_func
 
     def get_seg_infos(self):
-        room_idxs, label_weight = self._get_room_idxs_and_label_weight()
+        scene_idxs, label_weight = self.get_scene_idxs_and_label_weight()
         save_folder = osp.join(self.data_root, 'seg_info')
         mmcv.mkdir_or_exist(save_folder)
         np.save(
-            osp.join(save_folder, f'{self.split}_resampled_room_idxs.npy'),
-            room_idxs)
+            osp.join(save_folder, f'{self.split}_resampled_scene_idxs.npy'),
+            scene_idxs)
         np.save(
             osp.join(save_folder, f'{self.split}_label_weight.npy'),
             label_weight)
-        print(f'{self.split} resampled room index and label weight saved')
+        print(f'{self.split} resampled scene index and label weight saved')
 
     def _convert_to_label(self, mask):
         """Convert class_id in loaded segmentation mask to label."""
@@ -192,11 +192,11 @@ class ScanNetSegDataset(object):
         label = self.cat_id2class[mask]
         return label
 
-    def _get_room_idxs_and_label_weight(self):
-        """Compute room_idxs for data sampling and label weight for loss \
+    def get_scene_idxs_and_label_weight(self):
+        """Compute scene_idxs for data sampling and label weight for loss \
         calculation.
 
-        We sample more times for rooms with more points. Label_weight is
+        We sample more times for scenes with more points. Label_weight is
         inversely proportional to number of class points.
         """
         num_classes = len(self.cat_ids)
@@ -209,17 +209,17 @@ class ScanNetSegDataset(object):
             class_count, _ = np.histogram(label, range(num_classes + 2))
             label_weight += class_count
 
-        # repeat room_idx for num_room_point // num_sample_point times
+        # repeat scene_idx for num_scene_point // num_sample_point times
         sample_prob = np.array(num_point_all) / float(np.sum(num_point_all))
         num_iter = int(np.sum(num_point_all) / float(self.num_points))
-        room_idxs = []
+        scene_idxs = []
         for idx in range(len(self.data_infos)):
-            room_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
-        room_idxs = np.array(room_idxs).astype(np.int32)
+            scene_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
+        scene_idxs = np.array(scene_idxs).astype(np.int32)
 
         # calculate label weight, adopted from PointNet++
         label_weight = label_weight[:-1].astype(np.float32)
         label_weight = label_weight / label_weight.sum()
         label_weight = self.label_weight_func(label_weight).astype(np.float32)
 
-        return room_idxs, label_weight
+        return scene_idxs, label_weight

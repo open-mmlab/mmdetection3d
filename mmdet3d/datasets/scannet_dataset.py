@@ -1,14 +1,10 @@
-import mmcv
 import numpy as np
-import torch
 from os import path as osp
 
 from mmdet3d.core import show_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
-from ..core.bbox import get_box_type
-from .custom_3d import Custom3DDataset
-from .pipelines import Compose
+from .custom_3d import Custom3DDataset, Custom3DSegDataset
 
 
 @DATASETS.register_module()
@@ -133,7 +129,7 @@ class ScanNetDataset(Custom3DDataset):
 
 
 @DATASETS.register_module()
-class ScanNetSegDataset(Custom3DDataset):
+class ScanNetSegDataset(Custom3DSegDataset):
     r"""ScanNet Dataset for Semantic Segmentation Task.
 
     This class serves as the API for experiments on the ScanNet Dataset.
@@ -157,8 +153,8 @@ class ScanNetSegDataset(Custom3DDataset):
         ignore_index (int, optional): The label index to be ignored, e.g. \
             unannotated points. If None is given, set to len(self.CLASSES).
             Defaults to None.
-        room_idxs (np.ndarray | str, optional): Precomputed index to load data.
-            Map data sampling idx to room idx.
+        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+            data. For scenes with many points, we may sample it several times.
             Defaults to None.
         label_weight (np.ndarray | str, optional): Precomputed weight to \
             balance loss calculation. If None is given, compute from data.
@@ -170,12 +166,10 @@ class ScanNetSegDataset(Custom3DDataset):
                'bathtub', 'otherfurniture')
 
     VALID_CLASS_IDS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
-                       33, 34, 36, 39)  # class_ids used for training
+                       33, 34, 36, 39)
 
-    # all possible class_ids in loaded segmentation mask
     ALL_CLASS_IDS = tuple(range(41))
 
-    # official color for visualization
     PALETTE = [
         [174, 199, 232],
         [152, 223, 138],
@@ -208,32 +202,20 @@ class ScanNetSegDataset(Custom3DDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 room_idxs=None,
+                 scene_idxs=None,
                  label_weight=None):
 
-        self.data_root = data_root
-        self.ann_file = ann_file
-        self.test_mode = test_mode
-        self.modality = modality
-        self.filter_empty_gt = False
-        self.box_type_3d, self.box_mode_3d = get_box_type('depth')
-
-        self.data_infos = self.load_annotations(self.ann_file)
-
-        if pipeline is not None:
-            self.pipeline = Compose(pipeline)
-
-        self.ignore_index = len(self.CLASSES) if \
-            ignore_index is None else ignore_index
-
-        self.room_idxs, self.label_weight = \
-            self._get_room_idxs_and_label_weight(room_idxs, label_weight)
-        self.CLASSES, self.PALETTE = \
-            self.get_classes_and_palette(classes, palette)
-
-        # set group flag for the sampler
-        if not self.test_mode:
-            self._set_group_flag()
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
+            classes=classes,
+            palette=palette,
+            modality=modality,
+            test_mode=test_mode,
+            ignore_index=ignore_index,
+            scene_idxs=scene_idxs,
+            label_weight=label_weight)
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
@@ -272,208 +254,25 @@ class ScanNetSegDataset(Custom3DDataset):
                 osp.join(self.data_root, pts_path),
                 dtype=np.float32).reshape(-1, 6)
             sem_mask_path = data_info['pts_semantic_mask_path']
-            gt_sem_mask = self._convert_to_train_label(
+            gt_sem_mask = self.convert_to_label(
                 osp.join(self.data_root, sem_mask_path))
             pred_sem_mask = result['semantic_mask'].numpy()
             show_seg_result(points, gt_sem_mask,
                             pred_sem_mask, out_dir, file_name,
                             np.array(self.PALETTE), self.ignore_index, show)
 
-    def get_classes_and_palette(self, classes=None, palette=None):
-        """Get class names of current dataset.
-
-        This function is taken from MMSegmentation.
-
-        Args:
-            classes (Sequence[str] | str | None): If classes is None, use
-                default CLASSES defined by builtin dataset. If classes is a
-                string, take it as a file name. The file contains the name of
-                classes where each line contains one class name. If classes is
-                a tuple or list, override the CLASSES defined by the dataset.
-                Defaults to None.
-            palette (Sequence[Sequence[int]]] | np.ndarray | None):
-                The palette of segmentation map. If None is given, random
-                palette will be generated. Defaults to None.
-        """
-        if classes is None:
-            self.custom_classes = False
-            self.label_map = {
-                cls_id: self.ignore_index
-                for cls_id in self.ALL_CLASS_IDS
-            }  # map id in the loaded mask to label used for training
-            self.label_map.update(
-                {cls_id: i
-                 for i, cls_id in enumerate(self.VALID_CLASS_IDS)})
-            self.label2cat = {
-                i: cat_name
-                for i, cat_name in enumerate(self.CLASSES)
-            }  # map label to category name
-            return self.CLASSES, self.PALETTE
-
-        self.custom_classes = True
-        if isinstance(classes, str):
-            # take it as a file path
-            class_names = mmcv.list_from_file(classes)
-        elif isinstance(classes, (tuple, list)):
-            class_names = classes
-        else:
-            raise ValueError(f'Unsupported type {type(classes)} of classes.')
-
-        if self.CLASSES:
-            if not set(class_names).issubset(self.CLASSES):
-                raise ValueError('classes is not a subset of CLASSES.')
-
-            # update valid_class_ids
-            self.VALID_CLASS_IDS = [
-                self.VALID_CLASS_IDS[self.CLASSES.index(cls_name)]
-                for cls_name in class_names
-            ]
-
-            # dictionary, its keys are the old label ids and its values
-            # are the new label ids.
-            # used for changing pixel labels in load_annotations.
-            self.label_map = {
-                cls_id: self.ignore_index
-                for cls_id in self.ALL_CLASS_IDS
-            }
-            self.label_map.update(
-                {cls_id: i
-                 for i, cls_id in enumerate(self.VALID_CLASS_IDS)})
-            self.label2cat = {
-                i: cat_name
-                for i, cat_name in enumerate(class_names)
-            }
-
-        # modify palette for visualization
-        palette = [
-            self.PALETTE[self.CLASSES.index(cls_name)]
-            for cls_name in class_names
-        ]
-
-        # also need to modify self.label_weight
-        self.label_weight = np.array([
-            self.label_weight[self.CLASSES.index(cls_name)]
-            for cls_name in class_names
-        ]).astype(np.float32)
-
-        return class_names, palette
-
-    def _get_room_idxs_and_label_weight(self, room_idxs, label_weight):
-        """Compute room_idxs for data sampling and label weight for loss \
+    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
+        """Compute scene_idxs for data sampling and label weight for loss \
         calculation.
 
-        We sample more times for rooms with more points. Label_weight is
+        We sample more times for scenes with more points. Label_weight is
         inversely proportional to number of class points.
         """
-        if self.test_mode:
-            # when testing, we load one whole room every time
-            # and we don't need label weight for loss calculation
-            return np.arange(len(self.data_infos)), None
+        # when testing, we load one whole scene every time
+        # and we don't need label weight for loss calculation
+        if not self.test_mode and scene_idxs is None:
+            raise NotImplementedError(
+                'please provide re-sampled scene indexes for training')
 
-        assert room_idxs is not None, \
-            'please provide re-sampled room indexes for training'
-
-        if isinstance(room_idxs, str):
-            room_idxs = np.load(room_idxs)
-        else:
-            room_idxs = np.array(room_idxs)
-
-        if label_weight is None:
-            # we don't used label weighting in training
-            label_weight = np.ones(len(self.CLASSES))
-        elif isinstance(label_weight, str):
-            label_weight = np.load(label_weight)
-        else:
-            label_weight = np.array(label_weight)
-
-        return room_idxs.astype(np.int32), label_weight.astype(np.float32)
-
-    def _convert_to_train_label(self, mask):
-        """Convert class_id in loaded segmentation mask to label."""
-        # TODO: currently only support loading from local
-        # TODO: may need to consider ceph data storage in the future
-        if isinstance(mask, str):
-            if mask.endswith('npy'):
-                mask = np.load(mask)
-            else:
-                mask = np.fromfile(mask, dtype=np.long)
-        mask_copy = mask.copy()
-        for class_id, label in self.label_map.items():
-            mask_copy[mask == class_id] = label
-
-        return mask_copy
-
-    def evaluate(self,
-                 results,
-                 metric=None,
-                 logger=None,
-                 show=False,
-                 out_dir=None):
-        """Evaluate.
-
-        Evaluation in semantic segmentation protocol.
-
-        Args:
-            results (list[dict]): List of results.
-            metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | None | str): Logger used for printing
-                related information during evaluation. Defaults to None.
-            show (bool, optional): Whether to visualize.
-                Defaults to False.
-            out_dir (str, optional): Path to save the visualization results.
-                Defaults to None.
-
-        Returns:
-            dict: Evaluation results.
-        """
-        from mmdet3d.core.evaluation import seg_eval
-        assert isinstance(
-            results, list), f'Expect results to be list, got {type(results)}.'
-        assert len(results) > 0, 'Expect length of results > 0.'
-        assert len(results) == len(self.data_infos)
-        assert isinstance(
-            results[0], dict
-        ), f'Expect elements in results to be dict, got {type(results[0])}.'
-        pred_sem_masks = [result['semantic_mask'] for result in results]
-        gt_sem_masks = [
-            torch.from_numpy(
-                self._convert_to_train_label(
-                    osp.join(self.data_root,
-                             data_info['pts_semantic_mask_path'])))
-            for data_info in self.data_infos
-        ]
-        ret_dict = seg_eval(
-            gt_sem_masks,
-            pred_sem_masks,
-            self.label2cat,
-            self.ignore_index,
-            logger=logger)
-        if show:
-            self.show(pred_sem_masks, out_dir)
-
-        return ret_dict
-
-    def __len__(self):
-        """Return the length of room_idxs.
-
-        Returns:
-            int: Length of data infos.
-        """
-        return len(self.room_idxs)
-
-    def __getitem__(self, idx):
-        """Get item from infos according to the given index.
-
-        Returns:
-            dict: Data dictionary of the corresponding index.
-        """
-        room_idx = self.room_idxs[idx]  # map to room idx
-        if self.test_mode:
-            return self.prepare_test_data(room_idx)
-        while True:
-            data = self.prepare_train_data(room_idx)
-            if data is None:
-                idx = self._rand_another(idx)
-                room_idx = self.room_idxs[idx]  # map to room idx
-                continue
-            return data
+        return super().get_scene_idxs_and_label_weight(scene_idxs,
+                                                       label_weight)

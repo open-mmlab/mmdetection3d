@@ -243,7 +243,7 @@ def test_seg_getitem():
         [227, 119, 194],
         [82, 84, 163],
     ]
-    room_idxs = [0 for _ in range(20)]
+    scene_idxs = [0 for _ in range(20)]
     label_weight = [
         2.389689, 2.7215734, 4.5944676, 4.8543367, 4.096086, 4.907941,
         4.690836, 4.512031, 4.623311, 4.9242644, 5.358117, 5.360071, 5.019636,
@@ -287,15 +287,15 @@ def test_seg_getitem():
     ]
 
     scannet_dataset = ScanNetSegDataset(
-        root_path,
-        ann_file,
-        pipelines,
+        data_root=root_path,
+        ann_file=ann_file,
+        pipeline=pipelines,
         classes=None,
         palette=None,
         modality=None,
         test_mode=False,
         ignore_index=None,
-        room_idxs=room_idxs,
+        scene_idxs=scene_idxs,
         label_weight=label_weight)
 
     data = scannet_dataset[0]
@@ -339,8 +339,8 @@ def test_seg_getitem():
     assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
     assert original_classes == class_names
     assert original_palette == palette
-    assert scannet_dataset.room_idxs.dtype == np.int32
-    assert np.all(scannet_dataset.room_idxs == np.array(room_idxs))
+    assert scannet_dataset.scene_idxs.dtype == np.int32
+    assert np.all(scannet_dataset.scene_idxs == np.array(scene_idxs))
     assert np.allclose(scannet_dataset.label_weight, np.array(label_weight),
                        1e-5)
 
@@ -356,7 +356,10 @@ def test_seg_getitem():
         use_normalized_coord=False,
         test_mode=False)
     scannet_dataset = ScanNetSegDataset(
-        root_path, ann_file, new_pipelines, room_idxs=room_idxs)
+        data_root=root_path,
+        ann_file=ann_file,
+        pipeline=new_pipelines,
+        scene_idxs=scene_idxs)
 
     data = scannet_dataset[0]
     points = data['points']._data
@@ -374,7 +377,10 @@ def test_seg_getitem():
         use_dim=[0, 1, 2])
     new_pipelines.remove(new_pipelines[4])
     scannet_dataset = ScanNetSegDataset(
-        root_path, ann_file, new_pipelines, room_idxs=room_idxs)
+        data_root=root_path,
+        ann_file=ann_file,
+        pipeline=new_pipelines,
+        scene_idxs=scene_idxs)
 
     data = scannet_dataset[0]
     points = data['points']._data
@@ -400,7 +406,10 @@ def test_seg_getitem():
         test_mode=False)
     new_pipelines.remove(new_pipelines[4])
     scannet_dataset = ScanNetSegDataset(
-        root_path, ann_file, new_pipelines, room_idxs=room_idxs)
+        data_root=root_path,
+        ann_file=ann_file,
+        pipeline=new_pipelines,
+        scene_idxs=scene_idxs)
 
     data = scannet_dataset[0]
     points = data['points']._data
@@ -408,11 +417,11 @@ def test_seg_getitem():
 
     # test dataset with selected classes
     scannet_dataset = ScanNetSegDataset(
-        root_path,
-        ann_file,
+        data_root=root_path,
+        ann_file=ann_file,
         pipeline=None,
         classes=['cabinet', 'chair'],
-        room_idxs=room_idxs)
+        scene_idxs=scene_idxs)
 
     label_map = {i: 20 for i in range(41)}
     label_map.update({3: 0, 5: 1})
@@ -425,18 +434,18 @@ def test_seg_getitem():
     assert scannet_dataset.label2cat == {0: 'cabinet', 1: 'chair'}
     assert np.all(scannet_dataset.label_weight == np.ones(2))
 
-    # Test load classes from file
+    # test load classes from file
     import tempfile
     tmp_file = tempfile.NamedTemporaryFile()
     with open(tmp_file.name, 'w') as f:
         f.write('cabinet\nchair\n')
 
     scannet_dataset = ScanNetSegDataset(
-        root_path,
-        ann_file,
+        data_root=root_path,
+        ann_file=ann_file,
         pipeline=None,
         classes=tmp_file.name,
-        room_idxs=room_idxs)
+        scene_idxs=scene_idxs)
     assert scannet_dataset.CLASSES != original_classes
     assert scannet_dataset.CLASSES == ['cabinet', 'chair']
     assert scannet_dataset.PALETTE == [palette[2], palette[4]]
@@ -444,15 +453,24 @@ def test_seg_getitem():
     assert scannet_dataset.label_map == label_map
     assert scannet_dataset.label2cat == {0: 'cabinet', 1: 'chair'}
 
+    # test scene_idxs in dataset
+    # we should input scene_idxs in train mode
+    with pytest.raises(NotImplementedError):
+        scannet_dataset = ScanNetSegDataset(
+            data_root=root_path,
+            ann_file=ann_file,
+            pipeline=None,
+            scene_idxs=None)
+
     # test mode
     scannet_dataset = ScanNetSegDataset(
-        root_path,
-        ann_file,
+        data_root=root_path,
+        ann_file=ann_file,
         pipeline=None,
         test_mode=True,
-        room_idxs=room_idxs)
-    assert np.all(scannet_dataset.room_idxs == np.array([0]))
-    assert scannet_dataset.label_weight is None
+        scene_idxs=scene_idxs)
+    assert np.all(scannet_dataset.scene_idxs == np.array([0]))
+    assert np.all(scannet_dataset.label_weight == np.ones(len(class_names)))
 
 
 def test_seg_evaluate():
@@ -460,7 +478,8 @@ def test_seg_evaluate():
         pytest.skip()
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
-    scannet_dataset = ScanNetSegDataset(root_path, ann_file, test_mode=True)
+    scannet_dataset = ScanNetSegDataset(
+        data_root=root_path, ann_file=ann_file, test_mode=True)
     results = []
     pred_sem_mask = dict(
         semantic_mask=torch.tensor([
@@ -485,7 +504,8 @@ def test_seg_show():
     temp_dir = tempfile.mkdtemp()
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
-    scannet_dataset = ScanNetSegDataset(root_path, ann_file, room_idxs=[0])
+    scannet_dataset = ScanNetSegDataset(
+        data_root=root_path, ann_file=ann_file, scene_idxs=[0])
     result = dict(
         semantic_mask=torch.tensor([
             13, 5, 1, 2, 6, 2, 13, 1, 14, 2, 0, 0, 5, 5, 3, 0, 1, 14, 0, 0, 0,

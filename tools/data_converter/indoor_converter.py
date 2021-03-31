@@ -56,7 +56,7 @@ def create_indoor_info_file(data_path,
     print(f'{pkl_prefix} info val file is saved to {val_filename}')
 
     # generate infos for the semantic segmentation task
-    # e.g. re-sampled room indexes and label weights
+    # e.g. re-sampled scene indexes and label weights
     if seg_flag:
         assert pkl_prefix in ['scannet']
         train_dataset = ScanNetSegDataset(

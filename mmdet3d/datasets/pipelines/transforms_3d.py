@@ -428,7 +428,7 @@ class GlobalRotScaleTrans(object):
         repr_str = self.__class__.__name__
         repr_str += f'(rot_range={self.rot_range},'
         repr_str += f' scale_ratio_range={self.scale_ratio_range},'
-        repr_str += f' translation_std={self.translation_std})'
+        repr_str += f' translation_std={self.translation_std},'
         repr_str += f' shift_height={self.shift_height})'
         return repr_str
 
