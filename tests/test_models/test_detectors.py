@@ -124,12 +124,9 @@ def test_voxel_net():
 def test_3dssd():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
-
     _setup_seed(0)
-    3dssd_cfg = _get_detector_cfg(
-        '3dssd/3dssd_kitti-3d-car.py'
-    )
-    self = build_detector(3dssd_cfg).cuda()
+    ssd3d_cfg = _get_detector_cfg('3dssd/3dssd_kitti-3d-car.py')
+    self = build_detector(ssd3d_cfg).cuda()
     points_0 = torch.rand([2000, 4], device='cuda')
     points_1 = torch.rand([2000, 4], device='cuda')
     points = [points_0, points_1]
