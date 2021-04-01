@@ -106,7 +106,7 @@ def inference_detector(model, pcd):
     return result, data
 
 
-def inference_multi_modality_detector(model, pcd, image):
+def inference_multi_modality_detector(model, pcd, image, ann_file):
     """Inference point cloud with the multimodality detector.
 
     Args:
@@ -122,11 +122,13 @@ def inference_multi_modality_detector(model, pcd, image):
     # build the data pipeline
     test_pipeline = deepcopy(cfg.data.test.pipeline)
     test_pipeline = Compose(test_pipeline)
-    # box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
+    box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
     data = dict(
         pts_filename=pcd,
         img_prefix=osp.dirname(image),
         img_info=dict(filename=osp.basename(image)),
+        box_type_3d=box_type_3d,
+        box_mode_3d=box_mode_3d,
         img_fields=[],
         bbox3d_fields=[],
         pts_mask_fields=[],
@@ -135,6 +137,20 @@ def inference_multi_modality_detector(model, pcd, image):
         mask_fields=[],
         seg_fields=[])
     data = test_pipeline(data)
+    data_infos = mmcv.load(ann_file)
+    image_idx = int(image[-10:-4])
+    for x in data_infos:
+        if int(x['image']['image_idx']) != image_idx:
+            continue
+        info = x
+        break
+    import numpy as np
+    rect = info['calib']['R0_rect'].astype(np.float32)
+    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+    P2 = info['calib']['P2'].astype(np.float32)
+    lidar2img = P2 @ rect @ Trv2c
+    data['img_metas'][0].data['lidar2img'] = lidar2img
+
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
         # scatter to specified GPU

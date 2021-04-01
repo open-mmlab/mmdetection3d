@@ -7,6 +7,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('pcd', help='Point cloud file')
     parser.add_argument('image', help='image file')
+    parser.add_argument('ann', help='ann file')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
@@ -18,7 +19,7 @@ def main():
     # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)
     # test a single image
-    result, data = inference_multi_modality_detector(model, args.pcd, args.image)
+    result, data = inference_multi_modality_detector(model, args.pcd, args.image, args.ann)
     # show the results
     show_result_meshlab(data, result, args.out_dir)
 
