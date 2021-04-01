@@ -69,9 +69,9 @@ def get_acc_cls(hist):
 def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
     """Semantic Segmentation  Evaluation.
 
-     Evaluate the result of the Semantic Segmentation.
+    Evaluate the result of the Semantic Segmentation.
 
-     Args:
+    Args:
         gt_labels (list[torch.Tensor]): Ground truth labels.
         seg_preds  (list[torch.Tensor]): Predictions.
         label2cat (dict): Map from label to category name.
