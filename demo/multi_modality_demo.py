@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
-from mmdet3d.apis import inference_detector, inference_multi_modality_detector, init_detector, show_result_meshlab
+from mmdet3d.apis import (inference_multi_modality_detector, init_detector,
+                          show_result_meshlab)
 
 
 def main():
@@ -19,7 +20,8 @@ def main():
     # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)
     # test a single image
-    result, data = inference_multi_modality_detector(model, args.pcd, args.image, args.ann)
+    result, data = inference_multi_modality_detector(model, args.pcd,
+                                                     args.image, args.ann)
     # show the results
     show_result_meshlab(data, result, args.out_dir)
 

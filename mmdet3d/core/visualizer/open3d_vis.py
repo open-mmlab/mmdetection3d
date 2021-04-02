@@ -365,7 +365,7 @@ def project_pts_on_img(points,
             color=tuple(color),
             thickness=thickness,
         )
-    cv2.imshow('project_pts_img', img)
+    cv2.imshow('project_pts_img', img.astype(np.uint8))
     cv2.waitKey(100)
 
 
@@ -407,8 +407,49 @@ def project_bbox3d_on_img(bboxes3d,
                      (corners[end, 0], corners[end, 1]), color, thickness,
                      cv2.LINE_AA)
 
-    cv2.imshow('project_bbox3d_img', img)
+    cv2.imshow('project_bbox3d_img', img.astype(np.uint8))
     cv2.waitKey(0)
+
+
+def draw_bbox3d_on_img(bboxes3d,
+                       raw_img,
+                       lidar2img_rt,
+                       color=(0, 255, 0),
+                       thickness=1):
+    """Project the 3D bbox on 2D plane and draw on input image.
+
+    Args:
+        bboxes3d (numpy.array, shape=[M, 7]):
+            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+        raw_img (numpy.array): The numpy array of image.
+        lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
+            according to the camera intrinsic parameters.
+        color (tuple[int]): the color to draw bboxes. Default: (0, 255, 0).
+        thickness (int, optional): The thickness of bboxes. Default: 1.
+    """
+    img = raw_img.copy()
+    corners_3d = bboxes3d.corners
+    num_bbox = corners_3d.shape[0]
+    pts_4d = np.concatenate(
+        [corners_3d.reshape(-1, 3),
+         np.ones((num_bbox * 8, 1))], axis=-1)
+    pts_2d = pts_4d @ lidar2img_rt.T
+
+    pts_2d[:, 2] = np.clip(pts_2d[:, 2], a_min=1e-5, a_max=1e5)
+    pts_2d[:, 0] /= pts_2d[:, 2]
+    pts_2d[:, 1] /= pts_2d[:, 2]
+    imgfov_pts_2d = pts_2d[..., :2].reshape(num_bbox, 8, 2)
+
+    line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
+                    (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
+    for i in range(num_bbox):
+        corners = imgfov_pts_2d[i].astype(np.int)
+        for start, end in line_indices:
+            cv2.line(img, (corners[start, 0], corners[start, 1]),
+                     (corners[end, 0], corners[end, 1]), color, thickness,
+                     cv2.LINE_AA)
+
+    return img.astype(np.uint8)
 
 
 class Visualizer(object):

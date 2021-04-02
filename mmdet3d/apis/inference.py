@@ -1,11 +1,13 @@
 import mmcv
+import numpy as np
 import torch
 from copy import deepcopy
 from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from os import path as osp
 
-from mmdet3d.core import Box3DMode, show_result
+from mmdet3d.core import (Box3DMode, LiDARInstance3DBoxes,
+                          show_multi_modality_result, show_result)
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_detector
@@ -113,6 +115,7 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         model (nn.Module): The loaded detector.
         pcd (str): Point cloud files.
         image (str): Image files.
+        ann_file (str): Annotation files.
 
     Returns:
         tuple: Predicted results and data from pipeline.
@@ -137,6 +140,8 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         mask_fields=[],
         seg_fields=[])
     data = test_pipeline(data)
+
+    # LiDAR to image conversion
     data_infos = mmcv.load(ann_file)
     image_idx = int(image[-10:-4])
     for x in data_infos:
@@ -144,7 +149,6 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
             continue
         info = x
         break
-    import numpy as np
     rect = info['calib']['R0_rect'].astype(np.float32)
     Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
     P2 = info['calib']['P2'].astype(np.float32)
@@ -187,8 +191,28 @@ def show_result_meshlab(data, result, out_dir):
     if data['img_metas'][0][0]['box_mode_3d'] != Box3DMode.DEPTH:
         points = points[..., [1, 0, 2]]
         points[..., 0] *= -1
-        pred_bboxes = Box3DMode.convert(pred_bboxes,
+        show_bboxes = Box3DMode.convert(pred_bboxes,
                                         data['img_metas'][0][0]['box_mode_3d'],
                                         Box3DMode.DEPTH)
-    show_result(points, None, pred_bboxes, out_dir, file_name, show=False)
+    else:
+        show_bboxes = deepcopy(pred_bboxes)
+    show_result(points, None, show_bboxes, out_dir, file_name, show=False)
+
+    # project 3D bbox to 2D image plane
+    # for now we convert points into lidar mode
+    if 'lidar2img' in data['img_metas'][0][0]:
+        show_bboxes = Box3DMode.convert(pred_bboxes,
+                                        data['img_metas'][0][0]['box_mode_3d'],
+                                        Box3DMode.LIDAR)
+        show_bboxes = LiDARInstance3DBoxes(show_bboxes, origin=(0.5, 0.5, 0))
+        img = mmcv.imread(data['img_metas'][0][0]['filename'])
+
+        show_multi_modality_result(
+            img,
+            None,
+            show_bboxes,
+            data['img_metas'][0][0]['lidar2img'],
+            out_dir,
+            file_name,
+            show=False)
     return out_dir, file_name
