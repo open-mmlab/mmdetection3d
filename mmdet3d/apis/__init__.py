@@ -1,5 +1,6 @@
-from .inference import (convert_SyncBN, inference_detector, init_detector,
-                        show_result_meshlab, inference_multi_modality_detector)
+from .inference import (convert_SyncBN, inference_detector,
+                        inference_multi_modality_detector, init_detector,
+                        show_result_meshlab)
 from .test import single_gpu_test
 
 __all__ = [

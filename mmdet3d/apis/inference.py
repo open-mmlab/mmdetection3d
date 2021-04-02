@@ -6,8 +6,9 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from os import path as osp
 
-from mmdet3d.core import (Box3DMode, LiDARInstance3DBoxes,
-                          show_multi_modality_result, show_result)
+from mmdet3d.core import (Box3DMode, DepthInstance3DBoxes,
+                          LiDARInstance3DBoxes, show_multi_modality_result,
+                          show_result)
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_detector
@@ -126,6 +127,14 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     test_pipeline = deepcopy(cfg.data.test.pipeline)
     test_pipeline = Compose(test_pipeline)
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
+    # get data info containing calib
+    data_infos = mmcv.load(ann_file)
+    image_idx = int(image[-10:-4])
+    for x in data_infos:
+        if int(x['image']['image_idx']) != image_idx:
+            continue
+        info = x
+        break
     data = dict(
         pts_filename=pcd,
         img_prefix=osp.dirname(image),
@@ -139,21 +148,23 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         bbox_fields=[],
         mask_fields=[],
         seg_fields=[])
+
+    # depth map points to image conversion
+    if box_mode_3d == Box3DMode.DEPTH:
+        data.update(dict(calib=info['calib']))
+
     data = test_pipeline(data)
 
     # LiDAR to image conversion
-    data_infos = mmcv.load(ann_file)
-    image_idx = int(image[-10:-4])
-    for x in data_infos:
-        if int(x['image']['image_idx']) != image_idx:
-            continue
-        info = x
-        break
-    rect = info['calib']['R0_rect'].astype(np.float32)
-    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-    P2 = info['calib']['P2'].astype(np.float32)
-    lidar2img = P2 @ rect @ Trv2c
-    data['img_metas'][0].data['lidar2img'] = lidar2img
+    if box_mode_3d == Box3DMode.LIDAR:
+        rect = info['calib']['R0_rect'].astype(np.float32)
+        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+        P2 = info['calib']['P2'].astype(np.float32)
+        lidar2img = P2 @ rect @ Trv2c
+        data['img_metas'][0].data['lidar2img'] = lidar2img
+    elif box_mode_3d == Box3DMode.DEPTH:
+        data['calib'][0]['Rt'] = data['calib'][0]['Rt'].astype(np.float32)
+        data['calib'][0]['K'] = data['calib'][0]['K'].astype(np.float32)
 
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
@@ -163,6 +174,10 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         # this is a workaround to avoid the bug of MMDataParallel
         data['img_metas'] = data['img_metas'][0].data
         data['points'] = data['points'][0].data
+        data['img'] = data['img'][0].data
+        if box_mode_3d == Box3DMode.DEPTH:
+            data['calib'] = data['calib'][0].data
+
     # forward the model
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)
@@ -199,12 +214,9 @@ def show_result_meshlab(data, result, out_dir):
     show_result(points, None, show_bboxes, out_dir, file_name, show=False)
 
     # project 3D bbox to 2D image plane
-    # for now we convert points into lidar mode
-    if 'lidar2img' in data['img_metas'][0][0]:
-        show_bboxes = Box3DMode.convert(pred_bboxes,
-                                        data['img_metas'][0][0]['box_mode_3d'],
-                                        Box3DMode.LIDAR)
-        show_bboxes = LiDARInstance3DBoxes(show_bboxes, origin=(0.5, 0.5, 0))
+    if 'lidar2img' in data['img_metas'][0][0] and \
+            data['img_metas'][0][0]['box_mode_3d'] == Box3DMode.LIDAR:
+        show_bboxes = LiDARInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
         img = mmcv.imread(data['img_metas'][0][0]['filename'])
 
         show_multi_modality_result(
@@ -215,4 +227,20 @@ def show_result_meshlab(data, result, out_dir):
             out_dir,
             file_name,
             show=False)
+    elif 'calib' in data.keys() and \
+            data['img_metas'][0][0]['box_mode_3d'] == Box3DMode.DEPTH:
+        show_bboxes = DepthInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
+        img = mmcv.imread(data['img_metas'][0][0]['filename'])
+
+        show_multi_modality_result(
+            img,
+            None,
+            show_bboxes,
+            data['calib'][0],
+            out_dir,
+            file_name,
+            depth_bbox=True,
+            img_metas=data['img_metas'][0][0],
+            show=False)
+
     return out_dir, file_name
