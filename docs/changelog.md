@@ -4,9 +4,8 @@
 
 #### Highlights
 
-- Support two multi-modality methods, [MoCa](https://arxiv.org/pdf/2012.12741.pdf) and [ImVoteNet](https://arxiv.org/pdf/2001.10692.pdf).
-- Support LiDAR semantic segmentation evaluation metrics
-- Support pytorch 1.7
+- Support a new multi-modality method [ImVoteNet](https://arxiv.org/abs/2001.10692).
+- Support pytorch 1.7 and 1.8
 - Refactor the structure of tools and [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py)/[test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py)
 
 #### Bug Fixes
@@ -22,9 +21,8 @@
 
 #### New Features
 
-- Support [MoCa](https://arxiv.org/pdf/2012.12741.pdf) on KITTI (#327)
 - Support LiDAR-based semantic segmentation metrics (#332)
-- Support [ImVoteNet](https://arxiv.org/pdf/2001.10692.pdf) (#352, #384)
+- Support [ImVoteNet](https://arxiv.org/abs/2001.10692) (#352, #384)
 - Support the KNN GPU operation (#360, #371)
 
 #### Improvements
