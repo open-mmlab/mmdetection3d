@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import re
 import torch
 from copy import deepcopy
 from mmcv.parallel import collate, scatter
@@ -129,7 +130,7 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
     # get data info containing calib
     data_infos = mmcv.load(ann_file)
-    image_idx = int(image[-10:-4])
+    image_idx = int(re.findall(r'\d+', image)[-1])  # xxx/sunrgbd_000017.jpg
     for x in data_infos:
         if int(x['image']['image_idx']) != image_idx:
             continue
@@ -202,20 +203,27 @@ def show_result_meshlab(data, result, out_dir):
         pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
     else:
         pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
+
     # for now we convert points into depth mode
-    if data['img_metas'][0][0]['box_mode_3d'] != Box3DMode.DEPTH:
+    box_mode = data['img_metas'][0][0]['box_mode_3d']
+    if box_mode != Box3DMode.DEPTH:
         points = points[..., [1, 0, 2]]
         points[..., 0] *= -1
-        show_bboxes = Box3DMode.convert(pred_bboxes,
-                                        data['img_metas'][0][0]['box_mode_3d'],
-                                        Box3DMode.DEPTH)
+        show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
     else:
         show_bboxes = deepcopy(pred_bboxes)
     show_result(points, None, show_bboxes, out_dir, file_name, show=False)
 
+    if 'img' not in data.keys():
+        return out_dir, file_name
+
+    # multi-modality visualization
     # project 3D bbox to 2D image plane
-    if 'lidar2img' in data['img_metas'][0][0] and \
-            data['img_metas'][0][0]['box_mode_3d'] == Box3DMode.LIDAR:
+    if box_mode == Box3DMode.LIDAR:
+        if 'lidar2img' not in data['img_metas'][0][0]:
+            raise NotImplementedError(
+                'LiDAR to image transformation matrix is not provided')
+
         show_bboxes = LiDARInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
         img = mmcv.imread(data['img_metas'][0][0]['filename'])
 
@@ -227,8 +235,11 @@ def show_result_meshlab(data, result, out_dir):
             out_dir,
             file_name,
             show=False)
-    elif 'calib' in data.keys() and \
-            data['img_metas'][0][0]['box_mode_3d'] == Box3DMode.DEPTH:
+    elif box_mode == Box3DMode.DEPTH:
+        if 'calib' not in data.keys():
+            raise NotImplementedError(
+                'camera calibration information is not provided')
+
         show_bboxes = DepthInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
         img = mmcv.imread(data['img_metas'][0][0]['filename'])
 
@@ -242,5 +253,8 @@ def show_result_meshlab(data, result, out_dir):
             depth_bbox=True,
             img_metas=data['img_metas'][0][0],
             show=False)
+    else:
+        raise NotImplementedError(
+            f'visualization of {box_mode} bbox is not supported')
 
     return out_dir, file_name
