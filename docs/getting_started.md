@@ -240,7 +240,7 @@ Examples:
 ```python
 to_ply('./test.obj', './test.ply', 'obj')
 ```
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](../demo).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](https://github.com/open-mmlab/mmdetection3d/tree/master/demo).
 
 ## High-level APIs for testing point clouds
 
