@@ -185,13 +185,14 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     return result, data
 
 
-def show_result_meshlab(data, result, out_dir):
+def show_result_meshlab(data, result, out_dir, score_thr=0.0):
     """Show result by meshlab.
 
     Args:
         data (dict): Contain data from pipeline.
         result (dict): Predicted result from model.
         out_dir (str): Directory to save visualized result.
+        score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
     """
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
@@ -201,8 +202,15 @@ def show_result_meshlab(data, result, out_dir):
 
     if 'pts_bbox' in result[0].keys():
         pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
+        pred_scores = result[0]['pts_bbox']['scores_3d'].numpy()
     else:
         pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
+        pred_scores = result[0]['scores_3d'].numpy()
+
+    # filter out low score bboxes for visualization
+    if score_thr > 0:
+        inds = pred_scores > score_thr
+        pred_bboxes = pred_bboxes[inds]
 
     # for now we convert points into depth mode
     box_mode = data['img_metas'][0][0]['box_mode_3d']
