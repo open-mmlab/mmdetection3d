@@ -194,12 +194,11 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 ### Point cloud demo
 
-We provide a demo script to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md)
+We provide several demo scripts to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md). To test a single-modality 3D detection on point cloud scenes:
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
 ```
-
 Examples:
 
 ```shell
@@ -212,7 +211,7 @@ import numpy as np
 import pandas as pd
 from plyfile import PlyData
 
-def conver_ply(input_path, output_path):
+def convert_ply(input_path, output_path):
     plydata = PlyData.read(input_path)  # read file
     data = plydata.elements[0].data  # read data
     data_pd = pd.DataFrame(data)  # convert to DataFrame
@@ -228,6 +227,20 @@ Examples:
 ```python
 convert_ply('./test.ply', './test.bin')
 ```
+If you have point clouds in other format (`off`, `obj`, etc.), you can use trimesh to convert them into `ply`.
+```python
+import trimesh
+
+def to_ply(input_path, output_path, original_type):
+    mesh = trimesh.load(input_path, file_type=original_type)  # read file
+    mesh.export(output_path, file_type='ply')  # convert to ply
+```
+Examples:
+
+```python
+to_ply('./test.obj', './test.ply', 'obj')
+```
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](../demo).
 
 ## High-level APIs for testing point clouds
 
