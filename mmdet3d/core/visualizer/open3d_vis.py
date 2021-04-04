@@ -435,6 +435,9 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
     pts_4d = np.concatenate(
         [corners_3d.reshape(-1, 3),
          np.ones((num_bbox * 8, 1))], axis=-1)
+    lidar2img_rt = copy.deepcopy(lidar2img_rt).reshape(4, 4)
+    if isinstance(lidar2img_rt, torch.Tensor):
+        lidar2img_rt = lidar2img_rt.cpu().numpy()
     pts_2d = pts_4d @ lidar2img_rt.T
 
     pts_2d[:, 2] = np.clip(pts_2d[:, 2], a_min=1e-5, a_max=1e5)
@@ -476,9 +479,18 @@ def draw_depth_bbox3d_on_img(bboxes3d,
     from mmdet3d.models import apply_3d_transformation
 
     img = raw_img.copy()
+    calibs = copy.deepcopy(calibs)
+    img_metas = copy.deepcopy(img_metas)
     corners_3d = bboxes3d.corners
     num_bbox = corners_3d.shape[0]
     points_3d = corners_3d.reshape(-1, 3)
+    assert ('Rt' in calibs.keys() and 'K' in calibs.keys()), \
+        'Rt and K matrix should be provided as camera caliberation information'
+    if isinstance(calibs['Rt'], np.ndarray):
+        calibs['Rt'] = torch.from_numpy(calibs['Rt'])
+        calibs['K'] = torch.from_numpy(calibs['K'])
+    calibs['Rt'] = calibs['Rt'].reshape(3, 3).float().cpu()
+    calibs['K'] = calibs['K'].reshape(3, 3).float().cpu()
 
     # first reverse the data transformations
     xyz_depth = apply_3d_transformation(
@@ -486,13 +498,10 @@ def draw_depth_bbox3d_on_img(bboxes3d,
 
     # then convert from depth coords to camera coords
     xyz_cam = Coord3DMode.convert_point(
-        xyz_depth,
-        Coord3DMode.DEPTH,
-        Coord3DMode.CAM,
-        rt_mat=calibs['Rt'][0].cpu())
+        xyz_depth, Coord3DMode.DEPTH, Coord3DMode.CAM, rt_mat=calibs['Rt'])
 
     # project to 2d to get image coords (uv)
-    uv_origin = points_cam2img(xyz_cam, calibs['K'][0].cpu())
+    uv_origin = points_cam2img(xyz_cam, calibs['K'])
     uv_origin = (uv_origin - 1).round()
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 

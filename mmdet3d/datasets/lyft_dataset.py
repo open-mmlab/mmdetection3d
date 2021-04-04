@@ -415,7 +415,7 @@ class LyftDataset(Custom3DDataset):
             points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                                Coord3DMode.DEPTH)
             inds = result['pts_bbox']['scores_3d'] > 0.1
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
                                           Box3DMode.DEPTH)
             pred_bboxes = result['pts_bbox']['boxes_3d'][inds].tensor.numpy()
