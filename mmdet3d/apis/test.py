@@ -1,4 +1,5 @@
 import mmcv
+import os
 import torch
 
 
@@ -29,8 +30,14 @@ def single_gpu_test(model, data_loader, show=False, out_dir=None):
             result = model(return_loss=False, rescale=True, **data)
 
         if show:
-            model.module.show_results(data, result, out_dir)
-
+            print('into show')
+            if hasattr(model.module, 'show_results'):
+                model.module.show_results(data, result, out_dir)
+            else:
+                img_file = data['img_metas'][0].data[0][0]['filename']
+                outfile = os.path.basename(img_file)
+                outfile = os.path.join(out_dir, outfile)
+                model.module.show_result(img_file, result[0], out_file=outfile)
         results.extend(result)
 
         batch_size = len(result)
