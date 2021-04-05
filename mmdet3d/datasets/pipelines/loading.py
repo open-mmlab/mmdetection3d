@@ -3,7 +3,7 @@ import numpy as np
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import LoadAnnotations
+from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
 
 
 @PIPELINES.register_module()
@@ -63,6 +63,33 @@ class LoadMultiViewImageFromFiles(object):
         """str: Return a string that describes the module."""
         return "{} (to_float32={}, color_type='{}')".format(
             self.__class__.__name__, self.to_float32, self.color_type)
+
+
+@PIPELINES.register_module()
+class LoadImageFromFileMono3D(LoadImageFromFile):
+    """Load an image from file in monocular 3D object detection. Compared to 2D
+    detection, additional camera parameters need to be loaded.
+
+    Args:
+        kwargs (dict): Arguments are the same as those in \
+            :class:`LoadImageFromFile`.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __call__(self, results):
+        """Call functions to load image and get image meta information.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet.CustomDataset`.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        super().__call__(results)
+        results['cam_intrinsic'] = results['img_info']['cam_intrinsic']
+        return results
 
 
 @PIPELINES.register_module()
@@ -405,6 +432,8 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to True.
         with_label_3d (bool, optional): Whether to load 3D labels.
             Defaults to True.
+        with_attr_label (bool, optional): Whether to load attribute label.
+            Defaults to False.
         with_mask_3d (bool, optional): Whether to load 3D instance masks.
             for points. Defaults to False.
         with_seg_3d (bool, optional): Whether to load 3D semantic masks.
@@ -416,6 +445,8 @@ class LoadAnnotations3D(LoadAnnotations):
         with_mask (bool, optional): Whether to load 2D instance masks.
             Defaults to False.
         with_seg (bool, optional): Whether to load 2D semantic masks.
+            Defaults to False.
+        with_bbox_depth (bool, optional): Whether to load 2.5D boxes.
             Defaults to False.
         poly2mask (bool, optional): Whether to convert polygon annotations
             to bitmasks. Defaults to True.
@@ -429,12 +460,14 @@ class LoadAnnotations3D(LoadAnnotations):
     def __init__(self,
                  with_bbox_3d=True,
                  with_label_3d=True,
+                 with_attr_label=False,
                  with_mask_3d=False,
                  with_seg_3d=False,
                  with_bbox=False,
                  with_label=False,
                  with_mask=False,
                  with_seg=False,
+                 with_bbox_depth=False,
                  poly2mask=True,
                  seg_3d_dtype='int',
                  file_client_args=dict(backend='disk')):
@@ -446,7 +479,9 @@ class LoadAnnotations3D(LoadAnnotations):
             poly2mask,
             file_client_args=file_client_args)
         self.with_bbox_3d = with_bbox_3d
+        self.with_bbox_depth = with_bbox_depth
         self.with_label_3d = with_label_3d
+        self.with_attr_label = with_attr_label
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
@@ -464,6 +499,19 @@ class LoadAnnotations3D(LoadAnnotations):
         results['bbox3d_fields'].append('gt_bboxes_3d')
         return results
 
+    def _load_bboxes_depth(self, results):
+        """Private function to load 2.5D bounding box annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 2.5D bounding box annotations.
+        """
+        results['centers2d'] = results['ann_info']['centers2d']
+        results['depths'] = results['ann_info']['depths']
+        return results
+
     def _load_labels_3d(self, results):
         """Private function to load label annotations.
 
@@ -474,6 +522,18 @@ class LoadAnnotations3D(LoadAnnotations):
             dict: The dict containing loaded label annotations.
         """
         results['gt_labels_3d'] = results['ann_info']['gt_labels_3d']
+        return results
+
+    def _load_attr_labels(self, results):
+        """Private function to load label annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded label annotations.
+        """
+        results['attr_labels'] = results['ann_info']['attr_labels']
         return results
 
     def _load_masks_3d(self, results):
@@ -543,8 +603,14 @@ class LoadAnnotations3D(LoadAnnotations):
             results = self._load_bboxes_3d(results)
             if results is None:
                 return None
+        if self.with_bbox_depth:
+            results = self._load_bboxes_depth(results)
+            if results is None:
+                return None
         if self.with_label_3d:
             results = self._load_labels_3d(results)
+        if self.with_attr_label:
+            results = self._load_attr_labels(results)
         if self.with_mask_3d:
             results = self._load_masks_3d(results)
         if self.with_seg_3d:
@@ -558,11 +624,13 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str = self.__class__.__name__ + '(\n'
         repr_str += f'{indent_str}with_bbox_3d={self.with_bbox_3d}, '
         repr_str += f'{indent_str}with_label_3d={self.with_label_3d}, '
+        repr_str += f'{indent_str}with_attr_label={self.with_attr_label}, '
         repr_str += f'{indent_str}with_mask_3d={self.with_mask_3d}, '
         repr_str += f'{indent_str}with_seg_3d={self.with_seg_3d}, '
         repr_str += f'{indent_str}with_bbox={self.with_bbox}, '
         repr_str += f'{indent_str}with_label={self.with_label}, '
         repr_str += f'{indent_str}with_mask={self.with_mask}, '
         repr_str += f'{indent_str}with_seg={self.with_seg}, '
+        repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str

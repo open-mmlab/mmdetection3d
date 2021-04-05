@@ -117,6 +117,71 @@ class RandomFlip3D(RandomFlip):
 
 
 @PIPELINES.register_module()
+class RandomFlipMono3D(RandomFlip3D):
+    """Flip the image & bbox in monocular 3D detection.
+
+    If the input dict contains the key "flip", then the flag will be used,
+    otherwise it will be randomly decided by a ratio specified in the init
+    method.
+
+    Args:
+        kwargs (dict): The same parameters as RandomFlip3D.
+    """
+
+    def __init__(self, **kwargs):
+        super(RandomFlipMono3D, self).__init__(**kwargs)
+        assert self.sync_2d is True, 'Only support sync_2d=True in Mono3D.'
+
+    def random_flip_data_3d(self, input_dict, direction='horizontal'):
+        """Flip 3D data randomly.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            direction (str): Flip direction. Default: horizontal.
+
+        Returns:
+            dict: Flipped results, 'centers2d', bbox3d_fields' keys are \
+                updated in the result dict.
+        """
+        assert direction == 'horizontal', 'Not support vertical in Mono3D.'
+        if len(input_dict['bbox3d_fields']) == 0:  # test mode
+            input_dict['bbox3d_fields'].append('empty_box3d')
+            input_dict['empty_box3d'] = input_dict['box_type_3d'](
+                np.array([], dtype=np.float32))
+        assert len(input_dict['bbox3d_fields']) == 1
+        for key in input_dict['bbox3d_fields']:
+            input_dict[key].flip(direction)  # Don't need to flip points here
+        w = input_dict['img_shape'][1]
+        if 'centers2d' in input_dict:
+            input_dict['centers2d'][..., 0] = \
+                w - input_dict['centers2d'][..., 0]
+
+    def __call__(self, input_dict):
+        """Call function to flip values in the ``bbox3d_fields`` and also \
+        flip 2D image and its 2.5D annotations.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Flipped results, 'flip', 'flip_direction', \
+                'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added \
+                into result dict.
+        """
+        # filp 2D image and its annotations
+        super(RandomFlipMono3D, self).__call__(input_dict)
+        return input_dict
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += '(sync_2d={},'.format(self.sync_2d)
+        repr_str += 'flip_ratio_bev_vertical={})'.format(
+            self.flip_ratio_bev_vertical)
+        return repr_str
+
+
+@PIPELINES.register_module()
 class ObjectSample(object):
     """Sample GT objects to the data.
 
