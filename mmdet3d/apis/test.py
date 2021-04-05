@@ -30,7 +30,6 @@ def single_gpu_test(model, data_loader, show=False, out_dir=None):
             result = model(return_loss=False, rescale=True, **data)
 
         if show:
-            print('into show')
             if hasattr(model.module, 'show_results'):
                 model.module.show_results(data, result, out_dir)
             else:
