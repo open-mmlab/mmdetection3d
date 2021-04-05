@@ -269,7 +269,7 @@ std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
   AT_CUDA_CHECK(cudaGetLastError());
 
   coors_map_sorted = coors_map_sorted.cumsum(0, torch::kInt32);
-  coors_map.index_put_(coors_id_argsort, coors_map_sorted);
+  coors_map.index_put_({coors_id_argsort}, coors_map_sorted);
 
   const int num_coors_cpu =
       coors_map_sorted[-1].cpu().data_ptr<int32_t>()[0] + 1;
