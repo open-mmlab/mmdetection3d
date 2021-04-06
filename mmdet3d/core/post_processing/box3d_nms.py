@@ -31,7 +31,7 @@ def box3d_multiclass_nms(mlvl_bboxes,
             of direction classifier. Defaults to None.
         mlvl_attr_scores (torch.Tensor, optional): Multi-level scores
             of attribute classifier. Defaults to None.
-        mlvl_bboxes2d (torch.Tensor, optional): Multi-level 2D bounding \
+        mlvl_bboxes2d (torch.Tensor, optional): Multi-level 2D bounding
             boxes. Defaults to None.
 
     Returns:
