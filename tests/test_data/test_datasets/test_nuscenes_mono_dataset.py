@@ -120,7 +120,7 @@ def test_format_results():
         pipeline=pipeline,
         data_root=root_path,
         test_mode=True)
-    results = mmcv.load('tests/data/nuscenes/sample_results.pkl')
+    results = mmcv.load('tests/data/nuscenes/mono3d_sample_results.pkl')
     result_files, tmp_dir = nus_dataset.format_results(results)
     result_data = mmcv.load(result_files['img_bbox'])
     assert len(result_data['results'].keys()) == 1
