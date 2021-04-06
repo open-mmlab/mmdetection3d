@@ -8,18 +8,8 @@ from nuscenes.utils.data_classes import Box as NuScenesBox
 from os import path as osp
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
-from mmdet.datasets import DATASETS
+from mmdet.datasets import DATASETS, CocoDataset
 from ..core.bbox import CameraInstance3DBoxes, get_box_type
-
-try:
-    import pycocotools
-    assert pycocotools.__version__ >= '12.0.2'
-except AssertionError:
-    raise AssertionError('Incompatible version of pycocotools is installed. '
-                         'Run pip uninstall pycocotools first. Then run pip '
-                         'install mmpycocotools to install open-mmlab forked '
-                         'pycocotools.')
-from mmdet.datasets import CocoDataset
 
 
 @DATASETS.register_module()
