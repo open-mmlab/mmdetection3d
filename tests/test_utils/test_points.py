@@ -239,8 +239,11 @@ def test_base_points():
 
     # test set and get function for BasePoint color and height
     base_points = BasePoints(points_np[:, :3])
+    assert base_points.attribute_dims is None
     base_points.height = points_np[:, 3]
+    assert base_points.attribute_dims == dict(height=3)
     base_points.color = points_np[:, 4:]
+    assert base_points.attribute_dims == dict(height=3, color=[4, 5, 6])
     assert torch.allclose(base_points.height,
                           torch.tensor([0.6666, 0.1502, 0.6565, 0.2803]))
     assert torch.allclose(

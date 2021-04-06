@@ -498,6 +498,7 @@ def test_seg_evaluate():
 
 def test_seg_show():
     import mmcv
+    import os
     import tempfile
     from os import path as osp
 
@@ -524,3 +525,7 @@ def test_seg_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    os.remove(pts_file_path)
+    os.remove(gt_file_path)
+    os.remove(pred_file_path)
+    os.removedirs(osp.join(temp_dir, 'scene0000_00'))

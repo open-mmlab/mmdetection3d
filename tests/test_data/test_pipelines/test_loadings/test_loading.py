@@ -4,9 +4,10 @@ import pytest
 from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmdet3d.core.points import LiDARPoints
+from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
                                         LoadPointsFromMultiSweeps,
+                                        NormalizePointsColor,
                                         PointSegClassMapping)
 
 
@@ -200,3 +201,31 @@ def test_load_points_from_multi_sweeps():
     expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
     assert repr_str == expected_repr_str
     assert points.shape == (403, 4)
+
+
+def test_normalize_points_color():
+    coord = np.array([[68.137, 3.358, 2.516], [67.697, 3.55, 2.501],
+                      [67.649, 3.76, 2.5], [66.414, 3.901, 2.459],
+                      [66.012, 4.085, 2.446], [65.834, 4.178, 2.44],
+                      [65.841, 4.386, 2.44], [65.745, 4.587, 2.438],
+                      [65.551, 4.78, 2.432], [65.486, 4.982, 2.43]])
+    color = np.array([[131, 95, 138], [71, 185, 253], [169, 47, 41],
+                      [174, 161, 88], [6, 158, 213], [6, 86, 78],
+                      [118, 161, 78], [72, 195, 138], [180, 170, 32],
+                      [197, 85, 27]])
+    points = np.concatenate([coord, color], axis=1)
+    points = DepthPoints(
+        points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+    input_dict = dict(points=points)
+
+    color_mean = [100, 150, 200]
+    points_color_normalizer = NormalizePointsColor(color_mean=color_mean)
+    input_dict = points_color_normalizer(input_dict)
+    points = input_dict['points']
+    repr_str = repr(points_color_normalizer)
+    expected_repr_str = f'NormalizePointsColor(color_mean={color_mean})'
+
+    assert repr_str == expected_repr_str
+    assert np.allclose(points.coord, coord)
+    assert np.allclose(points.color,
+                       (color - np.array(color_mean)[None, :]) / 255.0)
