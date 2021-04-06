@@ -65,7 +65,8 @@ def test_show_result_meshlab():
             pts_bbox=dict(
                 boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
     ]
-    temp_out_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir)
     expected_outfile_ply = file_name + '_pred.obj'
     expected_outfile_obj = file_name + '_points.obj'
@@ -75,9 +76,7 @@ def test_show_result_meshlab():
                                              expected_outfile_obj)
     assert os.path.exists(expected_outfile_ply_path)
     assert os.path.exists(expected_outfile_obj_path)
-    os.remove(expected_outfile_obj_path)
-    os.remove(expected_outfile_ply_path)
-    os.removedirs(os.path.join(temp_out_dir, file_name))
+    tmp_dir.cleanup()
 
     # test multi-modality show
     # Indoor scene
@@ -112,7 +111,8 @@ def test_show_result_meshlab():
             pts_bbox=dict(
                 boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
     ]
-    temp_out_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
     expected_outfile_ply = file_name + '_pred.ply'
     expected_outfile_obj = file_name + '_points.obj'
@@ -130,11 +130,7 @@ def test_show_result_meshlab():
     assert os.path.exists(expected_outfile_obj_path)
     assert os.path.exists(expected_outfile_png_path)
     assert os.path.exists(expected_outfile_proj_path)
-    os.remove(expected_outfile_obj_path)
-    os.remove(expected_outfile_ply_path)
-    os.remove(expected_outfile_png_path)
-    os.remove(expected_outfile_proj_path)
-    os.removedirs(os.path.join(temp_out_dir, file_name))
+    tmp_dir.cleanup()
     # outdoor scene
     pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
     filename = 'tests/data/kitti/training/image_2/000000.png'
@@ -165,7 +161,8 @@ def test_show_result_meshlab():
                 boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
     ]
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.1)
-    temp_out_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
     expected_outfile_ply = file_name + '_pred.ply'
     expected_outfile_obj = file_name + '_points.obj'
@@ -183,11 +180,7 @@ def test_show_result_meshlab():
     assert os.path.exists(expected_outfile_obj_path)
     assert os.path.exists(expected_outfile_png_path)
     assert os.path.exists(expected_outfile_proj_path)
-    os.remove(expected_outfile_obj_path)
-    os.remove(expected_outfile_ply_path)
-    os.remove(expected_outfile_png_path)
-    os.remove(expected_outfile_proj_path)
-    os.removedirs(os.path.join(temp_out_dir, file_name))
+    tmp_dir.cleanup()
 
 
 def test_inference_detector():

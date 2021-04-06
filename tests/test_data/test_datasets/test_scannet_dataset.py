@@ -172,7 +172,8 @@ def test_show():
     from os import path as osp
 
     from mmdet3d.core.bbox import DepthInstance3DBoxes
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
     scannet_dataset = ScanNetDataset(root_path, ann_file)

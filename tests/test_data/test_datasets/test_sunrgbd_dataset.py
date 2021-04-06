@@ -208,7 +208,8 @@ def test_show():
     from os import path as osp
 
     from mmdet3d.core.bbox import DepthInstance3DBoxes
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     root_path, ann_file, _, pipelines, modality = \
         _generate_sunrgbd_dataset_config()
     sunrgbd_dataset = SUNRGBDDataset(
@@ -232,9 +233,11 @@ def test_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
 
     # test multi-modality show
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     root_path, ann_file, _, multi_modality_pipelines, modality = \
         _generate_sunrgbd_multi_modality_dataset_config()
     sunrgbd_dataset = SUNRGBDDataset(
@@ -252,3 +255,4 @@ def test_show():
     mmcv.check_file_exist(img_file_path)
     mmcv.check_file_exist(img_pred_path)
     mmcv.check_file_exist(img_gt_file)
+    tmp_dir.cleanup()

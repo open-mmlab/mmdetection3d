@@ -232,11 +232,11 @@ def test_evaluate():
 
 def test_show():
     import mmcv
-    import tempfile
     from os import path as osp
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     data_root, ann_file, classes, pts_prefix, \
         pipeline, modality, split = _generate_kitti_dataset_config()
     kitti_dataset = KittiDataset(
@@ -259,9 +259,11 @@ def test_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
 
     # test multi-modality show
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     _, _, _, _, multi_modality_pipeline, modality, _ = \
         _generate_kitti_multi_modality_dataset_config()
     kitti_dataset = KittiDataset(data_root, ann_file, split, pts_prefix,
@@ -279,6 +281,7 @@ def test_show():
     mmcv.check_file_exist(img_file_path)
     mmcv.check_file_exist(img_pred_path)
     mmcv.check_file_exist(img_gt_file)
+    tmp_dir.cleanup()
 
 
 def test_format_results():
@@ -333,7 +336,8 @@ def test_bbox2result_kitti():
     scores_3d = torch.tensor([0.5])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     results = [result]
-    temp_kitti_result_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_kitti_result_dir = tmp_dir.name
     det_annos = kitti_dataset.bbox2result_kitti(
         results, classes, submission_prefix=temp_kitti_result_dir)
     expected_file_path = os.path.join(temp_kitti_result_dir, '000000.txt')
@@ -346,10 +350,10 @@ def test_bbox2result_kitti():
     assert np.allclose(det_annos[0]['score'], expected_score)
     assert np.allclose(det_annos[0]['dimensions'], expected_dimensions)
     assert os.path.exists(expected_file_path)
-    os.remove(expected_file_path)
-    os.removedirs(temp_kitti_result_dir)
+    tmp_dir.cleanup()
 
-    temp_kitti_result_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_kitti_result_dir = tmp_dir.name
     boxes_3d = LiDARInstance3DBoxes(torch.tensor([]))
     labels_3d = torch.tensor([])
     scores_3d = torch.tensor([])
@@ -360,8 +364,7 @@ def test_bbox2result_kitti():
         results, classes, submission_prefix=temp_kitti_result_dir)
     expected_file_path = os.path.join(temp_kitti_result_dir, '000000.txt')
     assert os.path.exists(expected_file_path)
-    os.remove(expected_file_path)
-    os.removedirs(temp_kitti_result_dir)
+    tmp_dir.cleanup()
 
 
 def test_bbox2result_kitti2d():
