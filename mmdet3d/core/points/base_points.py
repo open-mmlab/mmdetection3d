@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import warnings
 from abc import abstractmethod
 
 
@@ -49,6 +50,10 @@ class BasePoints(object):
     @coord.setter
     def coord(self, tensor):
         """Set the coordinates of each point."""
+        try:
+            tensor = tensor.reshape(self.shape[0], 3)
+        except (RuntimeError, ValueError):  # for torch.Tensor and np.ndarray
+            raise ValueError(f'got unexpected shape {tensor.shape}')
         if not isinstance(tensor, torch.Tensor):
             tensor = self.tensor.new_tensor(tensor)
         self.tensor[:, :3] = tensor
@@ -65,13 +70,23 @@ class BasePoints(object):
     @height.setter
     def height(self, tensor):
         """Set the height of each point."""
+        try:
+            tensor = tensor.reshape(self.shape[0])
+        except (RuntimeError, ValueError):  # for torch.Tensor and np.ndarray
+            raise ValueError(f'got unexpected shape {tensor.shape}')
+        if not isinstance(tensor, torch.Tensor):
+            tensor = self.tensor.new_tensor(tensor)
         if self.attribute_dims is not None and \
                 'height' in self.attribute_dims.keys():
-            if not isinstance(tensor, torch.Tensor):
-                tensor = self.tensor.new_tensor(tensor)
             self.tensor[:, self.attribute_dims['height']] = tensor
         else:
-            raise KeyError('point does not have height attribute')
+            # add height attribute
+            if self.attribute_dims is None:
+                self.attribute_dims = dict()
+            attr_dim = self.shape[1]
+            self.tensor = torch.cat([self.tensor, tensor.unsqueeze(1)], dim=1)
+            self.attribute_dims.update(dict(height=attr_dim))
+            self.points_dim += 1
 
     @property
     def color(self):
@@ -85,13 +100,26 @@ class BasePoints(object):
     @color.setter
     def color(self, tensor):
         """Set the color of each point."""
+        try:
+            tensor = tensor.reshape(self.shape[0], 3)
+        except (RuntimeError, ValueError):  # for torch.Tensor and np.ndarray
+            raise ValueError(f'got unexpected shape {tensor.shape}')
+        if tensor.max() >= 256 or tensor.min() < 0:
+            warnings.warn('point got color value beyond [0, 255]')
+        if not isinstance(tensor, torch.Tensor):
+            tensor = self.tensor.new_tensor(tensor)
         if self.attribute_dims is not None and \
                 'color' in self.attribute_dims.keys():
-            if not isinstance(tensor, torch.Tensor):
-                tensor = self.tensor.new_tensor(tensor)
             self.tensor[:, self.attribute_dims['color']] = tensor
         else:
-            raise KeyError('point does not have color attribute')
+            # add color attribute
+            if self.attribute_dims is None:
+                self.attribute_dims = dict()
+            attr_dim = self.shape[1]
+            self.tensor = torch.cat([self.tensor, tensor], dim=1)
+            self.attribute_dims.update(
+                dict(color=[attr_dim, attr_dim + 1, attr_dim + 2]))
+            self.points_dim += 3
 
     @property
     def shape(self):
