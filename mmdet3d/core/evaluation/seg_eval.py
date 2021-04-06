@@ -87,16 +87,15 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
 
     hist_list = []
     for i in range(len(gt_labels)):
-        gt_seg = gt_labels[i].clone().numpy()
-        pred_seg = seg_preds[i].clone().numpy()
+        gt_seg = gt_labels[i].clone().numpy().astype(np.int)
+        pred_seg = seg_preds[i].clone().numpy().astype(np.int)
 
         # filter out ignored points
-        pred_seg[gt_seg == ignore_index] = 255
-        gt_seg[gt_seg == ignore_index] = 255
+        pred_seg[gt_seg == ignore_index] = -1
+        gt_seg[gt_seg == ignore_index] = -1
 
         # calculate one instance result
-        hist_list.append(
-            fast_hist(pred_seg.astype(int), gt_seg.astype(int), num_classes))
+        hist_list.append(fast_hist(pred_seg, gt_seg, num_classes))
 
     iou = per_class_iou(sum(hist_list))
     miou = np.nanmean(iou)
