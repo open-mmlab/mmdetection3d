@@ -212,6 +212,7 @@ def test_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
 
 
 def test_seg_getitem():

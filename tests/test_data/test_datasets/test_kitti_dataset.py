@@ -270,8 +270,8 @@ def test_show():
                                  multi_modality_pipeline, classes, modality)
     kitti_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
-    gt_file_path = osp.join(temp_dir, '000000', '000000_gt.ply')
-    pred_file_path = osp.join(temp_dir, '000000', '000000_pred.ply')
+    gt_file_path = osp.join(temp_dir, '000000', '000000_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000000', '000000_pred.obj')
     img_file_path = osp.join(temp_dir, '000000', '000000_img.png')
     img_pred_path = osp.join(temp_dir, '000000', '000000_pred.png')
     img_gt_file = osp.join(temp_dir, '000000', '000000_gt.png')
@@ -299,7 +299,7 @@ def test_format_results():
     scores_3d = torch.tensor([0.5])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     results = [result]
-    result_files, _ = kitti_dataset.format_results(results)
+    result_files, tmp_dir = kitti_dataset.format_results(results)
     expected_name = np.array(['Pedestrian'])
     expected_truncated = np.array([0.])
     expected_occluded = np.array([0])
@@ -320,6 +320,7 @@ def test_format_results():
     assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y)
     assert np.allclose(result_files[0]['score'], expected_score)
     assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
+    tmp_dir.cleanup()
 
 
 def test_bbox2result_kitti():

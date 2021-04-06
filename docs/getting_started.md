@@ -199,13 +199,16 @@ We provide several demo scripts to test a single sample. Pre-trained models can 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
 ```
+
 Examples:
 
 ```shell
 python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
+
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
 Note that you need to install pandas and plyfile before using this script. This function can also be used for data preprocessing for training ```ply data```.
+
 ```python
 import numpy as np
 import pandas as pd
@@ -222,12 +225,15 @@ def convert_ply(input_path, output_path):
         data_np[:, i] = data_pd[name]
     data_np.astype(np.float32).tofile(output_path)
 ```
+
 Examples:
 
 ```python
 convert_ply('./test.ply', './test.bin')
 ```
+
 If you have point clouds in other format (`off`, `obj`, etc.), you can use trimesh to convert them into `ply`.
+
 ```python
 import trimesh
 
@@ -235,12 +241,14 @@ def to_ply(input_path, output_path, original_type):
     mesh = trimesh.load(input_path, file_type=original_type)  # read file
     mesh.export(output_path, file_type='ply')  # convert to ply
 ```
+
 Examples:
 
 ```python
 to_ply('./test.obj', './test.ply', 'obj')
 ```
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](https://github.com/open-mmlab/mmdetection3d/tree/master/demo).
+
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
 
 ## High-level APIs for testing point clouds
 

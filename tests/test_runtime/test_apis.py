@@ -68,14 +68,14 @@ def test_show_result_meshlab():
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir)
-    expected_outfile_ply = file_name + '_pred.obj'
-    expected_outfile_obj = file_name + '_points.obj'
-    expected_outfile_ply_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_ply)
-    expected_outfile_obj_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_obj)
-    assert os.path.exists(expected_outfile_ply_path)
-    assert os.path.exists(expected_outfile_obj_path)
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
     tmp_dir.cleanup()
 
     # test multi-modality show
@@ -114,20 +114,20 @@ def test_show_result_meshlab():
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
-    expected_outfile_ply = file_name + '_pred.ply'
-    expected_outfile_obj = file_name + '_points.obj'
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
     expected_outfile_png = file_name + '_img.png'
     expected_outfile_proj = file_name + '_pred.png'
-    expected_outfile_ply_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_ply)
-    expected_outfile_obj_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_obj)
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
     expected_outfile_png_path = os.path.join(out_dir, file_name,
                                              expected_outfile_png)
     expected_outfile_proj_path = os.path.join(out_dir, file_name,
                                               expected_outfile_proj)
-    assert os.path.exists(expected_outfile_ply_path)
-    assert os.path.exists(expected_outfile_obj_path)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
     assert os.path.exists(expected_outfile_png_path)
     assert os.path.exists(expected_outfile_proj_path)
     tmp_dir.cleanup()
@@ -164,20 +164,20 @@ def test_show_result_meshlab():
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
-    expected_outfile_ply = file_name + '_pred.ply'
-    expected_outfile_obj = file_name + '_points.obj'
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
     expected_outfile_png = file_name + '_img.png'
     expected_outfile_proj = file_name + '_pred.png'
-    expected_outfile_ply_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_ply)
-    expected_outfile_obj_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_obj)
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
     expected_outfile_png_path = os.path.join(out_dir, file_name,
                                              expected_outfile_png)
     expected_outfile_proj_path = os.path.join(out_dir, file_name,
                                               expected_outfile_proj)
-    assert os.path.exists(expected_outfile_ply_path)
-    assert os.path.exists(expected_outfile_obj_path)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
     assert os.path.exists(expected_outfile_png_path)
     assert os.path.exists(expected_outfile_proj_path)
     tmp_dir.cleanup()
