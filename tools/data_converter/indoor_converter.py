@@ -23,15 +23,7 @@ def create_indoor_info_file(data_path,
         workers (int): Number of threads to be used. Default: 4.
     """
     assert os.path.exists(data_path)
-
-    seg_flag = False  # whether needs to generate some segmentation infos
-    if pkl_prefix.endswith('-seg'):
-        seg_flag = True
-        pkl_prefix = pkl_prefix[:-4]
-    elif pkl_prefix.endswith('-det'):
-        pkl_prefix = pkl_prefix[:-4]
     assert pkl_prefix in ['sunrgbd', 'scannet']
-
     save_path = data_path if save_path is None else save_path
     assert os.path.exists(save_path)
 
@@ -56,15 +48,16 @@ def create_indoor_info_file(data_path,
 
     # generate infos for the semantic segmentation task
     # e.g. re-sampled scene indexes and label weights
-    if seg_flag:
-        assert pkl_prefix in ['scannet']
+    if pkl_prefix == 'scannet':
+        # label weight computation function is adopted from
+        # https://github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py#L24
         train_dataset = ScanNetSegData(
             data_root=data_path,
             ann_file=train_filename,
             split='train',
             num_points=8192,
             label_weight_func=lambda x: 1.0 / np.log(1.2 + x))
-        # TODO: no need to generate on val set?
+        # TODO: do we need to generate on val set?
         val_dataset = ScanNetSegData(
             data_root=data_path,
             ann_file=val_filename,

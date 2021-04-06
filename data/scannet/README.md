@@ -5,16 +5,16 @@ We follow the procedure in [votenet](https://github.com/facebookresearch/votenet
 
 2. In this directory, extract point clouds and annotations by running `python batch_load_scannet_data.py`. Add the `--max_num_point 50000` flag if you only use the ScanNet data for the detection task. It will downsample the scenes to less points.
 
-3. Enter the project root directory, generate training data by running the following command depending on the task
+3. Enter the project root directory, generate training data by running
 ```bash
-python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet-det/scannet-seg
+python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
 ```
 
-For example, if you want to prepare ScanNet data for both detection and segmentation task, the overall process could be achieved through the following script
+The overall process could be achieved through the following script
 ```bash
 python batch_load_scannet_data.py
 cd ../..
-python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet-seg
+python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
 ```
 
 The directory structure after pre-processing should be as below
@@ -33,6 +33,11 @@ scannet
 │   ├── xxxxx.bin
 ├── semantic_mask
 │   ├── xxxxx.bin
+├── seg_info
+│   ├── train_label_weight.npy
+│   ├── train_resampled_scene_idxs.npy
+│   ├── val_label_weight.npy
+│   ├── val_resampled_scene_idxs.npy
 ├── scannet_infos_train.pkl
 ├── scannet_infos_val.pkl
 

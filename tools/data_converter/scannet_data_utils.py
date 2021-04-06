@@ -164,6 +164,8 @@ class ScanNetSegData(object):
         for i, cat_id in enumerate(self.cat_ids):
             self.cat_id2class[cat_id] = i
 
+        # label weighting function is taken from
+        # https://github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py#L24
         self.label_weight_func = (lambda x: 1.0 / np.log(1.2 + x)) if \
             label_weight_func is None else label_weight_func
 
