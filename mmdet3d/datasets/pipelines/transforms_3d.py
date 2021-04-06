@@ -667,8 +667,8 @@ class IndoorPatchPointSample(object):
             Defaults to None.
         use_normalized_coord (bool, optional): Whether to use normalized xyz as
             additional features. Defaults to False.
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
+        num_try (int, optional): Number of times to try if the patch selected
+            is invalid. Defaults to 10.
     """
 
     def __init__(self,
@@ -677,13 +677,13 @@ class IndoorPatchPointSample(object):
                  sample_rate=1.0,
                  ignore_index=None,
                  use_normalized_coord=False,
-                 test_mode=False):
+                 num_try=10):
         self.num_points = num_points
         self.block_size = block_size
         self.sample_rate = sample_rate
         self.ignore_index = ignore_index
         self.use_normalized_coord = use_normalized_coord
-        self.test_mode = test_mode
+        self.num_try = num_try
 
     def _input_generation(self, coords, patch_center, coord_max, attributes,
                           attribute_dims, point_type):
@@ -733,15 +733,15 @@ class IndoorPatchPointSample(object):
         Then sample points within that patch to a certain number.
 
         Args:
-            points (np.ndarray): 3D Points.
-            sem_mask (np.array): semantic segmentation label for input points.
+            points (BasePoints): 3D Points.
+            sem_mask (np.ndarray): semantic segmentation mask for input points.
             replace (bool): Whether the sample is with or without replacement.
                 Defaults to None.
 
         Returns:
             tuple[np.ndarray] | np.ndarray:
 
-                - points (np.ndarray): 3D Points.
+                - points (BasePoints): 3D Points.
                 - choices (np.ndarray): The generated random samples.
         """
         coords = points.coord.numpy()
@@ -752,7 +752,7 @@ class IndoorPatchPointSample(object):
         coord_max = np.amax(coords, axis=0)
         coord_min = np.amin(coords, axis=0)
 
-        for i in range(10):
+        for i in range(self.num_try):
             # random sample a point as patch center
             cur_center = coords[np.random.choice(coords.shape[0])]
 
@@ -779,6 +779,9 @@ class IndoorPatchPointSample(object):
                 (cur_coords >= (cur_min - 0.01)) * (cur_coords <=
                                                     (cur_max + 0.01)),
                 axis=1) == 3
+            # not sure if 31, 31, 62 are just some big values used to transform
+            # coords from 3d array to 1d and then check their uniqueness
+            # this is used in all the ScanNet code following PointNet++
             vidx = np.ceil((cur_coords[mask, :] - cur_min) /
                            (cur_max - cur_min) * np.array([31.0, 31.0, 62.0]))
             vidx = np.unique(vidx[:, 0] * 31.0 * 62.0 + vidx[:, 1] * 62.0 +
@@ -808,86 +811,6 @@ class IndoorPatchPointSample(object):
 
         return points, choices
 
-    def _sliding_patch_generation(self, points):
-        """Sampling points in a sliding window fashion.
-
-        First sample patches to cover all the input points.
-        Then sample points in each patch to batch points of a certain number.
-
-        Args:
-            points (np.ndarray): 3D Points.
-
-        Returns:
-            np.ndarray: The generated random samples.
-        """
-        coords = points.coord.numpy()
-        attributes = points.tensor[:, 3:].numpy()
-        attribute_dims = points.attribute_dims
-        point_type = type(points)
-
-        coord_max = np.amax(coords, axis=0)
-        coord_min = np.amin(coords, axis=0)
-        stride = self.block_size * self.sample_rate
-        num_grid_x = int(
-            np.ceil((coord_max[0] - coord_min[0] - self.block_size) / stride) +
-            1)
-        num_grid_y = int(
-            np.ceil((coord_max[1] - coord_min[1] - self.block_size) / stride) +
-            1)
-
-        all_points = []
-        all_idxs = []
-        for idx_y in range(num_grid_y):
-            s_y = coord_min[1] + idx_y * stride
-            e_y = min(s_y + self.block_size, coord_max[1])
-            s_y = e_y - self.block_size
-            for idx_x in range(num_grid_x):
-                s_x = coord_min[0] + idx_x * stride
-                e_x = min(s_x + self.block_size, coord_max[0])
-                s_x = e_x - self.block_size
-                # boundary of a patch
-                cur_min = np.array([s_x, s_y, coord_min[2]])
-                cur_max = np.array([e_x, e_y, coord_max[2]])
-                cur_choice = np.sum(
-                    (coords >= (cur_min - 0.001)) * (coords <=
-                                                     (cur_max + 0.001)),
-                    axis=1) == 3
-
-                if not cur_choice.any():  # no points in this patch
-                    continue
-
-                # sample points in this patch to multiple batches
-                cur_center = cur_min + self.block_size / 2.0
-                point_idxs = np.where(cur_choice)[0]
-                num_batch = int(
-                    np.ceil(point_idxs.shape[0] / float(self.num_points)))
-                point_size = int(num_batch * self.num_points)
-                replace = point_size > 2 * point_idxs.shape[0]
-                point_idxs_repeat = np.random.choice(
-                    point_idxs,
-                    point_size - point_idxs.shape[0],
-                    replace=replace)
-                choices = np.concatenate([point_idxs, point_idxs_repeat])
-                np.random.shuffle(choices)
-
-                # construct model input
-                point_batch = self._input_generation(coords[choices],
-                                                     cur_center, coord_max,
-                                                     attributes[choices],
-                                                     attribute_dims,
-                                                     point_type)
-
-                all_points.append(point_batch)
-                all_idxs.append(choices)
-
-        all_points = point_type.cat(all_points)
-        all_idxs = np.concatenate(all_idxs)
-
-        # make sure all points are sampled at least once
-        assert np.unique(all_idxs).shape[0] == points.shape[0]
-
-        return all_points
-
     def __call__(self, results):
         """Call function to sample points to in indoor scenes.
 
@@ -899,11 +822,6 @@ class IndoorPatchPointSample(object):
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
-
-        if self.test_mode:
-            points = self._sliding_patch_generation(points)
-            results['points'] = points
-            return results
 
         assert 'pts_semantic_mask' in results.keys(), \
             'semantic mask should be provided in training and evaluation'
@@ -928,7 +846,7 @@ class IndoorPatchPointSample(object):
         repr_str += f' sample_rate={self.sample_rate},'
         repr_str += f' ignore_index={self.ignore_index},'
         repr_str += f' use_normalized_coord={self.use_normalized_coord},'
-        repr_str += f' test_mode={self.test_mode})'
+        repr_str += f' num_try={self.num_try})'
         return repr_str
 
 

@@ -135,8 +135,7 @@ def test_scannet_seg_pipeline():
             block_size=1.5,
             sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True,
-            test_mode=False),
+            use_normalized_coord=True),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])

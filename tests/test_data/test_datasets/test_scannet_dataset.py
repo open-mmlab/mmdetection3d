@@ -276,8 +276,7 @@ def test_seg_getitem():
             block_size=1.5,
             sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True,
-            test_mode=False),
+            use_normalized_coord=True),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -353,8 +352,7 @@ def test_seg_getitem():
         block_size=1.5,
         sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False,
-        test_mode=False)
+        use_normalized_coord=False)
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
         ann_file=ann_file,
@@ -402,8 +400,7 @@ def test_seg_getitem():
         block_size=1.5,
         sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False,
-        test_mode=False)
+        use_normalized_coord=False)
     new_pipelines.remove(new_pipelines[4])
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
@@ -498,11 +495,11 @@ def test_seg_evaluate():
 
 def test_seg_show():
     import mmcv
-    import os
     import tempfile
     from os import path as osp
 
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'
     scannet_dataset = ScanNetSegDataset(
@@ -525,7 +522,4 @@ def test_seg_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
-    os.remove(pts_file_path)
-    os.remove(gt_file_path)
-    os.remove(pred_file_path)
-    os.removedirs(osp.join(temp_dir, 'scene0000_00'))
+    tmp_dir.cleanup()
