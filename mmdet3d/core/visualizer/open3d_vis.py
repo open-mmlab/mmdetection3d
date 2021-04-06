@@ -486,9 +486,10 @@ def draw_depth_bbox3d_on_img(bboxes3d,
     points_3d = corners_3d.reshape(-1, 3)
     assert ('Rt' in calibs.keys() and 'K' in calibs.keys()), \
         'Rt and K matrix should be provided as camera caliberation information'
-    if isinstance(calibs['Rt'], np.ndarray):
-        calibs['Rt'] = torch.from_numpy(calibs['Rt'])
-        calibs['K'] = torch.from_numpy(calibs['K'])
+    if not isinstance(calibs['Rt'], torch.Tensor):
+        calibs['Rt'] = torch.from_numpy(np.array(calibs['Rt']))
+    if not isinstance(calibs['K'], torch.Tensor):
+        calibs['K'] = torch.from_numpy(np.array(calibs['K']))
     calibs['Rt'] = calibs['Rt'].reshape(3, 3).float().cpu()
     calibs['K'] = calibs['K'].reshape(3, 3).float().cpu()
 
