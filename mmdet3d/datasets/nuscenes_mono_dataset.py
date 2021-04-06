@@ -88,8 +88,7 @@ class NuScenesMonoDataset(CocoDataset):
                 use_lidar=False,
                 use_radar=False,
                 use_map=False,
-                use_external=False,
-            )
+                use_external=False)
 
     def pre_pipeline(self, results):
         """Initialization before data preparation.
@@ -237,6 +236,7 @@ class NuScenesMonoDataset(CocoDataset):
         Returns:
             str: Predicted attribute name.
         """
+        # TODO: Simplify the variable name
         AttrMapping_rev2 = [
             'cycle.with_rider', 'cycle.without_rider', 'pedestrian.moving',
             'pedestrian.standing', 'pedestrian.sitting_lying_down',
@@ -328,7 +328,7 @@ class NuScenesMonoDataset(CocoDataset):
             cam_boxes3d_for_nms = xywhr2xyxyr(cam_boxes3d.bev)
             boxes3d = cam_boxes3d.tensor
             # generate attr scores from attr labels
-            attrs = torch.LongTensor([attr for attr in attrs_per_frame]).cuda()
+            attrs = labels.new_tensor([attr for attr in attrs_per_frame])
             boxes3d, scores, labels, attrs = box3d_multiclass_nms(
                 boxes3d,
                 cam_boxes3d_for_nms,
