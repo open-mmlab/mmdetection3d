@@ -24,7 +24,7 @@ def test_getitem():
             with_label_3d=True,
             with_bbox_depth=True),
         dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
-        dict(type='RandomFlipMono3D', flip_ratio_bev_horizontal=1.0),
+        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=1.0),
         dict(type='Normalize', **img_norm_cfg),
         dict(type='Pad', size_divisor=32),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
