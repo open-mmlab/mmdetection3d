@@ -1,20 +1,19 @@
 import mmcv
 import numpy as np
 import tempfile
+import torch
 from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
-from ..core.bbox import get_box_type
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class Custom3DDataset(Dataset):
-    """Customized 3D dataset.
+class Custom3DSegDataset(Dataset):
+    """Customized 3D dataset for semantic segmentation task.
 
-    This is the base dataset of SUNRGB-D, ScanNet, nuScenes, and KITTI
-    dataset.
+    This is the base dataset of ScanNet and S3DIS dataset.
 
     Args:
         data_root (str): Path of dataset root.
@@ -23,45 +22,64 @@ class Custom3DDataset(Dataset):
             Defaults to None.
         classes (tuple[str], optional): Classes used in the dataset.
             Defaults to None.
+        palette (list[list[int]], optional): The palette of segmentation map.
+            Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to None.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
-            Based on the `box_type_3d`, the dataset will encapsulate the box
-            to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR'. Available options includes
-
-            - 'LiDAR': Box in LiDAR coordinates.
-            - 'Depth': Box in depth coordinates, usually for indoor dataset.
-            - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
+        ignore_index (int, optional): The label index to be ignored, e.g. \
+            unannotated points. If None is given, set to len(self.CLASSES) to
+            be consistent with PointSegClassMapping function in pipeline.
+            Defaults to None.
+        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+            data. For scenes with many points, we may sample it several times.
+            Defaults to None.
+        label_weight (np.ndarray | str, optional): Precomputed weight to \
+            balance loss calculation. If None is given, use equal weighting.
+            Defaults to None.
     """
+    # names of all classes data used for the task
+    CLASSES = None
+
+    # class_ids used for training
+    VALID_CLASS_IDS = None
+
+    # all possible class_ids in loaded segmentation mask
+    ALL_CLASS_IDS = None
+
+    # official color for visualization
+    PALETTE = None
 
     def __init__(self,
                  data_root,
                  ann_file,
                  pipeline=None,
                  classes=None,
+                 palette=None,
                  modality=None,
-                 box_type_3d='LiDAR',
-                 filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 ignore_index=None,
+                 scene_idxs=None,
+                 label_weight=None):
         super().__init__()
         self.data_root = data_root
         self.ann_file = ann_file
         self.test_mode = test_mode
         self.modality = modality
-        self.filter_empty_gt = filter_empty_gt
-        self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
-        self.CLASSES = self.get_classes(classes)
-        self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
         self.data_infos = self.load_annotations(self.ann_file)
 
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
+
+        self.ignore_index = len(self.CLASSES) if \
+            ignore_index is None else ignore_index
+
+        self.scene_idxs, self.label_weight = \
+            self.get_scene_idxs_and_label_weight(scene_idxs, label_weight)
+        self.CLASSES, self.PALETTE = \
+            self.get_classes_and_palette(classes, palette)
 
         # set group flag for the sampler
         if not self.test_mode:
@@ -105,8 +123,6 @@ class Custom3DDataset(Dataset):
         if not self.test_mode:
             annos = self.get_ann_info(index)
             input_dict['ann_info'] = annos
-            if self.filter_empty_gt and ~(annos['gt_labels_3d'] != -1).any():
-                return None
         return input_dict
 
     def pre_pipeline(self, results):
@@ -116,24 +132,16 @@ class Custom3DDataset(Dataset):
             results (dict): Dict before data preprocessing.
 
                 - img_fields (list): Image fields.
-                - bbox3d_fields (list): 3D bounding boxes fields.
                 - pts_mask_fields (list): Mask fields of points.
                 - pts_seg_fields (list): Mask fields of point segments.
-                - bbox_fields (list): Fields of bounding boxes.
                 - mask_fields (list): Fields of masks.
                 - seg_fields (list): Segment fields.
-                - box_type_3d (str): 3D box type.
-                - box_mode_3d (str): 3D box mode.
         """
         results['img_fields'] = []
-        results['bbox3d_fields'] = []
         results['pts_mask_fields'] = []
         results['pts_seg_fields'] = []
-        results['bbox_fields'] = []
         results['mask_fields'] = []
         results['seg_fields'] = []
-        results['box_type_3d'] = self.box_type_3d
-        results['box_mode_3d'] = self.box_mode_3d
 
     def prepare_train_data(self, index):
         """Training data preparation.
@@ -149,10 +157,6 @@ class Custom3DDataset(Dataset):
             return None
         self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
-        if self.filter_empty_gt and \
-                (example is None or
-                    ~(example['gt_labels_3d']._data != -1).any()):
-            return None
         return example
 
     def prepare_test_data(self, index):
@@ -169,9 +173,10 @@ class Custom3DDataset(Dataset):
         example = self.pipeline(input_dict)
         return example
 
-    @classmethod
-    def get_classes(cls, classes=None):
+    def get_classes_and_palette(self, classes=None, palette=None):
         """Get class names of current dataset.
+
+        This function is taken from MMSegmentation.
 
         Args:
             classes (Sequence[str] | str | None): If classes is None, use
@@ -179,13 +184,29 @@ class Custom3DDataset(Dataset):
                 string, take it as a file name. The file contains the name of
                 classes where each line contains one class name. If classes is
                 a tuple or list, override the CLASSES defined by the dataset.
-
-        Return:
-            list[str]: A list of class names.
+                Defaults to None.
+            palette (Sequence[Sequence[int]]] | np.ndarray | None):
+                The palette of segmentation map. If None is given, random
+                palette will be generated. Defaults to None.
         """
         if classes is None:
-            return cls.CLASSES
+            self.custom_classes = False
+            # map id in the loaded mask to label used for training
+            self.label_map = {
+                cls_id: self.ignore_index
+                for cls_id in self.ALL_CLASS_IDS
+            }
+            self.label_map.update(
+                {cls_id: i
+                 for i, cls_id in enumerate(self.VALID_CLASS_IDS)})
+            # map label to category name
+            self.label2cat = {
+                i: cat_name
+                for i, cat_name in enumerate(self.CLASSES)
+            }
+            return self.CLASSES, self.PALETTE
 
+        self.custom_classes = True
         if isinstance(classes, str):
             # take it as a file path
             class_names = mmcv.list_from_file(classes)
@@ -194,7 +215,74 @@ class Custom3DDataset(Dataset):
         else:
             raise ValueError(f'Unsupported type {type(classes)} of classes.')
 
-        return class_names
+        if self.CLASSES:
+            if not set(class_names).issubset(self.CLASSES):
+                raise ValueError('classes is not a subset of CLASSES.')
+
+            # update valid_class_ids
+            self.VALID_CLASS_IDS = [
+                self.VALID_CLASS_IDS[self.CLASSES.index(cls_name)]
+                for cls_name in class_names
+            ]
+
+            # dictionary, its keys are the old label ids and its values
+            # are the new label ids.
+            # used for changing pixel labels in load_annotations.
+            self.label_map = {
+                cls_id: self.ignore_index
+                for cls_id in self.ALL_CLASS_IDS
+            }
+            self.label_map.update(
+                {cls_id: i
+                 for i, cls_id in enumerate(self.VALID_CLASS_IDS)})
+            self.label2cat = {
+                i: cat_name
+                for i, cat_name in enumerate(class_names)
+            }
+
+        # modify palette for visualization
+        palette = [
+            self.PALETTE[self.CLASSES.index(cls_name)]
+            for cls_name in class_names
+        ]
+
+        # also need to modify self.label_weight
+        self.label_weight = np.array([
+            self.label_weight[self.CLASSES.index(cls_name)]
+            for cls_name in class_names
+        ]).astype(np.float32)
+
+        return class_names, palette
+
+    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
+        """Compute scene_idxs for data sampling and label weight for loss \
+        calculation.
+
+        We sample more times for scenes with more points. Label_weight is
+        inversely proportional to number of class points.
+        """
+        if self.test_mode:
+            # when testing, we load one whole scene every time
+            # and we don't need label weight for loss calculation
+            return np.arange(len(self.data_infos)).astype(np.int32), \
+                np.ones(len(self.CLASSES)).astype(np.float32)
+
+        if scene_idxs is None:
+            scene_idxs = np.arange(len(self.data_infos))
+        if isinstance(scene_idxs, str):
+            scene_idxs = np.load(scene_idxs)
+        else:
+            scene_idxs = np.array(scene_idxs)
+
+        if label_weight is None:
+            # we don't used label weighting in training
+            label_weight = np.ones(len(self.CLASSES))
+        elif isinstance(label_weight, str):
+            label_weight = np.load(label_weight)
+        else:
+            label_weight = np.array(label_weight)
+
+        return scene_idxs.astype(np.int32), label_weight.astype(np.float32)
 
     def format_results(self,
                        outputs,
@@ -220,30 +308,45 @@ class Custom3DDataset(Dataset):
         mmcv.dump(outputs, out)
         return outputs, tmp_dir
 
+    def convert_to_label(self, mask):
+        """Convert class_id in segmentation mask to label."""
+        # TODO: currently only support loading from local
+        # TODO: may need to consider ceph data storage in the future
+        if isinstance(mask, str):
+            if mask.endswith('npy'):
+                mask = np.load(mask)
+            else:
+                mask = np.fromfile(mask, dtype=np.long)
+        mask_copy = mask.copy()
+        for class_id, label in self.label_map.items():
+            mask_copy[mask == class_id] = label
+
+        return mask_copy
+
     def evaluate(self,
                  results,
                  metric=None,
-                 iou_thr=(0.25, 0.5),
                  logger=None,
                  show=False,
                  out_dir=None):
         """Evaluate.
 
-        Evaluation in indoor protocol.
+        Evaluation in semantic segmentation protocol.
 
         Args:
             results (list[dict]): List of results.
             metric (str | list[str]): Metrics to be evaluated.
-            iou_thr (list[float]): AP IoU thresholds.
-            show (bool): Whether to visualize.
-                Default: False.
-            out_dir (str): Path to save the visualization results.
-                Default: None.
+            logger (logging.Logger | None | str): Logger used for printing
+                related information during evaluation. Defaults to None.
+            show (bool, optional): Whether to visualize.
+                Defaults to False.
+            out_dir (str, optional): Path to save the visualization results.
+                Defaults to None.
 
         Returns:
             dict: Evaluation results.
         """
-        from mmdet3d.core.evaluation import indoor_eval
+        from mmdet3d.core.evaluation import seg_eval
         assert isinstance(
             results, list), f'Expect results to be list, got {type(results)}.'
         assert len(results) > 0, 'Expect length of results > 0.'
@@ -251,28 +354,24 @@ class Custom3DDataset(Dataset):
         assert isinstance(
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
-        gt_annos = [info['annos'] for info in self.data_infos]
-        label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
-        ret_dict = indoor_eval(
-            gt_annos,
-            results,
-            iou_thr,
-            label2cat,
-            logger=logger,
-            box_type_3d=self.box_type_3d,
-            box_mode_3d=self.box_mode_3d)
+        pred_sem_masks = [result['semantic_mask'] for result in results]
+        gt_sem_masks = [
+            torch.from_numpy(
+                self.convert_to_label(
+                    osp.join(self.data_root,
+                             data_info['pts_semantic_mask_path'])))
+            for data_info in self.data_infos
+        ]
+        ret_dict = seg_eval(
+            gt_sem_masks,
+            pred_sem_masks,
+            self.label2cat,
+            self.ignore_index,
+            logger=logger)
         if show:
-            self.show(results, out_dir)
+            self.show(pred_sem_masks, out_dir)
 
         return ret_dict
-
-    def __len__(self):
-        """Return the length of data infos.
-
-        Returns:
-            int: Length of data infos.
-        """
-        return len(self.data_infos)
 
     def _rand_another(self, idx):
         """Randomly get another item with the same flag.
@@ -283,18 +382,28 @@ class Custom3DDataset(Dataset):
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
 
+    def __len__(self):
+        """Return the length of scene_idxs.
+
+        Returns:
+            int: Length of data infos.
+        """
+        return len(self.scene_idxs)
+
     def __getitem__(self, idx):
         """Get item from infos according to the given index.
 
         Returns:
             dict: Data dictionary of the corresponding index.
         """
+        scene_idx = self.scene_idxs[idx]  # map to scene idx
         if self.test_mode:
-            return self.prepare_test_data(idx)
+            return self.prepare_test_data(scene_idx)
         while True:
-            data = self.prepare_train_data(idx)
+            data = self.prepare_train_data(scene_idx)
             if data is None:
                 idx = self._rand_another(idx)
+                scene_idx = self.scene_idxs[idx]  # map to scene idx
                 continue
             return data
 

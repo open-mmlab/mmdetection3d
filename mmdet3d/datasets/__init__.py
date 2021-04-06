@@ -1,6 +1,7 @@
 from mmdet.datasets.builder import build_dataloader
 from .builder import DATASETS, build_dataset
-from .custom_3d import Custom3DDataset, Custom3DSegDataset
+from .custom_3d import Custom3DDataset
+from .custom_3d_seg import Custom3DSegDataset
 from .kitti_dataset import KittiDataset
 from .lyft_dataset import LyftDataset
 from .nuscenes_dataset import NuScenesDataset

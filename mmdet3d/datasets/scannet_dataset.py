@@ -4,7 +4,8 @@ from os import path as osp
 from mmdet3d.core import show_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
-from .custom_3d import Custom3DDataset, Custom3DSegDataset
+from .custom_3d import Custom3DDataset
+from .custom_3d_seg import Custom3DSegDataset
 
 
 @DATASETS.register_module()
