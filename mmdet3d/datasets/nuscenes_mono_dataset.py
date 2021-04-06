@@ -639,6 +639,15 @@ def global_nusc_box_to_cam(info,
 
 
 def nusc_box_to_cam_box3d(boxes):
+    """Convert boxes from :obj:`NuScenesBox` to :obj:`CameraInstance3DBoxes`.
+
+    Args:
+        boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
+
+    Returns:
+        tuple (:obj:`CameraInstance3DBoxes` | torch.Tensor | torch.Tensor): \
+            Converted 3D bounding boxes, scores and labels.
+    """
     locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)
     dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
     rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
