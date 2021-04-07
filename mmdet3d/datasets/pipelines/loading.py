@@ -75,9 +75,6 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             :class:`LoadImageFromFile`.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __call__(self, results):
         """Call functions to load image and get image meta information.
 
