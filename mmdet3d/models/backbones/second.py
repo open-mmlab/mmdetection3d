@@ -1,12 +1,12 @@
 from mmcv.cnn import build_conv_layer, build_norm_layer
-from mmcv.runner import load_checkpoint
+from mmcv.runner import load_checkpoint, BaseModule
 from torch import nn as nn
 
 from mmdet.models import BACKBONES
 
 
 @BACKBONES.register_module()
-class SECOND(nn.Module):
+class SECOND(BaseModule):
     """Backbone network for SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
@@ -24,8 +24,9 @@ class SECOND(nn.Module):
                  layer_nums=[3, 5, 5],
                  layer_strides=[2, 2, 2],
                  norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                 conv_cfg=dict(type='Conv2d', bias=False)):
-        super(SECOND, self).__init__()
+                 conv_cfg=dict(type='Conv2d', bias=False),
+                 init_cfg=None):
+        super(SECOND, self).__init__(init_cfg=init_cfg)
         assert len(layer_strides) == len(layer_nums)
         assert len(out_channels) == len(layer_nums)
 

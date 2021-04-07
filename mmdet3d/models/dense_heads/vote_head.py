@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.runner import force_fp32
+from mmcv.runner import force_fp32, BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -15,7 +15,7 @@ from .base_conv_bbox_head import BaseConvBboxHead
 
 
 @HEADS.register_module()
-class VoteHead(nn.Module):
+class VoteHead(BaseModule):
     r"""Bbox head of `Votenet <https://arxiv.org/abs/1904.09664>`_.
 
     Args:
@@ -44,6 +44,7 @@ class VoteHead(nn.Module):
                  bbox_coder,
                  train_cfg=None,
                  test_cfg=None,
+                 init_cfg=None,
                  vote_module_cfg=None,
                  vote_aggregation_cfg=None,
                  pred_layer_cfg=None,
@@ -57,7 +58,7 @@ class VoteHead(nn.Module):
                  size_res_loss=None,
                  semantic_loss=None,
                  iou_loss=None):
-        super(VoteHead, self).__init__()
+        super(VoteHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -91,10 +92,6 @@ class VoteHead(nn.Module):
             **pred_layer_cfg,
             num_cls_out_channels=self._get_cls_out_channels(),
             num_reg_out_channels=self._get_reg_out_channels())
-
-    def init_weights(self):
-        """Initialize weights of VoteHead."""
-        pass
 
     def _get_cls_out_channels(self):
         """Return the channel number of classification outputs."""

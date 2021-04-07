@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer, kaiming_init
-from mmcv.runner import force_fp32
+from mmcv.runner import force_fp32, BaseModule
 from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
@@ -15,7 +15,7 @@ from mmdet.core import build_bbox_coder, multi_apply
 
 
 @HEADS.register_module()
-class SeparateHead(nn.Module):
+class SeparateHead(BaseModule):
     """SeparateHead for CenterHead.
 
     Args:
@@ -42,9 +42,11 @@ class SeparateHead(nn.Module):
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
+                 init_cfg=None,
                  **kwargs):
-        super(SeparateHead, self).__init__()
-
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(SeparateHead, self).__init__(init_cfg=init_cfg)
         self.heads = heads
         self.init_bias = init_bias
         for head in self.heads:
@@ -119,7 +121,7 @@ class SeparateHead(nn.Module):
 
 
 @HEADS.register_module()
-class DCNSeparateHead(nn.Module):
+class DCNSeparateHead(BaseModule):
     r"""DCNSeparateHead for CenterHead.
 
     .. code-block:: none
@@ -154,8 +156,11 @@ class DCNSeparateHead(nn.Module):
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
+                 init_cfg=None,
                  **kwargs):
-        super(DCNSeparateHead, self).__init__()
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(DCNSeparateHead, self).__init__(init_cfg=init_cfg)
         if 'heatmap' in heads:
             heads.pop('heatmap')
         # feature adaptation with dcn
@@ -232,7 +237,7 @@ class DCNSeparateHead(nn.Module):
 
 
 @HEADS.register_module()
-class CenterHead(nn.Module):
+class CenterHead(BaseModule):
     """CenterHead for CenterPoint.
 
     Args:
@@ -280,8 +285,11 @@ class CenterHead(nn.Module):
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
-                 norm_bbox=True):
-        super(CenterHead, self).__init__()
+                 norm_bbox=True,
+                 init_cfg=None):
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(CenterHead, self).__init__(init_cfg=init_cfg)
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]

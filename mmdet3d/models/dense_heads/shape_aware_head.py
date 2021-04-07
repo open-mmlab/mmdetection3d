@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
@@ -11,7 +12,7 @@ from .anchor3d_head import Anchor3DHead
 
 
 @HEADS.register_module()
-class BaseShapeHead(nn.Module):
+class BaseShapeHead(BaseModule):
     """Base Shape-aware Head in Shape Signature Network.
 
     Note:
@@ -48,8 +49,9 @@ class BaseShapeHead(nn.Module):
                  use_direction_classifier=True,
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
-                 bias=False):
-        super().__init__()
+                 bias=False,
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.num_cls = num_cls
         self.num_base_anchors = num_base_anchors
         self.use_direction_classifier = use_direction_classifier
@@ -84,15 +86,29 @@ class BaseShapeHead(nn.Module):
         if use_direction_classifier:
             self.conv_dir_cls = nn.Conv2d(out_channels, num_base_anchors * 2,
                                           1)
-
-    def init_weights(self):
-        """Initialize weights."""
-        bias_cls = bias_init_with_prob(0.01)
-        # shared conv layers have already been initialized by ConvModule
-        normal_init(self.conv_cls, std=0.01, bias=bias_cls)
-        normal_init(self.conv_reg, std=0.01)
-        if self.use_direction_classifier:
-            normal_init(self.conv_dir_cls, std=0.01, bias=bias_cls)
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(type='Normal', name='conv_cls',std=0.01,
+                    bias_prob=0.01))
+            if self.use_direction_classifier:
+                self.init_cfg = dict(
+                    type='Normal',
+                    layer='Conv2d',
+                    std=0.01,
+                    override=[
+                        dict(
+                            type='Normal', 
+                            name='conv_cls',
+                            std=0.01,
+                            bias_prob=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_dir_cls',
+                            std=0.01,
+                            bias_prob=0.01)])
 
     def forward(self, x):
         """Forward function for SmallHead.

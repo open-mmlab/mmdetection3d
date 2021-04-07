@@ -49,11 +49,12 @@ class PrimitiveHead(nn.Module):
                  surface_thresh=0.5,
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
+                 init_cfg=None,
                  objectness_loss=None,
                  center_loss=None,
                  semantic_reg_loss=None,
                  semantic_cls_loss=None):
-        super(PrimitiveHead, self).__init__()
+        super(PrimitiveHead, self).__init__(init_cfg=init_cfg)
         assert primitive_mode in ['z', 'xy', 'line']
         # The dimension of primitive semantic information.
         self.num_dims = num_dims
@@ -110,9 +111,6 @@ class PrimitiveHead(nn.Module):
         self.conv_pred.add_module('conv_out',
                                   nn.Conv1d(prev_channel, conv_out_channel, 1))
 
-    def init_weights(self):
-        """Initialize weights of VoteHead."""
-        pass
 
     def forward(self, feats_dict, sample_mod):
         """Forward pass.

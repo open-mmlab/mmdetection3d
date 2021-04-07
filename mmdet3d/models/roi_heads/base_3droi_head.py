@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
 from torch import nn as nn
+from mmcv.runner import BaseModule
 
 
-class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
+class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
     """Base class for 3d RoIHeads."""
 
     def __init__(self,
@@ -10,8 +11,9 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                  mask_roi_extractor=None,
                  mask_head=None,
                  train_cfg=None,
-                 test_cfg=None):
-        super(Base3DRoIHead, self).__init__()
+                 test_cfg=None,
+                 init_cfg=None):
+        super(Base3DRoIHead, self).__init__(init_cfg=init_cfg)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 

@@ -22,6 +22,7 @@ class VoxelNet(SingleStage3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 init_cfg=None,
                  pretrained=None):
         super(VoxelNet, self).__init__(
             backbone=backbone,
@@ -29,6 +30,7 @@ class VoxelNet(SingleStage3DDetector):
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
+            init_cfg=init_cfg,
             pretrained=pretrained,
         )
         self.voxel_layer = Voxelization(**voxel_layer)

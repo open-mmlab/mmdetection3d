@@ -67,9 +67,10 @@ class ImVoteNet(Base3DDetector):
                  num_sampled_seed=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
+                 pretrained=None,
+                 init_cfg=None):
 
-        super(ImVoteNet, self).__init__()
+        super(ImVoteNet, self).__init__(init_cfg=init_cfg)
 
         # point branch
         if pts_backbone is not None:
