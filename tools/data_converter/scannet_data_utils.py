@@ -37,12 +37,13 @@ class ScanNetData(object):
                               f'scannetv2_{split}.txt')
         mmcv.check_file_exist(split_file)
         self.sample_id_list = mmcv.list_from_file(split_file)
+        self.is_train = (split != 'test')
 
     def __len__(self):
         return len(self.sample_id_list)
 
     def get_box_label(self, idx):
-        box_file = osp.join(self.root_dir, 'scannet_train_instance_data',
+        box_file = osp.join(self.root_dir, 'scannet_instance_data',
                             f'{idx}_bbox.npy')
         mmcv.check_file_exist(box_file)
         return np.load(box_file)
@@ -67,36 +68,41 @@ class ScanNetData(object):
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
-            pts_filename = osp.join(self.root_dir,
-                                    'scannet_train_instance_data',
+            pts_filename = osp.join(self.root_dir, 'scannet_instance_data',
                                     f'{sample_idx}_vert.npy')
-            pts_instance_mask_path = osp.join(self.root_dir,
-                                              'scannet_train_instance_data',
-                                              f'{sample_idx}_ins_label.npy')
-            pts_semantic_mask_path = osp.join(self.root_dir,
-                                              'scannet_train_instance_data',
-                                              f'{sample_idx}_sem_label.npy')
-
             points = np.load(pts_filename)
-            pts_instance_mask = np.load(pts_instance_mask_path).astype(np.long)
-            pts_semantic_mask = np.load(pts_semantic_mask_path).astype(np.long)
-
             mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
-
             points.tofile(
                 osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
-            pts_instance_mask.tofile(
-                osp.join(self.root_dir, 'instance_mask', f'{sample_idx}.bin'))
-            pts_semantic_mask.tofile(
-                osp.join(self.root_dir, 'semantic_mask', f'{sample_idx}.bin'))
-
             info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
-            info['pts_instance_mask_path'] = osp.join('instance_mask',
-                                                      f'{sample_idx}.bin')
-            info['pts_semantic_mask_path'] = osp.join('semantic_mask',
-                                                      f'{sample_idx}.bin')
+
+            if self.is_train:
+                pts_instance_mask_path = osp.join(
+                    self.root_dir, 'scannet_instance_data',
+                    f'{sample_idx}_ins_label.npy')
+                pts_semantic_mask_path = osp.join(
+                    self.root_dir, 'scannet_instance_data',
+                    f'{sample_idx}_sem_label.npy')
+
+                pts_instance_mask = np.load(pts_instance_mask_path).astype(
+                    np.long)
+                pts_semantic_mask = np.load(pts_semantic_mask_path).astype(
+                    np.long)
+
+                mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
+                mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
+
+                pts_instance_mask.tofile(
+                    osp.join(self.root_dir, 'instance_mask',
+                             f'{sample_idx}.bin'))
+                pts_semantic_mask.tofile(
+                    osp.join(self.root_dir, 'semantic_mask',
+                             f'{sample_idx}.bin'))
+
+                info['pts_instance_mask_path'] = osp.join(
+                    'instance_mask', f'{sample_idx}.bin')
+                info['pts_semantic_mask_path'] = osp.join(
+                    'semantic_mask', f'{sample_idx}.bin')
 
             if has_label:
                 annotations = {}
@@ -150,6 +156,7 @@ class ScanNetSegData(object):
         self.data_root = data_root
         self.data_infos = mmcv.load(ann_file)
         self.split = split
+        assert split in ['train', 'val', 'test']
         self.num_points = num_points
 
         self.all_ids = np.arange(41)  # all possible ids
@@ -170,6 +177,8 @@ class ScanNetSegData(object):
             label_weight_func is None else label_weight_func
 
     def get_seg_infos(self):
+        if self.split == 'test':
+            return
         scene_idxs, label_weight = self.get_scene_idxs_and_label_weight()
         save_folder = osp.join(self.data_root, 'seg_info')
         mmcv.mkdir_or_exist(save_folder)
