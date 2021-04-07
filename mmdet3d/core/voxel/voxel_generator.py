@@ -196,7 +196,7 @@ def _points_to_voxel_reverse_kernel(points,
         if voxelidx == -1:
             voxelidx = voxel_num
             if voxel_num >= max_voxels:
-                break
+                continue
             voxel_num += 1
             coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx
             coors[voxelidx] = coor
@@ -268,7 +268,7 @@ def _points_to_voxel_kernel(points,
         if voxelidx == -1:
             voxelidx = voxel_num
             if voxel_num >= max_voxels:
-                break
+                continue
             voxel_num += 1
             coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx
             coors[voxelidx] = coor
