@@ -515,6 +515,16 @@ class NuScenesMonoDataset(CocoDataset):
             self.show(results, out_dir)
         return results_dict
 
+    def show(self, results, out_dir):
+        """Results visualization.
+
+        Args:
+            results (list[dict]): List of bounding boxes results.
+            out_dir (str): Output directory of visualization result.
+        """
+        # TODO: support mono3d visualization
+        pass
+
 
 def output_to_nusc_box(detection):
     """Convert the output to the box class in the nuScenes.
