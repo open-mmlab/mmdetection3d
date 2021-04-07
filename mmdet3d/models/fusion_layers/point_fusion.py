@@ -28,9 +28,9 @@ def point_sample(
         img_features (torch.Tensor): 1 x C x H x W image features.
         points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
         lidar2img_rt (torch.Tensor): 4x4 transformation matrix.
-        img_scale_factor (torch.Tensor): Scale factor with shape of \
+        img_scale_factor (torch.Tensor): Scale factor with shape of
             (w_scale, h_scale).
-        img_crop_offset (torch.Tensor): Crop offset used to crop \
+        img_crop_offset (torch.Tensor): Crop offset used to crop
             image during data augmentation with shape of (w_offset, h_offset).
         img_flip (bool): Whether the image is flipped.
         img_pad_shape (tuple[int]): int tuple indicates the h & w after
@@ -47,7 +47,6 @@ def point_sample(
     Returns:
         torch.Tensor: NxC image features sampled by point coordinates.
     """
-
     # apply transformation based on info in img_meta
     points = apply_3d_transformation(points, 'LIDAR', img_meta, reverse=True)
 
@@ -180,16 +179,16 @@ class PointFusion(nn.Module):
                 self.lateral_convs.append(l_conv)
             self.img_transform = nn.Sequential(
                 nn.Linear(mid_channels * len(img_channels), out_channels),
-                nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01),
+                nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01)
             )
         else:
             self.img_transform = nn.Sequential(
                 nn.Linear(sum(img_channels), out_channels),
-                nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01),
+                nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01)
             )
         self.pts_transform = nn.Sequential(
             nn.Linear(pts_channels, out_channels),
-            nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01),
+            nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01)
         )
 
         if self.fuse_out:
@@ -285,6 +284,7 @@ class PointFusion(nn.Module):
         img_scale_factor = (
             pts.new_tensor(img_meta['scale_factor'][:2])
             if 'scale_factor' in img_meta.keys() else 1)
+
         img_flip = img_meta['flip'] if 'flip' in img_meta.keys() else False
         img_crop_offset = (
             pts.new_tensor(img_meta['img_crop_offset'])

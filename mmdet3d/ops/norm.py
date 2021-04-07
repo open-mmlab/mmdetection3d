@@ -58,8 +58,17 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
             return super().forward(input)
         assert input.shape[0] > 0, 'SyncBN does not support empty inputs'
         C = input.shape[1]
-        mean = torch.mean(input, dim=[0, 2])
-        meansqr = torch.mean(input * input, dim=[0, 2])
+        if input.dim() == 3:
+            expected_dim = [0, 2]
+            expected_shape = [1, -1, 1]
+        elif input.dim() == 2:
+            expected_dim = [0]
+            expected_shape = [1, -1]
+        else:
+            raise ValueError(
+                        f'expected 2D or 3D input (got {input.dim()}D input)')
+        mean = torch.mean(input, dim=expected_dim)
+        meansqr = torch.mean(input * input, dim=expected_dim)
 
         vec = torch.cat([mean, meansqr], dim=0)
         vec = AllReduce.apply(vec) * (1.0 / dist.get_world_size())
@@ -73,8 +82,8 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         invstd = torch.rsqrt(var + self.eps)
         scale = self.weight * invstd
         bias = self.bias - mean * scale
-        scale = scale.reshape(1, -1, 1)
-        bias = bias.reshape(1, -1, 1)
+        scale = scale.reshape(*expected_shape)
+        bias = bias.reshape(*expected_shape)
         return input * scale + bias
 
 

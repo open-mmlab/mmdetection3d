@@ -8,7 +8,7 @@ from mmdet.datasets.pipelines import LoadAnnotations
 
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
-    """Load multi channel images from a list of separate channel files.
+    """Load multi view images from a dict that contains image information.
 
     Expects results['img_filename'] to be a list of filenames.
 
@@ -18,45 +18,35 @@ class LoadMultiViewImageFromFiles(object):
         color_type (str): Color type of the file. Defaults to 'unchanged'.
     """
 
-    def __init__(self, to_float32=False, color_type='unchanged'):
+    def __init__(self,
+                 to_float32=False,
+                 color_type='unchanged',
+                 file_client_args=dict(backend='disk')):
         self.to_float32 = to_float32
         self.color_type = color_type
+        self.file_client_args = file_client_args.copy()
+        self.file_client = None
 
-    def __call__(self, results):
-        """Call function to load multi-view image from files.
-
-        Args:
-            results (dict): Result dict containing multi-view image filenames.
-
-        Returns:
-            dict: The result dict containing the multi-view image data. \
-                Added keys and values are described below.
-
-                - filename (str): Multi-view image filenames.
-                - img (np.ndarray): Multi-view image arrays.
-                - img_shape (tuple[int]): Shape of multi-view image arrays.
-                - ori_shape (tuple[int]): Shape of original image arrays.
-                - pad_shape (tuple[int]): Shape of padded image arrays.
-                - scale_factor (float): Scale factor.
-                - img_norm_cfg (dict): Normalization configuration of images.
-        """
-        filename = results['img_filename']
-        img = np.stack(
-            [mmcv.imread(name, self.color_type) for name in filename], axis=-1)
+    def _load_img(self, filename):
+        img_bytes = self.file_client.get(filename)
+        img = mmcv.imfrombytes(img_bytes, flag=self.color_type)
         if self.to_float32:
             img = img.astype(np.float32)
-        results['filename'] = filename
-        results['img'] = img
-        results['img_shape'] = img.shape
-        results['ori_shape'] = img.shape
-        # Set initial values for default meta_keys
-        results['pad_shape'] = img.shape
-        results['scale_factor'] = 1.0
-        num_channels = 1 if len(img.shape) < 3 else img.shape[2]
-        results['img_norm_cfg'] = dict(
-            mean=np.zeros(num_channels, dtype=np.float32),
-            std=np.ones(num_channels, dtype=np.float32),
-            to_rgb=False)
+        return img
+
+    def __call__(self, results):
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+        if 'img_fields' not in results:
+            results['img_fields'] = []
+        for key in results['img_info']['filename']:
+            img = self._load_img(results['img_info']['filename'][key])
+            results['img_fields'].append(key)
+            results[key] = img
+            results['img_shape'] = img.shape
+            results['ori_shape'] = img.shape
+            # Set initial values for default meta_keys
+            results['pad_shape'] = img.shape
         return results
 
     def __repr__(self):
