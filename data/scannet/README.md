@@ -1,9 +1,9 @@
-### Prepare ScanNet Data
+### Prepare ScanNet Data for Indoor Detection or Segmentation Task
 We follow the procedure in [votenet](https://github.com/facebookresearch/votenet/).
 
 1. Download ScanNet v2 data [HERE](https://github.com/ScanNet/ScanNet). Link or move the 'scans' folder to this level of directory.
 
-2. In this directory, extract point clouds and annotations by running `python batch_load_scannet_data.py`.
+2. In this directory, extract point clouds and annotations by running `python batch_load_scannet_data.py`. Add the `--max_num_point 50000` flag if you only use the ScanNet data for the detection task. It will downsample the scenes to less points.
 
 3. Enter the project root directory, generate training data by running
 ```bash
@@ -33,6 +33,11 @@ scannet
 │   ├── xxxxx.bin
 ├── semantic_mask
 │   ├── xxxxx.bin
+├── seg_info
+│   ├── train_label_weight.npy
+│   ├── train_resampled_scene_idxs.npy
+│   ├── val_label_weight.npy
+│   ├── val_resampled_scene_idxs.npy
 ├── scannet_infos_train.pkl
 ├── scannet_infos_val.pkl
 

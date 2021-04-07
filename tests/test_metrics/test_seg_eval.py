@@ -9,12 +9,15 @@ def test_indoor_eval():
     if not torch.cuda.is_available():
         pytest.skip()
     seg_preds = [
-        torch.Tensor(
-            [0, 0, 1, 0, 2, 1, 3, 1, 1, 0, 2, 2, 2, 2, 1, 3, 0, 3, 3, 3])
+        torch.Tensor([
+            0, 0, 1, 0, 0, 2, 1, 3, 1, 2, 1, 0, 2, 2, 2, 2, 1, 3, 0, 3, 3, 3, 3
+        ])
     ]
     gt_labels = [
-        torch.Tensor(
-            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+        torch.Tensor([
+            0, 0, 0, 255, 0, 0, 1, 1, 1, 255, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3,
+            3, 255
+        ])
     ]
 
     label2cat = {
@@ -23,7 +26,7 @@ def test_indoor_eval():
         2: 'motorcycle',
         3: 'truck',
     }
-    ret_value = seg_eval(gt_labels, seg_preds, label2cat)
+    ret_value = seg_eval(gt_labels, seg_preds, label2cat, ignore_index=255)
 
     assert np.isclose(ret_value['car'], 0.428571429)
     assert np.isclose(ret_value['bicycle'], 0.428571429)
