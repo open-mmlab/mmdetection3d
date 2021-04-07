@@ -525,3 +525,36 @@ def test_seg_show():
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
     tmp_dir.cleanup()
+
+
+def test_seg_format_results():
+    import mmcv
+    from os import path as osp
+
+    root_path = './tests/data/scannet'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    scannet_dataset = ScanNetSegDataset(
+        data_root=root_path, ann_file=ann_file, test_mode=True)
+    results = []
+    pred_sem_mask = dict(
+        semantic_mask=torch.tensor([
+            13, 5, 1, 2, 6, 2, 13, 1, 14, 2, 0, 0, 5, 5, 3, 0, 1, 14, 0, 0, 0,
+            18, 6, 15, 13, 0, 2, 4, 0, 3, 16, 6, 13, 5, 13, 0, 0, 0, 0, 1, 7,
+            3, 19, 12, 8, 0, 11, 0, 0, 1, 2, 13, 17, 1, 1, 1, 6, 2, 13, 19, 4,
+            17, 0, 14, 1, 7, 2, 1, 7, 2, 0, 5, 17, 5, 0, 0, 3, 6, 5, 11, 1, 13,
+            13, 2, 3, 1, 0, 13, 19, 1, 14, 5, 3, 1, 13, 1, 2, 3, 2, 1
+        ]).long())
+    results.append(pred_sem_mask)
+    result_files, tmp_dir = scannet_dataset.format_results(results)
+
+    expected_label = np.array([
+        16, 6, 2, 3, 7, 3, 16, 2, 24, 3, 1, 1, 6, 6, 4, 1, 2, 24, 1, 1, 1, 36,
+        7, 28, 16, 1, 3, 5, 1, 4, 33, 7, 16, 6, 16, 1, 1, 1, 1, 2, 8, 4, 39,
+        14, 9, 1, 12, 1, 1, 2, 3, 16, 34, 2, 2, 2, 7, 3, 16, 39, 5, 34, 1, 24,
+        2, 8, 3, 2, 8, 3, 1, 6, 34, 6, 1, 1, 4, 7, 6, 12, 2, 16, 16, 3, 4, 2,
+        1, 16, 39, 2, 24, 6, 4, 2, 16, 2, 3, 4, 3, 2
+    ])
+    expected_txt_path = osp.join(tmp_dir.name, 'results', 'scene0000_00.txt')
+    assert np.all(result_files[0]['seg_mask'] == expected_label)
+    mmcv.check_file_exist(expected_txt_path)
+    tmp_dir.cleanup()

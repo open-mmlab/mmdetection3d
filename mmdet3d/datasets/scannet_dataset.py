@@ -1,4 +1,5 @@
 import numpy as np
+import tempfile
 from os import path as osp
 
 from mmdet3d.core import show_result, show_seg_result
@@ -277,3 +278,45 @@ class ScanNetSegDataset(Custom3DSegDataset):
 
         return super().get_scene_idxs_and_label_weight(scene_idxs,
                                                        label_weight)
+
+    def format_results(self, results, txtfile_prefix=None):
+        """Format the results to txt file. Refer to
+        http://kaldir.vc.in.tum.de/scannet_benchmark/documentation.
+
+        Args:
+            outputs (list[dict]): Testing results of the dataset.
+            txtfile_prefix (str | None): The prefix of saved files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+
+        Returns:
+            tuple: (outputs, tmp_dir), outputs is the detection results,
+                tmp_dir is the temporal directory created for saving submission
+                files when ``submission_prefix`` is not specified.
+        """
+        import mmcv
+
+        if txtfile_prefix is None:
+            tmp_dir = tempfile.TemporaryDirectory()
+            txtfile_prefix = osp.join(tmp_dir.name, 'results')
+        else:
+            tmp_dir = None
+        mmcv.mkdir_or_exist(txtfile_prefix)
+
+        # need to map network output to original label idx
+        pred2label = np.zeros(len(self.VALID_CLASS_IDS)).astype(np.int)
+        for original_label, output_idx in self.label_map.items():
+            if output_idx != self.ignore_index:
+                pred2label[output_idx] = original_label
+
+        outputs = []
+        for i, result in enumerate(results):
+            info = self.data_infos[i]
+            sample_idx = info['point_cloud']['lidar_idx']
+            pred_sem_mask = result['semantic_mask'].numpy().astype(np.int)
+            pred_label = pred2label[pred_sem_mask]
+            curr_file = f'{txtfile_prefix}/{sample_idx}.txt'
+            np.savetxt(curr_file, pred_label, fmt='%d')
+            outputs.append(dict(seg_mask=pred_label))
+
+        return outputs, tmp_dir
