@@ -43,12 +43,6 @@ test_pipeline = [
         use_color=True,
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5]),
-    dict(
-        type='IndoorPatchPointSample',
-        num_points=num_points,
-        block_size=1.5,
-        sample_rate=0.5,
-        use_normalized_coord=True),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points'])
