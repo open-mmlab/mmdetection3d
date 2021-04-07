@@ -35,8 +35,12 @@ def single_gpu_test(model,
             result = model(return_loss=False, rescale=True, **data)
 
         if show:
+            # Visualize the results of MMdetection3D model
+            # 'show_results' is MMdetection3D visualization API
             if hasattr(model.module, 'show_results'):
                 model.module.show_results(data, result, out_dir)
+            # Visualize the results of MMdetection model
+            # 'show_result' is MMdetection visualization API
             else:
                 batch_size = len(result)
                 if batch_size == 1 and isinstance(data['img'][0],
