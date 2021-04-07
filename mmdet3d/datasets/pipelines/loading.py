@@ -90,33 +90,6 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
 
 
 @PIPELINES.register_module()
-class LoadImageFromFileMono3D(LoadImageFromFile):
-    """Load an image from file in monocular 3D object detection. Compared to 2D
-    detection, additional camera parameters need to be loaded.
-
-    Args:
-        kwargs (dict): Arguments are the same as those in \
-            :class:`LoadImageFromFile`.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def __call__(self, results):
-        """Call functions to load image and get image meta information.
-
-        Args:
-            results (dict): Result dict from :obj:`mmdet.CustomDataset`.
-
-        Returns:
-            dict: The dict contains loaded image and meta information.
-        """
-        super().__call__(results)
-        results['cam_intrinsic'] = results['img_info']['cam_intrinsic']
-        return results
-
-
-@PIPELINES.register_module()
 class LoadPointsFromMultiSweeps(object):
     """Load points from multiple sweeps.
 
