@@ -65,8 +65,17 @@ class RandomFlip3D(RandomFlip):
                 np.array([], dtype=np.float32))
         assert len(input_dict['bbox3d_fields']) == 1
         for key in input_dict['bbox3d_fields']:
-            input_dict['points'] = input_dict[key].flip(
-                direction, points=input_dict['points'])
+            if 'points' in input_dict:
+                input_dict['points'] = input_dict[key].flip(
+                    direction, points=input_dict['points'])
+            else:
+                input_dict[key].flip(direction)
+        if 'centers2d' in input_dict:
+            assert self.sync_2d is True and direction == 'horizontal', \
+                'Only support sync_2d=True and horizontal flip with images'
+            w = input_dict['img_shape'][1]
+            input_dict['centers2d'][..., 0] = \
+                w - input_dict['centers2d'][..., 0]
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \

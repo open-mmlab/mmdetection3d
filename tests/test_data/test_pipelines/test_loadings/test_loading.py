@@ -130,10 +130,11 @@ def test_load_annotations3D():
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
     repr_str = repr(scannet_load_annotations3D)
     expected_repr_str = 'LoadAnnotations3D(\n    with_bbox_3d=True,     ' \
-                        'with_label_3d=True,     with_mask_3d=True,     ' \
-                        'with_seg_3d=True,     with_bbox=False,     ' \
-                        'with_label=False,     with_mask=False,     ' \
-                        'with_seg=False,     poly2mask=True)'
+                        'with_label_3d=True,     with_attr_label=False,     ' \
+                        'with_mask_3d=True,     with_seg_3d=True,     ' \
+                        'with_bbox=False,     with_label=False,     ' \
+                        'with_mask=False,     with_seg=False,     ' \
+                        'with_bbox_depth=False,     poly2mask=True)'
     assert repr_str == expected_repr_str
     assert scannet_gt_boxes.tensor.shape == (27, 7)
     assert scannet_gt_labels.shape == (27, )

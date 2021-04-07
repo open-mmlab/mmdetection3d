@@ -9,11 +9,17 @@ from pyquaternion import Quaternion
 from shapely.geometry import MultiPoint, box
 from typing import List, Tuple, Union
 
+from mmdet3d.core.bbox.box_np_ops import points_cam2img
 from mmdet3d.datasets import NuScenesDataset
 
 nus_categories = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
                   'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
                   'barrier')
+
+nus_attributes = ('cycle.with_rider', 'cycle.without_rider',
+                  'pedestrian.moving', 'pedestrian.standing',
+                  'pedestrian.sitting_lying_down', 'vehicle.moving',
+                  'vehicle.parked', 'vehicle.stopped', 'None')
 
 
 def create_nuscenes_infos(root_path,
@@ -324,13 +330,14 @@ def obtain_sensor2top(nusc,
     return sweep
 
 
-def export_2d_annotation(root_path, info_path, version):
+def export_2d_annotation(root_path, info_path, version, mono3d=True):
     """Export 2d annotation from the info file and raw data.
 
     Args:
         root_path (str): Root path of the raw data.
         info_path (str): Path of the info file.
         version (str): Dataset version.
+        mono3d (bool): Whether to export mono3d annotation. Default: True.
     """
     # get bbox annotations for camera
     camera_types = [
@@ -356,12 +363,20 @@ def export_2d_annotation(root_path, info_path, version):
             coco_infos = get_2d_boxes(
                 nusc,
                 cam_info['sample_data_token'],
-                visibilities=['', '1', '2', '3', '4'])
+                visibilities=['', '1', '2', '3', '4'],
+                mono3d=mono3d)
             (height, width, _) = mmcv.imread(cam_info['data_path']).shape
             coco_2d_dict['images'].append(
                 dict(
-                    file_name=cam_info['data_path'],
+                    file_name=cam_info['data_path'].split('data/nuscenes/')
+                    [-1],
                     id=cam_info['sample_data_token'],
+                    token=info['token'],
+                    cam2ego_rotation=cam_info['sensor2ego_rotation'],
+                    cam2ego_translation=cam_info['sensor2ego_translation'],
+                    ego2global_rotation=info['ego2global_rotation'],
+                    ego2global_translation=info['ego2global_translation'],
+                    cam_intrinsic=cam_info['cam_intrinsic'],
                     width=width,
                     height=height))
             for coco_info in coco_infos:
@@ -372,16 +387,24 @@ def export_2d_annotation(root_path, info_path, version):
                 coco_info['id'] = coco_ann_id
                 coco_2d_dict['annotations'].append(coco_info)
                 coco_ann_id += 1
-    mmcv.dump(coco_2d_dict, f'{info_path[:-4]}.coco.json')
+    if mono3d:
+        json_prefix = f'{info_path[:-4]}_mono3d'
+    else:
+        json_prefix = f'{info_path[:-4]}'
+    mmcv.dump(coco_2d_dict, f'{json_prefix}.coco.json')
 
 
-def get_2d_boxes(nusc, sample_data_token: str,
-                 visibilities: List[str]) -> List[OrderedDict]:
+def get_2d_boxes(nusc,
+                 sample_data_token: str,
+                 visibilities: List[str],
+                 mono3d=True):
     """Get the 2D annotation records for a given `sample_data_token`.
 
     Args:
-        sample_data_token: Sample data token belonging to a camera keyframe.
-        visibilities: Visibility filter.
+        sample_data_token (str): Sample data token belonging to a camera \
+            keyframe.
+        visibilities (list[str]): Visibility filter.
+        mono3d (bool): Whether to get boxes with mono3d annotation.
 
     Return:
         list[dict]: List of 2D annotation record that belongs to the input
@@ -456,6 +479,43 @@ def get_2d_boxes(nusc, sample_data_token: str,
         # Generate dictionary record to be included in the .json file.
         repro_rec = generate_record(ann_rec, min_x, min_y, max_x, max_y,
                                     sample_data_token, sd_rec['filename'])
+
+        # If mono3d=True, add 3D annotations in camera coordinates
+        if mono3d and (repro_rec is not None):
+            loc = box.center.tolist()
+            dim = box.wlh.tolist()
+            rot = [box.orientation.yaw_pitch_roll[0]]
+
+            global_velo2d = nusc.box_velocity(box.token)[:2]
+            global_velo3d = np.array([*global_velo2d, 0.0])
+            e2g_r_mat = Quaternion(pose_rec['rotation']).rotation_matrix
+            c2e_r_mat = Quaternion(cs_rec['rotation']).rotation_matrix
+            cam_velo3d = global_velo3d @ np.linalg.inv(
+                e2g_r_mat).T @ np.linalg.inv(c2e_r_mat).T
+            velo = cam_velo3d[0::2].tolist()
+
+            repro_rec['bbox_cam3d'] = loc + dim + rot
+            repro_rec['velo_cam3d'] = velo
+
+            center3d = np.array(loc).reshape([1, 3])
+            center2d = points_cam2img(
+                center3d, camera_intrinsic, with_depth=True)
+            repro_rec['center2d'] = center2d.squeeze().tolist()
+            # normalized center2D + depth
+            # if samples with depth < 0 will be removed
+            if repro_rec['center2d'][2] <= 0:
+                continue
+
+            ann_token = nusc.get('sample_annotation',
+                                 box.token)['attribute_tokens']
+            if len(ann_token) == 0:
+                attr_name = 'None'
+            else:
+                attr_name = nusc.get('attribute', ann_token[0])['name']
+            attr_id = nus_attributes.index(attr_name)
+            repro_rec['attribute_name'] = attr_name
+            repro_rec['attribute_id'] = attr_id
+
         repro_recs.append(repro_rec)
 
     return repro_recs

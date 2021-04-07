@@ -335,21 +335,40 @@ def rotation_points_single_angle(points, angle, axis=0):
     return points @ rot_mat_T, rot_mat_T
 
 
-def points_cam2img(points_3d, proj_mat):
+def points_cam2img(points_3d, proj_mat, with_depth=False):
     """Project points in camera coordinates to image coordinates.
 
     Args:
         points_3d (np.ndarray): Points in shape (N, 3)
         proj_mat (np.ndarray): Transformation matrix between coordinates.
+        with_depth (bool): Whether to keep depth in the output.
 
     Returns:
         np.ndarray: Points in image coordinates with shape [N, 2].
     """
     points_shape = list(points_3d.shape)
     points_shape[-1] = 1
+
+    assert len(proj_mat.shape) == 2, 'The dimension of the projection'\
+        f' matrix should be 2 instead of {len(proj_mat.shape)}.'
+    d1, d2 = proj_mat.shape[:2]
+    assert (d1 == 3 and d2 == 3) or (d1 == 3 and d2 == 4) or (
+        d1 == 4 and d2 == 4), 'The shape of the projection matrix'\
+        f' ({d1}*{d2}) is not supported.'
+    if d1 == 3:
+        proj_mat_expanded = np.eye(4, dtype=proj_mat.dtype)
+        proj_mat_expanded[:d1, :d2] = proj_mat
+        proj_mat = proj_mat_expanded
+
     points_4 = np.concatenate([points_3d, np.ones(points_shape)], axis=-1)
     point_2d = points_4 @ proj_mat.T
     point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
+
+    if with_depth:
+        points_2d_depth = np.concatenate([point_2d_res, point_2d[..., 2:3]],
+                                         axis=-1)
+        return points_2d_depth
+
     return point_2d_res
 
 

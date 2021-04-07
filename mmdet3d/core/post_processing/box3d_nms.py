@@ -11,7 +11,9 @@ def box3d_multiclass_nms(mlvl_bboxes,
                          score_thr,
                          max_num,
                          cfg,
-                         mlvl_dir_scores=None):
+                         mlvl_dir_scores=None,
+                         mlvl_attr_scores=None,
+                         mlvl_bboxes2d=None):
     """Multi-class nms for 3D boxes.
 
     Args:
@@ -27,10 +29,15 @@ def box3d_multiclass_nms(mlvl_bboxes,
         cfg (dict): Configuration dict of NMS.
         mlvl_dir_scores (torch.Tensor, optional): Multi-level scores
             of direction classifier. Defaults to None.
+        mlvl_attr_scores (torch.Tensor, optional): Multi-level scores
+            of attribute classifier. Defaults to None.
+        mlvl_bboxes2d (torch.Tensor, optional): Multi-level 2D bounding
+            boxes. Defaults to None.
 
     Returns:
         tuple[torch.Tensor]: Return results after nms, including 3D \
-            bounding boxes, scores, labels and direction scores.
+            bounding boxes, scores, labels, direction scores, attribute \
+            scores (optional) and 2D bounding boxes (optional).
     """
     # do multi class nms
     # the fg class id range: [0, num_classes-1]
@@ -39,6 +46,8 @@ def box3d_multiclass_nms(mlvl_bboxes,
     scores = []
     labels = []
     dir_scores = []
+    attr_scores = []
+    bboxes2d = []
     for i in range(0, num_classes):
         # get bboxes and scores of this class
         cls_inds = mlvl_scores[:, i] > score_thr
@@ -65,6 +74,12 @@ def box3d_multiclass_nms(mlvl_bboxes,
         if mlvl_dir_scores is not None:
             _mlvl_dir_scores = mlvl_dir_scores[cls_inds]
             dir_scores.append(_mlvl_dir_scores[selected])
+        if mlvl_attr_scores is not None:
+            _mlvl_attr_scores = mlvl_attr_scores[cls_inds]
+            attr_scores.append(_mlvl_attr_scores[selected])
+        if mlvl_bboxes2d is not None:
+            _mlvl_bboxes2d = mlvl_bboxes2d[cls_inds]
+            bboxes2d.append(_mlvl_bboxes2d[selected])
 
     if bboxes:
         bboxes = torch.cat(bboxes, dim=0)
@@ -72,6 +87,10 @@ def box3d_multiclass_nms(mlvl_bboxes,
         labels = torch.cat(labels, dim=0)
         if mlvl_dir_scores is not None:
             dir_scores = torch.cat(dir_scores, dim=0)
+        if mlvl_attr_scores is not None:
+            attr_scores = torch.cat(attr_scores, dim=0)
+        if mlvl_bboxes2d is not None:
+            bboxes2d = torch.cat(bboxes2d, dim=0)
         if bboxes.shape[0] > max_num:
             _, inds = scores.sort(descending=True)
             inds = inds[:max_num]
@@ -80,12 +99,31 @@ def box3d_multiclass_nms(mlvl_bboxes,
             scores = scores[inds]
             if mlvl_dir_scores is not None:
                 dir_scores = dir_scores[inds]
+            if mlvl_attr_scores is not None:
+                attr_scores = attr_scores[inds]
+            if mlvl_bboxes2d is not None:
+                bboxes2d = bboxes2d[inds]
     else:
         bboxes = mlvl_scores.new_zeros((0, mlvl_bboxes.size(-1)))
         scores = mlvl_scores.new_zeros((0, ))
         labels = mlvl_scores.new_zeros((0, ), dtype=torch.long)
-        dir_scores = mlvl_scores.new_zeros((0, ))
-    return bboxes, scores, labels, dir_scores
+        if mlvl_dir_scores is not None:
+            dir_scores = mlvl_scores.new_zeros((0, ))
+        if mlvl_attr_scores is not None:
+            attr_scores = mlvl_scores.new_zeros((0, ))
+        if mlvl_bboxes2d is not None:
+            bboxes2d = mlvl_scores.new_zeros((0, 4))
+
+    results = (bboxes, scores, labels)
+
+    if mlvl_dir_scores is not None:
+        results = results + (dir_scores, )
+    if mlvl_attr_scores is not None:
+        results = results + (attr_scores, )
+    if mlvl_bboxes2d is not None:
+        results = results + (bboxes2d, )
+
+    return results
 
 
 def aligned_3d_nms(boxes, scores, classes, thresh):
