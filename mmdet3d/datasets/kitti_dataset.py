@@ -613,7 +613,7 @@ class KittiDataset(Custom3DDataset):
         labels = box_dict['labels_3d']
         sample_idx = info['image']['image_idx']
         # TODO: remove the hack of yaw
-        box_preds.tensor[:, -1] = box_preds.tensor[:, -1] - np.pi
+        # box_preds.tensor[:, -1] = box_preds.tensor[:, -1] - np.pi
         box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
 
         if len(box_preds) == 0:

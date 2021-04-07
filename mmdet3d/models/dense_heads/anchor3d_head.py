@@ -503,8 +503,11 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         if bboxes.shape[0] > 0:
             dir_rot = limit_period(bboxes[..., 6] - self.dir_offset,
                                    self.dir_limit_offset, np.pi)
+            # dir_scores = abs(dir_scores - 1)
             bboxes[..., 6] = (
                 dir_rot + self.dir_offset +
                 np.pi * dir_scores.to(bboxes.dtype))
+            # print('max: ', torch.max(bboxes[...,6]))
+            # print('min: ', torch.min(bboxes[...,6]))
         bboxes = input_meta['box_type_3d'](bboxes, box_dim=self.box_code_size)
         return bboxes, scores, labels

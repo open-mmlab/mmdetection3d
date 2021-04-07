@@ -332,7 +332,9 @@ def get_direction_target(anchors,
         torch.Tensor: Encoded direction targets.
     """
     rot_gt = reg_targets[..., 6] + anchors[..., 6]
-    offset_rot = limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
+    # assume the groundtruth yaw is (-pi, pi)
+    rot_gt = limit_period(rot_gt, 0.5, 2 * np.pi)
+    offset_rot = limit_period(rot_gt - dir_offset - np.pi, 0, 2 * np.pi)
     dir_cls_targets = torch.floor(offset_rot / (2 * np.pi / num_bins)).long()
     dir_cls_targets = torch.clamp(dir_cls_targets, min=0, max=num_bins - 1)
     if one_hot:
