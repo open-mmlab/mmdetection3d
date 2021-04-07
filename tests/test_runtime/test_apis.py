@@ -67,7 +67,7 @@ def test_show_result_meshlab():
     ]
     temp_out_dir = tempfile.mkdtemp()
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir)
-    expected_outfile_ply = file_name + '_pred.ply'
+    expected_outfile_ply = file_name + '_pred.obj'
     expected_outfile_obj = file_name + '_points.obj'
     expected_outfile_ply_path = os.path.join(out_dir, file_name,
                                              expected_outfile_ply)

@@ -167,8 +167,8 @@ class Collect3D(object):
 
     def __repr__(self):
         """str: Return a string that describes the module."""
-        return self.__class__.__name__ + '(keys={}, meta_keys={})'.format(
-            self.keys, self.meta_keys)
+        return self.__class__.__name__ + \
+            f'(keys={self.keys}, meta_keys={self.meta_keys})'
 
 
 @PIPELINES.register_module()
@@ -256,7 +256,6 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(class_names={}, '.format(self.class_names)
-        repr_str += 'with_gt={}, with_label={})'.format(
-            self.with_gt, self.with_label)
+        repr_str += f'(class_names={self.class_names}, '
+        repr_str += f'with_gt={self.with_gt}, with_label={self.with_label})'
         return repr_str

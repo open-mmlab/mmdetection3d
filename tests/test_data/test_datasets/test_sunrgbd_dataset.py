@@ -147,8 +147,8 @@ def test_show():
     results = [result]
     sunrgbd_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
-    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.ply')
-    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.ply')
+    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)

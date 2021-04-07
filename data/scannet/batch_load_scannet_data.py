@@ -47,12 +47,13 @@ def export_one_scan(scan_name, output_filename_prefix, max_num_point,
     instance_bboxes = instance_bboxes[bbox_mask, :]
     print(f'Num of care instances: {instance_bboxes.shape[0]}')
 
-    N = mesh_vertices.shape[0]
-    if N > max_num_point:
-        choices = np.random.choice(N, max_num_point, replace=False)
-        mesh_vertices = mesh_vertices[choices, :]
-        semantic_labels = semantic_labels[choices]
-        instance_labels = instance_labels[choices]
+    if max_num_point is not None:
+        N = mesh_vertices.shape[0]
+        if N > max_num_point:
+            choices = np.random.choice(N, max_num_point, replace=False)
+            mesh_vertices = mesh_vertices[choices, :]
+            semantic_labels = semantic_labels[choices]
+            instance_labels = instance_labels[choices]
 
     np.save(f'{output_filename_prefix}_vert.npy', mesh_vertices)
     np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
@@ -88,7 +89,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--max_num_point',
-        default=50000,
+        default=None,
         help='The maximum number of the points.')
     parser.add_argument(
         '--output_folder',

@@ -66,28 +66,37 @@ def get_acc_cls(hist):
     return np.nanmean(np.diag(hist) / hist.sum(axis=1))
 
 
-def seg_eval(gt_labels, seg_preds, label2cat, logger=None):
-    """Semantic Segmentation Evaluation.
+def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
+    """Semantic Segmentation  Evaluation.
 
-     Evaluate the result of the Semantic Segmentation.
+    Evaluate the result of the Semantic Segmentation.
 
-     Args:
-         gt_labels (list[torch.Tensor]): Ground truth labels.
-         seg_preds  (list[torch.Tensor]): Predtictions
-         label2cat (dict): Map from label to category.
-         logger (logging.Logger | str | None): The way to print the mAP
+    Args:
+        gt_labels (list[torch.Tensor]): Ground truth labels.
+        seg_preds  (list[torch.Tensor]): Predictions.
+        label2cat (dict): Map from label to category name.
+        ignore_index (int): Index that will be ignored in evaluation.
+        logger (logging.Logger | str | None): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 
-    Return:
+    Returns:
         dict[str, float]: Dict of results.
     """
     assert len(seg_preds) == len(gt_labels)
+    num_classes = len(label2cat)
 
     hist_list = []
-    for i in range(len(seg_preds)):
-        hist_list.append(
-            fast_hist(seg_preds[i].numpy().astype(int),
-                      gt_labels[i].numpy().astype(int), len(label2cat)))
+    for i in range(len(gt_labels)):
+        gt_seg = gt_labels[i].clone().numpy().astype(np.int)
+        pred_seg = seg_preds[i].clone().numpy().astype(np.int)
+
+        # filter out ignored points
+        pred_seg[gt_seg == ignore_index] = -1
+        gt_seg[gt_seg == ignore_index] = -1
+
+        # calculate one instance result
+        hist_list.append(fast_hist(pred_seg, gt_seg, num_classes))
+
     iou = per_class_iou(sum(hist_list))
     miou = np.nanmean(iou)
     acc = get_acc(sum(hist_list))
