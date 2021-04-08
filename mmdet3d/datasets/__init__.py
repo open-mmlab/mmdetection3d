@@ -26,7 +26,8 @@ __all__ = [
     'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle', 'ObjectRangeFilter',
     'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile',
     'NormalizePointsColor', 'IndoorPointSample', 'LoadAnnotations3D',
-    'SUNRGBDDataset', 'ScanNetDataset', 'SemanticKITTIDataset',
-    'Custom3DDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
-    'BackgroundPointsFilter', 'VoxelBasedPointSampler'
+    'SUNRGBDDataset', 'ScanNetDataset', 'ScanNetSegDataset',
+    'SemanticKITTIDataset', 'Custom3DDataset', 'Custom3DSegDataset',
+    'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
+    'VoxelBasedPointSampler'
 ]
