@@ -280,8 +280,8 @@ class ScanNetSegDataset(Custom3DSegDataset):
                                                        label_weight)
 
     def format_results(self, results, txtfile_prefix=None):
-        """Format the results to txt file. Refer to
-        http://kaldir.vc.in.tum.de/scannet_benchmark/documentation.
+        r"""Format the results to txt file. Refer to `ScanNet documentation
+        <http://kaldir.vc.in.tum.de/scannet_benchmark/documentation>`_.
 
         Args:
             outputs (list[dict]): Testing results of the dataset.
