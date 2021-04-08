@@ -214,6 +214,37 @@ def test_show():
     mmcv.check_file_exist(pred_file_path)
     tmp_dir.cleanup()
 
+    # show function with pipeline
+    class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                   'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'garbagebin')
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=class_names,
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    scannet_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
+    pts_file_path = osp.join(temp_dir, 'scene0000_00',
+                             'scene0000_00_points.obj')
+    gt_file_path = osp.join(temp_dir, 'scene0000_00', 'scene0000_00_gt.obj')
+    pred_file_path = osp.join(temp_dir, 'scene0000_00',
+                              'scene0000_00_pred.obj')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
 
 def test_seg_getitem():
     np.random.seed(0)

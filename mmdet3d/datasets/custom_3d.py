@@ -226,7 +226,8 @@ class Custom3DDataset(Dataset):
                  iou_thr=(0.25, 0.5),
                  logger=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -238,6 +239,8 @@ class Custom3DDataset(Dataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -262,9 +265,28 @@ class Custom3DDataset(Dataset):
             box_type_3d=self.box_type_3d,
             box_mode_3d=self.box_mode_3d)
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
 
         return ret_dict
+
+    @staticmethod
+    def _extract_data(results, key):
+        """Extract and return the data corresponding to key in results dict.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor: Data term.
+        """
+        # results[key] may be DataContainer or list[DataContainer]
+        if isinstance(results[key], mmcv.parallel.DataContainer):
+            data = results[key]._data
+        else:  # list output of MultiScaleFlipAug3D
+            data = results[key][0]._data
+
+        return data
 
     def __len__(self):
         """Return the length of data infos.

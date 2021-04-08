@@ -7,6 +7,7 @@ from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
+from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -108,26 +109,42 @@ class ScanNetDataset(Custom3DDataset):
             pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self, results, out_dir, show=True):
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
+        if pipeline is not None:
+            pipeline = Compose(pipeline)
+            original_pipeline = self.pipeline if \
+                hasattr(self, 'pipeline') else None  # save the original one
+            self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = np.fromfile(
-                osp.join(self.data_root, pts_path),
-                dtype=np.float32).reshape(-1, 6)
+            if pipeline is None:  # load from disk
+                points = np.fromfile(
+                    osp.join(self.data_root, pts_path),
+                    dtype=np.float32).reshape(-1, 6)
+            else:  # load via pipeline
+                example = self.prepare_test_data(i)
+                points = self._extract_data(example, 'points').numpy()
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
                         show)
+        if pipeline is not None:  # switch back to original pipeline
+            if original_pipeline is not None:
+                self.pipeline = original_pipeline
+            else:
+                delattr(self, 'pipeline')
 
 
 @DATASETS.register_module()
