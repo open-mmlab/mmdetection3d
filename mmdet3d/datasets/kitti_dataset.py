@@ -658,8 +658,7 @@ class KittiDataset(Custom3DDataset):
                 box3d_lidar=box_preds[valid_inds].tensor.numpy(),
                 scores=scores[valid_inds].numpy(),
                 label_preds=labels[valid_inds].numpy(),
-                sample_idx=sample_idx,
-            )
+                sample_idx=sample_idx)
         else:
             return dict(
                 bbox=np.zeros([0, 4]),
@@ -667,8 +666,7 @@ class KittiDataset(Custom3DDataset):
                 box3d_lidar=np.zeros([0, 7]),
                 scores=np.zeros([0]),
                 label_preds=np.zeros([0, 4]),
-                sample_idx=sample_idx,
-            )
+                sample_idx=sample_idx)
 
     def show(self, results, out_dir, show=True):
         """Results visualization.
