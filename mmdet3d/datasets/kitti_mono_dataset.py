@@ -483,7 +483,7 @@ class KittiMonoDataset(NuScenesMonoDataset):
                                 anno['score'][idx]),
                             file=f,
                         )
-            print('Result is saved to {}'.format(submission_prefix))
+            print(f'Result is saved to {submission_prefix}')
 
         return det_annos
 
