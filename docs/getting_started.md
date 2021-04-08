@@ -248,7 +248,7 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](0_demo.md).
 
 ## High-level APIs for testing point clouds
 
