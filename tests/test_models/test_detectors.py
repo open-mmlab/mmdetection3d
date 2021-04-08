@@ -121,6 +121,47 @@ def test_voxel_net():
     assert labels_3d.shape == torch.Size([50])
 
 
+def test_3dssd():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    ssd3d_cfg = _get_detector_cfg('3dssd/3dssd_kitti-3d-car.py')
+    self = build_detector(ssd3d_cfg).cuda()
+    points_0 = torch.rand([2000, 4], device='cuda')
+    points_1 = torch.rand([2000, 4], device='cuda')
+    points = [points_0, points_1]
+    img_meta_0 = dict(box_type_3d=DepthInstance3DBoxes)
+    img_meta_1 = dict(box_type_3d=DepthInstance3DBoxes)
+    img_metas = [img_meta_0, img_meta_1]
+    gt_bbox_0 = DepthInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bbox_1 = DepthInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bboxes = [gt_bbox_0, gt_bbox_1]
+    gt_labels_0 = torch.randint(0, 10, [10], device='cuda')
+    gt_labels_1 = torch.randint(0, 10, [10], device='cuda')
+    gt_labels = [gt_labels_0, gt_labels_1]
+
+    # test forward_train
+    losses = self.forward_train(points, img_metas, gt_bboxes, gt_labels)
+    assert losses['vote_loss'] >= 0
+    assert losses['objectness_loss'] >= 0
+    assert losses['semantic_loss'] >= 0
+    assert losses['center_loss'] >= 0
+    assert losses['dir_class_loss'] >= 0
+    assert losses['dir_res_loss'] >= 0
+    assert losses['size_class_loss'] >= 0
+    assert losses['size_res_loss'] >= 0
+
+    # test simple_test
+    results = self.simple_test(points, img_metas)
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
+    assert boxes_3d.tensor.shape[0] >= 0
+    assert boxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+
+
 def test_vote_net():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
