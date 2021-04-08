@@ -76,10 +76,13 @@ def main():
     for idx, data_info in enumerate(track_iter_progress(data_infos)):
         if cfg.dataset_type in ['KittiDataset', 'WaymoDataset']:
             pts_path = data_info['point_cloud']['velodyne_path']
-        elif cfg.dataset_type == ['ScanNetDataset', 'SUNRGBDDataset']:
+        elif cfg.dataset_type in ['ScanNetDataset', 'SUNRGBDDataset']:
             pts_path = data_info['pts_path']
-        elif cfg.dataset_type == ['NuScenesDataset', 'LyftDataset']:
+        elif cfg.dataset_type in ['NuScenesDataset', 'LyftDataset']:
             pts_path = data_info['lidar_path']
+        else:
+            raise NotImplementedError(
+                f'unsupported dataset type {cfg.dataset_type}')
         file_name = osp.splitext(osp.basename(pts_path))[0]
         save_path = osp.join(args.output_dir,
                              f'{file_name}.png') if args.output_dir else None
