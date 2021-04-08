@@ -26,7 +26,7 @@ def export_one_scan(scan_name,
                     max_num_point,
                     label_map_file,
                     scannet_dir,
-                    is_train=True):
+                    test_mode=False):
     mesh_file = osp.join(scannet_dir, scan_name, scan_name + '_vh_clean_2.ply')
     agg_file = osp.join(scannet_dir, scan_name,
                         scan_name + '.aggregation.json')
@@ -36,9 +36,9 @@ def export_one_scan(scan_name,
     meta_file = osp.join(scannet_dir, scan_name, f'{scan_name}.txt')
     mesh_vertices, semantic_labels, instance_labels, instance_bboxes, \
         instance2semantic = export(mesh_file, agg_file, seg_file,
-                                   meta_file, label_map_file, None, is_train)
+                                   meta_file, label_map_file, None, test_mode)
 
-    if is_train:
+    if not test_mode:
         mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
         mesh_vertices = mesh_vertices[mask, :]
         semantic_labels = semantic_labels[mask]
@@ -56,12 +56,12 @@ def export_one_scan(scan_name,
         if N > max_num_point:
             choices = np.random.choice(N, max_num_point, replace=False)
             mesh_vertices = mesh_vertices[choices, :]
-            if is_train:
+            if not test_mode:
                 semantic_labels = semantic_labels[choices]
                 instance_labels = instance_labels[choices]
 
     np.save(f'{output_filename_prefix}_vert.npy', mesh_vertices)
-    if is_train:
+    if not test_mode:
         np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
         np.save(f'{output_filename_prefix}_ins_label.npy', instance_labels)
         np.save(f'{output_filename_prefix}_bbox.npy', instance_bboxes)
@@ -72,8 +72,8 @@ def batch_export(max_num_point,
                  scan_names_file,
                  label_map_file,
                  scannet_dir,
-                 is_train=True):
-    if not is_train and not os.path.exists(scannet_dir):
+                 test_mode=False):
+    if test_mode and not os.path.exists(scannet_dir):
         # test data preparation is optional
         return
     if not os.path.exists(output_folder):
@@ -92,7 +92,7 @@ def batch_export(max_num_point,
             continue
         try:
             export_one_scan(scan_name, output_filename_prefix, max_num_point,
-                            label_map_file, scannet_dir, is_train)
+                            label_map_file, scannet_dir, test_mode)
         except Exception:
             print(f'Failed export scan: {scan_name}')
         print('-' * 20 + 'done')
@@ -133,14 +133,14 @@ def main():
         args.train_scan_names_file,
         args.label_map_file,
         args.train_scannet_dir,
-        is_train=True)
+        test_mode=False)
     batch_export(
         args.max_num_point,
         args.output_folder,
         args.test_scan_names_file,
         args.label_map_file,
         args.test_scannet_dir,
-        is_train=False)
+        test_mode=True)
 
 
 if __name__ == '__main__':

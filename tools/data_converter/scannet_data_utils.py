@@ -37,7 +37,7 @@ class ScanNetData(object):
                               f'scannetv2_{split}.txt')
         mmcv.check_file_exist(split_file)
         self.sample_id_list = mmcv.list_from_file(split_file)
-        self.is_train = (split != 'test')
+        self.test_mode = (split == 'test')
 
     def __len__(self):
         return len(self.sample_id_list)
@@ -76,7 +76,7 @@ class ScanNetData(object):
                 osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
             info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
 
-            if self.is_train:
+            if not self.test_mode:
                 pts_instance_mask_path = osp.join(
                     self.root_dir, 'scannet_instance_data',
                     f'{sample_idx}_ins_label.npy')
