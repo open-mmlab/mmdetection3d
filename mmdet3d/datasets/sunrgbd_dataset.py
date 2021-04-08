@@ -1,8 +1,9 @@
+import mmcv
 import numpy as np
 from collections import OrderedDict
 from os import path as osp
 
-from mmdet3d.core import show_result
+from mmdet3d.core import show_multi_modality_result, show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.core import eval_map
 from mmdet.datasets import DATASETS
@@ -164,14 +165,38 @@ class SUNRGBDDataset(Custom3DDataset):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
+            if hasattr(self, 'pipeline'):
+                example = self.prepare_test_data(i)
+            else:
+                example = None
             points = np.fromfile(
                 osp.join(self.data_root, pts_path),
                 dtype=np.float32).reshape(-1, 6)
             points[:, 3:] *= 255
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
+
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
-                        show)
+            show_result(points, gt_bboxes.copy(), pred_bboxes.copy(), out_dir,
+                        file_name, show)
+
+            # multi-modality visualization
+            if self.modality['use_camera'] and example is not None and \
+                    'calib' in data_info.keys():
+                img = mmcv.imread(example['img_metas']._data['filename'])
+                pred_bboxes = DepthInstance3DBoxes(
+                    pred_bboxes, origin=(0.5, 0.5, 0))
+                gt_bboxes = DepthInstance3DBoxes(
+                    gt_bboxes, origin=(0.5, 0.5, 0))
+                show_multi_modality_result(
+                    img,
+                    gt_bboxes,
+                    pred_bboxes,
+                    example['calib'],
+                    out_dir,
+                    file_name,
+                    depth_bbox=True,
+                    img_metas=example['img_metas']._data,
+                    show=show)
 
     def evaluate(self,
                  results,

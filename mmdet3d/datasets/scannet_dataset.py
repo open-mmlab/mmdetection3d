@@ -123,7 +123,7 @@ class ScanNetDataset(Custom3DDataset):
             points = np.fromfile(
                 osp.join(self.data_root, pts_path),
                 dtype=np.float32).reshape(-1, 6)
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
                         show)
