@@ -13,7 +13,7 @@ from .nuscenes_mono_dataset import NuScenesMonoDataset
 
 @DATASETS.register_module()
 class KittiMonoDataset(NuScenesMonoDataset):
-    r"""Monocular 3D detection on KITTI Dataset.
+    """Monocular 3D detection on KITTI Dataset.
 
     Args:
         data_root (str): Path of dataset root.
@@ -320,13 +320,10 @@ class KittiMonoDataset(NuScenesMonoDataset):
                     anno['truncated'].append(0.0)
                     anno['occluded'].append(0)
                     anno['alpha'].append(-np.arctan2(box[0], box[2]) + box[6])
-                    # anno['alpha'].append(box[6])
                     anno['bbox'].append(bbox)
                     anno['dimensions'].append(box[3:6])
                     anno['location'].append(box[:3])
                     anno['rotation_y'].append(box[6])
-                    # anno['rotation_y'].append(
-                    #     np.arctan2(box[0], box[2]) + box[6])
                     anno['score'].append(score)
 
                 anno = {k: np.stack(v) for k, v in anno.items()}

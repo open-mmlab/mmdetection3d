@@ -690,7 +690,8 @@ def kitti_eval(gt_annos,
     pred_alpha = False
     valid_alpha_gt = False
     for anno in dt_annos:
-        if anno['alpha'].shape[0] != 0:
+        mask = (anno['alpha'] != -10)
+        if anno['alpha'][mask].shape[0] != 0:
             pred_alpha = True
             break
     for anno in gt_annos:
