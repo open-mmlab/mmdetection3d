@@ -1,3 +1,4 @@
+import copy
 import cv2
 import numpy as np
 import torch
@@ -44,6 +45,9 @@ def _draw_points(points,
     elif mode == 'xyzrgb':
         pcd.points = o3d.utility.Vector3dVector(points[:, :3])
         points_colors = points[:, 3:6]
+        # normalize to [0, 1] for open3d drawing
+        if not ((points_colors >= 0.0) & (points_colors <= 1.0)).all():
+            points_colors /= 255.0
     else:
         raise NotImplementedError
 
@@ -462,6 +466,7 @@ class Visualizer(object):
         self.rot_axis = rot_axis
         self.center_mode = center_mode
         self.mode = mode
+        self.seg_num = 0
 
         # draw points
         if points is not None:
@@ -493,6 +498,28 @@ class Visualizer(object):
         _draw_bboxes(bbox3d, self.o3d_visualizer, self.points_colors, self.pcd,
                      bbox_color, points_in_box_color, self.rot_axis,
                      self.center_mode, self.mode)
+
+    def add_seg_mask(self, seg_mask_colors):
+        """Add segmentation mask to visualizer via per-point colorization.
+
+        Args:
+            seg_mask_colors (numpy.array, shape=[N, 6]):
+                The segmentation mask whose first 3 dims are point coordinates
+                and last 3 dims are converted colors.
+        """
+        # we can't draw the colors on existing points
+        # in case gt and pred mask would overlap
+        # instead we set a large offset along x-axis for each seg mask
+        self.seg_num += 1
+        offset = (np.array(self.pcd.points).max(0) -
+                  np.array(self.pcd.points).min(0))[0] * 1.2 * self.seg_num
+        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(
+            size=1, origin=[offset, 0, 0])  # create coordinate frame for seg
+        self.o3d_visualizer.add_geometry(mesh_frame)
+        seg_points = copy.deepcopy(seg_mask_colors)
+        seg_points[:, 0] += offset
+        _draw_points(
+            seg_points, self.o3d_visualizer, self.points_size, mode='xyzrgb')
 
     def show(self, save_path=None):
         """Visualize the points cloud.

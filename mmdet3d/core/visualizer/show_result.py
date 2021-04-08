@@ -133,18 +133,10 @@ def show_seg_result(points,
             unannotated points. Defaults to None.
         show (bool, optional): Visualize the results online. Defaults to False.
     """
-    '''
-    # TODO: not sure how to draw colors online, maybe we need two frames?
-    from .open3d_vis import Visualizer
-
-    if show:
-        vis = Visualizer(points)
-        if pred_bboxes is not None:
-            vis.add_bboxes(bbox3d=pred_bboxes)
-        if gt_bboxes is not None:
-            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
-        vis.show()
-    '''
+    # we need 3D coordinates to visualize segmentation mask
+    if gt_seg is not None or pred_seg is not None:
+        assert points is not None, \
+            '3D coordinates are required for segmentation visualization'
 
     # filter out ignored points
     if gt_seg is not None and ignore_index is not None:
@@ -156,8 +148,23 @@ def show_seg_result(points,
 
     if gt_seg is not None:
         gt_seg_color = palette[gt_seg]
+        gt_seg_color = np.concatenate([points[:, :3], gt_seg_color], axis=1)
     if pred_seg is not None:
         pred_seg_color = palette[pred_seg]
+        pred_seg_color = np.concatenate([points[:, :3], pred_seg_color],
+                                        axis=1)
+
+    # online visualization of segmentation mask
+    # we show three masks in a row, scene_points, gt_mask, pred_mask
+    if show:
+        from .open3d_vis import Visualizer
+        mode = 'xyzrgb' if points.shape[1] == 6 else 'xyz'
+        vis = Visualizer(points, mode=mode)
+        if gt_seg is not None:
+            vis.add_seg_mask(gt_seg_color)
+        if pred_seg is not None:
+            vis.add_seg_mask(pred_seg_color)
+        vis.show()
 
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
@@ -166,9 +173,8 @@ def show_seg_result(points,
         _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if gt_seg is not None:
-        gt_seg = np.concatenate([points[:, :3], gt_seg_color], axis=1)
-        _write_obj(gt_seg, osp.join(result_path, f'{filename}_gt.obj'))
+        _write_obj(gt_seg_color, osp.join(result_path, f'{filename}_gt.obj'))
 
     if pred_seg is not None:
-        pred_seg = np.concatenate([points[:, :3], pred_seg_color], axis=1)
-        _write_obj(pred_seg, osp.join(result_path, f'{filename}_pred.obj'))
+        _write_obj(pred_seg_color, osp.join(result_path,
+                                            f'{filename}_pred.obj'))
