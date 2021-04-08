@@ -147,7 +147,7 @@ class ObjectSample(object):
         """Remove the points in the sampled bounding boxes.
 
         Args:
-            points (np.ndarray): Input point cloud array.
+            points (:obj:`BasePoints`): Input point cloud array.
             boxes (np.ndarray): Sampled ground truth boxes.
 
         Returns:
@@ -604,7 +604,7 @@ class IndoorPointSample(object):
         Sample points to a certain number.
 
         Args:
-            points (np.ndarray): 3D Points.
+            points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
             replace (bool): Whether the sample is with or without replacement.
             Defaults to None.
@@ -613,7 +613,7 @@ class IndoorPointSample(object):
         Returns:
             tuple[np.ndarray] | np.ndarray:
 
-                - points (np.ndarray): 3D Points.
+                - points (np.ndarray | :obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
         if replace is None:
@@ -708,10 +708,10 @@ class IndoorPatchPointSample(object):
             attributes (np.ndarray): features of input points.
             attribute_dims (dict): Dictionary to indicate the meaning of extra
                 dimension.
-            point_type (type): class of input points.
+            point_type (type): class of input points inherited from BasePoints.
 
         Returns:
-            np.ndarray: The generated input data.
+            :obj:`BasePoints`: The generated input data.
         """
         # subtract patch center, the z dimension is not centered
         centered_coords = coords.copy()
@@ -742,15 +742,15 @@ class IndoorPatchPointSample(object):
         Then sample points within that patch to a certain number.
 
         Args:
-            points (BasePoints): 3D Points.
+            points (:obj:`BasePoints`): 3D Points.
             sem_mask (np.ndarray): semantic segmentation mask for input points.
             replace (bool): Whether the sample is with or without replacement.
                 Defaults to None.
 
         Returns:
-            tuple[np.ndarray] | np.ndarray:
+            tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
 
-                - points (BasePoints): 3D Points.
+                - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray): The generated random samples.
         """
         coords = points.coord.numpy()

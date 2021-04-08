@@ -154,7 +154,7 @@ class LoadPointsFromMultiSweeps(object):
         """Removes point too close within a certain radius from origin.
 
         Args:
-            points (np.ndarray): Sweep points.
+            points (np.ndarray | :obj:`BasePoints`): Sweep points.
             radius (float): Radius below which points are removed.
                 Defaults to 1.0.
 
@@ -183,7 +183,8 @@ class LoadPointsFromMultiSweeps(object):
             dict: The result dict containing the multi-sweep points data. \
                 Added key and value are described below.
 
-                - points (np.ndarray): Multi-sweep point cloud arrays.
+                - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point \
+                    cloud arrays.
         """
         points = results['points']
         points.tensor[:, 4] = 0
@@ -295,7 +296,7 @@ class NormalizePointsColor(object):
             dict: The result dict containing the normalized points. \
                 Updated key and value are described below.
 
-                - points (np.ndarray): Points after color normalization.
+                - points (:obj:`BasePoints`): Points after color normalization.
         """
         points = results['points']
         assert points.attribute_dims is not None and \
@@ -393,7 +394,7 @@ class LoadPointsFromFile(object):
             dict: The result dict containing the point clouds data. \
                 Added key and value are described below.
 
-                - points (np.ndarray): Point clouds data.
+                - points (:obj:`BasePoints`): Point clouds data.
         """
         pts_filename = results['pts_filename']
         points = self._load_points(pts_filename)
