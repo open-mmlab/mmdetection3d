@@ -49,7 +49,11 @@ time std over epochs is 0.0028
 average iter time: 1.1959 s/iter
 ```
 
+&emsp;
+
 # Visualization
+
+## Results
 
 To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
 
@@ -80,6 +84,26 @@ Or you can use 3D visualization software such as the [MeshLab](http://www.meshla
 
 **Notice**: The visualization API is a little unstable since we plan to refactor these parts together with MMDetection in the future.
 
+## Dataset
+
+To browse the KITTI directly without inference, you can run the following command
+
+```shell
+python tools/misc/browse_dataset.py ${CONFIG_FILE} --output-dir ${OUTPUT_DIR}
+```
+
+Sample config can be found in `configs/_base_/datasets/` folder.
+
+E.g.,
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py
+```
+
+**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing _ESC_ in open3d window.
+
+&emsp;
+
 # Model Complexity
 
 You can use `tools/analysis_tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
@@ -106,6 +130,8 @@ comparisons, but double check it before you adopt it in technical reports or pap
    input shape is (1, 3, 1280, 800).
 2. Some operators are not counted into FLOPs like GN and custom operators. Refer to [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py) for details.
 3. The FLOPs of two-stage detectors is dependent on the number of proposals.
+
+&emsp;
 
 # Model Conversion
 
@@ -150,6 +176,8 @@ python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth 
 
 The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`.
 
+&emsp;
+
 # Dataset Conversion
 
 `tools/data_converter/` contains tools to convert datasets to other formats. Most of them convert datasets to pickle based info files, like kitti, nuscenes and lyft. Waymo converter is used to reorganize waymo raw data like KITTI style. Users could refer to them for our approach to converting data format. It is also convenient to modify them to use as scripts like nuImages converter.
@@ -168,6 +196,8 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
 -   `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
 
 More details could be referred to the [doc](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html) for dataset preparation and [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md) for nuImages dataset.
+
+&emsp;
 
 # Miscellaneous
 

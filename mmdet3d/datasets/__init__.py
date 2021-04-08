@@ -15,6 +15,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalRotScaleTrans,
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
+from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
 __all__ = [
@@ -27,5 +28,5 @@ __all__ = [
     'LoadAnnotations3D', 'SUNRGBDDataset', 'ScanNetDataset',
     'ScanNetSegDataset', 'SemanticKITTIDataset', 'Custom3DDataset',
     'Custom3DSegDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
-    'BackgroundPointsFilter', 'VoxelBasedPointSampler'
+    'BackgroundPointsFilter', 'VoxelBasedPointSampler', 'get_loading_pipeline'
 ]
