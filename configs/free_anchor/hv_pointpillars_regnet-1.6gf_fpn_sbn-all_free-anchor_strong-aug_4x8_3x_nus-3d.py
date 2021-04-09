@@ -62,8 +62,27 @@ train_pipeline = [
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
-data = dict(train=dict(pipeline=train_pipeline))
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=file_client_args),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
 
+data = dict(train=dict(pipeline=train_pipeline))
 lr_config = dict(step=[28, 34])
-evaluation = dict(interval=36)
 runner = dict(max_epochs=36)
+evaluation = dict(interval=36, pipeline=eval_pipeline)

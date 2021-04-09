@@ -85,6 +85,21 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
 
 data = dict(
     samples_per_gpu=4,
@@ -93,7 +108,7 @@ data = dict(
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
 
-evaluation = dict(interval=2)
+evaluation = dict(interval=2, pipeline=eval_pipeline)
 
 # model settings
 model = dict(

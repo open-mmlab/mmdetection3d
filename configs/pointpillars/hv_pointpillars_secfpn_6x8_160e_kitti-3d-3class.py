@@ -64,6 +64,16 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
 
 data = dict(
     train=dict(dataset=dict(pipeline=train_pipeline, classes=class_names)),
@@ -79,7 +89,7 @@ optimizer = dict(lr=lr)
 # specifically tune this parameter.
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # Use evaluation interval=2 reduce the number of evaluation timese
-evaluation = dict(interval=2)
+evaluation = dict(interval=2, pipeline=eval_pipeline)
 # PointPillars usually need longer schedule than second, we simply double
 # the training schedule. Do remind that since we use RepeatDataset and
 # repeat factor is 2, so we actually train 160 epochs.
