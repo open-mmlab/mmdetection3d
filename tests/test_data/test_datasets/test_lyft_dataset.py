@@ -156,7 +156,7 @@ def test_show():
     scores_3d = torch.tensor([0.1815, 0.1663, 0.5792, 0.2194, 0.2780])
     labels_3d = torch.tensor([0, 0, 1, 1, 2])
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
-    results = [result]
+    results = [dict(pts_bbox=result)]
     kitti_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
     file_name = 'host-a017_lidar1_1236118886901125926'
     pts_file_path = osp.join(temp_dir, file_name, f'{file_name}_points.obj')

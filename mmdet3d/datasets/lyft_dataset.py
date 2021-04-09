@@ -408,6 +408,7 @@ class LyftDataset(Custom3DDataset):
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
         """
@@ -418,6 +419,8 @@ class LyftDataset(Custom3DDataset):
                 hasattr(self, 'pipeline') else None  # save the original one
             self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
+            if 'pts_bbox' in result.keys():
+                result = result['pts_bbox']
             example = self.prepare_test_data(i)
             data_info = self.data_infos[i]
             pts_path = data_info['lidar_path']
@@ -426,10 +429,11 @@ class LyftDataset(Custom3DDataset):
             points = self._extract_data(example, 'points').numpy()
             points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                                Coord3DMode.DEPTH)
+            inds = result['scores_3d'] > 0.1
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             show_gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
                                                Box3DMode.DEPTH)
-            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            pred_bboxes = result['boxes_3d'][inds].tensor.numpy()
             show_pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
                                                  Box3DMode.DEPTH)
             show_result(points, show_gt_bboxes, show_pred_bboxes, out_dir,

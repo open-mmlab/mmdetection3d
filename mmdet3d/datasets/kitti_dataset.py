@@ -689,6 +689,8 @@ class KittiDataset(Custom3DDataset):
                 hasattr(self, 'pipeline') else None  # save the original one
             self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
+            if 'pts_bbox' in result.keys():
+                result = result['pts_bbox']
             example = self.prepare_test_data(i)
             data_info = self.data_infos[i]
             pts_path = data_info['point_cloud']['velodyne_path']

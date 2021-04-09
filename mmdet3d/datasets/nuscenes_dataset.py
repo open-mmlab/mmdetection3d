@@ -9,6 +9,7 @@ from mmdet.datasets import DATASETS
 from ..core import show_result
 from ..core.bbox import Box3DMode, Coord3DMode, LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
+from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -453,7 +454,8 @@ class NuScenesDataset(Custom3DDataset):
                  jsonfile_prefix=None,
                  result_names=['pts_bbox'],
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in nuScenes protocol.
 
         Args:
@@ -467,6 +469,8 @@ class NuScenesDataset(Custom3DDataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -487,33 +491,50 @@ class NuScenesDataset(Custom3DDataset):
             tmp_dir.cleanup()
 
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
-    def show(self, results, out_dir):
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        if pipeline is not None:
+            pipeline = Compose(pipeline)
+            original_pipeline = self.pipeline if \
+                hasattr(self, 'pipeline') else None  # save the original one
+            self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
+            if 'pts_bbox' in result.keys():
+                result = result['pts_bbox']
             example = self.prepare_test_data(i)
-            points = example['points'][0]._data.numpy()
             data_info = self.data_infos[i]
             pts_path = data_info['lidar_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
             # for now we convert points into depth mode
+            points = self._extract_data(example, 'points').numpy()
             points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                                Coord3DMode.DEPTH)
-            inds = result['pts_bbox']['scores_3d'] > 0.1
+            inds = result['scores_3d'] > 0.1
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
-            gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
-                                          Box3DMode.DEPTH)
-            pred_bboxes = result['pts_bbox']['boxes_3d'][inds].tensor.numpy()
-            pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
-                                            Box3DMode.DEPTH)
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
+            show_gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
+                                               Box3DMode.DEPTH)
+            pred_bboxes = result['boxes_3d'][inds].tensor.numpy()
+            show_pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
+                                                 Box3DMode.DEPTH)
+            show_result(points, show_gt_bboxes, show_pred_bboxes, out_dir,
+                        file_name, show)
+        if pipeline is not None:  # switch back to original pipeline
+            if original_pipeline is not None:
+                self.pipeline = original_pipeline
+            else:
+                delattr(self, 'pipeline')
 
 
 def output_to_nusc_box(detection):
