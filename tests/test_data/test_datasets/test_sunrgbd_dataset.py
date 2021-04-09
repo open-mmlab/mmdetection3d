@@ -210,7 +210,7 @@ def test_show():
     from mmdet3d.core.bbox import DepthInstance3DBoxes
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name
-    root_path, ann_file, _, pipelines, modality = \
+    root_path, ann_file, class_names, pipelines, modality = \
         _generate_sunrgbd_dataset_config()
     sunrgbd_dataset = SUNRGBDDataset(
         root_path, ann_file, pipelines, modality=modality)
@@ -235,14 +235,71 @@ def test_show():
     mmcv.check_file_exist(pred_file_path)
     tmp_dir.cleanup()
 
+    # test show with pipeline
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=class_names,
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    sunrgbd_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
+    pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
+    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
     # test multi-modality show
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name
-    root_path, ann_file, _, multi_modality_pipelines, modality = \
+    root_path, ann_file, class_names, multi_modality_pipelines, modality = \
         _generate_sunrgbd_multi_modality_dataset_config()
     sunrgbd_dataset = SUNRGBDDataset(
         root_path, ann_file, multi_modality_pipelines, modality=modality)
     sunrgbd_dataset.show(results, temp_dir, show=False)
+    pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
+    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')
+    img_file_path = osp.join(temp_dir, '000001', '000001_img.png')
+    img_pred_path = osp.join(temp_dir, '000001', '000001_pred.png')
+    img_gt_file = osp.join(temp_dir, '000001', '000001_gt.png')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    mmcv.check_file_exist(img_file_path)
+    mmcv.check_file_exist(img_pred_path)
+    mmcv.check_file_exist(img_gt_file)
+    tmp_dir.cleanup()
+
+    # test multi-modality show with pipeline
+    eval_pipeline = [
+        dict(type='LoadImageFromFile'),
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=class_names,
+            with_label=False),
+        dict(type='Collect3D', keys=['points', 'img', 'calib'])
+    ]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    sunrgbd_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
     pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
     gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
     pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')

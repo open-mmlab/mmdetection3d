@@ -280,11 +280,13 @@ class Custom3DDataset(Dataset):
         Returns:
             np.ndarray | torch.Tensor: Data term.
         """
-        # results[key] may be DataContainer or list[DataContainer]
-        if isinstance(results[key], mmcv.parallel.DataContainer):
-            data = results[key]._data
-        else:  # list output of MultiScaleFlipAug3D
-            data = results[key][0]._data
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
 
         return data
 

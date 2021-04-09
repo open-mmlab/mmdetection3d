@@ -8,6 +8,7 @@ from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.core import eval_map
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
+from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -152,26 +153,35 @@ class SUNRGBDDataset(Custom3DDataset):
 
         return anns_results
 
-    def show(self, results, out_dir, show=True):
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
+        if pipeline is not None:
+            pipeline = Compose(pipeline)
+            original_pipeline = self.pipeline if \
+                hasattr(self, 'pipeline') else None  # save the original one
+            self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            if hasattr(self, 'pipeline'):
+            if hasattr(self, 'pipeline'):  # load via pipeline
                 example = self.prepare_test_data(i)
-            else:
+                points = self._extract_data(example, 'points').numpy()
+            else:  # load from disk
                 example = None
-            points = np.fromfile(
-                osp.join(self.data_root, pts_path),
-                dtype=np.float32).reshape(-1, 6)
+                points = np.fromfile(
+                    osp.join(self.data_root, pts_path),
+                    dtype=np.float32).reshape(-1, 6)
+            # scale colors to [0, 255]
             points[:, 3:] *= 255
 
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
@@ -182,21 +192,34 @@ class SUNRGBDDataset(Custom3DDataset):
             # multi-modality visualization
             if self.modality['use_camera'] and example is not None and \
                     'calib' in data_info.keys():
-                img = mmcv.imread(example['img_metas']._data['filename'])
+                if pipeline is not None:  # load via pipeline
+                    img = self._extract_data(example, 'img').numpy()
+                    # need to transpose channel to first dim
+                    img = img.transpose(1, 2, 0)
+                else:  # load from disk
+                    # because it's hard to revert the transforms applied on img
+                    # e.g. Normalize, Pad, Resize
+                    img = mmcv.imread(example['img_metas']._data['filename'])
                 pred_bboxes = DepthInstance3DBoxes(
                     pred_bboxes, origin=(0.5, 0.5, 0))
                 gt_bboxes = DepthInstance3DBoxes(
                     gt_bboxes, origin=(0.5, 0.5, 0))
+                img_metas = self._extract_data(example, 'img_metas')
                 show_multi_modality_result(
                     img,
                     gt_bboxes,
                     pred_bboxes,
-                    example['calib'],
+                    self._extract_data(example, 'calib'),
                     out_dir,
                     file_name,
                     depth_bbox=True,
-                    img_metas=example['img_metas']._data,
+                    img_metas=img_metas,
                     show=show)
+        if pipeline is not None:  # switch back to original pipeline
+            if original_pipeline is not None:
+                self.pipeline = original_pipeline
+            else:
+                delattr(self, 'pipeline')
 
     def evaluate(self,
                  results,
@@ -205,12 +228,31 @@ class SUNRGBDDataset(Custom3DDataset):
                  iou_thr_2d=(0.5, ),
                  logger=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
+        """Evaluate.
 
+        Evaluation in indoor protocol.
+
+        Args:
+            results (list[dict]): List of results.
+            metric (str | list[str]): Metrics to be evaluated.
+            iou_thr (list[float]): AP IoU thresholds.
+            iou_thr_2d (list[float]): AP IoU thresholds for 2d evaluation.
+            show (bool): Whether to visualize.
+                Default: False.
+            out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
+
+        Returns:
+            dict: Evaluation results.
+        """
         # evaluate 3D detection performance
         if isinstance(results[0], dict):
             return super().evaluate(results, metric, iou_thr, logger, show,
-                                    out_dir)
+                                    out_dir, pipeline)
         # evaluate 2D detection performance
         else:
             eval_results = OrderedDict()
