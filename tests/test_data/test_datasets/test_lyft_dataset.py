@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import tempfile
 import torch
 
 from mmdet3d.datasets import LyftDataset
@@ -114,3 +115,54 @@ def test_evaluate():
     ap_dict = lyft_dataset.evaluate(results, 'bbox')
     car_precision = ap_dict['pts_bbox_Lyft/car_AP']
     assert car_precision == 0.6
+
+
+def test_show():
+    import mmcv
+    from os import path as osp
+
+    from mmdet3d.core.bbox import LiDARInstance3DBoxes
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    root_path = './tests/data/lyft'
+    ann_file = './tests/data/lyft/lyft_infos.pkl'
+    class_names = ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
+                   'motorcycle', 'bicycle', 'pedestrian', 'animal')
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=5,
+            use_dim=5,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='LoadPointsFromMultiSweeps',
+            sweeps_num=10,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=class_names,
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    kitti_dataset = LyftDataset(ann_file, None, root_path)
+    boxes_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[46.1218, -4.6496, -0.9275, 0.5316, 1.4442, 1.7450, 1.1749],
+             [33.3189, 0.1981, 0.3136, 0.5656, 1.2301, 1.7985, 1.5723],
+             [46.1366, -4.6404, -0.9510, 0.5162, 1.6501, 1.7540, 1.3778],
+             [33.2646, 0.2297, 0.3446, 0.5746, 1.3365, 1.7947, 1.5430],
+             [58.9079, 16.6272, -1.5829, 1.5656, 3.9313, 1.4899, 1.5505]]))
+    scores_3d = torch.tensor([0.1815, 0.1663, 0.5792, 0.2194, 0.2780])
+    labels_3d = torch.tensor([0, 0, 1, 1, 2])
+    result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
+    results = [result]
+    kitti_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
+    file_name = 'host-a017_lidar1_1236118886901125926'
+    pts_file_path = osp.join(temp_dir, file_name, f'{file_name}_points.obj')
+    gt_file_path = osp.join(temp_dir, file_name, f'{file_name}_gt.obj')
+    pred_file_path = osp.join(temp_dir, file_name, f'{file_name}_pred.obj')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
