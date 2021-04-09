@@ -256,29 +256,52 @@ class ScanNetSegDataset(Custom3DSegDataset):
         anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self, results, out_dir, show=True):
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
+
+        # we need to load mask annotation so set test_mode as False
+        original_test_mode = self.test_mode
+        self.test_mode = False
+        if pipeline is not None:
+            pipeline = Compose(pipeline)
+            original_pipeline = self.pipeline if \
+                hasattr(self, 'pipeline') else None  # save the original one
+            self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = np.fromfile(
-                osp.join(self.data_root, pts_path),
-                dtype=np.float32).reshape(-1, 6)
-            sem_mask_path = data_info['pts_semantic_mask_path']
-            gt_sem_mask = self.convert_to_label(
-                osp.join(self.data_root, sem_mask_path))
+            if pipeline is None:  # load from disk
+                points = np.fromfile(
+                    osp.join(self.data_root, pts_path),
+                    dtype=np.float32).reshape(-1, 6)
+                sem_mask_path = data_info['pts_semantic_mask_path']
+                gt_sem_mask = self.convert_to_label(
+                    osp.join(self.data_root, sem_mask_path))
+            else:  # load via pipeline
+                example = self.prepare_test_data(i)
+                points = self._extract_data(example, 'points').numpy()
+                gt_sem_mask = self._extract_data(example, 'pts_semantic_mask')
             pred_sem_mask = result['semantic_mask'].numpy()
             show_seg_result(points, gt_sem_mask,
                             pred_sem_mask, out_dir, file_name,
                             np.array(self.PALETTE), self.ignore_index, show)
+
+        self.test_mode = original_test_mode
+        if pipeline is not None:  # switch back to original pipeline
+            if original_pipeline is not None:
+                self.pipeline = original_pipeline
+            else:
+                delattr(self, 'pipeline')
 
     def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
         """Compute scene_idxs for data sampling and label weight for loss \

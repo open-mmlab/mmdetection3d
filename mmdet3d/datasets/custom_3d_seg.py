@@ -328,7 +328,8 @@ class Custom3DSegDataset(Dataset):
                  metric=None,
                  logger=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluate.
 
         Evaluation in semantic segmentation protocol.
@@ -342,6 +343,8 @@ class Custom3DSegDataset(Dataset):
                 Defaults to False.
             out_dir (str, optional): Path to save the visualization results.
                 Defaults to None.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
 
         Returns:
             dict: Evaluation results.
@@ -354,22 +357,46 @@ class Custom3DSegDataset(Dataset):
         assert isinstance(
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
+
+        # we need to load mask annotation so set test_mode as False
+        original_test_mode = self.test_mode
+        self.test_mode = False
+        if pipeline is not None:
+            pipeline = Compose(pipeline)
+            original_pipeline = self.pipeline if \
+                hasattr(self, 'pipeline') else None  # save the original one
+            self.pipeline = pipeline  # set new pipeline for data loading
+
         pred_sem_masks = [result['semantic_mask'] for result in results]
-        gt_sem_masks = [
-            torch.from_numpy(
-                self.convert_to_label(
-                    osp.join(self.data_root,
-                             data_info['pts_semantic_mask_path'])))
-            for data_info in self.data_infos
-        ]
+        if pipeline is None:  # load from disk
+            gt_sem_masks = [
+                torch.from_numpy(
+                    self.convert_to_label(
+                        osp.join(self.data_root,
+                                 data_info['pts_semantic_mask_path'])))
+                for data_info in self.data_infos
+            ]
+        else:  # load via pipeline
+            gt_sem_masks = [
+                self._extract_data(
+                    self.prepare_test_data(i), 'pts_semantic_mask')
+                for i in range(len(self.data_infos))
+            ]
         ret_dict = seg_eval(
             gt_sem_masks,
             pred_sem_masks,
             self.label2cat,
             self.ignore_index,
             logger=logger)
+
+        self.test_mode = original_test_mode
+        if pipeline is not None:  # switch back to original pipeline
+            if original_pipeline is not None:
+                self.pipeline = original_pipeline
+            else:
+                delattr(self, 'pipeline')
         if show:
-            self.show(pred_sem_masks, out_dir)
+            self.show(pred_sem_masks, out_dir, pipeline=pipeline)
 
         return ret_dict
 
@@ -381,6 +408,27 @@ class Custom3DSegDataset(Dataset):
         """
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
+
+    @staticmethod
+    def _extract_data(results, key):
+        """Extract and return the data corresponding to key in results dict.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor: Data term.
+        """
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
+
+        return data
 
     def __len__(self):
         """Return the length of scene_idxs.

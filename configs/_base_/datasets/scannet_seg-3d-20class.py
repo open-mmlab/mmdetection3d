@@ -47,6 +47,30 @@ test_pipeline = [
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points'])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+# we need to load gt seg_mask!
+eval_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=True,
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True),
+    dict(
+        type='PointSegClassMapping',
+        valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
+                       33, 34, 36, 39)),
+    dict(type='DefaultFormatBundle3D', class_names=class_names),
+    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+]
 
 data = dict(
     samples_per_gpu=8,
@@ -77,3 +101,5 @@ data = dict(
         classes=class_names,
         test_mode=True,
         ignore_index=len(class_names)))
+
+evaluation = dict(pipeline=eval_pipeline)
