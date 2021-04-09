@@ -9,6 +9,7 @@ from .parta2 import PartA2
 from .ssd3dnet import SSD3DNet
 from .votenet import VoteNet
 from .voxelnet import VoxelNet
+from .pointrcnn import PointRCNN
 
 __all__ = [
     'Base3DDetector',
@@ -23,4 +24,5 @@ __all__ = [
     'CenterPoint',
     'SSD3DNet',
     'ImVoteNet',
+    'PointRCNN'
 ]

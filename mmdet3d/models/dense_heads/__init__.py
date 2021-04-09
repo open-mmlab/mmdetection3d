@@ -6,8 +6,10 @@ from .parta2_rpn_head import PartA2RPNHead
 from .shape_aware_head import ShapeAwareHead
 from .ssd_3d_head import SSD3DHead
 from .vote_head import VoteHead
+from .point_rpn_head import PointRPNHead
 
 __all__ = [
     'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
-    'SSD3DHead', 'BaseConvBboxHead', 'CenterHead', 'ShapeAwareHead'
+    'SSD3DHead', 'BaseConvBboxHead', 'CenterHead', 'ShapeAwareHead',
+    'PointRPNHead'
 ]

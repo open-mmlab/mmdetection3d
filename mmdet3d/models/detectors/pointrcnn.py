@@ -28,36 +28,37 @@ class PointRCNN(TwoStage3DDetector):
             test_cfg=test_cfg,
             pretrained=pretrained)
 
-def forward_train(self,
-                  points,
-                  gt_bboxes_3d,
-                  gt_labels_3d,
-                  pts_semantic_mask=None,
-                  gt_bboxes_ignore=None):
-    """Forward of training.
+    def forward_train(self,
+                      points,
+                      img_metas,
+                      gt_bboxes_3d,
+                      gt_labels_3d,
+                      pts_semantic_mask=None,
+                      gt_bboxes_ignore=None):
+        """Forward of training.
 
-    Args:
-        points (list[torch.Tensor]): Points of each batch.
-        gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
-        gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
-        pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
-            label of each batch.
-        gt_bboxes_ignore (None | list[torch.Tensor]): Specify
-            which bounding.
+        Args:
+            points (list[torch.Tensor]): Points of each batch.
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
+            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
+            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
+                label of each batch.
+            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+                which bounding.
 
-    Returns:
-        dict: Losses.
-    """
-    points_cat = torch.stack(points)
-    x = self.extract_feat(points_cat)
+        Returns:
+            dict: Losses.
+        """
+        points_cat = torch.stack(points)
+        x = self.extract_feat(points_cat)
+        print(x['sa_indices'][0].shape)
+        print(x['sa_features'][0].shape)
+        print(x['sa_xyz'][0].shape)
+        if self.with_rpn:
+            rpn_outs = self.rpn_head(x)
+            rpn_loss = self.rpn_head.loss(
+            rpn_outs,
+            gt_bboxes_ignore=gt_bboxes_ignore)
+        losses.update(rpn_loss)
 
-    if self.with_rpn:
-        rpn_outs = self.rpn_head(x)
-        rpn_loss = self.rpn_head.loss(
-          rpn_outs,
-          gt_bboxes_ignore=gt_bboxes_ignore
-        )
-    losses.update(rpn_loss)
-
-    return loss
-)
+        return loss
