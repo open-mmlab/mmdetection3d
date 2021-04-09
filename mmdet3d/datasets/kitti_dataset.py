@@ -12,6 +12,7 @@ from ..core import show_multi_modality_result, show_result
 from ..core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
                          LiDARInstance3DBoxes, points_cam2img)
 from .custom_3d import Custom3DDataset
+from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -300,7 +301,8 @@ class KittiDataset(Custom3DDataset):
                  pklfile_prefix=None,
                  submission_prefix=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -316,6 +318,8 @@ class KittiDataset(Custom3DDataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -354,7 +358,7 @@ class KittiDataset(Custom3DDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
         return ap_dict
 
     def bbox2result_kitti(self,
@@ -668,22 +672,29 @@ class KittiDataset(Custom3DDataset):
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
 
-    def show(self, results, out_dir, show=True):
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
+        if pipeline is not None:
+            pipeline = Compose(pipeline)
+            original_pipeline = self.pipeline if \
+                hasattr(self, 'pipeline') else None  # save the original one
+            self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
             example = self.prepare_test_data(i)
             data_info = self.data_infos[i]
             pts_path = data_info['point_cloud']['velodyne_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
             # for now we convert points into depth mode
-            points = example['points'][0]._data.numpy()
+            points = self._extract_data(example, 'points').numpy()
             points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                                Coord3DMode.DEPTH)
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
@@ -696,9 +707,11 @@ class KittiDataset(Custom3DDataset):
                         file_name, show)
 
             # multi-modality visualization
-            if self.modality['use_camera'] and \
-                    'lidar2img' in example['img_metas'][0]._data.keys():
-                img = mmcv.imread(example['img_metas'][0]._data['filename'])
+            img_metas = self._extract_data(example, 'img_metas')
+            if self.modality['use_camera'] and 'lidar2img' in img_metas.keys():
+                img = self._extract_data(example, 'img').numpy()
+                # need to transpose channel to first dim
+                img = img.transpose(1, 2, 0)
                 show_pred_bboxes = LiDARInstance3DBoxes(
                     pred_bboxes, origin=(0.5, 0.5, 0))
                 show_gt_bboxes = LiDARInstance3DBoxes(
@@ -707,7 +720,12 @@ class KittiDataset(Custom3DDataset):
                     img,
                     show_gt_bboxes,
                     show_pred_bboxes,
-                    example['img_metas'][0]._data['lidar2img'],
+                    img_metas['lidar2img'],
                     out_dir,
                     file_name,
                     show=False)
+        if pipeline is not None:  # switch back to original pipeline
+            if original_pipeline is not None:
+                self.pipeline = original_pipeline
+            else:
+                delattr(self, 'pipeline')
