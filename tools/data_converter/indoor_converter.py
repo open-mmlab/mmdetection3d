@@ -37,6 +37,8 @@ def create_indoor_info_file(data_path,
     else:
         train_dataset = ScanNetData(root_path=data_path, split='train')
         val_dataset = ScanNetData(root_path=data_path, split='val')
+        test_dataset = ScanNetData(root_path=data_path, split='test')
+        test_filename = os.path.join(save_path, f'{pkl_prefix}_infos_test.pkl')
 
     infos_train = train_dataset.get_infos(num_workers=workers, has_label=True)
     mmcv.dump(infos_train, train_filename, 'pkl')
@@ -45,6 +47,12 @@ def create_indoor_info_file(data_path,
     infos_val = val_dataset.get_infos(num_workers=workers, has_label=True)
     mmcv.dump(infos_val, val_filename, 'pkl')
     print(f'{pkl_prefix} info val file is saved to {val_filename}')
+
+    if pkl_prefix == 'scannet':
+        infos_test = test_dataset.get_infos(
+            num_workers=workers, has_label=False)
+        mmcv.dump(infos_test, test_filename, 'pkl')
+        print(f'{pkl_prefix} info test file is saved to {test_filename}')
 
     # generate infos for the semantic segmentation task
     # e.g. re-sampled scene indexes and label weights
@@ -64,6 +72,7 @@ def create_indoor_info_file(data_path,
             split='val',
             num_points=8192,
             label_weight_func=lambda x: 1.0 / np.log(1.2 + x))
+        # no need to generate for test set
 
         train_dataset.get_seg_infos()
         val_dataset.get_seg_infos()
