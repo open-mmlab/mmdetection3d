@@ -1,242 +1,145 @@
 import copy
 import mmcv
 import numpy as np
-import os
 import tempfile
 import torch
 from mmcv.utils import print_log
 from os import path as osp
 
 from mmdet.datasets import DATASETS
-from ..core import show_multi_modality_result, show_result
-from ..core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
-                         LiDARInstance3DBoxes, points_cam2img)
-from .custom_3d import Custom3DDataset
+from ..core.bbox import Box3DMode, CameraInstance3DBoxes, points_cam2img
+from .nuscenes_mono_dataset import NuScenesMonoDataset
 
 
 @DATASETS.register_module()
-class KittiDataset(Custom3DDataset):
-    r"""KITTI Dataset.
-
-    This class serves as the API for experiments on the `KITTI Dataset
-    <http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d>`_.
+class KittiMonoDataset(NuScenesMonoDataset):
+    """Monocular 3D detection on KITTI Dataset.
 
     Args:
         data_root (str): Path of dataset root.
-        ann_file (str): Path of annotation file.
-        split (str): Split of input data.
-        pts_prefix (str, optional): Prefix of points files.
-            Defaults to 'velodyne'.
-        pipeline (list[dict], optional): Pipeline used for data processing.
+        info_file (str): Path of info file.
+        load_interval (int, optional): Interval of loading the dataset. It is
+            used to uniformly sample the dataset. Defaults to 1.
+        with_velocity (bool, optional): Whether include velocity prediction
+            into the experiments. Defaults to False.
+        eval_version (str, optional): Configuration version of evaluation.
             Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
-            Based on the `box_type_3d`, the dataset will encapsulate the box
-            to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes
-
-            - 'LiDAR': Box in LiDAR coordinates.
-            - 'Depth': Box in depth coordinates, usually for indoor dataset.
-            - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
-        pcd_limit_range (list): The range of point cloud used to filter
-            invalid predicted boxes. Default: [0, -40, -3, 70.4, 40, 0.0].
+        version (str, optional): Dataset version. Defaults to None.
+        kwargs (dict): Other arguments are the same of NuScenesMonoDataset.
     """
-    CLASSES = ('car', 'pedestrian', 'cyclist')
+
+    CLASSES = ('Pedestrian', 'Cyclist', 'Car')
 
     def __init__(self,
                  data_root,
-                 ann_file,
-                 split,
-                 pts_prefix='velodyne',
-                 pipeline=None,
-                 classes=None,
-                 modality=None,
-                 box_type_3d='LiDAR',
-                 filter_empty_gt=True,
-                 test_mode=False,
-                 pcd_limit_range=[0, -40, -3, 70.4, 40, 0.0]):
+                 info_file,
+                 load_interval=1,
+                 with_velocity=False,
+                 eval_version=None,
+                 version=None,
+                 **kwargs):
         super().__init__(
             data_root=data_root,
-            ann_file=ann_file,
-            pipeline=pipeline,
-            classes=classes,
-            modality=modality,
-            box_type_3d=box_type_3d,
-            filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            load_interval=load_interval,
+            with_velocity=with_velocity,
+            eval_version=eval_version,
+            version=version,
+            **kwargs)
+        self.anno_infos = mmcv.load(info_file)
+        self.bbox_code_size = 7
 
-        self.split = split
-        self.root_split = os.path.join(self.data_root, split)
-        assert self.modality is not None
-        self.pcd_limit_range = pcd_limit_range
-        self.pts_prefix = pts_prefix
-
-    def _get_pts_filename(self, idx):
-        """Get point cloud filename according to the given index.
+    def _parse_ann_info(self, img_info, ann_info):
+        """Parse bbox and mask annotation.
 
         Args:
-            index (int): Index of the point cloud file to get.
+            ann_info (list[dict]): Annotation info of an image.
+            with_mask (bool): Whether to parse mask annotations.
 
         Returns:
-            str: Name of the point cloud file.
+            dict: A dict containing the following keys: bboxes, bboxes_ignore,\
+                labels, masks, seg_map. "masks" are raw annotations and not \
+                decoded into binary masks.
         """
-        pts_filename = osp.join(self.root_split, self.pts_prefix,
-                                f'{idx:06d}.bin')
-        return pts_filename
-
-    def get_data_info(self, index):
-        """Get data info according to the given index.
-
-        Args:
-            index (int): Index of the sample data to get.
-
-        Returns:
-            dict: Data information that will be passed to the data \
-                preprocessing pipelines. It includes the following keys:
-
-                - sample_idx (str): Sample index.
-                - pts_filename (str): Filename of point clouds.
-                - img_prefix (str | None): Prefix of image files.
-                - img_info (dict): Image info.
-                - lidar2img (list[np.ndarray], optional): Transformations \
-                    from lidar to different cameras.
-                - ann_info (dict): Annotation info.
-        """
-        info = self.data_infos[index]
-        sample_idx = info['image']['image_idx']
-        img_filename = os.path.join(self.data_root,
-                                    info['image']['image_path'])
-
-        # TODO: consider use torch.Tensor only
-        rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-        P2 = info['calib']['P2'].astype(np.float32)
-        lidar2img = P2 @ rect @ Trv2c
-
-        pts_filename = self._get_pts_filename(sample_idx)
-        input_dict = dict(
-            sample_idx=sample_idx,
-            pts_filename=pts_filename,
-            img_prefix=None,
-            img_info=dict(filename=img_filename),
-            lidar2img=lidar2img)
-
-        if not self.test_mode:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
-
-        return input_dict
-
-    def get_ann_info(self, index):
-        """Get annotation info according to the given index.
-
-        Args:
-            index (int): Index of the annotation data to get.
-
-        Returns:
-            dict: annotation information consists of the following keys:
-
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
-                    3D ground truth bboxes.
-                - gt_labels_3d (np.ndarray): Labels of ground truths.
-                - gt_bboxes (np.ndarray): 2D ground truth bboxes.
-                - gt_labels (np.ndarray): Labels of ground truths.
-                - gt_names (list[str]): Class names of ground truths.
-        """
-        # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-        rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-
-        annos = info['annos']
-        # we need other objects to avoid collision when sample
-        annos = self.remove_dontcare(annos)
-        loc = annos['location']
-        dims = annos['dimensions']
-        rots = annos['rotation_y']
-        gt_names = annos['name']
-        gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
-                                      axis=1).astype(np.float32)
-
-        # convert gt_bboxes_3d to velodyne coordinates
-        gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
-            self.box_mode_3d, np.linalg.inv(rect @ Trv2c))
-        gt_bboxes = annos['bbox']
-
-        selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
-        gt_bboxes = gt_bboxes[selected].astype('float32')
-        gt_names = gt_names[selected]
-
+        gt_bboxes = []
         gt_labels = []
-        for cat in gt_names:
-            if cat in self.CLASSES:
-                gt_labels.append(self.CLASSES.index(cat))
+        gt_bboxes_ignore = []
+        gt_masks_ann = []
+        gt_bboxes_cam3d = []
+        centers2d = []
+        depths = []
+        for i, ann in enumerate(ann_info):
+            if ann.get('ignore', False):
+                continue
+            x1, y1, w, h = ann['bbox']
+            inter_w = max(0, min(x1 + w, img_info['width']) - max(x1, 0))
+            inter_h = max(0, min(y1 + h, img_info['height']) - max(y1, 0))
+            if inter_w * inter_h == 0:
+                continue
+            if ann['area'] <= 0 or w < 1 or h < 1:
+                continue
+            if ann['category_id'] not in self.cat_ids:
+                continue
+            bbox = [x1, y1, x1 + w, y1 + h]
+            if ann.get('iscrowd', False):
+                gt_bboxes_ignore.append(bbox)
             else:
-                gt_labels.append(-1)
-        gt_labels = np.array(gt_labels).astype(np.int64)
+                gt_bboxes.append(bbox)
+                gt_labels.append(self.cat2label[ann['category_id']])
+                gt_masks_ann.append(ann.get('segmentation', None))
+                # 3D annotations in camera coordinates
+                bbox_cam3d = np.array(ann['bbox_cam3d']).reshape(-1, )
+                # change orientation to local yaw
+                bbox_cam3d[6] = -np.arctan2(bbox_cam3d[0],
+                                            bbox_cam3d[2]) + bbox_cam3d[6]
+                gt_bboxes_cam3d.append(bbox_cam3d)
+                # 2.5D annotations in camera coordinates
+                center2d = ann['center2d'][:2]
+                depth = ann['center2d'][2]
+                centers2d.append(center2d)
+                depths.append(depth)
+
+        if gt_bboxes:
+            gt_bboxes = np.array(gt_bboxes, dtype=np.float32)
+            gt_labels = np.array(gt_labels, dtype=np.int64)
+        else:
+            gt_bboxes = np.zeros((0, 4), dtype=np.float32)
+            gt_labels = np.array([], dtype=np.int64)
+
+        if gt_bboxes_cam3d:
+            gt_bboxes_cam3d = np.array(gt_bboxes_cam3d, dtype=np.float32)
+            centers2d = np.array(centers2d, dtype=np.float32)
+            depths = np.array(depths, dtype=np.float32)
+        else:
+            gt_bboxes_cam3d = np.zeros((0, self.bbox_code_size),
+                                       dtype=np.float32)
+            centers2d = np.zeros((0, 2), dtype=np.float32)
+            depths = np.zeros((0), dtype=np.float32)
+
+        gt_bboxes_cam3d = CameraInstance3DBoxes(
+            gt_bboxes_cam3d,
+            box_dim=gt_bboxes_cam3d.shape[-1],
+            origin=(0.5, 0.5, 0.5))
         gt_labels_3d = copy.deepcopy(gt_labels)
 
-        anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
+        if gt_bboxes_ignore:
+            gt_bboxes_ignore = np.array(gt_bboxes_ignore, dtype=np.float32)
+        else:
+            gt_bboxes_ignore = np.zeros((0, 4), dtype=np.float32)
+
+        seg_map = img_info['filename'].replace('jpg', 'png')
+
+        ann = dict(
             bboxes=gt_bboxes,
             labels=gt_labels,
-            gt_names=gt_names)
-        return anns_results
+            gt_bboxes_3d=gt_bboxes_cam3d,
+            gt_labels_3d=gt_labels_3d,
+            centers2d=centers2d,
+            depths=depths,
+            bboxes_ignore=gt_bboxes_ignore,
+            masks=gt_masks_ann,
+            seg_map=seg_map)
 
-    def drop_arrays_by_name(self, gt_names, used_classes):
-        """Drop irrelevant ground truths by name.
-
-        Args:
-            gt_names (list[str]): Names of ground truths.
-            used_classes (list[str]): Classes of interest.
-
-        Returns:
-            np.ndarray: Indices of ground truths that will be dropped.
-        """
-        inds = [i for i, x in enumerate(gt_names) if x not in used_classes]
-        inds = np.array(inds, dtype=np.int64)
-        return inds
-
-    def keep_arrays_by_name(self, gt_names, used_classes):
-        """Keep useful ground truths by name.
-
-        Args:
-            gt_names (list[str]): Names of ground truths.
-            used_classes (list[str]): Classes of interest.
-
-        Returns:
-            np.ndarray: Indices of ground truths that will be keeped.
-        """
-        inds = [i for i, x in enumerate(gt_names) if x in used_classes]
-        inds = np.array(inds, dtype=np.int64)
-        return inds
-
-    def remove_dontcare(self, ann_info):
-        """Remove annotations that do not need to be cared.
-
-        Args:
-            ann_info (dict): Dict of annotation infos. The ``'DontCare'``
-                annotations will be removed according to ann_file['name'].
-
-        Returns:
-            dict: Annotations after filtering.
-        """
-        img_filtered_annotations = {}
-        relevant_annotation_indices = [
-            i for i, x in enumerate(ann_info['name']) if x != 'DontCare'
-        ]
-        for key in ann_info.keys():
-            img_filtered_annotations[key] = (
-                ann_info[key][relevant_annotation_indices])
-        return img_filtered_annotations
+        return ann
 
     def format_results(self,
                        outputs,
@@ -269,7 +172,8 @@ class KittiDataset(Custom3DDataset):
             result_files = self.bbox2result_kitti2d(outputs, self.CLASSES,
                                                     pklfile_prefix,
                                                     submission_prefix)
-        elif 'pts_bbox' in outputs[0] or 'img_bbox' in outputs[0]:
+        elif 'pts_bbox' in outputs[0] or 'img_bbox' in outputs[0] or \
+                'img_bbox2d' in outputs[0]:
             result_files = dict()
             for name in outputs[0]:
                 results_ = [out[name] for out in outputs]
@@ -278,8 +182,8 @@ class KittiDataset(Custom3DDataset):
                     submission_prefix_ = submission_prefix + name
                 else:
                     submission_prefix_ = None
-                if 'img' in name:
-                    result_files = self.bbox2result_kitti2d(
+                if '2d' in name:
+                    result_files_ = self.bbox2result_kitti2d(
                         results_, self.CLASSES, pklfile_prefix_,
                         submission_prefix_)
                 else:
@@ -323,13 +227,13 @@ class KittiDataset(Custom3DDataset):
         """
         result_files, tmp_dir = self.format_results(results, pklfile_prefix)
         from mmdet3d.core.evaluation import kitti_eval
-        gt_annos = [info['annos'] for info in self.data_infos]
+        gt_annos = [info['annos'] for info in self.anno_infos]
 
         if isinstance(result_files, dict):
             ap_dict = dict()
             for name, result_files_ in result_files.items():
                 eval_types = ['bbox', 'bev', '3d']
-                if 'img' in name:
+                if '2d' in name:
                     eval_types = ['bbox']
                 ap_result_str, ap_dict_ = kitti_eval(
                     gt_annos,
@@ -343,7 +247,7 @@ class KittiDataset(Custom3DDataset):
                     f'Results of {name}:\n' + ap_result_str, logger=logger)
 
         else:
-            if metric == 'img_bbox':
+            if metric == 'img_bbox2d':
                 ap_result_str, ap_dict = kitti_eval(
                     gt_annos, result_files, self.CLASSES, eval_types=['bbox'])
             else:
@@ -375,8 +279,7 @@ class KittiDataset(Custom3DDataset):
         Returns:
             list[dict]: A list of dictionaries with the kitti format.
         """
-        assert len(net_outputs) == len(self.data_infos), \
-            'invalid list length of network outputs'
+        assert len(net_outputs) == len(self.anno_infos)
         if submission_prefix is not None:
             mmcv.mkdir_or_exist(submission_prefix)
 
@@ -385,9 +288,10 @@ class KittiDataset(Custom3DDataset):
         for idx, pred_dicts in enumerate(
                 mmcv.track_iter_progress(net_outputs)):
             annos = []
-            info = self.data_infos[idx]
+            info = self.anno_infos[idx]
             sample_idx = info['image']['image_idx']
             image_shape = info['image']['image_shape'][:2]
+
             box_dict = self.convert_valid_bboxes(pred_dicts, info)
             anno = {
                 'name': [],
@@ -415,8 +319,7 @@ class KittiDataset(Custom3DDataset):
                     anno['name'].append(class_names[int(label)])
                     anno['truncated'].append(0.0)
                     anno['occluded'].append(0)
-                    anno['alpha'].append(
-                        -np.arctan2(-box_lidar[1], box_lidar[0]) + box[6])
+                    anno['alpha'].append(-np.arctan2(box[0], box[2]) + box[6])
                     anno['bbox'].append(bbox)
                     anno['dimensions'].append(box[3:6])
                     anno['location'].append(box[:3])
@@ -425,6 +328,7 @@ class KittiDataset(Custom3DDataset):
 
                 anno = {k: np.stack(v) for k, v in anno.items()}
                 annos.append(anno)
+
             else:
                 anno = {
                     'name': np.array([]),
@@ -468,7 +372,7 @@ class KittiDataset(Custom3DDataset):
             if not pklfile_prefix.endswith(('.pkl', '.pickle')):
                 out = f'{pklfile_prefix}.pkl'
             mmcv.dump(det_annos, out)
-            print(f'Result is saved to {out}.')
+            print('Result is saved to %s' % out)
 
         return det_annos
 
@@ -490,8 +394,8 @@ class KittiDataset(Custom3DDataset):
         Returns:
             list[dict]: A list of dictionaries have the kitti format
         """
-        assert len(net_outputs) == len(self.data_infos), \
-            'invalid list length of network outputs'
+        assert len(net_outputs) == len(self.anno_infos)
+
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
@@ -507,7 +411,7 @@ class KittiDataset(Custom3DDataset):
                 location=[],
                 rotation_y=[],
                 score=[])
-            sample_idx = self.data_infos[i]['image']['image_idx']
+            sample_idx = self.anno_infos[i]['image']['image_idx']
 
             num_example = 0
             for label in range(len(bboxes_per_sample)):
@@ -516,7 +420,7 @@ class KittiDataset(Custom3DDataset):
                     anno['name'].append(class_names[int(label)])
                     anno['truncated'].append(0.0)
                     anno['occluded'].append(0)
-                    anno['alpha'].append(0.0)
+                    anno['alpha'].append(-10)
                     anno['bbox'].append(bbox[i, :4])
                     # set dimensions (height, width, length) to zero
                     anno['dimensions'].append(
@@ -550,18 +454,17 @@ class KittiDataset(Custom3DDataset):
             det_annos += annos
 
         if pklfile_prefix is not None:
-            # save file in pkl format
-            pklfile_path = (
-                pklfile_prefix[:-4] if pklfile_prefix.endswith(
-                    ('.pkl', '.pickle')) else pklfile_prefix)
-            mmcv.dump(det_annos, pklfile_path)
+            if not pklfile_prefix.endswith(('.pkl', '.pickle')):
+                out = f'{pklfile_prefix}.pkl'
+            mmcv.dump(det_annos, out)
+            print('Result is saved to %s' % out)
 
         if submission_prefix is not None:
             # save file in submission format
             mmcv.mkdir_or_exist(submission_prefix)
             print(f'Saving KITTI submission to {submission_prefix}')
             for i, anno in enumerate(det_annos):
-                sample_idx = self.data_infos[i]['image']['image_idx']
+                sample_idx = self.anno_infos[i]['image']['image_idx']
                 cur_det_file = f'{submission_prefix}/{sample_idx:06d}.txt'
                 with open(cur_det_file, 'w') as f:
                     bbox = anno['bbox']
@@ -589,38 +492,29 @@ class KittiDataset(Custom3DDataset):
 
         Args:
             box_dict (dict): Box dictionaries to be converted.
-
-                - boxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
+                - boxes_3d (:obj:`CameraInstance3DBoxes`): 3D bounding boxes.
                 - scores_3d (torch.Tensor): Scores of boxes.
                 - labels_3d (torch.Tensor): Class labels of boxes.
             info (dict): Data info.
 
         Returns:
             dict: Valid predicted boxes.
-
                 - bbox (np.ndarray): 2D bounding boxes.
                 - box3d_camera (np.ndarray): 3D bounding boxes in \
                     camera coordinate.
-                - box3d_lidar (np.ndarray): 3D bounding boxes in \
-                    LiDAR coordinate.
                 - scores (np.ndarray): Scores of boxes.
                 - label_preds (np.ndarray): Class label predictions.
                 - sample_idx (int): Sample index.
         """
-        # TODO: refactor this function
         box_preds = box_dict['boxes_3d']
         scores = box_dict['scores_3d']
         labels = box_dict['labels_3d']
         sample_idx = info['image']['image_idx']
-        # TODO: remove the hack of yaw
-        box_preds.tensor[:, -1] = box_preds.tensor[:, -1] - np.pi
-        box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
 
         if len(box_preds) == 0:
             return dict(
                 bbox=np.zeros([0, 4]),
                 box3d_camera=np.zeros([0, 7]),
-                box3d_lidar=np.zeros([0, 7]),
                 scores=np.zeros([0]),
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
@@ -631,7 +525,9 @@ class KittiDataset(Custom3DDataset):
         img_shape = info['image']['image_shape']
         P2 = box_preds.tensor.new_tensor(P2)
 
-        box_preds_camera = box_preds.convert_to(Box3DMode.CAM, rect @ Trv2c)
+        box_preds_camera = box_preds
+        box_preds_lidar = box_preds.convert_to(Box3DMode.LIDAR,
+                                               np.linalg.inv(rect @ Trv2c))
 
         box_corners = box_preds_camera.corners
         box_corners_in_image = points_cam2img(box_corners, P2)
@@ -646,16 +542,13 @@ class KittiDataset(Custom3DDataset):
                           (box_2d_preds[:, 1] < image_shape[0]) &
                           (box_2d_preds[:, 2] > 0) & (box_2d_preds[:, 3] > 0))
         # check box_preds
-        limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
-        valid_pcd_inds = ((box_preds.center > limit_range[:3]) &
-                          (box_preds.center < limit_range[3:]))
-        valid_inds = valid_cam_inds & valid_pcd_inds.all(-1)
+        valid_inds = valid_cam_inds
 
         if valid_inds.sum() > 0:
             return dict(
                 bbox=box_2d_preds[valid_inds, :].numpy(),
                 box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
-                box3d_lidar=box_preds[valid_inds].tensor.numpy(),
+                box3d_lidar=box_preds_lidar[valid_inds].tensor.numpy(),
                 scores=scores[valid_inds].numpy(),
                 label_preds=labels[valid_inds].numpy(),
                 sample_idx=sample_idx)
@@ -667,47 +560,3 @@ class KittiDataset(Custom3DDataset):
                 scores=np.zeros([0]),
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
-
-    def show(self, results, out_dir, show=True):
-        """Results visualization.
-
-        Args:
-            results (list[dict]): List of bounding boxes results.
-            out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
-        """
-        assert out_dir is not None, 'Expect out_dir, got none.'
-        for i, result in enumerate(results):
-            example = self.prepare_test_data(i)
-            data_info = self.data_infos[i]
-            pts_path = data_info['point_cloud']['velodyne_path']
-            file_name = osp.split(pts_path)[-1].split('.')[0]
-            # for now we convert points into depth mode
-            points = example['points'][0]._data.numpy()
-            points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
-                                               Coord3DMode.DEPTH)
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
-            show_gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
-                                               Box3DMode.DEPTH)
-            pred_bboxes = result['boxes_3d'].tensor.numpy()
-            show_pred_bboxes = Box3DMode.convert(pred_bboxes, Box3DMode.LIDAR,
-                                                 Box3DMode.DEPTH)
-            show_result(points, show_gt_bboxes, show_pred_bboxes, out_dir,
-                        file_name, show)
-
-            # multi-modality visualization
-            if self.modality['use_camera'] and \
-                    'lidar2img' in example['img_metas'][0]._data.keys():
-                img = mmcv.imread(example['img_metas'][0]._data['filename'])
-                show_pred_bboxes = LiDARInstance3DBoxes(
-                    pred_bboxes, origin=(0.5, 0.5, 0))
-                show_gt_bboxes = LiDARInstance3DBoxes(
-                    gt_bboxes, origin=(0.5, 0.5, 0))
-                show_multi_modality_result(
-                    img,
-                    show_gt_bboxes,
-                    show_pred_bboxes,
-                    example['img_metas'][0]._data['lidar2img'],
-                    out_dir,
-                    file_name,
-                    show=False)

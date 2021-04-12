@@ -22,6 +22,17 @@ def kitti_data_prep(root_path, info_prefix, version, out_dir):
     """
     kitti.create_kitti_info_file(root_path, info_prefix)
     kitti.create_reduced_point_cloud(root_path, info_prefix)
+
+    info_train_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(root_path, f'{info_prefix}_infos_val.pkl')
+    info_trainval_path = osp.join(root_path,
+                                  f'{info_prefix}_infos_trainval.pkl')
+    info_test_path = osp.join(root_path, f'{info_prefix}_infos_test.pkl')
+    kitti.export_2d_annotation(root_path, info_train_path)
+    kitti.export_2d_annotation(root_path, info_val_path)
+    kitti.export_2d_annotation(root_path, info_trainval_path)
+    kitti.export_2d_annotation(root_path, info_test_path)
+
     create_groundtruth_database(
         'KittiDataset',
         root_path,
