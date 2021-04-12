@@ -190,7 +190,8 @@ def test_seg_show():
     import tempfile
     from os import path as osp
 
-    temp_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
     root_path = './tests/data/s3dis'
     ann_file = './tests/data/s3dis/s3dis_infos.pkl'
     s3dis_dataset = S3DISSegDataset(
@@ -214,6 +215,45 @@ def test_seg_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
+    # test show with pipeline
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window',
+                   'door', 'table', 'chair', 'sofa', 'bookcase', 'board',
+                   'clutter')
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            use_color=True,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=False,
+            with_label_3d=False,
+            with_mask_3d=False,
+            with_seg_3d=True),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=tuple(range(len(class_names)))),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    ]
+    s3dis_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
+    pts_file_path = osp.join(temp_dir, 'Area_1_office_2',
+                             'Area_1_office_2_points.obj')
+    gt_file_path = osp.join(temp_dir, 'Area_1_office_2',
+                            'Area_1_office_2_gt.obj')
+    pred_file_path = osp.join(temp_dir, 'Area_1_office_2',
+                              'Area_1_office_2_pred.obj')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
 
 
 def test_multi_areas():
