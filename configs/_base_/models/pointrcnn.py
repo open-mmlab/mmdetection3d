@@ -21,21 +21,18 @@ model = dict(
     rpn_head=dict(
         type='PointRPNHead',
         num_classes=1,
-        input_channels=512,
+        num_dir_bins=12,
+        input_channels=256,
         center_loss=dict(
-            type='ChamferDistance',
-            mode='l2',
-            reduction='sum',
-            loss_src_weight=10.0,
-            loss_dst_weight=10.0),
+            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         dir_class_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         size_class_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         semantic_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         bbox_coder=dict(
@@ -43,6 +40,7 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(
         _delete_=True,
+        pos_distance_thr=10.0,
         rpn=dict(
             assigner=dict(
                 type='MaxIoUAssigner',

@@ -49,16 +49,21 @@ class PointRCNN(TwoStage3DDetector):
         Returns:
             dict: Losses.
         """
+        losses = dict()
         points_cat = torch.stack(points)
         x = self.extract_feat(points_cat)
-        print(x['sa_indices'][0].shape)
-        print(x['sa_features'][0].shape)
-        print(x['sa_xyz'][0].shape)
+        points_xyz = x['sa_xyz'][0] 
+        points_xyz_list = list()
+        for k in range(points_xyz.shape[0]):
+            points_xyz_list.append(points_xyz[k])
         if self.with_rpn:
             rpn_outs = self.rpn_head(x)
             rpn_loss = self.rpn_head.loss(
-            rpn_outs,
+            bbox_preds=rpn_outs,
+            points = points_xyz_list,
+            gt_bboxes_3d = gt_bboxes_3d,
+            gt_labels_3d=gt_labels_3d,
             gt_bboxes_ignore=gt_bboxes_ignore)
         losses.update(rpn_loss)
 
-        return loss
+        return losses
