@@ -35,8 +35,9 @@ def export_one_scan(scan_name,
     # includes axisAlignment info for the train set scans.
     meta_file = osp.join(scannet_dir, scan_name, f'{scan_name}.txt')
     mesh_vertices, semantic_labels, instance_labels, instance_bboxes, \
-        instance2semantic = export(mesh_file, agg_file, seg_file,
-                                   meta_file, label_map_file, None, test_mode)
+        instance2semantic, axis_align_matrix = export(
+            mesh_file, agg_file, seg_file, meta_file, label_map_file, None,
+            test_mode)
 
     if not test_mode:
         mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
@@ -66,6 +67,8 @@ def export_one_scan(scan_name,
         np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
         np.save(f'{output_filename_prefix}_ins_label.npy', instance_labels)
         np.save(f'{output_filename_prefix}_bbox.npy', instance_bboxes)
+        np.save(f'{output_filename_prefix}_axis_align_matrix.npy',
+                axis_align_matrix)
 
 
 def batch_export(max_num_point,

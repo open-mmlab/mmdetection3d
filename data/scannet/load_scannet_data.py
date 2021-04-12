@@ -69,7 +69,7 @@ def export(mesh_file,
         label_map_file (str): Path of the label_map_file.
         output_file (str): Path of the output folder.
             Default: None.
-        test_mode (bool): Whether is generating training data without labels.
+        test_mode (bool): Whether is generating test data without labels.
             Default: False.
 
     It returns a tuple, which containts the the following things:
@@ -86,8 +86,7 @@ def export(mesh_file,
 
     # Load scene axis alignment matrix
     lines = open(meta_file).readlines()
-    # TODO: test set data doesn't have align_matrix!
-    # TODO: save align_matrix and move align step to pipeline in the future
+    # test set data doesn't have align_matrix
     axis_align_matrix = np.eye(4)
     for line in lines:
         if 'axisAlignment' in line:
@@ -97,10 +96,6 @@ def export(mesh_file,
             ]
             break
     axis_align_matrix = np.array(axis_align_matrix).reshape((4, 4))
-    pts = np.ones((mesh_vertices.shape[0], 4))
-    pts[:, 0:3] = mesh_vertices[:, 0:3]
-    pts = np.dot(pts, axis_align_matrix.transpose())  # Nx4
-    mesh_vertices[:, 0:3] = pts[:, 0:3]
 
     # Load semantic and instance labels
     if not test_mode:
@@ -151,9 +146,10 @@ def export(mesh_file,
             np.save(output_file + '_sem_label.npy', label_ids)
             np.save(output_file + '_ins_label.npy', instance_ids)
             np.save(output_file + '_bbox.npy', instance_bboxes)
+            np.save(output_file + '_axis_align_matrix.npy', axis_align_matrix)
 
     return mesh_vertices, label_ids, instance_ids, \
-        instance_bboxes, object_id_to_label_id
+        instance_bboxes, object_id_to_label_id, axis_align_matrix
 
 
 def main():

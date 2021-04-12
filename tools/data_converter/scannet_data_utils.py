@@ -48,6 +48,12 @@ class ScanNetData(object):
         mmcv.check_file_exist(box_file)
         return np.load(box_file)
 
+    def get_axis_align_matrix(self, idx):
+        matrix_file = osp.join(self.root_dir, 'scannet_instance_data',
+                               f'{idx}_axis_align_matrix.npy')
+        mmcv.check_file_exist(matrix_file)
+        return np.load(matrix_file)
+
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
         """Get data infos.
 
@@ -125,6 +131,9 @@ class ScanNetData(object):
                         self.cat_ids2class[classes[i]]
                         for i in range(annotations['gt_num'])
                     ])
+                axis_align_matrix = self.get_axis_align_matrix(
+                    sample_idx)  # [4, 4]
+                annotations['axis_align_matrix'] = axis_align_matrix
                 info['annos'] = annotations
             return info
 
