@@ -24,6 +24,7 @@ anno_paths = [osp.join(args.s3dis_dir, p) for p in anno_paths]
 
 output_folder = args.output_folder
 if not osp.exists(output_folder):
+    print(f'Creating new data folder: {output_folder}')
     os.mkdir(output_folder)
 
 # Note: there is an extra character in the v1.2 data in Area_5/hallway_6.
@@ -39,8 +40,12 @@ with open(revise_file, 'w') as f:
     f.close()
 
 for anno_path in anno_paths:
-    print(anno_path)
+    print(f'Exporting data from annotation file: {anno_path}')
     elements = anno_path.split('/')
     out_filename = \
         elements[-3] + '_' + elements[-2]  # Area_1_hallway_1
-    export(anno_path, osp.join(output_folder, out_filename))
+    out_filename = osp.join(output_folder, out_filename)
+    if osp.isfile(f'{out_filename}_point.npy'):
+        print('File already exists. skipping.')
+        continue
+    export(anno_path, out_filename)
