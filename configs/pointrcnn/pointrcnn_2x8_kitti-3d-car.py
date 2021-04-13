@@ -1,6 +1,5 @@
 _base_ = [
-    '../_base_/datasets/kitti-3d-car.py',
-    '../_base_/models/pointrcnn.py',
+    '../_base_/datasets/kitti-3d-car.py', '../_base_/models/pointrcnn.py',
     '../_base_/default_runtime.py'
 ]
 

@@ -1,9 +1,9 @@
 import torch
+from torch import nn as nn
 
 from mmdet3d.core import merge_aug_bboxes_3d
 from mmdet.models import DETECTORS
 from .two_stage import TwoStage3DDetector
-
 
 @DETECTORS.register_module()
 class PointRCNN(TwoStage3DDetector):
@@ -11,6 +11,7 @@ class PointRCNN(TwoStage3DDetector):
 
       Please refer to the `paper <https://arxiv.org/abs/1812.04244>`_
     """
+
     def __init__(self,
                  backbone,
                  neck=None,
@@ -18,6 +19,7 @@ class PointRCNN(TwoStage3DDetector):
                  roi_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 fp_channels=None,
                  pretrained=None):
         super(PointRCNN, self).__init__(
             backbone=backbone,
@@ -27,6 +29,18 @@ class PointRCNN(TwoStage3DDetector):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             pretrained=pretrained)
+    
+    def extract_feat(self, points, img_metas=None):
+        """Directly extract features from the backbone+neck.
+
+        Args:
+            points (torch.Tensor): Input points.
+        """
+        x = self.backbone(points)
+        
+        if self.with_neck:
+            x = self.neck(x)
+        return x
 
     def forward_train(self,
                       points,
@@ -52,18 +66,37 @@ class PointRCNN(TwoStage3DDetector):
         losses = dict()
         points_cat = torch.stack(points)
         x = self.extract_feat(points_cat)
-        points_xyz = x['sa_xyz'][0] 
-        points_xyz_list = list()
-        for k in range(points_xyz.shape[0]):
-            points_xyz_list.append(points_xyz[k])
         if self.with_rpn:
             rpn_outs = self.rpn_head(x)
             rpn_loss = self.rpn_head.loss(
-            bbox_preds=rpn_outs,
-            points = points_xyz_list,
-            gt_bboxes_3d = gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            gt_bboxes_ignore=gt_bboxes_ignore)
+                bbox_preds=rpn_outs,
+                points=points,
+                gt_bboxes_3d=gt_bboxes_3d,
+                gt_labels_3d=gt_labels_3d,
+                gt_bboxes_ignore=gt_bboxes_ignore)
         losses.update(rpn_loss)
 
         return losses
+
+    def simple_test(self, points, img_metas, imgs=None, rescale=False):
+        """Forward of testing.
+
+        Args:
+            points (list[torch.Tensor]): Points of each sample.
+            img_metas (list): Image metas.
+            rescale (bool): Whether to rescale results.
+
+        Returns:
+            list: Predicted 3d boxes.
+        """
+        points_cat = torch.stack(points)
+
+        x = self.extract_feat(points_cat)
+        bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
+        bbox_list = self.bbox_head.get_bboxes(
+            points_cat, bbox_preds, img_metas, rescale=rescale)
+        bbox_results = [
+            bbox3d2result(bboxes, scores, labels)
+            for bboxes, scores, labels in bbox_list
+        ]
+        return bbox_results
