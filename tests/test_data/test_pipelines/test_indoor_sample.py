@@ -96,8 +96,7 @@ def test_indoor_seg_sample():
         scannet_points[scannet_choices, :3] - scannet_center,
         scannet_points[scannet_choices, 3:],
         scannet_points[scannet_choices, :3] / scannet_coord_max
-    ],
-                                          axis=1)
+    ], 1)
 
     assert scannet_points_result.points_dim == 9
     assert scannet_points_result.attribute_dims == dict(
@@ -143,8 +142,7 @@ def test_indoor_seg_sample():
         s3dis_points[s3dis_choices, :3] - s3dis_center,
         s3dis_points[s3dis_choices,
                      3:], s3dis_points[s3dis_choices, :3] / s3dis_coord_max
-    ],
-                                        axis=1)
+    ], 1)
 
     assert s3dis_points_result.points_dim == 9
     assert s3dis_points_result.attribute_dims == dict(
