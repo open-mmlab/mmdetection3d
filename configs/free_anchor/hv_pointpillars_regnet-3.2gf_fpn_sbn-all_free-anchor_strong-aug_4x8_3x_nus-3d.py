@@ -66,4 +66,4 @@ train_pipeline = [
 data = dict(train=dict(pipeline=train_pipeline))
 lr_config = dict(step=[28, 34])
 evaluation = dict(interval=36)
-total_epochs = 36
+runner = dict(max_epochs=36)
