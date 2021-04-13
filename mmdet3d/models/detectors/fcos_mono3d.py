@@ -6,7 +6,7 @@ from .single_stage_mono3d import SingleStageDetectorMono3D
 class FCOSMono3D(SingleStageDetectorMono3D):
     """Implementation of FCOS3D. Technical report will be released soon.
 
-    Currently you can refer to our entry on the
+    Currently please refer to our entry on the
     `leaderboard <https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera>` # noqa
     """
 
