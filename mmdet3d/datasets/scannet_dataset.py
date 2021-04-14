@@ -1,5 +1,6 @@
 import numpy as np
 import tempfile
+import warnings
 from os import path as osp
 
 from mmdet3d.core import show_result, show_seg_result
@@ -79,6 +80,8 @@ class ScanNetDataset(Custom3DDataset):
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - pts_instance_mask_path (str): Path of instance masks.
                 - pts_semantic_mask_path (str): Path of semantic masks.
+                - axis_align_matrix (np.ndarray): Transformation matrix for \
+                    global scene alignment.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
@@ -102,11 +105,21 @@ class ScanNetDataset(Custom3DDataset):
         pts_semantic_mask_path = osp.join(self.data_root,
                                           info['pts_semantic_mask_path'])
 
+        if 'axis_align_matrix' in info['annos'].keys():
+            axis_align_matrix = info['annos']['axis_align_matrix'].astype(
+                np.float32)
+        else:
+            axis_align_matrix = np.eye(4).astype(np.float32)
+            warnings.warn(
+                'axis_align_matrix is not found in ScanNet data info, please '
+                'use new pre-process scripts to re-generate ScanNet data')
+
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
             pts_instance_mask_path=pts_instance_mask_path,
-            pts_semantic_mask_path=pts_semantic_mask_path)
+            pts_semantic_mask_path=pts_semantic_mask_path,
+            axis_align_matrix=axis_align_matrix)
         return anns_results
 
     def _build_default_pipeline(self):

@@ -27,6 +27,14 @@ def test_getitem():
             with_label_3d=True,
             with_mask_3d=True,
             with_seg_3d=True),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                           34, 36, 39)),
+        dict(
+            type='GlobalAlignment',
+            rotation_axis=2,
+            ignore_index=len(class_names)),
         dict(type='IndoorPointSample', num_points=5),
         dict(
             type='RandomFlip3D',
@@ -63,22 +71,21 @@ def test_getitem():
     assert file_name == './tests/data/scannet/points/scene0000_00.bin'
     assert np.allclose(pcd_rotation, expected_rotation, 1e-3)
     assert sample_idx == 'scene0000_00'
-    expected_points = torch.tensor([[-2.7231, -2.2068, 2.3543, 2.3895],
-                                    [-0.4065, -3.4857, 2.1330, 2.1682],
-                                    [-1.4578, 1.3510, -0.0441, -0.0089],
-                                    [2.2428, -1.1323, -0.0288, 0.0064],
-                                    [0.7052, -2.9752, 1.5560, 1.5912]])
+    expected_points = torch.tensor(
+        [[1.8339e+00, 2.1093e+00, 2.2900e+00, 2.3895e+00],
+         [3.6079e+00, 1.4592e-01, 2.0687e+00, 2.1682e+00],
+         [4.1886e+00, 5.0614e+00, -1.0841e-01, -8.8736e-03],
+         [6.8790e+00, 1.5086e+00, -9.3154e-02, 6.3816e-03],
+         [4.8253e+00, 2.6668e-01, 1.4917e+00, 1.5912e+00]])
     expected_gt_bboxes_3d = torch.tensor(
-        [[-1.1835, -3.6317, 1.5704, 1.7577, 0.3761, 0.5724, 0.0000],
-         [-3.1832, 3.2269, 1.1911, 0.6727, 0.2251, 0.6715, 0.0000],
-         [-0.9598, -2.2864, 0.0093, 0.7506, 2.5709, 1.2145, 0.0000],
-         [-2.6988, -2.7354, 0.8288, 0.7680, 1.8877, 0.2870, 0.0000],
-         [3.2989, 0.2885, -0.0090, 0.7600, 3.8814, 2.1603, 0.0000]])
-    expected_gt_labels = np.array([
-        6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
-        0, 0, 0, 5, 5, 5
-    ])
-    expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
+        [[3.6132, 1.3705, 0.6052, 0.7930, 2.0360, 0.4429, 0.0000],
+         [8.3769, 2.5228, 0.2046, 1.3539, 2.8691, 1.8632, 0.0000],
+         [8.4100, 6.0750, 0.9772, 0.9319, 0.3843, 0.5662, 0.0000],
+         [7.6524, 5.6915, 0.0372, 0.2907, 0.2278, 0.5532, 0.0000],
+         [6.9771, 0.2455, -0.0296, 1.2820, 0.8182, 2.2613, 0.0000]])
+    expected_gt_labels = np.array(
+        [4, 11, 11, 10, 0, 3, 12, 4, 14, 1, 0, 0, 0, 5, 5]).astype(np.long)
+    expected_pts_semantic_mask = np.array([0, 18, 18, 18, 18])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     original_classes = scannet_dataset.CLASSES
 
