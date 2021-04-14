@@ -164,7 +164,7 @@ __global__ void determin_voxel_num(
     } else if (point_pos_in_voxel == 0) {
       // record new voxel
       int voxelidx = voxel_num[0];
-      if (voxel_num[0] >= max_voxels) break;
+      if (voxel_num[0] >= max_voxels) continue;
       voxel_num[0] += 1;
       coor_to_voxelidx[i] = voxelidx;
       num_points_per_voxel[voxelidx] = 1;
