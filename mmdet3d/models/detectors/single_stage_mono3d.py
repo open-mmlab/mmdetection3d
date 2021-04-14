@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from mmdet3d.core import bbox3d2result
@@ -104,7 +105,6 @@ class SingleStageMono3DDetector(SingleStageDetector):
 
     def aug_test(self, imgs, img_metas, rescale=False):
         """Test function with test time augmentation."""
-        import numpy as np
         feats = self.extract_feats(imgs)
 
         # only support aug_test for one sample
