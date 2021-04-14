@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import force_fp32
+from mmcv.ops.nms import batched_nms
 from torch import nn as nn
 
 from mmdet3d.core import limit_period, xywhr2xyxyr
@@ -9,10 +10,10 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes,
                                           rotation_3d_in_axis)
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
+
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 from .anchor3d_head import Anchor3DHead
-
 
 @HEADS.register_module()
 class PointRPNHead(nn.Module):
@@ -53,7 +54,9 @@ class PointRPNHead(nn.Module):
         self.bbox_codesize = bbox_codesize
         self.num_classes = num_classes
         self.train_cfg = train_cfg
-
+        self.test_cfg = test_cfg
+        print(self.train_cfg)
+        print(self.test_cfg)
         # build loss function
         self.center_loss = build_loss(center_loss)
         self.dir_res_loss = build_loss(dir_res_loss)
@@ -328,8 +331,12 @@ class PointRPNHead(nn.Module):
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
         # decode boxes
-        sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
+        # sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
+        # obj_scores = sem_scores.max(-1)[0]
+        sem_scores = bbox_preds['point_cls_preds'].transpose(1, 2) 
         obj_scores = sem_scores.max(-1)[0]
+        print('sem_scores: ', sem_scores.shape)
+        print('obj_scores: ', obj_scores.shape)
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
         batch_size = bbox3d.shape[0]
@@ -388,10 +395,11 @@ class PointRPNHead(nn.Module):
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
         bbox_classes = torch.argmax(sem_scores, -1)
+        nms_cfg = dict(type='nms',iou_thr=0.1)
         nms_selected = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]],
             obj_scores[nonempty_box_mask], bbox_classes[nonempty_box_mask],
-            self.test_cfg.nms_cfg)[1]
+            nms_cfg)[1]
 
         if nms_selected.shape[0] > self.test_cfg.max_output_num:
             nms_selected = nms_selected[:self.test_cfg.max_output_num]

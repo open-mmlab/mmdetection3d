@@ -4,6 +4,7 @@ from torch import nn as nn
 from mmdet3d.core import merge_aug_bboxes_3d
 from mmdet.models import DETECTORS
 from .two_stage import TwoStage3DDetector
+from mmdet3d.core.bbox import bbox3d2result
 
 @DETECTORS.register_module()
 class PointRCNN(TwoStage3DDetector):
@@ -92,8 +93,8 @@ class PointRCNN(TwoStage3DDetector):
         points_cat = torch.stack(points)
 
         x = self.extract_feat(points_cat)
-        bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
-        bbox_list = self.bbox_head.get_bboxes(
+        bbox_preds = self.rpn_head(x)
+        bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, img_metas, rescale=rescale)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)

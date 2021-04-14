@@ -83,12 +83,15 @@ model = dict(
             cls_pos_thr=0.75,
             cls_neg_thr=0.25)),
     test_cfg=dict(
+        nms_cfg=dict(type='nms',iou_thr=0.1),
         rpn=dict(
             nms_pre=1024,
             nms_post=100,
-            max_num=100,
+            max_output_num=100,
             nms_thr=0.7,
             score_thr=0,
+            nms_cfg=dict(type='nms',iou_thr=0.1),
+            per_class_proposal=True,
             use_rotate_nms=True),
         rcnn=dict(
             use_rotate_nms=True,
