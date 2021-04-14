@@ -75,7 +75,7 @@ void hard_voxelize_kernel(const torch::TensorAccessor<T, 2> points,
     // record voxel
     if (voxelidx == -1) {
       voxelidx = voxel_num;
-      if (max_voxels != -1 && voxel_num >= max_voxels) break;
+      if (max_voxels != -1 && voxel_num >= max_voxels) continue;
       voxel_num += 1;
 
       coor_to_voxelidx[coor[i][0]][coor[i][1]][coor[i][2]] = voxelidx;
