@@ -11,4 +11,4 @@ lr_config = dict(
     step=[20, 23])
 momentum_config = None
 # runtime settings
-total_epochs = 24
+runner = dict(type='EpochBasedRunner', max_epochs=24)
