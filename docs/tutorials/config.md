@@ -365,14 +365,14 @@ log_config = dict(  # config to register logger hook
     interval=50,  # Interval to print the log
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])  # The logger used to record the training process.
-total_epochs = 36  # Total epochs to train the model
+runner = dict(type='EpochBasedRunner', max_epochs=36) # Runner that runs the workflow in total max_epochs
 dist_params = dict(backend='nccl')  # Parameters to setup distributed training, the port can also be set.
 log_level = 'INFO'  # The level of logging.
 find_unused_parameters = True  # Whether to find unused parameters
 work_dir = None  # Directory to save the model checkpoints and logs for the current experiments.
 load_from = None # load models as a pre-trained model from a given path. This will not resume training.
 resume_from = None  # Resume checkpoints from a given path, the training will be resumed from the epoch when the checkpoint's is saved.
-workflow = [('train', 1)]  # Workflow for runner. [('train', 1)] means there is only one workflow and the workflow named 'train' is executed once. The workflow trains the model by 36 epochs according to the total_epochs.
+workflow = [('train', 1)]  # Workflow for runner. [('train', 1)] means there is only one workflow and the workflow named 'train' is executed once. The workflow trains the model by 36 epochs according to the max_epochs.
 gpu_ids = range(0, 1)  # ids of gpus
 ```
 

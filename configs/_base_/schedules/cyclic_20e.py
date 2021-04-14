@@ -21,4 +21,4 @@ momentum_config = dict(
 )
 
 # runtime settings
-total_epochs = 20
+runner = dict(type='EpochBasedRunner', max_epochs=20)
