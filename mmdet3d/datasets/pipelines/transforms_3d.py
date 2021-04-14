@@ -384,17 +384,17 @@ class GlobalAlignment(object):
             dict: Results after extracting bboxes, keys in \
                 input_dict['bbox3d_fields'] are updated in the dict.
         """
+        # TODO: this function is only used in ScanNet-Det pipeline currently
+        # TODO: we only extract gt_bboxes_3d which is DepthInstance3DBoxes
+        if 'gt_bboxes_3d' not in input_dict['bbox3d_fields']:
+            return
+        assert len(input_dict['bbox3d_fields']) == 1, \
+            'GlobalAlignment only support gt_bboxes_3d'
+
         assert 'pts_instance_mask' in input_dict.keys(), \
             'instance mask is not provided in GlobalAlignment'
         assert 'pts_semantic_mask' in input_dict.keys(), \
             'semantic mask is not provided in GlobalAlignment'
-
-        # TODO: this function is only used in ScanNet-Det currently
-        # TODO: we only extract gt_bboxes_3d which is DepthInstance3DBoxes
-        for key in input_dict['bbox3d_fields']:
-            if key != 'gt_bboxes_3d':
-                raise NotImplementedError(
-                    f'GlobalAlignment does not support 3d bbox {key}')
 
         coords = input_dict['points'].coord.numpy()
         inst_mask = input_dict['pts_instance_mask']
@@ -436,10 +436,10 @@ class GlobalAlignment(object):
             dict: Results after global alignment, 'points' and keys in \
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
-        assert 'axis_align_matrix' in input_dict['annos'].keys(), \
+        assert 'axis_align_matrix' in input_dict['ann_info'].keys(), \
             'axis_align_matrix is not provided in GlobalAlignment'
 
-        axis_align_matrix = input_dict['annos']['axis_align_matrix']
+        axis_align_matrix = input_dict['ann_info']['axis_align_matrix']
         assert axis_align_matrix.shape == (4, 4), \
             f'invalid shape {axis_align_matrix.shape} for axis_align_matrix'
         rot_mat = axis_align_matrix[:3, :3]

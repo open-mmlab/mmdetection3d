@@ -260,7 +260,7 @@ def test_global_alignment():
         gt_bboxes_3d=depth_bboxes,
         bbox3d_fields=['gt_bboxes_3d'],
         gt_labels_3d=gt_labels_3d,
-        annos=dict(axis_align_matrix=axis_align_matrix),
+        ann_info=dict(axis_align_matrix=axis_align_matrix),
         pts_instance_mask=ins_mask,
         pts_semantic_mask=sem_mask)
 
