@@ -3,11 +3,13 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
+                          DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.points import DepthPoints, LiDARPoints
-from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
-                              ObjectSample, PointShuffle, PointsRangeFilter,
-                              RandomFlip3D, VoxelBasedPointSampler)
+from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
+                              ObjectNoise, ObjectSample, RandomFlip3D,
+                              PointShuffle, PointsRangeFilter,
+                              VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -218,6 +220,114 @@ def test_points_range_filter():
 
     repr_str = repr(points_range_filter)
     expected_repr_str = f'PointsRangeFilter(point_cloud_range={pcd_range})'
+    assert repr_str == expected_repr_str
+
+
+def test_global_alignment():
+    np.random.seed(0)
+    valid_cat_ids = (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
+                     36, 39)
+    ignore_index = len(valid_cat_ids)
+    cat_ids2class = np.ones((41, ), dtype=np.int) * ignore_index
+    for class_id, cat_id in enumerate(valid_cat_ids):
+        cat_ids2class[cat_id] = class_id
+
+    global_alignment = GlobalAlignment(
+        rotation_axis=2, ignore_index=ignore_index)
+
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    sem_mask = np.fromfile('tests/data/scannet/semantic_mask/scene0000_00.bin',
+                           np.long)
+    ins_mask = np.fromfile('tests/data/scannet/instance_mask/scene0000_00.bin',
+                           np.long)
+    annos = mmcv.load('tests/data/scannet/scannet_infos.pkl')
+    info = annos[0]
+    gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
+    axis_align_matrix = info['annos']['axis_align_matrix']
+    gt_labels_3d = info['annos']['class']
+
+    depth_points = DepthPoints(points.copy(), points_dim=6)
+    depth_bboxes = DepthInstance3DBoxes(
+        gt_bboxes_3d,
+        box_dim=gt_bboxes_3d.shape[-1],
+        with_yaw=False,
+        origin=(0.5, 0.5, 0.5))
+    sem_mask = cat_ids2class[sem_mask]
+
+    input_dict = dict(
+        points=depth_points.clone(),
+        gt_bboxes_3d=depth_bboxes,
+        bbox3d_fields=['gt_bboxes_3d'],
+        gt_labels_3d=gt_labels_3d,
+        annos=dict(axis_align_matrix=axis_align_matrix),
+        pts_instance_mask=ins_mask,
+        pts_semantic_mask=sem_mask)
+
+    input_dict = global_alignment(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_depth_bboxes = input_dict['gt_bboxes_3d']
+    trans_bbox_labels = input_dict['gt_labels_3d']
+
+    # construct expected transformed points by affine transformation
+    pts = np.ones((points.shape[0], 4))
+    pts[:, :3] = points[:, :3]
+    trans_pts = np.dot(pts, axis_align_matrix.T)
+    expected_points = np.concatenate([trans_pts[:, :3], points[:, 3:]], axis=1)
+
+    expected_bbox_labels = np.array(
+        [4, 11, 11, 10, 0, 3, 12, 4, 14, 1, 0, 0, 0, 5, 5]).astype(np.long)
+    expected_depth_bboxes = np.array(
+        [[
+            -3.714606, -1.0654305, 0.6051854, 0.6297655, 1.9905674, 0.44288868,
+            0.
+        ],
+         [
+             -8.557551, -1.8178326, 0.20456636, 1.1263373, 2.7851129,
+             1.8631845, 0.
+         ],
+         [
+             -8.885854, -5.354957, 0.97720087, 0.9093195, 0.30981588, 0.566175,
+             0.
+         ],
+         [
+             -8.098918, -5.0357704, 0.03724962, 0.27458152, 0.20566699,
+             0.5532104, 0.
+         ],
+         [
+             -6.9733434, 0.33523083, -0.02958763, 1.2264912, 0.7187278,
+             2.2613325, 0.
+         ],
+         [
+             -5.36362, -1.6046655, 0.37014085, 2.8042943, 1.1057366,
+             0.31707314, 0.
+         ], [-2.6299255, -2.3314357, 1.4469249, 0., 0., 0., 0.],
+         [-5.201888, -1.014641, 0.11020403, 0., 0., 0., 0.],
+         [
+             -3.5216672, -6.8292904, 0.26571387, 0.13945593, 0.12182455,
+             0.02463818, 0.
+         ],
+         [
+             -6.4834313, -5.4506774, 0.13558027, 1.4790803, 0.6031074,
+             0.60305846, 0.
+         ],
+         [
+             -9.338867, -4.616579, 0.6112565, 0.17650154, 0.988079, 0.16838372,
+             0.
+         ], [-2.0639155, -1.245964, 0.30754995, 0., 0., 0., 0.],
+         [-2.002855, -1.9495802, 2.2899528, 0., 0., 0., 0.],
+         [-2.1240144, -3.751592, 0.92695427, 0., 0., 0., 0.],
+         [-3.6406162, -5.1366153, 0.25374442, 0., 0., 0., 0.]])
+
+    assert np.allclose(
+        trans_depth_points.tensor.numpy(), expected_points, atol=1e-6)
+    assert np.all(trans_bbox_labels == expected_bbox_labels)
+    assert np.allclose(
+        trans_depth_bboxes.tensor.numpy(), expected_depth_bboxes, atol=1e-6)
+
+    repr_str = repr(global_alignment)
+    expected_repr_str = 'GlobalAlignment(rotation_axis=2,' \
+                        f' ignore_index={ignore_index})'
     assert repr_str == expected_repr_str
 
 

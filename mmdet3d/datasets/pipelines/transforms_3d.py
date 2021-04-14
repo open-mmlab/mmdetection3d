@@ -294,6 +294,172 @@ class ObjectNoise(object):
 
 
 @PIPELINES.register_module()
+class GlobalAlignment(object):
+    """Apply global alignment to 3D scene points by rotation and translation.
+    Extract 3D bboxes from the aligned points and instance mask if provided.
+
+    Args:
+        rotation_axis (int): Rotation axis for points and bboxes rotation.
+        ignore_index (int): Label index for which we won't extract bboxes.
+
+    Note:
+        This function should be called after PointSegClassMapping in pipeline.
+        We do not record the applied rotation and translation as in \
+            GlobalRotScaleTrans. Because usually, we do not need to reverse \
+            the alignment step.
+        For example, ScanNet 3D detection task uses aligned ground-truth \
+            bounding boxes for evaluation.
+    """
+
+    def __init__(self, rotation_axis, ignore_index):
+        self.rotation_axis = rotation_axis
+        self.ignore_index = ignore_index
+
+    def _trans_points(self, input_dict, trans_factor):
+        """Private function to translate points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            trans_factor (np.ndarray): Translation vector to be applied.
+
+        Returns:
+            dict: Results after translation, 'points' is updated in the dict.
+        """
+        input_dict['points'].translate(trans_factor)
+
+    def _rot_points(self, input_dict, rot_mat):
+        """Private function to rotate bounding boxes and points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            rot_mat (np.ndarray): Rotation matrix to be applied.
+
+        Returns:
+            dict: Results after rotation, 'points' is updated in the dict.
+        """
+        # input should be rot_mat_T so I transpose it here
+        input_dict['points'].rotate(rot_mat.T)
+
+    def _check_rot_mat(self, rot_mat):
+        """Check if rotation matrix is valid for self.rotation_axis.
+
+        Args:
+            rot_mat (np.ndarray): Rotation matrix to be applied.
+        """
+        is_valid = np.allclose(np.linalg.det(rot_mat), 1.0)
+        valid_array = np.zeros(3)
+        valid_array[self.rotation_axis] = 1.0
+        is_valid &= (rot_mat[self.rotation_axis, :] == valid_array).all()
+        is_valid &= (rot_mat[:, self.rotation_axis] == valid_array).all()
+        assert is_valid, f'invalid rotation matrix {rot_mat}'
+
+    def _bbox_from_points(self, points):
+        """Get the bounding box of a set of points.
+
+        Args:
+            points (np.ndarray): A set of points belonging to one instance.
+
+        Returns:
+            np.ndarray: A bounding box of input points. We use origin as \
+                (0.5, 0.5, 0.5) without yaw.
+        """
+        xmin = np.min(points[:, 0])
+        ymin = np.min(points[:, 1])
+        zmin = np.min(points[:, 2])
+        xmax = np.max(points[:, 0])
+        ymax = np.max(points[:, 1])
+        zmax = np.max(points[:, 2])
+        bbox = np.array([(xmin + xmax) / 2, (ymin + ymax) / 2,
+                         (zmin + zmax) / 2, xmax - xmin, ymax - ymin,
+                         zmax - zmin])
+        return bbox
+
+    def _extract_bboxes(self, input_dict):
+        """Extract bounding boxes from points, semantic mask and instance mask.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after extracting bboxes, keys in \
+                input_dict['bbox3d_fields'] are updated in the dict.
+        """
+        assert 'pts_instance_mask' in input_dict.keys(), \
+            'instance mask is not provided in GlobalAlignment'
+        assert 'pts_semantic_mask' in input_dict.keys(), \
+            'semantic mask is not provided in GlobalAlignment'
+
+        # TODO: this function is only used in ScanNet-Det currently
+        # TODO: we only extract gt_bboxes_3d which is DepthInstance3DBoxes
+        for key in input_dict['bbox3d_fields']:
+            if key != 'gt_bboxes_3d':
+                raise NotImplementedError(
+                    f'GlobalAlignment does not support 3d bbox {key}')
+
+        coords = input_dict['points'].coord.numpy()
+        inst_mask = input_dict['pts_instance_mask']
+        sem_mask = input_dict['pts_semantic_mask']
+
+        # select points from valid categories where we want to extract bboxes
+        valid_cat_mask = (sem_mask != self.ignore_index)
+        inst_ids = np.unique(inst_mask[valid_cat_mask])  # ids of valid insts
+        instance_bboxes = np.zeros((inst_ids.shape[0], 7))
+        inst_id2cat_id = {
+            inst_id: sem_mask[inst_mask == inst_id][0]
+            for inst_id in inst_ids
+        }
+        for bbox_idx, inst_id in enumerate(inst_ids):
+            cat_id = inst_id2cat_id[inst_id]
+            inst_coords = coords[inst_mask == inst_id]
+            bbox = self._bbox_from_points(inst_coords)
+            instance_bboxes[bbox_idx, :6] = bbox
+            instance_bboxes[bbox_idx, 6] = cat_id
+
+        # TODO: currently only DepthInstance3DBoxes is supported!
+        # TODO: may support yaw in the future
+        original_type = type(input_dict['gt_bboxes_3d'])
+        input_dict['gt_bboxes_3d'] = original_type(
+            instance_bboxes[:, :6],
+            box_dim=6,
+            with_yaw=False,
+            origin=(0.5, 0.5, 0.5))
+        if 'gt_labels_3d' in input_dict.keys():
+            input_dict['gt_labels_3d'] = instance_bboxes[:, 6].astype(np.long)
+
+    def __call__(self, input_dict):
+        """Call function to shuffle points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after global alignment, 'points' and keys in \
+                input_dict['bbox3d_fields'] are updated in the result dict.
+        """
+        assert 'axis_align_matrix' in input_dict['annos'].keys(), \
+            'axis_align_matrix is not provided in GlobalAlignment'
+
+        axis_align_matrix = input_dict['annos']['axis_align_matrix']
+        assert axis_align_matrix.shape == (4, 4), \
+            f'invalid shape {axis_align_matrix.shape} for axis_align_matrix'
+        rot_mat = axis_align_matrix[:3, :3]
+        trans_vec = axis_align_matrix[:3, -1]
+
+        self._check_rot_mat(rot_mat)
+        self._rot_points(input_dict, rot_mat)
+        self._trans_points(input_dict, trans_vec)
+        self._extract_bboxes(input_dict)
+
+        return input_dict
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(rotation_axis={self.rotation_axis},'
+        repr_str += f' ignore_index={self.ignore_index})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class GlobalRotScaleTrans(object):
     """Apply global rotation, scaling and translation to a 3D scene.
 
