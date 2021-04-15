@@ -4,7 +4,6 @@ from os import path as osp
 from mmdet3d.core import show_seg_result
 from mmdet.datasets import DATASETS
 from .custom_3d_seg import Custom3DSegDataset
-from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -94,52 +93,29 @@ class _S3DISSegDataset(Custom3DSegDataset):
         anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self, results, out_dir, show=True):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-
-        # we need to load mask annotation so set test_mode as False
-        original_test_mode = self.test_mode
-        self.test_mode = False
-        if pipeline is not None:
-            pipeline = Compose(pipeline)
-            original_pipeline = self.pipeline if \
-                hasattr(self, 'pipeline') else None  # save the original one
-            self.pipeline = pipeline  # set new pipeline for data loading
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            if pipeline is None:  # load from disk
-                points = np.fromfile(
-                    osp.join(self.data_root, pts_path),
-                    dtype=np.float32).reshape(-1, 6)
-                sem_mask_path = data_info['pts_semantic_mask_path']
-                gt_sem_mask = self.convert_to_label(
-                    osp.join(self.data_root, sem_mask_path))
-            else:  # load via pipeline
-                example = self.prepare_test_data(i)
-                points = self._extract_data(example, 'points').numpy()
-                gt_sem_mask = self._extract_data(example, 'pts_semantic_mask')
+            points = np.fromfile(
+                osp.join(self.data_root, pts_path),
+                dtype=np.float32).reshape(-1, 6)
+            sem_mask_path = data_info['pts_semantic_mask_path']
+            gt_sem_mask = self.convert_to_label(
+                osp.join(self.data_root, sem_mask_path))
             pred_sem_mask = result['semantic_mask'].numpy()
             show_seg_result(points, gt_sem_mask,
                             pred_sem_mask, out_dir, file_name,
                             np.array(self.PALETTE), self.ignore_index, show)
-
-        self.test_mode = original_test_mode
-        if pipeline is not None:  # switch back to original pipeline
-            if original_pipeline is not None:
-                self.pipeline = original_pipeline
-            else:
-                delattr(self, 'pipeline')
 
     def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
         """Compute scene_idxs for data sampling and label weight for loss \
@@ -289,7 +265,7 @@ class S3DISSegDataset(_S3DISSegDataset):
     def _check_ann_files(self, ann_file):
         """Make ann_files as list/tuple."""
         # ann_file could be str
-        if not isinstance(ann_file, list) and not isinstance(ann_file, tuple):
+        if not isinstance(ann_file, (list, tuple)):
             ann_file = self._duplicate_to_list(ann_file, 1)
         return ann_file
 
@@ -302,9 +278,7 @@ class S3DISSegDataset(_S3DISSegDataset):
             return self._duplicate_to_list(scene_idx, num)
         if isinstance(scene_idx[0], str):  # list of str
             return scene_idx
-        if isinstance(scene_idx[0], list) or \
-            isinstance(scene_idx[0], tuple) or \
-                isinstance(scene_idx[0], np.ndarray):  # list of idx
+        if isinstance(scene_idx[0], (list, tuple, np.ndarray)):  # list of idx
             return scene_idx
         # single idx
         return self._duplicate_to_list(scene_idx, num)
@@ -318,9 +292,7 @@ class S3DISSegDataset(_S3DISSegDataset):
             return self._duplicate_to_list(label_weight, num)
         if isinstance(label_weight[0], str):  # list of str
             return label_weight
-        if isinstance(label_weight[0], list) or \
-            isinstance(label_weight[0], tuple) or \
-                isinstance(label_weight[0], np.ndarray):  # list of weight
+        if isinstance(label_weight[0], (list, tuple, np.ndarray)):  # list of w
             return label_weight
         # single weight
         return self._duplicate_to_list(label_weight, num)
