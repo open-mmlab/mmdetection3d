@@ -1,12 +1,14 @@
 import mmcv
 import numpy as np
 import tempfile
+import warnings
 from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
 from ..core.bbox import get_box_type
 from .pipelines import Compose
+from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -268,6 +270,27 @@ class Custom3DDataset(Dataset):
             self.show(results, out_dir, pipeline=pipeline)
 
         return ret_dict
+
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pass
+
+    def _get_pipeline(self, pipeline):
+        """Get data loading pipeline in self.show/evaluate function.
+
+        Args:
+            pipeline (list[dict] | None): Input pipeline. If None is given, \
+                get from self.pipeline.
+        """
+        if pipeline is None:
+            if not hasattr(self, 'pipeline') or self.pipeline is None:
+                warnings.warn(
+                    'Use default pipeline for data loading, this may cause '
+                    'errors when data is on ceph')
+                return self._build_default_pipeline()
+            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
+            return Compose(loading_pipeline)
+        return Compose(pipeline)
 
     def _extract_data(self, index, pipeline, key, load_annos=False):
         """Load data using input pipeline and extract data according to key.

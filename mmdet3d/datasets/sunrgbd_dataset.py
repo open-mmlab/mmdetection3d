@@ -152,23 +152,40 @@ class SUNRGBDDataset(Custom3DDataset):
 
         return anns_results
 
-    def show(self,
-             results,
-             out_dir,
-             show=True,
-             pipeline=[
-                 dict(
-                     type='LoadPointsFromFile',
-                     coord_type='DEPTH',
-                     shift_height=False,
-                     load_dim=6,
-                     use_dim=[0, 1, 2]),
-                 dict(
-                     type='DefaultFormatBundle3D',
-                     class_names=[],
-                     with_label=False),
-                 dict(type='Collect3D', keys=['points'])
-             ]):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        if self.modality['use_camera']:
+            pipeline = [
+                dict(type='LoadImageFromFile'),
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='DEPTH',
+                    shift_height=False,
+                    load_dim=6,
+                    use_dim=[0, 1, 2]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=self.CLASSES,
+                    with_label=False),
+                dict(type='Collect3D', keys=['points', 'img'])
+            ]
+        else:
+            pipeline = [
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='DEPTH',
+                    shift_height=False,
+                    load_dim=6,
+                    use_dim=[0, 1, 2]),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=self.CLASSES,
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
@@ -176,10 +193,10 @@ class SUNRGBDDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = Compose(pipeline)
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
@@ -223,20 +240,7 @@ class SUNRGBDDataset(Custom3DDataset):
                  logger=None,
                  show=False,
                  out_dir=None,
-                 pipeline=[
-                     dict(type='LoadImageFromFile'),
-                     dict(
-                         type='LoadPointsFromFile',
-                         coord_type='DEPTH',
-                         shift_height=True,
-                         load_dim=6,
-                         use_dim=[0, 1, 2]),
-                     dict(
-                         type='DefaultFormatBundle3D',
-                         class_names=[],
-                         with_label=False),
-                     dict(type='Collect3D', keys=['points', 'img', 'calib'])
-                 ]):
+                 pipeline=None):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -251,7 +255,7 @@ class SUNRGBDDataset(Custom3DDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
 
         Returns:
             dict: Evaluation results.

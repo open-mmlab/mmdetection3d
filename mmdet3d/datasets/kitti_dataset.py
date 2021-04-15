@@ -302,19 +302,7 @@ class KittiDataset(Custom3DDataset):
                  submission_prefix=None,
                  show=False,
                  out_dir=None,
-                 pipeline=[
-                     dict(
-                         type='LoadPointsFromFile',
-                         coord_type='LIDAR',
-                         load_dim=4,
-                         use_dim=4,
-                         file_client_args=dict(backend='disk')),
-                     dict(
-                         type='DefaultFormatBundle3D',
-                         class_names=[],
-                         with_label=False),
-                     dict(type='Collect3D', keys=['points'])
-                 ]):
+                 pipeline=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -332,7 +320,7 @@ class KittiDataset(Custom3DDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
 
         Returns:
             dict[str, float]: Results of each evaluation metric.
@@ -684,24 +672,40 @@ class KittiDataset(Custom3DDataset):
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
 
-    def show(self,
-             results,
-             out_dir,
-             show=True,
-             pipeline=[
-                 dict(
-                     type='LoadPointsFromFile',
-                     coord_type='LIDAR',
-                     load_dim=4,
-                     use_dim=4,
-                     file_client_args=dict(backend='disk')),
-                 dict(type='LoadImageFromFile'),
-                 dict(
-                     type='DefaultFormatBundle3D',
-                     class_names=[],
-                     with_label=False),
-                 dict(type='Collect3D', keys=['points', 'img'])
-             ]):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        if self.modality['use_camera']:
+            pipeline = [
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='LIDAR',
+                    load_dim=4,
+                    use_dim=4,
+                    file_client_args=dict(backend='disk')),
+                dict(type='LoadImageFromFile'),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=self.CLASSES,
+                    with_label=False),
+                dict(type='Collect3D', keys=['points', 'img'])
+            ]
+        else:
+            pipeline = [
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='LIDAR',
+                    load_dim=4,
+                    use_dim=4,
+                    file_client_args=dict(backend='disk')),
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=self.CLASSES,
+                    with_label=False),
+                dict(type='Collect3D', keys=['points'])
+            ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
@@ -709,10 +713,10 @@ class KittiDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = Compose(pipeline)
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             if 'pts_bbox' in result.keys():
                 result = result['pts_bbox']

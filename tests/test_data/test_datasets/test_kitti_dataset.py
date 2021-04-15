@@ -292,7 +292,7 @@ def test_show():
         _generate_kitti_multi_modality_dataset_config()
     kitti_dataset = KittiDataset(data_root, ann_file, split, pts_prefix,
                                  multi_modality_pipeline, classes, modality)
-    kitti_dataset.show(results, temp_dir, False, multi_modality_pipeline)
+    kitti_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
     gt_file_path = osp.join(temp_dir, '000000', '000000_gt.obj')
     pred_file_path = osp.join(temp_dir, '000000', '000000_pred.obj')

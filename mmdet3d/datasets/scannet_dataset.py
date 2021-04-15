@@ -109,23 +109,24 @@ class ScanNetDataset(Custom3DDataset):
             pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self,
-             results,
-             out_dir,
-             show=True,
-             pipeline=[
-                 dict(
-                     type='LoadPointsFromFile',
-                     coord_type='DEPTH',
-                     shift_height=False,
-                     load_dim=6,
-                     use_dim=[0, 1, 2]),
-                 dict(
-                     type='DefaultFormatBundle3D',
-                     class_names=[],
-                     with_label=False),
-                 dict(type='Collect3D', keys=['points'])
-             ]):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='DEPTH',
+                shift_height=False,
+                load_dim=6,
+                use_dim=[0, 1, 2]),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=self.CLASSES,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
@@ -133,10 +134,10 @@ class ScanNetDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = Compose(pipeline)
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
@@ -257,34 +258,35 @@ class ScanNetSegDataset(Custom3DSegDataset):
         anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self,
-             results,
-             out_dir,
-             show=True,
-             pipeline=[
-                 dict(
-                     type='LoadPointsFromFile',
-                     coord_type='DEPTH',
-                     shift_height=False,
-                     use_color=True,
-                     load_dim=6,
-                     use_dim=[0, 1, 2, 3, 4, 5]),
-                 dict(
-                     type='LoadAnnotations3D',
-                     with_bbox_3d=False,
-                     with_label_3d=False,
-                     with_mask_3d=False,
-                     with_seg_3d=True),
-                 dict(
-                     type='PointSegClassMapping',
-                     valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14,
-                                    16, 24, 28, 33, 34, 36, 39)),
-                 dict(
-                     type='DefaultFormatBundle3D',
-                     with_label=False,
-                     class_names=[]),
-                 dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
-             ]):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='DEPTH',
+                shift_height=False,
+                use_color=True,
+                load_dim=6,
+                use_dim=[0, 1, 2, 3, 4, 5]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=False,
+                with_seg_3d=True),
+            dict(
+                type='PointSegClassMapping',
+                valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
+                               24, 28, 33, 34, 36, 39)),
+            dict(
+                type='DefaultFormatBundle3D',
+                with_label=False,
+                class_names=self.CLASSES),
+            dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
@@ -292,10 +294,10 @@ class ScanNetSegDataset(Custom3DSegDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = Compose(pipeline)
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']

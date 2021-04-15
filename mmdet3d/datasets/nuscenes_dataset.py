@@ -455,23 +455,7 @@ class NuScenesDataset(Custom3DDataset):
                  result_names=['pts_bbox'],
                  show=False,
                  out_dir=None,
-                 pipeline=[
-                     dict(
-                         type='LoadPointsFromFile',
-                         coord_type='LIDAR',
-                         load_dim=5,
-                         use_dim=5,
-                         file_client_args=dict(backend='disk')),
-                     dict(
-                         type='LoadPointsFromMultiSweeps',
-                         sweeps_num=10,
-                         file_client_args=dict(backend='disk')),
-                     dict(
-                         type='DefaultFormatBundle3D',
-                         class_names=[],
-                         with_label=False),
-                     dict(type='Collect3D', keys=['points'])
-                 ]):
+                 pipeline=None):
         """Evaluation in nuScenes protocol.
 
         Args:
@@ -487,7 +471,7 @@ class NuScenesDataset(Custom3DDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
 
         Returns:
             dict[str, float]: Results of each evaluation metric.
@@ -510,27 +494,28 @@ class NuScenesDataset(Custom3DDataset):
             self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
-    def show(self,
-             results,
-             out_dir,
-             show=True,
-             pipeline=[
-                 dict(
-                     type='LoadPointsFromFile',
-                     coord_type='LIDAR',
-                     load_dim=5,
-                     use_dim=5,
-                     file_client_args=dict(backend='disk')),
-                 dict(
-                     type='LoadPointsFromMultiSweeps',
-                     sweeps_num=10,
-                     file_client_args=dict(backend='disk')),
-                 dict(
-                     type='DefaultFormatBundle3D',
-                     class_names=[],
-                     with_label=False),
-                 dict(type='Collect3D', keys=['points'])
-             ]):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                load_dim=5,
+                use_dim=5,
+                file_client_args=dict(backend='disk')),
+            dict(
+                type='LoadPointsFromMultiSweeps',
+                sweeps_num=10,
+                file_client_args=dict(backend='disk')),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=self.CLASSES,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
@@ -538,10 +523,10 @@ class NuScenesDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = Compose(pipeline)
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             if 'pts_bbox' in result.keys():
                 result = result['pts_bbox']

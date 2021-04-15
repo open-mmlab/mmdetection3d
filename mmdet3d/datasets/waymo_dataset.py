@@ -220,19 +220,7 @@ class WaymoDataset(KittiDataset):
                  submission_prefix=None,
                  show=False,
                  out_dir=None,
-                 pipeline=[
-                     dict(
-                         type='LoadPointsFromFile',
-                         coord_type='LIDAR',
-                         load_dim=6,
-                         use_dim=5,
-                         file_client_args=dict(backend='disk')),
-                     dict(
-                         type='DefaultFormatBundle3D',
-                         class_names=[],
-                         with_label=False),
-                     dict(type='Collect3D', keys=['points'])
-                 ]):
+                 pipeline=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -251,7 +239,7 @@ class WaymoDataset(KittiDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: The eval_pipeline in dataset config file.
+                Default: None.
 
         Returns:
             dict[str: float]: results of each evaluation metric

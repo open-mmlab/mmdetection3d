@@ -1,11 +1,13 @@
 import mmcv
 import numpy as np
 import tempfile
+import warnings
 from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
 from .pipelines import Compose
+from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -307,21 +309,6 @@ class Custom3DSegDataset(Dataset):
         mmcv.dump(outputs, out)
         return outputs, tmp_dir
 
-    def convert_to_label(self, mask):
-        """Convert class_id in segmentation mask to label."""
-        # TODO: currently only support loading from local
-        # TODO: may need to consider ceph data storage in the future
-        if isinstance(mask, str):
-            if mask.endswith('npy'):
-                mask = np.load(mask)
-            else:
-                mask = np.fromfile(mask, dtype=np.long)
-        mask_copy = mask.copy()
-        for class_id, label in self.label_map.items():
-            mask_copy[mask == class_id] = label
-
-        return mask_copy
-
     def evaluate(self,
                  results,
                  metric=None,
@@ -357,11 +344,11 @@ class Custom3DSegDataset(Dataset):
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
 
-        pipeline = Compose(pipeline)
+        load_pipeline = self._get_pipeline(pipeline)
         pred_sem_masks = [result['semantic_mask'] for result in results]
         gt_sem_masks = [
             self._extract_data(
-                i, pipeline, 'pts_semantic_mask', load_annos=True)
+                i, load_pipeline, 'pts_semantic_mask', load_annos=True)
             for i in range(len(self.data_infos))
         ]
         ret_dict = seg_eval(
@@ -384,6 +371,27 @@ class Custom3DSegDataset(Dataset):
         """
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
+
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pass
+
+    def _get_pipeline(self, pipeline):
+        """Get data loading pipeline in self.show/evaluate function.
+
+        Args:
+            pipeline (list[dict] | None): Input pipeline. If None is given, \
+                get from self.pipeline.
+        """
+        if pipeline is None:
+            if not hasattr(self, 'pipeline') or self.pipeline is None:
+                warnings.warn(
+                    'Use default pipeline for data loading, this may cause '
+                    'errors when data is on ceph')
+                return self._build_default_pipeline()
+            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
+            return Compose(loading_pipeline)
+        return Compose(pipeline)
 
     def _extract_data(self, index, pipeline, key, load_annos=False):
         """Load data using input pipeline and extract data according to key.
