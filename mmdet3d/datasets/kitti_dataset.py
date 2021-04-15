@@ -302,7 +302,19 @@ class KittiDataset(Custom3DDataset):
                  submission_prefix=None,
                  show=False,
                  out_dir=None,
-                 pipeline=None):
+                 pipeline=[
+                     dict(
+                         type='LoadPointsFromFile',
+                         coord_type='LIDAR',
+                         load_dim=4,
+                         use_dim=4,
+                         file_client_args=dict(backend='disk')),
+                     dict(
+                         type='DefaultFormatBundle3D',
+                         class_names=[],
+                         with_label=False),
+                     dict(type='Collect3D', keys=['points'])
+                 ]):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -320,7 +332,7 @@ class KittiDataset(Custom3DDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
+                Default: The eval_pipeline in dataset config file.
 
         Returns:
             dict[str, float]: Results of each evaluation metric.
@@ -672,7 +684,24 @@ class KittiDataset(Custom3DDataset):
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self,
+             results,
+             out_dir,
+             show=True,
+             pipeline=[
+                 dict(
+                     type='LoadPointsFromFile',
+                     coord_type='LIDAR',
+                     load_dim=4,
+                     use_dim=4,
+                     file_client_args=dict(backend='disk')),
+                 dict(type='LoadImageFromFile'),
+                 dict(
+                     type='DefaultFormatBundle3D',
+                     class_names=[],
+                     with_label=False),
+                 dict(type='Collect3D', keys=['points', 'img'])
+             ]):
         """Results visualization.
 
         Args:
@@ -680,23 +709,20 @@ class KittiDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
+                Default: The eval_pipeline in dataset config file.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        if pipeline is not None:
-            pipeline = Compose(pipeline)
-            original_pipeline = self.pipeline if \
-                hasattr(self, 'pipeline') else None  # save the original one
-            self.pipeline = pipeline  # set new pipeline for data loading
+        pipeline = Compose(pipeline)
         for i, result in enumerate(results):
             if 'pts_bbox' in result.keys():
                 result = result['pts_bbox']
-            example = self.prepare_test_data(i)
             data_info = self.data_infos[i]
             pts_path = data_info['point_cloud']['velodyne_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
+            points, img_metas, img = self._extract_data(
+                i, pipeline, ['points', 'img_metas', 'img'])
+            points = points.numpy()
             # for now we convert points into depth mode
-            points = self._extract_data(example, 'points').numpy()
             points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                                Coord3DMode.DEPTH)
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
@@ -709,9 +735,8 @@ class KittiDataset(Custom3DDataset):
                         file_name, show)
 
             # multi-modality visualization
-            img_metas = self._extract_data(example, 'img_metas')
             if self.modality['use_camera'] and 'lidar2img' in img_metas.keys():
-                img = self._extract_data(example, 'img').numpy()
+                img = img.numpy()
                 # need to transpose channel to first dim
                 img = img.transpose(1, 2, 0)
                 show_pred_bboxes = LiDARInstance3DBoxes(
@@ -726,8 +751,3 @@ class KittiDataset(Custom3DDataset):
                     out_dir,
                     file_name,
                     show=False)
-        if pipeline is not None:  # switch back to original pipeline
-            if original_pipeline is not None:
-                self.pipeline = original_pipeline
-            else:
-                delattr(self, 'pipeline')

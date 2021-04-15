@@ -358,7 +358,23 @@ class LyftDataset(Custom3DDataset):
                  result_names=['pts_bbox'],
                  show=False,
                  out_dir=None,
-                 pipeline=None):
+                 pipeline=[
+                     dict(
+                         type='LoadPointsFromFile',
+                         coord_type='LIDAR',
+                         load_dim=5,
+                         use_dim=5,
+                         file_client_args=dict(backend='disk')),
+                     dict(
+                         type='LoadPointsFromMultiSweeps',
+                         sweeps_num=10,
+                         file_client_args=dict(backend='disk')),
+                     dict(
+                         type='DefaultFormatBundle3D',
+                         class_names=[],
+                         with_label=False),
+                     dict(type='Collect3D', keys=['points'])
+                 ]):
         """Evaluation in Lyft protocol.
 
         Args:
@@ -378,7 +394,7 @@ class LyftDataset(Custom3DDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
+                Default: The eval_pipeline in dataset config file.
 
         Returns:
             dict[str, float]: Evaluation results.
@@ -402,7 +418,27 @@ class LyftDataset(Custom3DDataset):
             self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self,
+             results,
+             out_dir,
+             show=True,
+             pipeline=[
+                 dict(
+                     type='LoadPointsFromFile',
+                     coord_type='LIDAR',
+                     load_dim=5,
+                     use_dim=5,
+                     file_client_args=dict(backend='disk')),
+                 dict(
+                     type='LoadPointsFromMultiSweeps',
+                     sweeps_num=10,
+                     file_client_args=dict(backend='disk')),
+                 dict(
+                     type='DefaultFormatBundle3D',
+                     class_names=[],
+                     with_label=False),
+                 dict(type='Collect3D', keys=['points'])
+             ]):
         """Results visualization.
 
         Args:
@@ -410,23 +446,17 @@ class LyftDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
+                Default: The eval_pipeline in dataset config file.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        if pipeline is not None:
-            pipeline = Compose(pipeline)
-            original_pipeline = self.pipeline if \
-                hasattr(self, 'pipeline') else None  # save the original one
-            self.pipeline = pipeline  # set new pipeline for data loading
+        pipeline = Compose(pipeline)
         for i, result in enumerate(results):
             if 'pts_bbox' in result.keys():
                 result = result['pts_bbox']
-            example = self.prepare_test_data(i)
             data_info = self.data_infos[i]
             pts_path = data_info['lidar_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            # for now we convert points into depth mode
-            points = self._extract_data(example, 'points').numpy()
+            points = self._extract_data(i, pipeline, 'points').numpy()
             points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
                                                Coord3DMode.DEPTH)
             inds = result['scores_3d'] > 0.1
@@ -438,11 +468,6 @@ class LyftDataset(Custom3DDataset):
                                                  Box3DMode.DEPTH)
             show_result(points, show_gt_bboxes, show_pred_bboxes, out_dir,
                         file_name, show)
-        if pipeline is not None:  # switch back to original pipeline
-            if original_pipeline is not None:
-                self.pipeline = original_pipeline
-            else:
-                delattr(self, 'pipeline')
 
     def json2csv(self, json_path, csv_savepath):
         """Convert the json file to csv format for submission.

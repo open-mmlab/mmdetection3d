@@ -1,4 +1,3 @@
-import mmcv
 import numpy as np
 from collections import OrderedDict
 from os import path as osp
@@ -153,7 +152,23 @@ class SUNRGBDDataset(Custom3DDataset):
 
         return anns_results
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self,
+             results,
+             out_dir,
+             show=True,
+             pipeline=[
+                 dict(
+                     type='LoadPointsFromFile',
+                     coord_type='DEPTH',
+                     shift_height=False,
+                     load_dim=6,
+                     use_dim=[0, 1, 2]),
+                 dict(
+                     type='DefaultFormatBundle3D',
+                     class_names=[],
+                     with_label=False),
+                 dict(type='Collect3D', keys=['points'])
+             ]):
         """Results visualization.
 
         Args:
@@ -161,27 +176,18 @@ class SUNRGBDDataset(Custom3DDataset):
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
+                Default: The eval_pipeline in dataset config file.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
-        if pipeline is not None:
-            pipeline = Compose(pipeline)
-            original_pipeline = self.pipeline if \
-                hasattr(self, 'pipeline') else None  # save the original one
-            self.pipeline = pipeline  # set new pipeline for data loading
+        pipeline = Compose(pipeline)
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            if hasattr(self, 'pipeline'):  # load via pipeline
-                example = self.prepare_test_data(i)
-                points = self._extract_data(example, 'points').numpy()
-            else:  # load from disk
-                example = None
-                points = np.fromfile(
-                    osp.join(self.data_root, pts_path),
-                    dtype=np.float32).reshape(-1, 6)
+            points, img_metas, img, calib = self._extract_data(
+                i, pipeline, ['points', 'img_metas', 'img', 'calib'])
             # scale colors to [0, 255]
+            points = points.numpy()
             points[:, 3:] *= 255
 
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
@@ -190,36 +196,24 @@ class SUNRGBDDataset(Custom3DDataset):
                         file_name, show)
 
             # multi-modality visualization
-            if self.modality['use_camera'] and example is not None and \
-                    'calib' in data_info.keys():
-                if pipeline is not None:  # load via pipeline
-                    img = self._extract_data(example, 'img').numpy()
-                    # need to transpose channel to first dim
-                    img = img.transpose(1, 2, 0)
-                else:  # load from disk
-                    # because it's hard to revert the transforms applied on img
-                    # e.g. Normalize, Pad, Resize
-                    img = mmcv.imread(example['img_metas']._data['filename'])
+            if self.modality['use_camera'] and 'calib' in data_info.keys():
+                img = img.numpy()
+                # need to transpose channel to first dim
+                img = img.transpose(1, 2, 0)
                 pred_bboxes = DepthInstance3DBoxes(
                     pred_bboxes, origin=(0.5, 0.5, 0))
                 gt_bboxes = DepthInstance3DBoxes(
                     gt_bboxes, origin=(0.5, 0.5, 0))
-                img_metas = self._extract_data(example, 'img_metas')
                 show_multi_modality_result(
                     img,
                     gt_bboxes,
                     pred_bboxes,
-                    self._extract_data(example, 'calib'),
+                    calib,
                     out_dir,
                     file_name,
                     depth_bbox=True,
                     img_metas=img_metas,
                     show=show)
-        if pipeline is not None:  # switch back to original pipeline
-            if original_pipeline is not None:
-                self.pipeline = original_pipeline
-            else:
-                delattr(self, 'pipeline')
 
     def evaluate(self,
                  results,
@@ -229,7 +223,20 @@ class SUNRGBDDataset(Custom3DDataset):
                  logger=None,
                  show=False,
                  out_dir=None,
-                 pipeline=None):
+                 pipeline=[
+                     dict(type='LoadImageFromFile'),
+                     dict(
+                         type='LoadPointsFromFile',
+                         coord_type='DEPTH',
+                         shift_height=True,
+                         load_dim=6,
+                         use_dim=[0, 1, 2]),
+                     dict(
+                         type='DefaultFormatBundle3D',
+                         class_names=[],
+                         with_label=False),
+                     dict(type='Collect3D', keys=['points', 'img', 'calib'])
+                 ]):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -244,7 +251,7 @@ class SUNRGBDDataset(Custom3DDataset):
             out_dir (str): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
+                Default: The eval_pipeline in dataset config file.
 
         Returns:
             dict: Evaluation results.

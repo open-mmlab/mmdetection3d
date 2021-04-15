@@ -269,24 +269,54 @@ class Custom3DDataset(Dataset):
 
         return ret_dict
 
-    @staticmethod
-    def _extract_data(results, key):
-        """Extract and return the data corresponding to key in results dict.
+    def _extract_data(self, index, pipeline, key, load_annos=False):
+        """Load data using input pipeline and extract data according to key.
 
         Args:
-            results (dict): Result dict containing point clouds data.
-            key (str): Key of the desired data.
+            index (int): Index for accessing the target data.
+            pipeline (:obj:`Compose`): Composed data loading pipeline.
+            key (str | list[str]): One single or a list of data key.
+            load_annos (bool): Whether to load data annotations.
+                If True, need to set self.test_mode as False before loading.
 
         Returns:
-            np.ndarray | torch.Tensor: Data term.
+            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
+                A single or a list of loaded data.
         """
-        # results[key] may be data or list[data]
-        # data may be wrapped inside DataContainer
-        data = results[key]
-        if isinstance(data, list) or isinstance(data, tuple):
-            data = data[0]
-        if isinstance(data, mmcv.parallel.DataContainer):
-            data = data._data
+        assert pipeline is not None, 'data loading pipeline is not provided'
+        if load_annos:
+            original_test_mode = self.test_mode
+            self.test_mode = False
+        input_dict = self.get_data_info(index)
+        self.pre_pipeline(input_dict)
+        example = pipeline(input_dict)
+
+        def get_data(key):
+            """Extract and return the data corresponding to key in result dict.
+
+            Args:
+                key (str): Key of the desired data.
+
+            Returns:
+                np.ndarray | torch.Tensor | None: Data term.
+            """
+            if key not in example.keys():
+                return None
+            # example[key] may be data or list[data]
+            # data may be wrapped inside DataContainer
+            data = example[key]
+            if isinstance(data, list) or isinstance(data, tuple):
+                data = data[0]
+            if isinstance(data, mmcv.parallel.DataContainer):
+                data = data._data
+            return data
+
+        if isinstance(key, str):
+            data = get_data(key)
+        else:
+            data = [get_data(k) for k in key]
+        if load_annos:
+            self.test_mode = original_test_mode
 
         return data
 

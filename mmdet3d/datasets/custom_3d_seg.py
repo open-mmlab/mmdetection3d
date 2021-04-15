@@ -1,7 +1,6 @@
 import mmcv
 import numpy as np
 import tempfile
-import torch
 from os import path as osp
 from torch.utils.data import Dataset
 
@@ -358,30 +357,13 @@ class Custom3DSegDataset(Dataset):
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
 
-        # we need to load mask annotation so set test_mode as False
-        original_test_mode = self.test_mode
-        self.test_mode = False
-        if pipeline is not None:
-            pipeline = Compose(pipeline)
-            original_pipeline = self.pipeline if \
-                hasattr(self, 'pipeline') else None  # save the original one
-            self.pipeline = pipeline  # set new pipeline for data loading
-
+        pipeline = Compose(pipeline)
         pred_sem_masks = [result['semantic_mask'] for result in results]
-        if pipeline is None:  # load from disk
-            gt_sem_masks = [
-                torch.from_numpy(
-                    self.convert_to_label(
-                        osp.join(self.data_root,
-                                 data_info['pts_semantic_mask_path'])))
-                for data_info in self.data_infos
-            ]
-        else:  # load via pipeline
-            gt_sem_masks = [
-                self._extract_data(
-                    self.prepare_test_data(i), 'pts_semantic_mask')
-                for i in range(len(self.data_infos))
-            ]
+        gt_sem_masks = [
+            self._extract_data(
+                i, pipeline, 'pts_semantic_mask', load_annos=True)
+            for i in range(len(self.data_infos))
+        ]
         ret_dict = seg_eval(
             gt_sem_masks,
             pred_sem_masks,
@@ -389,12 +371,6 @@ class Custom3DSegDataset(Dataset):
             self.ignore_index,
             logger=logger)
 
-        self.test_mode = original_test_mode
-        if pipeline is not None:  # switch back to original pipeline
-            if original_pipeline is not None:
-                self.pipeline = original_pipeline
-            else:
-                delattr(self, 'pipeline')
         if show:
             self.show(pred_sem_masks, out_dir, pipeline=pipeline)
 
@@ -409,24 +385,54 @@ class Custom3DSegDataset(Dataset):
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
 
-    @staticmethod
-    def _extract_data(results, key):
-        """Extract and return the data corresponding to key in results dict.
+    def _extract_data(self, index, pipeline, key, load_annos=False):
+        """Load data using input pipeline and extract data according to key.
 
         Args:
-            results (dict): Result dict containing point clouds data.
-            key (str): Key of the desired data.
+            index (int): Index for accessing the target data.
+            pipeline (:obj:`Compose`): Composed data loading pipeline.
+            key (str | list[str]): One single or a list of data key.
+            load_annos (bool): Whether to load data annotations.
+                If True, need to set self.test_mode as False before loading.
 
         Returns:
-            np.ndarray | torch.Tensor: Data term.
+            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
+                A single or a list of loaded data.
         """
-        # results[key] may be data or list[data]
-        # data may be wrapped inside DataContainer
-        data = results[key]
-        if isinstance(data, list) or isinstance(data, tuple):
-            data = data[0]
-        if isinstance(data, mmcv.parallel.DataContainer):
-            data = data._data
+        assert pipeline is not None, 'data loading pipeline is not provided'
+        if load_annos:
+            original_test_mode = self.test_mode
+            self.test_mode = False
+        input_dict = self.get_data_info(index)
+        self.pre_pipeline(input_dict)
+        example = pipeline(input_dict)
+
+        def get_data(key):
+            """Extract and return the data corresponding to key in result dict.
+
+            Args:
+                key (str): Key of the desired data.
+
+            Returns:
+                np.ndarray | torch.Tensor | None: Data term.
+            """
+            if key not in example.keys():
+                return None
+            # example[key] may be data or list[data]
+            # data may be wrapped inside DataContainer
+            data = example[key]
+            if isinstance(data, list) or isinstance(data, tuple):
+                data = data[0]
+            if isinstance(data, mmcv.parallel.DataContainer):
+                data = data._data
+            return data
+
+        if isinstance(key, str):
+            data = get_data(key)
+        else:
+            data = [get_data(k) for k in key]
+        if load_annos:
+            self.test_mode = original_test_mode
 
         return data
 

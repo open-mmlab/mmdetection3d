@@ -520,12 +520,7 @@ def test_seg_evaluate():
             13, 2, 3, 1, 0, 13, 19, 1, 14, 5, 3, 1, 13, 1, 2, 3, 2, 1
         ]).long())
     results.append(pred_sem_mask)
-    ret_dict = scannet_dataset.evaluate(results)
-    assert abs(ret_dict['miou'] - 0.5308) < 0.01
-    assert abs(ret_dict['acc'] - 0.8219) < 0.01
-    assert abs(ret_dict['acc_cls'] - 0.7649) < 0.01
 
-    # test evaluate with pipeline
     class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
                    'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
                    'curtain', 'refrigerator', 'showercurtrain', 'toilet',
