@@ -6,8 +6,8 @@ import torch
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
-                              ObjectSample, PointShuffle, RandomFlip3D,
-                              VoxelBasedPointSampler)
+                              ObjectSample, PointShuffle, PointsRangeFilter,
+                              RandomFlip3D, VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -181,6 +181,43 @@ def test_point_shuffle():
 
     repr_str = repr(point_shuffle)
     expected_repr_str = 'PointShuffle'
+    assert repr_str == expected_repr_str
+
+
+def test_points_range_filter():
+    pcd_range = [0.0, 0.0, 0.0, 3.0, 3.0, 3.0]
+    points_range_filter = PointsRangeFilter(pcd_range)
+
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    ins_mask = np.fromfile('tests/data/scannet/instance_mask/scene0000_00.bin',
+                           np.long)
+    sem_mask = np.fromfile('tests/data/scannet/semantic_mask/scene0000_00.bin',
+                           np.long)
+
+    points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+    input_dict = dict(
+        points=points.clone(),
+        pts_instance_mask=ins_mask.copy(),
+        pts_semantic_mask=sem_mask.copy())
+    results = points_range_filter(input_dict)
+    shuffle_pts = results['points']
+    shuffle_ins_mask = results['pts_instance_mask']
+    shuffle_sem_mask = results['pts_semantic_mask']
+
+    select_idx = np.array(
+        [5, 11, 22, 26, 27, 33, 46, 47, 56, 63, 74, 78, 79, 91])
+    expected_pts = points.tensor.numpy()[select_idx]
+    expected_ins_mask = ins_mask[select_idx]
+    expected_sem_mask = sem_mask[select_idx]
+
+    assert np.allclose(shuffle_pts.tensor.numpy(), expected_pts)
+    assert np.all(shuffle_ins_mask == expected_ins_mask)
+    assert np.all(shuffle_sem_mask == expected_sem_mask)
+
+    repr_str = repr(points_range_filter)
+    expected_repr_str = f'PointsRangeFilter(point_cloud_range={pcd_range})'
     assert repr_str == expected_repr_str
 
 

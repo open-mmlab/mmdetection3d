@@ -453,7 +453,7 @@ class PointShuffle(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after sampling, 'points', 'pts_instance_mask' \
+            dict: Results after filtering, 'points', 'pts_instance_mask' \
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         idx = input_dict['points'].shuffle()
@@ -538,13 +538,24 @@ class PointsRangeFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points' keys are updated \
-                in the result dict.
+            dict: Results after filtering, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         points_mask = points.in_range_3d(self.pcd_range)
         clean_points = points[points_mask]
         input_dict['points'] = clean_points
+        points_mask = points_mask.numpy()
+
+        pts_instance_mask = input_dict.get('pts_instance_mask', None)
+        pts_semantic_mask = input_dict.get('pts_semantic_mask', None)
+
+        if pts_instance_mask is not None:
+            input_dict['pts_instance_mask'] = pts_instance_mask[points_mask]
+
+        if pts_semantic_mask is not None:
+            input_dict['pts_semantic_mask'] = pts_semantic_mask[points_mask]
+
         return input_dict
 
     def __repr__(self):
