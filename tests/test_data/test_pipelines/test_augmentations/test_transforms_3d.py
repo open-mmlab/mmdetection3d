@@ -4,9 +4,9 @@ import pytest
 import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
-from mmdet3d.core.points import LiDARPoints
+from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
-                              ObjectSample, RandomFlip3D,
+                              ObjectSample, PointShuffle, RandomFlip3D,
                               VoxelBasedPointSampler)
 
 
@@ -137,6 +137,51 @@ def test_object_noise():
     assert repr_str == expected_repr_str
     assert points.tensor.numpy().shape == (800, 4)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d, 1e-3)
+
+
+def test_point_shuffle():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    point_shuffle = PointShuffle()
+
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    ins_mask = np.fromfile('tests/data/scannet/instance_mask/scene0000_00.bin',
+                           np.long)
+    sem_mask = np.fromfile('tests/data/scannet/semantic_mask/scene0000_00.bin',
+                           np.long)
+
+    points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+    input_dict = dict(
+        points=points.clone(),
+        pts_instance_mask=ins_mask.copy(),
+        pts_semantic_mask=sem_mask.copy())
+    results = point_shuffle(input_dict)
+
+    shuffle_pts = results['points']
+    shuffle_ins_mask = results['pts_instance_mask']
+    shuffle_sem_mask = results['pts_semantic_mask']
+
+    shuffle_idx = np.array([
+        44, 19, 93, 90, 71, 69, 37, 95, 53, 91, 81, 42, 80, 85, 74, 56, 76, 63,
+        82, 40, 26, 92, 57, 10, 16, 66, 89, 41, 97, 8, 31, 24, 35, 30, 65, 7,
+        98, 23, 20, 29, 78, 61, 94, 15, 4, 52, 59, 5, 54, 46, 3, 28, 2, 70, 6,
+        60, 49, 68, 55, 72, 79, 77, 45, 1, 32, 34, 11, 0, 22, 12, 87, 50, 25,
+        47, 36, 96, 9, 83, 62, 84, 18, 17, 75, 67, 13, 48, 39, 21, 64, 88, 38,
+        27, 14, 73, 33, 58, 86, 43, 99, 51
+    ])
+    expected_pts = points.tensor.numpy()[shuffle_idx]
+    expected_ins_mask = ins_mask[shuffle_idx]
+    expected_sem_mask = sem_mask[shuffle_idx]
+
+    assert np.allclose(shuffle_pts.tensor.numpy(), expected_pts)
+    assert np.all(shuffle_ins_mask == expected_ins_mask)
+    assert np.all(shuffle_sem_mask == expected_sem_mask)
+
+    repr_str = repr(point_shuffle)
+    expected_repr_str = 'PointShuffle'
+    assert repr_str == expected_repr_str
 
 
 def test_random_flip_3d():

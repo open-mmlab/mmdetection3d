@@ -453,10 +453,21 @@ class PointShuffle(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points' keys are updated \
-                in the result dict.
+            dict: Results after sampling, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
         """
-        input_dict['points'].shuffle()
+        idx = input_dict['points'].shuffle()
+        idx = idx.numpy()
+
+        pts_instance_mask = input_dict.get('pts_instance_mask', None)
+        pts_semantic_mask = input_dict.get('pts_semantic_mask', None)
+
+        if pts_instance_mask is not None:
+            input_dict['pts_instance_mask'] = pts_instance_mask[idx]
+
+        if pts_semantic_mask is not None:
+            input_dict['pts_semantic_mask'] = pts_semantic_mask[idx]
+
         return input_dict
 
     def __repr__(self):
