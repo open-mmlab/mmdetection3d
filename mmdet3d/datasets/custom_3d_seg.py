@@ -374,7 +374,8 @@ class Custom3DSegDataset(Dataset):
 
     def _build_default_pipeline(self):
         """Build the default pipeline for this dataset."""
-        pass
+        raise NotImplementedError('_build_default_pipeline is not implemented '
+                                  f'for dataset {self.__class__.__name__}')
 
     def _get_pipeline(self, pipeline):
         """Get data loading pipeline in self.show/evaluate function.
