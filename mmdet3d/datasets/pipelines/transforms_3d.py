@@ -120,7 +120,7 @@ class RandomFlip3D(RandomFlip):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(sync_2d={self.sync_2d},'
-        repr_str += f'flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
+        repr_str += f' flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
         return repr_str
 
 
@@ -909,8 +909,8 @@ class BackgroundPointsFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points' keys are updated \
-                in the result dict.
+            dict: Results after filtering, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         gt_bboxes_3d = input_dict['gt_bboxes_3d']

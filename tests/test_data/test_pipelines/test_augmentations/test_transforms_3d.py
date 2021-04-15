@@ -272,7 +272,7 @@ def test_random_flip_3d():
          [5.0903, -5.1004, -1.2694, 0.7100, 1.7000, 1.8300, 5.0552]])
     repr_str = repr(random_flip_3d)
     expected_repr_str = 'RandomFlip3D(sync_2d=True,' \
-                        'flip_ratio_bev_vertical=1.0)'
+                        ' flip_ratio_bev_vertical=1.0)'
     assert np.allclose(points, expected_points)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert repr_str == expected_repr_str

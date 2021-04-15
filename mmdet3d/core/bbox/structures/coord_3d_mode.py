@@ -77,19 +77,19 @@ class Coord3DMode(IntEnum):
         """Convert boxes from `src` mode to `dst` mode.
 
         Args:
-            box (tuple | list | np.dnarray |
+            box (tuple | list | np.ndarray |
                 torch.Tensor | BaseInstance3DBoxes):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
             src (:obj:`CoordMode`): The src Box mode.
             dst (:obj:`CoordMode`): The target Box mode.
-            rt_mat (np.dnarray | torch.Tensor): The rotation and translation
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.dnarray | torch.Tensor | BaseInstance3DBoxes): \
+            (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes): \
                 The converted box of the same type.
         """
         if src == dst:
@@ -182,19 +182,19 @@ class Coord3DMode(IntEnum):
         """Convert points from `src` mode to `dst` mode.
 
         Args:
-            point (tuple | list | np.dnarray |
+            point (tuple | list | np.ndarray |
                 torch.Tensor | BasePoints):
                 Can be a k-tuple, k-list or an Nxk array/tensor.
             src (:obj:`CoordMode`): The src Point mode.
             dst (:obj:`CoordMode`): The target Point mode.
-            rt_mat (np.dnarray | torch.Tensor): The rotation and translation
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.dnarray | torch.Tensor | BasePoints): \
+            (tuple | list | np.ndarray | torch.Tensor | BasePoints): \
                 The converted point of the same type.
         """
         if src == dst:
