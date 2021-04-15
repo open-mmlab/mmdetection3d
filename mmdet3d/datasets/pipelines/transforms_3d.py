@@ -660,15 +660,17 @@ class IndoorPointSample(object):
         points = results['points']
         points, choices = self.points_random_sampling(
             points, self.num_points, return_choices=True)
+        results['points'] = points
 
         pts_instance_mask = results.get('pts_instance_mask', None)
         pts_semantic_mask = results.get('pts_semantic_mask', None)
-        results['points'] = points
 
-        if pts_instance_mask is not None and pts_semantic_mask is not None:
+        if pts_instance_mask is not None:
             pts_instance_mask = pts_instance_mask[choices]
-            pts_semantic_mask = pts_semantic_mask[choices]
             results['pts_instance_mask'] = pts_instance_mask
+
+        if pts_semantic_mask is not None:
+            pts_semantic_mask = pts_semantic_mask[choices]
             results['pts_semantic_mask'] = pts_semantic_mask
 
         return results
