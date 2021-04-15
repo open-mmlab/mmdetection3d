@@ -267,7 +267,7 @@ def test_show():
         _generate_sunrgbd_multi_modality_dataset_config()
     sunrgbd_dataset = SUNRGBDDataset(
         root_path, ann_file, multi_modality_pipelines, modality=modality)
-    sunrgbd_dataset.show(results, temp_dir, show=False)
+    sunrgbd_dataset.show(results, temp_dir, False, multi_modality_pipelines)
     pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
     gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
     pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')
