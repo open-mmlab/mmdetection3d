@@ -136,19 +136,18 @@ def test_3dssd():
     gt_bbox_0 = DepthInstance3DBoxes(torch.rand([10, 7], device='cuda'))
     gt_bbox_1 = DepthInstance3DBoxes(torch.rand([10, 7], device='cuda'))
     gt_bboxes = [gt_bbox_0, gt_bbox_1]
-    gt_labels_0 = torch.randint(0, 10, [10], device='cuda')
-    gt_labels_1 = torch.randint(0, 10, [10], device='cuda')
+    gt_labels_0 = torch.zeros([10], device='cuda').long()
+    gt_labels_1 = torch.zeros([10], device='cuda').long()
     gt_labels = [gt_labels_0, gt_labels_1]
 
     # test forward_train
     losses = self.forward_train(points, img_metas, gt_bboxes, gt_labels)
     assert losses['vote_loss'] >= 0
-    assert losses['objectness_loss'] >= 0
-    assert losses['semantic_loss'] >= 0
+    assert losses['centerness_loss'] >= 0
     assert losses['center_loss'] >= 0
     assert losses['dir_class_loss'] >= 0
     assert losses['dir_res_loss'] >= 0
-    assert losses['size_class_loss'] >= 0
+    assert losses['corner_loss'] >= 0
     assert losses['size_res_loss'] >= 0
 
     # test simple_test
