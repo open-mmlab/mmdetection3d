@@ -593,7 +593,7 @@ def test_h3d_head():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
 
-    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x3_scannet-3d-18class.py')
+    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_3x8_scannet-3d-18class.py')
 
     num_point = 128
     num_proposal = 64
@@ -907,7 +907,7 @@ def test_ssd3d_head():
     assert ret_dict['dir_res'].shape == torch.Size([2, 64, 12])
 
     # test loss
-    points = [torch.rand([4000, 4], device='cuda') for i in range(2)]
+    points = [torch.rand([4000, 3], device='cuda') for i in range(2)]
     gt_bbox1 = LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
     gt_bbox2 = LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
     gt_bboxes = [gt_bbox1, gt_bbox2]
