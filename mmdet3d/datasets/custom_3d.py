@@ -293,6 +293,28 @@ class Custom3DDataset(Dataset):
             return Compose(loading_pipeline)
         return Compose(pipeline)
 
+    @staticmethod
+    def _get_data(results, key):
+        """Extract and return the data corresponding to key in result dict.
+
+        Args:
+            results (dict): Data loaded using pipeline.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor | None: Data term.
+        """
+        if key not in results.keys():
+            return None
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
+        return data
+
     def _extract_data(self, index, pipeline, key, load_annos=False):
         """Load data using input pipeline and extract data according to key.
 
@@ -315,30 +337,11 @@ class Custom3DDataset(Dataset):
         self.pre_pipeline(input_dict)
         example = pipeline(input_dict)
 
-        def get_data(key):
-            """Extract and return the data corresponding to key in result dict.
-
-            Args:
-                key (str): Key of the desired data.
-
-            Returns:
-                np.ndarray | torch.Tensor | None: Data term.
-            """
-            if key not in example.keys():
-                return None
-            # example[key] may be data or list[data]
-            # data may be wrapped inside DataContainer
-            data = example[key]
-            if isinstance(data, list) or isinstance(data, tuple):
-                data = data[0]
-            if isinstance(data, mmcv.parallel.DataContainer):
-                data = data._data
-            return data
-
+        # extract data items according to keys
         if isinstance(key, str):
-            data = get_data(key)
+            data = self._get_data(example, key)
         else:
-            data = [get_data(k) for k in key]
+            data = [self._get_data(example, k) for k in key]
         if load_annos:
             self.test_mode = original_test_mode
 

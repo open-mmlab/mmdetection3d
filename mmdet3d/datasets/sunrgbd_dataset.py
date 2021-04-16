@@ -154,35 +154,21 @@ class SUNRGBDDataset(Custom3DDataset):
 
     def _build_default_pipeline(self):
         """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='DEPTH',
+                shift_height=False,
+                load_dim=6,
+                use_dim=[0, 1, 2]),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=self.CLASSES,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ]
         if self.modality['use_camera']:
-            pipeline = [
-                dict(type='LoadImageFromFile'),
-                dict(
-                    type='LoadPointsFromFile',
-                    coord_type='DEPTH',
-                    shift_height=False,
-                    load_dim=6,
-                    use_dim=[0, 1, 2]),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=self.CLASSES,
-                    with_label=False),
-                dict(type='Collect3D', keys=['points', 'img'])
-            ]
-        else:
-            pipeline = [
-                dict(
-                    type='LoadPointsFromFile',
-                    coord_type='DEPTH',
-                    shift_height=False,
-                    load_dim=6,
-                    use_dim=[0, 1, 2]),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=self.CLASSES,
-                    with_label=False),
-                dict(type='Collect3D', keys=['points'])
-            ]
+            pipeline.insert(0, dict(type='LoadImageFromFile'))
         return Compose(pipeline)
 
     def show(self, results, out_dir, show=True, pipeline=None):
