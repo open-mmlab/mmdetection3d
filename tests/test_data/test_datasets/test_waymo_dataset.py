@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import tempfile
 import torch
 
@@ -6,8 +7,8 @@ from mmdet3d.datasets import WaymoDataset
 
 
 def _generate_waymo_dataset_config():
-    data_root = 'tests/data/waymo/'
-    ann_file = 'tests/data/waymo/waymo_infos_train.pkl'
+    data_root = 'tests/data/waymo/kitti_format/'
+    ann_file = 'tests/data/waymo/kitti_format/waymo_infos_train.pkl'
     classes = ['Car', 'Pedestrian', 'Cyclist']
     pts_prefix = 'velodyne'
     point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
@@ -109,11 +110,41 @@ def test_getitem():
     assert torch.all(gt_labels_3d == expected_gt_labels_3d)
 
 
+def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    from mmdet3d.core.bbox import LiDARInstance3DBoxes
+    data_root, ann_file, classes, pts_prefix, pipeline, modality, split, \
+        point_cloud_range, file_client_args = _generate_waymo_dataset_config()
+    waymo_dataset = WaymoDataset(data_root, ann_file, split, pts_prefix,
+                                 pipeline, classes, modality)
+    boxes_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[31.4750, -4.5690, 2.1857, 2.3519, 6.0931, 3.1756, -1.2895]]))
+    labels_3d = torch.tensor([
+        0,
+    ])
+    scores_3d = torch.tensor([0.5])
+    result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    # kitti protocol
+    # kitti box and waymo box are in different format
+    metric = ['kitti']
+    _ = waymo_dataset.evaluate([result], metric=metric)
+    # assert np.isclose(ap_dict['KITTI/Overall_3D_easy'], 3.030303030)
+    # assert np.isclose(ap_dict['KITTI/Overall_3D_moderate'], 3.030303030)
+    # assert np.isclose(ap_dict['KITTI/Overall_3D_hard'], 3.030303030)
+
+    # waymo protocol
+    # missing gt file tests/data/waymo/waymo_format/gt.bin
+
+
 def test_show():
     import mmcv
     from os import path as osp
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
+
+    # Waymo shares show function with KITTI so I just copy it here
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name
     data_root, ann_file, classes, pts_prefix, pipeline, modality, split, \
