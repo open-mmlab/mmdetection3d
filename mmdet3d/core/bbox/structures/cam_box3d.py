@@ -185,7 +185,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
-        assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1
+        assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1, \
+            f'invalid rotation angle shape {angle.shape}'
 
         if angle.numel() == 1:
             rot_sin = torch.sin(angle)
