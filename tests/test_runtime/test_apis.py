@@ -9,7 +9,7 @@ from os.path import dirname, exists, join
 from mmdet3d.apis import (convert_SyncBN, inference_detector, init_detector,
                           show_result_meshlab, single_gpu_test)
 from mmdet3d.core import Box3DMode
-from mmdet3d.core.bbox import LiDARInstance3DBoxes
+from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_detector
 
@@ -65,19 +65,122 @@ def test_show_result_meshlab():
             pts_bbox=dict(
                 boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
     ]
-    temp_out_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(data, result, temp_out_dir)
-    expected_outfile_ply = file_name + '_pred.ply'
-    expected_outfile_obj = file_name + '_points.obj'
-    expected_outfile_ply_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_ply)
-    expected_outfile_obj_path = os.path.join(out_dir, file_name,
-                                             expected_outfile_obj)
-    assert os.path.exists(expected_outfile_ply_path)
-    assert os.path.exists(expected_outfile_obj_path)
-    os.remove(expected_outfile_obj_path)
-    os.remove(expected_outfile_ply_path)
-    os.removedirs(os.path.join(temp_out_dir, file_name))
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
+    tmp_dir.cleanup()
+
+    # test multi-modality show
+    # Indoor scene
+    pcd = 'tests/data/sunrgbd/points/000001.bin'
+    filename = 'tests/data/sunrgbd/sunrgbd_trainval/image/000001.jpg'
+    box_3d = DepthInstance3DBoxes(
+        torch.tensor(
+            [[-1.1580, 3.3041, -0.9961, 0.3829, 0.4647, 0.5574, 1.1213]]))
+    img = np.random.randn(1, 3, 608, 832)
+    K = np.array([[[529.5000, 0.0000, 365.0000], [0.0000, 529.5000, 265.0000],
+                   [0.0000, 0.0000, 1.0000]]])
+    Rt = torch.tensor([[[0.9980, 0.0058, -0.0634], [0.0058, 0.9835, 0.1808],
+                        [0.0634, -0.1808, 0.9815]]])
+    img_meta = dict(
+        filename=filename,
+        pcd_horizontal_flip=False,
+        pcd_vertical_flip=False,
+        box_mode_3d=Box3DMode.DEPTH,
+        box_type_3d=DepthInstance3DBoxes,
+        pcd_trans=np.array([0., 0., 0.]),
+        pcd_scale_factor=1.0,
+        pts_filename=pcd,
+        transformation_3d_flow=['R', 'S', 'T'])
+    calib = dict(K=K, Rt=Rt)
+    data = dict(
+        points=[[torch.tensor(points)]],
+        img_metas=[[img_meta]],
+        img=[img],
+        calib=[calib])
+    result = [
+        dict(
+            pts_bbox=dict(
+                boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
+    ]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
+    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
+    expected_outfile_png = file_name + '_img.png'
+    expected_outfile_proj = file_name + '_pred.png'
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
+    expected_outfile_png_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_png)
+    expected_outfile_proj_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_proj)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
+    assert os.path.exists(expected_outfile_png_path)
+    assert os.path.exists(expected_outfile_proj_path)
+    tmp_dir.cleanup()
+    # outdoor scene
+    pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
+    filename = 'tests/data/kitti/training/image_2/000000.png'
+    box_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            [[6.4495, -3.9097, -1.7409, 1.5063, 3.1819, 1.4716, 1.8782]]))
+    img = np.random.randn(1, 3, 384, 1280)
+    lidar2img = np.array(
+        [[6.09695435e+02, -7.21421631e+02, -1.25125790e+00, -1.23041824e+02],
+         [1.80384201e+02, 7.64479828e+00, -7.19651550e+02, -1.01016693e+02],
+         [9.99945343e-01, 1.24365499e-04, 1.04513029e-02, -2.69386917e-01],
+         [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+    img_meta = dict(
+        filename=filename,
+        pcd_horizontal_flip=False,
+        pcd_vertical_flip=False,
+        box_mode_3d=Box3DMode.LIDAR,
+        box_type_3d=LiDARInstance3DBoxes,
+        pcd_trans=np.array([0., 0., 0.]),
+        pcd_scale_factor=1.0,
+        pts_filename=pcd,
+        lidar2img=lidar2img)
+    data = dict(
+        points=[[torch.tensor(points)]], img_metas=[[img_meta]], img=[img])
+    result = [
+        dict(
+            pts_bbox=dict(
+                boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
+    ]
+    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.1)
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
+    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
+    expected_outfile_png = file_name + '_img.png'
+    expected_outfile_proj = file_name + '_pred.png'
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
+    expected_outfile_png_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_png)
+    expected_outfile_proj_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_proj)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
+    assert os.path.exists(expected_outfile_png_path)
+    assert os.path.exists(expected_outfile_proj_path)
+    tmp_dir.cleanup()
 
 
 def test_inference_detector():

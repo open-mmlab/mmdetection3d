@@ -3,7 +3,7 @@ import numpy as np
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import LoadAnnotations
+from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
 
 
 @PIPELINES.register_module()
@@ -61,8 +61,32 @@ class LoadMultiViewImageFromFiles(object):
 
     def __repr__(self):
         """str: Return a string that describes the module."""
-        return "{} (to_float32={}, color_type='{}')".format(
-            self.__class__.__name__, self.to_float32, self.color_type)
+        return f'{self.__class__.__name__} (to_float32={self.to_float32}, '\
+            f"color_type='{self.color_type}')"
+
+
+@PIPELINES.register_module()
+class LoadImageFromFileMono3D(LoadImageFromFile):
+    """Load an image from file in monocular 3D object detection. Compared to 2D
+    detection, additional camera parameters need to be loaded.
+
+    Args:
+        kwargs (dict): Arguments are the same as those in \
+            :class:`LoadImageFromFile`.
+    """
+
+    def __call__(self, results):
+        """Call functions to load image and get image meta information.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet.CustomDataset`.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        super().__call__(results)
+        results['cam_intrinsic'] = results['img_info']['cam_intrinsic']
+        return results
 
 
 @PIPELINES.register_module()
@@ -130,7 +154,7 @@ class LoadPointsFromMultiSweeps(object):
         """Removes point too close within a certain radius from origin.
 
         Args:
-            points (np.ndarray): Sweep points.
+            points (np.ndarray | :obj:`BasePoints`): Sweep points.
             radius (float): Radius below which points are removed.
                 Defaults to 1.0.
 
@@ -159,7 +183,8 @@ class LoadPointsFromMultiSweeps(object):
             dict: The result dict containing the multi-sweep points data. \
                 Added key and value are described below.
 
-                - points (np.ndarray): Multi-sweep point cloud arrays.
+                - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point \
+                    cloud arrays.
         """
         points = results['points']
         points.tensor[:, 4] = 0
@@ -246,7 +271,7 @@ class PointSegClassMapping(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(valid_cat_ids={})'.format(self.valid_cat_ids)
+        repr_str += f'(valid_cat_ids={self.valid_cat_ids})'
         return repr_str
 
 
@@ -271,19 +296,23 @@ class NormalizePointsColor(object):
             dict: The result dict containing the normalized points. \
                 Updated key and value are described below.
 
-                - points (np.ndarray): Points after color normalization.
+                - points (:obj:`BasePoints`): Points after color normalization.
         """
         points = results['points']
-        assert points.shape[1] >= 6,\
-            f'Expect points have channel >=6, got {points.shape[1]}'
-        points[:, 3:6] = points[:, 3:6] - np.array(self.color_mean) / 256.0
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims.keys(), \
+            'Expect points have color attribute'
+        if self.color_mean is not None:
+            points.color = points.color - \
+                points.color.new_tensor(self.color_mean)
+        points.color = points.color / 255.0
         results['points'] = points
         return results
 
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += '(color_mean={})'.format(self.color_mean)
+        repr_str += f'(color_mean={self.color_mean})'
         return repr_str
 
 
@@ -294,17 +323,18 @@ class LoadPointsFromFile(object):
     Load sunrgbd and scannet points from file.
 
     Args:
-        load_dim (int): The dimension of the loaded points.
-            Defaults to 6.
         coord_type (str): The type of coordinates of points cloud.
             Available options includes:
             - 'LIDAR': Points in LiDAR coordinates.
             - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
             - 'CAMERA': Points in camera coordinates.
+        load_dim (int): The dimension of the loaded points.
+            Defaults to 6.
         use_dim (list[int]): Which dimensions of the points to be used.
             Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
         shift_height (bool): Whether to use shifted height. Defaults to False.
+        use_color (bool): Whether to use color features. Defaults to False.
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
@@ -315,8 +345,10 @@ class LoadPointsFromFile(object):
                  load_dim=6,
                  use_dim=[0, 1, 2],
                  shift_height=False,
+                 use_color=False,
                  file_client_args=dict(backend='disk')):
         self.shift_height = shift_height
+        self.use_color = use_color
         if isinstance(use_dim, int):
             use_dim = list(range(use_dim))
         assert max(use_dim) < load_dim, \
@@ -362,7 +394,7 @@ class LoadPointsFromFile(object):
             dict: The result dict containing the point clouds data. \
                 Added key and value are described below.
 
-                - points (np.ndarray): Point clouds data.
+                - points (:obj:`BasePoints`): Point clouds data.
         """
         pts_filename = results['pts_filename']
         points = self._load_points(pts_filename)
@@ -373,8 +405,21 @@ class LoadPointsFromFile(object):
         if self.shift_height:
             floor_height = np.percentile(points[:, 2], 0.99)
             height = points[:, 2] - floor_height
-            points = np.concatenate([points, np.expand_dims(height, 1)], 1)
+            points = np.concatenate(
+                [points[:, :3],
+                 np.expand_dims(height, 1), points[:, 3:]], 1)
             attribute_dims = dict(height=3)
+
+        if self.use_color:
+            assert len(self.use_dim) >= 6
+            if attribute_dims is None:
+                attribute_dims = dict()
+            attribute_dims.update(
+                dict(color=[
+                    points.shape[1] - 3,
+                    points.shape[1] - 2,
+                    points.shape[1] - 1,
+                ]))
 
         points_class = get_points_type(self.coord_type)
         points = points_class(
@@ -386,10 +431,11 @@ class LoadPointsFromFile(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__ + '('
-        repr_str += 'shift_height={}, '.format(self.shift_height)
-        repr_str += 'file_client_args={}), '.format(self.file_client_args)
-        repr_str += 'load_dim={}, '.format(self.load_dim)
-        repr_str += 'use_dim={})'.format(self.use_dim)
+        repr_str += f'shift_height={self.shift_height}, '
+        repr_str += f'use_color={self.use_color}, '
+        repr_str += f'file_client_args={self.file_client_args}, '
+        repr_str += f'load_dim={self.load_dim}, '
+        repr_str += f'use_dim={self.use_dim})'
         return repr_str
 
 
@@ -405,6 +451,8 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to True.
         with_label_3d (bool, optional): Whether to load 3D labels.
             Defaults to True.
+        with_attr_label (bool, optional): Whether to load attribute label.
+            Defaults to False.
         with_mask_3d (bool, optional): Whether to load 3D instance masks.
             for points. Defaults to False.
         with_seg_3d (bool, optional): Whether to load 3D semantic masks.
@@ -416,6 +464,8 @@ class LoadAnnotations3D(LoadAnnotations):
         with_mask (bool, optional): Whether to load 2D instance masks.
             Defaults to False.
         with_seg (bool, optional): Whether to load 2D semantic masks.
+            Defaults to False.
+        with_bbox_depth (bool, optional): Whether to load 2.5D boxes.
             Defaults to False.
         poly2mask (bool, optional): Whether to convert polygon annotations
             to bitmasks. Defaults to True.
@@ -429,12 +479,14 @@ class LoadAnnotations3D(LoadAnnotations):
     def __init__(self,
                  with_bbox_3d=True,
                  with_label_3d=True,
+                 with_attr_label=False,
                  with_mask_3d=False,
                  with_seg_3d=False,
                  with_bbox=False,
                  with_label=False,
                  with_mask=False,
                  with_seg=False,
+                 with_bbox_depth=False,
                  poly2mask=True,
                  seg_3d_dtype='int',
                  file_client_args=dict(backend='disk')):
@@ -446,7 +498,9 @@ class LoadAnnotations3D(LoadAnnotations):
             poly2mask,
             file_client_args=file_client_args)
         self.with_bbox_3d = with_bbox_3d
+        self.with_bbox_depth = with_bbox_depth
         self.with_label_3d = with_label_3d
+        self.with_attr_label = with_attr_label
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
@@ -464,6 +518,19 @@ class LoadAnnotations3D(LoadAnnotations):
         results['bbox3d_fields'].append('gt_bboxes_3d')
         return results
 
+    def _load_bboxes_depth(self, results):
+        """Private function to load 2.5D bounding box annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 2.5D bounding box annotations.
+        """
+        results['centers2d'] = results['ann_info']['centers2d']
+        results['depths'] = results['ann_info']['depths']
+        return results
+
     def _load_labels_3d(self, results):
         """Private function to load label annotations.
 
@@ -474,6 +541,18 @@ class LoadAnnotations3D(LoadAnnotations):
             dict: The dict containing loaded label annotations.
         """
         results['gt_labels_3d'] = results['ann_info']['gt_labels_3d']
+        return results
+
+    def _load_attr_labels(self, results):
+        """Private function to load label annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded label annotations.
+        """
+        results['attr_labels'] = results['ann_info']['attr_labels']
         return results
 
     def _load_masks_3d(self, results):
@@ -543,8 +622,14 @@ class LoadAnnotations3D(LoadAnnotations):
             results = self._load_bboxes_3d(results)
             if results is None:
                 return None
+        if self.with_bbox_depth:
+            results = self._load_bboxes_depth(results)
+            if results is None:
+                return None
         if self.with_label_3d:
             results = self._load_labels_3d(results)
+        if self.with_attr_label:
+            results = self._load_attr_labels(results)
         if self.with_mask_3d:
             results = self._load_masks_3d(results)
         if self.with_seg_3d:
@@ -558,11 +643,13 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str = self.__class__.__name__ + '(\n'
         repr_str += f'{indent_str}with_bbox_3d={self.with_bbox_3d}, '
         repr_str += f'{indent_str}with_label_3d={self.with_label_3d}, '
+        repr_str += f'{indent_str}with_attr_label={self.with_attr_label}, '
         repr_str += f'{indent_str}with_mask_3d={self.with_mask_3d}, '
         repr_str += f'{indent_str}with_seg_3d={self.with_seg_3d}, '
         repr_str += f'{indent_str}with_bbox={self.with_bbox}, '
         repr_str += f'{indent_str}with_label={self.with_label}, '
         repr_str += f'{indent_str}with_mask={self.with_mask}, '
         repr_str += f'{indent_str}with_seg={self.with_seg}, '
+        repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str

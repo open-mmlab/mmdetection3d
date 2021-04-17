@@ -4,8 +4,8 @@ import trimesh
 from os import path as osp
 
 
-def _write_ply(points, out_filename):
-    """Write points into ``ply`` format for meshlab visualization.
+def _write_obj(points, out_filename):
+    """Write points into ``obj`` format for meshlab visualization.
 
     Args:
         points (np.ndarray): Points in shape (N, dim).
@@ -62,8 +62,8 @@ def _write_oriented_bbox(scene_bbox, out_filename):
         scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
 
     mesh_list = trimesh.util.concatenate(scene.dump())
-    # save to ply file
-    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
+    # save to obj file
+    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='obj')
 
     return
 
@@ -77,7 +77,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        show (bool): Visualize the results online.
+        show (bool): Visualize the results online. Defaults to True.
     """
     if show:
         from .open3d_vis import Visualizer
@@ -93,7 +93,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
     mmcv.mkdir_or_exist(result_path)
 
     if points is not None:
-        _write_ply(points, osp.join(result_path, f'{filename}_points.obj'))
+        _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
 
     if gt_bboxes is not None:
         # bottom center to gravity center
@@ -101,7 +101,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         # the positive direction for yaw in meshlab is clockwise
         gt_bboxes[:, 6] *= -1
         _write_oriented_bbox(gt_bboxes,
-                             osp.join(result_path, f'{filename}_gt.ply'))
+                             osp.join(result_path, f'{filename}_gt.obj'))
 
     if pred_bboxes is not None:
         # bottom center to gravity center
@@ -109,4 +109,139 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         # the positive direction for yaw in meshlab is clockwise
         pred_bboxes[:, 6] *= -1
         _write_oriented_bbox(pred_bboxes,
-                             osp.join(result_path, f'{filename}_pred.ply'))
+                             osp.join(result_path, f'{filename}_pred.obj'))
+
+
+def show_seg_result(points,
+                    gt_seg,
+                    pred_seg,
+                    out_dir,
+                    filename,
+                    palette,
+                    ignore_index=None,
+                    show=False):
+    """Convert results into format that is directly readable for meshlab.
+
+    Args:
+        points (np.ndarray): Points.
+        gt_seg (np.ndarray): Ground truth segmentation mask.
+        pred_seg (np.ndarray): Predicted segmentation mask.
+        out_dir (str): Path of output directory
+        filename (str): Filename of the current frame.
+        palette (np.ndarray): Mapping between class labels and colors.
+        ignore_index (int, optional): The label index to be ignored, e.g. \
+            unannotated points. Defaults to None.
+        show (bool, optional): Visualize the results online. Defaults to False.
+    """
+    # we need 3D coordinates to visualize segmentation mask
+    if gt_seg is not None or pred_seg is not None:
+        assert points is not None, \
+            '3D coordinates are required for segmentation visualization'
+
+    # filter out ignored points
+    if gt_seg is not None and ignore_index is not None:
+        if points is not None:
+            points = points[gt_seg != ignore_index]
+        if pred_seg is not None:
+            pred_seg = pred_seg[gt_seg != ignore_index]
+        gt_seg = gt_seg[gt_seg != ignore_index]
+
+    if gt_seg is not None:
+        gt_seg_color = palette[gt_seg]
+        gt_seg_color = np.concatenate([points[:, :3], gt_seg_color], axis=1)
+    if pred_seg is not None:
+        pred_seg_color = palette[pred_seg]
+        pred_seg_color = np.concatenate([points[:, :3], pred_seg_color],
+                                        axis=1)
+
+    # online visualization of segmentation mask
+    # we show three masks in a row, scene_points, gt_mask, pred_mask
+    if show:
+        from .open3d_vis import Visualizer
+        mode = 'xyzrgb' if points.shape[1] == 6 else 'xyz'
+        vis = Visualizer(points, mode=mode)
+        if gt_seg is not None:
+            vis.add_seg_mask(gt_seg_color)
+        if pred_seg is not None:
+            vis.add_seg_mask(pred_seg_color)
+        vis.show()
+
+    result_path = osp.join(out_dir, filename)
+    mmcv.mkdir_or_exist(result_path)
+
+    if points is not None:
+        _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
+
+    if gt_seg is not None:
+        _write_obj(gt_seg_color, osp.join(result_path, f'{filename}_gt.obj'))
+
+    if pred_seg is not None:
+        _write_obj(pred_seg_color, osp.join(result_path,
+                                            f'{filename}_pred.obj'))
+
+
+def show_multi_modality_result(img,
+                               gt_bboxes,
+                               pred_bboxes,
+                               proj_mat,
+                               out_dir,
+                               filename,
+                               depth_bbox=False,
+                               img_metas=None,
+                               show=True,
+                               gt_bbox_color=(61, 102, 255),
+                               pred_bbox_color=(241, 101, 72)):
+    """Convert multi-modality detection results into 2D results.
+
+    Project the predicted 3D bbox to 2D image plane and visualize them.
+
+    Args:
+        img (np.ndarray): The numpy array of image in cv2 fashion.
+        gt_bboxes (np.ndarray): Ground truth boxes.
+        pred_bboxes (np.ndarray): Predicted boxes.
+        proj_mat (numpy.array, shape=[4, 4]): The projection matrix
+            according to the camera intrinsic parameters.
+        out_dir (str): Path of output directory
+        filename (str): Filename of the current frame.
+        depth_bbox (bool): Whether we are projecting camera bbox or lidar bbox.
+        img_metas (dict): Used in projecting cameta bbox.
+        show (bool): Visualize the results online. Defaults to True.
+        gt_bbox_color (str or tuple(int)): Color of bbox lines.
+           The tuple of color should be in BGR order. Default: (255, 102, 61)
+        pred_bbox_color (str or tuple(int)): Color of bbox lines.
+           The tuple of color should be in BGR order. Default: (72, 101, 241)
+    """
+    if depth_bbox:
+        from .open3d_vis import draw_depth_bbox3d_on_img as draw_bbox
+    else:
+        from .open3d_vis import draw_lidar_bbox3d_on_img as draw_bbox
+
+    result_path = osp.join(out_dir, filename)
+    mmcv.mkdir_or_exist(result_path)
+
+    if show:
+        show_img = img.copy()
+        if gt_bboxes is not None:
+            show_img = draw_bbox(
+                gt_bboxes, show_img, proj_mat, img_metas, color=gt_bbox_color)
+        if pred_bboxes is not None:
+            show_img = draw_bbox(
+                pred_bboxes,
+                show_img,
+                proj_mat,
+                img_metas,
+                color=pred_bbox_color)
+        mmcv.imshow(show_img, win_name='project_bbox3d_img', wait_time=0)
+
+    if img is not None:
+        mmcv.imwrite(img, osp.join(result_path, f'{filename}_img.png'))
+
+    if gt_bboxes is not None:
+        gt_img = draw_bbox(
+            gt_bboxes, img, proj_mat, img_metas, color=gt_bbox_color)
+        mmcv.imwrite(gt_img, osp.join(result_path, f'{filename}_gt.png'))
+
+    if pred_bboxes is not None:
+        pred_img = draw_bbox(
+            pred_bboxes, img, proj_mat, img_metas, color=pred_bbox_color)
+        mmcv.imwrite(pred_img, osp.join(result_path, f'{filename}_pred.png'))

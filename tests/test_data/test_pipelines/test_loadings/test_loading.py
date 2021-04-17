@@ -4,9 +4,11 @@ import pytest
 from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmdet3d.core.points import LiDARPoints
+from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
-                                        LoadPointsFromMultiSweeps)
+                                        LoadPointsFromMultiSweeps,
+                                        NormalizePointsColor,
+                                        PointSegClassMapping)
 
 
 def test_load_points_from_indoor_file():
@@ -35,10 +37,32 @@ def test_load_points_from_indoor_file():
     scannet_point_cloud = scannet_results['points'].tensor.numpy()
     repr_str = repr(scannet_load_data)
     expected_repr_str = 'LoadPointsFromFile(shift_height=True, ' \
-                        'file_client_args={\'backend\': \'disk\'}), ' \
+                        'use_color=False, ' \
+                        'file_client_args={\'backend\': \'disk\'}, ' \
                         'load_dim=6, use_dim=[0, 1, 2])'
     assert repr_str == expected_repr_str
     assert scannet_point_cloud.shape == (100, 4)
+
+    # test load point cloud with both shifted height and color
+    scannet_load_data = LoadPointsFromFile(
+        coord_type='DEPTH',
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5],
+        shift_height=True,
+        use_color=True)
+
+    scannet_results = dict()
+
+    scannet_results['pts_filename'] = osp.join(data_path,
+                                               scannet_info['pts_path'])
+    scannet_results = scannet_load_data(scannet_results)
+    scannet_point_cloud = scannet_results['points']
+    assert scannet_point_cloud.points_dim == 7
+    assert scannet_point_cloud.attribute_dims == dict(
+        height=3, color=[4, 5, 6])
+
+    scannet_point_cloud = scannet_point_cloud.tensor.numpy()
+    assert scannet_point_cloud.shape == (100, 7)
 
 
 def test_load_points_from_outdoor_file():
@@ -106,15 +130,53 @@ def test_load_annotations3D():
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
     repr_str = repr(scannet_load_annotations3D)
     expected_repr_str = 'LoadAnnotations3D(\n    with_bbox_3d=True,     ' \
-                        'with_label_3d=True,     with_mask_3d=True,     ' \
-                        'with_seg_3d=True,     with_bbox=False,     ' \
-                        'with_label=False,     with_mask=False,     ' \
-                        'with_seg=False,     poly2mask=True)'
+                        'with_label_3d=True,     with_attr_label=False,     ' \
+                        'with_mask_3d=True,     with_seg_3d=True,     ' \
+                        'with_bbox=False,     with_label=False,     ' \
+                        'with_mask=False,     with_seg=False,     ' \
+                        'with_bbox_depth=False,     poly2mask=True)'
     assert repr_str == expected_repr_str
     assert scannet_gt_boxes.tensor.shape == (27, 7)
     assert scannet_gt_labels.shape == (27, )
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )
+
+
+def test_load_segmentation_mask():
+    # Test loading semantic segmentation mask on ScanNet dataset
+    scannet_info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
+    scannet_load_annotations3D = LoadAnnotations3D(
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True)
+    scannet_results = dict()
+    data_path = './tests/data/scannet'
+
+    # prepare input of loading pipeline
+    scannet_results['ann_info'] = dict()
+    scannet_results['ann_info']['pts_semantic_mask_path'] = osp.join(
+        data_path, scannet_info['pts_semantic_mask_path'])
+    scannet_results['pts_seg_fields'] = []
+
+    scannet_results = scannet_load_annotations3D(scannet_results)
+    scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
+    assert scannet_pts_semantic_mask.shape == (100, )
+
+    # Convert class_id to label and assign ignore_index
+    scannet_seg_class_mapping = \
+        PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
+                              24, 28, 33, 34, 36, 39))
+    scannet_results = scannet_seg_class_mapping(scannet_results)
+    scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
+
+    assert np.all(scannet_pts_semantic_mask == np.array([
+        13, 20, 1, 2, 6, 2, 13, 1, 13, 2, 0, 20, 5, 20, 2, 0, 1, 13, 0, 0, 0,
+        20, 6, 20, 13, 20, 2, 20, 20, 2, 16, 5, 13, 5, 13, 0, 20, 0, 0, 1, 7,
+        20, 20, 20, 20, 20, 20, 20, 0, 1, 2, 13, 16, 1, 1, 1, 6, 2, 12, 20, 3,
+        20, 20, 14, 1, 20, 2, 1, 7, 2, 0, 5, 20, 5, 20, 20, 3, 6, 5, 20, 0, 13,
+        12, 2, 20, 0, 0, 13, 20, 1, 20, 5, 3, 0, 13, 1, 2, 2, 2, 1
+    ]))
 
 
 def test_load_points_from_multi_sweeps():
@@ -140,3 +202,31 @@ def test_load_points_from_multi_sweeps():
     expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
     assert repr_str == expected_repr_str
     assert points.shape == (403, 4)
+
+
+def test_normalize_points_color():
+    coord = np.array([[68.137, 3.358, 2.516], [67.697, 3.55, 2.501],
+                      [67.649, 3.76, 2.5], [66.414, 3.901, 2.459],
+                      [66.012, 4.085, 2.446], [65.834, 4.178, 2.44],
+                      [65.841, 4.386, 2.44], [65.745, 4.587, 2.438],
+                      [65.551, 4.78, 2.432], [65.486, 4.982, 2.43]])
+    color = np.array([[131, 95, 138], [71, 185, 253], [169, 47, 41],
+                      [174, 161, 88], [6, 158, 213], [6, 86, 78],
+                      [118, 161, 78], [72, 195, 138], [180, 170, 32],
+                      [197, 85, 27]])
+    points = np.concatenate([coord, color], axis=1)
+    points = DepthPoints(
+        points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+    input_dict = dict(points=points)
+
+    color_mean = [100, 150, 200]
+    points_color_normalizer = NormalizePointsColor(color_mean=color_mean)
+    input_dict = points_color_normalizer(input_dict)
+    points = input_dict['points']
+    repr_str = repr(points_color_normalizer)
+    expected_repr_str = f'NormalizePointsColor(color_mean={color_mean})'
+
+    assert repr_str == expected_repr_str
+    assert np.allclose(points.coord, coord)
+    assert np.allclose(points.color,
+                       (color - np.array(color_mean)[None, :]) / 255.0)

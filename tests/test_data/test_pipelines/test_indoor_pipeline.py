@@ -104,6 +104,77 @@ def test_scannet_pipeline():
     assert np.all(pts_instance_mask.numpy() == expected_pts_instance_mask)
 
 
+def test_scannet_seg_pipeline():
+    class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
+                   'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'otherfurniture')
+
+    np.random.seed(0)
+    pipelines = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            use_color=True,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=False,
+            with_label_3d=False,
+            with_mask_3d=False,
+            with_seg_3d=True),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
+                           28, 33, 34, 36, 39)),
+        dict(
+            type='IndoorPatchPointSample',
+            num_points=5,
+            block_size=1.5,
+            sample_rate=1.0,
+            ignore_index=len(class_names),
+            use_normalized_coord=True),
+        dict(type='NormalizePointsColor', color_mean=None),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    ]
+    pipeline = Compose(pipelines)
+    info = mmcv.load('./tests/data/scannet/scannet_infos.pkl')[0]
+    results = dict()
+    data_path = './tests/data/scannet'
+    results['pts_filename'] = osp.join(data_path, info['pts_path'])
+    results['ann_info'] = dict()
+    results['ann_info']['pts_semantic_mask_path'] = osp.join(
+        data_path, info['pts_semantic_mask_path'])
+
+    results['pts_seg_fields'] = []
+
+    results = pipeline(results)
+
+    points = results['points']._data
+    pts_semantic_mask = results['pts_semantic_mask']._data
+
+    # build sampled points
+    scannet_points = np.fromfile(
+        osp.join(data_path, info['pts_path']), dtype=np.float32).reshape(
+            (-1, 6))
+    scannet_choices = np.array([87, 34, 58, 9, 18])
+    scannet_center = np.array([-2.1772466, -3.4789145, 1.242711])
+    scannet_center[2] = 0.0
+    scannet_coord_max = np.amax(scannet_points[:, :3], axis=0)
+    expected_points = np.concatenate([
+        scannet_points[scannet_choices, :3] - scannet_center,
+        scannet_points[scannet_choices, 3:] / 255.,
+        scannet_points[scannet_choices, :3] / scannet_coord_max
+    ],
+                                     axis=1)
+    expected_pts_semantic_mask = np.array([13, 13, 12, 2, 0])
+    assert np.allclose(points.numpy(), expected_points, atol=1e-6)
+    assert np.all(pts_semantic_mask.numpy() == expected_pts_semantic_mask)
+
+
 def test_sunrgbd_pipeline():
     class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                    'dresser', 'night_stand', 'bookshelf', 'bathtub')

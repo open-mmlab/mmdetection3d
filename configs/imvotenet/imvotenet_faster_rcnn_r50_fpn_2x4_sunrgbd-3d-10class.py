@@ -53,6 +53,6 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=0.001,
     step=[6])
-total_epochs = 8
+runner = dict(max_epochs=8)
 
 load_from = 'http://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'  # noqa

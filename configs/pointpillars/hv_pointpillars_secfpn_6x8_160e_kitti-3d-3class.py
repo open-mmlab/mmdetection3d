@@ -83,4 +83,4 @@ evaluation = dict(interval=2)
 # PointPillars usually need longer schedule than second, we simply double
 # the training schedule. Do remind that since we use RepeatDataset and
 # repeat factor is 2, so we actually train 160 epochs.
-total_epochs = 80
+runner = dict(max_epochs=80)

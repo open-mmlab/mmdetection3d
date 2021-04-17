@@ -1,15 +1,17 @@
 import numpy as np
+import tempfile
 from os import path as osp
 
-from mmdet3d.core import show_result
+from mmdet3d.core import show_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
+from .custom_3d_seg import Custom3DSegDataset
 
 
 @DATASETS.register_module()
 class ScanNetDataset(Custom3DDataset):
-    r"""ScanNet Dataset.
+    r"""ScanNet Dataset for Detection Task.
 
     This class serves as the API for experiments on the ScanNet Dataset.
 
@@ -122,7 +124,199 @@ class ScanNetDataset(Custom3DDataset):
             points = np.fromfile(
                 osp.join(self.data_root, pts_path),
                 dtype=np.float32).reshape(-1, 6)
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
                         show)
+
+
+@DATASETS.register_module()
+class ScanNetSegDataset(Custom3DSegDataset):
+    r"""ScanNet Dataset for Semantic Segmentation Task.
+
+    This class serves as the API for experiments on the ScanNet Dataset.
+
+    Please refer to the `github repo <https://github.com/ScanNet/ScanNet>`_
+    for data downloading.
+
+    Args:
+        data_root (str): Path of dataset root.
+        ann_file (str): Path of annotation file.
+        pipeline (list[dict], optional): Pipeline used for data processing.
+            Defaults to None.
+        classes (tuple[str], optional): Classes used in the dataset.
+            Defaults to None.
+        palette (list[list[int]], optional): The palette of segmentation map.
+            Defaults to None.
+        modality (dict, optional): Modality to specify the sensor data used
+            as input. Defaults to None.
+        test_mode (bool, optional): Whether the dataset is in test mode.
+            Defaults to False.
+        ignore_index (int, optional): The label index to be ignored, e.g. \
+            unannotated points. If None is given, set to len(self.CLASSES).
+            Defaults to None.
+        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+            data. For scenes with many points, we may sample it several times.
+            Defaults to None.
+        label_weight (np.ndarray | str, optional): Precomputed weight to \
+            balance loss calculation. If None is given, compute from data.
+            Defaults to None.
+    """
+    CLASSES = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
+               'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
+               'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
+               'bathtub', 'otherfurniture')
+
+    VALID_CLASS_IDS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
+                       33, 34, 36, 39)
+
+    ALL_CLASS_IDS = tuple(range(41))
+
+    PALETTE = [
+        [174, 199, 232],
+        [152, 223, 138],
+        [31, 119, 180],
+        [255, 187, 120],
+        [188, 189, 34],
+        [140, 86, 75],
+        [255, 152, 150],
+        [214, 39, 40],
+        [197, 176, 213],
+        [148, 103, 189],
+        [196, 156, 148],
+        [23, 190, 207],
+        [247, 182, 210],
+        [219, 219, 141],
+        [255, 127, 14],
+        [158, 218, 229],
+        [44, 160, 44],
+        [112, 128, 144],
+        [227, 119, 194],
+        [82, 84, 163],
+    ]
+
+    def __init__(self,
+                 data_root,
+                 ann_file,
+                 pipeline=None,
+                 classes=None,
+                 palette=None,
+                 modality=None,
+                 test_mode=False,
+                 ignore_index=None,
+                 scene_idxs=None,
+                 label_weight=None):
+
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
+            classes=classes,
+            palette=palette,
+            modality=modality,
+            test_mode=test_mode,
+            ignore_index=ignore_index,
+            scene_idxs=scene_idxs,
+            label_weight=label_weight)
+
+    def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: annotation information consists of the following keys:
+
+                - pts_semantic_mask_path (str): Path of semantic masks.
+        """
+        # Use index to get the annos, thus the evalhook could also use this api
+        info = self.data_infos[index]
+
+        pts_semantic_mask_path = osp.join(self.data_root,
+                                          info['pts_semantic_mask_path'])
+
+        anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
+        return anns_results
+
+    def show(self, results, out_dir, show=True):
+        """Results visualization.
+
+        Args:
+            results (list[dict]): List of bounding boxes results.
+            out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
+        """
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        for i, result in enumerate(results):
+            data_info = self.data_infos[i]
+            pts_path = data_info['pts_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            points = np.fromfile(
+                osp.join(self.data_root, pts_path),
+                dtype=np.float32).reshape(-1, 6)
+            sem_mask_path = data_info['pts_semantic_mask_path']
+            gt_sem_mask = self.convert_to_label(
+                osp.join(self.data_root, sem_mask_path))
+            pred_sem_mask = result['semantic_mask'].numpy()
+            show_seg_result(points, gt_sem_mask,
+                            pred_sem_mask, out_dir, file_name,
+                            np.array(self.PALETTE), self.ignore_index, show)
+
+    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
+        """Compute scene_idxs for data sampling and label weight for loss \
+        calculation.
+
+        We sample more times for scenes with more points. Label_weight is
+        inversely proportional to number of class points.
+        """
+        # when testing, we load one whole scene every time
+        # and we don't need label weight for loss calculation
+        if not self.test_mode and scene_idxs is None:
+            raise NotImplementedError(
+                'please provide re-sampled scene indexes for training')
+
+        return super().get_scene_idxs_and_label_weight(scene_idxs,
+                                                       label_weight)
+
+    def format_results(self, results, txtfile_prefix=None):
+        r"""Format the results to txt file. Refer to `ScanNet documentation
+        <http://kaldir.vc.in.tum.de/scannet_benchmark/documentation>`_.
+
+        Args:
+            outputs (list[dict]): Testing results of the dataset.
+            txtfile_prefix (str | None): The prefix of saved files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+
+        Returns:
+            tuple: (outputs, tmp_dir), outputs is the detection results,
+                tmp_dir is the temporal directory created for saving submission
+                files when ``submission_prefix`` is not specified.
+        """
+        import mmcv
+
+        if txtfile_prefix is None:
+            tmp_dir = tempfile.TemporaryDirectory()
+            txtfile_prefix = osp.join(tmp_dir.name, 'results')
+        else:
+            tmp_dir = None
+        mmcv.mkdir_or_exist(txtfile_prefix)
+
+        # need to map network output to original label idx
+        pred2label = np.zeros(len(self.VALID_CLASS_IDS)).astype(np.int)
+        for original_label, output_idx in self.label_map.items():
+            if output_idx != self.ignore_index:
+                pred2label[output_idx] = original_label
+
+        outputs = []
+        for i, result in enumerate(results):
+            info = self.data_infos[i]
+            sample_idx = info['point_cloud']['lidar_idx']
+            pred_sem_mask = result['semantic_mask'].numpy().astype(np.int)
+            pred_label = pred2label[pred_sem_mask]
+            curr_file = f'{txtfile_prefix}/{sample_idx}.txt'
+            np.savetxt(curr_file, pred_label, fmt='%d')
+            outputs.append(dict(seg_mask=pred_label))
+
+        return outputs, tmp_dir

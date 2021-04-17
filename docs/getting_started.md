@@ -12,7 +12,7 @@ The required versions of MMCV and MMDetection for different versions of MMDetect
 
 | MMDetection3D version | MMDetection version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
+| master              | mmdet>=2.10.0       | mmcv-full>=1.2.4, <=1.4|
 | 0.12.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
 | 0.11.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
 | 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
@@ -194,7 +194,7 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 ### Point cloud demo
 
-We provide a demo script to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md)
+We provide several demo scripts to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md). To test a single-modality 3D detection on point cloud scenes:
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
@@ -203,16 +203,18 @@ python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device 
 Examples:
 
 ```shell
-python demo/pcd_demo.py demo/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
+python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
+
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
 Note that you need to install pandas and plyfile before using this script. This function can also be used for data preprocessing for training ```ply data```.
+
 ```python
 import numpy as np
 import pandas as pd
 from plyfile import PlyData
 
-def conver_ply(input_path, output_path):
+def convert_ply(input_path, output_path):
     plydata = PlyData.read(input_path)  # read file
     data = plydata.elements[0].data  # read data
     data_pd = pd.DataFrame(data)  # convert to DataFrame
@@ -223,11 +225,30 @@ def conver_ply(input_path, output_path):
         data_np[:, i] = data_pd[name]
     data_np.astype(np.float32).tofile(output_path)
 ```
+
 Examples:
 
 ```python
 convert_ply('./test.ply', './test.bin')
 ```
+
+If you have point clouds in other format (`off`, `obj`, etc.), you can use trimesh to convert them into `ply`.
+
+```python
+import trimesh
+
+def to_ply(input_path, output_path, original_type):
+    mesh = trimesh.load(input_path, file_type=original_type)  # read file
+    mesh.export(output_path, file_type='ply')  # convert to ply
+```
+
+Examples:
+
+```python
+to_ply('./test.obj', './test.ply', 'obj')
+```
+
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](0_demo.md).
 
 ## High-level APIs for testing point clouds
 

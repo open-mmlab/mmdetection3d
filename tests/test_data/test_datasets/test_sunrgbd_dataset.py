@@ -5,8 +5,7 @@ import torch
 from mmdet3d.datasets import SUNRGBDDataset
 
 
-def test_getitem():
-    np.random.seed(0)
+def _generate_sunrgbd_dataset_config():
     root_path = './tests/data/sunrgbd'
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
     class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
@@ -39,8 +38,61 @@ def test_getitem():
                 'pcd_scale_factor', 'pcd_rotation'
             ]),
     ]
+    modality = dict(use_lidar=True, use_camera=False)
+    return root_path, ann_file, class_names, pipelines, modality
 
-    sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file, pipelines)
+
+def _generate_sunrgbd_multi_modality_dataset_config():
+    root_path = './tests/data/sunrgbd'
+    ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
+    class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+                   'dresser', 'night_stand', 'bookshelf', 'bathtub')
+    img_norm_cfg = dict(
+        mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
+    pipelines = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(type='LoadImageFromFile'),
+        dict(type='LoadAnnotations3D'),
+        dict(type='LoadAnnotations', with_bbox=True),
+        dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
+        dict(type='RandomFlip', flip_ratio=0.0),
+        dict(type='Normalize', **img_norm_cfg),
+        dict(type='Pad', size_divisor=32),
+        dict(
+            type='RandomFlip3D',
+            sync_2d=False,
+            flip_ratio_bev_horizontal=0.5,
+        ),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.523599, 0.523599],
+            scale_ratio_range=[0.85, 1.15],
+            shift_height=True),
+        dict(type='IndoorPointSample', num_points=5),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D',
+            keys=[
+                'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
+                'gt_labels_3d', 'calib'
+            ])
+    ]
+    modality = dict(use_lidar=True, use_camera=True)
+    return root_path, ann_file, class_names, pipelines, modality
+
+
+def test_getitem():
+    np.random.seed(0)
+    root_path, ann_file, class_names, pipelines, modality = \
+        _generate_sunrgbd_dataset_config()
+
+    sunrgbd_dataset = SUNRGBDDataset(
+        root_path, ann_file, pipelines, modality=modality)
     data = sunrgbd_dataset[0]
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
@@ -95,14 +147,41 @@ def test_getitem():
     assert SUNRGBD_dataset.CLASSES != original_classes
     assert SUNRGBD_dataset.CLASSES == ['bed', 'table']
 
+    # test multi-modality SUN RGB-D dataset
+    np.random.seed(0)
+    root_path, ann_file, class_names, multi_modality_pipelines, modality = \
+        _generate_sunrgbd_multi_modality_dataset_config()
+    sunrgbd_dataset = SUNRGBDDataset(
+        root_path, ann_file, multi_modality_pipelines, modality=modality)
+    data = sunrgbd_dataset[0]
+
+    points = data['points']._data
+    gt_bboxes_3d = data['gt_bboxes_3d']._data
+    gt_labels_3d = data['gt_labels_3d']._data
+    calib = data['calib']
+    img = data['img']._data
+
+    expected_Rt = np.array([[0.97959, 0.012593, -0.20061],
+                            [0.012593, 0.99223, 0.12377],
+                            [0.20061, -0.12377, 0.97182]])
+    expected_K = np.array([[529.5, 0., 0.], [0., 529.5, 0.], [365., 265., 1.]])
+
+    assert torch.allclose(points, expected_points, 1e-2)
+    assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
+    assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
+    assert img.shape[:] == (3, 608, 832)
+    assert np.allclose(calib['Rt'], expected_Rt)
+    assert np.allclose(calib['K'], expected_K)
+
 
 def test_evaluate():
     if not torch.cuda.is_available():
         pytest.skip()
     from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
-    root_path = './tests/data/sunrgbd'
-    ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
-    sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file)
+    root_path, ann_file, _, pipelines, modality = \
+        _generate_sunrgbd_dataset_config()
+    sunrgbd_dataset = SUNRGBDDataset(
+        root_path, ann_file, pipelines, modality=modality)
     results = []
     pred_boxes = dict()
     pred_boxes['boxes_3d'] = DepthInstance3DBoxes(
@@ -129,10 +208,12 @@ def test_show():
     from os import path as osp
 
     from mmdet3d.core.bbox import DepthInstance3DBoxes
-    temp_dir = tempfile.mkdtemp()
-    root_path = './tests/data/sunrgbd'
-    ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
-    sunrgbd_dataset = SUNRGBDDataset(root_path, ann_file)
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    root_path, ann_file, _, pipelines, modality = \
+        _generate_sunrgbd_dataset_config()
+    sunrgbd_dataset = SUNRGBDDataset(
+        root_path, ann_file, pipelines, modality=modality)
     boxes_3d = DepthInstance3DBoxes(
         torch.tensor(
             [[1.1500, 4.2614, -1.0669, 1.3219, 2.1593, 1.0267, 1.6473],
@@ -147,8 +228,31 @@ def test_show():
     results = [result]
     sunrgbd_dataset.show(results, temp_dir, show=False)
     pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
-    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.ply')
-    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.ply')
+    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
+    # test multi-modality show
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    root_path, ann_file, _, multi_modality_pipelines, modality = \
+        _generate_sunrgbd_multi_modality_dataset_config()
+    sunrgbd_dataset = SUNRGBDDataset(
+        root_path, ann_file, multi_modality_pipelines, modality=modality)
+    sunrgbd_dataset.show(results, temp_dir, show=False)
+    pts_file_path = osp.join(temp_dir, '000001', '000001_points.obj')
+    gt_file_path = osp.join(temp_dir, '000001', '000001_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000001', '000001_pred.obj')
+    img_file_path = osp.join(temp_dir, '000001', '000001_img.png')
+    img_pred_path = osp.join(temp_dir, '000001', '000001_pred.png')
+    img_gt_file = osp.join(temp_dir, '000001', '000001_gt.png')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    mmcv.check_file_exist(img_file_path)
+    mmcv.check_file_exist(img_pred_path)
+    mmcv.check_file_exist(img_gt_file)
+    tmp_dir.cleanup()

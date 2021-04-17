@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 
 from mmdet3d.core.points import (BasePoints, CameraPoints, DepthPoints,
@@ -227,6 +228,41 @@ def test_base_points():
     assert torch.allclose(
         new_points.tensor,
         torch.tensor([[1, 2, 3, 4, 5, 6, 7]], dtype=base_points.tensor.dtype))
+
+    # test BasePoint indexing
+    base_points = BasePoints(
+        points_np,
+        points_dim=7,
+        attribute_dims=dict(height=3, color=[4, 5, 6]))
+    assert torch.all(base_points[:, 3:].tensor == torch.tensor(points_np[:,
+                                                                         3:]))
+
+    # test set and get function for BasePoint color and height
+    base_points = BasePoints(points_np[:, :3])
+    assert base_points.attribute_dims is None
+    base_points.height = points_np[:, 3]
+    assert base_points.attribute_dims == dict(height=3)
+    base_points.color = points_np[:, 4:]
+    assert base_points.attribute_dims == dict(height=3, color=[4, 5, 6])
+    assert torch.allclose(base_points.height,
+                          torch.tensor([0.6666, 0.1502, 0.6565, 0.2803]))
+    assert torch.allclose(
+        base_points.color,
+        torch.tensor([[0.1956, 0.4974, 0.9409], [0.3707, 0.1086, 0.6297],
+                      [0.6248, 0.6954, 0.2538], [0.0258, 0.4896, 0.3269]]))
+    # values to be set should have correct shape (e.g. number of points)
+    with pytest.raises(ValueError):
+        base_points.coord = np.random.rand(5, 3)
+    with pytest.raises(ValueError):
+        base_points.height = np.random.rand(3)
+    with pytest.raises(ValueError):
+        base_points.color = np.random.rand(4, 2)
+    base_points.coord = points_np[:, [1, 2, 3]]
+    base_points.height = points_np[:, 0]
+    base_points.color = points_np[:, [4, 5, 6]]
+    assert np.allclose(base_points.coord, points_np[:, 1:4])
+    assert np.allclose(base_points.height, points_np[:, 0])
+    assert np.allclose(base_points.color, points_np[:, 4:])
 
 
 def test_cam_points():

@@ -18,6 +18,6 @@ model = dict(
 data = dict(samples_per_gpu=1, workers_per_gpu=1)
 # learning policy
 lr_config = dict(step=[16, 19])
-total_epochs = 20
+runner = dict(max_epochs=20)
 
 load_from = 'http://download.openmmlab.com/mmdetection/v2.0/htc/htc_x101_64x4d_fpn_dconv_c3-c5_mstrain_400_1400_16x1_20e_coco/htc_x101_64x4d_fpn_dconv_c3-c5_mstrain_400_1400_16x1_20e_coco_20200312-946fd751.pth'  # noqa

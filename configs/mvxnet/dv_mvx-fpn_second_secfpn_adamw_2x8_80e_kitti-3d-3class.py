@@ -202,7 +202,8 @@ data = dict(
             pipeline=train_pipeline,
             modality=input_modality,
             classes=class_names,
-            test_mode=False)),
+            test_mode=False,
+            box_type_3d='LiDAR')),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -212,7 +213,8 @@ data = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         classes=class_names,
-        test_mode=True),
+        test_mode=True,
+        box_type_3d='LiDAR'),
     test=dict(
         type=dataset_type,
         data_root=data_root,
@@ -222,7 +224,8 @@ data = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         classes=class_names,
-        test_mode=True))
+        test_mode=True,
+        box_type_3d='LiDAR'))
 # Training settings
 optimizer = dict(type='AdamW', lr=0.003, betas=(0.95, 0.99), weight_decay=0.01)
 # max_norm=10 is better for SECOND
@@ -245,7 +248,7 @@ log_config = dict(
 # yapf:enable
 evaluation = dict(interval=1)
 # runtime settings
-total_epochs = 40
+runner = dict(max_epochs=40)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = None
