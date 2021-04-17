@@ -2,9 +2,10 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.core import merge_aug_bboxes_3d
+from mmdet3d.core.bbox import bbox3d2result
 from mmdet.models import DETECTORS
 from .two_stage import TwoStage3DDetector
-from mmdet3d.core.bbox import bbox3d2result
+
 
 @DETECTORS.register_module()
 class PointRCNN(TwoStage3DDetector):
@@ -30,7 +31,7 @@ class PointRCNN(TwoStage3DDetector):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             pretrained=pretrained)
-    
+
     def extract_feat(self, points, img_metas=None):
         """Directly extract features from the backbone+neck.
 
@@ -38,7 +39,7 @@ class PointRCNN(TwoStage3DDetector):
             points (torch.Tensor): Input points.
         """
         x = self.backbone(points)
-        
+
         if self.with_neck:
             x = self.neck(x)
         return x
@@ -74,6 +75,7 @@ class PointRCNN(TwoStage3DDetector):
                 points=points,
                 gt_bboxes_3d=gt_bboxes_3d,
                 gt_labels_3d=gt_labels_3d,
+                img_metas=img_metas,
                 gt_bboxes_ignore=gt_bboxes_ignore)
         losses.update(rpn_loss)
 

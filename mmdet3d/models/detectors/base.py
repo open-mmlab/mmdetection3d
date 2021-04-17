@@ -104,4 +104,4 @@ class Base3DDetector(BaseDetector):
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
-            show_result(points, None, pred_bboxes, out_dir, file_name)
+            show_result(points, None, pred_bboxes, out_dir, file_name, False)

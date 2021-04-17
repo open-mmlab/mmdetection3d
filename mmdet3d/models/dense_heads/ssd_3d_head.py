@@ -153,8 +153,6 @@ class SSD3DHead(VoteHead):
             weight=centerness_weights)
 
         # calculate center loss
-        print('bbox_pred: ', bbox_preds['center_offset'].shape)
-        print('center_targets: ', center_targets.shape)
         center_loss = self.center_loss(
             bbox_preds['center_offset'],
             center_targets,
@@ -453,8 +451,6 @@ class SSD3DHead(VoteHead):
         # decode boxes
         sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
         obj_scores = sem_scores.max(-1)[0]
-        print('obj_scores: ', obj_scores.shape)
-        print('sem_scores: ', sem_scores.shape)
         bbox3d = self.bbox_coder.decode(bbox_preds)
 
         batch_size = bbox3d.shape[0]

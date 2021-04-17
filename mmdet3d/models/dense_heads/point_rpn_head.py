@@ -4,8 +4,9 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import force_fp32
 from mmcv.ops.nms import batched_nms
 from torch import nn as nn
+import torch.nn.functional as F
 
-from mmdet3d.core import limit_period, xywhr2xyxyr
+from mmdet3d.core import limit_period, xywhr2xyxyr, Box3DMode, Coord3DMode
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes,
                                           rotation_3d_in_axis)
@@ -14,6 +15,70 @@ from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 from .anchor3d_head import Anchor3DHead
+import trimesh
+
+def write_ply(points,points_label,out_filename):
+    """Write points into ``ply`` format for meshlab visualization.
+
+    Args:
+        points (np.ndarray): Points in shape (N, dim).
+        out_filename (str): Filename to be saved.
+    """
+    N = points.shape[0]
+    fout = open(out_filename, 'w')
+    for i in range(N):
+        if points.shape[1] == 3:
+            # c = points[i, 3:].astype(int)
+            c = points_label.astype(int)
+            fout.write(
+                'v %f %f %f %d %d %d\n' %
+                (points[i, 0], points[i, 1], points[i, 2], c[i] * 255, 0, 0))
+
+        else:
+            fout.write('v %f %f %f %d\n' %
+                       (points[i, 0], points[i, 1], points[i, 2], points_label[i]))
+    fout.close()
+
+def write_oriented_bbox(scene_bbox, out_filename):
+    """Export oriented (around Z axis) scene bbox to meshes.
+
+    Args:
+        scene_bbox(list[ndarray] or ndarray): xyz pos of center and
+            3 lengths (dx,dy,dz) and heading angle around Z axis.
+            Y forward, X right, Z upward. heading angle of positive X is 0,
+            heading angle of positive Y is 90 degrees.
+        out_filename(str): Filename.
+    """
+
+    def heading2rotmat(heading_angle):
+        rotmat = np.zeros((3, 3))
+        rotmat[2, 2] = 1
+        cosval = np.cos(heading_angle)
+        sinval = np.sin(heading_angle)
+        rotmat[0:2, 0:2] = np.array([[cosval, -sinval], [sinval, cosval]])
+        return rotmat
+
+    def convert_oriented_box_to_trimesh_fmt(box):
+        ctr = box[:3]
+        lengths = box[3:6]
+        trns = np.eye(4)
+        trns[0:3, 3] = ctr
+        trns[3, 3] = 1.0
+        trns[0:3, 0:3] = heading2rotmat(box[6])
+        box_trimesh_fmt = trimesh.creation.box(lengths, trns)
+        return box_trimesh_fmt
+
+    if len(scene_bbox) == 0:
+        scene_bbox = np.zeros((1, 7))
+    scene = trimesh.scene.Scene()
+    for box in scene_bbox:
+        scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
+
+    mesh_list = trimesh.util.concatenate(scene.dump())
+    # save to ply file
+    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
+
+    return
 
 @HEADS.register_module()
 class PointRPNHead(nn.Module):
@@ -32,6 +97,7 @@ class PointRPNHead(nn.Module):
                  cls_loss=dict(
                      type='FocalLoss',
                      use_sigmoid=True,
+                     reduction='mean',
                      gamma=2.0,
                      alpha=0.25,
                      loss_weight=1.0),
@@ -55,8 +121,7 @@ class PointRPNHead(nn.Module):
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        print(self.train_cfg)
-        print(self.test_cfg)
+    
         # build loss function
         self.center_loss = build_loss(center_loss)
         self.dir_res_loss = build_loss(dir_res_loss)
@@ -113,6 +178,7 @@ class PointRPNHead(nn.Module):
                 1,
                 padding=0,
                 conv_cfg=conv_cfg,
+                act_cfg=None,
                 bias=True,
                 inplace=True))
         return nn.Sequential(*conv_list)
@@ -122,18 +188,26 @@ class PointRPNHead(nn.Module):
         point_cls_preds = self.cls_layers(point_features)
         point_box_preds = self.bbox_layers(point_features)
 
-        point_cls_scores = torch.sigmoid(point_cls_preds)
         ret_dict = {
-            'point_cls_preds': point_cls_scores,
-            'point_box_preds': point_box_preds,
-            'seed_points': feat_dict['fp_xyz'][-1],
-            'seed_indices': feat_dict['fp_indices'][-1],
-            'seed_features': feat_dict['fp_features'][-1]
+            'fp_points': feat_dict['fp_xyz'][-1],
+            'fp_indices': feat_dict['fp_indices'][-1],
+            'fp_features': feat_dict['fp_features'][-1]
         }
-        decode_res = self.bbox_coder.split_pred(point_cls_scores,
+        decode_res = self.bbox_coder.split_pred(point_cls_preds,
                                                 point_box_preds,
                                                 feat_dict['fp_xyz'][-1])
         ret_dict.update(decode_res)
+        # print(point_cls_preds.shape)
+        # points_label = point_cls_preds.transpose(2, 1).reshape(-1).cpu().data.numpy()
+        # points_label[points_label>0.9] = 1
+        # points = feat_dict['fp_xyz'][-1].cpu().data.numpy()
+        # print(points_label.shape)
+        # print(points.shape)
+        # write_ply(points[0],points_label,'/tmp/label_points.obj')
+        # bbox3d = self.bbox_coder.decode(ret_dict)
+        # write_oriented_bbox(bbox3d[0].cpu().numpy(),'/tmp/label_bboxes.ply')
+        # assert 0
+
         return ret_dict
 
     @force_fp32(apply_to=('bbox_preds'))
@@ -194,10 +268,22 @@ class PointRPNHead(nn.Module):
             size_res_targets,
             weight=box_loss_weights.unsqueeze(-1))
         # calculate semantic loss
+        semantic_points = bbox_preds['obj_scores'].transpose(2, 1).reshape(-1, 1)
+        semantic_points_label = negative_mask.long()
         semantic_loss = self.cls_loss(
-            bbox_preds['point_cls_preds'].transpose(2, 1).reshape(-1, 1),
-            mask_targets.reshape(-1))
-
+            semantic_points,
+            semantic_points_label.reshape(-1))
+        
+        '''
+        print('tensor: ',points[0].shape)
+        print(semantic_points_label[0].shape)
+        points_label = semantic_points_label[3].cpu().data.numpy()
+        points = points[3][:,0:3].cpu().data.numpy()
+        write_ply(points,points_label,'/tmp/label_points.obj')
+        gt_bboxes = gt_bboxes_3d[3].tensor.cpu().numpy()
+        write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes.ply')
+        assert 0
+        '''
         losses = dict(
             center_loss=center_loss,
             dir_class_loss=dir_class_loss,
@@ -254,8 +340,8 @@ class PointRPNHead(nn.Module):
         mask_targets = torch.stack(mask_targets)
         positive_mask = torch.stack(positive_mask)
         negative_mask = torch.stack(negative_mask)
-        box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)
-        
+        box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)    
+    
         batch_size, proposal_num = dir_class_targets.shape[:2]
         heading_label_one_hot = dir_class_targets.new_zeros(
             (batch_size, proposal_num, self.num_dir_bins))
@@ -298,7 +384,6 @@ class PointRPNHead(nn.Module):
         valid_gt = gt_labels_3d != -1
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
-
         (center_targets, size_targets, dir_class_targets,
          dir_res_targets) = self.bbox_coder.encode(gt_bboxes_3d, gt_labels_3d)
 
@@ -306,15 +391,15 @@ class PointRPNHead(nn.Module):
             gt_bboxes_3d, points)
 
         center_targets = center_targets[assignment]
+        center_targets -= points[:,0:3]
         size_res_targets = size_targets[assignment]
         mask_targets = gt_labels_3d[assignment]
         dir_class_targets = dir_class_targets[assignment]
         dir_res_targets = dir_res_targets[assignment]
-        mask_targets = gt_labels_3d[assignment]
-
+        
         positive_mask = (points_mask.max(1)[0] > 0)
         negative_mask = (points_mask.max(1)[0] == 0)
-
+        
         return (center_targets, size_res_targets, dir_class_targets,
                 dir_res_targets, mask_targets, positive_mask, negative_mask)
 
@@ -333,14 +418,25 @@ class PointRPNHead(nn.Module):
         # decode boxes
         # sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
         # obj_scores = sem_scores.max(-1)[0]
-        sem_scores = bbox_preds['point_cls_preds'].transpose(1, 2) 
+        bbox_preds['obj_scores'] = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
+        sem_scores = bbox_preds['obj_scores']
         obj_scores = sem_scores.max(-1)[0]
-        print('sem_scores: ', sem_scores.shape)
-        print('obj_scores: ', obj_scores.shape)
         bbox3d = self.bbox_coder.decode(bbox_preds)
-
+        
         batch_size = bbox3d.shape[0]
         results = list()
+        '''
+        for b in range(batch_size):
+            bbox = input_meta['box_type_3d'](
+                bbox3d[b].clone(),
+                box_dim=bbox3d[b].shape[-1],
+                with_yaw=self.bbox_coder.with_rot)
+            selected = nms_gpu(bbox.bev, obj_scores, 0.1)
+            bbox = bbox[selected]
+            score_selected = obj_scores[b][selected]
+             
+            result.append(())
+        '''
 
         for b in range(batch_size):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
@@ -373,7 +469,7 @@ class PointRPNHead(nn.Module):
             bbox.clone(),
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
-            origin=(0.5, 0.5, 1.0))
+            origin=(0.5, 0.5, 1))
 
         if isinstance(bbox, LiDARInstance3DBoxes):
             box_idx = bbox.points_in_boxes(points)
@@ -442,16 +538,17 @@ class PointRPNHead(nn.Module):
         """
         # TODO: align points_in_boxes function in each box_structures
         num_bbox = bboxes_3d.tensor.shape[0]
-        if points.shape[1] != 3:
-            points = points[:,0:3]
         if isinstance(bboxes_3d, LiDARInstance3DBoxes):
-            assignment = bboxes_3d.points_in_boxes(points).long()
+            # points_in boxes assuem z is the the bottom center
+            bboxes_3d.tensor[:, 2] -= bboxes_3d.tensor[:, 5] / 2
+            assignment = bboxes_3d.points_in_boxes(points[:,0:3]).long()
             points_mask = assignment.new_zeros(
                 [assignment.shape[0], num_bbox + 1])
             assignment[assignment == -1] = num_bbox
             points_mask.scatter_(1, assignment.unsqueeze(1), 1)
             points_mask = points_mask[:, :-1]
             assignment[assignment == num_bbox] = num_bbox - 1
+            bboxes_3d.tensor[:, 2] += bboxes_3d.tensor[:, 5] / 2
         elif isinstance(bboxes_3d, DepthInstance3DBoxes):
             points_mask = bboxes_3d.points_in_boxes(points)
             assignment = points_mask.argmax(dim=-1)
