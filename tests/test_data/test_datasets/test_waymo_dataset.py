@@ -150,12 +150,11 @@ def test_evaluate():
     assert np.isclose(ap_dict['KITTI/Overall_3D_hard'], 3.0303030303030307)
 
     # waymo protocol
-    if not torch.cuda.is_available():
-        pytest.skip('test requires tensorflow-gpu')
     metric = ['waymo']
     ap_dict = waymo_dataset.evaluate([result], metric=metric)
-    import pdb
-    pdb.set_trace()
+    assert np.isclose(ap_dict['Overall/L1 mAP'], 0.0)
+    assert np.isclose(ap_dict['Overall/L2 mAP'], 0.0)
+    assert np.isclose(ap_dict['Overall/L2 mAPH'], 0.0)
 
 
 def test_show():
@@ -189,4 +188,49 @@ def test_show():
     mmcv.check_file_exist(pts_file_path)
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
+
+def test_format_results():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    from mmdet3d.core.bbox import LiDARInstance3DBoxes
+    data_root, ann_file, classes, pts_prefix, pipeline, \
+        modality, split = _generate_waymo_val_dataset_config()
+    waymo_dataset = WaymoDataset(data_root, ann_file, split, pts_prefix,
+                                 pipeline, classes, modality)
+    boxes_3d = LiDARInstance3DBoxes(
+        torch.tensor(
+            # [[31.9723, -2.3247, 2.2145, 2.3900, 6.0800, 3.1000, -1.3200]]))
+            [[
+                6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
+                1.4600e+00, -9.0000e-02
+            ]]))
+    labels_3d = torch.tensor([
+        0,
+    ])
+    scores_3d = torch.tensor([0.5])
+    result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
+    result_files, tmp_dir = waymo_dataset.format_results([result],
+                                                         data_format='waymo')
+    expected_name = np.array(['Car'])
+    expected_truncated = np.array([0.])
+    expected_occluded = np.array([0])
+    expected_alpha = np.array([0.35619745])
+    expected_bbox = np.array([[0., 673.59814, 37.07779, 719.7537]])
+    expected_dimensions = np.array([[4.36, 1.46, 2.01]])
+    expected_location = np.array([[-33.000042, 2.4999967, 68.29972]])
+    expected_rotation_y = np.array([-0.09])
+    expected_score = np.array([0.5])
+    expected_sample_idx = np.array([1000000])
+    assert np.all(result_files[0]['name'] == expected_name)
+    assert np.allclose(result_files[0]['truncated'], expected_truncated)
+    assert np.all(result_files[0]['occluded'] == expected_occluded)
+    assert np.allclose(result_files[0]['alpha'], expected_alpha)
+    assert np.allclose(result_files[0]['bbox'], expected_bbox)
+    assert np.allclose(result_files[0]['dimensions'], expected_dimensions)
+    assert np.allclose(result_files[0]['location'], expected_location)
+    assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y)
+    assert np.allclose(result_files[0]['score'], expected_score)
+    assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
     tmp_dir.cleanup()
