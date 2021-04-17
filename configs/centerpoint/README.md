@@ -27,11 +27,11 @@ We follow the below style to name config files. Contributors are advised to foll
 
 `{dataset}`: dataset like nus-3d, kitti-3d, lyft-3d, scannet-3d, sunrgbd-3d. We also indicate the number of classes we are using if there exist multiple settings, e.g., kitti-3d-3class and kitti-3d-car means training on KITTI dataset with 3 classes and single class, respectively.
 ```
-@article{yin2020center,
-  title={Center-based 3d object detection and tracking},
+@article{yin2021center,
+  title={Center-based 3D Object Detection and Tracking},
   author={Yin, Tianwei and Zhou, Xingyi and Kr{\"a}henb{\"u}hl, Philipp},
-  journal={arXiv preprint arXiv:2006.11275},
-  year={2020}
+  journal={CVPR},
+  year={2021},
 }
 ```
 
@@ -47,10 +47,11 @@ For example, we change `centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic
 _base_ = './centerpoint_0075voxel_second_secfpn_circlenms' \
          '_4x8_cyclic_20e_nus.py'
 
-test_cfg = dict(
-    pts=dict(
-        use_rotate_nms=True,
-        max_num=83))
+model = dict(
+    test_cfg=dict(
+        pts=dict(
+            use_rotate_nms=True,
+            max_num=83)))
 
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 file_client_args = dict(backend='disk')

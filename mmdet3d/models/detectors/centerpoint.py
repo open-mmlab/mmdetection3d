@@ -181,8 +181,6 @@ class CenterPoint(MVXTwoStageDetector):
         else:
             for key in bbox_list[0].keys():
                 bbox_list[0][key] = bbox_list[0][key].to('cpu')
-            import pdb
-            pdb.set_trace()
             return bbox_list[0]
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):

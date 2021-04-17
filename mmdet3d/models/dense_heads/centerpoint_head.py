@@ -119,8 +119,8 @@ class SeparateHead(nn.Module):
 
 
 @HEADS.register_module()
-class DCNSeperateHead(nn.Module):
-    r"""DCNSeperateHead for CenterHead.
+class DCNSeparateHead(nn.Module):
+    r"""DCNSeparateHead for CenterHead.
 
     .. code-block:: none
             /-----> DCN for heatmap task -----> heatmap task.
@@ -155,7 +155,7 @@ class DCNSeperateHead(nn.Module):
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
                  **kwargs):
-        super(DCNSeperateHead, self).__init__()
+        super(DCNSeparateHead, self).__init__()
         if 'heatmap' in heads:
             heads.pop('heatmap')
         # feature adaptation with dcn
@@ -250,7 +250,7 @@ class CenterHead(nn.Module):
             Default: dict(type='GaussianFocalLoss', reduction='mean').
         loss_bbox (dict): Config of regression loss function.
             Default: dict(type='L1Loss', reduction='none').
-        seperate_head (dict): Config of seperate head. Default: dict(
+        separate_head (dict): Config of separate head. Default: dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3)
         share_conv_channel (int): Output channels for share_conv_layer.
             Default: 64.
@@ -273,7 +273,7 @@ class CenterHead(nn.Module):
                  loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
                  loss_bbox=dict(
                      type='L1Loss', reduction='none', loss_weight=0.25),
-                 seperate_head=dict(
+                 separate_head=dict(
                      type='SeparateHead', init_bias=-2.19, final_kernel=3),
                  share_conv_channel=64,
                  num_heatmap_convs=2,
@@ -312,9 +312,9 @@ class CenterHead(nn.Module):
         for num_cls in num_classes:
             heads = copy.deepcopy(common_heads)
             heads.update(dict(heatmap=(num_cls, num_heatmap_convs)))
-            seperate_head.update(
+            separate_head.update(
                 in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
-            self.task_heads.append(builder.build_head(seperate_head))
+            self.task_heads.append(builder.build_head(separate_head))
 
     def init_weights(self):
         """Initialize weights."""

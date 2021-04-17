@@ -111,88 +111,94 @@ model = dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=True,
                 reduction='sum',
-                loss_weight=1.0))))
-# model training and testing settings
-train_cfg = dict(
-    rpn=dict(
-        assigner=[
-            dict(  # for Pedestrian
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
-                ignore_iof_thr=-1),
-            dict(  # for Cyclist
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
-                ignore_iof_thr=-1),
-            dict(  # for Car
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
-                ignore_iof_thr=-1)
-        ],
-        allowed_border=0,
-        pos_weight=-1,
-        debug=False),
-    rpn_proposal=dict(
-        nms_pre=9000,
-        nms_post=512,
-        max_num=512,
-        nms_thr=0.8,
-        score_thr=0,
-        use_rotate_nms=False),
-    rcnn=dict(
-        assigner=[
-            dict(  # for Pedestrian
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
-                pos_iou_thr=0.55,
-                neg_iou_thr=0.55,
-                min_pos_iou=0.55,
-                ignore_iof_thr=-1),
-            dict(  # for Cyclist
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
-                pos_iou_thr=0.55,
-                neg_iou_thr=0.55,
-                min_pos_iou=0.55,
-                ignore_iof_thr=-1),
-            dict(  # for Car
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
-                pos_iou_thr=0.55,
-                neg_iou_thr=0.55,
-                min_pos_iou=0.55,
-                ignore_iof_thr=-1)
-        ],
-        sampler=dict(
-            type='IoUNegPiecewiseSampler',
-            num=128,
-            pos_fraction=0.55,
-            neg_piece_fractions=[0.8, 0.2],
-            neg_iou_piece_thrs=[0.55, 0.1],
-            neg_pos_ub=-1,
-            add_gt_as_proposals=False,
-            return_iou=True),
-        cls_pos_thr=0.75,
-        cls_neg_thr=0.25))
-test_cfg = dict(
-    rpn=dict(
-        nms_pre=1024,
-        nms_post=100,
-        max_num=100,
-        nms_thr=0.7,
-        score_thr=0,
-        use_rotate_nms=True),
-    rcnn=dict(
-        use_rotate_nms=True, use_raw_score=True, nms_thr=0.01, score_thr=0.3))
+                loss_weight=1.0))),
+    # model training and testing settings
+    train_cfg=dict(
+        rpn=dict(
+            assigner=[
+                dict(  # for Pedestrian
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.5,
+                    neg_iou_thr=0.35,
+                    min_pos_iou=0.35,
+                    ignore_iof_thr=-1),
+                dict(  # for Cyclist
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.5,
+                    neg_iou_thr=0.35,
+                    min_pos_iou=0.35,
+                    ignore_iof_thr=-1),
+                dict(  # for Car
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.6,
+                    neg_iou_thr=0.45,
+                    min_pos_iou=0.45,
+                    ignore_iof_thr=-1)
+            ],
+            allowed_border=0,
+            pos_weight=-1,
+            debug=False),
+        rpn_proposal=dict(
+            nms_pre=9000,
+            nms_post=512,
+            max_num=512,
+            nms_thr=0.8,
+            score_thr=0,
+            use_rotate_nms=False),
+        rcnn=dict(
+            assigner=[
+                dict(  # for Pedestrian
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1),
+                dict(  # for Cyclist
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1),
+                dict(  # for Car
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1)
+            ],
+            sampler=dict(
+                type='IoUNegPiecewiseSampler',
+                num=128,
+                pos_fraction=0.55,
+                neg_piece_fractions=[0.8, 0.2],
+                neg_iou_piece_thrs=[0.55, 0.1],
+                neg_pos_ub=-1,
+                add_gt_as_proposals=False,
+                return_iou=True),
+            cls_pos_thr=0.75,
+            cls_neg_thr=0.25)),
+    test_cfg=dict(
+        rpn=dict(
+            nms_pre=1024,
+            nms_post=100,
+            max_num=100,
+            nms_thr=0.7,
+            score_thr=0,
+            use_rotate_nms=True),
+        rcnn=dict(
+            use_rotate_nms=True,
+            use_raw_score=True,
+            nms_thr=0.01,
+            score_thr=0.3)))
 
 # dataset settings
 dataset_type = 'KittiDataset'
@@ -306,7 +312,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 80
+runner = dict(max_epochs=80)
 dist_params = dict(backend='nccl', port=29506)
 log_level = 'INFO'
 find_unused_parameters = True

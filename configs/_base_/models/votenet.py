@@ -62,8 +62,12 @@ model = dict(
         size_res_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
         semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
-# model training and testing settings
-train_cfg = dict(pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')
-test_cfg = dict(
-    sample_mod='seed', nms_thr=0.25, score_thr=0.05, per_class_proposal=True)
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+    # model training and testing settings
+    train_cfg=dict(
+        pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote'),
+    test_cfg=dict(
+        sample_mod='seed',
+        nms_thr=0.25,
+        score_thr=0.05,
+        per_class_proposal=True))

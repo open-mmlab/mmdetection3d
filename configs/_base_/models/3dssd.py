@@ -65,17 +65,16 @@ model = dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         corner_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        vote_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0)))
-
-# model training and testing settings
-train_cfg = dict(
-    sample_mod='spec', pos_distance_thr=10.0, expand_dims_length=0.05)
-test_cfg = dict(
-    nms_cfg=dict(type='nms', iou_thr=0.1),
-    sample_mod='spec',
-    score_thr=0.0,
-    per_class_proposal=True,
-    max_output_num=100)
+        vote_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0)),
+    # model training and testing settings
+    train_cfg=dict(
+        sample_mod='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
+    test_cfg=dict(
+        nms_cfg=dict(type='nms', iou_thr=0.1),
+        sample_mod='spec',
+        score_thr=0.0,
+        per_class_proposal=True,
+        max_output_num=100))
 
 # optimizer
 # This schedule is mainly used by models on indoor dataset,
@@ -85,4 +84,4 @@ optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(policy='step', warmup=None, step=[80, 120])
 # runtime settings
-total_epochs = 150
+runner = dict(max_epochs=150)

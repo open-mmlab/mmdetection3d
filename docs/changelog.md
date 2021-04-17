@@ -1,5 +1,102 @@
 ## Changelog
 
+### v0.12.0 (1/4/2021)
+
+#### Highlights
+
+- Support a new multi-modality method [ImVoteNet](https://arxiv.org/abs/2001.10692).
+- Support pytorch 1.7 and 1.8
+- Refactor the structure of tools and [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py)/[test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py)
+
+#### Bug Fixes
+
+- Fix missing keys `coord_type` in database sampler config (#345)
+- Rename H3DNet configs (#349)
+- Fix CI by using ubuntu 18.04 in github workflow (#350)
+- Add assertions to avoid 4-dim points being input to [points_in_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) (#357)
+- Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
+- Fix the incorrect adopted pipeline when adding val to workflow (#370)
+- Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
+- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in pytorch 1.7 (#393)
+
+#### New Features
+
+- Support LiDAR-based semantic segmentation metrics (#332)
+- Support [ImVoteNet](https://arxiv.org/abs/2001.10692) (#352, #384)
+- Support the KNN GPU operation (#360, #371)
+
+#### Improvements
+
+- Add FAQ for common problems in the documentation (#333)
+- Refactor the structure of tools (#339)
+- Refactor [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py) and [test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py) (#343)
+- Support demo on nuScenes (#353)
+- Add 3DSSD checkpoints (#359)
+- Update the Bibtex of CenterPoint (#368)
+- Add citation format and reference to other OpenMMLab projects in the README (#374)
+- Upgrade the mmcv version requirements (#376)
+- Add numba and numpy version requirements in FAQ (#379)
+- Avoid unnecessary for-loop execution of vfe layer creation (#389)
+- Update SUNRGBD dataset documentation to stress the requirements for training ImVoteNet (#391)
+- Modify vote head to support 3DSSD (#396)
+
+### v0.11.0 (1/3/2021)
+
+#### Highlights
+
+- Support more friendly visualization interfaces based on open3d
+- Support a faster and more memory-efficient implementation of DynamicScatter
+- Refactor unit tests and details of configs
+
+#### Bug Fixes
+
+- Fix an unsupported bias setting in the unit test for centerpoint head (#304)
+- Fix errors due to typos in the centerpoint head (#308)
+- Fix a minor bug in [points_in_boxes.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) when tensors are not in the same device. (#317)
+- Fix warning of deprecated usages of nonzero during training with pytorch 1.6 (#330)
+
+#### New Features
+
+- Support new visualization methods based on open3d (#284, #323)
+
+#### Improvements
+
+- Refactor unit tests (#303)
+- Move the key `train_cfg` and `test_cfg` into the model configs (#307)
+- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md). (#310, #316)
+- Support a faster and more memory-efficient implementation of DynamicScatter (#318, #326)
+
+### v0.10.0 (1/2/2021)
+
+#### Highlights
+
+- Preliminary release of API for SemanticKITTI dataset.
+- Documentation and demo enhancement for better user experience.
+- Fix a number of underlying minor bugs and add some corresponding important unit tests.
+
+#### Bug Fixes
+
+- Fixed the issue of unpacking size in [furthest_point_sample.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/furthest_point_sample/furthest_point_sample.py) (#248)
+- Fix bugs for 3DSSD triggered by empty ground truths (#258)
+- Remove models without checkpoints in model zoo statistics of documentation (#259)
+- Fix some unclear installation instructions in [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md) (#269)
+- Fix relative paths/links in the documentation (#271)
+- Fix a minor bug in [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) when num_features != 4 (#275)
+- Fix the bug about missing text files when testing on KITTI (#278)
+- Fix issues caused by inplace modification of tensors in `BaseInstance3DBoxes` (#283)
+- Fix log analysis for evaluation and adjust the documentation accordingly (#285)
+
+#### New Features
+
+- Support SemanticKITTI dataset preliminarily (#287)
+
+#### Improvements
+
+- Add tag to README in configurations for specifying different uses (#262)
+- Update instructions for evaluation metrics in the documentation (#265)
+- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
+- Add unit test for voxelization (#275)
+
 ### v0.9.0 (31/12/2020)
 
 #### Highlights
@@ -35,7 +132,7 @@
 
 #### Improvements
 
-- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#166)
+- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#205)
 - Add model zoo statistics and polish the documentation. (#201)
 
 ### v0.7.0 (1/11/2020)

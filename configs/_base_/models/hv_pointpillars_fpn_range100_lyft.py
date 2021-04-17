@@ -17,6 +17,6 @@ model = dict(
         num_classes=9,
         anchor_generator=dict(
             ranges=[[-100, -100, -1.8, 100, 100, -1.8]], custom_values=[]),
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=7)))
-# model training settings (based on nuScenes model settings)
-train_cfg = dict(pts=dict(code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]))
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=7)),
+    # model training settings (based on nuScenes model settings)
+    train_cfg=dict(pts=dict(code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])))

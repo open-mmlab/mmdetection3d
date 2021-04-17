@@ -8,11 +8,12 @@ Welcome to MMDetection3D's documentation!
    getting_started.md
    model_zoo.md
    data_preparation.md
-   
+
 .. toctree::
    :maxdepth: 2
    :caption: Quick Run
 
+   0_demo.md
    1_exist_data_model.md
    2_new_data_model.md
 
@@ -33,6 +34,7 @@ Welcome to MMDetection3D's documentation!
    :caption: Notes
 
    benchmarks.md
+   faq.md
 
 .. toctree::
    :caption: API Reference

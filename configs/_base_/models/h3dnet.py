@@ -311,32 +311,31 @@ model = dict(
                 reduction='none',
                 loss_weight=5.0),
             primitive_center_loss=dict(
-                type='MSELoss', reduction='none', loss_weight=1.0))))
-
-# model training and testing settings
-train_cfg = dict(
-    rpn=dict(pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote'),
-    rpn_proposal=dict(use_nms=False),
-    rcnn=dict(
-        pos_distance_thr=0.3,
-        neg_distance_thr=0.6,
-        sample_mod='vote',
-        far_threshold=0.6,
-        near_threshold=0.3,
-        mask_surface_threshold=0.3,
-        label_surface_threshold=0.3,
-        mask_line_threshold=0.3,
-        label_line_threshold=0.3))
-
-test_cfg = dict(
-    rpn=dict(
-        sample_mod='seed',
-        nms_thr=0.25,
-        score_thr=0.05,
-        per_class_proposal=True,
-        use_nms=False),
-    rcnn=dict(
-        sample_mod='seed',
-        nms_thr=0.25,
-        score_thr=0.05,
-        per_class_proposal=True))
+                type='MSELoss', reduction='none', loss_weight=1.0))),
+    # model training and testing settings
+    train_cfg=dict(
+        rpn=dict(
+            pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote'),
+        rpn_proposal=dict(use_nms=False),
+        rcnn=dict(
+            pos_distance_thr=0.3,
+            neg_distance_thr=0.6,
+            sample_mod='vote',
+            far_threshold=0.6,
+            near_threshold=0.3,
+            mask_surface_threshold=0.3,
+            label_surface_threshold=0.3,
+            mask_line_threshold=0.3,
+            label_line_threshold=0.3)),
+    test_cfg=dict(
+        rpn=dict(
+            sample_mod='seed',
+            nms_thr=0.25,
+            score_thr=0.05,
+            per_class_proposal=True,
+            use_nms=False),
+        rcnn=dict(
+            sample_mod='seed',
+            nms_thr=0.25,
+            score_thr=0.05,
+            per_class_proposal=True)))

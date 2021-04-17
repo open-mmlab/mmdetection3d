@@ -1,4 +1,3 @@
-import copy
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
@@ -7,8 +6,8 @@ from os import path as osp
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import (Box3DMode, bbox3d2result, merge_aug_bboxes_3d,
-                          show_result)
+from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,
+                          merge_aug_bboxes_3d, show_result)
 from mmdet3d.ops import Voxelization
 from mmdet.core import multi_apply
 from mmdet.models import DETECTORS
@@ -486,19 +485,18 @@ class MVXTwoStageDetector(Base3DDetector):
 
             assert out_dir is not None, 'Expect out_dir, got none.'
             inds = result[batch_id]['pts_bbox']['scores_3d'] > 0.1
-            pred_bboxes = copy.deepcopy(
-                result[batch_id]['pts_bbox']['boxes_3d'][inds].tensor.numpy())
-            # for now we convert points into depth mode
-            if box_mode_3d == Box3DMode.DEPTH:
-                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            elif (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
-                                                    == Box3DMode.LIDAR):
-                points = points[..., [1, 0, 2]]
-                points[..., 0] *= -1
+            pred_bboxes = result[batch_id]['pts_bbox']['boxes_3d'][inds]
+
+            # for now we convert points and bbox into depth mode
+            if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
+                                                  == Box3DMode.LIDAR):
+                points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
+                                                   Coord3DMode.DEPTH)
                 pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
                                                 Box3DMode.DEPTH)
-                pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-            else:
+            elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
+
+            pred_bboxes = pred_bboxes.tensor.cpu().numpy()
             show_result(points, None, pred_bboxes, out_dir, file_name)
