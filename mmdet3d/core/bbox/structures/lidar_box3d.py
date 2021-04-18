@@ -14,16 +14,19 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     .. code-block:: none
 
-                            up z    x front (yaw=0.5*pi)
+                            up z    x front (yaw=-0.5*pi)
                                ^   ^
                                |  /
                                | /
-       (yaw=pi) left y <------ 0
+      (yaw=-pi) left y <------ 0 -------- (yaw=0)
 
     The relative coordinate of bottom center in a LiDAR box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
-    The yaw is 0 at the negative direction of y axis, and increases from
+    The yaw is 0 at the negative direction of y axis, and decreases from
     the negative direction of y to the positive direction of x.
+
+    A refactor is ongoing to make the three coordinate systems
+    easier to understand and convert between each other.
 
     Attributes:
         tensor (torch.Tensor): Float matrix of N x box_dim.
