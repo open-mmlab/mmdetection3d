@@ -165,10 +165,15 @@ class ShapeAwareHead(Anchor3DHead):
             :class:`Anchor3DHead`.
     """
 
-    def __init__(self, tasks, assign_per_class=True, **kwargs):
+    def __init__(self, tasks, 
+                 assign_per_class=True, 
+                 init_cfg=None,
+                 **kwargs):
         self.tasks = tasks
         self.featmap_sizes = []
-        super().__init__(assign_per_class=assign_per_class, **kwargs)
+        super().__init__(assign_per_class=assign_per_class,
+                         init_cfg=None,
+                         **kwargs)
 
     def _init_layers(self):
         """Initialize neural network layers of the head."""
@@ -190,11 +195,6 @@ class ShapeAwareHead(Anchor3DHead):
                 shared_conv_strides=task['shared_conv_strides'])
             self.heads.append(build_head(branch))
             cls_ptr += task['num_class']
-
-    def init_weights(self):
-        """Initialize the weights of head."""
-        for head in self.heads:
-            head.init_weights()
 
     def forward_single(self, x):
         """Forward function on a single-scale feature map.

@@ -36,11 +36,6 @@ class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
         return hasattr(self, 'mask_head') and self.mask_head is not None
 
     @abstractmethod
-    def init_weights(self, pretrained):
-        """Initialize the module with pre-trained weights."""
-        pass
-
-    @abstractmethod
     def init_bbox_head(self):
         """Initialize the box head."""
         pass

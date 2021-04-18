@@ -30,8 +30,8 @@ class SECONDFPN(BaseModule):
                  norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
                  upsample_cfg=dict(type='deconv', bias=False),
                  conv_cfg=dict(type='Conv2d', bias=False),
-                 init_cfg=None,
-                 use_conv_for_no_stride=False):
+                 use_conv_for_no_stride=False,
+                 init_cfg=None):
         # if for GroupNorm,
         # cfg is dict(type='GN', num_groups=num_groups, eps=1e-3, affine=True)
         super(SECONDFPN, self).__init__(init_cfg=init_cfg)
@@ -77,14 +77,6 @@ class SECONDFPN(BaseModule):
                     val=1.0)
             ]
 
-
-    def init_weights(self):
-        """Initialize weights of FPN."""
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                kaiming_init(m)
-            elif is_norm(m):
-                constant_init(m, 1)
 
     @auto_fp16()
     def forward(self, x):

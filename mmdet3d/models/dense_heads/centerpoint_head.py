@@ -79,16 +79,16 @@ class SeparateHead(BaseModule):
             conv_layers = nn.Sequential(*conv_layers)
 
             self.__setattr__(head, conv_layers)
-
-    def init_weights(self):
-        """Initialize weights."""
-        for head in self.heads:
-            if head == 'heatmap':
-                self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
-            else:
-                for m in self.__getattr__(head).modules():
-                    if isinstance(m, nn.Conv2d):
-                        kaiming_init(m)
+            
+            if init_cfg is None:
+                self.init_cfg = dict(
+                    type='Kaiming',
+                    layer='Conv2d',
+                    distribution='uniform',
+                    override=dict(type='Kaiming',
+                                name=self.__getattr__('heatmap')[-1],
+                                distribution='uniform',
+                                bias=self.init_bias))
 
     def forward(self, x):
         """Forward function for SepHead.
@@ -197,11 +197,16 @@ class DCNSeparateHead(BaseModule):
             head_conv=head_conv,
             final_kernel=final_kernel,
             bias=bias)
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Kaiming',
+                layer='Conv2d',
+                distribution='uniform',
+                override=dict(type='Kaiming',
+                            name=self.cls_head[-1],
+                            distribution='uniform'
+                            bias=self.init_bias))
 
-    def init_weights(self):
-        """Initialize weights."""
-        self.cls_head[-1].bias.data.fill_(self.init_bias)
-        self.task_head.init_weights()
 
     def forward(self, x):
         """Forward function for DCNSepHead.
@@ -323,11 +328,6 @@ class CenterHead(BaseModule):
             separate_head.update(
                 in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
             self.task_heads.append(builder.build_head(separate_head))
-
-    def init_weights(self):
-        """Initialize weights."""
-        for task_head in self.task_heads:
-            task_head.init_weights()
 
     def forward_single(self, x):
         """Forward function for CenterPoint.

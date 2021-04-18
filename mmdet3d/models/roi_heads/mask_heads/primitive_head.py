@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -11,7 +12,7 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class PrimitiveHead(nn.Module):
+class PrimitiveHead(BaseModule):
     r"""Primitive head of `H3DNet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
@@ -49,11 +50,11 @@ class PrimitiveHead(nn.Module):
                  surface_thresh=0.5,
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
-                 init_cfg=None,
                  objectness_loss=None,
                  center_loss=None,
                  semantic_reg_loss=None,
-                 semantic_cls_loss=None):
+                 semantic_cls_loss=None,
+                 init_cfg=None):
         super(PrimitiveHead, self).__init__(init_cfg=init_cfg)
         assert primitive_mode in ['z', 'xy', 'line']
         # The dimension of primitive semantic information.

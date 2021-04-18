@@ -12,6 +12,7 @@ from mmdet3d.ops import build_sa_module, furthest_point_sample
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 from .base_conv_bbox_head import BaseConvBboxHead
+from mmcv.runner import BaseModule
 
 
 @HEADS.register_module()
@@ -44,7 +45,6 @@ class VoteHead(BaseModule):
                  bbox_coder,
                  train_cfg=None,
                  test_cfg=None,
-                 init_cfg=None,
                  vote_module_cfg=None,
                  vote_aggregation_cfg=None,
                  pred_layer_cfg=None,
@@ -57,7 +57,8 @@ class VoteHead(BaseModule):
                  size_class_loss=None,
                  size_res_loss=None,
                  semantic_loss=None,
-                 iou_loss=None):
+                 iou_loss=None,
+                 init_cfg=None):
         super(VoteHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
