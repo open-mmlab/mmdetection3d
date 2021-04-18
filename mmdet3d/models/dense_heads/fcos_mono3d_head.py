@@ -1,10 +1,11 @@
 import numpy as np
 import torch
 from mmcv.cnn import Scale, normal_init
+from mmcv.runner import force_fp32
 from torch import nn as nn
 
 from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
-from mmdet.core import force_fp32, multi_apply
+from mmdet.core import multi_apply
 from mmdet.models.builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
