@@ -32,7 +32,12 @@ def main():
     results = mmcv.load(args.result)
 
     if getattr(dataset, 'show', None) is not None:
-        dataset.show(results, args.show_dir)
+        # data loading pipeline for showing
+        eval_pipeline = cfg.get('eval_pipeline', {})
+        if eval_pipeline:
+            dataset.show(results, args.show_dir, pipeline=eval_pipeline)
+        else:
+            dataset.show(results, args.show_dir)  # use default pipeline
     else:
         raise NotImplementedError(
             'Show is not implemented for dataset {}!'.format(

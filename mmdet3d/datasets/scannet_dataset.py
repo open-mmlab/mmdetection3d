@@ -7,6 +7,7 @@ from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
+from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -108,22 +109,40 @@ class ScanNetDataset(Custom3DDataset):
             pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self, results, out_dir, show=True):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='DEPTH',
+                shift_height=False,
+                load_dim=6,
+                use_dim=[0, 1, 2]),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=self.CLASSES,
+                with_label=False),
+            dict(type='Collect3D', keys=['points'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = np.fromfile(
-                osp.join(self.data_root, pts_path),
-                dtype=np.float32).reshape(-1, 6)
+            points = self._extract_data(i, pipeline, 'points').numpy()
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
@@ -239,25 +258,53 @@ class ScanNetSegDataset(Custom3DSegDataset):
         anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
         return anns_results
 
-    def show(self, results, out_dir, show=True):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='DEPTH',
+                shift_height=False,
+                use_color=True,
+                load_dim=6,
+                use_dim=[0, 1, 2, 3, 4, 5]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=False,
+                with_seg_3d=True),
+            dict(
+                type='PointSegClassMapping',
+                valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
+                               24, 28, 33, 34, 36, 39)),
+            dict(
+                type='DefaultFormatBundle3D',
+                with_label=False,
+                class_names=self.CLASSES),
+            dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
             show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
+        pipeline = self._get_pipeline(pipeline)
         for i, result in enumerate(results):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = np.fromfile(
-                osp.join(self.data_root, pts_path),
-                dtype=np.float32).reshape(-1, 6)
-            sem_mask_path = data_info['pts_semantic_mask_path']
-            gt_sem_mask = self.convert_to_label(
-                osp.join(self.data_root, sem_mask_path))
+            points, gt_sem_mask = self._extract_data(
+                i, pipeline, ['points', 'pts_semantic_mask'], load_annos=True)
+            points = points.numpy()
             pred_sem_mask = result['semantic_mask'].numpy()
             show_seg_result(points, gt_sem_mask,
                             pred_sem_mask, out_dir, file_name,

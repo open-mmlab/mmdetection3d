@@ -1,12 +1,14 @@
 import mmcv
 import numpy as np
 import tempfile
+import warnings
 from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
 from ..core.bbox import get_box_type
 from .pipelines import Compose
+from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -226,7 +228,8 @@ class Custom3DDataset(Dataset):
                  iou_thr=(0.25, 0.5),
                  logger=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -238,6 +241,8 @@ class Custom3DDataset(Dataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -262,9 +267,87 @@ class Custom3DDataset(Dataset):
             box_type_3d=self.box_type_3d,
             box_mode_3d=self.box_mode_3d)
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
 
         return ret_dict
+
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        raise NotImplementedError('_build_default_pipeline is not implemented '
+                                  f'for dataset {self.__class__.__name__}')
+
+    def _get_pipeline(self, pipeline):
+        """Get data loading pipeline in self.show/evaluate function.
+
+        Args:
+            pipeline (list[dict] | None): Input pipeline. If None is given, \
+                get from self.pipeline.
+        """
+        if pipeline is None:
+            if not hasattr(self, 'pipeline') or self.pipeline is None:
+                warnings.warn(
+                    'Use default pipeline for data loading, this may cause '
+                    'errors when data is on ceph')
+                return self._build_default_pipeline()
+            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
+            return Compose(loading_pipeline)
+        return Compose(pipeline)
+
+    @staticmethod
+    def _get_data(results, key):
+        """Extract and return the data corresponding to key in result dict.
+
+        Args:
+            results (dict): Data loaded using pipeline.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor | None: Data term.
+        """
+        if key not in results.keys():
+            return None
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
+        return data
+
+    def _extract_data(self, index, pipeline, key, load_annos=False):
+        """Load data using input pipeline and extract data according to key.
+
+        Args:
+            index (int): Index for accessing the target data.
+            pipeline (:obj:`Compose`): Composed data loading pipeline.
+            key (str | list[str]): One single or a list of data key.
+            load_annos (bool): Whether to load data annotations.
+                If True, need to set self.test_mode as False before loading.
+
+        Returns:
+            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
+                A single or a list of loaded data.
+        """
+        assert pipeline is not None, 'data loading pipeline is not provided'
+        # when we want to load ground-truth via pipeline (e.g. bbox, seg mask)
+        # we need to set self.test_mode as False so that we have 'annos'
+        if load_annos:
+            original_test_mode = self.test_mode
+            self.test_mode = False
+        input_dict = self.get_data_info(index)
+        self.pre_pipeline(input_dict)
+        example = pipeline(input_dict)
+
+        # extract data items according to keys
+        if isinstance(key, str):
+            data = self._get_data(example, key)
+        else:
+            data = [self._get_data(example, k) for k in key]
+        if load_annos:
+            self.test_mode = original_test_mode
+
+        return data
 
     def __len__(self):
         """Return the length of data infos.
