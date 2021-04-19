@@ -248,7 +248,7 @@ log_config = dict(
 # yapf:enable
 evaluation = dict(interval=1)
 # runtime settings
-runner = dict(max_epochs=40)
+runner = dict(type='EpochBasedRunner', max_epochs=40)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = None

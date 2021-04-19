@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from torch import nn as nn
 from mmcv.runner import BaseModule
 
 
@@ -12,6 +11,7 @@ class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
                  mask_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 pretrained=None,
                  init_cfg=None):
         super(Base3DRoIHead, self).__init__(init_cfg=init_cfg)
         self.train_cfg = train_cfg

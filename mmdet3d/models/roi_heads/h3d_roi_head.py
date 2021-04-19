@@ -20,11 +20,13 @@ class H3DRoIHead(Base3DRoIHead):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 pretrained=None,
                  init_cfg=None):
         super(H3DRoIHead, self).__init__(
-            bbox_head=bbox_head, 
-            train_cfg=train_cfg, 
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
             test_cfg=test_cfg,
+            pretrained=pretrained,
             init_cfg=init_cfg)
         # Primitive module
         assert len(primitive_list) == 3
