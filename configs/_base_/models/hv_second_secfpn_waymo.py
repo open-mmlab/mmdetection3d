@@ -6,7 +6,6 @@
 voxel_size = [0.08, 0.08, 0.1]
 model = dict(
     type='VoxelNet',
-    init_cfg=[],
     voxel_layer=dict(
         max_num_points=10,
         point_cloud_range=[-76.8, -51.2, -2, 76.8, 51.2, 4],

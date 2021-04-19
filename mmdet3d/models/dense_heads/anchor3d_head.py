@@ -1,7 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import bias_init_with_prob, normal_init
-from mmcv.runner import force_fp32, BaseModule
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
@@ -109,9 +108,8 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
                 type='Normal',
                 layer='Conv2d',
                 std=0.01,
-                override=dict(type='Normal', name='conv_cls',std=0.01,
-                    bias_prob=0.01))
-
+                override=dict(
+                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
 
     def _init_assigner_sampler(self):
         """Initialize the target assigner and sampler of the head."""

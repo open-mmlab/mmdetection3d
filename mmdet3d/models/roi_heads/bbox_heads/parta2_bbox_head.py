@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, normal_init, xavier_init
+from mmcv.cnn import ConvModule, normal_init
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -222,18 +222,15 @@ class PartA2BboxHead(BaseModule):
 
         self.conv_reg = nn.Sequential(*reg_layers)
 
-        
         if init_cfg is None:
-            self.init_cfg = [
-                dict(type='Xavier', 
-                     layer='Conv2d',
-                     distribution='uniform',
-                     override=dict(type='Normal',
-                                   name=self.conv_reg[-1].conv,
-                                   mean=0,
-                                   std=0.001)),
-                dict(type='Xavier', layer='Conv1d',distribution='uniform')
-            ]
+            self.init_cfg = dict(
+                type='Xavier',
+                layer=['Conv2d', 'Conv1d'],
+                distribution='uniform')
+
+    def init_weight(self):
+        super().init_weight()
+        normal_init(self.conv_reg[-1].conv, mean=0, std=0.001)
 
     def forward(self, seg_feats, part_feats):
         """Forward pass.

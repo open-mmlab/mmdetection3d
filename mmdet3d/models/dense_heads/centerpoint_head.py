@@ -1,8 +1,8 @@
 import copy
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, build_conv_layer, kaiming_init
-from mmcv.runner import force_fp32, BaseModule
+from mmcv.cnn import ConvModule, build_conv_layer
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
@@ -79,16 +79,21 @@ class SeparateHead(BaseModule):
             conv_layers = nn.Sequential(*conv_layers)
 
             self.__setattr__(head, conv_layers)
-            
+
             if init_cfg is None:
                 self.init_cfg = dict(
                     type='Kaiming',
                     layer='Conv2d',
-                    distribution='uniform',
-                    override=dict(type='Kaiming',
-                                name=self.__getattr__('heatmap')[-1],
-                                distribution='uniform',
-                                bias=self.init_bias))
+                    override=dict(
+                        type='Kaiming', name='heatmap',
+                        distribution='uniform'))
+
+    def init_weight(self):
+        """Initialize weights."""
+        super().init_weight()
+        for head in self.heads:
+            if head == 'heatmap':
+                self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
 
     def forward(self, x):
         """Forward function for SepHead.
@@ -202,11 +207,11 @@ class DCNSeparateHead(BaseModule):
                 type='Kaiming',
                 layer='Conv2d',
                 distribution='uniform',
-                override=dict(type='Kaiming',
-                            name=self.cls_head[-1],
-                            distribution='uniform'
-                            bias=self.init_bias))
-
+                override=dict(
+                    type='Kaiming',
+                    name=self.cls_head[-1],
+                    distribution='uniform',
+                    bias=self.init_bias))
 
     def forward(self, x):
         """Forward function for DCNSepHead.

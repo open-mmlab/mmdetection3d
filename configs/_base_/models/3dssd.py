@@ -1,6 +1,5 @@
 model = dict(
     type='SSD3DNet',
-    init_cfg=[],
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,

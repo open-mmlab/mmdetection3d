@@ -76,7 +76,7 @@ class PartA2RPNHead(Anchor3DHead):
                  loss_bbox=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
                  loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2),
-                 init_cfg=None,):
+                 init_cfg=None):
         super().__init__(num_classes, in_channels, train_cfg, test_cfg,
                          feat_channels, use_direction_classifier,
                          anchor_generator, assigner_per_size, assign_per_class,

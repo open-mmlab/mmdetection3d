@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
+from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -91,24 +91,8 @@ class BaseShapeHead(BaseModule):
                 type='Normal',
                 layer='Conv2d',
                 std=0.01,
-                override=dict(type='Normal', name='conv_cls',std=0.01,
-                    bias_prob=0.01))
-            if self.use_direction_classifier:
-                self.init_cfg = dict(
-                    type='Normal',
-                    layer='Conv2d',
-                    std=0.01,
-                    override=[
-                        dict(
-                            type='Normal', 
-                            name='conv_cls',
-                            std=0.01,
-                            bias_prob=0.01),
-                        dict(
-                            type='Normal',
-                            name='conv_dir_cls',
-                            std=0.01,
-                            bias_prob=0.01)])
+                bias_prob=0.01,
+                override=dict(type='Normal', name='conv_reg', std=0.01))
 
     def forward(self, x):
         """Forward function for SmallHead.
@@ -165,15 +149,11 @@ class ShapeAwareHead(Anchor3DHead):
             :class:`Anchor3DHead`.
     """
 
-    def __init__(self, tasks, 
-                 assign_per_class=True, 
-                 init_cfg=None,
-                 **kwargs):
+    def __init__(self, tasks, assign_per_class=True, init_cfg=None, **kwargs):
         self.tasks = tasks
         self.featmap_sizes = []
-        super().__init__(assign_per_class=assign_per_class,
-                         init_cfg=None,
-                         **kwargs)
+        super().__init__(
+            assign_per_class=assign_per_class, init_cfg=None, **kwargs)
 
     def _init_layers(self):
         """Initialize neural network layers of the head."""

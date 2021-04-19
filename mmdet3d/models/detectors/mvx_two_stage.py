@@ -1,9 +1,9 @@
 import mmcv
 import torch
+import warnings
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import force_fp32
 from os import path as osp
-from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,
@@ -80,27 +80,26 @@ class MVXTwoStageDetector(Base3DDetector):
         else:
             raise ValueError(
                 f'pretrained should be a dict, got {type(pretrained)}')
-        
+
         if self.with_img_backbone:
             if img_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
-            self.img_backbone.init_cfg = dict(type='Pretrained', 
-                                              checkpoint=img_pretrained)
+                self.img_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
         if self.with_img_roi_head:
             if img_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
-            self.img_roi_head.init_cfg = dict(type='Pretrained', 
-                                              checkpoint=img_pretrained)
+                self.img_roi_head.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
 
         if self.with_pts_backbone:
             if img_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
-            self.pts_backbone.init_cfg = dict(type='Pretrained', 
-                                              checkpoint=pts_pretrained)
-
+                self.pts_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=pts_pretrained)
 
     @property
     def with_img_shared_head(self):
