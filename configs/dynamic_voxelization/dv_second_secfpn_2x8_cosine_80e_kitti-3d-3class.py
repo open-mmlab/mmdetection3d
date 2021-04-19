@@ -16,7 +16,3 @@ model = dict(
         type='DynamicSimpleVFE',
         voxel_size=voxel_size,
         point_cloud_range=point_cloud_range))
-
-# optimizer
-optimizer = dict(_delete_=True)
-lr_config = dict(_delete_=True)
