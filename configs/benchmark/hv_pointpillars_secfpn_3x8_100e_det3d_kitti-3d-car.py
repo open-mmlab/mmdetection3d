@@ -1,3 +1,5 @@
+_base_ = ['../_base_/default_runtime.py', '../_base_/schedules/cyclic_40e.py']
+
 # model settings
 voxel_size = [0.16, 0.16, 4]
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
@@ -152,40 +154,14 @@ data = dict(
         modality=input_modality,
         classes=class_names,
         test_mode=True))
+
 # optimizer
 lr = 0.001  # max learning rate
-optimizer = dict(
-    type='AdamW',
-    lr=lr,
-    betas=(0.95, 0.99),  # the momentum is change during training
-    weight_decay=0.01)
+optimizer = dict(lr=lr)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-# learning policy
-lr_config = dict(
-    policy='cyclic',
-    target_ratio=(10, 1e-4),
-    cyclic_times=1,
-    step_ratio_up=0.4)
-momentum_config = dict(
-    policy='cyclic',
-    target_ratio=(0.85 / 0.95, 1),
-    cyclic_times=1,
-    step_ratio_up=0.4)
-checkpoint_config = dict(interval=1)
-evaluation = dict(interval=1)
-# yapf:disable
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
-# runtime settings
 runner = dict(max_epochs=50)
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
+
+evaluation = dict(interval=1)
+
 work_dir = './work_dirs/pp_secfpn_100e'
-load_from = None
-resume_from = None
 workflow = [('train', 50)]

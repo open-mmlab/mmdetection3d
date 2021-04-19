@@ -18,18 +18,5 @@ model = dict(
         point_cloud_range=point_cloud_range))
 
 # optimizer
-lr = 0.003  # max learning rate
-optimizer = dict(
-    _delete_=True,
-    type='AdamW',
-    lr=lr,
-    betas=(0.95, 0.99),  # the momentum is change during training
-    weight_decay=0.001)
-lr_config = dict(
-    _delete_=True,
-    policy='CosineAnnealing',
-    warmup='linear',
-    warmup_iters=1000,
-    warmup_ratio=1.0 / 10,
-    min_lr_ratio=1e-5)
-momentum_config = None
+optimizer = dict(_delete_=True)
+lr_config = dict(_delete_=True)
