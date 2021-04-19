@@ -40,7 +40,7 @@ test_pipeline = [
     dict(type='LoadImageFromFileMono3D'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1600, 900),
+        scale_factor=1.0,
         flip=False,
         transforms=[
             dict(type='RandomFlip3D'),
