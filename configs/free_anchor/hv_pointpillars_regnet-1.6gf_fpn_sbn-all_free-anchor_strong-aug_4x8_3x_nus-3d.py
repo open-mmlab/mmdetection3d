@@ -62,8 +62,8 @@ train_pipeline = [
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
-
 data = dict(train=dict(pipeline=train_pipeline))
+
 lr_config = dict(step=[28, 34])
 runner = dict(max_epochs=36)
 evaluation = dict(interval=36)
