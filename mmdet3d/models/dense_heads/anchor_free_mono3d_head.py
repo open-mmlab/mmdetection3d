@@ -40,6 +40,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         pred_attrs (bool): Whether to predict attributes. Default to False.
         num_attrs (int): The number of attributes to be predicted. Default: 9.
         pred_velo (bool): Whether to predict velocity. Default to False.
+        pred_bbox2d (bool): Whether to predict 2D boxes. Default to False.
         group_reg_dims (tuple[int]): The dimension of each regression target
             group. Default: (2, 1, 3, 1, 2).
         cls_branch (tuple[int]): Channels for classification branch.
@@ -93,6 +94,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             pred_attrs=False,
             num_attrs=9,  # For nuscenes
             pred_velo=False,
+            pred_bbox2d=False,
             group_reg_dims=(2, 1, 3, 1, 2),  # offset, depth, size, rot, velo,
             cls_branch=(128, 64),
             reg_branch=(
@@ -131,6 +133,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         assert len(reg_branch) == len(group_reg_dims), 'The number of '\
             'element in reg_branch and group_reg_dims should be the same.'
         self.pred_velo = pred_velo
+        self.pred_bbox2d = pred_bbox2d
         self.out_channels = []
         for reg_branch_channels in reg_branch:
             if len(reg_branch_channels) > 0:
