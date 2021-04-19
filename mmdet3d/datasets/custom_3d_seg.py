@@ -431,6 +431,8 @@ class Custom3DSegDataset(Dataset):
                 A single or a list of loaded data.
         """
         assert pipeline is not None, 'data loading pipeline is not provided'
+        # when we want to load ground-truth via pipeline (e.g. bbox, seg mask)
+        # we need to set self.test_mode as False so that we have 'annos'
         if load_annos:
             original_test_mode = self.test_mode
             self.test_mode = False
