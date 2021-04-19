@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import warnings
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule
 from torch import nn as nn
@@ -153,7 +154,17 @@ class ShapeAwareHead(Anchor3DHead):
         self.tasks = tasks
         self.featmap_sizes = []
         super().__init__(
-            assign_per_class=assign_per_class, init_cfg=None, **kwargs)
+            assign_per_class=assign_per_class, init_cfg=init_cfg, **kwargs)
+
+    def init_weight(self):
+        if not self._is_init:
+            for m in self.children():
+                if hasattr(m, 'init_weight'):
+                    m.init_weight()
+            self._is_init = True
+        else:
+            warnings.warn(f'init_weight of {self.__class__.__name__} has '
+                          f'been called more than once.')
 
     def _init_layers(self):
         """Initialize neural network layers of the head."""
