@@ -32,8 +32,7 @@ class DynamicVoxelNet(VoxelNet):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             pretrained=pretrained,
-            init_cfg=init_cfg
-        )
+            init_cfg=init_cfg)
 
     def extract_feat(self, points, img_metas):
         """Extract features from points."""
