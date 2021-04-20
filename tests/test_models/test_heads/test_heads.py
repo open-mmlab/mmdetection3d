@@ -1092,7 +1092,7 @@ def test_fcos_mono3d_head():
                            [0.0, 1260.8474446004698, 495.3344268742088],
                            [0.0, 0.0, 1.0]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
-            box_type_3d=CameraInstance3DBoxes)
+            box_type_3d=CameraInstance3DBoxes) for i in range(2)
     ]
     losses = self.loss(*ret_dict, gt_bboxes, gt_labels, gt_bboxes_3d,
                        gt_labels_3d, centers2d, depths, attr_labels, img_metas)
@@ -1107,16 +1107,8 @@ def test_fcos_mono3d_head():
     assert losses['loss_attr'] >= 0
 
     # test get_boxes
-    feats = [
-        torch.rand([1, 256, 116, 200], dtype=torch.float32).cuda(),
-        torch.rand([1, 256, 58, 100], dtype=torch.float32).cuda(),
-        torch.rand([1, 256, 29, 50], dtype=torch.float32).cuda(),
-        torch.rand([1, 256, 15, 25], dtype=torch.float32).cuda(),
-        torch.rand([1, 256, 8, 13], dtype=torch.float32).cuda()
-    ]
-    ret_dict = self(feats)
     results = self.get_bboxes(*ret_dict, img_metas)
-    assert len(results) == 1
+    assert len(results) == 2
     assert len(results[0]) == 4
     assert results[0][0].tensor.shape == torch.Size([200, 9])
     assert results[0][1].shape == torch.Size([200])
