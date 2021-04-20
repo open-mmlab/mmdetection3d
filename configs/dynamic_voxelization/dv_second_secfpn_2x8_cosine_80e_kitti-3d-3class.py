@@ -1,4 +1,8 @@
-_base_ = '../second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py'
+_base_ = [
+    '../_base_/models/hv_second_secfpn_kitti.py',
+    '../_base_/datasets/kitti-3d-3class.py', '../_base_/schedules/cosine.py',
+    '../_base_/default_runtime.py'
+]
 
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 voxel_size = [0.05, 0.05, 0.1]

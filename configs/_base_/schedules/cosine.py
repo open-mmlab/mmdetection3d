@@ -1,3 +1,4 @@
+# This schedule is mainly used by models with dynamic voxelization
 # optimizer
 lr = 0.003  # max learning rate
 optimizer = dict(
