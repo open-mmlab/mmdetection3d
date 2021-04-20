@@ -1,18 +1,17 @@
 import glob
 import numpy as np
-import os
+from os import path as osp
 
 # -----------------------------------------------------------------------------
 # CONSTANTS
 # -----------------------------------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = osp.dirname(osp.abspath(__file__))
 
-classes = [
-    x.rstrip()
-    for x in open(os.path.join(BASE_DIR, 'meta_data/class_names.txt'))
+class_names = [
+    x.rstrip() for x in open(osp.join(BASE_DIR, 'meta_data/class_names.txt'))
 ]
-class2label = {cls: i for i, cls in enumerate(classes)}
+class2label = {one_class: i for i, one_class in enumerate(class_names)}
 
 # -----------------------------------------------------------------------------
 # CONVERT ORIGINAL DATA TO POINTS, SEM_LABEL AND INS_LABEL FILES
@@ -35,12 +34,12 @@ def export(anno_path, out_filename):
     points_list = []
     ins_idx = 1  # instance ids should be indexed from 1, so 0 is unannotated
 
-    for f in glob.glob(os.path.join(anno_path, '*.txt')):
-        cls = os.path.basename(f).split('_')[0]
-        if cls not in classes:  # note: in some room there is 'staris' class
-            cls = 'clutter'
+    for f in glob.glob(osp.join(anno_path, '*.txt')):
+        one_class = osp.basename(f).split('_')[0]
+        if one_class not in class_names:  # some rooms have 'staris' class
+            one_class = 'clutter'
         points = np.loadtxt(f)
-        labels = np.ones((points.shape[0], 1)) * class2label[cls]
+        labels = np.ones((points.shape[0], 1)) * class2label[one_class]
         ins_labels = np.ones((points.shape[0], 1)) * ins_idx
         ins_idx += 1
         points_list.append(np.concatenate([points, labels, ins_labels], 1))

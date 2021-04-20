@@ -6,11 +6,13 @@ We follow the procedure in [pointnet](https://github.com/charlesq34/pointnet).
 2. In this directory, extract point clouds and annotations by running `python collect_indoor3d_data.py`.
 
 3. Enter the project root directory, generate training data by running
+
 ```bash
 python tools/create_data.py s3dis --root-path ./data/s3dis --out-dir ./data/s3dis --extra-tag s3dis
 ```
 
 The overall process could be achieved through the following script
+
 ```bash
 python collect_indoor3d_data.py
 cd ../..
