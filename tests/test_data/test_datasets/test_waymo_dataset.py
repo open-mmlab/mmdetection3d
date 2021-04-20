@@ -157,7 +157,7 @@ def test_evaluate():
                           4.4500e+00, 1.5900e+00, -8.8000e-02
                       ]]))
     labels_3d = torch.tensor([0, 0])
-    scores_3d = torch.tensor([0.5, 0.8])
+    scores_3d = torch.tensor([0.8, 0.6])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     ap_dict = waymo_dataset.evaluate([result], metric=metric)
     assert np.isclose(ap_dict['Overall/L1 mAP'], 0.0)
@@ -190,6 +190,30 @@ def test_show():
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
     results = [result]
     waymo_dataset.show(results, temp_dir, show=False)
+    pts_file_path = osp.join(temp_dir, '1000000', '1000000_points.obj')
+    gt_file_path = osp.join(temp_dir, '1000000', '1000000_gt.obj')
+    pred_file_path = osp.join(temp_dir, '1000000', '1000000_pred.obj')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
+    # test show with pipeline
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=6,
+            use_dim=5),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=classes,
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    waymo_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
     pts_file_path = osp.join(temp_dir, '1000000', '1000000_points.obj')
     gt_file_path = osp.join(temp_dir, '1000000', '1000000_gt.obj')
     pred_file_path = osp.join(temp_dir, '1000000', '1000000_pred.obj')
