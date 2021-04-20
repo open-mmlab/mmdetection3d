@@ -7,8 +7,8 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
                           DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
-                              ObjectNoise, ObjectSample, RandomFlip3D,
-                              PointShuffle, PointsRangeFilter,
+                              ObjectNoise, ObjectSample, PointShuffle,
+                              PointsRangeFilter, RandomFlip3D,
                               VoxelBasedPointSampler)
 
 
@@ -233,7 +233,7 @@ def test_global_alignment():
         cat_ids2class[cat_id] = class_id
 
     global_alignment = GlobalAlignment(
-        rotation_axis=2, ignore_index=ignore_index)
+        rotation_axis=2, ignore_index=ignore_index, extract_bbox=True)
 
     points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
                          np.float32).reshape(-1, 6)
@@ -327,7 +327,8 @@ def test_global_alignment():
 
     repr_str = repr(global_alignment)
     expected_repr_str = 'GlobalAlignment(rotation_axis=2,' \
-                        f' ignore_index={ignore_index})'
+                        f' ignore_index={ignore_index},' \
+                        f' extract_bbox=True)'
     assert repr_str == expected_repr_str
 
 

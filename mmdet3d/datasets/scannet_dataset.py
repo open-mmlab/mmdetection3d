@@ -105,14 +105,7 @@ class ScanNetDataset(Custom3DDataset):
         pts_semantic_mask_path = osp.join(self.data_root,
                                           info['pts_semantic_mask_path'])
 
-        if 'axis_align_matrix' in info['annos'].keys():
-            axis_align_matrix = info['annos']['axis_align_matrix'].astype(
-                np.float32)
-        else:
-            axis_align_matrix = np.eye(4).astype(np.float32)
-            warnings.warn(
-                'axis_align_matrix is not found in ScanNet data info, please '
-                'use new pre-process scripts to re-generate ScanNet data')
+        axis_align_matrix = self._get_axis_align_matrix(info)
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
@@ -121,6 +114,128 @@ class ScanNetDataset(Custom3DDataset):
             pts_semantic_mask_path=pts_semantic_mask_path,
             axis_align_matrix=axis_align_matrix)
         return anns_results
+
+    def prepare_test_data(self, index):
+        """Prepare data for testing.
+
+        We should take axis_align_matrix from self.data_infos since we need \
+            to align point clouds.
+
+        Args:
+            index (int): Index for accessing the target data.
+
+        Returns:
+            dict: Testing data dict of the corresponding index.
+        """
+        input_dict = self.get_data_info(index)
+        # take the axis_align_matrix from data_infos
+        input_dict['ann_info'] = dict(
+            axis_align_matrix=self._get_axis_align_matrix(
+                self.data_infos[index]))
+        self.pre_pipeline(input_dict)
+        example = self.pipeline(input_dict)
+        return example
+
+    @staticmethod
+    def _get_axis_align_matrix(info):
+        """Get axis_align_matrix from info. If not exist, return identity mat.
+
+        Args:
+            info (dict): one data info term.
+
+        Returns:
+            np.ndarray: 4x4 transformation matrix.
+        """
+        if 'axis_align_matrix' in info['annos'].keys():
+            return info['annos']['axis_align_matrix'].astype(np.float32)
+        else:
+            warnings.warn(
+                'axis_align_matrix is not found in ScanNet data info, please '
+                'use new pre-process scripts to re-generate ScanNet data')
+            return np.eye(4).astype(np.float32)
+
+    def evaluate(self,
+                 results,
+                 metric=None,
+                 iou_thr=(0.25, 0.5),
+                 logger=None,
+                 show=False,
+                 out_dir=None,
+                 pipeline=None):
+        """Evaluate.
+
+        Evaluation in indoor protocol.
+        Since ScanNet detection data pipeline re-computes ground-truth boxes,
+            we can't directly use gt_bboxes from self.data_infos.
+
+        Args:
+            results (list[dict]): List of results.
+            metric (str | list[str]): Metrics to be evaluated.
+            iou_thr (list[float]): AP IoU thresholds.
+            show (bool): Whether to visualize.
+                Default: False.
+            out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
+
+        Returns:
+            dict: Evaluation results.
+        """
+        from mmdet3d.core.evaluation import indoor_eval
+        assert isinstance(
+            results, list), f'Expect results to be list, got {type(results)}.'
+        assert len(results) > 0, 'Expect length of results > 0.'
+        assert len(results) == len(self.data_infos)
+        assert isinstance(
+            results[0], dict
+        ), f'Expect elements in results to be dict, got {type(results[0])}.'
+        # load gt_bboxes via pipeline
+        pipeline = self._get_pipeline(pipeline)
+        gt_bboxes = [
+            self._extract_data(
+                i, pipeline, ['gt_bboxes_3d', 'gt_labels_3d'], load_annos=True)
+            for i in range(len(self.data_infos))
+        ]
+        gt_annos = [self._build_annos(*gt_bbox) for gt_bbox in gt_bboxes]
+        label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
+        ret_dict = indoor_eval(
+            gt_annos,
+            results,
+            iou_thr,
+            label2cat,
+            logger=logger,
+            box_type_3d=self.box_type_3d,
+            box_mode_3d=self.box_mode_3d)
+        if show:
+            self.show(results, out_dir, pipeline=pipeline)
+
+        return ret_dict
+
+    @staticmethod
+    def _build_annos(gt_bboxes, gt_labels):
+        """Transform gt bboxes and labels into self.data_infos['annos'] format.
+
+        Args:
+            gt_bboxes (:obj:`BaseInstance3DBoxes`): \
+                3D bounding boxes in Depth coordinate
+            gt_labels (torch.Tensor): Labels of boxes.
+
+        Returns:
+            dict: annotations including the following keys
+
+                - gt_boxes_upright_depth (np.ndarray): 3D bounding boxes.
+                - class (np.ndarray): Labels of boxes.
+                - gt_num (int): Number of boxes.
+        """
+        bbox = gt_bboxes.tensor.numpy()[:, :6].copy()  # drop yaw dimension
+        bbox[..., 2] += bbox[..., 5] / 2  # bottom center to gravity center
+        anno = {
+            'gt_boxes_upright_depth': bbox,
+            'class': gt_labels.numpy(),
+            'gt_num': gt_labels.shape[0]
+        }
+        return anno
 
     def _build_default_pipeline(self):
         """Build the default pipeline for this dataset."""
@@ -132,10 +247,27 @@ class ScanNetDataset(Custom3DDataset):
                 load_dim=6,
                 use_dim=[0, 1, 2]),
             dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=True,
+                with_seg_3d=True),
+            dict(
+                type='PointSegClassMapping',
+                valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
+                               33, 34, 36, 39)),
+            dict(
+                type='GlobalAlignment',
+                rotation_axis=2,
+                ignore_index=len(self.CLASSES),
+                extract_bbox=True),
+            dict(
                 type='DefaultFormatBundle3D',
                 class_names=self.CLASSES,
                 with_label=False),
-            dict(type='Collect3D', keys=['points'])
+            dict(
+                type='Collect3D',
+                keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
         ]
         return Compose(pipeline)
 
@@ -155,8 +287,10 @@ class ScanNetDataset(Custom3DDataset):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = self._extract_data(i, pipeline, 'points').numpy()
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
+            points, gt_bboxes = self._extract_data(
+                i, pipeline, ['points', 'gt_bboxes_3d'], load_annos=True)
+            points = points.numpy()
+            gt_bboxes = gt_bboxes.tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
                         show)

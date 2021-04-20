@@ -301,6 +301,9 @@ class GlobalAlignment(object):
     Args:
         rotation_axis (int): Rotation axis for points and bboxes rotation.
         ignore_index (int): Label index for which we won't extract bboxes.
+        extract_bbox (bool): Whether extract new ground-truth bboxes after \
+            alignment. This requires instance and semantic mask inputs.
+            Defaults to False.
 
     Note:
         This function should be called after PointSegClassMapping in pipeline.
@@ -311,9 +314,10 @@ class GlobalAlignment(object):
             bounding boxes for evaluation.
     """
 
-    def __init__(self, rotation_axis, ignore_index):
+    def __init__(self, rotation_axis, ignore_index, extract_bbox=False):
         self.rotation_axis = rotation_axis
         self.ignore_index = ignore_index
+        self.extract_bbox = extract_bbox
 
     def _trans_points(self, input_dict, trans_factor):
         """Private function to translate points.
@@ -386,10 +390,7 @@ class GlobalAlignment(object):
         """
         # TODO: this function is only used in ScanNet-Det pipeline currently
         # TODO: we only extract gt_bboxes_3d which is DepthInstance3DBoxes
-        if 'gt_bboxes_3d' not in input_dict['bbox3d_fields']:
-            return
-        assert len(input_dict['bbox3d_fields']) == 1, \
-            'GlobalAlignment only support gt_bboxes_3d'
+        from mmdet3d.core.bbox import DepthInstance3DBoxes
 
         assert 'pts_instance_mask' in input_dict.keys(), \
             'instance mask is not provided in GlobalAlignment'
@@ -415,16 +416,14 @@ class GlobalAlignment(object):
             instance_bboxes[bbox_idx, :6] = bbox
             instance_bboxes[bbox_idx, 6] = cat_id
 
-        # TODO: currently only DepthInstance3DBoxes is supported!
-        # TODO: may support yaw in the future
-        original_type = type(input_dict['gt_bboxes_3d'])
-        input_dict['gt_bboxes_3d'] = original_type(
+        if 'gt_bboxes_3d' not in input_dict['bbox3d_fields']:
+            input_dict['bbox3d_fields'].append('gt_bboxes_3d')
+        input_dict['gt_bboxes_3d'] = DepthInstance3DBoxes(
             instance_bboxes[:, :6],
             box_dim=6,
             with_yaw=False,
             origin=(0.5, 0.5, 0.5))
-        if 'gt_labels_3d' in input_dict.keys():
-            input_dict['gt_labels_3d'] = instance_bboxes[:, 6].astype(np.long)
+        input_dict['gt_labels_3d'] = instance_bboxes[:, 6].astype(np.long)
 
     def __call__(self, input_dict):
         """Call function to shuffle points.
@@ -448,14 +447,16 @@ class GlobalAlignment(object):
         self._check_rot_mat(rot_mat)
         self._rot_points(input_dict, rot_mat)
         self._trans_points(input_dict, trans_vec)
-        self._extract_bboxes(input_dict)
+        if self.extract_bbox:
+            self._extract_bboxes(input_dict)
 
         return input_dict
 
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += f'(rotation_axis={self.rotation_axis},'
-        repr_str += f' ignore_index={self.ignore_index})'
+        repr_str += f' ignore_index={self.ignore_index},'
+        repr_str += f' extract_bbox={self.extract_bbox})'
         return repr_str
 
 

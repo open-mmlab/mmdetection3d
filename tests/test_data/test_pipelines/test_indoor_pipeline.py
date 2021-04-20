@@ -23,8 +23,8 @@ def test_scannet_pipeline():
             use_dim=[0, 1, 2]),
         dict(
             type='LoadAnnotations3D',
-            with_bbox_3d=True,
-            with_label_3d=True,
+            with_bbox_3d=False,
+            with_label_3d=False,
             with_mask_3d=True,
             with_seg_3d=True),
         dict(
@@ -34,7 +34,8 @@ def test_scannet_pipeline():
         dict(
             type='GlobalAlignment',
             rotation_axis=2,
-            ignore_index=len(class_names)),
+            ignore_index=len(class_names),
+            extract_bbox=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(
             type='RandomFlip3D',
