@@ -45,7 +45,8 @@ def create_indoor_info_file(data_path,
             train_dataset = ScanNetData(root_path=data_path, split='train')
             val_dataset = ScanNetData(root_path=data_path, split='val')
             test_dataset = ScanNetData(root_path=data_path, split='test')
-            test_filename = os.path.join(save_path, f'{pkl_prefix}_infos_test.pkl')
+            test_filename = os.path.join(save_path,
+                                         f'{pkl_prefix}_infos_test.pkl')
 
         infos_train = train_dataset.get_infos(
             num_workers=workers, has_label=True)
