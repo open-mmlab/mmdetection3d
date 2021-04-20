@@ -219,9 +219,6 @@ class ScanNetSegData(object):
                 mask = np.load(mask)
             else:
                 mask = np.fromfile(mask, dtype=np.long)
-        # first filter out unannotated points (labeled as 0)
-        mask = mask[mask != 0]
-        # then convert to [0, 20) labels
         label = self.cat_id2class[mask]
         return label
 

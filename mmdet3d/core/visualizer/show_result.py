@@ -61,10 +61,7 @@ def _write_oriented_bbox(scene_bbox, out_filename):
         scene_bbox = np.zeros((1, 7))
     scene = trimesh.scene.Scene()
     for box in scene_bbox:
-        try:
-            scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
-        except ValueError:  # invalid box shape, e.g. width==0
-            continue
+        scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
 
     mesh_list = trimesh.util.concatenate(scene.dump())
     # save to obj file

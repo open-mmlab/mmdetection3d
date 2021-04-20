@@ -5,8 +5,6 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')
-valid_class_ids = (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36,
-                   39)
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -79,7 +77,6 @@ test_pipeline = [
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
-# we need to load gt masks for aligned gt bbox extracting
 eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -87,18 +84,12 @@ eval_pipeline = [
         shift_height=False,
         load_dim=6,
         use_dim=[0, 1, 2]),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_mask_3d=False,
-        with_seg_3d=False),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(type='Collect3D', keys=['points'])
 ]
 
 data = dict(

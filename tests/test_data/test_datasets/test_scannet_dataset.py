@@ -183,19 +183,12 @@ def test_evaluate():
             shift_height=False,
             load_dim=6,
             use_dim=[0, 1, 2]),
-        dict(
-            type='LoadAnnotations3D',
-            with_bbox_3d=True,
-            with_label_3d=True,
-            with_mask_3d=False,
-            with_seg_3d=False),
         dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='DefaultFormatBundle3D',
             class_names=class_names,
             with_label=False),
-        dict(
-            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+        dict(type='Collect3D', keys=['points'])
     ]
     ret_dict = scannet_dataset.evaluate(
         results, metric, pipeline=eval_pipeline)
@@ -265,19 +258,12 @@ def test_show():
             shift_height=False,
             load_dim=6,
             use_dim=[0, 1, 2]),
-        dict(
-            type='LoadAnnotations3D',
-            with_bbox_3d=True,
-            with_label_3d=True,
-            with_mask_3d=False,
-            with_seg_3d=False),
         dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='DefaultFormatBundle3D',
             class_names=class_names,
             with_label=False),
-        dict(
-            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+        dict(type='Collect3D', keys=['points'])
     ]
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name

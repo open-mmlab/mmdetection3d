@@ -163,20 +163,12 @@ class ScanNetDataset(Custom3DDataset):
                 shift_height=False,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(
-                type='LoadAnnotations3D',
-                with_bbox_3d=True,
-                with_label_3d=True,
-                with_mask_3d=False,
-                with_seg_3d=False),
             dict(type='GlobalAlignment', rotation_axis=2),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=self.CLASSES,
                 with_label=False),
-            dict(
-                type='Collect3D',
-                keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+            dict(type='Collect3D', keys=['points'])
         ]
         return Compose(pipeline)
 
@@ -196,8 +188,7 @@ class ScanNetDataset(Custom3DDataset):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = self._extract_data(
-                i, pipeline, 'points', load_annos=True).numpy()
+            points = self._extract_data(i, pipeline, 'points').numpy()
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
             show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
