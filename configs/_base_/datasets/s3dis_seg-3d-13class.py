@@ -66,7 +66,10 @@ eval_pipeline = [
     dict(
         type='PointSegClassMapping',
         valid_cat_ids=tuple(range(len(class_names)))),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
+    dict(
+        type='DefaultFormatBundle3D',
+        with_label=False,
+        class_names=class_names),
     dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
 ]
 
