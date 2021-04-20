@@ -130,15 +130,11 @@ def test_evaluate():
     waymo_dataset = WaymoDataset(data_root, ann_file, split, pts_prefix,
                                  pipeline, classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
-        torch.tensor(
-            # [[31.9723, -2.3247, 2.2145, 2.3900, 6.0800, 3.1000, -1.3200]]))
-            [[
-                6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
-                1.4600e+00, -9.0000e-02
-            ]]))
-    labels_3d = torch.tensor([
-        0,
-    ])
+        torch.tensor([[
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
+            1.4600e+00, -9.0000e-02
+        ]]))
+    labels_3d = torch.tensor([0])
     scores_3d = torch.tensor([0.5])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
 
@@ -151,6 +147,18 @@ def test_evaluate():
 
     # waymo protocol
     metric = ['waymo']
+    boxes_3d = LiDARInstance3DBoxes(
+        torch.tensor([[
+            6.9800e+01, 3.3200e+01, 4.1500e-02, 2.0000e+00, 4.4000e+00,
+            1.5000e+00, -9.1000e-02
+        ],
+                      [
+                          6.9100e+01, 3.3600e+01, 4.1800e-02, 2.1000e+00,
+                          4.4500e+00, 1.5900e+00, -8.8000e-02
+                      ]]))
+    labels_3d = torch.tensor([0, 0])
+    scores_3d = torch.tensor([0.5, 0.8])
+    result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     ap_dict = waymo_dataset.evaluate([result], metric=metric)
     assert np.isclose(ap_dict['Overall/L1 mAP'], 0.0)
     assert np.isclose(ap_dict['Overall/L2 mAP'], 0.0)
@@ -200,15 +208,11 @@ def test_format_results():
     waymo_dataset = WaymoDataset(data_root, ann_file, split, pts_prefix,
                                  pipeline, classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
-        torch.tensor(
-            # [[31.9723, -2.3247, 2.2145, 2.3900, 6.0800, 3.1000, -1.3200]]))
-            [[
-                6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
-                1.4600e+00, -9.0000e-02
-            ]]))
-    labels_3d = torch.tensor([
-        0,
-    ])
+        torch.tensor([[
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
+            1.4600e+00, -9.0000e-02
+        ]]))
+    labels_3d = torch.tensor([0])
     scores_3d = torch.tensor([0.5])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     result_files, tmp_dir = waymo_dataset.format_results([result],
