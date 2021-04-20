@@ -225,7 +225,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-runner = dict(max_epochs=80)
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/pp_secfpn_80e'
