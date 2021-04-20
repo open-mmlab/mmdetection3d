@@ -1071,7 +1071,7 @@ def test_fcos_mono3d_head():
     # test loss
     gt_bboxes = [
         torch.rand([3, 4], dtype=torch.float32).cuda(),
-        torch.rand([3, 4], dtype=torch.float32).cuda(),
+        torch.rand([3, 4], dtype=torch.float32).cuda()
     ]
     gt_bboxes_3d = CameraInstance3DBoxes(
         torch.rand([3, 9], device='cuda'), box_dim=9)
@@ -1079,11 +1079,11 @@ def test_fcos_mono3d_head():
     gt_labels_3d = gt_labels
     centers2d = [
         torch.rand([3, 2], dtype=torch.float32).cuda(),
-        torch.rand([3, 2], dtype=torch.float32).cuda(),
+        torch.rand([3, 2], dtype=torch.float32).cuda()
     ]
     depths = [
         torch.rand([3], dtype=torch.float32).cuda(),
-        torch.rand([3], dtype=torch.float32).cuda(),
+        torch.rand([3], dtype=torch.float32).cuda()
     ]
     attr_labels = [torch.randint(0, 9, [3], device='cuda') for i in range(2)]
     img_metas = [

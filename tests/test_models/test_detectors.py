@@ -5,7 +5,8 @@ import random
 import torch
 from os.path import dirname, exists, join
 
-from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes)
 from mmdet3d.models.builder import build_detector
 
 
@@ -316,3 +317,60 @@ def test_centerpoint():
     assert boxes_3d_0.tensor.shape[1] == 9
     assert scores_3d_0.shape[0] >= 0
     assert labels_3d_0.shape[0] >= 0
+
+
+def test_fcos3d():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    _setup_seed(0)
+    fcos3d_cfg = _get_detector_cfg(
+        'fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py')
+    self = build_detector(fcos3d_cfg).cuda()
+    imgs = torch.rand([1, 3, 928, 1600], dtype=torch.float32).cuda()
+    gt_bboxes = [torch.rand([3, 4], dtype=torch.float32).cuda()]
+    gt_bboxes_3d = CameraInstance3DBoxes(
+        torch.rand([3, 9], device='cuda'), box_dim=9)
+    gt_labels = [torch.randint(0, 10, [3], device='cuda')]
+    gt_labels_3d = gt_labels
+    centers2d = [torch.rand([3, 2], dtype=torch.float32).cuda()]
+    depths = [torch.rand([3], dtype=torch.float32).cuda()]
+    attr_labels = [torch.randint(0, 9, [3], device='cuda')]
+    img_metas = [
+        dict(
+            cam_intrinsic=[[1260.8474446004698, 0.0, 807.968244525554],
+                           [0.0, 1260.8474446004698, 495.3344268742088],
+                           [0.0, 0.0, 1.0]],
+            scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
+            box_type_3d=CameraInstance3DBoxes)
+    ]
+
+    # test forward_train
+    losses = self.forward_train(imgs, img_metas, gt_bboxes, gt_labels,
+                                gt_bboxes_3d, gt_labels_3d, centers2d, depths,
+                                attr_labels)
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_offset'] >= 0
+    assert losses['loss_depth'] >= 0
+    assert losses['loss_size'] >= 0
+    assert losses['loss_rotsin'] >= 0
+    assert losses['loss_centerness'] >= 0
+    assert losses['loss_velo'] >= 0
+    assert losses['loss_dir'] >= 0
+    assert losses['loss_attr'] >= 0
+
+    # test simple_test
+    results = self.simple_test(imgs, img_metas)
+    boxes_3d = results[0]['img_bbox']['boxes_3d']
+    scores_3d = results[0]['img_bbox']['scores_3d']
+    labels_3d = results[0]['img_bbox']['labels_3d']
+    attrs_3d = results[0]['img_bbox']['attrs_3d']
+    assert boxes_3d.tensor.shape[0] >= 0
+    assert boxes_3d.tensor.shape[1] == 9
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+    assert attrs_3d.shape[0] >= 0
+
+
+if __name__ == '__main__':
+    test_fcos3d()
