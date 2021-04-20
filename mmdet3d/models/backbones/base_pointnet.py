@@ -1,6 +1,6 @@
+import warnings
 from abc import ABCMeta
-from mmcv.runner import load_checkpoint, BaseModule
-from torch import nn as nn
+from mmcv.runner import BaseModule
 
 
 class BasePointNet(BaseModule, metaclass=ABCMeta):

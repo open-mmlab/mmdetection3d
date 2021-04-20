@@ -1,5 +1,6 @@
+import warnings
 from mmcv.cnn import build_conv_layer, build_norm_layer
-from mmcv.runner import load_checkpoint, BaseModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet.models import BACKBONES
@@ -62,7 +63,7 @@ class SECOND(BaseModule):
             blocks.append(block)
 
         self.blocks = nn.ModuleList(blocks)
-        
+
         assert not (init_cfg and pretrained), \
             'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):

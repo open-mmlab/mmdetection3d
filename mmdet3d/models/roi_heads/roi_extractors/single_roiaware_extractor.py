@@ -1,9 +1,8 @@
 import torch
-from torch import nn as nn
+from mmcv.runner import BaseModule
 
 from mmdet3d import ops
 from mmdet.models.builder import ROI_EXTRACTORS
-from mmcv.runner import BaseModule
 
 
 @ROI_EXTRACTORS.register_module()

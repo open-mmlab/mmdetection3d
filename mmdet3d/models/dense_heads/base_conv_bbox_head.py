@@ -32,7 +32,8 @@ class BaseConvBboxHead(BaseModule):
                  init_cfg=None,
                  *args,
                  **kwargs):
-        super(BaseConvBboxHead, self).__init__(init_cfg=init_cfg, *args, **kwargs)
+        super(BaseConvBboxHead, self).__init__(
+            init_cfg=init_cfg, *args, **kwargs)
         assert in_channels > 0
         assert num_cls_out_channels > 0
         assert num_reg_out_channels > 0
@@ -99,7 +100,6 @@ class BaseConvBboxHead(BaseModule):
                     bias=self.bias,
                     inplace=True))
         return conv_layers
-
 
     def forward(self, feats):
         """Forward.

@@ -1,8 +1,7 @@
 import numpy as np
 import torch
-from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
-                      constant_init, is_norm)
-from mmcv.runner import auto_fp16, BaseModule
+from mmcv.cnn import build_conv_layer, build_norm_layer, build_upsample_layer
+from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
 from mmdet.models import NECKS
@@ -71,12 +70,10 @@ class SECONDFPN(BaseModule):
                 dict(
                     type='Constant',
                     layer=[
-                        '_BatchNorm', '_InstanceNorm', 'GroupNorm',
-                        'LayerNorm'
+                        '_BatchNorm', '_InstanceNorm', 'GroupNorm', 'LayerNorm'
                     ],
                     val=1.0)
             ]
-
 
     @auto_fp16()
     def forward(self, x):

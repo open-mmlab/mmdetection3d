@@ -1,7 +1,8 @@
 import copy
 import torch
+import warnings
 from mmcv.cnn import ConvModule
-from mmcv.runner import auto_fp16, load_checkpoint, BaseModule
+from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
 from mmdet.models import BACKBONES, build_backbone
@@ -85,7 +86,6 @@ class MultiBackbone(BaseModule):
             warnings.warn('DeprecationWarning: pretrained is a deprecated, '
                           'please use "init_cfg" instead')
             self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
-
 
     @auto_fp16()
     def forward(self, points):

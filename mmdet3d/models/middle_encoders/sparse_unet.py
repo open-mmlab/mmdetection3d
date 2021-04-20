@@ -1,6 +1,5 @@
 import torch
-from mmcv.runner import auto_fp16, BaseModule
-from torch import nn as nn
+from mmcv.runner import BaseModule, auto_fp16
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv

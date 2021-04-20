@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -10,7 +11,6 @@ from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.ops import build_sa_module
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
-from mmcv.runner import BaseModule
 
 
 @HEADS.register_module()
@@ -199,7 +199,6 @@ class H3DBboxHead(BaseModule):
         conv_out_channel = (2 + 3 + bbox_coder['num_dir_bins'] * 2 +
                             bbox_coder['num_sizes'] * 4 + self.num_classes)
         self.bbox_pred.append(nn.Conv1d(prev_channel, conv_out_channel, 1))
-
 
     def forward(self, feats_dict, sample_mod):
         """Forward pass.

@@ -1,7 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule
-
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -202,11 +201,11 @@ class PointFusion(BaseModule):
                 # TODO: check whether this is necessary
                 nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01),
                 nn.ReLU(inplace=False))
-        
+
         if init_cfg is None:
             self.init_cfg = [
-                dict(type='Xavier', layer='Conv2d',distribution='uniform'),
-                dict(type='Xavier', layer='Linear',distribution='uniform')
+                dict(type='Xavier', layer='Conv2d', distribution='uniform'),
+                dict(type='Xavier', layer='Linear', distribution='uniform')
             ]
 
     def forward(self, img_feats, pts, pts_feats, img_metas):

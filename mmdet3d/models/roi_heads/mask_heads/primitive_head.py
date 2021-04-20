@@ -112,7 +112,6 @@ class PrimitiveHead(BaseModule):
         self.conv_pred.add_module('conv_out',
                                   nn.Conv1d(prev_channel, conv_out_channel, 1))
 
-
     def forward(self, feats_dict, sample_mod):
         """Forward pass.
 
