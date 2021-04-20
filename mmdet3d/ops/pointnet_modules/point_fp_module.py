@@ -1,6 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import force_fp32, BaseModule
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 from typing import List
 
