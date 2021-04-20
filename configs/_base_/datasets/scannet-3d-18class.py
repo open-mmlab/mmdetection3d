@@ -16,18 +16,16 @@ train_pipeline = [
         use_dim=[0, 1, 2]),
     dict(
         type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
+        with_bbox_3d=True,
+        with_label_3d=True,
         with_mask_3d=True,
         with_seg_3d=True),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='PointSegClassMapping',
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),
         max_cat_id=40),
-    dict(
-        type='GlobalAlignment', rotation_axis=2,
-        ignore_index=len(class_names)),
     dict(type='IndoorPointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
@@ -54,9 +52,7 @@ test_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
-    dict(
-        type='GlobalAlignment', rotation_axis=2,
-        ignore_index=len(class_names)),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -93,16 +89,11 @@ eval_pipeline = [
         use_dim=[0, 1, 2]),
     dict(
         type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=True,
-        with_seg_3d=True),
-    dict(type='PointSegClassMapping', valid_cat_ids=valid_class_ids),
-    dict(
-        type='GlobalAlignment',
-        rotation_axis=2,
-        ignore_index=len(class_names),
-        extract_bbox=True),
+        with_bbox_3d=True,
+        with_label_3d=True,
+        with_mask_3d=False,
+        with_seg_3d=False),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,

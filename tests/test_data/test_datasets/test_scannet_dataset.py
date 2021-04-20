@@ -27,15 +27,11 @@ def test_getitem():
             with_label_3d=True,
             with_mask_3d=True,
             with_seg_3d=True),
+        dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='PointSegClassMapping',
             valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
                            34, 36, 39)),
-        dict(
-            type='GlobalAlignment',
-            rotation_axis=2,
-            ignore_index=len(class_names),
-            extract_bbox=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(
             type='RandomFlip3D',
@@ -79,13 +75,15 @@ def test_getitem():
          [6.8790e+00, 1.5086e+00, -9.3154e-02, 6.3816e-03],
          [4.8253e+00, 2.6668e-01, 1.4917e+00, 1.5912e+00]])
     expected_gt_bboxes_3d = torch.tensor(
-        [[3.6132, 1.3705, 0.6052, 0.7930, 2.0360, 0.4429, 0.0000],
-         [8.3769, 2.5228, 0.2046, 1.3539, 2.8691, 1.8632, 0.0000],
-         [8.4100, 6.0750, 0.9772, 0.9319, 0.3843, 0.5662, 0.0000],
-         [7.6524, 5.6915, 0.0372, 0.2907, 0.2278, 0.5532, 0.0000],
-         [6.9771, 0.2455, -0.0296, 1.2820, 0.8182, 2.2613, 0.0000]])
-    expected_gt_labels = np.array(
-        [4, 11, 11, 10, 0, 3, 12, 4, 14, 1, 0, 0, 0, 5, 5]).astype(np.long)
+        [[-1.1835, -3.6317, 1.5704, 1.7577, 0.3761, 0.5724, 0.0000],
+         [-3.1832, 3.2269, 1.1911, 0.6727, 0.2251, 0.6715, 0.0000],
+         [-0.9598, -2.2864, 0.0093, 0.7506, 2.5709, 1.2145, 0.0000],
+         [-2.6988, -2.7354, 0.8288, 0.7680, 1.8877, 0.2870, 0.0000],
+         [3.2989, 0.2885, -0.0090, 0.7600, 3.8814, 2.1603, 0.0000]])
+    expected_gt_labels = np.array([
+        6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
+        0, 0, 0, 5, 5, 5
+    ])
     expected_pts_semantic_mask = np.array([0, 18, 18, 18, 18])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     original_classes = scannet_dataset.CLASSES
@@ -131,23 +129,47 @@ def test_evaluate():
     results = []
     pred_boxes = dict()
     pred_boxes['boxes_3d'] = DepthInstance3DBoxes(
-        torch.tensor(
-            [[-3.7146, -1.0654, 0.6052, 0.6298, 1.9906, 0.4429, 0.0000],
-             [-8.5576, -1.8178, 0.2046, 1.1263, 2.7851, 1.8632, 0.0000],
-             [-8.8859, -5.3550, 0.9772, 0.9093, 0.3098, 0.5662, 0.0000],
-             [-8.0989, -5.0358, 0.0372, 0.2746, 0.2057, 0.5532, 0.0000],
-             [-6.9733, 0.3352, -0.0296, 1.2265, 0.7187, 2.2613, 0.0000],
-             [-5.3636, -1.6047, 0.3701, 2.8043, 1.1057, 0.3171, 0.0000]]))
-    pred_boxes['labels_3d'] = torch.tensor([4, 11, 11, 10, 0, 3])
+        torch.tensor([[
+            1.4813e+00, 3.5207e+00, 1.5704e+00, 1.7445e+00, 2.3196e-01,
+            5.7235e-01, 0.0000e+00
+        ],
+                      [
+                          2.9040e+00, -3.4803e+00, 1.1911e+00, 6.6078e-01,
+                          1.7072e-01, 6.7154e-01, 0.0000e+00
+                      ],
+                      [
+                          1.1466e+00, 2.1987e+00, 9.2576e-03, 5.4184e-01,
+                          2.5346e+00, 1.2145e+00, 0.0000e+00
+                      ],
+                      [
+                          2.9168e+00, 2.5016e+00, 8.2875e-01, 6.1697e-01,
+                          1.8428e+00, 2.8697e-01, 0.0000e+00
+                      ],
+                      [
+                          -3.3114e+00, -1.3351e-02, -8.9524e-03, 4.4082e-01,
+                          3.8582e+00, 2.1603e+00, 0.0000e+00
+                      ],
+                      [
+                          -2.0135e+00, -3.4857e+00, 9.3848e-01, 1.9911e+00,
+                          2.1603e-01, 1.2767e+00, 0.0000e+00
+                      ],
+                      [
+                          -2.1945e+00, -3.1402e+00, -3.8165e-02, 1.4801e+00,
+                          6.8676e-01, 1.0586e+00, 0.0000e+00
+                      ],
+                      [
+                          -2.7553e+00, 2.4055e+00, -2.9972e-02, 1.4764e+00,
+                          1.4927e+00, 2.3380e+00, 0.0000e+00
+                      ]]))
+    pred_boxes['labels_3d'] = torch.tensor([6, 6, 4, 9, 11, 11])
     pred_boxes['scores_3d'] = torch.tensor([0.5, 1.0, 1.0, 1.0, 1.0, 0.5])
     results.append(pred_boxes)
     metric = [0.25, 0.5]
     ret_dict = scannet_dataset.evaluate(results, metric)
-    assert abs(ret_dict['table_AP_0.25'] - 0.5) < 0.01
+    assert abs(ret_dict['table_AP_0.25'] - 0.3333) < 0.01
+    assert abs(ret_dict['window_AP_0.25'] - 1.0) < 0.01
+    assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
     assert abs(ret_dict['curtain_AP_0.25'] - 1.0) < 0.01
-    assert abs(ret_dict['desk_AP_0.25'] - 1.0) < 0.01
-    assert abs(ret_dict['cabinet_AP_0.25'] - 0.25) < 0.01
-    assert abs(ret_dict['sofa_AP_0.25'] - 1.0) < 0.01
 
     # test evaluate with pipeline
     class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
@@ -163,19 +185,11 @@ def test_evaluate():
             use_dim=[0, 1, 2]),
         dict(
             type='LoadAnnotations3D',
-            with_bbox_3d=False,
-            with_label_3d=False,
-            with_mask_3d=True,
-            with_seg_3d=True),
-        dict(
-            type='PointSegClassMapping',
-            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
-                           34, 36, 39)),
-        dict(
-            type='GlobalAlignment',
-            rotation_axis=2,
-            ignore_index=len(class_names),
-            extract_bbox=True),
+            with_bbox_3d=True,
+            with_label_3d=True,
+            with_mask_3d=False,
+            with_seg_3d=False),
+        dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='DefaultFormatBundle3D',
             class_names=class_names,
@@ -185,11 +199,10 @@ def test_evaluate():
     ]
     ret_dict = scannet_dataset.evaluate(
         results, metric, pipeline=eval_pipeline)
-    assert abs(ret_dict['table_AP_0.25'] - 0.5) < 0.01
+    assert abs(ret_dict['table_AP_0.25'] - 0.3333) < 0.01
+    assert abs(ret_dict['window_AP_0.25'] - 1.0) < 0.01
+    assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
     assert abs(ret_dict['curtain_AP_0.25'] - 1.0) < 0.01
-    assert abs(ret_dict['desk_AP_0.25'] - 1.0) < 0.01
-    assert abs(ret_dict['cabinet_AP_0.25'] - 0.25) < 0.01
-    assert abs(ret_dict['sofa_AP_0.25'] - 1.0) < 0.01
 
 
 def test_show():
@@ -254,19 +267,11 @@ def test_show():
             use_dim=[0, 1, 2]),
         dict(
             type='LoadAnnotations3D',
-            with_bbox_3d=False,
-            with_label_3d=False,
-            with_mask_3d=True,
-            with_seg_3d=True),
-        dict(
-            type='PointSegClassMapping',
-            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
-                           34, 36, 39)),
-        dict(
-            type='GlobalAlignment',
-            rotation_axis=2,
-            ignore_index=len(class_names),
-            extract_bbox=True),
+            with_bbox_3d=True,
+            with_label_3d=True,
+            with_mask_3d=False,
+            with_seg_3d=False),
+        dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='DefaultFormatBundle3D',
             class_names=class_names,

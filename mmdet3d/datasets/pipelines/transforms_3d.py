@@ -296,17 +296,11 @@ class ObjectNoise(object):
 @PIPELINES.register_module()
 class GlobalAlignment(object):
     """Apply global alignment to 3D scene points by rotation and translation.
-    Extract 3D bboxes from the aligned points and instance mask if provided.
 
     Args:
         rotation_axis (int): Rotation axis for points and bboxes rotation.
-        ignore_index (int): Label index for which we won't extract bboxes.
-        extract_bbox (bool): Whether extract new ground-truth bboxes after \
-            alignment. This requires instance and semantic mask inputs.
-            Defaults to False.
 
     Note:
-        This function should be called after PointSegClassMapping in pipeline.
         We do not record the applied rotation and translation as in \
             GlobalRotScaleTrans. Because usually, we do not need to reverse \
             the alignment step.
@@ -314,10 +308,8 @@ class GlobalAlignment(object):
             bounding boxes for evaluation.
     """
 
-    def __init__(self, rotation_axis, ignore_index, extract_bbox=False):
+    def __init__(self, rotation_axis):
         self.rotation_axis = rotation_axis
-        self.ignore_index = ignore_index
-        self.extract_bbox = extract_bbox
 
     def _trans_points(self, input_dict, trans_factor):
         """Private function to translate points.
@@ -357,74 +349,6 @@ class GlobalAlignment(object):
         is_valid &= (rot_mat[:, self.rotation_axis] == valid_array).all()
         assert is_valid, f'invalid rotation matrix {rot_mat}'
 
-    def _bbox_from_points(self, points):
-        """Get the bounding box of a set of points.
-
-        Args:
-            points (np.ndarray): A set of points belonging to one instance.
-
-        Returns:
-            np.ndarray: A bounding box of input points. We use origin as \
-                (0.5, 0.5, 0.5) without yaw.
-        """
-        xmin = np.min(points[:, 0])
-        ymin = np.min(points[:, 1])
-        zmin = np.min(points[:, 2])
-        xmax = np.max(points[:, 0])
-        ymax = np.max(points[:, 1])
-        zmax = np.max(points[:, 2])
-        bbox = np.array([(xmin + xmax) / 2, (ymin + ymax) / 2,
-                         (zmin + zmax) / 2, xmax - xmin, ymax - ymin,
-                         zmax - zmin])
-        return bbox
-
-    def _extract_bboxes(self, input_dict):
-        """Extract bounding boxes from points, semantic mask and instance mask.
-
-        Args:
-            input_dict (dict): Result dict from loading pipeline.
-
-        Returns:
-            dict: Results after extracting bboxes, keys in \
-                input_dict['bbox3d_fields'] are updated in the dict.
-        """
-        # TODO: this function is only used in ScanNet-Det pipeline currently
-        # TODO: we only extract gt_bboxes_3d which is DepthInstance3DBoxes
-        from mmdet3d.core.bbox import DepthInstance3DBoxes
-
-        assert 'pts_instance_mask' in input_dict.keys(), \
-            'instance mask is not provided in GlobalAlignment'
-        assert 'pts_semantic_mask' in input_dict.keys(), \
-            'semantic mask is not provided in GlobalAlignment'
-
-        coords = input_dict['points'].coord.numpy()
-        inst_mask = input_dict['pts_instance_mask']
-        sem_mask = input_dict['pts_semantic_mask']
-
-        # select points from valid categories where we want to extract bboxes
-        valid_cat_mask = (sem_mask != self.ignore_index)
-        inst_ids = np.unique(inst_mask[valid_cat_mask])  # ids of valid insts
-        instance_bboxes = np.zeros((inst_ids.shape[0], 7))
-        inst_id2cat_id = {
-            inst_id: sem_mask[inst_mask == inst_id][0]
-            for inst_id in inst_ids
-        }
-        for bbox_idx, inst_id in enumerate(inst_ids):
-            cat_id = inst_id2cat_id[inst_id]
-            inst_coords = coords[inst_mask == inst_id]
-            bbox = self._bbox_from_points(inst_coords)
-            instance_bboxes[bbox_idx, :6] = bbox
-            instance_bboxes[bbox_idx, 6] = cat_id
-
-        if 'gt_bboxes_3d' not in input_dict['bbox3d_fields']:
-            input_dict['bbox3d_fields'].append('gt_bboxes_3d')
-        input_dict['gt_bboxes_3d'] = DepthInstance3DBoxes(
-            instance_bboxes[:, :6],
-            box_dim=6,
-            with_yaw=False,
-            origin=(0.5, 0.5, 0.5))
-        input_dict['gt_labels_3d'] = instance_bboxes[:, 6].astype(np.long)
-
     def __call__(self, input_dict):
         """Call function to shuffle points.
 
@@ -447,16 +371,12 @@ class GlobalAlignment(object):
         self._check_rot_mat(rot_mat)
         self._rot_points(input_dict, rot_mat)
         self._trans_points(input_dict, trans_vec)
-        if self.extract_bbox:
-            self._extract_bboxes(input_dict)
 
         return input_dict
 
     def __repr__(self):
         repr_str = self.__class__.__name__
-        repr_str += f'(rotation_axis={self.rotation_axis},'
-        repr_str += f' ignore_index={self.ignore_index},'
-        repr_str += f' extract_bbox={self.extract_bbox})'
+        repr_str += f'(rotation_axis={self.rotation_axis})'
         return repr_str
 
 

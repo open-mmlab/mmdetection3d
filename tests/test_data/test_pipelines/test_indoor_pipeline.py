@@ -23,19 +23,15 @@ def test_scannet_pipeline():
             use_dim=[0, 1, 2]),
         dict(
             type='LoadAnnotations3D',
-            with_bbox_3d=False,
-            with_label_3d=False,
+            with_bbox_3d=True,
+            with_label_3d=True,
             with_mask_3d=True,
             with_seg_3d=True),
+        dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='PointSegClassMapping',
             valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
                            34, 36, 39)),
-        dict(
-            type='GlobalAlignment',
-            rotation_axis=2,
-            ignore_index=len(class_names),
-            extract_bbox=True),
         dict(type='IndoorPointSample', num_points=5),
         dict(
             type='RandomFlip3D',
@@ -97,13 +93,15 @@ def test_scannet_pipeline():
          [6.8790e+00, 1.5086e+00, -9.3154e-02, 6.3816e-03],
          [4.8253e+00, 2.6668e-01, 1.4917e+00, 1.5912e+00]])
     expected_gt_bboxes_3d = torch.tensor(
-        [[3.6132, 1.3705, 0.6052, 0.7930, 2.0360, 0.4429, 0.0000],
-         [8.3769, 2.5228, 0.2046, 1.3539, 2.8691, 1.8632, 0.0000],
-         [8.4100, 6.0750, 0.9772, 0.9319, 0.3843, 0.5662, 0.0000],
-         [7.6524, 5.6915, 0.0372, 0.2907, 0.2278, 0.5532, 0.0000],
-         [6.9771, 0.2455, -0.0296, 1.2820, 0.8182, 2.2613, 0.0000]])
-    expected_gt_labels_3d = np.array(
-        [4, 11, 11, 10, 0, 3, 12, 4, 14, 1, 0, 0, 0, 5, 5]).astype(np.long)
+        [[-1.1835, -3.6317, 1.8565, 1.7577, 0.3761, 0.5724, 0.0000],
+         [-3.1832, 3.2269, 1.5268, 0.6727, 0.2251, 0.6715, 0.0000],
+         [-0.9598, -2.2864, 0.6165, 0.7506, 2.5709, 1.2145, 0.0000],
+         [-2.6988, -2.7354, 0.9722, 0.7680, 1.8877, 0.2870, 0.0000],
+         [3.2989, 0.2885, 1.0712, 0.7600, 3.8814, 2.1603, 0.0000]])
+    expected_gt_labels_3d = np.array([
+        6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
+        0, 0, 0, 5, 5, 5
+    ])
     expected_pts_semantic_mask = np.array([0, 18, 18, 18, 18])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     assert torch.allclose(points, expected_points, 1e-2)
