@@ -59,12 +59,6 @@ model = dict(
 
 data = dict(samples_per_gpu=3, workers_per_gpu=2)
 
-# optimizer
 # yapf:disable
-log_config = dict(
-    interval=30,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
+log_config = dict(interval=30)
 # yapf:enable

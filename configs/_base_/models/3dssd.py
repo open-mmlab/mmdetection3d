@@ -75,13 +75,3 @@ model = dict(
         score_thr=0.0,
         per_class_proposal=True,
         max_output_num=100))
-
-# optimizer
-# This schedule is mainly used by models on indoor dataset,
-# e.g., VoteNet on SUNRGBD and ScanNet
-lr = 0.002  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[80, 120])
-# runtime settings
-runner = dict(max_epochs=150)
