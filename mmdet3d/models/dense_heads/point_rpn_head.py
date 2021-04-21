@@ -270,20 +270,25 @@ class PointRPNHead(nn.Module):
         # calculate semantic loss
         semantic_points = bbox_preds['obj_scores'].transpose(2, 1).reshape(-1, 1)
         semantic_points_label = negative_mask.long()
+        semantic_loss_weight = negative_mask.float() + positive_mask.float()
         semantic_loss = self.cls_loss(
             semantic_points,
-            semantic_points_label.reshape(-1))
+            semantic_points_label.reshape(-1),
+            weight=semantic_loss_weight)
         
         '''
+        indices_xxx = 0
         print('tensor: ',points[0].shape)
         print(semantic_points_label[0].shape)
-        points_label = semantic_points_label[3].cpu().data.numpy()
-        points = points[3][:,0:3].cpu().data.numpy()
+        points_label = semantic_points_label[indices_xxx].cpu().data.numpy()
+        points = points[indices_xxx][:,0:3].cpu().data.numpy()
         write_ply(points,points_label,'/tmp/label_points.obj')
-        gt_bboxes = gt_bboxes_3d[3].tensor.cpu().numpy()
+        gt_bboxes = gt_bboxes_3d[indices_xxx].tensor.cpu().numpy()
+        gt_bboxes[:, 6] = -gt_bboxes[:, 6]
         write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes.ply')
         assert 0
         '''
+
         losses = dict(
             center_loss=center_loss,
             dir_class_loss=dir_class_loss,
@@ -381,6 +386,8 @@ class PointRPNHead(nn.Module):
         """
         assert self.bbox_coder.with_rot or pts_semantic_mask is not None
         gt_bboxes_3d = gt_bboxes_3d.to(points.device)
+        gt_bboxes_3d_all = gt_bboxes_3d.clone()
+
         valid_gt = gt_labels_3d != -1
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
@@ -389,7 +396,7 @@ class PointRPNHead(nn.Module):
 
         points_mask, assignment = self._assign_targets_by_points_inside(
             gt_bboxes_3d, points)
-
+        
         center_targets = center_targets[assignment]
         center_targets -= points[:,0:3]
         size_res_targets = size_targets[assignment]
@@ -397,8 +404,11 @@ class PointRPNHead(nn.Module):
         dir_class_targets = dir_class_targets[assignment]
         dir_res_targets = dir_res_targets[assignment]
         
+        points_mask_all_bbox, assignment = self._assign_targets_by_points_inside(
+            gt_bboxes_3d_all, points)
+        
         positive_mask = (points_mask.max(1)[0] > 0)
-        negative_mask = (points_mask.max(1)[0] == 0)
+        negative_mask = (points_mask_all_bbox.max(1)[0] == 0)
         
         return (center_targets, size_res_targets, dir_class_targets,
                 dir_res_targets, mask_targets, positive_mask, negative_mask)
