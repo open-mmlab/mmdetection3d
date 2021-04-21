@@ -1,4 +1,5 @@
 ### Prepare S3DIS Data
+
 We follow the procedure in [pointnet](https://github.com/charlesq34/pointnet).
 
 1. Download S3DIS data by filling this [Google form](https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1). Download the ```Stanford3dDataset_v1.2_Aligned_Version.zip``` file and unzip it. Link or move the folder to this level of directory.
@@ -20,6 +21,7 @@ python tools/create_data.py s3dis --root-path ./data/s3dis --out-dir ./data/s3di
 ```
 
 The directory structure after pre-processing should be as below
+
 ```
 s3dis
 ├── indoor3d_util.py
