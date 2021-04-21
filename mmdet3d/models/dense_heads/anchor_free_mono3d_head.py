@@ -266,15 +266,10 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
 
     def init_weights(self):
         """Initialize weights of the head."""
-        for m in self.cls_convs:
-            if isinstance(m.conv, nn.Conv2d):
-                normal_init(m.conv, std=0.01)
-        for m in self.reg_convs:
-            if isinstance(m.conv, nn.Conv2d):
-                normal_init(m.conv, std=0.01)
-        for m in self.conv_cls_prev:
-            if isinstance(m.conv, nn.Conv2d):
-                normal_init(m.conv, std=0.01)
+        for modules in [self.cls_convs, self.reg_convs, self.conv_cls_prev]:
+            for m in modules:
+                if isinstance(m.conv, nn.Conv2d):
+                    normal_init(m.conv, std=0.01)
         for conv_reg_prev in self.conv_reg_prevs:
             if conv_reg_prev is None:
                 continue
