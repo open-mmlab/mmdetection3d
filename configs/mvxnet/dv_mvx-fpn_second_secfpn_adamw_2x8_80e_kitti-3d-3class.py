@@ -188,6 +188,17 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points', 'img'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points', 'img'])
+]
 
 data = dict(
     samples_per_gpu=2,
@@ -234,7 +245,7 @@ optimizer = dict(weight_decay=0.01)
 # max_norm=10 is better for SECOND
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 
-evaluation = dict(interval=1)
+evaluation = dict(interval=1, pipeline=eval_pipeline)
 
 # You may need to download the model first is the network is unstable
 load_from = 'https://download.openmmlab.com/mmdetection3d/pretrain_models/mvx_faster_rcnn_detectron2-caffe_20e_coco-pretrain_gt-sample_kitti-3-class_moderate-79.3_20200207-a4a6a3c7.pth'  # noqa

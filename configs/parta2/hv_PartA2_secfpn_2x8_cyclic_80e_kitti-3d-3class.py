@@ -64,6 +64,16 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
 
 data = dict(
     samples_per_gpu=2,
@@ -105,4 +115,5 @@ data = dict(
 # Part-A2 uses a different learning rate from what SECOND uses.
 lr = 0.001
 optimizer = dict(lr=lr)
+evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
