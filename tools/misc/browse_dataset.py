@@ -77,10 +77,11 @@ def show_det_data(idx, dataset, out_dir, filename):
     example = dataset.prepare_train_data(idx)
     points = example['points']._data.numpy()
     gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d'].tensor
-    depth_points, depth_gt_bboxes = to_depth_mode(points, gt_bboxes)
+    if dataset.box_mode_3d != Box3DMode.DEPTH:
+        points, gt_bboxes = to_depth_mode(points, gt_bboxes)
     show_result(
-        depth_points,
-        depth_gt_bboxes.copy(),
+        points,
+        gt_bboxes.clone(),
         None,
         out_dir,
         filename,
@@ -113,10 +114,13 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename):
     img = example['img']._data.numpy()
     # need to transpose channel to first dim
     img = img.transpose(1, 2, 0)
+    # no 3D gt bboxes, just show img
+    if gt_bboxes.tensor.shape[0] == 0:
+        gt_bboxes = None
     if isinstance(gt_bboxes, DepthInstance3DBoxes):
         show_multi_modality_result(
             img,
-            gt_bboxes.copy(),
+            gt_bboxes,
             None,
             example['calib'],
             out_dir,
@@ -127,7 +131,7 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename):
     elif isinstance(gt_bboxes, LiDARInstance3DBoxes):
         show_multi_modality_result(
             img,
-            gt_bboxes.copy(),
+            gt_bboxes,
             None,
             img_metas['lidar2img'],
             out_dir,
@@ -136,8 +140,22 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename):
             img_metas=img_metas,
             show=True)
     else:
+        # can't project, just show img
         show_multi_modality_result(
-            img, None, None, out_dir=out_dir, filename=filename, show=True)
+            img, None, None, None, out_dir, filename, show=True)
+
+
+def is_multi_modality(dataset):
+    """Judge whether a dataset loads multi-modality data (points+img)."""
+    if not hasattr(dataset, 'modality') or dataset.modality is None:
+        return False
+    if dataset.modality['use_camera']:
+        # even dataset with `use_camera=True` may not load img
+        # should check its loaded data
+        example = dataset.prepare_train_data(0)
+        if 'img' in example.keys():
+            return True
+    return False
 
 
 def main():
@@ -159,8 +177,7 @@ def main():
     multi_modality = False
     if cfg.dataset_type in ['ScanNetSegDataset']:
         vis_type = 'seg'  # segmentation
-    if dataset.modality['use_camera']:
-        multi_modality = True  # multi-modality detection
+    multi_modality = is_multi_modality(dataset)  # multi-modality detection
 
     for idx, data_info in enumerate(track_iter_progress(data_infos)):
         if cfg.dataset_type in ['KittiDataset', 'WaymoDataset']:
