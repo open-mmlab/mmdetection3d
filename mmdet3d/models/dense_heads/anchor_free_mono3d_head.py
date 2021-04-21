@@ -334,6 +334,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
 
         for cls_layer in self.cls_convs:
             cls_feat = cls_layer(cls_feat)
+        # clone the cls_feat for reusing the feature map afterwards
         clone_cls_feat = cls_feat.clone()
         for conv_cls_prev_layer in self.conv_cls_prev:
             clone_cls_feat = conv_cls_prev_layer(clone_cls_feat)
@@ -343,6 +344,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             reg_feat = reg_layer(reg_feat)
         bbox_pred = []
         for i in range(len(self.group_reg_dims)):
+            # clone the reg_feat for reusing the feature map afterwards
             clone_reg_feat = reg_feat.clone()
             if len(self.reg_branch[i]) > 0:
                 for conv_reg_prev_layer in self.conv_reg_prevs[i]:
@@ -359,6 +361,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
 
         attr_pred = None
         if self.pred_attrs:
+            # clone the cls_feat for reusing the feature map afterwards
             clone_cls_feat = cls_feat.clone()
             for conv_attr_prev_layer in self.conv_attr_prev:
                 clone_cls_feat = conv_attr_prev_layer(clone_cls_feat)
