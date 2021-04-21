@@ -3,8 +3,10 @@ import numpy as np
 from mmcv import Config, DictAction, mkdir_or_exist, track_iter_progress
 from os import path as osp
 
-from mmdet3d.core.bbox import Box3DMode, Coord3DMode
-from mmdet3d.core.visualizer.open3d_vis import Visualizer
+from mmdet3d.core.bbox import (Box3DMode, Coord3DMode, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes)
+from mmdet3d.core.visualizer import (show_multi_modality_result, show_result,
+                                     show_seg_result)
 from mmdet3d.datasets import build_dataset
 
 
@@ -59,6 +61,85 @@ def build_data_cfg(config_path, skip_type, cfg_options):
     return cfg
 
 
+def to_depth_mode(points, bboxes):
+    """Convert points and bboxes to Depth Coord and Depth Box mode."""
+    if points is not None:
+        points = Coord3DMode.convert_point(points.copy(), Coord3DMode.LIDAR,
+                                           Coord3DMode.DEPTH)
+    if bboxes is not None:
+        bboxes = Box3DMode.convert(bboxes.clone(), Box3DMode.LIDAR,
+                                   Box3DMode.DEPTH)
+    return points, bboxes
+
+
+def show_det_data(idx, dataset, out_dir, filename):
+    """Visualize 3D point cloud and 3D bboxes."""
+    example = dataset.prepare_train_data(idx)
+    points = example['points']._data.numpy()
+    gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d'].tensor
+    depth_points, depth_gt_bboxes = to_depth_mode(points, gt_bboxes)
+    show_result(
+        depth_points,
+        depth_gt_bboxes.copy(),
+        None,
+        out_dir,
+        filename,
+        show=True,
+        snapshot=True)
+
+
+def show_seg_data(idx, dataset, out_dir, filename):
+    """Visualize 3D point cloud and segmentation mask."""
+    example = dataset.prepare_train_data(idx)
+    points = example['points']._data.numpy()
+    gt_seg = example['pts_semantic_mask']._data.numpy()
+    show_seg_result(
+        points,
+        gt_seg.copy(),
+        None,
+        out_dir,
+        filename,
+        np.array(dataset.PALETTE),
+        dataset.ignore_index,
+        show=True,
+        snapshot=True)
+
+
+def show_proj_bbox_img(idx, dataset, out_dir, filename):
+    """Visualize 3D bboxes on 2D image by projection."""
+    example = dataset.prepare_train_data(idx)
+    gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d']
+    img_metas = example['img_metas']._data
+    img = example['img']._data.numpy()
+    # need to transpose channel to first dim
+    img = img.transpose(1, 2, 0)
+    if isinstance(gt_bboxes, DepthInstance3DBoxes):
+        show_multi_modality_result(
+            img,
+            gt_bboxes.copy(),
+            None,
+            example['calib'],
+            out_dir,
+            filename,
+            depth_bbox=True,
+            img_metas=img_metas,
+            show=True)
+    elif isinstance(gt_bboxes, LiDARInstance3DBoxes):
+        show_multi_modality_result(
+            img,
+            gt_bboxes.copy(),
+            None,
+            img_metas['lidar2img'],
+            out_dir,
+            filename,
+            depth_bbox=False,
+            img_metas=img_metas,
+            show=True)
+    else:
+        show_multi_modality_result(
+            img, None, None, out_dir=out_dir, filename=filename, show=True)
+
+
 def main():
     args = parse_args()
 
@@ -74,11 +155,12 @@ def main():
     data_infos = dataset.data_infos
 
     # configure visualization mode
-    vis_type = 'det'
-    pts_mode = 'xyz'
+    vis_type = 'det'  # single-modality detection
+    multi_modality = False
     if cfg.dataset_type in ['ScanNetSegDataset']:
-        vis_type = 'seg'
-        pts_mode = 'xyzrgb'
+        vis_type = 'seg'  # segmentation
+    if dataset.modality['use_camera']:
+        multi_modality = True  # multi-modality detection
 
     for idx, data_info in enumerate(track_iter_progress(data_infos)):
         if cfg.dataset_type in ['KittiDataset', 'WaymoDataset']:
@@ -94,38 +176,16 @@ def main():
                 f'unsupported dataset type {cfg.dataset_type}')
 
         file_name = osp.splitext(osp.basename(pts_path))[0]
-        save_path = osp.join(args.output_dir,
-                             f'{file_name}.png') if args.output_dir else None
-
-        example = dataset.prepare_train_data(idx)
-        points = example['points']._data.numpy()
-        # even if points is already in 'DEPTH' mode, we still transform them
-        # so that points will be aligned with `gt_bboxes`
-        points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
-                                           Coord3DMode.DEPTH)
-        vis = Visualizer(points, mode=pts_mode)
 
         if vis_type == 'det':
-            gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d'].tensor
-            if gt_bboxes is not None:
-                gt_bboxes = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
-                                              Box3DMode.DEPTH)
-            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
+            # show 3D bboxes on 3D point clouds
+            show_det_data(idx, dataset, args.output_dir, file_name)
+            if multi_modality:
+                # project 3D bboxes to 2D image
+                show_proj_bbox_img(idx, dataset, args.output_dir, file_name)
         elif vis_type == 'seg':
-            gt_seg = example['pts_semantic_mask']._data.numpy()
-            # filter out ignore points
-            ignore_index = dataset.ignore_index
-            show_coords = points[gt_seg != ignore_index, :3]
-            gt_seg = gt_seg[gt_seg != ignore_index]
-            # draw colors on points
-            palette = np.array(dataset.PALETTE)
-            gt_seg_color = palette[gt_seg]
-            gt_seg_color = np.concatenate([show_coords, gt_seg_color], axis=1)
-            vis.add_seg_mask(gt_seg_color)
-        # even no gt is loaded, we still show the points
-
-        vis.show(save_path)
-        del vis
+            # show 3D segmentation mask on 3D point clouds
+            show_seg_data(idx, dataset, args.output_dir, file_name)
 
 
 if __name__ == '__main__':
