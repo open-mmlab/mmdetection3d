@@ -1,6 +1,5 @@
 import argparse
 from os import path as osp
-
 from tools.data_converter import indoor_converter as indoor
 from tools.data_converter import kitti_converter as kitti
 from tools.data_converter import lyft_converter as lyft_converter
