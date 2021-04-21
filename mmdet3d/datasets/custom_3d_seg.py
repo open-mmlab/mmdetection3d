@@ -268,6 +268,8 @@ class Custom3DSegDataset(Dataset):
             return np.arange(len(self.data_infos)).astype(np.int32), \
                 np.ones(len(self.CLASSES)).astype(np.float32)
 
+        # we may need to re-sample different scenes according to scene_idxs
+        # this is necessary for indoor scene segmentation such as ScanNet
         if scene_idxs is None:
             scene_idxs = np.arange(len(self.data_infos))
         if isinstance(scene_idxs, str):
@@ -460,6 +462,10 @@ class Custom3DSegDataset(Dataset):
 
     def __getitem__(self, idx):
         """Get item from infos according to the given index.
+
+        In indoor scene segmentation task, each scene contains millions of
+        points. However, we only sample less than 10k points within a patch
+        each time. Therefore, we use `scene_idxs` to re-sample different rooms.
 
         Returns:
             dict: Data dictionary of the corresponding index.

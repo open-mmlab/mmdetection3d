@@ -9,11 +9,16 @@ from .pipelines import Compose
 
 @DATASETS.register_module()
 class _S3DISSegDataset(Custom3DSegDataset):
-    """S3DIS Dataset for Semantic Segmentation Task.
+    r"""S3DIS Dataset for Semantic Segmentation Task.
 
     This class is the inner dataset for S3DIS. Since S3DIS has 6 areas, we
-    often train on 5 of them and test on the remaining one. There should be an
-    wrapper concating all the provided data in different areas.
+    often train on 5 of them and test on the remaining one.
+    However, there is not a fixed train-test split of S3DIS. People often test
+    on Area_5 as suggested by `SEGCloud <https://arxiv.org/abs/1710.07563>`_.
+    But many papers also report the average results of 6-fold cross validation
+    over the 6 areas (e.g. `DGCNN <https://arxiv.org/abs/1801.07829>`_).
+    Therefore, we use an inner dataset for one area, and further use a dataset
+    wrapper to concat all the provided data in different areas.
 
     Args:
         data_root (str): Path of dataset root.
@@ -168,6 +173,8 @@ class S3DISSegDataset(_S3DISSegDataset):
 
     This class serves as the API for experiments on the S3DIS Dataset.
     It wraps the provided datasets of different areas.
+    We don't use `mmdet.datasets.dataset_wrappers.ConcatDataset` because we
+    need to concat the `scene_idxs` and `label_weights` of different areas.
 
     Please refer to the `google form <https://docs.google.com/forms/d/e/1FAIpQL
     ScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1>`_ for

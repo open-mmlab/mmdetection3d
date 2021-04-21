@@ -65,6 +65,8 @@ def create_indoor_info_file(data_path,
 
     # generate infos for the semantic segmentation task
     # e.g. re-sampled scene indexes and label weights
+    # scene indexes are used to re-sample rooms with different number of points
+    # label weights are used to balance classes with different number of points
     if pkl_prefix == 'scannet':
         # label weight computation function is adopted from
         # https://github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py#L24
@@ -87,6 +89,7 @@ def create_indoor_info_file(data_path,
     else:
         # S3DIS doesn't have a fixed train-val split
         # it has 6 areas instead, so we generate info file for each of them
+        # in training, we will use dataset to wrap different areas
         splits = [f'Area_{i}' for i in [1, 2, 3, 4, 5, 6]]
         for split in splits:
             dataset = S3DISData(root_path=data_path, split=split)
