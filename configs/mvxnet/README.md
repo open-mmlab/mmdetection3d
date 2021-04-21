@@ -5,6 +5,7 @@
 [ALGORITHM]
 
 We implement MVX-Net and provide its results and models on KITTI dataset.
+
 ```
 @inproceedings{sindagi2019mvx,
   title={MVX-Net: Multimodal voxelnet for 3D object detection},

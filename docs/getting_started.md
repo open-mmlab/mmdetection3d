@@ -64,7 +64,7 @@ you can use more CUDA versions such as 9.0.
 
 `e.g.` The pre-build *mmcv-full* could be installed by running: (available versions could be found [here](https://mmcv.readthedocs.io/en/latest/#install-with-pip))
 
- ```shell
+```shell
 pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/{cu_version}/{torch_version}/index.html
 ```
 
@@ -253,6 +253,7 @@ More demos about single/multi-modality and indoor/outdoor 3D detection can be fo
 ## High-level APIs for testing point clouds
 
 ### Synchronous interface
+
 Here is an example of building the model and test given point clouds.
 
 ```python

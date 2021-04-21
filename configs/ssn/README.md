@@ -13,7 +13,6 @@ We implement PointPillars with Shape-aware grouping heads used in the SSN and pr
   booktitle={Proceedings of the European Conference on Computer Vision},
   year={2020}
 }
-
 ```
 
 ## Results

@@ -127,6 +127,7 @@ All outputs (log files and checkpoints) will be saved to the working directory,
 which is specified by `work_dir` in the config file.
 
 By default we evaluate the model on the validation set after each epoch, you can change the evaluation interval by adding the interval argument in the training config.
+
 ```python
 evaluation = dict(interval=12)  # This evaluate the model per 12 epoch.
 ```
