@@ -97,9 +97,9 @@ train_pipeline = [
         rot_uniform_noise=[-0.15707963267, 0.15707963267]),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
-        type='GlobalRotScale',
-        rot_uniform_noise=[-0.78539816, 0.78539816],
-        scaling_uniform_noise=[0.95, 1.05]),
+        type='GlobalRotScaleTrans',
+        rot_range=[-0.78539816, 0.78539816],
+        scale_ratio_range=[0.95, 1.05]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
