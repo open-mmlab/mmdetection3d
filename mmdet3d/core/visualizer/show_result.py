@@ -68,7 +68,13 @@ def _write_oriented_bbox(scene_bbox, out_filename):
     return
 
 
-def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=False):
+def show_result(points,
+                gt_bboxes,
+                pred_bboxes,
+                out_dir,
+                filename,
+                show=False,
+                snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -78,6 +84,7 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=False):
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
         show (bool): Visualize the results online. Defaults to False.
+        snapshot (bool): Whether to save the online results. Defaults to False.
     """
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
@@ -90,7 +97,8 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=False):
             vis.add_bboxes(bbox3d=pred_bboxes)
         if gt_bboxes is not None:
             vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
-        show_path = osp.join(result_path, f'{filename}_online.png')
+        show_path = osp.join(result_path,
+                             f'{filename}_online.png') if snapshot else None
         vis.show(show_path)
 
     if points is not None:
@@ -120,7 +128,8 @@ def show_seg_result(points,
                     filename,
                     palette,
                     ignore_index=None,
-                    show=False):
+                    show=False,
+                    snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -133,6 +142,8 @@ def show_seg_result(points,
         ignore_index (int, optional): The label index to be ignored, e.g. \
             unannotated points. Defaults to None.
         show (bool, optional): Visualize the results online. Defaults to False.
+        snapshot (bool, optional): Whether to save the online results. \
+            Defaults to False.
     """
     # we need 3D coordinates to visualize segmentation mask
     if gt_seg is not None or pred_seg is not None:
@@ -168,7 +179,8 @@ def show_seg_result(points,
             vis.add_seg_mask(gt_seg_color)
         if pred_seg is not None:
             vis.add_seg_mask(pred_seg_color)
-        show_path = osp.join(result_path, f'{filename}_online.png')
+        show_path = osp.join(result_path,
+                             f'{filename}_online.png') if snapshot else None
         vis.show(show_path)
 
     if points is not None:

@@ -16,6 +16,10 @@ def main():
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
         '--show', action='store_true', help='show online visuliaztion results')
+    parser.add_argument(
+        '--snapshot',
+        action='store_true',
+        help='whether to save online visuliaztion results')
     args = parser.parse_args()
 
     # build the model from a config file and a checkpoint file
@@ -24,7 +28,12 @@ def main():
     result, data = inference_detector(model, args.pcd)
     # show the results
     show_result_meshlab(
-        data, result, args.out_dir, args.score_thr, show=args.show)
+        data,
+        result,
+        args.out_dir,
+        args.score_thr,
+        show=args.show,
+        snapshot=args.snapshot)
 
 
 if __name__ == '__main__':
