@@ -1,8 +1,8 @@
 import numpy as np
 import torch
-from mmseg.models import SEGMENTORS, EncoderDecoder, build_head
 from torch.nn import functional as F
 
+from mmseg.models import SEGMENTORS, EncoderDecoder, build_head
 from ..builder import build_backbone, build_neck
 from .base import Base3DSegmentor
 
