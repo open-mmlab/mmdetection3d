@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement PointPillars and provide the results and checkpoints on KITTI, nuScenes, Lyft and Waymo datasets.
 

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRGBD datasets.
 

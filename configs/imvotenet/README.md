@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement ImVoteNet and provide the result and checkpoints on SUNRGBD.
 
