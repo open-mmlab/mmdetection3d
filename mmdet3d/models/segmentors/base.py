@@ -99,7 +99,7 @@ class Base3DSegmentor(BaseSegmentor):
                     f'for visualization!')
             file_name = osp.split(pts_filename)[-1].split('.')[0]
 
-            pred_sem_mask = result[batch_id]['seg_3d']
+            pred_sem_mask = result[batch_id]['semantic_mask'].cpu().numpy()
 
             show_seg_result(points, None, pred_sem_mask, out_dir, file_name,
                             palette, ignore_index)
