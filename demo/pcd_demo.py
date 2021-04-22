@@ -14,6 +14,8 @@ def main():
         '--score-thr', type=float, default=0.0, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
+    parser.add_argument(
+        '--show', action='store_true', help='show online visuliaztion results')
     args = parser.parse_args()
 
     # build the model from a config file and a checkpoint file
@@ -21,7 +23,8 @@ def main():
     # test a single image
     result, data = inference_detector(model, args.pcd)
     # show the results
-    show_result_meshlab(data, result, args.out_dir, args.score_thr)
+    show_result_meshlab(
+        data, result, args.out_dir, args.score_thr, show=args.show)
 
 
 if __name__ == '__main__':
