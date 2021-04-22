@@ -3,10 +3,10 @@ import numpy as np
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
-from mmseg.models.segmentors import BaseSegmentor
 from os import path as osp
 
 from mmdet3d.core import show_seg_result
+from mmseg.models.segmentors import BaseSegmentor
 
 
 class Base3DSegmentor(BaseSegmentor):
@@ -99,7 +99,7 @@ class Base3DSegmentor(BaseSegmentor):
                     f'for visualization!')
             file_name = osp.split(pts_filename)[-1].split('.')[0]
 
-            pred_sem_mask = result[batch_id]['semantic_mask'].cpu().numpy()
+            pred_sem_mask = result[batch_id].cpu().numpy()
 
             show_seg_result(points, None, pred_sem_mask, out_dir, file_name,
                             palette, ignore_index)
