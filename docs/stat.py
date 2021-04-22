@@ -26,7 +26,7 @@ for f in files:
     if len(ckpts) == 0:
         continue
 
-    _papertype = [x for x in re.findall(r'\[([A-Z]+)\]', content)]
+    _papertype = [x for x in re.findall(r'<!-- \[([A-Z]+)\] -->', content)]
     assert len(_papertype) > 0
     papertype = _papertype[0]
 
