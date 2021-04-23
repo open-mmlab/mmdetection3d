@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement 3DSSD and provide the results and checkpoints on KITTI datasets.
 
