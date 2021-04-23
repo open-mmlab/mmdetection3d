@@ -96,8 +96,7 @@ def test_indoor_seg_sample():
         scannet_points[scannet_choices, :3] - scannet_center,
         scannet_points[scannet_choices, 3:],
         scannet_points[scannet_choices, :3] / scannet_coord_max
-    ],
-                                          axis=1)
+    ], 1)
 
     assert scannet_points_result.points_dim == 9
     assert scannet_points_result.attribute_dims == dict(
@@ -115,3 +114,39 @@ def test_indoor_seg_sample():
                         'use_normalized_coord=True, ' \
                         'num_try=10)'
     assert repr_str == expected_repr_str
+
+    # test on S3DIS dataset
+    np.random.seed(0)
+    s3dis_patch_sample_points = IndoorPatchPointSample(5, 1.0, 1.0, None, True)
+    s3dis_results = dict()
+    s3dis_points = np.fromfile(
+        './tests/data/s3dis/points/Area_1_office_2.bin',
+        dtype=np.float32).reshape((-1, 6))
+    s3dis_results['points'] = DepthPoints(
+        s3dis_points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+
+    s3dis_pts_semantic_mask = np.fromfile(
+        './tests/data/s3dis/semantic_mask/Area_1_office_2.bin', dtype=np.long)
+    s3dis_results['pts_semantic_mask'] = s3dis_pts_semantic_mask
+
+    s3dis_results = s3dis_patch_sample_points(s3dis_results)
+    s3dis_points_result = s3dis_results['points']
+    s3dis_semantic_labels_result = s3dis_results['pts_semantic_mask']
+
+    # manually constructed sampled points
+    s3dis_choices = np.array([87, 37, 60, 18, 31])
+    s3dis_center = np.array([2.691, 2.231, 3.172])
+    s3dis_center[2] = 0.0
+    s3dis_coord_max = np.amax(s3dis_points[:, :3], axis=0)
+    s3dis_input_points = np.concatenate([
+        s3dis_points[s3dis_choices, :3] - s3dis_center,
+        s3dis_points[s3dis_choices,
+                     3:], s3dis_points[s3dis_choices, :3] / s3dis_coord_max
+    ], 1)
+
+    assert s3dis_points_result.points_dim == 9
+    assert s3dis_points_result.attribute_dims == dict(
+        color=[3, 4, 5], normalized_coord=[6, 7, 8])
+    s3dis_points_result = s3dis_points_result.tensor.numpy()
+    assert np.allclose(s3dis_input_points, s3dis_points_result, atol=1e-6)
+    assert np.all(np.array([0, 1, 0, 8, 0]) == s3dis_semantic_labels_result)

@@ -276,8 +276,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
                 with_seg_3d=True),
             dict(
                 type='PointSegClassMapping',
-                valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
-                               24, 28, 33, 34, 36, 39)),
+                valid_cat_ids=self.VALID_CLASS_IDS),
             dict(
                 type='DefaultFormatBundle3D',
                 with_label=False,
