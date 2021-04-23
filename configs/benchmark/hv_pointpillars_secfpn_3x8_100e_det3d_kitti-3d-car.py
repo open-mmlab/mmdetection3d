@@ -92,9 +92,9 @@ train_pipeline = [
     dict(
         type='ObjectNoise',
         num_try=100,
-        loc_noise_std=[0.25, 0.25, 0.25],
+        translation_std=[0.25, 0.25, 0.25],
         global_rot_range=[0.0, 0.0],
-        rot_uniform_noise=[-0.15707963267, 0.15707963267]),
+        rot_range=[-0.15707963267, 0.15707963267]),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
