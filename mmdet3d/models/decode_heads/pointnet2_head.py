@@ -45,11 +45,12 @@ class PointNet2Head(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: Coordinates of multiple levels of points.
-            torch.Tensor: Features of multiple levels of points.
+            list[torch.Tensor]: Coordinates of multiple levels of points.
+            list[torch.Tensor]: Features of multiple levels of points.
         """
         sa_xyz = feat_dict['sa_xyz']
         sa_features = feat_dict['sa_features']
+        assert len(sa_xyz) == len(sa_features)
 
         return sa_xyz, sa_features
 
