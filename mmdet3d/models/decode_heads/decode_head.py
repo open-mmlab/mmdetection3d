@@ -13,25 +13,38 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
         channels (int): Channels after modules, before conv_seg.
         num_classes (int): Number of classes.
         dropout_ratio (float): Ratio of dropout layer. Default: 0.5.
+        conv_cfg (dict|None): Config of conv layers.
+            Default: dict(type='Conv1d').
+        norm_cfg (dict|None): Config of norm layers.
+            Default: dict(type='BN1d').
+        act_cfg (dict): Config of activation layers.
+            Default: dict(type='ReLU').
         loss_decode (dict): Config of decode loss.
             Default: dict(type='CrossEntropyLoss').
         ignore_index (int | None): The label index to be ignored. When using
-            masked BCE loss, ignore_index should be set to None. Default: 20.
+            masked BCE loss, ignore_index should be set to None. Default: 255.
     """
 
     def __init__(self,
                  channels,
                  num_classes,
                  dropout_ratio=0.5,
+                 conv_cfg=dict(type='Conv1d'),
+                 norm_cfg=dict(type='BN1d'),
+                 act_cfg=dict(type='ReLU'),
                  loss_decode=dict(
                      type='CrossEntropyLoss',
                      use_sigmoid=False,
                      class_weight=None,
                      loss_weight=1.0),
-                 ignore_index=20):
+                 ignore_index=255):
         super(Base3DDecodeHead, self).__init__()
+        self.channels = channels
         self.num_classes = num_classes
         self.dropout_ratio = dropout_ratio
+        self.conv_cfg = conv_cfg
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
         self.loss_decode = build_loss(loss_decode)
         self.ignore_index = ignore_index
 

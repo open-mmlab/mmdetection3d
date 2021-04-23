@@ -1,3 +1,4 @@
+from mmcv.cnn.bricks import ConvModule
 from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule
@@ -7,10 +8,13 @@ from .decode_head import Base3DDecodeHead
 
 @HEADS.register_module()
 class PointNet2Head(Base3DDecodeHead):
-    """PointNet2 decoder head.
+    r"""PointNet2 decoder head.
+
+    Decoder head used in `PointNet++ <https://arxiv.org/abs/1706.02413>`_.
+    Refer to the `official code <https://github.com/charlesq34/pointnet2>`_.
 
     Args:
-        fp_channels (tuple[tuple[int]]): List of mlp channels in FP modules.
+        fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
     """
 
     def __init__(self,
@@ -23,6 +27,16 @@ class PointNet2Head(Base3DDecodeHead):
         self.FP_modules = nn.ModuleList()
         for cur_fp_mlps in fp_channels:
             self.FP_modules.append(PointFPModule(mlp_channels=cur_fp_mlps))
+
+        # https://github.com/charlesq34/pointnet2/blob/master/models/pointnet2_sem_seg.py#L40
+        self.pre_seg_conv = ConvModule(
+            fp_channels[-1][-1],
+            self.channels,
+            kernel_size=1,
+            bias=True,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
     def _extract_input(self, feat_dict):
         """Extract inputs from features dictionary.
@@ -50,14 +64,16 @@ class PointNet2Head(Base3DDecodeHead):
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 
-        fp_features = sa_features[-1]
+        # https://github.com/charlesq34/pointnet2/blob/master/models/pointnet2_sem_seg.py#L24
+        sa_features[0] = None
+
+        fp_feature = sa_features[-1]
 
         for i in range(self.num_fp):
             # consume the points in a bottom-up manner
-            fp_features = self.FP_modules[i](sa_xyz[-(i + 2)],
-                                             sa_xyz[-(i + 1)],
-                                             sa_features[-(i + 2)],
-                                             fp_features)
-        output = self.cls_seg(fp_features)
+            fp_feature = self.FP_modules[i](sa_xyz[-(i + 2)], sa_xyz[-(i + 1)],
+                                            sa_features[-(i + 2)], fp_feature)
+        output = self.pre_seg_conv(fp_feature)
+        output = self.cls_seg(output)
 
         return output
