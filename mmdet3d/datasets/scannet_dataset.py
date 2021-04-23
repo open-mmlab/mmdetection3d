@@ -305,8 +305,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
             points, gt_sem_mask = self._extract_data(
                 i, pipeline, ['points', 'pts_semantic_mask'], load_annos=True)
             points = points.numpy()
-            # TODO: results are list of masks rather than list of dicts?
-            pred_sem_mask = result.numpy()
+            pred_sem_mask = result['semantic_mask'].numpy()
             show_seg_result(points, gt_sem_mask,
                             pred_sem_mask, out_dir, file_name,
                             np.array(self.PALETTE), self.ignore_index, show)
@@ -361,8 +360,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
         for i, result in enumerate(results):
             info = self.data_infos[i]
             sample_idx = info['point_cloud']['lidar_idx']
-            # TODO: results are list of masks rather than list of dicts?
-            pred_sem_mask = result.numpy().astype(np.int)
+            pred_sem_mask = result['semantic_mask'].numpy().astype(np.int)
             pred_label = pred2label[pred_sem_mask]
             curr_file = f'{txtfile_prefix}/{sample_idx}.txt'
             np.savetxt(curr_file, pred_label, fmt='%d')

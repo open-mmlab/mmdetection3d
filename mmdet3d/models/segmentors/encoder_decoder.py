@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-from mmseg.models import SEGMENTORS, EncoderDecoder, build_head
-from ..builder import build_backbone, build_neck
+from mmseg.models import SEGMENTORS, EncoderDecoder
+from ..builder import build_backbone, build_head, build_neck
 from .base import Base3DSegmentor
 
 
@@ -50,6 +50,9 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         Args:
             points (torch.Tensor): Input points of shape [B, N, 3+C].
             img_metas (list[dict]): Meta information of each sample.
+
+        Returns:
+            torch.Tensor: Segmentation logits of shape [B, num_classes, N].
         """
         x = self.extract_feat(points)
         out = self._decode_head_forward_test(x, img_metas)
@@ -260,11 +263,15 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         Returns:
             Tensor: The output segmentation map.
         """
-        seg_logit = self.inference(points, img_metas)
-        seg_pred = seg_logit.argmax(dim=1)
-        seg_pred = seg_pred.cpu().numpy()
-        # unravel batch dim
-        seg_pred = list(seg_pred)
+        # 3D segmentation requires per-point prediction, so it's impossible
+        # to use down-sampling to get a batch of scenes with same num_points
+        # therefore, we only support testing one scene every time
+        assert points.shape[0] == 1, 'simple test only supports batch size 1'
+        seg_logit = self.inference(points, img_metas)  # [1, num_classes, N]
+        seg_pred = seg_logit.argmax(dim=1)  # [1, N]
+        seg_pred = seg_pred.cpu()  # to cpu tensor for consistency with det3d
+        # unravel batch dim into list
+        seg_pred = [dict(semantic_mask=seg) for seg in seg_pred]
         return seg_pred
 
     def aug_test(self, points, img_metas):
@@ -277,14 +284,17 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         Returns:
             Tensor: The output segmentation map.
         """
+        # in aug_test, one scene going through different augmentations could
+        # have the same number of points and are stacked as a batch
         # to save memory, we get augmented seg logit inplace
-        seg_logit = self.inference(points[0], img_metas[0])
+        seg_logit = self.inference(points[0].unsqueeze(0), [img_metas[0]])
         for i in range(1, len(points)):
-            cur_seg_logit = self.inference(points[i], img_metas[i])
+            cur_seg_logit = self.inference(
+                points[i].unsqueeze(0), [img_metas[i]])  # [1, num_classes, N]
             seg_logit += cur_seg_logit
         seg_logit /= len(points)
-        seg_pred = seg_logit.argmax(dim=1)
-        seg_pred = seg_pred.cpu().numpy()
-        # unravel batch dim
-        seg_pred = list(seg_pred)
+        seg_pred = seg_logit.argmax(dim=1)  # [1, N]
+        seg_pred = seg_pred.cpu()  # to cpu tensor for consistency with det3d
+        # unravel batch dim into list
+        seg_pred = [dict(semantic_mask=seg) for seg in seg_pred]
         return seg_pred

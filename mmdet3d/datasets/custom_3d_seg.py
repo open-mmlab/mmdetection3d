@@ -348,8 +348,7 @@ class Custom3DSegDataset(Dataset):
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
 
         load_pipeline = self._get_pipeline(pipeline)
-        # TODO: results are list of masks rather than list of dicts?
-        # pred_sem_masks = [result['semantic_mask'] for result in results]
+        pred_sem_masks = [result['semantic_mask'] for result in results]
         gt_sem_masks = [
             self._extract_data(
                 i, load_pipeline, 'pts_semantic_mask', load_annos=True)
@@ -357,13 +356,13 @@ class Custom3DSegDataset(Dataset):
         ]
         ret_dict = seg_eval(
             gt_sem_masks,
-            results,
+            pred_sem_masks,
             self.label2cat,
             self.ignore_index,
             logger=logger)
 
         if show:
-            self.show(results, out_dir, pipeline=pipeline)
+            self.show(pred_sem_masks, out_dir, pipeline=pipeline)
 
         return ret_dict
 
