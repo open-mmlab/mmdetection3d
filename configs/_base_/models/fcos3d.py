@@ -32,16 +32,16 @@ model = dict(
         dir_offset=0.7854,  # pi/4
         strides=[8, 16, 32, 64, 128],
         group_reg_dims=(2, 1, 3, 1, 2),  # offset, depth, size, rot, velo
-        cls_branch=(128, 64),
+        cls_branch=(256, ),
         reg_branch=(
-            (128, 64),  # offset
-            (128, 64),  # depth
-            (64, ),  # size
-            (64, ),  # rot
+            (256, ),  # offset
+            (256, ),  # depth
+            (256, ),  # size
+            (256, ),  # rot
             ()  # velo
         ),
-        dir_branch=(64, ),
-        attr_branch=(64, ),
+        dir_branch=(256, ),
+        attr_branch=(256, ),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,

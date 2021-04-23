@@ -370,7 +370,3 @@ def test_fcos3d():
     assert scores_3d.shape[0] >= 0
     assert labels_3d.shape[0] >= 0
     assert attrs_3d.shape[0] >= 0
-
-
-if __name__ == '__main__':
-    test_fcos3d()
