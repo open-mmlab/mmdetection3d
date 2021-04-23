@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement H3DNet and provide the result and checkpoints on ScanNet datasets.
 

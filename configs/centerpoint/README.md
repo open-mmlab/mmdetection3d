@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement CenterPoint and provide the result and checkpoints on nuScenes dataset.
 
