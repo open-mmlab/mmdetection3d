@@ -1,0 +1,49 @@
+# FCOS3D: Fully Convolutional One-Stage Monocular 3D Object Detection
+
+## Introduction
+
+<!-- [ALGORITHM] -->
+
+FCOS3D is a general anchor-free, one-stage monocular 3D object detector adapted from the original 2D version FCOS.
+It serves as a baseline built on top of mmdetection and mmdetection3d for 3D detection based on monocular vision.
+
+Currently we first support the benchmark on the large-scale nuScenes dataset, which achieved 1st place out of all the vision-only methods in the nuScenes 3D detecton challenge of NeurIPS 2020.
+
+```
+@article{wang2021fcos3d,
+  title={{FCOS3D}: Fully Convolutional One-Stage Monocular 3D Object Detection},
+  author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
+  journal={arXiv preprint arXiv:2104.10956},
+  year={2021}
+}
+# For the original 2D version
+@inproceedings{tian2019fcos,
+  title     =  {{FCOS}: Fully Convolutional One-Stage Object Detection},
+  author    =  {Tian, Zhi and Shen, Chunhua and Chen, Hao and He, Tong},
+  booktitle =  {Proc. Int. Conf. Computer Vision (ICCV)},
+  year      =  {2019}
+}
+```
+
+## Usage
+
+### Data Preparation
+
+After supporting FCOS3D and monocular 3D object detection in v0.13.0, the coco-style 2D json info files will include related annotations by default 
+(see [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L333) if you would like to change the parameter).
+So you can just follow the data preparation steps given in the documentation, then all the needed infos are ready together.
+
+### Test time augmentation
+
+We implement test time augmentation for the dense outputs of detection heads, which is more effective than merging predicted boxes at last.
+You can turn on it by setting `flip=True` in the `test_pipeline`.
+
+## Results
+
+### NuScenes
+
+|  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP | NDS | Download |
+| :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
+|[ResNet101 w/ DCN](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py)|1x|8.69||29.5|37.2||
+|[above w/ finetune](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py)|1x|8.69||31.6|39.3||
+|above w/ tta|1x|8.69||32.6|40.2||
