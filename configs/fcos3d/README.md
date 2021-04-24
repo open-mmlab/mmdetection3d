@@ -7,7 +7,7 @@
 FCOS3D is a general anchor-free, one-stage monocular 3D object detector adapted from the original 2D version FCOS.
 It serves as a baseline built on top of mmdetection and mmdetection3d for 3D detection based on monocular vision.
 
-Currently we first support the benchmark on the large-scale nuScenes dataset, which achieved 1st place out of all the vision-only methods in the nuScenes 3D detecton challenge of NeurIPS 2020.
+Currently we first support the benchmark on the large-scale nuScenes dataset, which achieved 1st place out of all the vision-only methods in the [nuScenes 3D detecton challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera) of NeurIPS 2020.
 
 ```
 @article{wang2021fcos3d,
