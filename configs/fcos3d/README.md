@@ -38,6 +38,10 @@ So you can just follow the data preparation steps given in the documentation, th
 We implement test time augmentation for the dense outputs of detection heads, which is more effective than merging predicted boxes at last.
 You can turn on it by setting `flip=True` in the `test_pipeline`.
 
+### Training with finetune
+
+Due to the scale and measurements of depth is different from those of other regression targets, we first train the model with depth weight equal to 0.2 for a more stable training procedure. For a stronger detector with better performance, please finetune the model with depth weight changed to 1.0 as shown in the [config](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py). Note that the path of `load_from` needs to be changed to yours accordingly.
+
 ## Results
 
 ### NuScenes
