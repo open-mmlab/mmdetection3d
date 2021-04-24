@@ -3,7 +3,7 @@ from mmcv.cnn import normal_init
 from mmcv.runner import auto_fp16, force_fp32
 from torch import nn as nn
 
-from ..builder import build_loss
+from mmseg.models.builder import build_loss
 
 
 class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
@@ -50,7 +50,7 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
 
         self.conv_seg = nn.Conv1d(channels, num_classes, kernel_size=1)
         if dropout_ratio > 0:
-            self.dropout = nn.Dropout1d(dropout_ratio)
+            self.dropout = nn.Dropout(dropout_ratio)
         else:
             self.dropout = None
         self.fp16_enabled = False
@@ -104,16 +104,15 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
 
     @force_fp32(apply_to=('seg_logit', ))
     def losses(self, seg_logit, seg_label):
-        """Compute segmentation loss."""
+        """Compute semantic segmentation loss.
+
+        Args:
+            seg_logit (torch.Tensor): Predicted per-point segmentation logits \
+                of shape [B, num_classes, N].
+            seg_label (torch.Tensor): Ground-truth segmentation label of \
+                shape [B, N].
+        """
         loss = dict()
-        if self.sampler is not None:
-            seg_weight = self.sampler.sample(seg_logit, seg_label)
-        else:
-            seg_weight = None
-        seg_label = seg_label.squeeze(1)
-        loss['loss_seg'] = self.loss_decode(
-            seg_logit,
-            seg_label,
-            weight=seg_weight,
-            ignore_index=self.ignore_index)
+        loss['loss_sem_seg'] = self.loss_decode(
+            seg_logit, seg_label, ignore_index=self.ignore_index)
         return loss

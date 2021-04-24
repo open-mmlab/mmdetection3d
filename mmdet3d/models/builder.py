@@ -34,13 +34,6 @@ def build_head(cfg):
     return build(cfg, HEADS)
 
 
-def build_seg_head(cfg):
-    """Build head for 3D segmentor."""
-    from mmseg.models.builder import HEADS as SEG_HEADS
-    from mmseg.models.builder import build as seg_build
-    return seg_build(cfg, SEG_HEADS)
-
-
 def build_loss(cfg):
     """Build loss function."""
     return build(cfg, LOSSES)

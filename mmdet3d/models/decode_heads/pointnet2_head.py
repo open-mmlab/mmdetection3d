@@ -2,7 +2,7 @@ from mmcv.cnn.bricks import ConvModule
 from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule
-from mmseg.models import HEADS
+from mmdet.models import HEADS
 from .decode_head import Base3DDecodeHead
 
 

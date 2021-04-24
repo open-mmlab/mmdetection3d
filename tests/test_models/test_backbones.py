@@ -29,7 +29,6 @@ def test_pointnet2_sa_ssg():
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
-    N = 100
     # test forward
     ret_dict = self(xyz)
     fp_xyz = ret_dict['fp_xyz']
@@ -42,20 +41,20 @@ def test_pointnet2_sa_ssg():
     assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3
     assert fp_xyz[0].shape == torch.Size([1, 16, 3])
     assert fp_xyz[1].shape == torch.Size([1, 32, 3])
-    assert fp_xyz[2].shape == torch.Size([1, N, 3])
+    assert fp_xyz[2].shape == torch.Size([1, 100, 3])
     assert fp_features[0].shape == torch.Size([1, 16, 16])
     assert fp_features[1].shape == torch.Size([1, 16, 32])
-    assert fp_features[2].shape == torch.Size([1, 16, N])
+    assert fp_features[2].shape == torch.Size([1, 16, 100])
     assert fp_indices[0].shape == torch.Size([1, 16])
     assert fp_indices[1].shape == torch.Size([1, 32])
-    assert fp_indices[2].shape == torch.Size([1, N])
-    assert sa_xyz[0].shape == torch.Size([1, N, 3])
+    assert fp_indices[2].shape == torch.Size([1, 100])
+    assert sa_xyz[0].shape == torch.Size([1, 100, 3])
     assert sa_xyz[1].shape == torch.Size([1, 32, 3])
     assert sa_xyz[2].shape == torch.Size([1, 16, 3])
-    assert sa_features[0].shape == torch.Size([1, 3, N])
+    assert sa_features[0].shape == torch.Size([1, 3, 100])
     assert sa_features[1].shape == torch.Size([1, 16, 32])
     assert sa_features[2].shape == torch.Size([1, 16, 16])
-    assert sa_indices[0].shape == torch.Size([1, N])
+    assert sa_indices[0].shape == torch.Size([1, 100])
     assert sa_indices[1].shape == torch.Size([1, 32])
     assert sa_indices[2].shape == torch.Size([1, 16])
 
