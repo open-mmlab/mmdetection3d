@@ -102,7 +102,7 @@ Support methods
 | CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| FCOS3D               | ✗        | ☐        | ☐        | ☐         | ☐     | ☐        | ☐     |
+| FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
