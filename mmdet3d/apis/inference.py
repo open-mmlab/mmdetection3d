@@ -12,7 +12,7 @@ from mmdet3d.core import (Box3DMode, DepthInstance3DBoxes,
                           show_result)
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
-from mmdet3d.models import build_detector
+from mmdet3d.models import build_model
 
 
 def convert_SyncBN(config):
@@ -52,7 +52,7 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
     config.model.pretrained = None
     convert_SyncBN(config.model)
     config.model.train_cfg = None
-    model = build_detector(config.model, test_cfg=config.get('test_cfg'))
+    model = build_model(config.model, test_cfg=config.get('test_cfg'))
     if checkpoint is not None:
         checkpoint = load_checkpoint(model, checkpoint)
         if 'CLASSES' in checkpoint['meta']:

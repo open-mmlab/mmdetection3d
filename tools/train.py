@@ -14,7 +14,7 @@ from os import path as osp
 
 from mmdet3d import __version__
 from mmdet3d.datasets import build_dataset
-from mmdet3d.models import build_detector
+from mmdet3d.models import build_model
 from mmdet3d.utils import collect_env, get_root_logger
 from mmdet.apis import set_random_seed, train_detector
 
@@ -170,7 +170,7 @@ def main():
     meta['seed'] = args.seed
     meta['exp_name'] = osp.basename(args.config)
 
-    model = build_detector(
+    model = build_model(
         cfg.model,
         train_cfg=cfg.get('train_cfg'),
         test_cfg=cfg.get('test_cfg'))

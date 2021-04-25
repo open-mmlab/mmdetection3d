@@ -3,6 +3,10 @@ _base_ = [
     '../_base_/models/pointnet2_ssg.py', '../_base_/default_runtime.py'
 ]
 
+# data settings
+data = dict(samples_per_gpu=16)
+evaluation = dict(interval=20)
+
 # model settings
 model = dict(
     decode_head=dict(
@@ -24,4 +28,3 @@ lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
 # runtime settings
 checkpoint_config = dict(interval=10)
 runner = dict(type='EpochBasedRunner', max_epochs=200)
-evaluation = dict(interval=20)

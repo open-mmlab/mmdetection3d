@@ -66,6 +66,18 @@ def build_segmentor(cfg, train_cfg=None, test_cfg=None):
     return build(cfg, SEGMENTORS, dict(train_cfg=train_cfg, test_cfg=test_cfg))
 
 
+def build_model(cfg, train_cfg=None, test_cfg=None):
+    """A function warpper for building 3D detector or segmentor according to
+    cfg.
+
+    Should be deprecated in the future.
+    """
+    if cfg.type in ['EncoderDecoder3D']:
+        return build_segmentor(cfg, train_cfg=train_cfg, test_cfg=test_cfg)
+    else:
+        return build_detector(cfg, train_cfg=train_cfg, test_cfg=test_cfg)
+
+
 def build_voxel_encoder(cfg):
     """Build voxel encoder."""
     return build(cfg, VOXEL_ENCODERS)
