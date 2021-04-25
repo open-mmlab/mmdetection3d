@@ -24,7 +24,7 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
-        super(EncoderDecoder3D, self).__init__()
+        Base3DSegmentor.__init__(self)
         self.backbone = build_backbone(backbone)
         if neck is not None:
             self.neck = build_neck(neck)
@@ -57,6 +57,14 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         x = self.extract_feat(points)
         out = self._decode_head_forward_test(x, img_metas)
         return out
+
+    def forward_train(self, points, img_metas, pts_semantic_mask):
+        """Forward function for training."""
+        return EncoderDecoder.forward_train(
+            self,
+            img=points,
+            img_metas=img_metas,
+            gt_semantic_seg=pts_semantic_mask)
 
     @staticmethod
     def _input_generation(coords,
@@ -163,7 +171,7 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                 replace = point_size > 2 * point_idxs.shape[0]
 
                 # TODO: faster alternative of np.random.choice?
-                repeat_idx = torch.ones_like(point_idxs).multinomial(
+                repeat_idx = torch.ones_like(point_idxs).float().multinomial(
                     point_size - point_idxs.shape[0], replacement=replace)
                 point_idxs_repeat = point_idxs[repeat_idx]
                 choices = torch.cat([point_idxs, point_idxs_repeat], dim=0)
@@ -202,17 +210,19 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         block_size = self.test_cfg.block_size
         sample_rate = self.test_cfg.sample_rate
         use_normalized_coord = self.test_cfg.use_normalized_coord
-        batch_size = self.test_cfg.batch_size
+        batch_size = self.test_cfg.batch_size * num_points
 
-        # patch_points is of shape [K, N, 3+C], patch_idxs is of shape [K, N]
+        # patch_points is of shape [K*N, 3+C], patch_idxs is of shape [K*N]
         patch_points, patch_idxs = self._sliding_patch_generation(
             point, num_points, block_size, sample_rate, use_normalized_coord)
+        feats_dim = patch_points.shape[1]
         preds = point.new_zeros((point.shape[0], self.num_classes))
         count_mat = point.new_zeros(point.shape[0])
         seg_logits = []  # save patch predictions
 
         for batch_idx in range(0, patch_points.shape[0], batch_size):
             batch_points = patch_points[batch_idx:batch_idx + batch_size]
+            batch_points = batch_points.view(-1, num_points, feats_dim)
             # batch_seg_logit is of shape [B, num_classes, N]
             batch_seg_logit = self.encode_decode(batch_points, img_meta)
             batch_seg_logit = batch_seg_logit.transpose(1, 2).contiguous()
@@ -220,11 +230,10 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
 
         # TODO: more efficient way to aggregate the predictions?
         seg_logits = torch.cat(seg_logits, dim=0)  # [K*N, num_classes]
-        patch_idxs = patch_idxs.view(-1)  # [K*N]
         for i in range(patch_idxs.shape[0]):
             preds[patch_idxs[i]] += seg_logits[i]
             count_mat[patch_idxs[i]] += 1
-        preds = preds / count_mat
+        preds = preds / count_mat[:, None]
         return preds.transpose(0, 1)  # to [num_classes, K*N]
 
     def whole_inference(self, points, img_metas):
@@ -257,44 +266,52 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         """Simple test with single scene.
 
         Args:
-            points (torch.Tensor): Input points of shape [1, N, 3+C].
+            points (list[torch.Tensor]): List of points of shape [N, 3+C].
             img_metas (list[dict]): Meta information of each sample.
 
         Returns:
-            Tensor: The output segmentation map.
+            list[dict]: The output prediction result with following keys:
+
+                - semantic_mask (Tensor): Segmentation mask of shape [N].
         """
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
-        assert points.shape[0] == 1, 'simple test only supports batch size 1'
-        seg_logit = self.inference(points, img_metas)  # [1, num_classes, N]
-        seg_pred = seg_logit.argmax(dim=1)  # [1, N]
-        seg_pred = seg_pred.cpu()  # to cpu tensor for consistency with det3d
-        # unravel batch dim into list
-        seg_pred = [dict(semantic_mask=seg) for seg in seg_pred]
+        seg_pred = []
+        for point, img_meta in zip(points, img_metas):
+            seg_prob = self.inference(point.unsqueeze(0), [img_meta])[0]
+            seg_map = seg_prob.argmax(0)  # [N]
+            # to cpu tensor for consistency with det3d
+            seg_map = seg_map.cpu()
+            seg_pred.append(seg_map)
+        # warp in dict
+        seg_pred = [dict(semantic_mask=seg_map) for seg_map in seg_pred]
         return seg_pred
 
     def aug_test(self, points, img_metas):
         """Test with augmentations.
 
         Args:
-            points (torch.Tensor): Input points of shape [B, N, 3+C].
-            img_metas (list[dict]): Meta information of each sample.
+            points (list[torch.Tensor]): List of points of shape [B, N, 3+C].
+            img_metas (list[list[dict]]): Meta information of each sample.
+                Outer list are different samples while inner is different augs.
 
         Returns:
-            Tensor: The output segmentation map.
+            list[dict]: The output prediction result with following keys:
+
+                - semantic_mask (Tensor): Segmentation mask of shape [N].
         """
         # in aug_test, one scene going through different augmentations could
         # have the same number of points and are stacked as a batch
         # to save memory, we get augmented seg logit inplace
-        seg_logit = self.inference(points[0].unsqueeze(0), [img_metas[0]])
-        for i in range(1, len(points)):
-            cur_seg_logit = self.inference(
-                points[i].unsqueeze(0), [img_metas[i]])  # [1, num_classes, N]
-            seg_logit += cur_seg_logit
-        seg_logit /= len(points)
-        seg_pred = seg_logit.argmax(dim=1)  # [1, N]
-        seg_pred = seg_pred.cpu()  # to cpu tensor for consistency with det3d
-        # unravel batch dim into list
-        seg_pred = [dict(semantic_mask=seg) for seg in seg_pred]
+        seg_pred = []
+        for point, img_meta in zip(points, img_metas):
+            seg_prob = self.inference(point, img_meta)  # [B, num_classes, N]
+            seg_prob = seg_prob.mean(0)  # [num_classes, N]
+            seg_map = seg_prob.argmax(0)  # [N]
+            # to cpu tensor for consistency with det3d
+            seg_map = seg_map.cpu()
+            seg_pred.append(seg_map)
+        # warp in dict
+        seg_pred = [dict(semantic_mask=seg_map) for seg_map in seg_pred]
         return seg_pred

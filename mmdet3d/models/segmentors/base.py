@@ -16,7 +16,7 @@ class Base3DSegmentor(BaseSegmentor):
         """
         Args:
             points (list[torch.Tensor]): the outer list indicates test-time
-                augmentations and inner torch.Tensor should have a shape NxC,
+                augmentations and inner torch.Tensor should have a shape BXNxC,
                 which contains all points in the batch.
             img_metas (list[list[dict]]): the outer list indicates test-time
                 augs (multiscale, flip, etc.) and the inner list indicates
