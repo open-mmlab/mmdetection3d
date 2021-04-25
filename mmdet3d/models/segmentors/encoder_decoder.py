@@ -60,11 +60,13 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
 
     def forward_train(self, points, img_metas, pts_semantic_mask):
         """Forward function for training."""
+        points_cat = torch.stack(points)
+        pts_semantic_mask_cat = torch.stack(pts_semantic_mask)
         return EncoderDecoder.forward_train(
             self,
-            img=points,
+            img=points_cat,
             img_metas=img_metas,
-            gt_semantic_seg=pts_semantic_mask)
+            gt_semantic_seg=pts_semantic_mask_cat)
 
     @staticmethod
     def _input_generation(coords,

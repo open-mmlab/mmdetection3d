@@ -78,9 +78,9 @@ def test_pointnet2_ssg():
         'pointnet2/pointnet2_ssg_16x2_scannet-3d-20class.py')
     pn2_ssg_cfg.test_cfg.num_points = 32
     self = build_segmentor(pn2_ssg_cfg).cuda()
-    points = torch.rand(2, 1024, 6).float().cuda()
+    points = [torch.rand(1024, 6).float().cuda() for _ in range(2)]
     img_metas = [dict(), dict()]
-    gt_masks = torch.randint(0, 20, (2, 1024)).long().cuda()
+    gt_masks = [torch.randint(0, 20, (1024, )).long().cuda() for _ in range(2)]
 
     # test forward_train
     losses = self.forward_train(points, img_metas, gt_masks)
@@ -95,7 +95,7 @@ def test_pointnet2_ssg():
                        forward_losses['decode.loss_sem_seg'].item())
 
     # test loss with ignore_index
-    ignore_masks = torch.ones_like(gt_masks) * 20
+    ignore_masks = [torch.ones_like(gt_masks[0]) * 20 for _ in range(2)]
     losses = self.forward_train(points, img_metas, ignore_masks)
     assert losses['decode.loss_sem_seg'].item() == 0
 
@@ -145,16 +145,16 @@ def test_pointnet2_msg():
         'pointnet2/pointnet2_msg_14x2_scannet-3d-20class.py')
     pn2_msg_cfg.test_cfg.num_points = 32
     self = build_segmentor(pn2_msg_cfg).cuda()
-    points = torch.rand(2, 1024, 6).float().cuda()
+    points = [torch.rand(1024, 6).float().cuda() for _ in range(2)]
     img_metas = [dict(), dict()]
-    gt_masks = torch.randint(0, 20, (2, 1024)).long().cuda()
+    gt_masks = [torch.randint(0, 20, (1024, )).long().cuda() for _ in range(2)]
 
     # test forward_train
     losses = self.forward_train(points, img_metas, gt_masks)
     assert losses['decode.loss_sem_seg'].item() >= 0
 
     # test loss with ignore_index
-    ignore_masks = torch.ones_like(gt_masks) * 20
+    ignore_masks = [torch.ones_like(gt_masks[0]) * 20 for _ in range(2)]
     losses = self.forward_train(points, img_metas, ignore_masks)
     assert losses['decode.loss_sem_seg'].item() == 0
 

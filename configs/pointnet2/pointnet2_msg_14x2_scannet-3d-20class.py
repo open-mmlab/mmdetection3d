@@ -4,8 +4,8 @@ _base_ = [
 ]
 
 # data settings
-data = dict(samples_per_gpu=16)
-evaluation = dict(interval=20)
+data = dict(samples_per_gpu=14)
+evaluation = dict(interval=20)  # whole scene evaluation is very time-consuming
 
 # model settings
 model = dict(
@@ -22,6 +22,7 @@ model = dict(
 # optimizer
 lr = 0.001  # max learning rate
 optimizer = dict(type='Adam', lr=lr, weight_decay=0)
+optimizer_config = dict(grad_clip=None)
 # lr_config = dict(policy='step', warmup=None, gamma=0.7, step=10)
 lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
 

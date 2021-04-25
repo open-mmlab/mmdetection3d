@@ -3,6 +3,9 @@ import os
 import torch
 from mmcv.image import tensor2imgs
 
+# from mmdet.models import BaseDetector
+from mmdet3d.models import Base3DDetector, Base3DSegmentor
+
 
 def single_gpu_test(model,
                     data_loader,
@@ -32,15 +35,22 @@ def single_gpu_test(model,
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
         with torch.no_grad():
-            result = model(return_loss=False, rescale=True, **data)
+            if isinstance(model.module, Base3DDetector):
+                result = model(return_loss=False, rescale=True, **data)
+            elif isinstance(model.module, Base3DSegmentor):
+                result = model(return_loss=False, **data)
+            else:
+                raise NotImplementedError(
+                    f'unrecognized model type {type(model)}')
 
         if show:
-            # Visualize the results of MMdetection3D model
-            # 'show_results' is MMdetection3D visualization API
-            if hasattr(model.module, 'show_results'):
+            # Visualize the results of MMDetection3D model
+            if isinstance(model.module, Base3DDetector):
                 model.module.show_results(data, result, out_dir)
-            # Visualize the results of MMdetection model
-            # 'show_result' is MMdetection visualization API
+            # Visualize the results of MMSegmentation3D model
+            if isinstance(model.module, Base3DSegmentor):
+                model.module.show_results(data, result, out_dir)
+            # Visualize the results of MMDetection model
             else:
                 batch_size = len(result)
                 if batch_size == 1 and isinstance(data['img'][0],

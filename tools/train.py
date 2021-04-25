@@ -13,10 +13,11 @@ from mmcv.runner import get_dist_info, init_dist
 from os import path as osp
 
 from mmdet3d import __version__
+from mmdet3d.apis import train_model
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
 from mmdet3d.utils import collect_env, get_root_logger
-from mmdet.apis import set_random_seed, train_detector
+from mmdet.apis import set_random_seed
 
 
 def parse_args():
@@ -198,7 +199,7 @@ def main():
             CLASSES=datasets[0].CLASSES)
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
-    train_detector(
+    train_model(
         model,
         datasets,
         cfg,

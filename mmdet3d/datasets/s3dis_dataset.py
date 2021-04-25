@@ -3,11 +3,13 @@ from os import path as osp
 
 from mmdet3d.core import show_seg_result
 from mmdet.datasets import DATASETS
+from mmseg.datasets import DATASETS as SEG_DATASETS
 from .custom_3d_seg import Custom3DSegDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
+@SEG_DATASETS.register_module()
 class _S3DISSegDataset(Custom3DSegDataset):
     r"""S3DIS Dataset for Semantic Segmentation Task.
 
