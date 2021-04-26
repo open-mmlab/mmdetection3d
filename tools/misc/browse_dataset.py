@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import warnings
 from mmcv import Config, DictAction, mkdir_or_exist, track_iter_progress
 from os import path as osp
 
@@ -24,6 +25,12 @@ def parse_args():
         default=None,
         type=str,
         help='If there is no display interface, you can save it')
+    parser.add_argument(
+        '--multi-modality',
+        action='store_true',
+        help='Whether to visualize multi-modality data. If True, we will show '
+        'both 3D point clouds with 3D bounding boxes and 2D images with '
+        'projected bounding boxes.')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -171,26 +178,34 @@ def main():
     except TypeError:  # seg dataset doesn't have `filter_empty_gt` key
         dataset = build_dataset(cfg.data.train)
     data_infos = dataset.data_infos
+    dataset_type = cfg.dataset_type
 
     # configure visualization mode
     vis_type = 'det'  # single-modality detection
-    multi_modality = False
-    if cfg.dataset_type in ['ScanNetSegDataset']:
+    if dataset_type in ['ScanNetSegDataset', 'S3DISSegDataset']:
         vis_type = 'seg'  # segmentation
-    multi_modality = is_multi_modality(dataset)  # multi-modality detection
+    multi_modality = args.multi_modality
+    if multi_modality:
+        # check whether dataset really supports multi-modality input
+        if not is_multi_modality(dataset):
+            warnings.warn(
+                f'{dataset_type} with current config does not support multi-'
+                'modality data loading, only show point clouds here')
+            multi_modality = False
 
     for idx, data_info in enumerate(track_iter_progress(data_infos)):
-        if cfg.dataset_type in ['KittiDataset', 'WaymoDataset']:
+        if dataset_type in ['KittiDataset', 'WaymoDataset']:
             pts_path = data_info['point_cloud']['velodyne_path']
-        elif cfg.dataset_type in ['ScanNetDataset', 'SUNRGBDDataset']:
+        elif dataset_type in [
+                'ScanNetDataset', 'SUNRGBDDataset', 'ScanNetSegDataset',
+                'S3DISSegDataset'
+        ]:
             pts_path = data_info['pts_path']
-        elif cfg.dataset_type in ['NuScenesDataset', 'LyftDataset']:
+        elif dataset_type in ['NuScenesDataset', 'LyftDataset']:
             pts_path = data_info['lidar_path']
-        elif cfg.dataset_type in ['ScanNetSegDataset']:
-            pts_path = data_info['pts_path']
         else:
             raise NotImplementedError(
-                f'unsupported dataset type {cfg.dataset_type}')
+                f'unsupported dataset type {dataset_type}')
 
         file_name = osp.splitext(osp.basename(pts_path))[0]
 
