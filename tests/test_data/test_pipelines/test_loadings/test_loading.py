@@ -217,7 +217,7 @@ def test_load_segmentation_mask():
     # Convert class_id to label and assign ignore_index
     scannet_seg_class_mapping = \
         PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
-                              24, 28, 33, 34, 36, 39))
+                              24, 28, 33, 34, 36, 39), 40)
     scannet_results = scannet_seg_class_mapping(scannet_results)
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
 
@@ -250,7 +250,7 @@ def test_load_segmentation_mask():
     assert s3dis_pts_semantic_mask.shape == (100, )
 
     # Convert class_id to label and assign ignore_index
-    s3dis_seg_class_mapping = PointSegClassMapping(tuple(range(13)))
+    s3dis_seg_class_mapping = PointSegClassMapping(tuple(range(13)), 13)
     s3dis_results = s3dis_seg_class_mapping(s3dis_results)
     s3dis_pts_semantic_mask = s3dis_results['pts_semantic_mask']
 
@@ -286,6 +286,35 @@ def test_load_points_from_multi_sweeps():
     expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
     assert repr_str == expected_repr_str
     assert points.shape == (403, 4)
+
+
+def test_point_seg_class_mapping():
+    sem_mask = np.array([
+        16, 22, 2, 3, 7, 3, 16, 2, 16, 3, 1, 0, 6, 22, 3, 1, 2, 16, 1, 1, 1,
+        38, 7, 25, 16, 25, 3, 40, 38, 3, 33, 6, 16, 6, 16, 1, 38, 1, 1, 2, 8,
+        0, 18, 15, 0, 0, 40, 40, 1, 2, 3, 16, 33, 2, 2, 2, 7, 3, 14, 22, 4, 22,
+        15, 24, 2, 40, 3, 2, 8, 3, 1, 6, 40, 6, 0, 15, 4, 7, 6, 0, 1, 16, 14,
+        3, 0, 1, 1, 16, 38, 2, 15, 6, 4, 1, 16, 2, 3, 3, 3, 2
+    ])
+    valid_cat_ids = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                     34, 36, 39)
+    point_seg_class_mapping = PointSegClassMapping(valid_cat_ids, 40)
+    input_dict = dict(pts_semantic_mask=sem_mask)
+    results = point_seg_class_mapping(input_dict)
+    mapped_sem_mask = results['pts_semantic_mask']
+    expected_sem_mask = np.array([
+        13, 20, 1, 2, 6, 2, 13, 1, 13, 2, 0, 20, 5, 20, 2, 0, 1, 13, 0, 0, 0,
+        20, 6, 20, 13, 20, 2, 20, 20, 2, 16, 5, 13, 5, 13, 0, 20, 0, 0, 1, 7,
+        20, 20, 20, 20, 20, 20, 20, 0, 1, 2, 13, 16, 1, 1, 1, 6, 2, 12, 20, 3,
+        20, 20, 14, 1, 20, 2, 1, 7, 2, 0, 5, 20, 5, 20, 20, 3, 6, 5, 20, 0, 13,
+        12, 2, 20, 0, 0, 13, 20, 1, 20, 5, 3, 0, 13, 1, 2, 2, 2, 1
+    ])
+    repr_str = repr(point_seg_class_mapping)
+    expected_repr_str = f'PointSegClassMapping(valid_cat_ids={valid_cat_ids}'\
+        ', max_cat_id=40)'
+
+    assert np.all(mapped_sem_mask == expected_sem_mask)
+    assert repr_str == expected_repr_str
 
 
 def test_normalize_points_color():
