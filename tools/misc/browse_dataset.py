@@ -32,6 +32,11 @@ def parse_args():
         'both 3D point clouds with 3D bounding boxes and 2D images with '
         'projected bounding boxes.')
     parser.add_argument(
+        '--online',
+        action='store_true',
+        help='Whether to perform online visualization. Note that you often '
+        'need a monitor to do so.')
+    parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
@@ -79,7 +84,7 @@ def to_depth_mode(points, bboxes):
     return points, bboxes
 
 
-def show_det_data(idx, dataset, out_dir, filename):
+def show_det_data(idx, dataset, out_dir, filename, show=False):
     """Visualize 3D point cloud and 3D bboxes."""
     example = dataset.prepare_train_data(idx)
     points = example['points']._data.numpy()
@@ -92,11 +97,11 @@ def show_det_data(idx, dataset, out_dir, filename):
         None,
         out_dir,
         filename,
-        show=True,
+        show=show,
         snapshot=True)
 
 
-def show_seg_data(idx, dataset, out_dir, filename):
+def show_seg_data(idx, dataset, out_dir, filename, show=False):
     """Visualize 3D point cloud and segmentation mask."""
     example = dataset.prepare_train_data(idx)
     points = example['points']._data.numpy()
@@ -109,11 +114,11 @@ def show_seg_data(idx, dataset, out_dir, filename):
         filename,
         np.array(dataset.PALETTE),
         dataset.ignore_index,
-        show=True,
+        show=show,
         snapshot=True)
 
 
-def show_proj_bbox_img(idx, dataset, out_dir, filename):
+def show_proj_bbox_img(idx, dataset, out_dir, filename, show=False):
     """Visualize 3D bboxes on 2D image by projection."""
     example = dataset.prepare_train_data(idx)
     gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d']
@@ -134,7 +139,7 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename):
             filename,
             depth_bbox=True,
             img_metas=img_metas,
-            show=True)
+            show=show)
     elif isinstance(gt_bboxes, LiDARInstance3DBoxes):
         show_multi_modality_result(
             img,
@@ -145,11 +150,11 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename):
             filename,
             depth_bbox=False,
             img_metas=img_metas,
-            show=True)
+            show=show)
     else:
         # can't project, just show img
         show_multi_modality_result(
-            img, None, None, None, out_dir, filename, show=True)
+            img, None, None, None, out_dir, filename, show=show)
 
 
 def is_multi_modality(dataset):
@@ -211,13 +216,16 @@ def main():
 
         if vis_type == 'det':
             # show 3D bboxes on 3D point clouds
-            show_det_data(idx, dataset, args.output_dir, file_name)
+            show_det_data(
+                idx, dataset, args.output_dir, file_name, show=args.online)
             if multi_modality:
                 # project 3D bboxes to 2D image
-                show_proj_bbox_img(idx, dataset, args.output_dir, file_name)
+                show_proj_bbox_img(
+                    idx, dataset, args.output_dir, file_name, show=args.online)
         elif vis_type == 'seg':
             # show 3D segmentation mask on 3D point clouds
-            show_seg_data(idx, dataset, args.output_dir, file_name)
+            show_seg_data(
+                idx, dataset, args.output_dir, file_name, show=args.online)
 
 
 if __name__ == '__main__':
