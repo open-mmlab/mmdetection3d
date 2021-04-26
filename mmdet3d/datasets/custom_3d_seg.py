@@ -143,6 +143,7 @@ class Custom3DSegDataset(Dataset):
         results['pts_seg_fields'] = []
         results['mask_fields'] = []
         results['seg_fields'] = []
+        results['gt_bboxes_3d'] = []
 
     def prepare_train_data(self, index):
         """Training data preparation.
