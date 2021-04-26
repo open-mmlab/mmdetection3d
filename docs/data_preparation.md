@@ -51,6 +51,12 @@ mmdetection3d
 │   │   ├── val.txt
 │   │   ├── test.txt
 │   │   ├── sample_submission.csv
+│   ├── s3dis
+│   │   ├── meta_data
+│   │   ├── Stanford3dDataset_v1.2_Aligned_Version
+│   │   ├── collect_indoor3d_data.py
+│   │   ├── indoor3d_util.py
+│   │   ├── README.md
 │   ├── scannet
 │   │   ├── meta_data
 │   │   ├── scans
@@ -113,7 +119,9 @@ python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft -
 
 Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above.
 
-### ScanNet and SUN RGB-D
+### S3DIS, ScanNet and SUN RGB-D
+
+To prepare s3dis data, please see [s3dis](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md).
 
 To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md).
 

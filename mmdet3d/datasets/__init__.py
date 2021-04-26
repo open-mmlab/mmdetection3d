@@ -13,6 +13,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalRotScaleTrans,
                         NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointShuffle, PointsRangeFilter,
                         RandomFlip3D, VoxelBasedPointSampler)
+from .s3dis_dataset import S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
@@ -27,7 +28,7 @@ __all__ = [
     'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle', 'ObjectRangeFilter',
     'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile',
     'NormalizePointsColor', 'IndoorPointSample', 'LoadAnnotations3D',
-    'SUNRGBDDataset', 'ScanNetDataset', 'ScanNetSegDataset',
+    'SUNRGBDDataset', 'ScanNetDataset', 'ScanNetSegDataset', 'S3DISSegDataset',
     'SemanticKITTIDataset', 'Custom3DDataset', 'Custom3DSegDataset',
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline'

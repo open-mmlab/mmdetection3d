@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[BACKBONE]
+<!-- [BACKBONE] -->
 
 We implement RegNetX models in 3D detection systems and provide their first results with PointPillars on nuScenes dataset.
 

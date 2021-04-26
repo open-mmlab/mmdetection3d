@@ -2,9 +2,10 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement Dynamic Voxelization proposed in  and provide its results and models on KITTI dataset.
+
 ```
 @article{zhou2019endtoend,
     title={End-to-End Multi-View Fusion for 3D Object Detection in LiDAR Point Clouds},

@@ -296,7 +296,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.
-            rt_mat (np.dnarray | torch.Tensor): The rotation and translation
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera

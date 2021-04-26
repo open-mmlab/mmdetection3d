@@ -261,6 +261,30 @@ def test_show():
     mmcv.check_file_exist(pred_file_path)
     tmp_dir.cleanup()
 
+    # test show with pipeline
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=classes,
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    kitti_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
+    pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
+    gt_file_path = osp.join(temp_dir, '000000', '000000_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000000', '000000_pred.obj')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()
+
     # test multi-modality show
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name
@@ -269,6 +293,37 @@ def test_show():
     kitti_dataset = KittiDataset(data_root, ann_file, split, pts_prefix,
                                  multi_modality_pipeline, classes, modality)
     kitti_dataset.show(results, temp_dir, show=False)
+    pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
+    gt_file_path = osp.join(temp_dir, '000000', '000000_gt.obj')
+    pred_file_path = osp.join(temp_dir, '000000', '000000_pred.obj')
+    img_file_path = osp.join(temp_dir, '000000', '000000_img.png')
+    img_pred_path = osp.join(temp_dir, '000000', '000000_pred.png')
+    img_gt_file = osp.join(temp_dir, '000000', '000000_gt.png')
+    mmcv.check_file_exist(pts_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    mmcv.check_file_exist(img_file_path)
+    mmcv.check_file_exist(img_pred_path)
+    mmcv.check_file_exist(img_gt_file)
+    tmp_dir.cleanup()
+
+    # test multi-modality show with pipeline
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=4),
+        dict(type='LoadImageFromFile'),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=classes,
+            with_label=False),
+        dict(type='Collect3D', keys=['points', 'img'])
+    ]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    kitti_dataset.show(results, temp_dir, show=False, pipeline=eval_pipeline)
     pts_file_path = osp.join(temp_dir, '000000', '000000_points.obj')
     gt_file_path = osp.join(temp_dir, '000000', '000000_gt.obj')
     pred_file_path = osp.join(temp_dir, '000000', '000000_pred.obj')

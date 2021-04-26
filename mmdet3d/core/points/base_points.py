@@ -127,9 +127,14 @@ class BasePoints(object):
         return self.tensor.shape
 
     def shuffle(self):
-        """Shuffle the points."""
-        self.tensor = self.tensor[torch.randperm(
-            self.__len__(), device=self.tensor.device)]
+        """Shuffle the points.
+
+        Returns:
+            torch.Tensor: The shuffled index.
+        """
+        idx = torch.randperm(self.__len__(), device=self.tensor.device)
+        self.tensor = self.tensor[idx]
+        return idx
 
     def rotate(self, rotation, axis=None):
         """Rotate points with the given rotation matrix or angle.

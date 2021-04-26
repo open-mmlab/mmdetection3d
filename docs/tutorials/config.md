@@ -242,6 +242,22 @@ test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for m
     dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
         keys=['points'])
 ]
+eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmdet3d.datasets.pipelines for more details
+    dict(
+        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.pipelines.indoor_loading for more details
+        shift_height=True,  # Whether to use shifted height
+        load_dim=6,  # The dimension of the loaded points
+        use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
+    dict(
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formating for more details
+        class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                     'window', 'bookshelf', 'picture', 'counter', 'desk',
+                     'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                     'sink', 'bathtub', 'garbagebin')),
+        with_label=False),
+    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
+        keys=['points'])
+]
 data = dict(
     samples_per_gpu=8,  # Batch size of a single GPU
     workers_per_gpu=4,  # Worker to pre-fetch data for each single GPU
@@ -347,6 +363,22 @@ data = dict(
                  'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                  'garbagebin'),  # Names of classes
         test_mode=True))  # Whether to use test mode
+evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created before
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        load_dim=6,
+        use_dim=[0, 1, 2]),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                     'window', 'bookshelf', 'picture', 'counter', 'desk',
+                     'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                     'sink', 'bathtub', 'garbagebin'),
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+])
 lr = 0.008  # Learning rate of optimizers
 optimizer = dict(  # Config used to build optimizer, support all the optimizers in PyTorch whose arguments are also the same as those in PyTorch
     type='Adam',  # Type of optimizers,   # Type of optimizers, refer to https://github.com/open-mmlab/mmdetection/blob/master/mmdet/core/optimizer/default_constructor.py#L13 for more details
@@ -381,7 +413,7 @@ gpu_ids = range(0, 1)  # ids of gpus
 ### Ignore some fields in the base configs
 
 Sometimes, you may set `_delete_=True` to ignore some of fields in base configs.
-You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple inllustration.
+You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple illustration.
 
 In MMDetection or MMDetection3D, for example, to change the FPN neck of PointPillars with the following config.
 

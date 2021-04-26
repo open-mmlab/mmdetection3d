@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[ALGORITHM]
+<!-- [ALGORITHM] -->
 
 We implement Part-A^2 and provide its results and checkpoints on KITTI dataset.
 
@@ -14,8 +14,8 @@ We implement Part-A^2 and provide its results and checkpoints on KITTI dataset.
   year={2020},
   publisher={IEEE}
 }
-
 ```
+
 ## Results
 
 ### KITTI
