@@ -23,14 +23,14 @@ In MMDetection 0.6.0, we updated the model structure of VoteNet, therefore model
 
 ### ScanNet data pre-processing
 
-We adopt new pre-processing and conversion steps of ScanNet dataset. In previous versions of MMDetection3D, ScanNet dataset was only used for 3D detection task, where we trained on train set and tested on val set. In MMDetection3D 0.13.0, we further support 3D segmentation task on ScanNet, which includes online benchmarking on test set. Since the alignment matrix is not provided for test set data, we abandon the alignment of points in data generation step to support both tasks. Besides, as 3D segmentation requires per-point prediction, we also remove the down-sampling step in data generation.
+We adopt new pre-processing and conversion steps of ScanNet dataset. In previous versions of MMDetection3D, ScanNet dataset was only used for 3D detection task, where we trained on the training set and tested on the validation set. In MMDetection3D 0.13.0, we further support 3D segmentation task on ScanNet, which includes online benchmarking on test set. Since the alignment matrix is not provided for test set data, we abandon the alignment of points in data generation steps to support both tasks. Besides, as 3D segmentation requires per-point prediction, we also remove the down-sampling step in data generation.
 
-- In our new ScanNet processing scripts, we save the unaligned points for all train, val and test set. For train and val set with annotations, we also store the `axis_align_matrix` in data infos. For ground-truth bounding boxes, we store boxes in both aligned and unaligned coordinates with key `gt_boxes_upright_depth` and key `unaligned_gt_boxes_upright_depth` respectively in data infos.
+- In our new ScanNet processing scripts, we save the unaligned points for all the training, validation and test set. For train and val set with annotations, we also store the `axis_align_matrix` in data infos. For ground-truth bounding boxes, we store boxes in both aligned and unaligned coordinates with key `gt_boxes_upright_depth` and key `unaligned_gt_boxes_upright_depth` respectively in data infos.
 
 - In `ScanNetDataset`, we now load the `axis_align_matrix` as a part of data annotations. If it is not contained in old data infos, we will use identity matrix for compatibility. We also add a transform function `GlobalAlignment` in ScanNet detection data pipeline to align the points.
 
 - Since the aligned boxes share the same key as in old data infos, we do not need to modify the code related to it. But do remember that they are not in the same coordinate as the saved points.
 
-- There is a `IndoorPointSample` step in the data pipeline of ScanNet detection task which down-samples points. So the removal of down-sampling in data generation will not affect the code.
+- There is an `IndoorPointSample` step in the data pipeline of ScanNet detection task which down-samples points. So the removal of down-sampling in data generation will not affect the code.
 
 We have tested our pre-trained models on the new ScanNet dataset and get similar results. In order to prepare ScanNet data for both detection and segmentation tasks, please re-run the new pre-processing scripts.
