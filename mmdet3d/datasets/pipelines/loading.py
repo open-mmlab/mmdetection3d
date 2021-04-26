@@ -238,9 +238,10 @@ class PointSegClassMapping(object):
     Args:
         valid_cat_ids (tuple[int]): A tuple of valid category.
         max_cat_id (int): The max possible cat_id in input segmentation mask.
+            Defaults to 40.
     """
 
-    def __init__(self, valid_cat_ids, max_cat_id):
+    def __init__(self, valid_cat_ids, max_cat_id=40):
         self.valid_cat_ids = valid_cat_ids
         self.max_cat_id = max_cat_id
 
