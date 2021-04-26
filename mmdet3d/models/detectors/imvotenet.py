@@ -148,21 +148,21 @@ class ImVoteNet(Base3DDetector):
             if img_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
-            self.img_backbone.init_cfg = dict(
-                type='Pretrained', checkpoint=img_pretrained)
+                self.img_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
         if self.with_img_roi_head:
             if img_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
-            self.img_roi_head.init_cfg = dict(
-                type='Pretrained', checkpoint=img_pretrained)
+                self.img_roi_head.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
 
         if self.with_pts_backbone:
             if img_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
-            self.pts_backbone.init_cfg = dict(
-                type='Pretrained', checkpoint=pts_pretrained)
+                self.pts_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=pts_pretrained)
 
     def freeze_img_branch_params(self):
         """Freeze all image branch parameters."""
