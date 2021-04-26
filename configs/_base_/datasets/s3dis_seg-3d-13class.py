@@ -22,7 +22,8 @@ train_pipeline = [
         with_seg_3d=True),
     dict(
         type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names)))),
+        valid_cat_ids=tuple(range(len(class_names))),
+        max_cat_id=13),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,
@@ -65,7 +66,8 @@ eval_pipeline = [
         with_seg_3d=True),
     dict(
         type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names)))),
+        valid_cat_ids=tuple(range(len(class_names))),
+        max_cat_id=13),
     dict(
         type='DefaultFormatBundle3D',
         with_label=False,
