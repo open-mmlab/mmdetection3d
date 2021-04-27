@@ -43,6 +43,8 @@ class PointRCNN(TwoStage3DDetector):
         if self.with_neck:
             x = self.neck(x)
         return x
+    
+    def 
 
     def forward_train(self,
                       points,
@@ -67,6 +69,7 @@ class PointRCNN(TwoStage3DDetector):
         """
         losses = dict()
         points_cat = torch.stack(points)
+        points_intensity = points_cat[:, :, 3]
         x = self.extract_feat(points_cat)
         if self.with_rpn:
             rpn_outs = self.rpn_head(x)
@@ -77,7 +80,14 @@ class PointRCNN(TwoStage3DDetector):
                 gt_labels_3d=gt_labels_3d,
                 img_metas=img_metas,
                 gt_bboxes_ignore=gt_bboxes_ignore)
-        losses.update(rpn_loss)
+            proposal_list = self.rpn_head.get_bboxes(
+                points_cat, bbox_preds, img_metas, rescale=rescale)
+
+        if self.with_rcnn:
+            roi_losses = self.roi_head.forward_train(x, img_metas, proposal_list,
+                                                     gt_bboxes_3d, gt_labels_3d)
+
+            losses.update(rpn_loss)
 
         return losses
 

@@ -4,8 +4,10 @@ from mmdet3d.core import AssignResult
 from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
 from mmdet.core import build_assigner, build_sampler
 from mmdet.models import HEADS
+from mmdet3d.core.bbox.structures import rotation_3d_in_axis
 from ..builder import build_head, build_roi_extractor
 from .base_3droi_head import Base3DRoIHead
+
 
 
 @HEADS.register_module()
@@ -23,17 +25,19 @@ class PointRCNNROIHead(Base3DRoIHead):
     def __init__(self,
                  bbox_head,
                  num_classes=3,
+                 point_roi_extractor=None,
                  train_cfg=None,
                  test_cfg=None):
         super(PointRCNNROIHead, self).__init__(
             bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
         self.num_classes = num_classes
 
+        if point_roi_extractor is not None:
+            self.point_roi_extractor = build_roi_extractor(point_roi_extractor)
+
         self.init_assigner_sampler()
 
     def init_weights(self, pretrained):
-        """Initialize weights, skip since ``PartAggregationROIHead`` does not
-        need to initialize weights."""
         pass
 
     def init_bbox_head(self, bbox_head):
@@ -83,8 +87,8 @@ class PointRCNNROIHead(Base3DRoIHead):
         
         
         bbox_results = self._bbox_forward_train(
-            feats_dict['seg_features'], 
-            semantic_results['part_feats'],
+            feats_dict['fp_features'], 
+            feats_dict['fp_points']
             sample_results)
         losses.update(bbox_results['loss_bbox'])
 
@@ -133,7 +137,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         ]
         return bbox_results
 
-    def _bbox_forward_train(self, global_feats, local_feats, voxels_dict,
+    def _bbox_forward_train(self, global_feats, local_feats,
                             sampling_results):
         """Forward training function of roi_extractor and bbox_head.
 
@@ -158,35 +162,34 @@ class PointRCNNROIHead(Base3DRoIHead):
         bbox_results.update(loss_bbox=loss_bbox)
         return bbox_results
 
-    def _bbox_forward(self, seg_feats, part_feats, voxels_dict, rois):
+    def _bbox_forward(self, global_feats, points, batch_size, rois):
         """Forward function of roi_extractor and bbox_head used in both
         training and testing.
 
         Args:
-            seg_feats (torch.Tensor): Point-wise semantic features.
-            part_feats (torch.Tensor): Point-wise part prediction features.
-            voxels_dict (dict): Contains information of voxels.
+            global_feats (torch.Tensor): Point-wise semantic features.
+            local_feats (torch.Tensor): Point-wise part prediction features.
             rois (Tensor): Roi boxes.
 
         Returns:
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
-        pooled_seg_feats = self.seg_roi_extractor(seg_feats,
-                                                  voxels_dict['voxel_centers'],
-                                                  voxels_dict['coors'][..., 0],
-                                                  rois)
-        pooled_part_feats = self.part_roi_extractor(
-            part_feats, voxels_dict['voxel_centers'],
-            voxels_dict['coors'][..., 0], rois)
-        cls_score, bbox_pred = self.bbox_head(pooled_seg_feats,
-                                              pooled_part_feats)
+        pooled_point_feats = self.point_point_extractor(global_feats, points, 
+                                                        batch_size, rois)
+
+        #cannoical transformation
+        roi_center = rois[:, :, 0:3]
+        pooled_point_feats[:, :, :, 0:3] -= roi_center.unsequeeze(dim=2)
+        for k in range(batch_size):
+            pooled_point_feats[k, :, :, 0:3] = rotation_3d_in_axis(
+                pooled_point_feats[k, :, :, 0:3], rois[k, :, 6], 2)
+
+        cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
 
         bbox_results = dict(
             cls_score=cls_score,
-            bbox_pred=bbox_pred,
-            pooled_seg_feats=pooled_seg_feats,
-            pooled_part_feats=pooled_part_feats)
+            bbox_pred=bbox_pred)
         return bbox_results
 
     def _assign_and_sample(self, proposal_list, gt_bboxes_3d, gt_labels_3d):

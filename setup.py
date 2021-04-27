@@ -217,6 +217,16 @@ if __name__ == '__main__':
                     'src/points_in_boxes_cuda.cu',
                 ]),
             make_cuda_ext(
+                name='roipoint_pool3d_ext',
+                module='mmdet3d.ops.roipoint_pool3d',
+                sources=[
+                    'src/roipoint_pool3d.cpp'
+                ],
+                sources=[
+                    'src/roipoint_pool3d_kernel.cu'
+                ]
+            ),
+            make_cuda_ext(
                 name='ball_query_ext',
                 module='mmdet3d.ops.ball_query',
                 sources=['src/ball_query.cpp'],
