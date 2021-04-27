@@ -6,7 +6,7 @@ import os
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils
 from mmdet.datasets import PIPELINES
-from ..registry import OBJECTSAMPLERS
+from ..builder import OBJECTSAMPLERS
 
 
 class BatchSampler:
