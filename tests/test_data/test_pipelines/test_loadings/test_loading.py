@@ -289,6 +289,10 @@ def test_load_points_from_multi_sweeps():
 
 
 def test_point_seg_class_mapping():
+    # max_cat_id should larger tham max id in valid_cat_ids
+    with pytest.raises(AssertionError):
+        point_seg_class_mapping = PointSegClassMapping([1, 2, 5], 4)
+
     sem_mask = np.array([
         16, 22, 2, 3, 7, 3, 16, 2, 16, 3, 1, 0, 6, 22, 3, 1, 2, 16, 1, 1, 1,
         38, 7, 25, 16, 25, 3, 40, 38, 3, 33, 6, 16, 6, 16, 1, 38, 1, 1, 2, 8,

@@ -242,12 +242,16 @@ class PointSegClassMapping(object):
     """
 
     def __init__(self, valid_cat_ids, max_cat_id=40):
+        assert max_cat_id >= np.max(valid_cat_ids), \
+            'max_cat_id should be greater than maximum id in valid_cat_ids'
+
         self.valid_cat_ids = valid_cat_ids
-        self.max_cat_id = max_cat_id
+        self.max_cat_id = int(max_cat_id)
 
         # build cat_id to class index mapping
         neg_cls = len(valid_cat_ids)
-        self.cat_id2class = (np.ones(max_cat_id + 1) * neg_cls).astype(int)
+        self.cat_id2class = np.ones(
+            self.max_cat_id + 1, dtype=np.int) * neg_cls
         for cls_idx, cat_id in enumerate(valid_cat_ids):
             self.cat_id2class[cat_id] = cls_idx
 
