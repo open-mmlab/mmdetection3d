@@ -20,7 +20,6 @@ Models:
     In Collection: FP16
     Config: configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py
     Metadata:
-      train time (s/iter): 0.84
       Training Memory (GB):
         - FP32: 5.4
         - FP16: 2.9
@@ -36,7 +35,6 @@ Models:
     In Collection: FP16
     Config: configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
     Metadata:
-      train time (s/iter): 0.98
       Training Memory (GB):
         - FP32: 5.4
         - FP16: 2.9
@@ -52,7 +50,6 @@ Models:
     In Collection: FP16
     Config: configs/fp16/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 2.14
       Training Memory (GB):
         - FP32: 16.4
         - FP16: 8.37
@@ -70,7 +67,6 @@ Models:
     In Collection: FP16
     Config: configs/fp16/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 2.21
       Training Memory (GB):
         - FP32: 16.4
         - FP16: 8.40

@@ -17,7 +17,6 @@ Models:
     In Collection: MVX-Net
     Config: configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py
     Metadata:
-      train time (s/iter): 0.89
       Training Memory (GB): 6.7
     Results:
       - Task: 3D Object Detection

@@ -17,7 +17,6 @@ Models:
     In Collection: VoteNet
     Config: configs/votenet/votenet_16x8_sunrgbd-3d-10class.py
     Metadata:
-      train time (s/iter): 0.38
       Training Memory (GB): 8.1
     Results:
       - Task: 3D Object Detection
@@ -31,7 +30,6 @@ Models:
     In Collection: VoteNet
     Config: configs/votenet/votenet_8x8_scannet-3d-18class.py
     Metadata:
-      train time (s/iter): 0.54
       Training Memory (GB): 4.1
     Results:
       - Task: 3D Object Detection

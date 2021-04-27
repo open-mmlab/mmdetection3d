@@ -15,7 +15,6 @@ Models:
     In Collection: H3DNet
     Config: configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py
     Metadata:
-      train time (s/iter): 2.73
       Training Memory (GB): 7.9
     Results:
       - Task: 3D Object Detection

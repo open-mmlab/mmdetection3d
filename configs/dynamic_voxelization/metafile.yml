@@ -17,7 +17,6 @@ Models:
     In Collection: Dynamic Voxelization
     Config: configs/dynamic_voxelization/dv_second_secfpn_6x8_80e_kitti-3d-car.py
     Metadata:
-      train time (s/iter): 0.84
       Training Memory (GB): 5.5
     Results:
       - Task: 3D Object Detection
@@ -30,7 +29,6 @@ Models:
     In Collection: Dynamic Voxelization
     Config: configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py
     Metadata:
-      train time (s/iter): 0.94
       Training Memory (GB): 5.5
     Results:
       - Task: 3D Object Detection
@@ -43,7 +41,6 @@ Models:
     In Collection: Dynamic Voxelization
     Config: configs/dynamic_voxelization/dv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py
     Metadata:
-      train time (s/iter): 0.43
       Training Memory (GB): 4.7
     Results:
       - Task: 3D Object Detection

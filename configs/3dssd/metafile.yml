@@ -16,7 +16,6 @@ Models:
     In Collection: 3DSSD
     Config: configs/3dssd/3dssd_kitti-3d-car.py
     Metadata:
-      train time (s/iter): 0.42
       Training Memory (GB): 4.7
     Results:
       - Task: 3D Object Detection

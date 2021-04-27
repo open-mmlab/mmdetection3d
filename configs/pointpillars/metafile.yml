@@ -19,7 +19,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py
     Metadata:
-      train time (s/iter): 0.33
       Training Memory (GB): 5.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -33,7 +32,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py
     Metadata:
-      train time (s/iter): 0.42
       Training Memory (GB): 5.5
       Training Resources: 8x V100 GPUs
     Results:
@@ -47,7 +45,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 1.23
       Training Memory (GB): 16.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -62,7 +59,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 1.37
       Training Memory (GB): 16.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -78,7 +74,7 @@ Models:
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d.py
     Results:
       - Task: 3D Object Detection
-        Dataset: nuScenes
+        Dataset: Lyft
         Metrics:
           Private Score: 13.4
           Public Score: 13.4
@@ -88,7 +84,7 @@ Models:
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d.py
     Results:
       - Task: 3D Object Detection
-        Dataset: nuScenes
+        Dataset: Lyft
         Metrics:
           Private Score: 14.0
           Public Score: 14.2
@@ -97,7 +93,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car.py
     Metadata:
-      train time (s/iter): 1.33
       Training Memory (GB): 7.76
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:
@@ -114,7 +109,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
     Metadata:
-      train time (s/iter): 1.55
       Training Memory (GB): 8.12
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:
@@ -131,7 +125,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car.py
     Metadata:
-      train time (s/iter): 1.43
       Training Memory (GB): 7.76
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:
@@ -147,7 +140,6 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class.py
     Metadata:
-      train time (s/iter): 1.62
       Training Memory (GB): 8.12
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:

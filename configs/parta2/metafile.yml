@@ -17,7 +17,6 @@ Models:
     In Collection: Part-A^2
     Config: configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py
     Metadata:
-      train time (s/iter): 1.14
       Training Memory (GB): 4.1
     Results:
       - Task: 3D Object Detection
@@ -30,7 +29,6 @@ Models:
     In Collection: Part-A^2
     Config: configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car.py
     Metadata:
-      train time (s/iter): 1.00
       Training Memory (GB): 4.0
     Results:
       - Task: 3D Object Detection

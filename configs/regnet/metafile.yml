@@ -19,7 +19,6 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 1.48
       Training Memory (GB): 16.4
     Results:
       - Task: 3D Object Detection
@@ -33,7 +32,6 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 1.48
       Training Memory (GB): 17.3
     Results:
       - Task: 3D Object Detection
@@ -47,7 +45,6 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      train time (s/iter): 1.80
       Training Memory (GB): 24.0
     Results:
       - Task: 3D Object Detection
@@ -62,7 +59,7 @@ Models:
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_lyft-3d.py
     Results:
       - Task: 3D Object Detection
-        Dataset: nuScenes
+        Dataset: Lyft
         Metrics:
           Private Score:
           Public Score:
@@ -72,7 +69,7 @@ Models:
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_lyft-3d.py
     Results:
       - Task: 3D Object Detection
-        Dataset: nuScenes
+        Dataset: Lyft
         Metrics:
           Private Score: 15.5
           Public Score: 15.6

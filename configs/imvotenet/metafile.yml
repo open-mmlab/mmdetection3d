@@ -16,7 +16,6 @@ Models:
     In Collection: ImVoteNet
     Config: configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py
     Metadata:
-      train time (s/iter): 0.22
       Training Memory (GB): 2.1
     Results:
       - Task: Object Detection
@@ -29,7 +28,6 @@ Models:
     In Collection: ImVoteNet
     Config: configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py
     Metadata:
-      train time (s/iter): 2.66
       Training Memory (GB): 9.4
     Results:
       - Task: 3D Object Detection
