@@ -7,7 +7,6 @@ Collections:
       Training Resources: 8x V100 GPUs
       Architecture:
         - Sparse U-Net
-        - Feature Pyramid Network
         - Focal Loss
     Paper: https://arxiv.org/abs/1907.03670
     README: configs/parta2/README.md

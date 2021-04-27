@@ -1,11 +1,6 @@
 Collections:
   - Name: PointPillars
     Metadata:
-      Training Data:
-        - KITTI
-        - nuScenes
-        - Lyft
-        - Waymo
       Training Techniques:
         - AdamW
       Architecture:
@@ -19,6 +14,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py
     Metadata:
+      Training Data: KITTI
       Training Memory (GB): 5.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -32,6 +28,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py
     Metadata:
+      Training Data: KITTI
       Training Memory (GB): 5.5
       Training Resources: 8x V100 GPUs
     Results:
@@ -45,6 +42,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory (GB): 16.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -59,6 +57,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory (GB): 16.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -72,6 +71,8 @@ Models:
   - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
@@ -82,6 +83,8 @@ Models:
   - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
@@ -93,6 +96,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car.py
     Metadata:
+      Training Data: Waymo
       Training Memory (GB): 7.76
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:
@@ -109,6 +113,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
     Metadata:
+      Training Data: Waymo
       Training Memory (GB): 8.12
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:
@@ -125,6 +130,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car.py
     Metadata:
+      Training Data: Waymo
       Training Memory (GB): 7.76
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:
@@ -140,6 +146,7 @@ Models:
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class.py
     Metadata:
+      Training Data: Waymo
       Training Memory (GB): 8.12
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:

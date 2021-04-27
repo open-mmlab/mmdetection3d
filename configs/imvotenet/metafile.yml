@@ -6,6 +6,8 @@ Collections:
         - AdamW
       Training Resources: 8x TITAN Xp
       Architecture:
+        - Faster R-CNN
+        - VoteNet
         - Feature Pyramid Network
         - Focal Loss
     Paper: https://arxiv.org/abs/2001.10692

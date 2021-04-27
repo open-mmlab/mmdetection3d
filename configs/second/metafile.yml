@@ -1,9 +1,6 @@
 Collections:
   - Name: SECOND
     Metadata:
-      Training Data:
-        - KITTI
-        - Waymo
       Training Techniques:
         - AdamW
       Architecture:
@@ -17,6 +14,7 @@ Models:
     In Collection: SECOND
     Config: configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py
     Metadata:
+      Training Data: KITTI
       Training Memory (GB): 5.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -30,6 +28,7 @@ Models:
     In Collection: SECOND
     Config: configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py
     Metadata:
+      Training Data: KITTI
       Training Memory (GB): 5.4
       Training Resources: 8x V100 GPUs
     Results:
@@ -43,6 +42,7 @@ Models:
     In Collection: SECOND
     Config: configs/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
     Metadata:
+      Training Data: Waymo
       Training Memory (GB): 8.12
       Training Resources: 8x GeForce GTX 1080 Ti
     Results:

@@ -8,6 +8,7 @@ Collections:
       Architecture:
         - Hard Voxelization
         - Focal Loss
+        - Free Anchor
     Paper: https://arxiv.org/abs/1909.02466
     README: configs/free_anchor/README.md
 

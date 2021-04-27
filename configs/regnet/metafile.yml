@@ -1,9 +1,6 @@
 Collections:
   - Name: RegNetX
     Metadata:
-      Training Data:
-        - nuScenes
-        - Lyft
       Training Techniques:
         - AdamW
       Training Resources: 8x V100 GPUs
@@ -19,6 +16,7 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory (GB): 16.4
     Results:
       - Task: 3D Object Detection
@@ -32,6 +30,7 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory (GB): 17.3
     Results:
       - Task: 3D Object Detection
@@ -45,6 +44,7 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory (GB): 24.0
     Results:
       - Task: 3D Object Detection
@@ -57,6 +57,8 @@ Models:
   - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_lyft-3d
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
@@ -67,6 +69,8 @@ Models:
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_lyft-3d
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
