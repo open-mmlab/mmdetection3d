@@ -1,4 +1,3 @@
-from mmcv.cnn import xavier_init
 from mmcv.cnn.bricks.registry import ATTENTION, TRANSFORMER_LAYER_SEQUENCE
 from mmcv.cnn.bricks.transformer import (MultiheadAttention,
                                          TransformerLayerSequence)
@@ -30,18 +29,13 @@ class GroupFree3DMultiheadAttention(MultiheadAttention):
                  dropout=0.,
                  init_cfg=None,
                  **kwargs):
-        super(GroupFree3DMultiheadAttention, self).__init__(
-            embed_dims=embed_dims,
-            num_heads=num_heads,
-            dropout=dropout,
-            init_cfg=init_cfg,
-            **kwargs)
+        super().__init__(embed_dims, num_heads, dropout, init_cfg, **kwargs)
 
     def forward(self,
                 query,
-                key=None,
-                value=None,
-                residual=None,
+                key,
+                value,
+                residual,
                 query_pos=None,
                 key_pos=None,
                 attn_mask=None,
@@ -143,16 +137,8 @@ class GroupFree3DTransformerDecoder(TransformerLayerSequence):
             Default: None.
     """
 
-    def __init__(self,
-                 bbox_coder,
-                 pred_layer_cfg=None,
-                 transformerlayers=None,
-                 num_layers=None,
-                 init_cfg=None):
-        super(GroupFree3DTransformerDecoder, self).__init__(
-            transformerlayers=transformerlayers,
-            num_layers=num_layers,
-            init_cfg=init_cfg)
+    def __init__(self, bbox_coder, pred_layer_cfg=None, **kwargs):
+        super(GroupFree3DTransformerDecoder, self).__init__(**kwargs)
 
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.num_classes = self.num_sizes = self.bbox_coder.num_sizes
@@ -186,9 +172,8 @@ class GroupFree3DTransformerDecoder(TransformerLayerSequence):
 
     def init_weights(self):
         # follow the official Group-Free-3D to init parameters
-        for m in self.modules():
-            if hasattr(m, 'weight') and m.weight.dim() > 1:
-                xavier_init(m, distribution='uniform')
+        for p in self.parameters():
+            nn.init.xavier_uniform_(p)
         self._is_init = True
 
     def _get_cls_out_channels(self):
@@ -203,16 +188,8 @@ class GroupFree3DTransformerDecoder(TransformerLayerSequence):
         # size class+residual(num_sizes*4)
         return 3 + self.num_dir_bins * 2 + self.num_sizes * 4
 
-    def forward(self,
-                candidate_features,
-                candidate_xyz,
-                seed_features,
-                seed_xyz,
-                base_bbox3d,
-                attn_masks=None,
-                query_key_padding_mask=None,
-                key_padding_mask=None,
-                **kwargs):
+    def forward(self, candidate_features, candidate_xyz, seed_features,
+                seed_xyz, base_bbox3d, **kwargs):
         """Forward function for `GroupFree3DTransformerDecoder`.
 
         Args:
@@ -258,9 +235,6 @@ class GroupFree3DTransformerDecoder(TransformerLayerSequence):
                 value,
                 query_pos=query_pos,
                 key_pos=key_pos,
-                attn_masks=attn_masks,
-                query_key_padding_mask=query_key_padding_mask,
-                key_padding_mask=key_padding_mask,
                 **kwargs).permute(1, 2, 0)
 
             results['query' + suffix] = query

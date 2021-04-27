@@ -1,4 +1,5 @@
 import torch
+from mmcv import ConfigDict
 
 
 def test_groupfree3d_transformer_decoder():
@@ -49,6 +50,7 @@ def test_groupfree3d_transformer_decoder():
         ffn_dropout=0.1,
         operation_order=('self_attn', 'norm', 'cross_attn', 'norm', 'ffn',
                          'norm'))
+    transformerlayers = ConfigDict(transformerlayers)
 
     self = GroupFree3DTransformerDecoder(
         num_layers=6,
@@ -74,10 +76,14 @@ def test_groupfree3d_transformer_decoder():
         seed_xyz=seed_xyz,
         base_bbox3d=base_bbox3d)
 
-    assert transformer_res['center_5'] == torch.Size([2, 128, 3])
-    assert transformer_res['dir_class_5'] == torch.Size([2, 128, 1])
-    assert transformer_res['dir_res_5'] == torch.Size([2, 128, 1])
-    assert transformer_res['size_class_5'] == torch.Size([2, 128, 18])
-    assert transformer_res['size_res_5'] == torch.Size([2, 128, 18, 3])
-    assert transformer_res['obj_scores_5'] == torch.Size([2, 128, 1])
-    assert transformer_res['sem_scores_5'] == torch.Size([2, 128, 18])
+    assert transformer_res['center_5'].shape == torch.Size([2, 128, 3])
+    assert transformer_res['dir_class_5'].shape == torch.Size([2, 128, 1])
+    assert transformer_res['dir_res_5'].shape == torch.Size([2, 128, 1])
+    assert transformer_res['size_class_5'].shape == torch.Size([2, 128, 18])
+    assert transformer_res['size_res_5'].shape == torch.Size([2, 128, 18, 3])
+    assert transformer_res['obj_scores_5'].shape == torch.Size([2, 128, 1])
+    assert transformer_res['sem_scores_5'].shape == torch.Size([2, 128, 18])
+
+
+if __name__ == '__main__':
+    test_groupfree3d_transformer_decoder()
