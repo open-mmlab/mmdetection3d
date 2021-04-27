@@ -70,7 +70,7 @@ def test_indoor_seg_sample():
     scannet_patch_sample_points = IndoorPatchPointSample(5, 1.5, 1.0, 20, True)
     scannet_seg_class_mapping = \
         PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
-                              24, 28, 33, 34, 36, 39))
+                              24, 28, 33, 34, 36, 39), 40)
     scannet_results = dict()
     scannet_points = np.fromfile(
         './tests/data/scannet/points/scene0000_00.bin',

@@ -128,7 +128,8 @@ def test_scannet_seg_pipeline():
         dict(
             type='PointSegClassMapping',
             valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                           28, 33, 34, 36, 39)),
+                           28, 33, 34, 36, 39),
+            max_cat_id=40),
         dict(
             type='IndoorPatchPointSample',
             num_points=5,
@@ -197,7 +198,8 @@ def test_s3dis_seg_pipeline():
             with_seg_3d=True),
         dict(
             type='PointSegClassMapping',
-            valid_cat_ids=tuple(range(len(class_names)))),
+            valid_cat_ids=tuple(range(len(class_names))),
+            max_cat_id=13),
         dict(
             type='IndoorPatchPointSample',
             num_points=5,
