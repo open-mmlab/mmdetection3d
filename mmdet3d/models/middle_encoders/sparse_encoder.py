@@ -3,7 +3,7 @@ from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
-from ..registry import MIDDLE_ENCODERS
+from ..builder import MIDDLE_ENCODERS
 
 
 @MIDDLE_ENCODERS.register_module()
