@@ -201,7 +201,8 @@ train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for
     dict(
         type='PointSegClassMapping',  # Declare valid categories, refer to mmdet3d.datasets.pipelines.point_seg_class_mapping for more details
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39)),
+                       36, 39),  # all valid categories ids
+        max_cat_id=40),  # max possible category id in input segmentation mask
     dict(type='IndoorPointSample',  # Sample indoor points, refer to mmdet3d.datasets.pipelines.indoor_sample for more details
             num_points=40000),  # Number of points to be sampled
     dict(type='IndoorFlipData',  # Augmentation pipeline that flip points and 3d boxes
@@ -283,7 +284,8 @@ data = dict(
                 dict(
                     type='PointSegClassMapping',
                     valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                                   28, 33, 34, 36, 39)),
+                                   28, 33, 34, 36, 39),
+                    max_cat_id=40),
                 dict(type='IndoorPointSample', num_points=40000),
                 dict(
                     type='IndoorFlipData',

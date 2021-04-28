@@ -1,8 +1,7 @@
 import argparse
 import mmcv
+from indoor3d_util import export
 from os import path as osp
-
-from .indoor3d_util import export
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

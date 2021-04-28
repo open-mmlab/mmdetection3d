@@ -237,10 +237,23 @@ class PointSegClassMapping(object):
 
     Args:
         valid_cat_ids (tuple[int]): A tuple of valid category.
+        max_cat_id (int): The max possible cat_id in input segmentation mask.
+            Defaults to 40.
     """
 
-    def __init__(self, valid_cat_ids):
+    def __init__(self, valid_cat_ids, max_cat_id=40):
+        assert max_cat_id >= np.max(valid_cat_ids), \
+            'max_cat_id should be greater than maximum id in valid_cat_ids'
+
         self.valid_cat_ids = valid_cat_ids
+        self.max_cat_id = int(max_cat_id)
+
+        # build cat_id to class index mapping
+        neg_cls = len(valid_cat_ids)
+        self.cat_id2class = np.ones(
+            self.max_cat_id + 1, dtype=np.int) * neg_cls
+        for cls_idx, cat_id in enumerate(valid_cat_ids):
+            self.cat_id2class[cat_id] = cls_idx
 
     def __call__(self, results):
         """Call function to map original semantic class to valid category ids.
@@ -256,22 +269,17 @@ class PointSegClassMapping(object):
         """
         assert 'pts_semantic_mask' in results
         pts_semantic_mask = results['pts_semantic_mask']
-        neg_cls = len(self.valid_cat_ids)
 
-        for i in range(pts_semantic_mask.shape[0]):
-            if pts_semantic_mask[i] in self.valid_cat_ids:
-                converted_id = self.valid_cat_ids.index(pts_semantic_mask[i])
-                pts_semantic_mask[i] = converted_id
-            else:
-                pts_semantic_mask[i] = neg_cls
+        converted_pts_sem_mask = self.cat_id2class[pts_semantic_mask]
 
-        results['pts_semantic_mask'] = pts_semantic_mask
+        results['pts_semantic_mask'] = converted_pts_sem_mask
         return results
 
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(valid_cat_ids={self.valid_cat_ids})'
+        repr_str += f'(valid_cat_ids={self.valid_cat_ids}, '
+        repr_str += f'max_cat_id={self.max_cat_id})'
         return repr_str
 
 
