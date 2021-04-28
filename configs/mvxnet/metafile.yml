@@ -8,7 +8,6 @@ Collections:
       Architecture:
         - Feature Pyramid Network
         - Dynamic Voxelization
-        - Focal Loss
     Paper: https://arxiv.org/abs/1904.01649
     README: configs/mvxnet/README.md
 

@@ -9,7 +9,6 @@ Collections:
         - Faster R-CNN
         - VoteNet
         - Feature Pyramid Network
-        - Focal Loss
     Paper: https://arxiv.org/abs/2001.10692
     README: configs/imvotenet/README.md
 

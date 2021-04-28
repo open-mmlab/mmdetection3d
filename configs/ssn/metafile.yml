@@ -6,7 +6,6 @@ Collections:
       Training Resources: 8x GeForce GTX 1080 Ti
       Architecture:
         - Hard Voxelization
-        - Focal Loss
     Paper: https://arxiv.org/abs/2004.02774
     README: configs/ssn/README.md
 

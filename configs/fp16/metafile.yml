@@ -7,7 +7,6 @@ Collections:
       Training Resources: 8x TITAN Xp
       Architecture:
         - Hard Voxelization
-        - Focal Loss
     Paper:
       - https://www.mdpi.com/1424-8220/18/10/3337
       - https://arxiv.org/abs/1812.05784

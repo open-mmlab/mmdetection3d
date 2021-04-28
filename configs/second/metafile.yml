@@ -5,7 +5,6 @@ Collections:
         - AdamW
       Architecture:
         - Hard Voxelization
-        - Focal Loss
     Paper: https://www.mdpi.com/1424-8220/18/10/3337
     README: configs/second/README.md
 

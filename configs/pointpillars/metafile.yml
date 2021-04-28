@@ -5,7 +5,6 @@ Collections:
         - AdamW
       Architecture:
         - Feature Pyramid Network
-        - Focal Loss
     Paper: https://arxiv.org/abs/1812.05784
     README: configs/pointpillars/README.md
 

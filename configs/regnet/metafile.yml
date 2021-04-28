@@ -7,7 +7,6 @@ Collections:
       Architecture:
         - Faster R-CNN
         - Hard Voxelization
-        - Focal Loss
     Paper: https://arxiv.org/abs/2003.13678
     README: configs/regnet/README.md
 
