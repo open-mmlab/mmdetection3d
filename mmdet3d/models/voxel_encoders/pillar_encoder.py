@@ -4,7 +4,7 @@ from mmcv.runner import force_fp32
 from torch import nn
 
 from mmdet3d.ops import DynamicScatter
-from ..builder import VOXEL_ENCODERS
+from ..registry import VOXEL_ENCODERS
 from .utils import PFNLayer, get_paddings_indicator
 
 

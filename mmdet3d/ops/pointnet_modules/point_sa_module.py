@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from typing import List
 
 from mmdet3d.ops import GroupAll, Points_Sampler, QueryAndGroup, gather_points
-from .builder import SA_MODULES
+from .registry import SA_MODULES
 
 
 @SA_MODULES.register_module()

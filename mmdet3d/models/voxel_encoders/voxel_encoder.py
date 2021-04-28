@@ -5,7 +5,7 @@ from torch import nn
 
 from mmdet3d.ops import DynamicScatter
 from .. import builder
-from ..builder import VOXEL_ENCODERS
+from ..registry import VOXEL_ENCODERS
 from .utils import VFELayer, get_paddings_indicator
 
 

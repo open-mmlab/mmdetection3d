@@ -6,7 +6,7 @@ from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import box_np_ops
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
-from ..builder import OBJECTSAMPLERS
+from ..registry import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
 
 

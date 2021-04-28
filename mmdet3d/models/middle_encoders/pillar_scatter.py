@@ -2,7 +2,7 @@ import torch
 from mmcv.runner import auto_fp16
 from torch import nn
 
-from ..builder import MIDDLE_ENCODERS
+from ..registry import MIDDLE_ENCODERS
 
 
 @MIDDLE_ENCODERS.register_module()

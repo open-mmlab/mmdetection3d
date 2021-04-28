@@ -1,6 +1,4 @@
-from mmcv.utils import Registry
-
-SA_MODULES = Registry('point_sa_module')
+from .registry import SA_MODULES
 
 
 def build_sa_module(cfg, *args, **kwargs):

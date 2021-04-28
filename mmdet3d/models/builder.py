@@ -1,45 +1,38 @@
 import warnings
-from mmcv.cnn import MODELS as MMCV_MODELS
-from mmcv.utils import Registry
 
 from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
-                                  ROI_EXTRACTORS, SHARED_HEADS)
-
-MODELS = Registry('models', parent=MMCV_MODELS)
-
-VOXEL_ENCODERS = MODELS
-MIDDLE_ENCODERS = MODELS
-FUSION_LAYERS = MODELS
+                                  ROI_EXTRACTORS, SHARED_HEADS, build)
+from .registry import FUSION_LAYERS, MIDDLE_ENCODERS, VOXEL_ENCODERS
 
 
 def build_backbone(cfg):
     """Build backbone."""
-    return BACKBONES.build(cfg)
+    return build(cfg, BACKBONES)
 
 
 def build_neck(cfg):
     """Build neck."""
-    return NECKS.build(cfg)
+    return build(cfg, NECKS)
 
 
 def build_roi_extractor(cfg):
     """Build RoI feature extractor."""
-    return ROI_EXTRACTORS.build(cfg)
+    return build(cfg, ROI_EXTRACTORS)
 
 
 def build_shared_head(cfg):
     """Build shared head of detector."""
-    return SHARED_HEADS.build(cfg)
+    return build(cfg, SHARED_HEADS)
 
 
 def build_head(cfg):
     """Build head."""
-    return HEADS.build(cfg)
+    return build(cfg, HEADS)
 
 
 def build_loss(cfg):
     """Build loss function."""
-    return LOSSES.build(cfg)
+    return build(cfg, LOSSES)
 
 
 def build_detector(cfg, train_cfg=None, test_cfg=None):
@@ -52,20 +45,19 @@ def build_detector(cfg, train_cfg=None, test_cfg=None):
         'train_cfg specified in both outer field and model field '
     assert cfg.get('test_cfg') is None or test_cfg is None, \
         'test_cfg specified in both outer field and model field '
-    return DETECTORS.build(
-        cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
+    return build(cfg, DETECTORS, dict(train_cfg=train_cfg, test_cfg=test_cfg))
 
 
 def build_voxel_encoder(cfg):
     """Build voxel encoder."""
-    return VOXEL_ENCODERS.build(cfg)
+    return build(cfg, VOXEL_ENCODERS)
 
 
 def build_middle_encoder(cfg):
     """Build middle level encoder."""
-    return MIDDLE_ENCODERS.build(cfg)
+    return build(cfg, MIDDLE_ENCODERS)
 
 
 def build_fusion_layer(cfg):
     """Build fusion layer."""
-    return FUSION_LAYERS.build(cfg)
+    return build(cfg, FUSION_LAYERS)

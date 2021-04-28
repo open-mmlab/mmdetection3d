@@ -1,5 +1,5 @@
 import platform
-from mmcv.utils import Registry, build_from_cfg
+from mmcv.utils import build_from_cfg
 
 from mmdet.datasets import DATASETS
 from mmdet.datasets.builder import _concat_dataset
@@ -11,8 +11,6 @@ if platform.system() != 'Windows':
     hard_limit = rlimit[1]
     soft_limit = min(4096, hard_limit)
     resource.setrlimit(resource.RLIMIT_NOFILE, (soft_limit, hard_limit))
-
-OBJECTSAMPLERS = Registry('Object sampler')
 
 
 def build_dataset(cfg, default_args=None):
