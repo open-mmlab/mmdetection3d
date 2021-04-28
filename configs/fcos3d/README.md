@@ -33,6 +33,10 @@ After supporting FCOS3D and monocular 3D object detection in v0.13.0, the coco-s
 (see [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L333) if you would like to change the parameter).
 So you can just follow the data preparation steps given in the documentation, then all the needed infos are ready together.
 
+### Training and Inference
+
+The way to training and inference a monocular 3D object detector is the same as others in mmdetection and mmdetection3d. You can basically follow the [documentation](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#train-predefined-models-on-standard-datasets) and change the `config`, `work_dirs`, etc. accordingly.
+
 ### Test time augmentation
 
 We implement test time augmentation for the dense outputs of detection heads, which is more effective than merging predicted boxes at last.
@@ -48,6 +52,6 @@ Due to the scale and measurements of depth is different from those of other regr
 
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP | NDS | Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|[ResNet101 w/ DCN](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py)|1x|8.69||29.5|37.2||
-|[above w/ finetune](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py)|1x|8.69||31.6|39.3||
-|above w/ tta|1x|8.69||32.6|40.2||
+|[ResNet101 w/ DCN](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py)|1x|8.69||29.9|37.3||
+|[above w/ finetune](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py)|1x|8.69||32.1|39.3||
+|above w/ tta|1x|8.69||33.1|40.0||
