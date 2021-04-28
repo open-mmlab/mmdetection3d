@@ -149,20 +149,17 @@ def test_evaluate():
     metric = ['waymo']
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor([[
-            6.9800e+01, 3.3200e+01, 4.1500e-02, 2.0000e+00, 4.4000e+00,
-            1.5000e+00, -9.1000e-02
-        ],
-                      [
-                          6.9100e+01, 3.3600e+01, 4.1800e-02, 2.1000e+00,
-                          4.4500e+00, 1.5900e+00, -8.8000e-02
-                      ]]))
-    labels_3d = torch.tensor([0, 0])
-    scores_3d = torch.tensor([0.8, 0.6])
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
+            1.4600e+00, -9.0000e-02
+        ]]))
+    labels_3d = torch.tensor([0])
+    scores_3d = torch.tensor([0.8])
     result = dict(boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
     ap_dict = waymo_dataset.evaluate([result], metric=metric)
-    assert np.isclose(ap_dict['Overall/L1 mAP'], 0.0)
-    assert np.isclose(ap_dict['Overall/L2 mAP'], 0.0)
-    assert np.isclose(ap_dict['Overall/L2 mAPH'], 0.0)
+    assert np.isclose(ap_dict['Overall/L1 mAP'], 0.3333333333333333)
+    assert np.isclose(ap_dict['Overall/L2 mAP'], 0.3333333333333333)
+    assert np.isclose(ap_dict['Overall/L1 mAPH'], 0.3333333333333333)
+    assert np.isclose(ap_dict['Overall/L2 mAPH'], 0.3333333333333333)
 
 
 def test_show():
