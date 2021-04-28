@@ -156,14 +156,14 @@ class ShapeAwareHead(Anchor3DHead):
         super().__init__(
             assign_per_class=assign_per_class, init_cfg=init_cfg, **kwargs)
 
-    def init_weight(self):
+    def init_weights(self):
         if not self._is_init:
             for m in self.children():
-                if hasattr(m, 'init_weight'):
-                    m.init_weight()
+                if hasattr(m, 'init_weights'):
+                    m.init_weights()
             self._is_init = True
         else:
-            warnings.warn(f'init_weight of {self.__class__.__name__} has '
+            warnings.warn(f'init_weights of {self.__class__.__name__} has '
                           f'been called more than once.')
 
     def _init_layers(self):

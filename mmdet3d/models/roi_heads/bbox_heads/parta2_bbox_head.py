@@ -228,8 +228,8 @@ class PartA2BboxHead(BaseModule):
                 layer=['Conv2d', 'Conv1d'],
                 distribution='uniform')
 
-    def init_weight(self):
-        super().init_weight()
+    def init_weights(self):
+        super().init_weights()
         normal_init(self.conv_reg[-1].conv, mean=0, std=0.001)
 
     def forward(self, seg_feats, part_feats):

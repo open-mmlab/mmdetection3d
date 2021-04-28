@@ -88,9 +88,9 @@ class SeparateHead(BaseModule):
                         type='Kaiming', name='heatmap',
                         distribution='uniform'))
 
-    def init_weight(self):
+    def init_weights(self):
         """Initialize weights."""
-        super().init_weight()
+        super().init_weights()
         for head in self.heads:
             if head == 'heatmap':
                 self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
