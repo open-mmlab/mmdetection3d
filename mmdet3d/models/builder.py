@@ -1,8 +1,12 @@
 import warnings
+from mmcv.utils import Registry
 
 from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
                                   ROI_EXTRACTORS, SHARED_HEADS, build)
-from .registry import FUSION_LAYERS, MIDDLE_ENCODERS, VOXEL_ENCODERS
+
+VOXEL_ENCODERS = Registry('voxel_encoder')
+MIDDLE_ENCODERS = Registry('middle_encoder')
+FUSION_LAYERS = Registry('fusion_layer')
 
 
 def build_backbone(cfg):

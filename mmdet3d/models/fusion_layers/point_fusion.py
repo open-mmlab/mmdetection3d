@@ -3,7 +3,7 @@ from mmcv.cnn import ConvModule, xavier_init
 from torch import nn as nn
 from torch.nn import functional as F
 
-from ..registry import FUSION_LAYERS
+from ..builder import FUSION_LAYERS
 from . import apply_3d_transformation
 
 
