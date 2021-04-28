@@ -123,8 +123,8 @@ exps/
 # demo
 *.jpg
 *.png
-/data/s3dis/Stanford3dDataset_v1.2_Aligned_Version/
-/data/scannet/scans/
-/data/sunrgbd/OFFICIAL_SUNRGBD/
+data/s3dis/Stanford3dDataset_v1.2_Aligned_Version/
+data/scannet/scans/
+data/sunrgbd/OFFICIAL_SUNRGBD/
 *.obj
 *.ply
