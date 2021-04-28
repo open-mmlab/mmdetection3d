@@ -62,9 +62,6 @@ Models:
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
-        Metrics:
-          Private Score:
-          Public Score:
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_lyft-3d
     In Collection: RegNetX
