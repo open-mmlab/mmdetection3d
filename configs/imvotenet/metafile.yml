@@ -1,0 +1,38 @@
+Collections:
+  - Name: ImVoteNet
+    Metadata:
+      Training Data: SUNRGBD
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Faster R-CNN
+        - VoteNet
+        - Feature Pyramid Network
+    Paper: https://arxiv.org/abs/2001.10692
+    README: configs/imvotenet/README.md
+
+Models:
+  - Name: imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class
+    In Collection: ImVoteNet
+    Config: configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py
+    Metadata:
+      Training Memory (GB): 2.1
+    Results:
+      - Task: Object Detection
+        Dataset: SUNRGBD-2D
+        Metrics:
+          AP@0.5: 62.70
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class_20210323_173222-cad62aeb.pth
+
+  - Name: imvotenet_stage2_16x8_sunrgbd-3d-10class
+    In Collection: ImVoteNet
+    Config: configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py
+    Metadata:
+      Training Memory (GB): 9.4
+    Results:
+      - Task: 3D Object Detection
+        Dataset: SUNRGBD-3D
+        Metrics:
+          AP@0.25: 64.04
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class/imvotenet_stage2_16x8_sunrgbd-3d-10class_20210323_184021-d44dcb66.pth

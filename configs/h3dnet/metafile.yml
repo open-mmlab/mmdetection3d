@@ -1,0 +1,24 @@
+Collections:
+  - Name: H3DNet
+    Metadata:
+      Training Data: ScanNet
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x GeForce GTX 1080 Ti
+      Architecture:
+    Paper: https://arxiv.org/abs/2006.05682
+    README: configs/h3dnet/README.md
+
+Models:
+  - Name: h3dnet_3x8_scannet-3d-18class
+    In Collection: H3DNet
+    Config: configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py
+    Metadata:
+      Training Memory (GB): 7.9
+    Results:
+      - Task: 3D Object Detection
+        Dataset: ScanNet
+        Metrics:
+          AP@0.25: 66.43
+          AP@0.5: 48.01
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/h3dnet/h3dnet_scannet-3d-18class/h3dnet_scannet-3d-18class_20200830_000136-02e36246.pth
