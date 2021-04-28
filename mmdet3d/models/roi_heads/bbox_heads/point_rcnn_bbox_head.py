@@ -6,7 +6,7 @@ from torch import nn as nn
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import make_sparse_convmodule
+from mmdet3d.ops import make_sparse_convmodule, build_sa_module
 from mmdet3d.ops import spconv as spconv
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
@@ -28,15 +28,21 @@ class PointRCNNBboxHead(nn.Module):
                  num_classes, 
                  in_channels, 
                  mlp_channels,
+                 conv_cfg=dict(type='Conv1d'),
+                 norm_cfg=dict(type='BN1d'),
+                 act_cfg=dict(type='ReLU'),
                  bbox_codesize=46,
                  conv_channels=(512, 512),
-                 num_points=(2048, 1024, 512, 256),
-                 radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
-                 num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
-                 sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
-                             ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
-                             ((128, 128, 256), (128, 192, 256), (128, 256,
-                                                                 256))),
+                 num_points=(128, 32, 1),
+                 radius=(0.2, 0.4, 100),
+                 num_samples=(64 ,64 , 64),
+                 sa_channels=((128, 128, 128),
+                              (128, 128, 256),
+                              (256, 256, 512)),
+                 sa_cfg=dict(
+                     type='PointSAModule',
+                     pool_mod='max',
+                     use_xyz=True),
                  loss_bbox=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
                  loss_cls=dict(
@@ -44,82 +50,71 @@ class PointRCNNBboxHead(nn.Module):
                      use_sigmoid=True,
                      reduction='none',
                      loss_weight=1.0)):
-    super(PointRCNNBboxHead, self)__init__()
-    self.num_classes = num_classes
-    self.in_channels = in_channels
+        super(PointRCNNBboxHead, self).__init__()
+        self.num_classes = num_classes
+        self.in_channels = in_channels
+        self.conv_cfg = conv_cfg
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        self.bbox_codesize = bbox_codesize
+        self.num_sa = len(sa_channels)
 
-    self.loss_bbox = build_loss(loss_bbox)
-    self.loss_cls = build_loss(loss_cls)
-    self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
+        self.loss_bbox = build_loss(loss_bbox)
+        self.loss_cls = build_loss(loss_cls)
+        self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
-    self.shared_mlps = nn.Sequential()
-    for i in range(len(mlp_channels) - 1):
-        self.shared_mlps.add_module(
-            f'layer{i}',
-            ConvModule(
-                mlp_channels[i],
-                mlp_channels[i + 1],
-                kernel_size=(1, 1),
-                stride=(1, 1),
-                conv_cfg=dict(type='Conv2d')))
+        self.shared_mlps = nn.Sequential()
+        for i in range(len(mlp_channels) - 1):
+            self.shared_mlps.add_module(
+                f'layer{i}',
+                ConvModule(
+                    mlp_channels[i],
+                    mlp_channels[i + 1],
+                    kernel_size=(1, 1),
+                    stride=(1, 1),
+                    conv_cfg=dict(type='Conv2d')))
     
-    c_out = mlp_channels[-1]
-    self.merge_down_layer = ConvModule(
-        c_out * 2,
-        c_out,
-        kernel_size=(1, 1),
-        stride=(1, 1),
-        conv_cfg=dict(type='Conv2d'))
+        c_out = mlp_channels[-1]
+        self.merge_down_layer = ConvModule(
+            c_out * 2,
+            c_out,
+            kernel_size=(1, 1),
+            stride=(1, 1),
+            conv_cfg=dict(type='Conv2d'))
 
-    pre_channels = cout
-    self.cls_layers = self.make_conv_layers(
-        conv_channels=conv_channels,
-        input_channels=self.input_channels,
-        output_channels=self.num_classes,
-        conv_cfg=self.conv_cfg,
-        norm_cfg=self.norm_cfg,
-        act_cfg=self.act_cfg)
-    self.bbox_layers = self.make_conv_layers(
-        conv_channels=conv_channels,
-        input_channels=self.input_channels,
-        output_channels=self.bbox_codesize,
-        conv_cfg=self.conv_cfg,
-        norm_cfg=self.norm_cfg,
-        act_cfg=self.act_cfg)
+        pre_channels = c_out
+        self.cls_layers = self.make_conv_layers(
+            conv_channels=conv_channels,
+            input_channels=pre_channels,
+            output_channels=self.num_classes,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
+        self.bbox_layers = self.make_conv_layers(
+            conv_channels=conv_channels,
+            input_channels=pre_channels,
+            output_channels=self.bbox_codesize,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
-    self.SA_modules = nn.ModuleList()
-    for sa_index in range(self.num_sa):
+        self.SA_modules = nn.ModuleList()
+        sa_in_channel = self.in_channels - 3  # number of channels without xyz
+        
+        for sa_index in range(self.num_sa):
             cur_sa_mlps = list(sa_channels[sa_index])
-            sa_out_channel = 0
-            for radius_index in range(len(radii[sa_index])):
-                cur_sa_mlps[radius_index] = [sa_in_channel] + list(
-                    cur_sa_mlps[radius_index])
-                sa_out_channel += cur_sa_mlps[radius_index][-1]
-
-            if isinstance(fps_mods[sa_index], tuple):
-                cur_fps_mod = list(fps_mods[sa_index])
-            else:
-                cur_fps_mod = list([fps_mods[sa_index]])
-
-            if isinstance(fps_sample_range_lists[sa_index], tuple):
-                cur_fps_sample_range_list = list(
-                    fps_sample_range_lists[sa_index])
-            else:
-                cur_fps_sample_range_list = list(
-                    [fps_sample_range_lists[sa_index]])
+            cur_sa_mlps = [sa_in_channel] + cur_sa_mlps
+            sa_out_channel = cur_sa_mlps[-1]
 
             self.SA_modules.append(
                 build_sa_module(
                     num_point=num_points[sa_index],
-                    radii=radii[sa_index],
-                    sample_nums=num_samples[sa_index],
+                    radius=radius[sa_index],
+                    num_sample=num_samples[sa_index],
                     mlp_channels=cur_sa_mlps,
-                    fps_mod=cur_fps_mod,
-                    fps_sample_range_list=cur_fps_sample_range_list,
-                    dilated_group=dilated_group[sa_index],
                     norm_cfg=norm_cfg,
-                    cfg=sa_cfg,
-                    bias=True))
+                    cfg=sa_cfg))
+            sa_in_channel = sa_out_channel
 
 
     @staticmethod
@@ -239,7 +234,7 @@ class PointRCNNBboxHead(nn.Module):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
         
-     def _get_target_single(self, pos_bboxes, pos_gt_bboxes, ious, cfg):
+    def _get_target_single(self, pos_bboxes, pos_gt_bboxes, ious, cfg):
         """Generate training targets for a single sample.
 
         Args:

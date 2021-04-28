@@ -42,9 +42,7 @@ class PointRCNN(TwoStage3DDetector):
 
         if self.with_neck:
             x = self.neck(x)
-        return x
-    
-    def 
+        return x 
 
     def forward_train(self,
                       points,

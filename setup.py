@@ -222,7 +222,7 @@ if __name__ == '__main__':
                 sources=[
                     'src/roipoint_pool3d.cpp'
                 ],
-                sources=[
+                sources_cuda=[
                     'src/roipoint_pool3d_kernel.cu'
                 ]
             ),

@@ -41,6 +41,28 @@ model = dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)),
+    roi_head=dict(
+        type='PointRCNNROIHead',
+        num_classes=3,
+        point_roi_extractor=dict(
+            type='Single3DRoIPointExtractor',
+            roi_layer=dict(
+                type='RoIPointPool3d',
+                num_sampled_points=512,
+                pool_extra_width=1.0)),
+        bbox_head=dict(
+            type='PointRCNNBboxHead',
+            num_classes=1,
+            in_channels=6,
+            mlp_channels=[128, 128],
+            bbox_codesize=46,
+            conv_channels=[256,256],
+            num_points=(128, 32, 1),
+            radius=(0.2, 0.4, 100),
+            num_samples=(64 ,64 , 64),
+            sa_channels=((128, 128, 128),
+                         (128, 128, 256),
+                         (256, 256, 512)))),
     # model training and testing settings
     train_cfg=dict(
         _delete_=True,

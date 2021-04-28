@@ -40,6 +40,11 @@ class PointRCNNROIHead(Base3DRoIHead):
     def init_weights(self, pretrained):
         pass
 
+    def init_mask_head(self):
+        """Initialize mask head, skip since ``PointRCNNROIHead`` does not have
+        one."""
+        pass
+
     def init_bbox_head(self, bbox_head):
         """Initialize box head."""
         self.bbox_head = build_head(bbox_head)
@@ -88,7 +93,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         
         bbox_results = self._bbox_forward_train(
             feats_dict['fp_features'], 
-            feats_dict['fp_points']
+            feats_dict['fp_points'],
             sample_results)
         losses.update(bbox_results['loss_bbox'])
 
