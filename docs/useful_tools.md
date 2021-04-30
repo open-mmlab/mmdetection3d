@@ -86,21 +86,29 @@ Or you can use 3D visualization software such as the [MeshLab](http://www.meshla
 
 ## Dataset
 
-To browse the KITTI directly without inference, you can run the following command
+We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, as well as multi-modality 3D detection on KITTI and SUN RGB-D. To browse the KITTI dataset, you can run the following command
 
 ```shell
-python tools/misc/browse_dataset.py ${CONFIG_FILE} --output-dir ${OUTPUT_DIR}
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --output-dir ${OUTPUT_DIR} --online
 ```
 
-Sample config can be found in `configs/_base_/datasets/` folder.
+**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window. If you don't have a monitor, you can remove the `--online` flag to only save the visualization results and browse them offline.
 
-E.g.,
+If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then add the `--multi-modality` flag to the command. An example is showed below
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py
+python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --output-dir ${OUTPUT_DIR} --online --multi-modality
 ```
 
-**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing _ESC_ in open3d window.
+![Open3D_visualization](../resources/browse_dataset_multi_modality.png)
+
+You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --output-dir ${OUTPUT_DIR} --online
+```
+
+![Open3D_visualization](../resources/browse_dataset_seg.png)
 
 &emsp;
 
