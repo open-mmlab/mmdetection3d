@@ -10,7 +10,9 @@
 
 **News**: We released the codebase v0.12.0.
 
-In the recent [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results. Code and models will be released soon!
+In the recent [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
+
+Code and models for the best vision-only method, [FCOS3D](https://arxiv.org/abs/2104.10956), have been released. Please stay tuned for [MoCa](https://arxiv.org/abs/2012.12741).
 
 Documentation: https://mmdetection3d.readthedocs.io/
 
@@ -87,6 +89,7 @@ Support methods
 - [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
+- [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -101,6 +104,7 @@ Support methods
 | CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
