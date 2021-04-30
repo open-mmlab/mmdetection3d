@@ -43,6 +43,7 @@
 - Clamp 3D votes projections to image boundaries in ImVoteNet (#463)
 - Update out-of-date names of pipelines in the [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py) of pointpillars benchmark (#474)
 - Fix the lack of a placeholder when unpacking RPN targets in the [h3d_bbox_head.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/bbox_heads/h3d_bbox_head.py) (#508)
+- Fix the incorrect value of `K` when creating pickle files for SUN RGB-D (#511)
 
 ### v0.12.0 (1/4/2021)
 
