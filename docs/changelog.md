@@ -12,11 +12,12 @@
 - Fix Pytorch 1.8 Compilation issue in the [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) (#404)
 - Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) errors triggered by empty point input (#417)
 - Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
-- Fix the missing coord_type in the waymo dataset [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py) (#441)
-- Fix errors in four unittest functions including [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
-- Fix 3dssd training errors and simplify configs (#462)
-- Fix errors in ScanNet and S3DIS dataset and cfgs (#487)
-- Fix Typos in [.gitignore](https://github.com/open-mmlab/mmdetection3d/.gitignore) & errors in [customize_runtime](https://github.com/open-mmlab/mmdetection3d/docs/tutorials/customize_runtime.md) (#497)
+- Fix the missing `coord_type` in the waymo dataset [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py) (#441)
+- Fix errors in four unittest functions of [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
+- Fix 3DSSD training errors and simplify configs (#462)
+- Clamp 3D votes projections to image boundaries in ImVoteNet (#463)
+- Update out-of-date names of pipelines in the [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py) of pointpillars benchmark (#474)
+- Fix the lack of a placeholder when unpacking RPN targets in the [h3d_bbox_head.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/bbox_heads/h3d_bbox_head.py) (#508)
 
 #### New Features
 
@@ -28,17 +29,19 @@
 - Support online visualization of semantic segmentation results (#416)
 - Support ScanNet test results submission to online benchmark (#418)
 - Support S3DIS data pre-processing and dataset class (#433)
-- Support FCOS3D (#436, #442)
+- Support FCOS3D (#436, #442, #482, #484)
 - Adding PWC metafile in each model (#485)
 
 #### Improvements
 
-- Support dataset browsing to see the SUNRGBD, ScanNet or KITTI points and detection results (#367)
-- Add pipeline to load data on ceph (#430)
-- Refactor custom runner type and max epochs (#437)
-- Pipeline function process points and masks simultaneously when sampling points (#444)
-- Add waymo unit test (#455)
+- Support dataset browsing for SUNRGBD, ScanNet or KITTI points and detection results (#367)
+- Add the pipeline to load data on ceph (#430)
+- Customize runner types (#437)
+- Make pipeline functions process points and masks simultaneously when sampling points (#444)
+- Add waymo unit tests (#455)
+- Split the visualization of projecting points onto image from that for only points (#480)
 - Efficient implementation of PointSegClassMapping (#489)
+- Use the new model registry from mmcv (#495)
 
 ### v0.12.0 (1/4/2021)
 
