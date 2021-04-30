@@ -113,7 +113,8 @@ def test_voxel_net():
     assert losses['loss_dir'][0] >= 0
 
     # test simple_test
-    results = self.simple_test(points, img_metas)
+    with torch.no_grad():
+        results = self.simple_test(points, img_metas)
     boxes_3d = results[0]['boxes_3d']
     scores_3d = results[0]['scores_3d']
     labels_3d = results[0]['labels_3d']
@@ -152,7 +153,8 @@ def test_3dssd():
     assert losses['size_res_loss'] >= 0
 
     # test simple_test
-    results = self.simple_test(points, img_metas)
+    with torch.no_grad():
+        results = self.simple_test(points, img_metas)
     boxes_3d = results[0]['boxes_3d']
     scores_3d = results[0]['scores_3d']
     labels_3d = results[0]['labels_3d']
@@ -195,7 +197,8 @@ def test_vote_net():
     assert losses['size_res_loss'] >= 0
 
     # test simple_test
-    results = self.simple_test(points, img_metas)
+    with torch.no_grad():
+        results = self.simple_test(points, img_metas)
     boxes_3d = results[0]['boxes_3d']
     scores_3d = results[0]['scores_3d']
     labels_3d = results[0]['labels_3d']
@@ -237,7 +240,8 @@ def test_parta2():
     assert losses['loss_corner'] >= 0
 
     # test_simple_test
-    results = self.simple_test(points, img_metas)
+    with torch.no_grad():
+        results = self.simple_test(points, img_metas)
     boxes_3d = results[0]['boxes_3d']
     scores_3d = results[0]['scores_3d']
     labels_3d = results[0]['labels_3d']
@@ -283,7 +287,8 @@ def test_centerpoint():
         assert value >= 0
 
     # test_simple_test
-    results = self.simple_test(points, img_metas)
+    with torch.no_grad():
+        results = self.simple_test(points, img_metas)
     boxes_3d_0 = results[0]['pts_bbox']['boxes_3d']
     scores_3d_0 = results[0]['pts_bbox']['scores_3d']
     labels_3d_0 = results[0]['pts_bbox']['labels_3d']
@@ -309,7 +314,8 @@ def test_centerpoint():
             pcd_horizontal_flip=True,
             pcd_vertical_flip=False)
     ]]
-    results = self.aug_test(points, img_metas)
+    with torch.no_grad():
+        results = self.aug_test(points, img_metas)
     boxes_3d_0 = results[0]['pts_bbox']['boxes_3d']
     scores_3d_0 = results[0]['pts_bbox']['scores_3d']
     labels_3d_0 = results[0]['pts_bbox']['labels_3d']
@@ -360,7 +366,8 @@ def test_fcos3d():
     assert losses['loss_attr'] >= 0
 
     # test simple_test
-    results = self.simple_test(imgs, img_metas)
+    with torch.no_grad():
+        results = self.simple_test(imgs, img_metas)
     boxes_3d = results[0]['img_bbox']['boxes_3d']
     scores_3d = results[0]['img_bbox']['scores_3d']
     labels_3d = results[0]['img_bbox']['labels_3d']

@@ -678,10 +678,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                                        mlvl_attr_scores)
         bboxes, scores, labels, dir_scores, attrs = results
         attrs = attrs.to(labels.dtype)  # change data type to int
-        bboxes = input_meta['box_type_3d'](bboxes, box_dim=self.bbox_code_size)
+        bboxes = input_meta['box_type_3d'](
+            bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
         # Note that the predictions use origin (0.5, 0.5, 0.5)
         # Due to the ground truth centers2d are the gravity center of objects
-        # The center has been transformed when computing bev bbox!!!!
+        # v0.10.0 fix inplace operation to the input tensor of cam_box3d
+        # So here we also need to add origin=(0.5, 0.5, 0.5)
         if not self.pred_attrs:
             attrs = None
 

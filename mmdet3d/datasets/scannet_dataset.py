@@ -276,7 +276,8 @@ class ScanNetSegDataset(Custom3DSegDataset):
                 with_seg_3d=True),
             dict(
                 type='PointSegClassMapping',
-                valid_cat_ids=self.VALID_CLASS_IDS),
+                valid_cat_ids=self.VALID_CLASS_IDS,
+                max_cat_id=np.max(self.ALL_CLASS_IDS)),
             dict(
                 type='DefaultFormatBundle3D',
                 with_label=False,

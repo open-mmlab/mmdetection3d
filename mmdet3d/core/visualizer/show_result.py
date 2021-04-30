@@ -3,6 +3,8 @@ import numpy as np
 import trimesh
 from os import path as osp
 
+from .image_vis import draw_depth_bbox3d_on_img, draw_lidar_bbox3d_on_img
+
 
 def _write_obj(points, out_filename):
     """Write points into ``obj`` format for meshlab visualization.
@@ -212,9 +214,9 @@ def show_multi_modality_result(img,
            The tuple of color should be in BGR order. Default: (72, 101, 241)
     """
     if depth_bbox:
-        from .open3d_vis import draw_depth_bbox3d_on_img as draw_bbox
+        draw_bbox = draw_depth_bbox3d_on_img
     else:
-        from .open3d_vis import draw_lidar_bbox3d_on_img as draw_bbox
+        draw_bbox = draw_lidar_bbox3d_on_img
 
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)

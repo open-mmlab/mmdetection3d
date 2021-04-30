@@ -1,0 +1,54 @@
+Collections:
+  - Name: VoteNet
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x V100 GPUs
+      Architecture:
+        - PointNet++
+    Paper: https://arxiv.org/abs/1904.09664
+    README: configs/votenet/README.md
+
+Models:
+  - Name: votenet_16x8_sunrgbd-3d-10class.py
+    In Collection: VoteNet
+    Config: configs/votenet/votenet_16x8_sunrgbd-3d-10class.py
+    Metadata:
+      Training Data: SUNRGBD
+      Training Memory (GB): 8.1
+    Results:
+      - Task: 3D Object Detection
+        Dataset: SUNRGBD
+        Metrics:
+          AP@0.25: 59.07
+          AP@0.5: 35.77
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20200620_230238-4483c0c0.pth
+
+  - Name: votenet_8x8_scannet-3d-18class.py
+    In Collection: VoteNet
+    Config: configs/votenet/votenet_8x8_scannet-3d-18class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 4.1
+    Results:
+      - Task: 3D Object Detection
+        Dataset: ScanNet
+        Metrics:
+          AP@0.25: 62.90
+          AP@0.5: 39.91
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth
+
+  - Name: votenet_iouloss_8x8_scannet-3d-18class
+    In Collection: VoteNet
+    Config: configs/votenet/votenet_iouloss_8x8_scannet-3d-18class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 4.1
+      Architecture:
+        - IoU Loss
+    Results:
+      - Task: 3D Object Detection
+        Dataset: ScanNet
+        Metrics:
+          AP@0.25: 63.81
+          AP@0.5: 44.21
