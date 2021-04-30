@@ -82,12 +82,14 @@ class Points_Sampler(nn.Module):
 
             if fps_sample_range == -1:
                 sample_points_xyz = points_xyz[:, last_fps_end_index:]
-                sample_features = features[:, :, last_fps_end_index:]
+                sample_features = features[:, :, last_fps_end_index:] if \
+                    features is not None else None
             else:
                 sample_points_xyz = \
                     points_xyz[:, last_fps_end_index:fps_sample_range]
                 sample_features = \
-                    features[:, :, last_fps_end_index:fps_sample_range]
+                    features[:, :, last_fps_end_index:fps_sample_range] if \
+                    features is not None else None
 
             fps_idx = sampler(sample_points_xyz.contiguous(), sample_features,
                               npoint)
@@ -125,6 +127,8 @@ class FFPS_Sampler(nn.Module):
 
     def forward(self, points, features, npoint):
         """Sampling points with F-FPS."""
+        assert features is not None, \
+            'feature input to FFPS_Sampler should not be None'
         features_for_fps = torch.cat([points, features.transpose(1, 2)], dim=2)
         features_dist = calc_square_dist(
             features_for_fps, features_for_fps, norm=False)
@@ -143,6 +147,8 @@ class FS_Sampler(nn.Module):
 
     def forward(self, points, features, npoint):
         """Sampling points with FS_Sampling."""
+        assert features is not None, \
+            'feature input to FS_Sampler should not be None'
         features_for_fps = torch.cat([points, features.transpose(1, 2)], dim=2)
         features_dist = calc_square_dist(
             features_for_fps, features_for_fps, norm=False)

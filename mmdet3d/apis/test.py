@@ -1,9 +1,8 @@
 import mmcv
-import os
 import torch
 from mmcv.image import tensor2imgs
+from os import path as osp
 
-# from mmdet.models import BaseDetector
 from mmdet3d.models import Base3DDetector, Base3DSegmentor
 
 
@@ -35,20 +34,11 @@ def single_gpu_test(model,
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
         with torch.no_grad():
-            if isinstance(model.module, Base3DDetector):
-                result = model(return_loss=False, rescale=True, **data)
-            elif isinstance(model.module, Base3DSegmentor):
-                result = model(return_loss=False, **data)
-            else:
-                raise NotImplementedError(
-                    f'unrecognized model type {type(model)}')
+            result = model(return_loss=False, rescale=True, **data)
 
         if show:
             # Visualize the results of MMDetection3D model
-            if isinstance(model.module, Base3DDetector):
-                model.module.show_results(data, result, out_dir)
-            # Visualize the results of MMSegmentation3D model
-            if isinstance(model.module, Base3DSegmentor):
+            if isinstance(model.module, (Base3DDetector, Base3DSegmentor)):
                 model.module.show_results(data, result, out_dir)
             # Visualize the results of MMDetection model
             else:
@@ -70,8 +60,7 @@ def single_gpu_test(model,
                     img_show = mmcv.imresize(img_show, (ori_w, ori_h))
 
                     if out_dir:
-                        out_file = os.path.join(out_dir,
-                                                img_meta['ori_filename'])
+                        out_file = osp.join(out_dir, img_meta['ori_filename'])
                     else:
                         out_file = None
 

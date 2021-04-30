@@ -172,10 +172,13 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                 point_size = int(num_batch * num_points)
                 replace = point_size > 2 * point_idxs.shape[0]
 
-                # TODO: faster alternative of np.random.choice?
-                repeat_idx = torch.ones_like(point_idxs).float().multinomial(
-                    point_size - point_idxs.shape[0], replacement=replace)
-                point_idxs_repeat = point_idxs[repeat_idx]
+                # TODO: torch alternative for np.random.choice?
+                # TODO: tried tensor.multinomial before, finding it very slow
+                point_idxs_repeat = torch.from_numpy(
+                    np.random.choice(
+                        point_idxs.cpu().numpy(),
+                        point_size - point_idxs.shape[0],
+                        replace=replace)).to(device)
                 choices = torch.cat([point_idxs, point_idxs_repeat], dim=0)
                 choices = choices[torch.randperm(choices.shape[0])]
 
@@ -198,12 +201,14 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
 
         return patch_points, patch_idxs
 
-    def slide_inference(self, point, img_meta):
+    def slide_inference(self, point, img_meta, rescale):
         """Inference by sliding-window with overlap.
 
         Args:
             point (torch.Tensor): Input points of shape [N, 3+C].
             img_meta (dict): Meta information of input sample.
+            rescale (bool): Whether transform to original number of points.
+                Will be used for voxelization based segmentors.
 
         Returns:
             Tensor: The output segmentation map of shape [num_classes, N].
@@ -218,8 +223,6 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         patch_points, patch_idxs = self._sliding_patch_generation(
             point, num_points, block_size, sample_rate, use_normalized_coord)
         feats_dim = patch_points.shape[1]
-        preds = point.new_zeros((point.shape[0], self.num_classes))
-        count_mat = point.new_zeros(point.shape[0])
         seg_logits = []  # save patch predictions
 
         for batch_idx in range(0, patch_points.shape[0], batch_size):
@@ -230,25 +233,32 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
             batch_seg_logit = batch_seg_logit.transpose(1, 2).contiguous()
             seg_logits.append(batch_seg_logit.view(-1, self.num_classes))
 
-        # TODO: more efficient way to aggregate the predictions?
+        # aggregate per-point logits by indexing sum and dividing count
         seg_logits = torch.cat(seg_logits, dim=0)  # [K*N, num_classes]
-        for i in range(patch_idxs.shape[0]):
-            preds[patch_idxs[i]] += seg_logits[i]
-            count_mat[patch_idxs[i]] += 1
+        expand_patch_idxs = patch_idxs.unsqueeze(1).repeat(1, self.num_classes)
+        preds = point.new_zeros((point.shape[0], self.num_classes)).\
+            scatter_add_(dim=0, index=expand_patch_idxs, src=seg_logits)
+        count_mat = torch.bincount(patch_idxs)
         preds = preds / count_mat[:, None]
+
+        # TODO: if rescale and voxelization segmentor
+
         return preds.transpose(0, 1)  # to [num_classes, K*N]
 
-    def whole_inference(self, points, img_metas):
+    def whole_inference(self, points, img_metas, rescale):
         """Inference with full scene (one forward pass without sliding)."""
         seg_logit = self.encode_decode(points, img_metas)
+        # TODO: if rescale and voxelization segmentor
         return seg_logit
 
-    def inference(self, points, img_metas):
+    def inference(self, points, img_metas, rescale):
         """Inference with slide/whole style.
 
         Args:
             points (torch.Tensor): Input points of shape [B, N, 3+C].
             img_metas (list[dict]): Meta information of each sample.
+            rescale (bool): Whether transform to original number of points.
+                Will be used for voxelization based segmentors.
 
         Returns:
             Tensor: The output segmentation map.
@@ -256,20 +266,23 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         assert self.test_cfg.mode in ['slide', 'whole']
         if self.test_cfg.mode == 'slide':
             seg_logit = torch.stack([
-                self.slide_inference(point, img_meta)
+                self.slide_inference(point, img_meta, rescale)
                 for point, img_meta in zip(points, img_metas)
             ], 0)
         else:
-            seg_logit = self.whole_inference(points, img_metas)
+            seg_logit = self.whole_inference(points, img_metas, rescale)
         output = F.softmax(seg_logit, dim=1)
         return output
 
-    def simple_test(self, points, img_metas):
+    def simple_test(self, points, img_metas, rescale=True):
         """Simple test with single scene.
 
         Args:
             points (list[torch.Tensor]): List of points of shape [N, 3+C].
             img_metas (list[dict]): Meta information of each sample.
+            rescale (bool): Whether transform to original number of points.
+                Will be used for voxelization based segmentors.
+                Defaults to True.
 
         Returns:
             list[dict]: The output prediction result with following keys:
@@ -281,7 +294,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         # therefore, we only support testing one scene every time
         seg_pred = []
         for point, img_meta in zip(points, img_metas):
-            seg_prob = self.inference(point.unsqueeze(0), [img_meta])[0]
+            seg_prob = self.inference(point.unsqueeze(0), [img_meta],
+                                      rescale)[0]
             seg_map = seg_prob.argmax(0)  # [N]
             # to cpu tensor for consistency with det3d
             seg_map = seg_map.cpu()
@@ -290,13 +304,16 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         seg_pred = [dict(semantic_mask=seg_map) for seg_map in seg_pred]
         return seg_pred
 
-    def aug_test(self, points, img_metas):
+    def aug_test(self, points, img_metas, rescale=True):
         """Test with augmentations.
 
         Args:
             points (list[torch.Tensor]): List of points of shape [B, N, 3+C].
             img_metas (list[list[dict]]): Meta information of each sample.
                 Outer list are different samples while inner is different augs.
+            rescale (bool): Whether transform to original number of points.
+                Will be used for voxelization based segmentors.
+                Defaults to True.
 
         Returns:
             list[dict]: The output prediction result with following keys:
@@ -308,7 +325,7 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         # to save memory, we get augmented seg logit inplace
         seg_pred = []
         for point, img_meta in zip(points, img_metas):
-            seg_prob = self.inference(point, img_meta)  # [B, num_classes, N]
+            seg_prob = self.inference(point, img_meta, rescale)
             seg_prob = seg_prob.mean(0)  # [num_classes, N]
             seg_map = seg_prob.argmax(0)  # [N]
             # to cpu tensor for consistency with det3d
