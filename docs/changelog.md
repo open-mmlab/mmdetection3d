@@ -12,8 +12,8 @@
 - Fix Pytorch 1.8 Compilation issue (#404)
 - Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) error triggered by empty point input (#417)
 - Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
-- Fix Waymo loading error missing coordinate system(#441)
-- Fix error in four unittest functions including [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py)(#453)
+- Fix Waymo loading error missing coordinate system (#441)
+- Fix error in four unittest functions including [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
 
 #### New Features
 
@@ -30,8 +30,8 @@
 #### Improvements
 
 - Support dataset browsing to see the SUNRGBD, ScanNet or KITTI points and detection results (#367)
-- Refactor custom runner type and max epochs(#437)
-- Pipeline function process points and masks simultaneously when sampling points(#444)
+- Refactor custom runner type and max epochs (#437)
+- Pipeline function process points and masks simultaneously when sampling points (#444)
 - Add pipeline to load data on ceph (#430)
 - Efficient implementation of PointSegClassMapping (#489)
 
