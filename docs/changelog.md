@@ -9,7 +9,7 @@
 
 #### Bug Fixes
 
-- Fix Pytorch 1.8 Compilation issue (#404)
+- Fix Pytorch 1.8 Compilation issue in the [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) (#404)
 - Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) error triggered by empty point input (#417)
 - Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
 - Fix Waymo loading error missing coordinate system (#441)
