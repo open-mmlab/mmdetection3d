@@ -86,13 +86,13 @@ Or you can use 3D visualization software such as the [MeshLab](http://www.meshla
 
 ## Dataset
 
-We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support all the single-modality 3D detection, KITTI and SUN RGB-D multi-modality 3D detection and all the 3D segmentation datasets. To browse the KITTI dataset, you can run the following command
+We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, as well as multi-modality 3D detection on KITTI and SUN RGB-D. To browse the KITTI dataset, you can run the following command
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --output-dir ${OUTPUT_DIR} --online
 ```
 
-**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing _ESC_ in open3d window. If you don't have a monitor, you can remove the `--online` flag to only save the visualization results and browse them offline.
+**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window. If you don't have a monitor, you can remove the `--online` flag to only save the visualization results and browse them offline.
 
 If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then add the `--multi-modality` flag to the command. An example is showed below
 
