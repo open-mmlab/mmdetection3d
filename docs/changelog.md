@@ -30,6 +30,7 @@
 - Support ScanNet test results submission to online benchmark (#418)
 - Support S3DIS data pre-processing and dataset class (#433)
 - Support FCOS3D (#436, #442, #482, #484)
+- Support dataset browse for multiple types of datasets (#467)
 - Adding PWC metafile in each model (#485)
 
 #### Improvements
