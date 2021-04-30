@@ -5,34 +5,34 @@
 #### Highlights
 - Support a monocular 3D detection method [FCOS3D](https://arxiv.org/abs/2104.10956)
 - Support ScanNet and S3DIS semantic segmentation dataset
-- Support multi-modality visualization
+- Enhancement of visualization tools for datasets browsing, multi-modality and more tasks
 
 #### Bug Fixes
 
 - Fix Pytorch 1.8 Compilation issue in the [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) (#404)
-- Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) error triggered by empty point input (#417)
+- Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) errors triggered by empty point input (#417)
 - Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
-- Fix Waymo loading error missing coordinate system (#441)
-- Fix error in four unittest functions including [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
+- Fix the missing coord_type in the waymo dataset [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py) (#441)
+- Fix errors in four unittest functions including [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
 
 #### New Features
 
 - Support ScanNet semantic segmentation dataset (#390)
-- Support nuimages visualization (#408)
-- Support online visualization of semantic segmentation results (#416)
+- Support monocular 3D detection on nuScenes (#392)
 - Support multi-modality visualization (#405)
+- Support nuimages visualization (#408)
+- Support monocular 3D detection on KITTI (#415)
+- Support online visualization of semantic segmentation results (#416)
 - Support ScanNet test results submission to online benchmark (#418)
 - Support S3DIS data pre-processing and dataset class (#433)
-- Support monocular 3D detection on nuScenes (#392)
-- Support monocular 3D detection on KITTI (#415)
 - Support FCOS3D (#436, #442)
 
 #### Improvements
 
 - Support dataset browsing to see the SUNRGBD, ScanNet or KITTI points and detection results (#367)
+- Add pipeline to load data on ceph (#430)
 - Refactor custom runner type and max epochs (#437)
 - Pipeline function process points and masks simultaneously when sampling points (#444)
-- Add pipeline to load data on ceph (#430)
 - Efficient implementation of PointSegClassMapping (#489)
 
 ### v0.12.0 (1/4/2021)
