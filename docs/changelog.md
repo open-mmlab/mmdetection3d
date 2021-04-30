@@ -14,6 +14,9 @@
 - Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
 - Fix the missing coord_type in the waymo dataset [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py) (#441)
 - Fix errors in four unittest functions including [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
+- Fix 3dssd training errors and simplify configs (#462)
+- Fix errors in ScanNet and S3DIS dataset and cfgs (#487)
+- Fix Typos in [.gitignore](https://github.com/open-mmlab/mmdetection3d/.gitignore) & errors in [customize_runtime](https://github.com/open-mmlab/mmdetection3d/docs/tutorials/customize_runtime.md) (#497)
 
 #### New Features
 
@@ -26,6 +29,7 @@
 - Support ScanNet test results submission to online benchmark (#418)
 - Support S3DIS data pre-processing and dataset class (#433)
 - Support FCOS3D (#436, #442)
+- Adding PWC metafile in each model (#485)
 
 #### Improvements
 
@@ -33,6 +37,7 @@
 - Add pipeline to load data on ceph (#430)
 - Refactor custom runner type and max epochs (#437)
 - Pipeline function process points and masks simultaneously when sampling points (#444)
+- Add waymo unit test (#455)
 - Efficient implementation of PointSegClassMapping (#489)
 
 ### v0.12.0 (1/4/2021)
