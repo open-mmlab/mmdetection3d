@@ -1,5 +1,40 @@
 ## Changelog
 
+### v0.13.0 (1/5/2021)
+
+#### Highlights
+- Support a monocular 3D detection method [FCOS3D](https://arxiv.org/abs/2104.10956)
+- Support ScanNet and S3DIS semantic segmentation dataset
+- Support multi-modality visualization
+
+#### Bug Fixes
+
+- Fix Pytorch 1.8 Compilation issue (#404)
+- Fix dynamic_scatter error triggered by empty point input (#417)
+- Fix the bug of missing points (#406)
+- Fix Waymo loading error (#441)
+- Fix error in four unittest functions (#453)
+
+#### New Features
+
+- Support ScanNet semantic segmentation dataset (#390)
+- Support nuimages visualization (#408)
+- Support online visualization of semantic segmentation results (#416)
+- Support multi-modality visualization (#405)
+- Support ScanNet test results submission to online benchmark (#418)
+- Support S3DIS data pre-processing and dataset class (#433)
+- Support monocular 3D detection on nuScenes (#392)
+- Support monocular 3D detection on KITTI (#415)
+- Support FCOS3D (#436, #442)
+
+#### Improvements
+
+- Support dataset browsing on all datasets (#367)
+- Customize runner type (#437)
+- Pipeline function process points and masks simultaneously (#444)
+- Add pipeline for data loading (#430)
+- Efficient implementation of PointSegClassMapping (#489)
+
 ### v0.12.0 (1/4/2021)
 
 #### Highlights
