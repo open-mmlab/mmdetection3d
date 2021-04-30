@@ -5,19 +5,7 @@
 #### Highlights
 - Support a monocular 3D detection method [FCOS3D](https://arxiv.org/abs/2104.10956)
 - Support ScanNet and S3DIS semantic segmentation dataset
-- Enhancement of visualization tools for datasets browsing, multi-modality and more tasks
-
-#### Bug Fixes
-
-- Fix Pytorch 1.8 Compilation issue in the [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) (#404)
-- Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) errors triggered by empty point input (#417)
-- Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
-- Fix the missing `coord_type` in the waymo dataset [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py) (#441)
-- Fix errors in four unittest functions of [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
-- Fix 3DSSD training errors and simplify configs (#462)
-- Clamp 3D votes projections to image boundaries in ImVoteNet (#463)
-- Update out-of-date names of pipelines in the [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py) of pointpillars benchmark (#474)
-- Fix the lack of a placeholder when unpacking RPN targets in the [h3d_bbox_head.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/bbox_heads/h3d_bbox_head.py) (#508)
+- Enhancement of visualization tools for dataset browsing and demos, including support of visualization for multi-modality data and point cloud segmentation.
 
 #### New Features
 
@@ -31,18 +19,30 @@
 - Support S3DIS data pre-processing and dataset class (#433)
 - Support FCOS3D (#436, #442, #482, #484)
 - Support dataset browse for multiple types of datasets (#467)
-- Adding PWC metafile in each model (#485)
+- Adding paper-with-code (PWC) metafile for each model in the model zoo (#485)
 
 #### Improvements
 
 - Support dataset browsing for SUNRGBD, ScanNet or KITTI points and detection results (#367)
-- Add the pipeline to load data on ceph (#430)
-- Customize runner types (#437)
+- Add the pipeline to load data using file client (#430)
+- Support to customize the type of runner (#437)
 - Make pipeline functions process points and masks simultaneously when sampling points (#444)
 - Add waymo unit tests (#455)
 - Split the visualization of projecting points onto image from that for only points (#480)
 - Efficient implementation of PointSegClassMapping (#489)
 - Use the new model registry from mmcv (#495)
+
+#### Bug Fixes
+
+- Fix Pytorch 1.8 Compilation issue in the [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) (#404)
+- Fix [dynamic_scatter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) errors triggered by empty point input (#417)
+- Fix the bug of missing points caused by using break incorrectly in the voxelization (#423)
+- Fix the missing `coord_type` in the waymo dataset [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py) (#441)
+- Fix errors in four unittest functions of [configs](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py), [test_detectors.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_detectors.py), [test_heads.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_heads/test_heads.py) (#453)
+- Fix 3DSSD training errors and simplify configs (#462)
+- Clamp 3D votes projections to image boundaries in ImVoteNet (#463)
+- Update out-of-date names of pipelines in the [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py) of pointpillars benchmark (#474)
+- Fix the lack of a placeholder when unpacking RPN targets in the [h3d_bbox_head.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/bbox_heads/h3d_bbox_head.py) (#508)
 
 ### v0.12.0 (1/4/2021)
 
@@ -51,17 +51,6 @@
 - Support a new multi-modality method [ImVoteNet](https://arxiv.org/abs/2001.10692).
 - Support pytorch 1.7 and 1.8
 - Refactor the structure of tools and [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py)/[test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py)
-
-#### Bug Fixes
-
-- Fix missing keys `coord_type` in database sampler config (#345)
-- Rename H3DNet configs (#349)
-- Fix CI by using ubuntu 18.04 in github workflow (#350)
-- Add assertions to avoid 4-dim points being input to [points_in_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) (#357)
-- Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
-- Fix the incorrect adopted pipeline when adding val to workflow (#370)
-- Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
-- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in pytorch 1.7 (#393)
 
 #### New Features
 
@@ -84,6 +73,17 @@
 - Update SUNRGBD dataset documentation to stress the requirements for training ImVoteNet (#391)
 - Modify vote head to support 3DSSD (#396)
 
+#### Bug Fixes
+
+- Fix missing keys `coord_type` in database sampler config (#345)
+- Rename H3DNet configs (#349)
+- Fix CI by using ubuntu 18.04 in github workflow (#350)
+- Add assertions to avoid 4-dim points being input to [points_in_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) (#357)
+- Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
+- Fix the incorrect adopted pipeline when adding val to workflow (#370)
+- Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
+- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in pytorch 1.7 (#393)
+
 ### v0.11.0 (1/3/2021)
 
 #### Highlights
@@ -91,13 +91,6 @@
 - Support more friendly visualization interfaces based on open3d
 - Support a faster and more memory-efficient implementation of DynamicScatter
 - Refactor unit tests and details of configs
-
-#### Bug Fixes
-
-- Fix an unsupported bias setting in the unit test for centerpoint head (#304)
-- Fix errors due to typos in the centerpoint head (#308)
-- Fix a minor bug in [points_in_boxes.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) when tensors are not in the same device. (#317)
-- Fix warning of deprecated usages of nonzero during training with pytorch 1.6 (#330)
 
 #### New Features
 
@@ -110,6 +103,13 @@
 - Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md). (#310, #316)
 - Support a faster and more memory-efficient implementation of DynamicScatter (#318, #326)
 
+#### Bug Fixes
+
+- Fix an unsupported bias setting in the unit test for centerpoint head (#304)
+- Fix errors due to typos in the centerpoint head (#308)
+- Fix a minor bug in [points_in_boxes.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) when tensors are not in the same device. (#317)
+- Fix warning of deprecated usages of nonzero during training with pytorch 1.6 (#330)
+
 ### v0.10.0 (1/2/2021)
 
 #### Highlights
@@ -117,6 +117,17 @@
 - Preliminary release of API for SemanticKITTI dataset.
 - Documentation and demo enhancement for better user experience.
 - Fix a number of underlying minor bugs and add some corresponding important unit tests.
+
+#### New Features
+
+- Support SemanticKITTI dataset preliminarily (#287)
+
+#### Improvements
+
+- Add tag to README in configurations for specifying different uses (#262)
+- Update instructions for evaluation metrics in the documentation (#265)
+- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
+- Add unit test for voxelization (#275)
 
 #### Bug Fixes
 
@@ -130,23 +141,16 @@
 - Fix issues caused by inplace modification of tensors in `BaseInstance3DBoxes` (#283)
 - Fix log analysis for evaluation and adjust the documentation accordingly (#285)
 
-#### New Features
-
-- Support SemanticKITTI dataset preliminarily (#287)
-
-#### Improvements
-
-- Add tag to README in configurations for specifying different uses (#262)
-- Update instructions for evaluation metrics in the documentation (#265)
-- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
-- Add unit test for voxelization (#275)
-
 ### v0.9.0 (31/12/2020)
 
 #### Highlights
 
 - Documentation refactoring with better structure, especially about how to implement new models and customized datasets.
 - More compatible with refactored point structure by bug fixes in ground truth sampling.
+
+#### Improvements
+
+- Documentation refactoring (#242)
 
 #### Bug Fixes
 
@@ -156,10 +160,6 @@
 - Fix evaluation for indoors 3D detection in case of less classes in prediction (#231)
 - Remove unreachable lines in nuScenes data converter (#235)
 - Minor adjustments of numpy implementation for perspective projection and prediction filtering criterion in KITTI evaluation (#241)
-
-#### Improvements
-
-- Documentation refactoring (#242)
 
 ### v0.8.0 (30/11/2020)
 
@@ -187,11 +187,6 @@
 - Update benchmarks for SECOND on Waymo, CenterPoint with TTA on nuScenes and models with mixed precision training on KITTI and nuScenes.
 - Support semantic segmentation on nuImages and provide [HTC](https://arxiv.org/abs/1901.07518) models with configurations and performance for reference.
 
-#### Bug Fixes
-
-- Fix incorrect code weights in anchor3d_head when introducing mixed precision training (#173)
-- Fix the incorrect label mapping on nuImages dataset (#155)
-
 #### New Features
 
 - Modified primitive head which can support the setting on SUN-RGBD dataset (#136)
@@ -205,6 +200,11 @@
 - Delete checkpoints on Waymo to comply its specific license agreement (#180)
 - Update models and instructions with [mixed precision training](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fp16) on KITTI and nuScenes (#178)
 
+#### Bug Fixes
+
+- Fix incorrect code weights in anchor3d_head when introducing mixed precision training (#173)
+- Fix the incorrect label mapping on nuImages dataset (#155)
+
 ### v0.6.1 (11/10/2020)
 
 #### Highlights
@@ -213,17 +213,6 @@
 - Support docker with pytorch 1.6.0
 - Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
 - Switch model zoo to download.openmmlab.com
-
-#### Bug Fixes
-
-- Fix a bug of visualization in multi-batch case (#120)
-- Fix bugs in dcn unit test (#130)
-- Fix dcn bias bug in centerpoint (#137)
-- Fix dataset mapping in the evaluation of nuScenes mini dataset (#140)
-- Fix origin initialization in `CameraInstance3DBoxes` (#148, #150)
-- Correct documentation link in the getting_started.md (#159)
-- Fix model save path bug in gather_models.py (#153)
-- Fix image padding shape bug in `PointFusion` (#162)
 
 #### New Features
 
@@ -242,6 +231,17 @@
 - Update [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) baselines on Waymo with full dataset (#142)
 - Update [CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) results with models and logs (#154)
 
+#### Bug Fixes
+
+- Fix a bug of visualization in multi-batch case (#120)
+- Fix bugs in dcn unit test (#130)
+- Fix dcn bias bug in centerpoint (#137)
+- Fix dataset mapping in the evaluation of nuScenes mini dataset (#140)
+- Fix origin initialization in `CameraInstance3DBoxes` (#148, #150)
+- Correct documentation link in the getting_started.md (#159)
+- Fix model save path bug in gather_models.py (#153)
+- Fix image padding shape bug in `PointFusion` (#162)
+
 ### v0.6.0 (20/9/2020)
 
 #### Highlights
@@ -257,14 +257,6 @@
 - Support Batch Inference (#95, #103, #116): MMDetection3D v0.6.0 migrates to support batch inference based on MMDetection >= v2.4.0. This change influences all the test APIs in MMDetection3D and downstream codebases.
 - Start to use collect environment function from MMCV (#113): MMDetection3D v0.6.0 migrates to use `collect_env` function in MMCV.
 `get_compiler_version` and `get_compiling_cuda_version` compiled in `mmdet3d.ops.utils` are removed. Please import these two functions from `mmcv.ops`.
-
-#### Bug Fixes
-
-- Rename CosineAnealing to CosineAnnealing (#57)
-- Fix device inconsistant bug in 3D IoU computation (#69)
-- Fix a minor bug in json2csv of lyft dataset (#78)
-- Add missed test data for pointnet modules (#85)
-- Fix `use_valid_flag` bug in `CustomDataset` (#106)
 
 #### New Features
 
@@ -290,6 +282,14 @@
 - Use points loader to load point cloud data in ground truth (GT) samplers (#87)
 - Unify version file of OpenMMLab projects by using `version.py` (#112)
 - Remove unnecessary data preprocessing commands of SUN RGB-D dataset (#110)
+
+#### Bug Fixes
+
+- Rename CosineAnealing to CosineAnnealing (#57)
+- Fix device inconsistant bug in 3D IoU computation (#69)
+- Fix a minor bug in json2csv of lyft dataset (#78)
+- Add missed test data for pointnet modules (#85)
+- Fix `use_valid_flag` bug in `CustomDataset` (#106)
 
 ### v0.5.0 (9/7/2020)
 
