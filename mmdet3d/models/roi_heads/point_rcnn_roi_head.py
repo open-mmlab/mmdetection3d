@@ -90,10 +90,11 @@ class PointRCNNROIHead(Base3DRoIHead):
         sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
         
-        
+        features = feats_dict['fp_features'][-1]
+        local_features = feats_dict['fp_xyz']
         bbox_results = self._bbox_forward_train(
-            feats_dict['fp_features'], 
-            feats_dict['fp_points'],
+            features, 
+            local_features,
             sample_results)
         losses.update(bbox_results['loss_bbox'])
 
@@ -155,9 +156,13 @@ class PointRCNNROIHead(Base3DRoIHead):
         Returns:
             dict: Forward results including losses and predictions.
         """
+        print('feature shape: ', global_feats.shape)
+        batch_size = global_feats.shape[0]
         rois = bbox3d2roi([res.bboxes for res in sampling_results])
-        bbox_results = self._bbox_forward(global_feats, local_feats, rois)
-
+        bbox_results = self._bbox_forward(global_feats,
+                                          local_feats,
+                                          batch_size,
+                                          rois)
         bbox_targets = self.bbox_head.get_targets(sampling_results,
                                                   self.train_cfg)
         loss_bbox = self.bbox_head.loss(bbox_results['cls_score'],
@@ -180,8 +185,9 @@ class PointRCNNROIHead(Base3DRoIHead):
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
-        pooled_point_feats = self.point_point_extractor(global_feats, points, 
-                                                        batch_size, rois)
+        print(' input shape: ', global_feats.shape, points.shape, rois.shape)        
+        pooled_point_feats = self.point_roi_extractor(global_feats, points, 
+                                                      batch_size, rois)
 
         #cannoical transformation
         roi_center = rois[:, :, 0:3]

@@ -70,22 +70,25 @@ class PointRCNN(TwoStage3DDetector):
         points_intensity = points_cat[:, :, 3]
         x = self.extract_feat(points_cat)
         if self.with_rpn:
-            rpn_outs = self.rpn_head(x)
+            bbox_preds = self.rpn_head(x)
             rpn_loss = self.rpn_head.loss(
-                bbox_preds=rpn_outs,
+                bbox_preds=bbox_preds,
                 points=points,
                 gt_bboxes_3d=gt_bboxes_3d,
                 gt_labels_3d=gt_labels_3d,
                 img_metas=img_metas,
                 gt_bboxes_ignore=gt_bboxes_ignore)
-            proposal_list = self.rpn_head.get_bboxes(
-                points_cat, bbox_preds, img_metas, rescale=rescale)
+            bbox_list = self.rpn_head.get_bboxes(
+                points_cat, bbox_preds, img_metas)
+            proposal_list = [
+                bbox3d2result(bboxes, scores, labels)
+                for bboxes, scores, labels in bbox_list
+            ]
 
-        if self.with_rcnn:
-            roi_losses = self.roi_head.forward_train(x, img_metas, proposal_list,
-                                                     gt_bboxes_3d, gt_labels_3d)
-
-            losses.update(rpn_loss)
+            losses.update(rpn_loss)        
+        roi_losses = self.roi_head.forward_train(x, img_metas, proposal_list,
+                                                 gt_bboxes_3d, gt_labels_3d)
+        losses.update(roi_loss)
 
         return losses
 

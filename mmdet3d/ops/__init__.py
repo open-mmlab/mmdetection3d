@@ -15,7 +15,7 @@ from .pointnet_modules import (PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
                               points_in_boxes_cpu, points_in_boxes_gpu)
-from .roipoint_pool3d import ROIPointPool3d
+from .roipoint_pool3d import RoIPointPool3d
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
@@ -32,6 +32,6 @@ __all__ = [
     'gather_points', 'grouping_operation', 'group_points', 'GroupAll',
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
     'points_in_boxes_batch', 'get_compiler_version',
-    'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module'
+    'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module',
     'ROIPointPool3d'
 ]
