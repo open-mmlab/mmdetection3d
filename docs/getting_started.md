@@ -95,7 +95,7 @@ pip install mmcv-full
 
 Note:
 
-MMDetection3D v0.13.0 is only compatiable with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support mmdet>=2.12.0 since the v0.14.0 (to be released in May).
+MMDetection3D v0.13.0 is only compatible with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support `mmdet>=2.12.0` since v0.14.0 (to be released in May).
 
 ```shell
 pip install git+https://github.com/open-mmlab/mmdetection.git
