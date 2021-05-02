@@ -1,6 +1,5 @@
 from .base_points import BasePoints
-
-
+import torch
 class LiDARPoints(BasePoints):
     """Points of instances in LIDAR coordinates.
 
@@ -31,6 +30,10 @@ class LiDARPoints(BasePoints):
             self.tensor[:, 1] = -self.tensor[:, 1]
         elif bev_direction == 'vertical':
             self.tensor[:, 0] = -self.tensor[:, 0]
+    def sparsify(self, sparse_rate=0.2):
+        """Sparsify the point cloud, mainly use to do data augmentation."""
+        self.tensor = self.tensor[(torch.FloatTensor(self.tensor.shape[0]).uniform_() > sparse_rate)]
+
 
     def in_range_bev(self, point_range):
         """Check whether the points are in the given range.

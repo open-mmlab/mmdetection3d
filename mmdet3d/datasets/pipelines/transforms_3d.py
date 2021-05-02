@@ -8,7 +8,7 @@ from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
 from ..builder import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
-
+from IPython import embed
 
 @PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
@@ -185,12 +185,11 @@ class ObjectSample(object):
         else:
             sampled_dict = self.db_sampler.sample_all(
                 gt_bboxes_3d.tensor.numpy(), gt_labels_3d, img=None)
-
+          
         if sampled_dict is not None:
             sampled_gt_bboxes_3d = sampled_dict['gt_bboxes_3d']
             sampled_points = sampled_dict['points']
             sampled_gt_labels = sampled_dict['gt_labels_3d']
-
             gt_labels_3d = np.concatenate([gt_labels_3d, sampled_gt_labels],
                                           axis=0)
             gt_bboxes_3d = gt_bboxes_3d.new_box(
@@ -212,7 +211,6 @@ class ObjectSample(object):
         input_dict['gt_bboxes_3d'] = gt_bboxes_3d
         input_dict['gt_labels_3d'] = gt_labels_3d.astype(np.long)
         input_dict['points'] = points
-
         return input_dict
 
     def __repr__(self):

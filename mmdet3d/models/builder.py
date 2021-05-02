@@ -1,42 +1,64 @@
 import warnings
-from mmcv.utils import Registry
+from mmcv.utils import Registry, build_from_cfg
+
 
 from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
-                                  ROI_EXTRACTORS, SHARED_HEADS, build)
+                                  ROI_EXTRACTORS, SHARED_HEADS)
 
 VOXEL_ENCODERS = Registry('voxel_encoder')
 MIDDLE_ENCODERS = Registry('middle_encoder')
 FUSION_LAYERS = Registry('fusion_layer')
 
 
+
+def build(cfg, registry, default_args=None):
+    """Build a module.
+    Args:
+        cfg (dict, list[dict]): The config of modules, is is either a dict
+            or a list of configs.
+        registry (:obj:`Registry`): A registry the module belongs to.
+        default_args (dict, optional): Default arguments to build the module.
+            Defaults to None.
+    Returns:
+        nn.Module: A built nn module.
+    """
+    if isinstance(cfg, list):
+        modules = [
+            build_from_cfg(cfg_, registry, default_args) for cfg_ in cfg
+        ]
+        return nn.Sequential(*modules)
+    else:
+        return build_from_cfg(cfg, registry, default_args)
+
+
 def build_backbone(cfg):
     """Build backbone."""
-    return build(cfg, BACKBONES)
+    return BACKBONES.build(cfg)
 
 
 def build_neck(cfg):
     """Build neck."""
-    return build(cfg, NECKS)
+    return NECKS.build(cfg)
 
 
 def build_roi_extractor(cfg):
     """Build RoI feature extractor."""
-    return build(cfg, ROI_EXTRACTORS)
+    return ROI_EXTRACTORS.build(cfg)
 
 
 def build_shared_head(cfg):
     """Build shared head of detector."""
-    return build(cfg, SHARED_HEADS)
+    return SHARED_HEADS.build(cfg)
 
 
 def build_head(cfg):
     """Build head."""
-    return build(cfg, HEADS)
+    return HEADS.build(cfg)
 
 
 def build_loss(cfg):
     """Build loss function."""
-    return build(cfg, LOSSES)
+    return LOSSES.build(cfg)
 
 
 def build_detector(cfg, train_cfg=None, test_cfg=None):
@@ -50,7 +72,6 @@ def build_detector(cfg, train_cfg=None, test_cfg=None):
     assert cfg.get('test_cfg') is None or test_cfg is None, \
         'test_cfg specified in both outer field and model field '
     return build(cfg, DETECTORS, dict(train_cfg=train_cfg, test_cfg=test_cfg))
-
 
 def build_voxel_encoder(cfg):
     """Build voxel encoder."""

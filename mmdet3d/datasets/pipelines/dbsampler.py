@@ -2,12 +2,11 @@ import copy
 import mmcv
 import numpy as np
 import os
-
+import torch
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils
 from mmdet.datasets import PIPELINES
 from ..builder import OBJECTSAMPLERS
-
 
 class BatchSampler:
     """Class for sampling specific category of ground truths.
@@ -98,6 +97,8 @@ class DataBaseSampler(object):
                  prepare,
                  sample_groups,
                  classes=None,
+                 sparse_rate = 0.2,
+                 occlusion_rate = 0.2,
                  points_loader=dict(
                      type='LoadPointsFromFile',
                      coord_type='LIDAR',
@@ -112,7 +113,8 @@ class DataBaseSampler(object):
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
         self.points_loader = mmcv.build_from_cfg(points_loader, PIPELINES)
-
+        self.sparse_rate = sparse_rate
+        self.occlusion_rate = occlusion_rate
         db_infos = mmcv.load(info_path)
 
         # filter database infos
@@ -262,6 +264,30 @@ class DataBaseSampler(object):
 
             gt_labels = np.array([self.cat2label[s['name']] for s in sampled],
                                  dtype=np.long)
+            #TODO add db sample more transformation 
+            if self.sparse_rate:
+                #sparse rate range from 0 to specified num
+                sparse_rate = (self.sparse_rate) * torch.rand(1)  
+                for i in range(len(s_points_list)):
+                    s_points_list[i].sparsify(sparse_rate)
+            if self.occlusion_rate:
+                #TODO support horizon and vertical occlusion 
+                #ramdonly selecet 0~occlusion_rate, and mask out horizonly, and vertically
+                for i in range(len(s_points_list)):
+                    #horizon occlusion
+                    horizon_angle = torch.atan2(s_points_list[i].tensor[:,0], s_points_list[i].tensor[:,1])
+                    max_horizon_angle, min_horizon_angle = horizon_angle.max() , horizon_angle.min()
+                    angle_mask_start = (max_horizon_angle - min_horizon_angle) * torch.rand(1)*self.occlusion_rate  + min_horizon_angle
+                    angle_mask_end = angle_mask_start + (max_horizon_angle - min_horizon_angle) * self.occlusion_rate
+                    horizon_angle_mask = (horizon_angle < angle_mask_start) | (horizon_angle > angle_mask_end) 
+                    s_points_list[i].tensor = s_points_list[i].tensor[horizon_angle_mask]
+                    #vertical occlusion
+                    z = s_points_list[i].tensor[:,2]
+                    max_z, min_z = s_points_list[i].tensor[:,2].max() , s_points_list[i].tensor[:,2].min()
+                    mask_start = (max_z - min_z) * torch.rand(1)*self.occlusion_rate + min_z
+                    mask_end = mask_start + (max_z - min_z) * self.occlusion_rate
+                    vertical_mask = (z < mask_start) | (z > mask_end) 
+                    s_points_list[i].tensor = s_points_list[i].tensor[vertical_mask]
             ret = {
                 'gt_labels_3d':
                 gt_labels,
