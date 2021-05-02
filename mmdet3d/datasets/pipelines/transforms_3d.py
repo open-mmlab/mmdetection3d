@@ -8,7 +8,7 @@ from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
 from ..builder import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
-from IPython import embed
+
 
 @PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
