@@ -53,16 +53,14 @@ model = dict(
         bbox_head=dict(
             type='PointRCNNBboxHead',
             num_classes=1,
-            in_channels=6,
+            in_channels=128,
             mlp_channels=[128, 128],
             bbox_codesize=46,
-            conv_channels=[256,256],
+            conv_channels=[256, 256],
             num_points=(128, 32, 1),
             radius=(0.2, 0.4, 100),
-            num_samples=(64 ,64 , 64),
-            sa_channels=((128, 128, 128),
-                         (128, 128, 256),
-                         (256, 256, 512)))),
+            num_samples=(64, 64, 64),
+            sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)))),
     # model training and testing settings
     train_cfg=dict(
         _delete_=True,
@@ -120,3 +118,5 @@ model = dict(
             use_raw_score=True,
             nms_thr=0.01,
             score_thr=0.1)))
+
+find_unused_parameters = True

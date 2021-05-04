@@ -1,55 +1,54 @@
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, normal_init, xavier_init
+from mmcv.cnn import ConvModule
 from torch import nn as nn
 
-from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
-                                          rotation_3d_in_axis, xywhr2xyxyr)
+from mmdet3d.core.bbox.structures import rotation_3d_in_axis, xywhr2xyxyr
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import make_sparse_convmodule, build_sa_module
-from mmdet3d.ops import spconv as spconv
+from mmdet3d.ops import build_sa_module
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
+
 @HEADS.register_module()
 class PointRCNNBboxHead(nn.Module):
-    """PointRCNN ROI head
-    
+    """PointRCNN ROI head.
+
     Args:
         num_classes (int): The number of classes to prediction.
         in_channels (int): Input channels of RCNN
             convolution layer
         conv_channels (list(int)): Out channels of each
             pointrcnn convolution layer.
-
     """
-    def __init__(self, 
-                 num_classes, 
-                 in_channels, 
-                 mlp_channels,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 bbox_codesize=46,
-                 conv_channels=(512, 512),
-                 num_points=(128, 32, 1),
-                 radius=(0.2, 0.4, 100),
-                 num_samples=(64 ,64 , 64),
-                 sa_channels=((128, 128, 128),
-                              (128, 128, 256),
-                              (256, 256, 512)),
-                 sa_cfg=dict(
-                     type='PointSAModule',
-                     pool_mod='max',
-                     use_xyz=True),
-                 loss_bbox=dict(
-                     type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
-                 loss_cls=dict(
-                     type='CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='none',
-                     loss_weight=1.0)):
+
+    def __init__(
+        self,
+        num_classes,
+        in_channels,
+        mlp_channels,
+        conv_cfg=dict(type='Conv1d'),
+        norm_cfg=dict(type='BN1d'),
+        act_cfg=dict(type='ReLU'),
+        bbox_codesize=46,
+        conv_channels=(512, 512),
+        num_points=(128, 32, 1),
+        radius=(0.2, 0.4, 100),
+        num_samples=(64, 64, 64),
+        sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
+        sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
+        loss_bbox=dict(
+            type='SmoothL1Loss',
+            beta=1.0 / 9.0,
+            reduction='sum',
+            loss_weight=1.0),
+        loss_cls=dict(
+            type='CrossEntropyLoss',
+            use_sigmoid=True,
+            reduction='sum',
+            loss_weight=1.0)):
         super(PointRCNNBboxHead, self).__init__()
         self.num_classes = num_classes
         self.in_channels = in_channels
@@ -61,25 +60,30 @@ class PointRCNNBboxHead(nn.Module):
 
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_cls = build_loss(loss_cls)
+        self.bbox_coder = build_bbox_coder(bbox_coder)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
-        self.shared_mlps = nn.Sequential()
+        mlp_channels = [5] + mlp_channels
+        shared_mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
-            self.shared_mlps.add_module(
+            shared_mlps.add_module(
                 f'layer{i}',
                 ConvModule(
                     mlp_channels[i],
                     mlp_channels[i + 1],
                     kernel_size=(1, 1),
                     stride=(1, 1),
+                    inplace=False,
                     conv_cfg=dict(type='Conv2d')))
-    
+        self.xyz_up_layer = nn.Sequential(*shared_mlps)
+
         c_out = mlp_channels[-1]
         self.merge_down_layer = ConvModule(
             c_out * 2,
             c_out,
             kernel_size=(1, 1),
             stride=(1, 1),
+            inplace=False,
             conv_cfg=dict(type='Conv2d'))
 
         pre_channels = c_out
@@ -90,7 +94,7 @@ class PointRCNNBboxHead(nn.Module):
             conv_cfg=self.conv_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
-        self.bbox_layers = self.make_conv_layers(
+        self.reg_layers = self.make_conv_layers(
             conv_channels=conv_channels,
             input_channels=pre_channels,
             output_channels=self.bbox_codesize,
@@ -99,8 +103,8 @@ class PointRCNNBboxHead(nn.Module):
             act_cfg=self.act_cfg)
 
         self.SA_modules = nn.ModuleList()
-        sa_in_channel = self.in_channels - 3  # number of channels without xyz
-        
+        sa_in_channel = self.in_channels
+
         for sa_index in range(self.num_sa):
             cur_sa_mlps = list(sa_channels[sa_index])
             cur_sa_mlps = [sa_in_channel] + cur_sa_mlps
@@ -112,10 +116,24 @@ class PointRCNNBboxHead(nn.Module):
                     radius=radius[sa_index],
                     num_sample=num_samples[sa_index],
                     mlp_channels=cur_sa_mlps,
-                    norm_cfg=norm_cfg,
                     cfg=sa_cfg))
             sa_in_channel = sa_out_channel
 
+        pre_channels = sa_in_channel
+        self.cls_layers = self.make_conv_layers(
+            conv_channels=conv_channels,
+            input_channels=pre_channels,
+            output_channels=self.num_classes,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
+        self.reg_layers = self.make_conv_layers(
+            conv_channels=conv_channels,
+            input_channels=pre_channels,
+            output_channels=self.bbox_coder.code_size,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
     @staticmethod
     def make_conv_layers(conv_channels, input_channels, output_channels,
@@ -132,8 +150,7 @@ class PointRCNNBboxHead(nn.Module):
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg,
-                    bias=True,
-                    inplace=True))
+                    bias=True))
             prev_channels = conv_channels[k]
         conv_list.append(
             ConvModule(
@@ -144,31 +161,35 @@ class PointRCNNBboxHead(nn.Module):
                 conv_cfg=conv_cfg,
                 act_cfg=None,
                 bias=True,
-                inplace=True))
+                inplace=False))
         return nn.Sequential(*conv_list)
-    
-    def forward(self, input_data):
-        xyz_input = input_data[..., 0:5].transpose(1,2).unsqueeze(dim=3)
+
+    def forward(self, feats):
+        input_data = feats.clone().detach()
+        xyz_input = input_data[..., 0:5].transpose(
+            1, 2).unsqueeze(dim=3).contiguous().clone().detach()
         xyz_features = self.xyz_up_layer(xyz_input)
-
-        rpn_features = pts_input[..., 5:].transpose(1, 2).unsqueeze(dim=3)
-        merged_feature = torch.cat((xyz_feature, rpn_feature), dim=1)
-        merged_feature = self.merge_down_layer(merged_feature)
-        l_xyz, l_features = [xyz], [merged_feature.squeeze(dim=3)]
-
+        rpn_features = input_data[..., 5:].transpose(1, 2).unsqueeze(dim=3)
+        merged_features = torch.cat((xyz_features, rpn_features), dim=1)
+        merged_features = self.merge_down_layer(merged_features)
+        l_xyz, l_features = [input_data[..., 0:3].contiguous()], \
+                            [merged_features.squeeze(dim=3)]
         for i in range(len(self.SA_modules)):
-            li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
+            li_xyz, li_features, cur_indices = \
+                self.SA_modules[i](l_xyz[i], l_features[i])
             l_xyz.append(li_xyz)
             l_features.append(li_features)
 
-        rcnn_cls = self.cls_layer(l_features[-1]).transpose(1, 2).contiguous().squeeze(dim=1)  # (B, 1 or 2)
-        rcnn_reg = self.reg_layer(l_features[-1]).transpose(1, 2).contiguous().squeeze(dim=1)  # (B, C)
+        shared_features = l_features[-1]
+        rcnn_reg = self.reg_layers(shared_features).transpose(
+            1, 2).contiguous().squeeze(dim=1)  # (B, C)
+        rcnn_cls = self.cls_layers(shared_features).transpose(
+            1, 2).contiguous().squeeze(dim=1)
 
         return (rcnn_cls, rcnn_reg)
-    
-    def loss(self, cls_score, bbox_pred, labels, bbox_targets,
-             pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
-        
+
+    def loss(self, cls_score, bbox_pred, labels, bbox_targets, pos_gt_bboxes,
+             reg_mask, label_weights, bbox_weights):
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
 
@@ -182,18 +203,17 @@ class PointRCNNBboxHead(nn.Module):
         if pos_inds.any() == 0:
             # fake a part loss
             losses['loss_bbox'] = loss_cls.new_tensor(0)
-            if self.with_corner_loss:
-                losses['loss_corner'] = loss_cls.new_tensor(0)
         else:
             pos_bbox_pred = bbox_pred.view(rcnn_batch_size, -1)[pos_inds]
             bbox_weights_flat = bbox_weights[pos_inds].view(-1, 1).repeat(
                 1, pos_bbox_pred.shape[-1])
             loss_bbox = self.loss_bbox(
-                pos_bbox_pred.unsqueeze(dim=0), bbox_targets.unsqueeze(dim=0),
+                pos_bbox_pred.unsqueeze(dim=0),
+                bbox_targets.unsqueeze(dim=0).detach(),
                 bbox_weights_flat.unsqueeze(dim=0))
             losses['loss_bbox'] = loss_bbox
-        return loss
-    
+        return losses
+
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
         """Generate targets.
 
@@ -215,7 +235,6 @@ class PointRCNNBboxHead(nn.Module):
             pos_gt_bboxes_list,
             iou_list,
             cfg=rcnn_train_cfg)
-
         (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
          bbox_weights) = targets
 
@@ -233,7 +252,7 @@ class PointRCNNBboxHead(nn.Module):
 
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
-        
+
     def _get_target_single(self, pos_bboxes, pos_gt_bboxes, ious, cfg):
         """Generate training targets for a single sample.
 
@@ -300,7 +319,6 @@ class PointRCNNBboxHead(nn.Module):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
 
-
     def get_bboxes(self,
                    rois,
                    cls_score,
@@ -346,10 +364,9 @@ class PointRCNNBboxHead(nn.Module):
 
             cur_box_prob = class_pred[batch_id]
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
-            selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
-                                            cfg.score_thr, cfg.nms_thr,
-                                            img_metas[batch_id],
-                                            cfg.use_rotate_nms)
+            selected = self.multi_class_nms(
+                cur_box_prob.unsqueeze(1), cur_rcnn_boxes3d, cfg.score_thr,
+                cfg.nms_thr, img_metas[batch_id], cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[selected]
             selected_label_preds = cur_class_labels[selected]
             selected_scores = cur_cls_score[selected]
@@ -427,5 +444,3 @@ class PointRCNNBboxHead(nn.Module):
         selected = torch.cat(
             selected_list, dim=0) if len(selected_list) > 0 else []
         return selected
-
-

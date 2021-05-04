@@ -1,7 +1,6 @@
 import torch
-from torch import nn as nn
+from torch.nn import functional as F
 
-from mmdet3d.core import merge_aug_bboxes_3d
 from mmdet3d.core.bbox import bbox3d2result
 from mmdet.models import DETECTORS
 from .two_stage import TwoStage3DDetector
@@ -42,7 +41,7 @@ class PointRCNN(TwoStage3DDetector):
 
         if self.with_neck:
             x = self.neck(x)
-        return x 
+        return x
 
     def forward_train(self,
                       points,
@@ -67,7 +66,6 @@ class PointRCNN(TwoStage3DDetector):
         """
         losses = dict()
         points_cat = torch.stack(points)
-        points_intensity = points_cat[:, :, 3]
         x = self.extract_feat(points_cat)
         if self.with_rpn:
             bbox_preds = self.rpn_head(x)
@@ -78,17 +76,21 @@ class PointRCNN(TwoStage3DDetector):
                 gt_labels_3d=gt_labels_3d,
                 img_metas=img_metas,
                 gt_bboxes_ignore=gt_bboxes_ignore)
-            bbox_list = self.rpn_head.get_bboxes(
-                points_cat, bbox_preds, img_metas)
+            losses.update(rpn_loss)
+
+            sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(
+                1, 2).detach()
+            obj_scores = sem_scores.max(-1)[0]
+            bbox_list = self.rpn_head.get_bboxes(points_cat, bbox_preds,
+                                                 img_metas)
             proposal_list = [
-                bbox3d2result(bboxes, scores, labels)
+                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
                 for bboxes, scores, labels in bbox_list
             ]
-
-            losses.update(rpn_loss)        
-        roi_losses = self.roi_head.forward_train(x, img_metas, proposal_list,
-                                                 gt_bboxes_3d, gt_labels_3d)
-        losses.update(roi_loss)
+        roi_losses = self.roi_head.forward_train(x, obj_scores, img_metas,
+                                                 proposal_list, gt_bboxes_3d,
+                                                 gt_labels_3d)
+        losses.update(roi_losses)
 
         return losses
 
@@ -107,8 +109,18 @@ class PointRCNN(TwoStage3DDetector):
 
         x = self.extract_feat(points_cat)
         bbox_preds = self.rpn_head(x)
+        sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1,
+                                                                   2).detach()
+        obj_scores = sem_scores.max(-1)[0]
+
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, img_metas, rescale=rescale)
+        proposal_list = [
+            dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+            for bboxes, scores, labels in bbox_list
+        ]
+
+        self.roi_head.simple_test(x, obj_scores, img_metas, proposal_list)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list

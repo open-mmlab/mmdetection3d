@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn as nn
 
@@ -28,6 +29,33 @@ class Single3DRoIPointExtractor(nn.Module):
         roi_layers = layer_cls(**cfg)
         return roi_layers
 
+    def check_numpy_to_torch(self, x):
+        if isinstance(x, np.ndarray):
+            return torch.from_numpy(x).float(), True
+        return x, False
+
+    def rotate_points_along_z(self, points, angle):
+        """
+        Args:
+            points: (B, N, 3 + C)
+            angle: (B), angle along z-axis, angle increases x ==> y
+        Returns:
+
+        """
+        points, is_numpy = self.check_numpy_to_torch(points)
+        angle, _ = self.check_numpy_to_torch(angle)
+
+        cosa = torch.cos(angle)
+        sina = torch.sin(angle)
+        zeros = angle.new_zeros(points.shape[0])
+        ones = angle.new_ones(points.shape[0])
+        rot_matrix = torch.stack(
+            (cosa, sina, zeros, -sina, cosa, zeros, zeros, zeros, ones),
+            dim=1).view(-1, 3, 3).float()
+        points_rot = torch.matmul(points[:, :, 0:3], rot_matrix)
+        points_rot = torch.cat((points_rot, points[:, :, 3:]), dim=-1)
+        return points_rot.numpy() if is_numpy else points_rot
+
     def forward(self, feats, coordinate, batch_inds, rois):
         """Extract point-wise roi features.
 
@@ -41,13 +69,21 @@ class Single3DRoIPointExtractor(nn.Module):
         Returns:
             torch.FloatTensor: Pooled features
         """
-        pooled_roi_feats = []
-        for batch_idx in range(int(batch_inds.max()) + 1):
-            roi_inds = (rois[..., 0].int() == batch_idx)
-            coors_inds = (batch_inds.int() == batch_idx)
-            pooled_roi_feat = self.roi_layer(coordinate[coors_inds],
-                                             feats[coors_inds],
-                                             rois[..., 1:][roi_inds])
-            pooled_roi_feats.append(pooled_roi_feat)
-        pooled_roi_feats = torch.cat(pooled_roi_feats, 0)
-        return pooled_roi_feats
+        rois = rois[..., 1:]
+        rois = rois.view(batch_inds, -1, rois.shape[-1])
+        with torch.no_grad():
+            pooled_roi_feat, pooled_empty_flag = self.roi_layer(
+                coordinate, feats, rois)
+
+            # canonical transformation
+            roi_center = rois[:, :, 0:3]
+            pooled_roi_feat[:, :, :, 0:3] -= roi_center.unsqueeze(dim=2)
+            pooled_roi_feat = pooled_roi_feat.view(-1,
+                                                   pooled_roi_feat.shape[-2],
+                                                   pooled_roi_feat.shape[-1])
+            pooled_roi_feat[:, :, 0:3] = self.rotate_points_along_z(
+                pooled_roi_feat[:, :, 0:3],
+                -rois.view(-1, rois.shape[-1])[:, 6])
+            pooled_roi_feat[pooled_empty_flag.view(-1) > 0] = 0
+
+        return pooled_roi_feat

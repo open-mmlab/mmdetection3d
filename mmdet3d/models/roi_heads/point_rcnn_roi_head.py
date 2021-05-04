@@ -1,13 +1,12 @@
+import torch
 from torch.nn import functional as F
 
 from mmdet3d.core import AssignResult
 from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
 from mmdet.core import build_assigner, build_sampler
 from mmdet.models import HEADS
-from mmdet3d.core.bbox.structures import rotation_3d_in_axis
 from ..builder import build_head, build_roi_extractor
 from .base_3droi_head import Base3DRoIHead
-
 
 
 @HEADS.register_module()
@@ -25,12 +24,14 @@ class PointRCNNROIHead(Base3DRoIHead):
     def __init__(self,
                  bbox_head,
                  num_classes=3,
+                 depth_normalizer=70,
                  point_roi_extractor=None,
                  train_cfg=None,
                  test_cfg=None):
         super(PointRCNNROIHead, self).__init__(
             bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
         self.num_classes = num_classes
+        self.depth_normalizer = depth_normalizer
 
         if point_roi_extractor is not None:
             self.point_roi_extractor = build_roi_extractor(point_roi_extractor)
@@ -62,7 +63,7 @@ class PointRCNNROIHead(Base3DRoIHead):
                 ]
             self.bbox_sampler = build_sampler(self.train_cfg.sampler)
 
-    def forward_train(self, feats_dict, img_metas, proposal_list,
+    def forward_train(self, feats_dict, point_scores, img_metas, proposal_list,
                       gt_bboxes_3d, gt_labels_3d):
         """Training forward function of PartAggregationROIHead.
 
@@ -89,18 +90,24 @@ class PointRCNNROIHead(Base3DRoIHead):
         losses = dict()
         sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
-        
+
         features = feats_dict['fp_features'][-1]
-        local_features = feats_dict['fp_xyz']
-        bbox_results = self._bbox_forward_train(
-            features, 
-            local_features,
-            sample_results)
+        points = feats_dict['fp_xyz'][-1]
+        features = features.transpose(1, 2).contiguous()
+        point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5
+        features_list = [
+            point_scores.unsqueeze(2),
+            point_depths.unsqueeze(2), features
+        ]
+        features = torch.cat(features_list, dim=2)
+
+        bbox_results = self._bbox_forward_train(features, points,
+                                                sample_results)
         losses.update(bbox_results['loss_bbox'])
 
         return losses
 
-    def simple_test(self, feats_dict, voxels_dict, img_metas, proposal_list,
+    def simple_test(self, feats_dict, point_scores, img_metas, proposal_list,
                     **kwargs):
         """Simple testing forward function of PartAggregationROIHead.
 
@@ -109,24 +116,29 @@ class PointRCNNROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            voxels_dict (dict): Contains information of voxels.
+            obj_scores (dict): Contains object scores from the first stage.
             img_metas (list[dict]): Meta info of each image.
             proposal_list (list[dict]): Proposal information from rpn.
 
         Returns:
             dict: Bbox results of one frame.
         """
-        assert self.with_bbox, 'Bbox head must be implemented.'
-        assert self.with_semantic
-
-        semantic_results = self.semantic_head(feats_dict['seg_features'])
-
         rois = bbox3d2roi([res['boxes_3d'].tensor for res in proposal_list])
         labels_3d = [res['labels_3d'] for res in proposal_list]
-        cls_preds = [res['cls_preds'] for res in proposal_list]
-        bbox_results = self._bbox_forward(feats_dict['seg_features'],
-                                          semantic_results['part_feats'],
-                                          voxels_dict, rois)
+        cls_preds = [res['scores_3d'] for res in proposal_list]
+
+        features = feats_dict['fp_features'][-1]
+        points = feats_dict['fp_xyz'][-1]
+        features = features.transpose(1, 2).contiguous()
+        point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5
+        features_list = [
+            point_scores.unsqueeze(2),
+            point_depths.unsqueeze(2), features
+        ]
+
+        features = torch.cat(features_list, dim=2)
+        batch_size = features.shape[0]
+        bbox_results = self._bbox_forward(features, points, batch_size, rois)
 
         bbox_list = self.bbox_head.get_bboxes(
             rois,
@@ -143,8 +155,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         ]
         return bbox_results
 
-    def _bbox_forward_train(self, global_feats, local_feats,
-                            sampling_results):
+    def _bbox_forward_train(self, global_feats, local_feats, sampling_results):
         """Forward training function of roi_extractor and bbox_head.
 
         Args:
@@ -156,17 +167,15 @@ class PointRCNNROIHead(Base3DRoIHead):
         Returns:
             dict: Forward results including losses and predictions.
         """
-        print('feature shape: ', global_feats.shape)
-        batch_size = global_feats.shape[0]
         rois = bbox3d2roi([res.bboxes for res in sampling_results])
-        bbox_results = self._bbox_forward(global_feats,
-                                          local_feats,
-                                          batch_size,
-                                          rois)
+        batch_size = global_feats.shape[0]
+        bbox_results = self._bbox_forward(global_feats, local_feats,
+                                          batch_size, rois)
         bbox_targets = self.bbox_head.get_targets(sampling_results,
                                                   self.train_cfg)
+
         loss_bbox = self.bbox_head.loss(bbox_results['cls_score'],
-                                        bbox_results['bbox_pred'], rois,
+                                        bbox_results['bbox_pred'],
                                         *bbox_targets)
 
         bbox_results.update(loss_bbox=loss_bbox)
@@ -185,22 +194,10 @@ class PointRCNNROIHead(Base3DRoIHead):
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
-        print(' input shape: ', global_feats.shape, points.shape, rois.shape)        
-        pooled_point_feats = self.point_roi_extractor(global_feats, points, 
+        pooled_point_feats = self.point_roi_extractor(global_feats, points,
                                                       batch_size, rois)
-
-        #cannoical transformation
-        roi_center = rois[:, :, 0:3]
-        pooled_point_feats[:, :, :, 0:3] -= roi_center.unsequeeze(dim=2)
-        for k in range(batch_size):
-            pooled_point_feats[k, :, :, 0:3] = rotation_3d_in_axis(
-                pooled_point_feats[k, :, :, 0:3], rois[k, :, 6], 2)
-
         cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
-
-        bbox_results = dict(
-            cls_score=cls_score,
-            bbox_pred=bbox_pred)
+        bbox_results = dict(cls_score=cls_score, bbox_pred=bbox_pred)
         return bbox_results
 
     def _assign_and_sample(self, proposal_list, gt_bboxes_3d, gt_labels_3d):
@@ -224,7 +221,6 @@ class PointRCNNROIHead(Base3DRoIHead):
             cur_labels_3d = cur_proposal_list['labels_3d']
             cur_gt_bboxes = gt_bboxes_3d[batch_idx].to(cur_boxes.device)
             cur_gt_labels = gt_labels_3d[batch_idx]
-
             batch_num_gts = 0
             # 0 is bg
             batch_gt_indis = cur_gt_labels.new_full((len(cur_boxes), ), 0)
@@ -269,6 +265,7 @@ class PointRCNNROIHead(Base3DRoIHead):
                     cur_boxes.tensor,
                     cur_gt_bboxes.tensor,
                     gt_labels=cur_gt_labels)
+
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,
