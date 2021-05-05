@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import force_fp32
@@ -462,7 +463,7 @@ class SSD3DHead(VoteHead):
                 input_metas[b])
             # fix the wrong direction
             # To do: remove this ops
-            print('selected shape: ', bbox_selected.shape)
+            bbox_selected[..., 6] += np.pi
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
