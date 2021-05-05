@@ -15,6 +15,9 @@ from mmdet.datasets.pipelines import LoadImageFromFile
 def is_loading_function(transform):
     """Judge whether a transform function is a loading function.
 
+    Note: `MultiScaleFlipAug3D` is a wrapper for multiple pipeline functions,
+    so we need to search if its inner transforms contain any loading function.
+
     Args:
         transform (dict | :obj:`Pipeline`): A transform config or a function.
 
@@ -34,7 +37,7 @@ def is_loading_function(transform):
             return False
         if obj_cls in loading_functions:
             return True
-        if obj_cls in (MultiScaleFlipAug3D):
+        if obj_cls in (MultiScaleFlipAug3D, ):
             return None
     elif callable(transform):
         if isinstance(transform, loading_functions):

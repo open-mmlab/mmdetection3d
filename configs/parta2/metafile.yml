@@ -1,0 +1,36 @@
+Collections:
+  - Name: Part-A^2
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x V100 GPUs
+      Architecture:
+        - Sparse U-Net
+    Paper: https://arxiv.org/abs/1907.03670
+    README: configs/parta2/README.md
+
+Models:
+  - Name: hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class
+    In Collection: Part-A^2
+    Config: configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py
+    Metadata:
+      Training Memory (GB): 4.1
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 67.9
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class_20200620_230724-a2672098.pth
+
+  - Name: hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car
+    In Collection: Part-A^2
+    Config: configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car.py
+    Metadata:
+      Training Memory (GB): 4.0
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 79.16
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car_20200620_230755-f2a38b9a.pth

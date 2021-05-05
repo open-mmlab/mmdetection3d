@@ -1,0 +1,67 @@
+Collections:
+  - Name: SSN
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x GeForce GTX 1080 Ti
+      Architecture:
+        - Hard Voxelization
+    Paper: https://arxiv.org/abs/2004.02774
+    README: configs/ssn/README.md
+
+Models:
+  - Name: hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d
+    In Collection: SSN
+    Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py
+    Metadata:
+      Training Data: nuScenes
+      Training Memory (GB): 9.62
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 41.56
+          NDS: 54.83
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d_20201023_193737-5fda3f00.pth
+
+  - Name: hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d
+    In Collection: SSN
+    Config: configs/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d.py
+    Metadata:
+      Training Data: nuScenes
+      Training Memory (GB): 10.26
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 46.95
+          NDS: 58.24
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d_20201024_232447-7af3d8c8.pth
+
+  - Name: hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d
+    In Collection: SSN
+    Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+      Training Memory (GB): 8.30
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 17.4
+          Public Score: 17.5
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d_20201016_220844-3058d9fc.pth
+
+  - Name: hv_ssn_regnet-400mf_secfpn_sbn-all_1x16_2x_lyft-3d
+    In Collection: SSN
+    Config: configs/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_1x16_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+      Training Memory (GB): 9.98
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 18.1
+          Public Score: 18.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_lyft-3d_20201025_213155-4532096c.pth

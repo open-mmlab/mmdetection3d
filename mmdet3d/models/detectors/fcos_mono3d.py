@@ -4,7 +4,7 @@ from .single_stage_mono3d import SingleStageMono3DDetector
 
 @DETECTORS.register_module()
 class FCOSMono3D(SingleStageMono3DDetector):
-    """Implementation of FCOS3D. The technical report will be released soon.
+    r"""FCOS3D <https://arxiv.org/abs/2104.10956>`_ for monocular 3D object detection.
 
     Currently please refer to our entry on the
     `leaderboard <https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera>` # noqa

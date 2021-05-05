@@ -1,0 +1,54 @@
+Collections:
+  - Name: SECOND
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Architecture:
+        - Hard Voxelization
+    Paper: https://www.mdpi.com/1424-8220/18/10/3337
+    README: configs/second/README.md
+
+Models:
+  - Name: hv_second_secfpn_6x8_80e_kitti-3d-car
+    In Collection: SECOND
+    Config: configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py
+    Metadata:
+      Training Data: KITTI
+      Training Memory (GB): 5.4
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 79.07
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_6x8_80e_kitti-3d-car/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
+
+  - Name: hv_second_secfpn_6x8_80e_kitti-3d-3class
+    In Collection: SECOND
+    Config: configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py
+    Metadata:
+      Training Data: KITTI
+      Training Memory (GB): 5.4
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 64.41
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_6x8_80e_kitti-3d-3class/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth
+
+  - Name: hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class
+    In Collection: SECOND
+    Config: configs/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
+    Metadata:
+      Training Data: Waymo
+      Training Memory (GB): 8.12
+      Training Resources: 8x GeForce GTX 1080 Ti
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Waymo
+        Metrics:
+          mAP@L1: 65.3
+          mAPH@L1: 61.7
+          mAP@L2: 58.9
+          mAPH@L2: 55.7

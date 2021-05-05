@@ -1,0 +1,158 @@
+Collections:
+  - Name: PointPillars
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Architecture:
+        - Feature Pyramid Network
+    Paper: https://arxiv.org/abs/1812.05784
+    README: configs/pointpillars/README.md
+
+Models:
+  - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py
+    Metadata:
+      Training Data: KITTI
+      Training Memory (GB): 5.4
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          AP: 77.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20200620_230614-77663cd6.pth
+
+  - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py
+    Metadata:
+      Training Data: KITTI
+      Training Memory (GB): 5.5
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          AP: 59.5
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20200620_230421-aa0f3adb.pth
+
+  - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
+    Metadata:
+      Training Data: nuScenes
+      Training Memory (GB): 16.4
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 35.17
+          NDS: 49.7
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230725-0817d270.pth
+
+  - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py
+    Metadata:
+      Training Data: nuScenes
+      Training Memory (GB): 16.4
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 40.0
+          NDS: 53.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth
+
+  - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 13.4
+          Public Score: 13.4
+
+  - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 14.0
+          Public Score: 14.2
+
+  - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car.py
+    Metadata:
+      Training Data: Waymo
+      Training Memory (GB): 7.76
+      Training Resources: 8x GeForce GTX 1080 Ti
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Waymo
+        Metrics:
+          mAP@L1: 70.2
+          mAPH@L1: 69.6
+          mAP@L2: 62.6
+          mAPH@L2: 62.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth
+
+  - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
+    Metadata:
+      Training Data: Waymo
+      Training Memory (GB): 8.12
+      Training Resources: 8x GeForce GTX 1080 Ti
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Waymo
+        Metrics:
+          mAP@L1: 64.7
+          mAPH@L1: 57.6
+          mAP@L2: 58.4
+          mAPH@L2: 52.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class_20200831_204144-d1a706b1.pth
+
+  - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car.py
+    Metadata:
+      Training Data: Waymo
+      Training Memory (GB): 7.76
+      Training Resources: 8x GeForce GTX 1080 Ti
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Waymo
+        Metrics:
+          mAP@L1: 72.1
+          mAPH@L1: 71.5
+          mAP@L2: 63.6
+          mAPH@L2: 63.1
+
+  - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class.py
+    Metadata:
+      Training Data: Waymo
+      Training Memory (GB): 8.12
+      Training Resources: 8x GeForce GTX 1080 Ti
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Waymo
+        Metrics:
+          mAP@L1: 68.8
+          mAPH@L1: 63.3
+          mAP@L2: 62.6
+          mAPH@L2: 57.6

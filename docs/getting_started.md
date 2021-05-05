@@ -12,15 +12,16 @@ The required versions of MMCV and MMDetection for different versions of MMDetect
 
 | MMDetection3D version | MMDetection version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0       | mmcv-full>=1.3.2, <=1.4|
-| 0.12.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
-| 0.11.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
-| 0.10.0              | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
-| 0.9.0               | mmdet>=2.5.0        | mmcv-full>=1.2.4, <=1.4|
-| 0.8.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.4|
-| 0.7.0               | mmdet>=2.5.0        | mmcv-full>=1.1.5, <=1.4|
-| 0.6.0               | mmdet>=2.4.0        | mmcv-full>=1.1.3, <=1.2|
-| 0.5.0               | 2.3.0               | mmcv-full==1.0.5|
+| master              | mmdet>=2.10.0, <=2.11.0| mmcv-full>=1.2.4, <=1.4|
+| 0.13.0              | mmdet>=2.10.0, <=2.11.0| mmcv-full>=1.2.4, <=1.4|
+| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
+| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
+| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
+| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
+| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.1.5, <=1.4|
+| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.1.5, <=1.4|
+| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | mmcv-full>=1.1.3, <=1.2|
+| 0.5.0               | 2.3.0                  | mmcv-full==1.0.5|
 
 # Installation
 
@@ -91,6 +92,10 @@ pip install mmcv-full
 ```
 
 **d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).**
+
+Note:
+
+MMDetection3D v0.13.0 is only compatiable with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support mmdet>=2.12.0 since the v0.14.0 (to be released in May).
 
 ```shell
 pip install git+https://github.com/open-mmlab/mmdetection.git

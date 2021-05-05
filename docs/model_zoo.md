@@ -57,3 +57,7 @@ Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/co
 ### ImVoteNet
 
 Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvotenet) for details. We provide VoteNet baselines on SUNRGBD dataset.
+
+### FCOS3D
+
+Please refer to [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d) for details. We provide FCOS3D baselines on the nuScenes dataset currently.

@@ -339,7 +339,7 @@ class H3DBboxHead(BaseModule):
             dict: Losses of H3dnet.
         """
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
-         dir_class_targets, dir_res_targets, center_targets, mask_targets,
+         dir_class_targets, dir_res_targets, center_targets, _, mask_targets,
          valid_gt_masks, objectness_targets, objectness_weights,
          box_loss_weights, valid_gt_weights) = rpn_targets
 
