@@ -91,7 +91,7 @@ jobs:
       - name: Install mmdet3d dependencies
         run: |
           pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
-          pip install mmdet==-q git+https://github.com/open-mmlab/mmdetection.git
+          pip install -q git+https://github.com/open-mmlab/mmdetection.git
           pip install -r requirements.txt
       - name: Build and install
         run: |
