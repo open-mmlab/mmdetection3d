@@ -1,4 +1,6 @@
+import numpy as np
 import torch
+import trimesh
 from torch.nn import functional as F
 
 from mmdet3d.core import AssignResult
@@ -7,6 +9,73 @@ from mmdet.core import build_assigner, build_sampler
 from mmdet.models import HEADS
 from ..builder import build_head, build_roi_extractor
 from .base_3droi_head import Base3DRoIHead
+
+
+def write_ply(points, points_label, out_filename):
+    """Write points into ``ply`` format for meshlab visualization.
+
+    Args:
+        points (np.ndarray): Points in shape (N, dim).
+        out_filename (str): Filename to be saved.
+    """
+    N = points.shape[0]
+    fout = open(out_filename, 'w')
+    for i in range(N):
+        if points.shape[1] == 3:
+            c = (points_label[i] * 255).astype(int)
+            fout.write('v %f %f %f %d %d %d\n' %
+                       (points[i, 0], points[i, 1], points[i, 2], c, 0, 0))
+
+        else:
+            fout.write(
+                'v %f %f %f %d\n' %
+                (points[i, 0], points[i, 1], points[i, 2], points_label[i]))
+    fout.close()
+
+
+def write_oriented_bbox(scene_bbox, out_filename):
+    """Export oriented (around Z axis) scene bbox to meshes.
+
+    Args:
+        scene_bbox(list[ndarray] or ndarray): xyz pos of center and
+            3 lengths (dx,dy,dz) and heading angle around Z axis.
+            Y forward, X right, Z upward. heading angle of positive X is 0,
+            heading angle of positive Y is 90 degrees.
+        out_filename(str): Filename.
+    """
+
+    def heading2rotmat(heading_angle):
+        rotmat = np.zeros((3, 3))
+        rotmat[2, 2] = 1
+        cosval = np.cos(heading_angle)
+        sinval = np.sin(heading_angle)
+        rotmat[0:2, 0:2] = np.array([[cosval, -sinval], [sinval, cosval]])
+        return rotmat
+
+    def convert_oriented_box_to_trimesh_fmt(box):
+        ctr = box[:3]
+        lengths = box[3:6]
+        trns = np.eye(4)
+        trns[0:3, 3] = ctr
+        trns[3, 3] = 1.0
+        trns[0:3, 0:3] = heading2rotmat(box[6])
+        box_trimesh_fmt = trimesh.creation.box(lengths, trns)
+        return box_trimesh_fmt
+
+    if len(scene_bbox) == 0:
+        scene_bbox = np.zeros((1, 7))
+    scene = trimesh.scene.Scene()
+
+    scene.add_geometry(convert_oriented_box_to_trimesh_fmt(scene_bbox))
+    '''
+    for box in scene_bbox:
+        scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
+    '''
+    mesh_list = trimesh.util.concatenate(scene.dump())
+    # save to ply file
+    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
+
+    return
 
 
 @HEADS.register_module()
@@ -175,7 +244,7 @@ class PointRCNNROIHead(Base3DRoIHead):
                                                   self.train_cfg)
 
         loss_bbox = self.bbox_head.loss(bbox_results['cls_score'],
-                                        bbox_results['bbox_pred'],
+                                        bbox_results['bbox_pred'], rois,
                                         *bbox_targets)
 
         bbox_results.update(loss_bbox=loss_bbox)
@@ -194,9 +263,24 @@ class PointRCNNROIHead(Base3DRoIHead):
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
+        '''
+        print('points shape: ', points.squeeze().shape)
+        print('rois shape: ', rois.shape)
+        points_t = points[0].clone()
+        points_t = points_t[:,0:3].cpu().data.numpy()
+        points_label = global_feats[0][..., 0].clone()
+        points_label = points_label.cpu().data.numpy()
+        print(points_label)
+        bbox = rois[..., 1:].cpu().data.numpy()
+        bbox[..., 2] += bbox[..., 5] / 2
+        if torch.max( global_feats[0][..., 0]) > 0.9:
+            write_oriented_bbox(bbox,'/tmp/label_bboxes.ply')
+            write_ply(points_t,points_label,'/tmp/label_points.obj')
+        '''
 
         pooled_point_feats = self.point_roi_extractor(global_feats, points,
                                                       batch_size, rois)
+
         cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
         bbox_results = dict(cls_score=cls_score, bbox_pred=bbox_pred)
         return bbox_results

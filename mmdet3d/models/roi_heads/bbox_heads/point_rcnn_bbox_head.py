@@ -188,8 +188,8 @@ class PointRCNNBboxHead(nn.Module):
 
         return (rcnn_cls, rcnn_reg)
 
-    def loss(self, cls_score, bbox_pred, labels, bbox_targets, pos_gt_bboxes,
-             reg_mask, label_weights, bbox_weights):
+    def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
+             pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
 
@@ -205,6 +205,10 @@ class PointRCNNBboxHead(nn.Module):
             losses['loss_bbox'] = loss_cls.new_tensor(0)
         else:
             pos_bbox_pred = bbox_pred.view(rcnn_batch_size, -1)[pos_inds]
+            pos_rois = rois.view(rcnn_batch_size, -1)[pos_inds][...,
+                                                                1:].clone()
+            pos_bbox_pred += pos_rois.detach()
+
             bbox_weights_flat = bbox_weights[pos_inds].view(-1, 1).repeat(
                 1, pos_bbox_pred.shape[-1])
             loss_bbox = self.loss_bbox(
