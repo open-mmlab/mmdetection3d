@@ -1,7 +1,6 @@
 import torch
 from torch.nn import functional as F
 
-from mmdet3d.core.bbox import bbox3d2result
 from mmdet.models import DETECTORS
 from .two_stage import TwoStage3DDetector
 
@@ -120,9 +119,6 @@ class PointRCNN(TwoStage3DDetector):
             for bboxes, scores, labels in bbox_list
         ]
 
-        self.roi_head.simple_test(x, obj_scores, img_metas, proposal_list)
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
+        bbox_results = self.roi_head.simple_test(x, obj_scores, img_metas,
+                                                 proposal_list)
         return bbox_results

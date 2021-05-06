@@ -194,6 +194,7 @@ class PointRCNNROIHead(Base3DRoIHead):
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
+
         pooled_point_feats = self.point_roi_extractor(global_feats, points,
                                                       batch_size, rois)
         cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
