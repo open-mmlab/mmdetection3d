@@ -1,4 +1,6 @@
 /*
+Modified from
+https://github.com/sshaoshuai/PCDet/blob/master/pcdet/ops/roipoint_pool3d/src/roipoint_pool3d_kernel.cu
 Point cloud feature pooling
 Written by Shaoshuai Shi
 All Rights Reserved 2018.
