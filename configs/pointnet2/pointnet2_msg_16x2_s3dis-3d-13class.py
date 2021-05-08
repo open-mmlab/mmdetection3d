@@ -6,7 +6,7 @@ _base_ = [
 # data settings
 data_root = './data/s3dis/'
 data = dict(samples_per_gpu=16)
-evaluation = dict(interval=5)
+evaluation = dict(interval=2)
 
 # model settings
 model = dict(
@@ -28,5 +28,5 @@ optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
 
 # runtime settings
-checkpoint_config = dict(interval=5)
-runner = dict(type='EpochBasedRunner', max_epochs=150)
+checkpoint_config = dict(interval=2)
+runner = dict(type='EpochBasedRunner', max_epochs=50)
