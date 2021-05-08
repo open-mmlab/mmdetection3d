@@ -4,14 +4,17 @@ _base_ = [
 ]
 
 # data settings
+data_root = './data/scannet/'
 data = dict(samples_per_gpu=16)
-evaluation = dict(interval=20)  # whole scene evaluation is very time-consuming
+evaluation = dict(interval=5)
 
 # model settings
 model = dict(
     decode_head=dict(
-        num_classes=20, ignore_index=20,
-        loss_decode=dict(class_weight=None)),  # TODO:
+        num_classes=20,
+        ignore_index=20,
+        loss_decode=dict(class_weight=data_root +
+                         'seg_info/train_label_weight.npy')),
     test_cfg=dict(
         num_points=8192,
         block_size=1.5,
@@ -21,11 +24,10 @@ model = dict(
 
 # optimizer
 lr = 0.001  # max learning rate
-optimizer = dict(type='Adam', lr=lr, weight_decay=0)
+optimizer = dict(type='Adam', lr=lr, weight_decay=1e-4)
 optimizer_config = dict(grad_clip=None)
-# lr_config = dict(policy='step', warmup=None, gamma=0.7, step=10)
 lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
 
 # runtime settings
-checkpoint_config = dict(interval=10)
-runner = dict(type='EpochBasedRunner', max_epochs=200)
+checkpoint_config = dict(interval=5)
+runner = dict(type='EpochBasedRunner', max_epochs=150)
