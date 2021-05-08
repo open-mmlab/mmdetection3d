@@ -58,7 +58,7 @@ def export(mesh_file,
            meta_file,
            label_map_file,
            output_file=None,
-           is_train=True):
+           test_mode=False):
     """Export original files to vert, ins_label, sem_label and bbox file.
 
     Args:
@@ -69,8 +69,8 @@ def export(mesh_file,
         label_map_file (str): Path of the label_map_file.
         output_file (str): Path of the output folder.
             Default: None.
-        is_train (bool): Whether is generating training data with labels.
-            Default: True.
+        test_mode (bool): Whether is generating training data without labels.
+            Default: False.
 
     It returns a tuple, which containts the the following things:
         np.ndarray: Vertices of points data.
@@ -103,7 +103,7 @@ def export(mesh_file,
     mesh_vertices[:, 0:3] = pts[:, 0:3]
 
     # Load semantic and instance labels
-    if is_train:
+    if not test_mode:
         object_id_to_segs, label_to_segs = read_aggregation(agg_file)
         seg_to_verts, num_verts = read_segmentation(seg_file)
         label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)
@@ -147,7 +147,7 @@ def export(mesh_file,
 
     if output_file is not None:
         np.save(output_file + '_vert.npy', mesh_vertices)
-        if is_train:
+        if not test_mode:
             np.save(output_file + '_sem_label.npy', label_ids)
             np.save(output_file + '_ins_label.npy', instance_ids)
             np.save(output_file + '_bbox.npy', instance_bboxes)

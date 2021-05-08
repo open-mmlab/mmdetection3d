@@ -6,7 +6,7 @@ from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import box_np_ops
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
-from ..registry import OBJECTSAMPLERS
+from ..builder import OBJECTSAMPLERS
 from .data_augment_utils import noise_per_object_v3_
 
 
@@ -120,7 +120,7 @@ class RandomFlip3D(RandomFlip):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(sync_2d={self.sync_2d},'
-        repr_str += f'flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
+        repr_str += f' flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
         return repr_str
 
 
@@ -453,10 +453,21 @@ class PointShuffle(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points' keys are updated \
-                in the result dict.
+            dict: Results after filtering, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
         """
-        input_dict['points'].shuffle()
+        idx = input_dict['points'].shuffle()
+        idx = idx.numpy()
+
+        pts_instance_mask = input_dict.get('pts_instance_mask', None)
+        pts_semantic_mask = input_dict.get('pts_semantic_mask', None)
+
+        if pts_instance_mask is not None:
+            input_dict['pts_instance_mask'] = pts_instance_mask[idx]
+
+        if pts_semantic_mask is not None:
+            input_dict['pts_semantic_mask'] = pts_semantic_mask[idx]
+
         return input_dict
 
     def __repr__(self):
@@ -527,13 +538,24 @@ class PointsRangeFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points' keys are updated \
-                in the result dict.
+            dict: Results after filtering, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         points_mask = points.in_range_3d(self.pcd_range)
         clean_points = points[points_mask]
         input_dict['points'] = clean_points
+        points_mask = points_mask.numpy()
+
+        pts_instance_mask = input_dict.get('pts_instance_mask', None)
+        pts_semantic_mask = input_dict.get('pts_semantic_mask', None)
+
+        if pts_instance_mask is not None:
+            input_dict['pts_instance_mask'] = pts_instance_mask[points_mask]
+
+        if pts_semantic_mask is not None:
+            input_dict['pts_semantic_mask'] = pts_semantic_mask[points_mask]
+
         return input_dict
 
     def __repr__(self):
@@ -638,15 +660,17 @@ class IndoorPointSample(object):
         points = results['points']
         points, choices = self.points_random_sampling(
             points, self.num_points, return_choices=True)
+        results['points'] = points
 
         pts_instance_mask = results.get('pts_instance_mask', None)
         pts_semantic_mask = results.get('pts_semantic_mask', None)
-        results['points'] = points
 
-        if pts_instance_mask is not None and pts_semantic_mask is not None:
+        if pts_instance_mask is not None:
             pts_instance_mask = pts_instance_mask[choices]
-            pts_semantic_mask = pts_semantic_mask[choices]
             results['pts_instance_mask'] = pts_instance_mask
+
+        if pts_semantic_mask is not None:
+            pts_semantic_mask = pts_semantic_mask[choices]
             results['pts_semantic_mask'] = pts_semantic_mask
 
         return results
@@ -885,8 +909,8 @@ class BackgroundPointsFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points' keys are updated \
-                in the result dict.
+            dict: Results after filtering, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         gt_bboxes_3d = input_dict['gt_bboxes_3d']

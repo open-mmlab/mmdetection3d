@@ -52,6 +52,7 @@ def export_one_scan(scan_name,
         print(f'Num of care instances: {instance_bboxes.shape[0]}')
 
     if max_num_point is not None:
+        max_num_point = int(max_num_point)
         N = mesh_vertices.shape[0]
         if N > max_num_point:
             choices = np.random.choice(N, max_num_point, replace=False)

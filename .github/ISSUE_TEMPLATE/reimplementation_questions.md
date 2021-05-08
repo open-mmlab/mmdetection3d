@@ -30,13 +30,17 @@ A clear and concise description of what the problem you meet and what have you d
 
 **Reproduction**
 1. What command or script did you run?
+
 ```
 A placeholder for the command.
 ```
+
 2. What config dir you run?
+
 ```
 A placeholder for the config.
 ```
+
 3. Did you make any modifications on the code or config? Did you understand what you have modified?
 4. What dataset did you use?
 
@@ -50,6 +54,7 @@ A placeholder for the config.
 **Results**
 
 If applicable, paste the related results here, e.g., what you expect and what you get.
+
 ```
 A placeholder for results comparison
 ```

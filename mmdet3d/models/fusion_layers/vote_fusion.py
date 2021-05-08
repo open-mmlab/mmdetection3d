@@ -2,7 +2,7 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.core.bbox import Coord3DMode, points_cam2img
-from ..registry import FUSION_LAYERS
+from ..builder import FUSION_LAYERS
 from . import apply_3d_transformation, bbox_2d_transform, coord_2d_transform
 
 EPS = 1e-6
@@ -196,6 +196,10 @@ class VoteFusion(nn.Module):
             img_flatten /= 255.
 
             # take the normalized pixel value as texture cue
+            uv_rescaled[:, 0] = torch.clamp(uv_rescaled[:, 0].round(), 0,
+                                            img_shape[1] - 1)
+            uv_rescaled[:, 1] = torch.clamp(uv_rescaled[:, 1].round(), 0,
+                                            img_shape[0] - 1)
             uv_flatten = uv_rescaled[:, 1].round() * \
                 img_shape[1] + uv_rescaled[:, 0].round()
             uv_expanded = uv_flatten.unsqueeze(0).expand(3, -1).long()

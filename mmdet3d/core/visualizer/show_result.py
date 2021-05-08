@@ -3,6 +3,8 @@ import numpy as np
 import trimesh
 from os import path as osp
 
+from .image_vis import draw_depth_bbox3d_on_img, draw_lidar_bbox3d_on_img
+
 
 def _write_obj(points, out_filename):
     """Write points into ``obj`` format for meshlab visualization.
@@ -68,7 +70,13 @@ def _write_oriented_bbox(scene_bbox, out_filename):
     return
 
 
-def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
+def show_result(points,
+                gt_bboxes,
+                pred_bboxes,
+                out_dir,
+                filename,
+                show=True,
+                snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -77,8 +85,12 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        show (bool): Visualize the results online. Defaults to True.
+        show (bool): Visualize the results online. Defaults to False.
+        snapshot (bool): Whether to save the online results. Defaults to False.
     """
+    result_path = osp.join(out_dir, filename)
+    mmcv.mkdir_or_exist(result_path)
+
     if show:
         from .open3d_vis import Visualizer
 
@@ -87,10 +99,9 @@ def show_result(points, gt_bboxes, pred_bboxes, out_dir, filename, show=True):
             vis.add_bboxes(bbox3d=pred_bboxes)
         if gt_bboxes is not None:
             vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
-        vis.show()
-
-    result_path = osp.join(out_dir, filename)
-    mmcv.mkdir_or_exist(result_path)
+        show_path = osp.join(result_path,
+                             f'{filename}_online.png') if snapshot else None
+        vis.show(show_path)
 
     if points is not None:
         _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
@@ -119,7 +130,8 @@ def show_seg_result(points,
                     filename,
                     palette,
                     ignore_index=None,
-                    show=False):
+                    show=False,
+                    snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -132,6 +144,8 @@ def show_seg_result(points,
         ignore_index (int, optional): The label index to be ignored, e.g. \
             unannotated points. Defaults to None.
         show (bool, optional): Visualize the results online. Defaults to False.
+        snapshot (bool, optional): Whether to save the online results. \
+            Defaults to False.
     """
     # we need 3D coordinates to visualize segmentation mask
     if gt_seg is not None or pred_seg is not None:
@@ -154,6 +168,9 @@ def show_seg_result(points,
         pred_seg_color = np.concatenate([points[:, :3], pred_seg_color],
                                         axis=1)
 
+    result_path = osp.join(out_dir, filename)
+    mmcv.mkdir_or_exist(result_path)
+
     # online visualization of segmentation mask
     # we show three masks in a row, scene_points, gt_mask, pred_mask
     if show:
@@ -164,10 +181,9 @@ def show_seg_result(points,
             vis.add_seg_mask(gt_seg_color)
         if pred_seg is not None:
             vis.add_seg_mask(pred_seg_color)
-        vis.show()
-
-    result_path = osp.join(out_dir, filename)
-    mmcv.mkdir_or_exist(result_path)
+        show_path = osp.join(result_path,
+                             f'{filename}_online.png') if snapshot else None
+        vis.show(show_path)
 
     if points is not None:
         _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
@@ -188,7 +204,7 @@ def show_multi_modality_result(img,
                                filename,
                                depth_bbox=False,
                                img_metas=None,
-                               show=True,
+                               show=False,
                                gt_bbox_color=(61, 102, 255),
                                pred_bbox_color=(241, 101, 72)):
     """Convert multi-modality detection results into 2D results.
@@ -205,16 +221,16 @@ def show_multi_modality_result(img,
         filename (str): Filename of the current frame.
         depth_bbox (bool): Whether we are projecting camera bbox or lidar bbox.
         img_metas (dict): Used in projecting cameta bbox.
-        show (bool): Visualize the results online. Defaults to True.
+        show (bool): Visualize the results online. Defaults to False.
         gt_bbox_color (str or tuple(int)): Color of bbox lines.
            The tuple of color should be in BGR order. Default: (255, 102, 61)
         pred_bbox_color (str or tuple(int)): Color of bbox lines.
            The tuple of color should be in BGR order. Default: (72, 101, 241)
     """
     if depth_bbox:
-        from .open3d_vis import draw_depth_bbox3d_on_img as draw_bbox
+        draw_bbox = draw_depth_bbox3d_on_img
     else:
-        from .open3d_vis import draw_lidar_bbox3d_on_img as draw_bbox
+        draw_bbox = draw_lidar_bbox3d_on_img
 
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)

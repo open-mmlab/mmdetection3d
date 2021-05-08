@@ -185,7 +185,12 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     return result, data
 
 
-def show_result_meshlab(data, result, out_dir, score_thr=0.0):
+def show_result_meshlab(data,
+                        result,
+                        out_dir,
+                        score_thr=0.0,
+                        show=False,
+                        snapshot=False):
     """Show result by meshlab.
 
     Args:
@@ -193,6 +198,8 @@ def show_result_meshlab(data, result, out_dir, score_thr=0.0):
         result (dict): Predicted result from model.
         out_dir (str): Directory to save visualized result.
         score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
+        show (bool): Visualize the results online. Defaults to False.
+        snapshot (bool): Whether to save the online results. Defaults to False.
     """
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
@@ -220,7 +227,14 @@ def show_result_meshlab(data, result, out_dir, score_thr=0.0):
         show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
     else:
         show_bboxes = deepcopy(pred_bboxes)
-    show_result(points, None, show_bboxes, out_dir, file_name, show=False)
+    show_result(
+        points,
+        None,
+        show_bboxes,
+        out_dir,
+        file_name,
+        show=show,
+        snapshot=snapshot)
 
     if 'img' not in data.keys():
         return out_dir, file_name
@@ -242,7 +256,7 @@ def show_result_meshlab(data, result, out_dir, score_thr=0.0):
             data['img_metas'][0][0]['lidar2img'],
             out_dir,
             file_name,
-            show=False)
+            show=show)
     elif box_mode == Box3DMode.DEPTH:
         if 'calib' not in data.keys():
             raise NotImplementedError(
@@ -260,7 +274,7 @@ def show_result_meshlab(data, result, out_dir, score_thr=0.0):
             file_name,
             depth_bbox=True,
             img_metas=data['img_metas'][0][0],
-            show=False)
+            show=show)
     else:
         raise NotImplementedError(
             f'visualization of {box_mode} bbox is not supported')

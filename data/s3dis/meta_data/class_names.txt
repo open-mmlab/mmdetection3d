@@ -1,0 +1,13 @@
+ceiling
+floor
+wall
+beam
+column
+window
+door
+table
+chair
+sofa
+bookcase
+board
+clutter

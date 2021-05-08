@@ -168,6 +168,21 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
 
 data = dict(
     samples_per_gpu=4,
@@ -217,7 +232,7 @@ momentum_config = dict(
     cyclic_times=1,
     step_ratio_up=0.4)
 checkpoint_config = dict(interval=1)
-evaluation = dict(interval=2)
+evaluation = dict(interval=2, pipeline=eval_pipeline)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -227,7 +242,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-runner = dict(max_epochs=80)
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/sec_secfpn_80e'

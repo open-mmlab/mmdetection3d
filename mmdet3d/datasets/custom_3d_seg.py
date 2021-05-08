@@ -1,12 +1,13 @@
 import mmcv
 import numpy as np
 import tempfile
-import torch
+import warnings
 from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
 from .pipelines import Compose
+from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -142,6 +143,7 @@ class Custom3DSegDataset(Dataset):
         results['pts_seg_fields'] = []
         results['mask_fields'] = []
         results['seg_fields'] = []
+        results['gt_bboxes_3d'] = []
 
     def prepare_train_data(self, index):
         """Training data preparation.
@@ -267,6 +269,8 @@ class Custom3DSegDataset(Dataset):
             return np.arange(len(self.data_infos)).astype(np.int32), \
                 np.ones(len(self.CLASSES)).astype(np.float32)
 
+        # we may need to re-sample different scenes according to scene_idxs
+        # this is necessary for indoor scene segmentation such as ScanNet
         if scene_idxs is None:
             scene_idxs = np.arange(len(self.data_infos))
         if isinstance(scene_idxs, str):
@@ -308,27 +312,13 @@ class Custom3DSegDataset(Dataset):
         mmcv.dump(outputs, out)
         return outputs, tmp_dir
 
-    def convert_to_label(self, mask):
-        """Convert class_id in segmentation mask to label."""
-        # TODO: currently only support loading from local
-        # TODO: may need to consider ceph data storage in the future
-        if isinstance(mask, str):
-            if mask.endswith('npy'):
-                mask = np.load(mask)
-            else:
-                mask = np.fromfile(mask, dtype=np.long)
-        mask_copy = mask.copy()
-        for class_id, label in self.label_map.items():
-            mask_copy[mask == class_id] = label
-
-        return mask_copy
-
     def evaluate(self,
                  results,
                  metric=None,
                  logger=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluate.
 
         Evaluation in semantic segmentation protocol.
@@ -342,6 +332,8 @@ class Custom3DSegDataset(Dataset):
                 Defaults to False.
             out_dir (str, optional): Path to save the visualization results.
                 Defaults to None.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
 
         Returns:
             dict: Evaluation results.
@@ -354,13 +346,13 @@ class Custom3DSegDataset(Dataset):
         assert isinstance(
             results[0], dict
         ), f'Expect elements in results to be dict, got {type(results[0])}.'
+
+        load_pipeline = self._get_pipeline(pipeline)
         pred_sem_masks = [result['semantic_mask'] for result in results]
         gt_sem_masks = [
-            torch.from_numpy(
-                self.convert_to_label(
-                    osp.join(self.data_root,
-                             data_info['pts_semantic_mask_path'])))
-            for data_info in self.data_infos
+            self._extract_data(
+                i, load_pipeline, 'pts_semantic_mask', load_annos=True)
+            for i in range(len(self.data_infos))
         ]
         ret_dict = seg_eval(
             gt_sem_masks,
@@ -368,8 +360,9 @@ class Custom3DSegDataset(Dataset):
             self.label2cat,
             self.ignore_index,
             logger=logger)
+
         if show:
-            self.show(pred_sem_masks, out_dir)
+            self.show(pred_sem_masks, out_dir, pipeline=pipeline)
 
         return ret_dict
 
@@ -382,6 +375,84 @@ class Custom3DSegDataset(Dataset):
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
 
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        raise NotImplementedError('_build_default_pipeline is not implemented '
+                                  f'for dataset {self.__class__.__name__}')
+
+    def _get_pipeline(self, pipeline):
+        """Get data loading pipeline in self.show/evaluate function.
+
+        Args:
+            pipeline (list[dict] | None): Input pipeline. If None is given, \
+                get from self.pipeline.
+        """
+        if pipeline is None:
+            if not hasattr(self, 'pipeline') or self.pipeline is None:
+                warnings.warn(
+                    'Use default pipeline for data loading, this may cause '
+                    'errors when data is on ceph')
+                return self._build_default_pipeline()
+            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
+            return Compose(loading_pipeline)
+        return Compose(pipeline)
+
+    @staticmethod
+    def _get_data(results, key):
+        """Extract and return the data corresponding to key in result dict.
+
+        Args:
+            results (dict): Data loaded using pipeline.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor | None: Data term.
+        """
+        if key not in results.keys():
+            return None
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
+        return data
+
+    def _extract_data(self, index, pipeline, key, load_annos=False):
+        """Load data using input pipeline and extract data according to key.
+
+        Args:
+            index (int): Index for accessing the target data.
+            pipeline (:obj:`Compose`): Composed data loading pipeline.
+            key (str | list[str]): One single or a list of data key.
+            load_annos (bool): Whether to load data annotations.
+                If True, need to set self.test_mode as False before loading.
+
+        Returns:
+            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
+                A single or a list of loaded data.
+        """
+        assert pipeline is not None, 'data loading pipeline is not provided'
+        # when we want to load ground-truth via pipeline (e.g. bbox, seg mask)
+        # we need to set self.test_mode as False so that we have 'annos'
+        if load_annos:
+            original_test_mode = self.test_mode
+            self.test_mode = False
+        input_dict = self.get_data_info(index)
+        self.pre_pipeline(input_dict)
+        example = pipeline(input_dict)
+
+        # extract data items according to keys
+        if isinstance(key, str):
+            data = self._get_data(example, key)
+        else:
+            data = [self._get_data(example, k) for k in key]
+        if load_annos:
+            self.test_mode = original_test_mode
+
+        return data
+
     def __len__(self):
         """Return the length of scene_idxs.
 
@@ -392,6 +463,10 @@ class Custom3DSegDataset(Dataset):
 
     def __getitem__(self, idx):
         """Get item from infos according to the given index.
+
+        In indoor scene segmentation task, each scene contains millions of
+        points. However, we only sample less than 10k points within a patch
+        each time. Therefore, we use `scene_idxs` to re-sample different rooms.
 
         Returns:
             dict: Data dictionary of the corresponding index.

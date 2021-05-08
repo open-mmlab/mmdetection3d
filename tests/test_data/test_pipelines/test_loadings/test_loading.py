@@ -12,6 +12,7 @@ from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
 
 
 def test_load_points_from_indoor_file():
+    # test on SUN RGB-D dataset with shifted height
     sunrgbd_info = mmcv.load('./tests/data/sunrgbd/sunrgbd_infos.pkl')
     sunrgbd_load_points_from_file = LoadPointsFromFile(
         coord_type='DEPTH', load_dim=6, shift_height=True)
@@ -31,6 +32,7 @@ def test_load_points_from_indoor_file():
     data_path = './tests/data/scannet'
     scannet_info = scannet_info[0]
 
+    # test on ScanNet dataset with shifted height
     scannet_results['pts_filename'] = osp.join(data_path,
                                                scannet_info['pts_path'])
     scannet_results = scannet_load_data(scannet_results)
@@ -63,6 +65,28 @@ def test_load_points_from_indoor_file():
 
     scannet_point_cloud = scannet_point_cloud.tensor.numpy()
     assert scannet_point_cloud.shape == (100, 7)
+
+    # test load point cloud on S3DIS with color
+    data_path = './tests/data/s3dis'
+    s3dis_info = mmcv.load('./tests/data/s3dis/s3dis_infos.pkl')
+    s3dis_info = s3dis_info[0]
+    s3dis_load_data = LoadPointsFromFile(
+        coord_type='DEPTH',
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5],
+        shift_height=False,
+        use_color=True)
+
+    s3dis_results = dict()
+
+    s3dis_results['pts_filename'] = osp.join(data_path, s3dis_info['pts_path'])
+    s3dis_results = s3dis_load_data(s3dis_results)
+    s3dis_point_cloud = s3dis_results['points']
+    assert s3dis_point_cloud.points_dim == 6
+    assert s3dis_point_cloud.attribute_dims == dict(color=[3, 4, 5])
+
+    s3dis_point_cloud = s3dis_point_cloud.tensor.numpy()
+    assert s3dis_point_cloud.shape == (100, 6)
 
 
 def test_load_points_from_outdoor_file():
@@ -141,6 +165,33 @@ def test_load_annotations3D():
     assert scannet_pts_instance_mask.shape == (100, )
     assert scannet_pts_semantic_mask.shape == (100, )
 
+    # Test s3dis LoadAnnotations3D
+    s3dis_info = mmcv.load('./tests/data/s3dis/s3dis_infos.pkl')[0]
+    s3dis_load_annotations3D = LoadAnnotations3D(
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=True,
+        with_seg_3d=True)
+    s3dis_results = dict()
+    data_path = './tests/data/s3dis'
+
+    # prepare input of loading pipeline
+    s3dis_results['ann_info'] = dict()
+    s3dis_results['ann_info']['pts_instance_mask_path'] = osp.join(
+        data_path, s3dis_info['pts_instance_mask_path'])
+    s3dis_results['ann_info']['pts_semantic_mask_path'] = osp.join(
+        data_path, s3dis_info['pts_semantic_mask_path'])
+
+    s3dis_results['pts_mask_fields'] = []
+    s3dis_results['pts_seg_fields'] = []
+
+    s3dis_results = s3dis_load_annotations3D(s3dis_results)
+
+    s3dis_pts_instance_mask = s3dis_results['pts_instance_mask']
+    s3dis_pts_semantic_mask = s3dis_results['pts_semantic_mask']
+    assert s3dis_pts_instance_mask.shape == (100, )
+    assert s3dis_pts_semantic_mask.shape == (100, )
+
 
 def test_load_segmentation_mask():
     # Test loading semantic segmentation mask on ScanNet dataset
@@ -166,7 +217,7 @@ def test_load_segmentation_mask():
     # Convert class_id to label and assign ignore_index
     scannet_seg_class_mapping = \
         PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
-                              24, 28, 33, 34, 36, 39))
+                              24, 28, 33, 34, 36, 39), 40)
     scannet_results = scannet_seg_class_mapping(scannet_results)
     scannet_pts_semantic_mask = scannet_results['pts_semantic_mask']
 
@@ -176,6 +227,39 @@ def test_load_segmentation_mask():
         20, 20, 20, 20, 20, 20, 20, 0, 1, 2, 13, 16, 1, 1, 1, 6, 2, 12, 20, 3,
         20, 20, 14, 1, 20, 2, 1, 7, 2, 0, 5, 20, 5, 20, 20, 3, 6, 5, 20, 0, 13,
         12, 2, 20, 0, 0, 13, 20, 1, 20, 5, 3, 0, 13, 1, 2, 2, 2, 1
+    ]))
+
+    # Test on S3DIS dataset
+    s3dis_info = mmcv.load('./tests/data/s3dis/s3dis_infos.pkl')[0]
+    s3dis_load_annotations3D = LoadAnnotations3D(
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True)
+    s3dis_results = dict()
+    data_path = './tests/data/s3dis'
+
+    # prepare input of loading pipeline
+    s3dis_results['ann_info'] = dict()
+    s3dis_results['ann_info']['pts_semantic_mask_path'] = osp.join(
+        data_path, s3dis_info['pts_semantic_mask_path'])
+    s3dis_results['pts_seg_fields'] = []
+
+    s3dis_results = s3dis_load_annotations3D(s3dis_results)
+    s3dis_pts_semantic_mask = s3dis_results['pts_semantic_mask']
+    assert s3dis_pts_semantic_mask.shape == (100, )
+
+    # Convert class_id to label and assign ignore_index
+    s3dis_seg_class_mapping = PointSegClassMapping(tuple(range(13)), 13)
+    s3dis_results = s3dis_seg_class_mapping(s3dis_results)
+    s3dis_pts_semantic_mask = s3dis_results['pts_semantic_mask']
+
+    assert np.all(s3dis_pts_semantic_mask == np.array([
+        2, 2, 1, 2, 2, 5, 1, 0, 1, 1, 9, 12, 3, 0, 2, 0, 2, 0, 8, 2, 0, 2, 0,
+        2, 1, 7, 2, 10, 2, 0, 0, 0, 2, 2, 2, 2, 2, 1, 2, 2, 0, 0, 4, 6, 7, 2,
+        1, 2, 0, 1, 7, 0, 2, 2, 2, 0, 2, 2, 1, 12, 0, 2, 2, 2, 2, 7, 2, 2, 0,
+        2, 6, 2, 12, 6, 2, 12, 2, 1, 6, 1, 2, 6, 8, 2, 10, 1, 10, 0, 6, 9, 4,
+        3, 0, 0, 12, 1, 1, 5, 2, 2
     ]))
 
 
@@ -202,6 +286,39 @@ def test_load_points_from_multi_sweeps():
     expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
     assert repr_str == expected_repr_str
     assert points.shape == (403, 4)
+
+
+def test_point_seg_class_mapping():
+    # max_cat_id should larger tham max id in valid_cat_ids
+    with pytest.raises(AssertionError):
+        point_seg_class_mapping = PointSegClassMapping([1, 2, 5], 4)
+
+    sem_mask = np.array([
+        16, 22, 2, 3, 7, 3, 16, 2, 16, 3, 1, 0, 6, 22, 3, 1, 2, 16, 1, 1, 1,
+        38, 7, 25, 16, 25, 3, 40, 38, 3, 33, 6, 16, 6, 16, 1, 38, 1, 1, 2, 8,
+        0, 18, 15, 0, 0, 40, 40, 1, 2, 3, 16, 33, 2, 2, 2, 7, 3, 14, 22, 4, 22,
+        15, 24, 2, 40, 3, 2, 8, 3, 1, 6, 40, 6, 0, 15, 4, 7, 6, 0, 1, 16, 14,
+        3, 0, 1, 1, 16, 38, 2, 15, 6, 4, 1, 16, 2, 3, 3, 3, 2
+    ])
+    valid_cat_ids = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                     34, 36, 39)
+    point_seg_class_mapping = PointSegClassMapping(valid_cat_ids, 40)
+    input_dict = dict(pts_semantic_mask=sem_mask)
+    results = point_seg_class_mapping(input_dict)
+    mapped_sem_mask = results['pts_semantic_mask']
+    expected_sem_mask = np.array([
+        13, 20, 1, 2, 6, 2, 13, 1, 13, 2, 0, 20, 5, 20, 2, 0, 1, 13, 0, 0, 0,
+        20, 6, 20, 13, 20, 2, 20, 20, 2, 16, 5, 13, 5, 13, 0, 20, 0, 0, 1, 7,
+        20, 20, 20, 20, 20, 20, 20, 0, 1, 2, 13, 16, 1, 1, 1, 6, 2, 12, 20, 3,
+        20, 20, 14, 1, 20, 2, 1, 7, 2, 0, 5, 20, 5, 20, 20, 3, 6, 5, 20, 0, 13,
+        12, 2, 20, 0, 0, 13, 20, 1, 20, 5, 3, 0, 13, 1, 2, 2, 2, 1
+    ])
+    repr_str = repr(point_seg_class_mapping)
+    expected_repr_str = f'PointSegClassMapping(valid_cat_ids={valid_cat_ids}'\
+        ', max_cat_id=40)'
+
+    assert np.all(mapped_sem_mask == expected_sem_mask)
+    assert repr_str == expected_repr_str
 
 
 def test_normalize_points_color():
