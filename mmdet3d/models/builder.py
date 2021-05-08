@@ -1,9 +1,9 @@
 import warnings
 from mmcv.utils import Registry
-from mmseg.models.builder import SEGMENTORS
 
 from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
                                   ROI_EXTRACTORS, SHARED_HEADS, build)
+from mmseg.models.builder import SEGMENTORS
 
 VOXEL_ENCODERS = Registry('voxel_encoder')
 MIDDLE_ENCODERS = Registry('middle_encoder')
