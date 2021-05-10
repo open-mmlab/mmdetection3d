@@ -50,7 +50,8 @@ class PointRCNNBboxHead(BaseModule):
                 use_sigmoid=True,
                 reduction='sum',
                 loss_weight=1.0),
-            init_cfg=None):
+            init_cfg=None,
+            pretrained=None):
         super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.in_channels = in_channels

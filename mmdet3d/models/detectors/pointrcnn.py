@@ -30,7 +30,7 @@ class PointRCNN(TwoStage3DDetector):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             pretrained=pretrained,
-            init_cfg=None)
+            init_cfg=init_cfg)
 
     def extract_feat(self, points, img_metas=None):
         """Directly extract features from the backbone+neck.

@@ -3,7 +3,7 @@ import torch
 import trimesh
 from mmcv.cnn import ConvModule
 from mmcv.ops.nms import batched_nms
-from mmcv.runner import force_fp32
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -80,7 +80,7 @@ def write_oriented_bbox(scene_bbox, out_filename):
 
 
 @HEADS.register_module()
-class PointRPNHead(nn.Module):
+class PointRPNHead(BaseModule):
 
     def __init__(self,
                  num_classes,
@@ -107,8 +107,10 @@ class PointRPNHead(nn.Module):
                  size_res_loss=None,
                  semantic_loss=None,
                  bbox_coder=None,
-                 predict_boxes_when_training=False):
-        super().__init__()
+                 predict_boxes_when_training=False,
+                 init_cfg=None,
+                 pretrained=None):
+        super().__init__(init_cfg=init_cfg)
         self.input_channels = input_channels
         self.num_classes = num_classes
         self.num_dir_bins = num_dir_bins
@@ -147,10 +149,6 @@ class PointRPNHead(nn.Module):
             conv_cfg=self.conv_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
-
-    def init_weights(self):
-        """Initialize weights of VoteHead."""
-        pass
 
     @staticmethod
     def make_conv_layers(conv_channels, input_channels, output_channels,

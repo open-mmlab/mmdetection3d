@@ -90,7 +90,7 @@ class PointRCNNROIHead(Base3DRoIHead):
 
     def __init__(self,
                  bbox_head,
-                 num_classes=3,
+                 num_classes=1,
                  depth_normalizer=70,
                  point_roi_extractor=None,
                  train_cfg=None,
@@ -110,9 +110,6 @@ class PointRCNNROIHead(Base3DRoIHead):
             self.point_roi_extractor = build_roi_extractor(point_roi_extractor)
 
         self.init_assigner_sampler()
-
-    def init_weights(self, pretrained):
-        pass
 
     def init_mask_head(self):
         """Initialize mask head, skip since ``PointRCNNROIHead`` does not have
