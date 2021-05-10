@@ -188,6 +188,45 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     return result, data
 
 
+def inference_segmentor(model, pcd):
+    """Inference point cloud with the segmentor.
+
+    Args:
+        model (nn.Module): The loaded segmentor.
+        pcd (str): Point cloud files.
+
+    Returns:
+        tuple: Predicted results and data from pipeline.
+    """
+    cfg = model.cfg
+    device = next(model.parameters()).device  # model device
+    # build the data pipeline
+    test_pipeline = deepcopy(cfg.data.test.pipeline)
+    test_pipeline = Compose(test_pipeline)
+    data = dict(
+        pts_filename=pcd,
+        img_fields=[],
+        bbox3d_fields=[],
+        pts_mask_fields=[],
+        pts_seg_fields=[],
+        bbox_fields=[],
+        mask_fields=[],
+        seg_fields=[])
+    data = test_pipeline(data)
+    data = collate([data], samples_per_gpu=1)
+    if next(model.parameters()).is_cuda:
+        # scatter to specified GPU
+        data = scatter(data, [device.index])[0]
+    else:
+        # this is a workaround to avoid the bug of MMDataParallel
+        data['img_metas'] = data['img_metas'][0].data
+        data['points'] = data['points'][0].data
+    # forward the model
+    with torch.no_grad():
+        result = model(return_loss=False, rescale=True, **data)
+    return result, data
+
+
 def show_det_result_meshlab(data,
                             result,
                             out_dir,

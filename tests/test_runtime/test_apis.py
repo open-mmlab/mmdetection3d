@@ -7,12 +7,13 @@ from mmcv.parallel import MMDataParallel
 from os.path import dirname, exists, join
 
 from mmdet3d.apis import (convert_SyncBN, inference_detector,
-                          inference_multi_modality_detector, init_model,
-                          show_result_meshlab, single_gpu_test)
+                          inference_multi_modality_detector,
+                          inference_segmentor, init_model, show_result_meshlab,
+                          single_gpu_test)
 from mmdet3d.core import Box3DMode
 from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.datasets import build_dataloader, build_dataset
-from mmdet3d.models import build_detector
+from mmdet3d.models import build_model
 
 
 def _get_config_directory():
@@ -218,9 +219,10 @@ def test_inference_detector():
 
 
 def test_inference_multi_modality_detector():
-    # indoor scene
+    # these two multi-modality models both only have GPU implementations
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
+    # indoor scene
     pcd = 'tests/data/sunrgbd/points/000001.bin'
     img = 'tests/data/sunrgbd/sunrgbd_trainval/image/000001.jpg'
     ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
@@ -253,12 +255,27 @@ def test_inference_multi_modality_detector():
     assert labels_3d.shape[0] >= 0
 
 
+def test_inference_segmentor():
+    # PN2 only has GPU implementations
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pcd = 'tests/data/scannet/points/scene0000_00.bin'
+    segmentor_cfg = 'configs/pointnet2/pointnet2_ssg_' \
+                    '16x2_scannet-3d-20class.py'
+    segmentor = init_model(segmentor_cfg, device='cuda:0')
+    results = inference_segmentor(segmentor, pcd)
+    seg_3d = results[0][0]['semantic_mask']
+    assert seg_3d.shape == torch.Size([100])
+    assert seg_3d.min() >= 0
+    assert seg_3d.max() <= 19
+
+
 def test_single_gpu_test():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     cfg = _get_config_module('votenet/votenet_16x8_sunrgbd-3d-10class.py')
     cfg.model.train_cfg = None
-    model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+    model = build_model(cfg.model, test_cfg=cfg.get('test_cfg'))
     dataset_cfg = cfg.data.test
     dataset_cfg.data_root = './tests/data/sunrgbd'
     dataset_cfg.ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
