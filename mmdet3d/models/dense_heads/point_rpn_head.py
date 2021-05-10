@@ -88,7 +88,7 @@ class PointRPNHead(BaseModule):
                  input_channels,
                  train_cfg,
                  test_cfg,
-                 bbox_codesize=52,
+                 bbox_codesize=30,
                  conv_channels=(512, 512),
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
@@ -496,6 +496,7 @@ class PointRPNHead(BaseModule):
 
         if nms_selected.shape[0] > self.test_cfg.max_output_num:
             nms_selected = nms_selected[:self.test_cfg.max_output_num]
+
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores >= self.test_cfg.score_thr)
         nonempty_box_inds = torch.nonzero(

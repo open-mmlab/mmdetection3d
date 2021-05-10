@@ -195,7 +195,6 @@ class PointRCNNBboxHead(BaseModule):
              pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
-
         # calculate class loss
         cls_flat = cls_score.view(-1)
         loss_cls = self.loss_cls(cls_flat, labels, label_weights)
