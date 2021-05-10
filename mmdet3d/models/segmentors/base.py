@@ -10,7 +10,11 @@ from mmseg.models.segmentors import BaseSegmentor
 
 
 class Base3DSegmentor(BaseSegmentor):
-    """Base class for segmentors."""
+    """Base class for 3D segmentors.
+
+    The main difference with `BaseSegmentor` is that we modify the keys in
+    data_dict and use a 3D seg specific visualization function.
+    """
 
     def forward_test(self, points, img_metas, **kwargs):
         """
@@ -68,9 +72,9 @@ class Base3DSegmentor(BaseSegmentor):
                 segmentation map. If None is given, random palette will be
                 generated. Default: None
             out_dir (str): Output directory of visualization result.
-        ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
-            Defaults to None.
+            ignore_index (int, optional): The label index to be ignored, e.g.
+                unannotated points. If None is given, set to len(self.CLASSES).
+                Defaults to None.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
         if palette is None:

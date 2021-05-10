@@ -69,7 +69,7 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
         """Forward function for training.
 
         Args:
-            inputs (list[Tensor]): List of multi-level point features.
+            inputs (list[torch.Tensor]): List of multi-level point features.
             img_metas (list[dict]): Meta information of each sample.
             pts_semantic_mask (torch.Tensor): Semantic segmentation masks
                 used if the architecture supports semantic segmentation task.

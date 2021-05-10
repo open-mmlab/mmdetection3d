@@ -36,7 +36,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
 
         self.init_weights(pretrained=pretrained)
 
-        assert self.with_decode_head
+        assert self.with_decode_head, \
+            '3D EncoderDecoder Segmentor should have a decode_head'
 
     def _init_decode_head(self, decode_head):
         """Initialize ``decode_head``"""
@@ -133,6 +134,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                     `patch_points`, of shape [K, N].
         """
         device = points.device
+        # we assume the first three dims are points' 3D coordinates
+        # and the rest dims are their per-point features
         coords = points[:, :3]
         feats = points[:, 3:]
 
@@ -197,7 +200,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         patch_idxs = torch.cat(patch_idxs, dim=0)
 
         # make sure all points are sampled at least once
-        assert torch.unique(patch_idxs).shape[0] == points.shape[0]
+        assert torch.unique(patch_idxs).shape[0] == points.shape[0], \
+            'some points are not sampled in sliding inference'
 
         return patch_points, patch_idxs
 
