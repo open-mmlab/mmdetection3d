@@ -219,7 +219,8 @@ class WaymoDataset(KittiDataset):
                  pklfile_prefix=None,
                  submission_prefix=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -236,6 +237,8 @@ class WaymoDataset(KittiDataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -346,7 +349,7 @@ class WaymoDataset(KittiDataset):
             tmp_dir.cleanup()
 
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
         return ap_dict
 
     def bbox2result_kitti(self,

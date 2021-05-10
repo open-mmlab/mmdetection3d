@@ -21,7 +21,8 @@ train_pipeline = [
     dict(
         type='PointSegClassMapping',
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39)),
+                       36, 39),
+        max_cat_id=40),
     dict(type='IndoorPointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
@@ -72,6 +73,21 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        load_dim=6,
+        use_dim=[0, 1, 2]),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
 
 data = dict(
     samples_per_gpu=8,
@@ -105,3 +121,5 @@ data = dict(
         classes=class_names,
         test_mode=True,
         box_type_3d='Depth'))
+
+evaluation = dict(pipeline=eval_pipeline)

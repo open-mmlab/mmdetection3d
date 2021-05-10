@@ -57,7 +57,8 @@ def export(mesh_file,
            seg_file,
            meta_file,
            label_map_file,
-           output_file=None):
+           output_file=None,
+           test_mode=False):
     """Export original files to vert, ins_label, sem_label and bbox file.
 
     Args:
@@ -68,6 +69,8 @@ def export(mesh_file,
         label_map_file (str): Path of the label_map_file.
         output_file (str): Path of the output folder.
             Default: None.
+        test_mode (bool): Whether is generating training data without labels.
+            Default: False.
 
     It returns a tuple, which containts the the following things:
         np.ndarray: Vertices of points data.
@@ -83,6 +86,9 @@ def export(mesh_file,
 
     # Load scene axis alignment matrix
     lines = open(meta_file).readlines()
+    # TODO: test set data doesn't have align_matrix!
+    # TODO: save align_matrix and move align step to pipeline in the future
+    axis_align_matrix = np.eye(4)
     for line in lines:
         if 'axisAlignment' in line:
             axis_align_matrix = [
@@ -97,49 +103,56 @@ def export(mesh_file,
     mesh_vertices[:, 0:3] = pts[:, 0:3]
 
     # Load semantic and instance labels
-    object_id_to_segs, label_to_segs = read_aggregation(agg_file)
-    seg_to_verts, num_verts = read_segmentation(seg_file)
-    label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)
-    object_id_to_label_id = {}
-    for label, segs in label_to_segs.items():
-        label_id = label_map[label]
-        for seg in segs:
-            verts = seg_to_verts[seg]
-            label_ids[verts] = label_id
-    instance_ids = np.zeros(
-        shape=(num_verts), dtype=np.uint32)  # 0: unannotated
-    num_instances = len(np.unique(list(object_id_to_segs.keys())))
-    for object_id, segs in object_id_to_segs.items():
-        for seg in segs:
-            verts = seg_to_verts[seg]
-            instance_ids[verts] = object_id
-            if object_id not in object_id_to_label_id:
-                object_id_to_label_id[object_id] = label_ids[verts][0]
-    instance_bboxes = np.zeros((num_instances, 7))
-    for obj_id in object_id_to_segs:
-        label_id = object_id_to_label_id[obj_id]
-        obj_pc = mesh_vertices[instance_ids == obj_id, 0:3]
-        if len(obj_pc) == 0:
-            continue
-        xmin = np.min(obj_pc[:, 0])
-        ymin = np.min(obj_pc[:, 1])
-        zmin = np.min(obj_pc[:, 2])
-        xmax = np.max(obj_pc[:, 0])
-        ymax = np.max(obj_pc[:, 1])
-        zmax = np.max(obj_pc[:, 2])
-        bbox = np.array([(xmin + xmax) / 2, (ymin + ymax) / 2,
-                         (zmin + zmax) / 2, xmax - xmin, ymax - ymin,
-                         zmax - zmin, label_id])
-        # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
-        instance_bboxes[obj_id - 1, :] = bbox
+    if not test_mode:
+        object_id_to_segs, label_to_segs = read_aggregation(agg_file)
+        seg_to_verts, num_verts = read_segmentation(seg_file)
+        label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)
+        object_id_to_label_id = {}
+        for label, segs in label_to_segs.items():
+            label_id = label_map[label]
+            for seg in segs:
+                verts = seg_to_verts[seg]
+                label_ids[verts] = label_id
+        instance_ids = np.zeros(
+            shape=(num_verts), dtype=np.uint32)  # 0: unannotated
+        num_instances = len(np.unique(list(object_id_to_segs.keys())))
+        for object_id, segs in object_id_to_segs.items():
+            for seg in segs:
+                verts = seg_to_verts[seg]
+                instance_ids[verts] = object_id
+                if object_id not in object_id_to_label_id:
+                    object_id_to_label_id[object_id] = label_ids[verts][0]
+        instance_bboxes = np.zeros((num_instances, 7))
+        for obj_id in object_id_to_segs:
+            label_id = object_id_to_label_id[obj_id]
+            obj_pc = mesh_vertices[instance_ids == obj_id, 0:3]
+            if len(obj_pc) == 0:
+                continue
+            xmin = np.min(obj_pc[:, 0])
+            ymin = np.min(obj_pc[:, 1])
+            zmin = np.min(obj_pc[:, 2])
+            xmax = np.max(obj_pc[:, 0])
+            ymax = np.max(obj_pc[:, 1])
+            zmax = np.max(obj_pc[:, 2])
+            bbox = np.array([(xmin + xmax) / 2, (ymin + ymax) / 2,
+                             (zmin + zmax) / 2, xmax - xmin, ymax - ymin,
+                             zmax - zmin, label_id])
+            # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
+            instance_bboxes[obj_id - 1, :] = bbox
+    else:
+        label_ids = None
+        instance_ids = None
+        instance_bboxes = None
+        object_id_to_label_id = None
 
     if output_file is not None:
         np.save(output_file + '_vert.npy', mesh_vertices)
-        np.save(output_file + '_sem_label.npy', label_ids)
-        np.save(output_file + '_ins_label.npy', instance_ids)
-        np.save(output_file + '_bbox.npy', instance_bboxes)
+        if not test_mode:
+            np.save(output_file + '_sem_label.npy', label_ids)
+            np.save(output_file + '_ins_label.npy', instance_ids)
+            np.save(output_file + '_bbox.npy', instance_bboxes)
 
-    return mesh_vertices, label_ids, instance_ids,\
+    return mesh_vertices, label_ids, instance_ids, \
         instance_bboxes, object_id_to_label_id
 
 

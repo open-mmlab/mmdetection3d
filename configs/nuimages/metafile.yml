@@ -1,0 +1,269 @@
+Collections:
+  - Name: Mask R-CNN
+    Metadata:
+      Training Data: nuImages
+      Training Techniques:
+        - SGD with Momentum
+      Architecture:
+        - RoI Align
+        - RPN
+    Paper:
+      - https://arxiv.org/abs/1703.06870
+      - https://arxiv.org/abs/1712.00726v1
+    README: configs/nuimages/README.md
+
+Models:
+  - Name: mask_rcnn_r50_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_r50_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 7.4
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 47.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 38.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_fpn_1x_nuim/mask_rcnn_r50_fpn_1x_nuim_20201008_195238-e99f5182.pth
+
+  - Name: mask_rcnn_r50_fpn_coco-2x_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_r50_fpn_coco-2x_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 7.4
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 49.7
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 40.5
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_fpn_coco-2x_1x_nuim/mask_rcnn_r50_fpn_coco-2x_1x_nuim_20201008_195238-b1742a60.pth
+
+  - Name: mask_rcnn_r50_caffe_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_r50_caffe_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 7.0
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 47.7
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 38.2
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_1x_nuim/
+
+  - Name: mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 7.0
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 49.9
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 40.8
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim/mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim_20201008_195305-661a992e.pth
+
+  - Name: mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim.py
+    Metadata:
+      Training Memory (GB): 7.0
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 50.6
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 41.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim/mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim_20201009_125002-5529442c.pth
+
+  - Name: mask_rcnn_r101_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_r101_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 10.9
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 48.9
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 39.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r101_fpn_1x_nuim/mask_rcnn_r101_fpn_1x_nuim_20201024_134803-65c7623a.pth
+
+  - Name: mask_rcnn_x101_32x4d_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/mask_rcnn_x101_32x4d_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 13.3
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 50.4
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 40.5
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_x101_32x4d_fpn_1x_nuim/mask_rcnn_x101_32x4d_fpn_1x_nuim_20201024_135741-b699ab37.pth
+
+  - Name: cascade_mask_rcnn_r50_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 8.9
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 50.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 40.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_1x_nuim/cascade_mask_rcnn_r50_fpn_1x_nuim_20201008_195342-1147c036.pth
+
+  - Name: cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 8.9
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 52.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 42.2
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim_20201009_124158-ad0540e3.pth
+
+  - Name: cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim.py
+    Metadata:
+      Training Memory (GB): 8.9
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 52.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 42.2
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth
+
+  - Name: cascade_mask_rcnn_r101_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/cascade_mask_rcnn_r101_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 12.5
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 51.5
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 40.7
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r101_fpn_1x_nuim/cascade_mask_rcnn_r101_fpn_1x_nuim_20201024_134804-45215b1e.pth
+
+  - Name: cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 14.9
+      Training Resources: 8x TITAN Xp
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 52.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 41.6
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim_20201024_135753-e0e49778.pth
+
+  - Name: htc_r50_fpn_coco-20e_1x_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/htc_r50_fpn_coco-20e_1x_nuim.py
+    Metadata:
+      Training Memory (GB): 11.6
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 53.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 43.8
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/htc_r50_fpn_coco-20e_1x_nuim/htc_r50_fpn_coco-20e_1x_nuim_20201010_070203-0b53a65e.pth
+
+  - Name: htc_r50_fpn_coco-20e_20e_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/htc_r50_fpn_coco-20e_20e_nuim.py
+    Metadata:
+      Training Memory (GB): 11.6
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 54.8
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 44.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/htc_r50_fpn_coco-20e_20e_nuim/htc_r50_fpn_coco-20e_20e_nuim_20201008_211415-d6c60a2c.pth
+
+  - Name: htc_x101_64x4d_fpn_dconv_c3-c5_coco-20e_16x1_20e_nuim
+    In Collection: Mask R-CNN
+    Config: configs/nuimages/htc_x101_64x4d_fpn_dconv_c3-c5_coco-20e_16x1_20e_nuim.py
+    Metadata:
+      Training Memory (GB): 13.3
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: Object Detection
+        Dataset: nuImages
+        Metrics:
+          Box AP: 57.3
+      - Task: Instance Segmentation
+        Dataset: nuImages
+        Metrics:
+          Mask AP: 46.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/htc_x101_64x4d_fpn_dconv_c3-c5_coco-20e_16x1_20e_nuim/htc_x101_64x4d_fpn_dconv_c3-c5_coco-20e_16x1_20e_nuim_20201008_211222-0b16ac4b.pth

@@ -13,7 +13,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     .. code-block:: none
 
-                z front (yaw=0.5*pi)
+                z front (yaw=-0.5*pi)
                /
               /
              0 ------> x right (yaw=0)
@@ -24,8 +24,11 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     The relative coordinate of bottom center in a CAM box is (0.5, 1.0, 0.5),
     and the yaw is around the y axis, thus the rotation axis=1.
-    The yaw is 0 at the positive direction of x axis, and increases from
+    The yaw is 0 at the positive direction of x axis, and decreases from
     the positive direction of x to the positive direction of z.
+
+    A refactor is ongoing to make the three coordinate systems
+    easier to understand and convert between each other.
 
     Attributes:
         tensor (torch.Tensor): Float matrix of N x box_dim.
@@ -293,7 +296,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             dst (:obj:`BoxMode`): The target Box mode.
-            rt_mat (np.dnarray | torch.Tensor): The rotation and translation
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera

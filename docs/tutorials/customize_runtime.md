@@ -20,11 +20,11 @@ To modify the learning rate of the model, the users only need to modify the `lr`
 A customized optimizer could be defined as following.
 
 Assume you want to add a optimizer named `MyOptimizer`, which has arguments `a`, `b`, and `c`.
-You need to create a new directory named `mmdet/core/optimizer`.
-And then implement the new optimizer in a file, e.g., in `mmdet/core/optimizer/my_optimizer.py`:
+You need to create a new directory named `mmdet3d/core/optimizer`.
+And then implement the new optimizer in a file, e.g., in `mmdet3d/core/optimizer/my_optimizer.py`:
 
 ```python
-from .registry import OPTIMIZERS
+from mmcv.runner.optimizer import OPTIMIZERS
 from torch.optim import Optimizer
 
 
@@ -39,24 +39,33 @@ class MyOptimizer(Optimizer):
 
 To find the above module defined above, this module should be imported into the main namespace at first. There are two options to achieve it.
 
-- Modify `mmdet/core/optimizer/__init__.py` to import it.
+- Add `mmdet3d/core/optimizer/__init__.py` to import it.
 
-    The newly defined module should be imported in `mmdet/core/optimizer/__init__.py` so that the registry will
+    The newly defined module should be imported in `mmdet3d/core/optimizer/__init__.py` so that the registry will
     find the new module and add it:
 
 ```python
 from .my_optimizer import MyOptimizer
+
+__all__ = ['MyOptimizer']
+
+```
+
+You also need to import `optimizer` in `mmdet3d/core/__init__.py` by adding:
+
+```python
+from .optimizer import *  # noqa: F401, F403
 ```
 
 - Use `custom_imports` in the config to manually import it
 
 ```python
-custom_imports = dict(imports=['mmdet.core.optimizer.my_optimizer'], allow_failed_imports=False)
+custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_failed_imports=False)
 ```
 
-The module `mmdet.core.optimizer.my_optimizer` will be imported at the beginning of the program and the class `MyOptimizer` is then automatically registered.
+The module `mmdet3d.core.optimizer.my_optimizer` will be imported at the beginning of the program and the class `MyOptimizer` is then automatically registered.
 Note that only the package containing the class `MyOptimizer` should be imported.
-`mmdet.core.optimizer.my_optimizer.MyOptimizer` **cannot** be imported directly.
+`mmdet3d.core.optimizer.my_optimizer.MyOptimizer` **cannot** be imported directly.
 
 Actually users can use a totally different file directory structure using this importing method, as long as the module root can be located in `PYTHONPATH`.
 
@@ -179,7 +188,7 @@ so that 1 epoch for training and 1 epoch for validation will be run iteratively.
 **Note**:
 
 1. The parameters of model will not be updated during val epoch.
-2. Keyword `total_epochs` in the config only controls the number of training epochs and will not affect the validation workflow.
+2. Keyword `max_epochs` in `runner` in the config only controls the number of training epochs and will not affect the validation workflow.
 3. Workflows `[('train', 1), ('val', 1)]` and `[('train', 1)]` will not change the behavior of `EvalHook` because `EvalHook` is called by `after_train_epoch` and validation workflow only affect hooks that are called through `after_val_epoch`. Therefore, the only difference between `[('train', 1), ('val', 1)]` and `[('train', 1)]` is that the runner will calculate losses on validation set after each training epoch.
 
 ## Customize hooks
@@ -190,7 +199,7 @@ so that 1 epoch for training and 1 epoch for validation will be run iteratively.
 
 There are some occasions when the users might need to implement a new hook. MMDetection supports customized hooks in training (#3395) since v2.3.0. Thus the users could implement a hook directly in mmdet or their mmdet-based codebases and use the hook by only modifying the config in training.
 Before v2.3.0, the users need to modify the code to get the hook registered before training starts.
-Here we give an example of creating a new hook in mmdet and using it in training.
+Here we give an example of creating a new hook in mmdet3d and using it in training.
 
 ```python
 from mmcv.runner import HOOKS, Hook
@@ -225,21 +234,24 @@ Depending on the functionality of the hook, the users need to specify what the h
 
 #### 2. Register the new hook
 
-Then we need to make `MyHook` imported. Assuming the file is in `mmdet/core/utils/my_hook.py` there are two ways to do that:
+Then we need to make `MyHook` imported. Assuming the file is in `mmdet3d/core/utils/my_hook.py` there are two ways to do that:
 
-- Modify `mmdet/core/utils/__init__.py` to import it.
+- Modify `mmdet3d/core/utils/__init__.py` to import it.
 
-    The newly defined module should be imported in `mmdet/core/utils/__init__.py` so that the registry will
+    The newly defined module should be imported in `mmdet3d/core/utils/__init__.py` so that the registry will
     find the new module and add it:
 
 ```python
 from .my_hook import MyHook
+
+__all__ = [..., 'MyHook']
+
 ```
 
 - Use `custom_imports` in the config to manually import it
 
 ```python
-custom_imports = dict(imports=['mmdet.core.utils.my_hook'], allow_failed_imports=False)
+custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
 ```
 
 #### 3. Modify the config

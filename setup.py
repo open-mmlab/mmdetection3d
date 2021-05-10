@@ -147,7 +147,8 @@ if __name__ == '__main__':
         author_email='zwwdev@gmail.com',
         keywords='computer vision, 3D object detection',
         url='https://github.com/open-mmlab/mmdetection3d',
-        packages=find_packages(exclude=('configs', 'tools', 'demo')),
+        packages=find_packages(),
+        include_package_data=True,
         package_data={'mmdet3d.ops': ['*/*.so']},
         classifiers=[
             'Development Status :: 4 - Beta',
@@ -219,13 +220,8 @@ if __name__ == '__main__':
             make_cuda_ext(
                 name='roipoint_pool3d_ext',
                 module='mmdet3d.ops.roipoint_pool3d',
-                sources=[
-                    'src/roipoint_pool3d.cpp'
-                ],
-                sources_cuda=[
-                    'src/roipoint_pool3d_kernel.cu'
-                ]
-            ),
+                sources=['src/roipoint_pool3d.cpp'],
+                sources_cuda=['src/roipoint_pool3d_kernel.cu']),
             make_cuda_ext(
                 name='ball_query_ext',
                 module='mmdet3d.ops.ball_query',

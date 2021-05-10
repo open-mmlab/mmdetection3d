@@ -18,9 +18,11 @@ A clear and concise description of what the bug is.
 
 **Reproduction**
 1. What command or script did you run?
+
 ```
 A placeholder for the command.
 ```
+
 2. Did you make any modifications on the code or config? Did you understand what you have modified?
 3. What dataset did you use?
 
@@ -33,6 +35,7 @@ A placeholder for the command.
 
 **Error traceback**
 If applicable, paste the error trackback here.
+
 ```
 A placeholder for trackback.
 ```

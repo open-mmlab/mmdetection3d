@@ -14,7 +14,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     .. code-block:: none
 
-                    up z    y front (yaw=0.5*pi)
+                    up z    y front (yaw=-0.5*pi)
                        ^   ^
                        |  /
                        | /
@@ -22,8 +22,13 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     The relative coordinate of bottom center in a Depth box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
-    The yaw is 0 at the positive direction of x axis, and increases from
+    The yaw is 0 at the positive direction of x axis, and decreases from
     the positive direction of x to the positive direction of y.
+    Also note that rotation of DepthInstance3DBoxes is counterclockwise,
+    which is reverse to the definition of the yaw angle (clockwise).
+
+    A refactor is ongoing to make the three coordinate systems
+    easier to understand and convert between each other.
 
     Attributes:
         tensor (torch.Tensor): Float matrix of N x box_dim.

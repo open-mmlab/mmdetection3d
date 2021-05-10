@@ -201,7 +201,8 @@ train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for
     dict(
         type='PointSegClassMapping',  # Declare valid categories, refer to mmdet3d.datasets.pipelines.point_seg_class_mapping for more details
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39)),
+                       36, 39),  # all valid categories ids
+        max_cat_id=40),  # max possible category id in input segmentation mask
     dict(type='IndoorPointSample',  # Sample indoor points, refer to mmdet3d.datasets.pipelines.indoor_sample for more details
             num_points=40000),  # Number of points to be sampled
     dict(type='IndoorFlipData',  # Augmentation pipeline that flip points and 3d boxes
@@ -242,6 +243,22 @@ test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for m
     dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
         keys=['points'])
 ]
+eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmdet3d.datasets.pipelines for more details
+    dict(
+        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.pipelines.indoor_loading for more details
+        shift_height=True,  # Whether to use shifted height
+        load_dim=6,  # The dimension of the loaded points
+        use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
+    dict(
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formating for more details
+        class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                     'window', 'bookshelf', 'picture', 'counter', 'desk',
+                     'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                     'sink', 'bathtub', 'garbagebin')),
+        with_label=False),
+    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
+        keys=['points'])
+]
 data = dict(
     samples_per_gpu=8,  # Batch size of a single GPU
     workers_per_gpu=4,  # Worker to pre-fetch data for each single GPU
@@ -267,7 +284,8 @@ data = dict(
                 dict(
                     type='PointSegClassMapping',
                     valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                                   28, 33, 34, 36, 39)),
+                                   28, 33, 34, 36, 39),
+                    max_cat_id=40),
                 dict(type='IndoorPointSample', num_points=40000),
                 dict(
                     type='IndoorFlipData',
@@ -347,6 +365,22 @@ data = dict(
                  'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                  'garbagebin'),  # Names of classes
         test_mode=True))  # Whether to use test mode
+evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created before
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        load_dim=6,
+        use_dim=[0, 1, 2]),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                     'window', 'bookshelf', 'picture', 'counter', 'desk',
+                     'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                     'sink', 'bathtub', 'garbagebin'),
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+])
 lr = 0.008  # Learning rate of optimizers
 optimizer = dict(  # Config used to build optimizer, support all the optimizers in PyTorch whose arguments are also the same as those in PyTorch
     type='Adam',  # Type of optimizers,   # Type of optimizers, refer to https://github.com/open-mmlab/mmdetection/blob/master/mmdet/core/optimizer/default_constructor.py#L13 for more details
@@ -365,14 +399,14 @@ log_config = dict(  # config to register logger hook
     interval=50,  # Interval to print the log
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])  # The logger used to record the training process.
-total_epochs = 36  # Total epochs to train the model
+runner = dict(type='EpochBasedRunner', max_epochs=36) # Runner that runs the workflow in total max_epochs
 dist_params = dict(backend='nccl')  # Parameters to setup distributed training, the port can also be set.
 log_level = 'INFO'  # The level of logging.
 find_unused_parameters = True  # Whether to find unused parameters
 work_dir = None  # Directory to save the model checkpoints and logs for the current experiments.
 load_from = None # load models as a pre-trained model from a given path. This will not resume training.
 resume_from = None  # Resume checkpoints from a given path, the training will be resumed from the epoch when the checkpoint's is saved.
-workflow = [('train', 1)]  # Workflow for runner. [('train', 1)] means there is only one workflow and the workflow named 'train' is executed once. The workflow trains the model by 36 epochs according to the total_epochs.
+workflow = [('train', 1)]  # Workflow for runner. [('train', 1)] means there is only one workflow and the workflow named 'train' is executed once. The workflow trains the model by 36 epochs according to the max_epochs.
 gpu_ids = range(0, 1)  # ids of gpus
 ```
 
@@ -381,7 +415,7 @@ gpu_ids = range(0, 1)  # ids of gpus
 ### Ignore some fields in the base configs
 
 Sometimes, you may set `_delete_=True` to ignore some of fields in base configs.
-You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple inllustration.
+You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple illustration.
 
 In MMDetection or MMDetection3D, for example, to change the FPN neck of PointPillars with the following config.
 

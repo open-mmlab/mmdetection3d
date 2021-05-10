@@ -1,3 +1,5 @@
+_base_ = ['../_base_/schedules/cosine.py', '../_base_/default_runtime.py']
+
 # model settings
 voxel_size = [0.05, 0.05, 0.1]
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
@@ -186,6 +188,17 @@ test_pipeline = [
             dict(type='Collect3D', keys=['points', 'img'])
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['points', 'img'])
+]
 
 data = dict(
     samples_per_gpu=2,
@@ -202,7 +215,8 @@ data = dict(
             pipeline=train_pipeline,
             modality=input_modality,
             classes=class_names,
-            test_mode=False)),
+            test_mode=False,
+            box_type_3d='LiDAR')),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -212,7 +226,8 @@ data = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         classes=class_names,
-        test_mode=True),
+        test_mode=True,
+        box_type_3d='LiDAR'),
     test=dict(
         type=dataset_type,
         data_root=data_root,
@@ -222,34 +237,15 @@ data = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         classes=class_names,
-        test_mode=True))
+        test_mode=True,
+        box_type_3d='LiDAR'))
+
 # Training settings
-optimizer = dict(type='AdamW', lr=0.003, betas=(0.95, 0.99), weight_decay=0.01)
+optimizer = dict(weight_decay=0.01)
 # max_norm=10 is better for SECOND
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(
-    policy='CosineAnnealing',
-    warmup='linear',
-    warmup_iters=1000,
-    warmup_ratio=1.0 / 10,
-    min_lr_ratio=1e-5)
-momentum_config = None
-checkpoint_config = dict(interval=1)
-# yapf:disable
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
-evaluation = dict(interval=1)
-# runtime settings
-total_epochs = 40
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-work_dir = None
+
+evaluation = dict(interval=1, pipeline=eval_pipeline)
+
 # You may need to download the model first is the network is unstable
 load_from = 'https://download.openmmlab.com/mmdetection3d/pretrain_models/mvx_faster_rcnn_detectron2-caffe_20e_coco-pretrain_gt-sample_kitti-3-class_moderate-79.3_20200207-a4a6a3c7.pth'  # noqa
-resume_from = None
-workflow = [('train', 1)]

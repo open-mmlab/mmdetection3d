@@ -5,8 +5,8 @@ import random
 import torch
 from os.path import dirname, exists, join
 
-from mmdet3d.core.bbox import (Box3DMode, DepthInstance3DBoxes,
-                               LiDARInstance3DBoxes)
+from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
+                               DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.models.builder import build_head
 from mmdet.apis import set_random_seed
 
@@ -593,7 +593,7 @@ def test_h3d_head():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
 
-    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_8x3_scannet-3d-18class.py')
+    h3d_head_cfg = _get_roi_head_cfg('h3dnet/h3dnet_3x8_scannet-3d-18class.py')
 
     num_point = 128
     num_proposal = 64
@@ -907,7 +907,7 @@ def test_ssd3d_head():
     assert ret_dict['dir_res'].shape == torch.Size([2, 64, 12])
 
     # test loss
-    points = [torch.rand([4000, 4], device='cuda') for i in range(2)]
+    points = [torch.rand([4000, 3], device='cuda') for i in range(2)]
     gt_bbox1 = LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
     gt_bbox2 = LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
     gt_bboxes = [gt_bbox1, gt_bbox2]
@@ -1044,3 +1044,73 @@ def test_shape_aware_head_getboxes():
                                   input_metas)
     assert len(result_list[0][1]) > 0  # ensure not all boxes are filtered
     assert (result_list[0][1] > 0.3).all()
+
+
+def test_fcos_mono3d_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    fcos3d_head_cfg = _get_head_cfg(
+        'fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py')
+    self = build_head(fcos3d_head_cfg).cuda()
+
+    feats = [
+        torch.rand([2, 256, 116, 200], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 58, 100], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 29, 50], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 15, 25], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 8, 13], dtype=torch.float32).cuda()
+    ]
+
+    # test forward
+    ret_dict = self(feats)
+    assert len(ret_dict) == 5
+    assert len(ret_dict[0]) == 5
+    assert ret_dict[0][0].shape == torch.Size([2, 10, 116, 200])
+
+    # test loss
+    gt_bboxes = [
+        torch.rand([3, 4], dtype=torch.float32).cuda(),
+        torch.rand([3, 4], dtype=torch.float32).cuda()
+    ]
+    gt_bboxes_3d = CameraInstance3DBoxes(
+        torch.rand([3, 9], device='cuda'), box_dim=9)
+    gt_labels = [torch.randint(0, 10, [3], device='cuda') for i in range(2)]
+    gt_labels_3d = gt_labels
+    centers2d = [
+        torch.rand([3, 2], dtype=torch.float32).cuda(),
+        torch.rand([3, 2], dtype=torch.float32).cuda()
+    ]
+    depths = [
+        torch.rand([3], dtype=torch.float32).cuda(),
+        torch.rand([3], dtype=torch.float32).cuda()
+    ]
+    attr_labels = [torch.randint(0, 9, [3], device='cuda') for i in range(2)]
+    img_metas = [
+        dict(
+            cam_intrinsic=[[1260.8474446004698, 0.0, 807.968244525554],
+                           [0.0, 1260.8474446004698, 495.3344268742088],
+                           [0.0, 0.0, 1.0]],
+            scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
+            box_type_3d=CameraInstance3DBoxes) for i in range(2)
+    ]
+    losses = self.loss(*ret_dict, gt_bboxes, gt_labels, gt_bboxes_3d,
+                       gt_labels_3d, centers2d, depths, attr_labels, img_metas)
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_offset'] >= 0
+    assert losses['loss_depth'] >= 0
+    assert losses['loss_size'] >= 0
+    assert losses['loss_rotsin'] >= 0
+    assert losses['loss_centerness'] >= 0
+    assert losses['loss_velo'] >= 0
+    assert losses['loss_dir'] >= 0
+    assert losses['loss_attr'] >= 0
+
+    # test get_boxes
+    results = self.get_bboxes(*ret_dict, img_metas)
+    assert len(results) == 2
+    assert len(results[0]) == 4
+    assert results[0][0].tensor.shape == torch.Size([200, 9])
+    assert results[0][1].shape == torch.Size([200])
+    assert results[0][2].shape == torch.Size([200])
+    assert results[0][3].shape == torch.Size([200])
