@@ -177,7 +177,9 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         data['points'] = data['points'][0].data
         data['img'] = data['img'][0].data
         if box_mode_3d == Box3DMode.DEPTH:
-            data['calib'] = data['calib'][0].data
+            # data['calib'] = data['calib'][0].data
+            data['calib'][0]['Rt'] = data['calib'][0]['Rt'][0].data
+            data['calib'][0]['K'] = data['calib'][0]['K'][0].data
 
     # forward the model
     with torch.no_grad():

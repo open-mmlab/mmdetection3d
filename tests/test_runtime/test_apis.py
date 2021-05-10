@@ -6,7 +6,8 @@ import torch
 from mmcv.parallel import MMDataParallel
 from os.path import dirname, exists, join
 
-from mmdet3d.apis import (convert_SyncBN, inference_detector, init_detector,
+from mmdet3d.apis import (convert_SyncBN, inference_detector,
+                          inference_multi_modality_detector, init_detector,
                           show_result_meshlab, single_gpu_test)
 from mmdet3d.core import Box3DMode
 from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
@@ -79,7 +80,7 @@ def test_show_result_meshlab():
     tmp_dir.cleanup()
 
     # test multi-modality show
-    # Indoor scene
+    # indoor scene
     pcd = 'tests/data/sunrgbd/points/000001.bin'
     filename = 'tests/data/sunrgbd/sunrgbd_trainval/image/000001.jpg'
     box_3d = DepthInstance3DBoxes(
@@ -192,6 +193,42 @@ def test_inference_detector():
     bboxes_3d = results[0][0]['boxes_3d']
     scores_3d = results[0][0]['scores_3d']
     labels_3d = results[0][0]['labels_3d']
+    assert bboxes_3d.tensor.shape[0] >= 0
+    assert bboxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+
+
+def test_inference_multi_modality_detector():
+    # indoor scene
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pcd = 'tests/data/sunrgbd/points/000001.bin'
+    img = 'tests/data/sunrgbd/sunrgbd_trainval/image/000001.jpg'
+    ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
+    detector_cfg = 'configs/imvotenet/imvotenet_stage2_'\
+                   '16x8_sunrgbd-3d-10class.py'
+    detector = init_detector(detector_cfg, device='cuda')
+    results = inference_multi_modality_detector(detector, pcd, img, ann_file)
+    bboxes_3d = results[0][0]['boxes_3d']
+    scores_3d = results[0][0]['scores_3d']
+    labels_3d = results[0][0]['labels_3d']
+    assert bboxes_3d.tensor.shape[0] >= 0
+    assert bboxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+
+    # outdoor scene
+    pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
+    img = 'tests/data/kitti/training/image_2/000000.png'
+    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
+    detector_cfg = 'configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_' \
+                   '2x8_80e_kitti-3d-3class.py'
+    detector = init_detector(detector_cfg, device='cuda')
+    results = inference_multi_modality_detector(detector, pcd, img, ann_file)
+    bboxes_3d = results[0][0]['pts_bbox']['boxes_3d']
+    scores_3d = results[0][0]['pts_bbox']['scores_3d']
+    labels_3d = results[0][0]['pts_bbox']['labels_3d']
     assert bboxes_3d.tensor.shape[0] >= 0
     assert bboxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
