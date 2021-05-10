@@ -114,7 +114,8 @@ def test_show_result_meshlab():
     ]
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
-    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
+    out_dir, file_name = show_result_meshlab(
+        data, result, temp_out_dir, 0.3, task='multi_modality-det')
     expected_outfile_pred = file_name + '_pred.obj'
     expected_outfile_pts = file_name + '_points.obj'
     expected_outfile_png = file_name + '_img.png'
@@ -161,10 +162,10 @@ def test_show_result_meshlab():
             pts_bbox=dict(
                 boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
     ]
-    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.1)
+    out_dir, file_name = show_result_meshlab(
+        data, result, temp_out_dir, 0.1, task='multi_modality-det')
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
-    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
     expected_outfile_pred = file_name + '_pred.obj'
     expected_outfile_pts = file_name + '_points.obj'
     expected_outfile_png = file_name + '_img.png'
