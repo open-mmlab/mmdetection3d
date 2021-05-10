@@ -1,12 +1,13 @@
 from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks import build_conv_layer
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet.models.builder import HEADS
 
 
 @HEADS.register_module()
-class BaseConvBboxHead(nn.Module):
+class BaseConvBboxHead(BaseModule):
     r"""More general bbox head, with shared conv layers and two optional
     separated branches.
 
@@ -28,9 +29,11 @@ class BaseConvBboxHead(nn.Module):
                  norm_cfg=dict(type='BN1d'),
                  act_cfg=dict(type='ReLU'),
                  bias='auto',
+                 init_cfg=None,
                  *args,
                  **kwargs):
-        super(BaseConvBboxHead, self).__init__(*args, **kwargs)
+        super(BaseConvBboxHead, self).__init__(
+            init_cfg=init_cfg, *args, **kwargs)
         assert in_channels > 0
         assert num_cls_out_channels > 0
         assert num_reg_out_channels > 0
@@ -97,10 +100,6 @@ class BaseConvBboxHead(nn.Module):
                     bias=self.bias,
                     inplace=True))
         return conv_layers
-
-    def init_weights(self):
-        # conv layers are already initialized by ConvModule
-        pass
 
     def forward(self, feats):
         """Forward.

@@ -75,12 +75,13 @@ class PartA2RPNHead(Anchor3DHead):
                      loss_weight=1.0),
                  loss_bbox=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
-                 loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2)):
+                 loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2),
+                 init_cfg=None):
         super().__init__(num_classes, in_channels, train_cfg, test_cfg,
                          feat_channels, use_direction_classifier,
                          anchor_generator, assigner_per_size, assign_per_class,
                          diff_rad_by_sin, dir_offset, dir_limit_offset,
-                         bbox_coder, loss_cls, loss_bbox, loss_dir)
+                         bbox_coder, loss_cls, loss_bbox, loss_dir, init_cfg)
 
     @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
     def loss(self,

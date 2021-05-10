@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis, xywhr2xyxyr
@@ -12,7 +13,7 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class PointRCNNBboxHead(nn.Module):
+class PointRCNNBboxHead(BaseModule):
     """PointRCNN ROI head.
 
     Args:
@@ -24,32 +25,33 @@ class PointRCNNBboxHead(nn.Module):
     """
 
     def __init__(
-        self,
-        num_classes,
-        in_channels,
-        mlp_channels,
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
-        act_cfg=dict(type='ReLU'),
-        bbox_codesize=7,
-        conv_channels=(512, 512),
-        num_points=(128, 32, 1),
-        radius=(0.2, 0.4, 100),
-        num_samples=(64, 64, 64),
-        sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
-        sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
-        loss_bbox=dict(
-            type='SmoothL1Loss',
-            beta=1.0 / 9.0,
-            reduction='sum',
-            loss_weight=1.0),
-        loss_cls=dict(
-            type='CrossEntropyLoss',
-            use_sigmoid=True,
-            reduction='sum',
-            loss_weight=1.0)):
-        super(PointRCNNBboxHead, self).__init__()
+            self,
+            num_classes,
+            in_channels,
+            mlp_channels,
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            act_cfg=dict(type='ReLU'),
+            bbox_codesize=7,
+            conv_channels=(512, 512),
+            num_points=(128, 32, 1),
+            radius=(0.2, 0.4, 100),
+            num_samples=(64, 64, 64),
+            sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
+            bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
+            sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
+            loss_bbox=dict(
+                type='SmoothL1Loss',
+                beta=1.0 / 9.0,
+                reduction='sum',
+                loss_weight=1.0),
+            loss_cls=dict(
+                type='CrossEntropyLoss',
+                use_sigmoid=True,
+                reduction='sum',
+                loss_weight=1.0),
+            init_cfg=None):
+        super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.in_channels = in_channels
         self.conv_cfg = conv_cfg

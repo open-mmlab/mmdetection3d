@@ -94,9 +94,13 @@ class PointRCNNROIHead(Base3DRoIHead):
                  depth_normalizer=70,
                  point_roi_extractor=None,
                  train_cfg=None,
-                 test_cfg=None):
+                 test_cfg=None,
+                 init_cfg=None):
         super(PointRCNNROIHead, self).__init__(
-            bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
         self.num_classes = num_classes
         self.depth_normalizer = depth_normalizer
 

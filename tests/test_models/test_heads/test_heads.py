@@ -652,6 +652,7 @@ def test_h3d_head():
                                    dtype=torch.float32).cuda().long()
     dir_res_targets = torch.rand([1, num_proposal], dtype=torch.float32).cuda()
     center_targets = torch.rand([1, 4, 3], dtype=torch.float32).cuda()
+    assigned_center_targets = center_targets.clone()
     mask_targets = torch.rand([1, num_proposal],
                               dtype=torch.float32).cuda().long()
     valid_gt_masks = torch.rand([1, 4], dtype=torch.float32).cuda()
@@ -665,9 +666,9 @@ def test_h3d_head():
 
     targets = (vote_targets, vote_target_masks, size_class_targets,
                size_res_targets, dir_class_targets, dir_res_targets,
-               center_targets, mask_targets, valid_gt_masks,
-               objectness_targets, objectness_weights, box_loss_weights,
-               valid_gt_weights)
+               center_targets, assigned_center_targets, mask_targets,
+               valid_gt_masks, objectness_targets, objectness_weights,
+               box_loss_weights, valid_gt_weights)
 
     input_dict['targets'] = targets
 

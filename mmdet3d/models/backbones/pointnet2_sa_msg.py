@@ -56,8 +56,9 @@ class PointNet2SAMSG(BasePointNet):
                      type='PointSAModuleMSG',
                      pool_mod='max',
                      use_xyz=True,
-                     normalize_xyz=False)):
-        super().__init__()
+                     normalize_xyz=False),
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.num_sa = len(sa_channels)
         self.out_indices = out_indices
         assert max(out_indices) < self.num_sa

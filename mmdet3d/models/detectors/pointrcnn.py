@@ -20,7 +20,8 @@ class PointRCNN(TwoStage3DDetector):
                  train_cfg=None,
                  test_cfg=None,
                  fp_channels=None,
-                 pretrained=None):
+                 pretrained=None,
+                 init_cfg=None):
         super(PointRCNN, self).__init__(
             backbone=backbone,
             neck=neck,
@@ -28,7 +29,8 @@ class PointRCNN(TwoStage3DDetector):
             roi_head=roi_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained)
+            pretrained=pretrained,
+            init_cfg=None)
 
     def extract_feat(self, points, img_metas=None):
         """Directly extract features from the backbone+neck.

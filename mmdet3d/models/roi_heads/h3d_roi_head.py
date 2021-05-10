@@ -19,19 +19,20 @@ class H3DRoIHead(Base3DRoIHead):
                  primitive_list,
                  bbox_head=None,
                  train_cfg=None,
-                 test_cfg=None):
+                 test_cfg=None,
+                 pretrained=None,
+                 init_cfg=None):
         super(H3DRoIHead, self).__init__(
-            bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            pretrained=pretrained,
+            init_cfg=init_cfg)
         # Primitive module
         assert len(primitive_list) == 3
         self.primitive_z = build_head(primitive_list[0])
         self.primitive_xy = build_head(primitive_list[1])
         self.primitive_line = build_head(primitive_list[2])
-
-    def init_weights(self, pretrained):
-        """Initialize weights, skip since ``H3DROIHead`` does not need to
-        initialize weights."""
-        pass
 
     def init_mask_head(self):
         """Initialize mask head, skip since ``H3DROIHead`` does not have
