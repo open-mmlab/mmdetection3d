@@ -107,11 +107,7 @@ def test_show_result_meshlab():
         img_metas=[[img_meta]],
         img=[img],
         calib=[calib])
-    result = [
-        dict(
-            pts_bbox=dict(
-                boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
-    ]
+    result = [dict(boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d)]
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
     out_dir, file_name = show_result_meshlab(
@@ -182,6 +178,27 @@ def test_show_result_meshlab():
     assert os.path.exists(expected_outfile_pts_path)
     assert os.path.exists(expected_outfile_png_path)
     assert os.path.exists(expected_outfile_proj_path)
+    tmp_dir.cleanup()
+
+    # test seg show
+    pcd = 'tests/data/scannet/points/scene0000_00.bin'
+    points = np.random.rand(100, 6)
+    img_meta = dict(pts_filename=pcd)
+    data = dict(points=[[torch.tensor(points)]], img_metas=[[img_meta]])
+    pred_seg = torch.randint(0, 20, (100, ))
+    result = [dict(semantic_mask=pred_seg)]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
+    out_dir, file_name = show_result_meshlab(
+        data, result, temp_out_dir, task='seg')
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
     tmp_dir.cleanup()
 
 

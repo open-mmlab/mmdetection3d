@@ -232,7 +232,12 @@ def show_det_result_meshlab(data,
     return file_name
 
 
-def show_seg_result_meshlab(data, result, out_dir, show=False, snapshot=False):
+def show_seg_result_meshlab(data,
+                            result,
+                            out_dir,
+                            palette,
+                            show=False,
+                            snapshot=False):
     """Show 3D segmentation result by meshlab."""
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
@@ -240,13 +245,19 @@ def show_seg_result_meshlab(data, result, out_dir, show=False, snapshot=False):
 
     pred_seg = result[0]['semantic_mask'].numpy()
 
+    if palette is None:
+        # generate random color map
+        max_idx = pred_seg.max()
+        palette = np.random.randint(0, 256, size=(max_idx + 1, 3))
+    palette = np.array(palette).astype(np.int)
+
     show_seg_result(
         points,
         None,
         pred_seg,
         out_dir,
         file_name,
-        palette=None,
+        palette=palette,
         show=show,
         snapshot=snapshot)
 
@@ -326,7 +337,8 @@ def show_result_meshlab(data,
                         score_thr=0.0,
                         show=False,
                         snapshot=False,
-                        task='det'):
+                        task='det',
+                        palette=None):
     """Show result by meshlab.
 
     Args:
@@ -336,6 +348,12 @@ def show_result_meshlab(data,
         score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
         show (bool): Visualize the results online. Defaults to False.
         snapshot (bool): Whether to save the online results. Defaults to False.
+        task (str): Distinguish which task result to visualize. Currently we
+            support 3D detection, multi-modality detection and 3D segmentation.
+            Defaults to 'det'.
+        palette (list[list[int]]] | np.ndarray | None): The palette of
+                segmentation map. If None is given, random palette will be
+                generated. Defaults to None.
     """
     assert task in ['det', 'multi_modality-det', 'seg'], \
         f'unsupported visualization task {task}'
@@ -346,8 +364,8 @@ def show_result_meshlab(data,
                                             show, snapshot)
 
     if 'seg' in task:
-        file_name = show_seg_result_meshlab(data, result, out_dir, show,
-                                            snapshot)
+        file_name = show_seg_result_meshlab(data, result, out_dir, palette,
+                                            show, snapshot)
 
     if task == 'multi_modality-det':
         file_name = show_proj_bbox_img_result_meshlab(data, result, out_dir,
