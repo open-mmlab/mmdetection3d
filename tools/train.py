@@ -140,11 +140,19 @@ def main():
     # init the logger before other steps
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
     log_file = osp.join(cfg.work_dir, f'{timestamp}.log')
-    logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
+    # specify logger name, if we still use 'mmdet', the output info will be
+    # filtered and won't be saved in the log_file
+    # TODO: ugly workaround to judge whether we are training det or seg model
+    if cfg.model.type in ['EncoderDecoder3D']:
+        logger_name = 'mmseg'
+    else:
+        logger_name = 'mmdet'
+    logger = get_root_logger(
+        log_file=log_file, log_level=cfg.log_level, name=logger_name)
 
     # add a logging filter
-    logging_filter = logging.Filter('mmdet')
-    logging_filter.filter = lambda record: record.find('mmdet') != -1
+    logging_filter = logging.Filter(logger_name)
+    logging_filter.filter = lambda record: record.find(logger_name) != -1
 
     # init the meta dict to record some important information such as
     # environment info and seed, which will be logged
@@ -194,9 +202,11 @@ def main():
         # save mmdet version, config file content and class names in
         # checkpoints as meta data
         cfg.checkpoint_config.meta = dict(
-            mmdet_version=__version__,
+            mmdet3d_version=__version__,
             config=cfg.pretty_text,
-            CLASSES=datasets[0].CLASSES)
+            CLASSES=datasets[0].CLASSES,
+            PALETTE=datasets[0].PALETTE  # for segmentors
+            if hasattr(datasets[0], 'PALETTE') else None)
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
     train_model(
