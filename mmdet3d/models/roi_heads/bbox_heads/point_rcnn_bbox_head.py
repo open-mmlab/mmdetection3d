@@ -31,7 +31,7 @@ class PointRCNNBboxHead(nn.Module):
         conv_cfg=dict(type='Conv1d'),
         norm_cfg=dict(type='BN1d'),
         act_cfg=dict(type='ReLU'),
-        bbox_codesize=46,
+        bbox_codesize=7,
         conv_channels=(512, 512),
         num_points=(128, 32, 1),
         radius=(0.2, 0.4, 100),
@@ -204,11 +204,8 @@ class PointRCNNBboxHead(nn.Module):
             # fake a part loss
             losses['loss_bbox'] = loss_cls.new_tensor(0)
         else:
-            pos_bbox_pred = bbox_pred.view(rcnn_batch_size, -1)[pos_inds]
-            pos_rois = rois.view(rcnn_batch_size, -1)[pos_inds][...,
-                                                                1:].clone()
-            pos_bbox_pred += pos_rois.detach()
-
+            pos_bbox_pred = bbox_pred.view(rcnn_batch_size,
+                                           -1)[pos_inds][1:].clone()
             bbox_weights_flat = bbox_weights[pos_inds].view(-1, 1).repeat(
                 1, pos_bbox_pred.shape[-1])
             loss_bbox = self.loss_bbox(
@@ -277,7 +274,6 @@ class PointRCNNBboxHead(nn.Module):
         cls_pos_mask = ious > cfg.cls_pos_thr
         cls_neg_mask = ious < cfg.cls_neg_thr
         interval_mask = (cls_pos_mask == 0) & (cls_neg_mask == 0)
-
         # iou regression target
         label = (cls_pos_mask > 0).float()
         label[interval_mask] = ious[interval_mask] * 2 - 0.5
@@ -297,8 +293,7 @@ class PointRCNNBboxHead(nn.Module):
             pos_gt_bboxes_ct[..., 0:3] -= roi_center
             pos_gt_bboxes_ct[..., 6] -= roi_ry
             pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
-                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1),
-                -(roi_ry + np.pi / 2),
+                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), -roi_ry,
                 axis=2).squeeze(1)
 
             # flip orientation if rois have opposite orientation
@@ -325,7 +320,6 @@ class PointRCNNBboxHead(nn.Module):
 
     def get_bboxes(self,
                    rois,
-                   cls_score,
                    bbox_pred,
                    class_labels,
                    class_pred,
@@ -335,7 +329,6 @@ class PointRCNNBboxHead(nn.Module):
 
         Args:
             rois (torch.Tensor): Roi bounding boxes.
-            cls_score (torch.Tensor): Scores of bounding boxes.
             bbox_pred (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
             class_pred (torch.Tensor): Score for nms.
@@ -356,29 +349,28 @@ class PointRCNNBboxHead(nn.Module):
         local_roi_boxes[..., 0:3] = 0
         rcnn_boxes3d = self.bbox_coder.decode(local_roi_boxes, bbox_pred)
         rcnn_boxes3d[..., 0:3] = rotation_3d_in_axis(
-            rcnn_boxes3d[..., 0:3].unsqueeze(1), (roi_ry + np.pi / 2),
-            axis=2).squeeze(1)
+            rcnn_boxes3d[..., 0:3].unsqueeze(1), roi_ry, axis=2).squeeze(1)
         rcnn_boxes3d[:, 0:3] += roi_xyz
 
         # post processing
         result_list = []
         for batch_id in range(batch_size):
             cur_class_labels = class_labels[batch_id]
-            cur_cls_score = cls_score[roi_batch_id == batch_id].view(-1)
+            cur_cls_score = class_pred[roi_batch_id == batch_id].view(-1)
 
-            cur_box_prob = class_pred[batch_id]
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             selected = self.multi_class_nms(
-                cur_box_prob.unsqueeze(1), cur_rcnn_boxes3d, cfg.score_thr,
+                cur_cls_score.unsqueeze(1), cur_rcnn_boxes3d, cfg.score_thr,
                 cfg.nms_thr, img_metas[batch_id], cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[selected]
             selected_label_preds = cur_class_labels[selected]
             selected_scores = cur_cls_score[selected]
 
-            result_list.append(
-                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
-                                                    self.bbox_coder.code_size),
-                 selected_scores, selected_label_preds))
+            result_list.append((img_metas[batch_id]['box_type_3d'](
+                selected_bboxes,
+                self.bbox_coder.code_size,
+                origin=(0.5, 0.5, 0.5)), selected_scores,
+                                selected_label_preds))
         return result_list
 
     def multi_class_nms(self,

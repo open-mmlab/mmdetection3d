@@ -66,6 +66,12 @@ class PointRCNN(TwoStage3DDetector):
         losses = dict()
         points_cat = torch.stack(points)
         x = self.extract_feat(points_cat)
+
+        # features for rcnn
+        backbone_feats = x['fp_features'][-1].clone()
+        backbone_xyz = x['fp_xyz'][-1].clone()
+        rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
+
         if self.with_rpn:
             bbox_preds = self.rpn_head(x)
             rpn_loss = self.rpn_head.loss(
@@ -86,9 +92,12 @@ class PointRCNN(TwoStage3DDetector):
                 dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
                 for bboxes, scores, labels in bbox_list
             ]
-        roi_losses = self.roi_head.forward_train(x, obj_scores, img_metas,
+            rcnn_feats.update({'points_scores': obj_scores})
+
+        roi_losses = self.roi_head.forward_train(rcnn_feats, img_metas,
                                                  proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
+
         losses.update(roi_losses)
 
         return losses
@@ -107,18 +116,31 @@ class PointRCNN(TwoStage3DDetector):
         points_cat = torch.stack(points)
 
         x = self.extract_feat(points_cat)
+        # features for rcnn
+        backbone_feats = x['fp_features'][-1].clone()
+        backbone_xyz = x['fp_xyz'][-1].clone()
+        rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
+
         bbox_preds = self.rpn_head(x)
-        sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1,
-                                                                   2).detach()
-        obj_scores = sem_scores.max(-1)[0]
+        sem_scores = F.sigmoid(bbox_preds['obj_scores']).detach()
+        obj_scores = sem_scores.transpose(1, 2).max(-1)[0]
+        rcnn_feats.update({'points_scores': obj_scores})
 
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, img_metas, rescale=rescale)
+        '''
+        from mmdet3d.core.bbox import bbox3d2result
+        bbox_results = [
+            bbox3d2result(bboxes, scores, labels)
+            for bboxes, scores, labels in bbox_list
+        ]
+        '''
+
         proposal_list = [
             dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
             for bboxes, scores, labels in bbox_list
         ]
-
-        bbox_results = self.roi_head.simple_test(x, obj_scores, img_metas,
+        bbox_results = self.roi_head.simple_test(rcnn_feats, img_metas,
                                                  proposal_list)
+
         return bbox_results

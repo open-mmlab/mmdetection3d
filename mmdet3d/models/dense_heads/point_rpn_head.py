@@ -195,19 +195,21 @@ class PointRPNHead(nn.Module):
         decode_res = self.bbox_coder.split_pred(point_cls_preds,
                                                 point_box_preds,
                                                 feat_dict['fp_xyz'][-1])
-        ret_dict.update(decode_res)
-        # print(point_cls_preds.shape)
-        # points_label = point_cls_preds.transpose(2, 1). \
-        #   reshape(-1).cpu().data.numpy()
-        # points_label[points_label>0.9] = 1
-        # points = feat_dict['fp_xyz'][-1].cpu().data.numpy()
-        # print(points_label.shape)
-        # print(points.shape)
-        # write_ply(points[0],points_label,'/tmp/label_points.obj')
-        # bbox3d = self.bbox_coder.decode(ret_dict)
-        # write_oriented_bbox(bbox3d[0].cpu().numpy(),'/tmp/label_bboxes.ply')
-        # assert 0
 
+        ret_dict.update(decode_res)
+        '''
+        print(point_cls_preds.shape)
+        points_label = point_cls_preds.transpose(2, 1). \
+            reshape(-1).cpu().data.numpy()
+        points_label[points_label>0.9] = 1
+        points = feat_dict['fp_xyz'][-1].cpu().data.numpy()
+        print(points_label.shape)
+        print(points.shape)
+        write_ply(points[0],points_label,'/tmp/label_points.obj')
+        bbox3d = self.bbox_coder.decode(ret_dict)
+        write_oriented_bbox(bbox3d[0].cpu().numpy(),'/tmp/label_bboxes.ply')
+        # assert 0
+        '''
         return ret_dict
 
     @force_fp32(apply_to=('bbox_preds'))
@@ -282,10 +284,10 @@ class PointRPNHead(nn.Module):
         print(semantic_points_label[0].shape)
         points_label = semantic_points_label[indices_xxx].cpu().data.numpy()
         points = points[indices_xxx][:,0:3].cpu().data.numpy()
-        write_ply(points,points_label,'/tmp/label_points.obj')
+        write_ply(points,points_label,'/tmp/label_points_rpn.obj')
         gt_bboxes = gt_bboxes_3d[indices_xxx].tensor.cpu().numpy()
         gt_bboxes[:, 6] = -gt_bboxes[:, 6]
-        write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes.ply')
+        write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes_rpn.ply')
         assert 0
         '''
 
@@ -437,19 +439,6 @@ class PointRPNHead(nn.Module):
 
         batch_size = bbox3d.shape[0]
         results = list()
-        '''
-        for b in range(batch_size):
-            bbox = input_meta['box_type_3d'](
-                bbox3d[b].clone(),
-                box_dim=bbox3d[b].shape[-1],
-                with_yaw=self.bbox_coder.with_rot)
-            selected = nms_gpu(bbox.bev, obj_scores, 0.1)
-            bbox = bbox[selected]
-            score_selected = obj_scores[b][selected]
-
-            result.append(())
-        '''
-
         for b in range(batch_size):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
@@ -459,7 +448,6 @@ class PointRPNHead(nn.Module):
                 box_dim=bbox_selected.shape[-1],
                 with_yaw=self.bbox_coder.with_rot)
             results.append((bbox, score_selected, labels))
-
         return results
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
@@ -481,7 +469,7 @@ class PointRPNHead(nn.Module):
             bbox.clone(),
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
-            origin=(0.5, 0.5, 1))
+            origin=(0.5, 0.5, 0.5))
 
         if isinstance(bbox, LiDARInstance3DBoxes):
             box_idx = bbox.points_in_boxes(points)
@@ -503,15 +491,13 @@ class PointRPNHead(nn.Module):
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
         bbox_classes = torch.argmax(sem_scores, -1)
-        nms_cfg = dict(type='nms', iou_thr=0.8)
         nms_selected = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]].detach(),
             obj_scores[nonempty_box_mask].detach(),
-            bbox_classes[nonempty_box_mask].detach(), nms_cfg)[1]
+            bbox_classes[nonempty_box_mask].detach(), self.test_cfg.nms_cfg)[1]
 
         if nms_selected.shape[0] > self.test_cfg.max_output_num:
             nms_selected = nms_selected[:self.test_cfg.max_output_num]
-
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores >= self.test_cfg.score_thr)
         nonempty_box_inds = torch.nonzero(

@@ -66,11 +66,9 @@ def write_oriented_bbox(scene_bbox, out_filename):
         scene_bbox = np.zeros((1, 7))
     scene = trimesh.scene.Scene()
 
-    scene.add_geometry(convert_oriented_box_to_trimesh_fmt(scene_bbox))
-    '''
+    # scene.add_geometry(convert_oriented_box_to_trimesh_fmt(scene_bbox))
     for box in scene_bbox:
         scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
-    '''
     mesh_list = trimesh.util.concatenate(scene.dump())
     # save to ply file
     trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
@@ -132,8 +130,8 @@ class PointRCNNROIHead(Base3DRoIHead):
                 ]
             self.bbox_sampler = build_sampler(self.train_cfg.sampler)
 
-    def forward_train(self, feats_dict, point_scores, img_metas, proposal_list,
-                      gt_bboxes_3d, gt_labels_3d):
+    def forward_train(self, feats_dict, img_metas, proposal_list, gt_bboxes_3d,
+                      gt_labels_3d):
         """Training forward function of PartAggregationROIHead.
 
         Args:
@@ -156,12 +154,32 @@ class PointRCNNROIHead(Base3DRoIHead):
                 - loss_semantic (torch.Tensor): loss of semantic head
                 - loss_bbox (torch.Tensor): loss of bboxes
         """
+        '''
+        points_t = feats_dict['fp_xyz'][-1][0].clone()
+        points_t = points_t[:,0:3].cpu().data.numpy()
+        points_f = feats_dict['fp_features'][-1].clone()
+        print(points_f.shape)
+        points_label = point_scores[0].cpu().data.numpy()
+        bbox = gt_bboxes_3d[0].tensor.cpu().data.numpy()
+        bbox_p = proposal_list[0]['boxes_3d'].tensor.cpu().data.numpy()
+        bbox_p_s = proposal_list[0]['scores_3d'].cpu().data.numpy()
+        print(bbox.shape, bbox_p.shape,points_label.shape)
+        bbox_p = bbox_p[bbox_p_s>0.9]
+        write_oriented_bbox(bbox,'/tmp/label_bboxes.ply')
+        write_oriented_bbox(bbox_p,'/tmp/label_bboxes_pred.ply')
+        write_ply(points_t,points_label,'/tmp/label_points.obj')
+        assert 0
+        '''
+
         losses = dict()
         sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
 
-        features = feats_dict['fp_features'][-1]
-        points = feats_dict['fp_xyz'][-1]
+        features = feats_dict['features']
+        points = feats_dict['points']
+        point_scores = feats_dict['points_scores']
+
+        # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
         point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5
         features_list = [
@@ -176,8 +194,7 @@ class PointRCNNROIHead(Base3DRoIHead):
 
         return losses
 
-    def simple_test(self, feats_dict, point_scores, img_metas, proposal_list,
-                    **kwargs):
+    def simple_test(self, feats_dict, img_metas, proposal_list, **kwargs):
         """Simple testing forward function of PartAggregationROIHead.
 
         Note:
@@ -194,10 +211,11 @@ class PointRCNNROIHead(Base3DRoIHead):
         """
         rois = bbox3d2roi([res['boxes_3d'].tensor for res in proposal_list])
         labels_3d = [res['labels_3d'] for res in proposal_list]
-        cls_preds = [res['scores_3d'] for res in proposal_list]
 
-        features = feats_dict['fp_features'][-1]
-        points = feats_dict['fp_xyz'][-1]
+        features = feats_dict['features']
+        points = feats_dict['points']
+        point_scores = feats_dict['points_scores']
+
         features = features.transpose(1, 2).contiguous()
         point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5
         features_list = [
@@ -211,10 +229,9 @@ class PointRCNNROIHead(Base3DRoIHead):
 
         bbox_list = self.bbox_head.get_bboxes(
             rois,
-            bbox_results['cls_score'],
             bbox_results['bbox_pred'],
             labels_3d,
-            cls_preds,
+            bbox_results['cls_score'],
             img_metas,
             cfg=self.test_cfg)
 
@@ -277,7 +294,6 @@ class PointRCNNROIHead(Base3DRoIHead):
             write_oriented_bbox(bbox,'/tmp/label_bboxes.ply')
             write_ply(points_t,points_label,'/tmp/label_points.obj')
         '''
-
         pooled_point_feats = self.point_roi_extractor(global_feats, points,
                                                       batch_size, rois)
 
@@ -350,7 +366,6 @@ class PointRCNNROIHead(Base3DRoIHead):
                     cur_boxes.tensor,
                     cur_gt_bboxes.tensor,
                     gt_labels=cur_gt_labels)
-
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,
