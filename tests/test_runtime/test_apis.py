@@ -7,7 +7,7 @@ from mmcv.parallel import MMDataParallel
 from os.path import dirname, exists, join
 
 from mmdet3d.apis import (convert_SyncBN, inference_detector,
-                          inference_multi_modality_detector, init_detector,
+                          inference_multi_modality_detector, init_model,
                           show_result_meshlab, single_gpu_test)
 from mmdet3d.core import Box3DMode
 from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
@@ -188,7 +188,7 @@ def test_inference_detector():
     pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
     detector_cfg = 'configs/pointpillars/hv_pointpillars_secfpn_' \
                    '6x8_160e_kitti-3d-3class.py'
-    detector = init_detector(detector_cfg, device='cpu')
+    detector = init_model(detector_cfg, device='cpu')
     results = inference_detector(detector, pcd)
     bboxes_3d = results[0][0]['boxes_3d']
     scores_3d = results[0][0]['scores_3d']
@@ -208,7 +208,7 @@ def test_inference_multi_modality_detector():
     ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
     detector_cfg = 'configs/imvotenet/imvotenet_stage2_'\
                    '16x8_sunrgbd-3d-10class.py'
-    detector = init_detector(detector_cfg, device='cuda')
+    detector = init_model(detector_cfg, device='cuda:0')
     results = inference_multi_modality_detector(detector, pcd, img, ann_file)
     bboxes_3d = results[0][0]['boxes_3d']
     scores_3d = results[0][0]['scores_3d']
@@ -224,7 +224,7 @@ def test_inference_multi_modality_detector():
     ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
     detector_cfg = 'configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_' \
                    '2x8_80e_kitti-3d-3class.py'
-    detector = init_detector(detector_cfg, device='cuda')
+    detector = init_model(detector_cfg, device='cuda:0')
     results = inference_multi_modality_detector(detector, pcd, img, ann_file)
     bboxes_3d = results[0][0]['pts_bbox']['boxes_3d']
     scores_3d = results[0][0]['pts_bbox']['scores_3d']

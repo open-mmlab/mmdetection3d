@@ -279,13 +279,13 @@ More demos about single/multi-modality and indoor/outdoor 3D detection can be fo
 Here is an example of building the model and test given point clouds.
 
 ```python
-from mmdet3d.apis import init_detector, inference_detector
+from mmdet3d.apis import init_model, inference_detector
 
 config_file = 'configs/votenet/votenet_8x8_scannet-3d-18class.py'
 checkpoint_file = 'checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth'
 
 # build the model from a config file and a checkpoint file
-model = init_detector(config_file, checkpoint_file, device='cuda:0')
+model = init_model(config_file, checkpoint_file, device='cuda:0')
 
 # test a single image and show the results
 point_cloud = 'test.bin'

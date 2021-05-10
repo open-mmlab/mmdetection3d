@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from mmdet3d.apis import inference_detector, init_detector, show_result_meshlab
+from mmdet3d.apis import inference_detector, init_model, show_result_meshlab
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
 
     # build the model from a config file and a checkpoint file
-    model = init_detector(args.config, args.checkpoint, device=args.device)
+    model = init_model(args.config, args.checkpoint, device=args.device)
     # test a single image
     result, data = inference_detector(model, args.pcd)
     # show the results

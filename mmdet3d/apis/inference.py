@@ -31,8 +31,9 @@ def convert_SyncBN(config):
                 convert_SyncBN(config[item])
 
 
-def init_detector(config, checkpoint=None, device='cuda:0'):
-    """Initialize a detector from config file.
+def init_model(config, checkpoint=None, device='cuda:0'):
+    """Initialize a model from config file, which could be a 3D detector or a
+    3D segmentor.
 
     Args:
         config (str or :obj:`mmcv.Config`): Config file path or the config
