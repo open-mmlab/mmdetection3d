@@ -3,9 +3,10 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
-from mmdet3d.ops import build_sa_module, PointFPModule
+from mmdet3d.ops import PointFPModule, build_sa_module
 from mmdet.models import BACKBONES
 from .base_pointnet import BasePointNet
+
 
 @BACKBONES.register_module()
 class PointNet2Seg(BasePointNet):
@@ -36,6 +37,7 @@ class PointNet2Seg(BasePointNet):
             - normalize_xyz (bool): Whether to normalize xyz with radii in
               each SA module.
     """
+
     def __init__(self,
                  in_channels,
                  num_points=(2048, 1024, 512, 256),
@@ -55,15 +57,17 @@ class PointNet2Seg(BasePointNet):
                      type='PointSAModuleMSG',
                      pool_mod='max',
                      use_xyz=True,
-                     normalize_xyz=False)):
-        super().__init__()
+                     normalize_xyz=False),
+                 init_cfg=None,
+                 pretrained=None):
+        super().__init__(init_cfg=None, pretrained=None)
         self.num_sa = len(sa_channels)
         self.num_fp = len(fp_channels)
 
         assert len(num_points) == len(radii) == len(num_samples) == len(
             sa_channels) == len(aggregation_channels)
         assert len(sa_channels) >= len(fp_channels)
-        
+
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
         sa_in_channel = in_channels - 3  # number of channels without xyz
@@ -101,7 +105,7 @@ class PointNet2Seg(BasePointNet):
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
                     bias=True))
-           # skip_channel_list.append(sa_out_channel)
+            # skip_channel_list.append(sa_out_channel)
             self.aggregation_mlps.append(
                 ConvModule(
                     sa_out_channel,
@@ -150,10 +154,6 @@ class PointNet2Seg(BasePointNet):
         sa_xyz = [xyz]
         sa_features = [features]
         sa_indices = [indices]
-
-        out_sa_xyz = []
-        out_sa_features = []
-        out_sa_indices = []
 
         for i in range(self.num_sa):
             cur_xyz, cur_features, cur_indices = self.SA_modules[i](
