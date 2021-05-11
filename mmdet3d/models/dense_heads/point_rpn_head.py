@@ -1,10 +1,8 @@
 import numpy as np
 import torch
 import trimesh
-from mmcv.cnn import ConvModule
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule, force_fp32
-from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
@@ -12,6 +10,7 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 from .base_conv_bbox_head import BaseConvBboxHead
+
 
 def write_ply(points, points_label, out_filename):
     """Write points into ``ply`` format for meshlab visualization.
@@ -126,8 +125,8 @@ class PointRPNHead(BaseModule):
         self.conv_pred = BaseConvBboxHead(
             **pred_layer_cfg,
             num_cls_out_channels=self._get_cls_out_channels(),
-            num_reg_out_channels=self._get_reg_out_channels()) 
-    
+            num_reg_out_channels=self._get_reg_out_channels())
+
     def _get_cls_out_channels(self):
         """Return the channel number of classification outputs."""
         # Class numbers (k) + objectness (1)
@@ -138,7 +137,7 @@ class PointRPNHead(BaseModule):
         # Bbox classification and regression
         # (center residual (3), size regression (3)
         # heading class+residual (num_dir_bins*2)),
-        return 3 + 3 + self.num_dir_bins * 2        
+        return 3 + 3 + self.num_dir_bins * 2
 
     def forward(self, feat_dict):
         point_features = feat_dict['fp_features'][-1]
@@ -373,7 +372,12 @@ class PointRPNHead(BaseModule):
         return (center_targets, size_res_targets, dir_class_targets,
                 dir_res_targets, mask_targets, positive_mask, negative_mask)
 
-    def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
+    def get_bboxes(self,
+                   points,
+                   bbox_preds,
+                   input_metas,
+                   training_flag=False,
+                   rescale=False):
         """Generate bboxes from sdd3d head predictions.
 
         Args:
@@ -399,7 +403,7 @@ class PointRPNHead(BaseModule):
         for b in range(batch_size):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
-                input_metas[b])
+                input_metas[b], training_flag)
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -408,7 +412,7 @@ class PointRPNHead(BaseModule):
         return results
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
-                              input_meta):
+                              input_meta, training_flag):
         """Multi-class nms in single batch.
 
         Args:
@@ -454,8 +458,11 @@ class PointRPNHead(BaseModule):
             bbox_classes[nonempty_box_mask].detach(),
             self.train_cfg.rpn_proposal.nms_cfg)[1]
 
-        if nms_selected.shape[0] > self.train_cfg.rpn_proposal.max_num:
-            nms_selected = nms_selected[:self.train_cfg.rpn_proposal.max_num]
+        num_rpn_proposal = self.test_cfg.max_output_num
+        if training_flag:
+            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
+        if nms_selected.shape[0] > num_rpn_proposal:
+            nms_selected = nms_selected[:num_rpn_proposal]
 
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores >= self.train_cfg.rpn_proposal.score_thr)

@@ -88,8 +88,9 @@ class PointRCNN(TwoStage3DDetector):
             sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(
                 1, 2).detach()
             obj_scores = sem_scores.max(-1)[0]
+            is_training = True
             bbox_list = self.rpn_head.get_bboxes(points_cat, bbox_preds,
-                                                 img_metas)
+                                                 img_metas, is_training)
             proposal_list = [
                 dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
                 for bboxes, scores, labels in bbox_list
