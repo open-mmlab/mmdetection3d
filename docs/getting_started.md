@@ -8,20 +8,20 @@
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 
-The required versions of MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMCV and MMDetection to avoid installation issues.
+The required versions of MMCV, MMDetection and MMSegmentation for different versions of MMDetection3D are as below. Please install the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
 
-| MMDetection3D version | MMDetection version |    MMCV version     |
-|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0, <=2.11.0| mmcv-full>=1.2.4, <=1.4|
-| 0.13.0              | mmdet>=2.10.0, <=2.11.0| mmcv-full>=1.2.4, <=1.4|
-| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.1.5, <=1.4|
-| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.1.5, <=1.4|
-| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | mmcv-full>=1.1.3, <=1.2|
-| 0.5.0               | 2.3.0                  | mmcv-full==1.0.5|
+| MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
+|:-------------------:|:-------------------:|:-------------------:|:-------------------:|
+| master              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.2.4, <=1.4|
+| 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.4|
+| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.4|
+| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | Not required  | mmcv-full>=1.1.3, <=1.2|
+| 0.5.0               | 2.3.0                  | Not required  | mmcv-full==1.0.5|
 
 # Installation
 
@@ -110,14 +110,28 @@ pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
-**e. Clone the MMDetection3D repository.**
+**e. Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
+
+```shell
+pip install git+https://github.com/open-mmlab/mmsegmentation.git
+```
+
+Optionally, you could also build MMSegmentation from source in case you want to modify the code:
+
+```shell
+git clone https://github.com/open-mmlab/mmsegmentation.git
+cd mmsegmentation
+pip install -e .  # or "python setup.py develop"
+```
+
+**f. Clone the MMDetection3D repository.**
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 ```
 
-**f.Install build requirements and then install MMDetection3D.**
+**g.Install build requirements and then install MMDetection3D.**
 
 ```shell
 pip install -v -e .  # or "python setup.py develop"
@@ -176,6 +190,9 @@ pip install mmcv-full
 
 # install mmdetection
 pip install git+https://github.com/open-mmlab/mmdetection.git
+
+# install mmsegmentation
+pip install git+https://github.com/open-mmlab/mmsegmentation.git
 
 # install mmdetection3d
 git clone https://github.com/open-mmlab/mmdetection3d.git
