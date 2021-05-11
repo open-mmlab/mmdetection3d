@@ -6,6 +6,7 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis, xywhr2xyxyr
 from mmdet3d.models.builder import build_loss
+from mmdet3d.models.dense_heads import BaseConvBboxHead
 from mmdet3d.ops import build_sa_module
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
@@ -27,13 +28,8 @@ class PointRCNNBboxHead(BaseModule):
     def __init__(
             self,
             num_classes,
-            in_channels,
             mlp_channels,
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d'),
-            act_cfg=dict(type='ReLU'),
-            bbox_codesize=7,
-            conv_channels=(512, 512),
+            pred_layer_cfg=None,
             num_points=(128, 32, 1),
             radius=(0.2, 0.4, 100),
             num_samples=(64, 64, 64),
@@ -54,11 +50,6 @@ class PointRCNNBboxHead(BaseModule):
             pretrained=None):
         super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
-        self.in_channels = in_channels
-        self.conv_cfg = conv_cfg
-        self.norm_cfg = norm_cfg
-        self.act_cfg = act_cfg
-        self.bbox_codesize = bbox_codesize
         self.num_sa = len(sa_channels)
 
         self.loss_bbox = build_loss(loss_bbox)
@@ -66,6 +57,7 @@ class PointRCNNBboxHead(BaseModule):
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
+        # 5 = 3 (xyz) + scores + depth
         mlp_channels = [5] + mlp_channels
         shared_mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
@@ -90,23 +82,9 @@ class PointRCNNBboxHead(BaseModule):
             conv_cfg=dict(type='Conv2d'))
 
         pre_channels = c_out
-        self.cls_layers = self.make_conv_layers(
-            conv_channels=conv_channels,
-            input_channels=pre_channels,
-            output_channels=self.num_classes,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-        self.reg_layers = self.make_conv_layers(
-            conv_channels=conv_channels,
-            input_channels=pre_channels,
-            output_channels=self.bbox_codesize,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
 
         self.SA_modules = nn.ModuleList()
-        sa_in_channel = self.in_channels
+        sa_in_channel = pre_channels
 
         for sa_index in range(self.num_sa):
             cur_sa_mlps = list(sa_channels[sa_index])
@@ -122,50 +100,10 @@ class PointRCNNBboxHead(BaseModule):
                     cfg=sa_cfg))
             sa_in_channel = sa_out_channel
 
-        pre_channels = sa_in_channel
-        self.cls_layers = self.make_conv_layers(
-            conv_channels=conv_channels,
-            input_channels=pre_channels,
-            output_channels=self.num_classes,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-        self.reg_layers = self.make_conv_layers(
-            conv_channels=conv_channels,
-            input_channels=pre_channels,
-            output_channels=self.bbox_coder.code_size,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-
-    @staticmethod
-    def make_conv_layers(conv_channels, input_channels, output_channels,
-                         conv_cfg, norm_cfg, act_cfg):
-        prev_channels = input_channels
-        conv_list = list()
-        for k in range(len(conv_channels)):
-            conv_list.append(
-                ConvModule(
-                    prev_channels,
-                    conv_channels[k],
-                    1,
-                    padding=0,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg,
-                    bias=True))
-            prev_channels = conv_channels[k]
-        conv_list.append(
-            ConvModule(
-                prev_channels,
-                output_channels,
-                1,
-                padding=0,
-                conv_cfg=conv_cfg,
-                act_cfg=None,
-                bias=True,
-                inplace=False))
-        return nn.Sequential(*conv_list)
+        self.conv_pred = BaseConvBboxHead(
+            **pred_layer_cfg,
+            num_cls_out_channels=self.num_classes,
+            num_reg_out_channels=self.bbox_coder.code_size)
 
     def forward(self, feats):
         input_data = feats.clone().detach()
@@ -184,11 +122,10 @@ class PointRCNNBboxHead(BaseModule):
             l_features.append(li_features)
 
         shared_features = l_features[-1]
-        rcnn_reg = self.reg_layers(shared_features).transpose(
-            1, 2).contiguous().squeeze(dim=1)  # (B, C)
-        rcnn_cls = self.cls_layers(shared_features).transpose(
-            1, 2).contiguous().squeeze(dim=1)
-
+        rcnn_cls, rcnn_reg = self.conv_pred(shared_features)
+        rcnn_reg = rcnn_reg.transpose(1, 2).contiguous().squeeze(dim=1)
+        rcnn_cls = rcnn_cls.transpose(1, 2).contiguous().squeeze(dim=1)
+        print('rcnn_cls: ', rcnn_cls)
         return (rcnn_cls, rcnn_reg)
 
     def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
@@ -199,7 +136,7 @@ class PointRCNNBboxHead(BaseModule):
         cls_flat = cls_score.view(-1)
         loss_cls = self.loss_cls(cls_flat, labels, label_weights)
         losses['loss_cls'] = loss_cls
-
+        print('loss_cls: ', loss_cls)
         # calculate regression loss
         pos_inds = (reg_mask > 0)
         if pos_inds.any() == 0:
