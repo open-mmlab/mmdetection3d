@@ -18,6 +18,7 @@ train_pipeline = [
         with_label_3d=True,
         with_mask_3d=True,
         with_seg_3d=True),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='PointSegClassMapping',
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
@@ -49,6 +50,7 @@ test_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -82,6 +84,7 @@ eval_pipeline = [
         shift_height=False,
         load_dim=6,
         use_dim=[0, 1, 2]),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,

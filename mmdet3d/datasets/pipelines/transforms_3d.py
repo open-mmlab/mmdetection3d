@@ -294,6 +294,93 @@ class ObjectNoise(object):
 
 
 @PIPELINES.register_module()
+class GlobalAlignment(object):
+    """Apply global alignment to 3D scene points by rotation and translation.
+
+    Args:
+        rotation_axis (int): Rotation axis for points and bboxes rotation.
+
+    Note:
+        We do not record the applied rotation and translation as in \
+            GlobalRotScaleTrans. Because usually, we do not need to reverse \
+            the alignment step.
+        For example, ScanNet 3D detection task uses aligned ground-truth \
+            bounding boxes for evaluation.
+    """
+
+    def __init__(self, rotation_axis):
+        self.rotation_axis = rotation_axis
+
+    def _trans_points(self, input_dict, trans_factor):
+        """Private function to translate points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            trans_factor (np.ndarray): Translation vector to be applied.
+
+        Returns:
+            dict: Results after translation, 'points' is updated in the dict.
+        """
+        input_dict['points'].translate(trans_factor)
+
+    def _rot_points(self, input_dict, rot_mat):
+        """Private function to rotate bounding boxes and points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            rot_mat (np.ndarray): Rotation matrix to be applied.
+
+        Returns:
+            dict: Results after rotation, 'points' is updated in the dict.
+        """
+        # input should be rot_mat_T so I transpose it here
+        input_dict['points'].rotate(rot_mat.T)
+
+    def _check_rot_mat(self, rot_mat):
+        """Check if rotation matrix is valid for self.rotation_axis.
+
+        Args:
+            rot_mat (np.ndarray): Rotation matrix to be applied.
+        """
+        is_valid = np.allclose(np.linalg.det(rot_mat), 1.0)
+        valid_array = np.zeros(3)
+        valid_array[self.rotation_axis] = 1.0
+        is_valid &= (rot_mat[self.rotation_axis, :] == valid_array).all()
+        is_valid &= (rot_mat[:, self.rotation_axis] == valid_array).all()
+        assert is_valid, f'invalid rotation matrix {rot_mat}'
+
+    def __call__(self, input_dict):
+        """Call function to shuffle points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after global alignment, 'points' and keys in \
+                input_dict['bbox3d_fields'] are updated in the result dict.
+        """
+        assert 'axis_align_matrix' in input_dict['ann_info'].keys(), \
+            'axis_align_matrix is not provided in GlobalAlignment'
+
+        axis_align_matrix = input_dict['ann_info']['axis_align_matrix']
+        assert axis_align_matrix.shape == (4, 4), \
+            f'invalid shape {axis_align_matrix.shape} for axis_align_matrix'
+        rot_mat = axis_align_matrix[:3, :3]
+        trans_vec = axis_align_matrix[:3, -1]
+
+        self._check_rot_mat(rot_mat)
+        self._rot_points(input_dict, rot_mat)
+        self._trans_points(input_dict, trans_vec)
+
+        return input_dict
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(rotation_axis={self.rotation_axis})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class GlobalRotScaleTrans(object):
     """Apply global rotation, scaling and translation to a 3D scene.
 

@@ -1,5 +1,6 @@
 import numpy as np
 import tempfile
+import warnings
 from os import path as osp
 
 from mmdet3d.core import show_result, show_seg_result
@@ -79,6 +80,8 @@ class ScanNetDataset(Custom3DDataset):
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - pts_instance_mask_path (str): Path of instance masks.
                 - pts_semantic_mask_path (str): Path of semantic masks.
+                - axis_align_matrix (np.ndarray): Transformation matrix for \
+                    global scene alignment.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
@@ -102,12 +105,54 @@ class ScanNetDataset(Custom3DDataset):
         pts_semantic_mask_path = osp.join(self.data_root,
                                           info['pts_semantic_mask_path'])
 
+        axis_align_matrix = self._get_axis_align_matrix(info)
+
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
             pts_instance_mask_path=pts_instance_mask_path,
-            pts_semantic_mask_path=pts_semantic_mask_path)
+            pts_semantic_mask_path=pts_semantic_mask_path,
+            axis_align_matrix=axis_align_matrix)
         return anns_results
+
+    def prepare_test_data(self, index):
+        """Prepare data for testing.
+
+        We should take axis_align_matrix from self.data_infos since we need \
+            to align point clouds.
+
+        Args:
+            index (int): Index for accessing the target data.
+
+        Returns:
+            dict: Testing data dict of the corresponding index.
+        """
+        input_dict = self.get_data_info(index)
+        # take the axis_align_matrix from data_infos
+        input_dict['ann_info'] = dict(
+            axis_align_matrix=self._get_axis_align_matrix(
+                self.data_infos[index]))
+        self.pre_pipeline(input_dict)
+        example = self.pipeline(input_dict)
+        return example
+
+    @staticmethod
+    def _get_axis_align_matrix(info):
+        """Get axis_align_matrix from info. If not exist, return identity mat.
+
+        Args:
+            info (dict): one data info term.
+
+        Returns:
+            np.ndarray: 4x4 transformation matrix.
+        """
+        if 'axis_align_matrix' in info['annos'].keys():
+            return info['annos']['axis_align_matrix'].astype(np.float32)
+        else:
+            warnings.warn(
+                'axis_align_matrix is not found in ScanNet data info, please '
+                'use new pre-process scripts to re-generate ScanNet data')
+            return np.eye(4).astype(np.float32)
 
     def _build_default_pipeline(self):
         """Build the default pipeline for this dataset."""
@@ -118,6 +163,7 @@ class ScanNetDataset(Custom3DDataset):
                 shift_height=False,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
+            dict(type='GlobalAlignment', rotation_axis=2),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=self.CLASSES,

@@ -5,9 +5,10 @@ import torch
 
 from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.core.points import DepthPoints, LiDARPoints
-from mmdet3d.datasets import (BackgroundPointsFilter, ObjectNoise,
-                              ObjectSample, PointShuffle, PointsRangeFilter,
-                              RandomFlip3D, VoxelBasedPointSampler)
+from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
+                              ObjectNoise, ObjectSample, PointShuffle,
+                              PointsRangeFilter, RandomFlip3D,
+                              VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -218,6 +219,39 @@ def test_points_range_filter():
 
     repr_str = repr(points_range_filter)
     expected_repr_str = f'PointsRangeFilter(point_cloud_range={pcd_range})'
+    assert repr_str == expected_repr_str
+
+
+def test_global_alignment():
+    np.random.seed(0)
+    global_alignment = GlobalAlignment(rotation_axis=2)
+
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    annos = mmcv.load('tests/data/scannet/scannet_infos.pkl')
+    info = annos[0]
+    axis_align_matrix = info['annos']['axis_align_matrix']
+
+    depth_points = DepthPoints(points.copy(), points_dim=6)
+
+    input_dict = dict(
+        points=depth_points.clone(),
+        ann_info=dict(axis_align_matrix=axis_align_matrix))
+
+    input_dict = global_alignment(input_dict)
+    trans_depth_points = input_dict['points']
+
+    # construct expected transformed points by affine transformation
+    pts = np.ones((points.shape[0], 4))
+    pts[:, :3] = points[:, :3]
+    trans_pts = np.dot(pts, axis_align_matrix.T)
+    expected_points = np.concatenate([trans_pts[:, :3], points[:, 3:]], axis=1)
+
+    assert np.allclose(
+        trans_depth_points.tensor.numpy(), expected_points, atol=1e-6)
+
+    repr_str = repr(global_alignment)
+    expected_repr_str = 'GlobalAlignment(rotation_axis=2)'
     assert repr_str == expected_repr_str
 
 

@@ -147,7 +147,7 @@ class BasePoints(object):
         if not isinstance(rotation, torch.Tensor):
             rotation = self.tensor.new_tensor(rotation)
         assert rotation.shape == torch.Size([3, 3]) or \
-            rotation.numel() == 1
+            rotation.numel() == 1, f'invalid rotation shape {rotation.shape}'
 
         if axis is None:
             axis = self.rotation_axis
