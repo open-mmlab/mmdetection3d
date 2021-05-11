@@ -39,7 +39,7 @@ assert (mmdet_version >= digit_version(mmdet_minimum_version)
 # TODO: actually we are incompatibile with even the newest mmseg
 # TODO: some changes are still in master branch and not released yet
 mmseg_minimum_version = '0.13.0'
-mmseg_maximum_version = '1.0.0'
+mmseg_maximum_version = '0.13.0'
 mmseg_version = digit_version(mmseg.__version__)
 assert (mmseg_version >= digit_version(mmseg_minimum_version)
         and mmseg_version <= digit_version(mmseg_maximum_version)), \
