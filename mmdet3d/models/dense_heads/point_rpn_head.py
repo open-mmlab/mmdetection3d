@@ -11,7 +11,7 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
-
+from .base_conv_bbox_head import BaseConvBboxHead
 
 def write_ply(points, points_label, out_filename):
     """Write points into ``ply`` format for meshlab visualization.
@@ -85,14 +85,9 @@ class PointRPNHead(BaseModule):
     def __init__(self,
                  num_classes,
                  num_dir_bins,
-                 input_channels,
                  train_cfg,
                  test_cfg,
-                 bbox_codesize=30,
-                 conv_channels=(512, 512),
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
+                 pred_layer_cfg=None,
                  cls_loss=dict(
                      type='FocalLoss',
                      use_sigmoid=True,
@@ -103,8 +98,6 @@ class PointRPNHead(BaseModule):
                  center_loss=None,
                  dir_class_loss=None,
                  dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
                  semantic_loss=None,
                  bbox_coder=None,
                  predict_boxes_when_training=False,
@@ -115,10 +108,6 @@ class PointRPNHead(BaseModule):
         self.num_classes = num_classes
         self.num_dir_bins = num_dir_bins
         self.bbox_coder = build_bbox_coder(bbox_coder)
-        self.conv_cfg = conv_cfg
-        self.norm_cfg = norm_cfg
-        self.act_cfg = act_cfg
-        self.bbox_codesize = bbox_codesize
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -134,56 +123,26 @@ class PointRPNHead(BaseModule):
 
         # build box coder
         self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.conv_pred = BaseConvBboxHead(
+            **pred_layer_cfg,
+            num_cls_out_channels=self._get_cls_out_channels(),
+            num_reg_out_channels=self._get_reg_out_channels()) 
+    
+    def _get_cls_out_channels(self):
+        """Return the channel number of classification outputs."""
+        # Class numbers (k) + objectness (1)
+        return self.num_classes
 
-        self.cls_layers = self.make_conv_layers(
-            conv_channels=conv_channels,
-            input_channels=self.input_channels,
-            output_channels=self.num_classes,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-        self.bbox_layers = self.make_conv_layers(
-            conv_channels=conv_channels,
-            input_channels=self.input_channels,
-            output_channels=self.bbox_codesize,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-
-    @staticmethod
-    def make_conv_layers(conv_channels, input_channels, output_channels,
-                         conv_cfg, norm_cfg, act_cfg):
-        prev_channels = input_channels
-        conv_list = list()
-        for k in range(len(conv_channels)):
-            conv_list.append(
-                ConvModule(
-                    prev_channels,
-                    conv_channels[k],
-                    1,
-                    padding=0,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg,
-                    bias=True,
-                    inplace=True))
-            prev_channels = conv_channels[k]
-        conv_list.append(
-            ConvModule(
-                prev_channels,
-                output_channels,
-                1,
-                padding=0,
-                conv_cfg=conv_cfg,
-                act_cfg=None,
-                bias=True,
-                inplace=True))
-        return nn.Sequential(*conv_list)
+    def _get_reg_out_channels(self):
+        """Return the channel number of regression outputs."""
+        # Bbox classification and regression
+        # (center residual (3), size regression (3)
+        # heading class+residual (num_dir_bins*2)),
+        return 3 + 3 + self.num_dir_bins * 2        
 
     def forward(self, feat_dict):
         point_features = feat_dict['fp_features'][-1]
-        point_cls_preds = self.cls_layers(point_features)
-        point_box_preds = self.bbox_layers(point_features)
+        point_cls_preds, point_box_preds = self.conv_pred(point_features)
 
         ret_dict = {
             'fp_points': feat_dict['fp_xyz'][-1],

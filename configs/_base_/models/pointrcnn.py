@@ -25,8 +25,10 @@ model = dict(
         type='PointRPNHead',
         num_classes=1,
         num_dir_bins=12,
-        input_channels=128,
-        conv_channels=(128, 128),
+        pred_layer_cfg=dict(
+            in_channels=128,
+            shared_conv_channels=(128, 128),
+            bias=True),
         center_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         dir_class_loss=dict(
