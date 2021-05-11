@@ -88,7 +88,7 @@ class PointRPNHead(BaseModule):
                  input_channels,
                  train_cfg,
                  test_cfg,
-                 bbox_codesize=30,
+                 bbox_codesize=52,
                  conv_channels=(512, 512),
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),

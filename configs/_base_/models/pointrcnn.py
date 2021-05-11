@@ -98,7 +98,7 @@ model = dict(
                 neg_piece_fractions=[0.8, 0.2],
                 neg_iou_piece_thrs=[0.55, 0.1],
                 neg_pos_ub=-1,
-                add_gt_as_proposals=False,
+                add_gt_as_proposals=True,
                 return_iou=True),
             cls_pos_thr=0.6,
             cls_neg_thr=0.45)),
@@ -117,5 +117,3 @@ model = dict(
             use_raw_score=True,
             nms_thr=0.01,
             score_thr=0.1)))
-
-find_unused_parameters = True
