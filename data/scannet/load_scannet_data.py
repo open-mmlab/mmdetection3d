@@ -61,15 +61,10 @@ def extract_bbox(mesh_vertices, object_id_to_segs, object_id_to_label_id,
         obj_pc = mesh_vertices[instance_ids == obj_id, 0:3]
         if len(obj_pc) == 0:
             continue
-        xmin = np.min(obj_pc[:, 0])
-        ymin = np.min(obj_pc[:, 1])
-        zmin = np.min(obj_pc[:, 2])
-        xmax = np.max(obj_pc[:, 0])
-        ymax = np.max(obj_pc[:, 1])
-        zmax = np.max(obj_pc[:, 2])
-        bbox = np.array([(xmin + xmax) / 2, (ymin + ymax) / 2,
-                         (zmin + zmax) / 2, xmax - xmin, ymax - ymin,
-                         zmax - zmin, label_id])
+        xyz_min = np.min(obj_pc, axis=0)
+        xyz_max = np.max(obj_pc, axis=0)
+        bbox = np.concatenate([(xyz_min + xyz_max) / 2.0, xyz_max - xyz_min,
+                               np.array([label_id])])
         # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
         instance_bboxes[obj_id - 1, :] = bbox
     return instance_bboxes
