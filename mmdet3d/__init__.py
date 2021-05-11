@@ -1,6 +1,7 @@
 import mmcv
 
 import mmdet
+import mmseg
 from .version import __version__, short_version
 
 
@@ -34,5 +35,16 @@ assert (mmdet_version >= digit_version(mmdet_minimum_version)
     f'MMDET=={mmdet.__version__} is used but incompatible. ' \
     f'Please install mmdet>={mmdet_minimum_version}, ' \
     f'<={mmdet_maximum_version}.'
+
+# TODO: actually we are incompatibile with even the newest mmseg
+# TODO: some changes are still in master branch and not released yet
+mmseg_minimum_version = '0.13.0'
+mmseg_maximum_version = '0.13.0'
+mmseg_version = digit_version(mmseg.__version__)
+assert (mmseg_version >= digit_version(mmseg_minimum_version)
+        and mmseg_version <= digit_version(mmseg_maximum_version)), \
+    f'MMSEG=={mmseg.__version__} is used but incompatible. ' \
+    f'Please install mmseg>={mmseg_minimum_version}, ' \
+    f'<={mmseg_maximum_version}.'
 
 __all__ = ['__version__', 'short_version']
