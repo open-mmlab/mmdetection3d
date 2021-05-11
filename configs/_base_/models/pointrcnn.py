@@ -35,8 +35,6 @@ model = dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        size_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         semantic_loss=dict(
@@ -77,14 +75,14 @@ model = dict(
                 ignore_iof_thr=-1),
             allowed_border=0,
             pos_weight=-1,
-            debug=False),
-        rpn_proposal=dict(
-            nms_pre=9000,
-            nms_post=512,
-            max_num=512,
-            nms_thr=0.8,
-            score_thr=0,
-            use_rotate_nms=False),
+            debug=False,
+            rpn_proposal=dict(
+                nms_pre=9000,
+                nms_post=512,
+                max_num=512,
+                nms_cfg=dict(type='nms', iou_thr=0.8),
+                score_thr=0,
+                use_rotate_nms=False)),
         rcnn=dict(
             assigner=dict(  # for Car
                 type='MaxIoUAssigner',
