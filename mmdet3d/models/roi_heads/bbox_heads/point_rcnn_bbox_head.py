@@ -125,7 +125,6 @@ class PointRCNNBboxHead(BaseModule):
         rcnn_cls, rcnn_reg = self.conv_pred(shared_features)
         rcnn_reg = rcnn_reg.transpose(1, 2).contiguous().squeeze(dim=1)
         rcnn_cls = rcnn_cls.transpose(1, 2).contiguous().squeeze(dim=1)
-        print('rcnn_cls: ', rcnn_cls)
         return (rcnn_cls, rcnn_reg)
 
     def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
@@ -136,7 +135,6 @@ class PointRCNNBboxHead(BaseModule):
         cls_flat = cls_score.view(-1)
         loss_cls = self.loss_cls(cls_flat, labels, label_weights)
         losses['loss_cls'] = loss_cls
-        print('loss_cls: ', loss_cls)
         # calculate regression loss
         pos_inds = (reg_mask > 0)
         if pos_inds.any() == 0:
