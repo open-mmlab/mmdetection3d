@@ -308,18 +308,22 @@ def test_global_rot_scale_trans():
     trans_factor = np.array([0.97873798, 2.2408932, 1.86755799])
 
     true_depth_points = depth_points.clone()
-    true_depth_points.rotate(noise_rot)
-    true_depth_points.scale(scale_factor)
-    true_depth_points.translate(trans_factor)
     true_bboxes_3d = gt_bboxes_3d.clone()
-    true_bboxes_3d.rotate(noise_rot)
+    true_depth_points, noise_rot_mat_T = true_bboxes_3d.rotate(
+        noise_rot, true_depth_points)
     true_bboxes_3d.scale(scale_factor)
     true_bboxes_3d.translate(trans_factor)
+    true_depth_points.scale(scale_factor)
+    true_depth_points.translate(trans_factor)
 
     assert torch.allclose(
         trans_depth_points.tensor, true_depth_points.tensor, atol=1e-6)
     assert torch.allclose(
         trans_bboxes_3d.tensor, true_bboxes_3d.tensor, atol=1e-6)
+    assert input_dict['pcd_scale_factor'] == scale_factor
+    assert torch.allclose(
+        input_dict['pcd_rotation'], noise_rot_mat_T, atol=1e-6)
+    assert np.allclose(input_dict['pcd_trans'], trans_factor)
 
     repr_str = repr(global_rot_scale_trans)
     expected_repr_str = f'GlobalRotScaleTrans(rot_range={[-angle, angle]},' \
