@@ -1,7 +1,9 @@
 import mmcv
-import os
 import torch
 from mmcv.image import tensor2imgs
+from os import path as osp
+
+from mmdet3d.models import Base3DDetector, Base3DSegmentor
 
 
 def single_gpu_test(model,
@@ -35,11 +37,11 @@ def single_gpu_test(model,
             result = model(return_loss=False, rescale=True, **data)
 
         if show:
-            # Visualize the results of MMdetection3D model
+            # Visualize the results of MMDetection3D model
             # 'show_results' is MMdetection3D visualization API
-            if hasattr(model.module, 'show_results'):
+            if isinstance(model.module, (Base3DDetector, Base3DSegmentor)):
                 model.module.show_results(data, result, out_dir)
-            # Visualize the results of MMdetection model
+            # Visualize the results of MMDetection model
             # 'show_result' is MMdetection visualization API
             else:
                 batch_size = len(result)
@@ -60,8 +62,7 @@ def single_gpu_test(model,
                     img_show = mmcv.imresize(img_show, (ori_w, ori_h))
 
                     if out_dir:
-                        out_file = os.path.join(out_dir,
-                                                img_meta['ori_filename'])
+                        out_file = osp.join(out_dir, img_meta['ori_filename'])
                     else:
                         out_file = None
 
