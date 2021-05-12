@@ -2,7 +2,6 @@ from __future__ import division
 
 import argparse
 import copy
-import logging
 import mmcv
 import os
 import time
@@ -12,12 +11,14 @@ from mmcv import Config, DictAction
 from mmcv.runner import get_dist_info, init_dist
 from os import path as osp
 
-from mmdet3d import __version__
+from mmdet import __version__ as mmdet_version
+from mmdet3d import __version__ as mmdet3d_version
 from mmdet3d.apis import train_model
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
 from mmdet3d.utils import collect_env, get_root_logger
 from mmdet.apis import set_random_seed
+from mmseg import __version__ as mmseg_version
 
 
 def parse_args():
@@ -140,19 +141,9 @@ def main():
     # init the logger before other steps
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
     log_file = osp.join(cfg.work_dir, f'{timestamp}.log')
-    # specify logger name, if we still use 'mmdet', the output info will be
-    # filtered and won't be saved in the log_file
-    # TODO: ugly workaround to judge whether we are training det or seg model
-    if cfg.model.type in ['EncoderDecoder3D']:
-        logger_name = 'mmseg'
-    else:
-        logger_name = 'mmdet'
+    # set logger name as 'mmdet3d' and add filter
     logger = get_root_logger(
-        log_file=log_file, log_level=cfg.log_level, name=logger_name)
-
-    # add a logging filter
-    logging_filter = logging.Filter(logger_name)
-    logging_filter.filter = lambda record: record.find(logger_name) != -1
+        log_file=log_file, log_level=cfg.log_level, name='mmdet3d')
 
     # init the meta dict to record some important information such as
     # environment info and seed, which will be logged
@@ -202,7 +193,9 @@ def main():
         # save mmdet version, config file content and class names in
         # checkpoints as meta data
         cfg.checkpoint_config.meta = dict(
-            mmdet3d_version=__version__,
+            mmdet_version=mmdet_version,
+            mmseg_version=mmseg_version,
+            mmdet3d_version=mmdet3d_version,
             config=cfg.pretty_text,
             CLASSES=datasets[0].CLASSES,
             PALETTE=datasets[0].PALETTE  # for segmentors
