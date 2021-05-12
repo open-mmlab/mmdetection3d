@@ -1,19 +1,11 @@
 import copy
 import numpy as np
 import pytest
-import random
 import torch
 from os.path import dirname, exists, join
 
 from mmdet3d.models.builder import build_segmentor
-
-
-def _setup_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.backends.cudnn.deterministic = True
+from mmdet.apis import set_random_seed
 
 
 def _get_config_directory():
@@ -40,18 +32,6 @@ def _get_config_module(fname):
     return config_mod
 
 
-def _get_model_cfg(fname):
-    """Grab configs necessary to create a model.
-
-    These are deep copied to allow for safe modification of parameters without
-    influencing other tests.
-    """
-    config = _get_config_module(fname)
-    model = copy.deepcopy(config.model)
-
-    return model
-
-
 def _get_segmentor_cfg(fname):
     """Grab configs necessary to create a segmentor.
 
@@ -73,7 +53,7 @@ def test_pointnet2_ssg():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
-    _setup_seed(0)
+    set_random_seed(0, True)
     pn2_ssg_cfg = _get_segmentor_cfg(
         'pointnet2/pointnet2_ssg_16x2_scannet-3d-20class.py')
     pn2_ssg_cfg.test_cfg.num_points = 32
@@ -87,7 +67,7 @@ def test_pointnet2_ssg():
     assert losses['decode.loss_sem_seg'].item() >= 0
 
     # test forward function
-    _setup_seed(0)
+    set_random_seed(0, True)
     data_dict = dict(
         points=points, img_metas=img_metas, pts_semantic_mask=gt_masks)
     forward_losses = self.forward(return_loss=True, **data_dict)
@@ -140,9 +120,9 @@ def test_pointnet2_msg():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
-    _setup_seed(0)
+    set_random_seed(0, True)
     pn2_msg_cfg = _get_segmentor_cfg(
-        'pointnet2/pointnet2_msg_14x2_scannet-3d-20class.py')
+        'pointnet2/pointnet2_msg_16x2_scannet-3d-20class.py')
     pn2_msg_cfg.test_cfg.num_points = 32
     self = build_segmentor(pn2_msg_cfg).cuda()
     points = [torch.rand(1024, 6).float().cuda() for _ in range(2)]
