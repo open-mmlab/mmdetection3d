@@ -89,11 +89,17 @@ class BaseShapeHead(BaseModule):
                                           1)
         if init_cfg is None:
             self.init_cfg = dict(
-                type='Normal',
+                type='Kaiming',
                 layer='Conv2d',
-                std=0.01,
-                bias_prob=0.01,
-                override=dict(type='Normal', name='conv_reg', std=0.01))
+                distribution='uniform',
+                override=[
+                    dict(type='Normal', name='conv_reg', std=0.01),
+                    dict(
+                        type='Normal',
+                        name='conv_cls',
+                        std=0.01,
+                        bias_prob=0.01)
+                ])
 
     def forward(self, x):
         """Forward function for SmallHead.
@@ -158,7 +164,7 @@ class ShapeAwareHead(Anchor3DHead):
 
     def init_weights(self):
         if not self._is_init:
-            for m in self.children():
+            for m in self.heads:
                 if hasattr(m, 'init_weights'):
                     m.init_weights()
             self._is_init = True
