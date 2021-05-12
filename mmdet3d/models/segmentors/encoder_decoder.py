@@ -1,19 +1,21 @@
 import numpy as np
 import torch
+from torch import nn as nn
 from torch.nn import functional as F
 
-from mmseg.models import SEGMENTORS, EncoderDecoder
+from mmseg.core import add_prefix
+from mmseg.models import SEGMENTORS
 from ..builder import build_backbone, build_head, build_neck
 from .base import Base3DSegmentor
 
 
 @SEGMENTORS.register_module()
-class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
+class EncoderDecoder3D(Base3DSegmentor):
     """3D Encoder Decoder segmentors.
 
     EncoderDecoder typically consists of backbone, decode_head, auxiliary_head.
     Note that auxiliary_head is only used for deep supervision during training,
-    which could be dumped during inference.
+    which could be thrown during inference.
     """
 
     def __init__(self,
@@ -24,7 +26,7 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
-        Base3DSegmentor.__init__(self)
+        super(EncoderDecoder3D, self).__init__()
         self.backbone = build_backbone(backbone)
         if neck is not None:
             self.neck = build_neck(neck)
@@ -44,6 +46,41 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         self.decode_head = build_head(decode_head)
         self.num_classes = self.decode_head.num_classes
 
+    def _init_auxiliary_head(self, auxiliary_head):
+        """Initialize ``auxiliary_head``"""
+        if auxiliary_head is not None:
+            if isinstance(auxiliary_head, list):
+                self.auxiliary_head = nn.ModuleList()
+                for head_cfg in auxiliary_head:
+                    self.auxiliary_head.append(build_head(head_cfg))
+            else:
+                self.auxiliary_head = build_head(auxiliary_head)
+
+    def init_weights(self, pretrained=None):
+        """Initialize the weights in backbone and heads.
+
+        Args:
+            pretrained (str, optional): Path to pre-trained weights.
+                Defaults to None.
+        """
+
+        super(EncoderDecoder3D, self).init_weights(pretrained)
+        self.backbone.init_weights(pretrained=pretrained)
+        self.decode_head.init_weights()
+        if self.with_auxiliary_head:
+            if isinstance(self.auxiliary_head, nn.ModuleList):
+                for aux_head in self.auxiliary_head:
+                    aux_head.init_weights()
+            else:
+                self.auxiliary_head.init_weights()
+
+    def extract_feat(self, points):
+        """Extract features from points."""
+        x = self.backbone(points)
+        if self.with_neck:
+            x = self.neck(x)
+        return x
+
     def encode_decode(self, points, img_metas):
         """Encode points with backbone and decode into a semantic segmentation
         map of the same size as input.
@@ -59,15 +96,76 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
         out = self._decode_head_forward_test(x, img_metas)
         return out
 
+    def _decode_head_forward_train(self, x, img_metas, pts_semantic_mask):
+        """Run forward function and calculate loss for decode head in
+        training."""
+        losses = dict()
+        loss_decode = self.decode_head.forward_train(x, img_metas,
+                                                     pts_semantic_mask,
+                                                     self.train_cfg)
+
+        losses.update(add_prefix(loss_decode, 'decode'))
+        return losses
+
+    def _decode_head_forward_test(self, x, img_metas):
+        """Run forward function and calculate loss for decode head in
+        inference."""
+        seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg)
+        return seg_logits
+
+    def _auxiliary_head_forward_train(self, x, img_metas, pts_semantic_mask):
+        """Run forward function and calculate loss for auxiliary head in
+        training."""
+        losses = dict()
+        if isinstance(self.auxiliary_head, nn.ModuleList):
+            for idx, aux_head in enumerate(self.auxiliary_head):
+                loss_aux = aux_head.forward_train(x, img_metas,
+                                                  pts_semantic_mask,
+                                                  self.train_cfg)
+                losses.update(add_prefix(loss_aux, f'aux_{idx}'))
+        else:
+            loss_aux = self.auxiliary_head.forward_train(
+                x, img_metas, pts_semantic_mask, self.train_cfg)
+            losses.update(add_prefix(loss_aux, 'aux'))
+
+        return losses
+
+    def forward_dummy(self, points):
+        """Dummy forward function."""
+        seg_logit = self.encode_decode(points, None)
+
+        return seg_logit
+
     def forward_train(self, points, img_metas, pts_semantic_mask):
-        """Forward function for training."""
+        """Forward function for training.
+
+        Args:
+            points (list[torch.Tensor]): List of points of shape [N, C].
+            img_metas (list): Image metas.
+            pts_semantic_mask (list[torch.Tensor]): List of point-wise semantic
+                labels of shape [N].
+
+        Returns:
+            dict[str, Tensor]: Losses.
+        """
         points_cat = torch.stack(points)
         pts_semantic_mask_cat = torch.stack(pts_semantic_mask)
-        return EncoderDecoder.forward_train(
-            self,
-            img=points_cat,
-            img_metas=img_metas,
-            gt_semantic_seg=pts_semantic_mask_cat)
+
+        # extract features using backbone
+        x = self.extract_feat(points_cat)
+
+        losses = dict()
+
+        loss_decode = self._decode_head_forward_train(x, img_metas,
+                                                      pts_semantic_mask_cat)
+        losses.update(loss_decode)
+
+        if self.with_auxiliary_head:
+            loss_aux = self._auxiliary_head_forward_train(
+                x, img_metas, pts_semantic_mask_cat)
+            losses.update(loss_aux)
+
+        return losses
 
     @staticmethod
     def _input_generation(coords,
