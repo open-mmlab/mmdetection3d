@@ -66,13 +66,8 @@ class SECONDFPN(BaseModule):
 
         if init_cfg is None:
             self.init_cfg = [
-                dict(type='Kaiming', layer='Conv2d'),
-                dict(
-                    type='Constant',
-                    layer=[
-                        '_BatchNorm', '_InstanceNorm', 'GroupNorm', 'LayerNorm'
-                    ],
-                    val=1.0)
+                dict(type='Kaiming', layer='ConvTranspose2d'),
+                dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)
             ]
 
     @auto_fp16()
