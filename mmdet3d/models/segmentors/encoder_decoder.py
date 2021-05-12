@@ -177,14 +177,15 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                 num_batch = int(np.ceil(point_idxs.shape[0] / num_points))
                 point_size = int(num_batch * num_points)
                 replace = point_size > 2 * point_idxs.shape[0]
+                num_repeat = point_size - point_idxs.shape[0]
+                if replace:  # duplicate
+                    point_idxs_repeat = point_idxs[torch.randint(
+                        0, point_idxs.shape[0],
+                        size=(num_repeat, )).to(device)]
+                else:
+                    point_idxs_repeat = point_idxs[torch.randperm(
+                        point_idxs.shape[0])[:num_repeat]]
 
-                # TODO: torch alternative for np.random.choice?
-                # TODO: tried tensor.multinomial before, finding it very slow
-                point_idxs_repeat = torch.from_numpy(
-                    np.random.choice(
-                        point_idxs.cpu().numpy(),
-                        point_size - point_idxs.shape[0],
-                        replace=replace)).to(device)
                 choices = torch.cat([point_idxs, point_idxs_repeat], dim=0)
                 choices = choices[torch.randperm(choices.shape[0])]
 
