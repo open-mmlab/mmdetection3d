@@ -451,21 +451,25 @@ class PointRPNHead(BaseModule):
         minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
+        num_rpn_proposal = self.test_cfg.max_output_num
+        nms_cfg = self.test_cfg.nms_cfg
+        score_thr = self.test_cfg.score_thr
+        if training_flag:
+            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
+            nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
+            score_thr = self.train_cfg.rpn_proposal.score_thr
+
         bbox_classes = torch.argmax(sem_scores, -1)
         nms_selected = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]].detach(),
             obj_scores[nonempty_box_mask].detach(),
-            bbox_classes[nonempty_box_mask].detach(),
-            self.train_cfg.rpn_proposal.nms_cfg)[1]
+            bbox_classes[nonempty_box_mask].detach(), nms_cfg)[1]
 
-        num_rpn_proposal = self.test_cfg.max_output_num
-        if training_flag:
-            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
         if nms_selected.shape[0] > num_rpn_proposal:
             nms_selected = nms_selected[:num_rpn_proposal]
 
         # filter empty boxes and boxes with low score
-        scores_mask = (obj_scores >= self.train_cfg.rpn_proposal.score_thr)
+        scores_mask = (obj_scores >= score_thr)
         nonempty_box_inds = torch.nonzero(
             nonempty_box_mask, as_tuple=False).flatten()
         nonempty_mask = torch.zeros_like(bbox_classes).scatter(
