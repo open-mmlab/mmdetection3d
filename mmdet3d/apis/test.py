@@ -38,9 +38,11 @@ def single_gpu_test(model,
 
         if show:
             # Visualize the results of MMDetection3D model
+            # 'show_results' is MMdetection3D visualization API
             if isinstance(model.module, (Base3DDetector, Base3DSegmentor)):
                 model.module.show_results(data, result, out_dir)
             # Visualize the results of MMDetection model
+            # 'show_result' is MMdetection visualization API
             else:
                 batch_size = len(result)
                 if batch_size == 1 and isinstance(data['img'][0],
