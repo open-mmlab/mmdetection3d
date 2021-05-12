@@ -1,5 +1,5 @@
 model = dict(
-    type='GroupFree3DNet',
+    type='VoteNet',
     backbone=dict(
         type='PointNet2SASSG',
         in_channels=3,
