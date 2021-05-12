@@ -3,11 +3,12 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
+                          DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
-                              ObjectNoise, ObjectSample, PointShuffle,
-                              PointsRangeFilter, RandomFlip3D,
+                              GlobalRotScaleTrans, ObjectNoise, ObjectSample,
+                              PointShuffle, PointsRangeFilter, RandomFlip3D,
                               VoxelBasedPointSampler)
 
 
@@ -253,6 +254,110 @@ def test_global_alignment():
     repr_str = repr(global_alignment)
     expected_repr_str = 'GlobalAlignment(rotation_axis=2)'
     assert repr_str == expected_repr_str
+
+
+def test_global_rot_scale_trans():
+    angle = 0.78539816
+    scale = [0.95, 1.05]
+    trans_std = 1.0
+
+    # rot_range should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(rot_range='0.0')
+
+    # scale_ratio_range should be seq of numbers
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(scale_ratio_range=1.0)
+
+    # translation_std should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(translation_std='0.0')
+
+    global_rot_scale_trans = GlobalRotScaleTrans(
+        rot_range=angle,
+        scale_ratio_range=scale,
+        translation_std=trans_std,
+        shift_height=False)
+
+    np.random.seed(0)
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    annos = mmcv.load('tests/data/scannet/scannet_infos.pkl')
+    info = annos[0]
+    gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
+
+    depth_points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+    gt_bboxes_3d = DepthInstance3DBoxes(
+        gt_bboxes_3d.copy(),
+        box_dim=gt_bboxes_3d.shape[-1],
+        with_yaw=False,
+        origin=(0.5, 0.5, 0.5))
+
+    input_dict = dict(
+        points=depth_points.clone(),
+        bbox3d_fields=['gt_bboxes_3d'],
+        gt_bboxes_3d=gt_bboxes_3d.clone())
+
+    input_dict = global_rot_scale_trans(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_bboxes_3d = input_dict['gt_bboxes_3d']
+
+    noise_rot = 0.07667607233534723
+    scale_factor = 1.021518936637242
+    trans_factor = np.array([0.97873798, 2.2408932, 1.86755799])
+
+    true_depth_points = depth_points.clone()
+    true_depth_points.rotate(noise_rot)
+    true_depth_points.scale(scale_factor)
+    true_depth_points.translate(trans_factor)
+    true_bboxes_3d = gt_bboxes_3d.clone()
+    true_bboxes_3d.rotate(noise_rot)
+    true_bboxes_3d.scale(scale_factor)
+    true_bboxes_3d.translate(trans_factor)
+
+    assert torch.allclose(
+        trans_depth_points.tensor, true_depth_points.tensor, atol=1e-6)
+    assert torch.allclose(
+        trans_bboxes_3d.tensor, true_bboxes_3d.tensor, atol=1e-6)
+
+    repr_str = repr(global_rot_scale_trans)
+    expected_repr_str = f'GlobalRotScaleTrans(rot_range={[-angle, angle]},' \
+                        f' scale_ratio_range={scale},' \
+                        f' translation_std={[trans_std for _ in range(3)]},' \
+                        f' shift_height=False)'
+    assert repr_str == expected_repr_str
+
+    # points with shift_height but no bbox
+    global_rot_scale_trans = GlobalRotScaleTrans(
+        rot_range=angle,
+        scale_ratio_range=scale,
+        translation_std=trans_std,
+        shift_height=True)
+
+    # points should have height attribute when shift_height=True
+    with pytest.raises(AssertionError):
+        input_dict = global_rot_scale_trans(input_dict)
+
+    np.random.seed(0)
+    shift_height = points[:, 2:3] * 0.99
+    points = np.concatenate([points, shift_height], axis=1)
+    depth_points = DepthPoints(
+        points.copy(),
+        points_dim=7,
+        attribute_dims=dict(color=[3, 4, 5], height=6))
+
+    input_dict = dict(points=depth_points.clone(), bbox3d_fields=[])
+
+    input_dict = global_rot_scale_trans(input_dict)
+    trans_depth_points = input_dict['points']
+    true_shift_height = shift_height * scale_factor
+
+    assert np.allclose(
+        trans_depth_points.tensor.numpy(),
+        np.concatenate([true_depth_points.tensor.numpy(), true_shift_height],
+                       axis=1),
+        atol=1e-6)
 
 
 def test_random_flip_3d():
