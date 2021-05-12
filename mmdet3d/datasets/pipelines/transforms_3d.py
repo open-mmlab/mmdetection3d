@@ -450,13 +450,19 @@ class GlobalRotScaleTrans(object):
             rotation = [-rotation, rotation]
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
 
+        # if no bbox in input_dict, only rotate points
+        if len(input_dict['bbox3d_fields']) == 0:
+            rot_mat_T = input_dict['points'].rotate(noise_rotation)
+            input_dict['pcd_rotation'] = rot_mat_T
+            return
+
+        # rotate points with bboxes
         for key in input_dict['bbox3d_fields']:
             if len(input_dict[key].tensor) != 0:
                 points, rot_mat_T = input_dict[key].rotate(
                     noise_rotation, input_dict['points'])
                 input_dict['points'] = points
                 input_dict['pcd_rotation'] = rot_mat_T
-        # input_dict['points_instance'].rotate(noise_rotation)
 
     def _scale_bbox_points(self, input_dict):
         """Private function to scale bounding boxes and points.
