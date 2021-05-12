@@ -110,7 +110,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                                   num_points,
                                   block_size,
                                   sample_rate=0.5,
-                                  use_normalized_coord=False):
+                                  use_normalized_coord=False,
+                                  eps=1e-3):
         """Sampling points in a sliding window fashion.
 
         First sample patches to cover all the input points.
@@ -124,6 +125,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                 Defaults to 0.5.
             use_normalized_coord (bool, optional): Whether to use normalized \
                 xyz as additional features. Defaults to False.
+            eps (float, optional): A value added to patch boundary to guarantee
+                points coverage. Default 1e-3.
 
         Returns:
             np.ndarray | np.ndarray:
@@ -162,8 +165,8 @@ class EncoderDecoder3D(Base3DSegmentor, EncoderDecoder):
                 # extract points within this patch
                 cur_min = torch.tensor([s_x, s_y, coord_min[2]]).to(device)
                 cur_max = torch.tensor([e_x, e_y, coord_max[2]]).to(device)
-                cur_choice = ((coords >= cur_min - 1e-3) &
-                              (coords <= cur_max + 1e-3)).all(dim=1)
+                cur_choice = ((coords >= cur_min - eps) &
+                              (coords <= cur_max + eps)).all(dim=1)
 
                 if not cur_choice.any():  # no points in this patch
                     continue
