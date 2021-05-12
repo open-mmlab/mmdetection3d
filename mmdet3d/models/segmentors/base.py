@@ -17,11 +17,14 @@ class Base3DSegmentor(BaseSegmentor):
     """
 
     def forward_test(self, points, img_metas, **kwargs):
-        """
+        """Calls either simple_test or aug_test depending on the length of
+        outer list of points. If len(points) == 1, call simple_test. Otherwise
+        call aug_test to aggregate the test results by e.g. voting.
+
         Args:
-            points (list[torch.Tensor]): the outer list indicates test-time
-                augmentations and inner torch.Tensor should have a shape BXNxC,
-                which contains all points in the batch.
+            points (list[list[torch.Tensor]]): the outer list indicates
+                test-time augmentations and inner torch.Tensor should have a
+                shape BXNxC, which contains all points in the batch.
             img_metas (list[list[dict]]): the outer list indicates test-time
                 augs (multiscale, flip, etc.) and the inner list indicates
                 images in a batch.
