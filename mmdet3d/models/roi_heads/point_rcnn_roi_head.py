@@ -372,8 +372,7 @@ class PointRCNNROIHead(Base3DRoIHead):
                     cur_boxes.tensor,
                     cur_gt_bboxes.tensor,
                     gt_labels=cur_gt_labels)
-        #    print('assign_result: ', assign_result)
-        # sample boxes
+            # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,
                                                        cur_gt_bboxes.tensor,

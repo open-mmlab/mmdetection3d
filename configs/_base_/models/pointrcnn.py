@@ -97,16 +97,15 @@ model = dict(
                 neg_pos_ub=-1,
                 add_gt_as_proposals=True,
                 return_iou=True),
-            cls_pos_thr=0.6,
-            cls_neg_thr=0.45)),
+            cls_pos_thr=0.7,
+            cls_neg_thr=0.25)),
     test_cfg=dict(
         rpn=dict(
             nms_pre=9000,
             nms_post=512,
             max_output_num=100,
-            nms_thr=0.7,
             score_thr=0,
-            nms_cfg=dict(type='nms', iou_thr=0.8),
+            nms_cfg=dict(type='nms', iou_thr=0.85),
             per_class_proposal=True,
             use_rotate_nms=True),
         rcnn=dict(

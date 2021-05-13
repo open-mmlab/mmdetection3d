@@ -210,7 +210,8 @@ class PointRCNNBboxHead(BaseModule):
         interval_mask = (cls_pos_mask == 0) & (cls_neg_mask == 0)
         # iou regression target
         label = (cls_pos_mask > 0).float()
-        label[interval_mask] = ious[interval_mask] * 2 - 0.5
+        label[interval_mask] = (ious[interval_mask] - cfg.cls_neg_thr) / \
+            (cfg.cls_pos_thr - cfg.cls_neg_thr)
         # label weights
         label_weights = (label >= 0).float()
 
