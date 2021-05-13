@@ -13,31 +13,27 @@ All Rights Reserved 2018.
 #define DIVUP(m,n) ((m) / (n) + ((m) % (n) > 0))
 // #define DEBUG
 
-__device__ inline void lidar_to_local_coords(float shift_x, float shift_y,
-                                             float rz, float &local_x,
-                                             float &local_y) {
-  // should rotate pi/2 + alpha to translate LiDAR to local
-  float rot_angle = rz + M_PI / 2;
-  float cosa = cos(rot_angle), sina = sin(rot_angle);
-  local_x = shift_x * cosa + shift_y * (-sina);
-  local_y = shift_x * sina + shift_y * cosa;
+__device__ inline void lidar_to_local_coords(float shift_x, float shift_y, float rot_angle, float &local_x, float &local_y){
+    float cosa = cos(-rot_angle), sina = sin(-rot_angle);
+    local_x = shift_x * cosa + shift_y * (-sina);
+    local_y = shift_x * sina + shift_y * cosa;
 }
 
-__device__ inline int check_pt_in_box3d(const float *pt, const float *box3d,
-                                        float &local_x, float &local_y) {
-  // param pt: (x, y, z)
-  // param box3d: (cx, cy, cz, w, l, h, rz) in LiDAR coordinate, cz in the
-  // bottom center
-  float x = pt[0], y = pt[1], z = pt[2];
-  float cx = box3d[0], cy = box3d[1], cz = box3d[2];
-  float w = box3d[3], l = box3d[4], h = box3d[5], rz = box3d[6];
-  cz += h / 2.0;  // shift to the center since cz in box3d is the bottom center
 
-  if (fabsf(z - cz) > h / 2.0) return 0;
-  lidar_to_local_coords(x - cx, y - cy, rz, local_x, local_y);
-  float in_flag = (local_x > -l / 2.0) & (local_x < l / 2.0) &
-                  (local_y > -w / 2.0) & (local_y < w / 2.0);
-  return in_flag;
+__device__ inline int check_pt_in_box3d(const float *pt, const float *box3d, float &local_x, float &local_y){
+    // param pt: (x, y, z)
+    // param box3d: [x, y, z, dx, dy, dz, heading] (x, y, z) is the box center
+
+    const float MARGIN = 1e-5;
+    float x = pt[0], y = pt[1], z = pt[2];
+    float cx = box3d[0], cy = box3d[1], cz = box3d[2];
+    float dx = box3d[3], dy = box3d[4], dz = box3d[5], rz = box3d[6];
+    cz += dz / 2.0  // shift to the center since cz in box3d is the bottom center
+
+    if (fabsf(z - cz) > dz / 2.0) return 0;
+    lidar_to_local_coords(x - cx, y - cy, rz, local_x, local_y);
+    float in_flag = (fabs(local_x) < dx / 2.0 + MARGIN) & (fabs(local_y) < dy / 2.0 + MARGIN);
+    return in_flag;
 }
 
 __global__ void assign_pts_to_box3d(int batch_size, int pts_num, int boxes_num, const float *xyz, const float *boxes3d, int *pts_assign){

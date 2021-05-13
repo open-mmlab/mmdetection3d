@@ -90,7 +90,7 @@ class PointRPNHead(BaseModule):
                  cls_loss=dict(
                      type='FocalLoss',
                      use_sigmoid=True,
-                     reduction='mean',
+                     reduction='sum',
                      gamma=2.0,
                      alpha=0.25,
                      loss_weight=1.0),
@@ -228,12 +228,13 @@ class PointRPNHead(BaseModule):
         # calculate semantic loss
         semantic_points = bbox_preds['obj_scores'].transpose(2,
                                                              1).reshape(-1, 1)
-        semantic_points_label = negative_mask.long()
-        semantic_loss_weight = negative_mask.float() + positive_mask.float()
-        semantic_loss = self.cls_loss(
-            semantic_points,
-            semantic_points_label.reshape(-1),
-            weight=semantic_loss_weight)
+        semantic_points_label = 1 - positive_mask.long()
+        # for ignore, but now we do not have ignore label
+        # semantic_loss_weight = negative_mask.float() + positive_mask.float()
+        semantic_loss = self.cls_loss(semantic_points,
+                                      semantic_points_label.reshape(-1))
+
+        semantic_loss /= positive_mask.float().sum()
         '''
         indices_xxx = 0
         print('tensor: ',points[0].shape)

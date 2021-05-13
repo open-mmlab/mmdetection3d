@@ -73,7 +73,6 @@ class PointRCNN(TwoStage3DDetector):
         backbone_feats = x['fp_features'][-1].clone()
         backbone_xyz = x['fp_xyz'][-1].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
-
         if self.with_rpn:
             bbox_preds = self.rpn_head(x)
             rpn_loss = self.rpn_head.loss(

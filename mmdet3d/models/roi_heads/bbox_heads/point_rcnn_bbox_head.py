@@ -41,10 +41,7 @@ class PointRCNNBboxHead(BaseModule):
             bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
             sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
             loss_bbox=dict(
-                type='SmoothL1Loss',
-                beta=1.0 / 9.0,
-                reduction='sum',
-                loss_weight=1.0),
+                type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
             loss_cls=dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=True,
@@ -295,7 +292,7 @@ class PointRCNNBboxHead(BaseModule):
             pos_gt_bboxes_ct[..., 0:3] -= roi_center
             pos_gt_bboxes_ct[..., 6] -= roi_ry
             pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
-                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), -roi_ry,
+                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), roi_ry,
                 axis=2).squeeze(1)
 
             # flip orientation if rois have opposite orientation

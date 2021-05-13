@@ -157,17 +157,24 @@ class PointRCNNROIHead(Base3DRoIHead):
                 - loss_semantic (torch.Tensor): loss of semantic head
                 - loss_bbox (torch.Tensor): loss of bboxes
         """
+        features = feats_dict['features']
+        points = feats_dict['points']
+        point_scores = feats_dict['points_scores']
+        for i in range(len(gt_bboxes_3d)):
+            valid_gt = gt_labels_3d[i] != -1
+            gt_bboxes_3d[i].tensor = gt_bboxes_3d[i].tensor[valid_gt]
+            gt_labels_3d[i] = gt_labels_3d[i][valid_gt]
         '''
-        points_t = feats_dict['fp_xyz'][-1][0].clone()
+        points_t = points[0]
         points_t = points_t[:,0:3].cpu().data.numpy()
-        points_f = feats_dict['fp_features'][-1].clone()
-        print(points_f.shape)
-        points_label = point_scores[0].cpu().data.numpy()
+        points_label = point_scores[0].squeeze().cpu().data.numpy()
         bbox = gt_bboxes_3d[0].tensor.cpu().data.numpy()
         bbox_p = proposal_list[0]['boxes_3d'].tensor.cpu().data.numpy()
         bbox_p_s = proposal_list[0]['scores_3d'].cpu().data.numpy()
         print(bbox.shape, bbox_p.shape,points_label.shape)
-        bbox_p = bbox_p[bbox_p_s>0.9]
+        bbox_p = bbox_p[bbox_p_s>0.65]
+        bbox_p[..., 6] = -bbox_p[..., 6]
+        bbox[..., 6] = -bbox[..., 6]
         write_oriented_bbox(bbox,'/tmp/label_bboxes.ply')
         write_oriented_bbox(bbox_p,'/tmp/label_bboxes_pred.ply')
         write_ply(points_t,points_label,'/tmp/label_points.obj')
@@ -177,10 +184,6 @@ class PointRCNNROIHead(Base3DRoIHead):
         losses = dict()
         sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
-
-        features = feats_dict['features']
-        points = feats_dict['points']
-        point_scores = feats_dict['points_scores']
 
         # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
@@ -369,7 +372,8 @@ class PointRCNNROIHead(Base3DRoIHead):
                     cur_boxes.tensor,
                     cur_gt_bboxes.tensor,
                     gt_labels=cur_gt_labels)
-            # sample boxes
+        #    print('assign_result: ', assign_result)
+        # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,
                                                        cur_gt_bboxes.tensor,
