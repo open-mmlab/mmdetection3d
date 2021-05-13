@@ -59,7 +59,7 @@ python demo/multi_modality_demo.py demo/data/sunrgbd/sunrgbd_000017.bin demo/dat
 To test a 3D segmentor on point cloud data, simply run:
 
 ```shell
-python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--out-dir ${OUT_DIR}] [--show]
+python demo/pc_seg_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--out-dir ${OUT_DIR}] [--show]
 ```
 
 The visualization results including a point cloud and its predicted 3D segmentation mask will be saved in `${OUT_DIR}/PCD_NAME`.
@@ -67,5 +67,5 @@ The visualization results including a point cloud and its predicted 3D segmentat
 Example on ScanNet data using [PointNet++-SSG]() model:
 
 ```shell
-python demo/pcd_demo.py demo/data/scannet/scene0000_00.bin configs/pointnet2/pointnet2_ssg_16x2_scannet-3d-20class.py checkpoints/PN2_SSG.pth
+python demo/pc_seg_demo.py demo/data/scannet/scene0000_00.bin configs/pointnet2/pointnet2_ssg_16x2_scannet-3d-20class.py checkpoints/PN2_SSG.pth
 ```

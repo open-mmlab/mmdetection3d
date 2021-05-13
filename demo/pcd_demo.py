@@ -33,7 +33,8 @@ def main():
         args.out_dir,
         args.score_thr,
         show=args.show,
-        snapshot=args.snapshot)
+        snapshot=args.snapshot,
+        task='det')
 
 
 if __name__ == '__main__':
