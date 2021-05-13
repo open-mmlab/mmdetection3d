@@ -213,14 +213,14 @@ def show_multi_modality_result(img,
 
     Args:
         img (np.ndarray): The numpy array of image in cv2 fashion.
-        gt_bboxes (np.ndarray): Ground truth boxes.
-        pred_bboxes (np.ndarray): Predicted boxes.
+        gt_bboxes (:obj:`BaseInstance3DBoxes`): Ground truth boxes.
+        pred_bboxes (:obj:`BaseInstance3DBoxes`): Predicted boxes.
         proj_mat (numpy.array, shape=[4, 4]): The projection matrix
             according to the camera intrinsic parameters.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        depth_bbox (bool): Whether we are projecting camera bbox or lidar bbox.
-        img_metas (dict): Used in projecting cameta bbox.
+        depth_bbox (bool): Whether we are projecting depth bbox or lidar bbox.
+        img_metas (dict): Used in projecting depth bbox.
         show (bool): Visualize the results online. Defaults to False.
         gt_bbox_color (str or tuple(int)): Color of bbox lines.
            The tuple of color should be in BGR order. Default: (255, 102, 61)

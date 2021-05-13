@@ -107,7 +107,7 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes3d (numpy.array, shape=[M, 7]):
+        bboxes3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
             3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
         raw_img (numpy.array): The numpy array of image.
         lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
@@ -153,7 +153,7 @@ def draw_depth_bbox3d_on_img(bboxes3d,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes3d (numpy.array, shape=[M, 7]):
+        bboxes3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
             3d camera bbox (x, y, z, dx, dy, dz, yaw) to visualize.
         raw_img (numpy.array): The numpy array of image.
         calibs (dict): Camera calibration information, Rt and K.
