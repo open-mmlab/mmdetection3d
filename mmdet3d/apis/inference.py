@@ -347,6 +347,7 @@ def show_proj_det_result_meshlab(data,
             data['img_metas'][0][0]['lidar2img'],
             out_dir,
             file_name,
+            box_mode='lidar',
             show=show)
     elif box_mode == Box3DMode.DEPTH:
         if 'calib' not in data.keys():
@@ -362,7 +363,7 @@ def show_proj_det_result_meshlab(data,
             data['calib'][0],
             out_dir,
             file_name,
-            depth_bbox=True,
+            box_mode='depth',
             img_metas=data['img_metas'][0][0],
             show=show)
     else:

@@ -4,15 +4,16 @@ import numpy as np
 import pyquaternion
 import tempfile
 import torch
+import warnings
 from nuscenes.utils.data_classes import Box as NuScenesBox
 from os import path as osp
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset
 from ..core import show_multi_modality_result
-from ..core.bbox import (CameraInstance3DBoxes, LiDARInstance3DBoxes,
-                         get_box_type)
+from ..core.bbox import CameraInstance3DBoxes, get_box_type
 from .pipelines import Compose
+from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -528,6 +529,78 @@ class NuScenesMonoDataset(CocoDataset):
             self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
+    @staticmethod
+    def _get_data(results, key):
+        """Extract and return the data corresponding to key in result dict.
+
+        Args:
+            results (dict): Data loaded using pipeline.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor | None: Data term.
+        """
+        if key not in results.keys():
+            return None
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
+        return data
+
+    def _extract_data(self, index, pipeline, key, load_annos=False):
+        """Load data using input pipeline and extract data according to key.
+
+        Args:
+            index (int): Index for accessing the target data.
+            pipeline (:obj:`Compose`): Composed data loading pipeline.
+            key (str | list[str]): One single or a list of data key.
+            load_annos (bool): Whether to load data annotations.
+                If True, need to set self.test_mode as False before loading.
+
+        Returns:
+            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
+                A single or a list of loaded data.
+        """
+        assert pipeline is not None, 'data loading pipeline is not provided'
+        img_info = self.data_infos[index]
+        input_dict = dict(img_info=img_info)
+
+        if load_annos:
+            ann_info = self.get_ann_info(index)
+            input_dict.update(dict(ann_info=ann_info))
+
+        self.pre_pipeline(input_dict)
+        example = pipeline(input_dict)
+
+        # extract data items according to keys
+        if isinstance(key, str):
+            data = self._get_data(example, key)
+        else:
+            data = [self._get_data(example, k) for k in key]
+
+        return data
+
+    def _get_pipeline(self, pipeline):
+        """Get data loading pipeline in self.show/evaluate function.
+
+        Args:
+            pipeline (list[dict] | None): Input pipeline. If None is given, \
+                get from self.pipeline.
+        """
+        if pipeline is None:
+            if not hasattr(self, 'pipeline') or self.pipeline is None:
+                warnings.warn(
+                    'Use default pipeline for data loading, this may cause '
+                    'errors when data is on ceph')
+                return self._build_default_pipeline()
+            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
+            return Compose(loading_pipeline)
+        return Compose(pipeline)
+
     def _build_default_pipeline(self):
         """Build the default pipeline for this dataset."""
         pipeline = [
@@ -556,25 +629,29 @@ class NuScenesMonoDataset(CocoDataset):
             if 'img_bbox' in result.keys():
                 result = result['img_bbox']
             data_info = self.data_infos[i]
-            pts_path = data_info['lidar_path']
-            file_name = osp.split(pts_path)[-1].split('.')[0]
+            img_path = data_info['file_name']
+            file_name = osp.split(img_path)[-1].split('.')[0]
             img, img_metas = self._extract_data(i, pipeline,
                                                 ['img', 'img_metas'])
             # need to transpose channel to first dim
             img = img.numpy().transpose(1, 2, 0)
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
             pred_bboxes = result['boxes_3d'].tensor.numpy()
-            gt_bboxes = LiDARInstance3DBoxes(gt_bboxes, origin=(0.5, 0.5, 0))
-            pred_bboxes = LiDARInstance3DBoxes(
-                pred_bboxes, origin=(0.5, 0.5, 0))
+            gt_bboxes = CameraInstance3DBoxes(
+                gt_bboxes, box_dim=gt_bboxes.shape[-1], origin=(0.5, 1.0, 0.5))
+            pred_bboxes = CameraInstance3DBoxes(
+                pred_bboxes,
+                box_dim=pred_bboxes.shape[-1],
+                origin=(0.5, 1.0, 0.5))
             show_multi_modality_result(
                 img,
                 gt_bboxes,
                 pred_bboxes,
-                img_metas['lidar2img'],
+                img_metas['cam_intrinsic'],
                 out_dir,
                 file_name,
-                show=False)
+                box_mode='camera',
+                show=show)
 
 
 def output_to_nusc_box(detection):

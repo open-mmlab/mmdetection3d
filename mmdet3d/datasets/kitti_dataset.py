@@ -740,4 +740,5 @@ class KittiDataset(Custom3DDataset):
                     img_metas['lidar2img'],
                     out_dir,
                     file_name,
+                    box_mode='lidar',
                     show=False)
