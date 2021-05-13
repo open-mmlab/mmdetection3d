@@ -9,7 +9,10 @@ from os import path as osp
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset
-from ..core.bbox import CameraInstance3DBoxes, get_box_type
+from ..core import show_multi_modality_result
+from ..core.bbox import (CameraInstance3DBoxes, LiDARInstance3DBoxes,
+                         get_box_type)
+from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -484,7 +487,8 @@ class NuScenesMonoDataset(CocoDataset):
                  jsonfile_prefix=None,
                  result_names=['img_bbox'],
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in nuScenes protocol.
 
         Args:
@@ -498,6 +502,8 @@ class NuScenesMonoDataset(CocoDataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -519,18 +525,56 @@ class NuScenesMonoDataset(CocoDataset):
             tmp_dir.cleanup()
 
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
-    def show(self, results, out_dir):
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(type='LoadImageFromFileMono3D'),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=self.CLASSES,
+                with_label=False),
+            dict(type='Collect3D', keys=['img'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
-        # TODO: support mono3d visualization
-        pass
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        pipeline = self._get_pipeline(pipeline)
+        for i, result in enumerate(results):
+            if 'img_bbox' in result.keys():
+                result = result['img_bbox']
+            data_info = self.data_infos[i]
+            pts_path = data_info['lidar_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            img, img_metas = self._extract_data(i, pipeline,
+                                                ['img', 'img_metas'])
+            # need to transpose channel to first dim
+            img = img.numpy().transpose(1, 2, 0)
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
+            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            gt_bboxes = LiDARInstance3DBoxes(gt_bboxes, origin=(0.5, 0.5, 0))
+            pred_bboxes = LiDARInstance3DBoxes(
+                pred_bboxes, origin=(0.5, 0.5, 0))
+            show_multi_modality_result(
+                img,
+                gt_bboxes,
+                pred_bboxes,
+                img_metas['lidar2img'],
+                out_dir,
+                file_name,
+                show=False)
 
 
 def output_to_nusc_box(detection):
