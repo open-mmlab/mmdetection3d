@@ -26,9 +26,7 @@ model = dict(
         num_classes=1,
         num_dir_bins=12,
         pred_layer_cfg=dict(
-            in_channels=128,
-            shared_conv_channels=(128, 128),
-            bias=True),
+            in_channels=128, shared_conv_channels=(128, 128), bias=True),
         center_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         dir_class_loss=dict(
@@ -53,10 +51,9 @@ model = dict(
         bbox_head=dict(
             type='PointRCNNBboxHead',
             num_classes=1,
-            in_channels=128,
+            pred_layer_cfg=dict(
+                in_channels=512, shared_conv_channels=(256, 256), bias=True),
             mlp_channels=[128, 128],
-            bbox_codesize=7,
-            conv_channels=[256, 256],
             num_points=(128, 32, 1),
             radius=(0.2, 0.4, 100),
             num_samples=(64, 64, 64),
