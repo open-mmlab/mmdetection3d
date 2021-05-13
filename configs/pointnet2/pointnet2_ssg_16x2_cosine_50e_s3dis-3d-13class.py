@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/pointnet2_msg.py', '../_base_/default_runtime.py'
+    '../_base_/models/pointnet2_ssg.py', '../_base_/default_runtime.py'
 ]
 
 # data settings
@@ -23,7 +23,7 @@ model = dict(
 
 # optimizer
 lr = 0.001  # max learning rate
-optimizer = dict(type='Adam', lr=lr, weight_decay=1e-4)
+optimizer = dict(type='Adam', lr=lr, weight_decay=1e-3)
 optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
 

@@ -31,10 +31,10 @@ model = dict(
 
 # optimizer
 lr = 0.001  # max learning rate
-optimizer = dict(type='Adam', lr=lr, weight_decay=1e-4)
+optimizer = dict(type='Adam', lr=lr, weight_decay=1e-2)
 optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
 
 # runtime settings
 checkpoint_config = dict(interval=5)
-runner = dict(type='EpochBasedRunner', max_epochs=150)
+runner = dict(type='EpochBasedRunner', max_epochs=200)
