@@ -302,12 +302,12 @@ def show_seg_result_meshlab(data,
     return file_name
 
 
-def show_proj_bbox_img_result_meshlab(data,
-                                      result,
-                                      out_dir,
-                                      score_thr=0.0,
-                                      show=False,
-                                      snapshot=False):
+def show_proj_det_result_meshlab(data,
+                                 result,
+                                 out_dir,
+                                 score_thr=0.0,
+                                 show=False,
+                                 snapshot=False):
     """Show result of projecting 3D bbox to 2D image by meshlab."""
     assert 'img' in data.keys(), 'image data is not provided for visualization'
 
@@ -317,6 +317,7 @@ def show_proj_bbox_img_result_meshlab(data,
     # read from file because img in data_dict has undergone pipeline transform
     img = mmcv.imread(img_filename)
 
+    # TODO: use 'img_bbox' for Mono3D visualization
     if 'pts_bbox' in result[0].keys():
         pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
         pred_scores = result[0]['pts_bbox']['scores_3d'].numpy()
@@ -406,8 +407,7 @@ def show_result_meshlab(data,
                                             show, snapshot)
 
     if task == 'multi_modality-det':
-        file_name = show_proj_bbox_img_result_meshlab(data, result, out_dir,
-                                                      score_thr, show,
-                                                      snapshot)
+        file_name = show_proj_det_result_meshlab(data, result, out_dir,
+                                                 score_thr, show, snapshot)
 
     return out_dir, file_name
