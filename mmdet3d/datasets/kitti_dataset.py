@@ -741,4 +741,4 @@ class KittiDataset(Custom3DDataset):
                     out_dir,
                     file_name,
                     box_mode='lidar',
-                    show=False)
+                    show=show)
