@@ -11,7 +11,6 @@ model = dict(
                                                                     128)),
                      ((128, 192, 256), (128, 192, 256)), ((256, 256, 512),
                                                           (256, 384, 512))),
-        aggregation_channels=(96, 256, 512, 1024),
         dilated_group=(True, True, True, True),
         fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
         fps_sample_range_lists=((-1), (-1), (-1), (-1)),

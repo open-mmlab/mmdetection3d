@@ -47,11 +47,11 @@ class PointNet2Seg(BasePointNet):
                               ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                               ((128, 128, 256), (128, 192, 256), (128, 256,
                                                                   256))),
-                 aggregation_channels=(64, 128, 256),
                  fp_channels=((256, 256), (256, 256)),
                  fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
                  fps_sample_range_lists=((-1), (-1), (512, -1)),
                  dilated_group=(True, True, True),
+                 aggregation_channels=None,
                  norm_cfg=dict(type='BN2d'),
                  sa_cfg=dict(
                      type='PointSAModuleMSG',
@@ -65,7 +65,7 @@ class PointNet2Seg(BasePointNet):
         self.num_fp = len(fp_channels)
 
         assert len(num_points) == len(radii) == len(num_samples) == len(
-            sa_channels) == len(aggregation_channels)
+            sa_channels)
         assert len(sa_channels) >= len(fp_channels)
 
         self.SA_modules = nn.ModuleList()
@@ -77,6 +77,7 @@ class PointNet2Seg(BasePointNet):
             cur_sa_mlps = list(sa_channels[sa_index])
             sa_out_channel = 0
             for radius_index in range(len(radii[sa_index])):
+                print('sa_in_chanel: ', sa_in_channel)
                 cur_sa_mlps[radius_index] = [sa_in_channel] + list(
                     cur_sa_mlps[radius_index])
                 sa_out_channel += cur_sa_mlps[radius_index][-1]
@@ -105,17 +106,22 @@ class PointNet2Seg(BasePointNet):
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
                     bias=True))
-            # skip_channel_list.append(sa_out_channel)
-            self.aggregation_mlps.append(
-                ConvModule(
-                    sa_out_channel,
-                    aggregation_channels[sa_index],
-                    conv_cfg=dict(type='Conv1d'),
-                    norm_cfg=dict(type='BN1d'),
-                    kernel_size=1,
-                    bias=True))
-            sa_in_channel = aggregation_channels[sa_index]
-            skip_channel_list.append(sa_in_channel)
+            skip_channel_list.append(sa_out_channel)
+            if aggregation_channels is None:
+                print('aggregation_mlps is None')
+                self.aggregation_mlps.append(None)
+                sa_in_channel = sa_out_channel
+            else:
+                self.aggregation_mlps.append(
+                    ConvModule(
+                        sa_out_channel,
+                        aggregation_channels[sa_index],
+                        conv_cfg=dict(type='Conv1d'),
+                        norm_cfg=dict(type='BN1d'),
+                        kernel_size=1,
+                        bias=True))
+                sa_in_channel = aggregation_channels[sa_index]
+                skip_channel_list.append(sa_in_channel)
 
         self.FP_modules = nn.ModuleList()
         fp_source_channel = skip_channel_list.pop()
@@ -158,7 +164,8 @@ class PointNet2Seg(BasePointNet):
         for i in range(self.num_sa):
             cur_xyz, cur_features, cur_indices = self.SA_modules[i](
                 sa_xyz[i], sa_features[i])
-            cur_features = self.aggregation_mlps[i](cur_features)
+            if self.aggregation_mlps[i] is not None:
+                cur_features = self.aggregation_mlps[i](cur_features)
             sa_xyz.append(cur_xyz)
             sa_features.append(cur_features)
             sa_indices.append(
