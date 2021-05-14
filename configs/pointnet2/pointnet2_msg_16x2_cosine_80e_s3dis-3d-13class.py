@@ -1,10 +1,10 @@
 _base_ = [
     '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/pointnet2_msg.py', '../_base_/default_runtime.py'
+    '../_base_/models/pointnet2_msg.py',
+    '../_base_/schedules/seg_cosine_50e.py', '../_base_/default_runtime.py'
 ]
 
 # data settings
-data_root = './data/s3dis/'
 data = dict(samples_per_gpu=16)
 evaluation = dict(interval=2)
 
@@ -21,12 +21,7 @@ model = dict(
         use_normalized_coord=True,
         batch_size=24))
 
-# optimizer
-lr = 0.001  # max learning rate
-optimizer = dict(type='Adam', lr=lr, weight_decay=1e-3)
-optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
-
 # runtime settings
 checkpoint_config = dict(interval=2)
-runner = dict(type='EpochBasedRunner', max_epochs=64)
+# PointNet2-MSG needs longer training time than PointNet2-SSG
+runner = dict(type='EpochBasedRunner', max_epochs=80)

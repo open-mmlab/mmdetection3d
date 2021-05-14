@@ -1,6 +1,7 @@
 _base_ = [
     '../_base_/datasets/scannet_seg-3d-20class.py',
-    '../_base_/models/pointnet2_msg.py', '../_base_/default_runtime.py'
+    '../_base_/models/pointnet2_msg.py',
+    '../_base_/schedules/seg_cosine_200e.py', '../_base_/default_runtime.py'
 ]
 
 # dataset settings
@@ -159,12 +160,7 @@ model = dict(
         use_normalized_coord=False,
         batch_size=24))
 
-# optimizer
-lr = 0.001  # max learning rate
-optimizer = dict(type='Adam', lr=lr, weight_decay=1e-2)
-optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=1e-5)
-
 # runtime settings
 checkpoint_config = dict(interval=5)
-runner = dict(type='EpochBasedRunner', max_epochs=200)
+# PointNet2-MSG needs longer training time than PointNet2-SSG
+runner = dict(type='EpochBasedRunner', max_epochs=250)

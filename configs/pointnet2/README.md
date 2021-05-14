@@ -16,7 +16,7 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 }
 ```
 
-**Notice**: The original PointNet++ paper used step learning rate schedule. We discovered that cosine schedule achieves much better results and adopt it in our implementations. We also use a larger `weight_decay` factor because we find it consistently improving the performance.
+**Notice**: The original PointNet++ paper used step learning rate schedule. We discovered that cosine schedule achieves much better results and adopt it in our implementations. We also use a larger `weight_decay` factor because we find it consistently improves the performance.
 
 ## Results
 
@@ -24,10 +24,10 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 
 |        Method        |   Input   |   Lr schd   | Mem (GB) | Inf time (fps) | mIoU (Val set) | mIoU (Test set) | Download |
 | :------------------: |  :-----:  | :---------: | :------: | :------------: | :------------: | :------: |
-| [PointNet++ (SSG)](./pointnet2_ssg_only_xyz_16x2_cosine_200e_scannet-3d-20class.py) |    XYZ    | cosine 200e |    1.9    |           |           |           |[model]() &#124; [log]()|
+| [PointNet++ (SSG)](./pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet-3d-20class.py) |    XYZ    | cosine 200e |    1.9    |           |           |           |[model]() &#124; [log]()|
 | [PointNet++ (SSG)](./pointnet2_ssg_16x2_cosine_200e_scannet-3d-20class.py) | XYZ+Color | cosine 200e |   1.9    |           |           |           |[model]() &#124; [log]()|
-| [PointNet++ (MSG)](./pointnet2_msg_only_xyz_16x2_cosine_200e_scannet-3d-20class.py) |    XYZ    | cosine 200e |   2.4    |           |           |           |[model]() &#124; [log]()|
-| [PointNet++ (MSG)](./pointnet2_msg_16x2_cosine_200e_scannet-3d-20class.py) | XYZ+Color | cosine 200e |   2.4    |           |           |           |[model]() &#124; [log]()|
+| [PointNet++ (MSG)](./pointnet2_msg_xyz-only_16x2_cosine_250e_scannet-3d-20class.py) |    XYZ    | cosine 250e |   2.4    |           |           |           |[model]() &#124; [log]()|
+| [PointNet++ (MSG)](./pointnet2_msg_16x2_cosine_250e_scannet-3d-20class.py) | XYZ+Color | cosine 250e |   2.4    |           |           |           |[model]() &#124; [log]()|
 
 **Notes:**
 
@@ -46,7 +46,7 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 |        Method        |  Split   |  Lr schd   | Mem (GB) | Inf time (fps) | mIoU (Val set) | Download |
 | :------------------: |  :----:  | :--------: | :------: | :------------: | :------------: | :------: |
 | [PointNet++ (SSG)](./pointnet2_ssg_16x2_cosine_50e_s3dis-3d-13class.py) |  Area_5  | cosine 50e |   3.6    |           |           |[model]() &#124; [log]()|
-| [PointNet++ (MSG)](./pointnet2_msg_16x2_cosine_64e_s3dis-3d-13class.py) |  Area_5  | cosine 64e |   3.6    |           |           |[model]() &#124; [log]()|
+| [PointNet++ (MSG)](./pointnet2_msg_16x2_cosine_80e_s3dis-3d-13class.py) |  Area_5  | cosine 80e |   3.6    |           |           |[model]() &#124; [log]()|
 
 **Notes:**
 
