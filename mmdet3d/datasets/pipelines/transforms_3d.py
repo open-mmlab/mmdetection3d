@@ -403,8 +403,23 @@ class GlobalRotScaleTrans(object):
                  scale_ratio_range=[0.95, 1.05],
                  translation_std=[0, 0, 0],
                  shift_height=False):
+        seq_types = (list, tuple, np.ndarray)
+        if not isinstance(rot_range, seq_types):
+            assert isinstance(rot_range, (int, float)), \
+                f'unsupported rot_range type {type(rot_range)}'
+            rot_range = [-rot_range, rot_range]
         self.rot_range = rot_range
+
+        assert isinstance(scale_ratio_range, seq_types), \
+            f'unsupported scale_ratio_range type {type(scale_ratio_range)}'
         self.scale_ratio_range = scale_ratio_range
+
+        if not isinstance(translation_std, seq_types):
+            assert isinstance(translation_std, (int, float)), \
+                f'unsupported translation_std type {type(translation_std)}'
+            translation_std = [
+                translation_std, translation_std, translation_std
+            ]
         self.translation_std = translation_std
         self.shift_height = shift_height
 
@@ -419,14 +434,7 @@ class GlobalRotScaleTrans(object):
                 and keys in input_dict['bbox3d_fields'] are updated \
                 in the result dict.
         """
-        if not isinstance(self.translation_std, (list, tuple, np.ndarray)):
-            translation_std = [
-                self.translation_std, self.translation_std,
-                self.translation_std
-            ]
-        else:
-            translation_std = self.translation_std
-        translation_std = np.array(translation_std, dtype=np.float32)
+        translation_std = np.array(self.translation_std, dtype=np.float32)
         trans_factor = np.random.normal(scale=translation_std, size=3).T
 
         input_dict['points'].translate(trans_factor)
@@ -446,17 +454,21 @@ class GlobalRotScaleTrans(object):
                 in the result dict.
         """
         rotation = self.rot_range
-        if not isinstance(rotation, list):
-            rotation = [-rotation, rotation]
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
 
+        # if no bbox in input_dict, only rotate points
+        if len(input_dict['bbox3d_fields']) == 0:
+            rot_mat_T = input_dict['points'].rotate(noise_rotation)
+            input_dict['pcd_rotation'] = rot_mat_T
+            return
+
+        # rotate points with bboxes
         for key in input_dict['bbox3d_fields']:
             if len(input_dict[key].tensor) != 0:
                 points, rot_mat_T = input_dict[key].rotate(
                     noise_rotation, input_dict['points'])
                 input_dict['points'] = points
                 input_dict['pcd_rotation'] = rot_mat_T
-        # input_dict['points_instance'].rotate(noise_rotation)
 
     def _scale_bbox_points(self, input_dict):
         """Private function to scale bounding boxes and points.
@@ -472,7 +484,8 @@ class GlobalRotScaleTrans(object):
         points = input_dict['points']
         points.scale(scale)
         if self.shift_height:
-            assert 'height' in points.attribute_dims.keys()
+            assert 'height' in points.attribute_dims.keys(), \
+                'setting shift_height=True but points have no height attribute'
             points.tensor[:, points.attribute_dims['height']] *= scale
         input_dict['points'] = points
 
