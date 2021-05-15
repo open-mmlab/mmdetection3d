@@ -11,6 +11,7 @@ from mmdet3d.core import (Box3DMode, DepthInstance3DBoxes,
                           LiDARInstance3DBoxes, show_multi_modality_result,
                           show_result, show_seg_result)
 from mmdet3d.core.bbox import get_box_type
+from mmdet3d.core.bbox.structures.cam_box3d import CameraInstance3DBoxes
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_model
 
@@ -114,7 +115,7 @@ def inference_detector(model, pcd):
 
 
 def inference_multi_modality_detector(model, pcd, image, ann_file):
-    """Inference point cloud with the multimodality detector.
+    """Inference point cloud with the multi-modality detector.
 
     Args:
         model (nn.Module): The loaded detector.
@@ -182,6 +183,66 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         if box_mode_3d == Box3DMode.DEPTH:
             data['calib'][0]['Rt'] = data['calib'][0]['Rt'][0].data
             data['calib'][0]['K'] = data['calib'][0]['K'][0].data
+
+    # forward the model
+    with torch.no_grad():
+        result = model(return_loss=False, rescale=True, **data)
+    return result, data
+
+
+def inference_mono_3d_detector(model, image, ann_file):
+    """Inference image with the monocular 3D detector.
+
+    Args:
+        model (nn.Module): The loaded detector.
+        image (str): Image files.
+        ann_file (str): Annotation files.
+
+    Returns:
+        tuple: Predicted results and data from pipeline.
+    """
+    cfg = model.cfg
+    device = next(model.parameters()).device  # model device
+    # build the data pipeline
+    test_pipeline = deepcopy(cfg.data.test.pipeline)
+    test_pipeline = Compose(test_pipeline)
+    box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
+    # get data info containing calib
+    data_infos = mmcv.load(ann_file)
+    image_idx = int(re.findall(r'\d+', image)[-1])  # xxx/sunrgbd_000017.jpg
+    for x in data_infos:
+        if int(x['image']['image_idx']) != image_idx:
+            continue
+        info = x
+        break
+    data = dict(
+        img_prefix=osp.dirname(image),
+        img_info=dict(filename=osp.basename(image)),
+        box_type_3d=box_type_3d,
+        box_mode_3d=box_mode_3d,
+        img_fields=[],
+        bbox3d_fields=[],
+        pts_mask_fields=[],
+        pts_seg_fields=[],
+        bbox_fields=[],
+        mask_fields=[],
+        seg_fields=[])
+
+    # camera points to image conversion
+    if box_mode_3d == Box3DMode.CAM:
+        data['img_info'].update(
+            dict(cam_intrinsic=info['image']['cam_intrinsic']))
+
+    data = test_pipeline(data)
+
+    data = collate([data], samples_per_gpu=1)
+    if next(model.parameters()).is_cuda:
+        # scatter to specified GPU
+        data = scatter(data, [device.index])[0]
+    else:
+        # this is a workaround to avoid the bug of MMDataParallel
+        data['img_metas'] = data['img_metas'][0].data
+        data['img'] = data['img'][0].data
 
     # forward the model
     with torch.no_grad():
@@ -319,13 +380,12 @@ def show_proj_det_result_meshlab(data,
     # read from file because img in data_dict has undergone pipeline transform
     img = mmcv.imread(img_filename)
 
-    # TODO: use 'img_bbox' for Mono3D visualization
     if 'pts_bbox' in result[0].keys():
-        pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
-        pred_scores = result[0]['pts_bbox']['scores_3d'].numpy()
-    else:
-        pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
-        pred_scores = result[0]['scores_3d'].numpy()
+        result[0] = result[0]['pts_bbox']
+    elif 'img_bbox' in result[0].keys():
+        result[0] = result[0]['img_bbox']
+    pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
+    pred_scores = result[0]['scores_3d'].numpy()
 
     # filter out low score bboxes for visualization
     if score_thr > 0:
@@ -366,6 +426,26 @@ def show_proj_det_result_meshlab(data,
             box_mode='depth',
             img_metas=data['img_metas'][0][0],
             show=show)
+    elif box_mode == Box3DMode.CAM:
+        if 'cam_intrinsic' not in data['img_metas'][0][0]:
+            raise NotImplementedError(
+                'camera intrinsic matrix is not provided')
+
+        from mmdet3d.core.bbox import mono_cam_box2vis
+        show_bboxes = CameraInstance3DBoxes(
+            pred_bboxes, box_dim=pred_bboxes.shape[-1], origin=(0.5, 1.0, 0.5))
+        # TODO: remove the hack of box from NuScenesMonoDataset
+        show_bboxes = mono_cam_box2vis(show_bboxes)
+
+        show_multi_modality_result(
+            img,
+            None,
+            show_bboxes,
+            data['img_metas'][0][0]['cam_intrinsic'],
+            out_dir,
+            file_name,
+            box_mode='camera',
+            show=show)
     else:
         raise NotImplementedError(
             f'visualization of {box_mode} bbox is not supported')
@@ -397,19 +477,19 @@ def show_result_meshlab(data,
                 segmentation map. If None is given, random palette will be
                 generated. Defaults to None.
     """
-    assert task in ['det', 'multi_modality-det', 'seg'], \
+    assert task in ['det', 'multi_modality-det', 'seg', 'mono-det'], \
         f'unsupported visualization task {task}'
     assert out_dir is not None, 'Expect out_dir, got none.'
 
-    if 'det' in task:
+    if task in ['det', 'multi_modality-det']:
         file_name = show_det_result_meshlab(data, result, out_dir, score_thr,
                                             show, snapshot)
 
-    if 'seg' in task:
+    if task in ['seg']:
         file_name = show_seg_result_meshlab(data, result, out_dir, palette,
                                             show, snapshot)
 
-    if task == 'multi_modality-det':
+    if task in ['multi_modality-det', 'mono-det']:
         file_name = show_proj_det_result_meshlab(data, result, out_dir,
                                                  score_thr, show, snapshot)
 
