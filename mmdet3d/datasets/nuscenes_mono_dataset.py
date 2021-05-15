@@ -11,7 +11,7 @@ from os import path as osp
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset
 from ..core import show_multi_modality_result
-from ..core.bbox import CameraInstance3DBoxes, get_box_type
+from ..core.bbox import CameraInstance3DBoxes, get_box_type, mono_cam_box2vis
 from .pipelines import Compose
 from .utils import get_loading_pipeline
 
@@ -635,14 +635,11 @@ class NuScenesMonoDataset(CocoDataset):
                                                 ['img', 'img_metas'])
             # need to transpose channel to first dim
             img = img.numpy().transpose(1, 2, 0)
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
-            pred_bboxes = result['boxes_3d'].tensor.numpy()
-            gt_bboxes = CameraInstance3DBoxes(
-                gt_bboxes, box_dim=gt_bboxes.shape[-1], origin=(0.5, 1.0, 0.5))
-            pred_bboxes = CameraInstance3DBoxes(
-                pred_bboxes,
-                box_dim=pred_bboxes.shape[-1],
-                origin=(0.5, 1.0, 0.5))
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d']
+            pred_bboxes = result['boxes_3d']
+            # TODO: remove the hack of box from NuScenesMonoDataset
+            gt_bboxes = mono_cam_box2vis(gt_bboxes)
+            pred_bboxes = mono_cam_box2vis(pred_bboxes)
             show_multi_modality_result(
                 img,
                 gt_bboxes,

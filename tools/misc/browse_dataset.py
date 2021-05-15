@@ -1,6 +1,5 @@
 import argparse
 import numpy as np
-import torch
 import warnings
 from mmcv import Config, DictAction, mkdir_or_exist, track_iter_progress
 from os import path as osp
@@ -161,25 +160,9 @@ def show_proj_bbox_img(idx,
             show=show)
     elif isinstance(gt_bboxes, CameraInstance3DBoxes):
         # TODO: remove the hack of box from NuScenesMonoDataset
-        # we need to rotate the box along x-axis for np.pi / 2 (roll),
-        # change orientation from local yaw to global yaw
-        # and finally convert yaw by (np.pi / 2 - yaw)
         if is_nus_mono:
-            gt_loc = gt_bboxes.gravity_center
-            gt_dim = gt_bboxes.dims
-            gt_yaw = gt_bboxes.yaw
-            gt_feats = gt_bboxes.tensor[:, 7:]
-            # rotate along x-axis for np.pi / 2
-            gt_dim[:, [1, 2]] = gt_dim[:, [2, 1]]
-            # change local yaw to global yaw for visualization
-            # refer to https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L164-L166  # noqa
-            gt_yaw += torch.atan2(gt_loc[:, 0], gt_loc[:, 2])
-            # convert yaw by (np.pi / 2 - yaw)
-            gt_yaw = np.pi / 2.0 - gt_yaw
-            gt_bboxes = torch.cat([gt_loc, gt_dim, gt_yaw[:, None], gt_feats],
-                                  dim=1)
-            gt_bboxes = CameraInstance3DBoxes(
-                gt_bboxes, box_dim=gt_bboxes.shape[-1], origin=(0.5, 0.5, 0.5))
+            from mmdet3d.core.bbox import mono_cam_box2vis
+            gt_bboxes = mono_cam_box2vis(gt_bboxes)
         show_multi_modality_result(
             img,
             gt_bboxes,

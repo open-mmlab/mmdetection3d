@@ -142,3 +142,44 @@ def points_cam2img(points_3d, proj_mat):
     point_2d = torch.matmul(points_4, proj_mat.t())
     point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
     return point_2d_res
+
+
+def mono_cam_box2vis(cam_box):
+    """This is a post-processing function on the bboxes from Mono-3D task. If
+    we want to perform projection visualization, we need to:
+
+        1. rotate the box along x-axis for np.pi / 2 (roll)
+        2. change orientation from local yaw to global yaw
+        3. convert yaw by (np.pi / 2 - yaw)
+
+    After applying this function, we can project and draw it on 2D images.
+
+    Args:
+        cam_box (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate \
+            system before conversion. Could gt bbox loaded from dataset or \
+                network prediction output.
+
+    Returns:
+        :obj:`CameraInstance3DBoxes`: Box after conversion.
+    """
+    from . import CameraInstance3DBoxes
+    assert isinstance(cam_box, CameraInstance3DBoxes), \
+        'input bbox should be CameraInstance3DBoxes!'
+
+    loc = cam_box.gravity_center
+    dim = cam_box.dims
+    yaw = cam_box.yaw
+    feats = cam_box.tensor[:, 7:]
+    # rotate along x-axis for np.pi / 2
+    # see also here: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L557  # noqa
+    dim[:, [1, 2]] = dim[:, [2, 1]]
+    # change local yaw to global yaw for visualization
+    # refer to https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L164-L166  # noqa
+    yaw += torch.atan2(loc[:, 0], loc[:, 2])
+    # convert yaw by (np.pi / 2 - yaw)
+    yaw = np.pi / 2.0 - yaw
+    cam_box = torch.cat([loc, dim, yaw[:, None], feats], dim=1)
+    cam_box = CameraInstance3DBoxes(
+        cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))
+
+    return cam_box
