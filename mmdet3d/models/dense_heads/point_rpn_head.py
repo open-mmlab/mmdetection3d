@@ -9,7 +9,7 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
-from .base_conv_bbox_head import BaseConvBboxHead
+from .base_separate_conv_bbox_head import BaseSeparateConvBboxHead
 
 
 def write_ply(points, points_label, out_filename):
@@ -122,7 +122,7 @@ class PointRPNHead(BaseModule):
 
         # build box coder
         self.bbox_coder = build_bbox_coder(bbox_coder)
-        self.conv_pred = BaseConvBboxHead(
+        self.conv_pred = BaseSeparateConvBboxHead(
             **pred_layer_cfg,
             num_cls_out_channels=self._get_cls_out_channels(),
             num_reg_out_channels=self._get_reg_out_channels())

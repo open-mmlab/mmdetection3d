@@ -6,7 +6,7 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis, xywhr2xyxyr
 from mmdet3d.models.builder import build_loss
-from mmdet3d.models.dense_heads import BaseConvBboxHead
+from mmdet3d.models.dense_heads import BaseSeparateConvBboxHead
 from mmdet3d.ops import build_sa_module
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
@@ -97,7 +97,7 @@ class PointRCNNBboxHead(BaseModule):
                     cfg=sa_cfg))
             sa_in_channel = sa_out_channel
 
-        self.conv_pred = BaseConvBboxHead(
+        self.conv_pred = BaseSeparateConvBboxHead(
             **pred_layer_cfg,
             num_cls_out_channels=self.num_classes,
             num_reg_out_channels=self.bbox_coder.code_size)
