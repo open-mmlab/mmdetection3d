@@ -116,6 +116,8 @@ And browsing the nuScenes dataset in monocular 3D detection task
 python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono-det --output-dir ${OUTPUT_DIR} --online
 ```
 
+![Open3D_visualization](../resources/browse_dataset_mono.png)
+
 &emsp;
 
 # Model Complexity
