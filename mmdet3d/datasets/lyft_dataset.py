@@ -335,9 +335,15 @@ class LyftDataset(Custom3DDataset):
         else:
             tmp_dir = None
 
-        if not isinstance(results[0], dict):
+        # this is a bit hack to enable testing KITTI detectors on nuScenes
+        # refer to https://github.com/open-mmlab/mmdetection3d/issues/449
+        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
+            # list of dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...)
             result_files = self._format_bbox(results, jsonfile_prefix)
         else:
+            # list of dict('pts_bbox' or 'img_bbox':
+            #   dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...))
+            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
             result_files = dict()
             for name in results[0]:
                 print(f'\nFormating bboxes of {name}')
