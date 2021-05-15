@@ -209,11 +209,11 @@ def inference_mono_3d_detector(model, image, ann_file):
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
     # get data info containing calib
     data_infos = mmcv.load(ann_file)
-    image_idx = int(re.findall(r'\d+', image)[-1])  # xxx/sunrgbd_000017.jpg
-    for x in data_infos:
-        if int(x['image']['image_idx']) != image_idx:
+    # find the info corresponding to this image
+    for x in data_infos['images']:
+        if osp.basename(x['file_name']) != osp.basename(image):
             continue
-        info = x
+        img_info = x
         break
     data = dict(
         img_prefix=osp.dirname(image),
@@ -230,8 +230,7 @@ def inference_mono_3d_detector(model, image, ann_file):
 
     # camera points to image conversion
     if box_mode_3d == Box3DMode.CAM:
-        data['img_info'].update(
-            dict(cam_intrinsic=info['image']['cam_intrinsic']))
+        data['img_info'].update(dict(cam_intrinsic=img_info['cam_intrinsic']))
 
     data = test_pipeline(data)
 
