@@ -101,7 +101,7 @@
 
 - Refactor unit tests (#303)
 - Move the key `train_cfg` and `test_cfg` into the model configs (#307)
-- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md). (#310, #316)
+- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md/) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md/) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md/). (#310, #316)
 - Support a faster and more memory-efficient implementation of DynamicScatter (#318, #326)
 
 #### Bug Fixes
