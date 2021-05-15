@@ -23,6 +23,7 @@ class BaseSeparateConvBboxHead(BaseConvBboxHead):
                  reg_conv_channels=(),
                  num_reg_out_channels=0,
                  init_cfg=None,
+                 bias=False,
                  *args,
                  **kwargs):
         super().__init__(

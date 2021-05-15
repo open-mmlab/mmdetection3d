@@ -9,7 +9,7 @@ model = dict(
         num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
         sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,
                                                                     128)),
-                     ((128, 192, 256), (128, 192, 256)), ((256, 256, 512),
+                     ((128, 196, 256), (128, 196, 256)), ((256, 256, 512),
                                                           (256, 384, 512))),
         dilated_group=(True, True, True, True),
         fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
@@ -26,8 +26,8 @@ model = dict(
         num_dir_bins=12,
         pred_layer_cfg=dict(
             in_channels=128,
-            cls_conv_channels=(128, 128),
-            reg_conv_channels=(128, 128),
+            cls_conv_channels=(256, 256),
+            reg_conv_channels=(256, 256),
             bias=True),
         center_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),

@@ -77,7 +77,6 @@ class PointNet2Seg(BasePointNet):
             cur_sa_mlps = list(sa_channels[sa_index])
             sa_out_channel = 0
             for radius_index in range(len(radii[sa_index])):
-                print('sa_in_chanel: ', sa_in_channel)
                 cur_sa_mlps[radius_index] = [sa_in_channel] + list(
                     cur_sa_mlps[radius_index])
                 sa_out_channel += cur_sa_mlps[radius_index][-1]
@@ -105,10 +104,9 @@ class PointNet2Seg(BasePointNet):
                     dilated_group=dilated_group[sa_index],
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
-                    bias=True))
+                    bias=False))
             skip_channel_list.append(sa_out_channel)
             if aggregation_channels is None:
-                print('aggregation_mlps is None')
                 self.aggregation_mlps.append(None)
                 sa_in_channel = sa_out_channel
             else:
@@ -174,7 +172,6 @@ class PointNet2Seg(BasePointNet):
         fp_xyz = [sa_xyz[-1]]
         fp_features = [sa_features[-1]]
         fp_indices = [sa_indices[-1]]
-
         for i in range(self.num_fp):
             fp_features.append(self.FP_modules[i](
                 sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
