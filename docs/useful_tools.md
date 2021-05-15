@@ -10,6 +10,8 @@ You can plot loss/mAP curves given a training log file. Run `pip install seaborn
 python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}] [--mode ${MODE}] [--interval ${INTERVAL}]
 ```
 
+**Notice**: If the metric you want to plot is calculated in the eval stage, you need to add the flag `--mode eval`. If you perform evaluation with an interval of `${INTERVAL}`, you need to add the args `--interval ${INTERVAL}`.
+
 Examples:
 
 -   Plot the classification loss of some run.
@@ -55,27 +57,27 @@ average iter time: 1.1959 s/iter
 
 ## Results
 
-To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
+To see the prediction results of trained models, you can run the following command
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 ```
 
-Aftering running this command, plotted results **_\_points.obj and _**\_pred.obj files in `${SHOW_DIR}`.
+After running this command, plotted results including input data and the output of networks visualized on the input (e.g. `***_points.obj` and `***_pred.obj` in single-modality 3D detection task) will be saved in `${SHOW_DIR}`.
 
-To see the points, detection results and ground truth of SUNRGBD, ScanNet or KITTI during evaluation time, you can run the following command
+To see the prediction results during evaluation time, you can run the following command
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 
-After running this command, you will obtain **_\_points.obj, _**\_pred.obj files and \*\*\*\_gt.obj in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. You need to set `show=False` while running test in remote server withou GUI.
+After running this command, you will obtain the input data, the output of networks and ground-truth labels visualized on the input (e.g. `***_points.obj`, `***_pred.obj`, `***_gt.obj`, `***_img.png` and `***_pred.png` in multi-modality detection task) in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. You need to set `show=False` while running test in remote server withou GUI.
 
 As for offline visualization, you will have two options.
 To visualize the results with `Open3D` backend, you can run the following command
 
 ```bash
-python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}'
+python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
 
 ![Open3D_visualization](../resources/open3d_visual.gif)
