@@ -60,6 +60,8 @@ def init_model(config, checkpoint=None, device='cuda:0'):
             model.CLASSES = checkpoint['meta']['CLASSES']
         else:
             model.CLASSES = config.class_names
+        if 'PALETTE' in checkpoint['meta']:  # 3D Segmentor
+            model.PALETTE = checkpoint['meta']['PALETTE']
     model.cfg = config  # save the config in the model for convenience
     model.to(device)
     model.eval()

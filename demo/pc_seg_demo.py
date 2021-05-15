@@ -31,7 +31,8 @@ def main():
         args.out_dir,
         show=args.show,
         snapshot=args.snapshot,
-        task='seg')
+        task='seg',
+        palette=model.PALETTE)
 
 
 if __name__ == '__main__':
