@@ -37,6 +37,8 @@ model = dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+        corner_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         semantic_loss=dict(
             type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         bbox_coder=dict(
@@ -62,7 +64,9 @@ model = dict(
             num_points=(128, 32, 1),
             radius=(0.2, 0.4, 100),
             num_samples=(64, 64, 64),
-            sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)))),
+            sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
+            corner_loss=dict(
+                type='SmoothL1Loss', reduction='sum', loss_weight=1.0))),
     # model training and testing settings
     train_cfg=dict(
         _delete_=True,
@@ -100,7 +104,7 @@ model = dict(
                 neg_piece_fractions=[0.8, 0.2],
                 neg_iou_piece_thrs=[0.55, 0.1],
                 neg_pos_ub=-1,
-                add_gt_as_proposals=True,
+                add_gt_as_proposals=False,
                 return_iou=True),
             cls_pos_thr=0.7,
             cls_neg_thr=0.25)),
@@ -118,3 +122,5 @@ model = dict(
             use_raw_score=True,
             nms_thr=0.01,
             score_thr=0.1)))
+
+find_unused_parameters = True

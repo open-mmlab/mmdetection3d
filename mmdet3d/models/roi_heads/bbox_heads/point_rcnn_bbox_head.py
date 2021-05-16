@@ -4,7 +4,8 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
-from mmdet3d.core.bbox.structures import rotation_3d_in_axis, xywhr2xyxyr
+from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
+                                          rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.dense_heads import BaseSeparateConvBboxHead
 from mmdet3d.ops import build_sa_module
@@ -43,11 +44,14 @@ class PointRCNNBboxHead(BaseModule):
                 use_sigmoid=True,
                 reduction='sum',
                 loss_weight=1.0),
+            corner_loss=None,
+            with_corner_loss=True,
             init_cfg=None,
             pretrained=None):
         super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.num_sa = len(sa_channels)
+        self.with_corner_loss = with_corner_loss
 
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_cls = build_loss(loss_cls)
@@ -132,11 +136,15 @@ class PointRCNNBboxHead(BaseModule):
         cls_flat = cls_score.view(-1)
         loss_cls = self.loss_cls(cls_flat, labels, label_weights)
         losses['loss_cls'] = loss_cls
+
         # calculate regression loss
+        code_size = self.bbox_coder.code_size
         pos_inds = (reg_mask > 0)
         if pos_inds.any() == 0:
             # fake a part loss
             losses['loss_bbox'] = loss_cls.new_tensor(0)
+            if self.with_corner_loss:
+                losses['loss_corner'] = loss_cls.new_tensor(0)
         else:
             pos_bbox_pred = bbox_pred.view(rcnn_batch_size,
                                            -1)[pos_inds].clone()
@@ -147,7 +155,67 @@ class PointRCNNBboxHead(BaseModule):
                 bbox_targets.unsqueeze(dim=0).detach(),
                 bbox_weights_flat.unsqueeze(dim=0))
             losses['loss_bbox'] = loss_bbox
+
+            if self.with_corner_loss:
+                rois = rois.detach()
+                pos_roi_boxes3d = rois[..., 1:].view(-1, code_size)[pos_inds]
+                pos_roi_boxes3d = pos_roi_boxes3d.view(-1, code_size)
+                batch_anchors = pos_roi_boxes3d.clone().detach()
+                pos_rois_rotation = pos_roi_boxes3d[..., 6].view(-1)
+                roi_xyz = pos_roi_boxes3d[..., 0:3].view(-1, 3)
+                batch_anchors[..., 0:3] = 0
+                # decode boxes
+                pred_boxes3d = self.bbox_coder.decode(
+                    batch_anchors,
+                    pos_bbox_pred.view(-1, code_size)).view(-1, code_size)
+
+                pred_boxes3d[..., 0:3] = rotation_3d_in_axis(
+                    pred_boxes3d[..., 0:3].unsqueeze(1),
+                    pos_rois_rotation,
+                    axis=2).squeeze(1)
+
+                pred_boxes3d[:, 0:3] += roi_xyz
+
+                # calculate corner loss
+                loss_corner = self.get_corner_loss_lidar(
+                    pred_boxes3d, pos_gt_bboxes)
+                losses['loss_corner'] = loss_corner
         return losses
+
+    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1):
+        """Calculate corner loss of given boxes.
+
+        Args:
+            pred_bbox3d (torch.FloatTensor): Predicted boxes in shape (N, 7).
+            gt_bbox3d (torch.FloatTensor): Ground truth boxes in shape (N, 7).
+
+        Returns:
+            torch.FloatTensor: Calculated corner loss in shape (N).
+        """
+        assert pred_bbox3d.shape[0] == gt_bbox3d.shape[0]
+
+        # This is a little bit hack here because we assume the box for
+        # Part-A2 is in LiDAR coordinates
+        gt_boxes_structure = LiDARInstance3DBoxes(gt_bbox3d)
+        pred_box_corners = LiDARInstance3DBoxes(pred_bbox3d).corners
+        gt_box_corners = gt_boxes_structure.corners
+
+        # This flip only changes the heading direction of GT boxes
+        gt_bbox3d_flip = gt_boxes_structure.clone()
+        gt_bbox3d_flip.tensor[:, 6] += np.pi
+        gt_box_corners_flip = gt_bbox3d_flip.corners
+
+        corner_dist = torch.min(
+            torch.norm(pred_box_corners - gt_box_corners, dim=2),
+            torch.norm(pred_box_corners - gt_box_corners_flip,
+                       dim=2))  # (N, 8)
+        # huber loss
+        abs_error = torch.abs(corner_dist)
+        quadratic = torch.clamp(abs_error, max=delta)
+        linear = (abs_error - quadratic)
+        corner_loss = 0.5 * quadratic**2 + delta * linear
+
+        return corner_loss.mean(dim=1)
 
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
         """Generate targets.

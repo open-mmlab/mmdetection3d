@@ -237,7 +237,7 @@ class PointRCNNROIHead(Base3DRoIHead):
             rois,
             bbox_results['bbox_pred'],
             labels_3d,
-            bbox_results['cls_score'],
+            torch.sigmoid(bbox_results['cls_score']),
             img_metas,
             cfg=self.test_cfg)
 
