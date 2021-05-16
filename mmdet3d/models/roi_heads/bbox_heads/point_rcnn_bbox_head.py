@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule
+from mmcv.cnn import ConvModule, normal_init
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -105,6 +105,13 @@ class PointRCNNBboxHead(BaseModule):
             **pred_layer_cfg,
             num_cls_out_channels=self.num_classes,
             num_reg_out_channels=self.bbox_coder.code_size)
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Xavier', layer=['Conv2d', 'Conv1d'], bias=0)
+
+    def init_weights(self):
+        super().init_weights()
+        normal_init(self.conv_pred.conv_reg.weight, mean=0, std=0.001)
 
     def forward(self, feats):
         input_data = feats.clone().detach()
