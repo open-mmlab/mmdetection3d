@@ -242,8 +242,7 @@ class PointRPNHead(BaseModule):
         pred_bbox3d = img_metas[0]['box_type_3d'](
             pred_bbox3d.clone(),
             box_dim=pred_bbox3d.shape[-1],
-            with_yaw=self.bbox_coder.with_rot,
-            origin=(0.5, 0.5, 0.5))
+            with_yaw=self.bbox_coder.with_rot)
         pred_corners3d = pred_bbox3d.corners.reshape(-1, 8, 3)
         corner_loss = self.corner_loss(
             pred_corners3d,
@@ -269,6 +268,9 @@ class PointRPNHead(BaseModule):
         gt_bboxes = gt_bboxes_3d[indices_xxx].tensor.cpu().numpy()
         gt_bboxes[:, 6] = -gt_bboxes[:, 6]
         write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes_rpn.ply')
+        pred_bbox3d = pred_bbox3d[indices_xxx].tensor.detach().cpu().numpy()
+        pred_bbox3d[:, 6] = pred_bbox3d[:, 6]
+        write_oriented_bbox(pred_bbox3d, '/tmp/label_bboxes_pred_rpn.ply')
         assert 0
         '''
 
