@@ -16,14 +16,13 @@ from .base_conv_bbox_head import BaseConvBboxHead
 
 
 class PointsObjClsModule(nn.Module):
+    """object candidate point prediction from seed point features.
+
+    Args:
+        seed_feature_dim (int): number of channels of seed point features
+    """
 
     def __init__(self, seed_feature_dim):
-        """object candidate point prediction from seed point features.
-
-        Args:
-            seed_feature_dim: int
-                number of channels of seed point features
-        """
         super().__init__()
         self.in_dim = seed_feature_dim
         self.conv1 = torch.nn.Conv1d(self.in_dim, self.in_dim, 1)
@@ -35,10 +34,13 @@ class PointsObjClsModule(nn.Module):
     def forward(self, seed_features):
         """Forward pass.
 
-        Arguments:
-            seed_features: (batch_size, feature_dim, num_seed) Pytorch tensor
+        Args:
+            seed_features (torch.Tensor): seed features, dims:
+                (batch_size, feature_dim, num_seed)
+
         Returns:
-            logits: (batch_size, 1, num_seed)
+            torch.Tensor: objectness logits, dim:
+                (batch_size, 1, num_seed)
         """
         net = F.relu(self.bn1(self.conv1(seed_features)))
         net = F.relu(self.bn2(self.conv2(net)))
@@ -48,28 +50,40 @@ class PointsObjClsModule(nn.Module):
 
 
 class GeneralSamplingModule(nn.Module):
+    """Sampling Points.
 
-    def __init__(self):
-        super().__init__()
+    Sampling points with given index.
+    """
 
     def forward(self, xyz, features, sample_inds):
-        """
+        """Forward pass.
+
         Args:
-            xyz: (B, N, 3)
-            features: (B, C, N)
-            sample_inds: (B, M)
+            xyz： (B, N, 3) the coordinates of the features.
+            features (Tensor): (B, C, N) features to sample.
+            sample_inds (Tensor): (B, M) the given index,
+                where M is the number of points.
+
+        Returns:
+            Tensor: (B, M, 3) coordinates of sampled features
+            Tensor: (B, C, M) the sampled features.
+            Tensor: (B, M) the given index.
         """
         xyz_flipped = xyz.transpose(1, 2).contiguous()
-        new_xyz = gather_points(xyz_flipped, sample_inds).transpose(
-            1, 2).contiguous()  # (B, M, 3)
-        new_features = gather_points(features,
-                                     sample_inds).contiguous()  # (B, C, M)
+        new_xyz = gather_points(xyz_flipped,
+                                sample_inds).transpose(1, 2).contiguous()
+        new_features = gather_points(features, sample_inds).contiguous()
 
         return new_xyz, new_features, sample_inds
 
 
 class PositionEmbeddingLearned(nn.Module):
-    """Absolute pos embedding, learned."""
+    """Absolute position embedding with Conv learning.
+
+    Args:
+        input_channel (int): input features dim.
+        num_pos_feats (int): output position features dim.
+    """
 
     def __init__(self, input_channel, num_pos_feats=288):
         super().__init__()
@@ -79,6 +93,14 @@ class PositionEmbeddingLearned(nn.Module):
             nn.Conv1d(num_pos_feats, num_pos_feats, kernel_size=1))
 
     def forward(self, xyz):
+        """Forward pass.
+
+        Args:
+            xyz (Tensor)： (B, N, 3) the coordinates to embed.
+
+        Returns:
+            Tensor: (B, num_pos_feats, N) the embeded position features.
+        """
         xyz = xyz.transpose(1, 2).contiguous()
         position_embedding = self.position_embedding_head(xyz)
         return position_embedding

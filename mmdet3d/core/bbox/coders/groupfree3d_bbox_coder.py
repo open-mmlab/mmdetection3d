@@ -39,13 +39,13 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         Returns:
             torch.Tensor: Decoded bbox3d with shape (batch, n, 7).
         """
-        center = bbox_out['center' + suffix]
+        center = bbox_out[f'center{suffix}']
         batch_size, num_proposal = center.shape[:2]
 
         # decode heading angle
         if self.with_rot:
-            dir_class = torch.argmax(bbox_out['dir_class' + suffix], -1)
-            dir_res = torch.gather(bbox_out['dir_res' + suffix], 2,
+            dir_class = torch.argmax(bbox_out[f'dir_class{suffix}'], -1)
+            dir_res = torch.gather(bbox_out[f'dir_res{suffix}'], 2,
                                    dir_class.unsqueeze(-1))
             dir_res.squeeze_(2)
             dir_angle = self.class2angle(dir_class, dir_res).reshape(
@@ -55,8 +55,8 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
 
         # decode bbox size
         size_class = torch.argmax(
-            bbox_out['size_class' + suffix], -1, keepdim=True)
-        size_res = torch.gather(bbox_out['size_res' + suffix], 2,
+            bbox_out[f'size_class{suffix}'], -1, keepdim=True)
+        size_res = torch.gather(bbox_out[f'size_res{suffix}'], 2,
                                 size_class.unsqueeze(-1).repeat(1, 1, 1, 3))
         mean_sizes = center.new_tensor(self.mean_sizes)
         size_base = torch.index_select(mean_sizes, 0, size_class.reshape(-1))
@@ -87,15 +87,15 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         # decode center
         end += 3
         # (batch_size, num_proposal, 3)
-        results['center_residual' + suffix] = \
+        results[f'center_residual{suffix}'] = \
             reg_preds_trans[..., start:end].contiguous()
-        results['center' + suffix] = base_xyz + \
+        results[f'center{suffix}'] = base_xyz + \
             reg_preds_trans[..., start:end].contiguous()
         start = end
 
         # decode direction
         end += self.num_dir_bins
-        results['dir_class' + suffix] = \
+        results[f'dir_class{suffix}'] = \
             reg_preds_trans[..., start:end].contiguous()
         start = end
 
@@ -103,14 +103,14 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         dir_res_norm = reg_preds_trans[..., start:end].contiguous()
         start = end
 
-        results['dir_res_norm' + suffix] = dir_res_norm
-        results['dir_res' + suffix] = dir_res_norm * (
+        results[f'dir_res_norm{suffix}'] = dir_res_norm
+        results[f'dir_res{suffix}'] = dir_res_norm * (
             np.pi / self.num_dir_bins)
 
         # decode size
         end += self.num_sizes
-        results['size_class' +
-                suffix] = reg_preds_trans[..., start:end].contiguous()
+        results[f'size_class{suffix}'] = reg_preds_trans[
+            ..., start:end].contiguous()
         start = end
 
         end += self.num_sizes * 3
@@ -120,21 +120,21 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
             [batch_size, num_proposal, self.num_sizes, 3])
         start = end
 
-        results['size_res_norm' + suffix] = size_res_norm.contiguous()
+        results[f'size_res_norm{suffix}'] = size_res_norm.contiguous()
         mean_sizes = reg_preds.new_tensor(self.mean_sizes)
-        results['size_res' + suffix] = (
+        results[f'size_res{suffix}'] = (
             size_res_norm * mean_sizes.unsqueeze(0).unsqueeze(0))
 
         # decode objectness score
         start = 0
         # Group-Free-3D objectness output shape (batch, proposal, 1)
         end = 1
-        results['obj_scores' +
-                suffix] = cls_preds_trans[..., start:end].contiguous()
+        results[f'obj_scores{suffix}'] = cls_preds_trans[
+            ..., start:end].contiguous()
         start = end
 
         # decode semantic score
-        results['sem_scores' + suffix] = cls_preds_trans[...,
+        results[f'sem_scores{suffix}'] = cls_preds_trans[...,
                                                          start:].contiguous()
 
         return results
