@@ -101,14 +101,14 @@ __global__ void cuComputeDistanceGlobal(const float* A, int wA,
   * @param height      height of the distance matrix and of the index matrix
   * @param k           number of neighbors to consider
   */
-__global__ void cuInsertionSort(float *dist, long *ind, int width, int height, int k){
+__global__ void cuInsertionSort(float *dist, long long *ind, int width, int height, int k){
 
   // Variables
   int l, i, j;
   float *p_dist;
-  long  *p_ind;
+  long long  *p_ind;
   float curr_dist, max_dist;
-  long  curr_row,  max_row;
+  long long  curr_row,  max_row;
   unsigned int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   if (xIndex<width){
     // Pointer shift, initialization, and max value
@@ -182,16 +182,16 @@ __global__ void cuParallelSqrt(float *dist, int width, int k){
 }
 
 
-void debug(float * dist_dev, long * ind_dev, const int query_nb, const int k){
+void debug(float * dist_dev, long long * ind_dev, const int query_nb, const int k){
   float* dist_host = new float[query_nb * k];
-  long*  idx_host  = new long[query_nb * k];
+  long long*  idx_host  = new long long[query_nb * k];
 
   // Memory copy of output from device to host
   cudaMemcpy(dist_host, dist_dev,
       query_nb * k * sizeof(float), cudaMemcpyDeviceToHost);
 
   cudaMemcpy(idx_host, ind_dev,
-      query_nb * k * sizeof(long), cudaMemcpyDeviceToHost);
+      query_nb * k * sizeof(long long), cudaMemcpyDeviceToHost);
 
   int i, j;
   for(i = 0; i < k; i++){
@@ -229,7 +229,7 @@ void debug(float * dist_dev, long * ind_dev, const int query_nb, const int k){
   *
   */
 void knn_kernels_launcher(const float* ref_dev, int ref_nb, const float* query_dev, int query_nb,
-    int dim, int k, float* dist_dev, long* ind_dev, cudaStream_t stream){
+    int dim, int k, float* dist_dev, long long* ind_dev, cudaStream_t stream){
 
   // Grids ans threads
   dim3 g_16x16(query_nb / BLOCK_DIM, ref_nb / BLOCK_DIM, 1);

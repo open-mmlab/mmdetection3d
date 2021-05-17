@@ -18,7 +18,7 @@ void knn_kernels_launcher(
     int dim,
     int k,
     float* dist_dev,
-    long* ind_dev,
+    long long* ind_dev,
     cudaStream_t stream
     );
 
@@ -39,7 +39,7 @@ void knn_wrapper(
     int dim = query.size(0);
     auto dist = at::empty({ref_nb, query_nb}, query.options().dtype(at::kFloat));
     float * dist_dev = dist.data_ptr<float>();
-    long * ind_dev = ind.data_ptr<long>();
+    long long * ind_dev = ind.data_ptr<long long>();
 
     cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
