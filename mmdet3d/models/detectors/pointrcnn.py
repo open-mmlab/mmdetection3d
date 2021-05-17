@@ -130,13 +130,12 @@ class PointRCNN(TwoStage3DDetector):
 
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, img_metas, rescale=rescale)
-        
+
         from mmdet3d.core.bbox import bbox3d2result
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
-        
         '''
         proposal_list = [
             dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
