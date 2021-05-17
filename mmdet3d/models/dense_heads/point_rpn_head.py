@@ -279,7 +279,6 @@ class PointRPNHead(BaseModule):
             dir_class_loss=dir_class_loss,
             dir_res_loss=dir_res_loss,
             size_res_loss=size_loss,
-            corner_loss=corner_loss,
             semantic_loss=semantic_loss)
         return losses
 

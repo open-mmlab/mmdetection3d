@@ -83,7 +83,7 @@ class PointRCNN(TwoStage3DDetector):
                 img_metas=img_metas,
                 gt_bboxes_ignore=gt_bboxes_ignore)
             losses.update(rpn_loss)
-
+        '''
             sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(
                 1, 2).detach()
             obj_scores = sem_scores.max(-1)[0]
@@ -101,7 +101,7 @@ class PointRCNN(TwoStage3DDetector):
                                                  gt_labels_3d)
 
         losses.update(roi_losses)
-
+        '''
         return losses
 
     def simple_test(self, points, img_metas, imgs=None, rescale=False):
@@ -130,19 +130,19 @@ class PointRCNN(TwoStage3DDetector):
 
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, img_metas, rescale=rescale)
-        '''
+        
         from mmdet3d.core.bbox import bbox3d2result
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list
         ]
+        
         '''
-
         proposal_list = [
             dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
             for bboxes, scores, labels in bbox_list
         ]
         bbox_results = self.roi_head.simple_test(rcnn_feats, img_metas,
                                                  proposal_list)
-
+        '''
         return bbox_results
