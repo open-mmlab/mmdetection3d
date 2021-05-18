@@ -39,6 +39,7 @@ def enlarge_box3d(boxes3d, extra_width=(0, 0, 0)):
     large_boxes3d = boxes3d.clone()
 
     large_boxes3d[..., 3:6] += boxes3d.new_tensor(extra_width)
+    large_boxes3d[..., 2] -= boxes3d.new_tensor(extra_width / 2)
     return large_boxes3d
 
 
