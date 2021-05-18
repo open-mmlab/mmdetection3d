@@ -8,8 +8,6 @@ _base_ = [
 model = dict(
     bbox_head=dict(
         num_classes=18,
-        valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39),
         in_channels=288,
         bbox_coder=dict(
             type='GroupFree3DBBoxCoder',

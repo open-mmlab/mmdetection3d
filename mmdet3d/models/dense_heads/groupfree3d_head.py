@@ -112,7 +112,6 @@ class GroupFree3DHead(nn.Module):
 
     Args:
         num_classes (int): The number of class.
-        valid_cat_ids (tuple(int)): The valid class index of dataset.
         in_channels (int): The dims of input features from backbone.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
@@ -136,7 +135,6 @@ class GroupFree3DHead(nn.Module):
 
     def __init__(self,
                  num_classes,
-                 valid_cat_ids,
                  in_channels,
                  bbox_coder,
                  num_decoder_layers,
@@ -155,7 +153,6 @@ class GroupFree3DHead(nn.Module):
                  semantic_loss=None):
         super(GroupFree3DHead, self).__init__()
         self.num_classes = num_classes
-        self.valid_cat_ids = valid_cat_ids
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self.num_proposal = num_proposal
@@ -234,6 +231,14 @@ class GroupFree3DHead(nn.Module):
         """Initialize weights of transformer decoder in GroupFree3DHead."""
         # initialize transformer
         for m in self.decoder_layers.parameters():
+            if m.dim() > 1:
+                nn.init.xavier_uniform_(m)
+
+        for m in self.decoder_self_posembeds.parameters():
+            if m.dim() > 1:
+                nn.init.xavier_uniform_(m)
+
+        for m in self.decoder_cross_posembeds.parameters():
             if m.dim() > 1:
                 nn.init.xavier_uniform_(m)
 
@@ -344,7 +349,7 @@ class GroupFree3DHead(nn.Module):
                 query, key, value, query_pos=query_pos,
                 key_pos=key_pos).permute(1, 2, 0)
 
-            results['query' + suffix] = query
+            results[f'query{suffix}'] = query
 
             cls_predictions, reg_predictions = self.prediction_heads[i](query)
             decode_res = self.bbox_coder.split_pred(cls_predictions,
@@ -354,7 +359,7 @@ class GroupFree3DHead(nn.Module):
             results.update(decode_res)
 
             bbox3d = self.bbox_coder.decode(results, suffix)
-            results['bbox3d' + suffix] = bbox3d
+            results[f'bbox3d{suffix}'] = bbox3d
             base_bbox3d = bbox3d[:, :, :6].detach().clone()
             query = query.permute(2, 0, 1)
 
@@ -391,7 +396,7 @@ class GroupFree3DHead(nn.Module):
             ret_target (Bool): Return targets or not.
 
         Returns:
-            dict: Losses of Votenet.
+            dict: Losses of GroupFree3D.
         """
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    pts_semantic_mask, pts_instance_mask,
@@ -426,7 +431,7 @@ class GroupFree3DHead(nn.Module):
         for suffix in suffixes:
 
             # calculate objectness loss
-            obj_score = bbox_preds['obj_scores' + suffix].transpose(2,
+            obj_score = bbox_preds[f'obj_scores{suffix}'].transpose(2,
                                                                     1).reshape(
                                                                         -1, 1)
             objectness_loss = self.objectness_loss(
@@ -441,7 +446,7 @@ class GroupFree3DHead(nn.Module):
             box_loss_weights_expand = box_loss_weights.unsqueeze(-1).repeat(
                 1, 1, 3)
             center_loss = self.center_loss(
-                bbox_preds['center' + suffix],
+                bbox_preds[f'center{suffix}'],
                 assigned_center_targets,
                 weight=box_loss_weights_expand)
 
@@ -449,7 +454,7 @@ class GroupFree3DHead(nn.Module):
 
             # calculate direction class loss
             dir_class_loss = self.dir_class_loss(
-                bbox_preds['dir_class' + suffix].transpose(2, 1),
+                bbox_preds[f'dir_class{suffix}'].transpose(2, 1),
                 dir_class_targets,
                 weight=box_loss_weights)
 
@@ -461,7 +466,7 @@ class GroupFree3DHead(nn.Module):
             heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1),
                                            1)
             dir_res_norm = torch.sum(
-                bbox_preds['dir_res_norm' + suffix] * heading_label_one_hot,
+                bbox_preds[f'dir_res_norm{suffix}'] * heading_label_one_hot,
                 -1)
             dir_res_loss = self.dir_res_loss(
                 dir_res_norm, dir_res_targets, weight=box_loss_weights)
@@ -470,7 +475,7 @@ class GroupFree3DHead(nn.Module):
 
             # calculate size class loss
             size_class_loss = self.size_class_loss(
-                bbox_preds['size_class' + suffix].transpose(2, 1),
+                bbox_preds[f'size_class{suffix}'].transpose(2, 1),
                 size_class_targets,
                 weight=box_loss_weights)
 
@@ -484,7 +489,7 @@ class GroupFree3DHead(nn.Module):
             one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
                 -1).repeat(1, 1, 1, 3).contiguous()
             size_residual_norm = torch.sum(
-                bbox_preds['size_res_norm' + suffix] *
+                bbox_preds[f'size_res_norm{suffix}'] *
                 one_hot_size_targets_expand, 2)
             box_loss_weights_expand = box_loss_weights.unsqueeze(-1).repeat(
                 1, 1, 3)
@@ -497,7 +502,7 @@ class GroupFree3DHead(nn.Module):
 
             # calculate semantic loss
             semantic_loss = self.semantic_loss(
-                bbox_preds['sem_scores' + suffix].transpose(2, 1),
+                bbox_preds[f'sem_scores{suffix}'].transpose(2, 1),
                 mask_targets,
                 weight=box_loss_weights)
 
@@ -547,7 +552,7 @@ class GroupFree3DHead(nn.Module):
             bbox_preds (torch.Tensor): Bounding box predictions of vote head.
 
         Returns:
-            tuple[torch.Tensor]: Targets of vote head.
+            tuple[torch.Tensor]: Targets of GroupFree3D head.
         """
         # find empty example
         valid_gt_masks = list()
@@ -565,6 +570,8 @@ class GroupFree3DHead(nn.Module):
                     gt_labels_3d[index].shape))
                 gt_num.append(gt_labels_3d[index].shape[0])
         max_gt_num = max(gt_num)
+
+        max_gt_nums = [max_gt_num for _ in range(len(gt_labels_3d))]
 
         seed_points = [
             bbox_preds['seed_points'][i] for i in range(len(gt_labels_3d))
@@ -585,14 +592,13 @@ class GroupFree3DHead(nn.Module):
          objectness_masks) = multi_apply(self.get_targets_single, points,
                                          gt_bboxes_3d, gt_labels_3d,
                                          pts_semantic_mask, pts_instance_mask,
-                                         seed_points, seed_indices,
-                                         candidate_indices)
+                                         max_gt_nums, seed_points,
+                                         seed_indices, candidate_indices)
 
-        # pad targets as original code of votenet.
+        # pad targets as original code of GroupFree3D.
         for index in range(len(gt_labels_3d)):
-            pad_num = max_gt_num - gt_labels_3d[index].shape[0]
-            center_targets[index] = F.pad(center_targets[index],
-                                          (0, 0, 0, pad_num))
+            # +1: the last one for the empty target ?
+            pad_num = max_gt_num - gt_labels_3d[index].shape[0] + 1
             valid_gt_masks[index] = F.pad(valid_gt_masks[index], (0, pad_num))
 
         sampling_targets = torch.stack(sampling_targets)
@@ -634,11 +640,12 @@ class GroupFree3DHead(nn.Module):
                            gt_labels_3d,
                            pts_semantic_mask=None,
                            pts_instance_mask=None,
+                           max_gt_nums=None,
                            seed_points=None,
                            seed_indices=None,
                            candidate_indices=None,
                            seed_points_obj_topk=4):
-        """Generate targets of vote head for single batch.
+        """Generate targets of GroupFree3D head for single batch.
 
         Args:
             points (torch.Tensor): Points of each batch.
@@ -649,11 +656,14 @@ class GroupFree3DHead(nn.Module):
                 label of each batch.
             pts_instance_mask (None | torch.Tensor): Point-wise instance
                 label of each batch.
-            aggregated_points (torch.Tensor): Aggregated points from
-                vote aggregation layer.
+            max_gt_nums (int): Max number of GTs for single batch.
+            seed_points (torch.Tensor): Coordinates of seed points.
+            seed_indices (torch.Tensor): Indices of seed points.
+            candidate_indices (torch.Tensor): Indices of object candidates.
+            seed_points_obj_topk (int): k value of k-Closest Points Sampling.
 
         Returns:
-            tuple[torch.Tensor]: Targets of vote head.
+            tuple[torch.Tensor]: Targets of GroupFree3D head.
         """
 
         gt_bboxes_3d = gt_bboxes_3d.to(points.device)
@@ -667,7 +677,7 @@ class GroupFree3DHead(nn.Module):
             indices = torch.nonzero(
                 pts_instance_mask == i, as_tuple=False).squeeze(-1)
 
-            if pts_semantic_mask[indices[0]] in self.valid_cat_ids:
+            if pts_semantic_mask[indices[0]] < self.num_classes:
                 selected_points = points[indices, :3]
                 center = 0.5 * (
                     selected_points.min(0)[0] + selected_points.max(0)[0])
@@ -677,13 +687,29 @@ class GroupFree3DHead(nn.Module):
                 pts_instance_label[indices] = instance_lable
                 pts_obj_mask[indices] = 1
 
+        # generate center, dir, size target
+        (center_targets, size_class_targets, size_res_targets,
+         dir_class_targets,
+         dir_res_targets) = self.bbox_coder.encode(gt_bboxes_3d, gt_labels_3d)
+
+        # pad targets as original code of GroupFree3D
+        # +1: the last one for the empty target ?
+        pad_num = max_gt_nums - gt_labels_3d.shape[0] + 1
+        gt_labels_3d = F.pad(gt_labels_3d, (0, pad_num))
+        gt_center_pad = F.pad(
+            gt_bboxes_3d.tensor, (0, 0, 0, pad_num), value=1000)
+        gt_bboxes_3d = gt_bboxes_3d.new_box(gt_center_pad)
+        center_targets = F.pad(center_targets, (0, 0, 0, pad_num))
+        size_class_targets = F.pad(size_class_targets, (0, pad_num))
+        size_res_targets = F.pad(size_res_targets, (0, 0, 0, pad_num))
+        dir_class_targets = F.pad(dir_class_targets, (0, pad_num))
+        dir_res_targets = F.pad(dir_res_targets, (0, pad_num))
+
         # 1. generate objectness targets in sampling head
         gt_num = gt_labels_3d.shape[0]
         num_seed = seed_points.shape[0]
         num_candidate = candidate_indices.shape[0]
 
-        # pts_instance_label
-        # num_seed
         object_assignment = torch.gather(pts_instance_label, 0, seed_indices)
         # set background points to the last gt bbox as original code
         object_assignment[object_assignment < 0] = gt_num - 1
@@ -720,13 +746,11 @@ class GroupFree3DHead(nn.Module):
         sampling_targets[objectness_label_mask < 0] = 0
 
         # 2. objectness target
-        # pts_obj_mask
         seed_obj_gt = torch.gather(pts_obj_mask, 0, seed_indices)  # num_seed
         objectness_targets = torch.gather(seed_obj_gt, 0,
                                           candidate_indices)  # num_candidate
 
         # 3. box target
-        # pts_instance_label
         seed_instance_label = torch.gather(pts_instance_label, 0,
                                            seed_indices)  # num_seed
         query_points_instance_label = torch.gather(
@@ -738,13 +762,8 @@ class GroupFree3DHead(nn.Module):
         # set background points to the last gt bbox as original code
         assignment[assignment < 0] = gt_num - 1
 
-        # generate center, dir, size target
-        (center_targets, size_class_targets, size_res_targets,
-         dir_class_targets,
-         dir_res_targets) = self.bbox_coder.encode(gt_bboxes_3d, gt_labels_3d)
-
         assigned_center_targets = center_targets[assignment]
-        # assignment_expand = assignment.unsqueeze(1).repeat(1, 3)
+        assignment_expand = assignment.unsqueeze(1).repeat(1, 3)
         # assigned_center_targets = torch.gather(center_targets, 0,
         #                                        assignment_expand)
 
@@ -758,16 +777,14 @@ class GroupFree3DHead(nn.Module):
         size_class_targets = size_class_targets[assignment]
         # size_class_targets = torch.gather(size_class_targets, 0, assignment)
 
-        size_res_targets = size_res_targets[assignment]
-        # size_res_targets = \
-        # torch.gather(size_res_targets, 0, assignment_expand)
+        # size_res_targets = size_res_targets[assignment]
+        size_res_targets = \
+            torch.gather(size_res_targets, 0, assignment_expand)
         one_hot_size_targets = gt_bboxes_3d.tensor.new_zeros(
             (num_candidate, self.num_sizes))
-
         one_hot_size_targets.scatter_(1, size_class_targets.unsqueeze(-1), 1)
         one_hot_size_targets = one_hot_size_targets.unsqueeze(-1).repeat(
             1, 1, 3)  # (num_candidate,num_size_cluster,3)
-
         mean_sizes = size_res_targets.new_tensor(
             self.bbox_coder.mean_sizes).unsqueeze(0)
         pos_mean_sizes = torch.sum(one_hot_size_targets * mean_sizes, 1)
@@ -789,7 +806,7 @@ class GroupFree3DHead(nn.Module):
                    input_metas,
                    rescale=False,
                    use_nms=True):
-        """Generate bboxes from vote head predictions.
+        """Generate bboxes from GroupFree3D head predictions.
 
         Args:
             points (torch.Tensor): Input points.
@@ -807,8 +824,8 @@ class GroupFree3DHead(nn.Module):
 
         # decode boxes
         obj_scores = F.softmax(
-            bbox_preds['obj_scores' + suffix], dim=-1)[..., -1]
-        sem_scores = F.softmax(bbox_preds['sem_scores' + suffix], dim=-1)
+            bbox_preds[f'obj_scores{suffix}'], dim=-1)[..., -1]
+        sem_scores = F.softmax(bbox_preds[f'sem_scores{suffix}'], dim=-1)
         bbox3d = self.bbox_coder.decode(bbox_preds, suffix)
 
         if use_nms:
