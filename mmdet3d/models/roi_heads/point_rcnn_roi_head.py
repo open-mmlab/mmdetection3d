@@ -167,7 +167,8 @@ class PointRCNNROIHead(Base3DRoIHead):
             gt_bboxes = input_metas[i]['box_type_3d'](
                 gt_bboxes_3d[i].tensor[valid_gt].clone(),
                 box_dim=gt_bboxes_3d[i].tensor.shape[-1],
-                with_yaw=True)
+                with_yaw=True,
+                origin=(0.5, 0.5, 0.5))
             rcnn_gt_bboxes_3d.append(gt_bboxes)
             rcnn_gt_labels_3d.append(gt_labels_3d[i][valid_gt].clone())
         '''
