@@ -376,11 +376,10 @@ class PointRCNNBboxHead(BaseModule):
             selected_label_preds = cur_class_labels[selected]
             selected_scores = cur_cls_score[selected]
 
-            result_list.append((img_metas[batch_id]['box_type_3d'](
-                selected_bboxes,
-                self.bbox_coder.code_size,
-                origin=(0.5, 0.5, 0.5)), selected_scores,
-                                selected_label_preds))
+            result_list.append(
+                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
+                                                    self.bbox_coder.code_size),
+                 selected_scores, selected_label_preds))
         return result_list
 
     def multi_class_nms(self,
