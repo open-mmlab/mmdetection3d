@@ -245,7 +245,7 @@ class Coord3DMode(IntEnum):
         elif (src == Coord3DMode.DEPTH
               and dst == Coord3DMode.LIDAR) and rt_mat is None:
             rt_mat = arr.new_tensor([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
-        else:
+        elif rt_mat is None:
             raise NotImplementedError(
                 f'Conversion from Coord3DMode {src} to {dst} '
                 'is not supported yet')
