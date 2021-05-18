@@ -82,12 +82,14 @@ class Points_Sampler(nn.Module):
 
             if fps_sample_range == -1:
                 sample_points_xyz = points_xyz[:, last_fps_end_index:]
-                sample_features = features[:, :, last_fps_end_index:]
+                sample_features = features[:, :, last_fps_end_index:] if \
+                    features is not None else None
             else:
                 sample_points_xyz = \
                     points_xyz[:, last_fps_end_index:fps_sample_range]
                 sample_features = \
-                    features[:, :, last_fps_end_index:fps_sample_range]
+                    features[:, :, last_fps_end_index:fps_sample_range] if \
+                    features is not None else None
 
             fps_idx = sampler(sample_points_xyz.contiguous(), sample_features,
                               npoint)
