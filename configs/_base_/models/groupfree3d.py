@@ -1,5 +1,5 @@
 model = dict(
-    type='VoteNet',
+    type='GroupFree3DNet',
     backbone=dict(
         type='PointNet2SASSG',
         in_channels=3,
@@ -18,7 +18,7 @@ model = dict(
     bbox_head=dict(
         type='GroupFree3DHead',
         num_decoder_layers=6,
-        num_proposal=128,
+        num_proposal=256,
         transformerlayers=dict(
             type='BaseTransformerLayer',
             attn_cfgs=dict(
