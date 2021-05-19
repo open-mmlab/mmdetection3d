@@ -25,8 +25,9 @@ class EncoderDecoder3D(Base3DSegmentor):
                  auxiliary_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
-        super(EncoderDecoder3D, self).__init__()
+                 pretrained=None,
+                 init_cfg=None):
+        super(EncoderDecoder3D, self).__init__(init_cfg=init_cfg)
         self.backbone = build_backbone(backbone)
         if neck is not None:
             self.neck = build_neck(neck)

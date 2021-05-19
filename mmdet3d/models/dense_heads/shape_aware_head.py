@@ -99,6 +99,11 @@ class BaseShapeHead(BaseModule):
                             type='Normal',
                             name='conv_cls',
                             std=0.01,
+                            bias_prob=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_dir_cls',
+                            std=0.01,
                             bias_prob=0.01)
                     ])
             else:
@@ -111,11 +116,6 @@ class BaseShapeHead(BaseModule):
                         dict(
                             type='Normal',
                             name='conv_cls',
-                            std=0.01,
-                            bias_prob=0.01),
-                        dict(
-                            type='Normal',
-                            name='conv_dir_cls',
                             std=0.01,
                             bias_prob=0.01)
                     ])
