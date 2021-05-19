@@ -133,5 +133,10 @@ class PointNet2SASSG(BasePointNet):
             fp_indices.append(sa_indices[self.num_sa - i - 1])
 
         ret = dict(
-            fp_xyz=fp_xyz, fp_features=fp_features, fp_indices=fp_indices)
+            fp_xyz=fp_xyz,
+            fp_features=fp_features,
+            fp_indices=fp_indices,
+            sa_xyz=sa_xyz,
+            sa_features=sa_features,
+            sa_indices=sa_indices)
         return ret

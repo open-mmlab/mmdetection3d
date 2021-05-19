@@ -103,15 +103,21 @@ class PointNet2SAMSG(BasePointNet):
                     cfg=sa_cfg,
                     bias=True))
             skip_channel_list.append(sa_out_channel)
-            self.aggregation_mlps.append(
-                ConvModule(
-                    sa_out_channel,
-                    aggregation_channels[sa_index],
-                    conv_cfg=dict(type='Conv1d'),
-                    norm_cfg=dict(type='BN1d'),
-                    kernel_size=1,
-                    bias=True))
-            sa_in_channel = aggregation_channels[sa_index]
+
+            cur_aggregation_channel = aggregation_channels[sa_index]
+            if cur_aggregation_channel is None:
+                self.aggregation_mlps.append(None)
+                sa_in_channel = sa_out_channel
+            else:
+                self.aggregation_mlps.append(
+                    ConvModule(
+                        sa_out_channel,
+                        cur_aggregation_channel,
+                        conv_cfg=dict(type='Conv1d'),
+                        norm_cfg=dict(type='BN1d'),
+                        kernel_size=1,
+                        bias=True))
+                sa_in_channel = cur_aggregation_channel
 
     @auto_fp16(apply_to=('points', ))
     def forward(self, points):
@@ -140,14 +146,15 @@ class PointNet2SAMSG(BasePointNet):
         sa_features = [features]
         sa_indices = [indices]
 
-        out_sa_xyz = []
-        out_sa_features = []
-        out_sa_indices = []
+        out_sa_xyz = [xyz]
+        out_sa_features = [features]
+        out_sa_indices = [indices]
 
         for i in range(self.num_sa):
             cur_xyz, cur_features, cur_indices = self.SA_modules[i](
                 sa_xyz[i], sa_features[i])
-            cur_features = self.aggregation_mlps[i](cur_features)
+            if self.aggregation_mlps[i] is not None:
+                cur_features = self.aggregation_mlps[i](cur_features)
             sa_xyz.append(cur_xyz)
             sa_features.append(cur_features)
             sa_indices.append(

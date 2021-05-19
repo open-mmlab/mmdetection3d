@@ -2,7 +2,7 @@
 
 ## Introduction
 
-We provide scipts for multi-modality/single-modality and indoor/outdoor 3D detection demos. The pre-trained models can be downloaded from [model zoo](../docs/model_zoo.md). We provide pre-processed sample data from KITTI and SUN RGB-D dataset. You can use any other data following our pre-processing steps.
+We provide scipts for multi-modality/single-modality and indoor/outdoor 3D detection demos. The pre-trained models can be downloaded from [model zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/model_zoo.md). We provide pre-processed sample data from KITTI and SUN RGB-D dataset. You can use any other data following our pre-processing steps.
 
 ## Testing
 

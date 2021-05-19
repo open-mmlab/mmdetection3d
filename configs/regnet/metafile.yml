@@ -53,15 +53,6 @@ Models:
           NDS: 59.3
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d_20200629_050311-dcd4e090.pth
 
-  - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_lyft-3d
-    In Collection: RegNetX
-    Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_lyft-3d.py
-    Metadata:
-      Training Data: Lyft
-    Results:
-      - Task: 3D Object Detection
-        Dataset: Lyft
-
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_lyft-3d
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_lyft-3d.py

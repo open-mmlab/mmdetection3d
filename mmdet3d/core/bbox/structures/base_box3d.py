@@ -129,12 +129,15 @@ class BaseInstance3DBoxes(object):
         pass
 
     @abstractmethod
-    def rotate(self, angles, axis=0):
-        """Calculate whether the points are in any of the boxes.
+    def rotate(self, angle, points=None):
+        """Rotate boxes with points (optional) with the given angle or \
+        rotation matrix.
 
         Args:
-            angles (float): Rotation angles.
-            axis (int): The axis to rotate the boxes.
+            angle (float | torch.Tensor | np.ndarray):
+                Rotation angle or rotation matrix.
+            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, optional):
+                Points to rotate. Defaults to None.
         """
         pass
 
@@ -144,7 +147,7 @@ class BaseInstance3DBoxes(object):
         pass
 
     def translate(self, trans_vector):
-        """Calculate whether the points are in any of the boxes.
+        """Translate boxes with the given translation vector.
 
         Args:
             trans_vector (torch.Tensor): Translation vector of size 1x3.

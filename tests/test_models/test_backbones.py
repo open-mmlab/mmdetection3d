@@ -34,12 +34,43 @@ def test_pointnet2_sa_ssg():
     fp_xyz = ret_dict['fp_xyz']
     fp_features = ret_dict['fp_features']
     fp_indices = ret_dict['fp_indices']
+    sa_xyz = ret_dict['sa_xyz']
+    sa_features = ret_dict['sa_features']
+    sa_indices = ret_dict['sa_indices']
     assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
+    assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3
     assert fp_xyz[0].shape == torch.Size([1, 16, 3])
     assert fp_xyz[1].shape == torch.Size([1, 32, 3])
     assert fp_xyz[2].shape == torch.Size([1, 100, 3])
+    assert fp_features[0].shape == torch.Size([1, 16, 16])
+    assert fp_features[1].shape == torch.Size([1, 16, 32])
     assert fp_features[2].shape == torch.Size([1, 16, 100])
+    assert fp_indices[0].shape == torch.Size([1, 16])
+    assert fp_indices[1].shape == torch.Size([1, 32])
     assert fp_indices[2].shape == torch.Size([1, 100])
+    assert sa_xyz[0].shape == torch.Size([1, 100, 3])
+    assert sa_xyz[1].shape == torch.Size([1, 32, 3])
+    assert sa_xyz[2].shape == torch.Size([1, 16, 3])
+    assert sa_features[0].shape == torch.Size([1, 3, 100])
+    assert sa_features[1].shape == torch.Size([1, 16, 32])
+    assert sa_features[2].shape == torch.Size([1, 16, 16])
+    assert sa_indices[0].shape == torch.Size([1, 100])
+    assert sa_indices[1].shape == torch.Size([1, 32])
+    assert sa_indices[2].shape == torch.Size([1, 16])
+
+    # test only xyz input without features
+    cfg['in_channels'] = 3
+    self = build_backbone(cfg)
+    self.cuda()
+    ret_dict = self(xyz[..., :3])
+    assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
+    assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3
+    assert fp_features[0].shape == torch.Size([1, 16, 16])
+    assert fp_features[1].shape == torch.Size([1, 16, 32])
+    assert fp_features[2].shape == torch.Size([1, 16, 100])
+    assert sa_features[0].shape == torch.Size([1, 3, 100])
+    assert sa_features[1].shape == torch.Size([1, 16, 32])
+    assert sa_features[2].shape == torch.Size([1, 16, 16])
 
 
 def test_multi_backbone():
@@ -156,6 +187,8 @@ def test_multi_backbone():
 def test_pointnet2_sa_msg():
     if not torch.cuda.is_available():
         pytest.skip()
+
+    # PN2MSG used in 3DSSD
     cfg = dict(
         type='PointNet2SAMSG',
         in_channels=4,
@@ -216,3 +249,50 @@ def test_pointnet2_sa_msg():
                     pool_mod='max',
                     use_xyz=True,
                     normalize_xyz=False)))
+
+    # PN2MSG used in segmentation
+    cfg = dict(
+        type='PointNet2SAMSG',
+        in_channels=6,  # [xyz, rgb]
+        num_points=(1024, 256, 64, 16),
+        radii=((0.05, 0.1), (0.1, 0.2), (0.2, 0.4), (0.4, 0.8)),
+        num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
+        sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,
+                                                                    128)),
+                     ((128, 196, 256), (128, 196, 256)), ((256, 256, 512),
+                                                          (256, 384, 512))),
+        aggregation_channels=(None, None, None, None),
+        fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
+        fps_sample_range_lists=((-1), (-1), (-1), (-1)),
+        dilated_group=(False, False, False, False),
+        out_indices=(0, 1, 2, 3),
+        norm_cfg=dict(type='BN2d'),
+        sa_cfg=dict(
+            type='PointSAModuleMSG',
+            pool_mod='max',
+            use_xyz=True,
+            normalize_xyz=False))
+
+    self = build_backbone(cfg)
+    self.cuda()
+    ret_dict = self(xyz)
+    sa_xyz = ret_dict['sa_xyz']
+    sa_features = ret_dict['sa_features']
+    sa_indices = ret_dict['sa_indices']
+
+    assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 5
+    assert sa_xyz[0].shape == torch.Size([1, 100, 3])
+    assert sa_xyz[1].shape == torch.Size([1, 1024, 3])
+    assert sa_xyz[2].shape == torch.Size([1, 256, 3])
+    assert sa_xyz[3].shape == torch.Size([1, 64, 3])
+    assert sa_xyz[4].shape == torch.Size([1, 16, 3])
+    assert sa_features[0].shape == torch.Size([1, 3, 100])
+    assert sa_features[1].shape == torch.Size([1, 96, 1024])
+    assert sa_features[2].shape == torch.Size([1, 256, 256])
+    assert sa_features[3].shape == torch.Size([1, 512, 64])
+    assert sa_features[4].shape == torch.Size([1, 1024, 16])
+    assert sa_indices[0].shape == torch.Size([1, 100])
+    assert sa_indices[1].shape == torch.Size([1, 1024])
+    assert sa_indices[2].shape == torch.Size([1, 256])
+    assert sa_indices[3].shape == torch.Size([1, 64])
+    assert sa_indices[4].shape == torch.Size([1, 16])

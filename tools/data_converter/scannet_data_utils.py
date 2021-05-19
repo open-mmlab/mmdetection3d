@@ -42,11 +42,23 @@ class ScanNetData(object):
     def __len__(self):
         return len(self.sample_id_list)
 
-    def get_box_label(self, idx):
+    def get_aligned_box_label(self, idx):
         box_file = osp.join(self.root_dir, 'scannet_instance_data',
-                            f'{idx}_bbox.npy')
+                            f'{idx}_aligned_bbox.npy')
         mmcv.check_file_exist(box_file)
         return np.load(box_file)
+
+    def get_unaligned_box_label(self, idx):
+        box_file = osp.join(self.root_dir, 'scannet_instance_data',
+                            f'{idx}_unaligned_bbox.npy')
+        mmcv.check_file_exist(box_file)
+        return np.load(box_file)
+
+    def get_axis_align_matrix(self, idx):
+        matrix_file = osp.join(self.root_dir, 'scannet_instance_data',
+                               f'{idx}_axis_align_matrix.npy')
+        mmcv.check_file_exist(matrix_file)
+        return np.load(matrix_file)
 
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
         """Get data infos.
@@ -106,25 +118,35 @@ class ScanNetData(object):
 
             if has_label:
                 annotations = {}
-                boxes_with_classes = self.get_box_label(
-                    sample_idx)  # k, 6 + class
-                annotations['gt_num'] = boxes_with_classes.shape[0]
+                # box is of shape [k, 6 + class]
+                aligned_box_label = self.get_aligned_box_label(sample_idx)
+                unaligned_box_label = self.get_unaligned_box_label(sample_idx)
+                annotations['gt_num'] = aligned_box_label.shape[0]
                 if annotations['gt_num'] != 0:
-                    minmax_boxes3d = boxes_with_classes[:, :-1]  # k, 6
-                    classes = boxes_with_classes[:, -1]  # k, 1
+                    aligned_box = aligned_box_label[:, :-1]  # k, 6
+                    unaligned_box = unaligned_box_label[:, :-1]
+                    classes = aligned_box_label[:, -1]  # k
                     annotations['name'] = np.array([
                         self.label2cat[self.cat_ids2class[classes[i]]]
                         for i in range(annotations['gt_num'])
                     ])
-                    annotations['location'] = minmax_boxes3d[:, :3]
-                    annotations['dimensions'] = minmax_boxes3d[:, 3:6]
-                    annotations['gt_boxes_upright_depth'] = minmax_boxes3d
+                    # default names are given to aligned bbox for compatibility
+                    # we also save unaligned bbox info with marked names
+                    annotations['location'] = aligned_box[:, :3]
+                    annotations['dimensions'] = aligned_box[:, 3:6]
+                    annotations['gt_boxes_upright_depth'] = aligned_box
+                    annotations['unaligned_location'] = unaligned_box[:, :3]
+                    annotations['unaligned_dimensions'] = unaligned_box[:, 3:6]
+                    annotations[
+                        'unaligned_gt_boxes_upright_depth'] = unaligned_box
                     annotations['index'] = np.arange(
                         annotations['gt_num'], dtype=np.int32)
                     annotations['class'] = np.array([
                         self.cat_ids2class[classes[i]]
                         for i in range(annotations['gt_num'])
                     ])
+                axis_align_matrix = self.get_axis_align_matrix(sample_idx)
+                annotations['axis_align_matrix'] = axis_align_matrix  # 4x4
                 info['annos'] = annotations
             return info
 
@@ -197,9 +219,6 @@ class ScanNetSegData(object):
                 mask = np.load(mask)
             else:
                 mask = np.fromfile(mask, dtype=np.long)
-        # first filter out unannotated points (labeled as 0)
-        mask = mask[mask != 0]
-        # then convert to [0, 20) labels
         label = self.cat_id2class[mask]
         return label
 

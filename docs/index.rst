@@ -35,6 +35,7 @@ Welcome to MMDetection3D's documentation!
 
    benchmarks.md
    faq.md
+   compatibility.md
 
 .. toctree::
    :caption: API Reference

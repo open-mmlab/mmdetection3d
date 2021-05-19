@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import force_fp32
@@ -462,6 +463,9 @@ class SSD3DHead(VoteHead):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
                 input_metas[b])
+            # fix the wrong direction
+            # To do: remove this ops
+            bbox_selected[..., 6] += np.pi
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
