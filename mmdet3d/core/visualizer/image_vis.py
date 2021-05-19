@@ -118,18 +118,6 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
     imgfov_pts_2d = pts_2d[..., :2].reshape(num_bbox, 8, 2)
 
     return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)
-    '''
-    line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
-                    (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
-    for i in range(num_bbox):
-        corners = imgfov_pts_2d[i].astype(np.int)
-        for start, end in line_indices:
-            cv2.line(img, (corners[start, 0], corners[start, 1]),
-                     (corners[end, 0], corners[end, 1]), color, thickness,
-                     cv2.LINE_AA)
-
-    return img.astype(np.uint8)
-    '''
 
 
 def draw_depth_bbox3d_on_img(bboxes3d,
@@ -182,18 +170,6 @@ def draw_depth_bbox3d_on_img(bboxes3d,
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 
     return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)
-    '''
-    line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
-                    (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
-    for i in range(num_bbox):
-        corners = imgfov_pts_2d[i].astype(np.int)
-        for start, end in line_indices:
-            cv2.line(img, (corners[start, 0], corners[start, 1]),
-                     (corners[end, 0], corners[end, 1]), color, thickness,
-                     cv2.LINE_AA)
-
-    return img.astype(np.uint8)
-    '''
 
 
 def draw_camera_bbox3d_on_img(bboxes3d,
@@ -231,15 +207,3 @@ def draw_camera_bbox3d_on_img(bboxes3d,
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 
     return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)
-    '''
-    line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
-                    (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
-    for i in range(num_bbox):
-        corners = imgfov_pts_2d[i].astype(np.int)
-        for start, end in line_indices:
-            cv2.line(img, (corners[start, 0], corners[start, 1]),
-                     (corners[end, 0], corners[end, 1]), color, thickness,
-                     cv2.LINE_AA)
-
-    return img.astype(np.uint8)
-    '''

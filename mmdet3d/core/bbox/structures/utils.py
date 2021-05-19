@@ -156,7 +156,7 @@ def mono_cam_box2vis(cam_box):
 
     Args:
         cam_box (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate \
-            system before conversion. Could gt bbox loaded from dataset or \
+            system before conversion. Could be gt bbox loaded from dataset or \
                 network prediction output.
 
     Returns:
