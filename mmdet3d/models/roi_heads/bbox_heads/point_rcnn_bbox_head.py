@@ -44,7 +44,7 @@ class PointRCNNBboxHead(BaseModule):
                 use_sigmoid=True,
                 reduction='sum',
                 loss_weight=1.0),
-            corner_loss=None,
+            corner_loss=dict(type='SmoothL1Loss', reduction='mean'),
             with_corner_loss=True,
             init_cfg=None,
             pretrained=None):
@@ -55,6 +55,7 @@ class PointRCNNBboxHead(BaseModule):
 
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_cls = build_loss(loss_cls)
+        self.loss_corner = build_loss(corner_loss)
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
@@ -160,7 +161,7 @@ class PointRCNNBboxHead(BaseModule):
             loss_bbox = self.loss_bbox(
                 pos_bbox_pred.unsqueeze(dim=0),
                 bbox_targets.unsqueeze(dim=0).detach(),
-                bbox_weights_flat.unsqueeze(dim=0))
+                bbox_weights_flat.unsqueeze(dim=0) * 7)
             losses['loss_bbox'] = loss_bbox
 
             if self.with_corner_loss:
@@ -184,12 +185,19 @@ class PointRCNNBboxHead(BaseModule):
                 pred_boxes3d[:, 0:3] += roi_xyz
 
                 # calculate corner loss
+                bbox_weights = bbox_weights[pos_inds].view(-1, 1)
                 loss_corner = self.get_corner_loss_lidar(
-                    pred_boxes3d, pos_gt_bboxes)
+                    pred_boxes3d, pos_gt_bboxes, bbox_weights)
+
                 losses['loss_corner'] = loss_corner
+
         return losses
 
-    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1):
+    def get_corner_loss_lidar(self,
+                              pred_bbox3d,
+                              gt_bbox3d,
+                              bbox_weights,
+                              delta=1):
         """Calculate corner loss of given boxes.
 
         Args:
@@ -202,27 +210,15 @@ class PointRCNNBboxHead(BaseModule):
         assert pred_bbox3d.shape[0] == gt_bbox3d.shape[0]
 
         # This is a little bit hack here because we assume the box for
-        # Part-A2 is in LiDAR coordinates
+        # PointRCNN is in LiDAR coordinates
         gt_boxes_structure = LiDARInstance3DBoxes(gt_bbox3d)
         pred_box_corners = LiDARInstance3DBoxes(pred_bbox3d).corners
         gt_box_corners = gt_boxes_structure.corners
+        corner_loss = self.loss_corner(pred_box_corners,
+                                       gt_box_corners.reshape(-1, 8, 3),
+                                       bbox_weights.view(-1, 1, 1))
 
-        # This flip only changes the heading direction of GT boxes
-        gt_bbox3d_flip = gt_boxes_structure.clone()
-        gt_bbox3d_flip.tensor[:, 6] += np.pi
-        gt_box_corners_flip = gt_bbox3d_flip.corners
-
-        corner_dist = torch.min(
-            torch.norm(pred_box_corners - gt_box_corners, dim=2),
-            torch.norm(pred_box_corners - gt_box_corners_flip,
-                       dim=2))  # (N, 8)
-        # huber loss
-        abs_error = torch.abs(corner_dist)
-        quadratic = torch.clamp(abs_error, max=delta)
-        linear = (abs_error - quadratic)
-        corner_loss = 0.5 * quadratic**2 + delta * linear
-
-        return corner_loss.mean(dim=1)
+        return corner_loss
 
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
         """Generate targets.

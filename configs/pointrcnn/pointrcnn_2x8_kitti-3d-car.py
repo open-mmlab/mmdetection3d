@@ -80,9 +80,9 @@ data = dict(
 lr = 0.0025  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[95, 105])
+lr_config = dict(policy='step', warmup=None, step=[35, 45])
 # runtime settings
-total_epochs = 130
+total_epochs = 81
 
 # yapf:disable
 log_config = dict(
