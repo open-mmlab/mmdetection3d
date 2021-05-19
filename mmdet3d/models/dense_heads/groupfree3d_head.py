@@ -819,13 +819,22 @@ class GroupFree3DHead(nn.Module):
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
-        # TODO: support multi-stage predicitons
-        suffix = self.test_cfg['suffixes']
+        # support multi-stage predicitons
+        obj_scores = list()
+        sem_scores = list()
+        bbox3d = list()
+        for suffix in self.test_cfg['prediction_stages']:
+            # decode boxes
+            obj_score = F.sigmoid(bbox_preds[f'obj_scores{suffix}'])[..., -1]
+            sem_score = F.softmax(bbox_preds[f'sem_scores{suffix}'], dim=-1)
+            bbox = self.bbox_coder.decode(bbox_preds, suffix)
+            obj_scores.append(obj_score)
+            sem_scores.append(sem_score)
+            bbox3d.append(bbox)
 
-        # decode boxes
-        obj_scores = F.sigmoid(bbox_preds[f'obj_scores{suffix}'])[..., -1]
-        sem_scores = F.softmax(bbox_preds[f'sem_scores{suffix}'], dim=-1)
-        bbox3d = self.bbox_coder.decode(bbox_preds, suffix)
+        obj_scores = torch.cat(obj_scores, dim=1)
+        sem_scores = torch.cat(sem_scores, dim=1)
+        bbox3d = torch.cat(bbox3d, dim=1)
 
         if use_nms:
             batch_size = bbox3d.shape[0]
