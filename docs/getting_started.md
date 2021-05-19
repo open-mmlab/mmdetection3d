@@ -12,7 +12,7 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0          | mmseg>=0.13.0 | mmcv-full>=1.2.4, <=1.4|
+| master              | mmdet>=2.12.0          | mmseg>=0.13.0 | mmcv-full>=1.2.4, <=1.4|
 | 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
@@ -279,13 +279,13 @@ More demos about single/multi-modality and indoor/outdoor 3D detection can be fo
 Here is an example of building the model and test given point clouds.
 
 ```python
-from mmdet3d.apis import init_detector, inference_detector
+from mmdet3d.apis import init_model, inference_detector
 
 config_file = 'configs/votenet/votenet_8x8_scannet-3d-18class.py'
 checkpoint_file = 'checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth'
 
 # build the model from a config file and a checkpoint file
-model = init_detector(config_file, checkpoint_file, device='cuda:0')
+model = init_model(config_file, checkpoint_file, device='cuda:0')
 
 # test a single image and show the results
 point_cloud = 'test.bin'
