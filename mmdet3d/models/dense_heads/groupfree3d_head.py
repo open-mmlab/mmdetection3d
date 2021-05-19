@@ -823,8 +823,7 @@ class GroupFree3DHead(nn.Module):
         suffix = self.test_cfg['suffixes']
 
         # decode boxes
-        obj_scores = F.softmax(
-            bbox_preds[f'obj_scores{suffix}'], dim=-1)[..., -1]
+        obj_scores = F.sigmoid(bbox_preds[f'obj_scores{suffix}'])[..., -1]
         sem_scores = F.softmax(bbox_preds[f'sem_scores{suffix}'], dim=-1)
         bbox3d = self.bbox_coder.decode(bbox_preds, suffix)
 
