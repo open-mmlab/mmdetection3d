@@ -65,13 +65,13 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
         """Placeholder of forward function."""
         pass
 
-    def forward_train(self, inputs, img_metas, gt_semantic_seg, train_cfg):
+    def forward_train(self, inputs, img_metas, pts_semantic_mask, train_cfg):
         """Forward function for training.
 
         Args:
-            inputs (list[Tensor]): List of multi-level point features.
+            inputs (list[torch.Tensor]): List of multi-level point features.
             img_metas (list[dict]): Meta information of each sample.
-            gt_semantic_seg (torch.Tensor): Semantic segmentation masks
+            pts_semantic_mask (torch.Tensor): Semantic segmentation masks
                 used if the architecture supports semantic segmentation task.
             train_cfg (dict): The training config.
 
@@ -79,7 +79,7 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
             dict[str, Tensor]: a dictionary of loss components
         """
         seg_logits = self.forward(inputs)
-        losses = self.losses(seg_logits, gt_semantic_seg)
+        losses = self.losses(seg_logits, pts_semantic_mask)
         return losses
 
     def forward_test(self, inputs, img_metas, test_cfg):

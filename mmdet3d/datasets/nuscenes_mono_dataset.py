@@ -454,9 +454,16 @@ class NuScenesMonoDataset(CocoDataset):
         else:
             tmp_dir = None
 
-        if not isinstance(results[0], dict):
+        # currently the output prediction results could be in two formats
+        # 1. list of dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...)
+        # 2. list of dict('pts_bbox' or 'img_bbox':
+        #     dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...))
+        # this is a workaround to enable evaluation of both formats on nuScenes
+        # refer to https://github.com/open-mmlab/mmdetection3d/issues/449
+        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
             result_files = self._format_bbox(results, jsonfile_prefix)
         else:
+            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
             result_files = dict()
             for name in results[0]:
                 # not evaluate 2D predictions on nuScenes

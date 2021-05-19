@@ -61,12 +61,12 @@ def test_pn2_decode_head_loss():
     assert seg_logits.shape == torch.Size([2, 20, 4096])
 
     # test loss
-    gt_semantic_seg = torch.randint(0, 20, (2, 4096)).long().cuda()
-    losses = self.losses(seg_logits, gt_semantic_seg)
+    pts_semantic_mask = torch.randint(0, 20, (2, 4096)).long().cuda()
+    losses = self.losses(seg_logits, pts_semantic_mask)
     assert losses['loss_sem_seg'].item() > 0
 
     # test loss with ignore_index
-    ignore_index_mask = torch.ones_like(gt_semantic_seg) * 20
+    ignore_index_mask = torch.ones_like(pts_semantic_mask) * 20
     losses = self.losses(seg_logits, ignore_index_mask)
     assert losses['loss_sem_seg'].item() == 0
 
@@ -78,5 +78,5 @@ def test_pn2_decode_head_loss():
         loss_weight=1.0)
     self = build_head(pn2_decode_head_cfg)
     self.cuda()
-    losses = self.losses(seg_logits, gt_semantic_seg)
+    losses = self.losses(seg_logits, pts_semantic_mask)
     assert losses['loss_sem_seg'].item() > 0

@@ -6,11 +6,13 @@ from os import path as osp
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS
+from mmseg.datasets import DATASETS as SEG_DATASETS
 from .pipelines import Compose
 from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
+@SEG_DATASETS.register_module()
 class Custom3DSegDataset(Dataset):
     """Customized 3D dataset for semantic segmentation task.
 
@@ -143,7 +145,7 @@ class Custom3DSegDataset(Dataset):
         results['pts_seg_fields'] = []
         results['mask_fields'] = []
         results['seg_fields'] = []
-        results['gt_bboxes_3d'] = []
+        results['bbox3d_fields'] = []
 
     def prepare_train_data(self, index):
         """Training data preparation.
