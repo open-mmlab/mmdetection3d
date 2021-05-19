@@ -88,18 +88,37 @@ class BaseShapeHead(BaseModule):
             self.conv_dir_cls = nn.Conv2d(out_channels, num_base_anchors * 2,
                                           1)
         if init_cfg is None:
-            self.init_cfg = dict(
-                type='Kaiming',
-                layer='Conv2d',
-                distribution='uniform',
-                override=[
-                    dict(type='Normal', name='conv_reg', std=0.01),
-                    dict(
-                        type='Normal',
-                        name='conv_cls',
-                        std=0.01,
-                        bias_prob=0.01)
-                ])
+            if use_direction_classifier:
+                self.init_cfg = dict(
+                    type='Kaiming',
+                    layer='Conv2d',
+                    distribution='uniform',
+                    override=[
+                        dict(type='Normal', name='conv_reg', std=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_cls',
+                            std=0.01,
+                            bias_prob=0.01)
+                    ])
+            else:
+                self.init_cfg = dict(
+                    type='Kaiming',
+                    layer='Conv2d',
+                    distribution='uniform',
+                    override=[
+                        dict(type='Normal', name='conv_reg', std=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_cls',
+                            std=0.01,
+                            bias_prob=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_dir_cls',
+                            std=0.01,
+                            bias_prob=0.01)
+                    ])
 
     def forward(self, x):
         """Forward function for SmallHead.
