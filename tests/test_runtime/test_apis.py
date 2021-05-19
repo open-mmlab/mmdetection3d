@@ -6,12 +6,14 @@ import torch
 from mmcv.parallel import MMDataParallel
 from os.path import dirname, exists, join
 
-from mmdet3d.apis import (convert_SyncBN, inference_detector, init_detector,
-                          show_result_meshlab, single_gpu_test)
+from mmdet3d.apis import (convert_SyncBN, inference_detector,
+                          inference_multi_modality_detector,
+                          inference_segmentor, init_model, show_result_meshlab,
+                          single_gpu_test)
 from mmdet3d.core import Box3DMode
 from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.datasets import build_dataloader, build_dataset
-from mmdet3d.models import build_detector
+from mmdet3d.models import build_model
 
 
 def _get_config_directory():
@@ -79,7 +81,7 @@ def test_show_result_meshlab():
     tmp_dir.cleanup()
 
     # test multi-modality show
-    # Indoor scene
+    # indoor scene
     pcd = 'tests/data/sunrgbd/points/000001.bin'
     filename = 'tests/data/sunrgbd/sunrgbd_trainval/image/000001.jpg'
     box_3d = DepthInstance3DBoxes(
@@ -106,14 +108,11 @@ def test_show_result_meshlab():
         img_metas=[[img_meta]],
         img=[img],
         calib=[calib])
-    result = [
-        dict(
-            pts_bbox=dict(
-                boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
-    ]
+    result = [dict(boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d)]
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
-    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
+    out_dir, file_name = show_result_meshlab(
+        data, result, temp_out_dir, 0.3, task='multi_modality-det')
     expected_outfile_pred = file_name + '_pred.obj'
     expected_outfile_pts = file_name + '_points.obj'
     expected_outfile_png = file_name + '_img.png'
@@ -160,10 +159,10 @@ def test_show_result_meshlab():
             pts_bbox=dict(
                 boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d))
     ]
-    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.1)
+    out_dir, file_name = show_result_meshlab(
+        data, result, temp_out_dir, 0.1, task='multi_modality-det')
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
-    out_dir, file_name = show_result_meshlab(data, result, temp_out_dir, 0.3)
     expected_outfile_pred = file_name + '_pred.obj'
     expected_outfile_pts = file_name + '_points.obj'
     expected_outfile_png = file_name + '_img.png'
@@ -182,12 +181,33 @@ def test_show_result_meshlab():
     assert os.path.exists(expected_outfile_proj_path)
     tmp_dir.cleanup()
 
+    # test seg show
+    pcd = 'tests/data/scannet/points/scene0000_00.bin'
+    points = np.random.rand(100, 6)
+    img_meta = dict(pts_filename=pcd)
+    data = dict(points=[[torch.tensor(points)]], img_metas=[[img_meta]])
+    pred_seg = torch.randint(0, 20, (100, ))
+    result = [dict(semantic_mask=pred_seg)]
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_out_dir = tmp_dir.name
+    out_dir, file_name = show_result_meshlab(
+        data, result, temp_out_dir, task='seg')
+    expected_outfile_pred = file_name + '_pred.obj'
+    expected_outfile_pts = file_name + '_points.obj'
+    expected_outfile_pred_path = os.path.join(out_dir, file_name,
+                                              expected_outfile_pred)
+    expected_outfile_pts_path = os.path.join(out_dir, file_name,
+                                             expected_outfile_pts)
+    assert os.path.exists(expected_outfile_pred_path)
+    assert os.path.exists(expected_outfile_pts_path)
+    tmp_dir.cleanup()
+
 
 def test_inference_detector():
     pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
     detector_cfg = 'configs/pointpillars/hv_pointpillars_secfpn_' \
                    '6x8_160e_kitti-3d-3class.py'
-    detector = init_detector(detector_cfg, device='cpu')
+    detector = init_model(detector_cfg, device='cpu')
     results = inference_detector(detector, pcd)
     bboxes_3d = results[0][0]['boxes_3d']
     scores_3d = results[0][0]['scores_3d']
@@ -198,12 +218,64 @@ def test_inference_detector():
     assert labels_3d.shape[0] >= 0
 
 
+def test_inference_multi_modality_detector():
+    # these two multi-modality models both only have GPU implementations
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    # indoor scene
+    pcd = 'tests/data/sunrgbd/points/000001.bin'
+    img = 'tests/data/sunrgbd/sunrgbd_trainval/image/000001.jpg'
+    ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
+    detector_cfg = 'configs/imvotenet/imvotenet_stage2_'\
+                   '16x8_sunrgbd-3d-10class.py'
+    detector = init_model(detector_cfg, device='cuda:0')
+    results = inference_multi_modality_detector(detector, pcd, img, ann_file)
+    bboxes_3d = results[0][0]['boxes_3d']
+    scores_3d = results[0][0]['scores_3d']
+    labels_3d = results[0][0]['labels_3d']
+    assert bboxes_3d.tensor.shape[0] >= 0
+    assert bboxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+
+    # outdoor scene
+    pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
+    img = 'tests/data/kitti/training/image_2/000000.png'
+    ann_file = 'tests/data/kitti/kitti_infos_train.pkl'
+    detector_cfg = 'configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_' \
+                   '2x8_80e_kitti-3d-3class.py'
+    detector = init_model(detector_cfg, device='cuda:0')
+    results = inference_multi_modality_detector(detector, pcd, img, ann_file)
+    bboxes_3d = results[0][0]['pts_bbox']['boxes_3d']
+    scores_3d = results[0][0]['pts_bbox']['scores_3d']
+    labels_3d = results[0][0]['pts_bbox']['labels_3d']
+    assert bboxes_3d.tensor.shape[0] >= 0
+    assert bboxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+
+
+def test_inference_segmentor():
+    # PN2 only has GPU implementations
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pcd = 'tests/data/scannet/points/scene0000_00.bin'
+    segmentor_cfg = 'configs/pointnet2/pointnet2_ssg_' \
+                    '16x2_scannet-3d-20class.py'
+    segmentor = init_model(segmentor_cfg, device='cuda:0')
+    results = inference_segmentor(segmentor, pcd)
+    seg_3d = results[0][0]['semantic_mask']
+    assert seg_3d.shape == torch.Size([100])
+    assert seg_3d.min() >= 0
+    assert seg_3d.max() <= 19
+
+
 def test_single_gpu_test():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     cfg = _get_config_module('votenet/votenet_16x8_sunrgbd-3d-10class.py')
     cfg.model.train_cfg = None
-    model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+    model = build_model(cfg.model, test_cfg=cfg.get('test_cfg'))
     dataset_cfg = cfg.data.test
     dataset_cfg.data_root = './tests/data/sunrgbd'
     dataset_cfg.ann_file = 'tests/data/sunrgbd/sunrgbd_infos.pkl'
