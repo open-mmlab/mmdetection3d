@@ -115,17 +115,18 @@ Download Lyft 3D detection data [HERE](https://www.kaggle.com/c/3d-object-detect
 
 ```bash
 python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
+python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
-Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above.
+Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above. Also note that the second command serves the purpose of fixing a corrupted lidar data file. Please refer to the discussion [here](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000) for more details.
 
 ### S3DIS, ScanNet and SUN RGB-D
 
-To prepare s3dis data, please see [s3dis](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md).
+To prepare s3dis data, please see [s3dis](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md/).
 
-To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md).
+To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/).
 
-To prepare sunrgbd data, please see [sunrgbd](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md).
+To prepare sunrgbd data, please see [sunrgbd](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/).
 
 ### Customized Datasets
 

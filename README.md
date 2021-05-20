@@ -90,6 +90,7 @@ Support methods
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
 - [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
+- [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -105,6 +106,7 @@ Support methods
 | SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
+| PointNet++           | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)

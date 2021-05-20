@@ -9,7 +9,7 @@ from os import path as osp
 
 from mmdet3d.core import (Box3DMode, DepthInstance3DBoxes,
                           LiDARInstance3DBoxes, show_multi_modality_result,
-                          show_result)
+                          show_result, show_seg_result)
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_model
@@ -31,8 +31,9 @@ def convert_SyncBN(config):
                 convert_SyncBN(config[item])
 
 
-def init_detector(config, checkpoint=None, device='cuda:0'):
-    """Initialize a detector from config file.
+def init_model(config, checkpoint=None, device='cuda:0'):
+    """Initialize a model from config file, which could be a 3D detector or a
+    3D segmentor.
 
     Args:
         config (str or :obj:`mmcv.Config`): Config file path or the config
@@ -59,6 +60,8 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
             model.CLASSES = checkpoint['meta']['CLASSES']
         else:
             model.CLASSES = config.class_names
+        if 'PALETTE' in checkpoint['meta']:  # 3D Segmentor
+            model.PALETTE = checkpoint['meta']['PALETTE']
     model.cfg = config  # save the config in the model for convenience
     model.to(device)
     model.eval()
@@ -178,7 +181,8 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         data['points'] = data['points'][0].data
         data['img'] = data['img'][0].data
         if box_mode_3d == Box3DMode.DEPTH:
-            data['calib'] = data['calib'][0].data
+            data['calib'][0]['Rt'] = data['calib'][0]['Rt'][0].data
+            data['calib'][0]['K'] = data['calib'][0]['K'][0].data
 
     # forward the model
     with torch.no_grad():
@@ -186,27 +190,55 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     return result, data
 
 
-def show_result_meshlab(data,
-                        result,
-                        out_dir,
-                        score_thr=0.0,
-                        show=False,
-                        snapshot=False):
-    """Show result by meshlab.
+def inference_segmentor(model, pcd):
+    """Inference point cloud with the segmentor.
 
     Args:
-        data (dict): Contain data from pipeline.
-        result (dict): Predicted result from model.
-        out_dir (str): Directory to save visualized result.
-        score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
-        show (bool): Visualize the results online. Defaults to False.
-        snapshot (bool): Whether to save the online results. Defaults to False.
+        model (nn.Module): The loaded segmentor.
+        pcd (str): Point cloud files.
+
+    Returns:
+        tuple: Predicted results and data from pipeline.
     """
+    cfg = model.cfg
+    device = next(model.parameters()).device  # model device
+    # build the data pipeline
+    test_pipeline = deepcopy(cfg.data.test.pipeline)
+    test_pipeline = Compose(test_pipeline)
+    data = dict(
+        pts_filename=pcd,
+        img_fields=[],
+        bbox3d_fields=[],
+        pts_mask_fields=[],
+        pts_seg_fields=[],
+        bbox_fields=[],
+        mask_fields=[],
+        seg_fields=[])
+    data = test_pipeline(data)
+    data = collate([data], samples_per_gpu=1)
+    if next(model.parameters()).is_cuda:
+        # scatter to specified GPU
+        data = scatter(data, [device.index])[0]
+    else:
+        # this is a workaround to avoid the bug of MMDataParallel
+        data['img_metas'] = data['img_metas'][0].data
+        data['points'] = data['points'][0].data
+    # forward the model
+    with torch.no_grad():
+        result = model(return_loss=False, rescale=True, **data)
+    return result, data
+
+
+def show_det_result_meshlab(data,
+                            result,
+                            out_dir,
+                            score_thr=0.0,
+                            show=False,
+                            snapshot=False):
+    """Show 3D detection result by meshlab."""
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
     file_name = osp.split(pts_filename)[-1].split('.')[0]
-
-    assert out_dir is not None, 'Expect out_dir, got none.'
 
     if 'pts_bbox' in result[0].keys():
         pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
@@ -228,6 +260,7 @@ def show_result_meshlab(data,
         show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
     else:
         show_bboxes = deepcopy(pred_bboxes)
+
     show_result(
         points,
         None,
@@ -237,18 +270,76 @@ def show_result_meshlab(data,
         show=show,
         snapshot=snapshot)
 
-    if 'img' not in data.keys():
-        return out_dir, file_name
+    return file_name
 
-    # multi-modality visualization
-    # project 3D bbox to 2D image plane
+
+def show_seg_result_meshlab(data,
+                            result,
+                            out_dir,
+                            palette,
+                            show=False,
+                            snapshot=False):
+    """Show 3D segmentation result by meshlab."""
+    points = data['points'][0][0].cpu().numpy()
+    pts_filename = data['img_metas'][0][0]['pts_filename']
+    file_name = osp.split(pts_filename)[-1].split('.')[0]
+
+    pred_seg = result[0]['semantic_mask'].numpy()
+
+    if palette is None:
+        # generate random color map
+        max_idx = pred_seg.max()
+        palette = np.random.randint(0, 256, size=(max_idx + 1, 3))
+    palette = np.array(palette).astype(np.int)
+
+    show_seg_result(
+        points,
+        None,
+        pred_seg,
+        out_dir,
+        file_name,
+        palette=palette,
+        show=show,
+        snapshot=snapshot)
+
+    return file_name
+
+
+def show_proj_det_result_meshlab(data,
+                                 result,
+                                 out_dir,
+                                 score_thr=0.0,
+                                 show=False,
+                                 snapshot=False):
+    """Show result of projecting 3D bbox to 2D image by meshlab."""
+    assert 'img' in data.keys(), 'image data is not provided for visualization'
+
+    img_filename = data['img_metas'][0][0]['filename']
+    file_name = osp.split(img_filename)[-1].split('.')[0]
+
+    # read from file because img in data_dict has undergone pipeline transform
+    img = mmcv.imread(img_filename)
+
+    # TODO: use 'img_bbox' for Mono3D visualization
+    if 'pts_bbox' in result[0].keys():
+        pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
+        pred_scores = result[0]['pts_bbox']['scores_3d'].numpy()
+    else:
+        pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
+        pred_scores = result[0]['scores_3d'].numpy()
+
+    # filter out low score bboxes for visualization
+    if score_thr > 0:
+        inds = pred_scores > score_thr
+        pred_bboxes = pred_bboxes[inds]
+
+    box_mode = data['img_metas'][0][0]['box_mode_3d']
     if box_mode == Box3DMode.LIDAR:
         if 'lidar2img' not in data['img_metas'][0][0]:
             raise NotImplementedError(
                 'LiDAR to image transformation matrix is not provided')
 
         show_bboxes = LiDARInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
-        img = mmcv.imread(data['img_metas'][0][0]['filename'])
 
         show_multi_modality_result(
             img,
@@ -264,7 +355,6 @@ def show_result_meshlab(data,
                 'camera calibration information is not provided')
 
         show_bboxes = DepthInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
-        img = mmcv.imread(data['img_metas'][0][0]['filename'])
 
         show_multi_modality_result(
             img,
@@ -279,5 +369,48 @@ def show_result_meshlab(data,
     else:
         raise NotImplementedError(
             f'visualization of {box_mode} bbox is not supported')
+
+    return file_name
+
+
+def show_result_meshlab(data,
+                        result,
+                        out_dir,
+                        score_thr=0.0,
+                        show=False,
+                        snapshot=False,
+                        task='det',
+                        palette=None):
+    """Show result by meshlab.
+
+    Args:
+        data (dict): Contain data from pipeline.
+        result (dict): Predicted result from model.
+        out_dir (str): Directory to save visualized result.
+        score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
+        show (bool): Visualize the results online. Defaults to False.
+        snapshot (bool): Whether to save the online results. Defaults to False.
+        task (str): Distinguish which task result to visualize. Currently we
+            support 3D detection, multi-modality detection and 3D segmentation.
+            Defaults to 'det'.
+        palette (list[list[int]]] | np.ndarray | None): The palette of
+                segmentation map. If None is given, random palette will be
+                generated. Defaults to None.
+    """
+    assert task in ['det', 'multi_modality-det', 'seg'], \
+        f'unsupported visualization task {task}'
+    assert out_dir is not None, 'Expect out_dir, got none.'
+
+    if 'det' in task:
+        file_name = show_det_result_meshlab(data, result, out_dir, score_thr,
+                                            show, snapshot)
+
+    if 'seg' in task:
+        file_name = show_seg_result_meshlab(data, result, out_dir, palette,
+                                            show, snapshot)
+
+    if task == 'multi_modality-det':
+        file_name = show_proj_det_result_meshlab(data, result, out_dir,
+                                                 score_thr, show, snapshot)
 
     return out_dir, file_name

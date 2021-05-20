@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from mmdet3d.apis import inference_detector, init_model, show_result_meshlab
+from mmdet3d.apis import inference_segmentor, init_model, show_result_meshlab
 
 
 def main():
@@ -10,8 +10,6 @@ def main():
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
-    parser.add_argument(
-        '--score-thr', type=float, default=0.0, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
@@ -25,16 +23,16 @@ def main():
     # build the model from a config file and a checkpoint file
     model = init_model(args.config, args.checkpoint, device=args.device)
     # test a single image
-    result, data = inference_detector(model, args.pcd)
+    result, data = inference_segmentor(model, args.pcd)
     # show the results
     show_result_meshlab(
         data,
         result,
         args.out_dir,
-        args.score_thr,
         show=args.show,
         snapshot=args.snapshot,
-        task='det')
+        task='seg',
+        palette=model.PALETTE)
 
 
 if __name__ == '__main__':
