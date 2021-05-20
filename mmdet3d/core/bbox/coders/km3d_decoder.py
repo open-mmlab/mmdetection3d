@@ -12,128 +12,13 @@ git
         kernel (int): kernel size for max pooling
 
     Returns:
-        torch.Tensor: batch_size * channels * height * width
+        torch.Tensor (batch_size * channels * height * width): heatmap after
+        NMS.
     """
     pad = (kernel - 1) // 2
     hmax = F.max_pool2d(heat, (kernel, kernel), stride=1, padding=pad)
     keep = (hmax == heat).float()
     return heat * keep
-
-
-def _left_aggregate(heat):
-    """Process heat with left aggregate.
-
-    Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
-            channels * height * width)
-
-    Returns:
-        torch.Tensor: batch_size * channels * height * width
-    """
-    shape = heat.shape
-    heat = heat.reshape(-1, heat.shape[3])
-    heat = heat.transpose(1, 0).contiguous()
-    ret = heat.clone()
-    for i in range(1, heat.shape[0]):
-        inds = (heat[i] >= heat[i - 1])
-        ret[i] += ret[i - 1] * inds.float()
-    return (ret - heat).transpose(1, 0).reshape(shape)
-
-
-def _right_aggregate(heat):
-    """Process heat with right aggregate.
-
-    Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
-            channels * height * width)
-
-    Returns:
-        torch.Tensor: batch_size * channels * height * width
-    """
-    shape = heat.shape
-    heat = heat.reshape(-1, heat.shape[3])
-    heat = heat.transpose(1, 0).contiguous()
-    ret = heat.clone()
-    for i in range(heat.shape[0] - 2, -1, -1):
-        inds = (heat[i] >= heat[i + 1])
-        ret[i] += ret[i + 1] * inds.float()
-    return (ret - heat).transpose(1, 0).reshape(shape)
-
-
-def _top_aggregate(heat):
-    """Process heat with top aggregate.
-
-    Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
-            channels * height * width)
-
-    Returns:
-        torch.Tensor: batch_size * channels * height * width
-    """
-    heat = heat.transpose(3, 2)
-    shape = heat.shape
-    heat = heat.reshape(-1, heat.shape[3])
-    heat = heat.transpose(1, 0).contiguous()
-    ret = heat.clone()
-    for i in range(1, heat.shape[0]):
-        inds = (heat[i] >= heat[i - 1])
-        ret[i] += ret[i - 1] * inds.float()
-    return (ret - heat).transpose(1, 0).reshape(shape).transpose(3, 2)
-
-
-def _bottom_aggregate(heat):
-    """Process heat with bottom aggregate.
-
-    Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
-            channels * height * width)
-
-    Returns:
-        torch.Tensor: batch_size * channels * height * width
-    """
-    heat = heat.transpose(3, 2)
-    shape = heat.shape
-    heat = heat.reshape(-1, heat.shape[3])
-    heat = heat.transpose(1, 0).contiguous()
-    ret = heat.clone()
-    for i in range(heat.shape[0] - 2, -1, -1):
-        inds = (heat[i] >= heat[i + 1])
-        ret[i] += ret[i + 1] * inds.float()
-    return (ret - heat).transpose(1, 0).reshape(shape).transpose(3, 2)
-
-
-def _h_aggregate(heat, aggr_weight=0.1):
-    """Process heat with horizontal aggregate which is composed of left and
-    right aggregate.
-
-    Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
-            channels * height * width)
-        aggr_weight (float): Aggregate weights for both the left and the
-            right aggregate
-
-    Returns:
-        torch.Tensor: batch_size * channels * height * width
-    """
-    return aggr_weight * _left_aggregate(heat) + \
-        aggr_weight * _right_aggregate(heat) + heat
-
-
-def _v_aggregate(heat, aggr_weight=0.1):
-    """Process heat with vertical aggregate which is composed of top and bottom
-    aggregate.
-
-    Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
-            channels * height * width)
-        aggr_weight (float): Aggregate weights for both the top and the
-            bottom aggregate
-
-    Returns:
-        torch.Tensor: batch_size * channels * height * width
-    """
-    return aggr_weight * _top_aggregate(heat) + \
-        aggr_weight * _bottom_aggregate(heat) + heat
 
 
 def _topk_channel(scores, K=40):
@@ -170,7 +55,7 @@ def _gather_feat(feat, ind, mask=None):
         ind (torch.Tensor): index to be gathered
 
     Returns:
-        torch.Tensor (batch_size * channels * height * width): feat
+        torch.Tensor (batch_size * channels * height * width): gathered feat
     """
 
     # expand ind with the third dimension to be the same as feat
@@ -194,7 +79,7 @@ def _transpose_and_gather_feat(feat, ind):
         ind (torch.Tensor): index to be gathered
 
     Returns:
-        torch.Tensor (batch_size * channels * height * width): feat
+        torch.Tensor (batch_size * channels * height * width): resulted feat
     """
     feat = feat.permute(0, 2, 3, 1)
     feat = feat.view(feat.size(0), -1, feat.size(3))
