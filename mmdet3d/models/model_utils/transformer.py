@@ -14,21 +14,27 @@ class GroupFree3DMultiheadAttention(MultiheadAttention):
         num_heads (int): Parallel attention heads. Same as
             `nn.MultiheadAttention`.
         attn_drop (float): A Dropout layer on attn_output_weights. Default 0.0.
+        proj_drop (float): A Dropout layer. Default 0.0.
         dropout_layer (obj:`ConfigDict`): The dropout_layer used
             when adding the shortcut.
         init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
             Default: None.
+        batch_first (bool): Key, Query and Value are shape of
+            (batch, n, embed_dim)
+            or (n, batch, embed_dim). Default to False.
     """
 
     def __init__(self,
                  embed_dims,
                  num_heads,
                  attn_drop=0.,
+                 proj_drop=0.,
                  dropout_layer=dict(type='DropOut', drop_prob=0.),
                  init_cfg=None,
+                 batch_first=False,
                  **kwargs):
-        super().__init__(embed_dims, num_heads, attn_drop, dropout_layer,
-                         init_cfg, **kwargs)
+        super().__init__(embed_dims, num_heads, attn_drop, proj_drop,
+                         dropout_layer, init_cfg, batch_first, **kwargs)
 
     def forward(self,
                 query,
