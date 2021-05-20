@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import trimesh
 from mmcv.cnn import ConvModule, normal_init
 from mmcv.runner import BaseModule
 from torch import nn as nn
@@ -12,6 +13,49 @@ from mmdet3d.ops import build_sa_module
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
+
+
+def write_oriented_bbox(scene_bbox, out_filename):
+    """Export oriented (around Z axis) scene bbox to meshes.
+
+    Args:
+        scene_bbox(list[ndarray] or ndarray): xyz pos of center and
+            3 lengths (dx,dy,dz) and heading angle around Z axis.
+            Y forward, X right, Z upward. heading angle of positive X is 0,
+            heading angle of positive Y is 90 degrees.
+        out_filename(str): Filename.
+    """
+
+    def heading2rotmat(heading_angle):
+        rotmat = np.zeros((3, 3))
+        rotmat[2, 2] = 1
+        cosval = np.cos(heading_angle)
+        sinval = np.sin(heading_angle)
+        rotmat[0:2, 0:2] = np.array([[cosval, -sinval], [sinval, cosval]])
+        return rotmat
+
+    def convert_oriented_box_to_trimesh_fmt(box):
+        ctr = box[:3]
+        lengths = box[3:6]
+        trns = np.eye(4)
+        trns[0:3, 3] = ctr
+        trns[3, 3] = 1.0
+        trns[0:3, 0:3] = heading2rotmat(box[6])
+        box_trimesh_fmt = trimesh.creation.box(lengths, trns)
+        return box_trimesh_fmt
+
+    if len(scene_bbox) == 0:
+        scene_bbox = np.zeros((1, 7))
+    scene = trimesh.scene.Scene()
+
+    # scene.add_geometry(convert_oriented_box_to_trimesh_fmt(scene_bbox))
+    for box in scene_bbox:
+        scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
+    mesh_list = trimesh.util.concatenate(scene.dump())
+    # save to ply file
+    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
+
+    return
 
 
 @HEADS.register_module()
@@ -161,7 +205,7 @@ class PointRCNNBboxHead(BaseModule):
             loss_bbox = self.loss_bbox(
                 pos_bbox_pred.unsqueeze(dim=0),
                 bbox_targets.unsqueeze(dim=0).detach(),
-                bbox_weights_flat.unsqueeze(dim=0) * 7)
+                bbox_weights_flat.unsqueeze(dim=0))
             losses['loss_bbox'] = loss_bbox
 
             if self.with_corner_loss:
@@ -185,19 +229,14 @@ class PointRCNNBboxHead(BaseModule):
                 pred_boxes3d[:, 0:3] += roi_xyz
 
                 # calculate corner loss
-                bbox_weights = bbox_weights[pos_inds].view(-1, 1)
                 loss_corner = self.get_corner_loss_lidar(
-                    pred_boxes3d, pos_gt_bboxes, bbox_weights)
+                    pred_boxes3d, pos_gt_bboxes)
 
                 losses['loss_corner'] = loss_corner
 
         return losses
 
-    def get_corner_loss_lidar(self,
-                              pred_bbox3d,
-                              gt_bbox3d,
-                              bbox_weights,
-                              delta=1):
+    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1):
         """Calculate corner loss of given boxes.
 
         Args:
@@ -211,14 +250,25 @@ class PointRCNNBboxHead(BaseModule):
 
         # This is a little bit hack here because we assume the box for
         # PointRCNN is in LiDAR coordinates
+
         gt_boxes_structure = LiDARInstance3DBoxes(gt_bbox3d)
         pred_box_corners = LiDARInstance3DBoxes(pred_bbox3d).corners
         gt_box_corners = gt_boxes_structure.corners
-        corner_loss = self.loss_corner(pred_box_corners,
-                                       gt_box_corners.reshape(-1, 8, 3),
-                                       bbox_weights.view(-1, 1, 1))
 
-        return corner_loss
+        # This flip only changes the heading direction of GT boxes
+        gt_bbox3d_flip = gt_boxes_structure.clone()
+        gt_bbox3d_flip.tensor[:, 6] += np.pi
+        gt_box_corners_flip = gt_bbox3d_flip.corners
+
+        corner_dist = torch.min(
+            torch.norm(pred_box_corners - gt_box_corners, dim=2),
+            torch.norm(pred_box_corners - gt_box_corners_flip, dim=2))
+        # huber loss
+        abs_error = torch.abs(corner_dist)
+        quadratic = torch.clamp(abs_error, max=delta)
+        linear = (abs_error - quadratic)
+        corner_loss = 0.5 * quadratic**2 + delta * linear
+        return corner_loss.mean(dim=1)
 
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
         """Generate targets.

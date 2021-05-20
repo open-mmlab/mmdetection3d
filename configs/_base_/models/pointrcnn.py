@@ -113,14 +113,14 @@ model = dict(
             nms_pre=9000,
             nms_post=512,
             max_output_num=100,
-            score_thr=0.0,
+            score_thr=0.1,
             nms_cfg=dict(type='nms', iou_thr=0.85),
             per_class_proposal=True,
             use_rotate_nms=True),
         rcnn=dict(
             use_rotate_nms=True,
             use_raw_score=True,
-            nms_thr=0.01,
+            nms_thr=0.1,
             score_thr=0.1)))
 
 find_unused_parameters = True
