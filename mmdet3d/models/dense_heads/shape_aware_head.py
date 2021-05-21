@@ -110,7 +110,6 @@ class BaseShapeHead(BaseModule):
                 self.init_cfg = dict(
                     type='Kaiming',
                     layer='Conv2d',
-                    distribution='uniform',
                     a=math.sqrt(5),
                     override=[
                         dict(type='Normal', name='conv_reg', std=0.01),
