@@ -346,12 +346,11 @@ class PointRCNNBboxHead(BaseModule):
 
             # canonical transformation
             pos_gt_bboxes_ct[..., 0:3] -= roi_center
-            pos_gt_bboxes_ct[..., 6] -= roi_ry
             pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
                 pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), roi_ry,
                 axis=2).squeeze(1)
 
-            # flip orientation if rois have opposite orientation
+            # flip orientation if gt have opposite orientation
             ry_label = pos_gt_bboxes_ct[..., 6] % (2 * np.pi)  # 0 ~ 2pi
             opposite_flag = (ry_label > np.pi * 0.5) & (ry_label < np.pi * 1.5)
             ry_label[opposite_flag] = (ry_label[opposite_flag] + np.pi) % (
@@ -363,7 +362,17 @@ class PointRCNNBboxHead(BaseModule):
 
             rois_anchor = pos_bboxes.clone().detach()
             rois_anchor[:, 0:3] = 0
-            rois_anchor[:, 6] = 0
+
+            # flip orientation if rois have opposite orientation
+            ry_rois = rois_anchor[..., 6] % (2 * np.pi)  # 0 ~ 2pi
+            opposite_flag = (ry_rois > np.pi * 0.5) & (ry_rois < np.pi * 1.5)
+            ry_rois[opposite_flag] = (ry_rois[opposite_flag] + np.pi) % (
+                2 * np.pi)  # (0 ~ pi/2, 3pi/2 ~ 2pi)
+            flag = ry_rois > np.pi
+            ry_rois[flag] = ry_rois[flag] - np.pi * 2  # (-pi/2, pi/2)
+            ry_rois = torch.clamp(ry_rois, min=-np.pi / 2, max=np.pi / 2)
+            rois_anchor[..., 6] = ry_rois
+
             bbox_targets = self.bbox_coder.encode(rois_anchor,
                                                   pos_gt_bboxes_ct)
         else:
