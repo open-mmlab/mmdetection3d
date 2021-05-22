@@ -227,6 +227,7 @@ class PointRPNHead(BaseModule):
             bbox_preds['size'],
             size_res_targets,
             weight=box_loss_weights.unsqueeze(-1))
+        '''
         # corner loss
         one_hot_dir_class_targets = dir_class_targets.new_zeros(
             bbox_preds['dir_class'].shape)
@@ -249,7 +250,7 @@ class PointRPNHead(BaseModule):
             pred_corners3d,
             corner3d_targets.reshape(-1, 8, 3),
             weight=box_loss_weights.view(-1, 1, 1))
-
+        '''
         # calculate semantic loss
         semantic_points = bbox_preds['obj_scores'].transpose(2,
                                                              1).reshape(-1, 1)
@@ -282,7 +283,6 @@ class PointRPNHead(BaseModule):
             dir_class_loss=dir_class_loss,
             dir_res_loss=dir_res_loss,
             size_res_loss=size_loss,
-            corner_loss=corner_loss,
             semantic_loss=semantic_loss)
         return losses
 

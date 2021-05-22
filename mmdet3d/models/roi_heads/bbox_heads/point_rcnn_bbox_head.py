@@ -335,7 +335,6 @@ class PointRCNNBboxHead(BaseModule):
             (cfg.cls_pos_thr - cfg.cls_neg_thr)
         # label weights
         label_weights = (label >= 0).float()
-
         # box regression target
         reg_mask = pos_bboxes.new_zeros(ious.size(0)).long()
         reg_mask[0:pos_gt_bboxes.size(0)] = 1
