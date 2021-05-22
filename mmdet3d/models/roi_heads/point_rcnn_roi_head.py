@@ -310,6 +310,16 @@ class PointRCNNROIHead(Base3DRoIHead):
         pooled_point_feats = self.point_roi_extractor(global_feats, points,
                                                       batch_size, rois)
 
+        # flip orientation if rois have opposite orientation
+        ry_rois = rois[..., 6] % (2 * np.pi)  # 0 ~ 2pi
+        opposite_flag = (ry_rois > np.pi * 0.5) & (ry_rois < np.pi * 1.5)
+        ry_rois[opposite_flag] = (ry_rois[opposite_flag] + np.pi) % (
+            2 * np.pi)  # (0 ~ pi/2, 3pi/2 ~ 2pi)
+        flag = ry_rois > np.pi
+        ry_rois[flag] = ry_rois[flag] - np.pi * 2  # (-pi/2, pi/2)
+        ry_rois = torch.clamp(ry_rois, min=-np.pi / 2, max=np.pi / 2)
+        rois[..., 6] = ry_rois
+
         cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
         bbox_results = dict(cls_score=cls_score, bbox_pred=bbox_pred)
         return bbox_results
