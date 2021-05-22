@@ -8,12 +8,13 @@ _base_ = [
 model = dict(
     bbox_head=dict(
         num_classes=18,
-        in_channels=288,
+        size_cls_agnostic=False,
         bbox_coder=dict(
             type='GroupFree3DBBoxCoder',
             num_sizes=18,
             num_dir_bins=1,
             with_rot=False,
+            size_cls_agnostic=False,
             mean_sizes=[[0.76966727, 0.8116021, 0.92573744],
                         [1.876858, 1.8425595, 1.1931566],
                         [0.61328, 0.6148609, 0.7182701],
@@ -31,7 +32,34 @@ model = dict(
                         [0.59359556, 0.5912492, 0.73919016],
                         [0.50867593, 0.50656086, 0.30136237],
                         [1.1511526, 1.0546296, 0.49706793],
-                        [0.47535285, 0.49249494, 0.5802117]])))
+                        [0.47535285, 0.49249494, 0.5802117]]),
+        sampling_objectness_loss=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=8.0),
+        objectness_loss=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=1.0),
+        center_loss=dict(
+            type='SmoothL1Loss', beta=0.04, reduction='sum', loss_weight=10.0),
+        dir_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        dir_res_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+        size_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        size_res_loss=dict(
+            type='SmoothL1Loss',
+            beta=1.0 / 9.0,
+            reduction='sum',
+            loss_weight=10.0 / 9.0),
+        semantic_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
 
 # dataset settings
 dataset_type = 'ScanNetDataset'
@@ -52,6 +80,7 @@ train_pipeline = [
         with_label_3d=True,
         with_mask_3d=True,
         with_seg_3d=True),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='PointSegClassMapping',
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
@@ -80,6 +109,7 @@ test_pipeline = [
         coord_type='DEPTH',
         load_dim=6,
         use_dim=[0, 1, 2]),
+    dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -110,7 +140,7 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
-        times=1,
+        times=5,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
@@ -155,10 +185,10 @@ optimizer = dict(
         }))
 
 optimizer_config = dict(grad_clip=dict(max_norm=0.1, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[280, 340])
+lr_config = dict(policy='step', warmup=None, step=[56, 68])
 
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=400)
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 # yapf:disable
 log_config = dict(
     interval=10,
