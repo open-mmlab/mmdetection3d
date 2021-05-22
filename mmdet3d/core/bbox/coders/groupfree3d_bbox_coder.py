@@ -14,14 +14,53 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         num_sizes (int): Number of size clusters.
         mean_sizes (list[list[int]]): Mean size of bboxes in each class.
         with_rot (bool): Whether the bbox is with rotation.
+        size_cls_agnostic (bool): Wether the predicted size is class-agnostic.
     """
 
-    def __init__(self, num_dir_bins, num_sizes, mean_sizes, with_rot=True):
+    def __init__(self,
+                 num_dir_bins,
+                 num_sizes,
+                 mean_sizes,
+                 with_rot=True,
+                 size_cls_agnostic=True):
         super(GroupFree3DBBoxCoder, self).__init__(
             num_dir_bins=num_dir_bins,
             num_sizes=num_sizes,
             mean_sizes=mean_sizes,
             with_rot=with_rot)
+        self.size_cls_agnostic = size_cls_agnostic
+
+    def encode(self, gt_bboxes_3d, gt_labels_3d):
+        """Encode ground truth to prediction targets.
+
+        Args:
+            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth bboxes \
+                with shape (n, 7).
+            gt_labels_3d (torch.Tensor): Ground truth classes.
+
+        Returns:
+            tuple: Targets of center, size and direction.
+        """
+        # generate center target
+        center_target = gt_bboxes_3d.gravity_center
+
+        # generate bbox size target
+        size_target = gt_bboxes_3d.dims
+        size_class_target = gt_labels_3d
+        size_res_target = gt_bboxes_3d.dims - gt_bboxes_3d.tensor.new_tensor(
+            self.mean_sizes)[size_class_target]
+
+        # generate dir target
+        box_num = gt_labels_3d.shape[0]
+        if self.with_rot:
+            (dir_class_target,
+             dir_res_target) = self.angle2class(gt_bboxes_3d.yaw)
+        else:
+            dir_class_target = gt_labels_3d.new_zeros(box_num)
+            dir_res_target = gt_bboxes_3d.tensor.new_zeros(box_num)
+
+        return (center_target, size_target, size_class_target, size_res_target,
+                dir_class_target, dir_res_target)
 
     def decode(self, bbox_out, suffix=''):
         """Decode predicted parts to bbox3d.
@@ -34,6 +73,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
                 - dir_res: predicted bbox direction residual.
                 - size_class: predicted bbox size class.
                 - size_res: predicted bbox size residual.
+                - size: predicted class-agnostic bbox size
             suffix (str): Decode predictions with specific suffix.
 
         Returns:
@@ -54,14 +94,20 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
             dir_angle = center.new_zeros(batch_size, num_proposal, 1)
 
         # decode bbox size
-        size_class = torch.argmax(
-            bbox_out[f'size_class{suffix}'], -1, keepdim=True)
-        size_res = torch.gather(bbox_out[f'size_res{suffix}'], 2,
-                                size_class.unsqueeze(-1).repeat(1, 1, 1, 3))
-        mean_sizes = center.new_tensor(self.mean_sizes)
-        size_base = torch.index_select(mean_sizes, 0, size_class.reshape(-1))
-        bbox_size = size_base.reshape(batch_size, num_proposal,
-                                      -1) + size_res.squeeze(2)
+        if self.size_cls_agnostic:
+            bbox_size = bbox_out[f'size{suffix}'].reshape(
+                batch_size, num_proposal, 3)
+        else:
+            size_class = torch.argmax(
+                bbox_out[f'size_class{suffix}'], -1, keepdim=True)
+            size_res = torch.gather(
+                bbox_out[f'size_res{suffix}'], 2,
+                size_class.unsqueeze(-1).repeat(1, 1, 1, 3))
+            mean_sizes = center.new_tensor(self.mean_sizes)
+            size_base = torch.index_select(mean_sizes, 0,
+                                           size_class.reshape(-1))
+            bbox_size = size_base.reshape(batch_size, num_proposal,
+                                          -1) + size_res.squeeze(2)
 
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
@@ -108,22 +154,27 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
             np.pi / self.num_dir_bins)
 
         # decode size
-        end += self.num_sizes
-        results[f'size_class{suffix}'] = reg_preds_trans[
-            ..., start:end].contiguous()
-        start = end
+        if self.size_cls_agnostic:
+            end += 3
+            results['size' + suffix] = \
+                reg_preds_trans[..., start:end].contiguous()
+        else:
+            end += self.num_sizes
+            results[f'size_class{suffix}'] = reg_preds_trans[
+                ..., start:end].contiguous()
+            start = end
 
-        end += self.num_sizes * 3
-        size_res_norm = reg_preds_trans[..., start:end]
-        batch_size, num_proposal = reg_preds_trans.shape[:2]
-        size_res_norm = size_res_norm.view(
-            [batch_size, num_proposal, self.num_sizes, 3])
-        start = end
+            end += self.num_sizes * 3
+            size_res_norm = reg_preds_trans[..., start:end]
+            batch_size, num_proposal = reg_preds_trans.shape[:2]
+            size_res_norm = size_res_norm.view(
+                [batch_size, num_proposal, self.num_sizes, 3])
+            start = end
 
-        results[f'size_res_norm{suffix}'] = size_res_norm.contiguous()
-        mean_sizes = reg_preds.new_tensor(self.mean_sizes)
-        results[f'size_res{suffix}'] = (
-            size_res_norm * mean_sizes.unsqueeze(0).unsqueeze(0))
+            results[f'size_res_norm{suffix}'] = size_res_norm.contiguous()
+            mean_sizes = reg_preds.new_tensor(self.mean_sizes)
+            results[f'size_res{suffix}'] = (
+                size_res_norm * mean_sizes.unsqueeze(0).unsqueeze(0))
 
         # decode objectness score
         start = 0
