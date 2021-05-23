@@ -340,6 +340,16 @@ class PointRCNNBboxHead(BaseModule):
         reg_mask[0:pos_gt_bboxes.size(0)] = 1
         bbox_weights = (reg_mask > 0).float()
         if reg_mask.bool().any():
+            # flip orientation if rois have opposite orientation
+            ry_rois = pos_bboxes[..., 6] % (2 * np.pi)  # 0 ~ 2pi
+            opposite_flag = (ry_rois > np.pi * 0.5) & (ry_rois < np.pi * 1.5)
+            ry_rois[opposite_flag] = (ry_rois[opposite_flag] + np.pi) % (
+                2 * np.pi)  # (0 ~ pi/2, 3pi/2 ~ 2pi)
+            flag = ry_rois > np.pi
+            ry_rois[flag] = ry_rois[flag] - np.pi * 2  # (-pi/2, pi/2)
+            ry_rois = torch.clamp(ry_rois, min=-np.pi / 2, max=np.pi / 2)
+            pos_bboxes[..., 6] = ry_rois
+
             pos_gt_bboxes_ct = pos_gt_bboxes.clone().detach()
             roi_center = pos_bboxes[..., 0:3]
             roi_ry = pos_bboxes[..., 6] % (2 * np.pi)
@@ -396,6 +406,16 @@ class PointRCNNBboxHead(BaseModule):
         roi_batch_id = rois[..., 0]
         roi_boxes = rois[..., 1:]  # boxes without batch id
         batch_size = int(roi_batch_id.max().item() + 1)
+
+        # flip orientation if rois have opposite orientation
+        ry_rois = roi_boxes[..., 6] % (2 * np.pi)  # 0 ~ 2pi
+        opposite_flag = (ry_rois > np.pi * 0.5) & (ry_rois < np.pi * 1.5)
+        ry_rois[opposite_flag] = (ry_rois[opposite_flag] + np.pi) % (
+            2 * np.pi)  # (0 ~ pi/2, 3pi/2 ~ 2pi)
+        flag = ry_rois > np.pi
+        ry_rois[flag] = ry_rois[flag] - np.pi * 2  # (-pi/2, pi/2)
+        ry_rois = torch.clamp(ry_rois, min=-np.pi / 2, max=np.pi / 2)
+        roi_boxes[..., 6] = ry_rois
 
         # decode boxes
         roi_ry = roi_boxes[..., 6].view(-1)
