@@ -5,14 +5,14 @@ from torch.nn import functional as F
 
 def _nms(heat, kernel=3):
     """Process heat with Non Maximum Suppression.
-git
+
     Args:
         heat (torch.Tensor): Predictions from model in shape (batch_size *
             channels * height * width)
-        kernel (int): kernel size for max pooling
+        kernel (int): kKernel size for max pooling
 
     Returns:
-        torch.Tensor: heatmap after NMS, in shape (batch_size * channels *
+        torch.Tensor: Heatmap after NMS, in shape (batch_size * channels *
         height * width)
     """
     pad = (kernel - 1) // 2
@@ -26,13 +26,10 @@ def _topk_channel(scores, K=40):
 
     Args:
         scores (torch.Tensor): batch_size * channels * height * width
-        K (int): top K value
+        K (int): Top K value
 
     Returns:
-        torch.Tensor (batch_size * channels * K): top k scores
-        torch.Tensor (batch_size * channels * K): top k index
-        torch.Tensor (batch_size * channels * K): top k y's
-        torch.Tensor (batch_size * channels * K): top k x's
+        tuple[torch.Tensor]: Top-k scores, indices, y and x coordinates
     """
     batch, cat, height, width = scores.size()
 
@@ -52,7 +49,7 @@ def _gather_feat(feat, ind, mask=None):
     Args:
         feat (torch.Tensor): Predictions from model in shape (batch_size *
             channels * height * width)
-        ind (torch.Tensor): index to be gathered
+        ind (torch.Tensor): Index of feat to be gathered
 
     Returns:
         torch.Tensor: gathered feat, in shape (batch_size * channels *
@@ -70,17 +67,17 @@ def _gather_feat(feat, ind, mask=None):
     return feat
 
 
-def _transpose_and_gather_feat(feat, ind):
+def _permute_and_gather_feat(feat, ind):
     """gather feat with assigned index, with feat be permuted with (0,2,3,1)
     and reshaped to three dimensions.
 
     Args:
         heat (torch.Tensor): Predictions from model in shape (batch_size *
             channels * height * width)
-        ind (torch.Tensor): index to be gathered
+        ind (torch.Tensor): Index of feat to be gathered
 
     Returns:
-        torch.Tensor: transposed and gathered feat, in shape (batch_size *
+        torch.Tensor: Permuted and gathered feat, in shape (batch_size *
         channels * height * width)
     """
     feat = feat.permute(0, 2, 3, 1)
@@ -94,15 +91,13 @@ def _topk(scores, K=40):
     scores.
 
     Args:
-        scores (torch.Tensor): batch_size * channels * height * width
-        K (int): top K value
+        scores (torch.Tensor): Scores from heatmap hp parameters, in shape
+        (batch_size * channels * height * width)
+        K (int): Top K value
 
     Returns:
-        torch.Tensor: top k scores, in shape (batch_size * K)
-        torch.Tensor: top k index, in shape (batch_size * K)
-        torch.Tensor: top k classes, in shape (batch_size * K)
-        torch.Tensor: top k y's, in shape (batch_size * K)
-        torch.Tensor: top k x's, in shape (batch_size * K)
+        tuple[torch.Tensor]: Top-k scores, indices, classes, y and x
+        coordinates
     """
     batch, cat, height, width = scores.size()
 
@@ -122,23 +117,23 @@ def _topk(scores, K=40):
     return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
 
-def gen_position(kps, dim, rot, meta, const):
-    """generate position from 2D frame to world frame.
+def twoD_to_threeD_transform(kps, dim, rot, meta, const):
+    """Generate position from 2D frame to world frame.
 
     Args:
-        kps (torch.Tensor): batch_size * boxes * 18
-        dim (int): batch_size * boxes * 3 (height, width, length)
-        rot (torch.Tensor): batch_size * boxes * 8
+        kps (torch.Tensor): Key points in shape (batch_size * boxes * 18)
+        dim (int): Dimensions of height, width, length in shape (batch_size *
+            boxes * 3)
+        rot (torch.Tensor): Rotation values in shape(batch_size * boxes * 8)
         meta (dict): should contain keys below.
 
-            - trans_output_inv: transition parameters for computing
+            - trans_output_inv: Transition parameters for computing
                 matrix_A in pinv's matrix.
-            - calib: calibration for computing matrix_A in pinv's matrix.
-        const (torch.Tensor): batch_size * boxes * 16 * 2
+            - calib: Calibration for computing matrix_A in pinv's matrix.
+        const (torch.Tensor): constants in shape (batch_size * boxes * 16 * 2)
 
     Returns:
-        torch.Tensor: pinv, coordinates in world
-            frame
+        torch.Tensor: pinv, coordinates in world frame
         torch.Tensor: rot_y, yaw angle in shape (batch_size * boxes * 1)
         torch.Tensor: kps, key points coordinates in shape (batch_size * boxes
         * 18)
@@ -270,26 +265,27 @@ def object_pose_decode(heat,
     Args:
         heat (torch.Tensor): Predictions from model in shape (batch_size *
             channels * height * width)
-        wh (torch.Tensor): widths and heights of bboxs
-        kps (torch.Tensor): 1 * batch_size * 18
-        dim (int): 1 * batch_size * 3 (height, width, length)
-        rot (torch.Tensor): 1* batch_size * 8
-        prob (torch.Tensor): probabilities
-        reg (torch.Tensor): reg parameters
-        hm_hp (torch.Tensor): heatmap hp parameters
-        hp_offset (torch.Tensor): heatmap hp offsets
-        K (int): top K value
+        wh (torch.Tensor): Widths and heights of bboxs
+        kps (torch.Tensor): Key points in shape (1 * batch_size * 18)
+        dim (int): dimensions of height, width, length in shape (1 * batch_size
+            * 3)
+        rot (torch.Tensor): Rotation values in shape (1* batch_size * 8)
+        prob (torch.Tensor): Probabilities
+        reg (torch.Tensor): Reg parameters
+        hm_hp (torch.Tensor): Heatmap hp parameters
+        hp_offset (torch.Tensor): Heatmap hp offsets
+        K (int): Top K value
         meta (dict): should contain keys below.
 
-            - trans_output_inv: transition parameters for computing
-                matrix_A in pinv's matrix.
-            - calib: calibration for computing matrix_A in pinv's matrix.
-        const (torch.Tensor): 1 * batch_size * 16 * 2
+            - trans_output_inv: Transition parameters for computing matrix_A
+                in pinv's matrix.
+            - calib: Calibration for computing matrix_A in pinv's matrix.
+        const (torch.Tensor): Constants in shape (1 * batch_size * 16 * 2)
 
     Returns:
-        torch.Tensor: detection results in shape (1 * batch_size * 28),
-            containing final bboxes, scores, key points, dimensions,
-            heatmap score, yaw angle, position, probability, and classes.
+        torch.Tensor: Detection results in shape (1 * batch_size * 28),
+            containing final bboxes, scores, key points, dimensions, heatmap
+            score, yaw angle, position, probability, and classes.
     """
     batch, cat, height, width = heat.size()
     num_joints = kps.shape[1] // 2
@@ -297,19 +293,19 @@ def object_pose_decode(heat,
     heat = _nms(heat)
     scores, inds, clses, ys, xs = _topk(heat, K=K)
 
-    kps = _transpose_and_gather_feat(kps, inds)
+    kps = _permute_and_gather_feat(kps, inds)
     kps = kps.view(batch, K, num_joints * 2)
     kps[..., ::2] += xs.view(batch, K, 1).expand(batch, K, num_joints)
     kps[..., 1::2] += ys.view(batch, K, 1).expand(batch, K, num_joints)
     if reg is not None:
-        reg = _transpose_and_gather_feat(reg, inds)
+        reg = _permute_and_gather_feat(reg, inds)
         reg = reg.view(batch, K, 2)
         xs = xs.view(batch, K, 1) + reg[:, :, 0:1]
         ys = ys.view(batch, K, 1) + reg[:, :, 1:2]
     else:
         xs = xs.view(batch, K, 1) + 0.5
         ys = ys.view(batch, K, 1) + 0.5
-    wh = _transpose_and_gather_feat(wh, inds)
+    wh = _permute_and_gather_feat(wh, inds)
     wh = wh.view(batch, K, 2)
     clses = clses.view(batch, K, 1).float()
     scores = scores.view(batch, K, 1)
@@ -319,12 +315,12 @@ def object_pose_decode(heat,
         ys + wh[..., 1:2] / 2
     ],
                        dim=2)
-    dim = _transpose_and_gather_feat(dim, inds)
+    dim = _permute_and_gather_feat(dim, inds)
     dim = dim.view(batch, K, 3)
 
-    rot = _transpose_and_gather_feat(rot, inds)
+    rot = _permute_and_gather_feat(rot, inds)
     rot = rot.view(batch, K, 8)
-    prob = _transpose_and_gather_feat(prob, inds)[:, :, 0]
+    prob = _permute_and_gather_feat(prob, inds)[:, :, 0]
     prob = prob.view(batch, K, 1)
     if hm_hp is not None:
         hm_hp = _nms(hm_hp)
@@ -335,8 +331,8 @@ def object_pose_decode(heat,
         # batch x J x K
         hm_score, hm_inds, hm_ys, hm_xs = _topk_channel(hm_hp, K=K)
         if hp_offset is not None:
-            hp_offset = _transpose_and_gather_feat(hp_offset,
-                                                   hm_inds.view(batch, -1))
+            hp_offset = _permute_and_gather_feat(hp_offset,
+                                                 hm_inds.view(batch, -1))
             hp_offset = hp_offset.view(batch, num_joints, K, 2)
             hm_xs = hm_xs + hp_offset[:, :, :, 0]
             hm_ys = hm_ys + hp_offset[:, :, :, 1]
@@ -374,7 +370,8 @@ def object_pose_decode(heat,
         kps = (1 - mask) * hm_kps + mask * kps
         kps = kps.permute(0, 2, 1, 3).view(batch, K, num_joints * 2)
         hm_score = hm_score.permute(0, 2, 1, 3).squeeze(3)
-    position, rot_y, kps_inv = gen_position(kps, dim, rot, meta, const)
+    position, rot_y, kps_inv = twoD_to_threeD_transform(
+        kps, dim, rot, meta, const)
 
     detections = torch.cat(
         [bboxes, scores, kps_inv, dim, hm_score, rot_y, position, prob, clses],
