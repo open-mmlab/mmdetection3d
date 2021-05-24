@@ -804,8 +804,8 @@ class PointSample(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(num_points={self.num_points}, \
-            dist_metric={self.dist_metric})'
+        repr_str += f'(num_points={self.num_points},'
+        repr_str += f' dist_metric={self.dist_metric})'
 
         return repr_str
 
