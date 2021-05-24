@@ -12,8 +12,8 @@ git
         kernel (int): kernel size for max pooling
 
     Returns:
-        torch.Tensor (batch_size * channels * height * width): heatmap after
-        NMS.
+        torch.Tensor: heatmap after NMS, in shape (batch_size * channels *
+        height * width)
     """
     pad = (kernel - 1) // 2
     hmax = F.max_pool2d(heat, (kernel, kernel), stride=1, padding=pad)
@@ -55,7 +55,8 @@ def _gather_feat(feat, ind, mask=None):
         ind (torch.Tensor): index to be gathered
 
     Returns:
-        torch.Tensor (batch_size * channels * height * width): gathered feat
+        torch.Tensor: gathered feat, in shape (batch_size * channels *
+        height * width)
     """
 
     # expand ind with the third dimension to be the same as feat
@@ -79,7 +80,8 @@ def _transpose_and_gather_feat(feat, ind):
         ind (torch.Tensor): index to be gathered
 
     Returns:
-        torch.Tensor (batch_size * channels * height * width): resulted feat
+        torch.Tensor: transposed and gathered feat, in shape (batch_size *
+        channels * height * width)
     """
     feat = feat.permute(0, 2, 3, 1)
     feat = feat.view(feat.size(0), -1, feat.size(3))
@@ -96,11 +98,11 @@ def _topk(scores, K=40):
         K (int): top K value
 
     Returns:
-        torch.Tensor (batch_size * K): top k scores
-        torch.Tensor (batch_size * K): top k index
-        torch.Tensor (batch_size * K): top k classes
-        torch.Tensor (batch_size * K): top k y's
-        torch.Tensor (batch_size * K): top k x's
+        torch.Tensor: top k scores, in shape (batch_size * K)
+        torch.Tensor: top k index, in shape (batch_size * K)
+        torch.Tensor: top k classes, in shape (batch_size * K)
+        torch.Tensor: top k y's, in shape (batch_size * K)
+        torch.Tensor: top k x's, in shape (batch_size * K)
     """
     batch, cat, height, width = scores.size()
 
@@ -135,10 +137,11 @@ def gen_position(kps, dim, rot, meta, const):
         const (torch.Tensor): batch_size * boxes * 16 * 2
 
     Returns:
-        torch.Tensor (batch_size * boxes * 3): pinv, coordinates in world
+        torch.Tensor: pinv, coordinates in world
             frame
-        torch.Tensor (batch_size * boxes * 1): rot_y, yaw angle
-        torch.Tensor (batch_size * boxes * 18): kps, key points coordinates
+        torch.Tensor: rot_y, yaw angle in shape (batch_size * boxes * 1)
+        torch.Tensor: kps, key points coordinates in shape (batch_size * boxes
+        * 18)
     """
     batch = kps.size(0)  # batch, number of pictures, usually 1.
     boxes = kps.size(1)  # boxes
@@ -149,7 +152,6 @@ def gen_position(kps, dim, rot, meta, const):
     out_inv = out_inv.expand(batch, boxes, -1, -1).contiguous().view(-1, 2, 3)\
         .float()  # boxes 2 3
     kps = kps.view(batch, boxes, -1, 2).permute(0, 1, 3, 2)  # batch boxes 2 9
-    # hom = torch.ones(batch, boxes, 1, 9).cuda()  # batch boxes 1 9
     hom = kps.new_ones(batch, boxes, 1, 9)  # batch boxes 1 9
     kps = torch.cat((kps, hom), dim=2).view(-1, 3, 9)  # boxes 3 9
 
@@ -187,8 +189,8 @@ def gen_position(kps, dim, rot, meta, const):
     height = dim[:, :, 0:1]  # batch boxes 1
     width = dim[:, :, 1:2]  # batch boxes 1
     length = dim[:, :, 2:3]  # batch boxes 1
-    cosori = torch.cos(rot_y)  # batch boxes 1
-    sinori = torch.sin(rot_y)  # batch boxes 1
+    cos_rot_y = torch.cos(rot_y)  # batch boxes 1
+    sin_rot_y = torch.sin(rot_y)  # batch boxes 1
 
     matrix_B = torch.zeros_like(kpoint)  # batch boxes 16
     matrix_C = torch.zeros_like(kpoint)  # batch boxes 16
@@ -197,52 +199,52 @@ def gen_position(kps, dim, rot, meta, const):
     const = const.expand(batch, boxes, -1, -1)  # batch boxes 16 2
     matrix_A = torch.cat([const, kp], dim=3)  # batch boxes 16 3
 
-    matrix_B[:, :, 0:1] = length * 0.5 * cosori + width * 0.5 * sinori
-    matrix_B[:, :, 1:2] = height * 0.5
-    matrix_B[:, :, 2:3] = length * 0.5 * cosori - width * 0.5 * sinori
-    matrix_B[:, :, 3:4] = height * 0.5
-    matrix_B[:, :, 4:5] = -length * 0.5 * cosori - width * 0.5 * sinori
-    matrix_B[:, :, 5:6] = height * 0.5
-    matrix_B[:, :, 6:7] = -length * 0.5 * cosori + width * 0.5 * sinori
-    matrix_B[:, :, 7:8] = height * 0.5
-    matrix_B[:, :, 8:9] = length * 0.5 * cosori + width * 0.5 * sinori
-    matrix_B[:, :, 9:10] = -height * 0.5
-    matrix_B[:, :, 10:11] = length * 0.5 * cosori - width * 0.5 * sinori
-    matrix_B[:, :, 11:12] = -height * 0.5
-    matrix_B[:, :, 12:13] = -length * 0.5 * cosori - width * 0.5 * sinori
-    matrix_B[:, :, 13:14] = -height * 0.5
-    matrix_B[:, :, 14:15] = -length * 0.5 * cosori + width * 0.5 * sinori
-    matrix_B[:, :, 15:16] = -height * 0.5
+    data_B = torch.FloatTensor([
+        length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
+        length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
+        -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
+        -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
+        length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5,
+        length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
+        -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
+        -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5
+    ])
 
-    matrix_C[:, :, 0:1] = -length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 1:2] = -length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 2:3] = -length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 3:4] = -length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 4:5] = length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 5:6] = length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 6:7] = length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 7:8] = length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 8:9] = -length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 9:10] = -length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 10:11] = -length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 11:12] = -length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 12:13] = length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 13:14] = length * 0.5 * sinori - width * 0.5 * cosori
-    matrix_C[:, :, 14:15] = length * 0.5 * sinori + width * 0.5 * cosori
-    matrix_C[:, :, 15:16] = length * 0.5 * sinori + width * 0.5 * cosori
+    matrix_B[:, :, :] = data_B
+
+    data_C = torch.FloatTensor([
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y
+    ])
+
+    matrix_C[:, :, :] = data_C
 
     matrix_B = matrix_B - kp_norm * matrix_C  # 1 boxes 16
 
-    AT = matrix_A.permute(0, 1, 3, 2)  # 1 boxes 3 16
-    AT = AT.view(batch * boxes, 3, 16)  # boxes 3 16
+    matrix_A_transposed = matrix_A.permute(0, 1, 3, 2)  # 1 boxes 3 16
+    # matrix_A_transposed in shape(boxes 3 16)
+    matrix_A_transposed = matrix_A_transposed.view(batch * boxes, 3, 16)
     matrix_A = matrix_A.view(batch * boxes, 16, 3)  # boxes 16 3
     matrix_B = matrix_B.view(batch * boxes, 16, 1).float()  # boxes 16 1
-    # mask = mask.unsqueeze(2)
 
-    pinv = torch.bmm(AT, matrix_A)  # boxes 3 3
+    pinv = torch.bmm(matrix_A_transposed, matrix_A)  # boxes 3 3
     pinv = torch.inverse(pinv)  # boxes 3 3
 
-    pinv = torch.bmm(pinv, AT)  # boxes 3 16
+    pinv = torch.bmm(pinv, matrix_A_transposed)  # boxes 3 16
     pinv = torch.bmm(pinv, matrix_B)  # boxes 3 1
     pinv = pinv.view(batch, boxes, 3, 1).squeeze(3)  # 1 boxes 3
 
@@ -285,7 +287,7 @@ def object_pose_decode(heat,
         const (torch.Tensor): 1 * batch_size * 16 * 2
 
     Returns:
-        torch.Tensor (1 * batch_size * 28): detection, detection results
+        torch.Tensor: detection results in shape (1 * batch_size * 28),
             containing final bboxes, scores, key points, dimensions,
             heatmap score, yaw angle, position, probability, and classes.
     """
@@ -319,9 +321,7 @@ def object_pose_decode(heat,
                        dim=2)
     dim = _transpose_and_gather_feat(dim, inds)
     dim = dim.view(batch, K, 3)
-    # dim[:, :, 0] = torch.exp(dim[:, :, 0]) * 1.63
-    # dim[:, :, 1] = torch.exp(dim[:, :, 1]) * 1.53
-    # dim[:, :, 2] = torch.exp(dim[:, :, 2]) * 3.88
+
     rot = _transpose_and_gather_feat(rot, inds)
     rot = rot.view(batch, K, 8)
     prob = _transpose_and_gather_feat(prob, inds)[:, :, 0]
