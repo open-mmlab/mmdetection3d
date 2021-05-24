@@ -22,7 +22,7 @@ model = dict(
             normalize_xyz=False)),
     rpn_head=dict(
         type='PointRPNHead',
-        num_classes=1,
+        num_classes=3,
         num_dir_bins=12,
         pred_layer_cfg=dict(
             in_channels=128,
@@ -45,7 +45,7 @@ model = dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)),
     roi_head=dict(
         type='PointRCNNROIHead',
-        num_classes=1,
+        num_classes=3,
         point_roi_extractor=dict(
             type='Single3DRoIPointExtractor',
             roi_layer=dict(

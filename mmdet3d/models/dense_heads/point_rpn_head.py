@@ -23,11 +23,12 @@ def write_ply(points, points_label, out_filename):
     fout = open(out_filename, 'w')
     for i in range(N):
         if points.shape[1] == 3:
-            # c = points[i, 3:].astype(int)
-            c = points_label.astype(int)
-            fout.write(
-                'v %f %f %f %d %d %d\n' %
-                (points[i, 0], points[i, 1], points[i, 2], c[i] * 255, 0, 0))
+            c = [0, 0, 0]
+            if points_label[i].astype(int) <= 2:
+                c[points_label[i].astype(int)] = 1
+            fout.write('v %f %f %f %d %d %d\n' %
+                       (points[i, 0], points[i, 1], points[i, 2], c[0] * 255,
+                        c[1] * 255, c[2] * 255))
 
         else:
             fout.write(
@@ -252,9 +253,11 @@ class PointRPNHead(BaseModule):
             weight=box_loss_weights.view(-1, 1, 1))
         '''
         # calculate semantic loss
-        semantic_points = bbox_preds['obj_scores'].transpose(2,
-                                                             1).reshape(-1, 1)
-        semantic_points_label = 1 - positive_mask.long()
+        semantic_points = bbox_preds['obj_scores'].transpose(2, 1)
+        semantic_points = semantic_points.reshape(-1, self.num_classes)
+        semantic_targets = mask_targets
+        semantic_targets[negative_mask] = self.num_classes
+        semantic_points_label = semantic_targets
         # for ignore, but now we do not have ignore label
         # semantic_loss_weight = negative_mask.float() + positive_mask.float()
         semantic_loss = self.cls_loss(semantic_points,
@@ -262,14 +265,13 @@ class PointRPNHead(BaseModule):
         semantic_loss /= positive_mask.float().sum()
         '''
         indices_xxx = 0
-        print('tensor: ',points[0].shape)
-        print(semantic_points_label[0].shape)
         points_label = semantic_points_label[indices_xxx].cpu().data.numpy()
         points = points[indices_xxx][:,0:3].cpu().data.numpy()
         write_ply(points,points_label,'/tmp/label_points_rpn.obj')
         gt_bboxes = gt_bboxes_3d[indices_xxx].tensor.cpu().numpy()
         gt_bboxes[:, 6] = -gt_bboxes[:, 6]
         write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes_rpn.ply')
+        assert 0
         points_mask = points_label==0
         pred_bbox3d = pred_bbox3d[0:16384][points_mask].tensor
         pred_bbox3d = pred_bbox3d.tensor.detach().cpu().numpy()
