@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
@@ -731,12 +732,13 @@ class PointSample(object):
         Args:
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
-            dist_metric (int): The indicator to the near/far boundary.
+            dist_metric (int, optional): Indicator to the near/far boundary.
                 Once given, only the near points will be sampled.
                 Defaults to None.
-            replace (bool): Whether the sample is with or without replacement.
+            replace (bool, optional): Sampling with or without replacement.
                 Defaults to None.
-            return_choices (bool): Whether return choice. Defaults to False.
+            return_choices (bool, optional): Whether return choice.
+                Defaults to False.
 
         Returns:
             tuple[np.ndarray] | np.ndarray:
@@ -748,7 +750,7 @@ class PointSample(object):
             replace = (points.shape[0] < num_samples)
         sample_range = range(len(points))
         if dist_metric:
-            depth = points.tensor[:, 2].numpy()
+            depth = points.coord[:, 2]
             far_inds = np.where(depth > dist_metric)[0]
             near_inds = np.where(depth <= dist_metric)[0]
             if not replace:
@@ -777,6 +779,8 @@ class PointSample(object):
         """
         from mmdet3d.core.points import CameraPoints
         points = results['points']
+        # Points in Camera coord can provide the depth information.
+        # TODO: Need to suport distance-based sampling for other coord system.
         if self.dist_metric:
             assert isinstance(points, CameraPoints), \
                 'Sampling based on distance is only appliable for CAMERA coord'
@@ -800,8 +804,29 @@ class PointSample(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(num_points={self.num_points})'
+        repr_str += f'(num_points={self.num_points}, \
+            dist_metric={self.dist_metric})'
+
         return repr_str
+
+
+@PIPELINES.register_module()
+class IndoorPointSample(PointSample):
+    """Indoor point sample.
+
+    Sampling data to a certain number.
+    NOTE: IndoorPointSample is deprecated in favor of PointSample
+
+    Args:
+        name (str): Name of the dataset.
+        num_points (int): Number of points to be sampled.
+    """
+
+    def __init__(self, num_points):
+        warnings.warn(
+            'IndoorPointSample is deprecated in favor of PointSample')
+        super(IndoorPointSample, self).__init__(num_points)
+        self.num_points = num_points
 
 
 @PIPELINES.register_module()
