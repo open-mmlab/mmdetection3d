@@ -9,10 +9,10 @@ from .nuscenes_dataset import NuScenesDataset
 from .nuscenes_mono_dataset import NuScenesMonoDataset
 from .pipelines import (BackgroundPointsFilter, GlobalAlignment,
                         GlobalRotScaleTrans, IndoorPatchPointSample,
-                        IndoorPointSample, LoadAnnotations3D,
-                        LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                        NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
-                        ObjectSample, PointShuffle, PointsRangeFilter,
+                        LoadAnnotations3D, LoadPointsFromFile,
+                        LoadPointsFromMultiSweeps, NormalizePointsColor,
+                        ObjectNoise, ObjectRangeFilter, ObjectSample,
+                        PointSample, PointShuffle, PointsRangeFilter,
                         RandomFlip3D, VoxelBasedPointSampler)
 from .s3dis_dataset import S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
@@ -28,7 +28,7 @@ __all__ = [
     'NuScenesMonoDataset', 'LyftDataset', 'ObjectSample', 'RandomFlip3D',
     'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle', 'ObjectRangeFilter',
     'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile', 'S3DISSegDataset',
-    'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
+    'NormalizePointsColor', 'IndoorPatchPointSample', 'PointSample',
     'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset', 'ScanNetDataset',
     'ScanNetSegDataset', 'SemanticKITTIDataset', 'Custom3DDataset',
     'Custom3DSegDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
