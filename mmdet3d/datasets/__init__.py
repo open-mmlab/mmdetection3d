@@ -14,7 +14,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalAlignment,
                         NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointShuffle, PointsRangeFilter,
                         RandomDropPointsColor, RandomFlip3D,
-                        VoxelBasedPointSampler)
+                        RandomJitterPoints, VoxelBasedPointSampler)
 from .s3dis_dataset import S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
@@ -34,5 +34,5 @@ __all__ = [
     'ScanNetSegDataset', 'SemanticKITTIDataset', 'Custom3DDataset',
     'Custom3DSegDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
     'BackgroundPointsFilter', 'VoxelBasedPointSampler', 'get_loading_pipeline',
-    'RandomDropPointsColor'
+    'RandomDropPointsColor', 'RandomJitterPoints'
 ]
