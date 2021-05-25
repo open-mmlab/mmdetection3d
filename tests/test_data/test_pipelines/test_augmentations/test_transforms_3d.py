@@ -501,7 +501,7 @@ def test_random_jitter_points():
                         f' clip_range={clip_range})'
     assert repr_str == expected_repr_str
 
-    # test very clipping large noise
+    # test clipping very large noise
     random_jitter_points = RandomJitterPoints(jitter_std=1.0, clip_range=0.05)
     input_dict = dict(points=depth_points.clone())
 

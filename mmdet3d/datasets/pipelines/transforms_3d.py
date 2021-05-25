@@ -172,14 +172,22 @@ class RandomFlip3D(RandomFlip):
 class RandomJitterPoints(object):
     """Randomly jitter point coordinates.
 
+    Different from the global translation in GlobalRotScaleTrans, here we \
+        apply different noises to each point in a scene.
+
     Args:
         jitter_std (list[float]): The standard deviation of jittering noise.
-            This applies random noise to all points in a 3D scene, which is
-            sampled from a gaussian distribution whose standard deviation is
+            This applies random noise to all points in a 3D scene, which is \
+            sampled from a gaussian distribution whose standard deviation is \
             set by ``jitter_std``. Defaults to [0.01, 0.01, 0.01]
-        clip_range (list[float] | None): Clip the randomly generated jittering
+        clip_range (list[float] | None): Clip the randomly generated jitter \
             noise into this range. If None is given, don't perform clipping.
             Defaults to [-0.05, 0.05]
+
+    Note:
+        This transform should only be used in point cloud segmentation tasks \
+            because we don't transform ground-truth bboxes accordingly.
+        For similar transform in detection task, please refer to `ObjectNoise`.
     """
 
     def __init__(self,
@@ -218,7 +226,6 @@ class RandomJitterPoints(object):
                                    self.clip_range[1])
 
         points.translate(jitter_noise)
-        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
