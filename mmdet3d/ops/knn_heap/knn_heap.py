@@ -53,7 +53,7 @@ class KNNHeap(Function):
         B, npoint, _ = center_xyz.shape
         N = xyz.shape[1]
 
-        idx = center_xyz.new_zeros((B, npoint, k)).long()
+        idx = center_xyz.new_zeros((B, npoint, k)).int()
         dist2 = center_xyz.new_zeros((B, npoint, k)).float()
 
         knn_heap_ext.knn_heap_wrapper(B, N, npoint, k, xyz, center_xyz, idx,
