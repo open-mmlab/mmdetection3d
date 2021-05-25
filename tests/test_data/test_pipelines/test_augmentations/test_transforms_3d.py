@@ -394,6 +394,11 @@ def test_random_drop_points_color():
     trans_color = trans_depth_points.color
     assert torch.allclose(trans_color, depth_points.tensor[:, 3:6])
 
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=0.5)
+    repr_str = repr(random_drop_points_color)
+    expected_repr_str = 'RandomDropPointsColor(drop_ratio=0.5)'
+    assert repr_str == expected_repr_str
+
 
 def test_random_flip_3d():
     random_flip_3d = RandomFlip3D(

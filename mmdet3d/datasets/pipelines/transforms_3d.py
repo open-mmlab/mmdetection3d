@@ -12,7 +12,11 @@ from .data_augment_utils import noise_per_object_v3_
 
 @PIPELINES.register_module()
 class RandomDropPointsColor(object):
-    """Randomly set the color of points to all zeros.
+    r"""Randomly set the color of points to all zeros.
+
+    Once this transform is executed, all the points' color will be dropped.
+    Refer to `PAConv <https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/
+    util/transform.py#L223>`_ for more details.
 
     Args:
         drop_ratio (float): The probability of dropping point colors.
@@ -36,12 +40,11 @@ class RandomDropPointsColor(object):
         """
         points = input_dict['points']
         assert points.attribute_dims is not None and \
-            'color' in points.attribute_dims.keys(), \
+            'color' in points.attribute_dims, \
             'Expect points have color attribute'
 
         if np.random.rand() < self.drop_ratio:
             points.color = points.color * 0.0
-        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
