@@ -7,9 +7,9 @@ def _nms(heat, kernel=3):
     """Process heat with Non Maximum Suppression.
 
     Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
+        heat (torch.Tensor): Heatmap from model in shape (batch_size *
             channels * height * width)
-        kernel (int): kKernel size for max pooling
+        kernel (int): Kernel size for max pooling
 
     Returns:
         torch.Tensor: Heatmap after NMS, in shape (batch_size * channels *
@@ -25,8 +25,9 @@ def _topk_channel(scores, K=40):
     """Select top k channels of scores, index, y's, and x's given scores.
 
     Args:
-        scores (torch.Tensor): batch_size * channels * height * width
-        K (int): Top K value
+        scores (torch.Tensor): Scores from heatmap key points parameters, in
+            shape (batch_size * channels * height * width)
+        K (int): The number of top values to be output
 
     Returns:
         tuple[torch.Tensor]: Top-k scores, indices, y and x coordinates
@@ -43,16 +44,16 @@ def _topk_channel(scores, K=40):
 
 
 def _gather_feat(feat, ind, mask=None):
-    """Gather feat with assigned index, with index expanded to the third
+    """Gather features with assigned index, with index expanded to the third
     dimension.
 
     Args:
-        feat (torch.Tensor): Predictions from model in shape (batch_size *
+        feat (torch.Tensor): Features from model in shape (batch_size *
             channels * height * width)
-        ind (torch.Tensor): Index of feat to be gathered
+        ind (torch.Tensor): Index of features to be gathered
 
     Returns:
-        torch.Tensor: gathered feat, in shape (batch_size * channels *
+        torch.Tensor: gathered features, in shape (batch_size * channels *
         height * width)
     """
 
@@ -68,16 +69,16 @@ def _gather_feat(feat, ind, mask=None):
 
 
 def _permute_and_gather_feat(feat, ind):
-    """gather feat with assigned index, with feat be permuted with (0,2,3,1)
+    """Gather features by assigned index, with features permuted with (0,2,3,1)
     and reshaped to three dimensions.
 
     Args:
-        heat (torch.Tensor): Predictions from model in shape (batch_size *
+        feat (torch.Tensor): Features from model in shape (batch_size *
             channels * height * width)
-        ind (torch.Tensor): Index of feat to be gathered
+        ind (torch.Tensor): Index of features to be gathered
 
     Returns:
-        torch.Tensor: Permuted and gathered feat, in shape (batch_size *
+        torch.Tensor: Permuted and gathered features, in shape (batch_size *
         channels * height * width)
     """
     feat = feat.permute(0, 2, 3, 1)
@@ -91,9 +92,9 @@ def _topk(scores, K=40):
     scores.
 
     Args:
-        scores (torch.Tensor): Scores from heatmap hp parameters, in shape
-        (batch_size * channels * height * width)
-        K (int): Top K value
+        scores (torch.Tensor): Scores from heatmap key points parameters, in
+            shape (batch_size * channels * height * width)
+        K (int): The number of top values to be output
 
     Returns:
         tuple[torch.Tensor]: Top-k scores, indices, classes, y and x
@@ -117,8 +118,9 @@ def _topk(scores, K=40):
     return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
 
-def twoD_to_threeD_transform(kps, dim, rot, meta, const):
-    """Generate position from 2D frame to world frame.
+def transform_img2cam(kps, dim, rot, meta, const):
+    """Transform coordinates in the 2D image plane to the 3D camera coordinate
+    system.
 
     Args:
         kps (torch.Tensor): Key points in shape (batch_size * boxes * 18)
@@ -128,8 +130,9 @@ def twoD_to_threeD_transform(kps, dim, rot, meta, const):
         meta (dict): should contain keys below.
 
             - trans_output_inv: Transition parameters for computing
-                matrix_A in pinv's matrix.
-            - calib: Calibration for computing matrix_A in pinv's matrix.
+                matrix_A in pinv's matrix, in shape (1, 2, 3)
+            - calib: Calibration for computing matrix_A in pinv's matrix, in
+                shape (1, 2, 3)
         const (torch.Tensor): constants in shape (batch_size * boxes * 16 * 2)
 
     Returns:
@@ -138,110 +141,147 @@ def twoD_to_threeD_transform(kps, dim, rot, meta, const):
         torch.Tensor: kps, key points coordinates in shape (batch_size * boxes
         * 18)
     """
-    batch = kps.size(0)  # batch, number of pictures, usually 1.
-    boxes = kps.size(1)  # boxes
-    out_inv = meta['trans_output_inv']  # 1 2 3
-    calib = meta['calib']  # 1 3 4
+    batch = kps.size(0)
+    boxes = kps.size(1)
+    out_inv = meta['trans_output_inv']
+    calib = meta['calib']
 
-    out_inv = out_inv.unsqueeze(1)  # 1 1 2 3
+    out_inv = out_inv.unsqueeze(1)
     out_inv = out_inv.expand(batch, boxes, -1, -1).contiguous().view(-1, 2, 3)\
-        .float()  # boxes 2 3
-    kps = kps.view(batch, boxes, -1, 2).permute(0, 1, 3, 2)  # batch boxes 2 9
-    hom = kps.new_ones(batch, boxes, 1, 9)  # batch boxes 1 9
-    kps = torch.cat((kps, hom), dim=2).view(-1, 3, 9)  # boxes 3 9
+        .float()
+    # Transform kps in shape (batch boxes 2 9), hom in shape (batch boxes 1 9)
+    kps = kps.view(batch, boxes, -1, 2).permute(0, 1, 3, 2)
+    hom = kps.new_ones(batch, boxes, 1, 9)
+    kps = torch.cat((kps, hom), dim=2).view(-1, 3, 9)
 
-    # batch boxes 2 9     [[xxxxxxx...],[yyyyyy...]]
+    # kps in shape (batch boxes 2 9), i.e. [[x, x, x, x,...],[y, y, y, y,...]]
     kps = torch.bmm(out_inv, kps).view(batch, boxes, 2, 9)
-    # batch boxes 18 [xyxyxyxyx....]
+
+    # kps in shape (batch boxes 18), i.e. [x, y, x, y, x, y,....]
     kps = kps.permute(0, 1, 3, 2).view(batch, boxes, -1)
-    # calib2 batch boxes 1
+
+    # calib2 in shape (batch boxes 1)
     calib2 = torch.zeros_like(kps[:, :, 0:1]) + calib[:, 0:1, 0:1]
-    alpha_idx = rot[:, :, 1] > rot[:, :, 5]  # batch boxes
-    alpha_idx = alpha_idx.float()  # batch boxes
-    # alpha1 Shape: [batch boxes]
+    alpha_idx = rot[:, :, 1] > rot[:, :, 5]
+    alpha_idx = alpha_idx.float()
+
+    # alpha1, alpha_idx, alpna_pre in shape (batch boxes)
     alpha1 = torch.atan(rot[:, :, 2] / rot[:, :, 3]) + (-0.5 * np.pi)
     alpha2 = torch.atan(rot[:, :, 6] / rot[:, :, 7]) + (0.5 * np.pi)
-    alpna_pre = alpha1 * alpha_idx + alpha2 * (1 - alpha_idx)  # batch boxes
-    alpna_pre = alpna_pre.unsqueeze(2)  # batch boxes
+    alpna_pre = alpha1 * alpha_idx + alpha2 * (1 - alpha_idx)
+    alpna_pre = alpna_pre.unsqueeze(2)
 
-    # batch boxes 1
+    # rot_y in shape (batch boxes 1)
     rot_y = alpna_pre + torch.atan2(kps[:, :, 16:17] - calib[:, 0:1, 2:3],
                                     calib2)
-    rot_y[rot_y > np.pi] = rot_y[rot_y > np.pi] - 2 * np.pi  # batch boxes 1
+    rot_y[rot_y > np.pi] = rot_y[rot_y > np.pi] - 2 * np.pi
     rot_y[rot_y < -np.pi] = rot_y[rot_y < -np.pi] + 2 * np.pi
 
-    calib = calib.unsqueeze(1)  # 1 1 3 4
-    calib = calib.expand(batch, boxes, -1, -1).contiguous()  # batch boxes 3 4
-    kpoint = kps[:, :, :16]  # batch boxes 16
-    f = calib[:, :, 0, 0].unsqueeze(2)  # batch boxes 1
-    f = f.expand_as(kpoint)  # batch boxes 16
-    # batch boxes 1 , batch boxes 1
+    # transform calib into shape (batch boxes 3 4)
+    calib = calib.unsqueeze(1)
+    calib = calib.expand(batch, boxes, -1, -1).contiguous()
+    kpoint = kps[:, :, :16]
+    f = calib[:, :, 0, 0].unsqueeze(2)
+    f = f.expand_as(kpoint)
+
+    # cx, cy in shape (batch boxes 1), kp_norm in shape (1 boxes 16)
     cx, cy = calib[:, :, 0, 2].unsqueeze(2), calib[:, :, 1, 2].unsqueeze(2)
-    cxy = torch.cat((cx, cy), dim=2)  # 1 boxes 2
-    cxy = cxy.repeat(1, 1, 8)  # 1 boxes 16
-    kp_norm = (kpoint - cxy) / f  # 1 boxes 16
+    cxy = torch.cat((cx, cy), dim=2)
+    cxy = cxy.repeat(1, 1, 8)
+    kp_norm = (kpoint - cxy) / f
 
-    height = dim[:, :, 0:1]  # batch boxes 1
-    width = dim[:, :, 1:2]  # batch boxes 1
-    length = dim[:, :, 2:3]  # batch boxes 1
-    cos_rot_y = torch.cos(rot_y)  # batch boxes 1
-    sin_rot_y = torch.sin(rot_y)  # batch boxes 1
+    # following variables in shape (batch boxes 1)
+    height = dim[:, :, 0:1]
+    width = dim[:, :, 1:2]
+    length = dim[:, :, 2:3]
+    cos_rot_y = torch.cos(rot_y)
+    sin_rot_y = torch.sin(rot_y)
 
-    matrix_B = torch.zeros_like(kpoint)  # batch boxes 16
-    matrix_C = torch.zeros_like(kpoint)  # batch boxes 16
+    # initialize matrices in shape (batch boxes 16)
+    matrix_B = torch.zeros_like(kpoint)
+    matrix_C = torch.zeros_like(kpoint)
 
-    kp = kp_norm.unsqueeze(3)  # batch,boxes,16,1
-    const = const.expand(batch, boxes, -1, -1)  # batch boxes 16 2
-    matrix_A = torch.cat([const, kp], dim=3)  # batch boxes 16 3
+    # matrix_A in shape (batch boxes 16 3)
+    kp = kp_norm.unsqueeze(3)
+    const = const.expand(batch, boxes, -1, -1)
+    matrix_A = torch.cat([const, kp], dim=3)
 
-    data_B = torch.FloatTensor([
-        length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
-        length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
-        -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
-        -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
-        length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5,
-        length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
-        -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
-        -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5
-    ])
+    # data_B = torch.FloatTensor([
+    #     length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
+    #     length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
+    #     -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
+    #     -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
+    #     length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5,
+    #     length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
+    #     -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
+    #     -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5
+    # ])
 
+    index_B = torch.FloatTensor([[1, 1, 0], [0, 0, 1], [1, -1, 0], [0, 0, 1],
+                                 [-1, -1, 0], [0, 0, 1], [-1, 1, 0], [0, 0, 1],
+                                 [1, 1, 0], [0, 0, -1], [1, -1, 0], [0, 0, -1],
+                                 [-1, -1, 0], [0, 0, -1], [-1, 1, 0],
+                                 [0, 0, -1]])
+
+    var_B = torch.FloatTensor(
+        [length * 0.5 * cos_rot_y, width * 0.5 * sin_rot_y, height * 0.5])
+
+    data_B = index_B * var_B
     matrix_B[:, :, :] = data_B
 
-    data_C = torch.FloatTensor([
-        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y
-    ])
+    # data_C = torch.FloatTensor([
+    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y
+    # ])
+
+    index_C = torch.FloatTensor([[-1, 1], [-1, 1], [-1, -1], [-1, -1], [1, -1],
+                                 [1, -1], [1, 1], [1, 1], [-1, 1], [-1, 1],
+                                 [-1, -1], [-1, -1], [1, -1], [1, -1], [1, 1],
+                                 [1, 1]])
+
+    var_C = torch.FloatTensor(
+        [length * 0.5 * sin_rot_y, width * 0.5 * cos_rot_y])
+
+    data_C = index_C * var_C
 
     matrix_C[:, :, :] = data_C
 
-    matrix_B = matrix_B - kp_norm * matrix_C  # 1 boxes 16
+    # final matrix_B in shape (1 boxes 16)
+    matrix_B = matrix_B - kp_norm * matrix_C
 
-    matrix_A_transposed = matrix_A.permute(0, 1, 3, 2)  # 1 boxes 3 16
-    # matrix_A_transposed in shape(boxes 3 16)
+    # make matrix_A_transposed in shape(batch * boxes 3 16)
+    matrix_A_transposed = matrix_A.permute(0, 1, 3, 2)
     matrix_A_transposed = matrix_A_transposed.view(batch * boxes, 3, 16)
-    matrix_A = matrix_A.view(batch * boxes, 16, 3)  # boxes 16 3
-    matrix_B = matrix_B.view(batch * boxes, 16, 1).float()  # boxes 16 1
 
-    pinv = torch.bmm(matrix_A_transposed, matrix_A)  # boxes 3 3
-    pinv = torch.inverse(pinv)  # boxes 3 3
+    matrix_A = matrix_A.view(batch * boxes, 16, 3)
+    matrix_B = matrix_B.view(batch * boxes, 16, 1).float()
 
-    pinv = torch.bmm(pinv, matrix_A_transposed)  # boxes 3 16
-    pinv = torch.bmm(pinv, matrix_B)  # boxes 3 1
-    pinv = pinv.view(batch, boxes, 3, 1).squeeze(3)  # 1 boxes 3
+    # pinv here in shape (batch * boxes 3 3)
+    pinv = torch.bmm(matrix_A_transposed, matrix_A)
+    pinv = torch.inverse(pinv)
+
+    # pinv here in shape (batch * boxes 3 16)
+    pinv = torch.bmm(pinv, matrix_A_transposed)
+
+    # pinv here in shape (batch * boxes 3 1)
+    pinv = torch.bmm(pinv, matrix_B)
+
+    # final pinv in shape (batch, boxes, 3)
+    pinv = pinv.view(batch, boxes, 3, 1).squeeze(3)
 
     return pinv, rot_y, kps
 
@@ -258,7 +298,7 @@ def object_pose_decode(heat,
                        K=100,
                        meta=None,
                        const=None):
-    """The entry for Decoding object's pose with final bboxes, scores, key
+    """The entry for decoding object's pose with final bboxes, scores, key
     points, dimensions, heatmap score, yaw angle, position, probability, and
     classes.
 
@@ -272,14 +312,16 @@ def object_pose_decode(heat,
         rot (torch.Tensor): Rotation values in shape (1* batch_size * 8)
         prob (torch.Tensor): Probabilities
         reg (torch.Tensor): Reg parameters
-        hm_hp (torch.Tensor): Heatmap hp parameters
-        hp_offset (torch.Tensor): Heatmap hp offsets
+        hm_hp (torch.Tensor): Heatmap key points parameters
+        hp_offset (torch.Tensor): Heatmap key points offsets for down-sampling
+            error's makeup
         K (int): Top K value
         meta (dict): should contain keys below.
 
-            - trans_output_inv: Transition parameters for computing matrix_A
-                in pinv's matrix.
-            - calib: Calibration for computing matrix_A in pinv's matrix.
+            - trans_output_inv (torch.Tensor): Transition parameters for
+                computing matrix_A in pinv's matrix.
+            - calib (torch.Tensor): Calibration for computing matrix_A in
+                pinv's matrix.
         const (torch.Tensor): Constants in shape (1 * batch_size * 16 * 2)
 
     Returns:
@@ -370,8 +412,7 @@ def object_pose_decode(heat,
         kps = (1 - mask) * hm_kps + mask * kps
         kps = kps.permute(0, 2, 1, 3).view(batch, K, num_joints * 2)
         hm_score = hm_score.permute(0, 2, 1, 3).squeeze(3)
-    position, rot_y, kps_inv = twoD_to_threeD_transform(
-        kps, dim, rot, meta, const)
+    position, rot_y, kps_inv = transform_img2cam(kps, dim, rot, meta, const)
 
     detections = torch.cat(
         [bboxes, scores, kps_inv, dim, hm_score, rot_y, position, prob, clses],
