@@ -1,7 +1,9 @@
 import mmcv
 import numpy as np
 import pytest
+import tempfile
 import torch
+from os import path as osp
 
 from mmdet3d.datasets import NuScenesMonoDataset
 
@@ -149,3 +151,42 @@ def test_format_results():
         torch.tensor(det['rotation']), expected_rotation, 1e-5)
     assert det['detection_name'] == expected_detname
     assert det['attribute_name'] == expected_attr
+
+
+def test_show():
+    root_path = 'tests/data/nuscenes/'
+    ann_file = 'tests/data/nuscenes/nus_infos_mono3d.coco.json'
+    class_names = [
+        'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
+        'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
+    ]
+    eval_pipeline = [
+        dict(type='LoadImageFromFileMono3D'),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=class_names,
+            with_label=False),
+        dict(type='Collect3D', keys=['img'])
+    ]
+    nus_dataset = NuScenesMonoDataset(
+        data_root=root_path,
+        ann_file=ann_file,
+        img_prefix='tests/data/nuscenes/',
+        test_mode=True,
+        pipeline=eval_pipeline)
+    results = mmcv.load('tests/data/nuscenes/mono3d_sample_results.pkl')
+    results = [results[0]]
+
+    # show with eval_pipeline
+    tmp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tmp_dir.name
+    nus_dataset.show(results, temp_dir, show=False)
+    file_name = 'n015-2018-07-18-11-07-57+0800__' \
+                'CAM_BACK_LEFT__1531883530447423'
+    img_file_path = osp.join(temp_dir, file_name, f'{file_name}_img.png')
+    gt_file_path = osp.join(temp_dir, file_name, f'{file_name}_gt.png')
+    pred_file_path = osp.join(temp_dir, file_name, f'{file_name}_pred.png')
+    mmcv.check_file_exist(img_file_path)
+    mmcv.check_file_exist(gt_file_path)
+    mmcv.check_file_exist(pred_file_path)
+    tmp_dir.cleanup()

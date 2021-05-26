@@ -10,6 +10,8 @@ You can plot loss/mAP curves given a training log file. Run `pip install seaborn
 python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}] [--mode ${MODE}] [--interval ${INTERVAL}]
 ```
 
+**Notice**: If the metric you want to plot is calculated in the eval stage, you need to add the flag `--mode eval`. If you perform evaluation with an interval of `${INTERVAL}`, you need to add the args `--interval ${INTERVAL}`.
+
 Examples:
 
 -   Plot the classification loss of some run.
@@ -55,27 +57,27 @@ average iter time: 1.1959 s/iter
 
 ## Results
 
-To see the SUNRGBD, ScanNet or KITTI points and detection results, you can run the following command
+To see the prediction results of trained models, you can run the following command
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 ```
 
-Aftering running this command, plotted results **_\_points.obj and _**\_pred.obj files in `${SHOW_DIR}`.
+After running this command, plotted results including input data and the output of networks visualized on the input (e.g. `***_points.obj` and `***_pred.obj` in single-modality 3D detection task) will be saved in `${SHOW_DIR}`.
 
-To see the points, detection results and ground truth of SUNRGBD, ScanNet or KITTI during evaluation time, you can run the following command
+To see the prediction results during evaluation time, you can run the following command
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 
-After running this command, you will obtain **_\_points.obj, _**\_pred.obj files and \*\*\*\_gt.obj in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. You need to set `show=False` while running test in remote server withou GUI.
+After running this command, you will obtain the input data, the output of networks and ground-truth labels visualized on the input (e.g. `***_points.obj`, `***_pred.obj`, `***_gt.obj`, `***_img.png` and `***_pred.png` in multi-modality detection task) in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. You need to set `show=False` while running test in remote server without GUI.
 
 As for offline visualization, you will have two options.
 To visualize the results with `Open3D` backend, you can run the following command
 
 ```bash
-python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}'
+python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
 
 ![Open3D_visualization](../resources/open3d_visual.gif)
@@ -86,18 +88,18 @@ Or you can use 3D visualization software such as the [MeshLab](http://www.meshla
 
 ## Dataset
 
-We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, as well as multi-modality 3D detection on KITTI and SUN RGB-D. To browse the KITTI dataset, you can run the following command
+We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, multi-modality 3D detection on KITTI and SUN RGB-D, as well as monocular 3D detection on nuScenes. To browse the KITTI dataset, you can run the following command
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --output-dir ${OUTPUT_DIR} --online
 ```
 
 **Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window. If you don't have a monitor, you can remove the `--online` flag to only save the visualization results and browse them offline.
 
-If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then add the `--multi-modality` flag to the command. An example is showed below
+If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi_modality-det`. An example is showed below
 
 ```shell
-python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --output-dir ${OUTPUT_DIR} --online --multi-modality
+python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![Open3D_visualization](../resources/browse_dataset_multi_modality.png)
@@ -105,10 +107,18 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![Open3D_visualization](../resources/browse_dataset_seg.png)
+
+And browsing the nuScenes dataset in monocular 3D detection task
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono-det --output-dir ${OUTPUT_DIR} --online
+```
+
+![Open3D_visualization](../resources/browse_dataset_mono.png)
 
 &emsp;
 
