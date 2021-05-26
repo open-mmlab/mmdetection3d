@@ -92,8 +92,9 @@ class GeneralSamplingModule(nn.Module):
             Tensor: (B, C, M) the sampled features.
             Tensor: (B, M) the given index.
         """
-        xyz_flipped = xyz.permute(0, 2, 1)
-        new_xyz = gather_points(xyz_flipped, sample_inds).permute(0, 2, 1)
+        xyz_flipped = xyz.transpose(1, 2).contiguous()
+        new_xyz = gather_points(xyz_flipped,
+                                sample_inds).transpose(1, 2).contiguous()
         new_features = gather_points(features, sample_inds).contiguous()
 
         return new_xyz, new_features, sample_inds
@@ -483,7 +484,7 @@ class GroupFree3DHead(nn.Module):
 
             # calculate center loss
             box_loss_weights_expand = box_loss_weights.unsqueeze(-1).expand(
-                1, 1, 3)
+                -1, -1, 3)
             center_loss = self.center_loss(
                 bbox_preds[f'center{suffix}'],
                 assigned_center_targets,
@@ -537,12 +538,12 @@ class GroupFree3DHead(nn.Module):
                                               size_class_targets.unsqueeze(-1),
                                               1)
                 one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
-                    -1).expand(1, 1, 1, 3).contiguous()
+                    -1).expand(-1, -1, -1, 3).contiguous()
                 size_residual_norm = torch.sum(
                     bbox_preds[f'size_res_norm{suffix}'] *
                     one_hot_size_targets_expand, 2)
                 box_loss_weights_expand = box_loss_weights.unsqueeze(
-                    -1).expand(1, 1, 3)
+                    -1).expand(-1, -1, 3)
                 size_res_loss = self.size_res_loss(
                     size_residual_norm,
                     size_res_targets,
@@ -763,7 +764,7 @@ class GroupFree3DHead(nn.Module):
                         vote_targets_tmp[
                             column_indices, :3 *
                             self.gt_per_seed] = votes[column_indices].expand(
-                                1, self.gt_per_seed)
+                                -1, self.gt_per_seed)
                         vote_targets_tmp[column_indices,
                                          3 * self.gt_per_seed:] = i
 
@@ -875,7 +876,7 @@ class GroupFree3DHead(nn.Module):
         assignment = query_points_instance_label
         # set background points to the last gt bbox as original code
         assignment[assignment < 0] = gt_num - 1
-        assignment_expand = assignment.unsqueeze(1).expand(1, 3)
+        assignment_expand = assignment.unsqueeze(1).expand(-1, 3)
 
         assigned_center_targets = center_targets[assignment]
         assigned_size_targets = size_targets[assignment]
@@ -891,7 +892,7 @@ class GroupFree3DHead(nn.Module):
             (num_candidate, self.num_sizes))
         one_hot_size_targets.scatter_(1, size_class_targets.unsqueeze(-1), 1)
         one_hot_size_targets = one_hot_size_targets.unsqueeze(-1).expand(
-            1, 1, 3)  # (num_candidate,num_size_cluster,3)
+            -1, -1, 3)  # (num_candidate,num_size_cluster,3)
         mean_sizes = size_res_targets.new_tensor(
             self.bbox_coder.mean_sizes).unsqueeze(0)
         pos_mean_sizes = torch.sum(one_hot_size_targets * mean_sizes, 1)
