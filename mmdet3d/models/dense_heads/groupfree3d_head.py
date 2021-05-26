@@ -92,8 +92,8 @@ class GeneralSamplingModule(nn.Module):
             Tensor: (B, C, M) the sampled features.
             Tensor: (B, M) the given index.
         """
-        xyz_flipped = xyz.permute(0, 1, 2)
-        new_xyz = gather_points(xyz_flipped, sample_inds).permute(0, 1, 2)
+        xyz_flipped = xyz.permute(0, 2, 1)
+        new_xyz = gather_points(xyz_flipped, sample_inds).permute(0, 2, 1)
         new_features = gather_points(features, sample_inds).contiguous()
 
         return new_xyz, new_features, sample_inds
@@ -124,7 +124,7 @@ class PositionEmbeddingLearned(nn.Module):
         Returns:
             Tensor: (B, num_pos_feats, N) the embeded position features.
         """
-        xyz = xyz.permute(0, 1, 2)
+        xyz = xyz.permute(0, 2, 1)
         position_embedding = self.position_embedding_head(xyz)
         return position_embedding
 
@@ -842,7 +842,7 @@ class GroupFree3DHead(nn.Module):
         euclidean_dist1 = euclidean_dist1 * object_assignment_one_hot + 100 * (
             1 - object_assignment_one_hot)
         # (gt_num, num_seed)
-        euclidean_dist1 = euclidean_dist1.permute(0, 1)
+        euclidean_dist1 = euclidean_dist1.permute(1, 0)
 
         topk_inds = torch.topk(
             euclidean_dist1, seed_points_obj_topk,
