@@ -165,6 +165,33 @@ def test_pointnet_sa_module():
     assert new_features.shape == torch.Size([1, 32, 16])
     assert inds.shape == torch.Size([1, 16])
 
+    # can't set normalize_xyz when radius is None
+    with pytest.raises(AssertionError):
+        sa_cfg = dict(
+            type='PointSAModule',
+            num_point=16,
+            radius=None,
+            num_sample=8,
+            mlp_channels=[12, 32],
+            norm_cfg=dict(type='BN2d'),
+            use_xyz=True,
+            pool_mod='max',
+            normalize_xyz=True)
+        self = build_sa_module(sa_cfg)
+
+    # test kNN sampling when radius is None
+    sa_cfg['normalize_xyz'] = False
+    self = build_sa_module(sa_cfg).cuda()
+
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
+
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 16, 3])
+    assert new_features.shape == torch.Size([1, 32, 16])
+    assert inds.shape == torch.Size([1, 16])
+
 
 def test_pointnet_fp_module():
     if not torch.cuda.is_available():
