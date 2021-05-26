@@ -25,11 +25,13 @@ Currently we first support the benchmark on the large-scale nuScenes dataset, wh
 }
 ```
 
+![demo image](../../resources/browse_dataset_mono.png)
+
 ## Usage
 
 ### Data Preparation
 
-After supporting FCOS3D and monocular 3D object detection in v0.13.0, the coco-style 2D json info files will include related annotations by default 
+After supporting FCOS3D and monocular 3D object detection in v0.13.0, the coco-style 2D json info files will include related annotations by default
 (see [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L333) if you would like to change the parameter).
 So you can just follow the data preparation steps given in the documentation, then all the needed infos are ready together.
 
@@ -45,6 +47,10 @@ You can turn on it by setting `flip=True` in the `test_pipeline`.
 ### Training with finetune
 
 Due to the scale and measurements of depth is different from those of other regression targets, we first train the model with depth weight equal to 0.2 for a more stable training procedure. For a stronger detector with better performance, please finetune the model with depth weight changed to 1.0 as shown in the [config](./fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py). Note that the path of `load_from` needs to be changed to yours accordingly.
+
+### Visualizing prediction results
+
+We also provide visualization functions to show the monocular 3D detection results. Simply follow the [documentation](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#test-existing-models-on-standard-datasets) and use the `single-gpu testing` command. You only need to add the `--show` flag and specify `--show-dir` to store the visualization results.
 
 ## Results
 
