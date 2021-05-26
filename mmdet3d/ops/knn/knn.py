@@ -31,7 +31,7 @@ class KNN(Function):
                 when calling knn (=KNN.apply), just add the fourth param.
 
         Returns:
-            Tensor: (B, npoint, k) tensor with the indicies of
+            Tensor: (B, k, npoint) tensor with the indicies of
                 the features that form k-nearest neighbours.
         """
         assert k > 0
@@ -59,6 +59,8 @@ class KNN(Function):
         dist2 = center_xyz.new_zeros((B, npoint, k)).float()
 
         knn_ext.knn_wrapper(B, N, npoint, k, xyz, center_xyz, idx, dist2)
+        # idx shape to [B, k, npoint]
+        idx = idx.transpose(2, 1).contiguous()
         ctx.mark_non_differentiable(idx)
         return idx
 

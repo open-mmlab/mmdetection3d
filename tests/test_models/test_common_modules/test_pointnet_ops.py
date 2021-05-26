@@ -107,7 +107,7 @@ def test_knn():
     new_xyz_ = new_xyz.unsqueeze(2).repeat(1, 1, xyz.shape[1], 1)
     xyz_ = xyz.unsqueeze(1).repeat(1, new_xyz.shape[1], 1, 1)
     dist = ((new_xyz_ - xyz_) * (new_xyz_ - xyz_)).sum(-1)
-    expected_idx = dist.topk(k=5, dim=2, largest=False)[1]
+    expected_idx = dist.topk(k=5, dim=2, largest=False)[1].transpose(2, 1)
     assert torch.all(idx == expected_idx)
 
     idx = knn(5,
@@ -119,7 +119,7 @@ def test_knn():
     xyz_ = xyz.unsqueeze(2).repeat(1, 1, xyz.shape[1], 1)
     xyz__ = xyz.unsqueeze(1).repeat(1, xyz.shape[1], 1, 1)
     dist = ((xyz_ - xyz__) * (xyz_ - xyz__)).sum(-1)
-    expected_idx = dist.topk(k=5, dim=2, largest=False)[1]
+    expected_idx = dist.topk(k=5, dim=2, largest=False)[1].transpose(2, 1)
     assert torch.all(idx == expected_idx)
 
 
