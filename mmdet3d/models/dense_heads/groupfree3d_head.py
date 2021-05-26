@@ -39,6 +39,8 @@ class PointsObjClsModule(nn.Module):
                  act_cfg=dict(type='ReLU')):
         super().__init__()
         conv_channels = [in_channel for _ in range(num_conv_layers - 1)]
+        conv_channels.append(1)
+
         self.mlp = nn.Sequential()
         prev_channels = in_channel
         for i in range(num_conv_layers):
@@ -46,7 +48,7 @@ class PointsObjClsModule(nn.Module):
                 f'layer{i}',
                 ConvModule(
                     prev_channels,
-                    conv_channels[i] if i < num_conv_layers - 1 else 1,
+                    conv_channels[i],
                     1,
                     padding=0,
                     conv_cfg=conv_cfg,
