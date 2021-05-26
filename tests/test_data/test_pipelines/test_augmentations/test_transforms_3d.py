@@ -8,7 +8,8 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
                               GlobalRotScaleTrans, ObjectNoise, ObjectSample,
-                              PointShuffle, PointsRangeFilter, RandomFlip3D,
+                              PointShuffle, PointsRangeFilter,
+                              RandomDropPointsColor, RandomFlip3D,
                               VoxelBasedPointSampler)
 
 
@@ -362,6 +363,41 @@ def test_global_rot_scale_trans():
         np.concatenate([true_depth_points.tensor.numpy(), true_shift_height],
                        axis=1),
         atol=1e-6)
+
+
+def test_random_drop_points_color():
+    # drop_ratio should be in [0, 1]
+    with pytest.raises(AssertionError):
+        random_drop_points_color = RandomDropPointsColor(drop_ratio=1.1)
+
+    # 100% drop
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=1)
+
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    depth_points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_drop_points_color(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_color = trans_depth_points.color
+    assert torch.all(trans_color == trans_color.new_zeros(trans_color.shape))
+
+    # 0% drop
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=0)
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_drop_points_color(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_color = trans_depth_points.color
+    assert torch.allclose(trans_color, depth_points.tensor[:, 3:6])
+
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=0.5)
+    repr_str = repr(random_drop_points_color)
+    expected_repr_str = 'RandomDropPointsColor(drop_ratio=0.5)'
+    assert repr_str == expected_repr_str
 
 
 def test_random_flip_3d():

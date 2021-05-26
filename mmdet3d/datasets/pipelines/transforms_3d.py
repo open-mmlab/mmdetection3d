@@ -11,6 +11,50 @@ from .data_augment_utils import noise_per_object_v3_
 
 
 @PIPELINES.register_module()
+class RandomDropPointsColor(object):
+    r"""Randomly set the color of points to all zeros.
+
+    Once this transform is executed, all the points' color will be dropped.
+    Refer to `PAConv <https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/
+    util/transform.py#L223>`_ for more details.
+
+    Args:
+        drop_ratio (float): The probability of dropping point colors.
+            Defaults to 0.2.
+    """
+
+    def __init__(self, drop_ratio=0.2):
+        assert isinstance(drop_ratio, (int, float)) and 0 <= drop_ratio <= 1, \
+            f'invalid drop_ratio value {drop_ratio}'
+        self.drop_ratio = drop_ratio
+
+    def __call__(self, input_dict):
+        """Call function to drop point colors.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after color dropping, \
+                'points' key is updated in the result dict.
+        """
+        points = input_dict['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims, \
+            'Expect points have color attribute'
+
+        if np.random.rand() < self.drop_ratio:
+            points.color = points.color * 0.0
+        return input_dict
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(drop_ratio={self.drop_ratio})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
