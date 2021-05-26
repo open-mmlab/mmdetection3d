@@ -13,8 +13,9 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         num_dir_bins (int): Number of bins to encode direction angle.
         num_sizes (int): Number of size clusters.
         mean_sizes (list[list[int]]): Mean size of bboxes in each class.
-        with_rot (bool): Whether the bbox is with rotation.
-        size_cls_agnostic (bool): Wether the predicted size is class-agnostic.
+        with_rot (bool): Whether the bbox is with rotation. Defaults to True.
+        size_cls_agnostic (bool): Whether the predicted size is class-agnostic.
+            Defaults to True.
     """
 
     def __init__(self,
@@ -75,6 +76,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
                 - size_res: predicted bbox size residual.
                 - size: predicted class-agnostic bbox size
             suffix (str): Decode predictions with specific suffix.
+                Defaults to ''.
 
         Returns:
             torch.Tensor: Decoded bbox3d with shape (batch, n, 7).
@@ -120,6 +122,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
             reg_preds (torch.Tensor): Regression predicted features to split.
             base_xyz (torch.Tensor): Coordinates of points.
             suffix (str): Decode predictions with specific suffix.
+                Defaults to ''.
 
         Returns:
             dict[str, torch.Tensor]: Split results.

@@ -1147,8 +1147,8 @@ def test_groupfree3d_head():
     gt_bbox1 = torch.rand([10, 7], dtype=torch.float32).cuda()
     gt_bbox2 = torch.rand([10, 7], dtype=torch.float32).cuda()
 
-    gt_bbox1 = LiDARInstance3DBoxes(gt_bbox1)
-    gt_bbox2 = LiDARInstance3DBoxes(gt_bbox2)
+    gt_bbox1 = DepthInstance3DBoxes(gt_bbox1)
+    gt_bbox2 = DepthInstance3DBoxes(gt_bbox2)
     gt_bboxes = [gt_bbox1, gt_bbox2]
 
     pts_instance_mask_1 = torch.randint(0, 10, [50000], device='cuda')

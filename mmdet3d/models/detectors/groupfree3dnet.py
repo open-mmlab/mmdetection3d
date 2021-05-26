@@ -43,8 +43,9 @@ class GroupFree3DNet(SingleStage3DDetector):
                 label of each batch.
             gt_bboxes_ignore (None | list[torch.Tensor]): Specify
                 which bounding.
+
         Returns:
-            dict: Losses.
+            dict[str: torch.Tensor]: Losses.
         """
         points_cat = torch.stack(points)
 

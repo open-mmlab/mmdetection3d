@@ -2,6 +2,7 @@ import copy
 import numpy as np
 import torch
 from mmcv import ConfigDict
+from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks.transformer import build_transformer_layer
 from mmcv.runner import force_fp32
 from torch import nn as nn
@@ -19,17 +20,41 @@ class PointsObjClsModule(nn.Module):
     """object candidate point prediction from seed point features.
 
     Args:
-        seed_feature_dim (int): number of channels of seed point features
+        in_channel (int): number of channels of seed point features.
+        num_conv_layers (int): number of conv layers.
+            Default: 3.
+        conv_cfg (dict): Config of convolution.
+            Default: dict(type='Conv1d').
+        norm_cfg (dict): Config of normalization.
+            Default: dict(type='BN1d').
+        act_cfg (dict): Config of activation.
+            Default: dict(type='ReLU').
     """
 
-    def __init__(self, seed_feature_dim):
+    def __init__(self,
+                 in_channel,
+                 num_conv_layers=3,
+                 conv_cfg=dict(type='Conv1d'),
+                 norm_cfg=dict(type='BN1d'),
+                 act_cfg=dict(type='ReLU')):
         super().__init__()
-        self.in_dim = seed_feature_dim
-        self.conv1 = torch.nn.Conv1d(self.in_dim, self.in_dim, 1)
-        self.bn1 = torch.nn.BatchNorm1d(self.in_dim)
-        self.conv2 = torch.nn.Conv1d(self.in_dim, self.in_dim, 1)
-        self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
-        self.conv3 = torch.nn.Conv1d(self.in_dim, 1, 1)
+        conv_channels = [in_channel for _ in range(num_conv_layers - 1)]
+        self.mlp = nn.Sequential()
+        prev_channels = in_channel
+        for i in range(num_conv_layers):
+            self.mlp.add_module(
+                f'layer{i}',
+                ConvModule(
+                    prev_channels,
+                    conv_channels[i] if i < num_conv_layers - 1 else 1,
+                    1,
+                    padding=0,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg if i < num_conv_layers - 1 else None,
+                    act_cfg=act_cfg if i < num_conv_layers - 1 else None,
+                    bias=True,
+                    inplace=True))
+            prev_channels = conv_channels[i]
 
     def forward(self, seed_features):
         """Forward pass.
@@ -42,11 +67,7 @@ class PointsObjClsModule(nn.Module):
             torch.Tensor: objectness logits, dim:
                 (batch_size, 1, num_seed)
         """
-        net = F.relu(self.bn1(self.conv1(seed_features)))
-        net = F.relu(self.bn2(self.conv2(net)))
-        logits = self.conv3(net)  # (batch_size, 1, num_seed)
-
-        return logits
+        return self.mlp(seed_features)
 
 
 class GeneralSamplingModule(nn.Module):
@@ -69,9 +90,8 @@ class GeneralSamplingModule(nn.Module):
             Tensor: (B, C, M) the sampled features.
             Tensor: (B, M) the given index.
         """
-        xyz_flipped = xyz.transpose(1, 2).contiguous()
-        new_xyz = gather_points(xyz_flipped,
-                                sample_inds).transpose(1, 2).contiguous()
+        xyz_flipped = xyz.permute(1, 2)
+        new_xyz = gather_points(xyz_flipped, sample_inds).permute(1, 2)
         new_features = gather_points(features, sample_inds).contiguous()
 
         return new_xyz, new_features, sample_inds
@@ -83,6 +103,7 @@ class PositionEmbeddingLearned(nn.Module):
     Args:
         input_channel (int): input features dim.
         num_pos_feats (int): output position features dim.
+            Defaults to 288 to be consistent with seed features dim.
     """
 
     def __init__(self, input_channel, num_pos_feats=288):
@@ -101,7 +122,7 @@ class PositionEmbeddingLearned(nn.Module):
         Returns:
             Tensor: (B, num_pos_feats, N) the embeded position features.
         """
-        xyz = xyz.transpose(1, 2).contiguous()
+        xyz = xyz.permute(1, 2)
         position_embedding = self.position_embedding_head(xyz)
         return position_embedding
 
@@ -122,7 +143,7 @@ class GroupFree3DHead(nn.Module):
         num_proposal (int): The number of initial sampling candidates.
         pred_layer_cfg (dict): Config of classfication and regression
             prediction layers.
-        size_cls_agnostic (bool): Wether the predicted size is class-agnostic.
+        size_cls_agnostic (bool): Whether the predicted size is class-agnostic.
         gt_per_seed (int): the number of candidate instance each point belongs
             to.
         sampling_objectness_loss (dict): Config of initial sampling
@@ -449,11 +470,9 @@ class GroupFree3DHead(nn.Module):
         for suffix in suffixes:
 
             # calculate objectness loss
-            obj_score = bbox_preds[f'obj_scores{suffix}'].transpose(2,
-                                                                    1).reshape(
-                                                                        -1, 1)
+            obj_score = bbox_preds[f'obj_scores{suffix}'].transpose(2, 1)
             objectness_loss = self.objectness_loss(
-                obj_score,
+                obj_score.reshape(-1, 1),
                 1 - objectness_targets.reshape(-1),
                 objectness_weights.reshape(-1),
                 avg_factor=batch_size)
@@ -461,7 +480,7 @@ class GroupFree3DHead(nn.Module):
             objectness_loss_sum += objectness_loss
 
             # calculate center loss
-            box_loss_weights_expand = box_loss_weights.unsqueeze(-1).repeat(
+            box_loss_weights_expand = box_loss_weights.unsqueeze(-1).expand(
                 1, 1, 3)
             center_loss = self.center_loss(
                 bbox_preds[f'center{suffix}'],
@@ -516,12 +535,12 @@ class GroupFree3DHead(nn.Module):
                                               size_class_targets.unsqueeze(-1),
                                               1)
                 one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
-                    -1).repeat(1, 1, 1, 3).contiguous()
+                    -1).expand(1, 1, 1, 3).contiguous()
                 size_residual_norm = torch.sum(
                     bbox_preds[f'size_res_norm{suffix}'] *
                     one_hot_size_targets_expand, 2)
                 box_loss_weights_expand = box_loss_weights.unsqueeze(
-                    -1).repeat(1, 1, 3)
+                    -1).expand(1, 1, 3)
                 size_res_loss = self.size_res_loss(
                     size_residual_norm,
                     size_res_targets,
@@ -741,7 +760,7 @@ class GroupFree3DHead(nn.Module):
                     if j == 0:
                         vote_targets_tmp[
                             column_indices, :3 *
-                            self.gt_per_seed] = votes[column_indices].repeat(
+                            self.gt_per_seed] = votes[column_indices].expand(
                                 1, self.gt_per_seed)
                         vote_targets_tmp[column_indices,
                                          3 * self.gt_per_seed:] = i
@@ -821,7 +840,7 @@ class GroupFree3DHead(nn.Module):
         euclidean_dist1 = euclidean_dist1 * object_assignment_one_hot + 100 * (
             1 - object_assignment_one_hot)
         # (gt_num, num_seed)
-        euclidean_dist1 = euclidean_dist1.transpose(0, 1).contiguous()
+        euclidean_dist1 = euclidean_dist1.permute(0, 1)
 
         topk_inds = torch.topk(
             euclidean_dist1, seed_points_obj_topk,
@@ -854,7 +873,7 @@ class GroupFree3DHead(nn.Module):
         assignment = query_points_instance_label
         # set background points to the last gt bbox as original code
         assignment[assignment < 0] = gt_num - 1
-        assignment_expand = assignment.unsqueeze(1).repeat(1, 3)
+        assignment_expand = assignment.unsqueeze(1).expand(1, 3)
 
         assigned_center_targets = center_targets[assignment]
         assigned_size_targets = size_targets[assignment]
@@ -869,21 +888,21 @@ class GroupFree3DHead(nn.Module):
         one_hot_size_targets = gt_bboxes_3d.tensor.new_zeros(
             (num_candidate, self.num_sizes))
         one_hot_size_targets.scatter_(1, size_class_targets.unsqueeze(-1), 1)
-        one_hot_size_targets = one_hot_size_targets.unsqueeze(-1).repeat(
+        one_hot_size_targets = one_hot_size_targets.unsqueeze(-1).expand(
             1, 1, 3)  # (num_candidate,num_size_cluster,3)
         mean_sizes = size_res_targets.new_tensor(
             self.bbox_coder.mean_sizes).unsqueeze(0)
         pos_mean_sizes = torch.sum(one_hot_size_targets * mean_sizes, 1)
         size_res_targets /= pos_mean_sizes
 
-        mask_targets = gt_labels_3d[assignment]
+        mask_targets = gt_labels_3d[assignment].long()
 
         objectness_masks = points.new_ones((num_candidate))
 
         return (sampling_targets, assigned_size_targets, size_class_targets,
-                size_res_targets, dir_class_targets,
-                dir_res_targets, center_targets, assigned_center_targets,
-                mask_targets.long(), objectness_targets, objectness_masks)
+                size_res_targets, dir_class_targets, dir_res_targets,
+                center_targets, assigned_center_targets, mask_targets,
+                objectness_targets, objectness_masks)
 
     def get_bboxes(self,
                    points,
