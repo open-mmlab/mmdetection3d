@@ -14,13 +14,16 @@ model = dict(
             num_dir_bins=12,
             with_rot=True,
             size_cls_agnostic=True,
-            mean_sizes=[
-                [2.114256, 1.620300, 0.927272], [0.791118, 1.279516, 0.718182],
-                [0.923508, 1.867419, 0.845495], [0.591958, 0.552978, 0.827272],
-                [0.699104, 0.454178, 0.75625], [0.69519, 1.346299, 0.736364],
-                [0.528526, 1.002642, 1.172878], [0.500618, 0.632163, 0.683424],
-                [0.404671, 1.071108, 1.688889], [0.76584, 1.398258, 0.472728]
-            ]),
+            mean_sizes=[[2.114256, 1.620300, 0.927272],
+                        [0.791118, 1.279516, 0.718182],
+                        [0.923508, 1.867419, 0.845495],
+                        [0.591958, 0.552978, 0.827272],
+                        [0.699104, 0.454178, 0.75625],
+                        [0.69519, 1.346299, 0.736364],
+                        [0.528526, 1.002642, 1.172878],
+                        [0.500618, 0.632163, 0.683424],
+                        [0.404671, 1.071108, 1.688889],
+                        [0.76584, 1.398258, 0.472728]]),
         sampling_objectness_loss=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -51,7 +54,13 @@ model = dict(
             reduction='sum',
             loss_weight=10.0 * 0.0625),
         semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+    test_cfg=dict(
+        sample_mod='kps',
+        nms_thr=0.25,
+        score_thr=0.05,
+        per_class_proposal=True,
+        prediction_stages='all'))
 
 dataset_type = 'SUNRGBDDataset'
 data_root = 'data/sunrgbd/'

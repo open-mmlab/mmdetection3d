@@ -924,10 +924,27 @@ class GroupFree3DHead(nn.Module):
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
         # support multi-stage predicitons
+        assert self.test_cfg['prediction_stages'] in \
+            ['last', 'all', 'last_three']
+
+        suffixes = list()
+        if self.test_cfg['prediction_stages'] == 'last':
+            suffixes = [f'_{self.num_decoder_layers - 1}']
+        elif self.test_cfg['prediction_stages'] == 'all':
+            suffixes = ['_proposal'] + \
+                [f'_{i}' for i in range(self.num_decoder_layers)]
+        elif self.test_cfg['prediction_stages'] == 'last_three':
+            suffixes = [
+                f'_{i}' for i in range(self.num_decoder_layers -
+                                       3, self.num_decoder_layers)
+            ]
+        else:
+            raise NotImplementedError
+
         obj_scores = list()
         sem_scores = list()
         bbox3d = list()
-        for suffix in self.test_cfg['prediction_stages']:
+        for suffix in suffixes:
             # decode boxes
             obj_score = F.sigmoid(bbox_preds[f'obj_scores{suffix}'])[..., -1]
             sem_score = F.softmax(bbox_preds[f'sem_scores{suffix}'], dim=-1)

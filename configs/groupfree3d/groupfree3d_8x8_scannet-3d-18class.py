@@ -59,7 +59,13 @@ model = dict(
             reduction='sum',
             loss_weight=10.0 / 9.0),
         semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)))
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+    test_cfg=dict(
+        sample_mod='kps',
+        nms_thr=0.25,
+        score_thr=0.05,
+        per_class_proposal=True,
+        prediction_stages='last_three'))
 
 # dataset settings
 dataset_type = 'ScanNetDataset'

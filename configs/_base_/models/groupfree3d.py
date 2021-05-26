@@ -44,4 +44,4 @@ model = dict(
         nms_thr=0.25,
         score_thr=0.05,
         per_class_proposal=True,
-        prediction_stages=('_3', '_4', '_5')))
+        prediction_stages='last'))
