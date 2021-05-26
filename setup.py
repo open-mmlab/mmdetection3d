@@ -228,11 +228,6 @@ if __name__ == '__main__':
                 sources=['src/knn.cpp'],
                 sources_cuda=['src/knn_cuda.cu']),
             make_cuda_ext(
-                name='knn_heap_ext',
-                module='mmdet3d.ops.knn_heap',
-                sources=['src/knn_heap.cpp'],
-                sources_cuda=['src/knn_heap_cuda.cu']),
-            make_cuda_ext(
                 name='group_points_ext',
                 module='mmdet3d.ops.group_points',
                 sources=['src/group_points.cpp'],
