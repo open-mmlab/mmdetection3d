@@ -11,7 +11,7 @@ from .group_points import (GroupAll, QueryAndGroup, group_points,
 from .interpolate import three_interpolate, three_nn
 from .knn import knn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
-from .paconv import assign_score_withk
+from .paconv import PAConv, PAConvCUDA, assign_score_withk
 from .pointnet_modules import (PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
@@ -32,5 +32,6 @@ __all__ = [
     'gather_points', 'grouping_operation', 'group_points', 'GroupAll',
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
     'points_in_boxes_batch', 'get_compiler_version', 'assign_score_withk',
-    'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module'
+    'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module',
+    'PAConv', 'PAConvCUDA'
 ]

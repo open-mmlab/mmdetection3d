@@ -16,7 +16,7 @@ class AssignScoreWithK(Function):
         more detailed descriptions.
 
     Note:
-        This implementation equals to using ``neighbor`` kernel input, which is
+        This implementation assumes using ``neighbor`` kernel input, which is
             (point_features - center_features, point_features).
         See https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/
         pointnet2/paconv.py#L128 for more details.
@@ -34,21 +34,20 @@ class AssignScoreWithK(Function):
         Args:
             scores (torch.Tensor): (B, npoint, K, M), predicted scores to
                 aggregate weight matrices in the weight bank.
-                npoint is the number of sampled centers.
-                K is the number of neighbors in kNN querying.
-                M is the number of weight matrices in the weight bank.
-            point_features (torch.Tensor): (B, N, M, out_dim), pre-computed
-                point features to be aggregated.
-            center_features (torch.Tensor): (B, N, M, out_dim), pre-computed
-                center features to be aggregated.
+                ``npoint`` is the number of sampled centers.
+                ``K`` is the number of queried neighbors.
+                ``M`` is the number of weight matrices in the weight bank.
+            point_features (torch.Tensor): (B, N, M, out_dim)
+                Pre-computed point features to be aggregated.
+            center_features (torch.Tensor): (B, N, M, out_dim)
+                Pre-computed center features to be aggregated.
             knn_idx (torch.Tensor): (B, npoint, K), index of sampled kNN.
                 We assume the first idx in each row is the idx of the center.
             aggregate (str, optional): Aggregation method.
                 Can be 'sum', 'avg' or 'max'. Defaults to 'sum'.
 
         Returns:
-            Tensor: (B, out_dim, npoint, K), the aggregated features located
-                at each center.
+            torch.Tensor: (B, out_dim, npoint, K), the aggregated features.
         """
         agg = {'sum': 0, 'avg': 1, 'max': 2}
 
