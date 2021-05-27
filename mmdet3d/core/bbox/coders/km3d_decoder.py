@@ -206,17 +206,6 @@ def transform_img2cam(kps, dim, rot, meta, const):
     const = const.expand(batch, boxes, -1, -1)
     matrix_A = torch.cat([const, kp], dim=3)
 
-    # data_B = torch.FloatTensor([
-    #     length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
-    #     length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
-    #     -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
-    #     -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
-    #     length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5,
-    #     length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
-    #     -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
-    #     -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5
-    # ])
-
     index_B = torch.FloatTensor([[1, 1, 0], [0, 0, 1], [1, -1, 0], [0, 0, 1],
                                  [-1, -1, 0], [0, 0, 1], [-1, 1, 0], [0, 0, 1],
                                  [1, 1, 0], [0, 0, -1], [1, -1, 0], [0, 0, -1],
@@ -228,25 +217,6 @@ def transform_img2cam(kps, dim, rot, meta, const):
 
     data_B = index_B * var_B
     matrix_B[:, :, :] = data_B
-
-    # data_C = torch.FloatTensor([
-    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
-    #     length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y
-    # ])
 
     index_C = torch.FloatTensor([[-1, 1], [-1, 1], [-1, -1], [-1, -1], [1, -1],
                                  [1, -1], [1, 1], [1, 1], [-1, 1], [-1, 1],
