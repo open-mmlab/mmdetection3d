@@ -14,6 +14,12 @@ class AssignScoreWithK(Function):
         neighbor features with `knn_idx` and perform weighted sum of `scores`.
     See the `paper <https://arxiv.org/pdf/2103.14635.pdf>`_ appendix Sec. D for
         more detailed descriptions.
+
+    Note:
+        This implementation equals to using ``neighbor`` kernel input, which is
+            (point_features - center_features, point_features).
+        See https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/
+        pointnet2/paconv.py#L128 for more details.
     """
 
     @staticmethod

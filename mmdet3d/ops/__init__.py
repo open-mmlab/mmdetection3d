@@ -11,7 +11,7 @@ from .group_points import (GroupAll, QueryAndGroup, group_points,
 from .interpolate import three_interpolate, three_nn
 from .knn import knn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
-from .paconv_assign_score import assign_score_withk
+from .paconv import assign_score_withk
 from .pointnet_modules import (PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
