@@ -172,7 +172,7 @@ class RandomFlip3D(RandomFlip):
 class RandomJitterPoints(object):
     """Randomly jitter point coordinates.
 
-    Different from the global translation in GlobalRotScaleTrans, here we \
+    Different from the global translation in ``GlobalRotScaleTrans``, here we \
         apply different noises to each point in a scene.
 
     Args:
