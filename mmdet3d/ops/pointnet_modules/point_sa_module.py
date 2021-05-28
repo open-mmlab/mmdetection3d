@@ -540,7 +540,6 @@ class PAConvSAModuleMSGCUDA(_PointSAModuleBase):
             mlp = nn.ModuleList()
             for i in range(len(mlp_spec) - 1):
                 mlp.append(
-                    f'layer{i}',
                     PAConvCUDA(
                         mlp_spec[i],
                         mlp_spec[i + 1],
@@ -599,7 +598,7 @@ class PAConvSAModuleMSGCUDA(_PointSAModuleBase):
 
                 # (B, out_c, num_point, nsample)
                 grouped_new_features = self.mlps[i][j](
-                    (new_features, grouped_xyz, grouped_idx))
+                    (new_features, grouped_xyz, grouped_idx.long()))
 
                 # different from PointNet++ and non CUDA version of PAConv
                 # CUDA version of PAConv needs to aggregate local features
