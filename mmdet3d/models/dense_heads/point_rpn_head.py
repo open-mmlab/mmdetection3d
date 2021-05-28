@@ -227,7 +227,7 @@ class PointRPNHead(BaseModule):
             bbox_preds['size'],
             size_res_targets,
             weight=box_loss_weights.unsqueeze(-1))
-        '''
+
         # corner loss
         one_hot_dir_class_targets = dir_class_targets.new_zeros(
             bbox_preds['dir_class'].shape)
@@ -250,7 +250,7 @@ class PointRPNHead(BaseModule):
             pred_corners3d,
             corner3d_targets.reshape(-1, 8, 3),
             weight=box_loss_weights.view(-1, 1, 1))
-        '''
+
         # calculate semantic loss
         semantic_points = bbox_preds['obj_scores'].transpose(2,
                                                              1).reshape(-1, 1)
@@ -270,11 +270,13 @@ class PointRPNHead(BaseModule):
         gt_bboxes = gt_bboxes_3d[indices_xxx].tensor.cpu().numpy()
         gt_bboxes[:, 6] = -gt_bboxes[:, 6]
         write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes_rpn.ply')
+
         points_mask = points_label==0
         pred_bbox3d = pred_bbox3d[0:16384][points_mask].tensor
         pred_bbox3d = pred_bbox3d.tensor.detach().cpu().numpy()
         pred_bbox3d[:, 6] = -pred_bbox3d[:, 6]
         write_oriented_bbox(pred_bbox3d, '/tmp/label_bboxes_pred_rpn.ply')
+
         assert 0
         '''
 
@@ -283,6 +285,7 @@ class PointRPNHead(BaseModule):
             dir_class_loss=dir_class_loss,
             dir_res_loss=dir_res_loss,
             size_res_loss=size_loss,
+            corner_loss=corner_loss,
             semantic_loss=semantic_loss)
         return losses
 
@@ -382,16 +385,13 @@ class PointRPNHead(BaseModule):
         gt_labels_3d = gt_labels_3d[valid_gt]
 
         # transform the bbox coordinate to the pointcloud coordinate
-        trans_gt_bboxes = gt_bboxes_3d.clone()
-        trans_gt_bboxes.tensor[:, 2] -= trans_gt_bboxes.tensor[:, 5] / 2
-        gt_corner3d = trans_gt_bboxes.corners
+        gt_corner3d = gt_bboxes_3d.corners
 
         (center_targets, size_targets, dir_class_targets,
-         dir_res_targets) = self.bbox_coder.encode(trans_gt_bboxes,
-                                                   gt_labels_3d)
+         dir_res_targets) = self.bbox_coder.encode(gt_bboxes_3d, gt_labels_3d)
 
         points_mask, assignment = self._assign_targets_by_points_inside(
-            trans_gt_bboxes, points)
+            gt_bboxes_3d, points)
 
         center_targets = center_targets[assignment]
         center_targets -= points[:, 0:3]
@@ -443,7 +443,8 @@ class PointRPNHead(BaseModule):
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
-                with_yaw=self.bbox_coder.with_rot)
+                with_yaw=self.bbox_coder.with_rot,
+                origin=(0.5, 0.5, 0.5))
             results.append((bbox, score_selected, labels))
         return results
 

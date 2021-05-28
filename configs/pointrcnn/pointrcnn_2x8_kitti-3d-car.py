@@ -28,14 +28,13 @@ train_pipeline = [
     dict(
         type='ObjectNoise',
         num_try=100,
-        translation_std=[0.25, 0.25, 0.25],
+        translation_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
-        rot_range=[-0.15707963267, 0.15707963267]),
+        rot_range=[-0.78539816, 0.78539816]),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05]),
-    dict(type='BackgroundPointsFilter', bbox_enlarge_range=(0.5, 2.0, 0.5)),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='IndoorPointSample', num_points=16384),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
@@ -77,13 +76,13 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names))
 
 # optimizer
-lr = 0.0025  # max learning rate
+lr = 0.005  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(policy='step', warmup=None, step=[35, 45])
 # runtime settings
 total_epochs = 81
-
+evaluation = dict(interval=4)
 # yapf:disable
 log_config = dict(
     interval=30,

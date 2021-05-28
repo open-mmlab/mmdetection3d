@@ -160,16 +160,6 @@ class PointRCNNROIHead(Base3DRoIHead):
         features = feats_dict['features']
         points = feats_dict['points']
         point_scores = feats_dict['points_scores']
-        rcnn_gt_bboxes_3d = list()
-        rcnn_gt_labels_3d = list()
-        for i in range(len(gt_bboxes_3d)):
-            valid_gt = gt_labels_3d[i] != -1
-            gt_bboxes = input_metas[i]['box_type_3d'](
-                gt_bboxes_3d[i].tensor[valid_gt].clone(),
-                box_dim=gt_bboxes_3d[i].tensor.shape[-1],
-                with_yaw=True)
-            rcnn_gt_bboxes_3d.append(gt_bboxes)
-            rcnn_gt_labels_3d.append(gt_labels_3d[i][valid_gt].clone())
         '''
         points_t = points[0]
         points_t = points_t[:,0:3].cpu().data.numpy()
@@ -188,9 +178,8 @@ class PointRCNNROIHead(Base3DRoIHead):
         '''
 
         losses = dict()
-        sample_results = self._assign_and_sample(proposal_list,
-                                                 rcnn_gt_bboxes_3d,
-                                                 rcnn_gt_labels_3d)
+        sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
+                                                 gt_labels_3d)
 
         # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
