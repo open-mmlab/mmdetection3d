@@ -89,6 +89,8 @@ def inference_detector(model, pcd):
         pts_filename=pcd,
         box_type_3d=box_type_3d,
         box_mode_3d=box_mode_3d,
+        # for ScanNet demo we need axis_align_matrix
+        ann_info=dict(axis_align_matrix=np.eye(4)),
         sweeps=[],
         # set timestamp = 0
         timestamp=[0],
