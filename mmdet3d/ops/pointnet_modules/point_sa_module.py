@@ -63,6 +63,7 @@ class _PointSAModuleBase(nn.Module):
 
         if isinstance(mlp_channels, tuple):
             mlp_channels = list(map(list, mlp_channels))
+        self.mlp_channels = mlp_channels
 
         if isinstance(num_point, int):
             self.num_point = [num_point]
@@ -199,6 +200,12 @@ class _PointSAModuleBase(nn.Module):
             # (B, mlp[-1], num_point, nsample)
             new_features = self.mlps[i](grouped_results)
 
+            # this is a bit hack because PAConv outputs two values
+            # we take the first one as feature
+            if isinstance(self.mlps[i][0], PAConv):
+                assert isinstance(new_features, tuple)
+                new_features = new_features[0]
+
             # (B, mlp[-1], num_point)
             new_features = self._pool_features(new_features)
             new_features_list.append(new_features)
@@ -264,8 +271,8 @@ class PointSAModuleMSG(_PointSAModuleBase):
             pool_mod=pool_mod,
             normalize_xyz=normalize_xyz)
 
-        for i in range(len(mlp_channels)):
-            mlp_spec = mlp_channels[i]
+        for i in range(len(self.mlp_channels)):
+            mlp_spec = self.mlp_channels[i]
             if use_xyz:
                 mlp_spec[0] += 3
 
@@ -405,8 +412,8 @@ class PAConvSAModuleMSG(_PointSAModuleBase):
         # in PAConv, bias only exists in ScoreNet
         scorenet_cfg['bias'] = bias
 
-        for i in range(len(mlp_channels)):
-            mlp_spec = mlp_channels[i]
+        for i in range(len(self.mlp_channels)):
+            mlp_spec = self.mlp_channels[i]
             if use_xyz:
                 mlp_spec[0] += 3
 
@@ -528,8 +535,8 @@ class PAConvSAModuleMSGCUDA(_PointSAModuleBase):
         # we need to manually concat xyz for CUDA implemented PAConv
         self.use_xyz = use_xyz
 
-        for i in range(len(mlp_channels)):
-            mlp_spec = mlp_channels[i]
+        for i in range(len(self.mlp_channels)):
+            mlp_spec = self.mlp_channels[i]
             if use_xyz:
                 mlp_spec[0] += 3
 
@@ -598,7 +605,7 @@ class PAConvSAModuleMSGCUDA(_PointSAModuleBase):
 
                 # (B, out_c, num_point, nsample)
                 grouped_new_features = self.mlps[i][j](
-                    (new_features, grouped_xyz, grouped_idx.long()))
+                    (new_features, grouped_xyz, grouped_idx.long()))[0]
 
                 # different from PointNet++ and non CUDA version of PAConv
                 # CUDA version of PAConv needs to aggregate local features
