@@ -424,5 +424,6 @@ class PAConvSAModule(PAConvSAModuleMSG):
             fps_mod=fps_mod,
             fps_sample_range_list=fps_sample_range_list,
             normalize_xyz=normalize_xyz,
+            paconv_kernel_input=paconv_kernel_input,
             scorenet_input=scorenet_input,
             scorenet_cfg=scorenet_cfg)

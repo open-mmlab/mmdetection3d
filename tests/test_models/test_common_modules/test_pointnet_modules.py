@@ -289,6 +289,64 @@ def test_paconv_sa_module_msg():
     assert inds.shape == torch.Size([1, 16])
 
 
+def test_paconv_sa_module():
+    if not torch.cuda.is_available():
+        pytest.skip()
+    from mmdet3d.ops import build_sa_module
+    sa_cfg = dict(
+        type='PAConvSAModule',
+        num_point=16,
+        radius=0.2,
+        num_sample=8,
+        mlp_channels=[12, 32],
+        paconv_num_kernels=[8],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=True,
+        pool_mod='max',
+        paconv_kernel_input='neighbor')
+    self = build_sa_module(sa_cfg).cuda()
+
+    assert self.mlps[0].layer0.weight_bank.shape[0] == 15 * 2
+    assert self.mlps[0].layer0.weight_bank.shape[1] == 32 * 8
+
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
+
+    # (B, N, 3)
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
+    # (B, C, N)
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+
+    # test forward
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 16, 3])
+    assert new_features.shape == torch.Size([1, 32, 16])
+    assert inds.shape == torch.Size([1, 16])
+
+    # test kNN sampling when radius is None
+    sa_cfg = dict(
+        type='PAConvSAModule',
+        num_point=16,
+        radius=None,
+        num_sample=8,
+        mlp_channels=[12, 32],
+        paconv_num_kernels=[8],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=True,
+        pool_mod='max',
+        paconv_kernel_input='identity')
+    self = build_sa_module(sa_cfg).cuda()
+    assert self.mlps[0].layer0.weight_bank.shape[0] == 15 * 1
+
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
+
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_xyz.shape == torch.Size([1, 16, 3])
+    assert new_features.shape == torch.Size([1, 32, 16])
+    assert inds.shape == torch.Size([1, 16])
+
+
 def test_pointnet_fp_module():
     if not torch.cuda.is_available():
         pytest.skip()
