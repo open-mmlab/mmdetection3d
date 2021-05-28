@@ -212,9 +212,7 @@ class PAConv(nn.Module):
                 Features of the queried points.
 
         Returns:
-            Tuple[torch.Tensor]:
-                points_xyz: (B, 3, npoint, K), unchanged coordinates.
-                new_features: (B, out_c, npoint, K), features after PAConv.
+            torch.Tensor: (B, out_c, npoint, K), features after PAConv.
         """
         B, _, npoint, K = features.size()
         center_xyz = points_xyz[..., :1].repeat(1, 1, 1, K)
@@ -257,7 +255,7 @@ class PAConv(nn.Module):
         if self.activate is not None:
             new_features = self.activate(new_features)
 
-        return points_xyz, new_features
+        return new_features
 
 
 class PAConvCUDA(PAConv):
@@ -313,10 +311,7 @@ class PAConvCUDA(PAConv):
                 Index of the grouped points.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-                points_xyz: (B, 3, npoint, K), unchanged coordinates.
-                new_features: (B, out_c, npoint, K), features after PAConv.
-                points_idx: (B, npoint, K), unchanged grouping index.
+            torch.Tensor: (B, out_c, npoint, K), features after PAConv.
         """
         B, _, npoint, K = points_xyz.size()
         center_xyz = points_xyz[..., :1].repeat(1, 1, 1, K)
@@ -352,4 +347,4 @@ class PAConvCUDA(PAConv):
         if self.activate is not None:
             new_features = self.activate(new_features)
 
-        return points_xyz, new_features, points_idx
+        return new_features

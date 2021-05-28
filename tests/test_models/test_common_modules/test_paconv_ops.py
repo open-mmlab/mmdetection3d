@@ -199,10 +199,8 @@ def test_paconv():
     paconv = PAConv(in_channels, out_channels, 4)
 
     with torch.no_grad():
-        new_xyz, new_features = paconv(points_xyz, features)
+        new_features = paconv(points_xyz, features)
 
-    # xyz should be unchanged
-    assert torch.allclose(new_xyz, points_xyz)
     assert new_features.shape == torch.Size([B, out_channels, npoint, K])
 
 
@@ -222,10 +220,6 @@ def test_paconv_cuda():
     paconv = PAConvCUDA(in_channels, out_channels, 4).cuda()
 
     with torch.no_grad():
-        new_xyz, new_features, new_idx = paconv(points_xyz, features,
-                                                points_idx)
+        new_features = paconv(points_xyz, features, points_idx)
 
-    # xyz and idx should be unchanged
-    assert torch.allclose(new_xyz, points_xyz)
-    assert torch.all(points_idx == new_idx)
     assert new_features.shape == torch.Size([B, out_channels, npoint, K])
