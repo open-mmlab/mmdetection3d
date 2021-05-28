@@ -250,16 +250,15 @@ class PAConv(nn.Module):
         Args:
             inputs (tuple(torch.Tensor)):
 
-                - points_xyz (torch.Tensor): (B, 3, npoint, K)
-                    Coordinates of the grouped points.
                 - features (torch.Tensor): (B, in_c, npoint, K)
                     Features of the queried points.
+                - points_xyz (torch.Tensor): (B, 3, npoint, K)
+                    Coordinates of the grouped points.
 
         Returns:
             torch.Tensor: (B, out_c, npoint, K), features after PAConv.
         """
-        points_xyz, features = inputs
-
+        features, points_xyz = inputs
         B, _, npoint, K = features.size()
 
         if self.kernel_input == 'w_neighbor':
@@ -338,19 +337,19 @@ class PAConvCUDA(PAConv):
         Args:
             inputs (tuple(torch.Tensor)):
 
-                - points_xyz (torch.Tensor): (B, 3, npoint, K)
-                    Coordinates of the grouped points.
                 - features (torch.Tensor): (B, in_c, N)
                     Features of all points in the current point cloud.
                     Different from non-CUDA version PAConv, here the features
                         are not grouped by each center to form a K dim.
+                - points_xyz (torch.Tensor): (B, 3, npoint, K)
+                    Coordinates of the grouped points.
                 - points_idx (torch.Tensor): (B, npoint, K)
                     Index of the grouped points.
 
         Returns:
             torch.Tensor: (B, out_c, npoint, K), features after PAConv.
         """
-        points_xyz, features, points_idx = inputs
+        features, points_xyz, points_idx = inputs
 
         # prepare features for between each point and its grouping center
         xyz_features = self._prepare_scorenet_input(points_xyz)
