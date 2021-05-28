@@ -8,10 +8,8 @@ from mmdet3d.ops import GroupAll, Points_Sampler, QueryAndGroup, gather_points
 from .builder import SA_MODULES
 
 
-@SA_MODULES.register_module()
-class PointSAModuleMSG(nn.Module):
-    """Point set abstraction module with multi-scale grouping used in
-    Pointnets.
+class _PointSAModuleBase(nn.Module):
+    """Base module for point set abstraction module used in PointNets.
 
     Args:
         num_point (int): Number of points.
@@ -54,7 +52,7 @@ class PointSAModuleMSG(nn.Module):
                  pool_mod='max',
                  normalize_xyz: bool = False,
                  bias='auto'):
-        super().__init__()
+        super(_PointSAModuleBase, self).__init__()
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
         assert pool_mod in ['max', 'avg']
@@ -99,24 +97,6 @@ class PointSAModuleMSG(nn.Module):
             else:
                 grouper = GroupAll(use_xyz)
             self.groupers.append(grouper)
-
-            mlp_spec = mlp_channels[i]
-            if use_xyz:
-                mlp_spec[0] += 3
-
-            mlp = nn.Sequential()
-            for i in range(len(mlp_spec) - 1):
-                mlp.add_module(
-                    f'layer{i}',
-                    ConvModule(
-                        mlp_spec[i],
-                        mlp_spec[i + 1],
-                        kernel_size=(1, 1),
-                        stride=(1, 1),
-                        conv_cfg=dict(type='Conv2d'),
-                        norm_cfg=norm_cfg,
-                        bias=bias))
-            self.mlps.append(mlp)
 
     def forward(
         self,
@@ -180,6 +160,58 @@ class PointSAModuleMSG(nn.Module):
 
 
 @SA_MODULES.register_module()
+class PointSAModuleMSG(_PointSAModuleBase):
+    """Point set abstraction module with multi-scale grouping (MSG) used in
+    PointNets."""
+
+    def __init__(self,
+                 num_point: int,
+                 radii: List[float],
+                 sample_nums: List[int],
+                 mlp_channels: List[List[int]],
+                 fps_mod: List[str] = ['D-FPS'],
+                 fps_sample_range_list: List[int] = [-1],
+                 dilated_group: bool = False,
+                 norm_cfg: dict = dict(type='BN2d'),
+                 use_xyz: bool = True,
+                 pool_mod='max',
+                 normalize_xyz: bool = False,
+                 bias='auto'):
+        super(PointSAModuleMSG, self).__init__(
+            num_point=num_point,
+            radii=radii,
+            sample_nums=sample_nums,
+            mlp_channels=mlp_channels,
+            fps_mod=fps_mod,
+            fps_sample_range_list=fps_sample_range_list,
+            dilated_group=dilated_group,
+            norm_cfg=norm_cfg,
+            use_xyz=use_xyz,
+            pool_mod=pool_mod,
+            normalize_xyz=normalize_xyz,
+            bias=bias)
+
+        for i in range(len(mlp_channels)):
+            mlp_spec = mlp_channels[i]
+            if use_xyz:
+                mlp_spec[0] += 3
+
+            mlp = nn.Sequential()
+            for i in range(len(mlp_spec) - 1):
+                mlp.add_module(
+                    f'layer{i}',
+                    ConvModule(
+                        mlp_spec[i],
+                        mlp_spec[i + 1],
+                        kernel_size=(1, 1),
+                        stride=(1, 1),
+                        conv_cfg=dict(type='Conv2d'),
+                        norm_cfg=norm_cfg,
+                        bias=bias))
+            self.mlps.append(mlp)
+
+
+@SA_MODULES.register_module()
 class PointSAModule(PointSAModuleMSG):
     """Point set abstraction module used in Pointnets.
 
@@ -217,7 +249,7 @@ class PointSAModule(PointSAModuleMSG):
                  fps_mod: List[str] = ['D-FPS'],
                  fps_sample_range_list: List[int] = [-1],
                  normalize_xyz: bool = False):
-        super().__init__(
+        super(PointSAModule, self).__init__(
             mlp_channels=[mlp_channels],
             num_point=num_point,
             radii=[radius],
