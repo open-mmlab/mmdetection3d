@@ -29,7 +29,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         Args:
             gt_boxes: (N, 7 + C) [x, y, z, dx, dy, dz, heading, ...]
             points: (N, 3) [x, y, z]
-            gt_classes: (N) [1, num_classes]
+            gt_classes: (N) [0, num_classes - 1]
         Returns:
             box_coding: (N, 8 + C)
         """
@@ -41,7 +41,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
 
         if self.use_mean_size:
             assert gt_classes.max() <= self.mean_size.shape[0]
-            point_anchor_size = self.mean_size[gt_classes - 1]
+            point_anchor_size = self.mean_size[gt_classes]
             dxa, dya, dza = torch.split(point_anchor_size, 1, dim=-1)
             diagonal = torch.sqrt(dxa**2 + dya**2)
             xt = (xg - xa) / diagonal
@@ -70,7 +70,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         Args:
             box_encodings: (N, 8 + C) [x, y, z, dx, dy, dz, cos, sin, ...]
             points: [x, y, z]
-            pred_classes: (N) [1, num_classes]
+            pred_classes: (N) [0, num_classes - 1]
         Returns:
 
         """
@@ -79,8 +79,8 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         xa, ya, za = torch.split(points, 1, dim=-1)
 
         if self.use_mean_size:
-            assert pred_classes.max() <= self.mean_size.shape[0]
-            point_anchor_size = self.mean_size[pred_classes - 1]
+            assert pred_classes.max() <= self.mean_size.shape[0] - 1
+            point_anchor_size = self.mean_size[pred_classes]
             dxa, dya, dza = torch.split(point_anchor_size, 1, dim=-1)
             diagonal = torch.sqrt(dxa**2 + dya**2)
             xg = xt * diagonal + xa

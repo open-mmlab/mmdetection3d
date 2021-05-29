@@ -135,15 +135,20 @@ class PointRPNHead(BaseModule):
     def forward(self, feat_dict):
         point_features = feat_dict['fp_features'][-1]
         point_cls_preds, point_box_preds = self.conv_pred(point_features)
+        '''
         ret_dict = {
             'fp_points': feat_dict['fp_xyz'][-1],
             'fp_indices': feat_dict['fp_indices'][-1],
             'fp_features': feat_dict['fp_features'][-1]
         }
-        decode_res = self.bbox_coder.decode(feat_dict['fp_xyz'][-1],
-                                            point_cls_preds, point_box_preds)
-
-        ret_dict.update(decode_res)
+        print('preds: ', point_box_preds.shape, point_cls_preds.shape)
+        roi_scores, roi_labels = torch.max(
+            point_cls_preds.transpose(2,1),dim=2)
+        print('result: ', roi_scores.shape, roi_labels.shape)
+        bbox_preds = self.bbox_coder.decode(point_box_preds.transpose(2,1),
+                                            feat_dict['fp_xyz'][-1],
+                                            roi_labels)
+        '''
         '''
         print(point_cls_preds.shape)
         points_label = point_cls_preds.transpose(2, 1). \
@@ -157,11 +162,13 @@ class PointRPNHead(BaseModule):
         write_oriented_bbox(bbox3d[0].cpu().numpy(),'/tmp/label_bboxes.ply')
         # assert 0
         '''
-        return ret_dict
+        return (point_box_preds.transpose(2,
+                                          1), point_cls_preds.transpose(2, 1))
 
     @force_fp32(apply_to=('bbox_preds'))
     def loss(self,
              bbox_preds,
+             cls_preds,
              points,
              gt_bboxes_3d,
              gt_labels_3d,
@@ -188,18 +195,19 @@ class PointRPNHead(BaseModule):
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    bbox_preds)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
-         box_loss_weights, corner3d_targets) = targets
+         box_loss_weights, corner3d_targets, point_targets) = targets
 
         # bbox loss
-        bbox_loss = self.bbox_loss(bbox_preds, bbox_targets, box_loss_weights)
-
+        bbox_loss = self.bbox_loss(bbox_preds, bbox_targets,
+                                   box_loss_weights.unsqueeze(-1))
         # corner loss
-        pred_bbox3d = self.bbox_coder.decode(bbox_preds)
+        pred_bbox3d = self.bbox_coder.decode(bbox_preds, point_targets,
+                                             mask_targets)
         pred_bbox3d = pred_bbox3d.reshape(-1, pred_bbox3d.shape[-1])
         pred_bbox3d = img_metas[0]['box_type_3d'](
             pred_bbox3d.clone(),
             box_dim=pred_bbox3d.shape[-1],
-            with_yaw=self.bbox_coder.with_rot,
+            with_yaw=True,
             origin=(0.5, 0.5, 0.5))
         pred_corners3d = pred_bbox3d.corners.reshape(-1, 8, 3)
         corner_loss = self.corner_loss(
@@ -208,8 +216,7 @@ class PointRPNHead(BaseModule):
             weight=box_loss_weights.view(-1, 1, 1))
 
         # calculate semantic loss
-        semantic_points = bbox_preds['obj_scores'].transpose(2, 1)
-        semantic_points = semantic_points.reshape(-1, self.num_classes)
+        semantic_points = cls_preds.reshape(-1, self.num_classes)
         semantic_targets = mask_targets
         semantic_targets[negative_mask] = self.num_classes
         semantic_points_label = semantic_targets
@@ -274,18 +281,20 @@ class PointRPNHead(BaseModule):
                 gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
 
         (bbox_targets, mask_targets, positive_mask, negative_mask,
-         corner3d_targets) = multi_apply(self.get_targets_single, points,
-                                         gt_bboxes_3d, gt_labels_3d)
+         corner3d_targets,
+         point_targets) = multi_apply(self.get_targets_single, points,
+                                      gt_bboxes_3d, gt_labels_3d)
 
         bbox_targets = torch.stack(bbox_targets)
         corner3d_targets = torch.stack(corner3d_targets)
         mask_targets = torch.stack(mask_targets)
         positive_mask = torch.stack(positive_mask)
         negative_mask = torch.stack(negative_mask)
+        point_targets = torch.stack(point_targets)
         box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)
 
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
-                box_loss_weights, corner3d_targets)
+                box_loss_weights, corner3d_targets, point_targets)
 
     def get_targets_single(self, points, gt_bboxes_3d, gt_labels_3d):
         """Generate targets of ssd3d head for single batch.
@@ -320,14 +329,14 @@ class PointRPNHead(BaseModule):
         mask_targets = gt_labels_3d[assignment]
         corner3d_targets = gt_corner3d[assignment]
 
-        bbox_targets = self.bbox_coder.encode(points, gt_bboxes_3d_tensor,
-                                              mask_targets)
+        bbox_targets = self.bbox_coder.encode(gt_bboxes_3d_tensor,
+                                              points[..., 0:3], mask_targets)
 
         positive_mask = (points_mask.max(1)[0] > 0)
         negative_mask = (points_mask.max(1)[0] == 0)
-
+        point_targets = points[..., 0:3]
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
-                corner3d_targets)
+                corner3d_targets, point_targets)
 
     def get_bboxes(self,
                    points,

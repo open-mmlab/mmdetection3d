@@ -75,14 +75,14 @@ class PointRCNN(TwoStage3DDetector):
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
         '''
         if self.with_rpn:
-            bbox_preds = self.rpn_head(x)
+            bbox_preds, cls_preds = self.rpn_head(x)
             rpn_loss = self.rpn_head.loss(
                 bbox_preds=bbox_preds,
+                cls_preds=cls_preds,
                 points=points,
                 gt_bboxes_3d=gt_bboxes_3d,
                 gt_labels_3d=gt_labels_3d,
-                img_metas=img_metas,
-                gt_bboxes_ignore=gt_bboxes_ignore)
+                img_metas=img_metas)
             losses.update(rpn_loss)
         '''
             sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(
