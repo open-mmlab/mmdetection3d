@@ -22,30 +22,24 @@ model = dict(
             normalize_xyz=False)),
     rpn_head=dict(
         type='PointRPNHead',
-        num_classes=3,
+        num_classes=1,
         num_dir_bins=12,
         pred_layer_cfg=dict(
             in_channels=128,
             cls_conv_channels=(256, 256),
             reg_conv_channels=(256, 256),
             bias=True),
-        center_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        dir_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
-        dir_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+        bbox_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
         corner_loss=dict(
             type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         bbox_coder=dict(
-            type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)),
+            type='PointXYZWHLRBBoxCoder',
+            use_mean_size=True,
+            mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6,
+                                                            1.73]])),
     roi_head=dict(
         type='PointRCNNROIHead',
-        num_classes=3,
+        num_classes=1,
         point_roi_extractor=dict(
             type='Single3DRoIPointExtractor',
             roi_layer=dict(
