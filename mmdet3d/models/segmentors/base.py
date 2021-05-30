@@ -69,18 +69,18 @@ class Base3DSegmentor(BaseSegmentor):
     def show_results(self,
                      data,
                      result,
-                     palette=None,
                      out_dir=None,
+                     palette=None,
                      ignore_index=None):
         """Results visualization.
 
         Args:
             data (list[dict]): Input points and the information of the sample.
             result (list[dict]): Prediction results.
+            out_dir (str): Output directory of visualization result.
             palette (list[list[int]]] | np.ndarray | None): The palette of
                 segmentation map. If None is given, random palette will be
                 generated. Default: None
-            out_dir (str): Output directory of visualization result.
             ignore_index (int, optional): The label index to be ignored, e.g.
                 unannotated points. If None is given, set to len(self.CLASSES).
                 Defaults to None.
@@ -114,5 +114,12 @@ class Base3DSegmentor(BaseSegmentor):
 
             pred_sem_mask = result[batch_id]['semantic_mask'].cpu().numpy()
 
-            show_seg_result(points, None, pred_sem_mask, out_dir, file_name,
-                            palette, ignore_index)
+            show_seg_result(
+                points,
+                None,
+                pred_sem_mask,
+                out_dir,
+                file_name,
+                palette,
+                ignore_index,
+                show=True)
