@@ -11,7 +11,7 @@
 
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
-#include <torch/extension.h>
+#include <torch/types.h>
 
 
 #define THREADS_PER_BLOCK 256
