@@ -341,6 +341,7 @@ class PointRPNHead(BaseModule):
     def get_bboxes(self,
                    points,
                    bbox_preds,
+                   cls_preds,
                    input_metas,
                    training_flag=False,
                    rescale=False):
@@ -358,9 +359,7 @@ class PointRPNHead(BaseModule):
         # decode boxes
         # sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
         # obj_scores = sem_scores.max(-1)[0]
-        bbox_preds['obj_scores'] = F.sigmoid(
-            bbox_preds['obj_scores']).transpose(1, 2)
-        sem_scores = bbox_preds['obj_scores']
+        sem_scores = F.sigmoid(cls_preds)
         obj_scores = sem_scores.max(-1)[0]
         bbox3d = bbox_preds
 

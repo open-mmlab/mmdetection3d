@@ -123,14 +123,13 @@ class PointRCNN(TwoStage3DDetector):
         backbone_feats = x['fp_features'][-1].clone()
         backbone_xyz = x['fp_xyz'][-1].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
-
-        bbox_preds = self.rpn_head(x)
-        sem_scores = F.sigmoid(bbox_preds['obj_scores']).detach()
-        obj_scores = sem_scores.transpose(1, 2).max(-1)[0]
+        cls_preds, bbox_preds = self.rpn_head(x)
+        sem_scores = F.sigmoid(cls_preds).detach()
+        obj_scores = sem_scores.max(-1)[0]
         rcnn_feats.update({'points_scores': obj_scores})
 
         bbox_list = self.rpn_head.get_bboxes(
-            points_cat, bbox_preds, img_metas, rescale=rescale)
+            points_cat, bbox_preds, cls_preds, img_metas, rescale=rescale)
         from mmdet3d.core.bbox import bbox3d2result
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
