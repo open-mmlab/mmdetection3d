@@ -361,18 +361,20 @@ class PointRPNHead(BaseModule):
         # obj_scores = sem_scores.max(-1)[0]
         sem_scores = F.sigmoid(cls_preds)
         obj_scores = sem_scores.max(-1)[0]
-        bbox3d = bbox_preds
+        object_class = torch.argmax(sem_scores, -1)
 
-        batch_size = bbox3d.shape[0]
+        batch_size = sem_scores.shape[0]
         results = list()
         for b in range(batch_size):
+            bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
+                                            object_class[b])
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
-                obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
+                obj_scores[b], sem_scores[b], bbox3d, points[b, ..., :3],
                 input_metas[b], training_flag)
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
-                with_yaw=self.bbox_coder.with_rot,
+                with_yaw=True,
                 origin=(0.5, 0.5, 0.5))
             results.append((bbox, score_selected, labels))
         return results

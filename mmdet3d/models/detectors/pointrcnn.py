@@ -123,7 +123,7 @@ class PointRCNN(TwoStage3DDetector):
         backbone_feats = x['fp_features'][-1].clone()
         backbone_xyz = x['fp_xyz'][-1].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
-        cls_preds, bbox_preds = self.rpn_head(x)
+        bbox_preds, cls_preds = self.rpn_head(x)
         sem_scores = F.sigmoid(cls_preds).detach()
         obj_scores = sem_scores.max(-1)[0]
         rcnn_feats.update({'points_scores': obj_scores})
