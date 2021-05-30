@@ -197,7 +197,7 @@ lr_config = dict(policy='step', warmup=None, step=[56, 68])
 runner = dict(type='EpochBasedRunner', max_epochs=80)
 # yapf:disable
 log_config = dict(
-    interval=10,
+    interval=30,
     hooks=[
         dict(type='TextLoggerHook'),
         dict(type='TensorboardLoggerHook')

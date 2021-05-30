@@ -15,6 +15,8 @@ from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 from .base_conv_bbox_head import BaseConvBboxHead
 
+MAX_NUM_OBJ = 64
+
 
 class PointsObjClsModule(nn.Module):
     """object candidate point prediction from seed point features.
@@ -657,8 +659,7 @@ class GroupFree3DHead(nn.Module):
 
         # pad targets as original code of GroupFree3D.
         for index in range(len(gt_labels_3d)):
-            # +1: the last one for the empty target ?
-            pad_num = max_gt_num - gt_labels_3d[index].shape[0] + 1
+            pad_num = MAX_NUM_OBJ - gt_labels_3d[index].shape[0]
             valid_gt_masks[index] = F.pad(valid_gt_masks[index], (0, pad_num))
 
         sampling_targets = torch.stack(sampling_targets)
@@ -731,6 +732,29 @@ class GroupFree3DHead(nn.Module):
 
         gt_bboxes_3d = gt_bboxes_3d.to(points.device)
 
+        # generate center, dir, size target
+        (center_targets, size_targets, size_class_targets, size_res_targets,
+         dir_class_targets,
+         dir_res_targets) = self.bbox_coder.encode(gt_bboxes_3d, gt_labels_3d)
+
+        # pad targets as original code of GroupFree3D
+        pad_num = MAX_NUM_OBJ - gt_labels_3d.shape[0]
+        box_label_mask = points.new_zeros([MAX_NUM_OBJ])
+        box_label_mask[:gt_labels_3d.shape[0]] = 1
+
+        gt_bboxes_pad = F.pad(gt_bboxes_3d.tensor, (0, 0, 0, pad_num))
+        gt_bboxes_pad[gt_labels_3d.shape[0]:, 0:3] += 1000
+        gt_bboxes_3d = gt_bboxes_3d.new_box(gt_bboxes_pad)
+
+        gt_labels_3d = F.pad(gt_labels_3d, (0, pad_num))
+
+        center_targets = F.pad(center_targets, (0, 0, 0, pad_num), value=1000)
+        size_targets = F.pad(size_targets, (0, 0, 0, pad_num))
+        size_class_targets = F.pad(size_class_targets, (0, pad_num))
+        size_res_targets = F.pad(size_res_targets, (0, 0, 0, pad_num))
+        dir_class_targets = F.pad(dir_class_targets, (0, pad_num))
+        dir_res_targets = F.pad(dir_res_targets, (0, pad_num))
+
         # 0. generate pts_instance_label and pts_obj_mask
         num_points = points.shape[0]
         pts_obj_mask = points.new_zeros([num_points], dtype=torch.long)
@@ -793,32 +817,13 @@ class GroupFree3DHead(nn.Module):
                     center = 0.5 * (
                         selected_points.min(0)[0] + selected_points.max(0)[0])
 
-                    delta_xyz = center - gt_bboxes_3d.gravity_center
+                    delta_xyz = center - center_targets
                     instance_lable = torch.argmin((delta_xyz**2).sum(-1))
                     pts_instance_label[indices] = instance_lable
                     pts_obj_mask[indices] = 1
 
         else:
             raise NotImplementedError
-
-        # generate center, dir, size target
-        (center_targets, size_targets, size_class_targets, size_res_targets,
-         dir_class_targets,
-         dir_res_targets) = self.bbox_coder.encode(gt_bboxes_3d, gt_labels_3d)
-
-        # pad targets as original code of GroupFree3D
-        # +1: the last one for the empty target ?
-        pad_num = max_gt_nums - gt_labels_3d.shape[0] + 1
-        gt_labels_3d = F.pad(gt_labels_3d, (0, pad_num))
-        gt_center_pad = F.pad(
-            gt_bboxes_3d.tensor, (0, 0, 0, pad_num), value=1000)
-        gt_bboxes_3d = gt_bboxes_3d.new_box(gt_center_pad)
-        center_targets = F.pad(center_targets, (0, 0, 0, pad_num))
-        size_targets = F.pad(size_targets, (0, 0, 0, pad_num))
-        size_class_targets = F.pad(size_class_targets, (0, pad_num))
-        size_res_targets = F.pad(size_res_targets, (0, 0, 0, pad_num))
-        dir_class_targets = F.pad(dir_class_targets, (0, pad_num))
-        dir_res_targets = F.pad(dir_res_targets, (0, pad_num))
 
         # 1. generate objectness targets in sampling head
         gt_num = gt_labels_3d.shape[0]
@@ -845,9 +850,12 @@ class GroupFree3DHead(nn.Module):
         # (gt_num, num_seed)
         euclidean_dist1 = euclidean_dist1.permute(1, 0)
 
+        # gt_num x topk
         topk_inds = torch.topk(
-            euclidean_dist1, seed_points_obj_topk,
-            largest=False)[1]  # gt_num x topk
+            euclidean_dist1,
+            seed_points_obj_topk,
+            largest=False)[1] * box_label_mask[:, None] + \
+            (box_label_mask[:, None] - 1)
         topk_inds = topk_inds.long()
         topk_inds = topk_inds.view(-1).contiguous()
 
