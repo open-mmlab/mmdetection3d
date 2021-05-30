@@ -156,14 +156,15 @@ class PAConv(nn.Module):
         # determine weight kernel size according to used features
         if kernel_input == 'identity':
             # only use grouped_features
-            self.kernel_mul = 1
+            kernel_mul = 1
         elif kernel_input == 'w_neighbor':
             # concat of (grouped_features - center_features, grouped_features)
-            self.kernel_mul = 2
+            kernel_mul = 2
         else:
             raise NotImplementedError(
                 f'unsupported kernel_input {kernel_input}')
         self.kernel_input = kernel_input
+        in_channels = kernel_mul * in_channels
 
         # determine mlp channels in ScoreNet according to used xyz features
         if scorenet_input == 'identity':
@@ -191,23 +192,27 @@ class PAConv(nn.Module):
             raise NotImplementedError(
                 f'unsupported weight bank init method {weight_bank_init}')
 
-        self.m = num_kernels
+        self.num_kernels = num_kernels  # the parameter `m` in the paper
         weight_bank = weight_init(
-            torch.empty(self.m, in_channels * self.kernel_mul, out_channels))
+            torch.empty(self.num_kernels, in_channels, out_channels))
         weight_bank = weight_bank.permute(1, 0, 2).reshape(
-            in_channels * self.kernel_mul, self.m * out_channels).contiguous()
+            in_channels, self.num_kernels * out_channels).contiguous()
         self.weight_bank = nn.Parameter(weight_bank, requires_grad=True)
 
         # construct ScoreNet
         scorenet_cfg_ = copy.deepcopy(scorenet_cfg)
         scorenet_cfg_['mlp_channels'].insert(0, self.scorenet_in_channels)
-        scorenet_cfg_['mlp_channels'].append(self.m)
+        scorenet_cfg_['mlp_channels'].append(self.num_kernels)
         self.scorenet = ScoreNet(**scorenet_cfg_)
 
         self.bn = build_norm_layer(norm_cfg, out_channels)[1] if \
             norm_cfg is not None else None
         self.activate = build_activation_layer(act_cfg) if \
             act_cfg is not None else None
+
+        # set some basic attributes of Conv layers
+        self.in_channels = in_channels
+        self.out_channels = out_channels
 
         self.init_weights()
 
@@ -279,8 +284,9 @@ class PAConv(nn.Module):
         # first compute out features over all kernels
         # features is [B, C, npoint, K], weight_bank is [C, m * out_c]
         new_features = torch.matmul(
-            features.permute(0, 2, 3, 1), self.weight_bank).\
-            view(B, npoint, K, self.m, -1)  # [B, npoint, K, m, out_c]
+            features.permute(0, 2, 3, 1),
+            self.weight_bank).view(B, npoint, K, self.num_kernels,
+                                   -1)  # [B, npoint, K, m, out_c]
 
         # then aggregate using scores
         new_features = assign_score(scores, new_features)
@@ -369,7 +375,7 @@ class PAConvCUDA(PAConv):
         # pre-compute features for points and centers separately
         # features is [B, in_c, N], weight_bank is [C, m * out_dim]
         point_feat, center_feat = assign_kernel_withoutk(
-            features, self.weight_bank, self.m)
+            features, self.weight_bank, self.num_kernels)
 
         # aggregate features using custom cuda op
         new_features = assign_score_cuda(
