@@ -2,7 +2,7 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.ops import PAConv, PAConvCUDA
-from mmseg.models.builder import LOSSES
+from mmdet.models.builder import LOSSES
 
 
 def weight_correlation(conv):

@@ -179,6 +179,7 @@ def test_paconv_ssg():
     # test forward_train
     losses = self.forward_train(points, img_metas, gt_masks)
     assert losses['decode.loss_sem_seg'].item() >= 0
+    assert losses['reg.loss_reg'].item() >= 0
 
     # test forward function
     set_random_seed(0, True)
@@ -187,6 +188,8 @@ def test_paconv_ssg():
     forward_losses = self.forward(return_loss=True, **data_dict)
     assert np.allclose(losses['decode.loss_sem_seg'].item(),
                        forward_losses['decode.loss_sem_seg'].item())
+    assert np.allclose(losses['reg.loss_reg'].item(),
+                       forward_losses['reg.loss_reg'].item())
 
     # test loss with ignore_index
     ignore_masks = [torch.ones_like(gt_masks[0]) * 13 for _ in range(2)]
@@ -248,6 +251,7 @@ def test_paconv_cuda_ssg():
     # test forward_train
     losses = self.forward_train(points, img_metas, gt_masks)
     assert losses['decode.loss_sem_seg'].item() >= 0
+    assert losses['reg.loss_reg'].item() >= 0
 
     # test forward function
     set_random_seed(0, True)
@@ -256,6 +260,8 @@ def test_paconv_cuda_ssg():
     forward_losses = self.forward(return_loss=True, **data_dict)
     assert np.allclose(losses['decode.loss_sem_seg'].item(),
                        forward_losses['decode.loss_sem_seg'].item())
+    assert np.allclose(losses['reg.loss_reg'].item(),
+                       forward_losses['reg.loss_reg'].item())
 
     # test loss with ignore_index
     ignore_masks = [torch.ones_like(gt_masks[0]) * 13 for _ in range(2)]
