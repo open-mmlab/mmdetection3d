@@ -5,7 +5,7 @@ from torch.nn import functional as F
 
 from mmseg.core import add_prefix
 from mmseg.models import SEGMENTORS
-from ..builder import build_backbone, build_head, build_neck
+from ..builder import build_backbone, build_head, build_loss, build_neck
 from .base import Base3DSegmentor
 
 
@@ -23,6 +23,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                  decode_head,
                  neck=None,
                  auxiliary_head=None,
+                 regularization_loss=None,
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None,
@@ -33,6 +34,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             self.neck = build_neck(neck)
         self._init_decode_head(decode_head)
         self._init_auxiliary_head(auxiliary_head)
+        self._init_regularization_loss(regularization_loss)
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -53,6 +55,34 @@ class EncoderDecoder3D(Base3DSegmentor):
                     self.auxiliary_head.append(build_head(head_cfg))
             else:
                 self.auxiliary_head = build_head(auxiliary_head)
+
+    def _init_regularization_loss(self, regularization_loss):
+        """Initialize ``regularization_loss``"""
+        if regularization_loss is not None:
+            if isinstance(regularization_loss, list):
+                self.regularization_loss = nn.ModuleList()
+                for loss_cfg in regularization_loss:
+                    self.regularization_loss.append(build_loss(loss_cfg))
+            else:
+                self.regularization_loss = build_loss(regularization_loss)
+
+    def init_weights(self, pretrained=None):
+        """Initialize the weights in backbone and heads.
+
+        Args:
+            pretrained (str, optional): Path to pre-trained weights.
+                Defaults to None.
+        """
+
+        super(EncoderDecoder3D, self).init_weights(pretrained)
+        self.backbone.init_weights(pretrained=pretrained)
+        self.decode_head.init_weights()
+        if self.with_auxiliary_head:
+            if isinstance(self.auxiliary_head, nn.ModuleList):
+                for aux_head in self.auxiliary_head:
+                    aux_head.init_weights()
+            else:
+                self.auxiliary_head.init_weights()
 
     def extract_feat(self, points):
         """Extract features from points."""
@@ -110,6 +140,19 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return losses
 
+    def _regularization_loss_forward_train(self):
+        """Calculate regularization loss for model weight in training."""
+        losses = dict()
+        if isinstance(self.regularization_loss, nn.ModuleList):
+            for idx, reg_loss in enumerate(self.regularization_loss):
+                loss_reg = dict(loss_reg=reg_loss(self.modules()))
+                losses.update(add_prefix(loss_reg, f'reg_{idx}'))
+        else:
+            loss_reg = dict(loss_reg=self.regularization_loss(self.modules()))
+            losses.update(add_prefix(loss_reg, 'reg'))
+
+        return losses
+
     def forward_dummy(self, points):
         """Dummy forward function."""
         seg_logit = self.encode_decode(points, None)
@@ -144,6 +187,10 @@ class EncoderDecoder3D(Base3DSegmentor):
             loss_aux = self._auxiliary_head_forward_train(
                 x, img_metas, pts_semantic_mask_cat)
             losses.update(loss_aux)
+
+        if self.with_regularization_loss:
+            loss_reg = self._regularization_loss_forward_train()
+            losses.update(loss_reg)
 
         return losses
 
