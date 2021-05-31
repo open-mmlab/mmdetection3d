@@ -154,7 +154,6 @@ class _S3DISSegDataset(Custom3DSegDataset):
         We sample more times for scenes with more points.
         """
         # when testing, we load one whole scene every time
-        # and we don't need label weight for loss calculation
         if not self.test_mode and scene_idxs is None:
             raise NotImplementedError(
                 'please provide re-sampled scene indexes for training')

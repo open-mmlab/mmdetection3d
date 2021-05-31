@@ -254,9 +254,7 @@ class Custom3DSegDataset(Dataset):
         """
         if self.test_mode:
             # when testing, we load one whole scene every time
-            # and we don't need label weight for loss calculation
-            return np.arange(len(self.data_infos)).astype(np.int32), \
-                np.ones(len(self.CLASSES)).astype(np.float32)
+            return np.arange(len(self.data_infos)).astype(np.int32)
 
         # we may need to re-sample different scenes according to scene_idxs
         # this is necessary for indoor scene segmentation such as ScanNet
