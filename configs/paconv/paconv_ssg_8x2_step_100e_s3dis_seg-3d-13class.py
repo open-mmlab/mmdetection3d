@@ -4,7 +4,50 @@ _base_ = [
 ]
 
 # data settings
-data = dict(samples_per_gpu=8)
+class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
+               'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
+num_points = 4096
+train_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=True,
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True),
+    dict(
+        type='PointSegClassMapping',
+        valid_cat_ids=tuple(range(len(class_names))),
+        max_cat_id=13),
+    dict(
+        type='IndoorPatchPointSample',
+        num_points=num_points,
+        block_size=1.0,
+        sample_rate=1.0,
+        ignore_index=len(class_names),
+        use_normalized_coord=True),
+    dict(
+        type='GlobalRotScaleTrans',
+        rot_range=[-3.141592653589793, 3.141592653589793],
+        scale_ratio_range=[0.8, 1.2],
+        translation_std=[0, 0, 0]),
+    dict(
+        type='RandomJitterPoints',
+        jitter_std=[0.01, 0.01, 0.01],
+        clip_range=[-0.05, 0.05]),
+    dict(type='RandomDropPointsColor', drop_ratio=0.2),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(type='DefaultFormatBundle3D', class_names=class_names),
+    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+]
+
+data = dict(samples_per_gpu=8, train=dict(pipeline=train_pipeline))
 evaluation = dict(interval=2)
 
 # model settings
@@ -25,7 +68,7 @@ checkpoint_config = dict(interval=2)
 # optimizer
 optimizer = dict(type='SGD', lr=0.05, weight_decay=0.0001, momentum=0.9)
 optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='StepLrUpdaterHook', warmup=None, step=30, gamma=0.1)
+lr_config = dict(policy='Step', warmup=None, step=30, gamma=0.1)
 momentum_config = None
 
 # runtime settings
