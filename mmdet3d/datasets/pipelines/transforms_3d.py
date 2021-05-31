@@ -169,6 +169,74 @@ class RandomFlip3D(RandomFlip):
 
 
 @PIPELINES.register_module()
+class RandomJitterPoints(object):
+    """Randomly jitter point coordinates.
+
+    Different from the global translation in ``GlobalRotScaleTrans``, here we \
+        apply different noises to each point in a scene.
+
+    Args:
+        jitter_std (list[float]): The standard deviation of jittering noise.
+            This applies random noise to all points in a 3D scene, which is \
+            sampled from a gaussian distribution whose standard deviation is \
+            set by ``jitter_std``. Defaults to [0.01, 0.01, 0.01]
+        clip_range (list[float] | None): Clip the randomly generated jitter \
+            noise into this range. If None is given, don't perform clipping.
+            Defaults to [-0.05, 0.05]
+
+    Note:
+        This transform should only be used in point cloud segmentation tasks \
+            because we don't transform ground-truth bboxes accordingly.
+        For similar transform in detection task, please refer to `ObjectNoise`.
+    """
+
+    def __init__(self,
+                 jitter_std=[0.01, 0.01, 0.01],
+                 clip_range=[-0.05, 0.05]):
+        seq_types = (list, tuple, np.ndarray)
+        if not isinstance(jitter_std, seq_types):
+            assert isinstance(jitter_std, (int, float)), \
+                f'unsupported jitter_std type {type(jitter_std)}'
+            jitter_std = [jitter_std, jitter_std, jitter_std]
+        self.jitter_std = jitter_std
+
+        if clip_range is not None:
+            if not isinstance(clip_range, seq_types):
+                assert isinstance(clip_range, (int, float)), \
+                    f'unsupported clip_range type {type(clip_range)}'
+                clip_range = [-clip_range, clip_range]
+        self.clip_range = clip_range
+
+    def __call__(self, input_dict):
+        """Call function to jitter all the points in the scene.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after adding noise to each point, \
+                'points' key is updated in the result dict.
+        """
+        points = input_dict['points']
+        jitter_std = np.array(self.jitter_std, dtype=np.float32)
+        jitter_noise = \
+            np.random.randn(points.shape[0], 3) * jitter_std[None, :]
+        if self.clip_range is not None:
+            jitter_noise = np.clip(jitter_noise, self.clip_range[0],
+                                   self.clip_range[1])
+
+        points.translate(jitter_noise)
+        return input_dict
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(jitter_std={self.jitter_std},'
+        repr_str += f' clip_range={self.clip_range})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class ObjectSample(object):
     """Sample GT objects to the data.
 
@@ -433,8 +501,8 @@ class GlobalRotScaleTrans(object):
             Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
         scale_ratio_range (list[float]): Range of scale ratio.
             Defaults to [0.95, 1.05].
-        translation_std (list[float]): The standard deviation of ranslation
-            noise. This apply random translation to a scene by a noise, which
+        translation_std (list[float]): The standard deviation of translation
+            noise. This applies random translation to a scene by a noise, which
             is sampled from a gaussian distribution whose standard deviation
             is set by ``translation_std``. Defaults to [0, 0, 0]
         shift_height (bool): Whether to shift height.

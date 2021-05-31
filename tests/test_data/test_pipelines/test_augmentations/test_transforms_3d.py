@@ -10,7 +10,7 @@ from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
                               GlobalRotScaleTrans, ObjectNoise, ObjectSample,
                               PointShuffle, PointsRangeFilter,
                               RandomDropPointsColor, RandomFlip3D,
-                              VoxelBasedPointSampler)
+                              RandomJitterPoints, VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -455,6 +455,62 @@ def test_random_flip_3d():
     assert np.allclose(points, expected_points)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert repr_str == expected_repr_str
+
+
+def test_random_jitter_points():
+    # jitter_std should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        random_jitter_points = RandomJitterPoints(jitter_std='0.0')
+
+    # clip_range should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        random_jitter_points = RandomJitterPoints(clip_range='0.0')
+
+    random_jitter_points = RandomJitterPoints(jitter_std=0.01, clip_range=0.05)
+    np.random.seed(0)
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)[:10]
+    depth_points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_jitter_points(input_dict)
+    trans_depth_points = input_dict['points']
+
+    jitter_noise = np.array([[0.01764052, 0.00400157, 0.00978738],
+                             [0.02240893, 0.01867558, -0.00977278],
+                             [0.00950088, -0.00151357, -0.00103219],
+                             [0.00410598, 0.00144044, 0.01454273],
+                             [0.00761038, 0.00121675, 0.00443863],
+                             [0.00333674, 0.01494079, -0.00205158],
+                             [0.00313068, -0.00854096, -0.0255299],
+                             [0.00653619, 0.00864436, -0.00742165],
+                             [0.02269755, -0.01454366, 0.00045759],
+                             [-0.00187184, 0.01532779, 0.01469359]])
+
+    trans_depth_points = trans_depth_points.tensor.numpy()
+    expected_depth_points = points
+    expected_depth_points[:, :3] += jitter_noise
+    assert np.allclose(trans_depth_points, expected_depth_points)
+
+    repr_str = repr(random_jitter_points)
+    jitter_std = [0.01, 0.01, 0.01]
+    clip_range = [-0.05, 0.05]
+    expected_repr_str = f'RandomJitterPoints(jitter_std={jitter_std},' \
+                        f' clip_range={clip_range})'
+    assert repr_str == expected_repr_str
+
+    # test clipping very large noise
+    random_jitter_points = RandomJitterPoints(jitter_std=1.0, clip_range=0.05)
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_jitter_points(input_dict)
+    trans_depth_points = input_dict['points']
+    assert (trans_depth_points.tensor - depth_points.tensor).max().item() <= \
+        0.05 + 1e-6
+    assert (trans_depth_points.tensor - depth_points.tensor).min().item() >= \
+        -0.05 - 1e-6
 
 
 def test_background_points_filter():
