@@ -1,5 +1,34 @@
 ## Changelog
 
+### v0.14.0 (1/6/2021)
+
+#### Highlights
+- Support the point cloud segmentation method [PointNet++](https://arxiv.org/abs/1706.02413)
+
+#### New Features
+
+- Support PointNet++ (#479, #528, #532, #541)
+- Support RandomJitterPoints transform for point cloud segmentation (#584)
+- Support RandomDropPointsColor transform for point cloud segmentation (#585)
+
+#### Improvements
+
+- Move the point alignment of ScanNet from data pre-processing to pipeline (#439, #470)
+- Add compatibility document to provide detailed descriptions of BC-breaking changes (#504)
+- Add MMSegmentation installation requirement (#535)
+- Support points rotation even without bounding box in GlobalRotScaleTrans for point cloud segmentaiton (#540)
+- Support visualization of detection results and dataset browse for nuScenes Mono-3D dataset (#542, #582)
+- Support faster implementation of KNN (#586)
+- Support RegNetX models on Lyft dataset (#589)
+
+#### Bug Fixes
+- Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)
+- Fix evaluation bugs in nuScenes and Lyft dataset (#549)
+- Fix converting points between coordinates with specific transformation matrix in the [coord_3d_mode.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/coord_3d_mode.py) (#556)
+- Support PointPillars models on Lyft dataset (#578)
+- Fix the bug of demo with pre-trained VoteNet model on ScanNet (#600)
+
+
 ### v0.13.0 (1/5/2021)
 
 #### Highlights
