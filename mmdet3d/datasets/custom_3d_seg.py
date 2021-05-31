@@ -38,9 +38,6 @@ class Custom3DSegDataset(Dataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        label_weight (np.ndarray | str, optional): Precomputed weight to \
-            balance loss calculation. If None is given, use equal weighting.
-            Defaults to None.
     """
     # names of all classes data used for the task
     CLASSES = None
@@ -63,8 +60,7 @@ class Custom3DSegDataset(Dataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None,
-                 label_weight=None):
+                 scene_idxs=None):
         super().__init__()
         self.data_root = data_root
         self.ann_file = ann_file
@@ -79,8 +75,7 @@ class Custom3DSegDataset(Dataset):
         self.ignore_index = len(self.CLASSES) if \
             ignore_index is None else ignore_index
 
-        self.scene_idxs, self.label_weight = \
-            self.get_scene_idxs_and_label_weight(scene_idxs, label_weight)
+        self.scene_idxs = self.get_scene_idxs(scene_idxs)
         self.CLASSES, self.PALETTE = \
             self.get_classes_and_palette(classes, palette)
 
@@ -250,20 +245,12 @@ class Custom3DSegDataset(Dataset):
             for cls_name in class_names
         ]
 
-        # also need to modify self.label_weight
-        self.label_weight = np.array([
-            self.label_weight[self.CLASSES.index(cls_name)]
-            for cls_name in class_names
-        ]).astype(np.float32)
-
         return class_names, palette
 
-    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
-        """Compute scene_idxs for data sampling and label weight for loss \
-        calculation.
+    def get_scene_idxs(self, scene_idxs):
+        """Compute scene_idxs for data sampling.
 
-        We sample more times for scenes with more points. Label_weight is
-        inversely proportional to number of class points.
+        We sample more times for scenes with more points.
         """
         if self.test_mode:
             # when testing, we load one whole scene every time
@@ -280,15 +267,7 @@ class Custom3DSegDataset(Dataset):
         else:
             scene_idxs = np.array(scene_idxs)
 
-        if label_weight is None:
-            # we don't used label weighting in training
-            label_weight = np.ones(len(self.CLASSES))
-        elif isinstance(label_weight, str):
-            label_weight = np.load(label_weight)
-        else:
-            label_weight = np.array(label_weight)
-
-        return scene_idxs.astype(np.int32), label_weight.astype(np.float32)
+        return scene_idxs.astype(np.int32)
 
     def format_results(self,
                        outputs,
