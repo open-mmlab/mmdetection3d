@@ -8,9 +8,10 @@ from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
 from .test_time_aug import MultiScaleFlipAug3D
 from .transforms_3d import (BackgroundPointsFilter, GlobalAlignment,
                             GlobalRotScaleTrans, IndoorPatchPointSample,
-                            ObjectNoise, ObjectRangeFilter, ObjectSample,
-                            PointSample, PointShuffle, PointsRangeFilter,
-                            RandomFlip3D, VoxelBasedPointSampler)
+                            IndoorPointSample, ObjectNoise, ObjectRangeFilter,
+                            ObjectSample, PointSample, PointShuffle,
+                            PointsRangeFilter, RandomFlip3D,
+                            VoxelBasedPointSampler)
 
 __all__ = [
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
@@ -18,7 +19,8 @@ __all__ = [
     'Compose', 'LoadMultiViewImageFromFiles', 'LoadPointsFromFile',
     'DefaultFormatBundle', 'DefaultFormatBundle3D', 'DataBaseSampler',
     'NormalizePointsColor', 'LoadAnnotations3D', 'PointSample',
-    'PointSegClassMapping', 'MultiScaleFlipAug3D', 'LoadPointsFromMultiSweeps',
-    'BackgroundPointsFilter', 'VoxelBasedPointSampler', 'GlobalAlignment',
-    'IndoorPatchPointSample', 'LoadImageFromFileMono3D'
+    'IndoorPointSample', 'PointSegClassMapping', 'MultiScaleFlipAug3D',
+    'LoadPointsFromMultiSweeps', 'BackgroundPointsFilter',
+    'VoxelBasedPointSampler', 'GlobalAlignment', 'IndoorPatchPointSample',
+    'LoadImageFromFileMono3D'
 ]
