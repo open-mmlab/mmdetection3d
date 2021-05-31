@@ -3,12 +3,14 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core import Box3DMode, CameraInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
+                          DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
-                              ObjectNoise, ObjectSample, PointShuffle,
-                              PointsRangeFilter, RandomFlip3D,
-                              VoxelBasedPointSampler)
+                              GlobalRotScaleTrans, ObjectNoise, ObjectSample,
+                              PointShuffle, PointsRangeFilter,
+                              RandomDropPointsColor, RandomFlip3D,
+                              RandomJitterPoints, VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -255,6 +257,149 @@ def test_global_alignment():
     assert repr_str == expected_repr_str
 
 
+def test_global_rot_scale_trans():
+    angle = 0.78539816
+    scale = [0.95, 1.05]
+    trans_std = 1.0
+
+    # rot_range should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(rot_range='0.0')
+
+    # scale_ratio_range should be seq of numbers
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(scale_ratio_range=1.0)
+
+    # translation_std should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(translation_std='0.0')
+
+    global_rot_scale_trans = GlobalRotScaleTrans(
+        rot_range=angle,
+        scale_ratio_range=scale,
+        translation_std=trans_std,
+        shift_height=False)
+
+    np.random.seed(0)
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    annos = mmcv.load('tests/data/scannet/scannet_infos.pkl')
+    info = annos[0]
+    gt_bboxes_3d = info['annos']['gt_boxes_upright_depth']
+
+    depth_points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+    gt_bboxes_3d = DepthInstance3DBoxes(
+        gt_bboxes_3d.copy(),
+        box_dim=gt_bboxes_3d.shape[-1],
+        with_yaw=False,
+        origin=(0.5, 0.5, 0.5))
+
+    input_dict = dict(
+        points=depth_points.clone(),
+        bbox3d_fields=['gt_bboxes_3d'],
+        gt_bboxes_3d=gt_bboxes_3d.clone())
+
+    input_dict = global_rot_scale_trans(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_bboxes_3d = input_dict['gt_bboxes_3d']
+
+    noise_rot = 0.07667607233534723
+    scale_factor = 1.021518936637242
+    trans_factor = np.array([0.97873798, 2.2408932, 1.86755799])
+
+    true_depth_points = depth_points.clone()
+    true_bboxes_3d = gt_bboxes_3d.clone()
+    true_depth_points, noise_rot_mat_T = true_bboxes_3d.rotate(
+        noise_rot, true_depth_points)
+    true_bboxes_3d.scale(scale_factor)
+    true_bboxes_3d.translate(trans_factor)
+    true_depth_points.scale(scale_factor)
+    true_depth_points.translate(trans_factor)
+
+    assert torch.allclose(
+        trans_depth_points.tensor, true_depth_points.tensor, atol=1e-6)
+    assert torch.allclose(
+        trans_bboxes_3d.tensor, true_bboxes_3d.tensor, atol=1e-6)
+    assert input_dict['pcd_scale_factor'] == scale_factor
+    assert torch.allclose(
+        input_dict['pcd_rotation'], noise_rot_mat_T, atol=1e-6)
+    assert np.allclose(input_dict['pcd_trans'], trans_factor)
+
+    repr_str = repr(global_rot_scale_trans)
+    expected_repr_str = f'GlobalRotScaleTrans(rot_range={[-angle, angle]},' \
+                        f' scale_ratio_range={scale},' \
+                        f' translation_std={[trans_std for _ in range(3)]},' \
+                        f' shift_height=False)'
+    assert repr_str == expected_repr_str
+
+    # points with shift_height but no bbox
+    global_rot_scale_trans = GlobalRotScaleTrans(
+        rot_range=angle,
+        scale_ratio_range=scale,
+        translation_std=trans_std,
+        shift_height=True)
+
+    # points should have height attribute when shift_height=True
+    with pytest.raises(AssertionError):
+        input_dict = global_rot_scale_trans(input_dict)
+
+    np.random.seed(0)
+    shift_height = points[:, 2:3] * 0.99
+    points = np.concatenate([points, shift_height], axis=1)
+    depth_points = DepthPoints(
+        points.copy(),
+        points_dim=7,
+        attribute_dims=dict(color=[3, 4, 5], height=6))
+
+    input_dict = dict(points=depth_points.clone(), bbox3d_fields=[])
+
+    input_dict = global_rot_scale_trans(input_dict)
+    trans_depth_points = input_dict['points']
+    true_shift_height = shift_height * scale_factor
+
+    assert np.allclose(
+        trans_depth_points.tensor.numpy(),
+        np.concatenate([true_depth_points.tensor.numpy(), true_shift_height],
+                       axis=1),
+        atol=1e-6)
+
+
+def test_random_drop_points_color():
+    # drop_ratio should be in [0, 1]
+    with pytest.raises(AssertionError):
+        random_drop_points_color = RandomDropPointsColor(drop_ratio=1.1)
+
+    # 100% drop
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=1)
+
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)
+    depth_points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_drop_points_color(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_color = trans_depth_points.color
+    assert torch.all(trans_color == trans_color.new_zeros(trans_color.shape))
+
+    # 0% drop
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=0)
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_drop_points_color(input_dict)
+    trans_depth_points = input_dict['points']
+    trans_color = trans_depth_points.color
+    assert torch.allclose(trans_color, depth_points.tensor[:, 3:6])
+
+    random_drop_points_color = RandomDropPointsColor(drop_ratio=0.5)
+    repr_str = repr(random_drop_points_color)
+    expected_repr_str = 'RandomDropPointsColor(drop_ratio=0.5)'
+    assert repr_str == expected_repr_str
+
+
 def test_random_flip_3d():
     random_flip_3d = RandomFlip3D(
         flip_ratio_bev_horizontal=1.0, flip_ratio_bev_vertical=1.0)
@@ -310,6 +455,62 @@ def test_random_flip_3d():
     assert np.allclose(points, expected_points)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d)
     assert repr_str == expected_repr_str
+
+
+def test_random_jitter_points():
+    # jitter_std should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        random_jitter_points = RandomJitterPoints(jitter_std='0.0')
+
+    # clip_range should be a number or seq of numbers
+    with pytest.raises(AssertionError):
+        random_jitter_points = RandomJitterPoints(clip_range='0.0')
+
+    random_jitter_points = RandomJitterPoints(jitter_std=0.01, clip_range=0.05)
+    np.random.seed(0)
+    points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
+                         np.float32).reshape(-1, 6)[:10]
+    depth_points = DepthPoints(
+        points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
+
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_jitter_points(input_dict)
+    trans_depth_points = input_dict['points']
+
+    jitter_noise = np.array([[0.01764052, 0.00400157, 0.00978738],
+                             [0.02240893, 0.01867558, -0.00977278],
+                             [0.00950088, -0.00151357, -0.00103219],
+                             [0.00410598, 0.00144044, 0.01454273],
+                             [0.00761038, 0.00121675, 0.00443863],
+                             [0.00333674, 0.01494079, -0.00205158],
+                             [0.00313068, -0.00854096, -0.0255299],
+                             [0.00653619, 0.00864436, -0.00742165],
+                             [0.02269755, -0.01454366, 0.00045759],
+                             [-0.00187184, 0.01532779, 0.01469359]])
+
+    trans_depth_points = trans_depth_points.tensor.numpy()
+    expected_depth_points = points
+    expected_depth_points[:, :3] += jitter_noise
+    assert np.allclose(trans_depth_points, expected_depth_points)
+
+    repr_str = repr(random_jitter_points)
+    jitter_std = [0.01, 0.01, 0.01]
+    clip_range = [-0.05, 0.05]
+    expected_repr_str = f'RandomJitterPoints(jitter_std={jitter_std},' \
+                        f' clip_range={clip_range})'
+    assert repr_str == expected_repr_str
+
+    # test clipping very large noise
+    random_jitter_points = RandomJitterPoints(jitter_std=1.0, clip_range=0.05)
+    input_dict = dict(points=depth_points.clone())
+
+    input_dict = random_jitter_points(input_dict)
+    trans_depth_points = input_dict['points']
+    assert (trans_depth_points.tensor - depth_points.tensor).max().item() <= \
+        0.05 + 1e-6
+    assert (trans_depth_points.tensor - depth_points.tensor).min().item() >= \
+        -0.05 - 1e-6
 
 
 def test_background_points_filter():

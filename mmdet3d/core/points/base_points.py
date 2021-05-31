@@ -176,6 +176,8 @@ class BasePoints(object):
             raise NotImplementedError
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
 
+        return rot_mat_T
+
     @abstractmethod
     def flip(self, bev_direction='horizontal'):
         """Flip the points in BEV along given BEV direction."""

@@ -127,6 +127,8 @@ class FFPS_Sampler(nn.Module):
 
     def forward(self, points, features, npoint):
         """Sampling points with F-FPS."""
+        assert features is not None, \
+            'feature input to FFPS_Sampler should not be None'
         features_for_fps = torch.cat([points, features.transpose(1, 2)], dim=2)
         features_dist = calc_square_dist(
             features_for_fps, features_for_fps, norm=False)
@@ -145,6 +147,8 @@ class FS_Sampler(nn.Module):
 
     def forward(self, points, features, npoint):
         """Sampling points with FS_Sampling."""
+        assert features is not None, \
+            'feature input to FS_Sampler should not be None'
         features_for_fps = torch.cat([points, features.transpose(1, 2)], dim=2)
         features_dist = calc_square_dist(
             features_for_fps, features_for_fps, norm=False)

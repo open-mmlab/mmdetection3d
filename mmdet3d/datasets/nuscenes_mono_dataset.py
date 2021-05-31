@@ -4,12 +4,16 @@ import numpy as np
 import pyquaternion
 import tempfile
 import torch
+import warnings
 from nuscenes.utils.data_classes import Box as NuScenesBox
 from os import path as osp
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset
-from ..core.bbox import CameraInstance3DBoxes, get_box_type
+from ..core import show_multi_modality_result
+from ..core.bbox import CameraInstance3DBoxes, get_box_type, mono_cam_box2vis
+from .pipelines import Compose
+from .utils import get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -57,6 +61,14 @@ class NuScenesMonoDataset(CocoDataset):
         'bicycle': 'cycle.without_rider',
         'barrier': '',
         'traffic_cone': '',
+    }
+    # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
+    ErrNameMapping = {
+        'trans_err': 'mATE',
+        'scale_err': 'mASE',
+        'orient_err': 'mAOE',
+        'vel_err': 'mAVE',
+        'attr_err': 'mAAE'
     }
 
     def __init__(self,
@@ -423,6 +435,10 @@ class NuScenesMonoDataset(CocoDataset):
             for k, v in metrics['label_tp_errors'][name].items():
                 val = float('{:.4f}'.format(v))
                 detail['{}/{}_{}'.format(metric_prefix, name, k)] = val
+            for k, v in metrics['tp_errors'].items():
+                val = float('{:.4f}'.format(v))
+                detail['{}/{}'.format(metric_prefix,
+                                      self.ErrNameMapping[k])] = val
 
         detail['{}/NDS'.format(metric_prefix)] = metrics['nd_score']
         detail['{}/mAP'.format(metric_prefix)] = metrics['mean_ap']
@@ -454,9 +470,16 @@ class NuScenesMonoDataset(CocoDataset):
         else:
             tmp_dir = None
 
-        if not isinstance(results[0], dict):
+        # currently the output prediction results could be in two formats
+        # 1. list of dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...)
+        # 2. list of dict('pts_bbox' or 'img_bbox':
+        #     dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...))
+        # this is a workaround to enable evaluation of both formats on nuScenes
+        # refer to https://github.com/open-mmlab/mmdetection3d/issues/449
+        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
             result_files = self._format_bbox(results, jsonfile_prefix)
         else:
+            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
             result_files = dict()
             for name in results[0]:
                 # not evaluate 2D predictions on nuScenes
@@ -477,7 +500,8 @@ class NuScenesMonoDataset(CocoDataset):
                  jsonfile_prefix=None,
                  result_names=['img_bbox'],
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in nuScenes protocol.
 
         Args:
@@ -491,6 +515,8 @@ class NuScenesMonoDataset(CocoDataset):
             show (bool): Whether to visualize.
                 Default: False.
             out_dir (str): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -512,18 +538,129 @@ class NuScenesMonoDataset(CocoDataset):
             tmp_dir.cleanup()
 
         if show:
-            self.show(results, out_dir)
+            self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
-    def show(self, results, out_dir):
+    @staticmethod
+    def _get_data(results, key):
+        """Extract and return the data corresponding to key in result dict.
+
+        Args:
+            results (dict): Data loaded using pipeline.
+            key (str): Key of the desired data.
+
+        Returns:
+            np.ndarray | torch.Tensor | None: Data term.
+        """
+        if key not in results.keys():
+            return None
+        # results[key] may be data or list[data]
+        # data may be wrapped inside DataContainer
+        data = results[key]
+        if isinstance(data, list) or isinstance(data, tuple):
+            data = data[0]
+        if isinstance(data, mmcv.parallel.DataContainer):
+            data = data._data
+        return data
+
+    def _extract_data(self, index, pipeline, key, load_annos=False):
+        """Load data using input pipeline and extract data according to key.
+
+        Args:
+            index (int): Index for accessing the target data.
+            pipeline (:obj:`Compose`): Composed data loading pipeline.
+            key (str | list[str]): One single or a list of data key.
+            load_annos (bool): Whether to load data annotations.
+                If True, need to set self.test_mode as False before loading.
+
+        Returns:
+            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
+                A single or a list of loaded data.
+        """
+        assert pipeline is not None, 'data loading pipeline is not provided'
+        img_info = self.data_infos[index]
+        input_dict = dict(img_info=img_info)
+
+        if load_annos:
+            ann_info = self.get_ann_info(index)
+            input_dict.update(dict(ann_info=ann_info))
+
+        self.pre_pipeline(input_dict)
+        example = pipeline(input_dict)
+
+        # extract data items according to keys
+        if isinstance(key, str):
+            data = self._get_data(example, key)
+        else:
+            data = [self._get_data(example, k) for k in key]
+
+        return data
+
+    def _get_pipeline(self, pipeline):
+        """Get data loading pipeline in self.show/evaluate function.
+
+        Args:
+            pipeline (list[dict] | None): Input pipeline. If None is given, \
+                get from self.pipeline.
+        """
+        if pipeline is None:
+            if not hasattr(self, 'pipeline') or self.pipeline is None:
+                warnings.warn(
+                    'Use default pipeline for data loading, this may cause '
+                    'errors when data is on ceph')
+                return self._build_default_pipeline()
+            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
+            return Compose(loading_pipeline)
+        return Compose(pipeline)
+
+    def _build_default_pipeline(self):
+        """Build the default pipeline for this dataset."""
+        pipeline = [
+            dict(type='LoadImageFromFileMono3D'),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=self.CLASSES,
+                with_label=False),
+            dict(type='Collect3D', keys=['img'])
+        ]
+        return Compose(pipeline)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
+            show (bool): Visualize the results online.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
         """
-        # TODO: support mono3d visualization
-        pass
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        pipeline = self._get_pipeline(pipeline)
+        for i, result in enumerate(results):
+            if 'img_bbox' in result.keys():
+                result = result['img_bbox']
+            data_info = self.data_infos[i]
+            img_path = data_info['file_name']
+            file_name = osp.split(img_path)[-1].split('.')[0]
+            img, img_metas = self._extract_data(i, pipeline,
+                                                ['img', 'img_metas'])
+            # need to transpose channel to first dim
+            img = img.numpy().transpose(1, 2, 0)
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d']
+            pred_bboxes = result['boxes_3d']
+            # TODO: remove the hack of box from NuScenesMonoDataset
+            gt_bboxes = mono_cam_box2vis(gt_bboxes)
+            pred_bboxes = mono_cam_box2vis(pred_bboxes)
+            show_multi_modality_result(
+                img,
+                gt_bboxes,
+                pred_bboxes,
+                img_metas['cam_intrinsic'],
+                out_dir,
+                file_name,
+                box_mode='camera',
+                show=show)
 
 
 def output_to_nusc_box(detection):

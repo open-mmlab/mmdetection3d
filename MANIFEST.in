@@ -1,11 +1,6 @@
-include requirements/*.txt
-include mmdet3d/ops/**/*.cpp mmdet3d/ops/**/*.cu
-include mmdet3d/ops/**/*.h mmdet3d/ops/**/*.cc
-include mmdet3d/VERSION
 include mmdet3d/model_zoo.yml
-include mmdet3d/configs/*/*.py
-include mmdet3d/configs/*/*.yml
-include mmdet3d/tools/*.py
-include mmdet3d/tools/*.sh
-include mmdet3d/tools/*/*.py
-include mmdet3d/demo/*/*
+include requirements/*.txt
+recursive-include mmdet3d/configs *.py *.yml
+recursive-include mmdet3d/tools *.sh *.py
+recursive-include mmdet3d/ops *.cpp *.cu *.h *.cc
+recursive-include mmdet3d/demo *.png *.jpg *.bin *.pkl *.py
