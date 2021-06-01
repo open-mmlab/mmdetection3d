@@ -20,6 +20,7 @@
 - Support visualization of detection results and dataset browse for nuScenes Mono-3D dataset (#542, #582)
 - Support faster implementation of KNN (#586)
 - Support RegNetX models on Lyft dataset (#589)
+- Remove a useless parameter [label_weight] from segmentation datasets including [Custom3DSegDataset], [ScanNetSegDataset] and [S3DISSegDataset] (#607)
 
 #### Bug Fixes
 - Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)
