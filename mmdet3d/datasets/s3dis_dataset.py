@@ -41,9 +41,6 @@ class _S3DISSegDataset(Custom3DSegDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        label_weight (np.ndarray | str, optional): Precomputed weight to \
-            balance loss calculation. If None is given, compute from data.
-            Defaults to None.
     """
     CLASSES = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
                'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
@@ -66,8 +63,7 @@ class _S3DISSegDataset(Custom3DSegDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None,
-                 label_weight=None):
+                 scene_idxs=None):
 
         super().__init__(
             data_root=data_root,
@@ -78,8 +74,7 @@ class _S3DISSegDataset(Custom3DSegDataset):
             modality=modality,
             test_mode=test_mode,
             ignore_index=ignore_index,
-            scene_idxs=scene_idxs,
-            label_weight=label_weight)
+            scene_idxs=scene_idxs)
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
@@ -153,21 +148,17 @@ class _S3DISSegDataset(Custom3DSegDataset):
                             pred_sem_mask, out_dir, file_name,
                             np.array(self.PALETTE), self.ignore_index, show)
 
-    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
-        """Compute scene_idxs for data sampling and label weight for loss \
-        calculation.
+    def get_scene_idxs(self, scene_idxs):
+        """Compute scene_idxs for data sampling.
 
-        We sample more times for scenes with more points. Label_weight is
-        inversely proportional to number of class points.
+        We sample more times for scenes with more points.
         """
         # when testing, we load one whole scene every time
-        # and we don't need label weight for loss calculation
         if not self.test_mode and scene_idxs is None:
             raise NotImplementedError(
                 'please provide re-sampled scene indexes for training')
 
-        return super().get_scene_idxs_and_label_weight(scene_idxs,
-                                                       label_weight)
+        return super().get_scene_idxs(scene_idxs)
 
 
 @DATASETS.register_module()
@@ -178,7 +169,7 @@ class S3DISSegDataset(_S3DISSegDataset):
     This class serves as the API for experiments on the S3DIS Dataset.
     It wraps the provided datasets of different areas.
     We don't use `mmdet.datasets.dataset_wrappers.ConcatDataset` because we
-    need to concat the `scene_idxs` and `label_weights` of different areas.
+    need to concat the `scene_idxs` of different areas.
 
     Please refer to the `google form <https://docs.google.com/forms/d/e/1FAIpQL
     ScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1>`_ for
@@ -203,9 +194,6 @@ class S3DISSegDataset(_S3DISSegDataset):
         scene_idxs (list[np.ndarray] | list[str], optional): Precomputed index
             to load data. For scenes with many points, we may sample it several
             times. Defaults to None.
-        label_weights (list[np.ndarray] | list[str], optional): Precomputed
-            weight to balance loss calculation. If None is given, compute from
-            data. Defaults to None.
     """
 
     def __init__(self,
@@ -217,14 +205,11 @@ class S3DISSegDataset(_S3DISSegDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None,
-                 label_weights=None):
+                 scene_idxs=None):
 
-        # make sure that ann_files, scene_idxs and label_weights have same len
+        # make sure that ann_files and scene_idxs have same length
         ann_files = self._check_ann_files(ann_files)
         scene_idxs = self._check_scene_idxs(scene_idxs, len(ann_files))
-        label_weights = self._check_label_weights(label_weights,
-                                                  len(ann_files))
 
         # initialize some attributes as datasets[0]
         super().__init__(
@@ -236,8 +221,7 @@ class S3DISSegDataset(_S3DISSegDataset):
             modality=modality,
             test_mode=test_mode,
             ignore_index=ignore_index,
-            scene_idxs=scene_idxs[0],
-            label_weight=label_weights[0])
+            scene_idxs=scene_idxs[0])
 
         datasets = [
             _S3DISSegDataset(
@@ -249,14 +233,12 @@ class S3DISSegDataset(_S3DISSegDataset):
                 modality=modality,
                 test_mode=test_mode,
                 ignore_index=ignore_index,
-                scene_idxs=scene_idxs[i],
-                label_weight=label_weights[i]) for i in range(len(ann_files))
+                scene_idxs=scene_idxs[i]) for i in range(len(ann_files))
         ]
 
-        # data_infos, scene_idxs, label_weight need to be concat
+        # data_infos and scene_idxs need to be concat
         self.concat_data_infos([dst.data_infos for dst in datasets])
         self.concat_scene_idxs([dst.scene_idxs for dst in datasets])
-        self.concat_label_weight([dst.label_weight for dst in datasets])
 
         # set group flag for the sampler
         if not self.test_mode:
@@ -287,15 +269,6 @@ class S3DISSegDataset(_S3DISSegDataset):
                 [self.scene_idxs, one_scene_idxs + offset]).astype(np.int32)
             offset = np.unique(self.scene_idxs).max() + 1
 
-    def concat_label_weight(self, label_weights):
-        """Concat label_weight from several datasets to form self.label_weight.
-
-        Args:
-            label_weights (list[np.ndarray])
-        """
-        # TODO: simply average them?
-        self.label_weight = np.array(label_weights).mean(0).astype(np.float32)
-
     @staticmethod
     def _duplicate_to_list(x, num):
         """Repeat x `num` times to form a list."""
@@ -321,17 +294,3 @@ class S3DISSegDataset(_S3DISSegDataset):
             return scene_idx
         # single idx
         return self._duplicate_to_list(scene_idx, num)
-
-    def _check_label_weights(self, label_weight, num):
-        """Make label_weights as list/tuple."""
-        if label_weight is None:
-            return self._duplicate_to_list(label_weight, num)
-        # label_weight could be str, np.ndarray, list or tuple
-        if isinstance(label_weight, str):  # str
-            return self._duplicate_to_list(label_weight, num)
-        if isinstance(label_weight[0], str):  # list of str
-            return label_weight
-        if isinstance(label_weight[0], (list, tuple, np.ndarray)):  # list of w
-            return label_weight
-        # single weight
-        return self._duplicate_to_list(label_weight, num)

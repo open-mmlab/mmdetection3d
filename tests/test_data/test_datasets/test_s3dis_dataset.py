@@ -17,11 +17,6 @@ def test_seg_getitem():
                [170, 120, 200], [255, 0, 0], [200, 100, 100], [10, 200, 100],
                [200, 200, 200], [50, 50, 50]]
     scene_idxs = [0 for _ in range(20)]
-    label_weight = [
-        3.0441623, 3.3606708, 2.6408234, 4.5086737, 4.8403897, 4.7637715,
-        4.4685297, 4.7051463, 4.9190116, 5.3899403, 4.6436925, 5.0669650,
-        3.6270046
-    ]
 
     pipelines = [
         dict(
@@ -65,8 +60,7 @@ def test_seg_getitem():
         modality=None,
         test_mode=False,
         ignore_index=None,
-        scene_idxs=scene_idxs,
-        label_weights=label_weight)
+        scene_idxs=scene_idxs)
 
     data = s3dis_dataset[0]
     points = data['points']._data
@@ -102,8 +96,6 @@ def test_seg_getitem():
     assert original_palette == palette
     assert s3dis_dataset.scene_idxs.dtype == np.int32
     assert np.all(s3dis_dataset.scene_idxs == np.array(scene_idxs))
-    assert np.allclose(s3dis_dataset.label_weight, np.array(label_weight),
-                       1e-5)
 
     # test dataset with selected classes
     s3dis_dataset = S3DISSegDataset(
@@ -122,7 +114,6 @@ def test_seg_getitem():
     assert s3dis_dataset.VALID_CLASS_IDS == [3, 5]
     assert s3dis_dataset.label_map == label_map
     assert s3dis_dataset.label2cat == {0: 'beam', 1: 'window'}
-    assert np.all(s3dis_dataset.label_weight == np.ones(2))
 
     # test load classes from file
     import tempfile
@@ -160,7 +151,6 @@ def test_seg_getitem():
         test_mode=True,
         scene_idxs=scene_idxs)
     assert np.all(s3dis_dataset.scene_idxs == np.array([0]))
-    assert np.all(s3dis_dataset.label_weight == np.ones(len(class_names)))
 
 
 def test_seg_evaluate():
@@ -232,33 +222,23 @@ def test_multi_areas():
                [170, 120, 200], [255, 0, 0], [200, 100, 100], [10, 200, 100],
                [200, 200, 200], [50, 50, 50]]
     scene_idxs = [0 for _ in range(20)]
-    label_weight = [
-        3.0441623, 3.3606708, 2.6408234, 4.5086737, 4.8403897, 4.7637715,
-        4.4685297, 4.7051463, 4.9190116, 5.3899403, 4.6436925, 5.0669650,
-        3.6270046
-    ]
 
     # repeat
     repeat_num = 3
     s3dis_dataset = S3DISSegDataset(
         data_root=root_path,
         ann_files=[ann_file for _ in range(repeat_num)],
-        scene_idxs=scene_idxs,
-        label_weights=label_weight)
+        scene_idxs=scene_idxs)
     assert s3dis_dataset.CLASSES == class_names
     assert s3dis_dataset.PALETTE == palette
     assert len(s3dis_dataset.data_infos) == repeat_num
     assert np.all(s3dis_dataset.scene_idxs == np.concatenate(
         [np.array(scene_idxs) + i for i in range(repeat_num)]))
-    assert np.allclose(s3dis_dataset.label_weight, np.array(label_weight))
 
-    # different scene_idxs and label_weight input
-    label_weights = np.random.rand(repeat_num, len(class_names))
+    # different scene_idxs input
     s3dis_dataset = S3DISSegDataset(
         data_root=root_path,
         ann_files=[ann_file for _ in range(repeat_num)],
-        scene_idxs=[[0, 0, 1, 2, 2], [0, 1, 2, 3, 3, 4], [0, 1, 1, 2, 2, 2]],
-        label_weights=label_weights)
+        scene_idxs=[[0, 0, 1, 2, 2], [0, 1, 2, 3, 3, 4], [0, 1, 1, 2, 2, 2]])
     assert np.all(s3dis_dataset.scene_idxs == np.array(
         [0, 0, 1, 2, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9, 10, 10, 10]))
-    assert np.allclose(s3dis_dataset.label_weight, label_weights.mean(0))

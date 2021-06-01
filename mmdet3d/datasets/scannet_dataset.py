@@ -225,9 +225,6 @@ class ScanNetSegDataset(Custom3DSegDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        label_weight (np.ndarray | str, optional): Precomputed weight to \
-            balance loss calculation. If None is given, compute from data.
-            Defaults to None.
     """
     CLASSES = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
                'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
@@ -271,8 +268,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None,
-                 label_weight=None):
+                 scene_idxs=None):
 
         super().__init__(
             data_root=data_root,
@@ -283,8 +279,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
             modality=modality,
             test_mode=test_mode,
             ignore_index=ignore_index,
-            scene_idxs=scene_idxs,
-            label_weight=label_weight)
+            scene_idxs=scene_idxs)
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
@@ -358,21 +353,17 @@ class ScanNetSegDataset(Custom3DSegDataset):
                             pred_sem_mask, out_dir, file_name,
                             np.array(self.PALETTE), self.ignore_index, show)
 
-    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
-        """Compute scene_idxs for data sampling and label weight for loss \
-        calculation.
+    def get_scene_idxs(self, scene_idxs):
+        """Compute scene_idxs for data sampling.
 
-        We sample more times for scenes with more points. Label_weight is
-        inversely proportional to number of class points.
+        We sample more times for scenes with more points.
         """
         # when testing, we load one whole scene every time
-        # and we don't need label weight for loss calculation
         if not self.test_mode and scene_idxs is None:
             raise NotImplementedError(
                 'please provide re-sampled scene indexes for training')
 
-        return super().get_scene_idxs_and_label_weight(scene_idxs,
-                                                       label_weight)
+        return super().get_scene_idxs(scene_idxs)
 
     def format_results(self, results, txtfile_prefix=None):
         r"""Format the results to txt file. Refer to `ScanNet documentation

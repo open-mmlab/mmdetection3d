@@ -115,10 +115,6 @@ data = dict(
         scene_idxs=[
             data_root + f'seg_info/Area_{i}_resampled_scene_idxs.npy'
             for i in train_area
-        ],
-        label_weights=[
-            data_root + f'seg_info/Area_{i}_label_weight.npy'
-            for i in train_area
         ]),
     val=dict(
         type=dataset_type,
