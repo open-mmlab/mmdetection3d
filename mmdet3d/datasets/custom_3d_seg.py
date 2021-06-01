@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 from mmdet.datasets import DATASETS
 from mmseg.datasets import DATASETS as SEG_DATASETS
 from .pipelines import Compose
-from .utils import get_loading_pipeline
+from .utils import extract_result_dict, get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -38,9 +38,6 @@ class Custom3DSegDataset(Dataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        label_weight (np.ndarray | str, optional): Precomputed weight to \
-            balance loss calculation. If None is given, use equal weighting.
-            Defaults to None.
     """
     # names of all classes data used for the task
     CLASSES = None
@@ -63,8 +60,7 @@ class Custom3DSegDataset(Dataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None,
-                 label_weight=None):
+                 scene_idxs=None):
         super().__init__()
         self.data_root = data_root
         self.ann_file = ann_file
@@ -79,8 +75,7 @@ class Custom3DSegDataset(Dataset):
         self.ignore_index = len(self.CLASSES) if \
             ignore_index is None else ignore_index
 
-        self.scene_idxs, self.label_weight = \
-            self.get_scene_idxs_and_label_weight(scene_idxs, label_weight)
+        self.scene_idxs = self.get_scene_idxs(scene_idxs)
         self.CLASSES, self.PALETTE = \
             self.get_classes_and_palette(classes, palette)
 
@@ -250,26 +245,16 @@ class Custom3DSegDataset(Dataset):
             for cls_name in class_names
         ]
 
-        # also need to modify self.label_weight
-        self.label_weight = np.array([
-            self.label_weight[self.CLASSES.index(cls_name)]
-            for cls_name in class_names
-        ]).astype(np.float32)
-
         return class_names, palette
 
-    def get_scene_idxs_and_label_weight(self, scene_idxs, label_weight):
-        """Compute scene_idxs for data sampling and label weight for loss \
-        calculation.
+    def get_scene_idxs(self, scene_idxs):
+        """Compute scene_idxs for data sampling.
 
-        We sample more times for scenes with more points. Label_weight is
-        inversely proportional to number of class points.
+        We sample more times for scenes with more points.
         """
         if self.test_mode:
             # when testing, we load one whole scene every time
-            # and we don't need label weight for loss calculation
-            return np.arange(len(self.data_infos)).astype(np.int32), \
-                np.ones(len(self.CLASSES)).astype(np.float32)
+            return np.arange(len(self.data_infos)).astype(np.int32)
 
         # we may need to re-sample different scenes according to scene_idxs
         # this is necessary for indoor scene segmentation such as ScanNet
@@ -280,15 +265,7 @@ class Custom3DSegDataset(Dataset):
         else:
             scene_idxs = np.array(scene_idxs)
 
-        if label_weight is None:
-            # we don't used label weighting in training
-            label_weight = np.ones(len(self.CLASSES))
-        elif isinstance(label_weight, str):
-            label_weight = np.load(label_weight)
-        else:
-            label_weight = np.array(label_weight)
-
-        return scene_idxs.astype(np.int32), label_weight.astype(np.float32)
+        return scene_idxs.astype(np.int32)
 
     def format_results(self,
                        outputs,
@@ -399,28 +376,6 @@ class Custom3DSegDataset(Dataset):
             return Compose(loading_pipeline)
         return Compose(pipeline)
 
-    @staticmethod
-    def _get_data(results, key):
-        """Extract and return the data corresponding to key in result dict.
-
-        Args:
-            results (dict): Data loaded using pipeline.
-            key (str): Key of the desired data.
-
-        Returns:
-            np.ndarray | torch.Tensor | None: Data term.
-        """
-        if key not in results.keys():
-            return None
-        # results[key] may be data or list[data]
-        # data may be wrapped inside DataContainer
-        data = results[key]
-        if isinstance(data, list) or isinstance(data, tuple):
-            data = data[0]
-        if isinstance(data, mmcv.parallel.DataContainer):
-            data = data._data
-        return data
-
     def _extract_data(self, index, pipeline, key, load_annos=False):
         """Load data using input pipeline and extract data according to key.
 
@@ -447,9 +402,9 @@ class Custom3DSegDataset(Dataset):
 
         # extract data items according to keys
         if isinstance(key, str):
-            data = self._get_data(example, key)
+            data = extract_result_dict(example, key)
         else:
-            data = [self._get_data(example, k) for k in key]
+            data = [extract_result_dict(example, k) for k in key]
         if load_annos:
             self.test_mode = original_test_mode
 
