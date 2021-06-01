@@ -13,6 +13,7 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
 | master              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.3.1, <=1.4|
+| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.3.1, <=1.4|
 | 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
@@ -95,7 +96,7 @@ pip install mmcv-full
 
 Note:
 
-MMDetection3D v0.13.0 is only compatible with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support `mmdet>=2.12.0` since v0.14.0 (to be released in May).
+MMDetection3D v0.14.0 is only compatible with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support `mmdet>=2.12.0` since v0.15.0 (to be released in July).
 
 ```shell
 pip install git+https://github.com/open-mmlab/mmdetection.git
