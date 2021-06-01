@@ -1127,11 +1127,11 @@ class BackgroundPointsFilter(object):
         points = input_dict['points']
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
 
-        gt_bboxes_3d_np = gt_bboxes_3d.tensor.numpy()
-        gt_bboxes_3d_np[:, :3] = gt_bboxes_3d.gravity_center.numpy()
+        gt_bboxes_3d_np = gt_bboxes_3d.tensor.clone().numpy()
+        gt_bboxes_3d_np[:, :3] = gt_bboxes_3d.gravity_center.clone().numpy()
         enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
         enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
-        points_numpy = points.tensor.numpy()
+        points_numpy = points.tensor.clone().numpy()
         foreground_masks = box_np_ops.points_in_rbbox(points_numpy,
                                                       gt_bboxes_3d_np)
         enlarge_foreground_masks = box_np_ops.points_in_rbbox(
