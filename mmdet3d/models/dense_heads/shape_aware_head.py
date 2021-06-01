@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import torch
 import warnings
@@ -110,7 +109,6 @@ class BaseShapeHead(BaseModule):
                 self.init_cfg = dict(
                     type='Kaiming',
                     layer='Conv2d',
-                    a=math.sqrt(5),
                     override=[
                         dict(type='Normal', name='conv_reg', std=0.01),
                         dict(
