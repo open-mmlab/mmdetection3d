@@ -7,10 +7,11 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
                           DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
-                              GlobalRotScaleTrans, ObjectNoise, ObjectSample,
-                              PointShuffle, PointsRangeFilter,
-                              RandomDropPointsColor, RandomFlip3D,
-                              RandomJitterPoints, VoxelBasedPointSampler)
+                              GlobalRotScaleTrans, ObjectNameFilter,
+                              ObjectNoise, ObjectSample, PointShuffle,
+                              PointsRangeFilter, RandomDropPointsColor,
+                              RandomFlip3D, RandomJitterPoints,
+                              VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -140,6 +141,47 @@ def test_object_noise():
     assert repr_str == expected_repr_str
     assert points.tensor.numpy().shape == (800, 4)
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d, 1e-3)
+
+
+def test_object_name_filter():
+    class_names = ['Pedestrian']
+    object_name_filter = ObjectNameFilter(class_names)
+
+    annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
+    info = annos[0]
+    rect = info['calib']['R0_rect'].astype(np.float32)
+    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+    annos = info['annos']
+    loc = annos['location']
+    dims = annos['dimensions']
+    rots = annos['rotation_y']
+    gt_names = annos['name']
+
+    gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
+                                  axis=1).astype(np.float32)
+    gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
+        Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
+    CLASSES = ('Pedestrian', 'Cyclist', 'Car')
+    gt_labels = []
+    for cat in gt_names:
+        if cat in CLASSES:
+            gt_labels.append(CLASSES.index(cat))
+        else:
+            gt_labels.append(-1)
+    gt_labels = np.array(gt_labels, dtype=np.long)
+    input_dict = dict(
+        gt_bboxes_3d=gt_bboxes_3d.clone(), gt_labels_3d=gt_labels.copy())
+
+    results = object_name_filter(input_dict)
+    bboxes_3d = results['gt_bboxes_3d']
+    labels_3d = results['gt_labels_3d']
+    keep_mask = np.array([name in class_names for name in gt_names])
+    assert torch.allclose(gt_bboxes_3d.tensor[keep_mask], bboxes_3d.tensor)
+    assert np.all(gt_labels[keep_mask] == labels_3d)
+
+    repr_str = repr(object_name_filter)
+    expected_repr_str = f'ObjectNameFilter(classes={class_names})'
+    assert repr_str == expected_repr_str
 
 
 def test_point_shuffle():
