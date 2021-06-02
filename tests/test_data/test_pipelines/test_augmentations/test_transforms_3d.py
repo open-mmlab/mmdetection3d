@@ -270,9 +270,11 @@ def test_global_rot_scale_trans():
     with pytest.raises(AssertionError):
         global_rot_scale_trans = GlobalRotScaleTrans(scale_ratio_range=1.0)
 
-    # translation_std should be a number or seq of numbers
+    # translation_std should be a positive number or seq of positive numbers
     with pytest.raises(AssertionError):
         global_rot_scale_trans = GlobalRotScaleTrans(translation_std='0.0')
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(translation_std=-1.0)
 
     global_rot_scale_trans = GlobalRotScaleTrans(
         rot_range=angle,

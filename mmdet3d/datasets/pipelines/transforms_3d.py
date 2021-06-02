@@ -532,6 +532,8 @@ class GlobalRotScaleTrans(object):
             translation_std = [
                 translation_std, translation_std, translation_std
             ]
+        assert all([std >= 0 for std in translation_std]), \
+            'translation_std should be positive'
         self.translation_std = translation_std
         self.shift_height = shift_height
 
