@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import trimesh
 from mmcv.cnn import ConvModule, normal_init
 from mmcv.runner import BaseModule
 from torch import nn as nn
@@ -13,49 +12,6 @@ from mmdet3d.ops import build_sa_module
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
-
-
-def write_oriented_bbox(scene_bbox, out_filename):
-    """Export oriented (around Z axis) scene bbox to meshes.
-
-    Args:
-        scene_bbox(list[ndarray] or ndarray): xyz pos of center and
-            3 lengths (dx,dy,dz) and heading angle around Z axis.
-            Y forward, X right, Z upward. heading angle of positive X is 0,
-            heading angle of positive Y is 90 degrees.
-        out_filename(str): Filename.
-    """
-
-    def heading2rotmat(heading_angle):
-        rotmat = np.zeros((3, 3))
-        rotmat[2, 2] = 1
-        cosval = np.cos(heading_angle)
-        sinval = np.sin(heading_angle)
-        rotmat[0:2, 0:2] = np.array([[cosval, -sinval], [sinval, cosval]])
-        return rotmat
-
-    def convert_oriented_box_to_trimesh_fmt(box):
-        ctr = box[:3]
-        lengths = box[3:6]
-        trns = np.eye(4)
-        trns[0:3, 3] = ctr
-        trns[3, 3] = 1.0
-        trns[0:3, 0:3] = heading2rotmat(box[6])
-        box_trimesh_fmt = trimesh.creation.box(lengths, trns)
-        return box_trimesh_fmt
-
-    if len(scene_bbox) == 0:
-        scene_bbox = np.zeros((1, 7))
-    scene = trimesh.scene.Scene()
-
-    # scene.add_geometry(convert_oriented_box_to_trimesh_fmt(scene_bbox))
-    for box in scene_bbox:
-        scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
-    mesh_list = trimesh.util.concatenate(scene.dump())
-    # save to ply file
-    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
-
-    return
 
 
 @HEADS.register_module()
@@ -88,7 +44,6 @@ class PointRCNNBboxHead(BaseModule):
                 use_sigmoid=True,
                 reduction='sum',
                 loss_weight=1.0),
-            corner_loss=dict(type='SmoothL1Loss', reduction='mean'),
             with_corner_loss=True,
             init_cfg=None,
             pretrained=None):
@@ -99,7 +54,6 @@ class PointRCNNBboxHead(BaseModule):
 
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_cls = build_loss(loss_cls)
-        self.loss_corner = build_loss(corner_loss)
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
@@ -340,17 +294,6 @@ class PointRCNNBboxHead(BaseModule):
         reg_mask[0:pos_gt_bboxes.size(0)] = 1
         bbox_weights = (reg_mask > 0).float()
         if reg_mask.bool().any():
-            """# flip orientation if rois have opposite orientation.
-
-            ry_rois = pos_bboxes[..., 6] % (2 * np.pi)  # 0 ~ 2pi
-            opposite_flag = (ry_rois > np.pi * 0.5) & (ry_rois < np.pi * 1.5)
-            ry_rois[opposite_flag] = (ry_rois[opposite_flag] + np.pi) % (
-                2 * np.pi)  # (0 ~ pi/2, 3pi/2 ~ 2pi)
-            flag = ry_rois > np.pi
-            ry_rois[flag] = ry_rois[flag] - np.pi * 2  # (-pi/2, pi/2)
-            ry_rois = torch.clamp(ry_rois, min=-np.pi / 2, max=np.pi / 2)
-            pos_bboxes[..., 6] = ry_rois
-            """
             pos_gt_bboxes_ct = pos_gt_bboxes.clone().detach()
             roi_center = pos_bboxes[..., 0:3]
             roi_ry = pos_bboxes[..., 6] % (2 * np.pi)
@@ -386,6 +329,7 @@ class PointRCNNBboxHead(BaseModule):
 
     def get_bboxes(self,
                    rois,
+                   cls_score,
                    bbox_pred,
                    class_labels,
                    class_pred,
@@ -395,6 +339,7 @@ class PointRCNNBboxHead(BaseModule):
 
         Args:
             rois (torch.Tensor): Roi bounding boxes.
+            cls_score (torch.Tensor): Scores of bounding boxes.
             bbox_pred (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
             class_pred (torch.Tensor): Score for nms.
@@ -407,17 +352,7 @@ class PointRCNNBboxHead(BaseModule):
         roi_batch_id = rois[..., 0]
         roi_boxes = rois[..., 1:]  # boxes without batch id
         batch_size = int(roi_batch_id.max().item() + 1)
-        '''
-        # flip orientation if rois have opposite orientation
-        ry_rois = roi_boxes[..., 6] % (2 * np.pi)  # 0 ~ 2pi
-        opposite_flag = (ry_rois > np.pi * 0.5) & (ry_rois < np.pi * 1.5)
-        ry_rois[opposite_flag] = (ry_rois[opposite_flag] + np.pi) % (
-            2 * np.pi)  # (0 ~ pi/2, 3pi/2 ~ 2pi)
-        flag = ry_rois > np.pi
-        ry_rois[flag] = ry_rois[flag] - np.pi * 2  # (-pi/2, pi/2)
-        ry_rois = torch.clamp(ry_rois, min=-np.pi / 2, max=np.pi / 2)
-        roi_boxes[..., 6] = ry_rois
-        '''
+
         # decode boxes
         roi_ry = roi_boxes[..., 6].view(-1)
         roi_xyz = roi_boxes[..., 0:3].view(-1, 3)
@@ -425,26 +360,30 @@ class PointRCNNBboxHead(BaseModule):
         local_roi_boxes[..., 0:3] = 0
         rcnn_boxes3d = self.bbox_coder.decode(local_roi_boxes, bbox_pred)
         rcnn_boxes3d[..., 0:3] = rotation_3d_in_axis(
-            rcnn_boxes3d[..., 0:3].unsqueeze(1), roi_ry, axis=2).squeeze(1)
+            rcnn_boxes3d[..., 0:3].unsqueeze(1), (roi_ry + np.pi / 2),
+            axis=2).squeeze(1)
         rcnn_boxes3d[:, 0:3] += roi_xyz
 
         # post processing
         result_list = []
         for batch_id in range(batch_size):
             cur_class_labels = class_labels[batch_id]
-            cur_cls_score = class_pred[roi_batch_id == batch_id].view(-1)
+            cur_cls_score = cls_score[roi_batch_id == batch_id].view(-1)
 
+            cur_box_prob = class_pred[batch_id]
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
-            selected = self.multi_class_nms(
-                cur_cls_score.unsqueeze(1), cur_rcnn_boxes3d, cfg.score_thr,
-                cfg.nms_thr, img_metas[batch_id], cfg.use_rotate_nms)
+            selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
+                                            cfg.score_thr, cfg.nms_thr,
+                                            img_metas[batch_id],
+                                            cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[selected]
             selected_label_preds = cur_class_labels[selected]
             selected_scores = cur_cls_score[selected]
 
-            result_list.append((img_metas[batch_id]['box_type_3d'](
-                selected_bboxes, self.bbox_coder.code_size,
-                with_yaw=True), selected_scores, selected_label_preds))
+            result_list.append(
+                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
+                                                    self.bbox_coder.code_size),
+                 selected_scores, selected_label_preds))
         return result_list
 
     def multi_class_nms(self,

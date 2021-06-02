@@ -46,7 +46,6 @@ model = dict(
                                                             1.73]])),
     roi_head=dict(
         type='PointRCNNROIHead',
-        num_classes=3,
         point_roi_extractor=dict(
             type='Single3DRoIPointExtractor',
             roi_layer=dict(
@@ -55,7 +54,7 @@ model = dict(
                 pool_extra_width=1.0)),
         bbox_head=dict(
             type='PointRCNNBboxHead',
-            num_classes=3,
+            num_classes=1,
             pred_layer_cfg=dict(
                 in_channels=512,
                 cls_conv_channels=(256, 256),
@@ -66,23 +65,11 @@ model = dict(
             radius=(0.2, 0.4, 100),
             num_samples=(64, 64, 64),
             sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
-            corner_loss=dict(
-                type='SmoothL1Loss', reduction='sum', loss_weight=1.0))),
+            with_corner_loss=True)),
     # model training and testing settings
     train_cfg=dict(
-        _delete_=True,
         pos_distance_thr=10.0,
         rpn=dict(
-            assigner=dict(
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
-                ignore_iof_thr=-1),
-            allowed_border=0,
-            pos_weight=-1,
-            debug=False,
             rpn_proposal=dict(
                 nms_pre=9000,
                 nms_post=512,
@@ -113,9 +100,9 @@ model = dict(
         rpn=dict(
             nms_pre=9000,
             nms_post=512,
-            max_output_num=100,
-            score_thr=0.1,
-            nms_cfg=dict(type='nms', iou_thr=0.1),
+            max_output_num=128,
+            score_thr=0,
+            nms_cfg=dict(type='nms', iou_thr=0.92),
             per_class_proposal=False,
             use_rotate_nms=True),
         rcnn=dict(
