@@ -39,7 +39,7 @@ model = dict(
                                                             1.73]])),
     roi_head=dict(
         type='PointRCNNROIHead',
-        num_classes=1,
+        num_classes=3,
         point_roi_extractor=dict(
             type='Single3DRoIPointExtractor',
             roi_layer=dict(
@@ -48,7 +48,7 @@ model = dict(
                 pool_extra_width=1.0)),
         bbox_head=dict(
             type='PointRCNNBboxHead',
-            num_classes=1,
+            num_classes=3,
             pred_layer_cfg=dict(
                 in_channels=512,
                 cls_conv_channels=(256, 256),
@@ -80,7 +80,7 @@ model = dict(
                 nms_pre=9000,
                 nms_post=512,
                 max_num=512,
-                nms_cfg=dict(type='nms', iou_thr=0.8),
+                nms_cfg=dict(type='nms', iou_thr=0.9),
                 score_thr=0,
                 use_rotate_nms=False)),
         rcnn=dict(
@@ -94,7 +94,7 @@ model = dict(
             sampler=dict(
                 type='IoUNegPiecewiseSampler',
                 num=100,
-                pos_fraction=0.5,
+                pos_fraction=0.55,
                 neg_piece_fractions=[0.8, 0.2],
                 neg_iou_piece_thrs=[0.55, 0.1],
                 neg_pos_ub=-1,
@@ -107,8 +107,8 @@ model = dict(
             nms_pre=9000,
             nms_post=512,
             max_output_num=100,
-            score_thr=0.1,
-            nms_cfg=dict(type='nms', iou_thr=0.85),
+            score_thr=0,
+            nms_cfg=dict(type='nms', iou_thr=0.92),
             per_class_proposal=False,
             use_rotate_nms=True),
         rcnn=dict(
