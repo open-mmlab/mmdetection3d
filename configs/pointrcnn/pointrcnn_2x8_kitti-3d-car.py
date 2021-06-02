@@ -6,7 +6,7 @@ _base_ = [
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']
+class_names = ['Car', 'Pedestrian', 'Cyclist']
 point_cloud_range = [0, -40, -5, 70, 40, 3]
 input_modality = dict(use_lidar=True, use_camera=False)
 
@@ -16,8 +16,8 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=12, Pedestrian=6, Cyclist=6)),
-    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
+        filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
+    sample_groups=dict(Car=20, Pedestrian=15, Cyclist=15),
     classes=class_names)
 
 train_pipeline = [
@@ -68,8 +68,8 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
+    samples_per_gpu=12,
+    workers_per_gpu=12,
     train=dict(
         type='RepeatDataset',
         times=2,
@@ -78,7 +78,7 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names))
 
 # optimizer
-lr = 0.001  # max learning rate
+lr = 0.01  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(policy='step', warmup=None, step=[35, 45])

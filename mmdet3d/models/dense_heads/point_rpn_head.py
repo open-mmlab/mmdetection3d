@@ -203,6 +203,7 @@ class PointRPNHead(BaseModule):
         # corner loss
         pred_bbox3d = self.bbox_coder.decode(bbox_preds, point_targets,
                                              mask_targets)
+        '''
         pred_bbox3d = pred_bbox3d.reshape(-1, pred_bbox3d.shape[-1])
         pred_bbox3d = img_metas[0]['box_type_3d'](
             pred_bbox3d.clone(),
@@ -214,7 +215,7 @@ class PointRPNHead(BaseModule):
             pred_corners3d,
             corner3d_targets.reshape(-1, 8, 3),
             weight=box_loss_weights.view(-1, 1, 1))
-
+        '''
         # calculate semantic loss
         semantic_points = cls_preds.reshape(-1, self.num_classes)
         semantic_targets = mask_targets
@@ -243,10 +244,7 @@ class PointRPNHead(BaseModule):
         assert 0
         '''
 
-        losses = dict(
-            bbox_loss=bbox_loss,
-            corner_loss=corner_loss,
-            semantic_loss=semantic_loss)
+        losses = dict(bbox_loss=bbox_loss, semantic_loss=semantic_loss)
         return losses
 
     def get_targets(self,
@@ -321,7 +319,8 @@ class PointRPNHead(BaseModule):
 
         # transform the bbox coordinate to the pointcloud coordinate
         gt_corner3d = gt_bboxes_3d.corners
-        gt_bboxes_3d_tensor = gt_bboxes_3d.tensor
+        gt_bboxes_3d_tensor = gt_bboxes_3d.tensor.clone()
+        gt_bboxes_3d_tensor[..., 2] += gt_bboxes_3d_tensor[..., 5] / 2
 
         points_mask, assignment = self._assign_targets_by_points_inside(
             gt_bboxes_3d, points)

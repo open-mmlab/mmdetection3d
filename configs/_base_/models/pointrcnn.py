@@ -29,13 +29,20 @@ model = dict(
             cls_conv_channels=(256, 256),
             reg_conv_channels=(256, 256),
             bias=True),
-        bbox_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+        bbox_loss=dict(
+            type='SmoothL1Loss',
+            beta=1.0 / 9.0,
+            reduction='sum',
+            loss_weight=1.0),
         corner_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='SmoothL1Loss',
+            beta=1.0 / 9.0,
+            reduction='sum',
+            loss_weight=1.0),
         bbox_coder=dict(
             type='PointXYZWHLRBBoxCoder',
             use_mean_size=True,
-            mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6,
+            mean_size=[[1.6, 3.9, 1.56], [0.6, 0.8, 1.73], [0.6, 1.76,
                                                             1.73]])),
     roi_head=dict(
         type='PointRCNNROIHead',
@@ -107,8 +114,8 @@ model = dict(
             nms_pre=9000,
             nms_post=512,
             max_output_num=100,
-            score_thr=0,
-            nms_cfg=dict(type='nms', iou_thr=0.92),
+            score_thr=0.1,
+            nms_cfg=dict(type='nms', iou_thr=0.1),
             per_class_proposal=False,
             use_rotate_nms=True),
         rcnn=dict(
