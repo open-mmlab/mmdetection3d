@@ -35,7 +35,7 @@ def test_paconv_sa_module_msg():
         norm_cfg=dict(type='BN2d'),
         use_xyz=False,
         pool_mod='max',
-        paconv_kernel_input='neighbor').cuda()
+        paconv_kernel_input='w_neighbor').cuda()
 
     assert self.mlps[0].layer0.weight_bank.shape[0] == 12 * 2
     assert self.mlps[0].layer0.weight_bank.shape[1] == 16 * 4
@@ -113,7 +113,7 @@ def test_paconv_sa_module():
         norm_cfg=dict(type='BN2d'),
         use_xyz=True,
         pool_mod='max',
-        paconv_kernel_input='neighbor')
+        paconv_kernel_input='w_neighbor')
     self = build_sa_module(sa_cfg).cuda()
 
     assert self.mlps[0].layer0.weight_bank.shape[0] == 15 * 2
@@ -189,7 +189,7 @@ def test_paconv_cuda_sa_module_msg():
         norm_cfg=dict(type='BN2d'),
         use_xyz=False,
         pool_mod='max',
-        paconv_kernel_input='neighbor').cuda()
+        paconv_kernel_input='w_neighbor').cuda()
 
     assert self.mlps[0][0].weight_bank.shape[0] == 12 * 2
     assert self.mlps[0][0].weight_bank.shape[1] == 16 * 4
@@ -222,7 +222,7 @@ def test_paconv_cuda_sa_module_msg():
     assert new_features.shape == torch.Size([1, 48, 16])
     assert inds.shape == torch.Size([1, 16])
 
-    # CUDA PAConv only supports neighbor kernel_input
+    # CUDA PAConv only supports w_neighbor kernel_input
     with pytest.raises(AssertionError):
         self = PAConvSAModuleMSGCUDA(
             num_point=16,
@@ -250,7 +250,7 @@ def test_paconv_cuda_sa_module():
         norm_cfg=dict(type='BN2d'),
         use_xyz=True,
         pool_mod='max',
-        paconv_kernel_input='neighbor')
+        paconv_kernel_input='w_neighbor')
     self = build_sa_module(sa_cfg).cuda()
 
     assert self.mlps[0][0].weight_bank.shape[0] == 15 * 2
@@ -280,7 +280,7 @@ def test_paconv_cuda_sa_module():
         norm_cfg=dict(type='BN2d'),
         use_xyz=True,
         pool_mod='max',
-        paconv_kernel_input='neighbor')
+        paconv_kernel_input='w_neighbor')
     self = build_sa_module(sa_cfg).cuda()
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)

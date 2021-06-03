@@ -355,10 +355,17 @@ class PAConvSAModuleMSG(_PointSAModuleBase):
         paconv_num_kernels (list[list[int]]): Number of weight kernels in the
             weight banks of each layer's PAConv.
         paconv_kernel_input (str, optional): Input features to be multiplied
-            with weight kernels. Can be 'identity' or 'neighbor'.
-            Defaults to 'neighbor'.
+            with weight kernels. Can be 'identity' or 'w_neighbor'.
+            Defaults to 'w_neighbor'.
         scorenet_input (str, optional): Type of the input to ScoreNet.
-            Can be 'identity', 'neighbor' or 'ed7'. Defaults to 'ed7'.
+            Defaults to 'w_neighbor_dist'. Can be the following values:
+
+            - 'identity': Use xyz coordinates as input.
+            - 'w_neighbor': Use xyz coordinates and the difference with center
+                points as input.
+            - 'w_neighbor_dist': Use xyz coordinates, the difference with
+                center points and the Euclidian distance as input.
+
         scorenet_cfg (dict, optional): Config of the ScoreNet module, which
             may contain the following keys and values:
 
@@ -384,8 +391,8 @@ class PAConvSAModuleMSG(_PointSAModuleBase):
                  pool_mod: str = 'max',
                  normalize_xyz: bool = False,
                  bias: str = 'auto',
-                 paconv_kernel_input: str = 'neighbor',
-                 scorenet_input: str = 'ed7',
+                 paconv_kernel_input: str = 'w_neighbor',
+                 scorenet_input: str = 'w_neighbor_dist',
                  scorenet_cfg: dict = dict(
                      mlp_channels=[16, 16, 16],
                      score_norm='softmax',
@@ -455,8 +462,8 @@ class PAConvSAModule(PAConvSAModuleMSG):
                  fps_mod: List[str] = ['D-FPS'],
                  fps_sample_range_list: List[int] = [-1],
                  normalize_xyz: bool = False,
-                 paconv_kernel_input: str = 'neighbor',
-                 scorenet_input: str = 'ed7',
+                 paconv_kernel_input: str = 'w_neighbor',
+                 scorenet_input: str = 'w_neighbor_dist',
                  scorenet_cfg: dict = dict(
                      mlp_channels=[16, 16, 16],
                      score_norm='softmax',
@@ -503,8 +510,8 @@ class PAConvSAModuleMSGCUDA(_PointSAModuleBase):
                  pool_mod: str = 'max',
                  normalize_xyz: bool = False,
                  bias: str = 'auto',
-                 paconv_kernel_input: str = 'neighbor',
-                 scorenet_input: str = 'ed7',
+                 paconv_kernel_input: str = 'w_neighbor',
+                 scorenet_input: str = 'w_neighbor_dist',
                  scorenet_cfg: dict = dict(
                      mlp_channels=[8, 16, 16],
                      score_norm='softmax',
@@ -646,8 +653,8 @@ class PAConvSAModuleCUDA(PAConvSAModuleMSGCUDA):
                  fps_mod: List[str] = ['D-FPS'],
                  fps_sample_range_list: List[int] = [-1],
                  normalize_xyz: bool = False,
-                 paconv_kernel_input: str = 'neighbor',
-                 scorenet_input: str = 'ed7',
+                 paconv_kernel_input: str = 'w_neighbor',
+                 scorenet_input: str = 'w_neighbor_dist',
                  scorenet_cfg: dict = dict(
                      mlp_channels=[8, 16, 16],
                      score_norm='softmax',
