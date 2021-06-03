@@ -4,7 +4,6 @@ from mmcv.cnn import (ConvModule, build_activation_layer, build_norm_layer,
                       constant_init, xavier_init)
 from torch import nn as nn
 from torch.nn import functional as F
-from typing import List
 
 from .assign_score import assign_score_withk as assign_score_cuda
 from .utils import assign_kernel_withoutk, assign_score, calc_euclidian_dist
@@ -30,11 +29,11 @@ class ScoreNet(nn.Module):
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 last_bn: bool = False,
-                 score_norm: str = 'softmax',
-                 temp_factor: float = 1.0,
-                 norm_cfg: dict = dict(type='BN2d'),
+                 mlp_channels,
+                 last_bn=False,
+                 score_norm='softmax',
+                 temp_factor=1.0,
+                 norm_cfg=dict(type='BN2d'),
                  bias='auto'):
         super(ScoreNet, self).__init__()
 
@@ -75,8 +74,8 @@ class ScoreNet(nn.Module):
         """Initialize weights of shared MLP layers."""
         # refer to https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/paconv.py#L105  # noqa
         for m in self.mlps.modules():
-            if isinstance(m.conv, nn.Conv2d):
-                xavier_init(m.conv)
+            if isinstance(m, nn.Conv2d):
+                xavier_init(m)
 
     def forward(self, xyz_features):
         """Forward.
@@ -96,7 +95,7 @@ class ScoreNet(nn.Module):
             scores = F.softmax(scores / self.temp_factor, dim=1)
         elif self.score_norm == 'sigmoid':
             scores = torch.sigmoid(scores / self.temp_factor)
-        else:
+        else:  # 'identity'
             scores = scores
 
         scores = scores.permute(0, 2, 3, 1)  # (B, N, K, M)
@@ -120,12 +119,13 @@ class PAConv(nn.Module):
         act_cfg (dict, optional): Type of activation method.
             Defaults to dict(type='ReLU', inplace=True).
         scorenet_input (str, optional): Type of input to ScoreNet.
-            Can be 'identity', 'neighbor' or 'ed7'. Defaults to 'ed7'.
+            Can be 'identity', 'w_neighbor' or 'w_neighbor_dist'.
+            Defaults to 'w_neighbor_dist'.
         weight_bank_init (str, optional): Init method of weight bank kernels.
             Can be 'kaiming' or 'xavier'. Defaults to 'kaiming'.
         kernel_input (str, optional): Input features to be multiplied with
-            weight kernels. Can be 'identity' or 'neighbor'.
-            Defaults to 'neighbor'.
+            weight kernels. Can be 'identity' or 'w_neighbor'.
+            Defaults to 'w_neighbor'.
         scorenet_cfg (dict, optional): Config of the ScoreNet module, which
             may contain the following keys and values:
 
@@ -138,15 +138,15 @@ class PAConv(nn.Module):
     """
 
     def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 num_kernels: int,
-                 norm_cfg: dict = dict(type='BN2d', momentum=0.1),
-                 act_cfg: dict = dict(type='ReLU', inplace=True),
-                 scorenet_input: str = 'ed7',
-                 weight_bank_init: str = 'kaiming',
-                 kernel_input: str = 'neighbor',
-                 scorenet_cfg: dict = dict(
+                 in_channels,
+                 out_channels,
+                 num_kernels,
+                 norm_cfg=dict(type='BN2d', momentum=0.1),
+                 act_cfg=dict(type='ReLU', inplace=True),
+                 scorenet_input='w_neighbor_dist',
+                 weight_bank_init='kaiming',
+                 kernel_input='w_neighbor',
+                 scorenet_cfg=dict(
                      mlp_channels=[8, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
@@ -157,7 +157,7 @@ class PAConv(nn.Module):
         if kernel_input == 'identity':
             # only use grouped_features
             self.kernel_mul = 1
-        elif kernel_input == 'neighbor':
+        elif kernel_input == 'w_neighbor':
             # concat of (grouped_features - center_features, grouped_features)
             self.kernel_mul = 2
         else:
@@ -169,10 +169,10 @@ class PAConv(nn.Module):
         if scorenet_input == 'identity':
             # only use relative position (grouped_xyz - center_xyz)
             self.scorenet_in_channels = 3
-        elif scorenet_input == 'neighbor':
+        elif scorenet_input == 'w_neighbor':
             # (grouped_xyz - center_xyz, grouped_xyz)
             self.scorenet_in_channels = 6
-        elif scorenet_input == 'ed7':
+        elif scorenet_input == 'w_neighbor_dist':
             # (center_xyz, grouped_xyz - center_xyz, Euclidian distance)
             self.scorenet_in_channels = 7
         else:
@@ -217,6 +217,33 @@ class PAConv(nn.Module):
         if self.bn is not None:
             constant_init(self.bn, val=1)
 
+    def _prepare_scorenet_input(self, points_xyz):
+        """Prepare input point pairs features for self.ScoreNet.
+
+        Args:
+            points_xyz (torch.Tensor): (B, 3, npoint, K)
+                Coordinates of the grouped points.
+
+        Returns:
+            torch.Tensor: (B, C, npoint, K)
+                The generated features per point pair.
+        """
+        B, _, npoint, K = points_xyz.size()
+        center_xyz = points_xyz[..., :1].repeat(1, 1, 1, K)
+        xyz_diff = points_xyz - center_xyz  # [B, 3, npoint, K]
+        if self.scorenet_input == 'identity':
+            xyz_features = xyz_diff
+        elif self.scorenet_input == 'w_neighbor':
+            xyz_features = torch.cat((xyz_diff, points_xyz), dim=1)
+        else:  # w_neighbor_dist
+            euclidian_dist = calc_euclidian_dist(
+                center_xyz.permute(0, 2, 3, 1).reshape(B * npoint * K, 3),
+                points_xyz.permute(0, 2, 3, 1).reshape(B * npoint * K, 3)).\
+                    reshape(B, 1, npoint, K)
+            xyz_features = torch.cat((center_xyz, xyz_diff, euclidian_dist),
+                                     dim=1)
+        return xyz_features
+
     def forward(self, points_xyz, features):
         """Forward.
 
@@ -230,26 +257,15 @@ class PAConv(nn.Module):
             torch.Tensor: (B, out_c, npoint, K), features after PAConv.
         """
         B, _, npoint, K = features.size()
-        center_xyz = points_xyz[..., :1].repeat(1, 1, 1, K)
-        xyz_diff = points_xyz - center_xyz  # [B, 3, npoint, K]
 
-        if self.kernel_input == 'neighbor':
+        if self.kernel_input == 'w_neighbor':
             center_features = features[..., :1].repeat(1, 1, 1, K)
             features_diff = features - center_features
             # to (B, 2 * in_c, npoint, K)
             features = torch.cat((features_diff, features), dim=1)
 
-        if self.scorenet_input == 'identity':
-            xyz_features = xyz_diff
-        elif self.scorenet_input == 'neighbor':
-            xyz_features = torch.cat((xyz_diff, points_xyz), dim=1)
-        else:  # ed7
-            euclidian_dist = calc_euclidian_dist(
-                center_xyz.permute(0, 2, 3, 1).reshape(B * npoint * K, 3),
-                points_xyz.permute(0, 2, 3, 1).reshape(B * npoint * K, 3)).\
-                    reshape(B, 1, npoint, K)
-            xyz_features = torch.cat((center_xyz, xyz_diff, euclidian_dist),
-                                     dim=1)
+        # prepare features for between each point and its grouping center
+        xyz_features = self._prepare_scorenet_input(points_xyz)
 
         # scores to assemble weight kernels
         scores = self.scorenet(xyz_features)  # [B, npoint, K, m]
@@ -277,20 +293,23 @@ class PAConvCUDA(PAConv):
     """CUDA version of PAConv that implements a cuda op to efficiently perform
     kernel assembling.
 
+    Different from vanilla PAConv, the input features of this function is not
+    grouped by centers. Instead, they will be queried on-the-fly by the
+    additional input `points_idx`. This avoids the large intermediate matrix.
     See the `paper <https://arxiv.org/pdf/2103.14635.pdf>`_ appendix Sec. D for
     more detailed descriptions.
     """
 
     def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 num_kernels: int,
-                 norm_cfg: dict = dict(type='BN2d', momentum=0.1),
-                 act_cfg: dict = dict(type='ReLU', inplace=True),
-                 scorenet_input: str = 'ed7',
-                 weight_bank_init: str = 'kaiming',
-                 kernel_input: str = 'neighbor',
-                 scorenet_cfg: dict = dict(
+                 in_channels,
+                 out_channels,
+                 num_kernels,
+                 norm_cfg=dict(type='BN2d', momentum=0.1),
+                 act_cfg=dict(type='ReLU', inplace=True),
+                 scorenet_input='w_neighbor_dist',
+                 weight_bank_init='kaiming',
+                 kernel_input='w_neighbor',
+                 scorenet_cfg=dict(
                      mlp_channels=[8, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
@@ -306,8 +325,8 @@ class PAConvCUDA(PAConv):
             kernel_input=kernel_input,
             scorenet_cfg=scorenet_cfg)
 
-        assert self.kernel_input == 'neighbor', \
-            'CUDA implemented PAConv only supports neighbor kernel_input'
+        assert self.kernel_input == 'w_neighbor', \
+            'CUDA implemented PAConv only supports w_neighbor kernel_input'
 
     def forward(self, points_xyz, features, points_idx):
         """Forward.
@@ -325,21 +344,8 @@ class PAConvCUDA(PAConv):
         Returns:
             torch.Tensor: (B, out_c, npoint, K), features after PAConv.
         """
-        B, _, npoint, K = points_xyz.size()
-        center_xyz = points_xyz[..., :1].repeat(1, 1, 1, K)
-        xyz_diff = points_xyz - center_xyz  # [B, 3, npoint, K]
-
-        if self.scorenet_input == 'identity':
-            xyz_features = xyz_diff
-        elif self.scorenet_input == 'neighbor':
-            xyz_features = torch.cat((xyz_diff, points_xyz), dim=1)
-        else:  # ed7
-            euclidian_dist = calc_euclidian_dist(
-                center_xyz.permute(0, 2, 3, 1).reshape(B * npoint * K, 3),
-                points_xyz.permute(0, 2, 3, 1).reshape(B * npoint * K, 3)).\
-                    reshape(B, 1, npoint, K)
-            xyz_features = torch.cat((center_xyz, xyz_diff, euclidian_dist),
-                                     dim=1)
+        # prepare features for between each point and its grouping center
+        xyz_features = self._prepare_scorenet_input(points_xyz)
 
         # scores to assemble weight kernels
         scores = self.scorenet(xyz_features)  # [B, npoint, K, m]
