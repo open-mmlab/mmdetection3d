@@ -36,12 +36,36 @@ model = dict(
             operation_order=('self_attn', 'norm', 'cross_attn', 'norm', 'ffn',
                              'norm')),
         pred_layer_cfg=dict(
-            in_channels=288, shared_conv_channels=(288, 288), bias=True)),
+            in_channels=288, shared_conv_channels=(288, 288), bias=True),
+        sampling_objectness_loss=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=8.0),
+        objectness_loss=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=1.0),
+        center_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+        dir_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        dir_res_loss=dict(
+            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+        size_class_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        size_res_loss=dict(
+            type='SmoothL1Loss', beta=1.0, reduction='sum', loss_weight=10.0),
+        semantic_loss=dict(
+            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
     # model training and testing settings
     train_cfg=dict(sample_mod='kps'),
     test_cfg=dict(
         sample_mod='kps',
         nms_thr=0.25,
-        score_thr=0.05,
+        score_thr=0.0,
         per_class_proposal=True,
         prediction_stages='last'))

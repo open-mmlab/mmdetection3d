@@ -58,9 +58,9 @@ model = dict(
     test_cfg=dict(
         sample_mod='kps',
         nms_thr=0.25,
-        score_thr=0.05,
+        score_thr=0.0,
         per_class_proposal=True,
-        prediction_stages='all'))
+        prediction_stages='last_three'))
 
 dataset_type = 'SUNRGBDDataset'
 data_root = 'data/sunrgbd/'
@@ -122,7 +122,7 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
-        times=5,
+        times=1,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
@@ -167,7 +167,7 @@ optimizer = dict(
         }))
 
 optimizer_config = dict(grad_clip=dict(max_norm=0.1, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[84, 96, 108])
+lr_config = dict(policy='step', warmup=None, step=[420, 480, 540])
 
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=120)
+runner = dict(type='EpochBasedRunner', max_epochs=600)
