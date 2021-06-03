@@ -8,10 +8,10 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
                               GlobalRotScaleTrans, ObjectNameFilter,
-                              ObjectNoise, ObjectSample, PointShuffle,
-                              PointsRangeFilter, RandomDropPointsColor,
-                              RandomFlip3D, RandomJitterPoints,
-                              VoxelBasedPointSampler)
+                              ObjectNoise, ObjectRangeFilter, ObjectSample,
+                              PointShuffle, PointsRangeFilter,
+                              RandomDropPointsColor, RandomFlip3D,
+                              RandomJitterPoints, VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -263,6 +263,38 @@ def test_points_range_filter():
 
     repr_str = repr(points_range_filter)
     expected_repr_str = f'PointsRangeFilter(point_cloud_range={pcd_range})'
+    assert repr_str == expected_repr_str
+
+
+def test_object_range_filter():
+    point_cloud_range = [0, -40, -3, 70.4, 40, 1]
+    object_range_filter = ObjectRangeFilter(point_cloud_range)
+
+    bbox = np.array(
+        [[8.7314, -1.8559, -0.6547, 0.4800, 1.2000, 1.8900, 0.0100],
+         [28.7314, -18.559, 0.6547, 2.4800, 1.6000, 1.9200, 5.0100],
+         [-2.54, -1.8559, -0.6547, 0.4800, 1.2000, 1.8900, 0.0100],
+         [72.7314, -18.559, 0.6547, 6.4800, 11.6000, 4.9200, -0.0100],
+         [18.7314, -18.559, 20.6547, 6.4800, 8.6000, 3.9200, -1.0100],
+         [3.7314, 42.559, -0.6547, 6.4800, 8.6000, 2.9200, 3.0100]])
+    gt_bboxes_3d = LiDARInstance3DBoxes(bbox, origin=(0.5, 0.5, 0.5))
+    gt_labels_3d = np.array([0, 2, 1, 1, 2, 0], dtype=np.long)
+
+    input_dict = dict(
+        gt_bboxes_3d=gt_bboxes_3d.clone(), gt_labels_3d=gt_labels_3d.copy())
+    results = object_range_filter(input_dict)
+    bboxes_3d = results['gt_bboxes_3d']
+    labels_3d = results['gt_labels_3d']
+    keep_mask = np.array([True, True, False, False, True, False])
+    expected_bbox = gt_bboxes_3d.tensor[keep_mask]
+    expected_bbox[1, 6] -= 2 * np.pi  # limit yaw
+
+    assert torch.allclose(expected_bbox, bboxes_3d.tensor)
+    assert np.all(gt_labels_3d[keep_mask] == labels_3d)
+
+    repr_str = repr(object_range_filter)
+    expected_repr_str = 'ObjectRangeFilter(point_cloud_range=' \
+        '[0.0, -40.0, -3.0, 70.4000015258789, 40.0, 1.0])'
     assert repr_str == expected_repr_str
 
 
