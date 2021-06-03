@@ -1,6 +1,7 @@
 import copy
 import torch
-from mmcv.cnn import ConvModule, build_activation_layer, build_norm_layer
+from mmcv.cnn import (ConvModule, build_activation_layer, build_norm_layer,
+                      constant_init, xavier_init)
 from torch import nn as nn
 from torch.nn import functional as F
 from typing import List, Tuple
@@ -69,6 +70,13 @@ class ScoreNet(nn.Module):
                 norm_cfg=norm_cfg if last_bn else None,
                 act_cfg=None,
                 bias=bias))
+
+    def init_weights(self):
+        """Initialize weights of shared MLP layers."""
+        # refer to https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/paconv.py#L105  # noqa
+        for m in self.mlps.modules():
+            if isinstance(m.conv, nn.Conv2d):
+                xavier_init(m.conv)
 
     def forward(self, xyz_features):
         """Forward.
@@ -200,6 +208,14 @@ class PAConv(nn.Module):
             norm_cfg is not None else None
         self.activate = build_activation_layer(act_cfg) if \
             act_cfg is not None else None
+
+        self.init_weights()
+
+    def init_weights(self):
+        """Initialize weights of shared MLP layers."""
+        self.scorenet.init_weights()
+        if self.bn is not None:
+            constant_init(self.bn, val=1)
 
     def forward(self, points_xyz: torch.Tensor,
                 features: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
