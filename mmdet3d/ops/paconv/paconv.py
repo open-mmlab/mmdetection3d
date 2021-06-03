@@ -4,7 +4,7 @@ from mmcv.cnn import (ConvModule, build_activation_layer, build_norm_layer,
                       constant_init, xavier_init)
 from torch import nn as nn
 from torch.nn import functional as F
-from typing import List, Tuple
+from typing import List
 
 from .assign_score import assign_score_withk as assign_score_cuda
 from .utils import assign_kernel_withoutk, assign_score, calc_euclidian_dist
@@ -217,8 +217,7 @@ class PAConv(nn.Module):
         if self.bn is not None:
             constant_init(self.bn, val=1)
 
-    def forward(self, points_xyz: torch.Tensor,
-                features: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, points_xyz, features):
         """Forward.
 
         Args:
@@ -310,10 +309,7 @@ class PAConvCUDA(PAConv):
         assert self.kernel_input == 'neighbor', \
             'CUDA implemented PAConv only supports neighbor kernel_input'
 
-    def forward(
-        self, points_xyz: torch.Tensor, features: torch.Tensor,
-        points_idx: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, points_xyz, features, points_idx):
         """Forward.
 
         Args:

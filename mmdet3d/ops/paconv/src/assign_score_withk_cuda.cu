@@ -36,7 +36,7 @@
 
 
 // input: points(B,N0,M,O), centers(B,N0,M,O), scores(B,N1,K,M), knn_idx(B,N1,K)
-// ouput: fout(B,O,N)
+// output: fout(B,O,N)
 // algo: fout(b,i,k,j) = s(b,i,k,m)*p(b,c(i),k,m,j) =  s(b,i,k,m)*p(b,i(k),m,j)
 //       i(k) = idx(b,i,k)
 //      sum: fout(b,i,j) = fout(b,i,j) + s(b,i,k,m)*p(b,i,k,m,j)
@@ -45,12 +45,12 @@
 
 
 __global__ void assign_score_withk_forward_kernel(const int B, const int N0, const int N1,
-                                                    const int M, const int K, const int O, const int aggregate,
-                                                    const float* points,
-                                                    const float* centers,
-                                                    const float* scores,
-                                                    const long* knn_idx,
-                                                    float* output) {
+                                                  const int M, const int K, const int O, const int aggregate,
+                                                  const float* points,
+                                                  const float* centers,
+                                                  const float* scores,
+                                                  const long* knn_idx,
+                                                  float* output) {
 
     // ----- parallel loop for B, N1, K and O ---------
     long i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -79,12 +79,12 @@ __global__ void assign_score_withk_forward_kernel(const int B, const int N0, con
 
 
 __global__ void assign_score_withk_backward_points_kernel(const int B, const int N0, const int N, const int M,
-                                                            const int K, const int O, const int aggregate,
-                                                            const float* grad_out,
-                                                            const float* scores,
-                                                            const long* knn_idx,
-                                                            float* grad_points,
-                                                            float* grad_centers) {
+                                                          const int K, const int O, const int aggregate,
+                                                          const float* grad_out,
+                                                          const float* scores,
+                                                          const long* knn_idx,
+                                                          float* grad_points,
+                                                          float* grad_centers) {
 
     // ----- parallel loop for B, M, O ---------
     long i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -105,8 +105,6 @@ __global__ void assign_score_withk_backward_points_kernel(const int B, const int
                 scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N*K + o*N*K + n*K + k]);
             atomicAdd(grad_centers + b*N0*M*O + cn*M*O + m*O + o,
                 - scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N*K + o*N*K + n*K + k]);
-            //grad_points[b*N*M*O + kn*M*O + m*O + o] += 2 * scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
-            //grad_points[b*N*M*O + n*M*O + m*O + o] -= scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
             }
     }
 
@@ -114,12 +112,12 @@ __global__ void assign_score_withk_backward_points_kernel(const int B, const int
 
 
 __global__ void assign_score_withk_backward_scores_kernel(const int B, const int N0, const int N, const int M,
-                                                            const int K, const int O, const int aggregate,
-                                                            const float* grad_out,
-                                                            const float* points,
-                                                            const float* centers,
-                                                            const long* knn_idx,
-                                                            float* grad_scores) {
+                                                          const int K, const int O, const int aggregate,
+                                                          const float* grad_out,
+                                                          const float* points,
+                                                          const float* centers,
+                                                          const long* knn_idx,
+                                                          float* grad_scores) {
 
     // ----- parallel loop for B, N, K, M ---------
     long i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -139,7 +137,6 @@ __global__ void assign_score_withk_backward_scores_kernel(const int B, const int
         atomicAdd(grad_scores + b*N*K*M + n*K*M + k*M + m,
             (points[b*N0*M*O + kn*M*O + m*O + o]
                 - centers[b*N0*M*O + cn*M*O + m*O + o])* grad_out[b*O*N*K + o*N*K + n*K + k]);
-    // grad_scores[b*N*K*M + n*K*M + k*M + m] += (2 * points[b*N*M*O + kn*M*O + m*O + o] - points[b*N*M*O + n*M*O + m*O + o])* grad_out[b*O*N + o*N + n];
     }
 }
 
@@ -172,14 +169,14 @@ void assign_score_withk_forward_wrapper(int B, int N0, int N1, int M, int K, int
 
 
 void assign_score_withk_backward_wrapper(int B, int N0, int N1, int M, int K, int O, int aggregate,
-                                        const at::Tensor& grad_out,
-                                        const at::Tensor& points,
-                                        const at::Tensor& centers,
-                                        const at::Tensor& scores,
-                                        const at::Tensor& knn_idx,
-                                        at::Tensor& grad_points,
-                                        at::Tensor& grad_centers,
-                                        at::Tensor& grad_scores) {
+                                         const at::Tensor& grad_out,
+                                         const at::Tensor& points,
+                                         const at::Tensor& centers,
+                                         const at::Tensor& scores,
+                                         const at::Tensor& knn_idx,
+                                         at::Tensor& grad_points,
+                                         at::Tensor& grad_centers,
+                                         at::Tensor& grad_scores) {
 
     CHECK_CONTIGUOUS(grad_out);
     CHECK_CONTIGUOUS(scores);
