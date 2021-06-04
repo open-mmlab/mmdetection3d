@@ -158,6 +158,10 @@ class PointRCNNROIHead(Base3DRoIHead):
         features = feats_dict['features']
         points = feats_dict['points']
         point_scores = feats_dict['points_scores']
+
+        losses = dict()
+        sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
+                                                 gt_labels_3d)
         '''
         points_t = points[0]
         points_t = points_t[:,0:3].cpu().data.numpy()
@@ -174,10 +178,6 @@ class PointRCNNROIHead(Base3DRoIHead):
         write_ply(points_t,points_label,'/tmp/label_points.obj')
         assert 0
         '''
-
-        losses = dict()
-        sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
-                                                 gt_labels_3d)
 
         # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
@@ -353,6 +353,18 @@ class PointRCNNROIHead(Base3DRoIHead):
                     cur_boxes.tensor,
                     cur_gt_bboxes.tensor,
                     gt_labels=cur_gt_labels)
+
+            pos_inds = torch.nonzero(assign_result.gt_inds > 0, as_tuple=False)
+            if pos_inds.numel() > 450:
+                bbox = gt_bboxes_3d[0].tensor.cpu().data.numpy()
+                bbox_p = proposal_list[0]['boxes_3d'].tensor.cpu().data.numpy()
+                print(bbox.shape, bbox_p.shape)
+                bbox_p[..., 6] = -bbox_p[..., 6]
+                bbox[..., 6] = -bbox[..., 6]
+                write_oriented_bbox(bbox, '/tmp/label_bboxes.ply')
+                write_oriented_bbox(bbox_p, '/tmp/label_bboxes_pred.ply')
+                assert 0
+
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,
