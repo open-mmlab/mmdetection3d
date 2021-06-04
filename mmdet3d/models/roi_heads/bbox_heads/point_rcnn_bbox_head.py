@@ -105,7 +105,7 @@ class PointRCNNBboxHead(BaseModule):
 
         self.conv_pred = BaseSeparateConvBboxHead(
             **pred_layer_cfg,
-            num_cls_out_channels=self.num_classes,
+            num_cls_out_channels=1,
             num_reg_out_channels=self.bbox_coder.code_size)
         if init_cfg is None:
             self.init_cfg = dict(
