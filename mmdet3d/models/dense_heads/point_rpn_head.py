@@ -374,7 +374,7 @@ class PointRPNHead(BaseModule):
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
                 with_yaw=True)
-            results.append((bbox, score_selected, labels))
+            results.append((bbox, score_selected, labels, cls_preds))
         return results
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,

@@ -92,7 +92,11 @@ class PointRCNN(TwoStage3DDetector):
                                                  cls_preds, img_metas,
                                                  is_training)
             proposal_list = [
-                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
+                dict(
+                    boxes_3d=bboxes,
+                    scores_3d=scores,
+                    labels_3d=labels,
+                    cls_preds=cls_preds)
                 for bboxes, scores, labels in bbox_list
             ]
             rcnn_feats.update({'points_scores': obj_scores})
@@ -138,8 +142,11 @@ class PointRCNN(TwoStage3DDetector):
         ]
         '''
         proposal_list = [
-            dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
-            for bboxes, scores, labels in bbox_list
+            dict(
+                boxes_3d=bboxes,
+                scores_3d=scores,
+                labels_3d=labels,
+                cls_preds=cls_preds) for bboxes, scores, labels in bbox_list
         ]
         bbox_results = self.roi_head.simple_test(rcnn_feats, img_metas,
                                                  proposal_list)
