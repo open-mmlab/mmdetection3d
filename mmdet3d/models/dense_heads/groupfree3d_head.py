@@ -787,8 +787,8 @@ class GroupFree3DHead(nn.Module):
                     if j == 0:
                         vote_targets_tmp[
                             column_indices, :3 *
-                            self.gt_per_seed] = votes[column_indices].expand(
-                                -1, self.gt_per_seed)
+                            self.gt_per_seed] = votes[column_indices].repeat(
+                                1, self.gt_per_seed)
                         vote_targets_tmp[column_indices,
                                          3 * self.gt_per_seed:] = i
 
