@@ -918,6 +918,12 @@ class IndoorPatchPointSample(object):
         min_unique_num (int | None, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
+
+    Note:
+        This transform should only be used in the training process of point
+            cloud segmentation tasks. For the sliding patch generation and
+            inference process in testing, please refer to the `slide_inference`
+            function of `EncoderDecoder3D` class.
     """
 
     def __init__(self,
