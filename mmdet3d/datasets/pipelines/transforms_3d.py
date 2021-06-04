@@ -905,8 +905,6 @@ class IndoorPatchPointSample(object):
         num_points (int): Number of points to be sampled.
         block_size (float, optional): Size of a block to sample points from.
             Defaults to 1.5.
-        sample_rate (float, optional): Stride used in sliding patch generation.
-            Defaults to 1.0.
         ignore_index (int, optional): Label index that won't be used for the
             segmentation task. This is set in PointSegClassMapping as neg_cls.
             Defaults to None.
@@ -914,21 +912,29 @@ class IndoorPatchPointSample(object):
             additional features. Defaults to False.
         num_try (int, optional): Number of times to try if the patch selected
             is invalid. Defaults to 10.
+        enlarge_size (float | None, optional): Enlarge the sampled patch to
+            [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
+            an augmentation. If None, set it as 0.01. Defaults to 0.2.
+        min_unique_num (int | None, optional): Minimum number of unique points
+            the sampled patch should contain. If None, use PointNet++'s method
+            to judge uniqueness. Defaults to None.
     """
 
     def __init__(self,
                  num_points,
                  block_size=1.5,
-                 sample_rate=1.0,
                  ignore_index=None,
                  use_normalized_coord=False,
-                 num_try=10):
+                 num_try=10,
+                 enlarge_size=0.2,
+                 min_unique_num=None):
         self.num_points = num_points
         self.block_size = block_size
-        self.sample_rate = sample_rate
         self.ignore_index = ignore_index
         self.use_normalized_coord = use_normalized_coord
         self.num_try = num_try
+        self.enlarge_size = enlarge_size if enlarge_size is not None else 0.01
+        self.min_unique_num = min_unique_num
 
     def _input_generation(self, coords, patch_center, coord_max, attributes,
                           attribute_dims, point_type):
@@ -997,7 +1003,7 @@ class IndoorPatchPointSample(object):
         coord_max = np.amax(coords, axis=0)
         coord_min = np.amin(coords, axis=0)
 
-        for i in range(self.num_try):
+        for _ in range(self.num_try):
             # random sample a point as patch center
             cur_center = coords[np.random.choice(coords.shape[0])]
 
@@ -1009,7 +1015,8 @@ class IndoorPatchPointSample(object):
             cur_max[2] = coord_max[2]
             cur_min[2] = coord_min[2]
             cur_choice = np.sum(
-                (coords >= (cur_min - 0.2)) * (coords <= (cur_max + 0.2)),
+                (coords >= (cur_min - self.enlarge_size)) *
+                (coords <= (cur_max + self.enlarge_size)),
                 axis=1) == 3
 
             if not cur_choice.any():  # no points in this patch
@@ -1024,14 +1031,20 @@ class IndoorPatchPointSample(object):
                 (cur_coords >= (cur_min - 0.01)) * (cur_coords <=
                                                     (cur_max + 0.01)),
                 axis=1) == 3
-            # not sure if 31, 31, 62 are just some big values used to transform
-            # coords from 3d array to 1d and then check their uniqueness
-            # this is used in all the ScanNet code following PointNet++
-            vidx = np.ceil((cur_coords[mask, :] - cur_min) /
-                           (cur_max - cur_min) * np.array([31.0, 31.0, 62.0]))
-            vidx = np.unique(vidx[:, 0] * 31.0 * 62.0 + vidx[:, 1] * 62.0 +
-                             vidx[:, 2])
-            flag1 = len(vidx) / 31.0 / 31.0 / 62.0 >= 0.02
+
+            if self.min_unique_num is None:
+                # use PointNet++'s method as default
+                # [31, 31, 62] are just some big values used to transform
+                # coords from 3d array to 1d and then check their uniqueness
+                # this is used in all the ScanNet code following PointNet++
+                vidx = np.ceil(
+                    (cur_coords[mask, :] - cur_min) / (cur_max - cur_min) *
+                    np.array([31.0, 31.0, 62.0]))
+                vidx = np.unique(vidx[:, 0] * 31.0 * 62.0 + vidx[:, 1] * 62.0 +
+                                 vidx[:, 2])
+                flag1 = len(vidx) / 31.0 / 31.0 / 62.0 >= 0.02
+            else:
+                flag1 = mask.sum() >= self.min_unique_num
 
             # selected patch should contain enough annotated points
             if self.ignore_index is None:
@@ -1088,10 +1101,11 @@ class IndoorPatchPointSample(object):
         repr_str = self.__class__.__name__
         repr_str += f'(num_points={self.num_points},'
         repr_str += f' block_size={self.block_size},'
-        repr_str += f' sample_rate={self.sample_rate},'
         repr_str += f' ignore_index={self.ignore_index},'
         repr_str += f' use_normalized_coord={self.use_normalized_coord},'
-        repr_str += f' num_try={self.num_try})'
+        repr_str += f' num_try={self.num_try},'
+        repr_str += f' enlarge_size={self.enlarge_size},'
+        repr_str += f' min_unique_num={self.min_unique_num})'
         return repr_str
 
 
