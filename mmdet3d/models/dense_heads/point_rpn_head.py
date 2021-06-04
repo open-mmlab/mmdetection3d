@@ -367,14 +367,15 @@ class PointRPNHead(BaseModule):
         for b in range(batch_size):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
-            bbox_selected, score_selected, labels = self.multiclass_nms_single(
-                obj_scores[b], sem_scores[b], bbox3d, points[b, ..., :3],
-                input_metas[b], training_flag)
+            bbox_selected, score_selected, labels, cls_preds_selected = \
+                self.multiclass_nms_single(obj_scores[b], sem_scores[b],
+                                           bbox3d, points[b, ..., :3],
+                                           input_metas[b], training_flag)
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
                 with_yaw=True)
-            results.append((bbox, score_selected, labels, cls_preds))
+            results.append((bbox, score_selected, labels, cls_preds_selected))
         return results
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
@@ -443,21 +444,24 @@ class PointRPNHead(BaseModule):
         selected = (nonempty_mask.bool() & scores_mask.bool())
 
         if self.test_cfg.per_class_proposal:
-            bbox_selected, score_selected, labels = [], [], []
+            bbox_selected, score_selected, labels, cls_preds = [], [], [], []
             for k in range(sem_scores.shape[-1]):
                 bbox_selected.append(bbox[selected].tensor)
                 score_selected.append(obj_scores[selected])
+                cls_preds.append(sem_scores[selected])
                 labels.append(
                     torch.zeros_like(bbox_classes[selected]).fill_(k))
             bbox_selected = torch.cat(bbox_selected, 0)
             score_selected = torch.cat(score_selected, 0)
             labels = torch.cat(labels, 0)
+            cls_preds = torch.cat(cls_preds, 0)
         else:
             bbox_selected = bbox[selected].tensor
             score_selected = obj_scores[selected]
             labels = bbox_classes[selected]
+            cls_preds = sem_scores[selected]
 
-        return bbox_selected, score_selected, labels
+        return bbox_selected, score_selected, labels, cls_preds
 
     def _assign_targets_by_points_inside(self, bboxes_3d, points):
         """Compute assignment by checking whether point is inside bbox.
