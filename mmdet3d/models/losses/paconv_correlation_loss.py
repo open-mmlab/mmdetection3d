@@ -28,7 +28,7 @@ def weight_correlation(conv):
     # [num_kernels, num_kernels]
     inner_product = torch.matmul(flatten_kernels, flatten_kernels.T)
     # [num_kernels, 1]
-    kernel_norms = torch.sum(flatten_kernels**2, dim=-1, keepdim=True)
+    kernel_norms = torch.sum(flatten_kernels**2, dim=-1, keepdim=True)**0.5
     # [num_kernels, num_kernels]
     kernel_norms = torch.matmul(kernel_norms, kernel_norms.T)
     cosine_sims = inner_product / kernel_norms
