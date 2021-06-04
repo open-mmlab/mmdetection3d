@@ -17,7 +17,7 @@ db_sampler = dict(
     prepare=dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
-    sample_groups=dict(Car=20, Pedestrian=15, Cyclist=15),
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
     classes=class_names)
 
 train_pipeline = [
@@ -68,8 +68,8 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=12,
-    workers_per_gpu=12,
+    samples_per_gpu=2,
+    workers_per_gpu=2,
     train=dict(
         type='RepeatDataset',
         times=2,
@@ -78,13 +78,13 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names))
 
 # optimizer
-lr = 0.01  # max learning rate
+lr = 0.002  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(policy='step', warmup=None, step=[35, 45])
 # runtime settings
 total_epochs = 81
-evaluation = dict(interval=4)
+evaluation = dict(interval=60)
 # yapf:disable
 log_config = dict(
     interval=30,

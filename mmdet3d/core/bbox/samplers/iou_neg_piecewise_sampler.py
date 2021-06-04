@@ -144,8 +144,23 @@ class IoUNegPiecewiseSampler(RandomSampler):
                 num_expected_neg = neg_upper_bound
         neg_inds = self.neg_sampler._sample_neg(
             assign_result, num_expected_neg, bboxes=bboxes, **kwargs)
+        origin_neg = neg_inds.shape[0]
         neg_inds = neg_inds.unique()
+        if neg_inds.shape[0] + pos_inds.shape[0] < 100:
+            cur_bbox_num = neg_inds.shape[0] + pos_inds.shape[0]
+            neg_expected_num = self.num - cur_bbox_num
+            if len(neg_inds) < neg_expected_num:
+                neg_inds_aa = torch.nonzero(
+                    assign_result.gt_inds == 0, as_tuple=False)
+                neg_inds_bb = torch.nonzero(
+                    assign_result.gt_inds > 0, as_tuple=False)
+                neg_num = neg_inds_aa.numel()
+                pos_num = neg_inds_bb.numel()
+                print('error: ', neg_inds, neg_expected_num, neg_num, pos_num,
+                      assign_result.max_overlaps)
+            extend_neg_inds = self.random_choice(neg_inds, neg_expected_num)
 
+            neg_inds = torch.cat([neg_inds, extend_neg_inds], dim=0)
         sampling_result = SamplingResult(pos_inds, neg_inds, bboxes, gt_bboxes,
                                          assign_result, gt_flags)
         if self.return_iou:

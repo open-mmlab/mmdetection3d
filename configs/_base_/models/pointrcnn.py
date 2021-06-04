@@ -72,9 +72,9 @@ model = dict(
         rpn=dict(
             rpn_proposal=dict(
                 nms_pre=9000,
-                nms_post=512,
-                max_num=512,
-                nms_cfg=dict(type='nms', iou_thr=0.9),
+                nms_post=2048,
+                max_num=2048,
+                nms_cfg=dict(type='nms', iou_thr=0.85),
                 score_thr=0,
                 use_rotate_nms=False)),
         rcnn=dict(
@@ -100,9 +100,9 @@ model = dict(
         rpn=dict(
             nms_pre=9000,
             nms_post=512,
-            max_output_num=128,
+            max_output_num=100,
             score_thr=0,
-            nms_cfg=dict(type='nms', iou_thr=0.92),
+            nms_cfg=dict(type='nms', iou_thr=0.87),
             per_class_proposal=False,
             use_rotate_nms=True),
         rcnn=dict(

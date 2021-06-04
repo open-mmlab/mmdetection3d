@@ -127,7 +127,7 @@ class PointRCNN(TwoStage3DDetector):
         sem_scores = F.sigmoid(cls_preds).detach()
         obj_scores = sem_scores.max(-1)[0]
         rcnn_feats.update({'points_scores': obj_scores})
-
+        print(torch.min(cls_preds))
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, cls_preds, img_metas, rescale=rescale)
         '''

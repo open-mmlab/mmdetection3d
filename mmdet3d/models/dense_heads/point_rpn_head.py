@@ -373,8 +373,7 @@ class PointRPNHead(BaseModule):
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
-                with_yaw=True,
-                origin=(0.5, 0.5, 0.5))
+                with_yaw=True)
             results.append((bbox, score_selected, labels))
         return results
 
@@ -394,7 +393,10 @@ class PointRPNHead(BaseModule):
         """
         num_bbox = bbox.shape[0]
         bbox = input_meta['box_type_3d'](
-            bbox.clone(), box_dim=bbox.shape[-1], with_yaw=True)
+            bbox.clone(),
+            box_dim=bbox.shape[-1],
+            with_yaw=True,
+            origin=(0.5, 0.5, 0.5))
 
         if isinstance(bbox, LiDARInstance3DBoxes):
             box_idx = bbox.points_in_boxes(points)

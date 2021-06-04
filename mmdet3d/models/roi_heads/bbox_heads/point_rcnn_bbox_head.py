@@ -38,7 +38,10 @@ class PointRCNNBboxHead(BaseModule):
             bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
             sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
             loss_bbox=dict(
-                type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+                type='SmoothL1Loss',
+                beta=1.0 / 9.0,
+                reduction='sum',
+                loss_weight=1.0),
             loss_cls=dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=True,
