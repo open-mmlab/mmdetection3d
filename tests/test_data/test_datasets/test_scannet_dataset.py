@@ -336,7 +336,9 @@ def test_seg_getitem():
             num_points=5,
             block_size=1.5,
             ignore_index=len(class_names),
-            use_normalized_coord=True),
+            use_normalized_coord=True,
+            enlarge_size=0.2,
+            min_unique_num=None),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
