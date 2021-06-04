@@ -122,6 +122,9 @@ def transform_img2cam(kps, dim, rot, meta, const):
     """Transform coordinates in the 2D image plane to the 3D camera coordinate
     system.
 
+    For detailed explanations of matrix, please refer to KM3D's paper:
+    https://arxiv.org/abs/2009.00764v1
+
     Args:
         kps (torch.Tensor): Key points in shape (batch_size * boxes * 18)
         dim (int): Dimensions of height, width, length in shape (batch_size *
@@ -130,8 +133,8 @@ def transform_img2cam(kps, dim, rot, meta, const):
         meta (dict): should contain keys below.
 
             - trans_output_inv: Transition parameters for computing
-                matrix_A in pinv's matrix, in shape (1, 2, 3)
-            - calib: Calibration for computing matrix_A in pinv's matrix, in
+                matrix_left in pinv's matrix, in shape (1, 2, 3)
+            - calib: Calibration for computing matrix_left in pinv's matrix, in
                 shape (1, 2, 3)
         const (torch.Tensor): constants in shape (batch_size * boxes * 16 * 2)
 
@@ -160,8 +163,8 @@ def transform_img2cam(kps, dim, rot, meta, const):
     # kps in shape (batch boxes 18), i.e. [x, y, x, y, x, y,....]
     kps = kps.permute(0, 1, 3, 2).view(batch, boxes, -1)
 
-    # calib2 in shape (batch boxes 1)
-    calib2 = torch.zeros_like(kps[:, :, 0:1]) + calib[:, 0:1, 0:1]
+    # calib_combined in shape (batch boxes 1)
+    calib_combined = torch.zeros_like(kps[:, :, 0:1]) + calib[:, 0:1, 0:1]
     alpha_idx = rot[:, :, 1] > rot[:, :, 5]
     alpha_idx = alpha_idx.float()
 
@@ -171,9 +174,9 @@ def transform_img2cam(kps, dim, rot, meta, const):
     alpna_pre = alpha1 * alpha_idx + alpha2 * (1 - alpha_idx)
     alpna_pre = alpna_pre.unsqueeze(2)
 
-    # rot_y in shape (batch boxes 1)
+    # rot_y in shape (batch boxes 1), which is the yaw angle
     rot_y = alpna_pre + torch.atan2(kps[:, :, 16:17] - calib[:, 0:1, 2:3],
-                                    calib2)
+                                    calib_combined)
     rot_y[rot_y > np.pi] = rot_y[rot_y > np.pi] - 2 * np.pi
     rot_y[rot_y < -np.pi] = rot_y[rot_y < -np.pi] + 2 * np.pi
 
@@ -201,54 +204,73 @@ def transform_img2cam(kps, dim, rot, meta, const):
     matrix_B = torch.zeros_like(kpoint)
     matrix_C = torch.zeros_like(kpoint)
 
-    # matrix_A in shape (batch boxes 16 3)
+    # matrix_left in shape (batch boxes 16 3)
     kp = kp_norm.unsqueeze(3)
     const = const.expand(batch, boxes, -1, -1)
-    matrix_A = torch.cat([const, kp], dim=3)
+    matrix_left = torch.cat([const, kp], dim=3)
+    """Below is the matrix for position solving in KM3D paper.
+    matrix_left is the left-hand matrix with (-1 0 kp_1x) as the first row;
+    matrix right is aimed to be the right-hand matrix with
+        (l*cosµ)/2+(w*sinµ)/2-kp_1x*[-(l*sinµ)/2+(w*cosµ)/2] as the first row.
+        By construction, data_B is the constant involving (l*cosµ)/2+(w*sinµ)/2
+        and its kind; data_C is the constant involving -(l*sinµ)/2+(w*cosµ)/2
+        and its kind.
+        Therefore, matrix_B-kp_norm*matrix_C can result in the final matrix.
 
-    index_B = torch.FloatTensor([[1, 1, 0], [0, 0, 1], [1, -1, 0], [0, 0, 1],
-                                 [-1, -1, 0], [0, 0, 1], [-1, 1, 0], [0, 0, 1],
-                                 [1, 1, 0], [0, 0, -1], [1, -1, 0], [0, 0, -1],
-                                 [-1, -1, 0], [0, 0, -1], [-1, 1, 0],
-                                 [0, 0, -1]])
+    """
+    data_B = torch.FloatTensor([
+        length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
+        length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
+        -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
+        -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
+        length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5,
+        length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
+        -length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, -height * 0.5,
+        -length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, -height * 0.5
+    ])
 
-    var_B = torch.FloatTensor(
-        [length * 0.5 * cos_rot_y, width * 0.5 * sin_rot_y, height * 0.5])
-
-    data_B = index_B * var_B
     matrix_B[:, :, :] = data_B
 
-    index_C = torch.FloatTensor([[-1, 1], [-1, 1], [-1, -1], [-1, -1], [1, -1],
-                                 [1, -1], [1, 1], [1, 1], [-1, 1], [-1, 1],
-                                 [-1, -1], [-1, -1], [1, -1], [1, -1], [1, 1],
-                                 [1, 1]])
-
-    var_C = torch.FloatTensor(
-        [length * 0.5 * sin_rot_y, width * 0.5 * cos_rot_y])
-
-    data_C = index_C * var_C
+    data_C = torch.FloatTensor([
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        -length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y - width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y,
+        length * 0.5 * sin_rot_y + width * 0.5 * cos_rot_y
+    ])
 
     matrix_C[:, :, :] = data_C
 
     # final matrix_B in shape (1 boxes 16)
-    matrix_B = matrix_B - kp_norm * matrix_C
+    matrix_right = matrix_B - kp_norm * matrix_C
 
-    # make matrix_A_transposed in shape(batch * boxes 3 16)
-    matrix_A_transposed = matrix_A.permute(0, 1, 3, 2)
-    matrix_A_transposed = matrix_A_transposed.view(batch * boxes, 3, 16)
+    # make matrix_left_transposed in shape(batch * boxes 3 16)
+    matrix_left_transposed = matrix_left.permute(0, 1, 3, 2)
+    matrix_left_transposed = matrix_left_transposed.view(batch * boxes, 3, 16)
 
-    matrix_A = matrix_A.view(batch * boxes, 16, 3)
-    matrix_B = matrix_B.view(batch * boxes, 16, 1).float()
+    matrix_left = matrix_left.view(batch * boxes, 16, 3)
+    matrix_right = matrix_right.view(batch * boxes, 16, 1).float()
 
     # pinv here in shape (batch * boxes 3 3)
-    pinv = torch.bmm(matrix_A_transposed, matrix_A)
+    pinv = torch.bmm(matrix_left_transposed, matrix_left)
     pinv = torch.inverse(pinv)
 
     # pinv here in shape (batch * boxes 3 16)
-    pinv = torch.bmm(pinv, matrix_A_transposed)
+    pinv = torch.bmm(pinv, matrix_left_transposed)
 
     # pinv here in shape (batch * boxes 3 1)
-    pinv = torch.bmm(pinv, matrix_B)
+    pinv = torch.bmm(pinv, matrix_right)
 
     # final pinv in shape (batch, boxes, 3)
     pinv = pinv.view(batch, boxes, 3, 1).squeeze(3)
@@ -289,8 +311,8 @@ def object_pose_decode(heat,
         meta (dict): should contain keys below.
 
             - trans_output_inv (torch.Tensor): Transition parameters for
-                computing matrix_A in pinv's matrix.
-            - calib (torch.Tensor): Calibration for computing matrix_A in
+                computing matrix_left in pinv's matrix.
+            - calib (torch.Tensor): Calibration for computing matrix_left in
                 pinv's matrix.
         const (torch.Tensor): Constants in shape (1 * batch_size * 16 * 2)
 
