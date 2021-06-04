@@ -211,7 +211,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         """
         rois = bbox3d2roi([res['boxes_3d'].tensor for res in proposal_list])
         labels_3d = [res['labels_3d'] for res in proposal_list]
-        cls_preds = [res['cls_preds'] for res in proposal_list]
+        scores_3d = [res['scores_3d'] for res in proposal_list]
 
         features = feats_dict['features']
         points = feats_dict['points']
@@ -232,7 +232,7 @@ class PointRCNNROIHead(Base3DRoIHead):
             bbox_results['cls_score'],
             bbox_results['bbox_pred'],
             labels_3d,
-            cls_preds,
+            scores_3d,
             img_metas,
             cfg=self.test_cfg)
 
@@ -353,8 +353,7 @@ class PointRCNNROIHead(Base3DRoIHead):
                     cur_boxes.tensor,
                     cur_gt_bboxes.tensor,
                     gt_labels=cur_gt_labels)
-
-            pos_inds = torch.nonzero(assign_result.gt_inds > 0, as_tuple=False)
+            '''
             if pos_inds.numel() > 450:
                 bbox = gt_bboxes_3d[0].tensor.cpu().data.numpy()
                 bbox_p = proposal_list[0]['boxes_3d'].tensor.cpu().data.numpy()
@@ -364,7 +363,7 @@ class PointRCNNROIHead(Base3DRoIHead):
                 write_oriented_bbox(bbox, '/tmp/label_bboxes.ply')
                 write_oriented_bbox(bbox_p, '/tmp/label_bboxes_pred.ply')
                 assert 0
-
+            '''
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,

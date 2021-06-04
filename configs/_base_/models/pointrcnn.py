@@ -54,7 +54,7 @@ model = dict(
                 pool_extra_width=1.0)),
         bbox_head=dict(
             type='PointRCNNBboxHead',
-            num_classes=1,
+            num_classes=3,
             pred_layer_cfg=dict(
                 in_channels=512,
                 cls_conv_channels=(256, 256),
@@ -72,9 +72,9 @@ model = dict(
         rpn=dict(
             rpn_proposal=dict(
                 nms_pre=9000,
-                nms_post=2048,
-                max_num=2048,
-                nms_cfg=dict(type='nms', iou_thr=0.85),
+                nms_post=512,
+                max_num=512,
+                nms_cfg=dict(type='nms', iou_thr=0.8),
                 score_thr=0,
                 use_rotate_nms=False)),
         rcnn=dict(

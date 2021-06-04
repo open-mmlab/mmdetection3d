@@ -200,10 +200,10 @@ class PointRPNHead(BaseModule):
         # bbox loss
         bbox_loss = self.bbox_loss(bbox_preds, bbox_targets,
                                    box_loss_weights.unsqueeze(-1))
+        '''
         # corner loss
         pred_bbox3d = self.bbox_coder.decode(bbox_preds, point_targets,
                                              mask_targets)
-        '''
         pred_bbox3d = pred_bbox3d.reshape(-1, pred_bbox3d.shape[-1])
         pred_bbox3d = img_metas[0]['box_type_3d'](
             pred_bbox3d.clone(),
@@ -429,7 +429,7 @@ class PointRPNHead(BaseModule):
         nms_selected = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]].detach(),
             obj_scores[nonempty_box_mask].detach(),
-            bbox_classes[nonempty_box_mask].detach(), nms_cfg)[1]
+            bbox_classes[nonempty_box_mask].detach(), nms_cfg, True)[1]
 
         if nms_selected.shape[0] > num_rpn_proposal:
             nms_selected = nms_selected[:num_rpn_proposal]
