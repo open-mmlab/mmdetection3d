@@ -75,6 +75,7 @@ def test_chamfer_disrance():
 def test_paconv_correlation_loss():
     from mmdet3d.models.losses import PAConvCorrelationLoss
     from mmdet3d.ops import PAConv, PAConvCUDA
+    from mmdet.apis import set_random_seed
 
     class ToyModel(nn.Module):
 
@@ -88,6 +89,7 @@ def test_paconv_correlation_loss():
 
             self.conv1 = nn.Conv1d(3, 8, 1)
 
+    set_random_seed(0, True)
     model = ToyModel()
 
     # reduction shoule be in ['none', 'mean', 'sum']
@@ -100,9 +102,9 @@ def test_paconv_correlation_loss():
     assert mean_corr_loss.requires_grad
 
     sum_corr_loss = paconv_corr_loss(model.modules(), reduction_override='sum')
-    assert sum_corr_loss == mean_corr_loss * 3
+    assert torch.allclose(sum_corr_loss, mean_corr_loss * 3)
 
     none_corr_loss = paconv_corr_loss(
         model.modules(), reduction_override='none')
     assert none_corr_loss.shape[0] == 3
-    assert none_corr_loss.mean() == mean_corr_loss
+    assert torch.allclose(none_corr_loss.mean(), mean_corr_loss)
