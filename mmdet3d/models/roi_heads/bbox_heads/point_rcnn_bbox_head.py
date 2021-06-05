@@ -305,7 +305,7 @@ class PointRCNNBboxHead(BaseModule):
             pos_gt_bboxes_ct[..., 0:3] -= roi_center
             pos_gt_bboxes_ct[..., 6] -= roi_ry
             pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
-                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), roi_ry,
+                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), -roi_ry,
                 axis=2).squeeze(1)
 
             # flip orientation if gt have opposite orientation
@@ -363,8 +363,7 @@ class PointRCNNBboxHead(BaseModule):
         local_roi_boxes[..., 0:3] = 0
         rcnn_boxes3d = self.bbox_coder.decode(local_roi_boxes, bbox_pred)
         rcnn_boxes3d[..., 0:3] = rotation_3d_in_axis(
-            rcnn_boxes3d[..., 0:3].unsqueeze(1), (roi_ry + np.pi / 2),
-            axis=2).squeeze(1)
+            rcnn_boxes3d[..., 0:3].unsqueeze(1), roi_ry, axis=2).squeeze(1)
         rcnn_boxes3d[:, 0:3] += roi_xyz
 
         # post processing

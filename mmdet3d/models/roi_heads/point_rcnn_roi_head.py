@@ -229,7 +229,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         bbox_results = self._bbox_forward(features, points, batch_size, rois)
         bbox_list = self.bbox_head.get_bboxes(
             rois,
-            bbox_results['cls_score'],
+            torch.sigmoid(bbox_results['cls_score']),
             bbox_results['bbox_pred'],
             labels_3d,
             cls_preds,
