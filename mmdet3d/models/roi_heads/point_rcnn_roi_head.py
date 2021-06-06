@@ -211,7 +211,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         """
         rois = bbox3d2roi([res['boxes_3d'].tensor for res in proposal_list])
         labels_3d = [res['labels_3d'] for res in proposal_list]
-        cls_preds = [res['cls_preds'] for res in proposal_list]
+        # cls_preds = [res['cls_preds'] for res in proposal_list]
 
         features = feats_dict['features']
         points = feats_dict['points']
@@ -232,7 +232,7 @@ class PointRCNNROIHead(Base3DRoIHead):
             torch.sigmoid(bbox_results['cls_score']),
             bbox_results['bbox_pred'],
             labels_3d,
-            cls_preds,
+            torch.sigmoid(bbox_results['cls_score']),
             img_metas,
             cfg=self.test_cfg)
 

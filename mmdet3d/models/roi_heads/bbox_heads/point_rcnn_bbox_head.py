@@ -373,6 +373,7 @@ class PointRCNNBboxHead(BaseModule):
             cur_cls_score = cls_score[roi_batch_id == batch_id].view(-1)
 
             cur_box_prob = class_pred[batch_id]
+            cur_box_prob = cur_cls_score.unsqueeze(1)
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
                                             cfg.score_thr, cfg.nms_thr,
