@@ -106,9 +106,9 @@ model = dict(
 lr = 0.002  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[80, 120])
+lr_config = dict(policy='step', warmup=None, step=[45, 60])
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=150)
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 
 # yapf:disable
 log_config = dict(
