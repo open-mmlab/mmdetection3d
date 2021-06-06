@@ -1127,8 +1127,10 @@ class BackgroundPointsFilter(object):
         points = input_dict['points']
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
 
+        # avoid groundtruth being modified
         gt_bboxes_3d_np = gt_bboxes_3d.tensor.clone().numpy()
         gt_bboxes_3d_np[:, :3] = gt_bboxes_3d.gravity_center.clone().numpy()
+
         enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
         enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
         points_numpy = points.tensor.clone().numpy()
