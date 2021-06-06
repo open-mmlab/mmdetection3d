@@ -17,7 +17,7 @@ db_sampler = dict(
     prepare=dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
-    sample_groups=dict(Car=20, Pedestrian=15, Cyclist=15),
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
     classes=class_names)
 
 train_pipeline = [

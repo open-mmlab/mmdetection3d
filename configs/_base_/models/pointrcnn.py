@@ -74,7 +74,7 @@ model = dict(
                 nms_pre=9000,
                 nms_post=512,
                 max_num=512,
-                nms_cfg=dict(type='nms', iou_thr=0.82),
+                nms_cfg=dict(type='nms', iou_thr=0.75),
                 score_thr=0,
                 use_rotate_nms=False)),
         rcnn=dict(
