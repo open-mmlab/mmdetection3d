@@ -614,8 +614,7 @@ def test_background_points_filter():
     points = np.concatenate([points, extra_points.numpy()], 0)
     points = LiDARPoints(points, points_dim=4)
     input_dict = dict(points=points, gt_bboxes_3d=gt_bboxes_3d)
-    origin_input_dict = dict(
-        points=points.clone(), gt_bboxes_3d=gt_bboxes_3d.clone())
+    origin_gt_bboxes_3d = gt_bboxes_3d.clone()
     input_dict = background_points_filter(input_dict)
 
     points = input_dict['points'].tensor.numpy()
@@ -625,9 +624,8 @@ def test_background_points_filter():
     assert repr_str == expected_repr_str
     assert points.shape == (800, 4)
     assert np.allclose(orig_points, points)
-    assert np.allclose(input_dict['points'], origin_input_dict['points'])
-    assert np.allclose(input_dict['gt_bboxes_3d'],
-                       origin_input_dict['gt_bboxes_3d'])
+    assert np.allclose(input_dict['gt_bboxes_3d'].tensor.numpy(),
+                       origin_gt_bboxes_3d.tensor.numpy())
 
     # test single float config
     BackgroundPointsFilter(0.5)
