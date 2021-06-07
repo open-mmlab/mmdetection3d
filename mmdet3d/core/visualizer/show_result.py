@@ -3,7 +3,8 @@ import numpy as np
 import trimesh
 from os import path as osp
 
-from .image_vis import draw_depth_bbox3d_on_img, draw_lidar_bbox3d_on_img
+from .image_vis import (draw_camera_bbox3d_on_img, draw_depth_bbox3d_on_img,
+                        draw_lidar_bbox3d_on_img)
 
 
 def _write_obj(points, out_filename):
@@ -202,7 +203,7 @@ def show_multi_modality_result(img,
                                proj_mat,
                                out_dir,
                                filename,
-                               depth_bbox=False,
+                               box_mode,
                                img_metas=None,
                                show=False,
                                gt_bbox_color=(61, 102, 255),
@@ -213,24 +214,29 @@ def show_multi_modality_result(img,
 
     Args:
         img (np.ndarray): The numpy array of image in cv2 fashion.
-        gt_bboxes (np.ndarray): Ground truth boxes.
-        pred_bboxes (np.ndarray): Predicted boxes.
+        gt_bboxes (:obj:`BaseInstance3DBoxes`): Ground truth boxes.
+        pred_bboxes (:obj:`BaseInstance3DBoxes`): Predicted boxes.
         proj_mat (numpy.array, shape=[4, 4]): The projection matrix
             according to the camera intrinsic parameters.
-        out_dir (str): Path of output directory
+        out_dir (str): Path of output directory.
         filename (str): Filename of the current frame.
-        depth_bbox (bool): Whether we are projecting camera bbox or lidar bbox.
-        img_metas (dict): Used in projecting cameta bbox.
+        box_mode (str): Coordinate system the boxes are in.
+            Should be one of 'depth', 'lidar' and 'camera'.
+        img_metas (dict): Used in projecting depth bbox.
         show (bool): Visualize the results online. Defaults to False.
         gt_bbox_color (str or tuple(int)): Color of bbox lines.
            The tuple of color should be in BGR order. Default: (255, 102, 61)
         pred_bbox_color (str or tuple(int)): Color of bbox lines.
            The tuple of color should be in BGR order. Default: (72, 101, 241)
     """
-    if depth_bbox:
+    if box_mode == 'depth':
         draw_bbox = draw_depth_bbox3d_on_img
-    else:
+    elif box_mode == 'lidar':
         draw_bbox = draw_lidar_bbox3d_on_img
+    elif box_mode == 'camera':
+        draw_bbox = draw_camera_bbox3d_on_img
+    else:
+        raise NotImplementedError(f'unsupported box mode {box_mode}')
 
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)

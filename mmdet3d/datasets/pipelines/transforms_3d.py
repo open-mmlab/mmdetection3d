@@ -11,6 +11,50 @@ from .data_augment_utils import noise_per_object_v3_
 
 
 @PIPELINES.register_module()
+class RandomDropPointsColor(object):
+    r"""Randomly set the color of points to all zeros.
+
+    Once this transform is executed, all the points' color will be dropped.
+    Refer to `PAConv <https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/
+    util/transform.py#L223>`_ for more details.
+
+    Args:
+        drop_ratio (float): The probability of dropping point colors.
+            Defaults to 0.2.
+    """
+
+    def __init__(self, drop_ratio=0.2):
+        assert isinstance(drop_ratio, (int, float)) and 0 <= drop_ratio <= 1, \
+            f'invalid drop_ratio value {drop_ratio}'
+        self.drop_ratio = drop_ratio
+
+    def __call__(self, input_dict):
+        """Call function to drop point colors.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after color dropping, \
+                'points' key is updated in the result dict.
+        """
+        points = input_dict['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims, \
+            'Expect points have color attribute'
+
+        if np.random.rand() < self.drop_ratio:
+            points.color = points.color * 0.0
+        return input_dict
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(drop_ratio={self.drop_ratio})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
@@ -121,6 +165,74 @@ class RandomFlip3D(RandomFlip):
         repr_str = self.__class__.__name__
         repr_str += f'(sync_2d={self.sync_2d},'
         repr_str += f' flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
+        return repr_str
+
+
+@PIPELINES.register_module()
+class RandomJitterPoints(object):
+    """Randomly jitter point coordinates.
+
+    Different from the global translation in ``GlobalRotScaleTrans``, here we \
+        apply different noises to each point in a scene.
+
+    Args:
+        jitter_std (list[float]): The standard deviation of jittering noise.
+            This applies random noise to all points in a 3D scene, which is \
+            sampled from a gaussian distribution whose standard deviation is \
+            set by ``jitter_std``. Defaults to [0.01, 0.01, 0.01]
+        clip_range (list[float] | None): Clip the randomly generated jitter \
+            noise into this range. If None is given, don't perform clipping.
+            Defaults to [-0.05, 0.05]
+
+    Note:
+        This transform should only be used in point cloud segmentation tasks \
+            because we don't transform ground-truth bboxes accordingly.
+        For similar transform in detection task, please refer to `ObjectNoise`.
+    """
+
+    def __init__(self,
+                 jitter_std=[0.01, 0.01, 0.01],
+                 clip_range=[-0.05, 0.05]):
+        seq_types = (list, tuple, np.ndarray)
+        if not isinstance(jitter_std, seq_types):
+            assert isinstance(jitter_std, (int, float)), \
+                f'unsupported jitter_std type {type(jitter_std)}'
+            jitter_std = [jitter_std, jitter_std, jitter_std]
+        self.jitter_std = jitter_std
+
+        if clip_range is not None:
+            if not isinstance(clip_range, seq_types):
+                assert isinstance(clip_range, (int, float)), \
+                    f'unsupported clip_range type {type(clip_range)}'
+                clip_range = [-clip_range, clip_range]
+        self.clip_range = clip_range
+
+    def __call__(self, input_dict):
+        """Call function to jitter all the points in the scene.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after adding noise to each point, \
+                'points' key is updated in the result dict.
+        """
+        points = input_dict['points']
+        jitter_std = np.array(self.jitter_std, dtype=np.float32)
+        jitter_noise = \
+            np.random.randn(points.shape[0], 3) * jitter_std[None, :]
+        if self.clip_range is not None:
+            jitter_noise = np.clip(jitter_noise, self.clip_range[0],
+                                   self.clip_range[1])
+
+        points.translate(jitter_noise)
+        return input_dict
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(jitter_std={self.jitter_std},'
+        repr_str += f' clip_range={self.clip_range})'
         return repr_str
 
 
@@ -389,8 +501,8 @@ class GlobalRotScaleTrans(object):
             Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
         scale_ratio_range (list[float]): Range of scale ratio.
             Defaults to [0.95, 1.05].
-        translation_std (list[float]): The standard deviation of ranslation
-            noise. This apply random translation to a scene by a noise, which
+        translation_std (list[float]): The standard deviation of translation
+            noise. This applies random translation to a scene by a noise, which
             is sampled from a gaussian distribution whose standard deviation
             is set by ``translation_std``. Defaults to [0, 0, 0]
         shift_height (bool): Whether to shift height.
@@ -420,6 +532,8 @@ class GlobalRotScaleTrans(object):
             translation_std = [
                 translation_std, translation_std, translation_std
             ]
+        assert all([std >= 0 for std in translation_std]), \
+            'translation_std should be positive'
         self.translation_std = translation_std
         self.shift_height = shift_height
 
@@ -1015,11 +1129,13 @@ class BackgroundPointsFilter(object):
         points = input_dict['points']
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
 
-        gt_bboxes_3d_np = gt_bboxes_3d.tensor.numpy()
-        gt_bboxes_3d_np[:, :3] = gt_bboxes_3d.gravity_center.numpy()
+        # avoid groundtruth being modified
+        gt_bboxes_3d_np = gt_bboxes_3d.tensor.clone().numpy()
+        gt_bboxes_3d_np[:, :3] = gt_bboxes_3d.gravity_center.clone().numpy()
+
         enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
         enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
-        points_numpy = points.tensor.numpy()
+        points_numpy = points.tensor.clone().numpy()
         foreground_masks = box_np_ops.points_in_rbbox(points_numpy,
                                                       gt_bboxes_3d_np)
         enlarge_foreground_masks = box_np_ops.points_in_rbbox(

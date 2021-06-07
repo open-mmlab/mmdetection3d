@@ -26,7 +26,7 @@ from ..builder import VOXEL_ENCODERS
 
 
 @VOXEL_ENCODERS.register_module()
-class HardVFE(BaseModule):
+class HardVFE(nn.Module):
 
     def __init__(self, arg1, arg2):
         pass
@@ -327,8 +327,8 @@ class PartAggregationROIHead(Base3DRoIHead):
                  test_cfg=None,
                  init_cfg=None):
         super(PartAggregationROIHead, self).__init__(
-            bbox_head=bbox_head, 
-            train_cfg=train_cfg, 
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
         self.num_classes = num_classes

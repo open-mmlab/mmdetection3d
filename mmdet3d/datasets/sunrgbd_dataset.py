@@ -214,7 +214,7 @@ class SUNRGBDDataset(Custom3DDataset):
                     calib,
                     out_dir,
                     file_name,
-                    depth_bbox=True,
+                    box_mode='depth',
                     img_metas=img_metas,
                     show=show)
 

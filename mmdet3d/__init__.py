@@ -17,7 +17,7 @@ def digit_version(version_str):
     return digit_version
 
 
-mmcv_minimum_version = '1.3.2'
+mmcv_minimum_version = '1.3.5'
 mmcv_maximum_version = '1.4.0'
 mmcv_version = digit_version(mmcv.__version__)
 
@@ -36,10 +36,8 @@ assert (mmdet_version >= digit_version(mmdet_minimum_version)
     f'Please install mmdet>={mmdet_minimum_version}, ' \
     f'<={mmdet_maximum_version}.'
 
-# TODO: actually we are incompatibile with even the newest mmseg
-# TODO: some changes are still in master branch and not released yet
 mmseg_minimum_version = '0.13.0'
-mmseg_maximum_version = '0.13.0'
+mmseg_maximum_version = '0.14.0'
 mmseg_version = digit_version(mmseg.__version__)
 assert (mmseg_version >= digit_version(mmseg_minimum_version)
         and mmseg_version <= digit_version(mmseg_maximum_version)), \
