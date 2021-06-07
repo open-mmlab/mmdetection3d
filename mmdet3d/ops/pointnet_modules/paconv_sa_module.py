@@ -4,11 +4,11 @@ from typing import List, Tuple
 
 from mmdet3d.ops import PAConv, PAConvCUDA
 from .builder import SA_MODULES
-from .point_sa_module import _PointSAModuleBase
+from .point_sa_module import BasePointSAModule
 
 
 @SA_MODULES.register_module()
-class PAConvSAModuleMSG(_PointSAModuleBase):
+class PAConvSAModuleMSG(BasePointSAModule):
     """Point set abstraction module with multi-scale grouping (MSG) used in
     PAConv networks.
 
@@ -151,7 +151,7 @@ class PAConvSAModule(PAConvSAModuleMSG):
 
 
 @SA_MODULES.register_module()
-class PAConvSAModuleMSGCUDA(_PointSAModuleBase):
+class PAConvSAModuleMSGCUDA(BasePointSAModule):
     """Point set abstraction module with multi-scale grouping (MSG) used in
     PAConv networks.
 

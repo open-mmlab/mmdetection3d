@@ -9,7 +9,7 @@ from mmdet3d.ops import (GroupAll, PAConv, Points_Sampler, QueryAndGroup,
 from .builder import SA_MODULES
 
 
-class _PointSAModuleBase(nn.Module):
+class BasePointSAModule(nn.Module):
     """Base module for point set abstraction module used in PointNets.
 
     Args:
@@ -52,7 +52,7 @@ class _PointSAModuleBase(nn.Module):
                  normalize_xyz: bool = False,
                  grouper_return_grouped_xyz: bool = False,
                  grouper_return_grouped_idx: bool = False):
-        super(_PointSAModuleBase, self).__init__()
+        super(BasePointSAModule, self).__init__()
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
         assert pool_mod in ['max', 'avg']
@@ -214,7 +214,7 @@ class _PointSAModuleBase(nn.Module):
 
 
 @SA_MODULES.register_module()
-class PointSAModuleMSG(_PointSAModuleBase):
+class PointSAModuleMSG(BasePointSAModule):
     """Point set abstraction module with multi-scale grouping (MSG) used in
     PointNets.
 
