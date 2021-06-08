@@ -23,7 +23,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                  decode_head,
                  neck=None,
                  auxiliary_head=None,
-                 regularization_loss=None,
+                 loss_regularization=None,
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None,
@@ -34,7 +34,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             self.neck = build_neck(neck)
         self._init_decode_head(decode_head)
         self._init_auxiliary_head(auxiliary_head)
-        self._init_regularization_loss(regularization_loss)
+        self._init_loss_regularization(loss_regularization)
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -56,15 +56,15 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.auxiliary_head = build_head(auxiliary_head)
 
-    def _init_regularization_loss(self, regularization_loss):
-        """Initialize ``regularization_loss``"""
-        if regularization_loss is not None:
-            if isinstance(regularization_loss, list):
-                self.regularization_loss = nn.ModuleList()
-                for loss_cfg in regularization_loss:
-                    self.regularization_loss.append(build_loss(loss_cfg))
+    def _init_loss_regularization(self, loss_regularization):
+        """Initialize ``loss_regularization``"""
+        if loss_regularization is not None:
+            if isinstance(loss_regularization, list):
+                self.loss_regularization = nn.ModuleList()
+                for loss_cfg in loss_regularization:
+                    self.loss_regularization.append(build_loss(loss_cfg))
             else:
-                self.regularization_loss = build_loss(regularization_loss)
+                self.loss_regularization = build_loss(loss_regularization)
 
     def init_weights(self, pretrained=None):
         """Initialize the weights in backbone and heads.
@@ -140,15 +140,15 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return losses
 
-    def _regularization_loss_forward_train(self):
+    def _loss_regularization_forward_train(self):
         """Calculate regularization loss for model weight in training."""
         losses = dict()
-        if isinstance(self.regularization_loss, nn.ModuleList):
-            for idx, reg_loss in enumerate(self.regularization_loss):
+        if isinstance(self.loss_regularization, nn.ModuleList):
+            for idx, reg_loss in enumerate(self.loss_regularization):
                 loss_reg = dict(loss_reg=reg_loss(self.modules()))
                 losses.update(add_prefix(loss_reg, f'reg_{idx}'))
         else:
-            loss_reg = dict(loss_reg=self.regularization_loss(self.modules()))
+            loss_reg = dict(loss_reg=self.loss_regularization(self.modules()))
             losses.update(add_prefix(loss_reg, 'reg'))
 
         return losses
@@ -188,8 +188,8 @@ class EncoderDecoder3D(Base3DSegmentor):
                 x, img_metas, pts_semantic_mask_cat)
             losses.update(loss_aux)
 
-        if self.with_regularization_loss:
-            loss_reg = self._regularization_loss_forward_train()
+        if self.with_loss_regularization:
+            loss_reg = self._loss_regularization_forward_train()
             losses.update(loss_reg)
 
         return losses

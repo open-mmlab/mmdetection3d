@@ -17,10 +17,10 @@ class Base3DSegmentor(BaseSegmentor):
     """
 
     @property
-    def with_regularization_loss(self):
+    def with_loss_regularization(self):
         """bool: whether the segmentor has regularization loss for weight"""
-        return hasattr(self, 'regularization_loss') and \
-            self.regularization_loss is not None
+        return hasattr(self, 'loss_regularization') and \
+            self.loss_regularization is not None
 
     def forward_test(self, points, img_metas, **kwargs):
         """Calls either simple_test or aug_test depending on the length of
