@@ -122,8 +122,17 @@ def transform_img2cam(kps, dim, rot, meta, const):
     """Transform coordinates in the 2D image plane to the 3D camera coordinate
     system.
 
-    For detailed explanations of matrix, please refer to KM3D's paper:
-    https://arxiv.org/abs/2009.00764v1
+    Please refer to 'https://arxiv.org/abs/2009.00764v1' for detailed
+    explanations of matrix.
+
+    Matrix construction:
+    matrix_left is the left-hand matrix with (-1 0 kp_1x) as the first row;
+    matrix right is aimed to be the right-hand matrix with
+    (l*cosµ)/2+(w*sinµ)/2-kp_1x*[-(l*sinµ)/2+(w*cosµ)/2] as the first row.
+    By construction, data_B is the constant involving (l*cosµ)/2+(w*sinµ)/2
+    and its kind; data_C is the constant involving -(l*sinµ)/2+(w*cosµ)/2
+    and its kind.
+    Therefore, matrix_B - kp_norm * matrix_C results in the final matrix.
 
     Args:
         kps (torch.Tensor): Key points in shape (batch_size * boxes * 18)
@@ -133,9 +142,8 @@ def transform_img2cam(kps, dim, rot, meta, const):
         meta (dict): should contain keys below.
 
             - trans_output_inv: Transition parameters for computing
-                matrix_left in pinv's matrix, in shape (1, 2, 3)
-            - calib: Calibration for computing matrix_left in pinv's matrix, in
-                shape (1, 2, 3)
+                matrix_left in shape (1, 2, 3)
+            - calib: Calibration for computing matrix_left in shape (1, 2, 3)
         const (torch.Tensor): constants in shape (batch_size * boxes * 16 * 2)
 
     Returns:
@@ -208,16 +216,8 @@ def transform_img2cam(kps, dim, rot, meta, const):
     kp = kp_norm.unsqueeze(3)
     const = const.expand(batch, boxes, -1, -1)
     matrix_left = torch.cat([const, kp], dim=3)
-    """Below is the matrix for position solving in KM3D paper.
-    matrix_left is the left-hand matrix with (-1 0 kp_1x) as the first row;
-    matrix right is aimed to be the right-hand matrix with
-        (l*cosµ)/2+(w*sinµ)/2-kp_1x*[-(l*sinµ)/2+(w*cosµ)/2] as the first row.
-        By construction, data_B is the constant involving (l*cosµ)/2+(w*sinµ)/2
-        and its kind; data_C is the constant involving -(l*sinµ)/2+(w*cosµ)/2
-        and its kind.
-        Therefore, matrix_B-kp_norm*matrix_C can result in the final matrix.
 
-    """
+    # Below is the matrix computation for position solving in KM3D paper.
     data_B = torch.FloatTensor([
         length * 0.5 * cos_rot_y + width * 0.5 * sin_rot_y, height * 0.5,
         length * 0.5 * cos_rot_y - width * 0.5 * sin_rot_y, height * 0.5,
@@ -263,19 +263,19 @@ def transform_img2cam(kps, dim, rot, meta, const):
     matrix_right = matrix_right.view(batch * boxes, 16, 1).float()
 
     # pinv here in shape (batch * boxes 3 3)
-    pinv = torch.bmm(matrix_left_transposed, matrix_left)
-    pinv = torch.inverse(pinv)
+    points_3d = torch.bmm(matrix_left_transposed, matrix_left)
+    points_3d = torch.inverse(points_3d)
 
     # pinv here in shape (batch * boxes 3 16)
-    pinv = torch.bmm(pinv, matrix_left_transposed)
+    points_3d = torch.bmm(points_3d, matrix_left_transposed)
 
     # pinv here in shape (batch * boxes 3 1)
-    pinv = torch.bmm(pinv, matrix_right)
+    points_3d = torch.bmm(points_3d, matrix_right)
 
     # final pinv in shape (batch, boxes, 3)
-    pinv = pinv.view(batch, boxes, 3, 1).squeeze(3)
+    points_3d = points_3d.view(batch, boxes, 3, 1).squeeze(3)
 
-    return pinv, rot_y, kps
+    return points_3d, rot_y, kps
 
 
 def object_pose_decode(heat,
@@ -285,8 +285,8 @@ def object_pose_decode(heat,
                        rot,
                        prob=None,
                        reg=None,
-                       hm_hp=None,
-                       hp_offset=None,
+                       kps_heatmap=None,
+                       kps_offsets=None,
                        K=100,
                        meta=None,
                        const=None):
@@ -304,8 +304,8 @@ def object_pose_decode(heat,
         rot (torch.Tensor): Rotation values in shape (1* batch_size * 8)
         prob (torch.Tensor): Probabilities
         reg (torch.Tensor): Reg parameters
-        hm_hp (torch.Tensor): Heatmap key points parameters
-        hp_offset (torch.Tensor): Heatmap key points offsets for down-sampling
+        kps_heatmap (torch.Tensor): Heatmap key points parameters
+        kps_offsets (torch.Tensor): Heatmap key points offsets for downsampling
             error's makeup
         K (int): Top K value
         meta (dict): should contain keys below.
@@ -356,20 +356,20 @@ def object_pose_decode(heat,
     rot = rot.view(batch, K, 8)
     prob = _permute_and_gather_feat(prob, inds)[:, :, 0]
     prob = prob.view(batch, K, 1)
-    if hm_hp is not None:
-        hm_hp = _nms(hm_hp)
+    if kps_heatmap is not None:
+        kps_heatmap = _nms(kps_heatmap)
         thresh = 0.1
         kps = kps.view(batch, K, num_joints, 2).permute(0, 2, 1,
                                                         3)  # batch x J x K x 2
         reg_kps = kps.unsqueeze(3).expand(batch, num_joints, K, K, 2)
         # batch x J x K
-        hm_score, hm_inds, hm_ys, hm_xs = _topk_channel(hm_hp, K=K)
-        if hp_offset is not None:
-            hp_offset = _permute_and_gather_feat(hp_offset,
-                                                 hm_inds.view(batch, -1))
-            hp_offset = hp_offset.view(batch, num_joints, K, 2)
-            hm_xs = hm_xs + hp_offset[:, :, :, 0]
-            hm_ys = hm_ys + hp_offset[:, :, :, 1]
+        hm_score, hm_inds, hm_ys, hm_xs = _topk_channel(kps_heatmap, K=K)
+        if kps_offsets is not None:
+            kps_offsets = _permute_and_gather_feat(kps_offsets,
+                                                   hm_inds.view(batch, -1))
+            kps_offsets = kps_offsets.view(batch, num_joints, K, 2)
+            hm_xs = hm_xs + kps_offsets[:, :, :, 0]
+            hm_ys = hm_ys + kps_offsets[:, :, :, 1]
         else:
             hm_xs = hm_xs + 0.5
             hm_ys = hm_ys + 0.5
@@ -388,21 +388,21 @@ def object_pose_decode(heat,
                                1).expand(batch, num_joints, K, 1, 2)
         hm_kps = hm_kps.gather(3, min_ind)
         hm_kps = hm_kps.view(batch, num_joints, K, 2)
-        length = bboxes[:, :, 0].view(batch, 1, K, 1)\
+        left = bboxes[:, :, 0].view(batch, 1, K, 1)\
             .expand(batch, num_joints, K, 1)
-        t = bboxes[:, :, 1].view(batch, 1, K, 1)\
+        top = bboxes[:, :, 1].view(batch, 1, K, 1)\
             .expand(batch, num_joints, K, 1)
-        r = bboxes[:, :, 2].view(batch, 1, K, 1)\
+        right = bboxes[:, :, 2].view(batch, 1, K, 1)\
             .expand(batch, num_joints, K, 1)
-        batch = bboxes[:, :, 3].view(batch, 1, K, 1)\
+        bottom = bboxes[:, :, 3].view(batch, 1, K, 1)\
             .expand(batch, num_joints, K, 1)
-        mask = (hm_kps[..., 0:1] < length) + (hm_kps[..., 0:1] > r) + \
-               (hm_kps[..., 1:2] < t) + (hm_kps[..., 1:2] > batch) + \
+        mask = (hm_kps[..., 0:1] < left) + (hm_kps[..., 0:1] > right) + \
+               (hm_kps[..., 1:2] < top) + (hm_kps[..., 1:2] > bottom) + \
                (hm_score < thresh) + \
-               (min_dist > (torch.max(batch - t, r - length) * 0.3))
-        mask = (mask > 0).float().expand(batch, num_joints, K, 2)
+               (min_dist > (torch.max(bottom - top, right - left) * 0.3))
+        mask = (mask > 0).float().expand(bottom, num_joints, K, 2)
         kps = (1 - mask) * hm_kps + mask * kps
-        kps = kps.permute(0, 2, 1, 3).view(batch, K, num_joints * 2)
+        kps = kps.permute(0, 2, 1, 3).view(bottom, K, num_joints * 2)
         hm_score = hm_score.permute(0, 2, 1, 3).squeeze(3)
     position, rot_y, kps_inv = transform_img2cam(kps, dim, rot, meta, const)
 
