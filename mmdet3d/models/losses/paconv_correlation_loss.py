@@ -6,7 +6,7 @@ from mmdet.models.builder import LOSSES
 
 
 def weight_correlation(conv):
-    """Calculate correlations between weight kernels in Conv's weight bank as
+    """Calculate correlations between kernel weights in Conv's weight bank as
     regularization loss. The cosine similarity is used as metrics.
 
     Args:
@@ -14,7 +14,7 @@ def weight_correlation(conv):
             Currently we only support `PAConv` and `PAConvCUDA`.
 
     Returns:
-        torch.Tensor: Correlations between each weight kernels in weight bank.
+        torch.Tensor: Correlations between each kernel weights in weight bank.
     """
     assert isinstance(conv, (PAConv, PAConvCUDA))
     kernels = conv.weight_bank  # [C_in, num_kernels * C_out]
@@ -51,7 +51,7 @@ def paconv_correlation_loss(modules, reduction):
             The valid reduction method are none, sum or mean.
 
     Returns:
-        torch.Tensor: Correlation loss of weight kernels.
+        torch.Tensor: Correlation loss of kernel weights.
     """
     corr_loss = []
     for module in modules:
@@ -73,7 +73,7 @@ def paconv_correlation_loss(modules, reduction):
 
 @LOSSES.register_module()
 class PAConvCorrelationLoss(nn.Module):
-    """Calculate correlation loss of weight kernels in PAConv's weight bank.
+    """Calculate correlation loss of kernel weights in PAConv's weight bank.
 
     Args:
         reduction (str): Method to reduce losses. The reduction is performed
@@ -99,7 +99,7 @@ class PAConvCorrelationLoss(nn.Module):
                 Defaults to None.
 
         Returns:
-            torch.Tensor: Correlation loss of weight kernels.
+            torch.Tensor: Correlation loss of kernel weights.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (

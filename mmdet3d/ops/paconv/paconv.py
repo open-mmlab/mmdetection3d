@@ -10,7 +10,7 @@ from .utils import assign_kernel_withoutk, assign_score, calc_euclidian_dist
 
 
 class ScoreNet(nn.Module):
-    """ScoreNet that outputs coefficient scores to assemble weight kernels in
+    """ScoreNet that outputs coefficient scores to assemble kernel weights in
     the weight bank according to the relative position of point pairs.
 
     Args:
@@ -106,14 +106,14 @@ class ScoreNet(nn.Module):
 class PAConv(nn.Module):
     """Non-CUDA version of PAConv.
 
-    PAConv stores a trainable weight bank containing several weight kernels.
+    PAConv stores a trainable weight bank containing several kernel weights.
     Given input points and features, it computes coefficient scores to assemble
     those kernels to form conv kernels, and then runs convolution on the input.
 
     Args:
         in_channels (int): Input channels of point features.
         out_channels (int): Output channels of point features.
-        num_kernels (int): Number of weight kernels in the weight bank.
+        num_kernels (int): Number of kernel weights in the weight bank.
         norm_cfg (dict, optional): Type of normalization method.
             Defaults to dict(type='BN2d', momentum=0.1).
         act_cfg (dict, optional): Type of activation method.
@@ -124,7 +124,7 @@ class PAConv(nn.Module):
         weight_bank_init (str, optional): Init method of weight bank kernels.
             Can be 'kaiming' or 'xavier'. Defaults to 'kaiming'.
         kernel_input (str, optional): Input features to be multiplied with
-            weight kernels. Can be 'identity' or 'w_neighbor'.
+            kernel weights. Can be 'identity' or 'w_neighbor'.
             Defaults to 'w_neighbor'.
         scorenet_cfg (dict, optional): Config of the ScoreNet module, which
             may contain the following keys and values:
@@ -181,7 +181,7 @@ class PAConv(nn.Module):
                 f'unsupported scorenet_input {scorenet_input}')
         self.scorenet_input = scorenet_input
 
-        # construct weight kernels in weight bank
+        # construct kernel weights in weight bank
         # self.weight_bank is of shape [C, num_kernels * out_c]
         # where C can be in_c or (2 * in_c)
         if weight_bank_init == 'kaiming':
@@ -278,7 +278,7 @@ class PAConv(nn.Module):
         # prepare features for between each point and its grouping center
         xyz_features = self._prepare_scorenet_input(points_xyz)
 
-        # scores to assemble weight kernels
+        # scores to assemble kernel weights
         scores = self.scorenet(xyz_features)  # [B, npoint, K, m]
 
         # first compute out features over all kernels
@@ -369,7 +369,7 @@ class PAConvCUDA(PAConv):
         # prepare features for between each point and its grouping center
         xyz_features = self._prepare_scorenet_input(points_xyz)
 
-        # scores to assemble weight kernels
+        # scores to assemble kernel weights
         scores = self.scorenet(xyz_features)  # [B, npoint, K, m]
 
         # pre-compute features for points and centers separately
