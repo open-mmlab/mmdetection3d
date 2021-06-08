@@ -42,7 +42,7 @@ model = dict(
             loss_weight=1.0)),
     # correlation loss to regularize PAConv's kernel weights
     loss_regularization=dict(
-        type='PAConvCorrelationLoss', reduction='sum', loss_weight=10.0),
+        type='PAConvRegularizationLoss', reduction='sum', loss_weight=10.0),
     # model training and testing settings
     train_cfg=dict(),
     test_cfg=dict(mode='slide'))
