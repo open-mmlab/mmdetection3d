@@ -10,7 +10,7 @@ model = dict(
         sa_channels=((32, 32, 64), (64, 64, 128), (128, 128, 256), (256, 256,
                                                                     512)),
         fp_channels=(),
-        norm_cfg=dict(type='BN2d', momentum=0.1),
+        norm_cfg=dict(type='naiveSyncBN2d', momentum=0.1),
         sa_cfg=dict(
             type='PAConvSAModule',
             pool_mod='max',
@@ -23,15 +23,17 @@ model = dict(
                 mlp_channels=[16, 16, 16],
                 score_norm='softmax',
                 temp_factor=1.0,
-                last_bn=False))),
+                last_bn=False,
+                norm_cfg=dict(type='naiveSyncBN2d', momentum=0.1)))),
     decode_head=dict(
         type='PAConvHead',
         fp_channels=((768, 256, 256), (384, 256, 256), (320, 256, 128),
                      (128 + 6, 128, 128, 128)),
+        fp_norm_cfg=dict(type='naiveSyncBN2d'),
         channels=128,
         dropout_ratio=0.5,
         conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
+        norm_cfg=dict(type='naiveSyncBN1d'),
         act_cfg=dict(type='ReLU'),
         loss_decode=dict(
             type='CrossEntropyLoss',
