@@ -1,6 +1,5 @@
 import torch
 from torch import nn as nn
-from typing import List, Tuple
 
 from mmdet3d.ops import PAConv, PAConvCUDA
 from .builder import SA_MODULES
@@ -42,22 +41,22 @@ class PAConvSAModuleMSG(BasePointSAModule):
     """
 
     def __init__(self,
-                 num_point: int,
-                 radii: List[float],
-                 sample_nums: List[int],
-                 mlp_channels: List[List[int]],
-                 paconv_num_kernels: List[List[int]],
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 dilated_group: bool = False,
-                 norm_cfg: dict = dict(type='BN2d', momentum=0.1),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 normalize_xyz: bool = False,
-                 bias: str = 'auto',
-                 paconv_kernel_input: str = 'w_neighbor',
-                 scorenet_input: str = 'w_neighbor_dist',
-                 scorenet_cfg: dict = dict(
+                 num_point,
+                 radii,
+                 sample_nums,
+                 mlp_channels,
+                 paconv_num_kernels,
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 dilated_group=False,
+                 norm_cfg=dict(type='BN2d', momentum=0.1),
+                 use_xyz=True,
+                 pool_mod='max',
+                 normalize_xyz=False,
+                 bias='auto',
+                 paconv_kernel_input='w_neighbor',
+                 scorenet_input='w_neighbor_dist',
+                 scorenet_cfg=dict(
                      mlp_channels=[16, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
@@ -115,20 +114,20 @@ class PAConvSAModule(PAConvSAModuleMSG):
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 paconv_num_kernels: List[int],
-                 num_point: int = None,
-                 radius: float = None,
-                 num_sample: int = None,
-                 norm_cfg: dict = dict(type='BN2d', momentum=0.1),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 normalize_xyz: bool = False,
-                 paconv_kernel_input: str = 'w_neighbor',
-                 scorenet_input: str = 'w_neighbor_dist',
-                 scorenet_cfg: dict = dict(
+                 mlp_channels,
+                 paconv_num_kernels,
+                 num_point=None,
+                 radius=None,
+                 num_sample=None,
+                 norm_cfg=dict(type='BN2d', momentum=0.1),
+                 use_xyz=True,
+                 pool_mod='max',
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 normalize_xyz=False,
+                 paconv_kernel_input='w_neighbor',
+                 scorenet_input='w_neighbor_dist',
+                 scorenet_cfg=dict(
                      mlp_channels=[16, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
@@ -161,22 +160,22 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
     """
 
     def __init__(self,
-                 num_point: int,
-                 radii: List[float],
-                 sample_nums: List[int],
-                 mlp_channels: List[List[int]],
-                 paconv_num_kernels: List[List[int]],
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 dilated_group: bool = False,
-                 norm_cfg: dict = dict(type='BN2d', momentum=0.1),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 normalize_xyz: bool = False,
-                 bias: str = 'auto',
-                 paconv_kernel_input: str = 'w_neighbor',
-                 scorenet_input: str = 'w_neighbor_dist',
-                 scorenet_cfg: dict = dict(
+                 num_point,
+                 radii,
+                 sample_nums,
+                 mlp_channels,
+                 paconv_num_kernels,
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 dilated_group=False,
+                 norm_cfg=dict(type='BN2d', momentum=0.1),
+                 use_xyz=True,
+                 pool_mod='max',
+                 normalize_xyz=False,
+                 bias='auto',
+                 paconv_kernel_input='w_neighbor',
+                 scorenet_input='w_neighbor_dist',
+                 scorenet_cfg=dict(
                      mlp_channels=[8, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
@@ -230,11 +229,11 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
 
     def forward(
         self,
-        points_xyz: torch.Tensor,
-        features: torch.Tensor = None,
-        indices: torch.Tensor = None,
-        target_xyz: torch.Tensor = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        points_xyz,
+        features=None,
+        indices=None,
+        target_xyz=None,
+    ):
         """forward.
 
         Args:
@@ -306,20 +305,20 @@ class PAConvCUDASAModule(PAConvCUDASAModuleMSG):
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 paconv_num_kernels: List[int],
-                 num_point: int = None,
-                 radius: float = None,
-                 num_sample: int = None,
-                 norm_cfg: dict = dict(type='BN2d', momentum=0.1),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 normalize_xyz: bool = False,
-                 paconv_kernel_input: str = 'w_neighbor',
-                 scorenet_input: str = 'w_neighbor_dist',
-                 scorenet_cfg: dict = dict(
+                 mlp_channels,
+                 paconv_num_kernels,
+                 num_point=None,
+                 radius=None,
+                 num_sample=None,
+                 norm_cfg=dict(type='BN2d', momentum=0.1),
+                 use_xyz=True,
+                 pool_mod='max',
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 normalize_xyz=False,
+                 paconv_kernel_input='w_neighbor',
+                 scorenet_input='w_neighbor_dist',
+                 scorenet_cfg=dict(
                      mlp_channels=[8, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
