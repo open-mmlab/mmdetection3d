@@ -160,11 +160,11 @@ def test_paconv_sa_module():
 def test_paconv_cuda_sa_module_msg():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PAConvSAModuleMSGCUDA
+    from mmdet3d.ops import PAConvCUDASAModuleMSG
 
     # paconv_num_kernels should have same length as mlp_channels
     with pytest.raises(AssertionError):
-        self = PAConvSAModuleMSGCUDA(
+        self = PAConvCUDASAModuleMSG(
             num_point=16,
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
@@ -173,14 +173,14 @@ def test_paconv_cuda_sa_module_msg():
 
     # paconv_num_kernels inner num should match as mlp_channels
     with pytest.raises(AssertionError):
-        self = PAConvSAModuleMSGCUDA(
+        self = PAConvCUDASAModuleMSG(
             num_point=16,
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
             mlp_channels=[[12, 16], [12, 32]],
             paconv_num_kernels=[[4, 4], [8, 8]]).cuda()
 
-    self = PAConvSAModuleMSGCUDA(
+    self = PAConvCUDASAModuleMSG(
         num_point=16,
         radii=[0.2, 0.4],
         sample_nums=[4, 8],
@@ -224,7 +224,7 @@ def test_paconv_cuda_sa_module_msg():
 
     # CUDA PAConv only supports w_neighbor kernel_input
     with pytest.raises(AssertionError):
-        self = PAConvSAModuleMSGCUDA(
+        self = PAConvCUDASAModuleMSG(
             num_point=16,
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
@@ -241,7 +241,7 @@ def test_paconv_cuda_sa_module():
         pytest.skip()
     from mmdet3d.ops import build_sa_module
     sa_cfg = dict(
-        type='PAConvSAModuleCUDA',
+        type='PAConvCUDASAModule',
         num_point=16,
         radius=0.2,
         num_sample=8,
@@ -271,7 +271,7 @@ def test_paconv_cuda_sa_module():
 
     # test kNN sampling when radius is None
     sa_cfg = dict(
-        type='PAConvSAModuleCUDA',
+        type='PAConvCUDASAModule',
         num_point=16,
         radius=None,
         num_sample=8,

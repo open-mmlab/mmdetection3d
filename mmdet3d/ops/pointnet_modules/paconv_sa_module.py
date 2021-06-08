@@ -151,7 +151,7 @@ class PAConvSAModule(PAConvSAModuleMSG):
 
 
 @SA_MODULES.register_module()
-class PAConvSAModuleMSGCUDA(BasePointSAModule):
+class PAConvCUDASAModuleMSG(BasePointSAModule):
     """Point set abstraction module with multi-scale grouping (MSG) used in
     PAConv networks.
 
@@ -181,7 +181,7 @@ class PAConvSAModuleMSGCUDA(BasePointSAModule):
                      score_norm='softmax',
                      temp_factor=1.0,
                      last_bn=False)):
-        super(PAConvSAModuleMSGCUDA, self).__init__(
+        super(PAConvCUDASAModuleMSG, self).__init__(
             num_point=num_point,
             radii=radii,
             sample_nums=sample_nums,
@@ -296,7 +296,7 @@ class PAConvSAModuleMSGCUDA(BasePointSAModule):
 
 
 @SA_MODULES.register_module()
-class PAConvSAModuleCUDA(PAConvSAModuleMSGCUDA):
+class PAConvCUDASAModule(PAConvCUDASAModuleMSG):
     """Point set abstraction module with single-scale grouping (SSG) used in
     PAConv networks.
 
@@ -324,7 +324,7 @@ class PAConvSAModuleCUDA(PAConvSAModuleMSGCUDA):
                      score_norm='softmax',
                      temp_factor=1.0,
                      last_bn=False)):
-        super(PAConvSAModuleCUDA, self).__init__(
+        super(PAConvCUDASAModule, self).__init__(
             mlp_channels=[mlp_channels],
             paconv_num_kernels=[paconv_num_kernels],
             num_point=num_point,
