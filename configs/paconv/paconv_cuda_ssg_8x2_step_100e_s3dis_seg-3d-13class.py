@@ -34,7 +34,7 @@ train_pipeline = [
         use_normalized_coord=True),
     dict(
         type='GlobalRotScaleTrans',
-        rot_range=[-3.141592653589793, 3.141592653589793],
+        rot_range=[-3.141592653589793, 3.141592653589793],  # [-pi, pi]
         scale_ratio_range=[0.8, 1.2],
         translation_std=[0, 0, 0]),
     dict(
