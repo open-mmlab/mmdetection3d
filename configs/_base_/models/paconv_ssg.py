@@ -38,8 +38,8 @@ model = dict(
             use_sigmoid=False,
             class_weight=None,  # should be modified with dataset
             loss_weight=1.0)),
-    # regularization loss for PAConv's weight kernels
-    regularization_loss=dict(
+    # correlation loss to regularize PAConv's kernel weights
+    loss_regularization=dict(
         type='PAConvCorrelationLoss', reduction='sum', loss_weight=10.0),
     # model training and testing settings
     train_cfg=dict(),
