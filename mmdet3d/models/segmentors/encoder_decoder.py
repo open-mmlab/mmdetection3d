@@ -146,12 +146,14 @@ class EncoderDecoder3D(Base3DSegmentor):
         """Calculate regularization loss for model weight in training."""
         losses = dict()
         if isinstance(self.loss_regularization, nn.ModuleList):
-            for idx, reg_loss in enumerate(self.loss_regularization):
-                loss_reg = dict(loss_reg=reg_loss(self.modules()))
-                losses.update(add_prefix(loss_reg, f'reg_{idx}'))
+            for idx, regularize_loss in enumerate(self.loss_regularization):
+                loss_regularize = dict(
+                    loss_regularize=regularize_loss(self.modules()))
+                losses.update(add_prefix(loss_regularize, f'regularize_{idx}'))
         else:
-            loss_reg = dict(loss_reg=self.loss_regularization(self.modules()))
-            losses.update(add_prefix(loss_reg, 'reg'))
+            loss_regularize = dict(
+                loss_regularize=self.loss_regularization(self.modules()))
+            losses.update(add_prefix(loss_regularize, 'regularize'))
 
         return losses
 
@@ -191,8 +193,8 @@ class EncoderDecoder3D(Base3DSegmentor):
             losses.update(loss_aux)
 
         if self.with_loss_regularization:
-            loss_reg = self._loss_regularization_forward_train()
-            losses.update(loss_reg)
+            loss_regularize = self._loss_regularization_forward_train()
+            losses.update(loss_regularize)
 
         return losses
 
