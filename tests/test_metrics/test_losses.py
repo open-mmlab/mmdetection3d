@@ -72,8 +72,8 @@ def test_chamfer_disrance():
                                                                0]])).all()
 
 
-def test_paconv_correlation_loss():
-    from mmdet3d.models.losses import PAConvCorrelationLoss
+def test_paconv_regularization_loss():
+    from mmdet3d.models.losses import PAConvRegularizationLoss
     from mmdet3d.ops import PAConv, PAConvCUDA
     from mmdet.apis import set_random_seed
 
@@ -94,9 +94,9 @@ def test_paconv_correlation_loss():
 
     # reduction shoule be in ['none', 'mean', 'sum']
     with pytest.raises(AssertionError):
-        paconv_corr_loss = PAConvCorrelationLoss(reduction='l2')
+        paconv_corr_loss = PAConvRegularizationLoss(reduction='l2')
 
-    paconv_corr_loss = PAConvCorrelationLoss(reduction='mean')
+    paconv_corr_loss = PAConvRegularizationLoss(reduction='mean')
     mean_corr_loss = paconv_corr_loss(model.modules())
     assert mean_corr_loss >= 0
     assert mean_corr_loss.requires_grad

@@ -3,6 +3,7 @@ from torch import nn as nn
 
 from mmdet3d.ops import PAConv, PAConvCUDA
 from mmdet.models.builder import LOSSES
+from mmdet.models.losses.utils import weight_reduce_loss
 
 
 def weight_correlation(conv):
@@ -41,8 +42,8 @@ def weight_correlation(conv):
     return corr
 
 
-def paconv_correlation_loss(modules, reduction):
-    """Computes correlation loss of PAConv modules as regularization.
+def paconv_regularization_loss(modules, reduction):
+    """Computes correlation loss of PAConv weight kernels as regularization.
 
     Args:
         modules (List[nn.Module] | :obj:`generator`):
@@ -59,21 +60,17 @@ def paconv_correlation_loss(modules, reduction):
             corr_loss.append(weight_correlation(module))
     corr_loss = torch.stack(corr_loss)
 
-    if reduction == 'sum':
-        corr_loss = torch.sum(corr_loss)
-    elif reduction == 'mean':
-        corr_loss = torch.mean(corr_loss)
-    elif reduction == 'none':
-        pass
-    else:
-        raise NotImplementedError
+    # perform reduction
+    corr_loss = weight_reduce_loss(corr_loss, reduction=reduction)
 
     return corr_loss
 
 
 @LOSSES.register_module()
-class PAConvCorrelationLoss(nn.Module):
+class PAConvRegularizationLoss(nn.Module):
     """Calculate correlation loss of kernel weights in PAConv's weight bank.
+
+    This is used as a regularization term in PAConv model training.
 
     Args:
         reduction (str): Method to reduce losses. The reduction is performed
@@ -83,7 +80,7 @@ class PAConvCorrelationLoss(nn.Module):
     """
 
     def __init__(self, reduction='mean', loss_weight=1.0):
-        super(PAConvCorrelationLoss, self).__init__()
+        super(PAConvRegularizationLoss, self).__init__()
         assert reduction in ['none', 'sum', 'mean']
         self.reduction = reduction
         self.loss_weight = loss_weight
@@ -105,4 +102,5 @@ class PAConvCorrelationLoss(nn.Module):
         reduction = (
             reduction_override if reduction_override else self.reduction)
 
-        return self.loss_weight * paconv_correlation_loss(modules, reduction)
+        return self.loss_weight * paconv_regularization_loss(
+            modules, reduction=reduction)
