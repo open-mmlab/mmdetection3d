@@ -1,6 +1,6 @@
+from mmcv.cnn import ConvModule
 from torch import nn
 
-from mmcv.cnn import ConvModule
 from mmdet.models import NECKS
 
 
