@@ -1,4 +1,5 @@
 from torch import nn
+
 from mmdet.models import NECKS
 
 
@@ -10,6 +11,7 @@ class OutdoorImVoxelNeck(nn.Module):
         in_channels (int): Input channels of multi-scale feature map.
         out_channels (int): Output channels of multi-scale feature map.
     """
+
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.model = nn.Sequential(
@@ -18,11 +20,10 @@ class OutdoorImVoxelNeck(nn.Module):
             ResBlock(in_channels * 2),
             ConvBlock(in_channels * 2, in_channels * 4, stride=(1, 1, 2)),
             ResBlock(in_channels * 4),
-            ConvBlock(in_channels * 4, out_channels, padding=(1, 1, 0))
-        )
+            ConvBlock(in_channels * 4, out_channels, padding=(1, 1, 0)))
 
     def forward(self, x):
-        """Forward function
+        """Forward function.
 
         Args:
             x (torch.Tensor): of shape (N, C_in, N_x, N_y, N_z).
@@ -50,6 +51,7 @@ class ConvBlock(nn.Module):
         padding (int): Padding of 3d convolution.
         activation (bool): Whether to use ReLU.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -57,12 +59,13 @@ class ConvBlock(nn.Module):
                  padding=(1, 1, 1),
                  activation=True):
         super().__init__()
-        self.conv = nn.Conv3d(in_channels, out_channels, 3, stride=stride, padding=padding)
+        self.conv = nn.Conv3d(
+            in_channels, out_channels, 3, stride=stride, padding=padding)
         self.norm = nn.BatchNorm3d(out_channels)
         self.activation = nn.ReLU(inplace=True) if activation else None
 
     def forward(self, x):
-        """Forward function
+        """Forward function.
 
         Args:
             x (torch.Tensor): of shape (N, C, N_x, N_y, N_z).
@@ -83,6 +86,7 @@ class ResBlock(nn.Module):
     Args:
         n_channels (int): Input channels of a feature map.
     """
+
     def __init__(self, n_channels):
         super().__init__()
         self.conv0 = ConvBlock(n_channels, n_channels)
@@ -90,7 +94,7 @@ class ResBlock(nn.Module):
         self.activation = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        """Forward function
+        """Forward function.
 
         Args:
             x (torch.Tensor): of shape (N, C, N_x, N_y, N_z).

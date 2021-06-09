@@ -15,10 +15,7 @@ model = dict(
         in_channels=[256, 512, 1024, 2048],
         out_channels=64,
         num_outs=4),
-    neck_3d=dict(
-        type='OutdoorImVoxelNeck',
-        in_channels=64,
-        out_channels=256),
+    neck_3d=dict(type='OutdoorImVoxelNeck', in_channels=64, out_channels=256),
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=1,
@@ -88,14 +85,19 @@ train_pipeline = [
     dict(type='Pad', size_divisor=32),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])]
+    dict(type='Collect3D', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
+]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='Resize', img_scale=(1280, 384), keep_ratio=True),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names, with_label=False),
-    dict(type='Collect3D', keys=['img'])]
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['img'])
+]
 
 data = dict(
     samples_per_gpu=4,
@@ -147,10 +149,8 @@ total_epochs = 12
 checkpoint_config = dict(interval=1, max_keep_ckpts=1)
 log_config = dict(
     interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
 evaluation = dict(interval=1)
 dist_params = dict(backend='nccl')
 find_unused_parameters = True  # only 1 of 4 FPN outputs is used

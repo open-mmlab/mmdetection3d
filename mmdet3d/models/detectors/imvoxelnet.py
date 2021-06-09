@@ -1,17 +1,15 @@
 import torch
+
+from mmdet3d.core import bbox3d2result, build_anchor_generator
+from mmdet3d.models.fusion_layers.point_fusion import point_sample
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from mmdet.models.detectors import BaseDetector
-
-from mmdet3d.core import bbox3d2result
-from mmdet3d.core import build_anchor_generator
-from mmdet3d.models.fusion_layers.point_fusion import point_sample
 
 
 @DETECTORS.register_module()
 class ImVoxelNet(BaseDetector):
-    """ ImVoxelNet <https://arxiv.org/abs/2106.01178>.
+    """ImVoxelNet <https://arxiv.org/abs/2106.01178>."""
 
-    """
     def __init__(self,
                  backbone,
                  neck,
@@ -82,12 +80,14 @@ class ImVoxelNet(BaseDetector):
                 img_pad_shape=img.shape[-2:],
                 img_shape=img_meta['img_shape'][:2],
                 aligned=False)
-            volumes.append(volume.reshape(self.n_voxels[::-1] + [-1]).permute(3, 2, 1, 0))
+            volumes.append(
+                volume.reshape(self.n_voxels[::-1] + [-1]).permute(3, 2, 1, 0))
         x = torch.stack(volumes)
         x = self.neck_3d(x)
         return x
 
-    def forward_train(self, img, img_metas, gt_bboxes_3d, gt_labels_3d, **kwargs):
+    def forward_train(self, img, img_metas, gt_bboxes_3d, gt_labels_3d,
+                      **kwargs):
         """Forward of training.
 
         Args:
