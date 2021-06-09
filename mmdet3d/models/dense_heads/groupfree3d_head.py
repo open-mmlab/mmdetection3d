@@ -3,7 +3,8 @@ import numpy as np
 import torch
 from mmcv import ConfigDict
 from mmcv.cnn import ConvModule
-from mmcv.cnn.bricks.transformer import build_transformer_layer, build_positional_encoding
+from mmcv.cnn.bricks.transformer import (build_positional_encoding,
+                                         build_transformer_layer)
 from mmcv.runner import force_fp32
 from torch import nn as nn
 from torch.nn import functional as F
@@ -95,8 +96,8 @@ class GeneralSamplingModule(nn.Module):
             Tensor: (B, M) the given index.
         """
         xyz_t = xyz.transpose(1, 2).contiguous()
-        new_xyz = gather_points(xyz_t,
-                                sample_inds).transpose(1, 2).contiguous()
+        new_xyz = gather_points(xyz_t, sample_inds).transpose(1,
+                                                              2).contiguous()
         new_features = gather_points(features, sample_inds).contiguous()
 
         return new_xyz, new_features, sample_inds
