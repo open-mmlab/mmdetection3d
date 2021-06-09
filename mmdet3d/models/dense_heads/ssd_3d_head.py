@@ -491,7 +491,7 @@ class SSD3DHead(VoteHead):
             bbox.clone(),
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
-            origin=(0.5, 0.5, 1.0))
+            origin=(0.5, 0.5, 0.5))
 
         if isinstance(bbox, LiDARInstance3DBoxes):
             box_idx = bbox.points_in_boxes(points)
