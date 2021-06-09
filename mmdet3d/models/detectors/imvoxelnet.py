@@ -6,8 +6,12 @@ from mmdet3d.core import bbox3d2result
 from mmdet3d.core import build_anchor_generator
 from mmdet3d.models.fusion_layers.point_fusion import point_sample
 
+
 @DETECTORS.register_module()
 class ImVoxelNet(BaseDetector):
+    """ ImVoxelNet <https://arxiv.org/abs/2106.01178>.
+
+    """
     def __init__(self,
                  backbone,
                  neck,
@@ -32,6 +36,12 @@ class ImVoxelNet(BaseDetector):
         self.init_weights(pretrained=pretrained)
 
     def init_weights(self, pretrained=None):
+        """Initialize the weights in detector.
+
+        Args:
+            pretrained (str, optional): Path to pre-trained weights.
+                Defaults to None.
+        """
         super().init_weights(pretrained)
         self.backbone.init_weights(pretrained=pretrained)
         self.neck.init_weights()
@@ -39,10 +49,17 @@ class ImVoxelNet(BaseDetector):
         self.bbox_head.init_weights()
 
     def extract_feat(self, img, img_metas):
+        """Extract 3d features from the backbone -> fpn -> 3d projection.
+
+        Args:
+            img (Tensor): Input images of shape (N, C_in, H, W).
+            img_metas (list): Image metas.
+
+        Returns:
+            torch.Tensor: of shape (N, C_out, N_x, N_y, N_z)
+        """
         x = self.backbone(img)
         x = self.neck(x)[0]
-        stride = img.shape[-1] // x.shape[-1]  # todo: remove
-        assert stride == 4  # todo: remove
         points = self.anchor_generator.grid_anchors(
             [self.n_voxels[::-1]], device=img.device)[0][:, :3]
         volumes = []
@@ -64,23 +81,52 @@ class ImVoxelNet(BaseDetector):
                 img_flip=img_flip,
                 img_pad_shape=img.shape[-2:],
                 img_shape=img_meta['img_shape'][:2],
-                aligned=False)  # todo: True?
+                aligned=False)
             volumes.append(volume.reshape(self.n_voxels[::-1] + [-1]).permute(3, 2, 1, 0))
         x = torch.stack(volumes)
         x = self.neck_3d(x)
         return x
 
     def forward_train(self, img, img_metas, gt_bboxes_3d, gt_labels_3d, **kwargs):
+        """Forward of training.
+
+        Args:
+            img (Tensor): Input images of shape (N, C_in, H, W).
+            img_metas (list): Image metas.
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
+            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
+
+        Returns:
+            dict[str, Tensor]: A dictionary of loss components.
+        """
         x = self.extract_feat(img, img_metas)
         x = self.bbox_head(x)
         losses = self.bbox_head.loss(*x, gt_bboxes_3d, gt_labels_3d, img_metas)
         return losses
 
     def forward_test(self, img, img_metas, **kwargs):
+        """Forward of testing.
+
+        Args:
+            img (Tensor): Input images of shape (N, C_in, H, W).
+            img_metas (list): Image metas.
+
+        Returns:
+            list[dict]: Predicted 3d boxes.
+        """
         # not supporting aug_test for now
         return self.simple_test(img, img_metas)
 
     def simple_test(self, img, img_metas):
+        """Test without augmentations.
+
+        Args:
+            img (Tensor): Input images of shape (N, C_in, H, W).
+            img_metas (list): Image metas.
+
+        Returns:
+            list[dict]: Predicted 3d boxes.
+        """
         x = self.extract_feat(img, img_metas)
         x = self.bbox_head(x)
         bbox_list = self.bbox_head.get_bboxes(*x, img_metas)
@@ -91,7 +137,13 @@ class ImVoxelNet(BaseDetector):
         return bbox_results
 
     def aug_test(self, imgs, img_metas, **kwargs):
-        pass
+        """Test with augmentations.
 
-    def show_results(self, *args, **kwargs):
-        pass
+        Args:
+            imgs (list[Tensor]): Input images of shape (N, C_in, H, W).
+            img_metas (list): Image metas.
+
+        Returns:
+            list[dict]: Predicted 3d boxes.
+        """
+        raise NotImplementedError
