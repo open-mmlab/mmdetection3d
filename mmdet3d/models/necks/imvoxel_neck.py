@@ -1,5 +1,6 @@
 from torch import nn
 
+from mmcv.cnn import ConvModule
 from mmdet.models import NECKS
 
 
@@ -15,12 +16,35 @@ class OutdoorImVoxelNeck(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.model = nn.Sequential(
-            ResBlock(in_channels),
-            ConvBlock(in_channels, in_channels * 2, stride=(1, 1, 2)),
-            ResBlock(in_channels * 2),
-            ConvBlock(in_channels * 2, in_channels * 4, stride=(1, 1, 2)),
-            ResBlock(in_channels * 4),
-            ConvBlock(in_channels * 4, out_channels, padding=(1, 1, 0)))
+            ResModule(in_channels),
+            ConvModule(
+                in_channels=in_channels,
+                out_channels=in_channels * 2,
+                kernel_size=3,
+                stride=(1, 1, 2),
+                padding=1,
+                conv_cfg=dict(type='Conv3d'),
+                norm_cfg=dict(type='BN3d'),
+                act_cfg=dict(type='ReLU', inplace=True)),
+            ResModule(in_channels * 2),
+            ConvModule(
+                in_channels=in_channels * 2,
+                out_channels=in_channels * 4,
+                kernel_size=3,
+                stride=(1, 1, 2),
+                padding=1,
+                conv_cfg=dict(type='Conv3d'),
+                norm_cfg=dict(type='BN3d'),
+                act_cfg=dict(type='ReLU', inplace=True)),
+            ResModule(in_channels * 4),
+            ConvModule(
+                in_channels=in_channels * 4,
+                out_channels=out_channels,
+                kernel_size=3,
+                padding=(1, 1, 0),
+                conv_cfg=dict(type='Conv3d'),
+                norm_cfg=dict(type='BN3d'),
+                act_cfg=dict(type='ReLU', inplace=True)))
 
     def forward(self, x):
         """Forward function.
@@ -41,46 +65,7 @@ class OutdoorImVoxelNeck(nn.Module):
         pass
 
 
-class ConvBlock(nn.Module):
-    """3d convolution block for ImVoxelNeck.
-
-    Args:
-        in_channels (int): Input channels of a feature map.
-        out_channels (int): Output channels of a feature map.
-        stride (int): Stride of 3d convolution.
-        padding (int): Padding of 3d convolution.
-        activation (bool): Whether to use ReLU.
-    """
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 stride=(1, 1, 1),
-                 padding=(1, 1, 1),
-                 activation=True):
-        super().__init__()
-        self.conv = nn.Conv3d(
-            in_channels, out_channels, 3, stride=stride, padding=padding)
-        self.norm = nn.BatchNorm3d(out_channels)
-        self.activation = nn.ReLU(inplace=True) if activation else None
-
-    def forward(self, x):
-        """Forward function.
-
-        Args:
-            x (torch.Tensor): of shape (N, C, N_x, N_y, N_z).
-
-        Returns:
-            torch.Tensor: 5d feature map.
-        """
-        x = self.conv(x)
-        x = self.norm(x)
-        if self.activation is not None:
-            x = self.activation(x)
-        return x
-
-
-class ResBlock(nn.Module):
+class ResModule(nn.Module):
     """3d residual block for ImVoxelNeck.
 
     Args:
@@ -89,8 +74,22 @@ class ResBlock(nn.Module):
 
     def __init__(self, n_channels):
         super().__init__()
-        self.conv0 = ConvBlock(n_channels, n_channels)
-        self.conv1 = ConvBlock(n_channels, n_channels, activation=False)
+        self.conv0 = ConvModule(
+            in_channels=n_channels,
+            out_channels=n_channels,
+            kernel_size=3,
+            padding=1,
+            conv_cfg=dict(type='Conv3d'),
+            norm_cfg=dict(type='BN3d'),
+            act_cfg=dict(type='ReLU', inplace=True))
+        self.conv1 = ConvModule(
+            in_channels=n_channels,
+            out_channels=n_channels,
+            kernel_size=3,
+            padding=1,
+            conv_cfg=dict(type='Conv3d'),
+            norm_cfg=dict(type='BN3d'),
+            act_cfg=None)
         self.activation = nn.ReLU(inplace=True)
 
     def forward(self, x):

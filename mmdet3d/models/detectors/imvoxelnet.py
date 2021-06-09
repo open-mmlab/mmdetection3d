@@ -8,7 +8,7 @@ from mmdet.models.detectors import BaseDetector
 
 @DETECTORS.register_module()
 class ImVoxelNet(BaseDetector):
-    """ImVoxelNet <https://arxiv.org/abs/2106.01178>."""
+    r"""`ImVoxelNet <https://arxiv.org/abs/2106.01178>`_."""
 
     def __init__(self,
                  backbone,
