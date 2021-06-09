@@ -3,7 +3,7 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Get Started
+   :caption: 开始你的第一步
 
    getting_started.md
    model_zoo.md
@@ -11,7 +11,7 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Quick Run
+   :caption: 快速启动
 
    0_demo.md
    1_exist_data_model.md
@@ -19,33 +19,31 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
+   :caption: 教程
 
    tutorials/index.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Useful Tools and Scripts
+   :caption: 实用工具与脚本
 
    useful_tools.md
 
 .. toctree::
    :maxdepth: 2
-   :caption: Notes
+   :caption: 说明
 
-   benchmarks.md
    faq.md
-   compatibility.md
-
-.. toctree::
-   :caption: API Reference
-
-   api.rst
 
 .. toctree::
    :caption: 语言切换
 
    switch_language.md
+
+.. toctree::
+   :caption: 接口文档（英文）
+
+   api.rst
 
 Indices and tables
 ==================
