@@ -444,6 +444,7 @@ class GroupFree3DHead(nn.Module):
         suffixes = ['_proposal'] + [
             f'_{i}' for i in range(bbox_preds['num_decoder_layers'])
         ]
+        num_stages = len(suffixes)
         for suffix in suffixes:
 
             # calculate objectness loss
@@ -453,7 +454,7 @@ class GroupFree3DHead(nn.Module):
                 1 - objectness_targets.reshape(-1),
                 objectness_weights.reshape(-1),
                 avg_factor=batch_size)
-            losses[f'objectness_loss{suffix}'] = objectness_loss
+            losses[f'objectness_loss{suffix}'] = objectness_loss / num_stages
 
             # calculate center loss
             box_loss_weights_expand = box_loss_weights.unsqueeze(-1).expand(
@@ -462,14 +463,14 @@ class GroupFree3DHead(nn.Module):
                 bbox_preds[f'center{suffix}'],
                 assigned_center_targets,
                 weight=box_loss_weights_expand)
-            losses[f'center_loss{suffix}'] = center_loss
+            losses[f'center_loss{suffix}'] = center_loss / num_stages
 
             # calculate direction class loss
             dir_class_loss = self.dir_class_loss(
                 bbox_preds[f'dir_class{suffix}'].transpose(2, 1),
                 dir_class_targets,
                 weight=box_loss_weights)
-            losses[f'dir_class_loss{suffix}'] = dir_class_loss
+            losses[f'dir_class_loss{suffix}'] = dir_class_loss / num_stages
 
             # calculate direction residual loss
             heading_label_one_hot = size_class_targets.new_zeros(
@@ -481,7 +482,7 @@ class GroupFree3DHead(nn.Module):
                 -1)
             dir_res_loss = self.dir_res_loss(
                 dir_res_norm, dir_res_targets, weight=box_loss_weights)
-            losses[f'dir_res_loss{suffix}'] = dir_res_loss
+            losses[f'dir_res_loss{suffix}'] = dir_res_loss / num_stages
 
             if self.size_cls_agnostic:
                 # calculate class-agnostic size loss
@@ -489,7 +490,7 @@ class GroupFree3DHead(nn.Module):
                     bbox_preds[f'size{suffix}'],
                     assigned_size_targets,
                     weight=box_loss_weights_expand)
-                losses[f'size_reg_loss{suffix}'] = size_reg_loss
+                losses[f'size_reg_loss{suffix}'] = size_reg_loss / num_stages
 
             else:
                 # calculate size class loss
@@ -497,7 +498,8 @@ class GroupFree3DHead(nn.Module):
                     bbox_preds[f'size_class{suffix}'].transpose(2, 1),
                     size_class_targets,
                     weight=box_loss_weights)
-                losses[f'size_class_loss{suffix}'] = size_class_loss
+                losses[
+                    f'size_class_loss{suffix}'] = size_class_loss / num_stages
 
                 # calculate size residual loss
                 one_hot_size_targets = size_class_targets.new_zeros(
@@ -516,14 +518,14 @@ class GroupFree3DHead(nn.Module):
                     size_residual_norm,
                     size_res_targets,
                     weight=box_loss_weights_expand)
-                losses[f'size_res_loss{suffix}'] = size_res_loss
+                losses[f'size_res_loss{suffix}'] = size_res_loss / num_stages
 
             # calculate semantic loss
             semantic_loss = self.semantic_loss(
                 bbox_preds[f'sem_scores{suffix}'].transpose(2, 1),
                 mask_targets,
                 weight=box_loss_weights)
-            losses[f'semantic_loss{suffix}'] = semantic_loss
+            losses[f'semantic_loss{suffix}'] = semantic_loss / num_stages
 
         if ret_target:
             losses['targets'] = targets
