@@ -1,9 +1,10 @@
 from mmcv.cnn.bricks.registry import ATTENTION
+from mmcv.cnn.bricks.transformer import POSITIONAL_ENCODING
 from mmcv.cnn.bricks.transformer import MultiheadAttention
 
 
 @ATTENTION.register_module()
-class GroupFree3DMultiheadAttention(MultiheadAttention):
+class GroupFree3DMHA(MultiheadAttention):
     """A warpper for torch.nn.MultiheadAttention for GroupFree3D.
 
     This module implements MultiheadAttention with residual connection,
@@ -46,7 +47,7 @@ class GroupFree3DMultiheadAttention(MultiheadAttention):
                 attn_mask=None,
                 key_padding_mask=None,
                 **kwargs):
-        """Forward function for `GroupFree3DMultiheadAttention`.
+        """Forward function for `GroupFree3DMHA`.
 
         **kwargs allow passing a more general data flow when combining
         with other operations in `transformerlayer`.
@@ -93,7 +94,7 @@ class GroupFree3DMultiheadAttention(MultiheadAttention):
         else:
             value = value + query_pos
 
-        return super(GroupFree3DMultiheadAttention, self).forward(
+        return super(GroupFree3DMHA, self).forward(
             query=query,
             key=key,
             value=value,
@@ -103,3 +104,34 @@ class GroupFree3DMultiheadAttention(MultiheadAttention):
             attn_mask=attn_mask,
             key_padding_mask=key_padding_mask,
             **kwargs)
+
+
+@POSITIONAL_ENCODING.register_module()
+class ConvBNPositionalEncoding(nn.Module):
+    """Absolute position embedding with Conv learning.
+
+    Args:
+        input_channel (int): input features dim.
+        num_pos_feats (int): output position features dim.
+            Defaults to 288 to be consistent with seed features dim.
+    """
+
+    def __init__(self, input_channel, num_pos_feats=288):
+        super().__init__()
+        self.position_embedding_head = nn.Sequential(
+            nn.Conv1d(input_channel, num_pos_feats, kernel_size=1),
+            nn.BatchNorm1d(num_pos_feats), nn.ReLU(inplace=True),
+            nn.Conv1d(num_pos_feats, num_pos_feats, kernel_size=1))
+
+    def forward(self, xyz):
+        """Forward pass.
+
+        Args:
+            xyz (Tensor)： (B, N, 3) the coordinates to embed.
+
+        Returns:
+            Tensor: (B, num_pos_feats, N) the embeded position features.
+        """
+        xyz = xyz.permute(0, 2, 1)
+        position_embedding = self.position_embedding_head(xyz)
+        return position_embedding

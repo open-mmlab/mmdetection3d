@@ -47,6 +47,7 @@ class GroupFree3DNet(SingleStage3DDetector):
         Returns:
             dict[str: torch.Tensor]: Losses.
         """
+        # TODO: refactor votenet series to reduce redundant codes. 
         points_cat = torch.stack(points)
 
         x = self.extract_feat(points_cat)

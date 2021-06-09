@@ -1,4 +1,4 @@
-from .transformer import GroupFree3DMultiheadAttention
+from .transformer import GroupFree3DMHA
 from .vote_module import VoteModule
 
-__all__ = ['VoteModule', 'GroupFree3DMultiheadAttention']
+__all__ = ['VoteModule', 'GroupFree3DMHA']

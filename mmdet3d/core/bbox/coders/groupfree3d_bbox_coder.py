@@ -180,15 +180,10 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
                 size_res_norm * mean_sizes.unsqueeze(0).unsqueeze(0))
 
         # decode objectness score
-        start = 0
         # Group-Free-3D objectness output shape (batch, proposal, 1)
-        end = 1
-        results[f'obj_scores{suffix}'] = cls_preds_trans[
-            ..., start:end].contiguous()
-        start = end
+        results[f'obj_scores{suffix}'] = cls_preds_trans[..., :1].contiguous()
 
         # decode semantic score
-        results[f'sem_scores{suffix}'] = cls_preds_trans[...,
-                                                         start:].contiguous()
+        results[f'sem_scores{suffix}'] = cls_preds_trans[..., 1:].contiguous()
 
         return results
