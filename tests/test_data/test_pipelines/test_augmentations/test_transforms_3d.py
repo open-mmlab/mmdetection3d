@@ -7,7 +7,8 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
                           DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
-                              GlobalRotScaleTrans, ObjectNoise, ObjectSample,
+                              GlobalRotScaleTrans, ObjectNameFilter,
+                              ObjectNoise, ObjectRangeFilter, ObjectSample,
                               PointShuffle, PointsRangeFilter,
                               RandomDropPointsColor, RandomFlip3D,
                               RandomJitterPoints, VoxelBasedPointSampler)
@@ -142,6 +143,47 @@ def test_object_noise():
     assert torch.allclose(gt_bboxes_3d, expected_gt_bboxes_3d, 1e-3)
 
 
+def test_object_name_filter():
+    class_names = ['Pedestrian']
+    object_name_filter = ObjectNameFilter(class_names)
+
+    annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
+    info = annos[0]
+    rect = info['calib']['R0_rect'].astype(np.float32)
+    Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+    annos = info['annos']
+    loc = annos['location']
+    dims = annos['dimensions']
+    rots = annos['rotation_y']
+    gt_names = annos['name']
+
+    gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
+                                  axis=1).astype(np.float32)
+    gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
+        Box3DMode.LIDAR, np.linalg.inv(rect @ Trv2c))
+    CLASSES = ('Pedestrian', 'Cyclist', 'Car')
+    gt_labels = []
+    for cat in gt_names:
+        if cat in CLASSES:
+            gt_labels.append(CLASSES.index(cat))
+        else:
+            gt_labels.append(-1)
+    gt_labels = np.array(gt_labels, dtype=np.long)
+    input_dict = dict(
+        gt_bboxes_3d=gt_bboxes_3d.clone(), gt_labels_3d=gt_labels.copy())
+
+    results = object_name_filter(input_dict)
+    bboxes_3d = results['gt_bboxes_3d']
+    labels_3d = results['gt_labels_3d']
+    keep_mask = np.array([name in class_names for name in gt_names])
+    assert torch.allclose(gt_bboxes_3d.tensor[keep_mask], bboxes_3d.tensor)
+    assert np.all(gt_labels[keep_mask] == labels_3d)
+
+    repr_str = repr(object_name_filter)
+    expected_repr_str = f'ObjectNameFilter(classes={class_names})'
+    assert repr_str == expected_repr_str
+
+
 def test_point_shuffle():
     np.random.seed(0)
     torch.manual_seed(0)
@@ -224,6 +266,38 @@ def test_points_range_filter():
     assert repr_str == expected_repr_str
 
 
+def test_object_range_filter():
+    point_cloud_range = [0, -40, -3, 70.4, 40, 1]
+    object_range_filter = ObjectRangeFilter(point_cloud_range)
+
+    bbox = np.array(
+        [[8.7314, -1.8559, -0.6547, 0.4800, 1.2000, 1.8900, 0.0100],
+         [28.7314, -18.559, 0.6547, 2.4800, 1.6000, 1.9200, 5.0100],
+         [-2.54, -1.8559, -0.6547, 0.4800, 1.2000, 1.8900, 0.0100],
+         [72.7314, -18.559, 0.6547, 6.4800, 11.6000, 4.9200, -0.0100],
+         [18.7314, -18.559, 20.6547, 6.4800, 8.6000, 3.9200, -1.0100],
+         [3.7314, 42.559, -0.6547, 6.4800, 8.6000, 2.9200, 3.0100]])
+    gt_bboxes_3d = LiDARInstance3DBoxes(bbox, origin=(0.5, 0.5, 0.5))
+    gt_labels_3d = np.array([0, 2, 1, 1, 2, 0], dtype=np.long)
+
+    input_dict = dict(
+        gt_bboxes_3d=gt_bboxes_3d.clone(), gt_labels_3d=gt_labels_3d.copy())
+    results = object_range_filter(input_dict)
+    bboxes_3d = results['gt_bboxes_3d']
+    labels_3d = results['gt_labels_3d']
+    keep_mask = np.array([True, True, False, False, True, False])
+    expected_bbox = gt_bboxes_3d.tensor[keep_mask]
+    expected_bbox[1, 6] -= 2 * np.pi  # limit yaw
+
+    assert torch.allclose(expected_bbox, bboxes_3d.tensor)
+    assert np.all(gt_labels_3d[keep_mask] == labels_3d)
+
+    repr_str = repr(object_range_filter)
+    expected_repr_str = 'ObjectRangeFilter(point_cloud_range=' \
+        '[0.0, -40.0, -3.0, 70.4000015258789, 40.0, 1.0])'
+    assert repr_str == expected_repr_str
+
+
 def test_global_alignment():
     np.random.seed(0)
     global_alignment = GlobalAlignment(rotation_axis=2)
@@ -270,9 +344,11 @@ def test_global_rot_scale_trans():
     with pytest.raises(AssertionError):
         global_rot_scale_trans = GlobalRotScaleTrans(scale_ratio_range=1.0)
 
-    # translation_std should be a number or seq of numbers
+    # translation_std should be a positive number or seq of positive numbers
     with pytest.raises(AssertionError):
         global_rot_scale_trans = GlobalRotScaleTrans(translation_std='0.0')
+    with pytest.raises(AssertionError):
+        global_rot_scale_trans = GlobalRotScaleTrans(translation_std=-1.0)
 
     global_rot_scale_trans = GlobalRotScaleTrans(
         rot_range=angle,
