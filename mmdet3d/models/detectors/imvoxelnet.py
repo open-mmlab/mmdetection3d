@@ -50,7 +50,7 @@ class ImVoxelNet(BaseDetector):
         """Extract 3d features from the backbone -> fpn -> 3d projection.
 
         Args:
-            img (Tensor): Input images of shape (N, C_in, H, W).
+            img (torch.Tensor): Input images of shape (N, C_in, H, W).
             img_metas (list): Image metas.
 
         Returns:
@@ -91,13 +91,13 @@ class ImVoxelNet(BaseDetector):
         """Forward of training.
 
         Args:
-            img (Tensor): Input images of shape (N, C_in, H, W).
+            img (torch.Tensor): Input images of shape (N, C_in, H, W).
             img_metas (list): Image metas.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
 
         Returns:
-            dict[str, Tensor]: A dictionary of loss components.
+            dict[str, torch.Tensor]: A dictionary of loss components.
         """
         x = self.extract_feat(img, img_metas)
         x = self.bbox_head(x)
@@ -108,7 +108,7 @@ class ImVoxelNet(BaseDetector):
         """Forward of testing.
 
         Args:
-            img (Tensor): Input images of shape (N, C_in, H, W).
+            img (torch.Tensor): Input images of shape (N, C_in, H, W).
             img_metas (list): Image metas.
 
         Returns:
@@ -121,7 +121,7 @@ class ImVoxelNet(BaseDetector):
         """Test without augmentations.
 
         Args:
-            img (Tensor): Input images of shape (N, C_in, H, W).
+            img (torch.Tensor): Input images of shape (N, C_in, H, W).
             img_metas (list): Image metas.
 
         Returns:
@@ -140,7 +140,7 @@ class ImVoxelNet(BaseDetector):
         """Test with augmentations.
 
         Args:
-            imgs (list[Tensor]): Input images of shape (N, C_in, H, W).
+            imgs (list[torch.Tensor]): Input images of shape (N, C_in, H, W).
             img_metas (list): Image metas.
 
         Returns:
