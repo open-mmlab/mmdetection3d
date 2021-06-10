@@ -83,19 +83,19 @@ class PAConvSAModuleMSG(BasePointSAModule):
         scorenet_cfg['bias'] = bias
 
         for i in range(len(self.mlp_channels)):
-            mlp_spec = self.mlp_channels[i]
+            mlp_channel = self.mlp_channels[i]
             if use_xyz:
-                mlp_spec[0] += 3
+                mlp_channel[0] += 3
 
             num_kernels = paconv_num_kernels[i]
 
             mlp = nn.Sequential()
-            for i in range(len(mlp_spec) - 1):
+            for i in range(len(mlp_channel) - 1):
                 mlp.add_module(
                     f'layer{i}',
                     PAConv(
-                        mlp_spec[i],
-                        mlp_spec[i + 1],
+                        mlp_channel[i],
+                        mlp_channel[i + 1],
                         num_kernels[i],
                         norm_cfg=norm_cfg,
                         kernel_input=paconv_kernel_input,
@@ -206,20 +206,20 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
         self.use_xyz = use_xyz
 
         for i in range(len(self.mlp_channels)):
-            mlp_spec = self.mlp_channels[i]
+            mlp_channel = self.mlp_channels[i]
             if use_xyz:
-                mlp_spec[0] += 3
+                mlp_channel[0] += 3
 
             num_kernels = paconv_num_kernels[i]
 
             # can't use `nn.Sequential` for PAConvCUDA because its input and
             # output have different shapes
             mlp = nn.ModuleList()
-            for i in range(len(mlp_spec) - 1):
+            for i in range(len(mlp_channel) - 1):
                 mlp.append(
                     PAConvCUDA(
-                        mlp_spec[i],
-                        mlp_spec[i + 1],
+                        mlp_channel[i],
+                        mlp_channel[i + 1],
                         num_kernels[i],
                         norm_cfg=norm_cfg,
                         kernel_input=paconv_kernel_input,

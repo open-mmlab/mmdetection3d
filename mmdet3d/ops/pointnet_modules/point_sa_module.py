@@ -270,17 +270,17 @@ class PointSAModuleMSG(BasePointSAModule):
             normalize_xyz=normalize_xyz)
 
         for i in range(len(self.mlp_channels)):
-            mlp_spec = self.mlp_channels[i]
+            mlp_channel = self.mlp_channels[i]
             if use_xyz:
-                mlp_spec[0] += 3
+                mlp_channel[0] += 3
 
             mlp = nn.Sequential()
-            for i in range(len(mlp_spec) - 1):
+            for i in range(len(mlp_channel) - 1):
                 mlp.add_module(
                     f'layer{i}',
                     ConvModule(
-                        mlp_spec[i],
-                        mlp_spec[i + 1],
+                        mlp_channel[i],
+                        mlp_channel[i + 1],
                         kernel_size=(1, 1),
                         stride=(1, 1),
                         conv_cfg=dict(type='Conv2d'),
