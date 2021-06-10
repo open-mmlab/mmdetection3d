@@ -8,7 +8,7 @@ from .point_sa_module import BasePointSAModule
 
 @SA_MODULES.register_module()
 class PAConvSAModuleMSG(BasePointSAModule):
-    """Point set abstraction module with multi-scale grouping (MSG) used in
+    r"""Point set abstraction module with multi-scale grouping (MSG) used in
     PAConv networks.
 
     Replace the MLPs in `PointSAModuleMSG` with PAConv layers.
@@ -106,7 +106,7 @@ class PAConvSAModuleMSG(BasePointSAModule):
 
 @SA_MODULES.register_module()
 class PAConvSAModule(PAConvSAModuleMSG):
-    """Point set abstraction module with single-scale grouping (SSG) used in
+    r"""Point set abstraction module with single-scale grouping (SSG) used in
     PAConv networks.
 
     Replace the MLPs in `PointSAModule` with PAConv layers. See the `paper
@@ -151,7 +151,7 @@ class PAConvSAModule(PAConvSAModuleMSG):
 
 @SA_MODULES.register_module()
 class PAConvCUDASAModuleMSG(BasePointSAModule):
-    """Point set abstraction module with multi-scale grouping (MSG) used in
+    r"""Point set abstraction module with multi-scale grouping (MSG) used in
     PAConv networks.
 
     Replace the non CUDA version PAConv with CUDA implemented PAConv for
@@ -296,7 +296,7 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
 
 @SA_MODULES.register_module()
 class PAConvCUDASAModule(PAConvCUDASAModuleMSG):
-    """Point set abstraction module with single-scale grouping (SSG) used in
+    r"""Point set abstraction module with single-scale grouping (SSG) used in
     PAConv networks.
 
     Replace the non CUDA version PAConv with CUDA implemented PAConv for

@@ -2,7 +2,6 @@ import torch
 from mmcv.cnn import ConvModule
 from torch import nn as nn
 from torch.nn import functional as F
-from typing import List, Tuple
 
 from mmdet3d.ops import (GroupAll, PAConv, Points_Sampler, QueryAndGroup,
                          gather_points)
@@ -40,18 +39,18 @@ class BasePointSAModule(nn.Module):
     """
 
     def __init__(self,
-                 num_point: int,
-                 radii: List[float],
-                 sample_nums: List[int],
-                 mlp_channels: List[List[int]],
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 dilated_group: bool = False,
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 normalize_xyz: bool = False,
-                 grouper_return_grouped_xyz: bool = False,
-                 grouper_return_grouped_idx: bool = False):
+                 num_point,
+                 radii,
+                 sample_nums,
+                 mlp_channels,
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 dilated_group=False,
+                 use_xyz=True,
+                 pool_mod='max',
+                 normalize_xyz=False,
+                 grouper_return_grouped_xyz=False,
+                 grouper_return_grouped_idx=False):
         super(BasePointSAModule, self).__init__()
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
@@ -101,10 +100,7 @@ class BasePointSAModule(nn.Module):
                 grouper = GroupAll(use_xyz)
             self.groupers.append(grouper)
 
-    def _sample_points(
-            self, points_xyz: torch.Tensor, features: torch.Tensor,
-            indices: torch.Tensor,
-            target_xyz: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _sample_points(self, points_xyz, features, indices, target_xyz):
         """Perform point sampling based on inputs.
 
         If `indices` is specified, directly sample corresponding points.
@@ -137,14 +133,16 @@ class BasePointSAModule(nn.Module):
 
         return new_xyz, indices
 
-    def _pool_features(self, features: torch.Tensor) -> torch.Tensor:
+    def _pool_features(self, features):
         """Perform feature aggregation using pooling operation.
 
         Args:
             features (torch.Tensor): (B, C, N, K)
+                Features of locally grouped points before pooling.
 
         Returns:
             torch.Tensor: (B, C, N)
+                Pooled features aggregating local information.
         """
         if self.pool_mod == 'max':
             # (B, C, N, 1)
@@ -161,11 +159,11 @@ class BasePointSAModule(nn.Module):
 
     def forward(
         self,
-        points_xyz: torch.Tensor,
-        features: torch.Tensor = None,
-        indices: torch.Tensor = None,
-        target_xyz: torch.Tensor = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        points_xyz,
+        features=None,
+        indices=None,
+        target_xyz=None,
+    ):
         """forward.
 
         Args:
@@ -247,18 +245,18 @@ class PointSAModuleMSG(BasePointSAModule):
     """
 
     def __init__(self,
-                 num_point: int,
-                 radii: List[float],
-                 sample_nums: List[int],
-                 mlp_channels: List[List[int]],
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 dilated_group: bool = False,
-                 norm_cfg: dict = dict(type='BN2d'),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 normalize_xyz: bool = False,
-                 bias: str = 'auto'):
+                 num_point,
+                 radii,
+                 sample_nums,
+                 mlp_channels,
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 dilated_group=False,
+                 norm_cfg=dict(type='BN2d'),
+                 use_xyz=True,
+                 pool_mod='max',
+                 normalize_xyz=False,
+                 bias='auto'):
         super(PointSAModuleMSG, self).__init__(
             num_point=num_point,
             radii=radii,
@@ -320,16 +318,16 @@ class PointSAModule(PointSAModuleMSG):
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 num_point: int = None,
-                 radius: float = None,
-                 num_sample: int = None,
-                 norm_cfg: dict = dict(type='BN2d'),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 normalize_xyz: bool = False):
+                 mlp_channels,
+                 num_point=None,
+                 radius=None,
+                 num_sample=None,
+                 norm_cfg=dict(type='BN2d'),
+                 use_xyz=True,
+                 pool_mod='max',
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 normalize_xyz=False):
         super(PointSAModule, self).__init__(
             mlp_channels=[mlp_channels],
             num_point=num_point,
