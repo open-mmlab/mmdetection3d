@@ -7,7 +7,7 @@ from torch import nn as nn
 class GroupFree3DMHA(MultiheadAttention):
     """A warpper for torch.nn.MultiheadAttention for GroupFree3D.
 
-    This module implements MultiheadAttention with residual connection,
+    This module implements MultiheadAttention with identity connection,
     and positional encoding used in DETR is also passed as input.
 
     Args:
@@ -41,7 +41,7 @@ class GroupFree3DMHA(MultiheadAttention):
                 query,
                 key,
                 value,
-                residual,
+                identity,
                 query_pos=None,
                 key_pos=None,
                 attn_mask=None,
@@ -61,8 +61,8 @@ class GroupFree3DMHA(MultiheadAttention):
             value (Tensor): The value tensor with same shape as `key`.
                 Same in `nn.MultiheadAttention.forward`. Defaults to None.
                 If None, the `key` will be used.
-            residual (Tensor): This tensor, with the same shape as x,
-                will be used for the residual link.
+            identity (Tensor): This tensor, with the same shape as x,
+                will be used for the identity link.
                 If None, `x` will be used. Defaults to None.
             query_pos (Tensor): The positional encoding for query, with
                 the same shape as `x`. If not None, it will
@@ -98,7 +98,7 @@ class GroupFree3DMHA(MultiheadAttention):
             query=query,
             key=key,
             value=value,
-            residual=residual,
+            identity=identity,
             query_pos=query_pos,
             key_pos=key_pos,
             attn_mask=attn_mask,
