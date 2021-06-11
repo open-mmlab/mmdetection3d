@@ -122,8 +122,8 @@ def transform_img2cam(kps, dim, rot, meta, const):
     """Transform coordinates in the 2D image plane to the 3D camera coordinate
     system.
 
-    Please refer to 'https://arxiv.org/abs/2009.00764v1' for detailed
-    explanations of matrix.
+    Please refer to `KM3D paper <https://arxiv.org/abs/2009.00764v1>`_ for
+    detailed explanations of matrix.
 
     Matrix construction:
     matrix_left is the left-hand matrix with (-1 0 kp_1x) as the first row;
@@ -262,20 +262,20 @@ def transform_img2cam(kps, dim, rot, meta, const):
     matrix_left = matrix_left.view(batch * boxes, 16, 3)
     matrix_right = matrix_right.view(batch * boxes, 16, 1).float()
 
-    # pinv here in shape (batch * boxes 3 3)
+    # points_3d here in shape (batch * boxes 3 3)
     points_3d = torch.bmm(matrix_left_transposed, matrix_left)
-    points_3d = torch.inverse(points_3d)
+    points_3d_inv = torch.inverse(points_3d)
 
-    # pinv here in shape (batch * boxes 3 16)
-    points_3d = torch.bmm(points_3d, matrix_left_transposed)
+    # points_3d_inv here in shape (batch * boxes 3 16)
+    points_3d_inv = torch.bmm(points_3d_inv, matrix_left_transposed)
 
-    # pinv here in shape (batch * boxes 3 1)
-    points_3d = torch.bmm(points_3d, matrix_right)
+    # points_3d_inv here in shape (batch * boxes 3 1)
+    points_3d_inv = torch.bmm(points_3d_inv, matrix_right)
 
-    # final pinv in shape (batch, boxes, 3)
-    points_3d = points_3d.view(batch, boxes, 3, 1).squeeze(3)
+    # final points_3d_inv in shape (batch, boxes, 3)
+    points_3d_inv = points_3d_inv.view(batch, boxes, 3, 1).squeeze(3)
 
-    return points_3d, rot_y, kps
+    return points_3d_inv, rot_y, kps
 
 
 def object_pose_decode(heat,
