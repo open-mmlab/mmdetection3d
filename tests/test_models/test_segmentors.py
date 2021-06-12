@@ -55,7 +55,7 @@ def test_pointnet2_ssg():
 
     set_random_seed(0, True)
     pn2_ssg_cfg = _get_segmentor_cfg(
-        'pointnet2/pointnet2_ssg_16x2_scannet-3d-20class.py')
+        'pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py')
     pn2_ssg_cfg.test_cfg.num_points = 32
     self = build_segmentor(pn2_ssg_cfg).cuda()
     points = [torch.rand(1024, 6).float().cuda() for _ in range(2)]
@@ -122,7 +122,7 @@ def test_pointnet2_msg():
 
     set_random_seed(0, True)
     pn2_msg_cfg = _get_segmentor_cfg(
-        'pointnet2/pointnet2_msg_16x2_scannet-3d-20class.py')
+        'pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py')
     pn2_msg_cfg.test_cfg.num_points = 32
     self = build_segmentor(pn2_msg_cfg).cuda()
     points = [torch.rand(1024, 6).float().cuda() for _ in range(2)]
