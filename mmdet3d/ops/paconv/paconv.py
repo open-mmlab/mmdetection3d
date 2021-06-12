@@ -26,6 +26,8 @@ class ScoreNet(nn.Module):
         bias (bool | str, optional): If specified as `auto`, it will be decided
             by the norm_cfg. Bias will be set as True if `norm_cfg` is None,
             otherwise False. Defaults to 'auto'.
+        use_xavier_init (bool, optional): Apply xavier_init to Conv modules.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -34,7 +36,8 @@ class ScoreNet(nn.Module):
                  score_norm='softmax',
                  temp_factor=1.0,
                  norm_cfg=dict(type='BN2d'),
-                 bias='auto'):
+                 bias='auto',
+                 use_xavier_init=False):
         super(ScoreNet, self).__init__()
 
         assert score_norm in ['softmax', 'sigmoid', 'identity'], \
@@ -42,6 +45,7 @@ class ScoreNet(nn.Module):
 
         self.score_norm = score_norm
         self.temp_factor = temp_factor
+        self.use_xavier_init = use_xavier_init
 
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 2):
@@ -72,6 +76,9 @@ class ScoreNet(nn.Module):
 
     def init_weights(self):
         """Initialize weights of shared MLP layers."""
+        if not self.use_xavier_init:
+            return
+        # the official code applies xavier_init to all the Conv layers
         # refer to https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/paconv.py#L105  # noqa
         for m in self.mlps.modules():
             if isinstance(m, nn.Conv2d):
@@ -147,7 +154,7 @@ class PAConv(nn.Module):
                  weight_bank_init='kaiming',
                  kernel_input='w_neighbor',
                  scorenet_cfg=dict(
-                     mlp_channels=[8, 16, 16],
+                     mlp_channels=[16, 16, 16],
                      score_norm='softmax',
                      temp_factor=1.0,
                      last_bn=False)):
@@ -220,7 +227,7 @@ class PAConv(nn.Module):
         """Initialize weights of shared MLP layers."""
         self.scorenet.init_weights()
         if self.bn is not None:
-            constant_init(self.bn, val=1)
+            constant_init(self.bn, val=1, bias=0)
 
     def _prepare_scorenet_input(self, points_xyz):
         """Prepare input point pairs features for self.ScoreNet.

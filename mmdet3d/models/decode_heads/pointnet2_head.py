@@ -15,6 +15,8 @@ class PointNet2Head(Base3DDecodeHead):
 
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
+        fp_norm_cfg (dict|None): Config of norm layers used in FP modules.
+            Default: dict(type='BN2d').
     """
 
     def __init__(self,
