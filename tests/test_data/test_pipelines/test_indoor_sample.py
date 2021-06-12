@@ -67,7 +67,8 @@ def test_indoor_sample():
 def test_indoor_seg_sample():
     # test the train time behavior of IndoorPatchPointSample
     np.random.seed(0)
-    scannet_patch_sample_points = IndoorPatchPointSample(5, 1.5, 20, True)
+    scannet_patch_sample_points = IndoorPatchPointSample(
+        5, 1.5, ignore_index=20, use_normalized_coord=True)
     scannet_seg_class_mapping = \
         PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
                               24, 28, 33, 34, 36, 39), 40)
@@ -119,7 +120,13 @@ def test_indoor_seg_sample():
     # when enlarge_size and min_unique_num are set
     np.random.seed(0)
     scannet_patch_sample_points = IndoorPatchPointSample(
-        5, 1.0, 20, False, num_try=1000, enlarge_size=None, min_unique_num=5)
+        5,
+        1.0,
+        ignore_index=20,
+        use_normalized_coord=False,
+        num_try=1000,
+        enlarge_size=None,
+        min_unique_num=5)
     # this patch is within [0, 1] and has 5 unique points
     # it should be selected
     scannet_points = np.random.rand(5, 6)
@@ -154,7 +161,8 @@ def test_indoor_seg_sample():
 
     # test on S3DIS dataset
     np.random.seed(0)
-    s3dis_patch_sample_points = IndoorPatchPointSample(5, 1.0, None, True)
+    s3dis_patch_sample_points = IndoorPatchPointSample(
+        5, 1.0, ignore_index=None, use_normalized_coord=True)
     s3dis_results = dict()
     s3dis_points = np.fromfile(
         './tests/data/s3dis/points/Area_1_office_2.bin',

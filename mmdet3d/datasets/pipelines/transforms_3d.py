@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
@@ -905,6 +906,10 @@ class IndoorPatchPointSample(object):
         num_points (int): Number of points to be sampled.
         block_size (float, optional): Size of a block to sample points from.
             Defaults to 1.5.
+        sample_rate (float, optional): Stride used in sliding patch generation.
+            This parameter is unused in `IndoorPatchPointSample` and thus has
+            been deprecated. We plan to remove it in the future.
+            Defaults to None.
         ignore_index (int, optional): Label index that won't be used for the
             segmentation task. This is set in PointSegClassMapping as neg_cls.
             Defaults to None.
@@ -929,6 +934,7 @@ class IndoorPatchPointSample(object):
     def __init__(self,
                  num_points,
                  block_size=1.5,
+                 sample_rate=None,
                  ignore_index=None,
                  use_normalized_coord=False,
                  num_try=10,
@@ -941,6 +947,11 @@ class IndoorPatchPointSample(object):
         self.num_try = num_try
         self.enlarge_size = enlarge_size if enlarge_size is not None else 0.01
         self.min_unique_num = min_unique_num
+
+        if sample_rate is not None:
+            warnings.warn(
+                "'sample_rate' has been deprecated and will be removed in "
+                'the future. Please remove them from your code.')
 
     def _input_generation(self, coords, patch_center, coord_max, attributes,
                           attribute_dims, point_type):

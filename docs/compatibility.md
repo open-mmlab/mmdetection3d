@@ -6,7 +6,7 @@ This document provides detailed descriptions of the BC-breaking changes in MMDet
 
 ### Enhance `IndoorPatchPointSample` transform
 
-We enhance the pipeline function `IndoorPatchPointSample` by adding more choices for patch selection and removing a useless parameter `sample_rate`. Please modify the code as well as the config files accordingly if you use this transform.
+We enhance the pipeline function `IndoorPatchPointSample` used in point cloud segmentation task by adding more choices for patch selection. Also, we plan to remove the unused parameter `sample_rate` in the future. Please modify the code as well as the config files accordingly if you use this transform.
 
 ## MMDetection3D 0.14.0
 
