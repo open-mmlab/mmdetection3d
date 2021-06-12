@@ -13,13 +13,16 @@ class PAConvHead(PointNet2Head):
 
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
+        fp_norm_cfg (dict|None): Config of norm layers used in FP modules.
+            Default: dict(type='BN2d').
     """
 
     def __init__(self,
                  fp_channels=((768, 256, 256), (384, 256, 256),
                               (320, 256, 128), (128 + 6, 128, 128, 128)),
+                 fp_norm_cfg=dict(type='BN2d'),
                  **kwargs):
-        super(PAConvHead, self).__init__(fp_channels, **kwargs)
+        super(PAConvHead, self).__init__(fp_channels, fp_norm_cfg, **kwargs)
 
         # https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/pointnet2_paconv_seg.py#L53
         # PointNet++'s decoder conv has bias while PAConv's doesn't have
@@ -45,6 +48,8 @@ class PAConvHead(PointNet2Head):
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 
+        # PointNet++ doesn't use the first level of `sa_features` as input
+        # while PAConv inputs it through skip-connection
         fp_feature = sa_features[-1]
 
         for i in range(self.num_fp):
