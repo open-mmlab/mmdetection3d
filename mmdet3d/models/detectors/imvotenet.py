@@ -10,7 +10,7 @@ from .base import Base3DDetector
 
 
 def sample_valid_seeds(mask, num_sampled_seed=1024):
-    """Randomly sample seeds from all imvotes.
+    r"""Randomly sample seeds from all imvotes.
 
     Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_  # noqa
 
