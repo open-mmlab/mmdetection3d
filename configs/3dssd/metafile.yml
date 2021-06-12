@@ -11,7 +11,7 @@ Collections:
     README: configs/3dssd/README.md
 
 Models:
-  - Name: 3dssd_kitti-3d-car
+  - Name: 3dssd_4x4_kitti-3d-car
     In Collection: 3DSSD
     Config: configs/3dssd/3dssd_4x4_kitti-3d-car.py
     Metadata:
