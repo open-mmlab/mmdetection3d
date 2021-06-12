@@ -67,7 +67,8 @@ def test_indoor_sample():
 def test_indoor_seg_sample():
     # test the train time behavior of IndoorPatchPointSample
     np.random.seed(0)
-    scannet_patch_sample_points = IndoorPatchPointSample(5, 1.5, 1.0, 20, True)
+    scannet_patch_sample_points = IndoorPatchPointSample(
+        5, 1.5, ignore_index=20, use_normalized_coord=True)
     scannet_seg_class_mapping = \
         PointSegClassMapping((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
                               24, 28, 33, 34, 36, 39), 40)
@@ -109,15 +110,59 @@ def test_indoor_seg_sample():
     repr_str = repr(scannet_patch_sample_points)
     expected_repr_str = 'IndoorPatchPointSample(num_points=5, ' \
                         'block_size=1.5, ' \
-                        'sample_rate=1.0, ' \
                         'ignore_index=20, ' \
                         'use_normalized_coord=True, ' \
-                        'num_try=10)'
+                        'num_try=10, ' \
+                        'enlarge_size=0.2, ' \
+                        'min_unique_num=None)'
     assert repr_str == expected_repr_str
+
+    # when enlarge_size and min_unique_num are set
+    np.random.seed(0)
+    scannet_patch_sample_points = IndoorPatchPointSample(
+        5,
+        1.0,
+        ignore_index=20,
+        use_normalized_coord=False,
+        num_try=1000,
+        enlarge_size=None,
+        min_unique_num=5)
+    # this patch is within [0, 1] and has 5 unique points
+    # it should be selected
+    scannet_points = np.random.rand(5, 6)
+    scannet_points[0, :3] = np.array([0.5, 0.5, 0.5])
+    # generate points smaller than `min_unique_num` in local patches
+    # they won't be sampled
+    for i in range(2, 11, 2):
+        scannet_points = np.concatenate(
+            [scannet_points, np.random.rand(4, 6) + i], axis=0)
+    scannet_results = dict(
+        points=DepthPoints(
+            scannet_points, points_dim=6,
+            attribute_dims=dict(color=[3, 4, 5])),
+        pts_semantic_mask=np.random.randint(0, 20,
+                                            (scannet_points.shape[0], )))
+    scannet_results = scannet_patch_sample_points(scannet_results)
+    scannet_points_result = scannet_results['points']
+
+    # manually constructed sampled points
+    scannet_choices = np.array([2, 4, 3, 1, 0])
+    scannet_center = np.array([0.56804454, 0.92559665, 0.07103606])
+    scannet_center[2] = 0.0
+    scannet_input_points = np.concatenate([
+        scannet_points[scannet_choices, :3] - scannet_center,
+        scannet_points[scannet_choices, 3:],
+    ], 1)
+
+    assert scannet_points_result.points_dim == 6
+    assert scannet_points_result.attribute_dims == dict(color=[3, 4, 5])
+    scannet_points_result = scannet_points_result.tensor.numpy()
+    assert np.allclose(scannet_input_points, scannet_points_result, atol=1e-6)
 
     # test on S3DIS dataset
     np.random.seed(0)
-    s3dis_patch_sample_points = IndoorPatchPointSample(5, 1.0, 1.0, None, True)
+    s3dis_patch_sample_points = IndoorPatchPointSample(
+        5, 1.0, ignore_index=None, use_normalized_coord=True)
     s3dis_results = dict()
     s3dis_points = np.fromfile(
         './tests/data/s3dis/points/Area_1_office_2.bin',
