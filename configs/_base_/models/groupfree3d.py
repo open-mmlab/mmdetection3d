@@ -27,7 +27,7 @@ model = dict(
                 embed_dims=288,
                 num_heads=8,
                 attn_drop=0.1,
-                dropout_layer=dict(type='DropOut', drop_prob=0.1)),
+                dropout_layer=dict(type='Dropout', drop_prob=0.1)),
             ffn_cfgs=dict(
                 embed_dims=288,
                 feedforward_channels=2048,
