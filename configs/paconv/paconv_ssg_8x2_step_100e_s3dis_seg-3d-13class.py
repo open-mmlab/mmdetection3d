@@ -29,9 +29,10 @@ train_pipeline = [
         type='IndoorPatchPointSample',
         num_points=num_points,
         block_size=1.0,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=True),
+        use_normalized_coord=True,
+        enlarge_size=0.01,
+        min_unique_num=num_points // 4),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-3.141592653589793, 3.141592653589793],  # [-pi, pi]
