@@ -12,7 +12,7 @@ class PAConvSAModuleMSG(BasePointSAModule):
     PAConv networks.
 
     Replace the MLPs in `PointSAModuleMSG` with PAConv layers.
-    See the `paper <https://arxiv.org/abs/2103.14635>`_ for more detials.
+    See the `paper <https://arxiv.org/abs/2103.14635>`_ for more details.
 
     Args:
         paconv_num_kernels (list[list[int]]): Number of weight kernels in the
@@ -110,7 +110,7 @@ class PAConvSAModule(PAConvSAModuleMSG):
     PAConv networks.
 
     Replace the MLPs in `PointSAModule` with PAConv layers. See the `paper
-    <https://arxiv.org/abs/2103.14635>`_ for more detials.
+    <https://arxiv.org/abs/2103.14635>`_ for more details.
     """
 
     def __init__(self,
@@ -156,7 +156,7 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
 
     Replace the non CUDA version PAConv with CUDA implemented PAConv for
     efficient computation. See the `paper <https://arxiv.org/abs/2103.14635>`_
-    for more detials.
+    for more details.
     """
 
     def __init__(self,
@@ -301,7 +301,7 @@ class PAConvCUDASAModule(PAConvCUDASAModuleMSG):
 
     Replace the non CUDA version PAConv with CUDA implemented PAConv for
     efficient computation. See the `paper <https://arxiv.org/abs/2103.14635>`_
-    for more detials.
+    for more details.
     """
 
     def __init__(self,
