@@ -773,8 +773,9 @@ class ImVoteNet(Base3DDetector):
 
         # only support aug_test for one sample
         aug_bboxes = []
-        for x, pts_cat, img_meta, bbox_2d, img in zip(
-                feats, points_cat, img_metas, bboxes_2d, imgs):
+        for x, pts_cat, img_meta, bbox_2d, img in zip(feats, points_cat,
+                                                      img_metas, bboxes_2d,
+                                                      imgs):
 
             bbox_2d = self.extract_bboxes_2d(
                 img, img_metas, train=False, bboxes_2d=bbox_2d, **kwargs)

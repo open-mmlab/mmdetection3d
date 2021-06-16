@@ -103,8 +103,8 @@ class SUNRGBDDataset(Custom3DDataset):
             calib = info['calib']
             rt_mat = calib['Rt']
             # follow Coord3DMode.convert_point
-            rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]]) @ \
-                     rt_mat.transpose(1, 0)
+            rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                               ]) @ rt_mat.transpose(1, 0)
             depth2img = calib['K'] @ rt_mat
             input_dict['depth2img'] = depth2img
 

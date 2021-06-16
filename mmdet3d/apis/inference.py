@@ -170,8 +170,8 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     elif box_mode_3d == Box3DMode.DEPTH:
         rt_mat = info['calib']['Rt']
         # follow Coord3DMode.convert_point
-        rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]]) @ \
-                 rt_mat.transpose(1, 0)
+        rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                           ]) @ rt_mat.transpose(1, 0)
         depth2img = info['calib']['K'] @ rt_mat
         data['img_metas'][0].data['depth2img'] = depth2img
 

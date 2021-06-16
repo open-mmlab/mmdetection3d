@@ -38,8 +38,8 @@ def test_vote_fusion():
     k_mat = torch.tensor([[529.5000, 0.0000, 365.0000],
                           [0.0000, 529.5000, 265.0000],
                           [0.0000, 0.0000, 1.0000]])
-    rt_mat = rt_mat.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]]) @ \
-             rt_mat.transpose(1, 0)
+    rt_mat = rt_mat.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                                ]) @ rt_mat.transpose(1, 0)
     depth2img = k_mat @ rt_mat
     img_meta['depth2img'] = depth2img
 
