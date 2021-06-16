@@ -22,8 +22,7 @@ class VoteFusion(nn.Module):
         self.num_classes = num_classes
         self.max_imvote_per_pixel = max_imvote_per_pixel
 
-    def forward(self, imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas,
-                calibs):
+    def forward(self, imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas):
         """Forward function.
 
         Args:
@@ -31,7 +30,6 @@ class VoteFusion(nn.Module):
             bboxes_2d_rescaled (list[torch.Tensor]): 2D bboxes.
             seeds_3d_depth (torch.Tensor): 3D seeds.
             img_metas (list[dict]): Meta information of images.
-            calibs: Camera calibration information of the images.
 
         Returns:
             torch.Tensor: Concatenated cues of each point.
@@ -52,15 +50,9 @@ class VoteFusion(nn.Module):
             xyz_depth = apply_3d_transformation(
                 seed_3d_depth, 'DEPTH', img_meta, reverse=True)
 
-            # then convert from depth coords to camera coords
-            xyz_cam = Coord3DMode.convert_point(
-                xyz_depth,
-                Coord3DMode.DEPTH,
-                Coord3DMode.CAM,
-                rt_mat=calibs['Rt'][i])
-
-            # project to 2d to get image coords (uv)
-            uv_origin = points_cam2img(xyz_cam, calibs['K'][i])
+            # project points from depth to image
+            depth2img = xyz_depth.new_tensor(img_meta['depth2img'])
+            uv_origin, z_cam = points_cam2img(xyz_depth, depth2img, True)
             uv_origin = (uv_origin - 1).round()
 
             # rescale 2d coordinates and bboxes
@@ -113,22 +105,12 @@ class VoteFusion(nn.Module):
                 seed_3d_expanded = seed_3d_depth.view(seed_num, 1, -1).expand(
                     -1, bbox_num, -1)
 
-                z_cam = xyz_cam[..., 2:3].view(seed_num, 1,
-                                               1).expand(-1, bbox_num, -1)
-
-                delta_u = delta_u * z_cam / calibs['K'][i, 0, 0]
-                delta_v = delta_v * z_cam / calibs['K'][i, 0, 0]
-
+                z_cam = z_cam.view(seed_num, 1, 1).expand(-1, bbox_num, -1)
                 imvote = torch.cat(
                     [delta_u, delta_v,
                      torch.zeros_like(delta_v)], dim=-1).view(-1, 3)
-
-                # convert from camera coords to depth coords
-                imvote = Coord3DMode.convert_point(
-                    imvote.view((-1, 3)),
-                    Coord3DMode.CAM,
-                    Coord3DMode.DEPTH,
-                    rt_mat=calibs['Rt'][i])
+                imvote = imvote * z_cam.reshape(-1, 1)
+                imvote = imvote @ torch.inverse(depth2img.t())
 
                 # apply transformation to lifted imvotes
                 imvote = apply_3d_transformation(
