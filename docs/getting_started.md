@@ -12,7 +12,7 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.3.1, <=1.4|
+| master              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0, <=0.14.0 | mmcv-full>=1.3.1, <=1.4|
 | 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.3.1, <=1.4|
 | 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
@@ -115,7 +115,7 @@ pip install -v -e .  # or "python setup.py develop"
 **e. Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
-pip install git+https://github.com/open-mmlab/mmsegmentation.git
+pip install mmsegmentation==0.14.0
 ```
 
 Optionally, you could also build MMSegmentation from source in case you want to modify the code:
@@ -123,6 +123,7 @@ Optionally, you could also build MMSegmentation from source in case you want to 
 ```shell
 git clone https://github.com/open-mmlab/mmsegmentation.git
 cd mmsegmentation
+git checkout 5d46314  # switch to v0.14.0 branch
 pip install -e .  # or "python setup.py develop"
 ```
 
