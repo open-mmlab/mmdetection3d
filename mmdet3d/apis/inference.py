@@ -157,7 +157,7 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         seg_fields=[])
     data = test_pipeline(data)
 
-    # TODO: this code is dangerous and dataset-specific. Move lidar2img and
+    # TODO: this code is dataset-specific. Move lidar2img and
     #       depth2img to .pkl annotations in the future.
     # LiDAR to image conversion
     if box_mode_3d == Box3DMode.LIDAR:

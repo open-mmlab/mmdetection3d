@@ -117,7 +117,8 @@ def points_cam2img(points_3d, proj_mat, return_z=False):
     Args:
         points_3d (torch.Tensor): Points in shape (N, 3).
         proj_mat (torch.Tensor): Transformation matrix between coordinates.
-        return_z (bool): Return third dimension if True.
+        return_z (bool, optional): Return third dimension if True.
+            Defaults to False.
 
     Returns:
         torch.Tensor: Points in image coordinates with shape [N, 2].

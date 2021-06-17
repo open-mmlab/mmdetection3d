@@ -247,7 +247,7 @@ eval_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['img', 'points', 'calib'])
+    dict(type='Collect3D', keys=['img', 'points'])
 ]
 
 data = dict(
