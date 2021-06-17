@@ -2,7 +2,7 @@
 
 LiDAR-based 3D detection is one of the most basic tasks supported in MMDetection3D.
 It expects the given model to take any number of points with features collected by LiDAR as input, and predict the 3D bounding boxes and category labels for each object of interest.
-Next, taking PointPillars on the KITTI dataset as an example, we will show how to train and test a model on a standard 3D detection benchmark, and how to visualize and validate the results.
+Next, taking PointPillars on the KITTI dataset as an example, we will show how to prepare data, train and test a model on a standard 3D detection benchmark, and how to visualize and validate the results.
 
 ## Data Preparation
 
