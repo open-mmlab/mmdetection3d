@@ -99,7 +99,7 @@ Note:
 MMDetection3D v0.14.0 is only compatible with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support `mmdet>=2.12.0` since v0.15.0 (to be released in July).
 
 ```shell
-pip install git+https://github.com/open-mmlab/mmdetection.git
+pip install mmdet==2.11.0
 ```
 
 Optionally, you could also build MMDetection from source in case you want to modify the code:
@@ -107,6 +107,7 @@ Optionally, you could also build MMDetection from source in case you want to mod
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
+git checkout 2894516  # switch to v2.11.0 branch
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
