@@ -19,6 +19,12 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :caption: Supported Tasks
+
+   supported_tasks/index.rst
+
+.. toctree::
+   :maxdepth: 2
    :caption: Tutorials
 
    tutorials/index.rst
