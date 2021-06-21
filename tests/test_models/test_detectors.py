@@ -127,7 +127,7 @@ def test_3dssd():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
-    ssd3d_cfg = _get_detector_cfg('3dssd/3dssd_kitti-3d-car.py')
+    ssd3d_cfg = _get_detector_cfg('3dssd/3dssd_4x4_kitti-3d-car.py')
     self = build_detector(ssd3d_cfg).cuda()
     points_0 = torch.rand([2000, 4], device='cuda')
     points_1 = torch.rand([2000, 4], device='cuda')
@@ -377,3 +377,41 @@ def test_fcos3d():
     assert scores_3d.shape[0] >= 0
     assert labels_3d.shape[0] >= 0
     assert attrs_3d.shape[0] >= 0
+
+
+def test_imvoxelnet():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    imvoxelnet_cfg = _get_detector_cfg('imvoxelnet/imvoxelnet_kitti-3d-car.py')
+    self = build_detector(imvoxelnet_cfg).cuda()
+    imgs = torch.rand([1, 3, 384, 1280], dtype=torch.float32).cuda()
+    gt_bboxes_3d = [LiDARInstance3DBoxes(torch.rand([3, 7], device='cuda'))]
+    gt_labels_3d = [torch.zeros([3], dtype=torch.long, device='cuda')]
+    img_metas = [
+        dict(
+            box_type_3d=LiDARInstance3DBoxes,
+            lidar2img=np.array([[6.0e+02, -7.2e+02, -1.2e+00, -1.2e+02],
+                                [1.8e+02, 7.6e+00, -7.1e+02, -1.0e+02],
+                                [9.9e-01, 1.2e-04, 1.0e-02, -2.6e-01],
+                                [0.0e+00, 0.0e+00, 0.0e+00, 1.0e+00]],
+                               dtype=np.float32),
+            img_shape=(384, 1272, 3))
+    ]
+
+    # test forward_train
+    losses = self.forward_train(imgs, img_metas, gt_bboxes_3d, gt_labels_3d)
+    assert losses['loss_cls'][0] >= 0
+    assert losses['loss_bbox'][0] >= 0
+    assert losses['loss_dir'][0] >= 0
+
+    # test simple_test
+    with torch.no_grad():
+        results = self.simple_test(imgs, img_metas)
+    boxes_3d = results[0]['boxes_3d']
+    scores_3d = results[0]['scores_3d']
+    labels_3d = results[0]['labels_3d']
+    assert boxes_3d.tensor.shape[0] >= 0
+    assert boxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0

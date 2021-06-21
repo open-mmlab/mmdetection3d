@@ -13,7 +13,7 @@ class PointwiseSemanticHead(nn.Module):
     """Semantic segmentation head for point-wise segmentation.
 
     Predict point-wise segmentation and part regression results for PartA2.
-    See `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
+    See `paper <https://arxiv.org/abs/1907.03670>`_ for more details.
 
     Args:
         in_channels (int): The number of input channel.

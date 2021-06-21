@@ -125,11 +125,11 @@ Then you can evaluate your models on waymo. An example to evaluate PointPillars 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --eval waymo --options 'pklfile_prefix=results/waymo-car/kitti_results' \
+       --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 
-`pklfile_prefix` should be given in the options if the bin file is needed to be generated. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
+`pklfile_prefix` should be given in the `--eval-options` if the bin file is needed to be generated. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
 
 **Notice**:
 
@@ -146,7 +146,7 @@ An example to test PointPillars on waymo with 8 GPUs, generate the bin files and
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --format-only --options 'pklfile_prefix=results/waymo-car/kitti_results' \
+       --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 

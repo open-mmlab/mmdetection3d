@@ -29,6 +29,8 @@ class QueryAndGroup(nn.Module):
         return_unique_cnt (bool): Whether to return the count of
             unique samples.
             Default: False.
+        return_grouped_idx (bool): Whether to return grouped idx.
+            Default: False.
     """
 
     def __init__(self,
@@ -39,7 +41,8 @@ class QueryAndGroup(nn.Module):
                  return_grouped_xyz=False,
                  normalize_xyz=False,
                  uniform_sample=False,
-                 return_unique_cnt=False):
+                 return_unique_cnt=False,
+                 return_grouped_idx=False):
         super(QueryAndGroup, self).__init__()
         self.max_radius = max_radius
         self.min_radius = min_radius
@@ -49,6 +52,7 @@ class QueryAndGroup(nn.Module):
         self.normalize_xyz = normalize_xyz
         self.uniform_sample = uniform_sample
         self.return_unique_cnt = return_unique_cnt
+        self.return_grouped_idx = return_grouped_idx
         if self.return_unique_cnt:
             assert self.uniform_sample, \
                 'uniform_sample should be True when ' \
@@ -116,6 +120,8 @@ class QueryAndGroup(nn.Module):
             ret.append(grouped_xyz)
         if self.return_unique_cnt:
             ret.append(unique_cnt)
+        if self.return_grouped_idx:
+            ret.append(idx)
         if len(ret) == 1:
             return ret[0]
         else:

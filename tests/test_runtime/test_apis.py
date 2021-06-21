@@ -321,7 +321,7 @@ def test_inference_segmentor():
         pytest.skip('test requires GPU and torch+cuda')
     pcd = 'tests/data/scannet/points/scene0000_00.bin'
     segmentor_cfg = 'configs/pointnet2/pointnet2_ssg_' \
-                    '16x2_scannet-3d-20class.py'
+                    '16x2_cosine_200e_scannet_seg-3d-20class.py'
     segmentor = init_model(segmentor_cfg, device='cuda:0')
     results = inference_segmentor(segmentor, pcd)
     seg_3d = results[0][0]['semantic_mask']
