@@ -1,7 +1,7 @@
 # LiDAR-Based 3D Semantic Segmentation
 
 LiDAR-based 3D semantic segmentation is one of the most basic tasks supported in MMDetection3D.
-It expects the given model to take any number of points with features collected by LiDAR as input, and predict the category labels for each input point.
+It expects the given model to take any number of points with features collected by LiDAR as input, and predict the semantic labels for each input point.
 Next, taking PointNet++ (SSG) on the ScanNet dataset as an example, we will show how to prepare data, train and test a model on a standard 3D semantic segmentation benchmark, and how to visualize and validate the results.
 
 ## Data Preparation
