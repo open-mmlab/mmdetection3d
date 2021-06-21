@@ -170,14 +170,17 @@ custom_imports = dict(
 
 to the config file and avoid modifying the original code.
 
-#### 3. Modify the config file
+#### 3. Use the neck in your config file
 
 ```python
-neck=dict(
-    type='SECONDFPN',
-    in_channels=[64, 128, 256],
-    upsample_strides=[1, 2, 4],
-    out_channels=[128, 128, 128])
+model = dict(
+    ...
+    neck=dict(
+        type='SECONDFPN',
+        in_channels=[64, 128, 256],
+        upsample_strides=[1, 2, 4],
+        out_channels=[128, 128, 128]),
+    ...
 ```
 
 ### Add new heads
@@ -383,7 +386,7 @@ Alternatively, the users can add
 
 ```python
 custom_imports=dict(
-    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.bbox_heads.parta2_bbox_head'])
+    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'])
 ```
 
 to the config file and achieve the same goal.
