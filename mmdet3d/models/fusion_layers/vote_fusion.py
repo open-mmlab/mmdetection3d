@@ -52,8 +52,9 @@ class VoteFusion(nn.Module):
 
             # project points from depth to image
             depth2img = xyz_depth.new_tensor(img_meta['depth2img'])
-            uv_origin, z_cam = points_cam2img(xyz_depth, depth2img, True)
-            uv_origin = (uv_origin - 1).round()
+            uvz_origin = points_cam2img(xyz_depth, depth2img, True)
+            z_cam = uvz_origin[..., 2]
+            uv_origin = (uvz_origin[..., :2] - 1).round()
 
             # rescale 2d coordinates and bboxes
             uv_rescaled = coord_2d_transform(img_meta, uv_origin, True)

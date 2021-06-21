@@ -232,9 +232,6 @@ class Coord3DMode(IntEnum):
         elif src == Coord3DMode.CAM and dst == Coord3DMode.DEPTH:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
-            else:
-                rt_mat = rt_mat @ rt_mat.new_tensor([[1, 0, 0], [0, 0, 1],
-                                                     [0, -1, 0]])
         elif src == Coord3DMode.LIDAR and dst == Coord3DMode.DEPTH:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
