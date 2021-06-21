@@ -13,7 +13,7 @@ from mmdet.datasets import DATASETS, CocoDataset
 from ..core import show_multi_modality_result
 from ..core.bbox import CameraInstance3DBoxes, get_box_type, mono_cam_box2vis
 from .pipelines import Compose
-from .utils import get_loading_pipeline
+from .utils import extract_result_dict, get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -541,28 +541,6 @@ class NuScenesMonoDataset(CocoDataset):
             self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
-    @staticmethod
-    def _get_data(results, key):
-        """Extract and return the data corresponding to key in result dict.
-
-        Args:
-            results (dict): Data loaded using pipeline.
-            key (str): Key of the desired data.
-
-        Returns:
-            np.ndarray | torch.Tensor | None: Data term.
-        """
-        if key not in results.keys():
-            return None
-        # results[key] may be data or list[data]
-        # data may be wrapped inside DataContainer
-        data = results[key]
-        if isinstance(data, list) or isinstance(data, tuple):
-            data = data[0]
-        if isinstance(data, mmcv.parallel.DataContainer):
-            data = data._data
-        return data
-
     def _extract_data(self, index, pipeline, key, load_annos=False):
         """Load data using input pipeline and extract data according to key.
 
@@ -590,9 +568,9 @@ class NuScenesMonoDataset(CocoDataset):
 
         # extract data items according to keys
         if isinstance(key, str):
-            data = self._get_data(example, key)
+            data = extract_result_dict(example, key)
         else:
-            data = [self._get_data(example, k) for k in key]
+            data = [extract_result_dict(example, k) for k in key]
 
         return data
 

@@ -2,22 +2,20 @@ import torch
 from mmcv.cnn import ConvModule
 from torch import nn as nn
 from torch.nn import functional as F
-from typing import List
 
-from mmdet3d.ops import GroupAll, Points_Sampler, QueryAndGroup, gather_points
+from mmdet3d.ops import (GroupAll, PAConv, Points_Sampler, QueryAndGroup,
+                         gather_points)
 from .builder import SA_MODULES
 
 
-@SA_MODULES.register_module()
-class PointSAModuleMSG(nn.Module):
-    """Point set abstraction module with multi-scale grouping used in
-    Pointnets.
+class BasePointSAModule(nn.Module):
+    """Base module for point set abstraction module used in PointNets.
 
     Args:
         num_point (int): Number of points.
         radii (list[float]): List of radius in each ball query.
         sample_nums (list[int]): Number of samples in each ball query.
-        mlp_channels (list[int]): Specify of the pointnet before
+        mlp_channels (list[list[int]]): Specify of the pointnet before
             the global pooling for each scale.
         fps_mod (list[str]: Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
@@ -28,33 +26,32 @@ class PointSAModuleMSG(nn.Module):
             Default: [-1].
         dilated_group (bool): Whether to use dilated ball query.
             Default: False.
-        norm_cfg (dict): Type of normalization method.
-            Default: dict(type='BN2d').
         use_xyz (bool): Whether to use xyz.
             Default: True.
         pool_mod (str): Type of pooling method.
             Default: 'max_pool'.
         normalize_xyz (bool): Whether to normalize local XYZ with radius.
             Default: False.
-        bias (bool | str): If specified as `auto`, it will be decided by the
-            norm_cfg. Bias will be set as True if `norm_cfg` is None, otherwise
-            False. Default: "auto".
+        grouper_return_grouped_xyz (bool): Whether to return grouped xyz in
+            `QueryAndGroup`. Defaults to False.
+        grouper_return_grouped_idx (bool): Whether to return grouped idx in
+            `QueryAndGroup`. Defaults to False.
     """
 
     def __init__(self,
-                 num_point: int,
-                 radii: List[float],
-                 sample_nums: List[int],
-                 mlp_channels: List[List[int]],
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 dilated_group: bool = False,
-                 norm_cfg: dict = dict(type='BN2d'),
-                 use_xyz: bool = True,
+                 num_point,
+                 radii,
+                 sample_nums,
+                 mlp_channels,
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 dilated_group=False,
+                 use_xyz=True,
                  pool_mod='max',
-                 normalize_xyz: bool = False,
-                 bias='auto'):
-        super().__init__()
+                 normalize_xyz=False,
+                 grouper_return_grouped_xyz=False,
+                 grouper_return_grouped_idx=False):
+        super(BasePointSAModule, self).__init__()
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
         assert pool_mod in ['max', 'avg']
@@ -65,6 +62,7 @@ class PointSAModuleMSG(nn.Module):
 
         if isinstance(mlp_channels, tuple):
             mlp_channels = list(map(list, mlp_channels))
+        self.mlp_channels = mlp_channels
 
         if isinstance(num_point, int):
             self.num_point = [num_point]
@@ -95,36 +93,77 @@ class PointSAModuleMSG(nn.Module):
                     sample_num,
                     min_radius=min_radius,
                     use_xyz=use_xyz,
-                    normalize_xyz=normalize_xyz)
+                    normalize_xyz=normalize_xyz,
+                    return_grouped_xyz=grouper_return_grouped_xyz,
+                    return_grouped_idx=grouper_return_grouped_idx)
             else:
                 grouper = GroupAll(use_xyz)
             self.groupers.append(grouper)
 
-            mlp_spec = mlp_channels[i]
-            if use_xyz:
-                mlp_spec[0] += 3
+    def _sample_points(self, points_xyz, features, indices, target_xyz):
+        """Perform point sampling based on inputs.
 
-            mlp = nn.Sequential()
-            for i in range(len(mlp_spec) - 1):
-                mlp.add_module(
-                    f'layer{i}',
-                    ConvModule(
-                        mlp_spec[i],
-                        mlp_spec[i + 1],
-                        kernel_size=(1, 1),
-                        stride=(1, 1),
-                        conv_cfg=dict(type='Conv2d'),
-                        norm_cfg=norm_cfg,
-                        bias=bias))
-            self.mlps.append(mlp)
+        If `indices` is specified, directly sample corresponding points.
+        Else if `target_xyz` is specified, use is as sampled points.
+        Otherwise sample points using `self.points_sampler`.
+
+        Args:
+            points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
+            features (Tensor): (B, C, N) features of each point.
+                Default: None.
+            indices (Tensor): (B, num_point) Index of the features.
+                Default: None.
+            target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
+
+        Returns:
+            Tensor: (B, num_point, 3) sampled xyz coordinates of points.
+            Tensor: (B, num_point) sampled points' index.
+        """
+        xyz_flipped = points_xyz.transpose(1, 2).contiguous()
+        if indices is not None:
+            assert (indices.shape[1] == self.num_point[0])
+            new_xyz = gather_points(xyz_flipped, indices).transpose(
+                1, 2).contiguous() if self.num_point is not None else None
+        elif target_xyz is not None:
+            new_xyz = target_xyz.contiguous()
+        else:
+            indices = self.points_sampler(points_xyz, features)
+            new_xyz = gather_points(xyz_flipped, indices).transpose(
+                1, 2).contiguous() if self.num_point is not None else None
+
+        return new_xyz, indices
+
+    def _pool_features(self, features):
+        """Perform feature aggregation using pooling operation.
+
+        Args:
+            features (torch.Tensor): (B, C, N, K)
+                Features of locally grouped points before pooling.
+
+        Returns:
+            torch.Tensor: (B, C, N)
+                Pooled features aggregating local information.
+        """
+        if self.pool_mod == 'max':
+            # (B, C, N, 1)
+            new_features = F.max_pool2d(
+                features, kernel_size=[1, features.size(3)])
+        elif self.pool_mod == 'avg':
+            # (B, C, N, 1)
+            new_features = F.avg_pool2d(
+                features, kernel_size=[1, features.size(3)])
+        else:
+            raise NotImplementedError
+
+        return new_features.squeeze(-1).contiguous()
 
     def forward(
         self,
-        points_xyz: torch.Tensor,
-        features: torch.Tensor = None,
-        indices: torch.Tensor = None,
-        target_xyz: torch.Tensor = None,
-    ) -> (torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+        points_xyz,
+        features=None,
+        indices=None,
+        target_xyz=None,
+    ):
         """forward.
 
         Args:
@@ -144,44 +183,116 @@ class PointSAModuleMSG(nn.Module):
                 Index of the features.
         """
         new_features_list = []
-        xyz_flipped = points_xyz.transpose(1, 2).contiguous()
-        if indices is not None:
-            assert (indices.shape[1] == self.num_point[0])
-            new_xyz = gather_points(xyz_flipped, indices).transpose(
-                1, 2).contiguous() if self.num_point is not None else None
-        elif target_xyz is not None:
-            new_xyz = target_xyz.contiguous()
-        else:
-            indices = self.points_sampler(points_xyz, features)
-            new_xyz = gather_points(xyz_flipped, indices).transpose(
-                1, 2).contiguous() if self.num_point is not None else None
+
+        # sample points, (B, num_point, 3), (B, num_point)
+        new_xyz, indices = self._sample_points(points_xyz, features, indices,
+                                               target_xyz)
 
         for i in range(len(self.groupers)):
-            # (B, C, num_point, nsample)
-            new_features = self.groupers[i](points_xyz, new_xyz, features)
+            # grouped_results may contain:
+            # - grouped_features: (B, C, num_point, nsample)
+            # - grouped_xyz: (B, 3, num_point, nsample)
+            # - grouped_idx: (B, num_point, nsample)
+            grouped_results = self.groupers[i](points_xyz, new_xyz, features)
 
             # (B, mlp[-1], num_point, nsample)
-            new_features = self.mlps[i](new_features)
-            if self.pool_mod == 'max':
-                # (B, mlp[-1], num_point, 1)
-                new_features = F.max_pool2d(
-                    new_features, kernel_size=[1, new_features.size(3)])
-            elif self.pool_mod == 'avg':
-                # (B, mlp[-1], num_point, 1)
-                new_features = F.avg_pool2d(
-                    new_features, kernel_size=[1, new_features.size(3)])
-            else:
-                raise NotImplementedError
+            new_features = self.mlps[i](grouped_results)
 
-            new_features = new_features.squeeze(-1)  # (B, mlp[-1], num_point)
+            # this is a bit hack because PAConv outputs two values
+            # we take the first one as feature
+            if isinstance(self.mlps[i][0], PAConv):
+                assert isinstance(new_features, tuple)
+                new_features = new_features[0]
+
+            # (B, mlp[-1], num_point)
+            new_features = self._pool_features(new_features)
             new_features_list.append(new_features)
 
         return new_xyz, torch.cat(new_features_list, dim=1), indices
 
 
 @SA_MODULES.register_module()
+class PointSAModuleMSG(BasePointSAModule):
+    """Point set abstraction module with multi-scale grouping (MSG) used in
+    PointNets.
+
+    Args:
+        num_point (int): Number of points.
+        radii (list[float]): List of radius in each ball query.
+        sample_nums (list[int]): Number of samples in each ball query.
+        mlp_channels (list[list[int]]): Specify of the pointnet before
+            the global pooling for each scale.
+        fps_mod (list[str]: Type of FPS method, valid mod
+            ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
+            F-FPS: using feature distances for FPS.
+            D-FPS: using Euclidean distances of points for FPS.
+            FS: using F-FPS and D-FPS simultaneously.
+        fps_sample_range_list (list[int]): Range of points to apply FPS.
+            Default: [-1].
+        dilated_group (bool): Whether to use dilated ball query.
+            Default: False.
+        norm_cfg (dict): Type of normalization method.
+            Default: dict(type='BN2d').
+        use_xyz (bool): Whether to use xyz.
+            Default: True.
+        pool_mod (str): Type of pooling method.
+            Default: 'max_pool'.
+        normalize_xyz (bool): Whether to normalize local XYZ with radius.
+            Default: False.
+        bias (bool | str): If specified as `auto`, it will be decided by the
+            norm_cfg. Bias will be set as True if `norm_cfg` is None, otherwise
+            False. Default: "auto".
+    """
+
+    def __init__(self,
+                 num_point,
+                 radii,
+                 sample_nums,
+                 mlp_channels,
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 dilated_group=False,
+                 norm_cfg=dict(type='BN2d'),
+                 use_xyz=True,
+                 pool_mod='max',
+                 normalize_xyz=False,
+                 bias='auto'):
+        super(PointSAModuleMSG, self).__init__(
+            num_point=num_point,
+            radii=radii,
+            sample_nums=sample_nums,
+            mlp_channels=mlp_channels,
+            fps_mod=fps_mod,
+            fps_sample_range_list=fps_sample_range_list,
+            dilated_group=dilated_group,
+            use_xyz=use_xyz,
+            pool_mod=pool_mod,
+            normalize_xyz=normalize_xyz)
+
+        for i in range(len(self.mlp_channels)):
+            mlp_channel = self.mlp_channels[i]
+            if use_xyz:
+                mlp_channel[0] += 3
+
+            mlp = nn.Sequential()
+            for i in range(len(mlp_channel) - 1):
+                mlp.add_module(
+                    f'layer{i}',
+                    ConvModule(
+                        mlp_channel[i],
+                        mlp_channel[i + 1],
+                        kernel_size=(1, 1),
+                        stride=(1, 1),
+                        conv_cfg=dict(type='Conv2d'),
+                        norm_cfg=norm_cfg,
+                        bias=bias))
+            self.mlps.append(mlp)
+
+
+@SA_MODULES.register_module()
 class PointSAModule(PointSAModuleMSG):
-    """Point set abstraction module used in Pointnets.
+    """Point set abstraction module with single-scale grouping (SSG) used in
+    PointNets.
 
     Args:
         mlp_channels (list[int]): Specify of the pointnet before
@@ -207,17 +318,17 @@ class PointSAModule(PointSAModuleMSG):
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 num_point: int = None,
-                 radius: float = None,
-                 num_sample: int = None,
-                 norm_cfg: dict = dict(type='BN2d'),
-                 use_xyz: bool = True,
-                 pool_mod: str = 'max',
-                 fps_mod: List[str] = ['D-FPS'],
-                 fps_sample_range_list: List[int] = [-1],
-                 normalize_xyz: bool = False):
-        super().__init__(
+                 mlp_channels,
+                 num_point=None,
+                 radius=None,
+                 num_sample=None,
+                 norm_cfg=dict(type='BN2d'),
+                 use_xyz=True,
+                 pool_mod='max',
+                 fps_mod=['D-FPS'],
+                 fps_sample_range_list=[-1],
+                 normalize_xyz=False):
+        super(PointSAModule, self).__init__(
             mlp_channels=[mlp_channels],
             num_point=num_point,
             radii=[radius],

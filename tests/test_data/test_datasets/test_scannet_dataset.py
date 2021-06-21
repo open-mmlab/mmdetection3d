@@ -310,12 +310,6 @@ def test_seg_getitem():
         [82, 84, 163],
     ]
     scene_idxs = [0 for _ in range(20)]
-    label_weight = [
-        2.389689, 2.7215734, 4.5944676, 4.8543367, 4.096086, 4.907941,
-        4.690836, 4.512031, 4.623311, 4.9242644, 5.358117, 5.360071, 5.019636,
-        4.967126, 5.3502126, 5.4023647, 5.4027233, 5.4169416, 5.3954206,
-        4.6971426
-    ]
 
     # test network inputs are (xyz, rgb, normalized_xyz)
     pipelines = [
@@ -341,9 +335,10 @@ def test_seg_getitem():
             type='IndoorPatchPointSample',
             num_points=5,
             block_size=1.5,
-            sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True),
+            use_normalized_coord=True,
+            enlarge_size=0.2,
+            min_unique_num=None),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -361,8 +356,7 @@ def test_seg_getitem():
         modality=None,
         test_mode=False,
         ignore_index=None,
-        scene_idxs=scene_idxs,
-        label_weight=label_weight)
+        scene_idxs=scene_idxs)
 
     data = scannet_dataset[0]
     points = data['points']._data
@@ -407,8 +401,6 @@ def test_seg_getitem():
     assert original_palette == palette
     assert scannet_dataset.scene_idxs.dtype == np.int32
     assert np.all(scannet_dataset.scene_idxs == np.array(scene_idxs))
-    assert np.allclose(scannet_dataset.label_weight, np.array(label_weight),
-                       1e-5)
 
     # test network inputs are (xyz, rgb)
     np.random.seed(0)
@@ -417,9 +409,10 @@ def test_seg_getitem():
         type='IndoorPatchPointSample',
         num_points=5,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False)
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None)
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
         ann_file=ann_file,
@@ -465,9 +458,10 @@ def test_seg_getitem():
         type='IndoorPatchPointSample',
         num_points=5,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False)
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None)
     new_pipelines.remove(new_pipelines[4])
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
@@ -496,7 +490,6 @@ def test_seg_getitem():
     assert scannet_dataset.VALID_CLASS_IDS == [3, 5]
     assert scannet_dataset.label_map == label_map
     assert scannet_dataset.label2cat == {0: 'cabinet', 1: 'chair'}
-    assert np.all(scannet_dataset.label_weight == np.ones(2))
 
     # test load classes from file
     import tempfile
@@ -534,7 +527,6 @@ def test_seg_getitem():
         test_mode=True,
         scene_idxs=scene_idxs)
     assert np.all(scannet_dataset.scene_idxs == np.array([0]))
-    assert np.all(scannet_dataset.label_weight == np.ones(len(class_names)))
 
 
 def test_seg_evaluate():

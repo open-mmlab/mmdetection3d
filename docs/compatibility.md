@@ -2,7 +2,17 @@
 
 This document provides detailed descriptions of the BC-breaking changes in MMDetection3D.
 
+## MMDetection3D 0.15.0
+
+### Enhance `IndoorPatchPointSample` transform
+
+We enhance the pipeline function `IndoorPatchPointSample` used in point cloud segmentation task by adding more choices for patch selection. Also, we plan to remove the unused parameter `sample_rate` in the future. Please modify the code as well as the config files accordingly if you use this transform.
+
 ## MMDetection3D 0.14.0
+
+### Dataset class for 3D segmentation task
+
+We remove a useless parameter `label_weight` from segmentation datasets including `Custom3DSegDataset`, `ScanNetSegDataset` and `S3DISSegDataset` since this weight is utilized in the loss function of model class. Please modify the code as well as the config files accordingly if you use or inherit from these codes.
 
 ### ScanNet data pre-processing
 

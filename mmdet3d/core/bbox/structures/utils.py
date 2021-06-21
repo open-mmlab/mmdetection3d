@@ -176,8 +176,10 @@ def mono_cam_box2vis(cam_box):
     # change local yaw to global yaw for visualization
     # refer to https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L164-L166  # noqa
     yaw += torch.atan2(loc[:, 0], loc[:, 2])
-    # convert yaw by (np.pi / 2 - yaw)
-    yaw = np.pi / 2.0 - yaw
+    # convert yaw by (-yaw - np.pi / 2)
+    # this is because mono 3D box class such as `NuScenesBox` has different
+    # definition of rotation with our `CameraInstance3DBoxes`
+    yaw = -yaw - np.pi / 2
     cam_box = torch.cat([loc, dim, yaw[:, None], feats], dim=1)
     cam_box = CameraInstance3DBoxes(
         cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))

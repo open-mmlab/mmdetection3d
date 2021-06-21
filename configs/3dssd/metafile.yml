@@ -11,14 +11,14 @@ Collections:
     README: configs/3dssd/README.md
 
 Models:
-  - Name: 3dssd_kitti-3d-car
+  - Name: 3dssd_4x4_kitti-3d-car
     In Collection: 3DSSD
-    Config: configs/3dssd/3dssd_kitti-3d-car.py
+    Config: configs/3dssd/3dssd_4x4_kitti-3d-car.py
     Metadata:
       Training Memory (GB): 4.7
     Results:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 78.39
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/3dssd/3dssd_kitti-3d-car_20210324_122002-07e9a19b.pth
+          mAP: 78.69
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/3dssd/3dssd_kitti-3d-car_20210602_124438-b4276f56.pth

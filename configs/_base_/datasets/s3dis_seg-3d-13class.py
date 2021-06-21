@@ -28,9 +28,10 @@ train_pipeline = [
         type='IndoorPatchPointSample',
         num_points=num_points,
         block_size=1.0,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=True),
+        use_normalized_coord=True,
+        enlarge_size=0.2,
+        min_unique_num=None),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
@@ -114,10 +115,6 @@ data = dict(
         ignore_index=len(class_names),
         scene_idxs=[
             data_root + f'seg_info/Area_{i}_resampled_scene_idxs.npy'
-            for i in train_area
-        ],
-        label_weights=[
-            data_root + f'seg_info/Area_{i}_label_weight.npy'
             for i in train_area
         ]),
     val=dict(

@@ -228,6 +228,11 @@ if __name__ == '__main__':
                 sources=['src/knn.cpp'],
                 sources_cuda=['src/knn_cuda.cu']),
             make_cuda_ext(
+                name='assign_score_withk_ext',
+                module='mmdet3d.ops.paconv',
+                sources=['src/assign_score_withk.cpp'],
+                sources_cuda=['src/assign_score_withk_cuda.cu']),
+            make_cuda_ext(
                 name='group_points_ext',
                 module='mmdet3d.ops.group_points',
                 sources=['src/group_points.cpp'],

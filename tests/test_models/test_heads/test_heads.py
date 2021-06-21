@@ -665,7 +665,7 @@ def test_h3d_head():
 
     targets = (vote_targets, vote_target_masks, size_class_targets,
                size_res_targets, dir_class_targets, dir_res_targets,
-               center_targets, mask_targets, valid_gt_masks,
+               center_targets, None, mask_targets, valid_gt_masks,
                objectness_targets, objectness_weights, box_loss_weights,
                valid_gt_weights)
 
@@ -889,7 +889,7 @@ def test_ssd3d_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
-    ssd3d_head_cfg = _get_vote_head_cfg('3dssd/3dssd_kitti-3d-car.py')
+    ssd3d_head_cfg = _get_vote_head_cfg('3dssd/3dssd_4x4_kitti-3d-car.py')
     ssd3d_head_cfg.vote_module_cfg.num_points = 64
     self = build_head(ssd3d_head_cfg).cuda()
     sa_xyz = [torch.rand([2, 128, 3], dtype=torch.float32).cuda()]
