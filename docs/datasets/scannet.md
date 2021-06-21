@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to [sunrgbd](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/).
+For the overall process, please refer to [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/).
 
 ### Export ScanNet data
 
@@ -26,10 +26,9 @@ mmdetection3d
 │   │   ├── load_scannet_data.py
 │   │   ├── scannet_utils.py
 │   │   ├── README.md
-
 ```
 
-Under folder `scans` there are overall 1201 train and 312 validation folders in witch raw point cloud data and relevant annotation are saved. For instance, under folder `scene0001_01` the files are as below:
+Under folder `scans` there are overall 1201 train and 312 validation folders in which raw point cloud data and relevant annotations are saved. For instance, under folder `scene0001_01` the files are as below:
 
 - `scene0001_01_vh_clean_2.ply`: Mesh file including raw point cloud data.
 - `scene0001_01.aggregation.json`: Aggregation file including object id, segments id and label.
@@ -37,10 +36,10 @@ Under folder `scans` there are overall 1201 train and 312 validation folders in 
 - `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
 - `scene0001_01_vh_clean_2.labels.ply`
 
-Export ScanNet data by running `python batch_load_scannet_data.py` in which the main steps including:
+Export ScanNet data by running `python batch_load_scannet_data.py` in which the main steps include:
 
 - Load label map file
-- Load raw point cloud data and transform into axis-aligned format
+- Load raw point cloud data
 - Load semantic and instance label for each point
 - Generate 3d bounding box for each scan
 - Save all raw data and annotations
@@ -126,6 +125,7 @@ def export(mesh_file,
         # bbox format is [x, y, z, dx, dy, dz, label_id]
         # [x, y, z] is gravity center of bbox, [dx, dy, dz] is axis-aligned
         # [label_id] is semantic label id in 'nyu40id' standard
+        # Note: since 3d bbox is axis-aligned, the yaw is 0.
         unaligned_bboxes = extract_bbox(mesh_vertices, object_id_to_segs,
                                         object_id_to_label_id, instance_ids)
         aligned_bboxes = extract_bbox(aligned_mesh_vertices, object_id_to_segs,
@@ -138,6 +138,7 @@ def export(mesh_file,
         object_id_to_label_id = None
 
     if output_file is not None:
+        # Note: save axis-unaligned point cloud data
         np.save(output_file + '_vert.npy', mesh_vertices)
         if not test_mode:
             np.save(output_file + '_sem_label.npy', label_ids)
@@ -217,7 +218,7 @@ python tools/create_data.py scannet --root-path ./data/scannet \
 --out-dir ./data/scannet --extra-tag scannet
 ```
 
-The above exported point cloud file, semantic label file and instance label file are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated. The core function `process_single_scene` of getting data infos is as follows.
+The above exported point cloud file, semantic label file and instance label file are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for train or validation. The core function `process_single_scene` of getting data infos is as follows.
 
 ```python
 def process_single_scene(sample_idx):
@@ -322,12 +323,11 @@ scannet
 ├── scannet_infos_train.pkl
 ├── scannet_infos_val.pkl
 ├── scannet_infos_test.pkl
-
 ```
 
-- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample, the point would be axis-aligned in pre-processing of 3d detection task.
+- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Note: the point would be axis-aligned in pre-processing `GlobalAlignment` of 3d detection task.
 - `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
-- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id is mapped to train id in train pipeline `PointSegClassMapping`.
+- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id will be mapped to train id in train pipeline `PointSegClassMapping`.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
     - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
     - info['pts_path']: The path of `points/xxxxx.bin`.
@@ -391,7 +391,13 @@ train_pipeline = [
 ]
 ```
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
-- `PointSegClassMapping`: Only the valid category id would be mapped to train class label id, e.g. [0, 18).
-- `IndoorPointSample`, `GlobalRotScaleTrans` and `GlobalRotScaleTrans` are three kinds of typical data augmentation of ScanNet.
+- `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 18).
+- Data augmentation:
+    - `IndoorPointSample`: downsample input point cloud.
+    - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
+    - `GlobalRotScaleTrans`: rotate input point cloud, usually [-5, 5] degree.
 
 ## Metrics
+
+Typically mean average precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3d object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
+As introduced in section `Export ScanNet data`, all ground truth 3d bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3d bounding box is also zero and axis-aligned 3d non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.
