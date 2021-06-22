@@ -818,24 +818,26 @@ class ObjectNameFilter(object):
 
 
 @PIPELINES.register_module()
-class IndoorPointSample(object):
-    """Indoor point sample.
+class PointSample(object):
+    """Point sample.
 
     Sampling data to a certain number.
 
     Args:
-        name (str): Name of the dataset.
         num_points (int): Number of points to be sampled.
+        dist_metric (int, optional): The indicator to the near/far boundary
     """
 
-    def __init__(self, num_points):
+    def __init__(self, num_points, dist_metric=None):
         self.num_points = num_points
+        self.dist_metric = dist_metric
 
-    def points_random_sampling(self,
-                               points,
-                               num_samples,
-                               replace=None,
-                               return_choices=False):
+    def _points_random_sampling(self,
+                                points,
+                                num_samples,
+                                dist_metric=None,
+                                replace=None,
+                                return_choices=False):
         """Points random sampling.
 
         Sample points to a certain number.
@@ -843,20 +845,34 @@ class IndoorPointSample(object):
         Args:
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
-            replace (bool): Whether the sample is with or without replacement.
-            Defaults to None.
-            return_choices (bool): Whether return choice. Defaults to False.
-
+            dist_metric (int, optional): Indicator to the near/far boundary.
+                Once given, only the near points will be sampled.
+                Defaults to None.
+            replace (bool, optional): Sampling with or without replacement.
+                Defaults to None.
+            return_choices (bool, optional): Whether return choice.
+                Defaults to False.
         Returns:
             tuple[np.ndarray] | np.ndarray:
-
                 - points (np.ndarray | :obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
         if replace is None:
             replace = (points.shape[0] < num_samples)
-        choices = np.random.choice(
-            points.shape[0], num_samples, replace=replace)
+        sample_range = range(len(points))
+        if dist_metric:
+            depth = points.coord[:, 2]
+            far_inds = np.where(depth > dist_metric)[0]
+            near_inds = np.where(depth <= dist_metric)[0]
+            if not replace:
+                # Only sampling the near points when len(points) >= num_samples
+                sample_range = near_inds
+                num_samples -= len(far_inds)
+        choices = np.random.choice(sample_range, num_samples, replace=replace)
+        if dist_metric and not replace:
+            choices = np.concatenate((far_inds, choices))
+            # Shuffle points after sampling
+            np.random.shuffle(choices)
         if return_choices:
             return points[choices], choices
         else:
@@ -867,14 +883,19 @@ class IndoorPointSample(object):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
-
         Returns:
             dict: Results after sampling, 'points', 'pts_instance_mask' \
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
+        from mmdet3d.core.points import CameraPoints
         points = results['points']
-        points, choices = self.points_random_sampling(
-            points, self.num_points, return_choices=True)
+        # Points in Camera coord can provide the depth information.
+        # TODO: Need to suport distance-based sampling for other coord system.
+        if self.dist_metric:
+            assert isinstance(points, CameraPoints), \
+                'Sampling based on distance is only appliable for CAMERA coord'
+        points, choices = self._points_random_sampling(
+            points, self.num_points, self.dist_metric, return_choices=True)
         results['points'] = points
 
         pts_instance_mask = results.get('pts_instance_mask', None)
@@ -889,6 +910,43 @@ class IndoorPointSample(object):
             results['pts_semantic_mask'] = pts_semantic_mask
 
         return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(num_points={self.num_points},'
+        repr_str += f' dist_metric={self.dist_metric})'
+
+        return repr_str
+
+
+@PIPELINES.register_module()
+class IndoorPointSample(PointSample):
+    """Indoor point sample.
+
+    Sampling data to a certain number.
+    NOTE: IndoorPointSample is deprecated in favor of PointSample
+
+    Args:
+        num_points (int): Number of points to be sampled.
+    """
+
+    def __init__(self, num_points):
+        warnings.warn(
+            'IndoorPointSample is deprecated in favor of PointSample')
+        super(IndoorPointSample, self).__init__(num_points)
+        self.num_points = num_points
+
+    def __call__(self, results):
+        """Call function to sample points to in indoor scenes.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Results after sampling, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
+        """
+        return super(IndoorPointSample, self).__call__(results)
 
     def __repr__(self):
         """str: Return a string that describes the module."""
