@@ -282,7 +282,7 @@ class BasePoints(object):
             4. `new_points = points[3:11, vector]`:
                 return a slice of points and attribute dims.
             5. `new_points = points[4:12, 2]`:
-                return a slice of points with single attribute
+                return a slice of points with single attribute.
             Note that the returned Points might share storage with this Points,
             subject to Pytorch's indexing semantics.
 
