@@ -56,7 +56,7 @@ custom_imports = dict(
 
 to the config file to avoid modifying the original code.
 
-#### 3. Use the backbone in your config file
+#### 3. Use the voxel encoder in your config file
 
 ```python
 model = dict(

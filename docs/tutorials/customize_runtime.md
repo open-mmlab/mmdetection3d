@@ -57,7 +57,7 @@ You also need to import `optimizer` in `mmdet3d/core/__init__.py` by adding:
 from .optimizer import *
 ```
 
-or using `custom_imports` in the config to manually import it
+or use `custom_imports` in the config to manually import it
 
 ```python
 custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_failed_imports=False)
