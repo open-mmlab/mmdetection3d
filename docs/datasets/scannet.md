@@ -2,9 +2,11 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/).
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) page for ScanNet.
 
 ### Export ScanNet data
+
+By exporting ScanNet data, we load the raw point cloud data and generate the relevant annotations including semantic label, instance label and ground truth bounding boxes.
 
 ```shell
 python batch_load_scannet_data.py
@@ -36,7 +38,7 @@ Under folder `scans` there are overall 1201 train and 312 validation folders in 
 - `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
 - `scene0001_01_vh_clean_2.labels.ply`
 
-Export ScanNet data by running `python batch_load_scannet_data.py` in which the main steps include:
+Export ScanNet data by running `python batch_load_scannet_data.py`. The main steps include:
 
 - Load label map file
 - Load raw point cloud data
