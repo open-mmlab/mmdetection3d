@@ -57,7 +57,7 @@ def test_indoor_sample():
     sunrgbd_choices = np.array([2, 8, 4, 9, 1])
     sunrgbd_points_result = sunrgbd_results['points'].tensor.numpy()
     repr_str = repr(sunrgbd_sample_points)
-    expected_repr_str = 'PointSample(num_points=5)'
+    expected_repr_str = 'PointSample(num_points=5), dist_metric=None)'
     assert repr_str == expected_repr_str
     assert np.allclose(sunrgbd_point_cloud[sunrgbd_choices],
                        sunrgbd_points_result)
