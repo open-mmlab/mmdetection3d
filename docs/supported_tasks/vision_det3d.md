@@ -2,6 +2,7 @@
 
 Vision-based 3D detection refers to the 3D detection solutions based on vision-only input, such as monocular, binocular and multi-view image based 3D detection.
 Currently, we only support monocular and multi-view 3D detection methods. Other approaches should be also compatible with our framework and will be supported in the future.
+
 It expects the given model to take any number of images as input, and predict the 3D bounding boxes and category labels for each object of interest.
 Next, taking FCOS3D on the nuScenes dataset as an example, we will show how to prepare data, train and test a model on a standard 3D detection benchmark, and how to visualize and validate the results.
 
@@ -72,8 +73,10 @@ Please remember to modify the path [here](https://github.com/open-mmlab/mmdetect
 ## Quantitative Evaluation
 
 During training, the model checkpoints will be evaluated regularly according to the setting of `evaluation = dict(interval=xxx)` in the config.
+
 We support official evaluation protocols for different datasets.
 Due to the output format is the same as 3D detection based on other modalities, the evaluation methods are also the same.
+
 For nuScenes, the model will be evaluated with distance-based mean AP (mAP) and NuScenes Detection Score (NDS) for 10 categories respectively.
 The evaluation results will be printed in the command like:
 
@@ -114,6 +117,7 @@ If you would like to only conduct inference or test the model performance on the
 you just need to replace the `--eval mAP` with `--format-only` in the previous evaluation script and specify the `jsonfile_prefix` if necessary,
 e.g., adding an option `--eval-options jsonfile_prefix=work_dirs/fcos3d/test_submission`.
 Please guarantee the [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-mono3d.py#L93) in the config corresponds to the test set instead of validation set.
+
 After generating the results, you can basically compress the folder and upload to the evalAI evaluation server for nuScenes 3D detection challenge.
 
 ## Qualitative Validation
@@ -121,6 +125,7 @@ After generating the results, you can basically compress the folder and upload t
 MMDetection3D also provides versatile tools for visualization such that we can have an intuitive feeling of the detection results predicted by our trained models.
 You can either set the `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` option to visualize the detection results online during evaluation,
 or using `tools/misc/visualize_results.py` for offline visualization.
+
 Besides, we also provide scripts `tools/misc/browse_dataset.py` to visualize the dataset without inference.
 Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization).
 
