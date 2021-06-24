@@ -40,11 +40,9 @@ Under folder `scans` there are overall 1201 train and 312 validation folders in 
 
 Export ScanNet data by running `python batch_load_scannet_data.py`. The main steps include:
 
-- Load label map file
-- Load raw point cloud data
-- Load semantic and instance label for each point
-- Generate 3d bounding box for each scan
-- Save all raw data and annotations
+- Export original files to point cloud, instance label, semantic label and bounding box file.
+- Downsample raw point cloud and filter invalid classes.
+- Save point cloud data and relevant annotation files.
 
  And the core function `export` in `load_scannet_data.py` is as follows:
 
@@ -132,29 +130,14 @@ def export(mesh_file,
                                         object_id_to_label_id, instance_ids)
         aligned_bboxes = extract_bbox(aligned_mesh_vertices, object_id_to_segs,
                                       object_id_to_label_id, instance_ids)
-    else:
-        label_ids = None
-        instance_ids = None
-        unaligned_bboxes = None
-        aligned_bboxes = None
-        object_id_to_label_id = None
-
-    if output_file is not None:
-        # Note: save axis-unaligned point cloud data
-        np.save(output_file + '_vert.npy', mesh_vertices)
-        if not test_mode:
-            np.save(output_file + '_sem_label.npy', label_ids)
-            np.save(output_file + '_ins_label.npy', instance_ids)
-            np.save(output_file + '_unaligned_bbox.npy', unaligned_bboxes)
-            np.save(output_file + '_aligned_bbox.npy', aligned_bboxes)
-            np.save(output_file + '_axis_align_matrix.npy', axis_align_matrix)
+    ...
 
     return mesh_vertices, label_ids, instance_ids, unaligned_bboxes, \
         aligned_bboxes, object_id_to_label_id, axis_align_matrix
 
 ```
 
-After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000. In addition, invalid semantic label outside of `nyu40id` standard should be filtered. The overall `export_one_scan` procedure is as follows:
+After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000. In addition, invalid semantic label outside of `nyu40id` standard should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files. The overall `export_one_scan` procedure is as follows:
 
 ```python
 def export_one_scan(scan_name,
@@ -163,18 +146,15 @@ def export_one_scan(scan_name,
                     label_map_file,
                     scannet_dir,
                     test_mode=False):
-    mesh_file = osp.join(scannet_dir, scan_name, scan_name + '_vh_clean_2.ply')
-    agg_file = osp.join(scannet_dir, scan_name,
-                        scan_name + '.aggregation.json')
-    seg_file = osp.join(scannet_dir, scan_name,
-                        scan_name + '_vh_clean_2.0.010000.segs.json')
-    # includes axisAlignment info for the train set scans.
-    meta_file = osp.join(scannet_dir, scan_name, f'{scan_name}.txt')
+    ...
+
+    # Export original files
     mesh_vertices, semantic_labels, instance_labels, unaligned_bboxes, \
         aligned_bboxes, instance2semantic, axis_align_matrix = export(
             mesh_file, agg_file, seg_file, meta_file, label_map_file, None,
             test_mode)
 
+    # filter invalid classes
     if not test_mode:
         mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
         mesh_vertices = mesh_vertices[mask, :]
@@ -202,6 +182,7 @@ def export_one_scan(scan_name,
                 semantic_labels = semantic_labels[choices]
                 instance_labels = instance_labels[choices]
 
+    # save point cloud and annotations
     np.save(f'{output_filename_prefix}_vert.npy', mesh_vertices)
     if not test_mode:
         np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
@@ -224,46 +205,11 @@ The above exported point cloud file, semantic label file and instance label file
 
 ```python
 def process_single_scene(sample_idx):
-    print(f'{self.split} sample_idx: {sample_idx}')
-    info = dict()
-    pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
-    info['point_cloud'] = pc_info
-    pts_filename = osp.join(self.root_dir, 'scannet_instance_data',
-                            f'{sample_idx}_vert.npy')
-    points = np.load(pts_filename)
-    mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
-    points.tofile(
-        osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
-    info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
 
-    if not self.test_mode:
-        pts_instance_mask_path = osp.join(
-            self.root_dir, 'scannet_instance_data',
-            f'{sample_idx}_ins_label.npy')
-        pts_semantic_mask_path = osp.join(
-            self.root_dir, 'scannet_instance_data',
-            f'{sample_idx}_sem_label.npy')
+    # save point cloud, instance label and semantic label in .bin file respectively, get info['pts_path'], info['pts_instance_mask_path'] and info['pts_semantic_mask_path']
+    ...
 
-        pts_instance_mask = np.load(pts_instance_mask_path).astype(
-            np.long)
-        pts_semantic_mask = np.load(pts_semantic_mask_path).astype(
-            np.long)
-
-        mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
-        mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
-
-        pts_instance_mask.tofile(
-            osp.join(self.root_dir, 'instance_mask',
-                     f'{sample_idx}.bin'))
-        pts_semantic_mask.tofile(
-            osp.join(self.root_dir, 'semantic_mask',
-                     f'{sample_idx}.bin'))
-
-        info['pts_instance_mask_path'] = osp.join(
-            'instance_mask', f'{sample_idx}.bin')
-        info['pts_semantic_mask_path'] = osp.join(
-            'semantic_mask', f'{sample_idx}.bin')
-
+    # get annotations
     if has_label:
         annotations = {}
         # box is of shape [k, 6 + class]
