@@ -60,6 +60,27 @@ class RandomScale(object):
 
 
 @PIPELINES.register_module()
+class RandomJitter(object):
+
+    def __init__(self, sigma=0.01, clip=0.05):
+        self.sigma = sigma
+        self.clip = clip
+
+    def __call__(self, input_dict):
+        assert (self.clip > 0)
+        points = input_dict['points']
+        jitter = np.clip(self.sigma * np.random.randn(points.shape[0], 3),
+                         -1 * self.clip, self.clip)
+        points.coord = points.coord + points.coord.new_tensor(jitter)
+        input_dict['points'] = points
+        return input_dict
+
+    def __repr__(self):
+        return 'RandomJitter(sigma: {}, clip: {})'.format(
+            self.sigma, self.clip)
+
+
+@PIPELINES.register_module()
 class RandomDropPointsColor(object):
     r"""Randomly set the color of points to all zeros.
 
