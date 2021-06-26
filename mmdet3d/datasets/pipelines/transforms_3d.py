@@ -146,6 +146,199 @@ class RandomDropPointsColor(object):
 
 
 @PIPELINES.register_module()
+class PAConvIndoorPatchPointSample(object):
+    r"""Indoor point sample within a patch. Modified from `PointNet++ <https://
+    github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py>`_.
+
+    Sampling data to a certain number for semantic segmentation.
+
+    Args:
+        num_points (int): Number of points to be sampled.
+        block_size (float, optional): Size of a block to sample points from.
+            Defaults to 1.5.
+        sample_rate (float, optional): Stride used in sliding patch generation.
+            This parameter is unused in `IndoorPatchPointSample` and thus has
+            been deprecated. We plan to remove it in the future.
+            Defaults to None.
+        ignore_index (int, optional): Label index that won't be used for the
+            segmentation task. This is set in PointSegClassMapping as neg_cls.
+            Defaults to None.
+        use_normalized_coord (bool, optional): Whether to use normalized xyz as
+            additional features. Defaults to False.
+        num_try (int, optional): Number of times to try if the patch selected
+            is invalid. Defaults to 10.
+        enlarge_size (float | None, optional): Enlarge the sampled patch to
+            [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
+            an augmentation. If None, set it as 0.01. Defaults to 0.2.
+        min_unique_num (int | None, optional): Minimum number of unique points
+            the sampled patch should contain. If None, use PointNet++'s method
+            to judge uniqueness. Defaults to None.
+
+    Note:
+        This transform should only be used in the training process of point
+            cloud segmentation tasks. For the sliding patch generation and
+            inference process in testing, please refer to the `slide_inference`
+            function of `EncoderDecoder3D` class.
+    """
+
+    def __init__(self,
+                 num_points=4096,
+                 block_size=1.0,
+                 use_normalized_coord=True,
+                 num_try=100000):
+        self.num_points = num_points
+        self.block_size = block_size
+        self.use_normalized_coord = use_normalized_coord
+        self.num_try = num_try
+        self.min_unique_num = num_points / 4
+
+    def _input_generation(self, coords, patch_center, coord_max, attributes,
+                          attribute_dims, point_type):
+        """Generating model input.
+
+        Generate input by subtracting patch center and adding additional \
+            features. Currently support colors and normalized xyz as features.
+
+        Args:
+            coords (np.ndarray): Sampled 3D Points.
+            patch_center (np.ndarray): Center coordinate of the selected patch.
+            coord_max (np.ndarray): Max coordinate of all 3D Points.
+            attributes (np.ndarray): features of input points.
+            attribute_dims (dict): Dictionary to indicate the meaning of extra
+                dimension.
+            point_type (type): class of input points inherited from BasePoints.
+
+        Returns:
+            :obj:`BasePoints`: The generated input data.
+        """
+        # subtract patch center, the z dimension is not centered
+        centered_coords = coords.copy()
+        centered_coords[:, 0] -= patch_center[0]
+        centered_coords[:, 1] -= patch_center[1]
+
+        if self.use_normalized_coord:
+            normalized_coord = coords / coord_max
+            attributes = np.concatenate([attributes, normalized_coord], axis=1)
+            if attribute_dims is None:
+                attribute_dims = dict()
+            attribute_dims.update(
+                dict(normalized_coord=[
+                    attributes.shape[1], attributes.shape[1] +
+                    1, attributes.shape[1] + 2
+                ]))
+
+        points = np.concatenate([centered_coords, attributes], axis=1)
+        points = point_type(
+            points, points_dim=points.shape[1], attribute_dims=attribute_dims)
+
+        return points
+
+    def _patch_points_sampling(self, points, sem_mask, replace=None):
+        """Patch points sampling.
+
+        First sample a valid patch.
+        Then sample points within that patch to a certain number.
+
+        Args:
+            points (:obj:`BasePoints`): 3D Points.
+            sem_mask (np.ndarray): semantic segmentation mask for input points.
+            replace (bool): Whether the sample is with or without replacement.
+                Defaults to None.
+
+        Returns:
+            tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
+
+                - points (:obj:`BasePoints`): 3D Points.
+                - choices (np.ndarray): The generated random samples.
+        """
+        coords = points.coord.numpy()
+        attributes = points.tensor[:, 3:].numpy()
+        attribute_dims = points.attribute_dims
+        point_type = type(points)
+
+        coord_max = np.amax(coords, axis=0)
+        coord_min = np.amin(coords, axis=0)
+
+        for _ in range(self.num_try):
+            # random sample a point as patch center
+            cur_center = coords[np.random.choice(coords.shape[0])]
+
+            # boundary of a patch
+            cur_max = cur_center + np.array(
+                [self.block_size / 2.0, self.block_size / 2.0, 0.0])
+            cur_min = cur_center - np.array(
+                [self.block_size / 2.0, self.block_size / 2.0, 0.0])
+            cur_max[2] = coord_max[2] + 1e-3
+            cur_min[2] = coord_min[2] - 1e-3
+            cur_choice = np.sum(
+                (coords >= cur_min) * (coords <= cur_max), axis=1) == 3
+
+            if not cur_choice.any():  # no points in this patch
+                continue
+
+            point_idxs = np.where(cur_choice)[0]
+
+            if point_idxs.size > self.min_unique_num:
+                break
+
+        if point_idxs.size >= self.num_points:
+            choices = np.random.choice(
+                point_idxs, self.num_points, replace=False)
+        else:
+            # do not use random choice here to avoid some pts not counted
+            dup = np.random.choice(point_idxs.size,
+                                   self.num_points - point_idxs.size)
+            idx_dup = np.concatenate(
+                [np.arange(point_idxs.size),
+                 np.array(dup)], 0)
+            choices = point_idxs[idx_dup]
+
+        # construct model input
+        points = self._input_generation(coords[choices], cur_center, coord_max,
+                                        attributes[choices], attribute_dims,
+                                        point_type)
+
+        return points, choices
+
+    def __call__(self, results):
+        """Call function to sample points to in indoor scenes.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after sampling, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
+        """
+        points = results['points']
+
+        assert 'pts_semantic_mask' in results.keys(), \
+            'semantic mask should be provided in training and evaluation'
+        pts_semantic_mask = results['pts_semantic_mask']
+
+        points, choices = self._patch_points_sampling(points,
+                                                      pts_semantic_mask)
+
+        results['points'] = points
+        results['pts_semantic_mask'] = pts_semantic_mask[choices]
+        pts_instance_mask = results.get('pts_instance_mask', None)
+        if pts_instance_mask is not None:
+            results['pts_instance_mask'] = pts_instance_mask[choices]
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(num_points={self.num_points},'
+        repr_str += f' block_size={self.block_size},'
+        repr_str += f' use_normalized_coord={self.use_normalized_coord},'
+        repr_str += f' num_try={self.num_try},'
+        repr_str += f' min_unique_num={self.min_unique_num})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
