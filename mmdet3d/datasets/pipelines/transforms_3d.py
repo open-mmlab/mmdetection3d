@@ -81,6 +81,27 @@ class RandomJitter(object):
 
 
 @PIPELINES.register_module()
+class RandomDropColor(object):
+
+    def __init__(self, p=0.8, color_augment=0.0):
+        self.p = p
+        self.color_augment = color_augment
+
+    def __call__(self, input_dict):
+        points = input_dict['points']
+        if points.attribute_dims is not None and \
+            'color' in points.attribute_dims and \
+                np.random.rand() > self.p:
+            points.color = points.color * self.color_augment
+        input_dict['points'] = points
+        return input_dict
+
+    def __repr__(self):
+        return 'RandomDropColor(color_augment: {}, p: {})'.format(
+            self.color_augment, self.p)
+
+
+@PIPELINES.register_module()
 class RandomDropPointsColor(object):
     r"""Randomly set the color of points to all zeros.
 
