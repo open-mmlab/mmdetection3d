@@ -41,6 +41,25 @@ class RandomRotate(object):
 
 
 @PIPELINES.register_module()
+class RandomScale(object):
+
+    def __init__(self, scale_low=0.8, scale_high=1.2):
+        self.scale_low = scale_low
+        self.scale_high = scale_high
+
+    def __call__(self, input_dict):
+        scale = np.random.uniform(self.scale_low, self.scale_high)
+        points = input_dict['points']
+        points.coord = points.coord * scale
+        input_dict['points'] = points
+        return input_dict
+
+    def __repr__(self):
+        return 'RandomScale(scale_low: {}, scale_high: {})'.format(
+            self.scale_low, self.scale_high)
+
+
+@PIPELINES.register_module()
 class RandomDropPointsColor(object):
     r"""Randomly set the color of points to all zeros.
 
