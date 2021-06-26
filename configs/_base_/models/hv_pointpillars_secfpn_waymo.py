@@ -48,15 +48,14 @@ model = dict(
                     [-74.88, -74.88, -0.1188, 74.88, 74.88, -0.1188],
                     [-74.88, -74.88, 0, 74.88, 74.88, 0]],
             sizes=[
-                [2.08, 4.73, 1.77],  # car
-                [0.84, 1.81, 1.77],  # cyclist
-                [0.84, 0.91, 1.74]  # pedestrian
+                [4.73, 2.08, 1.77],  # car
+                [1.81, 0.84, 1.77],  # cyclist
+                [0.91, 0.84, 1.74]  # pedestrian
             ],
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,
-        dir_offset=0.7854,  # pi/4
-        dir_limit_offset=0,
+        dir_offset=-0.7854,  # -pi / 4
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=7),
         loss_cls=dict(
             type='FocalLoss',

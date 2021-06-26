@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import force_fp32
@@ -463,7 +462,7 @@ class SSD3DHead(VoteHead):
                 input_metas[b])
             # fix the wrong direction
             # To do: remove this ops
-            bbox_selected[..., 6] += np.pi
+            # bbox_selected[..., 6] += np.pi
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -486,23 +485,14 @@ class SSD3DHead(VoteHead):
         Returns:
             tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
-        num_bbox = bbox.shape[0]
         bbox = input_meta['box_type_3d'](
             bbox.clone(),
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
             origin=(0.5, 0.5, 0.5))
 
-        if isinstance(bbox, LiDARInstance3DBoxes):
-            box_idx = bbox.points_in_boxes(points)
-            box_indices = box_idx.new_zeros([num_bbox + 1])
-            box_idx[box_idx == -1] = num_bbox
-            box_indices.scatter_add_(0, box_idx.long(),
-                                     box_idx.new_ones(box_idx.shape))
-            box_indices = box_indices[:-1]
-            nonempty_box_mask = box_indices >= 0
-        elif isinstance(bbox, DepthInstance3DBoxes):
-            box_indices = bbox.points_in_boxes(points)
+        if isinstance(bbox, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
+            box_indices = bbox.points_in_boxes_batch(points)
             nonempty_box_mask = box_indices.T.sum(1) >= 0
         else:
             raise NotImplementedError('Unsupported bbox type!')
@@ -557,18 +547,8 @@ class SSD3DHead(VoteHead):
             tuple[torch.Tensor]: Flags indicating whether each point is
                 inside bbox and the index of box where each point are in.
         """
-        # TODO: align points_in_boxes function in each box_structures
-        num_bbox = bboxes_3d.tensor.shape[0]
-        if isinstance(bboxes_3d, LiDARInstance3DBoxes):
-            assignment = bboxes_3d.points_in_boxes(points).long()
-            points_mask = assignment.new_zeros(
-                [assignment.shape[0], num_bbox + 1])
-            assignment[assignment == -1] = num_bbox
-            points_mask.scatter_(1, assignment.unsqueeze(1), 1)
-            points_mask = points_mask[:, :-1]
-            assignment[assignment == num_bbox] = num_bbox - 1
-        elif isinstance(bboxes_3d, DepthInstance3DBoxes):
-            points_mask = bboxes_3d.points_in_boxes(points)
+        if isinstance(bboxes_3d, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
+            points_mask = bboxes_3d.points_in_boxes_batch(points)
             assignment = points_mask.argmax(dim=-1)
         else:
             raise NotImplementedError('Unsupported bbox type!')

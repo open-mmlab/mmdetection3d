@@ -51,15 +51,15 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                      type='Anchor3DRangeGenerator',
                      range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
                      strides=[2],
-                     sizes=[[1.6, 3.9, 1.56]],
+                     sizes=[[3.9, 1.6, 1.56]],
                      rotations=[0, 1.57],
                      custom_values=[],
                      reshape_out=False),
                  assigner_per_size=False,
                  assign_per_class=False,
                  diff_rad_by_sin=True,
-                 dir_offset=0,
-                 dir_limit_offset=1,
+                 dir_offset=-np.pi / 2,
+                 dir_limit_offset=0,
                  bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
@@ -504,7 +504,7 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
             dir_rot = limit_period(bboxes[..., 6] - self.dir_offset,
                                    self.dir_limit_offset, np.pi)
             bboxes[..., 6] = (
-                dir_rot + self.dir_offset +
+                dir_rot + self.dir_offset -
                 np.pi * dir_scores.to(bboxes.dtype))
         bboxes = input_meta['box_type_3d'](bboxes, box_dim=self.box_code_size)
         return bboxes, scores, labels

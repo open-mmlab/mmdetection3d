@@ -215,7 +215,9 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 # Verification
 
-## Verify with point cloud demo
+## Demo
+
+### Point cloud demo
 
 We provide several demo scripts to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md). To test a single-modality 3D detection on point cloud scenes:
 
@@ -271,7 +273,7 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](0_demo.md).
 
 ## High-level APIs for testing point clouds
 

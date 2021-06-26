@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from abc import abstractmethod
 
+from mmdet3d.ops import points_in_boxes_batch, points_in_boxes_gpu
 from mmdet3d.ops.iou3d import iou3d_cuda
 from .utils import limit_period, xywhr2xyxyr
 
@@ -458,3 +459,48 @@ class BaseInstance3DBoxes(object):
         original_type = type(self)
         return original_type(
             new_tensor, box_dim=self.box_dim, with_yaw=self.with_yaw)
+
+    def points_in_boxes(self, points, boxes_override=None):
+        """Find the box which the points are in.
+
+        Args:
+            points (torch.Tensor): Points in shape (N, 3).
+
+        Returns:
+            torch.Tensor: The index of box where each point are in.
+        """
+        if boxes_override is not None:
+            boxes = boxes_override
+        else:
+            boxes = self.tensor
+        box_idx = points_in_boxes_gpu(
+            points.unsqueeze(0),
+            boxes.unsqueeze(0).to(points.device)).squeeze(0)
+        return box_idx
+
+    def points_in_boxes_batch(self, points, boxes_override=None):
+        """Find points that are in boxes (CUDA).
+
+        Args:
+            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
+                3 dimensions are [x, y, z] in LiDAR coordinate.
+
+        Returns:
+            torch.Tensor: The index of boxes each point lies in with shape \
+                of (B, M, T).
+        """
+        if boxes_override is not None:
+            boxes = boxes_override
+        else:
+            boxes = self.tensor
+
+        points_clone = points.clone()[:, :3]
+        if points_clone.dim() == 2:
+            points_clone = points_clone.unsqueeze(0)
+        else:
+            assert points_clone.dim() == 3 and points_clone.shape[0] == 1
+
+        boxes = boxes.to(points_clone.device).unsqueeze(0)
+        box_idxs_of_pts = points_in_boxes_batch(points_clone, boxes)
+
+        return box_idxs_of_pts.squeeze(0)

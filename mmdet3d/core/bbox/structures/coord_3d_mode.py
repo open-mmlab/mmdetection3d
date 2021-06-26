@@ -2,12 +2,9 @@ import numpy as np
 import torch
 from enum import IntEnum, unique
 
-from mmdet3d.core.points import (BasePoints, CameraPoints, DepthPoints,
-                                 LiDARPoints)
+from ...points import BasePoints, CameraPoints, DepthPoints, LiDARPoints
 from .base_box3d import BaseInstance3DBoxes
-from .cam_box3d import CameraInstance3DBoxes
-from .depth_box3d import DepthInstance3DBoxes
-from .lidar_box3d import LiDARInstance3DBoxes
+from .box_3d_mode import Box3DMode
 
 
 @unique
@@ -63,12 +60,40 @@ class Coord3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def convert(input, src, dst, rt_mat=None):
+    def mode_coord2box(coord_mode):
+        if coord_mode == Coord3DMode.LIDAR:
+            return Box3DMode.LIDAR
+        elif coord_mode == Coord3DMode.CAM:
+            return Box3DMode.CAM
+        elif coord_mode == Coord3DMode.DEPTH:
+            return Box3DMode.DEPTH
+        else:
+            raise NotImplementedError
+
+    @staticmethod
+    def mode_box2coord(box_mode):
+        if box_mode == Box3DMode.LIDAR:
+            return Coord3DMode.LIDAR
+        elif box_mode == Box3DMode.CAM:
+            return Coord3DMode.CAM
+        elif box_mode == Box3DMode.DEPTH:
+            return Coord3DMode.DEPTH
+        else:
+            raise NotImplementedError
+
+    @staticmethod
+    def convert(input, src, dst, rt_mat=None, is_point=True):
         """Convert boxes or points from `src` mode to `dst` mode."""
         if isinstance(input, BaseInstance3DBoxes):
             return Coord3DMode.convert_box(input, src, dst, rt_mat=rt_mat)
         elif isinstance(input, BasePoints):
             return Coord3DMode.convert_point(input, src, dst, rt_mat=rt_mat)
+        elif isinstance(input, (tuple, list, np.ndarray, torch.Tensor)):
+            if is_point:
+                return Coord3DMode.convert_point(
+                    input, src, dst, rt_mat=rt_mat)
+            else:
+                return Coord3DMode.convert_box(input, src, dst, rt_mat=rt_mat)
         else:
             raise NotImplementedError
 
@@ -80,8 +105,8 @@ class Coord3DMode(IntEnum):
             box (tuple | list | np.ndarray |
                 torch.Tensor | BaseInstance3DBoxes):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
-            src (:obj:`CoordMode`): The src Box mode.
-            dst (:obj:`CoordMode`): The target Box mode.
+            src (:obj:`Coord3DMode`): The src Box mode.
+            dst (:obj:`Coord3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -92,90 +117,9 @@ class Coord3DMode(IntEnum):
             (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes): \
                 The converted box of the same type.
         """
-        if src == dst:
-            return box
-
-        is_numpy = isinstance(box, np.ndarray)
-        is_Instance3DBoxes = isinstance(box, BaseInstance3DBoxes)
-        single_box = isinstance(box, (list, tuple))
-        if single_box:
-            assert len(box) >= 7, (
-                'CoordMode.convert takes either a k-tuple/list or '
-                'an Nxk array/tensor, where k >= 7')
-            arr = torch.tensor(box)[None, :]
-        else:
-            # avoid modifying the input box
-            if is_numpy:
-                arr = torch.from_numpy(np.asarray(box)).clone()
-            elif is_Instance3DBoxes:
-                arr = box.tensor.clone()
-            else:
-                arr = box.clone()
-
-        # convert box from `src` mode to `dst` mode.
-        x_size, y_size, z_size = arr[..., 3:4], arr[..., 4:5], arr[..., 5:6]
-        if src == Coord3DMode.LIDAR and dst == Coord3DMode.CAM:
-            if rt_mat is None:
-                rt_mat = arr.new_tensor([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
-            xyz_size = torch.cat([y_size, z_size, x_size], dim=-1)
-        elif src == Coord3DMode.CAM and dst == Coord3DMode.LIDAR:
-            if rt_mat is None:
-                rt_mat = arr.new_tensor([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
-            xyz_size = torch.cat([z_size, x_size, y_size], dim=-1)
-        elif src == Coord3DMode.DEPTH and dst == Coord3DMode.CAM:
-            if rt_mat is None:
-                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
-            xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
-        elif src == Coord3DMode.CAM and dst == Coord3DMode.DEPTH:
-            if rt_mat is None:
-                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
-            xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
-        elif src == Coord3DMode.LIDAR and dst == Coord3DMode.DEPTH:
-            if rt_mat is None:
-                rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
-            xyz_size = torch.cat([y_size, x_size, z_size], dim=-1)
-        elif src == Coord3DMode.DEPTH and dst == Coord3DMode.LIDAR:
-            if rt_mat is None:
-                rt_mat = arr.new_tensor([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
-            xyz_size = torch.cat([y_size, x_size, z_size], dim=-1)
-        else:
-            raise NotImplementedError(
-                f'Conversion from Coord3DMode {src} to {dst} '
-                'is not supported yet')
-
-        if not isinstance(rt_mat, torch.Tensor):
-            rt_mat = arr.new_tensor(rt_mat)
-        if rt_mat.size(1) == 4:
-            extended_xyz = torch.cat(
-                [arr[:, :3], arr.new_ones(arr.size(0), 1)], dim=-1)
-            xyz = extended_xyz @ rt_mat.t()
-        else:
-            xyz = arr[:, :3] @ rt_mat.t()
-
-        remains = arr[..., 6:]
-        arr = torch.cat([xyz[:, :3], xyz_size, remains], dim=-1)
-
-        # convert arr to the original type
-        original_type = type(box)
-        if single_box:
-            return original_type(arr.flatten().tolist())
-        if is_numpy:
-            return arr.numpy()
-        elif is_Instance3DBoxes:
-            if dst == Coord3DMode.CAM:
-                target_type = CameraInstance3DBoxes
-            elif dst == Coord3DMode.LIDAR:
-                target_type = LiDARInstance3DBoxes
-            elif dst == Coord3DMode.DEPTH:
-                target_type = DepthInstance3DBoxes
-            else:
-                raise NotImplementedError(
-                    f'Conversion to {dst} through {original_type}'
-                    ' is not supported yet')
-            return target_type(
-                arr, box_dim=arr.size(-1), with_yaw=box.with_yaw)
-        else:
-            return arr
+        src = Coord3DMode.mode_coord2box(src)
+        dst = Coord3DMode.mode_coord2box(dst)
+        return Box3DMode.convert(box, src, dst, rt_mat=rt_mat)
 
     @staticmethod
     def convert_point(point, src, dst, rt_mat=None):
