@@ -12,6 +12,35 @@ from .data_augment_utils import noise_per_object_v3_
 
 
 @PIPELINES.register_module()
+class RandomRotate(object):
+
+    def __init__(self, rotate_angle=None, along_z=True):
+        self.rotate_angle = rotate_angle
+        self.along_z = along_z
+
+    def __call__(self, input_dict):
+        if self.rotate_angle is None:
+            rotate_angle = np.random.uniform() * 2 * np.pi
+        else:
+            rotate_angle = self.rotate_angle
+        cosval, sinval = np.cos(rotate_angle), np.sin(rotate_angle)
+        if self.along_z:
+            rotation_matrix = np.array([[cosval, sinval, 0],
+                                        [-sinval, cosval, 0], [0, 0, 1]])
+        else:
+            rotation_matrix = np.array([[cosval, 0, sinval], [0, 1, 0],
+                                        [-sinval, 0, cosval]])
+        points = input_dict['points']
+        points.coord = points.coord @ points.coord.new_tensor(rotation_matrix)
+        input_dict['points'] = points
+        return input_dict
+
+    def __repr__(self):
+        return 'RandomRotate(rotate_angle: {}, along_z: {})'.format(
+            self.rotate_angle, self.along_z)
+
+
+@PIPELINES.register_module()
 class RandomDropPointsColor(object):
     r"""Randomly set the color of points to all zeros.
 
