@@ -231,7 +231,7 @@ def test_format_results():
                                  pipeline, classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor([[
-            6.9684e+01, 3.3335e+01, 4.1465e-02, 4.3600e+00, 2.0100e+00, 
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 4.3600e+00, 2.0100e+00,
             1.4600e+00, 9.0000e-02 - np.pi / 2
         ]]))
     labels_3d = torch.tensor([0])
