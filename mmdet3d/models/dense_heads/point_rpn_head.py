@@ -5,8 +5,10 @@ from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule, force_fp32
 from torch.nn import functional as F
 
+from mmdet3d.core import xywhr2xyxyr
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
+from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 from .base_separate_conv_bbox_head import BaseSeparateConvBboxHead
@@ -377,6 +379,57 @@ class PointRPNHead(BaseModule):
                 with_yaw=True)
             results.append((bbox, score_selected, labels, cls_preds_selected))
         return results
+
+    def class_agnostic_nms(self, obj_scores, sem_scores, bbox, points,
+                           input_meta, training_flag):
+        """Multi-class nms in single batch.
+
+        Args:
+            obj_scores (torch.Tensor): Objectness score of bounding boxes.
+            sem_scores (torch.Tensor): semantic class score of bounding boxes.
+            bbox (torch.Tensor): Predicted bounding boxes.
+            points (torch.Tensor): Input points.
+            input_meta (dict): Point cloud and image's meta info.
+
+        Returns:
+            tuple[torch.Tensor]: Bounding boxes, scores and labels.
+        """
+        bbox = input_meta['box_type_3d'](
+            bbox.clone(),
+            box_dim=bbox.shape[-1],
+            with_yaw=True,
+            origin=(0.5, 0.5, 0.5))
+        bbox_for_nms = xywhr2xyxyr(bbox.bev)
+
+        bbox_selected = []
+        score_selected = []
+        labels = []
+        cls_preds = []
+
+        num_rpn_proposal = self.test_cfg.max_output_num
+        score_thr = self.test_cfg.score_thr
+        if training_flag:
+            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
+            score_thr = self.train_cfg.rpn_proposal.score_thr
+
+        score_thr_inds = obj_scores > score_thr
+        _scores = obj_scores[score_thr_inds]
+        _bboxes_for_nms = bbox_for_nms[score_thr_inds, :]
+        _bboxes = bbox[score_thr_inds]
+        _sem_scores = sem_scores[score_thr_inds]
+        _classes = torch.argmax(_sem_scores, -1)
+
+        selected = nms_gpu(_bboxes_for_nms, _scores, score_thr)
+        if selected.shape[0] > num_rpn_proposal:
+            selected = selected[:num_rpn_proposal]
+
+        if len(selected) > 0:
+            bbox_selected = _bboxes[selected].tensor
+            score_selected = _scores[selected]
+            labels = _classes[selected]
+            cls_preds = _sem_scores[selected]
+
+        return bbox_selected, score_selected, labels, cls_preds
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta, training_flag):
