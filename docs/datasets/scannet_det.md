@@ -1,4 +1,4 @@
-# ScanNet
+# ScanNet for 3D Object Detection
 
 ## Dataset preparation
 
@@ -54,26 +54,6 @@ def export(mesh_file,
            label_map_file,
            output_file=None,
            test_mode=False):
-    """Export original files to vert, ins_label, sem_label and bbox file.
-
-    Args:
-        mesh_file (str): Path of the mesh_file.
-        agg_file (str): Path of the agg_file.
-        seg_file (str): Path of the seg_file.
-        meta_file (str): Path of the meta_file.
-        label_map_file (str): Path of the label_map_file.
-        output_file (str): Path of the output folder.
-            Default: None.
-        test_mode (bool): Whether is generating test data without labels.
-            Default: False.
-
-    It returns a tuple, which containts the the following things:
-        np.ndarray: Vertices of points data.
-        np.ndarray: Indexes of label.
-        np.ndarray: Indexes of instance.
-        np.ndarray: Instance bboxes.
-        dict: Map from object_id to label_id.
-    """
 
     # label map file: ./data/scannet/meta_data/scannetv2-labels.combined.tsv
     # the various label standards in the label map file, e.g. 'nyu40id'
@@ -82,7 +62,9 @@ def export(mesh_file,
     # load raw point cloud data, 6-dims feature: XYZRGB
     mesh_vertices = scannet_utils.read_mesh_vertices_rgb(mesh_file)
 
-    # Load scene axis alignment matrix
+    # Load scene axis alignment matrix: a 4x4 transformation matrix
+    # transform raw points in sensor coordinate system to a coordinate system
+    # which is axis-aligned with the length/width of the room
     lines = open(meta_file).readlines()
     # test set data doesn't have align_matrix
     axis_align_matrix = np.eye(4)
@@ -97,14 +79,18 @@ def export(mesh_file,
 
     # perform global alignment of mesh vertices
     pts = np.ones((mesh_vertices.shape[0], 4))
+    # raw point cloud in homogeneous coordinats, each row: [x, y, z, 1]
     pts[:, 0:3] = mesh_vertices[:, 0:3]
+    # transform raw mesh vertices to aligned mesh vertices
     pts = np.dot(pts, axis_align_matrix.transpose())  # Nx4
     aligned_mesh_vertices = np.concatenate([pts[:, 0:3], mesh_vertices[:, 3:]],
                                            axis=1)
 
     # Load semantic and instance labels
     if not test_mode:
+        # each object has one semantic label and consists of several segments
         object_id_to_segs, label_to_segs = read_aggregation(agg_file)
+        # many points may belong to the same segment
         seg_to_verts, num_verts = read_segmentation(seg_file)
         label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)
         object_id_to_label_id = {}
@@ -112,6 +98,7 @@ def export(mesh_file,
             label_id = label_map[label]
             for seg in segs:
                 verts = seg_to_verts[seg]
+                # each point has one semantic label
                 label_ids[verts] = label_id
         instance_ids = np.zeros(
             shape=(num_verts), dtype=np.uint32)  # 0: unannotated
@@ -119,6 +106,7 @@ def export(mesh_file,
             for seg in segs:
                 verts = seg_to_verts[seg]
                 # object_id is 1-indexed, i.e. 1,2,3,.,,,.NUM_INSTANCES
+                # each point belongs to one object
                 instance_ids[verts] = object_id
                 if object_id not in object_id_to_label_id:
                     object_id_to_label_id[object_id] = label_ids[verts][0]
@@ -137,62 +125,7 @@ def export(mesh_file,
 
 ```
 
-After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000. In addition, invalid semantic label outside of `nyu40id` standard should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files. The overall `export_one_scan` procedure is as follows:
-
-```python
-def export_one_scan(scan_name,
-                    output_filename_prefix,
-                    max_num_point,
-                    label_map_file,
-                    scannet_dir,
-                    test_mode=False):
-    ...
-
-    # Export original files
-    mesh_vertices, semantic_labels, instance_labels, unaligned_bboxes, \
-        aligned_bboxes, instance2semantic, axis_align_matrix = export(
-            mesh_file, agg_file, seg_file, meta_file, label_map_file, None,
-            test_mode)
-
-    # filter invalid classes
-    if not test_mode:
-        mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
-        mesh_vertices = mesh_vertices[mask, :]
-        semantic_labels = semantic_labels[mask]
-        instance_labels = instance_labels[mask]
-
-        num_instances = len(np.unique(instance_labels))
-        print(f'Num of instances: {num_instances}')
-
-        bbox_mask = np.in1d(unaligned_bboxes[:, -1], OBJ_CLASS_IDS)
-        unaligned_bboxes = unaligned_bboxes[bbox_mask, :]
-        bbox_mask = np.in1d(aligned_bboxes[:, -1], OBJ_CLASS_IDS)
-        aligned_bboxes = aligned_bboxes[bbox_mask, :]
-        assert unaligned_bboxes.shape[0] == aligned_bboxes.shape[0]
-        print(f'Num of care instances: {unaligned_bboxes.shape[0]}')
-
-    # raw point cloud downsample
-    if max_num_point is not None:
-        max_num_point = int(max_num_point)
-        N = mesh_vertices.shape[0]
-        if N > max_num_point:
-            choices = np.random.choice(N, max_num_point, replace=False)
-            mesh_vertices = mesh_vertices[choices, :]
-            if not test_mode:
-                semantic_labels = semantic_labels[choices]
-                instance_labels = instance_labels[choices]
-
-    # save point cloud and annotations
-    np.save(f'{output_filename_prefix}_vert.npy', mesh_vertices)
-    if not test_mode:
-        np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
-        np.save(f'{output_filename_prefix}_ins_label.npy', instance_labels)
-        np.save(f'{output_filename_prefix}_unaligned_bbox.npy',
-                unaligned_bboxes)
-        np.save(f'{output_filename_prefix}_aligned_bbox.npy', aligned_bboxes)
-        np.save(f'{output_filename_prefix}_axis_align_matrix.npy',
-                axis_align_matrix)
-```
+After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large. In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
 
 ### Create dataset
 
