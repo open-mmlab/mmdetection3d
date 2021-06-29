@@ -51,7 +51,7 @@ extensions = [
 ]
 
 autodoc_mock_imports = [
-    'cv2', 'matplotlib', 'nuscenes', 'PIL', 'pycocotools', 'pyquaternion',
+    'matplotlib', 'nuscenes', 'PIL', 'pycocotools', 'pyquaternion',
     'terminaltables', 'mmcv', 'mmdet', 'mmdet3d.version', 'mmdet3d.ops',
     'mmseg'
 ]
