@@ -163,25 +163,14 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         self._init_layers()
         if init_cfg is None:
             self.init_cfg =dict(
-                type='Kaiming',
-                layer=['Conv2d', 'DCNv2'],
-                bias=self.conv_bias,
-                override=[
-                    dict(
-                        type='Normal', 
-                        name=[
-                            'conv_regs', 
-                            'reg_convs'
-                            'cls_convs',
-                            'conv_cls_prev'
-                            ],
-                        std=0.01),
-                    dict(
-                        type='Normal', 
-                        name='conv_cls',
-                        std=0.01,
-                        bias=0.01
-                    )])
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal', 
+                    name='conv_cls',
+                    std=0.01,
+                    bias=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -289,20 +278,6 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
     def init_weights(self):
         """Initialize weights of the head."""
         super().init_weights()
-        for conv_reg_prev in self.conv_reg_prevs:
-            if conv_reg_prev is None:
-                continue
-            for m in conv_reg_prev:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
-        if self.use_direction_classifier:
-            for m in self.conv_dir_cls_prev:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
-        if self.pred_attrs:
-            for m in self.conv_attr_prev:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
         bias_cls = bias_init_with_prob(0.01)
         if self.use_direction_classifier:
             normal_init(self.conv_dir_cls, std=0.01, bias=bias_cls)

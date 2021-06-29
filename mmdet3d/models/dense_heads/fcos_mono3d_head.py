@@ -91,31 +91,19 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             loss_dir=loss_dir,
             loss_attr=loss_attr,
             norm_cfg=norm_cfg,
+            init_cfg=init_cfg,
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
         if init_cfg is None:
             self.init_cfg =dict(
-                type='Kaiming',
-                layer=['Conv2d', 'DCNv2'],
-                bias=self.conv_bias,
-                override=[
-                    dict(
-                        type='Normal', 
-                        name=[
-                            'conv_regs', 
-                            'reg_convs'
-                            'cls_convs',
-                            'conv_cls_prev',
-                            'conv_centerness_prev',
-                            'conv_centerness'
-                            ],
-                        std=0.01),
-                    dict(
-                        type='Normal', 
-                        name='conv_cls',
-                        std=0.01,
-                        bias=0.01
-                    )])
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal', 
+                    name='conv_cls',
+                    std=0.01,
+                    bias=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
