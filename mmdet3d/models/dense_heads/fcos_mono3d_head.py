@@ -74,6 +74,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                      loss_weight=1.0),
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  centerness_branch=(64, ),
+                 init_cfg=None,
                  **kwargs):
         self.regress_ranges = regress_ranges
         self.center_sampling = center_sampling
@@ -92,6 +93,29 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             norm_cfg=norm_cfg,
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
+        if init_cfg is None:
+            self.init_cfg =dict(
+                type='Kaiming',
+                layer=['Conv2d', 'DCNv2'],
+                bias=self.conv_bias,
+                override=[
+                    dict(
+                        type='Normal', 
+                        name=[
+                            'conv_regs', 
+                            'reg_convs'
+                            'cls_convs',
+                            'conv_cls_prev',
+                            'conv_centerness_prev',
+                            'conv_centerness'
+                            ],
+                        std=0.01),
+                    dict(
+                        type='Normal', 
+                        name='conv_cls',
+                        std=0.01,
+                        bias=0.01
+                    )])
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -103,14 +127,6 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.scales = nn.ModuleList([
             nn.ModuleList([Scale(1.0) for _ in range(3)]) for _ in self.strides
         ])  # only for offset, depth and size regression
-
-    def init_weights(self):
-        """Initialize weights of the head."""
-        super().init_weights()
-        for m in self.conv_centerness_prev:
-            if isinstance(m.conv, nn.Conv2d):
-                normal_init(m.conv, std=0.01)
-        normal_init(self.conv_centerness, std=0.01)
 
     def forward(self, feats):
         """Forward features from the upstream network.
