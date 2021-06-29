@@ -52,8 +52,7 @@ extensions = [
 
 autodoc_mock_imports = [
     'matplotlib', 'nuscenes', 'PIL', 'pycocotools', 'pyquaternion',
-    'terminaltables', 'mmcv', 'mmdet', 'mmdet3d.version', 'mmdet3d.ops',
-    'mmseg'
+    'terminaltables', 'mmdet3d.version', 'mmdet3d.ops'
 ]
 autosectionlabel_prefix_document = True
 
