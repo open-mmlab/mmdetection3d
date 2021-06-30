@@ -652,7 +652,6 @@ def test_h3d_head():
                                    dtype=torch.float32).cuda().long()
     dir_res_targets = torch.rand([1, num_proposal], dtype=torch.float32).cuda()
     center_targets = torch.rand([1, 4, 3], dtype=torch.float32).cuda()
-    assigned_center_targets = center_targets.clone()
     mask_targets = torch.rand([1, num_proposal],
                               dtype=torch.float32).cuda().long()
     valid_gt_masks = torch.rand([1, 4], dtype=torch.float32).cuda()
