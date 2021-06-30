@@ -666,15 +666,9 @@ def test_h3d_head():
 
     targets = (vote_targets, vote_target_masks, size_class_targets,
                size_res_targets, dir_class_targets, dir_res_targets,
-<<<<<<< HEAD
-               center_targets, assigned_center_targets, mask_targets,
-               valid_gt_masks, objectness_targets, objectness_weights,
-               box_loss_weights, valid_gt_weights)
-=======
                center_targets, None, mask_targets, valid_gt_masks,
                objectness_targets, objectness_weights, box_loss_weights,
                valid_gt_weights)
->>>>>>> master
 
     input_dict['targets'] = targets
 
