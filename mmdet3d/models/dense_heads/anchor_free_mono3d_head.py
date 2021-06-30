@@ -6,6 +6,7 @@ from torch import nn as nn
 
 from mmdet.core import multi_apply
 from mmdet.models.builder import HEADS, build_loss
+from mmcv.runner import Sequential, ModuleList
 from .base_mono3d_dense_head import BaseMono3DDenseHead
 
 
@@ -159,7 +160,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             self.attr_background_label = num_attrs
             self.loss_attr = build_loss(loss_attr)
             self.attr_branch = attr_branch
-
+     
         self._init_layers()
         if init_cfg is None:
             self.init_cfg =dict(
@@ -170,7 +171,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                     type='Normal', 
                     name='conv_cls',
                     std=0.01,
-                    bias=0.01))
+                    bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -274,9 +275,8 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 conv_channels=self.attr_branch,
                 conv_strides=(1, ) * len(self.attr_branch))
             self.conv_attr = nn.Conv2d(self.attr_branch[-1], self.num_attrs, 1)
-
+    
     def init_weights(self):
-        """Initialize weights of the head."""
         super().init_weights()
         bias_cls = bias_init_with_prob(0.01)
         if self.use_direction_classifier:

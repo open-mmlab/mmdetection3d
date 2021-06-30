@@ -103,7 +103,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                     type='Normal', 
                     name='conv_cls',
                     std=0.01,
-                    bias=0.01))
+                    bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -115,7 +115,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.scales = nn.ModuleList([
             nn.ModuleList([Scale(1.0) for _ in range(3)]) for _ in self.strides
         ])  # only for offset, depth and size regression
-
+        
     def forward(self, feats):
         """Forward features from the upstream network.
 

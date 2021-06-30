@@ -16,7 +16,6 @@ model = dict(
         out_channels=256,
         start_level=1,
         add_extra_convs=True,
-        extra_convs_on_inputs=False,  # use P5
         num_outs=5,
         relu_before_extra_convs=True),
     bbox_head=dict(
