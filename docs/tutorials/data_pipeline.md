@@ -98,11 +98,11 @@ For each operation, we list the related dict fields that are added/updated/remov
 
 `GlobalRotScaleTrans`
 - add: pcd_trans, pcd_rotation, pcd_scale_factor
-- update: points, bbox3d_fields
+- update: points, *bbox3d_fields
 
 `RandomFlip3D`
 - add: flip, pcd_horizontal_flip, pcd_vertical_flip
-- update: points, bbox3d_fields
+- update: points, *bbox3d_fields
 
 `PointsRangeFilter`
 - update: points

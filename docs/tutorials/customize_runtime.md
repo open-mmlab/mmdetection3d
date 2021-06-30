@@ -57,7 +57,7 @@ You also need to import `optimizer` in `mmdet3d/core/__init__.py` by adding:
 from .optimizer import *
 ```
 
-or use `custom_imports` in the config to manually import it
+Or use `custom_imports` in the config to manually import it
 
 ```python
 custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_failed_imports=False)
@@ -248,7 +248,7 @@ __all__ = [..., 'MyHook']
 
 ```
 
-or use `custom_imports` in the config to manually import it
+Or use `custom_imports` in the config to manually import it
 
 ```python
 custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
