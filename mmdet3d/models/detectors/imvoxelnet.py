@@ -19,8 +19,9 @@ class ImVoxelNet(BaseDetector):
                  anchor_generator,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
-        super().__init__()
+                 pretrained=None,
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.backbone = build_backbone(backbone)
         self.neck = build_neck(neck)
         self.neck_3d = build_neck(neck_3d)
@@ -31,20 +32,6 @@ class ImVoxelNet(BaseDetector):
         self.anchor_generator = build_anchor_generator(anchor_generator)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.init_weights(pretrained=pretrained)
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in detector.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-        super().init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-        self.neck.init_weights()
-        self.neck_3d.init_weights()
-        self.bbox_head.init_weights()
 
     def extract_feat(self, img, img_metas):
         """Extract 3d features from the backbone -> fpn -> 3d projection.
