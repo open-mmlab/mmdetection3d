@@ -13,6 +13,10 @@ To unify the parameter initialization in OpenMMLab projects, MMCV supports `Base
 We modified the dataset aumentation function `BackgroundPointsFilter`(in [here](https://github.com/open-mmlab/mmdetection3d/blob/mmdet3d/datasets/pipelines/transforms_3d.py#L1101)). In previous version of MMdetection3D, `BackgroundPointsFilter` changes the gt_bboxes_3d's bottom center to the gravity center. In MMDetection3D 0.14.0,
 `BackgroundPointsFilter` will not change it. Please refer to PR #609 for details.
 
+### Enhance `IndoorPatchPointSample` transform
+
+We enhance the pipeline function `IndoorPatchPointSample` used in point cloud segmentation task by adding more choices for patch selection. Also, we plan to remove the unused parameter `sample_rate` in the future. Please modify the code as well as the config files accordingly if you use this transform.
+
 ## MMDetection3D 0.14.0
 
 ### Dataset class for 3D segmentation task

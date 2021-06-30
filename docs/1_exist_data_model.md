@@ -46,7 +46,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --eval mAP
-       --options 'show=True' 'out_dir=./data/scannet/show_results'
+       --eval-options 'show=True' 'out_dir=./data/scannet/show_results'
    ```
 
 3. Test votenet on ScanNet (without saving the test results) and evaluate the mAP.
@@ -70,7 +70,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
        checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
-       --format-only --options 'jsonfile_prefix=./pointpillars_nuscenes_results'
+       --format-only --eval-options 'jsonfile_prefix=./pointpillars_nuscenes_results'
    ```
 
    The generated results be under `./pointpillars_nuscenes_results` directory.
@@ -80,7 +80,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
        checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
-       --format-only --options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
+       --format-only --eval-options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
    ```
 
    The generated results be under `./second_kitti_results` directory.
@@ -90,29 +90,31 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d.py \
        checkpoints/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d_latest.pth --out results/pp_lyft/results_challenge.pkl \
-       --format-only --options 'jsonfile_prefix=results/pp_lyft/results_challenge' \
-       'csv_path=results/pp_lyft/results_challenge.csv'
+       --format-only --eval-options 'jsonfile_prefix=results/pp_lyft/results_challenge' \
+       'csv_savepath=results/pp_lyft/results_challenge.csv'
    ```
 
-   **Notice**: To generate submissions on Lyft, `csv_path` must be given in the options. After generating the csv file, you can make a submission with kaggle commands given on the [website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit).
+   **Notice**: To generate submissions on Lyft, `csv_savepath` must be given in the `--eval-options`. After generating the csv file, you can make a submission with kaggle commands given on the [website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit).
 
-7. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
+   Note that in the [config of Lyft dataset](../configs/_base_/datasets/lyft-3d.py), the value of `ann_file` keyword in `test` is `data_root + 'lyft_infos_test.pkl'`, which is the official test set of Lyft without annotation. To test on the validation set, please change this to `data_root + 'lyft_infos_val.pkl'`.
+
+8. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --eval waymo --options 'pklfile_prefix=results/waymo-car/kitti_results' \
+       --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 
-   **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the options for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
+   **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the `--eval-options` for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
 
-8. Test PointPillars on waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
+9. Test PointPillars on waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --format-only --options 'pklfile_prefix=results/waymo-car/kitti_results' \
+       --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 

@@ -335,9 +335,10 @@ def test_seg_getitem():
             type='IndoorPatchPointSample',
             num_points=5,
             block_size=1.5,
-            sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True),
+            use_normalized_coord=True,
+            enlarge_size=0.2,
+            min_unique_num=None),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -408,9 +409,10 @@ def test_seg_getitem():
         type='IndoorPatchPointSample',
         num_points=5,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False)
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None)
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
         ann_file=ann_file,
@@ -456,9 +458,10 @@ def test_seg_getitem():
         type='IndoorPatchPointSample',
         num_points=5,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False)
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None)
     new_pipelines.remove(new_pipelines[4])
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,

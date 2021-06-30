@@ -86,7 +86,7 @@ def create_indoor_info_file(data_path,
         # no need to generate for test set
         train_dataset.get_seg_infos()
         val_dataset.get_seg_infos()
-    else:
+    elif pkl_prefix == 's3dis':
         # S3DIS doesn't have a fixed train-val split
         # it has 6 areas instead, so we generate info file for each of them
         # in training, we will use dataset to wrap different areas

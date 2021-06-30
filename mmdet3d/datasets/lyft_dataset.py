@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import os
 import pandas as pd
 import tempfile
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
@@ -495,6 +496,7 @@ class LyftDataset(Custom3DDataset):
             idx = Id_list.index(token)
             pred_list[idx] = prediction_str
         df = pd.DataFrame({'Id': Id_list, 'PredictionString': pred_list})
+        mmcv.mkdir_or_exist(os.path.dirname(csv_savepath))
         df.to_csv(csv_savepath, index=False)
 
 
