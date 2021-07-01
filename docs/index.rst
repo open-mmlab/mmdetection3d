@@ -25,6 +25,12 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :caption: Datasets
+
+   datasets/index.rst
+
+.. toctree::
+   :maxdepth: 2
    :caption: Tutorials
 
    tutorials/index.rst
