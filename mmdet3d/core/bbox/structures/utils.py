@@ -111,12 +111,14 @@ def get_box_type(box_type):
     return box_type_3d, box_mode_3d
 
 
-def points_cam2img(points_3d, proj_mat):
+def points_cam2img(points_3d, proj_mat, with_depth=False):
     """Project points from camera coordicates to image coordinates.
 
     Args:
-        points_3d (torch.Tensor): Points in shape (N, 3)
+        points_3d (torch.Tensor): Points in shape (N, 3).
         proj_mat (torch.Tensor): Transformation matrix between coordinates.
+        with_depth (bool, optional): Whether to keep depth in the output.
+            Defaults to False.
 
     Returns:
         torch.Tensor: Points in image coordinates with shape [N, 2].
@@ -141,6 +143,9 @@ def points_cam2img(points_3d, proj_mat):
         [points_3d, points_3d.new_ones(*points_shape)], dim=-1)
     point_2d = torch.matmul(points_4, proj_mat.t())
     point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
+
+    if with_depth:
+        return torch.cat([point_2d_res, point_2d[..., 2:3]], dim=-1)
     return point_2d_res
 
 

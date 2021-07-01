@@ -191,6 +191,8 @@ def test_points_conversion():
         depth_points.tensor[:, 3:]
     ],
                                  dim=1)
+    mat = rt_mat_provided.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+    rt_mat_provided = mat @ rt_mat_provided.transpose(1, 0)
     cam_point_tensor_new = Coord3DMode.convert_point(
         depth_points_new,
         Coord3DMode.DEPTH,

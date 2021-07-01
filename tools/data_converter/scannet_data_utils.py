@@ -244,7 +244,7 @@ class ScanNetSegData(object):
         num_iter = int(np.sum(num_point_all) / float(self.num_points))
         scene_idxs = []
         for idx in range(len(self.data_infos)):
-            scene_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
+            scene_idxs.extend([idx] * int(round(sample_prob[idx] * num_iter)))
         scene_idxs = np.array(scene_idxs).astype(np.int32)
 
         # calculate label weight, adopted from PointNet++

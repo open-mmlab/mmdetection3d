@@ -6,3 +6,4 @@ python:
     - requirements: requirements/docs.txt
     - requirements: requirements/runtime.txt
     - requirements: requirements/readthedocs.txt
+    - requirements: requirements/mminstall.txt

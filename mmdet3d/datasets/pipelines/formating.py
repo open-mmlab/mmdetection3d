@@ -100,6 +100,7 @@ class Collect3D(object):
         - 'ori_shape': original shape of the image as a tuple (h, w, c)
         - 'pad_shape': image shape after padding
         - 'lidar2img': transform from lidar to image
+        - 'depth2img': transform from depth to image
         - 'pcd_horizontal_flip': a boolean indicating if point cloud is \
             flipped horizontally
         - 'pcd_vertical_flip': a boolean indicating if point cloud is \
@@ -134,7 +135,7 @@ class Collect3D(object):
     def __init__(self,
                  keys,
                  meta_keys=('filename', 'ori_shape', 'img_shape', 'lidar2img',
-                            'pad_shape', 'scale_factor', 'flip',
+                            'depth2img', 'pad_shape', 'scale_factor', 'flip',
                             'cam_intrinsic', 'pcd_horizontal_flip',
                             'pcd_vertical_flip', 'box_mode_3d', 'box_type_3d',
                             'img_norm_cfg', 'rect', 'Trv2c', 'P2', 'pcd_trans',
