@@ -1,13 +1,13 @@
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import force_fp32
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 from typing import List
 
 from mmdet3d.ops import three_interpolate, three_nn
 
 
-class PointFPModule(nn.Module):
+class PointFPModule(BaseModule):
     """Point feature propagation module used in PointNets.
 
     Propagate the features from one set to another.
@@ -20,8 +20,9 @@ class PointFPModule(nn.Module):
 
     def __init__(self,
                  mlp_channels: List[int],
-                 norm_cfg: dict = dict(type='BN2d')):
-        super().__init__()
+                 norm_cfg: dict = dict(type='BN2d'),
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.fp16_enabled = False
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):

@@ -1,8 +1,9 @@
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 
-class MLP(nn.Module):
+class MLP(BaseModule):
     """A simple MLP module.
 
     Pass features (B, C, N) through an MLP.
@@ -25,8 +26,9 @@ class MLP(nn.Module):
                  conv_channels=(256, 256),
                  conv_cfg=dict(type='Conv1d'),
                  norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU')):
-        super().__init__()
+                 act_cfg=dict(type='ReLU'),
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.mlp = nn.Sequential()
         prev_channels = in_channel
         for i, conv_channel in enumerate(conv_channels):

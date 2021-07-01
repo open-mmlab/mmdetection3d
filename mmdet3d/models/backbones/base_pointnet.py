@@ -1,23 +1,20 @@
+import warnings
 from abc import ABCMeta
-from mmcv.runner import load_checkpoint
-from torch import nn as nn
+from mmcv.runner import BaseModule
 
 
-class BasePointNet(nn.Module, metaclass=ABCMeta):
+class BasePointNet(BaseModule, metaclass=ABCMeta):
     """Base class for PointNet."""
 
-    def __init__(self):
-        super(BasePointNet, self).__init__()
+    def __init__(self, init_cfg=None, pretrained=None):
+        super(BasePointNet, self).__init__(init_cfg)
         self.fp16_enabled = False
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights of PointNet backbone."""
-        # Do not initialize the conv layers
-        # to follow the original implementation
+        assert not (init_cfg and pretrained), \
+            'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):
-            from mmdet3d.utils import get_root_logger
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
+            warnings.warn('DeprecationWarning: pretrained is a deprecated, '
+                          'please use "init_cfg" instead')
+            self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
 
     @staticmethod
     def _split_point_feats(points):

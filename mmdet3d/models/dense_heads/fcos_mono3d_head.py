@@ -74,6 +74,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                      loss_weight=1.0),
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  centerness_branch=(64, ),
+                 init_cfg=None,
                  **kwargs):
         self.regress_ranges = regress_ranges
         self.center_sampling = center_sampling
@@ -90,6 +91,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             loss_dir=loss_dir,
             loss_attr=loss_attr,
             norm_cfg=norm_cfg,
+            init_cfg=init_cfg,
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
 

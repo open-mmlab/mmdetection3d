@@ -1,3 +1,4 @@
+import warnings
 from torch.nn import functional as F
 
 from mmdet3d.core import AssignResult
@@ -29,9 +30,14 @@ class PartAggregationROIHead(Base3DRoIHead):
                  part_roi_extractor=None,
                  bbox_head=None,
                  train_cfg=None,
-                 test_cfg=None):
+                 test_cfg=None,
+                 pretrained=None,
+                 init_cfg=None):
         super(PartAggregationROIHead, self).__init__(
-            bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
         self.num_classes = num_classes
         assert semantic_head is not None
         self.semantic_head = build_head(semantic_head)
@@ -43,10 +49,12 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         self.init_assigner_sampler()
 
-    def init_weights(self, pretrained):
-        """Initialize weights, skip since ``PartAggregationROIHead`` does not
-        need to initialize weights."""
-        pass
+        assert not (init_cfg and pretrained), \
+            'init_cfg and pretrained cannot be setting at the same time'
+        if isinstance(pretrained, str):
+            warnings.warn('DeprecationWarning: pretrained is a deprecated, '
+                          'please use "init_cfg" instead')
+            self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
 
     def init_mask_head(self):
         """Initialize mask head, skip since ``PartAggregationROIHead`` does not

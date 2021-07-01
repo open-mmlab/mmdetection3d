@@ -1,43 +1,46 @@
 import warnings
+from mmcv.cnn import MODELS as MMCV_MODELS
 from mmcv.utils import Registry
 
 from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
-                                  ROI_EXTRACTORS, SHARED_HEADS, build)
+                                  ROI_EXTRACTORS, SHARED_HEADS)
 from mmseg.models.builder import SEGMENTORS
 
-VOXEL_ENCODERS = Registry('voxel_encoder')
-MIDDLE_ENCODERS = Registry('middle_encoder')
-FUSION_LAYERS = Registry('fusion_layer')
+MODELS = Registry('models', parent=MMCV_MODELS)
+
+VOXEL_ENCODERS = MODELS
+MIDDLE_ENCODERS = MODELS
+FUSION_LAYERS = MODELS
 
 
 def build_backbone(cfg):
     """Build backbone."""
-    return build(cfg, BACKBONES)
+    return BACKBONES.build(cfg)
 
 
 def build_neck(cfg):
     """Build neck."""
-    return build(cfg, NECKS)
+    return NECKS.build(cfg)
 
 
 def build_roi_extractor(cfg):
     """Build RoI feature extractor."""
-    return build(cfg, ROI_EXTRACTORS)
+    return ROI_EXTRACTORS.build(cfg)
 
 
 def build_shared_head(cfg):
     """Build shared head of detector."""
-    return build(cfg, SHARED_HEADS)
+    return SHARED_HEADS.build(cfg)
 
 
 def build_head(cfg):
     """Build head."""
-    return build(cfg, HEADS)
+    return HEADS.build(cfg)
 
 
 def build_loss(cfg):
     """Build loss function."""
-    return build(cfg, LOSSES)
+    return LOSSES.build(cfg)
 
 
 def build_detector(cfg, train_cfg=None, test_cfg=None):
@@ -50,7 +53,8 @@ def build_detector(cfg, train_cfg=None, test_cfg=None):
         'train_cfg specified in both outer field and model field '
     assert cfg.get('test_cfg') is None or test_cfg is None, \
         'test_cfg specified in both outer field and model field '
-    return build(cfg, DETECTORS, dict(train_cfg=train_cfg, test_cfg=test_cfg))
+    return DETECTORS.build(
+        cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
 
 
 def build_segmentor(cfg, train_cfg=None, test_cfg=None):
@@ -63,7 +67,8 @@ def build_segmentor(cfg, train_cfg=None, test_cfg=None):
         'train_cfg specified in both outer field and model field '
     assert cfg.get('test_cfg') is None or test_cfg is None, \
         'test_cfg specified in both outer field and model field '
-    return build(cfg, SEGMENTORS, dict(train_cfg=train_cfg, test_cfg=test_cfg))
+    return SEGMENTORS.build(
+        cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
 
 
 def build_model(cfg, train_cfg=None, test_cfg=None):
@@ -80,14 +85,14 @@ def build_model(cfg, train_cfg=None, test_cfg=None):
 
 def build_voxel_encoder(cfg):
     """Build voxel encoder."""
-    return build(cfg, VOXEL_ENCODERS)
+    return VOXEL_ENCODERS.build(cfg)
 
 
 def build_middle_encoder(cfg):
     """Build middle level encoder."""
-    return build(cfg, MIDDLE_ENCODERS)
+    return MIDDLE_ENCODERS.build(cfg)
 
 
 def build_fusion_layer(cfg):
     """Build fusion layer."""
-    return build(cfg, FUSION_LAYERS)
+    return FUSION_LAYERS.build(cfg)

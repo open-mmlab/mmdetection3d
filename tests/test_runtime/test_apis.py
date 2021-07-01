@@ -244,10 +244,13 @@ def test_show_result_meshlab():
 
 
 def test_inference_detector():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
     pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
     detector_cfg = 'configs/pointpillars/hv_pointpillars_secfpn_' \
                    '6x8_160e_kitti-3d-3class.py'
-    detector = init_model(detector_cfg, device='cpu')
+    detector = init_model(detector_cfg, device='cuda:0')
     results = inference_detector(detector, pcd)
     bboxes_3d = results[0][0]['boxes_3d']
     scores_3d = results[0][0]['scores_3d']

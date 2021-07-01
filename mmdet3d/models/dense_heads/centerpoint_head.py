@@ -1,8 +1,8 @@
 import copy
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, build_conv_layer, kaiming_init
-from mmcv.runner import force_fp32
+from mmcv.cnn import ConvModule, build_conv_layer
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
@@ -15,7 +15,7 @@ from mmdet.core import build_bbox_coder, multi_apply
 
 
 @HEADS.register_module()
-class SeparateHead(nn.Module):
+class SeparateHead(BaseModule):
     """SeparateHead for CenterHead.
 
     Args:
@@ -42,9 +42,11 @@ class SeparateHead(nn.Module):
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
+                 init_cfg=None,
                  **kwargs):
-        super(SeparateHead, self).__init__()
-
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(SeparateHead, self).__init__(init_cfg=init_cfg)
         self.heads = heads
         self.init_bias = init_bias
         for head in self.heads:
@@ -78,15 +80,15 @@ class SeparateHead(nn.Module):
 
             self.__setattr__(head, conv_layers)
 
+            if init_cfg is None:
+                self.init_cfg = dict(type='Kaiming', layer='Conv2d')
+
     def init_weights(self):
         """Initialize weights."""
+        super().init_weights()
         for head in self.heads:
             if head == 'heatmap':
                 self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
-            else:
-                for m in self.__getattr__(head).modules():
-                    if isinstance(m, nn.Conv2d):
-                        kaiming_init(m)
 
     def forward(self, x):
         """Forward function for SepHead.
@@ -119,7 +121,7 @@ class SeparateHead(nn.Module):
 
 
 @HEADS.register_module()
-class DCNSeparateHead(nn.Module):
+class DCNSeparateHead(BaseModule):
     r"""DCNSeparateHead for CenterHead.
 
     .. code-block:: none
@@ -154,8 +156,11 @@ class DCNSeparateHead(nn.Module):
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
+                 init_cfg=None,
                  **kwargs):
-        super(DCNSeparateHead, self).__init__()
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(DCNSeparateHead, self).__init__(init_cfg=init_cfg)
         if 'heatmap' in heads:
             heads.pop('heatmap')
         # feature adaptation with dcn
@@ -192,11 +197,13 @@ class DCNSeparateHead(nn.Module):
             head_conv=head_conv,
             final_kernel=final_kernel,
             bias=bias)
+        if init_cfg is None:
+            self.init_cfg = dict(type='Kaiming', layer='Conv2d')
 
     def init_weights(self):
         """Initialize weights."""
+        super().init_weights()
         self.cls_head[-1].bias.data.fill_(self.init_bias)
-        self.task_head.init_weights()
 
     def forward(self, x):
         """Forward function for DCNSepHead.
@@ -232,7 +239,7 @@ class DCNSeparateHead(nn.Module):
 
 
 @HEADS.register_module()
-class CenterHead(nn.Module):
+class CenterHead(BaseModule):
     """CenterHead for CenterPoint.
 
     Args:
@@ -280,8 +287,11 @@ class CenterHead(nn.Module):
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
                  bias='auto',
-                 norm_bbox=True):
-        super(CenterHead, self).__init__()
+                 norm_bbox=True,
+                 init_cfg=None):
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(CenterHead, self).__init__(init_cfg=init_cfg)
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
@@ -315,11 +325,6 @@ class CenterHead(nn.Module):
             separate_head.update(
                 in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
             self.task_heads.append(builder.build_head(separate_head))
-
-    def init_weights(self):
-        """Initialize weights."""
-        for task_head in self.task_heads:
-            task_head.init_weights()
 
     def forward_single(self, x):
         """Forward function for CenterPoint.

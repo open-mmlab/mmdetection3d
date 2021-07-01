@@ -1,12 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from torch import nn as nn
+from mmcv.runner import BaseModule
 
 
-class BaseMono3DDenseHead(nn.Module, metaclass=ABCMeta):
+class BaseMono3DDenseHead(BaseModule, metaclass=ABCMeta):
     """Base class for Monocular 3D DenseHeads."""
 
-    def __init__(self):
-        super(BaseMono3DDenseHead, self).__init__()
+    def __init__(self, init_cfg=None):
+        super(BaseMono3DDenseHead, self).__init__(init_cfg=init_cfg)
 
     @abstractmethod
     def loss(self, **kwargs):
