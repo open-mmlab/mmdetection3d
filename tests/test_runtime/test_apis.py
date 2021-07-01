@@ -358,4 +358,3 @@ def test_single_gpu_test():
     assert bboxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
     assert labels_3d.shape[0] >= 0
-
