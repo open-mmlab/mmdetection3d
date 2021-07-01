@@ -623,9 +623,9 @@ def test_background_points_filter():
                         '[[0.5, 2.0, 0.5]])'
     assert repr_str == expected_repr_str
     assert points.shape == (800, 4)
-    assert np.equal(orig_points, points)
+    assert np.equal(orig_points, points).all()
     assert np.equal(input_dict['gt_bboxes_3d'].tensor.numpy(),
-                    origin_gt_bboxes_3d.tensor.numpy())
+                    origin_gt_bboxes_3d.tensor.numpy()).all()
 
     # test single float config
     BackgroundPointsFilter(0.5)
