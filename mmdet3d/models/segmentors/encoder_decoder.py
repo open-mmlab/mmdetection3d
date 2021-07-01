@@ -25,8 +25,9 @@ class EncoderDecoder3D(Base3DSegmentor):
                  auxiliary_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
-        super(EncoderDecoder3D, self).__init__()
+                 pretrained=None,
+                 init_cfg=None):
+        super(EncoderDecoder3D, self).__init__(init_cfg=init_cfg)
         self.backbone = build_backbone(backbone)
         if neck is not None:
             self.neck = build_neck(neck)
@@ -35,9 +36,6 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-
-        self.init_weights(pretrained=pretrained)
-
         assert self.with_decode_head, \
             '3D EncoderDecoder Segmentor should have a decode_head'
 
@@ -55,24 +53,6 @@ class EncoderDecoder3D(Base3DSegmentor):
                     self.auxiliary_head.append(build_head(head_cfg))
             else:
                 self.auxiliary_head = build_head(auxiliary_head)
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in backbone and heads.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-
-        super(EncoderDecoder3D, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-        self.decode_head.init_weights()
-        if self.with_auxiliary_head:
-            if isinstance(self.auxiliary_head, nn.ModuleList):
-                for aux_head in self.auxiliary_head:
-                    aux_head.init_weights()
-            else:
-                self.auxiliary_head.init_weights()
 
     def extract_feat(self, points):
         """Extract features from points."""

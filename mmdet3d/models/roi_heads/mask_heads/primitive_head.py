@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -11,7 +12,7 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class PrimitiveHead(nn.Module):
+class PrimitiveHead(BaseModule):
     r"""Primitive head of `H3DNet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
@@ -52,8 +53,9 @@ class PrimitiveHead(nn.Module):
                  objectness_loss=None,
                  center_loss=None,
                  semantic_reg_loss=None,
-                 semantic_cls_loss=None):
-        super(PrimitiveHead, self).__init__()
+                 semantic_cls_loss=None,
+                 init_cfg=None):
+        super(PrimitiveHead, self).__init__(init_cfg=init_cfg)
         assert primitive_mode in ['z', 'xy', 'line']
         # The dimension of primitive semantic information.
         self.num_dims = num_dims
@@ -109,10 +111,6 @@ class PrimitiveHead(nn.Module):
         conv_out_channel = 3 + num_dims + num_classes
         self.conv_pred.add_module('conv_out',
                                   nn.Conv1d(prev_channel, conv_out_channel, 1))
-
-    def init_weights(self):
-        """Initialize weights of VoteHead."""
-        pass
 
     def forward(self, feats_dict, sample_mod):
         """Forward pass.

@@ -1,9 +1,9 @@
 import mmcv
 import torch
+import warnings
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import force_fp32
 from os import path as osp
-from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,
@@ -33,8 +33,9 @@ class MVXTwoStageDetector(Base3DDetector):
                  img_rpn_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
-        super(MVXTwoStageDetector, self).__init__()
+                 pretrained=None,
+                 init_cfg=None):
+        super(MVXTwoStageDetector, self).__init__(init_cfg=init_cfg)
 
         if pts_voxel_layer:
             self.pts_voxel_layer = Voxelization(**pts_voxel_layer)
@@ -69,11 +70,7 @@ class MVXTwoStageDetector(Base3DDetector):
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.init_weights(pretrained=pretrained)
 
-    def init_weights(self, pretrained=None):
-        """Initialize model weights."""
-        super(MVXTwoStageDetector, self).init_weights(pretrained)
         if pretrained is None:
             img_pretrained = None
             pts_pretrained = None
@@ -83,23 +80,26 @@ class MVXTwoStageDetector(Base3DDetector):
         else:
             raise ValueError(
                 f'pretrained should be a dict, got {type(pretrained)}')
-        if self.with_img_backbone:
-            self.img_backbone.init_weights(pretrained=img_pretrained)
-        if self.with_pts_backbone:
-            self.pts_backbone.init_weights(pretrained=pts_pretrained)
-        if self.with_img_neck:
-            if isinstance(self.img_neck, nn.Sequential):
-                for m in self.img_neck:
-                    m.init_weights()
-            else:
-                self.img_neck.init_weights()
 
+        if self.with_img_backbone:
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.img_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
         if self.with_img_roi_head:
-            self.img_roi_head.init_weights(img_pretrained)
-        if self.with_img_rpn:
-            self.img_rpn_head.init_weights()
-        if self.with_pts_bbox:
-            self.pts_bbox_head.init_weights()
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.img_roi_head.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
+
+        if self.with_pts_backbone:
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.pts_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=pts_pretrained)
 
     @property
     def with_img_shared_head(self):

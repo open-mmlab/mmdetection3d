@@ -1,12 +1,13 @@
+import warnings
 from mmcv.cnn import build_conv_layer, build_norm_layer
-from mmcv.runner import load_checkpoint
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet.models import BACKBONES
 
 
 @BACKBONES.register_module()
-class SECOND(nn.Module):
+class SECOND(BaseModule):
     """Backbone network for SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
@@ -24,8 +25,10 @@ class SECOND(nn.Module):
                  layer_nums=[3, 5, 5],
                  layer_strides=[2, 2, 2],
                  norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                 conv_cfg=dict(type='Conv2d', bias=False)):
-        super(SECOND, self).__init__()
+                 conv_cfg=dict(type='Conv2d', bias=False),
+                 init_cfg=None,
+                 pretrained=None):
+        super(SECOND, self).__init__(init_cfg=init_cfg)
         assert len(layer_strides) == len(layer_nums)
         assert len(out_channels) == len(layer_nums)
 
@@ -61,14 +64,14 @@ class SECOND(nn.Module):
 
         self.blocks = nn.ModuleList(blocks)
 
-    def init_weights(self, pretrained=None):
-        """Initialize weights of the 2D backbone."""
-        # Do not initialize the conv layers
-        # to follow the original implementation
+        assert not (init_cfg and pretrained), \
+            'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):
-            from mmdet3d.utils import get_root_logger
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
+            warnings.warn('DeprecationWarning: pretrained is a deprecated, '
+                          'please use "init_cfg" instead')
+            self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
+        else:
+            self.init_cfg = dict(type='Kaiming', layer='Conv2d')
 
     def forward(self, x):
         """Forward function.

@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
-from torch import nn as nn
+from mmcv.runner import BaseModule
 
 
-class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
+class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
     """Base class for 3d RoIHeads."""
 
     def __init__(self,
@@ -10,8 +10,10 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                  mask_roi_extractor=None,
                  mask_head=None,
                  train_cfg=None,
-                 test_cfg=None):
-        super(Base3DRoIHead, self).__init__()
+                 test_cfg=None,
+                 pretrained=None,
+                 init_cfg=None):
+        super(Base3DRoIHead, self).__init__(init_cfg=init_cfg)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
@@ -32,11 +34,6 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
     def with_mask(self):
         """bool: whether the RoIHead has mask head"""
         return hasattr(self, 'mask_head') and self.mask_head is not None
-
-    @abstractmethod
-    def init_weights(self, pretrained):
-        """Initialize the module with pre-trained weights."""
-        pass
 
     @abstractmethod
     def init_bbox_head(self):

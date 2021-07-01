@@ -1,6 +1,5 @@
 import torch
-from mmcv.runner import auto_fp16
-from torch import nn as nn
+from mmcv.runner import BaseModule, auto_fp16
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
@@ -8,7 +7,7 @@ from ..builder import MIDDLE_ENCODERS
 
 
 @MIDDLE_ENCODERS.register_module()
-class SparseUNet(nn.Module):
+class SparseUNet(BaseModule):
     r"""SparseUNet for PartA^2.
 
     See the `paper <https://arxiv.org/abs/1907.03670>`_ for more details.
@@ -40,8 +39,9 @@ class SparseUNet(nn.Module):
                                                                  1)),
                  decoder_channels=((64, 64, 64), (64, 64, 32), (32, 32, 16),
                                    (16, 16, 16)),
-                 decoder_paddings=((1, 0), (1, 0), (0, 0), (0, 1))):
-        super().__init__()
+                 decoder_paddings=((1, 0), (1, 0), (0, 0), (0, 1)),
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.sparse_shape = sparse_shape
         self.in_channels = in_channels
         self.order = order
