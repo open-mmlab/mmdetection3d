@@ -1,4 +1,4 @@
-# Tutorial 6: Waymo Dataset
+# Waymo Dataset
 
 This page provides specific tutorials about the usage of MMDetection3D for waymo dataset.
 
