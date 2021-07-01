@@ -197,27 +197,25 @@ class PointRPNHead(BaseModule):
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    bbox_preds)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
-         box_loss_weights, corner3d_targets, point_targets) = targets
+         box_loss_weights, corner3d_targets, gt_targets,
+         point_targets) = targets
 
         # bbox loss
         bbox_loss = self.bbox_loss(bbox_preds, bbox_targets,
                                    box_loss_weights.unsqueeze(-1))
-        '''
+
         # corner loss
         pred_bbox3d = self.bbox_coder.decode(bbox_preds, point_targets,
                                              mask_targets)
         pred_bbox3d = pred_bbox3d.reshape(-1, pred_bbox3d.shape[-1])
         pred_bbox3d = img_metas[0]['box_type_3d'](
-            pred_bbox3d.clone(),
-            box_dim=pred_bbox3d.shape[-1],
-            with_yaw=True,
-            origin=(0.5, 0.5, 0.5))
-        pred_corners3d = pred_bbox3d.corners.reshape(-1, 8, 3)
-        corner_loss = self.corner_loss(
-            pred_corners3d,
-            corner3d_targets.reshape(-1, 8, 3),
-            weight=box_loss_weights.view(-1, 1, 1))
-        '''
+            pred_bbox3d.clone(), box_dim=pred_bbox3d.shape[-1], with_yaw=True)
+        # pred_corners3d = pred_bbox3d.corners.reshape(-1, 8, 3)
+        gt_targets = gt_targets.reshape(-1, gt_targets.shape[-1])
+        corner_loss = self.get_corner_loss_lidar(
+            pred_bbox3d.tensor[positive_mask.reshape(-1)],
+            gt_targets[positive_mask.reshape(-1)])
+
         # calculate semantic loss
         semantic_points = cls_preds.reshape(-1, self.num_classes)
         semantic_targets = mask_targets
@@ -246,8 +244,44 @@ class PointRPNHead(BaseModule):
         assert 0
         '''
 
-        losses = dict(bbox_loss=bbox_loss, semantic_loss=semantic_loss)
+        losses = dict(
+            bbox_loss=bbox_loss,
+            semantic_loss=semantic_loss,
+            corner_loss=corner_loss)
         return losses
+
+    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0 / 9.0):
+        """Calculate corner loss of given boxes.
+
+        Args:
+            pred_bbox3d (torch.FloatTensor): Predicted boxes in shape (N, 7).
+            gt_bbox3d (torch.FloatTensor): Ground truth boxes in shape (N, 7).
+        Returns:
+            torch.FloatTensor: Calculated corner loss in shape (N).
+        """
+        assert pred_bbox3d.shape[0] == gt_bbox3d.shape[0]
+
+        # This is a little bit hack here because we assume the box for
+        # PointRCNN is in LiDAR coordinates
+
+        gt_boxes_structure = LiDARInstance3DBoxes(gt_bbox3d)
+        pred_box_corners = LiDARInstance3DBoxes(pred_bbox3d).corners
+        gt_box_corners = gt_boxes_structure.corners
+
+        # This flip only changes the heading direction of GT boxes
+        gt_bbox3d_flip = gt_boxes_structure.clone()
+        gt_bbox3d_flip.tensor[:, 6] += np.pi
+        gt_box_corners_flip = gt_bbox3d_flip.corners
+
+        corner_dist = torch.min(
+            torch.norm(pred_box_corners - gt_box_corners, dim=2),
+            torch.norm(pred_box_corners - gt_box_corners_flip, dim=2))
+        # huber loss
+        abs_error = torch.abs(corner_dist)
+        quadratic = torch.clamp(abs_error, max=delta)
+        linear = (abs_error - quadratic)
+        corner_loss = 0.5 * quadratic**2 + delta * linear
+        return corner_loss.mean(dim=1)
 
     def get_targets(self,
                     points,
@@ -281,7 +315,7 @@ class PointRPNHead(BaseModule):
                 gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
 
         (bbox_targets, mask_targets, positive_mask, negative_mask,
-         corner3d_targets,
+         corner3d_targets, gt_targets,
          point_targets) = multi_apply(self.get_targets_single, points,
                                       gt_bboxes_3d, gt_labels_3d)
 
@@ -291,10 +325,11 @@ class PointRPNHead(BaseModule):
         positive_mask = torch.stack(positive_mask)
         negative_mask = torch.stack(negative_mask)
         point_targets = torch.stack(point_targets)
+        gt_targets = torch.stack(gt_targets)
         box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)
 
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
-                box_loss_weights, corner3d_targets, point_targets)
+                box_loss_weights, corner3d_targets, gt_targets, point_targets)
 
     def get_targets_single(self, points, gt_bboxes_3d, gt_labels_3d):
         """Generate targets of ssd3d head for single batch.
@@ -327,6 +362,7 @@ class PointRPNHead(BaseModule):
         points_mask, assignment = self._assign_targets_by_points_inside(
             gt_bboxes_3d, points)
         gt_bboxes_3d_tensor = gt_bboxes_3d_tensor[assignment]
+        gt_targets = gt_bboxes_3d_tensor.clone()
         mask_targets = gt_labels_3d[assignment]
         corner3d_targets = gt_corner3d[assignment]
 
@@ -337,7 +373,7 @@ class PointRPNHead(BaseModule):
         negative_mask = (points_mask.max(1)[0] == 0)
         point_targets = points[..., 0:3]
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
-                corner3d_targets, point_targets)
+                corner3d_targets, gt_targets, point_targets)
 
     def get_bboxes(self,
                    points,
