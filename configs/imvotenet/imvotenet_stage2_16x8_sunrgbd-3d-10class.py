@@ -193,7 +193,7 @@ train_pipeline = [
         type='Collect3D',
         keys=[
             'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-            'gt_labels_3d', 'calib'
+            'gt_labels_3d'
         ])
 ]
 
@@ -230,7 +230,7 @@ test_pipeline = [
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
-            dict(type='Collect3D', keys=['img', 'points', 'calib'])
+            dict(type='Collect3D', keys=['img', 'points'])
         ]),
 ]
 # construct a pipeline for data and gt loading in show function
@@ -247,7 +247,7 @@ eval_pipeline = [
         type='DefaultFormatBundle3D',
         class_names=class_names,
         with_label=False),
-    dict(type='Collect3D', keys=['img', 'points', 'calib'])
+    dict(type='Collect3D', keys=['img', 'points'])
 ]
 
 data = dict(

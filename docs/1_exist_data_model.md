@@ -16,7 +16,7 @@ You can use the following commands to test a dataset.
 
 ```shell
 # single-gpu testing
-python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show]
+python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
 
 # multi-gpu testing
 ./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}]
@@ -122,7 +122,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 
 ## Train predefined models on standard datasets
 
-MMDetection implements distributed training and non-distributed training,
+MMDetection3D implements distributed training and non-distributed training,
 which uses `MMDistributedDataParallel` and `MMDataParallel` respectively.
 
 All outputs (log files and checkpoints) will be saved to the working directory,
@@ -153,7 +153,7 @@ If you want to specify the working directory in the command, you can add an argu
 
 Optional arguments are:
 
-- `--no-validate` (**not suggested**): By default, the codebase will perform evaluation at every k (default value is 1, which can be modified like [this](https://github.com/open-mmlab/mmdetection/blob/master/configs/mask_rcnn/mask_rcnn_r50_fpn_1x_coco.py#L174)) epochs during the training. To disable this behavior, use `--no-validate`.
+- `--no-validate` (**not suggested**): By default, the codebase will perform evaluation at every k (default value is 1, which can be modified like [this](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)) epochs during the training. To disable this behavior, use `--no-validate`.
 - `--work-dir ${WORK_DIR}`: Override the working directory specified in the config file.
 - `--resume-from ${CHECKPOINT_FILE}`: Resume from a previous checkpoint file.
 - `--options 'Key=value'`: Overide some settings in the used config.
@@ -164,7 +164,7 @@ Difference between `resume-from` and `load-from`:
 
 ### Train with multiple machines
 
-If you run MMDetection on a cluster managed with [slurm](https://slurm.schedmd.com/), you can use the script `slurm_train.sh`. (This script also supports single machine training.)
+If you run MMDetection3D on a cluster managed with [slurm](https://slurm.schedmd.com/), you can use the script `slurm_train.sh`. (This script also supports single machine training.)
 
 ```shell
 [GPUS=${GPUS}] ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} ${CONFIG_FILE} ${WORK_DIR}
@@ -173,13 +173,13 @@ If you run MMDetection on a cluster managed with [slurm](https://slurm.schedmd.c
 Here is an example of using 16 GPUs to train Mask R-CNN on the dev partition.
 
 ```shell
-GPUS=16 ./tools/slurm_train.sh dev mask_r50_1x configs/mask_rcnn_r50_fpn_1x_coco.py /nfs/xxxx/mask_rcnn_r50_fpn_1x
+GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
 ```
 
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
 
 If you have just multiple machines connected with ethernet, you can refer to
-PyTorch [launch utility](https://pytorch.org/docs/stable/distributed_deprecated.html#launch-utility).
+PyTorch [launch utility](https://pytorch.org/docs/stable/distributed.html).
 Usually it is slow if you do not have high speed networking like InfiniBand.
 
 ### Launch multiple jobs on a single machine
@@ -217,7 +217,7 @@ If you use launch training jobs with Slurm, there are two ways to specify the po
    dist_params = dict(backend='nccl', port=29501)
    ```
 
-   Then you can launch two jobs with `config1.py` ang `config2.py`.
+   Then you can launch two jobs with `config1.py` and `config2.py`.
 
    ```shell
    CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR}

@@ -155,13 +155,10 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         bbox_fields=[],
         mask_fields=[],
         seg_fields=[])
-
-    # depth map points to image conversion
-    if box_mode_3d == Box3DMode.DEPTH:
-        data.update(dict(calib=info['calib']))
-
     data = test_pipeline(data)
 
+    # TODO: this code is dataset-specific. Move lidar2img and
+    #       depth2img to .pkl annotations in the future.
     # LiDAR to image conversion
     if box_mode_3d == Box3DMode.LIDAR:
         rect = info['calib']['R0_rect'].astype(np.float32)
@@ -169,9 +166,14 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         P2 = info['calib']['P2'].astype(np.float32)
         lidar2img = P2 @ rect @ Trv2c
         data['img_metas'][0].data['lidar2img'] = lidar2img
+    # Depth to image conversion
     elif box_mode_3d == Box3DMode.DEPTH:
-        data['calib'][0]['Rt'] = data['calib'][0]['Rt'].astype(np.float32)
-        data['calib'][0]['K'] = data['calib'][0]['K'].astype(np.float32)
+        rt_mat = info['calib']['Rt']
+        # follow Coord3DMode.convert_point
+        rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                           ]) @ rt_mat.transpose(1, 0)
+        depth2img = info['calib']['K'] @ rt_mat
+        data['img_metas'][0].data['depth2img'] = depth2img
 
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
@@ -182,9 +184,6 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         data['img_metas'] = data['img_metas'][0].data
         data['points'] = data['points'][0].data
         data['img'] = data['img'][0].data
-        if box_mode_3d == Box3DMode.DEPTH:
-            data['calib'][0]['Rt'] = data['calib'][0]['Rt'][0].data
-            data['calib'][0]['K'] = data['calib'][0]['K'][0].data
 
     # forward the model
     with torch.no_grad():
@@ -411,17 +410,13 @@ def show_proj_det_result_meshlab(data,
             box_mode='lidar',
             show=show)
     elif box_mode == Box3DMode.DEPTH:
-        if 'calib' not in data.keys():
-            raise NotImplementedError(
-                'camera calibration information is not provided')
-
         show_bboxes = DepthInstance3DBoxes(pred_bboxes, origin=(0.5, 0.5, 0))
 
         show_multi_modality_result(
             img,
             None,
             show_bboxes,
-            data['calib'][0],
+            None,
             out_dir,
             file_name,
             box_mode='depth',
