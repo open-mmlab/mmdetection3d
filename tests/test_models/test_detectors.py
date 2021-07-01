@@ -385,7 +385,7 @@ def test_groupfree3dnet():
 
     _setup_seed(0)
     groupfree3d_cfg = _get_detector_cfg(
-        'groupfree3d/groupfree3d_8x8_scannet-3d-18class.py')
+        'groupfree3d/groupfree3d_8x8_scannet-3d-18class-L6-O256.py')
     self = build_detector(groupfree3d_cfg).cuda()
 
     points_0 = torch.rand([50000, 3], device='cuda')
