@@ -1,10 +1,10 @@
 # Vision-Based 3D Detection
 
-Vision-based 3D detection refers to the 3D detection solutions based on vision-only input, such as monocular, binocular and multi-view image based 3D detection.
+Vision-based 3D detection refers to the 3D detection solutions based on vision-only input, such as monocular, binocular, and multi-view image based 3D detection.
 Currently, we only support monocular and multi-view 3D detection methods. Other approaches should be also compatible with our framework and will be supported in the future.
 
 It expects the given model to take any number of images as input, and predict the 3D bounding boxes and category labels for each object of interest.
-Next, taking FCOS3D on the nuScenes dataset as an example, we will show how to prepare data, train and test a model on a standard 3D detection benchmark, and how to visualize and validate the results.
+Taking FCOS3D on the nuScenes dataset as an example, we will show how to prepare data, train and test a model on a standard 3D detection benchmark, and how to visualize and validate the results.
 
 ## Data Preparation
 
@@ -50,14 +50,14 @@ The .json files only contain infos for 2D detection before supporting monocular 
 ## Training
 
 Then let us train a model with provided configs for FCOS3D. The basic script is the same as other models.
-You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#inference-with-existing-models) for sample scripts when training with different GPU settings.
+You can basically follow the examples provided in this [tutorial](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#inference-with-existing-models) when training with different GPU settings.
 Suppose we use 8 GPUs on a single machine with distributed training:
 
 ```
 ./tools/dist_train.sh configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py 8
 ```
 
-Note that `2x8` in the config name refers to the training is completed with 8 GPUs and 2 samples on each GPU.
+Note that `2x8` in the config name refers to the training is completed with 8 GPUs and 2 data samples on each GPU.
 If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
 A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
 
