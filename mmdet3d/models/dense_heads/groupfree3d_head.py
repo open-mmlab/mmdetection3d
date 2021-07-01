@@ -340,14 +340,14 @@ class GroupFree3DHead(nn.Module):
         results['query_points_feature'] = candidate_features  # (B, C, M)
         results['query_points_sample_inds'] = sample_inds.long()  # (B, M)
 
-        suffix = '_proposal'
+        prefix = 'proposal.'
         cls_predictions, reg_predictions = self.conv_pred(candidate_features)
         decode_res = self.bbox_coder.split_pred(cls_predictions,
                                                 reg_predictions, candidate_xyz,
-                                                suffix)
+                                                prefix)
 
         results.update(decode_res)
-        bbox3d = self.bbox_coder.decode(results, suffix)
+        bbox3d = self.bbox_coder.decode(results, prefix)
 
         # 2. Iterative object box prediction by transformer decoder.
         base_bbox3d = bbox3d[:, :, :6].detach().clone()
@@ -359,7 +359,7 @@ class GroupFree3DHead(nn.Module):
         # transformer decoder
         results['num_decoder_layers'] = 0
         for i in range(self.num_decoder_layers):
-            suffix = f'_{i}'
+            prefix = f's{i}.'
 
             query_pos = self.decoder_self_posembeds[i](base_bbox3d).permute(
                 2, 0, 1)
@@ -370,17 +370,17 @@ class GroupFree3DHead(nn.Module):
                 query, key, value, query_pos=query_pos,
                 key_pos=key_pos).permute(1, 2, 0)
 
-            results[f'query{suffix}'] = query
+            results[f'{prefix}query'] = query
 
             cls_predictions, reg_predictions = self.prediction_heads[i](query)
             decode_res = self.bbox_coder.split_pred(cls_predictions,
                                                     reg_predictions,
-                                                    candidate_xyz, suffix)
+                                                    candidate_xyz, prefix)
             # TODO: should save bbox3d instead of decode_res?
             results.update(decode_res)
 
-            bbox3d = self.bbox_coder.decode(results, suffix)
-            results[f'bbox3d{suffix}'] = bbox3d
+            bbox3d = self.bbox_coder.decode(results, prefix)
+            results[f'{prefix}bbox3d'] = bbox3d
             base_bbox3d = bbox3d[:, :, :6].detach().clone()
             query = query.permute(2, 0, 1)
 
@@ -441,36 +441,36 @@ class GroupFree3DHead(nn.Module):
             avg_factor=batch_size)
         losses['sampling_objectness_loss'] = sampling_objectness_loss
 
-        suffixes = ['_proposal'] + [
-            f'_{i}' for i in range(bbox_preds['num_decoder_layers'])
+        prefixes = ['proposal.'] + [
+            f's{i}.' for i in range(bbox_preds['num_decoder_layers'])
         ]
-        num_stages = len(suffixes)
-        for suffix in suffixes:
+        num_stages = len(prefixes)
+        for prefix in prefixes:
 
             # calculate objectness loss
-            obj_score = bbox_preds[f'obj_scores{suffix}'].transpose(2, 1)
+            obj_score = bbox_preds[f'{prefix}obj_scores'].transpose(2, 1)
             objectness_loss = self.objectness_loss(
                 obj_score.reshape(-1, 1),
                 1 - objectness_targets.reshape(-1),
                 objectness_weights.reshape(-1),
                 avg_factor=batch_size)
-            losses[f'objectness_loss{suffix}'] = objectness_loss / num_stages
+            losses[f'{prefix}objectness_loss'] = objectness_loss / num_stages
 
             # calculate center loss
             box_loss_weights_expand = box_loss_weights.unsqueeze(-1).expand(
                 -1, -1, 3)
             center_loss = self.center_loss(
-                bbox_preds[f'center{suffix}'],
+                bbox_preds[f'{prefix}center'],
                 assigned_center_targets,
                 weight=box_loss_weights_expand)
-            losses[f'center_loss{suffix}'] = center_loss / num_stages
+            losses[f'{prefix}center_loss'] = center_loss / num_stages
 
             # calculate direction class loss
             dir_class_loss = self.dir_class_loss(
-                bbox_preds[f'dir_class{suffix}'].transpose(2, 1),
+                bbox_preds[f'{prefix}dir_class'].transpose(2, 1),
                 dir_class_targets,
                 weight=box_loss_weights)
-            losses[f'dir_class_loss{suffix}'] = dir_class_loss / num_stages
+            losses[f'{prefix}dir_class_loss'] = dir_class_loss / num_stages
 
             # calculate direction residual loss
             heading_label_one_hot = size_class_targets.new_zeros(
@@ -478,28 +478,28 @@ class GroupFree3DHead(nn.Module):
             heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1),
                                            1)
             dir_res_norm = torch.sum(
-                bbox_preds[f'dir_res_norm{suffix}'] * heading_label_one_hot,
+                bbox_preds[f'{prefix}dir_res_norm'] * heading_label_one_hot,
                 -1)
             dir_res_loss = self.dir_res_loss(
                 dir_res_norm, dir_res_targets, weight=box_loss_weights)
-            losses[f'dir_res_loss{suffix}'] = dir_res_loss / num_stages
+            losses[f'{prefix}dir_res_loss'] = dir_res_loss / num_stages
 
             if self.size_cls_agnostic:
                 # calculate class-agnostic size loss
                 size_reg_loss = self.size_reg_loss(
-                    bbox_preds[f'size{suffix}'],
+                    bbox_preds[f'{prefix}size'],
                     assigned_size_targets,
                     weight=box_loss_weights_expand)
-                losses[f'size_reg_loss{suffix}'] = size_reg_loss / num_stages
+                losses[f'{prefix}size_reg_loss'] = size_reg_loss / num_stages
 
             else:
                 # calculate size class loss
                 size_class_loss = self.size_class_loss(
-                    bbox_preds[f'size_class{suffix}'].transpose(2, 1),
+                    bbox_preds[f'{prefix}size_class'].transpose(2, 1),
                     size_class_targets,
                     weight=box_loss_weights)
                 losses[
-                    f'size_class_loss{suffix}'] = size_class_loss / num_stages
+                    f'{prefix}size_class_loss'] = size_class_loss / num_stages
 
                 # calculate size residual loss
                 one_hot_size_targets = size_class_targets.new_zeros(
@@ -510,7 +510,7 @@ class GroupFree3DHead(nn.Module):
                 one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
                     -1).expand(-1, -1, -1, 3).contiguous()
                 size_residual_norm = torch.sum(
-                    bbox_preds[f'size_res_norm{suffix}'] *
+                    bbox_preds[f'{prefix}size_res_norm'] *
                     one_hot_size_targets_expand, 2)
                 box_loss_weights_expand = box_loss_weights.unsqueeze(
                     -1).expand(-1, -1, 3)
@@ -518,14 +518,14 @@ class GroupFree3DHead(nn.Module):
                     size_residual_norm,
                     size_res_targets,
                     weight=box_loss_weights_expand)
-                losses[f'size_res_loss{suffix}'] = size_res_loss / num_stages
+                losses[f'{prefix}size_res_loss'] = size_res_loss / num_stages
 
             # calculate semantic loss
             semantic_loss = self.semantic_loss(
-                bbox_preds[f'sem_scores{suffix}'].transpose(2, 1),
+                bbox_preds[f'{prefix}sem_scores'].transpose(2, 1),
                 mask_targets,
                 weight=box_loss_weights)
-            losses[f'semantic_loss{suffix}'] = semantic_loss / num_stages
+            losses[f'{prefix}semantic_loss'] = semantic_loss / num_stages
 
         if ret_target:
             losses['targets'] = targets
@@ -883,16 +883,16 @@ class GroupFree3DHead(nn.Module):
         assert self.test_cfg['prediction_stages'] in \
             ['last', 'all', 'last_three']
 
-        suffixes = list()
+        prefixes = list()
         if self.test_cfg['prediction_stages'] == 'last':
-            suffixes = [f'_{self.num_decoder_layers - 1}']
+            prefixes = [f'_{self.num_decoder_layers - 1}']
         elif self.test_cfg['prediction_stages'] == 'all':
-            suffixes = ['_proposal'] + \
-                [f'_{i}' for i in range(self.num_decoder_layers)]
+            prefixes = ['proposal.'] + \
+                [f's{i}.' for i in range(self.num_decoder_layers)]
         elif self.test_cfg['prediction_stages'] == 'last_three':
-            suffixes = [
-                f'_{i}' for i in range(self.num_decoder_layers -
-                                       3, self.num_decoder_layers)
+            prefixes = [
+                f's{i}.' for i in range(self.num_decoder_layers -
+                                        3, self.num_decoder_layers)
             ]
         else:
             raise NotImplementedError
@@ -900,11 +900,11 @@ class GroupFree3DHead(nn.Module):
         obj_scores = list()
         sem_scores = list()
         bbox3d = list()
-        for suffix in suffixes:
+        for prefix in prefixes:
             # decode boxes
-            obj_score = bbox_preds[f'obj_scores{suffix}'][..., -1].sigmoid()
-            sem_score = bbox_preds[f'sem_scores{suffix}'].softmax(-1)
-            bbox = self.bbox_coder.decode(bbox_preds, suffix)
+            obj_score = bbox_preds[f'{prefix}obj_scores'][..., -1].sigmoid()
+            sem_score = bbox_preds[f'{prefix}sem_scores'].softmax(-1)
+            bbox = self.bbox_coder.decode(bbox_preds, prefix)
             obj_scores.append(obj_score)
             sem_scores.append(sem_score)
             bbox3d.append(bbox)

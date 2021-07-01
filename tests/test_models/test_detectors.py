@@ -412,13 +412,13 @@ def test_groupfree3dnet():
                                 pts_semantic_mask, pts_instance_mask)
 
     assert losses['sampling_objectness_loss'] >= 0
-    assert losses['objectness_loss'] >= 0
-    assert losses['semantic_loss'] >= 0
-    assert losses['center_loss'] >= 0
-    assert losses['dir_class_loss'] >= 0
-    assert losses['dir_res_loss'] >= 0
-    assert losses['size_class_loss'] >= 0
-    assert losses['size_res_loss'] >= 0
+    assert losses['s5.objectness_loss'] >= 0
+    assert losses['s5.semantic_loss'] >= 0
+    assert losses['s5.center_loss'] >= 0
+    assert losses['s5.dir_class_loss'] >= 0
+    assert losses['s5.dir_res_loss'] >= 0
+    assert losses['s5.size_class_loss'] >= 0
+    assert losses['s5.size_res_loss'] >= 0
 
     # test simple_test
     with torch.no_grad():
