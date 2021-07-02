@@ -2,6 +2,10 @@
 
 ### v0.15.0 (1/7/2021)
 
+#### Compatibility
+
+In order to fix the problem that the priority of EvalHook is too low, all hook priorities have been re-adjusted in 1.3.8, so MMDetection 2.14.0 needs to rely on the latest MMCV 1.3.8 version. For related information, please refer to [#1120](https://github.com/open-mmlab/mmcv/pull/1120), for related issues, please refer to [#5343](https://github.com/open-mmlab/mmdetection/issues/5343).
+
 #### Highlights
 
 - Support [PAConv](https://arxiv.org/abs/2103.14635)
