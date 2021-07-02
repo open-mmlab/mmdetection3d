@@ -5,38 +5,38 @@
 #### Highlights
 
 - Support [PAConv](https://arxiv.org/abs/2103.14635)
-- Support monocular/multi-view 3D detector [ImVoxelNet] (https://arxiv.org/abs/2106.01178) on KITTI
+- Support monocular/multi-view 3D detector [ImVoxelNet](https://arxiv.org/abs/2106.01178) on KITTI
 - Support Transformer-based 3D detection method [Group-Free-3D](https://arxiv.org/abs/2104.00678) on ScanNet
-- Add documentation for tasks including LiDAR-based 3D detection and point-based 3D semantic segmentation
+- Add documentation for tasks including LiDAR-based 3D detection, vision-only 3D detection and point-based 3D semantic segmentation
 - Add dataset documents like ScanNet
-- Refine docs for tutorials, Quick Run and Useful Tools
 
 #### New Features
 
 - Support Group-Free-3D on ScanNet (#539)
-- Support PAConv modules(#598, #599)
+- Support PAConv modules (#598, #599)
 - Support ImVoxelNet on KITTI (#627, #654)
 
 #### Improvements
 
 - Add unit tests for pipeline functions `LoadImageFromFileMono3D`, `ObjectNameFilter` and `ObjectRangeFilter` (#615)
 - Enhance [IndoorPatchPointSample](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) (#617)
-- Refactoring model initialization methods based MMCV (#622)
+- Refactor model initialization methods based MMCV (#622)
 - Add Chinese docs (#629)
 - Add documentation for LiDAR-based 3D detection (#642)
-- Unifying intrinsic and extrinsic matrices for all datasets (#653)
+- Unify intrinsic and extrinsic matrices for all datasets (#653)
 - Add documentation for point-based 3D semantic segmentation (#663)
 - Add documentation of ScanNet for 3D detection (#664)
 - Refine docs for tutorials (#666)
+- Add documentation for vision-only 3D detection (#669)
 - Refine docs for Quick Run and Useful Tools (#686)
 
 
 #### Bug Fixes
 
-- Fix the bugs of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) (#609)
-- Fix LoadMultiViewImageFromFiles to be compatible with DefaultFormatBundle (#611)
-- Fix the potential bug in [analyze_logs](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) (#634)
-- Fix test command in docs and made some refinements (#635)
+- Fix the bug of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) using the bottom center of ground truth (#609)
+- Fix LoadMultiViewImageFromFiles to get list format for DefaultFormatBundle (#611)
+- Fix the potential bug in [analyze_logs](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) when the training resumes from a checkpoint or is stopped before evaluation (#634)
+- Fix test commands in docs and make some refinements (#635)
 - Fix wrong config paths in unit tests (#641)
 
 
