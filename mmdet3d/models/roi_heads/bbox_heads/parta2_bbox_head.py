@@ -1,6 +1,7 @@
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, normal_init, xavier_init
+from mmcv.cnn import ConvModule, normal_init
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
@@ -14,7 +15,7 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class PartA2BboxHead(nn.Module):
+class PartA2BboxHead(BaseModule):
     """PartA2 RoI head.
 
     Args:
@@ -67,8 +68,9 @@ class PartA2BboxHead(nn.Module):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      reduction='none',
-                     loss_weight=1.0)):
-        super(PartA2BboxHead, self).__init__()
+                     loss_weight=1.0),
+                 init_cfg=None):
+        super(PartA2BboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.with_corner_loss = with_corner_loss
         self.bbox_coder = build_bbox_coder(bbox_coder)
@@ -220,14 +222,14 @@ class PartA2BboxHead(nn.Module):
 
         self.conv_reg = nn.Sequential(*reg_layers)
 
-        self.init_weights()
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Xavier',
+                layer=['Conv2d', 'Conv1d'],
+                distribution='uniform')
 
     def init_weights(self):
-        """Initialize weights of the bbox head."""
-        for m in self.modules():
-            if isinstance(m, (nn.Conv2d, nn.Conv1d)):
-                xavier_init(m, distribution='uniform')
-
+        super().init_weights()
         normal_init(self.conv_reg[-1].conv, mean=0, std=0.001)
 
     def forward(self, seg_feats, part_feats):

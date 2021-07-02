@@ -1,12 +1,12 @@
 import torch
-from torch import nn as nn
+from mmcv.runner import BaseModule
 
 from mmdet3d import ops
 from mmdet.models.builder import ROI_EXTRACTORS
 
 
 @ROI_EXTRACTORS.register_module()
-class Single3DRoIAwareExtractor(nn.Module):
+class Single3DRoIAwareExtractor(BaseModule):
     """Point-wise roi-aware Extractor.
 
     Extract Point-wise roi features.
@@ -15,8 +15,8 @@ class Single3DRoIAwareExtractor(nn.Module):
         roi_layer (dict): The config of roi layer.
     """
 
-    def __init__(self, roi_layer=None):
-        super(Single3DRoIAwareExtractor, self).__init__()
+    def __init__(self, roi_layer=None, init_cfg=None):
+        super(Single3DRoIAwareExtractor, self).__init__(init_cfg=init_cfg)
         self.roi_layer = self.build_roi_layers(roi_layer)
 
     def build_roi_layers(self, layer_cfg):

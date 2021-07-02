@@ -109,8 +109,9 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             conv_cfg=None,
             norm_cfg=None,
             train_cfg=None,
-            test_cfg=None):
-        super(AnchorFreeMono3DHead, self).__init__()
+            test_cfg=None,
+            init_cfg=None):
+        super(AnchorFreeMono3DHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.cls_out_channels = num_classes
         self.in_channels = in_channels

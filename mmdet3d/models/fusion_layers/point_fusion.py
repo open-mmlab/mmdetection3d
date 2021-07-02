@@ -1,5 +1,6 @@
 import torch
-from mmcv.cnn import ConvModule, xavier_init
+from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -96,7 +97,7 @@ def point_sample(
 
 
 @FUSION_LAYERS.register_module()
-class PointFusion(nn.Module):
+class PointFusion(BaseModule):
     """Fuse image features from multi-scale features.
 
     Args:
@@ -138,6 +139,7 @@ class PointFusion(nn.Module):
                  conv_cfg=None,
                  norm_cfg=None,
                  act_cfg=None,
+                 init_cfg=None,
                  activate_out=True,
                  fuse_out=False,
                  dropout_ratio=0,
@@ -145,7 +147,7 @@ class PointFusion(nn.Module):
                  align_corners=True,
                  padding_mode='zeros',
                  lateral_conv=True):
-        super(PointFusion, self).__init__()
+        super(PointFusion, self).__init__(init_cfg=init_cfg)
         if isinstance(img_levels, int):
             img_levels = [img_levels]
         if isinstance(img_channels, int):
@@ -200,14 +202,11 @@ class PointFusion(nn.Module):
                 nn.BatchNorm1d(out_channels, eps=1e-3, momentum=0.01),
                 nn.ReLU(inplace=False))
 
-        self.init_weights()
-
-    # default init_weights for conv(msra) and norm in ConvModule
-    def init_weights(self):
-        """Initialize the weights of modules."""
-        for m in self.modules():
-            if isinstance(m, (nn.Conv2d, nn.Linear)):
-                xavier_init(m, distribution='uniform')
+        if init_cfg is None:
+            self.init_cfg = [
+                dict(type='Xavier', layer='Conv2d', distribution='uniform'),
+                dict(type='Xavier', layer='Linear', distribution='uniform')
+            ]
 
     def forward(self, img_feats, pts, pts_feats, img_metas):
         """Forward function.

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from torch import nn as nn
+import warnings
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.models.utils import MLP
@@ -69,9 +69,10 @@ class ImVoteNet(Base3DDetector):
                  num_sampled_seed=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
+                 pretrained=None,
+                 init_cfg=None):
 
-        super(ImVoteNet, self).__init__()
+        super(ImVoteNet, self).__init__(init_cfg=init_cfg)
 
         # point branch
         if pts_backbone is not None:
@@ -134,11 +135,7 @@ class ImVoteNet(Base3DDetector):
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.init_weights(pretrained=pretrained)
 
-    def init_weights(self, pretrained=None):
-        """Initialize model weights."""
-        super(ImVoteNet, self).init_weights(pretrained)
         if pretrained is None:
             img_pretrained = None
             pts_pretrained = None
@@ -148,29 +145,26 @@ class ImVoteNet(Base3DDetector):
         else:
             raise ValueError(
                 f'pretrained should be a dict, got {type(pretrained)}')
-        if self.with_img_backbone:
-            self.img_backbone.init_weights(pretrained=img_pretrained)
-        if self.with_img_neck:
-            if isinstance(self.img_neck, nn.Sequential):
-                for m in self.img_neck:
-                    m.init_weights()
-            else:
-                self.img_neck.init_weights()
 
+        if self.with_img_backbone:
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.img_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
         if self.with_img_roi_head:
-            self.img_roi_head.init_weights(img_pretrained)
-        if self.with_img_rpn:
-            self.img_rpn_head.init_weights()
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.img_roi_head.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
+
         if self.with_pts_backbone:
-            self.pts_backbone.init_weights(pretrained=pts_pretrained)
-        if self.with_pts_bbox:
-            self.pts_bbox_head.init_weights()
-        if self.with_pts_neck:
-            if isinstance(self.pts_neck, nn.Sequential):
-                for m in self.pts_neck:
-                    m.init_weights()
-            else:
-                self.pts_neck.init_weights()
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.pts_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=pts_pretrained)
 
     def freeze_img_branch_params(self):
         """Freeze all image branch parameters."""
