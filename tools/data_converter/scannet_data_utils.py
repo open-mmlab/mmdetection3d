@@ -60,6 +60,10 @@ class ScanNetData(object):
         mmcv.check_file_exist(matrix_file)
         return np.load(matrix_file)
 
+    def get_images_and_poses(self, idx):
+        out_path = osp.join(self.root_dir, 'scans', idx, 'out')
+
+
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
         """Get data infos.
 
