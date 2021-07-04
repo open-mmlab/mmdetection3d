@@ -5,6 +5,8 @@ import os
 import struct
 import zlib
 from argparse import ArgumentParser
+from functools import partial
+from multiprocessing import Pool
 
 COMPRESSION_TYPE_COLOR = {-1: 'unknown', 0: 'raw', 1: 'png', 2: 'jpeg'}
 
@@ -124,7 +126,6 @@ class SensorData:
     def export_intrinsics(self, output_path):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
-        print('exporting camera intrinsics to', output_path)
         self.save_mat_to_file(self.intrinsic_color,
                               os.path.join(output_path, 'intrinsic_color.txt'))
         self.save_mat_to_file(self.extrinsic_color,
@@ -135,7 +136,7 @@ class SensorData:
                               os.path.join(output_path, 'extrinsic_depth.txt'))
 
 
-def process_scene(path, idx, limit):
+def process_scene(path, limit, idx):
     data = SensorData(os.path.join(path, idx, f'{idx}.sens'), limit)
     output_path = os.path.join('posed_images', idx)
     data.export_color_images(output_path)
@@ -144,10 +145,8 @@ def process_scene(path, idx, limit):
 
 
 def process_directory(path, limit):
-    scenes = os.listdir(path)
-    for idx in scenes:
-        print(f'extracting {path} {idx}')
-        process_scene(path, idx, limit)
+    with Pool(8) as pool:
+        pool.map(partial(process_scene, path, limit), os.listdir(path))
 
 
 if __name__ == '__main__':

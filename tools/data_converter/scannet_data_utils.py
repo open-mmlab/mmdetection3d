@@ -1,5 +1,6 @@
 import mmcv
 import numpy as np
+import os
 from concurrent import futures as futures
 from os import path as osp
 
@@ -60,6 +61,28 @@ class ScanNetData(object):
         mmcv.check_file_exist(matrix_file)
         return np.load(matrix_file)
 
+    def get_images(self, idx):
+        paths = []
+        path = osp.join(self.root_dir, 'posed_images', idx)
+        for file in sorted(os.listdir(path)):
+            if file.endswith('.jpg'):
+                paths.append(osp.join(path, file))
+        return paths
+
+    def get_extrinsics(self, idx):
+        extrinsics = []
+        path = osp.join(self.root_dir, 'posed_images', idx)
+        for file in sorted(os.listdir(path)):
+            if file.endswith('.txt') and file[0].isdigit():
+                extrinsics.append(np.loadtxt(osp.join(path, file)))
+        return extrinsics
+
+    def get_intrinsics(self, idx):
+        matrix_file = osp.join(self.root_dir, 'posed_images', idx,
+                               'intrinsic_color.txt')
+        mmcv.check_file_exist(matrix_file)
+        return np.loadtxt(matrix_file)
+
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
         """Get data infos.
 
@@ -87,6 +110,12 @@ class ScanNetData(object):
             points.tofile(
                 osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
             info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
+
+            # update with RGB image paths if exist
+            if os.path.exists(osp.join(self.root_dir, 'posed_images')):
+                info['img_paths'] = self.get_images(sample_idx)
+                info['extrinsics'] = self.get_extrinsics(sample_idx)
+                info['intrinsics'] = self.get_intrinsics(sample_idx)
 
             if not self.test_mode:
                 pts_instance_mask_path = osp.join(
