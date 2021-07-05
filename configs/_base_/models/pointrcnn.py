@@ -40,7 +40,7 @@ model = dict(
             loss_weight=1.0),
         bbox_coder=dict(
             type='PointXYZWHLRBBoxCoder',
-            use_mean_size=True,
+            use_mean_size=False,
             mean_size=[[1.6, 3.9, 1.56], [0.6, 0.8, 1.73], [0.6, 1.76,
                                                             1.73]])),
     roi_head=dict(
