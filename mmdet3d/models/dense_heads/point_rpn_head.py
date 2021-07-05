@@ -11,7 +11,7 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
-from .base_separate_conv_bbox_head import BaseSeparateConvBboxHead
+from .base_linear_bbox_head import BaseLinearBboxHead
 
 
 def write_ply(points, points_label, out_filename):
@@ -117,7 +117,7 @@ class PointRPNHead(BaseModule):
 
         # build box coder
         self.bbox_coder = build_bbox_coder(bbox_coder)
-        self.conv_pred = BaseSeparateConvBboxHead(
+        self.conv_pred = BaseLinearBboxHead(
             **pred_layer_cfg,
             num_cls_out_channels=self._get_cls_out_channels(),
             num_reg_out_channels=self._get_reg_out_channels())
