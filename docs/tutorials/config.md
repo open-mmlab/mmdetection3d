@@ -203,7 +203,7 @@ train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),  # all valid categories ids
         max_cat_id=40),  # max possible category id in input segmentation mask
-    dict(type='IndoorPointSample',  # Sample indoor points, refer to mmdet3d.datasets.pipelines.indoor_sample for more details
+    dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
             num_points=40000),  # Number of points to be sampled
     dict(type='IndoorFlipData',  # Augmentation pipeline that flip points and 3d boxes
         flip_ratio_yz=0.5,  # Probability of being flipped along yz plane
@@ -232,7 +232,7 @@ test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for m
         shift_height=True,  # Whether to use shifted height
         load_dim=6,  # The dimension of the loaded points
         use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
-    dict(type='IndoorPointSample',  # Sample indoor points, refer to mmdet3d.datasets.pipelines.indoor_sample for more details
+    dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
         num_points=40000),  # Number of points to be sampled
     dict(
         type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formating for more details
@@ -286,7 +286,7 @@ data = dict(
                     valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
                                    28, 33, 34, 36, 39),
                     max_cat_id=40),
-                dict(type='IndoorPointSample', num_points=40000),
+                dict(type='PointSample', num_points=40000),
                 dict(
                     type='IndoorFlipData',
                     flip_ratio_yz=0.5,
@@ -325,7 +325,7 @@ data = dict(
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
@@ -350,7 +350,7 @@ data = dict(
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',

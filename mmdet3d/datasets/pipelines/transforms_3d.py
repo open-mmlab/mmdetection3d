@@ -931,22 +931,10 @@ class IndoorPointSample(PointSample):
         num_points (int): Number of points to be sampled.
     """
 
-    def __init__(self, num_points):
+    def __init__(self, *args, **kwargs):
         warnings.warn(
             'IndoorPointSample is deprecated in favor of PointSample')
-        super(IndoorPointSample, self).__init__(num_points)
-        self.num_points = num_points
-
-    def __call__(self, results):
-        """Call function to sample points to in indoor scenes.
-
-        Args:
-            input_dict (dict): Result dict from loading pipeline.
-        Returns:
-            dict: Results after sampling, 'points', 'pts_instance_mask' \
-                and 'pts_semantic_mask' keys are updated in the result dict.
-        """
-        return super(IndoorPointSample, self).__call__(results)
+        super(IndoorPointSample, self).__init__(*args, **kwargs)
 
     def __repr__(self):
         """str: Return a string that describes the module."""

@@ -187,7 +187,7 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='IndoorPointSample', num_points=20000),
+    dict(type='PointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Collect3D',
@@ -225,7 +225,7 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.5,
             ),
-            dict(type='IndoorPointSample', num_points=20000),
+            dict(type='PointSample', num_points=20000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
