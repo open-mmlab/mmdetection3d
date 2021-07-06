@@ -29,9 +29,10 @@ train_pipeline = [
         type='IndoorPatchPointSample',
         num_points=num_points,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False),
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])

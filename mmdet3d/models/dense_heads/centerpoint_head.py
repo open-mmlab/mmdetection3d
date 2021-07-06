@@ -81,10 +81,7 @@ class SeparateHead(BaseModule):
             self.__setattr__(head, conv_layers)
 
             if init_cfg is None:
-                self.init_cfg = dict(
-                    type='Kaiming',
-                    layer='Conv2d',
-                    override=dict(type='Kaiming', name='heatmap'))
+                self.init_cfg = dict(type='Kaiming', layer='Conv2d')
 
     def init_weights(self):
         """Initialize weights."""
@@ -201,13 +198,12 @@ class DCNSeparateHead(BaseModule):
             final_kernel=final_kernel,
             bias=bias)
         if init_cfg is None:
-            self.init_cfg = dict(
-                type='Kaiming',
-                layer='Conv2d',
-                override=dict(
-                    type='Kaiming',
-                    name=self.cls_head[-1],
-                    bias=self.init_bias))
+            self.init_cfg = dict(type='Kaiming', layer='Conv2d')
+
+    def init_weights(self):
+        """Initialize weights."""
+        super().init_weights()
+        self.cls_head[-1].bias.data.fill_(self.init_bias)
 
     def forward(self, x):
         """Forward function for DCNSepHead.

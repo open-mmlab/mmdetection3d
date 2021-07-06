@@ -90,12 +90,16 @@ def test_show_result_meshlab():
         torch.tensor(
             [[-1.1580, 3.3041, -0.9961, 0.3829, 0.4647, 0.5574, 1.1213]]))
     img = np.random.randn(1, 3, 608, 832)
-    K = np.array([[[529.5000, 0.0000, 365.0000], [0.0000, 529.5000, 265.0000],
-                   [0.0000, 0.0000, 1.0000]]])
-    Rt = torch.tensor([[[0.9980, 0.0058, -0.0634], [0.0058, 0.9835, 0.1808],
-                        [0.0634, -0.1808, 0.9815]]])
+    k_mat = np.array([[529.5000, 0.0000, 365.0000],
+                      [0.0000, 529.5000, 265.0000], [0.0000, 0.0000, 1.0000]])
+    rt_mat = np.array([[0.9980, 0.0058, -0.0634], [0.0058, 0.9835, 0.1808],
+                       [0.0634, -0.1808, 0.9815]])
+    rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]]) @ rt_mat.transpose(
+        1, 0)
+    depth2img = k_mat @ rt_mat
     img_meta = dict(
         filename=filename,
+        depth2img=depth2img,
         pcd_horizontal_flip=False,
         pcd_vertical_flip=False,
         box_mode_3d=Box3DMode.DEPTH,
@@ -104,12 +108,8 @@ def test_show_result_meshlab():
         pcd_scale_factor=1.0,
         pts_filename=pcd,
         transformation_3d_flow=['R', 'S', 'T'])
-    calib = dict(K=K, Rt=Rt)
     data = dict(
-        points=[[torch.tensor(points)]],
-        img_metas=[[img_meta]],
-        img=[img],
-        calib=[calib])
+        points=[[torch.tensor(points)]], img_metas=[[img_meta]], img=[img])
     result = [dict(boxes_3d=box_3d, labels_3d=labels_3d, scores_3d=scores_3d)]
     tmp_dir = tempfile.TemporaryDirectory()
     temp_out_dir = tmp_dir.name
@@ -244,10 +244,13 @@ def test_show_result_meshlab():
 
 
 def test_inference_detector():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
     pcd = 'tests/data/kitti/training/velodyne_reduced/000000.bin'
     detector_cfg = 'configs/pointpillars/hv_pointpillars_secfpn_' \
                    '6x8_160e_kitti-3d-3class.py'
-    detector = init_model(detector_cfg, device='cpu')
+    detector = init_model(detector_cfg, device='cuda:0')
     results = inference_detector(detector, pcd)
     bboxes_3d = results[0][0]['boxes_3d']
     scores_3d = results[0][0]['scores_3d']
@@ -321,7 +324,7 @@ def test_inference_segmentor():
         pytest.skip('test requires GPU and torch+cuda')
     pcd = 'tests/data/scannet/points/scene0000_00.bin'
     segmentor_cfg = 'configs/pointnet2/pointnet2_ssg_' \
-                    '16x2_scannet-3d-20class.py'
+                    '16x2_cosine_200e_scannet_seg-3d-20class.py'
     segmentor = init_model(segmentor_cfg, device='cuda:0')
     results = inference_segmentor(segmentor, pcd)
     seg_3d = results[0][0]['semantic_mask']

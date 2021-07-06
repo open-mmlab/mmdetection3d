@@ -1,4 +1,4 @@
-include mmdet3d/model_zoo.yml
+include mmdet3d/model-index.yml
 include requirements/*.txt
 recursive-include mmdet3d/configs *.py *.yml
 recursive-include mmdet3d/tools *.sh *.py

@@ -1,0 +1,24 @@
+Collections:
+  - Name: ImVoxelNet
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x Tesla P40
+      Architecture:
+        - Anchor3DHead
+    Paper: https://arxiv.org/abs/2106.01178
+    README: configs/imvoxelnet/README.md
+
+Models:
+  - Name: imvoxelnet_kitti-3d-car
+    In Collection: ImVoxelNet
+    Config: configs/imvoxelnet/imvoxelnet_kitti-3d-car.py
+    Metadata:
+      Training Memory (GB): 15.0
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 17.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvoxelnet/imvoxelnet_kitti-3d-car_20210610_152323-b9abba85.pth

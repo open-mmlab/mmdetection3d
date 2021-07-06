@@ -120,6 +120,7 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
     return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)
 
 
+# TODO: remove third parameter in all functions here in favour of img_metas
 def draw_depth_bbox3d_on_img(bboxes3d,
                              raw_img,
                              calibs,
@@ -137,35 +138,22 @@ def draw_depth_bbox3d_on_img(bboxes3d,
         color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
-    from mmdet3d.core import Coord3DMode
     from mmdet3d.core.bbox import points_cam2img
     from mmdet3d.models import apply_3d_transformation
 
     img = raw_img.copy()
-    calibs = copy.deepcopy(calibs)
     img_metas = copy.deepcopy(img_metas)
     corners_3d = bboxes3d.corners
     num_bbox = corners_3d.shape[0]
     points_3d = corners_3d.reshape(-1, 3)
-    assert ('Rt' in calibs.keys() and 'K' in calibs.keys()), \
-        'Rt and K matrix should be provided as camera caliberation information'
-    if not isinstance(calibs['Rt'], torch.Tensor):
-        calibs['Rt'] = torch.from_numpy(np.array(calibs['Rt']))
-    if not isinstance(calibs['K'], torch.Tensor):
-        calibs['K'] = torch.from_numpy(np.array(calibs['K']))
-    calibs['Rt'] = calibs['Rt'].reshape(3, 3).float().cpu()
-    calibs['K'] = calibs['K'].reshape(3, 3).float().cpu()
 
     # first reverse the data transformations
     xyz_depth = apply_3d_transformation(
         points_3d, 'DEPTH', img_metas, reverse=True)
 
-    # then convert from depth coords to camera coords
-    xyz_cam = Coord3DMode.convert_point(
-        xyz_depth, Coord3DMode.DEPTH, Coord3DMode.CAM, rt_mat=calibs['Rt'])
-
     # project to 2d to get image coords (uv)
-    uv_origin = points_cam2img(xyz_cam, calibs['K'])
+    uv_origin = points_cam2img(xyz_depth,
+                               xyz_depth.new_tensor(img_metas['depth2img']))
     uv_origin = (uv_origin - 1).round()
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 

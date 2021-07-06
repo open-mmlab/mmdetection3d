@@ -24,7 +24,7 @@ Please refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#config) 
 We follow the below style to name config files. Contributors are advised to follow the same style.
 
 ```
-{model}_[model setting]_{backbone}_{neck}_[norm setting]_[misc]_[batch_per_gpu x gpu]_{schedule}_{dataset}
+{model}_[model setting]_{backbone}_[neck]_[norm setting]_[misc]_[batch_per_gpu x gpu]_{schedule}_{dataset}
 ```
 
 `{xxx}` is required field and `[yyy]` is optional.
@@ -32,7 +32,7 @@ We follow the below style to name config files. Contributors are advised to foll
 - `{model}`: model type like `hv_pointpillars` (Hard Voxelization PointPillars), `VoteNet`, etc.
 - `[model setting]`: specific setting for some model.
 - `{backbone}`: backbone type like `regnet-400mf`, `regnet-1.6gf`.
-- `{neck}`: neck type like `fpn`, `secfpn`.
+- `[neck]`: neck type like `fpn`, `secfpn`.
 - `[norm_setting]`: `bn` (Batch Normalization) is used unless specified, other norm layer type could be `gn` (Group Normalization), `sbn` (Synchronized Batch Normalization).
 `gn-head`/`gn-neck` indicates GN is applied in head/neck only, while `gn-all` means GN is applied in the entire model, e.g. backbone, neck, head.
 - `[misc]`: miscellaneous setting/plugins of model, e.g. `strong-aug` means using stronger augmentation strategies for training.
@@ -383,14 +383,14 @@ evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created befo
 ])
 lr = 0.008  # Learning rate of optimizers
 optimizer = dict(  # Config used to build optimizer, support all the optimizers in PyTorch whose arguments are also the same as those in PyTorch
-    type='Adam',  # Type of optimizers,   # Type of optimizers, refer to https://github.com/open-mmlab/mmdetection/blob/master/mmdet/core/optimizer/default_constructor.py#L13 for more details
+    type='Adam',  # Type of optimizers,   # Type of optimizers, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12 for more details
     lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentaion of PyTorch
-optimizer_config = dict(  # Config used to build the optimizer hook, refer to https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/optimizer.py#L8 for implementation details.
+optimizer_config = dict(  # Config used to build the optimizer hook, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/optimizer.py#L22 for implementation details.
     grad_clip=dict(  # Config used to grad_clip
     max_norm=10,  # max norm of the gradients
     norm_type=2))  # Type of the used p-norm. Can be 'inf' for infinity norm.
 lr_config = dict(  # Learning rate scheduler config used to register LrUpdater hook
-    policy='step',  # The policy of scheduler, also support CosineAnnealing, Cyclic, etc. Refer to details of supported LrUpdater from https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/lr_updater.py#L9.
+    policy='step',  # The policy of scheduler, also support CosineAnnealing, Cyclic, etc. Refer to details of supported LrUpdater from https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L9.
     warmup=None,  # The warmup policy, also support `exp` and `constant`.
     step=[24, 32])  # Steps to decay the learning rate
 checkpoint_config = dict(  # Config to set the checkpoint hook, Refer to https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/checkpoint.py for implementation.
@@ -417,7 +417,7 @@ gpu_ids = range(0, 1)  # ids of gpus
 Sometimes, you may set `_delete_=True` to ignore some of fields in base configs.
 You may refer to [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) for simple illustration.
 
-In MMDetection or MMDetection3D, for example, to change the FPN neck of PointPillars with the following config.
+In MMDetection3D, for example, to change the FPN neck of PointPillars with the following config.
 
 ```python
 model = dict(

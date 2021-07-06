@@ -1,12 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from mmcv.cnn import normal_init
-from mmcv.runner import auto_fp16, force_fp32
+from mmcv.runner import BaseModule, auto_fp16, force_fp32
 from torch import nn as nn
 
 from mmseg.models.builder import build_loss
 
 
-class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
+class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
 
     Args:
@@ -37,8 +37,9 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
                      use_sigmoid=False,
                      class_weight=None,
                      loss_weight=1.0),
-                 ignore_index=255):
-        super(Base3DDecodeHead, self).__init__()
+                 ignore_index=255,
+                 init_cfg=None):
+        super(Base3DDecodeHead, self).__init__(init_cfg=init_cfg)
         self.channels = channels
         self.num_classes = num_classes
         self.dropout_ratio = dropout_ratio
@@ -57,6 +58,7 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
 
     def init_weights(self):
         """Initialize weights of classification layer."""
+        super().init_weights()
         normal_init(self.conv_seg, mean=0, std=0.01)
 
     @auto_fp16()

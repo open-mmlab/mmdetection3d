@@ -111,12 +111,14 @@ def get_box_type(box_type):
     return box_type_3d, box_mode_3d
 
 
-def points_cam2img(points_3d, proj_mat):
+def points_cam2img(points_3d, proj_mat, with_depth=False):
     """Project points from camera coordicates to image coordinates.
 
     Args:
-        points_3d (torch.Tensor): Points in shape (N, 3)
+        points_3d (torch.Tensor): Points in shape (N, 3).
         proj_mat (torch.Tensor): Transformation matrix between coordinates.
+        with_depth (bool, optional): Whether to keep depth in the output.
+            Defaults to False.
 
     Returns:
         torch.Tensor: Points in image coordinates with shape [N, 2].
@@ -141,6 +143,9 @@ def points_cam2img(points_3d, proj_mat):
         [points_3d, points_3d.new_ones(*points_shape)], dim=-1)
     point_2d = torch.matmul(points_4, proj_mat.t())
     point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
+
+    if with_depth:
+        return torch.cat([point_2d_res, point_2d[..., 2:3]], dim=-1)
     return point_2d_res
 
 
@@ -176,8 +181,10 @@ def mono_cam_box2vis(cam_box):
     # change local yaw to global yaw for visualization
     # refer to https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L164-L166  # noqa
     yaw += torch.atan2(loc[:, 0], loc[:, 2])
-    # convert yaw by (np.pi / 2 - yaw)
-    yaw = np.pi / 2.0 - yaw
+    # convert yaw by (-yaw - np.pi / 2)
+    # this is because mono 3D box class such as `NuScenesBox` has different
+    # definition of rotation with our `CameraInstance3DBoxes`
+    yaw = -yaw - np.pi / 2
     cam_box = torch.cat([loc, dim, yaw[:, None], feats], dim=1)
     cam_box = CameraInstance3DBoxes(
         cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))

@@ -57,9 +57,10 @@ def assign_kernel_withoutk(features, kernels, M):
         M (int): Number of weight matrices in the weight bank.
 
     Returns:
-        Tuple[torch.Tensor]: both of shape (B, N, M, out_dim)
-            point_features: Pre-computed features for points.
-            center_features: Pre-computed features for centers.
+        Tuple[torch.Tensor]: both of shape (B, N, M, out_dim):
+
+            - point_features: Pre-computed features for points.
+            - center_features: Pre-computed features for centers.
     """
     B, in_dim, N = features.size()
     feat_trans = features.permute(0, 2, 1)  # [B, N, in_dim]
