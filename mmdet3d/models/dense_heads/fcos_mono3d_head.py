@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import Scale, normal_init
+from mmcv.cnn import Scale
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
@@ -95,15 +95,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
         if init_cfg is None:
-            self.init_cfg =dict(
+            self.init_cfg = dict(
                 type='Normal',
                 layer='Conv2d',
                 std=0.01,
                 override=dict(
-                    type='Normal', 
-                    name='conv_cls',
-                    std=0.01,
-                    bias_prob=0.01))
+                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -115,7 +112,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.scales = nn.ModuleList([
             nn.ModuleList([Scale(1.0) for _ in range(3)]) for _ in self.strides
         ])  # only for offset, depth and size regression
-        
+
     def forward(self, feats):
         """Forward features from the upstream network.
 
