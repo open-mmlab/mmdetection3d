@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6 git ninja-build 
     && rm -rf /var/lib/apt/lists/*
 
 # Install MMCV, MMDetection and MMSegmentation
-RUN pip install mmcv-full==latest+torch1.6.0+cu101 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
-RUN pip install mmdet==2.11.0
-RUN pip install mmsegmentation==0.14.0
+RUN pip install mmcv-full==1.3.8 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.6.0/index.html
+RUN pip install mmdet==2.14.0
+RUN pip install mmsegmentation==0.14.1
 
 # Install MMDetection3D
 RUN conda clean --all
