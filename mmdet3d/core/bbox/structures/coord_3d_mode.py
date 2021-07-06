@@ -243,6 +243,9 @@ class Coord3DMode(IntEnum):
                 f'Conversion from Coord3DMode {src} to {dst} '
                 'is not supported yet')
 
+        if isinstance(rt_mat, np.ndarray):
+            rt_mat = arr.new_tensor(rt_mat)
+
         if rt_mat.size(1) == 4:
             extended_xyz = torch.cat(
                 [arr[:, :3], arr.new_ones(arr.size(0), 1)], dim=-1)
