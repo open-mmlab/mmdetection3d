@@ -105,7 +105,7 @@ model = dict(
             ],
             sampler=dict(
                 type='IoUNegPiecewiseSampler',
-                num=128,
+                num=100,
                 pos_fraction=0.5,
                 neg_piece_fractions=[0.8, 0.2],
                 neg_iou_piece_thrs=[0.55, 0.1],
@@ -120,7 +120,7 @@ model = dict(
             nms_post=512,
             max_output_num=100,
             score_thr=0.1,
-            nms_cfg=dict(type='nms', iou_thr=0.1),
+            nms_cfg=dict(type='nms', iou_thr=0.85),
             per_class_proposal=False,
             use_rotate_nms=True),
         rcnn=dict(
