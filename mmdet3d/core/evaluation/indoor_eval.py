@@ -206,7 +206,8 @@ def indoor_eval(gt_annos,
                 label2cat,
                 logger=None,
                 box_type_3d=None,
-                box_mode_3d=None):
+                box_mode_3d=None,
+                axis_aligned_lw=False):
     """Indoor Evaluation.
 
     Evaluate the result of the detection.
@@ -224,6 +225,9 @@ def indoor_eval(gt_annos,
         label2cat (dict): Map from label to category.
         logger (logging.Logger | str | None): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
+        axis_aligned_lw (bool): whether to use axis-aligned length and width
+            to replace the real length and width.
+            Default: False.
 
     Return:
         dict[str, float]: Dict of results.
@@ -255,6 +259,20 @@ def indoor_eval(gt_annos,
                 gt_anno['gt_boxes_upright_depth'],
                 box_dim=gt_anno['gt_boxes_upright_depth'].shape[-1],
                 origin=(0.5, 0.5, 0.5)).convert_to(box_mode_3d)
+            # replace the original real length and width
+            if axis_aligned_lw:
+                corner3d = gt_boxes.corners
+                minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
+                minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
+                minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
+                dims = minmax_box3d[:, 3:] - minmax_box3d[:, :3]
+                boxes = gt_anno['gt_boxes_upright_depth'].copy()
+                boxes[:, 3:6] = dims
+                gt_boxes = box_type_3d(
+                    boxes,
+                    box_dim=gt_anno['gt_boxes_upright_depth'].shape[-1],
+                    origin=(0.5, 0.5, 0.5)).convert_to(box_mode_3d)
+
             labels_3d = gt_anno['class']
         else:
             gt_boxes = box_type_3d(np.array([], dtype=np.float32))

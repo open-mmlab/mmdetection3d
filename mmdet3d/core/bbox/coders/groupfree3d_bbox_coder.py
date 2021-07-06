@@ -23,13 +23,15 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
                  num_sizes,
                  mean_sizes,
                  with_rot=True,
-                 size_cls_agnostic=True):
+                 size_cls_agnostic=True,
+                 axis_aligned_lw=False):
         super(GroupFree3DBBoxCoder, self).__init__(
             num_dir_bins=num_dir_bins,
             num_sizes=num_sizes,
             mean_sizes=mean_sizes,
             with_rot=with_rot)
         self.size_cls_agnostic = size_cls_agnostic
+        self.axis_aligned_lw = axis_aligned_lw
 
     def encode(self, gt_bboxes_3d, gt_labels_3d):
         """Encode ground truth to prediction targets.
@@ -46,7 +48,14 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         center_target = gt_bboxes_3d.gravity_center
 
         # generate bbox size target
-        size_target = gt_bboxes_3d.dims
+        if self.axis_aligned_lw:
+            corner3d = gt_bboxes_3d.corners
+            minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
+            minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
+            minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
+            size_target = minmax_box3d[:, 3:] - minmax_box3d[:, :3]
+        else:
+            size_target = gt_bboxes_3d.dims
         size_class_target = gt_labels_3d
         size_res_target = gt_bboxes_3d.dims - gt_bboxes_3d.tensor.new_tensor(
             self.mean_sizes)[size_class_target]
