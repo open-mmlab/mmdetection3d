@@ -445,28 +445,38 @@ class PointRPNHead(BaseModule):
         num_rpn_proposal = self.test_cfg.max_output_num
         nms_cfg = self.test_cfg.nms_cfg
         score_thr = self.test_cfg.score_thr
+        nms_pre = self.test_cfg.nms_pre
         if training_flag:
             num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
             nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
             score_thr = self.train_cfg.rpn_proposal.score_thr
+            nms_pre = self.train_cfg.rpn_proposal.nms_pre
 
         score_thr_inds = obj_scores > score_thr
         _scores = obj_scores[score_thr_inds]
         _bboxes_for_nms = bbox_for_nms[score_thr_inds, :]
-        _bboxes = bbox[score_thr_inds]
         _sem_scores = sem_scores[score_thr_inds]
-        _classes = torch.argmax(_sem_scores, -1)
+        classes = torch.argmax(_sem_scores, -1)
+        _classes = classes[score_thr_inds]
+        _bbox = bbox[score_thr_inds]
+
+        # select top k bbox
+        _, indices = _scores.topk(min(nms_pre, _scores.shape[0]))
+        _scores = _scores[indices]
+        _bboxes_for_nms = _bboxes_for_nms[indices]
+        _classes = _classes[indices]
+        _sem_scores = _sem_scores[indices]
+        _bbox = _bbox[indices]
 
         selected = nms_gpu(_bboxes_for_nms, _scores, nms_cfg.iou_thr)
         if selected.shape[0] > num_rpn_proposal:
             selected = selected[:num_rpn_proposal]
 
         if len(selected) > 0:
-            bbox_selected = _bboxes[selected].tensor
+            bbox_selected = _bbox[selected].tensor
             score_selected = _scores[selected]
             labels = _classes[selected]
             cls_preds = _sem_scores[selected]
-
         return bbox_selected, score_selected, labels, cls_preds
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
@@ -483,6 +493,15 @@ class PointRPNHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
+
+        num_rpn_proposal = self.test_cfg.max_output_num
+        nms_cfg = self.test_cfg.nms_cfg
+        score_thr = self.test_cfg.score_thr
+        if training_flag:
+            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
+            nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
+            score_thr = self.train_cfg.rpn_proposal.score_thr
+
         num_bbox = bbox.shape[0]
         bbox = input_meta['box_type_3d'](
             bbox.clone(),
@@ -508,7 +527,7 @@ class PointRPNHead(BaseModule):
         minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
         minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
-
+        '''
         num_rpn_proposal = self.test_cfg.max_output_num
         nms_cfg = self.test_cfg.nms_cfg
         score_thr = self.test_cfg.score_thr
@@ -516,7 +535,7 @@ class PointRPNHead(BaseModule):
             num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
             nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
             score_thr = self.train_cfg.rpn_proposal.score_thr
-
+        '''
         bbox_classes = torch.argmax(sem_scores, -1)
         nms_selected = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]].detach(),
