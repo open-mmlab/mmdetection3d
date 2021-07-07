@@ -443,9 +443,11 @@ class PointRPNHead(BaseModule):
         cls_preds = []
 
         num_rpn_proposal = self.test_cfg.max_output_num
+        nms_cfg = self.test_cfg.nms_cfg
         score_thr = self.test_cfg.score_thr
         if training_flag:
             num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
+            nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
             score_thr = self.train_cfg.rpn_proposal.score_thr
 
         score_thr_inds = obj_scores > score_thr
@@ -455,7 +457,7 @@ class PointRPNHead(BaseModule):
         _sem_scores = sem_scores[score_thr_inds]
         _classes = torch.argmax(_sem_scores, -1)
 
-        selected = nms_gpu(_bboxes_for_nms, _scores, score_thr)
+        selected = nms_gpu(_bboxes_for_nms, _scores, nms_cfg.iou_thr)
         if selected.shape[0] > num_rpn_proposal:
             selected = selected[:num_rpn_proposal]
 
