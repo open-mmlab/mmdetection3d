@@ -4,8 +4,8 @@ from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
 from mmdet3d.core import VoxelGenerator
-from mmdet3d.core.bbox import box_np_ops, LiDARInstance3DBoxes, \
-    CameraInstance3DBoxes, DepthInstance3DBoxes
+from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes, box_np_ops)
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
 from ..builder import OBJECTSAMPLERS
