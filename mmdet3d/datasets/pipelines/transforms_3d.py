@@ -5,6 +5,7 @@ from mmcv.utils import build_from_cfg
 
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import box_np_ops
+from mmdet3d.core.points import LiDARPoints, CameraPoints, DepthPoints
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import RandomFlip
 from ..builder import OBJECTSAMPLERS
@@ -699,7 +700,6 @@ class ObjectRangeFilter(object):
 
     def __init__(self, point_cloud_range):
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
-        self.bev_range = self.pcd_range[[0, 1, 3, 4]]
 
     def __call__(self, input_dict):
         """Call function to filter objects by the range.
@@ -711,9 +711,15 @@ class ObjectRangeFilter(object):
             dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d' \
                 keys are updated in the result dict.
         """
+        # Check points instance type and initialise bev_range
+        if isinstance(input_dict['points'], (LiDARPoints, DepthPoints)):
+            bev_range = self.pcd_range[[0, 1, 3, 4]]
+        elif isinstance(input_dict['points'], CameraPoints):
+            bev_range = self.pcd_range[[0, 2, 3, 5]]
+
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
-        mask = gt_bboxes_3d.in_range_bev(self.bev_range)
+        mask = gt_bboxes_3d.in_range_bev(bev_range)
         gt_bboxes_3d = gt_bboxes_3d[mask]
         # mask is a torch tensor but gt_labels_3d is still numpy array
         # using mask to index gt_labels_3d will cause bug when
