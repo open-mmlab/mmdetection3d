@@ -825,17 +825,17 @@ class PointSample(object):
 
     Args:
         num_points (int): Number of points to be sampled.
-        dist_metric (int, optional): The indicator to the near/far boundary
+        sample_range (int, optional): The range where to sample points.
     """
 
-    def __init__(self, num_points, dist_metric=None):
+    def __init__(self, num_points, sample_range=None):
         self.num_points = num_points
-        self.dist_metric = dist_metric
+        self.sample_range = sample_range
 
     def _points_random_sampling(self,
                                 points,
                                 num_samples,
-                                dist_metric=None,
+                                sample_range=None,
                                 replace=None,
                                 return_choices=False):
         """Points random sampling.
@@ -845,8 +845,8 @@ class PointSample(object):
         Args:
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
-            dist_metric (int, optional): Indicator to the near/far boundary.
-                Once given, only the near points will be sampled.
+            sample_range (int, optional): Indicating the range where the points
+                will be sampled.
                 Defaults to None.
             replace (bool, optional): Sampling with or without replacement.
                 Defaults to None.
@@ -860,16 +860,16 @@ class PointSample(object):
         if replace is None:
             replace = (points.shape[0] < num_samples)
         sample_range = range(len(points))
-        if dist_metric:
+        if sample_range:
             depth = points.coord[:, 2]
-            far_inds = np.where(depth > dist_metric)[0]
-            near_inds = np.where(depth <= dist_metric)[0]
+            far_inds = np.where(depth > sample_range)[0]
+            near_inds = np.where(depth <= sample_range)[0]
             if not replace:
                 # Only sampling the near points when len(points) >= num_samples
                 sample_range = near_inds
                 num_samples -= len(far_inds)
         choices = np.random.choice(sample_range, num_samples, replace=replace)
-        if dist_metric and not replace:
+        if sample_range and not replace:
             choices = np.concatenate((far_inds, choices))
             # Shuffle points after sampling
             np.random.shuffle(choices)
@@ -891,11 +891,11 @@ class PointSample(object):
         points = results['points']
         # Points in Camera coord can provide the depth information.
         # TODO: Need to suport distance-based sampling for other coord system.
-        if self.dist_metric:
+        if self.sample_range:
             assert isinstance(points, CameraPoints), \
                 'Sampling based on distance is only appliable for CAMERA coord'
         points, choices = self._points_random_sampling(
-            points, self.num_points, self.dist_metric, return_choices=True)
+            points, self.num_points, self.sample_range, return_choices=True)
         results['points'] = points
 
         pts_instance_mask = results.get('pts_instance_mask', None)
@@ -915,7 +915,7 @@ class PointSample(object):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(num_points={self.num_points},'
-        repr_str += f' dist_metric={self.dist_metric})'
+        repr_str += f' sample_range={self.sample_range})'
 
         return repr_str
 
@@ -935,12 +935,6 @@ class IndoorPointSample(PointSample):
         warnings.warn(
             'IndoorPointSample is deprecated in favor of PointSample')
         super(IndoorPointSample, self).__init__(*args, **kwargs)
-
-    def __repr__(self):
-        """str: Return a string that describes the module."""
-        repr_str = self.__class__.__name__
-        repr_str += f'(num_points={self.num_points})'
-        return repr_str
 
 
 @PIPELINES.register_module()
