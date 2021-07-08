@@ -65,7 +65,7 @@ def plot_curve(log_dicts, args):
                 # if training is aborted before eval of the last epoch
                 # `xs` and `ys` will have different length and cause an error
                 # check if `ys[-1]` is empty here
-                if not log_dict[epoch][metric]:
+                if args.interval != 1 and not log_dict[epoch][metric]:
                     xs = xs[:-1]
 
                 ax = plt.gca()
