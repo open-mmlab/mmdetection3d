@@ -144,9 +144,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
                 num_expected_neg = neg_upper_bound
         neg_inds = self.neg_sampler._sample_neg(
             assign_result, num_expected_neg, bboxes=bboxes, **kwargs)
-        origin_neg = neg_inds.shape[0]
         neg_inds = neg_inds.unique()
-        if neg_inds.shape[0] + pos_inds.shape[0] < 100:
+        if neg_inds.shape[0] + pos_inds.shape[0] < self.num:
             cur_bbox_num = neg_inds.shape[0] + pos_inds.shape[0]
             neg_expected_num = self.num - cur_bbox_num
             if len(neg_inds) < neg_expected_num:
