@@ -862,6 +862,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                    attr_labels.new_full(
                        (num_points,), self.attr_background_label)
 
+        # change orientation to local yaw
+        gt_bboxes_3d[..., 6] = -torch.atan2(
+            gt_bboxes_3d[..., 0], gt_bboxes_3d[..., 2]) + gt_bboxes_3d[..., 6]
+
         areas = (gt_bboxes[:, 2] - gt_bboxes[:, 0]) * (
             gt_bboxes[:, 3] - gt_bboxes[:, 1])
         areas = areas[None].repeat(num_points, 1)

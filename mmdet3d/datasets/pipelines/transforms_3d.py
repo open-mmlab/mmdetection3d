@@ -121,6 +121,8 @@ class RandomFlip3D(RandomFlip):
             w = input_dict['img_shape'][1]
             input_dict['centers2d'][..., 0] = \
                 w - input_dict['centers2d'][..., 0]
+            # input_dict['cam_intrinsic'][0][2] = \
+            #     w - input_dict['cam_intrinsic'][0][2]
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \
