@@ -62,7 +62,7 @@ model = dict(
             mlp_channels=[128, 128],
             num_points=(128, 32, 1),
             radius=(0.2, 0.4, 100),
-            num_samples=(64, 64, 64),
+            num_samples=(16, 16, 16),
             sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
             with_corner_loss=True)),
     # model training and testing settings
@@ -73,7 +73,7 @@ model = dict(
                 nms_pre=9000,
                 nms_post=512,
                 max_num=512,
-                nms_cfg=dict(type='nms', iou_thr=0.75),
+                nms_cfg=dict(type='nms', iou_thr=0.8),
                 score_thr=0,
                 use_rotate_nms=False)),
         rcnn=dict(
@@ -105,7 +105,7 @@ model = dict(
             ],
             sampler=dict(
                 type='IoUNegPiecewiseSampler',
-                num=100,
+                num=128,
                 pos_fraction=0.5,
                 neg_piece_fractions=[0.8, 0.2],
                 neg_iou_piece_thrs=[0.55, 0.1],
