@@ -60,28 +60,6 @@ class Coord3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def mode_coord2box(coord_mode):
-        if coord_mode == Coord3DMode.LIDAR:
-            return Box3DMode.LIDAR
-        elif coord_mode == Coord3DMode.CAM:
-            return Box3DMode.CAM
-        elif coord_mode == Coord3DMode.DEPTH:
-            return Box3DMode.DEPTH
-        else:
-            raise NotImplementedError
-
-    @staticmethod
-    def mode_box2coord(box_mode):
-        if box_mode == Box3DMode.LIDAR:
-            return Coord3DMode.LIDAR
-        elif box_mode == Box3DMode.CAM:
-            return Coord3DMode.CAM
-        elif box_mode == Box3DMode.DEPTH:
-            return Coord3DMode.DEPTH
-        else:
-            raise NotImplementedError
-
-    @staticmethod
     def convert(input, src, dst, rt_mat=None, is_point=True):
         """Convert boxes or points from `src` mode to `dst` mode."""
         if isinstance(input, BaseInstance3DBoxes):
@@ -117,8 +95,6 @@ class Coord3DMode(IntEnum):
             (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes): \
                 The converted box of the same type.
         """
-        src = Coord3DMode.mode_coord2box(src)
-        dst = Coord3DMode.mode_coord2box(dst)
         return Box3DMode.convert(box, src, dst, rt_mat=rt_mat)
 
     @staticmethod

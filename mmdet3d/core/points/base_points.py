@@ -160,6 +160,7 @@ class BasePoints(object):
             self.tensor[:, :3] = rotated_points.squeeze(0)
             rot_mat_T = rot_mat_T.squeeze(0)
         else:
+            # rotation.numel() == 9
             self.tensor[:, :3] = self.tensor[:, :3] @ rotation
             rot_mat_T = rotation
 
