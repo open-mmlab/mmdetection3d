@@ -1,6 +1,8 @@
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
+import warnings
+from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
@@ -11,7 +13,7 @@ from .anchor3d_head import Anchor3DHead
 
 
 @HEADS.register_module()
-class BaseShapeHead(nn.Module):
+class BaseShapeHead(BaseModule):
     """Base Shape-aware Head in Shape Signature Network.
 
     Note:
@@ -48,8 +50,9 @@ class BaseShapeHead(nn.Module):
                  use_direction_classifier=True,
                  conv_cfg=dict(type='Conv2d'),
                  norm_cfg=dict(type='BN2d'),
-                 bias=False):
-        super().__init__()
+                 bias=False,
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.num_cls = num_cls
         self.num_base_anchors = num_base_anchors
         self.use_direction_classifier = use_direction_classifier
@@ -84,15 +87,36 @@ class BaseShapeHead(nn.Module):
         if use_direction_classifier:
             self.conv_dir_cls = nn.Conv2d(out_channels, num_base_anchors * 2,
                                           1)
-
-    def init_weights(self):
-        """Initialize weights."""
-        bias_cls = bias_init_with_prob(0.01)
-        # shared conv layers have already been initialized by ConvModule
-        normal_init(self.conv_cls, std=0.01, bias=bias_cls)
-        normal_init(self.conv_reg, std=0.01)
-        if self.use_direction_classifier:
-            normal_init(self.conv_dir_cls, std=0.01, bias=bias_cls)
+        if init_cfg is None:
+            if use_direction_classifier:
+                self.init_cfg = dict(
+                    type='Kaiming',
+                    layer='Conv2d',
+                    override=[
+                        dict(type='Normal', name='conv_reg', std=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_cls',
+                            std=0.01,
+                            bias_prob=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_dir_cls',
+                            std=0.01,
+                            bias_prob=0.01)
+                    ])
+            else:
+                self.init_cfg = dict(
+                    type='Kaiming',
+                    layer='Conv2d',
+                    override=[
+                        dict(type='Normal', name='conv_reg', std=0.01),
+                        dict(
+                            type='Normal',
+                            name='conv_cls',
+                            std=0.01,
+                            bias_prob=0.01)
+                    ])
 
     def forward(self, x):
         """Forward function for SmallHead.
@@ -149,10 +173,21 @@ class ShapeAwareHead(Anchor3DHead):
             :class:`Anchor3DHead`.
     """
 
-    def __init__(self, tasks, assign_per_class=True, **kwargs):
+    def __init__(self, tasks, assign_per_class=True, init_cfg=None, **kwargs):
         self.tasks = tasks
         self.featmap_sizes = []
-        super().__init__(assign_per_class=assign_per_class, **kwargs)
+        super().__init__(
+            assign_per_class=assign_per_class, init_cfg=init_cfg, **kwargs)
+
+    def init_weights(self):
+        if not self._is_init:
+            for m in self.heads:
+                if hasattr(m, 'init_weights'):
+                    m.init_weights()
+            self._is_init = True
+        else:
+            warnings.warn(f'init_weights of {self.__class__.__name__} has '
+                          f'been called more than once.')
 
     def _init_layers(self):
         """Initialize neural network layers of the head."""
@@ -174,11 +209,6 @@ class ShapeAwareHead(Anchor3DHead):
                 shared_conv_strides=task['shared_conv_strides'])
             self.heads.append(build_head(branch))
             cls_ptr += task['num_class']
-
-    def init_weights(self):
-        """Initialize the weights of head."""
-        for head in self.heads:
-            head.init_weights()
 
     def forward_single(self, x):
         """Forward function on a single-scale feature map.

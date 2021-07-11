@@ -1,5 +1,3 @@
-from torch import nn as nn
-
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from .base import Base3DDetector
 
@@ -28,8 +26,9 @@ class SingleStage3DDetector(Base3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 init_cfg=None,
                  pretrained=None):
-        super(SingleStage3DDetector, self).__init__()
+        super(SingleStage3DDetector, self).__init__(init_cfg)
         self.backbone = build_backbone(backbone)
         if neck is not None:
             self.neck = build_neck(neck)
@@ -38,19 +37,6 @@ class SingleStage3DDetector(Base3DDetector):
         self.bbox_head = build_head(bbox_head)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.init_weights(pretrained=pretrained)
-
-    def init_weights(self, pretrained=None):
-        """Initialize weights of detector."""
-        super(SingleStage3DDetector, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-        if self.with_neck:
-            if isinstance(self.neck, nn.Sequential):
-                for m in self.neck:
-                    m.init_weights()
-            else:
-                self.neck.init_weights()
-        self.bbox_head.init_weights()
 
     def extract_feat(self, points, img_metas=None):
         """Directly extract features from the backbone+neck.

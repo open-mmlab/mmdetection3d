@@ -1,14 +1,15 @@
 import copy
 import torch
+import warnings
 from mmcv.cnn import ConvModule
-from mmcv.runner import auto_fp16, load_checkpoint
+from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
 from mmdet.models import BACKBONES, build_backbone
 
 
 @BACKBONES.register_module()
-class MultiBackbone(nn.Module):
+class MultiBackbone(BaseModule):
     """MultiBackbone with different configs.
 
     Args:
@@ -31,8 +32,10 @@ class MultiBackbone(nn.Module):
                  norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.01),
                  act_cfg=dict(type='ReLU'),
                  suffixes=('net0', 'net1'),
+                 init_cfg=None,
+                 pretrained=None,
                  **kwargs):
-        super().__init__()
+        super().__init__(init_cfg=init_cfg)
         assert isinstance(backbones, dict) or isinstance(backbones, list)
         if isinstance(backbones, dict):
             backbones_list = []
@@ -77,14 +80,12 @@ class MultiBackbone(nn.Module):
                     bias=True,
                     inplace=True))
 
-    def init_weights(self, pretrained=None):
-        """Initialize the weights of PointNet++ backbone."""
-        # Do not initialize the conv layers
-        # to follow the original implementation
+        assert not (init_cfg and pretrained), \
+            'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):
-            from mmdet3d.utils import get_root_logger
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
+            warnings.warn('DeprecationWarning: pretrained is a deprecated, '
+                          'please use "init_cfg" instead')
+            self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
 
     @auto_fp16()
     def forward(self, points):

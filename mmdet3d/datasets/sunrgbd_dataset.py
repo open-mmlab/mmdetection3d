@@ -101,7 +101,12 @@ class SUNRGBDDataset(Custom3DDataset):
             input_dict['img_prefix'] = None
             input_dict['img_info'] = dict(filename=img_filename)
             calib = info['calib']
-            input_dict['calib'] = calib
+            rt_mat = calib['Rt']
+            # follow Coord3DMode.convert_point
+            rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                               ]) @ rt_mat.transpose(1, 0)
+            depth2img = calib['K'] @ rt_mat
+            input_dict['depth2img'] = depth2img
 
         if not self.test_mode:
             annos = self.get_ann_info(index)
@@ -187,8 +192,8 @@ class SUNRGBDDataset(Custom3DDataset):
             data_info = self.data_infos[i]
             pts_path = data_info['pts_path']
             file_name = osp.split(pts_path)[-1].split('.')[0]
-            points, img_metas, img, calib = self._extract_data(
-                i, pipeline, ['points', 'img_metas', 'img', 'calib'])
+            points, img_metas, img = self._extract_data(
+                i, pipeline, ['points', 'img_metas', 'img'])
             # scale colors to [0, 255]
             points = points.numpy()
             points[:, 3:] *= 255
@@ -199,7 +204,7 @@ class SUNRGBDDataset(Custom3DDataset):
                         file_name, show)
 
             # multi-modality visualization
-            if self.modality['use_camera'] and 'calib' in data_info.keys():
+            if self.modality['use_camera']:
                 img = img.numpy()
                 # need to transpose channel to first dim
                 img = img.transpose(1, 2, 0)
@@ -211,7 +216,7 @@ class SUNRGBDDataset(Custom3DDataset):
                     img,
                     gt_bboxes,
                     pred_bboxes,
-                    calib,
+                    None,
                     out_dir,
                     file_name,
                     box_mode='depth',

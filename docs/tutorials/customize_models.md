@@ -33,9 +33,6 @@ class HardVFE(nn.Module):
 
     def forward(self, x):  # should return a tuple
         pass
-
-    def init_weights(self, pretrained=None):
-        pass
 ```
 
 #### 2. Import the module
@@ -56,7 +53,7 @@ custom_imports = dict(
 
 to the config file to avoid modifying the original code.
 
-#### 3. Use the backbone in your config file
+#### 3. Use the voxel encoder in your config file
 
 ```python
 model = dict(
@@ -83,15 +80,12 @@ from ..builder import BACKBONES
 
 
 @BACKBONES.register_module()
-class SECOND(nn.Module):
+class SECOND(BaseModule):
 
     def __init__(self, arg1, arg2):
         pass
 
     def forward(self, x):  # should return a tuple
-        pass
-
-    def init_weights(self, pretrained=None):
         pass
 ```
 
@@ -135,7 +129,7 @@ Create a new file `mmdet3d/models/necks/second_fpn.py`.
 from ..builder import NECKS
 
 @NECKS.register
-class SECONDFPN(nn.Module):
+class SECONDFPN(BaseModule):
 
     def __init__(self,
                  in_channels=[128, 128, 256],
@@ -144,7 +138,8 @@ class SECONDFPN(nn.Module):
                  norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
                  upsample_cfg=dict(type='deconv', bias=False),
                  conv_cfg=dict(type='Conv2d', bias=False),
-                 use_conv_for_no_stride=False):
+                 use_conv_for_no_stride=False,
+                 init_cfg=None):
         pass
 
     def forward(self, X):
@@ -170,14 +165,17 @@ custom_imports = dict(
 
 to the config file and avoid modifying the original code.
 
-#### 3. Modify the config file
+#### 3. Use the neck in your config file
 
 ```python
-neck=dict(
-    type='SECONDFPN',
-    in_channels=[64, 128, 256],
-    upsample_strides=[1, 2, 4],
-    out_channels=[128, 128, 128])
+model = dict(
+    ...
+    neck=dict(
+        type='SECONDFPN',
+        in_channels=[64, 128, 256],
+        upsample_strides=[1, 2, 4],
+        out_channels=[128, 128, 128]),
+    ...
 ```
 
 ### Add new heads
@@ -195,7 +193,7 @@ from mmdet.models.builder import HEADS
 from .bbox_head import BBoxHead
 
 @HEADS.register_module()
-class PartA2BboxHead(nn.Module):
+class PartA2BboxHead(BaseModule):
     """PartA2 RoI head."""
 
     def __init__(self,
@@ -221,11 +219,9 @@ class PartA2BboxHead(nn.Module):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      reduction='none',
-                     loss_weight=1.0)):
-        super(PartA2BboxHead, self).__init__()
-
-    def init_weights(self):
-        # conv layers are already initialized by ConvModule
+                     loss_weight=1.0),
+                 init_cfg=None):
+        super(PartA2BboxHead, self).__init__(init_cfg=init_cfg)
 
     def forward(self, seg_feats, part_feats):
 
@@ -239,7 +235,7 @@ from torch import nn as nn
 
 
 @HEADS.register_module()
-class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
+class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
     """Base class for 3d RoIHeads."""
 
     def __init__(self,
@@ -247,7 +243,8 @@ class Base3DRoIHead(nn.Module, metaclass=ABCMeta):
                  mask_roi_extractor=None,
                  mask_head=None,
                  train_cfg=None,
-                 test_cfg=None):
+                 test_cfg=None,
+                 init_cfg=None):
 
     @property
     def with_bbox(self):
@@ -330,9 +327,13 @@ class PartAggregationROIHead(Base3DRoIHead):
                  part_roi_extractor=None,
                  bbox_head=None,
                  train_cfg=None,
-                 test_cfg=None):
+                 test_cfg=None,
+                 init_cfg=None):
         super(PartAggregationROIHead, self).__init__(
-            bbox_head=bbox_head, train_cfg=train_cfg, test_cfg=test_cfg)
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
         self.num_classes = num_classes
         assert semantic_head is not None
         self.semantic_head = build_head(semantic_head)
@@ -383,7 +384,7 @@ Alternatively, the users can add
 
 ```python
 custom_imports=dict(
-    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.bbox_heads.parta2_bbox_head'])
+    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'])
 ```
 
 to the config file and achieve the same goal.

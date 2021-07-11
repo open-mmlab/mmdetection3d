@@ -12,7 +12,8 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.4|
+| master              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
 | 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.4|
 | 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
@@ -94,12 +95,8 @@ pip install mmcv-full
 
 **d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
-Note:
-
-MMDetection3D v0.14.0 is only compatible with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support `mmdet>=2.12.0` since v0.15.0 (to be released in July).
-
 ```shell
-pip install mmdet==2.11.0
+pip install mmdet==2.14.0
 ```
 
 Optionally, you could also build MMDetection from source in case you want to modify the code:
@@ -107,7 +104,7 @@ Optionally, you could also build MMDetection from source in case you want to mod
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
-git checkout v2.11.0  # switch to v2.11.0 branch
+git checkout v2.14.0  # switch to v2.14.0 branch
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
@@ -115,7 +112,7 @@ pip install -v -e .  # or "python setup.py develop"
 **e. Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
-pip install mmsegmentation==0.14.0
+pip install mmsegmentation==0.14.1
 ```
 
 Optionally, you could also build MMSegmentation from source in case you want to modify the code:
@@ -123,7 +120,7 @@ Optionally, you could also build MMSegmentation from source in case you want to 
 ```shell
 git clone https://github.com/open-mmlab/mmsegmentation.git
 cd mmsegmentation
-git checkout v0.14.0  # switch to v0.14.0 branch
+git checkout v0.14.1  # switch to v0.14.1 branch
 pip install -e .  # or "python setup.py develop"
 ```
 

@@ -32,8 +32,9 @@ class FreeAnchor3DHead(Anchor3DHead):
                  bbox_thr=0.6,
                  gamma=2.0,
                  alpha=0.5,
+                 init_cfg=None,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(init_cfg=init_cfg, **kwargs)
         self.pre_anchor_topk = pre_anchor_topk
         self.bbox_thr = bbox_thr
         self.gamma = gamma

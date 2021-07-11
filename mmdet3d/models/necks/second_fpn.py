@@ -1,15 +1,14 @@
 import numpy as np
 import torch
-from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
-                      constant_init, is_norm, kaiming_init)
-from mmcv.runner import auto_fp16
+from mmcv.cnn import build_conv_layer, build_norm_layer, build_upsample_layer
+from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
 from mmdet.models import NECKS
 
 
 @NECKS.register_module()
-class SECONDFPN(nn.Module):
+class SECONDFPN(BaseModule):
     """FPN used in SECOND/PointPillars/PartA2/MVXNet.
 
     Args:
@@ -30,10 +29,11 @@ class SECONDFPN(nn.Module):
                  norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
                  upsample_cfg=dict(type='deconv', bias=False),
                  conv_cfg=dict(type='Conv2d', bias=False),
-                 use_conv_for_no_stride=False):
+                 use_conv_for_no_stride=False,
+                 init_cfg=None):
         # if for GroupNorm,
         # cfg is dict(type='GN', num_groups=num_groups, eps=1e-3, affine=True)
-        super(SECONDFPN, self).__init__()
+        super(SECONDFPN, self).__init__(init_cfg=init_cfg)
         assert len(out_channels) == len(upsample_strides) == len(in_channels)
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -64,13 +64,11 @@ class SECONDFPN(nn.Module):
             deblocks.append(deblock)
         self.deblocks = nn.ModuleList(deblocks)
 
-    def init_weights(self):
-        """Initialize weights of FPN."""
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                kaiming_init(m)
-            elif is_norm(m):
-                constant_init(m, 1)
+        if init_cfg is None:
+            self.init_cfg = [
+                dict(type='Kaiming', layer='ConvTranspose2d'),
+                dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)
+            ]
 
     @auto_fp16()
     def forward(self, x):

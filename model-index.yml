@@ -9,8 +9,11 @@ Import:
   - configs/mvxnet/metafile.yml
   - configs/nuimages/metafile.yml
   - configs/parta2/metafile.yml
+  - configs/pointnet2/metafile.yml
   - configs/pointpillars/metafile.yml
   - configs/regnet/metafile.yml
   - configs/second/metafile.yml
   - configs/ssn/metafile.yml
   - configs/votenet/metafile.yml
+  - configs/fcos3d/metafile.yml
+  - configs/imvoxelnet/metafile.yml

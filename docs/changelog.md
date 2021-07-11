@@ -1,5 +1,49 @@
 ## Changelog
 
+### v0.15.0 (1/7/2021)
+
+#### Compatibility
+
+In order to fix the problem that the priority of EvalHook is too low, all hook priorities have been re-adjusted in 1.3.8, so MMDetection 2.14.0 needs to rely on the latest MMCV 1.3.8 version. For related information, please refer to [#1120](https://github.com/open-mmlab/mmcv/pull/1120), for related issues, please refer to [#5343](https://github.com/open-mmlab/mmdetection/issues/5343).
+
+#### Highlights
+
+- Support [PAConv](https://arxiv.org/abs/2103.14635)
+- Support monocular/multi-view 3D detector [ImVoxelNet](https://arxiv.org/abs/2106.01178) on KITTI
+- Support Transformer-based 3D detection method [Group-Free-3D](https://arxiv.org/abs/2104.00678) on ScanNet
+- Add documentation for tasks including LiDAR-based 3D detection, vision-only 3D detection and point-based 3D semantic segmentation
+- Add dataset documents like ScanNet
+
+#### New Features
+
+- Support Group-Free-3D on ScanNet (#539)
+- Support PAConv modules (#598, #599)
+- Support ImVoxelNet on KITTI (#627, #654)
+
+#### Improvements
+
+- Add unit tests for pipeline functions `LoadImageFromFileMono3D`, `ObjectNameFilter` and `ObjectRangeFilter` (#615)
+- Enhance [IndoorPatchPointSample](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) (#617)
+- Refactor model initialization methods based MMCV (#622)
+- Add Chinese docs (#629)
+- Add documentation for LiDAR-based 3D detection (#642)
+- Unify intrinsic and extrinsic matrices for all datasets (#653)
+- Add documentation for point-based 3D semantic segmentation (#663)
+- Add documentation of ScanNet for 3D detection (#664)
+- Refine docs for tutorials (#666)
+- Add documentation for vision-only 3D detection (#669)
+- Refine docs for Quick Run and Useful Tools (#686)
+
+
+#### Bug Fixes
+
+- Fix the bug of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) using the bottom center of ground truth (#609)
+- Fix [LoadMultiViewImageFromFiles](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/loading.py) to unravel stacked multi-view images to list to be consistent with DefaultFormatBundle (#611)
+- Fix the potential bug in [analyze_logs](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) when the training resumes from a checkpoint or is stopped before evaluation (#634)
+- Fix test commands in docs and make some refinements (#635)
+- Fix wrong config paths in unit tests (#641)
+
+
 ### v0.14.0 (1/6/2021)
 
 #### Highlights
@@ -20,7 +64,7 @@
 - Support visualization of detection results and dataset browse for nuScenes Mono-3D dataset (#542, #582)
 - Support faster implementation of KNN (#586)
 - Support RegNetX models on Lyft dataset (#589)
-- Remove a useless parameter [label_weight] from segmentation datasets including [Custom3DSegDataset], [ScanNetSegDataset] and [S3DISSegDataset] (#607)
+- Remove a useless parameter `label_weight` from segmentation datasets including `Custom3DSegDataset`, `ScanNetSegDataset` and `S3DISSegDataset` (#607)
 
 #### Bug Fixes
 - Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)

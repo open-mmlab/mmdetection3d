@@ -1,5 +1,6 @@
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -13,7 +14,7 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class H3DBboxHead(nn.Module):
+class H3DBboxHead(BaseModule):
     r"""Bbox head of `H3DNet <https://arxiv.org/abs/2006.05682>`_.
 
     Args:
@@ -80,8 +81,9 @@ class H3DBboxHead(nn.Module):
                  cues_objectness_loss=None,
                  cues_semantic_loss=None,
                  proposal_objectness_loss=None,
-                 primitive_center_loss=None):
-        super(H3DBboxHead, self).__init__()
+                 primitive_center_loss=None,
+                 init_cfg=None):
+        super(H3DBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -197,15 +199,6 @@ class H3DBboxHead(nn.Module):
         conv_out_channel = (2 + 3 + bbox_coder['num_dir_bins'] * 2 +
                             bbox_coder['num_sizes'] * 4 + self.num_classes)
         self.bbox_pred.append(nn.Conv1d(prev_channel, conv_out_channel, 1))
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in detector.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-        pass
 
     def forward(self, feats_dict, sample_mod):
         """Forward pass.

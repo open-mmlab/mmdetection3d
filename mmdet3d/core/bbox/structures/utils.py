@@ -174,7 +174,8 @@ def points_cam2img(points_3d, proj_mat, with_depth=False):
         points_3d (torch.Tensor | np.ndarray): Points in shape (N, 3)
         proj_mat (torch.Tensor | np.ndarray):
             Transformation matrix between coordinates.
-        with_depth (bool): Whether to keep depth in the output.
+        with_depth (bool, optional): Whether to keep depth in the output.
+            Defaults to False.
 
     Returns:
         np.ndarray: Points in image coordinates with shape [N, 2].
@@ -194,7 +195,7 @@ def points_cam2img(points_3d, proj_mat, with_depth=False):
         proj_mat_expanded[:d1, :d2] = proj_mat
         proj_mat = proj_mat_expanded
 
-    # previous implementation use new_zeros, new_one yeilds better results
+    # previous implementation use new_zeros, new_one yields better results
     points_4 = torch.cat([points_3d, points_3d.new_ones(points_shape)], dim=-1)
 
     point_2d = points_4 @ proj_mat.T

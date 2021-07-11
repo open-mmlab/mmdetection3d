@@ -54,7 +54,8 @@ def corners_nd(dims, origin=0.5):
 
     Args:
         dims (np.ndarray, shape=[N, ndim]): Array of length per dim
-        origin (list or array or float): origin point relate to smallest point.
+        origin (list or array or float, optional): origin point relate to
+            smallest point. Defaults to 0.5
 
     Returns:
         np.ndarray, shape=[N, 2 ** ndim, ndim]: Returned corners.
@@ -89,7 +90,10 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     Args:
         centers (np.ndarray): Locations in kitti label file with shape (N, 2).
         dims (np.ndarray): Dimensions in kitti label file with shape (N, 2).
-        angles (np.ndarray): Rotation_y in kitti label file with shape (N).
+        angles (np.ndarray, optional): Rotation_y in kitti label file with
+            shape (N). Defaults to None.
+        origin (list or array or float, optional): origin point relate to
+            smallest point. Defaults to 0.5.
 
     Returns:
         np.ndarray: Corners with the shape of (N, 4, 2).
@@ -164,10 +168,13 @@ def center_to_corner_box3d(centers,
     Args:
         centers (np.ndarray): Locations in kitti label file with shape (N, 3).
         dims (np.ndarray): Dimensions in kitti label file with shape (N, 3).
-        angles (np.ndarray): Rotation_y in kitti label file with shape (N).
-        origin (list or array or float): Origin point relate to smallest point.
-            use (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0) in lidar.
-        axis (int): Rotation axis. 1 for camera and 2 for lidar.
+        angles (np.ndarray, optional): Rotation_y in kitti label file with
+            shape (N). Defaults to None.
+        origin (list or array or float, optional): Origin point relate to
+            smallest point. Use (0.5, 1.0, 0.5) in camera and (0.5, 0.5, 0)
+            in lidar. Defaults to (0.5, 1.0, 0.5).
+        axis (int, optional): Rotation axis. 1 for camera and 2 for lidar.
+            Defaults to 1.
 
     Returns:
         np.ndarray: Corners with the shape of (N, 8, 3).
@@ -264,8 +271,8 @@ def rotation_points_single_angle(points, angle, axis=0):
 
     Args:
         points (np.ndarray, shape=[N, 3]]):
-        angles (np.ndarray, shape=[1]]):
-        axis (int): Axis to rotate at.
+        angle (np.ndarray, shape=[1]]):
+        axis (int, optional): Axis to rotate at. Defaults to 0.
 
     Returns:
         np.ndarray: Rotated points.
@@ -339,8 +346,10 @@ def points_in_rbbox(points, rbbox, z_axis=2, origin=(0.5, 0.5, 0)):
     Args:
         points (np.ndarray, shape=[N, 3+dim]): Points to query.
         rbbox (np.ndarray, shape=[M, 7]): Boxes3d with rotation.
-        z_axis (int): Indicate which axis is height.
-        origin (tuple[int]): Indicate the position of box center.
+        z_axis (int, optional): Indicate which axis is height.
+            Defaults to 2.
+        origin (tuple[int], optional): Indicate the position of
+            box center. Defaults to (0.5, 0.5, 0).
 
     Returns:
         np.ndarray, shape=[N, M]: Indices of points in each box.
@@ -382,11 +391,13 @@ def create_anchors_3d_range(feature_size,
         anchor_range (torch.Tensor | list[float]): Range of anchors with
             shape [6]. The order is consistent with that of anchors, i.e.,
             (x_min, y_min, z_min, x_max, y_max, z_max).
-        sizes (list[list] | np.ndarray | torch.Tensor): Anchor size with
-            shape [N, 3], in order of x, y, z.
-        rotations (list[float] | np.ndarray | torch.Tensor): Rotations of
-            anchors in a single feature grid.
-        dtype (type): Data type. Default to np.float32.
+        sizes (list[list] | np.ndarray | torch.Tensor, optional):
+            Anchor size with shape [N, 3], in order of x, y, z.
+            Defaults to ((1.6, 3.9, 1.56), ).
+        rotations (list[float] | np.ndarray | torch.Tensor, optional):
+            Rotations of anchors in a single feature grid.
+            Defaults to (0, np.pi / 2).
+        dtype (type, optional): Data type. Default to np.float32.
 
     Returns:
         np.ndarray: Range based anchors with shape of \
@@ -423,7 +434,8 @@ def center_to_minmax_2d(centers, dims, origin=0.5):
     Args:
         centers (np.ndarray): Center points.
         dims (np.ndarray): Dimensions.
-        origin (list or array or float): origin point relate to smallest point.
+        origin (list or array or float, optional): Origin point relate
+            to smallest point. Defaults to 0.5.
 
     Returns:
         np.ndarray: Minmax points.
@@ -462,6 +474,8 @@ def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
     Args:
         boxes (np.ndarray): Input bounding boxes with shape of (N, 4).
         query_boxes (np.ndarray): Query boxes with shape of (K, 4).
+        mode (str, optional): IoU mode. Defaults to 'iou'.
+        eps (float, optional): Value added to denominator. Defaults to 0.
 
     Returns:
         np.ndarray: Overlap between boxes and query_boxes
@@ -551,8 +565,10 @@ def get_frustum(bbox_image, C, near_clip=0.001, far_clip=100):
     Args:
         bbox_image (list[int]): box in image coordinates.
         C (np.ndarray): Intrinsics.
-        near_clip (float): Nearest distance of frustum.
-        far_clip (float): Farthest distance of frustum.
+        near_clip (float, optional): Nearest distance of frustum.
+            Defaults to 0.001.
+        far_clip (float, optional): Farthest distance of frustum.
+            Defaults to 100.
 
     Returns:
         np.ndarray, shape=[8, 3]: coordinates of frustum corners.
@@ -645,12 +661,12 @@ def points_in_convex_polygon_3d_jit(points,
 
     Args:
         points (np.ndarray): Input points with shape of (num_points, 3).
-        polygon_surfaces (np.ndarray): Polygon surfaces with shape of \
-            (num_polygon, max_num_surfaces, max_num_points_of_surface, 3). \
-            All surfaces' normal vector must direct to internal. \
+        polygon_surfaces (np.ndarray): Polygon surfaces with shape of
+            (num_polygon, max_num_surfaces, max_num_points_of_surface, 3).
+            All surfaces' normal vector must direct to internal.
             Max_num_points_of_surface must at least 3.
-        num_surfaces (np.ndarray): Number of surfaces a polygon contains \
-            shape of (num_polygon).
+        num_surfaces (np.ndarray, optional): Number of surfaces a polygon
+            contains shape of (num_polygon). Defaults to None.
 
     Returns:
         np.ndarray: Result matrix with the shape of [num_points, num_polygon].
@@ -675,7 +691,8 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=True):
         points (np.ndarray): Input points with the shape of [num_points, 2].
         polygon (np.ndarray): Input polygon with the shape of
             [num_polygon, num_points_of_polygon, 2].
-        clockwise (bool): Indicate polygon is clockwise.
+        clockwise (bool, optional): Indicate polygon is clockwise. Defaults
+            to True.
 
     Returns:
         np.ndarray: Result matrix with the shape of [num_points, num_polygon].
@@ -727,7 +744,8 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
         boxes3d (np.ndarray): Boxes with shape of (N, 7) \
             [x, y, z, dx, dy, dz, ry] in LiDAR coords, see the definition of \
             ry in KITTI dataset.
-        bottom_center (bool): Whether z is on the bottom center of object.
+        bottom_center (bool, optional): Whether z is on the bottom center
+            of object. Defaults to True.
 
     Returns:
         np.ndarray: Box corners with the shape of [N, 8, 3].

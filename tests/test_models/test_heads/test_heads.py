@@ -1114,3 +1114,110 @@ def test_fcos_mono3d_head():
     assert results[0][1].shape == torch.Size([200])
     assert results[0][2].shape == torch.Size([200])
     assert results[0][3].shape == torch.Size([200])
+
+
+def test_groupfree3d_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    vote_head_cfg = _get_vote_head_cfg(
+        'groupfree3d/groupfree3d_8x8_scannet-3d-18class-L6-O256.py')
+    self = build_head(vote_head_cfg).cuda()
+
+    fp_xyz = [torch.rand([2, 256, 3], dtype=torch.float32).cuda()]
+    fp_features = [torch.rand([2, 288, 256], dtype=torch.float32).cuda()]
+    fp_indices = [torch.randint(0, 128, [2, 256]).cuda()]
+
+    input_dict = dict(
+        fp_xyz=fp_xyz, fp_features=fp_features, fp_indices=fp_indices)
+
+    # test forward
+    ret_dict = self(input_dict, 'kps')
+    assert ret_dict['seeds_obj_cls_logits'].shape == torch.Size([2, 1, 256])
+    assert ret_dict['s5.center'].shape == torch.Size([2, 128, 3])
+    assert ret_dict['s5.dir_class'].shape == torch.Size([2, 128, 1])
+    assert ret_dict['s5.dir_res'].shape == torch.Size([2, 128, 1])
+    assert ret_dict['s5.size_class'].shape == torch.Size([2, 128, 18])
+    assert ret_dict['s5.size_res'].shape == torch.Size([2, 128, 18, 3])
+    assert ret_dict['s5.obj_scores'].shape == torch.Size([2, 128, 1])
+    assert ret_dict['s5.sem_scores'].shape == torch.Size([2, 128, 18])
+
+    # test losses
+    points = [torch.rand([50000, 4], device='cuda') for i in range(2)]
+    gt_bbox1 = torch.rand([10, 7], dtype=torch.float32).cuda()
+    gt_bbox2 = torch.rand([10, 7], dtype=torch.float32).cuda()
+
+    gt_bbox1 = DepthInstance3DBoxes(gt_bbox1)
+    gt_bbox2 = DepthInstance3DBoxes(gt_bbox2)
+    gt_bboxes = [gt_bbox1, gt_bbox2]
+
+    pts_instance_mask_1 = torch.randint(0, 10, [50000], device='cuda')
+    pts_instance_mask_2 = torch.randint(0, 10, [50000], device='cuda')
+    pts_instance_mask = [pts_instance_mask_1, pts_instance_mask_2]
+
+    pts_semantic_mask_1 = torch.randint(0, 19, [50000], device='cuda')
+    pts_semantic_mask_2 = torch.randint(0, 19, [50000], device='cuda')
+    pts_semantic_mask = [pts_semantic_mask_1, pts_semantic_mask_2]
+
+    labels_1 = torch.randint(0, 18, [10], device='cuda')
+    labels_2 = torch.randint(0, 18, [10], device='cuda')
+    gt_labels = [labels_1, labels_2]
+
+    losses = self.loss(ret_dict, points, gt_bboxes, gt_labels,
+                       pts_semantic_mask, pts_instance_mask)
+
+    assert losses['s5.objectness_loss'] >= 0
+    assert losses['s5.semantic_loss'] >= 0
+    assert losses['s5.center_loss'] >= 0
+    assert losses['s5.dir_class_loss'] >= 0
+    assert losses['s5.dir_res_loss'] >= 0
+    assert losses['s5.size_class_loss'] >= 0
+    assert losses['s5.size_res_loss'] >= 0
+
+    # test multiclass_nms_single
+    obj_scores = torch.rand([256], device='cuda')
+    sem_scores = torch.rand([256, 18], device='cuda')
+    points = torch.rand([50000, 3], device='cuda')
+    bbox = torch.rand([256, 7], device='cuda')
+    input_meta = dict(box_type_3d=DepthInstance3DBoxes)
+    bbox_selected, score_selected, labels = \
+        self.multiclass_nms_single(obj_scores,
+                                   sem_scores,
+                                   bbox,
+                                   points,
+                                   input_meta)
+    assert bbox_selected.shape[0] >= 0
+    assert bbox_selected.shape[1] == 7
+    assert score_selected.shape[0] >= 0
+    assert labels.shape[0] >= 0
+
+    # test get_boxes
+    points = torch.rand([1, 50000, 3], device='cuda')
+    seed_points = torch.rand([1, 1024, 3], device='cuda')
+    seed_indices = torch.randint(0, 50000, [1, 1024], device='cuda')
+    obj_scores = torch.rand([1, 256, 1], device='cuda')
+    center = torch.rand([1, 256, 3], device='cuda')
+    dir_class = torch.rand([1, 256, 1], device='cuda')
+    dir_res_norm = torch.rand([1, 256, 1], device='cuda')
+    dir_res = torch.rand([1, 256, 1], device='cuda')
+    size_class = torch.rand([1, 256, 18], device='cuda')
+    size_res = torch.rand([1, 256, 18, 3], device='cuda')
+    sem_scores = torch.rand([1, 256, 18], device='cuda')
+    bbox_preds = dict()
+    bbox_preds['seed_points'] = seed_points
+    bbox_preds['seed_indices'] = seed_indices
+    bbox_preds['s5.obj_scores'] = obj_scores
+    bbox_preds['s5.center'] = center
+    bbox_preds['s5.dir_class'] = dir_class
+    bbox_preds['s5.dir_res_norm'] = dir_res_norm
+    bbox_preds['s5.dir_res'] = dir_res
+    bbox_preds['s5.size_class'] = size_class
+    bbox_preds['s5.size_res'] = size_res
+    bbox_preds['s5.sem_scores'] = sem_scores
+
+    self.test_cfg['prediction_stages'] == 'last'
+    results = self.get_bboxes(points, bbox_preds, [input_meta])
+    assert results[0][0].tensor.shape[0] >= 0
+    assert results[0][0].tensor.shape[1] == 7
+    assert results[0][1].shape[0] >= 0
+    assert results[0][2].shape[0] >= 0

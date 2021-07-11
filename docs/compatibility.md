@@ -4,6 +4,19 @@ This document provides detailed descriptions of the BC-breaking changes in MMDet
 
 ## MMDetection3D 0.15.0
 
+### MMCV Version
+
+In order to fix the problem that the priority of EvalHook is too low, all hook priorities have been re-adjusted in 1.3.8, so MMDetection 2.14.0 needs to rely on the latest MMCV 1.3.8 version. For related information, please refer to [#1120](https://github.com/open-mmlab/mmcv/pull/1120), for related issues, please refer to [#5343](https://github.com/open-mmlab/mmdetection/issues/5343).
+
+### Unified parameter initialization
+
+To unify the parameter initialization in OpenMMLab projects, MMCV supports `BaseModule` that accepts `init_cfg` to allow the modules' parameters initialized in a flexible and unified manner. Now the users need to explicitly call `model.init_weights()` in the training script to initialize the model (as in [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py#L183), previously this was handled by the detector. Please refer to PR #622 for details.
+
+### BackgroundPointsFilter
+
+We modified the dataset aumentation function `BackgroundPointsFilter`(in [here](https://github.com/open-mmlab/mmdetection3d/blob/mmdet3d/datasets/pipelines/transforms_3d.py#L1101)). In previous version of MMdetection3D, `BackgroundPointsFilter` changes the gt_bboxes_3d's bottom center to the gravity center. In MMDetection3D 0.15.0,
+`BackgroundPointsFilter` will not change it. Please refer to PR #609 for details.
+
 ### Enhance `IndoorPatchPointSample` transform
 
 We enhance the pipeline function `IndoorPatchPointSample` used in point cloud segmentation task by adding more choices for patch selection. Also, we plan to remove the unused parameter `sample_rate` in the future. Please modify the code as well as the config files accordingly if you use this transform.
