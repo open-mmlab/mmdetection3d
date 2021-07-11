@@ -7,6 +7,7 @@ from mmdet3d.datasets import SUNRGBDDataset
 
 def _generate_sunrgbd_dataset_config():
     root_path = './tests/data/sunrgbd'
+    # in coordinate system refactor, this test file is modified
     ann_file = './tests/data/sunrgbd/sunrgbd_infos.pkl'
     class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                    'dresser', 'night_stand', 'bookshelf', 'bathtub')
@@ -119,6 +120,8 @@ def test_getitem():
         [[0.8308, 4.1168, -1.2035, 2.2493, 1.8444, 1.9245, 1.6486],
          [2.3002, 4.8149, -1.2442, 0.5718, 0.8629, 0.9510, 1.6030],
          [-1.1477, 1.8090, -1.1725, 0.6965, 1.5273, 2.0563, 0.0552]])
+    # coord sys refactor (rotation is correct but yaw has to be reversed)
+    expected_gt_bboxes_3d[:, 6:] = -expected_gt_bboxes_3d[:, 6:]
     expected_gt_labels = np.array([0, 7, 6])
     original_classes = sunrgbd_dataset.CLASSES
 

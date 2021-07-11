@@ -1,8 +1,9 @@
 # TODO: clean the functions in this file and move the APIs into box structures
 # in the future
-
 import numba
 import numpy as np
+
+from .structures.utils import limit_period, points_cam2img, rotation_3d_in_axis
 
 
 def camera_to_lidar(points, r_rect, velo2cam):
@@ -38,11 +39,14 @@ def box_camera_to_lidar(data, r_rect, velo2cam):
     Returns:
         np.ndarray, shape=[N, 3]: Boxes in lidar coordinate.
     """
+    # TODO raw coords?
     xyz = data[:, 0:3]
-    l, h, w = data[:, 3:4], data[:, 4:5], data[:, 5:6]
+    dx, dy, dz = data[:, 3:4], data[:, 4:5], data[:, 5:6]
     r = data[:, 6:7]
     xyz_lidar = camera_to_lidar(xyz, r_rect, velo2cam)
-    return np.concatenate([xyz_lidar, w, l, h, r], axis=1)
+    r_new = -r - np.pi / 2
+    r_new = limit_period(r_new, period=np.pi * 2)
+    return np.concatenate([xyz_lidar, dx, dz, dy, r_new], axis=1)
 
 
 def corners_nd(dims, origin=0.5):
@@ -78,23 +82,6 @@ def corners_nd(dims, origin=0.5):
     return corners
 
 
-def rotation_2d(points, angles):
-    """Rotation 2d points based on origin point clockwise when angle positive.
-
-    Args:
-        points (np.ndarray): Points to be rotated with shape \
-            (N, point_size, 2).
-        angles (np.ndarray): Rotation angle with shape (N).
-
-    Returns:
-        np.ndarray: Same shape as points.
-    """
-    rot_sin = np.sin(angles)
-    rot_cos = np.cos(angles)
-    rot_mat_T = np.stack([[rot_cos, -rot_sin], [rot_sin, rot_cos]])
-    return np.einsum('aij,jka->aik', points, rot_mat_T)
-
-
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     """Convert kitti locations, dimensions and angles to corners.
     format: center(xy), dims(xy), angles(clockwise when positive)
@@ -113,7 +100,7 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     corners = corners_nd(dims, origin=origin)
     # corners: [N, 4, 2]
     if angles is not None:
-        corners = rotation_2d(corners, angles)
+        corners = rotation_3d_in_axis(corners, angles)
     corners += centers.reshape([-1, 1, 2])
     return corners
 
@@ -165,37 +152,6 @@ def depth_to_lidar_points(depth, trunc_pixel, P2, r_rect, velo2cam):
     points = points @ np.linalg.inv(P2.T)
     lidar_points = camera_to_lidar(points, r_rect, velo2cam)
     return lidar_points
-
-
-def rotation_3d_in_axis(points, angles, axis=0):
-    """Rotate points in specific axis.
-
-    Args:
-        points (np.ndarray, shape=[N, point_size, 3]]):
-        angles (np.ndarray, shape=[N]]):
-        axis (int): Axis to rotate at.
-
-    Returns:
-        np.ndarray: Rotated points.
-    """
-    # points: [N, point_size, 3]
-    rot_sin = np.sin(angles)
-    rot_cos = np.cos(angles)
-    ones = np.ones_like(rot_cos)
-    zeros = np.zeros_like(rot_cos)
-    if axis == 1:
-        rot_mat_T = np.stack([[rot_cos, zeros, -rot_sin], [zeros, ones, zeros],
-                              [rot_sin, zeros, rot_cos]])
-    elif axis == 2 or axis == -1:
-        rot_mat_T = np.stack([[rot_cos, -rot_sin, zeros],
-                              [rot_sin, rot_cos, zeros], [zeros, zeros, ones]])
-    elif axis == 0:
-        rot_mat_T = np.stack([[zeros, rot_cos, -rot_sin],
-                              [zeros, rot_sin, rot_cos], [ones, zeros, zeros]])
-    else:
-        raise ValueError('axis should in range')
-
-    return np.einsum('aij,jka->aik', points, rot_mat_T)
 
 
 def center_to_corner_box3d(centers,
@@ -251,8 +207,8 @@ def box2d_to_corner_jit(boxes):
         rot_sin = np.sin(boxes[i, -1])
         rot_cos = np.cos(boxes[i, -1])
         rot_mat_T[0, 0] = rot_cos
-        rot_mat_T[0, 1] = -rot_sin
-        rot_mat_T[1, 0] = rot_sin
+        rot_mat_T[0, 1] = rot_sin
+        rot_mat_T[1, 0] = -rot_sin
         rot_mat_T[1, 1] = rot_cos
         box_corners[i] = corners[i] @ rot_mat_T + boxes[i, :2]
     return box_corners
@@ -319,57 +275,20 @@ def rotation_points_single_angle(points, angle, axis=0):
     rot_cos = np.cos(angle)
     if axis == 1:
         rot_mat_T = np.array(
-            [[rot_cos, 0, -rot_sin], [0, 1, 0], [rot_sin, 0, rot_cos]],
+            [[rot_cos, 0, rot_sin], [0, 1, 0], [-rot_sin, 0, rot_cos]],
             dtype=points.dtype)
     elif axis == 2 or axis == -1:
         rot_mat_T = np.array(
-            [[rot_cos, -rot_sin, 0], [rot_sin, rot_cos, 0], [0, 0, 1]],
+            [[rot_cos, rot_sin, 0], [-rot_sin, rot_cos, 0], [0, 0, 1]],
             dtype=points.dtype)
     elif axis == 0:
         rot_mat_T = np.array(
-            [[1, 0, 0], [0, rot_cos, -rot_sin], [0, rot_sin, rot_cos]],
+            [[1, 0, 0], [0, rot_cos, rot_sin], [0, -rot_sin, rot_cos]],
             dtype=points.dtype)
     else:
         raise ValueError('axis should in range')
 
     return points @ rot_mat_T, rot_mat_T
-
-
-def points_cam2img(points_3d, proj_mat, with_depth=False):
-    """Project points in camera coordinates to image coordinates.
-
-    Args:
-        points_3d (np.ndarray): Points in shape (N, 3)
-        proj_mat (np.ndarray): Transformation matrix between coordinates.
-        with_depth (bool): Whether to keep depth in the output.
-
-    Returns:
-        np.ndarray: Points in image coordinates with shape [N, 2].
-    """
-    points_shape = list(points_3d.shape)
-    points_shape[-1] = 1
-
-    assert len(proj_mat.shape) == 2, 'The dimension of the projection'\
-        f' matrix should be 2 instead of {len(proj_mat.shape)}.'
-    d1, d2 = proj_mat.shape[:2]
-    assert (d1 == 3 and d2 == 3) or (d1 == 3 and d2 == 4) or (
-        d1 == 4 and d2 == 4), 'The shape of the projection matrix'\
-        f' ({d1}*{d2}) is not supported.'
-    if d1 == 3:
-        proj_mat_expanded = np.eye(4, dtype=proj_mat.dtype)
-        proj_mat_expanded[:d1, :d2] = proj_mat
-        proj_mat = proj_mat_expanded
-
-    points_4 = np.concatenate([points_3d, np.ones(points_shape)], axis=-1)
-    point_2d = points_4 @ proj_mat.T
-    point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
-
-    if with_depth:
-        points_2d_depth = np.concatenate([point_2d_res, point_2d[..., 2:3]],
-                                         axis=-1)
-        return points_2d_depth
-
-    return point_2d_res
 
 
 def box3d_to_bbox(box3d, P2):
@@ -450,25 +369,9 @@ def minmax_to_corner_2d(minmax_box):
     return center_to_corner_box2d(center, dims, origin=0.0)
 
 
-def limit_period(val, offset=0.5, period=np.pi):
-    """Limit the value into a period for periodic function.
-
-    Args:
-        val (np.ndarray): The value to be converted.
-        offset (float, optional): Offset to set the value range. \
-            Defaults to 0.5.
-        period (float, optional): Period of the value. Defaults to np.pi.
-
-    Returns:
-        torch.Tensor: Value in the range of \
-            [-offset * period, (1-offset) * period]
-    """
-    return val - np.floor(val / period + offset) * period
-
-
 def create_anchors_3d_range(feature_size,
                             anchor_range,
-                            sizes=((1.6, 3.9, 1.56), ),
+                            sizes=((3.9, 1.6, 1.56), ),
                             rotations=(0, np.pi / 2),
                             dtype=np.float32):
     """Create anchors 3d by range.
@@ -822,27 +725,33 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
 
     Args:
         boxes3d (np.ndarray): Boxes with shape of (N, 7) \
-            [x, y, z, w, l, h, ry] in LiDAR coords, see the definition of ry \
-            in KITTI dataset.
+            [x, y, z, dx, dy, dz, ry] in LiDAR coords, see the definition of \
+            ry in KITTI dataset.
         bottom_center (bool): Whether z is on the bottom center of object.
 
     Returns:
         np.ndarray: Box corners with the shape of [N, 8, 3].
     """
     boxes_num = boxes3d.shape[0]
-    w, l, h = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
-    x_corners = np.array(
-        [w / 2., -w / 2., -w / 2., w / 2., w / 2., -w / 2., -w / 2., w / 2.],
-        dtype=np.float32).T
-    y_corners = np.array(
-        [-l / 2., -l / 2., l / 2., l / 2., -l / 2., -l / 2., l / 2., l / 2.],
-        dtype=np.float32).T
+    dx, dy, dz = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
+    x_corners = np.array([
+        dx / 2., -dx / 2., -dx / 2., dx / 2., dx / 2., -dx / 2., -dx / 2.,
+        dx / 2.
+    ],
+                         dtype=np.float32).T
+    y_corners = np.array([
+        -dy / 2., -dy / 2., dy / 2., dy / 2., -dy / 2., -dy / 2., dy / 2.,
+        dy / 2.
+    ],
+                         dtype=np.float32).T
     if bottom_center:
         z_corners = np.zeros((boxes_num, 8), dtype=np.float32)
-        z_corners[:, 4:8] = h.reshape(boxes_num, 1).repeat(4, axis=1)  # (N, 8)
+        z_corners[:, 4:8] = dz.reshape(boxes_num, 1).repeat(
+            4, axis=1)  # (N, 8)
     else:
         z_corners = np.array([
-            -h / 2., -h / 2., -h / 2., -h / 2., h / 2., h / 2., h / 2., h / 2.
+            -dz / 2., -dz / 2., -dz / 2., -dz / 2., dz / 2., dz / 2., dz / 2.,
+            dz / 2.
         ],
                              dtype=np.float32).T
 
@@ -850,9 +759,9 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
     zeros, ones = np.zeros(
         ry.size, dtype=np.float32), np.ones(
             ry.size, dtype=np.float32)
-    rot_list = np.array([[np.cos(ry), -np.sin(ry), zeros],
-                         [np.sin(ry), np.cos(ry), zeros], [zeros, zeros,
-                                                           ones]])  # (3, 3, N)
+    rot_list = np.array([[np.cos(ry), np.sin(ry), zeros],
+                         [-np.sin(ry), np.cos(ry), zeros],
+                         [zeros, zeros, ones]])  # (3, 3, N)
     R_list = np.transpose(rot_list, (2, 0, 1))  # (N, 3, 3)
 
     temp_corners = np.concatenate((x_corners.reshape(
