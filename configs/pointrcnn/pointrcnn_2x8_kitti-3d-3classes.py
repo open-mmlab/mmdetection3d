@@ -59,7 +59,7 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='IndoorPointSample', num_points=16384),
+            dict(type='OutdoorPointSample', num_points=16384),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
