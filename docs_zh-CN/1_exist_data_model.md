@@ -2,9 +2,9 @@
 
 ## 使用已有模型进行推理
 
-这里我们提供了评测 SUNRGBD、ScanNet、KITTI 等多个数据集的测试脚本。
+这里我们提供了评测 SUNRGBD、ScanNet、KITTI 等多个数据集的测试脚本
 
-请参考 [开始](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html) 下的验证/演示来获取更容易集成到其它项目和基本演示的高级接口。
+请参考[开始](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html)下的验证/演示来获取更容易集成到其它项目和基本演示的高级接口
 
 ### 在标准数据集上测试已有模型
 
@@ -24,7 +24,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 可选参数：
 - `RESULT_FILE`: 输出结果（pickle格式）的文件名，如果未指定，结果不会被保存。
-- `EVAL_METRICS`: 在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测2D检测效果，可以将度量方法设置为 `img_bbox`；对于Waymo数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较。
+- `EVAL_METRICS`: 在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测2D检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较。
 - `--show`: 如果被指定，检测结果会在静默模式下被保存，用于调试和可视化，但只在单块GPU测试的情况下生效，和 `--show-dir` 搭配使用。
 - `--show-dir`: 如果被指定，检测结果会被保存在指定文件夹下的 `***_points.obj` 和 `***_pred.obj` 文件中，用于调试和可视化，但只在单块GPU测试的情况下生效，对于这个选项，图形化界面在你的环境中不是必需的。
 
@@ -151,7 +151,7 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 
 可选参数：
 
-- `--no-validate` (**不推荐**): 默认情况下，代码在训练阶段每k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
+- `--no-validate` (**不推荐**): 默认情况下，代码在训练阶段每k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
 - `--work-dir ${WORK_DIR}`: 覆盖配置文件中的指定工作目录。
 - `--resume-from ${CHECKPOINT_FILE}`: 从之前的模型数据文件中恢复。
 - `--options 'Key=value'`: 覆盖使用的配置中的一些设定。
