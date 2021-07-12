@@ -176,7 +176,7 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 
 ## A from-scratch setup script
 
-Here is a full script for setting up mmdetection with conda.
+Here is a full script for setting up MMdetection3D with conda.
 
 ```shell
 conda create -n open-mmlab python=3.7 -y
