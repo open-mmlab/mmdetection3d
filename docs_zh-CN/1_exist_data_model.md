@@ -129,7 +129,7 @@ MMDetection3D 分别用 `MMDistributedDataParallel` and `MMDataParallel` 实现�
 默认我们每过一个周期都在验证数据集上评测模型，你可以通过在训练配置里添加间隔参数来改变评测的时间间隔：
 
 ```python
-evaluation = dict(interval=12)  # This evaluate the model per 12 epoch.
+evaluation = dict(interval=12)  # 每12个周期评估一次模型
 ```
 
 **重要**：配置文件中的默认学习率对应8块显卡，配置文件名里有具体的批量大小，比如'2x8'表示一共8块显卡，每块显卡2个样本。
