@@ -19,7 +19,7 @@ COMPRESSION_TYPE_DEPTH = {
 
 
 class RGBDFrame:
-
+    """Class for single ScanNet RGB-D image processing."""
     def load(self, file_handle):
         self.camera_to_world = np.asarray(
             struct.unpack('f' * 16, file_handle.read(16 * 4)),
@@ -45,7 +45,9 @@ class RGBDFrame:
 
 
 class SensorData:
-
+    """Class for single ScanNet scene processing.
+    Single scene file contains multiple RGB-D images.
+    """
     def __init__(self, filename, limit):
         self.version = 4
         self.load(filename, limit)
@@ -100,7 +102,8 @@ class SensorData:
             depth = np.fromstring(
                 depth_data, dtype=np.uint16).reshape(self.depth_height,
                                                      self.depth_width)
-            imageio.imwrite(os.path.join(output_path, str(f) + '.png'), depth)
+            imageio.imwrite(os.path.join(
+                output_path, self.index_to_str(f) + '.png'), depth)
 
     def export_color_images(self, output_path):
         if not os.path.exists(output_path):
@@ -108,9 +111,15 @@ class SensorData:
         for f in range(len(self.frames)):
             color = self.frames[f].decompress_color(
                 self.color_compression_type)
-            imageio.imwrite(os.path.join(output_path, str(f) + '.jpg'), color)
+            imageio.imwrite(os.path.join(
+                output_path, self.index_to_str(f) + '.jpg'), color)
 
-    def save_mat_to_file(self, matrix, filename):
+    @staticmethod
+    def index_to_str(index):
+        return str(index).zfill(5)
+
+    @staticmethod
+    def save_mat_to_file(matrix, filename):
         with open(filename, 'w') as f:
             for line in matrix:
                 np.savetxt(f, line[np.newaxis], fmt='%f')
@@ -121,22 +130,20 @@ class SensorData:
         for f in range(len(self.frames)):
             self.save_mat_to_file(self.frames[f].camera_to_world,
                                   os.path.join(output_path,
-                                               str(f) + '.txt'))
+                                               self.index_to_str(f) + '.txt'))
 
     def export_intrinsics(self, output_path):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         self.save_mat_to_file(self.intrinsic_color,
-                              os.path.join(output_path, 'intrinsic_color.txt'))
-        self.save_mat_to_file(self.extrinsic_color,
-                              os.path.join(output_path, 'extrinsic_color.txt'))
-        self.save_mat_to_file(self.intrinsic_depth,
-                              os.path.join(output_path, 'intrinsic_depth.txt'))
-        self.save_mat_to_file(self.extrinsic_depth,
-                              os.path.join(output_path, 'extrinsic_depth.txt'))
+                              os.path.join(output_path, 'intrinsic.txt'))
 
 
 def process_scene(path, limit, idx):
+    """Process single ScanNet scene.
+    Extract RGB images, poses and camera intrinsics.
+    """
+    print(f'processing {idx}')
     data = SensorData(os.path.join(path, idx, f'{idx}.sens'), limit)
     output_path = os.path.join('posed_images', idx)
     data.export_color_images(output_path)
@@ -153,7 +160,10 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--max-images-per-scene', type=int, default=300)
     args = parser.parse_args()
+
+    # process train and val scenes
     if os.path.exists('scans'):
         process_directory('scans', args.max_images_per_scene)
+    # process test scenes
     if os.path.exists('scans_test'):
         process_directory('scans_test', args.max_images_per_scene)

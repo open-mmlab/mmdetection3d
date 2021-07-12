@@ -66,20 +66,20 @@ class ScanNetData(object):
         path = osp.join(self.root_dir, 'posed_images', idx)
         for file in sorted(os.listdir(path)):
             if file.endswith('.jpg'):
-                paths.append(osp.join(path, file))
+                paths.append(osp.join('posed_images', idx, file))
         return paths
 
     def get_extrinsics(self, idx):
         extrinsics = []
         path = osp.join(self.root_dir, 'posed_images', idx)
         for file in sorted(os.listdir(path)):
-            if file.endswith('.txt') and file[0].isdigit():
+            if file.endswith('.txt') and not file == 'intrinsic.txt':
                 extrinsics.append(np.loadtxt(osp.join(path, file)))
         return extrinsics
 
     def get_intrinsics(self, idx):
         matrix_file = osp.join(self.root_dir, 'posed_images', idx,
-                               'intrinsic_color.txt')
+                               'intrinsic.txt')
         mmcv.check_file_exist(matrix_file)
         return np.loadtxt(matrix_file)
 
