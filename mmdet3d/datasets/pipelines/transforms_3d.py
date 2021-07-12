@@ -136,6 +136,7 @@ class RandomDropPointsColor(object):
 
         if np.random.rand() < self.drop_ratio:
             points.color = points.color * 0.0
+        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
@@ -510,6 +511,7 @@ class RandomJitterPoints(object):
                                    self.clip_range[1])
 
         points.translate(jitter_noise)
+        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
@@ -1279,7 +1281,7 @@ class IndoorPatchPointSample(object):
 
         return points
 
-    def _patch_points_sampling(self, points, sem_mask, replace=None):
+    def _patch_points_sampling(self, points, sem_mask):
         """Patch points sampling.
 
         First sample a valid patch.
@@ -1288,8 +1290,6 @@ class IndoorPatchPointSample(object):
         Args:
             points (:obj:`BasePoints`): 3D Points.
             sem_mask (np.ndarray): semantic segmentation mask for input points.
-            replace (bool): Whether the sample is with or without replacement.
-                Defaults to None.
 
         Returns:
             tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
@@ -1326,6 +1326,7 @@ class IndoorPatchPointSample(object):
 
             cur_coords = coords[cur_choice, :]
             cur_sem_mask = sem_mask[cur_choice]
+            point_idxs = np.where(cur_choice)[0]
 
             # two criterion for patch sampling, adopted from PointNet++
             # points within selected patch shoule be scattered separately
@@ -1358,11 +1359,17 @@ class IndoorPatchPointSample(object):
             if flag1 and flag2:
                 break
 
-        # random sample idx
-        if replace is None:
-            replace = (cur_sem_mask.shape[0] < self.num_points)
-        choices = np.random.choice(
-            np.where(cur_choice)[0], self.num_points, replace=replace)
+        if point_idxs.size >= self.num_points:
+            choices = np.random.choice(
+                point_idxs, self.num_points, replace=False)
+        else:
+            # do not use random choice here to avoid some pts not counted
+            dup = np.random.choice(point_idxs.size,
+                                   self.num_points - point_idxs.size)
+            idx_dup = np.concatenate(
+                [np.arange(point_idxs.size),
+                 np.array(dup)], 0)
+            choices = point_idxs[idx_dup]
 
         # construct model input
         points = self._input_generation(coords[choices], cur_center, coord_max,
