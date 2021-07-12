@@ -38,7 +38,7 @@ train_pipeline = [
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='IndoorPointSample', num_points=16384),
+    dict(type='OutdoorPointSample', num_points=16384),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -59,7 +59,7 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='IndoorPointSample', num_points=16384),
+            dict(type='OutdoorPointSample', num_points=16384),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
