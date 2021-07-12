@@ -485,11 +485,11 @@ def get_2d_boxes(nusc,
             loc = box.center.tolist()
 
             dim = box.wlh
-            dim[[1, 2]] = dim[[2, 1]]  # convert wlh to our whl
+            dim[[0, 1, 2]] = dim[[1, 2, 0]]  # convert wlh to our lhw
             dim = dim.tolist()
 
             rot = box.orientation.yaw_pitch_roll[0]
-            rot = [-rot - np.pi / 2]  # convert the rot to our cam coordinate
+            rot = [-rot]  # convert the rot to our cam coordinate
 
             global_velo2d = nusc.box_velocity(box.token)[:2]
             global_velo3d = np.array([*global_velo2d, 0.0])

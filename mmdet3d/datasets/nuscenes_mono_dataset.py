@@ -664,8 +664,8 @@ def output_to_nusc_box(detection):
     box_yaw = box3d.yaw.numpy()
 
     # convert the dim/rot to nuscbox convention
-    box_dims[:, [1, 2]] = box_dims[:, [2, 1]]
-    box_yaw = -box_yaw - np.pi / 2
+    box_dims[:, [0, 1, 2]] = box_dims[:, [2, 0, 1]]
+    box_yaw = -box_yaw
 
     box_list = []
     for i in range(len(box3d)):
@@ -781,8 +781,8 @@ def nusc_box_to_cam_box3d(boxes):
     velocity = torch.Tensor([b.velocity[:2] for b in boxes]).view(-1, 2)
 
     # convert nusbox to cambox convention
-    dims[:, [1, 2]] = dims[:, [2, 1]]
-    rots = -np.pi / 2.0 - rots
+    dims[:, [0, 1, 2]] = dims[:, [2, 0, 1]]
+    rots = -rots
 
     boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
     cam_boxes3d = CameraInstance3DBoxes(
