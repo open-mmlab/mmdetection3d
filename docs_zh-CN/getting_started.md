@@ -123,7 +123,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c 。版本号将保存在训练的模型里。推荐在在每一次执行步骤 d 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
 
-    > 重要: 如果你重装了不同版本的 CUDA 或者Pythorch 的 mmdet，请务必移除 `./build` 文件。
+    > 重要: 如果你重装了不同版本的 CUDA 或者 Pythorch 的 mmdet，请务必移除 `./build` 文件。
 
     ```shell
     pip uninstall mmdet3d
@@ -184,7 +184,7 @@ pip install -v -e .
 
 ## 使用多版本的 MMDetection3D
 
-训练和测试的脚本已经在 PYTHONPATH 中进行了修改，以确保脚本使用当前目录中的 MMDetection。
+训练和测试的脚本已经在 PYTHONPATH 中进行了修改，以确保脚本使用当前目录中的 MMDetection3D。
 
 要使环境中安装默认的 MMDetection3D 而不是当前正在在使用的，可以删除出现在相关脚本中的代码：
 
@@ -210,7 +210,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 
 如果你想输入一个 `ply` 格式的文件，你可以使用如下函数将它转换为 `bin` 的文件格式。然后就可以使用转化成 `bin` 格式的文件去运行 demo。
 
-请注意在使用此脚本前，你需要先安装 pandas 和 plyfile。 这个函数也是用在数据预处理当中，为了能够直接训练 ```ply data```。
+请注意在使用此脚本前，你需要先安装 pandas 和 plyfile。 这个函数也可使用在数据预处理当中，为了能够直接训练 ```ply data```。
 
 ```python
 import numpy as np
