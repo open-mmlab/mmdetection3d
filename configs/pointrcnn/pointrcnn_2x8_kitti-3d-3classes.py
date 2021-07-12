@@ -38,7 +38,7 @@ train_pipeline = [
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='IndoorPointSample', num_points=16384),
+    dict(type='OutdoorPointSample', num_points=16384),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -85,7 +85,7 @@ optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(policy='step', warmup=None, step=[35, 45])
 # runtime settings
 total_epochs = 80
-evaluation = dict(interval=5)
+evaluation = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=30,

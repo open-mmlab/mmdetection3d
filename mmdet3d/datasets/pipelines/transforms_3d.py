@@ -639,8 +639,9 @@ class OutdoorPointSample(object):
                 - choices (np.ndarray, optional): The generated random samples.
         """
         num_points = num_samples
+        points_numpy = points.tensor.clone().numpy()
         if num_points < len(points):
-            pts_depth = np.linalg.norm(points[:, 0:3], axis=1)
+            pts_depth = np.linalg.norm(points_numpy[:, 0:3], axis=1)
             pts_near_flag = pts_depth < far_distance
             far_idxs_choice = np.where(pts_near_flag == 0)[0]
             near_idxs = np.where(pts_near_flag == 1)[0]
