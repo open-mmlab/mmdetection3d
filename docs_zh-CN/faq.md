@@ -10,6 +10,15 @@
 
   请将 open3d 的版本降级至 0.9.0.0，因为最新版 open3d 需要 'GLIBC_2.27' 文件的支持， Ubuntu 16.04 系统中缺失该文件，且该文件仅存在于 Ubuntu 18.04 及之后的系统中。
 
+- 如果您在 `import pycocotools` 时遇到版本错误的问题，这是由于 nuscenes-devkit 需要安装 pycocotools，然而 mmdet 依赖于 mmpycocotools，当前的解决方案如下所示，我们将会在之后全面支持 pycocotools ：
+
+  ```shell
+  pip uninstall pycocotools mmpycocotools
+  pip install mmpycocotools
+  ```
+
+  **注意**： 我们已经在 0.13.0 及之后的版本中全面支持 pycocotools。
+
 - 如果您遇到下面的问题，并且您的环境包含 numba == 0.48.0 和 numpy >= 1.20.0：
 
   ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``

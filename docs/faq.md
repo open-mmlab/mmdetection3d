@@ -10,6 +10,15 @@ We list some potential troubles encountered by users and developers, along with 
 
   please downgrade open3d to 0.9.0.0, because the latest open3d needs the support of file 'GLIBC_2.27', which only exists in Ubuntu 18.04, not in Ubuntu 16.04.
 
+- If you faced the error when importing pycocotools, this is because nuscenes-devkit installs pycocotools but mmdet relies on mmpycocotools. The current workaround is as below. We will migrate to use pycocotools in the future.
+
+  ```shell
+  pip uninstall pycocotools mmpycocotools
+  pip install mmpycocotools
+  ```
+
+  **NOTE**: We have migrated to use pycocotools in mmdet3d >= 0.13.0.
+
 - If you face the error shown below, and your environment contains numba == 0.48.0 with numpy >= 1.20.0:
 
   ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``
