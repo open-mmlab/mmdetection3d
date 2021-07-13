@@ -250,8 +250,8 @@ train_pipeline = [
 ]
 ```
 
-- `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 13). Other class ids will be converted to `ignore_index` which equals to `13`.
-- `IndoorPatchPointSample`: Crop a patch containing fixed number of points from input point cloud. `block_size` indicates the size of the cropped block, typically `1.0` for S3DIS.
+- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 13) during training. Other class ids will be converted to `ignore_index` which equals to `13`.
+- `IndoorPatchPointSample`: Crop a patch containing a fixed number of points from input point cloud. `block_size` indicates the size of the cropped block, typically `1.0` for S3DIS.
 - `NormalizePointsColor`: Normalize the RGB color values of input point cloud by dividing `255`.
 - Data augmentation:
     - `GlobalRotScaleTrans`: randomly rotate and scale input point cloud.
