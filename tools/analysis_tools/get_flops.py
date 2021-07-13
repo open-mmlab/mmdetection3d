@@ -20,6 +20,12 @@ def parse_args():
         default=[40000, 4],
         help='input point cloud size')
     parser.add_argument(
+        '--modality',
+        type=str,
+        default='point',
+        choices=['point', 'image', 'multi'],
+        help='input data modality')
+    parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
@@ -37,8 +43,20 @@ def main():
 
     args = parse_args()
 
-    assert len(args.shape) == 2, 'invalid input shape'
-    input_shape = tuple(args.shape)
+    if args.modality == 'point':
+        assert len(args.shape) == 2, 'invalid input shape'
+        input_shape = tuple(args.shape)
+    elif args.modality == 'image':
+        if len(args.shape) == 1:
+            input_shape = (3, args.shape[0], args.shape[0])
+        elif len(args.shape) == 2:
+            input_shape = (3, ) + tuple(args.shape)
+        else:
+            raise ValueError('invalid input shape')
+    elif args.modality == 'multi':
+        raise NotImplementedError(
+            'FLOPs counter is currently not supported for models with '
+            'multi-modality input')
 
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
@@ -60,7 +78,7 @@ def main():
         model.forward = model.forward_dummy
     else:
         raise NotImplementedError(
-            'FLOPs counter is currently not supported with {}'.format(
+            'FLOPs counter is currently not supported for {}'.format(
                 model.__class__.__name__))
 
     flops, params = get_model_complexity_info(model, input_shape)
