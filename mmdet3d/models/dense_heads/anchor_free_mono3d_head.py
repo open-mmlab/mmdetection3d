@@ -161,6 +161,13 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             self.attr_branch = attr_branch
 
         self._init_layers()
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -266,29 +273,8 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             self.conv_attr = nn.Conv2d(self.attr_branch[-1], self.num_attrs, 1)
 
     def init_weights(self):
-        """Initialize weights of the head."""
-        for modules in [self.cls_convs, self.reg_convs, self.conv_cls_prev]:
-            for m in modules:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
-        for conv_reg_prev in self.conv_reg_prevs:
-            if conv_reg_prev is None:
-                continue
-            for m in conv_reg_prev:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
-        if self.use_direction_classifier:
-            for m in self.conv_dir_cls_prev:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
-        if self.pred_attrs:
-            for m in self.conv_attr_prev:
-                if isinstance(m.conv, nn.Conv2d):
-                    normal_init(m.conv, std=0.01)
+        super().init_weights()
         bias_cls = bias_init_with_prob(0.01)
-        normal_init(self.conv_cls, std=0.01, bias=bias_cls)
-        for conv_reg in self.conv_regs:
-            normal_init(conv_reg, std=0.01)
         if self.use_direction_classifier:
             normal_init(self.conv_dir_cls, std=0.01, bias=bias_cls)
         if self.pred_attrs:
