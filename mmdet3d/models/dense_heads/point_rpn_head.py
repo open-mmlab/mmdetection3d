@@ -406,7 +406,7 @@ class PointRPNHead(BaseModule):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
             bbox_selected, score_selected, labels, cls_preds_selected = \
-                self.class_agnostic_nms(
+                self.multiclass_nms_single(
                     obj_scores[b], sem_scores[b],
                     bbox3d, points[b, ..., :3],
                     input_metas[b], training_flag)
@@ -453,7 +453,7 @@ class PointRPNHead(BaseModule):
             score_thr = self.train_cfg.rpn_proposal.score_thr
             nms_pre = self.train_cfg.rpn_proposal.nms_pre
 
-        score_thr_inds = obj_scores > score_thr
+        score_thr_inds = obj_scores >= score_thr
         _scores = obj_scores[score_thr_inds]
         _bboxes_for_nms = bbox_for_nms[score_thr_inds, :]
         _sem_scores = sem_scores[score_thr_inds]
