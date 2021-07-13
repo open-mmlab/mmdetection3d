@@ -1,11 +1,15 @@
 import mmcv
 import numpy as np
+import warnings
+from collections import defaultdict
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
+from mmdet.datasets.pipelines import (Compose, LoadAnnotations,
+                                      LoadImageFromFile)
 
 
+# TODO: It is not used now. Remove in favour of MultiViewPipeline.
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
     """Load multi channel images from a list of separate channel files.
@@ -19,6 +23,9 @@ class LoadMultiViewImageFromFiles(object):
     """
 
     def __init__(self, to_float32=False, color_type='unchanged'):
+        warnings.warn('DeprecationWarning: LoadMultiViewImageFromFiles'
+                      'is deprecated, please use MultiViewPipeline('
+                      'transforms=[dict(type="LoadImageFromFile")]) instead')
         self.to_float32 = to_float32
         self.color_type = color_type
 
@@ -665,4 +672,54 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_seg={self.with_seg}, '
         repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
+        return repr_str
+
+
+@PIPELINES.register_module()
+class MultiViewPipeline(object):
+
+    def __init__(self,
+                 transforms,
+                 n_images=-1,
+                 pose_keys=('lidar2img', 'depth2img', 'cam2img')):
+        self.transforms = Compose(transforms)
+        self.n_images = n_images
+        self.pose_keys = pose_keys
+
+    def __call__(self, results):
+        assert len(results['img_info'])
+        pose_keys = [k for k in results if k in self.pose_keys]
+        for key in pose_keys:
+            assert len(results[key]) == len(results['img_info'])
+        img_pose_dict = defaultdict(list)
+        ids = np.arange(len(results['img_info']))
+
+        # sample self.n_images from all images
+        if self.n_images > 0:
+            replace = True if self.n_images > len(ids) else False
+            ids = np.random.choice(ids, self.n_images, replace=replace)
+
+        # apply self.transforms to sampled images
+        for i in ids.tolist():
+            img_results = dict(
+                img_prefix=results['img_prefix'],
+                img_info=results['img_info'][i])
+            img_results = self.transforms(img_results)
+            img_pose_dict['img'].append(img_results['img'])
+            for key in pose_keys:
+                img_pose_dict[key].append(results[key][i])
+
+        # copy image keys to results
+        for key in img_results.keys():
+            if key not in ['img', 'img_prefix', 'img_info']:
+                results[key] = img_results[key]
+        for key in img_pose_dict:
+            results[key] = img_pose_dict[key]
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(transforms={self.transforms}, '
+        repr_str += f'n_images={self.n_images})'
         return repr_str
