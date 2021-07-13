@@ -113,9 +113,17 @@ class ScanNetData(object):
 
             # update with RGB image paths if exist
             if os.path.exists(osp.join(self.root_dir, 'posed_images')):
-                info['img_paths'] = self.get_images(sample_idx)
-                info['extrinsics'] = self.get_extrinsics(sample_idx)
                 info['intrinsics'] = self.get_intrinsics(sample_idx)
+                all_extrinsics = self.get_extrinsics(sample_idx)
+                all_img_paths = self.get_images(sample_idx)
+                # some poses in ScanNet are invalid
+                extrinsics, img_paths = [], []
+                for extrinsic, img_path in zip(all_extrinsics, all_img_paths):
+                    if np.all(np.isfinite(extrinsic)):
+                        img_paths.append(img_path)
+                        extrinsics.append(extrinsic)
+                info['extrinsics'] = extrinsics
+                info['img_paths'] = img_paths
 
             if not self.test_mode:
                 pts_instance_mask_path = osp.join(
