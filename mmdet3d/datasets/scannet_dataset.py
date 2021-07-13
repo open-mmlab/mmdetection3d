@@ -97,9 +97,10 @@ class ScanNetDataset(Custom3DDataset):
             input_dict['file_name'] = pts_filename
 
         if self.modality['use_camera']:
-            img_filename = []
+            img_info = []
             for img_path in info['img_paths']:
-                img_filename.append(osp.join(self.data_root, img_path))
+                img_info.append(
+                    dict(filename=osp.join(self.data_root, img_path)))
             intrinsic = info['intrinsics']
             axis_align_matrix = self._get_axis_align_matrix(info)
             depth2img = []
@@ -108,7 +109,7 @@ class ScanNetDataset(Custom3DDataset):
                     intrinsic @ np.linalg.inv(axis_align_matrix @ extrinsic))
 
             input_dict['img_prefix'] = None
-            input_dict['img_info'] = dict(filename=img_filename)
+            input_dict['img_info'] = img_info
             input_dict['depth2img'] = depth2img
 
         if not self.test_mode:
