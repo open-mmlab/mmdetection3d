@@ -192,7 +192,7 @@ The directory structure after process should be as below
 
 ```
 scannet
-├── scannet_utils.py
+├── meta_data
 ├── batch_load_scannet_data.py
 ├── load_scannet_data.py
 ├── scannet_utils.py
@@ -287,8 +287,9 @@ train_pipeline = [
         ])
 ]
 ```
+
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
-- `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 18).
+- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 18) during training.
 - Data augmentation:
     - `IndoorPointSample`: downsample input point cloud.
     - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
@@ -297,4 +298,5 @@ train_pipeline = [
 ## Metrics
 
 Typically mean average precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3d object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
+
 As introduced in section `Export ScanNet data`, all ground truth 3d bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3d bounding box is also zero and axis-aligned 3d non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.
