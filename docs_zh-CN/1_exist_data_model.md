@@ -23,7 +23,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 ```
 
 可选参数：
-- `RESULT_FILE`: 输出结果（pickle格式）的文件名，如果未指定，结果不会被保存。
+- `RESULT_FILE`: 输出结果（pickle 格式）的文件名，如果未指定，结果不会被保存。
 - `EVAL_METRICS`: 在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测2D检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较。
 - `--show`: 如果被指定，检测结果会在静默模式下被保存，用于调试和可视化，但只在单块GPU测试的情况下生效，和 `--show-dir` 搭配使用。
 - `--show-dir`: 如果被指定，检测结果会被保存在指定文件夹下的 `***_points.obj` 和 `***_pred.obj` 文件中，用于调试和可视化，但只在单块GPU测试的情况下生效，对于这个选项，图形化界面在你的环境中不是必需的。
@@ -151,7 +151,7 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 
 可选参数：
 
-- `--no-validate` (**不推荐**): 默认情况下，代码在训练阶段每k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
+- `--no-validate` (**不推荐**): 默认情况下，代码在训练阶段每 k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
 - `--work-dir ${WORK_DIR}`: 覆盖配置文件中的指定工作目录。
 - `--resume-from ${CHECKPOINT_FILE}`: 从之前的模型数据文件中恢复。
 - `--options 'Key=value'`: 覆盖使用的配置中的一些设定。
@@ -176,7 +176,7 @@ GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_16
 
 你可以查看 [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) 来获取所有的参数和环境变量。
 
-如果你有多个机器连接到以太网，可以参考PyTorch的 [launch utility](https://pytorch.org/docs/stable/distributed.html)，如果你没有像 InfiniBand 一样的高速率网络，通常会很慢。
+如果你有多个机器连接到以太网，可以参考 PyTorch 的 [launch utility](https://pytorch.org/docs/stable/distributed.html)，如果你没有像 InfiniBand 一样的高速率网络，通常会很慢。
 
 ### 在单个机器上启动多个任务
 
