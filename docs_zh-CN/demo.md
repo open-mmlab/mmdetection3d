@@ -1,20 +1,20 @@
 # 演示
 
-我们提供了多模态/单模态（基于激光雷达/视觉）、室内/室外场景的3D检测和3D语义分割演示的脚本，预训练模型可以从 [model zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/model_zoo.md/) 下载。我们也提供了 KITTI、SUN RGB-D、nuScenes 和 ScanNet 数据集的预处理样本数据，你可以根据我们的预处理步骤使用任何其它数据。
+我们提供了多模态/单模态（基于激光雷达/视觉）、室内/室外场景的 3D 检测和 3D 语义分割演示的脚本，预训练模型可以从 [model zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/model_zoo.md/) 下载。我们也提供了 KITTI、SUN RGB-D、nuScenes 和 ScanNet 数据集的预处理样本数据，你可以根据我们的预处理步骤使用任何其它数据。
 
 ## 测试
 
-### 3D检测
+### 3D 检测
 
 #### 单模态演示
 
-在点云数据上测试3D检测器，运行：
+在点云数据上测试 3D 检测器，运行：
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}] [--show]
 ```
 
-点云和预测3D框的可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，它可以使用 [MeshLab](http://www.meshlab.net/) 打开。注意如果你设置了 `--show`，通过 [Open3D](http://www.open3d.org/) 可以在线显示预测结果。
+点云和预测 3D 框的可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，它可以使用 [MeshLab](http://www.meshlab.net/) 打开。注意如果你设置了 `--show`，通过 [Open3D](http://www.open3d.org/) 可以在线显示预测结果。
 
 在 KITTI 数据上测试 [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) 模型：
 
@@ -32,13 +32,13 @@ python demo/pcd_demo.py demo/data/sunrgbd/sunrgbd_000017.bin configs/votenet/vot
 
 #### 多模态演示
 
-在多模态数据（通常是点云和图像）上测试3D检测器，运行：
+在多模态数据（通常是点云和图像）上测试 3D 检测器，运行：
 
 ```shell
 python demo/multi_modality_demo.py ${PCD_FILE} ${IMAGE_FILE} ${ANNOTATION_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}] [--show]
 ```
 
-`ANNOTATION_FILE` 需要提供3D到2D的仿射矩阵，可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云、图像、预测的3D框以及它们在图像上的投影。
+`ANNOTATION_FILE` 需要提供 3D 到 2D 的仿射矩阵，可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云、图像、预测的 3D 框以及它们在图像上的投影。
 
 在 KITTI 数据上测试 [MVX-Net](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/mvxnet) 模型：
 
@@ -52,15 +52,15 @@ python demo/multi_modality_demo.py demo/data/kitti/kitti_000008.bin demo/data/ki
 python demo/multi_modality_demo.py demo/data/sunrgbd/sunrgbd_000017.bin demo/data/sunrgbd/sunrgbd_000017.jpg demo/data/sunrgbd/sunrgbd_000017_infos.pkl configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py checkpoints/imvotenet_stage2_16x8_sunrgbd-3d-10class_20210323_184021-d44dcb66.pth
 ```
 
-### 单目3D检测
+### 单目 3D 检测
 
-在图像数据上测试单目3D检测器，运行：
+在图像数据上测试单目 3D 检测器，运行：
 
 ```shell
 python demo/mono_det_demo.py ${IMAGE_FILE} ${ANNOTATION_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--out-dir ${OUT_DIR}] [--show]
 ```
 
-`ANNOTATION_FILE` 需要提供3D到2D的仿射矩阵（相机内参矩阵），可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括图像以及预测3D框在图像上的投影。
+`ANNOTATION_FILE` 需要提供 3D 到 2D 的仿射矩阵（相机内参矩阵），可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括图像以及预测 3D 框在图像上的投影。
 
 在 nuScenes 数据上测试 [FCOS3D](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fcos3d) 模型：
 
@@ -68,15 +68,15 @@ python demo/mono_det_demo.py ${IMAGE_FILE} ${ANNOTATION_FILE} ${CONFIG_FILE} ${C
 python demo/mono_det_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.jpg demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525_mono3d.coco.json configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py checkpoints/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune_20210427_091419-35aaaad0.pth
 ```
 
-### 3D分割
+### 3D 分割
 
-在点云数据上测试3D分割器，运行：
+在点云数据上测试 3D 分割器，运行：
 
 ```shell
 python demo/pc_seg_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--out-dir ${OUT_DIR}] [--show]
 ```
 
-可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云以及预测的3D分割掩膜。
+可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云以及预测的 3D 分割掩膜。
 
 在 ScanNet 数据上测试 [PointNet++ (SSG)](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointnet2) 模型：
 
