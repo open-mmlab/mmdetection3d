@@ -216,6 +216,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     @staticmethod
     def get_direction_target(reg_targets,
                              dir_offset=0,
+                             dir_limit_offset=0,
                              num_bins=2,
                              one_hot=True):
         """Encode direction to 0 ~ num_bins-1.
@@ -230,7 +231,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             torch.Tensor: Encoded direction targets.
         """
         rot_gt = reg_targets[..., 6]
-        offset_rot = limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
+        offset_rot = limit_period(rot_gt - dir_offset, dir_limit_offset,
+                                  2 * np.pi)
         dir_cls_targets = torch.floor(offset_rot /
                                       (2 * np.pi / num_bins)).long()
         dir_cls_targets = torch.clamp(dir_cls_targets, min=0, max=num_bins - 1)
@@ -376,7 +378,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
             if self.use_direction_classifier:
                 pos_dir_cls_targets = self.get_direction_target(
-                    pos_bbox_targets_3d, self.dir_offset, one_hot=False)
+                    pos_bbox_targets_3d,
+                    self.dir_offset,
+                    self.dir_limit_offset,
+                    one_hot=False)
 
             if self.diff_rad_by_sin:
                 pos_bbox_preds, pos_bbox_targets_3d = self.add_sin_difference(

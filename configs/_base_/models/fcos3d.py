@@ -29,6 +29,7 @@ model = dict(
         pred_attrs=True,
         pred_velo=True,
         dir_offset=0.7854,  # pi/4
+        dir_limit_offset=0,
         strides=[8, 16, 32, 64, 128],
         group_reg_dims=(2, 1, 3, 1, 2),  # offset, depth, size, rot, velo
         cls_branch=(256, ),
