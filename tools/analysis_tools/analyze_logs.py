@@ -53,10 +53,18 @@ def plot_curve(log_dicts, args):
                     f'{args.json_logs[i]} does not contain metric {metric}')
 
             if args.mode == 'eval':
-                # if current training is resumed from previous checkpoint
-                # we lost information in early epochs
-                # `xs` should start according to `min(epochs)`
-                x0 = min(epochs) + args.interval - min(epochs) % args.interval
+                if min(epochs) == args.interval:
+                    x0 = args.interval
+                else:
+                    # if current training is resumed from previous checkpoint
+                    # we lost information in early epochs
+                    # `xs` should start according to `min(epochs)`
+                    if min(epochs) % args.interval == 0:
+                        x0 = min(epochs)
+                    else:
+                        # find the first epoch that do eval
+                        x0 = min(epochs) + args.interval - \
+                            min(epochs) % args.interval
                 xs = np.arange(x0, max(epochs) + 1, args.interval)
                 ys = []
                 for epoch in epochs[args.interval - 1::args.interval]:
