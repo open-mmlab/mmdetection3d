@@ -36,7 +36,7 @@ class VoxelNet(SingleStage3DDetector):
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
-    def extract_feat(self, points, img_metas):
+    def extract_feat(self, points, img_metas=None):
         """Extract features from points."""
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
