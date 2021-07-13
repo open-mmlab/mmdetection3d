@@ -86,7 +86,7 @@ pip install mmcv-full
 **d. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
 ```shell
-pip install mmdet==2.14.0
+pip install mmdet>=2.14.0
 ```
 
 同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMDetection： 
@@ -102,7 +102,7 @@ pip install -v -e .  # or "python setup.py develop"
 **e. 安装 [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
-pip install mmsegmentation==0.14.1
+pip install mmsegmentation>=0.14.1
 ```
 同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMSegmentation：
 
@@ -196,7 +196,7 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 ## 通过点云的 demo 来验证
 
-我们提供了几个 demo 脚本去测试单个样本，预训练的模型可以从[模型库](model_zoo.md)中下载. 运行如下命令可以去测试点云场景下一个单模态的 3D 检测算法。
+我们提供了一些 demo 脚本去测试单个样本，预训练的模型可以从[模型库](model_zoo.md)中下载. 运行如下命令可以去测试点云场景下一个单模态的 3D 检测算法。
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
@@ -251,9 +251,9 @@ def to_ply(input_path, output_path, original_type):
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-更多的关于单/多模态和室内/室外的 3D 检测的 demos 可以在[此](demo.md)找到.
+更多的关于单/多模态和室内/室外的 3D 检测的样例可以在[此](demo.md)找到.
 
-## 测试点云的高级 APIS
+## 测试点云的高级接口
 
 ### 同步接口
 
