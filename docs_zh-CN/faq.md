@@ -1,6 +1,6 @@
 # 常见问题解答
 
-我们列出了一些用户和开发者在开发过程中会遇到的一些常见问题以及对应的解决方案，如果您发现了任何频繁出现的问题，请随时扩充本列表，并且非常欢迎您提出的任何解决方案。如果您在环境配置、模型训练等工作中遇到任何的问题，请使用[问题模板](https://github.com/open-mmlab/mmdetection3d/blob/master/.github/ISSUE_TEMPLATE/error-report.md/)来创建相应的 issue ,并将所需的所有信息填入到问题模板中，我们会尽快解决您的问题。
+我们列出了一些用户和开发者在开发过程中会遇到的常见问题以及对应的解决方案，如果您发现了任何频繁出现的问题，请随时扩充本列表，非常欢迎您提出的任何解决方案。如果您在环境配置、模型训练等工作中遇到任何的问题，请使用[问题模板](https://github.com/open-mmlab/mmdetection3d/blob/master/.github/ISSUE_TEMPLATE/error-report.md/)来创建相应的 issue,并将所需的所有信息填入到问题模板中，我们会尽快解决您的问题。
 
 ## MMCV/MMDet/MMDet3D Installation
 
