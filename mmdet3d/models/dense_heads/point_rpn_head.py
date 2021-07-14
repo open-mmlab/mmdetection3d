@@ -406,7 +406,7 @@ class PointRPNHead(BaseModule):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
             bbox_selected, score_selected, labels, cls_preds_selected = \
-                self.multiclass_nms_single(
+                self.class_agnostic_nms(
                     obj_scores[b], sem_scores[b],
                     bbox3d, points[b, ..., :3],
                     input_metas[b], training_flag)

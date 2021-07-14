@@ -58,8 +58,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
         neg_inds = torch.nonzero(assign_result.gt_inds == 0, as_tuple=False)
         if neg_inds.numel() != 0:
             neg_inds = neg_inds.squeeze(1)
-        if len(neg_inds) <= num_expected:
-            return neg_inds
+        if len(neg_inds) <= 0:
+            return False
         else:
             neg_inds_choice = neg_inds.new_zeros([0])
             extend_num = 0
@@ -164,6 +164,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
                 num_expected_neg = neg_upper_bound
         neg_inds = self.neg_sampler._sample_neg(
             assign_result, num_expected_neg, bboxes=bboxes, **kwargs)
+
         sampling_result = SamplingResult(pos_inds, neg_inds, bboxes, gt_bboxes,
                                          assign_result, gt_flags)
         if self.return_iou:
