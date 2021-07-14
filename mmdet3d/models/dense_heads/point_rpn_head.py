@@ -222,9 +222,10 @@ class PointRPNHead(BaseModule):
         semantic_targets[negative_mask] = self.num_classes
         semantic_points_label = semantic_targets
         # for ignore, but now we do not have ignore label
-        # semantic_loss_weight = negative_mask.float() + positive_mask.float()
+        semantic_loss_weight = negative_mask.float() + positive_mask.float()
         semantic_loss = self.cls_loss(semantic_points,
-                                      semantic_points_label.reshape(-1))
+                                      semantic_points_label.reshape(-1),
+                                      semantic_loss_weight.reshape(-1))
         semantic_loss /= positive_mask.float().sum()
         '''
         indices_xxx = 0
@@ -371,6 +372,12 @@ class PointRPNHead(BaseModule):
 
         positive_mask = (points_mask.max(1)[0] > 0)
         negative_mask = (points_mask.max(1)[0] == 0)
+        # add ignore_mask
+        extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(0.2)
+        points_mask, _ = self._assign_targets_by_points_inside(
+            extend_gt_bboxes_3d, points)
+        negative_mask = (points_mask.max(1)[0] == 0)
+
         point_targets = points[..., 0:3]
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
                 corner3d_targets, gt_targets, point_targets)
@@ -406,7 +413,7 @@ class PointRPNHead(BaseModule):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
             bbox_selected, score_selected, labels, cls_preds_selected = \
-                self.class_agnostic_nms(
+                self.multiclass_nms_single(
                     obj_scores[b], sem_scores[b],
                     bbox3d, points[b, ..., :3],
                     input_metas[b], training_flag)
