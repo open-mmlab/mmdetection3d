@@ -122,6 +122,11 @@ class RandomFlip3D(RandomFlip):
             w = input_dict['ori_shape'][1]
             input_dict['centers2d'][..., 0] = \
                 w - input_dict['centers2d'][..., 0]
+            # need to modify the horizontal position of camera center
+            # along u-axis in the image (flip like centers2d)
+            # ['cam_intrinsic'][0][2] = c_u
+            # see more details and examples at
+            # https://github.com/open-mmlab/mmdetection3d/pull/744
             input_dict['cam_intrinsic'][0][2] = \
                 w - input_dict['cam_intrinsic'][0][2]
 
