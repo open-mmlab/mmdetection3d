@@ -1204,12 +1204,14 @@ class IndoorPatchPointSample(object):
             additional features. Defaults to False.
         num_try (int, optional): Number of times to try if the patch selected
             is invalid. Defaults to 10.
-        enlarge_size (float | None, optional): Enlarge the sampled patch to
+        enlarge_size (float, optional): Enlarge the sampled patch to
             [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
-            an augmentation. If None, set it as 0.01. Defaults to 0.2.
+            an augmentation. Defaults to 0.2.
         min_unique_num (int | None, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
+        eps (float, optional): A value added to patch boundary to guarantee
+            points coverage. Defaults to 1e-2.
 
     Note:
         This transform should only be used in the training process of point
@@ -1226,14 +1228,16 @@ class IndoorPatchPointSample(object):
                  use_normalized_coord=False,
                  num_try=10,
                  enlarge_size=0.2,
-                 min_unique_num=None):
+                 min_unique_num=None,
+                 eps=1e-2):
         self.num_points = num_points
         self.block_size = block_size
         self.ignore_index = ignore_index
         self.use_normalized_coord = use_normalized_coord
         self.num_try = num_try
-        self.enlarge_size = enlarge_size if enlarge_size is not None else 0.01
+        self.enlarge_size = enlarge_size
         self.min_unique_num = min_unique_num
+        self.eps = eps
 
         if sample_rate is not None:
             warnings.warn(
@@ -1331,8 +1335,8 @@ class IndoorPatchPointSample(object):
             # two criterion for patch sampling, adopted from PointNet++
             # points within selected patch shoule be scattered separately
             mask = np.sum(
-                (cur_coords >= (cur_min - 0.01)) * (cur_coords <=
-                                                    (cur_max + 0.01)),
+                (cur_coords >= (cur_min - self.eps)) * (cur_coords <=
+                                                        (cur_max + self.eps)),
                 axis=1) == 3
 
             if self.min_unique_num is None:
