@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/kitti-3d-car.py', '../_base_/models/pointrcnn.py',
-    '../_base_/default_runtime.py'
+    '../_base_/default_runtime.py', '../_base_/schedules/cyclic_40e.py'
 ]
 
 # dataset settings
@@ -79,12 +79,9 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names))
 
 # optimizer
-lr = 0.01  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[35, 45])
+lr = 0.002  # max learning rate
 # runtime settings
-total_epochs = 80
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 evaluation = dict(interval=1)
 # yapf:disable
 log_config = dict(
