@@ -95,9 +95,12 @@ class PointRCNNBboxHead(BaseModule):
             cur_sa_mlps = [sa_in_channel] + cur_sa_mlps
             sa_out_channel = cur_sa_mlps[-1]
 
+            cur_num_points = num_points[sa_index]
+            if cur_num_points <= 0:
+                cur_num_points = None
             self.SA_modules.append(
                 build_sa_module(
-                    num_point=num_points[sa_index],
+                    num_point=cur_num_points,
                     radius=radius[sa_index],
                     num_sample=num_samples[sa_index],
                     mlp_channels=cur_sa_mlps,

@@ -60,7 +60,7 @@ model = dict(
                 reg_conv_channels=(256, 256),
                 bias=True),
             mlp_channels=[128, 128],
-            num_points=(128, 32, 1),
+            num_points=(128, 32, -1),
             radius=(0.2, 0.4, 100),
             num_samples=(16, 16, 16),
             sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
@@ -73,7 +73,7 @@ model = dict(
                 nms_pre=9000,
                 nms_post=512,
                 max_num=512,
-                nms_cfg=dict(type='nms', iou_thr=0.75),
+                nms_cfg=dict(type='nms', iou_thr=0.8),
                 score_thr=0,
                 use_rotate_nms=False)),
         rcnn=dict(
