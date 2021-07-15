@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
+from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -108,11 +109,14 @@ class PointRCNNBboxHead(BaseModule):
             num_cls_out_channels=1,
             num_reg_out_channels=self.bbox_coder.code_size)
         if init_cfg is None:
-            self.init_cfg = dict(
-                type='Xavier', layer=['Conv2d', 'Conv1d'], bias=0)
+            self.init_cfg = dict(type='Xavier', layer=['Conv2d', 'Conv1d'])
 
     def init_weights(self):
         super().init_weights()
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv1d):
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
         normal_init(self.conv_pred.conv_reg.weight, mean=0, std=0.001)
 
     def forward(self, feats):
@@ -379,8 +383,7 @@ class PointRCNNBboxHead(BaseModule):
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
                                             cfg.score_thr, cfg.nms_thr,
-                                            img_metas[batch_id],
-                                            cfg.use_rotate_nms)
+                                            img_metas[batch_id], True)
             selected_bboxes = cur_rcnn_boxes3d[selected]
             selected_label_preds = cur_class_labels[selected]
             selected_scores = cur_cls_score[selected]
@@ -390,6 +393,25 @@ class PointRCNNBboxHead(BaseModule):
                                                     self.bbox_coder.code_size),
                  selected_scores, selected_label_preds))
         return result_list
+
+    def class_agnostic_nms(self, box_probs, box_preds, score_thr, nms_thr,
+                           input_meta, cur_class_labels):
+        nms_cfg = dict(type='nms', iou_thr=nms_thr)
+        bbox = input_meta['box_type_3d'](
+            box_preds.clone(), box_dim=box_preds.shape[-1], with_yaw=True)
+        corner3d = bbox.corners
+        minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
+        minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
+        minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
+        class_scores_keep = (box_probs >= score_thr).view(-1)
+        original_idxs = class_scores_keep.nonzero(as_tuple=False).view(-1)
+        nms_selected = batched_nms(
+            minmax_box3d[class_scores_keep][:, [0, 1, 3, 4]].detach(),
+            box_probs[class_scores_keep].view(-1).detach(),
+            cur_class_labels[class_scores_keep].detach(), nms_cfg, True)[1]
+        selected = original_idxs[nms_selected]
+
+        return selected
 
     def multi_class_nms(self,
                         box_probs,

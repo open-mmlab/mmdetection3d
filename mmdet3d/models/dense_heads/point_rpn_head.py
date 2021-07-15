@@ -467,7 +467,6 @@ class PointRPNHead(BaseModule):
         classes = torch.argmax(_sem_scores, -1)
         _classes = classes[score_thr_inds]
         _bbox = bbox[score_thr_inds]
-
         # select top k bbox
         _, indices = _scores.topk(min(nms_pre, _scores.shape[0]))
         _scores = _scores[indices]
@@ -475,7 +474,6 @@ class PointRPNHead(BaseModule):
         _classes = _classes[indices]
         _sem_scores = _sem_scores[indices]
         _bbox = _bbox[indices]
-
         selected = nms_gpu(_bboxes_for_nms, _scores, nms_cfg.iou_thr)
         if selected.shape[0] > num_rpn_proposal:
             selected = selected[:num_rpn_proposal]
