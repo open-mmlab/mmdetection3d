@@ -98,22 +98,23 @@ class QueryAndGroup(nn.Module):
         xyz_trans = points_xyz.transpose(1, 2).contiguous()
         # (B, 3, npoint, sample_num)
         grouped_xyz = grouping_operation(xyz_trans, idx)
-        grouped_xyz -= center_xyz.transpose(1, 2).unsqueeze(-1)
+        grouped_xyz_diff = grouped_xyz - \
+            center_xyz.transpose(1, 2).unsqueeze(-1)  # relative offsets
         if self.normalize_xyz:
-            grouped_xyz /= self.max_radius
+            grouped_xyz_diff /= self.max_radius
 
         if features is not None:
             grouped_features = grouping_operation(features, idx)
             if self.use_xyz:
                 # (B, C + 3, npoint, sample_num)
-                new_features = torch.cat([grouped_xyz, grouped_features],
+                new_features = torch.cat([grouped_xyz_diff, grouped_features],
                                          dim=1)
             else:
                 new_features = grouped_features
         else:
             assert (self.use_xyz
                     ), 'Cannot have not features and not use xyz as a feature!'
-            new_features = grouped_xyz
+            new_features = grouped_xyz_diff
 
         ret = [new_features]
         if self.return_grouped_xyz:
