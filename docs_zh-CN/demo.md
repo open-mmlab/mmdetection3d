@@ -1,12 +1,14 @@
-# 演示
+# 样例
 
-我们提供了多模态/单模态（基于激光雷达/视觉）、室内/室外场景的 3D 检测和 3D 语义分割演示的脚本，预训练模型可以从 [model zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/model_zoo.md/) 下载。我们也提供了 KITTI、SUN RGB-D、nuScenes 和 ScanNet 数据集的预处理样本数据，你可以根据我们的预处理步骤使用任何其它数据。
+# 介绍
+
+我们提供了多模态/单模态（基于激光雷达/视觉）、室内/室外场景的 3D 检测和 3D 语义分割样例的脚本，预训练模型可以从 [Model Zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/model_zoo.md/) 下载。我们也提供了 KITTI、SUN RGB-D、nuScenes 和 ScanNet 数据集的预处理样本数据，你可以根据我们的预处理步骤使用任何其它数据。
 
 ## 测试
 
 ### 3D 检测
 
-#### 单模态演示
+#### 单模态样例
 
 在点云数据上测试 3D 检测器，运行：
 
@@ -28,9 +30,9 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 python demo/pcd_demo.py demo/data/sunrgbd/sunrgbd_000017.bin configs/votenet/votenet_16x8_sunrgbd-3d-10class.py checkpoints/votenet_16x8_sunrgbd-3d-10class_20200620_230238-4483c0c0.pth
 ```
 
-如果你正在使用的 mmdetection3d 版本 >= 0.6.0，记住转换 VoteNet 的模型数据，查看 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet/README.md/) 来获取转换模型数据的详细说明。
+如果你正在使用的 mmdetection3d 版本 >= 0.6.0，记住转换 VoteNet 的模型权重文件，查看 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet/README.md/) 来获取转换模型权重文件的详细说明。
 
-#### 多模态演示
+#### 多模态样例
 
 在多模态数据（通常是点云和图像）上测试 3D 检测器，运行：
 
@@ -76,7 +78,7 @@ python demo/mono_det_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__C
 python demo/pc_seg_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--out-dir ${OUT_DIR}] [--show]
 ```
 
-可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云以及预测的 3D 分割掩膜。
+可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云以及预测的 3D 分割掩码。
 
 在 ScanNet 数据上测试 [PointNet++ (SSG)](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointnet2) 模型：
 
