@@ -4,16 +4,16 @@
 
 基本步骤如下所示：
 
-1. 准备自定义数据集;
-2. 准备配置文件;
+1. 准备自定义数据集；
+2. 准备配置文件；
 3. 在自定义数据集上进行模型的训练、测试和推理。
 
 ## 准备自定义数据集
 
 在 MMDetection3D 中有三种方式来自定义一个新的数据集：
 
-1. 将新数据集的数据格式重新组织成已支持的数据集格式;
-2. 将新数据集的数据格式重新组织成已支持的一种中间格式;
+1. 将新数据集的数据格式重新组织成已支持的数据集格式；
+2. 将新数据集的数据格式重新组织成已支持的一种中间格式；
 3. 从头开始创建一个新的数据集。
 
 由于前两种方式比第三种方式更加容易，我们更加建议采用前两种方式来自定义数据集。
@@ -80,7 +80,7 @@ KITTI 官方提供的目标检测开发[工具包]((https://s3.eu-central-1.amaz
 
 第二步是准备配置文件来帮助数据集的读取和使用，另外，为了在 3D 检测中获得不错的性能，调整超参数通常是必要的。
 
-假设我们想要使用 PointPillars 模型在 Waymo 数据集上实现 3 类的 3D 目标检测：vehicle、cyclist、pedestrian，参照 KITTI 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py)、模型[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py)和[整体配置文件]((https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py))，我们需要准备[数据集配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py)、[模型配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_waymo.py))，并将这两种文件进行结合得到[整体配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)。
+假设我们想要使用 PointPillars 模型在 Waymo 数据集上实现3类的 3D 目标检测：vehicle、cyclist、pedestrian，参照 KITTI 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py)、模型[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py)和[整体配置文件]((https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py))，我们需要准备[数据集配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py)、[模型配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_waymo.py))，并将这两种文件进行结合得到[整体配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py)。
 
 ## 训练一个新的模型
 
