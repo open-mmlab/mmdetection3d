@@ -936,9 +936,9 @@ class IndoorPatchPointSample(object):
             additional features. Defaults to False.
         num_try (int, optional): Number of times to try if the patch selected
             is invalid. Defaults to 10.
-        enlarge_size (float, optional): Enlarge the sampled patch to
+        enlarge_size (float | None, optional): Enlarge the sampled patch to
             [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
-            an augmentation. Defaults to 0.2.
+            an augmentation. If None, set it as 0. Defaults to 0.2.
         min_unique_num (int | None, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
@@ -967,7 +967,7 @@ class IndoorPatchPointSample(object):
         self.ignore_index = ignore_index
         self.use_normalized_coord = use_normalized_coord
         self.num_try = num_try
-        self.enlarge_size = enlarge_size
+        self.enlarge_size = enlarge_size if enlarge_size is not None else 0.0
         self.min_unique_num = min_unique_num
         self.eps = eps
 

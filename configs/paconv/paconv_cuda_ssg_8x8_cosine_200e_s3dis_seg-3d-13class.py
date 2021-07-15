@@ -31,7 +31,7 @@ train_pipeline = [
         block_size=1.0,
         use_normalized_coord=True,
         num_try=10000,
-        enlarge_size=0.0,
+        enlarge_size=None,
         min_unique_num=num_points // 4,
         eps=0.0),
     dict(type='NormalizePointsColor', color_mean=None),
