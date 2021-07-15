@@ -1174,10 +1174,10 @@ class BackgroundPointsFilter(object):
         enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
         enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
         points_numpy = points.tensor.clone().numpy()
-        foreground_masks = box_np_ops.points_in_rbbox(points_numpy,
-                                                      gt_bboxes_3d_np)
+        foreground_masks = box_np_ops.points_in_rbbox(
+            points_numpy, gt_bboxes_3d_np, origin=(0.5, 0.5, 0.5))
         enlarge_foreground_masks = box_np_ops.points_in_rbbox(
-            points_numpy, enlarged_gt_bboxes_3d)
+            points_numpy, enlarged_gt_bboxes_3d, origin=(0.5, 0.5, 0.5))
         foreground_masks = foreground_masks.max(1)
         enlarge_foreground_masks = enlarge_foreground_masks.max(1)
         valid_masks = ~np.logical_and(~foreground_masks,
