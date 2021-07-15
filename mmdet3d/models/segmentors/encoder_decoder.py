@@ -66,24 +66,6 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.loss_regularization = build_loss(loss_regularization)
 
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in backbone and heads.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-
-        super(EncoderDecoder3D, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-        self.decode_head.init_weights()
-        if self.with_auxiliary_head:
-            if isinstance(self.auxiliary_head, nn.ModuleList):
-                for aux_head in self.auxiliary_head:
-                    aux_head.init_weights()
-            else:
-                self.auxiliary_head.init_weights()
-
     def extract_feat(self, points):
         """Extract features from points."""
         x = self.backbone(points)
