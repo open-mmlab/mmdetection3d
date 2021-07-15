@@ -4,7 +4,7 @@
 
 这里我们提供了评测 SUNRGBD、ScanNet、KITTI 等多个数据集的测试脚本
 
-请参考[开始](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html)下的验证/演示来获取更容易集成到其它项目和基本演示的高级接口
+请参考[开始](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html)下的验证/样例来获取更容易集成到其它项目和基本样例的高级接口
 
 ### 在标准数据集上测试已有模型
 
@@ -30,7 +30,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 示例：
 
-假定你已经把模型数据下载到 `checkpoints/` 文件夹下：
+假定你已经把模型权重文件下载到 `checkpoints/` 文件夹下：
 
 1. 在 ScanNet 数据集上测试 votenet，保存模型，可视化预测结果
 
@@ -40,7 +40,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --show --show-dir ./data/scannet/show_results
    ```
 
-2. 在 ScanNet 数据集上测试 votenet，保存模型，可视化预测结果，可视化真实标注，计算 mAP
+2. 在 ScanNet 数据集上测试 votenet，保存模型，可视化预测结果，可视化真实标签，计算 mAP
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -96,7 +96,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
    **注意**: 为了生成 Lyft 数据集的提交结果，`--eval-options` 必须指定 `csv_savepath`。生成 csv 文件后，你可以使用[网站](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit)上给出的 kaggle 命令提交结果。
 
-   注意在 [Lyft 数据集的配置文件](../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`, 是没有标签的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
+   注意在 [Lyft 数据集的配置文件](../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`, 是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
 
 8. 使用8块显卡在 waymo 数据集上测试 PointPillars, 使用 waymo 度量方法计算 mAP
 
@@ -124,7 +124,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 MMDetection3D 分别用 `MMDistributedDataParallel` and `MMDataParallel` 实现了分布式训练和非分布式训练
 
-所有的输出（日志文件和模型数据）都会被保存到工作目录下，通过配置文件里的 `work_dir` 指定。
+所有的输出（日志文件和模型权重文件）都会被保存到工作目录下，通过配置文件里的 `work_dir` 指定。
 
 默认我们每过一个周期都在验证数据集上评测模型，你可以通过在训练配置里添加间隔参数来改变评测的时间间隔：
 
@@ -153,11 +153,11 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 
 - `--no-validate` (**不推荐**): 默认情况下，代码在训练阶段每 k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
 - `--work-dir ${WORK_DIR}`: 覆盖配置文件中的指定工作目录。
-- `--resume-from ${CHECKPOINT_FILE}`: 从之前的模型数据文件中恢复。
+- `--resume-from ${CHECKPOINT_FILE}`: 从之前的模型权重文件中恢复。
 - `--options 'Key=value'`: 覆盖使用的配置中的一些设定。
 
 `resume-from` 和 `load-from` 的不同点:
-`resume-from` 加载模型权重和优化器状态，同时周期数也从特定的模型数据文件中继承，通常用于恢复偶然中断的训练过程。
+`resume-from` 加载模型权重和优化器状态，同时周期数也从特定的模型权重文件中继承，通常用于恢复偶然中断的训练过程。
 `load-from` 仅加载模型权重，训练周期从0开始，通常用于微调。
 
 ### 使用多个机器进行训练
