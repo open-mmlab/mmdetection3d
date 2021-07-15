@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/paconv_cuda_ssg.py', '../_base_/default_runtime.py'
+    '../_base_/models/paconv_ssg.py', '../_base_/default_runtime.py'
 ]
 
 # data settings
@@ -29,10 +29,12 @@ train_pipeline = [
         type='IndoorPatchPointSample',
         num_points=num_points,
         block_size=1.0,
-        ignore_index=len(class_names),
         use_normalized_coord=True,
-        enlarge_size=0.01,
-        min_unique_num=num_points // 4),
+        num_try=10000,
+        enlarge_size=0.0,
+        min_unique_num=num_points // 4,
+        eps=0.0),
+    dict(type='NormalizePointsColor', color_mean=None),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-3.141592653589793, 3.141592653589793],  # [-pi, pi]
@@ -43,13 +45,12 @@ train_pipeline = [
         jitter_std=[0.01, 0.01, 0.01],
         clip_range=[-0.05, 0.05]),
     dict(type='RandomDropPointsColor', drop_ratio=0.2),
-    dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
 ]
 
 data = dict(samples_per_gpu=8, train=dict(pipeline=train_pipeline))
-evaluation = dict(interval=2)
+evaluation = dict(interval=1)
 
 # model settings
 model = dict(
@@ -64,13 +65,14 @@ model = dict(
         batch_size=12))
 
 # runtime settings
-checkpoint_config = dict(interval=2)
+checkpoint_config = dict(interval=1)
 
 # optimizer
-optimizer = dict(type='SGD', lr=0.05, weight_decay=0.0001, momentum=0.9)
+lr = 0.2
+optimizer = dict(type='SGD', lr=lr, weight_decay=0.0001, momentum=0.9)
 optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='Step', warmup=None, step=[60, 80], gamma=0.1)
+lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=lr * 0.01)
 momentum_config = None
 
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=100)
+runner = dict(type='EpochBasedRunner', max_epochs=200)
