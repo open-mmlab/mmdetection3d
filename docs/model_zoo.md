@@ -52,11 +52,11 @@ Please refer to [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/m
 
 ### SSN
 
-Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft datasets currently.
+Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft dataset currently.
 
 ### ImVoteNet
 
-Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvotenet) for details. We provide ImVoteNet baselines on SUNRGBD dataset.
+Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvotenet) for details. We provide VoteNet baselines on SUNRGBD dataset.
 
 ### FCOS3D
 
@@ -68,8 +68,4 @@ Please refer to [PointNet++](https://github.com/open-mmlab/mmdetection3d/blob/ma
 
 ### Group-Free-3D
 
-Please refer to [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/groupfree3d) for details. We provide Group-Free-3D baselines on ScanNet dataset.
-
-### ImVoxelNet
-
-Please refer to [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvoxelnet) for details. We provide  ImVoxelNet baselines on KITTI dataset.
+Please refer to [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/groupfree3d) for details. We provide Group-Free-3D baselines on ScanNet datasets.
