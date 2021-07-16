@@ -9,8 +9,9 @@
 
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.3.1, <=1.4|
-| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.13.0 | mmcv-full>=1.3.1, <=1.4|
+| master              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg>=0.14.0 | mmcv-full>=1.3.1, <=1.4|
 | 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
 | 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
@@ -55,9 +56,9 @@ conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 如果不是安装预构建的包，而是从源码中构建 PyTorch，则可以使用更多的 CUDA 版本，例如 CUDA 9.0。
 
 **c. 安装 [MMCV](https://mmcv.readthedocs.io/en/latest/).** 
-需要安装 *mmcv-full*， 因为 MMDetection3D 依赖 MMDetection 且需要   *mmcv-full* 中基于 CUDA 的程序.
+需要安装 *mmcv-full*，因为 MMDetection3D 依赖 MMDetection 且需要 *mmcv-full* 中基于 CUDA 的程序。
 
-`例` 可以使用下面命令安装预编译版本的 *mmcv-full* : (可使用的版本在[这里](https://mmcv.readthedocs.io/en/latest/#install-with-pip)可以找到)
+`例` 可以使用下面命令安装预编译版本的 *mmcv-full* ：(可使用的版本在[这里](https://mmcv.readthedocs.io/en/latest/#install-with-pip)可以找到)
 
 ```shell
 pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/{cu_version}/{torch_version}/index.html
@@ -94,7 +95,7 @@ pip install mmdet>=2.14.0
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
-git checkout v2.14.0  # switch to v2.14.0 branch
+git checkout v2.14.0  # 转到 v2.14.0 分支
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
@@ -123,7 +124,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c 。版本号将保存在训练的模型里。推荐在在每一次执行步骤 d 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
 
-    > 重要: 如果你重装了不同版本的 CUDA 或者 Pythorch 的 mmdet，请务必移除 `./build` 文件。
+    > 重要: 如果你重装了不同版本的 CUDA 或者 PyTorch 的 mmdet，请务必移除 `./build` 文件。
 
     ```shell
     pip uninstall mmdet3d
@@ -131,7 +132,7 @@ pip install -v -e .  # or "python setup.py develop"
     find . -name "*.so" | xargs rm
     ```
 
-2. 按照上述说明，MMDetection 安装在 `dev` 模式下，因此在本地对代码做的任何修改都会生效，无需重新安装；
+2. 按照上述说明，MMDetection3D 安装在 `dev` 模式下，因此在本地对代码做的任何修改都会生效，无需重新安装；
 
 3. 如果希望使用 `opencv-python-headless` 而不是 `opencv-python`， 可以在安装 MMCV 之前安装；
 
@@ -158,13 +159,11 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 
 以下是一个基于 conda 安装 MMdetection3D 的脚本 
 
-Here is a full script for setting up MMdetection3D with conda.
-
 ```shell
 conda create -n open-mmlab python=3.7 -y
 conda activate open-mmlab
 
-# 安装基于环境中默认 CUDA 版本下最新的pytorch (通常使用最新版本)
+# 安装基于环境中默认 CUDA 版本下最新的PyTorch (通常使用最新版本)
 conda install -c pytorch pytorch torchvision -y
 
 # 安装 mmcv
@@ -194,9 +193,9 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 # 验证
 
-## 通过点云的 demo 来验证
+## 通过点云样例程序来验证
 
-我们提供了一些 demo 脚本去测试单个样本，预训练的模型可以从[模型库](model_zoo.md)中下载. 运行如下命令可以去测试点云场景下一个单模态的 3D 检测算法。
+我们提供了一些样例脚本去测试单个样本，预训练的模型可以从[模型库](model_zoo.md)中下载. 运行如下命令可以去测试点云场景下一个单模态的 3D 检测算法。
 
 ```shell
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
@@ -208,7 +207,7 @@ python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device 
 python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
 
-如果你想输入一个 `ply` 格式的文件，你可以使用如下函数将它转换为 `bin` 的文件格式。然后就可以使用转化成 `bin` 格式的文件去运行 demo。
+如果你想输入一个 `ply` 格式的文件，你可以使用如下函数将它转换为 `bin` 的文件格式。然后就可以使用转化成 `bin` 格式的文件去运行样例程序。
 
 请注意在使用此脚本前，你需要先安装 pandas 和 plyfile。 这个函数也可使用在数据预处理当中，为了能够直接训练 ```ply data```。
 
