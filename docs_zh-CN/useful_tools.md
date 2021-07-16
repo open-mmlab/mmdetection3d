@@ -71,7 +71,7 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --eval-options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 
-在运行这个指令后，您将会在 `${SHOW_DIR}` 获得输入数据、可视化在输入上的网络输出和真值标签（例如：在多模态检测任务中的`***_points.obj`，`***_pred.obj`，`***_gt.obj`，`***_img.png` 和 `***_pred.png` ）。当 `show` 被激活，[Open3D](http://www.open3d.org/) 将会被用来在线可视化结果。当在没有GUI的远程服务器上运行测试的时候，您需要设定 `show=False`。
+在运行这个指令后，您将会在 `${SHOW_DIR}` 获得输入数据、可视化在输入上的网络输出和真值标签（例如：在多模态检测任务中的`***_points.obj`，`***_pred.obj`，`***_gt.obj`，`***_img.png` 和 `***_pred.png` ）。当 `show` 被激活，[Open3D](http://www.open3d.org/) 将会被用来在线可视化结果。当在没有 GUI 的远程服务器上运行测试的时候，您需要设定 `show=False`。
 
 至于离线可视化，您将有两个选择。
 利用 `Open3D` 后端可视化结果，您可以运行下面的指令
@@ -83,19 +83,19 @@ python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} -
 
 ![](../resources/open3d_visual.gif)
 
-或者您可以使用3D可视化软件，例如 [MeshLab](http://www.meshlab.net/) 来打开这些在 `${SHOW_DIR}` 目录下的文件，从而查看 3D 检测输出。具体来说，打开 `***_points.obj` 查看输入点云，打开 `***_pred.obj` 查看预测的 3D 边界框。这允许推理和结果生成在远程服务器中完成，用户可以使用 GUI 在他们的主机上打开它们。
+或者您可以使用 3D 可视化软件，例如 [MeshLab](http://www.meshlab.net/) 来打开这些在 `${SHOW_DIR}` 目录下的文件，从而查看 3D 检测输出。具体来说，打开 `***_points.obj` 查看输入点云，打开 `***_pred.obj` 查看预测的 3D 边界框。这允许推理和结果生成在远程服务器中完成，用户可以使用 GUI 在他们的主机上打开它们。
 
-**注意**:可视化 API 有一些不稳定，因为我们计划和 MMDetection 一起重构这一部分。
+**注意**：可视化 API 有一些不稳定，因为我们计划和 MMDetection 一起重构这一部分。
 
 ## 数据集
 
-我们也提供脚本可视化数据集而无需推理。您可以使用 `tools/misc/browse_dataset.py` 来在线显示载入的数据和真值标签，并且保存进磁盘。现在我们支持所有数据集上的单模态 3D 检测和 3D 分割，支持 KITTI 和 SUN RGB-D 数据集上的多模态3D检测，同时支持 nuScenes 数据集上的单目 3D 检测。为了浏览 KITTI 数据集，您可以运行下面的指令
+我们也提供脚本可视化数据集而无需推理。您可以使用 `tools/misc/browse_dataset.py` 来在线显示载入的数据和真值标签，并且保存进磁盘。现在我们支持所有数据集上的单模态 3D 检测和 3D 分割，支持 KITTI 和 SUN RGB-D 数据集上的多模态 3D 检测，同时支持 nuScenes 数据集上的单目 3D 检测。为了浏览 KITTI 数据集，您可以运行下面的指令
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --output-dir ${OUTPUT_DIR} --online
 ```
 
-**注意**: 一旦指定 `--output-dir` ，当按下 open3d 窗口的 `_ESC_`，用户指定的视图图像将被保存。如果您没有显示器，您可以移除 `--online` 标志，从而仅仅保存可视化结果并且进行离线浏览。
+**注意**：一旦指定 `--output-dir` ，当按下 open3d 窗口的 `_ESC_`，用户指定的视图图像将被保存。如果您没有显示器，您可以移除 `--online` 标志，从而仅仅保存可视化结果并且进行离线浏览。
 
 如果您还想显示带有投影到其上的 3D 边界框的 2D 图像，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi_modality-det`。一个例子如下所示
 
@@ -105,7 +105,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 
 ![](../resources/browse_dataset_multi_modality.png)
 
-您可以简单的使用不同的配置文件，浏览不同的数据集，例如：在 3D 语义分割任务中可视化ScanNet数据集
+您可以简单的使用不同的配置文件，浏览不同的数据集，例如：在 3D 语义分割任务中可视化 ScanNet 数据集
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
@@ -135,17 +135,17 @@ python tools/analysis_tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
 
 ```text
 ==============================
-Input shape: (3, 1280, 800)
-Flops: 239.32 GFLOPs
-Params: 37.74 M
+Input shape: (4000, 4)
+Flops: 5.78 GFLOPs
+Params: 953.83 k
 ==============================
 ```
 
 **注意**: 此工具仍然处于试验阶段，我们不能保证数值是绝对正确的。您可以将结果用于简单的比较，但在写技术文档报告或者论文之前您需要再次确认一下。
 
-1. 计算量 (FLOPs) 和输入形状有关，但是参数量 (params) 则和输入形状无关。默认的输入形状为 (1, 3, 1280, 800)。
+1. 计算量 (FLOPs) 和输入形状有关，但是参数量 (params) 则和输入形状无关。默认的输入形状为 (1, 40000, 4)。
 2. 一些运算操作不计入计算量 (FLOPs)，比如说像GN和定制的运算操作，详细细节请参考 [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py)。
-3. 两阶段检测的计算量 (FLOPs) 依赖于候选框的数量。
+3. 我们现在仅仅支持单模态输入（点云或者图片）的单阶段模型的计算量 (FLOPs) 计算，我们将会在未来支持两阶段和多模态模型的计算。
 
 &emsp;
 
@@ -153,7 +153,7 @@ Params: 37.74 M
 
 ## RegNet 模型转换到 MMDetection
 
-`tools/model_converters/regnet2mmdet.py` 将 pycls 预训练 RegNet 模型中的键转换为MMDetection 风格。
+`tools/model_converters/regnet2mmdet.py` 将 pycls 预训练 RegNet 模型中的键转换为 MMDetection 风格。
 
 ```shell
 python tools/model_converters/regnet2mmdet.py ${SRC} ${DST} [-h]
@@ -188,13 +188,13 @@ python tools/model_converters/publish_model.py ${INPUT_FILENAME} ${OUTPUT_FILENA
 python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth faster_rcnn_r50_fpn_1x_20190801.pth
 ```
 
-最终的输出文件名将会是`faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`。
+最终的输出文件名将会是 `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`。
 
 &emsp;
 
 # 数据集转换
 
-`tools/data_converter/` 包含转换数据集为其他格式的一些工具。其中大多数转换数据集为基于pickle的信息文件，比如 kitti，nuscense 和 lyft。Waymo 转换器被用来重组织 waymo 原始数据为 KITTI 风格。用户能够参考它们了解我们转换数据格式的方法。将它们修改为 nuImages 转换器等脚本也很方便。
+`tools/data_converter/` 包含转换数据集为其他格式的一些工具。其中大多数转换数据集为基于 pickle 的信息文件，比如 KITTI，nuscense 和 lyft。Waymo 转换器被用来重组织 waymo 原始数据为 KITTI 风格。用户能够参考它们了解我们转换数据格式的方法。将它们修改为 nuImages 转换器等脚本也很方便。
 
 为了转换 nuImages 数据集为 COCO 格式，请使用下面的指令：
 
