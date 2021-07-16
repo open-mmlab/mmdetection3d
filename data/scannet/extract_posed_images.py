@@ -1,12 +1,12 @@
 # Modified from https://github.com/ScanNet/ScanNet/blob/master/SensReader/python/SensorData.py # noqa
 import imageio
+import mmcv
 import numpy as np
 import os
 import struct
 import zlib
 from argparse import ArgumentParser
 from functools import partial
-from multiprocessing import Pool
 
 COMPRESSION_TYPE_COLOR = {-1: 'unknown', 0: 'raw', 1: 'png', 2: 'jpeg'}
 
@@ -20,6 +20,7 @@ COMPRESSION_TYPE_DEPTH = {
 
 class RGBDFrame:
     """Class for single ScanNet RGB-D image processing."""
+
     def load(self, file_handle):
         self.camera_to_world = np.asarray(
             struct.unpack('f' * 16, file_handle.read(16 * 4)),
@@ -46,8 +47,10 @@ class RGBDFrame:
 
 class SensorData:
     """Class for single ScanNet scene processing.
+
     Single scene file contains multiple RGB-D images.
     """
+
     def __init__(self, filename, limit):
         self.version = 4
         self.load(filename, limit)
@@ -102,8 +105,9 @@ class SensorData:
             depth = np.fromstring(
                 depth_data, dtype=np.uint16).reshape(self.depth_height,
                                                      self.depth_width)
-            imageio.imwrite(os.path.join(
-                output_path, self.index_to_str(f) + '.png'), depth)
+            imageio.imwrite(
+                os.path.join(output_path,
+                             self.index_to_str(f) + '.png'), depth)
 
     def export_color_images(self, output_path):
         if not os.path.exists(output_path):
@@ -111,8 +115,9 @@ class SensorData:
         for f in range(len(self.frames)):
             color = self.frames[f].decompress_color(
                 self.color_compression_type)
-            imageio.imwrite(os.path.join(
-                output_path, self.index_to_str(f) + '.jpg'), color)
+            imageio.imwrite(
+                os.path.join(output_path,
+                             self.index_to_str(f) + '.jpg'), color)
 
     @staticmethod
     def index_to_str(index):
@@ -128,9 +133,10 @@ class SensorData:
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         for f in range(len(self.frames)):
-            self.save_mat_to_file(self.frames[f].camera_to_world,
-                                  os.path.join(output_path,
-                                               self.index_to_str(f) + '.txt'))
+            self.save_mat_to_file(
+                self.frames[f].camera_to_world,
+                os.path.join(output_path,
+                             self.index_to_str(f) + '.txt'))
 
     def export_intrinsics(self, output_path):
         if not os.path.exists(output_path):
@@ -141,9 +147,9 @@ class SensorData:
 
 def process_scene(path, limit, idx):
     """Process single ScanNet scene.
+
     Extract RGB images, poses and camera intrinsics.
     """
-    print(f'processing {idx}')
     data = SensorData(os.path.join(path, idx, f'{idx}.sens'), limit)
     output_path = os.path.join('posed_images', idx)
     data.export_color_images(output_path)
@@ -151,19 +157,23 @@ def process_scene(path, limit, idx):
     data.export_poses(output_path)
 
 
-def process_directory(path, limit):
-    with Pool(8) as pool:
-        pool.map(partial(process_scene, path, limit), os.listdir(path))
+def process_directory(path, limit, nproc):
+    print(f'processing {path}')
+    mmcv.track_parallel_progress(
+        func=partial(process_scene, path, limit),
+        tasks=os.listdir(path),
+        nproc=nproc)
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--max-images-per-scene', type=int, default=300)
+    parser.add_argument('--nproc', type=int, default=8)
     args = parser.parse_args()
 
     # process train and val scenes
     if os.path.exists('scans'):
-        process_directory('scans', args.max_images_per_scene)
+        process_directory('scans', args.max_images_per_scene, args.nproc)
     # process test scenes
     if os.path.exists('scans_test'):
-        process_directory('scans_test', args.max_images_per_scene)
+        process_directory('scans_test', args.max_images_per_scene, args.nproc)
