@@ -10,12 +10,12 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 ### Unified parameter initialization
 
-To unify the parameter initialization in OpenMMLab projects, MMCV supports `BaseModule` that accepts `init_cfg` to allow the modules' parameters initialized in a flexible and unified manner. Now the users need to explicitly call `model.init_weights()` in the training script to initialize the model (as in [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py#L183), previously this was handled by the detector. Please refer to PR #622 for details.
+To unify the parameter initialization in OpenMMLab projects, MMCV supports `BaseModule` that accepts `init_cfg` to allow the modules' parameters initialized in a flexible and unified manner. Now the users need to explicitly call `model.init_weights()` in the training script to initialize the model (as in [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py#L183), previously this was handled by the detector. Please refer to PR [#622](https://github.com/open-mmlab/mmdetection3d/pull/622) for details.
 
 ### BackgroundPointsFilter
 
-We modified the dataset aumentation function `BackgroundPointsFilter`(in [here](https://github.com/open-mmlab/mmdetection3d/blob/mmdet3d/datasets/pipelines/transforms_3d.py#L1101)). In previous version of MMdetection3D, `BackgroundPointsFilter` changes the gt_bboxes_3d's bottom center to the gravity center. In MMDetection3D 0.15.0,
-`BackgroundPointsFilter` will not change it. Please refer to PR #609 for details.
+We modified the dataset augmentation function `BackgroundPointsFilter`([here](https://github.com/open-mmlab/mmdetection3d/blob/v0.15.0/mmdet3d/datasets/pipelines/transforms_3d.py#L1132)). In previous version of MMdetection3D, `BackgroundPointsFilter` changes the gt_bboxes_3d's bottom center to the gravity center. In MMDetection3D 0.15.0,
+`BackgroundPointsFilter` will not change it. Please refer to PR [#609](https://github.com/open-mmlab/mmdetection3d/pull/609) for details.
 
 ### Enhance `IndoorPatchPointSample` transform
 
@@ -45,7 +45,7 @@ We have trained a [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/mas
 
 ### SUNRGBD dataset for ImVoteNet
 
-We adopt a new pre-processing procedure for the SUNRGBD dataset in order to support ImVoteNet, which is a multi-modality method requiring both image and point cloud data. In previous versions of MMDetection3D, SUNRGBD dataset was only used for point cloud based 3D detection methods. In MMDetection3D 0.12.0, we add ImVoteNet to our model zoo, thus updating SUNRGBD correspondingly by adding image-related pre-processing steps. Specificly, we made these changes:
+We adopt a new pre-processing procedure for the SUNRGBD dataset in order to support ImVoteNet, which is a multi-modality method requiring both image and point cloud data. In previous versions of MMDetection3D, SUNRGBD dataset was only used for point cloud based 3D detection methods. In MMDetection3D 0.12.0, we add ImVoteNet to our model zoo, thus updating SUNRGBD correspondingly by adding image-related pre-processing steps. Specifically, we made these changes:
 
 - Fix a bug in the image file path in meta data.
 - Convert calibration matrices from double to float to avoid type mismatch in further operations.
