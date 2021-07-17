@@ -7,7 +7,7 @@ class FCOSMono3D(SingleStageMono3DDetector):
     r"""`FCOS3D <https://arxiv.org/abs/2104.10956>`_ for monocular 3D object detection.
 
     Currently please refer to our entry on the
-    `leaderboard <https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera>`_  # noqa
+    `leaderboard <https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera>`_  .. # noqa
     """
 
     def __init__(self,

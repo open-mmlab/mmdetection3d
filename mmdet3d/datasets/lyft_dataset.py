@@ -23,7 +23,7 @@ class LyftDataset(Custom3DDataset):
     This class serves as the API for experiments on the Lyft Dataset.
 
     Please refer to
-    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data>`_  # noqa
+    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data>`_  .. # noqa
     for data downloading.
 
     Args:

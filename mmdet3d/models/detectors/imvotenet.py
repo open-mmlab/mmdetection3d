@@ -12,7 +12,7 @@ from .base import Base3DDetector
 def sample_valid_seeds(mask, num_sampled_seed=1024):
     r"""Randomly sample seeds from all imvotes.
 
-    Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_  # noqa
+    Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_  .. # noqa
 
     Args:
         mask (torch.Tensor): Bool tensor in shape (
@@ -601,7 +601,7 @@ class ImVoteNet(Base3DDetector):
                              proposals=None,
                              rescale=False):
         r"""Test without augmentation, image network pretrain. May refer to
-        `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.  # noqa
+        `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.  .. # noqa
 
         Args:
             img (torch.Tensor): Should have a shape NxCxHxW, which contains
@@ -700,7 +700,7 @@ class ImVoteNet(Base3DDetector):
 
     def aug_test_img_only(self, img, img_metas, rescale=False):
         r"""Test function with augmentation, image network pretrain. May refer
-        to `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.  # noqa
+        to `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.  .. # noqa
 
         Args:
             img (list[list[torch.Tensor]], optional): the outer
