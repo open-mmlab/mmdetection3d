@@ -315,7 +315,7 @@ def show_det_result_meshlab(data,
     # for now we convert points into depth mode
     box_mode = data['img_metas'][0][0]['box_mode_3d']
     if box_mode != Box3DMode.DEPTH:
-        points = Coord3DMode.convert(points, box_mode, Box3DMode.DEPTH)
+        points = Coord3DMode.convert(points, box_mode, Coord3DMode.DEPTH)
         show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
     else:
         show_bboxes = deepcopy(pred_bboxes)
