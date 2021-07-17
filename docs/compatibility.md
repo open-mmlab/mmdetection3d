@@ -2,6 +2,14 @@
 
 This document provides detailed descriptions of the BC-breaking changes in MMDetection3D.
 
+## MMDetection3D 0.16.0
+
+### NuScenes coco-style data pre-processing
+
+We remove the rotation and dimension hack in the monocular 3D detection on nuScenes. Specifically, we transform the rotation and dimension of boxes defined by nuScenes devkit to the coordinate system of our `CameraInstance3DBoxes` in the pre-processing and transform them back in the post-processing. In this way, we can remove the corresponding [hack](https://github.com/open-mmlab/mmdetection3d/pull/744/files#diff-5bee5062bd84e6fa25a2fdd71353f6f283dfdc4a66a0316c3b1ca26078c978b6L165) used in the visualization tools. The modification also guarantees the correctness of all the operations based on our `CameraInstance3DBoxes` (such as NMS and flip augmentation) when training monocular 3D detectors.
+
+The modification only influences nuScenes coco-style json files. Please re-run the nuScenes data preparation script if necessary. See more details in the PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744).
+
 ## MMDetection3D 0.15.0
 
 ### MMCV Version
