@@ -10,12 +10,12 @@ def limit_period(val, offset=0.5, period=np.pi):
 
     Args:
         val (torch.Tensor | np.ndarray): The value to be converted.
-        offset (float, optional): Offset to set the value range. \
+        offset (float, optional): Offset to set the value range.
             Defaults to 0.5.
         period ([type], optional): Period of the value. Defaults to np.pi.
 
     Returns:
-        (torch.Tensor | np.ndarray): Value in the range of \
+        (torch.Tensor | np.ndarray): Value in the range of
             [-offset * period, (1-offset) * period]
     """
     limited_val = val - torch.floor(val / period + offset) * period
@@ -41,7 +41,7 @@ def rotation_3d_in_axis(points,
         clockwise: Whether the rotation is clockwise. Defaults to False.
 
     Raises:
-        ValueError: when the axis is not in range [0, 1, 2], it will \
+        ValueError: when the axis is not in range [0, 1, 2], it will
             raise value error.
 
     Returns:
@@ -219,9 +219,9 @@ def mono_cam_box2vis(cam_box):
     After applying this function, we can project and draw it on 2D images.
 
     Args:
-        cam_box (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate \
-            system before conversion. Could be gt bbox loaded from dataset or \
-                network prediction output.
+        cam_box (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate
+            system before conversion. Could be gt bbox loaded from dataset
+            or network prediction output.
 
     Returns:
         :obj:`CameraInstance3DBoxes`: Box after conversion.

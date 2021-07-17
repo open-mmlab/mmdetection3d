@@ -115,8 +115,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         return bev_boxes
 
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angles (float | torch.Tensor | np.ndarray):
@@ -125,8 +125,8 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns \
-                None, otherwise it returns the rotated points and the \
+            tuple or None: When ``points`` is None, the function returns
+                None, otherwise it returns the rotated points and the
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
@@ -233,7 +233,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: \
+            :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode

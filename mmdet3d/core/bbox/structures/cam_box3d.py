@@ -178,8 +178,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return bev_boxes
 
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angle (float | torch.Tensor | np.ndarray):
@@ -188,8 +188,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns \
-                None, otherwise it returns the rotated points and the \
+            tuple or None: When ``points`` is None, the function returns
+                None, otherwise it returns the rotated points and the
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
@@ -276,7 +276,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             polygon, we reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside \
+            torch.Tensor: Indicating whether each box is inside
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -328,7 +328,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`:  \
+            :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
@@ -358,11 +358,11 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Find points that are in boxes (CUDA).
 
         Args:
-            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
+            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3],
                 3 dimensions are [x, y, z] in LiDAR coordinate.
 
         Returns:
-            torch.Tensor: The index of boxes each point lies in with shape \
+            torch.Tensor: The index of boxes each point lies in with shape
                 of (B, M, T).
         """
         from .coord_3d_mode import Coord3DMode

@@ -393,14 +393,14 @@ def create_anchors_3d_range(feature_size,
             (x_min, y_min, z_min, x_max, y_max, z_max).
         sizes (list[list] | np.ndarray | torch.Tensor, optional):
             Anchor size with shape [N, 3], in order of x, y, z.
-            Defaults to ((1.6, 3.9, 1.56), ).
+            Defaults to ((3.9, 1.6, 1.56), ).
         rotations (list[float] | np.ndarray | torch.Tensor, optional):
             Rotations of anchors in a single feature grid.
             Defaults to (0, np.pi / 2).
         dtype (type, optional): Data type. Default to np.float32.
 
     Returns:
-        np.ndarray: Range based anchors with shape of \
+        np.ndarray: Range based anchors with shape of
             (*feature_size, num_sizes, num_rots, 7).
     """
     anchor_range = np.array(anchor_range, dtype)
@@ -451,7 +451,7 @@ def rbbox2d_to_near_bbox(rbboxes):
     """convert rotated bbox to nearest 'standing' or 'lying' bbox.
 
     Args:
-        rbboxes (np.ndarray): Rotated bboxes with shape of \
+        rbboxes (np.ndarray): Rotated bboxes with shape of
             (N, 5(x, y, xdim, ydim, rad)).
 
     Returns:
@@ -741,8 +741,8 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
       2 -------- 1
 
     Args:
-        boxes3d (np.ndarray): Boxes with shape of (N, 7) \
-            [x, y, z, dx, dy, dz, ry] in LiDAR coords, see the definition of \
+        boxes3d (np.ndarray): Boxes with shape of (N, 7)
+            [x, y, z, dx, dy, dz, ry] in LiDAR coords, see the definition of
             ry in KITTI dataset.
         bottom_center (bool, optional): Whether z is on the bottom center
             of object. Defaults to True.

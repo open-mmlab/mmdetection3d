@@ -92,7 +92,7 @@ class Coord3DMode(IntEnum):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes): \
+            (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes):
                 The converted box of the same type.
         """
         return Box3DMode.convert(box, src, dst, rt_mat=rt_mat)
@@ -114,7 +114,7 @@ class Coord3DMode(IntEnum):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor | BasePoints): \
+            (tuple | list | np.ndarray | torch.Tensor | BasePoints):
                 The converted point of the same type.
         """
         if src == dst:
