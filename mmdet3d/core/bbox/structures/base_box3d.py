@@ -199,7 +199,7 @@ class BaseInstance3DBoxes(object):
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`BoxMode`): The target Box mode.
+            dst (:obj:`Box3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -266,7 +266,7 @@ class BaseInstance3DBoxes(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            :obj:`BaseInstances3DBoxes`: A new object of  \
+            :obj:`BaseInstance3DBoxes`: A new object of  \
                 :class:`BaseInstances3DBoxes` after indexing.
         """
         original_type = type(self)
@@ -293,10 +293,10 @@ class BaseInstance3DBoxes(object):
         """Concatenate a list of Boxes into a single Boxes.
 
         Args:
-            boxes_list (list[:obj:`BaseInstances3DBoxes`]): List of boxes.
+            boxes_list (list[:obj:`BaseInstance3DBoxes`]): List of boxes.
 
         Returns:
-            :obj:`BaseInstances3DBoxes`: The concatenated Boxes.
+            :obj:`BaseInstance3DBoxes`: The concatenated Boxes.
         """
         assert isinstance(boxes_list, (list, tuple))
         if len(boxes_list) == 0:
@@ -360,8 +360,8 @@ class BaseInstance3DBoxes(object):
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
-            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
@@ -392,8 +392,8 @@ class BaseInstance3DBoxes(object):
             ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
 
         Args:
-            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
-            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
