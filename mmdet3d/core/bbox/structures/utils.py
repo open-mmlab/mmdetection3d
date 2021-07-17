@@ -36,7 +36,7 @@ def rotation_3d_in_axis(points,
         angles (np.ndarray | torch.Tensor | list | tuple | float):
             Vector of angles in shape (N,)
         axis (int, optional): The axis to be rotated. Defaults to 0.
-        return_mat: Whether or not returns the rotation matrix (transposed).
+        return_mat: Whether or not return the rotation matrix (transposed).
             Defaults to False.
         clockwise: Whether the rotation is clockwise. Defaults to False.
 
@@ -45,7 +45,7 @@ def rotation_3d_in_axis(points,
             raise value error.
 
     Returns:
-        torch.Tensor: Rotated points in shape (N, M, 3)
+        (torch.Tensor | np.ndarray): Rotated points in shape (N, M, 3).
     """
     batch_free = len(points.shape) == 2
     if batch_free:
@@ -122,14 +122,14 @@ def xywhr2xyxyr(boxes_xywhr):
         (torch.Tensor | np.ndarray): Converted boxes in XYXYR format.
     """
     boxes = torch.zeros_like(boxes_xywhr)
-    half_w = boxes_xywhr[:, 2] / 2
-    half_h = boxes_xywhr[:, 3] / 2
+    half_w = boxes_xywhr[..., 2] / 2
+    half_h = boxes_xywhr[..., 3] / 2
 
-    boxes[:, 0] = boxes_xywhr[:, 0] - half_w
-    boxes[:, 1] = boxes_xywhr[:, 1] - half_h
-    boxes[:, 2] = boxes_xywhr[:, 0] + half_w
-    boxes[:, 3] = boxes_xywhr[:, 1] + half_h
-    boxes[:, 4] = boxes_xywhr[:, 4]
+    boxes[..., 0] = boxes_xywhr[..., 0] - half_w
+    boxes[..., 1] = boxes_xywhr[..., 1] - half_h
+    boxes[..., 2] = boxes_xywhr[..., 0] + half_w
+    boxes[..., 3] = boxes_xywhr[..., 1] + half_h
+    boxes[..., 4] = boxes_xywhr[..., 4]
     return boxes
 
 
@@ -178,7 +178,8 @@ def points_cam2img(points_3d, proj_mat, with_depth=False):
             Defaults to False.
 
     Returns:
-        np.ndarray: Points in image coordinates with shape [N, 2].
+        (torch.Tensor | np.ndarray): Points in image coordinates,
+            with shape [N, 2] if `with_depth=False`, else [N, 3].
     """
     points_shape = list(points_3d.shape)
     points_shape[-1] = 1

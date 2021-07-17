@@ -153,7 +153,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         # positive direction of the gravity axis
         # in cam coord system points to the earth
         # so the bev yaw angle needs to be reversed
-        bev[:, -1:] = -bev[:, -1:]
+        bev[:, -1] = -bev[:, -1]
         return bev
 
     @property

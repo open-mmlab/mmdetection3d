@@ -167,13 +167,13 @@ class Coord3DMode(IntEnum):
             rt_mat = arr.new_tensor(rt_mat)
         if rt_mat.size(1) == 4:
             extended_xyz = torch.cat(
-                [arr[:, :3], arr.new_ones(arr.size(0), 1)], dim=-1)
+                [arr[..., :3], arr.new_ones(arr.size(0), 1)], dim=-1)
             xyz = extended_xyz @ rt_mat.t()
         else:
-            xyz = arr[:, :3] @ rt_mat.t()
+            xyz = arr[..., :3] @ rt_mat.t()
 
-        remains = arr[:, 3:]
-        arr = torch.cat([xyz[:, :3], remains], dim=-1)
+        remains = arr[..., 3:]
+        arr = torch.cat([xyz[..., :3], remains], dim=-1)
 
         # convert arr to the original type
         original_type = type(point)

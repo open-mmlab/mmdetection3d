@@ -494,7 +494,7 @@ class BaseInstance3DBoxes(object):
         else:
             boxes = self.tensor
 
-        points_clone = points.clone()[:, :3]
+        points_clone = points.clone()[..., :3]
         if points_clone.dim() == 2:
             points_clone = points_clone.unsqueeze(0)
         else:
