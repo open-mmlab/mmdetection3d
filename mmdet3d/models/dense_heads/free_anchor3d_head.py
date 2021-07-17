@@ -14,7 +14,7 @@ class FreeAnchor3DHead(Anchor3DHead):
 
     Note:
         This implementation is directly modified from the `mmdet implementation
-        <https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/dense_heads/free_anchor_retina_head.py>`_  # noqa
+        <https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/dense_heads/free_anchor_retina_head.py>`_  .. # noqa
         We find it also works on 3D detection with minor modification, i.e.,
         different hyper-parameters and a additional direction classifier.
 
