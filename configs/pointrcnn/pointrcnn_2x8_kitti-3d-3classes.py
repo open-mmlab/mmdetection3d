@@ -79,7 +79,8 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names))
 
 # optimizer
-lr = 0.002  # max learning rate
+lr = 0.001  # max learning rate
+optimizer = dict(lr=lr)
 # runtime settings
 runner = dict(type='EpochBasedRunner', max_epochs=80)
 evaluation = dict(interval=1)

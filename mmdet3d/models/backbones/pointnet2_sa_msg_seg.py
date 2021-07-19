@@ -50,7 +50,6 @@ class PointNet2Seg(BasePointNet):
                  fp_channels=((256, 256), (256, 256)),
                  fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
                  fps_sample_range_lists=((-1), (-1), (512, -1)),
-                 dilated_group=(True, True, True),
                  aggregation_channels=None,
                  norm_cfg=dict(type='BN2d'),
                  sa_cfg=dict(
@@ -101,7 +100,6 @@ class PointNet2Seg(BasePointNet):
                     mlp_channels=cur_sa_mlps,
                     fps_mod=cur_fps_mod,
                     fps_sample_range_list=cur_fps_sample_range_list,
-                    dilated_group=dilated_group[sa_index],
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
                     bias=False))

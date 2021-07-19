@@ -373,7 +373,7 @@ class PointRPNHead(BaseModule):
         positive_mask = (points_mask.max(1)[0] > 0)
         negative_mask = (points_mask.max(1)[0] == 0)
         # add ignore_mask
-        extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(0.2)
+        extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(0.1)
         points_mask, _ = self._assign_targets_by_points_inside(
             extend_gt_bboxes_3d, points)
         negative_mask = (points_mask.max(1)[0] == 0)
