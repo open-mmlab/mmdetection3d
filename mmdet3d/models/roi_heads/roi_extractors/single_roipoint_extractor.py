@@ -3,6 +3,7 @@ import torch
 from torch import nn as nn
 
 from mmdet3d import ops
+from mmdet3d.core.bbox.structures import rotation_3d_in_axis
 from mmdet.models.builder import ROI_EXTRACTORS
 
 
@@ -34,28 +35,6 @@ class Single3DRoIPointExtractor(nn.Module):
             return torch.from_numpy(x).float(), True
         return x, False
 
-    def rotate_points_along_z(self, points, angle):
-        """
-        Args:
-            points: (B, N, 3 + C)
-            angle: (B), angle along z-axis, angle increases x ==> y
-        Returns:
-
-        """
-        points, is_numpy = self.check_numpy_to_torch(points)
-        angle, _ = self.check_numpy_to_torch(angle)
-
-        cosa = torch.cos(angle)
-        sina = torch.sin(angle)
-        zeros = angle.new_zeros(points.shape[0])
-        ones = angle.new_ones(points.shape[0])
-        rot_matrix = torch.stack(
-            (cosa, sina, zeros, -sina, cosa, zeros, zeros, zeros, ones),
-            dim=1).view(-1, 3, 3).float()
-        points_rot = torch.matmul(points[:, :, 0:3], rot_matrix)
-        points_rot = torch.cat((points_rot, points[:, :, 3:]), dim=-1)
-        return points_rot.numpy() if is_numpy else points_rot
-
     def forward(self, feats, coordinate, batch_inds, rois):
         """Extract point-wise roi features.
 
@@ -81,9 +60,9 @@ class Single3DRoIPointExtractor(nn.Module):
             pooled_roi_feat = pooled_roi_feat.view(-1,
                                                    pooled_roi_feat.shape[-2],
                                                    pooled_roi_feat.shape[-1])
-            pooled_roi_feat[:, :, 0:3] = self.rotate_points_along_z(
+            pooled_roi_feat[:, :, 0:3] = rotation_3d_in_axis(
                 pooled_roi_feat[:, :, 0:3],
-                -(rois.view(-1, rois.shape[-1])[:, 6] + np.pi / 2))
+                -(rois.view(-1, rois.shape[-1])[:, 6]))
             pooled_roi_feat[pooled_empty_flag.view(-1) > 0] = 0
 
         return pooled_roi_feat
