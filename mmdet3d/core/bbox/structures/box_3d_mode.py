@@ -88,7 +88,7 @@ class Box3DMode(IntEnum):
         single_box = isinstance(box, (list, tuple))
         if single_box:
             assert len(box) >= 7, (
-                'BoxMode.convert takes either a k-tuple/list or '
+                'Box3DMode.convert takes either a k-tuple/list or '
                 'an Nxk array/tensor, where k >= 7')
             arr = torch.tensor(box)[None, :]
         else:
