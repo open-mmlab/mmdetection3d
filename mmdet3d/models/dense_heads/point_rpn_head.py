@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import trimesh
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule, force_fp32
 from torch.nn import functional as F
@@ -12,73 +11,6 @@ from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 from .base_linear_bbox_head import BaseLinearBboxHead
-
-
-def write_ply(points, points_label, out_filename):
-    """Write points into ``ply`` format for meshlab visualization.
-
-    Args:
-        points (np.ndarray): Points in shape (N, dim).
-        out_filename (str): Filename to be saved.
-    """
-    N = points.shape[0]
-    fout = open(out_filename, 'w')
-    for i in range(N):
-        if points.shape[1] == 3:
-            c = [0, 0, 0]
-            if points_label[i].astype(int) <= 2:
-                c[points_label[i].astype(int)] = 1
-            fout.write('v %f %f %f %d %d %d\n' %
-                       (points[i, 0], points[i, 1], points[i, 2], c[0] * 255,
-                        c[1] * 255, c[2] * 255))
-
-        else:
-            fout.write(
-                'v %f %f %f %d\n' %
-                (points[i, 0], points[i, 1], points[i, 2], points_label[i]))
-    fout.close()
-
-
-def write_oriented_bbox(scene_bbox, out_filename):
-    """Export oriented (around Z axis) scene bbox to meshes.
-
-    Args:
-        scene_bbox(list[ndarray] or ndarray): xyz pos of center and
-            3 lengths (dx,dy,dz) and heading angle around Z axis.
-            Y forward, X right, Z upward. heading angle of positive X is 0,
-            heading angle of positive Y is 90 degrees.
-        out_filename(str): Filename.
-    """
-
-    def heading2rotmat(heading_angle):
-        rotmat = np.zeros((3, 3))
-        rotmat[2, 2] = 1
-        cosval = np.cos(heading_angle)
-        sinval = np.sin(heading_angle)
-        rotmat[0:2, 0:2] = np.array([[cosval, -sinval], [sinval, cosval]])
-        return rotmat
-
-    def convert_oriented_box_to_trimesh_fmt(box):
-        ctr = box[:3]
-        lengths = box[3:6]
-        trns = np.eye(4)
-        trns[0:3, 3] = ctr
-        trns[3, 3] = 1.0
-        trns[0:3, 0:3] = heading2rotmat(box[6])
-        box_trimesh_fmt = trimesh.creation.box(lengths, trns)
-        return box_trimesh_fmt
-
-    if len(scene_bbox) == 0:
-        scene_bbox = np.zeros((1, 7))
-    scene = trimesh.scene.Scene()
-    for box in scene_bbox:
-        scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
-
-    mesh_list = trimesh.util.concatenate(scene.dump())
-    # save to ply file
-    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='ply')
-
-    return
 
 
 @HEADS.register_module()
@@ -137,33 +69,6 @@ class PointRPNHead(BaseModule):
     def forward(self, feat_dict):
         point_features = feat_dict['fp_features'][-1]
         point_cls_preds, point_box_preds = self.conv_pred(point_features)
-        '''
-        ret_dict = {
-            'fp_points': feat_dict['fp_xyz'][-1],
-            'fp_indices': feat_dict['fp_indices'][-1],
-            'fp_features': feat_dict['fp_features'][-1]
-        }
-        print('preds: ', point_box_preds.shape, point_cls_preds.shape)
-        roi_scores, roi_labels = torch.max(
-            point_cls_preds.transpose(2,1),dim=2)
-        print('result: ', roi_scores.shape, roi_labels.shape)
-        bbox_preds = self.bbox_coder.decode(point_box_preds.transpose(2,1),
-                                            feat_dict['fp_xyz'][-1],
-                                            roi_labels)
-        '''
-        '''
-        print(point_cls_preds.shape)
-        points_label = point_cls_preds.transpose(2, 1). \
-            reshape(-1).cpu().data.numpy()
-        points_label[points_label>0.9] = 1
-        points = feat_dict['fp_xyz'][-1].cpu().data.numpy()
-        print(points_label.shape)
-        print(points.shape)
-        write_ply(points[0],points_label,'/tmp/label_points.obj')
-        bbox3d = self.bbox_coder.decode(ret_dict)
-        write_oriented_bbox(bbox3d[0].cpu().numpy(),'/tmp/label_bboxes.ply')
-        # assert 0
-        '''
         return (point_box_preds.transpose(2,
                                           1), point_cls_preds.transpose(2, 1))
 
@@ -178,18 +83,15 @@ class PointRPNHead(BaseModule):
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of PointRCNNHead.
+            bbox_preds (dict): Predictions from forward of PointRCNN \
+                RPN_Head.
+            cls_preds (dict): Classification from forward of PointRCNN \
+                RPN_Head.
             points (list[torch.Tensor]): Input points.
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
-                semantic mask.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise
-                instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
-                which bounding.
 
         Returns:
             dict: Losses of PointRCNN.
@@ -197,8 +99,7 @@ class PointRPNHead(BaseModule):
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
                                    bbox_preds)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
-         box_loss_weights, corner3d_targets, gt_targets,
-         point_targets) = targets
+         box_loss_weights, gt_targets, point_targets) = targets
 
         # bbox loss
         bbox_loss = self.bbox_loss(bbox_preds, bbox_targets,
@@ -227,24 +128,6 @@ class PointRPNHead(BaseModule):
                                       semantic_points_label.reshape(-1),
                                       semantic_loss_weight.reshape(-1))
         semantic_loss /= positive_mask.float().sum()
-        '''
-        indices_xxx = 0
-        points_label = semantic_points_label[indices_xxx].cpu().data.numpy()
-        points = points[indices_xxx][:,0:3].cpu().data.numpy()
-        write_ply(points,points_label,'/tmp/label_points_rpn.obj')
-        gt_bboxes = gt_bboxes_3d[indices_xxx].tensor.cpu().numpy()
-        gt_bboxes[:, 6] = -gt_bboxes[:, 6]
-        write_oriented_bbox(gt_bboxes,'/tmp/label_bboxes_rpn.ply')
-        assert 0
-        points_mask = points_label==0
-        pred_bbox3d = pred_bbox3d[0:16384][points_mask].tensor
-        pred_bbox3d = pred_bbox3d.tensor.detach().cpu().numpy()
-        pred_bbox3d[:, 6] = -pred_bbox3d[:, 6]
-        write_oriented_bbox(pred_bbox3d, '/tmp/label_bboxes_pred_rpn.ply')
-
-        assert 0
-        '''
-
         losses = dict(
             bbox_loss=bbox_loss,
             semantic_loss=semantic_loss,
@@ -284,13 +167,7 @@ class PointRPNHead(BaseModule):
         corner_loss = 0.5 * quadratic**2 + delta * linear
         return corner_loss.mean(dim=1)
 
-    def get_targets(self,
-                    points,
-                    gt_bboxes_3d,
-                    gt_labels_3d,
-                    pts_semantic_mask=None,
-                    pts_instance_mask=None,
-                    bbox_preds=None):
+    def get_targets(self, points, gt_bboxes_3d, gt_labels_3d):
         """Generate targets of ssd3d head.
 
         Args:
@@ -298,14 +175,9 @@ class PointRPNHead(BaseModule):
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
-                label of each batch.
-            bbox_preds (torch.Tensor): Bounding box predictions of ssd3d head.
 
         Returns:
-            tuple[torch.Tensor]: Targets of ssd3d head.
+            tuple[torch.Tensor]: Targets of PointRCNN RPN head.
         """
         # find empty example
         for index in range(len(gt_labels_3d)):
@@ -315,13 +187,11 @@ class PointRPNHead(BaseModule):
                 gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
                 gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
 
-        (bbox_targets, mask_targets, positive_mask, negative_mask,
-         corner3d_targets, gt_targets,
+        (bbox_targets, mask_targets, positive_mask, negative_mask, gt_targets,
          point_targets) = multi_apply(self.get_targets_single, points,
                                       gt_bboxes_3d, gt_labels_3d)
 
         bbox_targets = torch.stack(bbox_targets)
-        corner3d_targets = torch.stack(corner3d_targets)
         mask_targets = torch.stack(mask_targets)
         positive_mask = torch.stack(positive_mask)
         negative_mask = torch.stack(negative_mask)
@@ -330,7 +200,7 @@ class PointRPNHead(BaseModule):
         box_loss_weights = positive_mask / (positive_mask.sum() + 1e-6)
 
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
-                box_loss_weights, corner3d_targets, gt_targets, point_targets)
+                box_loss_weights, gt_targets, point_targets)
 
     def get_targets_single(self, points, gt_bboxes_3d, gt_labels_3d):
         """Generate targets of ssd3d head for single batch.
@@ -356,7 +226,6 @@ class PointRPNHead(BaseModule):
         gt_labels_3d = gt_labels_3d[valid_gt]
 
         # transform the bbox coordinate to the pointcloud coordinate
-        gt_corner3d = gt_bboxes_3d.corners
         gt_bboxes_3d_tensor = gt_bboxes_3d.tensor.clone()
         gt_bboxes_3d_tensor[..., 2] += gt_bboxes_3d_tensor[..., 5] / 2
 
@@ -365,7 +234,6 @@ class PointRPNHead(BaseModule):
         gt_bboxes_3d_tensor = gt_bboxes_3d_tensor[assignment]
         gt_targets = gt_bboxes_3d_tensor.clone()
         mask_targets = gt_labels_3d[assignment]
-        corner3d_targets = gt_corner3d[assignment]
 
         bbox_targets = self.bbox_coder.encode(gt_bboxes_3d_tensor,
                                               points[..., 0:3], mask_targets)
@@ -380,7 +248,7 @@ class PointRPNHead(BaseModule):
 
         point_targets = points[..., 0:3]
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
-                corner3d_targets, gt_targets, point_targets)
+                gt_targets, point_targets)
 
     def get_bboxes(self,
                    points,
@@ -400,9 +268,6 @@ class PointRPNHead(BaseModule):
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
-        # decode boxes
-        # sem_scores = F.sigmoid(bbox_preds['obj_scores']).transpose(1, 2)
-        # obj_scores = sem_scores.max(-1)[0]
         sem_scores = F.sigmoid(cls_preds)
         obj_scores = sem_scores.max(-1)[0]
         object_class = torch.argmax(sem_scores, -1)
@@ -533,15 +398,7 @@ class PointRPNHead(BaseModule):
         minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
         minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
-        '''
-        num_rpn_proposal = self.test_cfg.max_output_num
-        nms_cfg = self.test_cfg.nms_cfg
-        score_thr = self.test_cfg.score_thr
-        if training_flag:
-            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
-            nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
-            score_thr = self.train_cfg.rpn_proposal.score_thr
-        '''
+
         bbox_classes = torch.argmax(sem_scores, -1)
         nms_selected = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]].detach(),

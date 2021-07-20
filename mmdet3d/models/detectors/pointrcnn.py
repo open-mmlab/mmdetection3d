@@ -44,23 +44,14 @@ class PointRCNN(TwoStage3DDetector):
             x = self.neck(x)
         return x
 
-    def forward_train(self,
-                      points,
-                      img_metas,
-                      gt_bboxes_3d,
-                      gt_labels_3d,
-                      pts_semantic_mask=None,
-                      gt_bboxes_ignore=None):
+    def forward_train(self, points, img_metas, gt_bboxes_3d, gt_labels_3d):
         """Forward of training.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
+            img_metas (list[dict]): Meta information of each sample.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
-                label of each batch.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
-                which bounding.
 
         Returns:
             dict: Losses.
@@ -132,13 +123,7 @@ class PointRCNN(TwoStage3DDetector):
         rcnn_feats.update({'points_scores': obj_scores})
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, cls_preds, img_metas, rescale=rescale)
-        '''
-        from mmdet3d.core.bbox import bbox3d2result
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels, preds_cls in bbox_list
-        ]
-        '''
+
         proposal_list = [
             dict(
                 boxes_3d=bboxes,

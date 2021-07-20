@@ -96,7 +96,7 @@ class PartA2(TwoStage3DDetector):
 
         Args:
             points (list[torch.Tensor]): Point cloud of each sample.
-            img_metas (list[dict]): Meta information of each sample
+            img_metas (list[dict]): Meta information of each sample.
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 boxes for each sample.
             gt_labels_3d (list[torch.Tensor]): Ground truth labels for

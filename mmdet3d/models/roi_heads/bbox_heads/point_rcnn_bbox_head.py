@@ -32,7 +32,7 @@ class PointRCNNBboxHead(BaseModule):
             num_classes,
             mlp_channels,
             pred_layer_cfg=None,
-            num_points=(128, 32, 1),
+            num_points=(128, 32, -1),
             radius=(0.2, 0.4, 100),
             num_samples=(64, 64, 64),
             sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),

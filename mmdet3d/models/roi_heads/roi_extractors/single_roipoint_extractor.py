@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import nn as nn
 
@@ -29,11 +28,6 @@ class Single3DRoIPointExtractor(nn.Module):
         layer_cls = getattr(ops, layer_type)
         roi_layers = layer_cls(**cfg)
         return roi_layers
-
-    def check_numpy_to_torch(self, x):
-        if isinstance(x, np.ndarray):
-            return torch.from_numpy(x).float(), True
-        return x, False
 
     def forward(self, feats, coordinate, batch_inds, rois):
         """Extract point-wise roi features.

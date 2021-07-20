@@ -10,7 +10,7 @@ from .base_pointnet import BasePointNet
 
 @BACKBONES.register_module()
 class PointNet2Seg(BasePointNet):
-    """PointNet2 Segmentation with Multi-scale grouping .
+    """PointNet2 Segmentation backbone with Multi-scale grouping .
 
     Args:
         in_channels (int): Input channels of point cloud.
@@ -139,12 +139,13 @@ class PointNet2Seg(BasePointNet):
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict[str, torch.Tensor]: Outputs of the last SA module.
+            dict[str, torch.Tensor]: Outputs of the last FP module.
 
-                - sa_xyz (torch.Tensor): The coordinates of sa features.
-                - sa_features (torch.Tensor): The features from the
-                    last Set Aggregation Layers.
-                - sa_indices (torch.Tensor): Indices of the \
+                - fp_xyz (list[torch.Tensor]): The coordinates of \
+                    each fp features.
+                - fp_features (list[torch.Tensor]): The features \
+                    from each Feature Propagate Layers.
+                - fp_indices (list[torch.Tensor]): Indices of the \
                     input points.
         """
         xyz, features = self._split_point_feats(points)
