@@ -93,7 +93,7 @@ __|____|____|____|_________\ x right
 
 The illustration of the three coordinate systems is shown below:
 
-![coord_sys_all](../../resources/coord_sys_all.png)
+![coord_sys_all](https://github.com/open-mmlab/mmdetection3d/blob/master/resources/coord_sys_all.png)
 
 The three figures above are the 3D coordinate system while the three figures below are the bird's eye view.
 
@@ -101,7 +101,7 @@ The three figures above are the 3D coordinate system while the three figures bel
 
 ### KITTI
 
-The raw annotation of KITTI is under Camera coordinate system, see [get_label_anno](../../tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train models on KITTI, the data is first converted from camera to LiDAR, see [get_ann_info](../../mmdet3d/datasets/kitti_dataset.py).
+The raw annotation of KITTI is under Camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train models on KITTI, the data is first converted from camera to LiDAR, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py).
 
 In SECOND, the LiDAR coordinate system for a box is defined as follows (a bird's eye view):
 
@@ -140,7 +140,7 @@ The raw data of ScanNet is not point cloud but mesh. The sampled point cloud dat
 
 The raw data of SUN RGB-D is not point cloud but RGB-D image. By back projection, we obtain the corresponding point cloud for each image, which is under our Depth coordinate system. However, the annotation is not under our system, hence needing conversion.
 
-For the conversion from raw annotation to annotation under our Depth coordinate system, please refer to [sunrgbd_data_utils.py](../../tools/data_converter/sunrgbd_data_utils.py).
+For the conversion from raw annotation to annotation under our Depth coordinate system, please refer to [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/sunrgbd_data_utils.py).
 
 ### S3DIS
 
@@ -168,25 +168,25 @@ Finally, the yaw angle should also be converted:
 
 - <img src="https://render.githubusercontent.com/render/math?math=r_{LiDAR}=-\frac{\pi}{2}-r_{camera}">
 
-See the code [here](mmdet3d/core/bbox/structures/box_3d_mode.py) for more details.
+See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/box_3d_mode.py) for more details.
 
 ### Bird's Eye View
 
 The BEV of a camera coordinate system box is <img src="https://render.githubusercontent.com/render/math?math=(x, y, dx, dy, -r)"> if the 3D box is <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)">. The inversion of the sign of the yaw angle is because the positive direction of the gravity axis of the Camera coordinate system points to the ground.
 
-See the code [here](../../mmdet3d/core/bbox/structures/cam_box3d.py) for more details.
+See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py) for more details.
 
 ### Rotation of boxes
 
 We set the rotation of all kinds of boxes to be counter-clockwise about the gravity axis. Therefore, to rotate a 3D box we first calculate the new box center, and then we add the rotation angle to the yaw angle.
 
-See the code [here](../../mmdet3d/core/bbox/structures/cam_box3d.py) for more details.
+See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py) for more details.
 
 ## Common FAQ
 
 #### Q1: Are the box related ops universal to all coordinate system types?
 
-No. For example, the ops under [this folder](../../mmdet3d/ops/roiaware_pool3d) are applicable to boxes under Depth or LiDAR coordinate system only. The evaluation functions for KITTI dataset [here](../../mmdet3d/core/evaluation/kitti_utils) are only applicable to boxes under Camera coordinate system since the rotation is clockwise if viewed from above.
+No. For example, the ops under [this folder](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d) are applicable to boxes under Depth or LiDAR coordinate system only. The evaluation functions for KITTI dataset [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/kitti_utils) are only applicable to boxes under Camera coordinate system since the rotation is clockwise if viewed from above.
 
 For each box related op, we have marked the type of boxes to which we can apply the op.
 
