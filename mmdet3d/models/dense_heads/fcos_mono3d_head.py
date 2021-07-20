@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import Scale, normal_init
+from mmcv.cnn import Scale
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
@@ -94,6 +94,13 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             init_cfg=init_cfg,
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -105,14 +112,6 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.scales = nn.ModuleList([
             nn.ModuleList([Scale(1.0) for _ in range(3)]) for _ in self.strides
         ])  # only for offset, depth and size regression
-
-    def init_weights(self):
-        """Initialize weights of the head."""
-        super().init_weights()
-        for m in self.conv_centerness_prev:
-            if isinstance(m.conv, nn.Conv2d):
-                normal_init(m.conv, std=0.01)
-        normal_init(self.conv_centerness, std=0.01)
 
     def forward(self, feats):
         """Forward features from the upstream network.
@@ -217,6 +216,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     @staticmethod
     def get_direction_target(reg_targets,
                              dir_offset=0,
+                             dir_limit_offset=0,
                              num_bins=2,
                              one_hot=True):
         """Encode direction to 0 ~ num_bins-1.
@@ -231,7 +231,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             torch.Tensor: Encoded direction targets.
         """
         rot_gt = reg_targets[..., 6]
-        offset_rot = limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
+        offset_rot = limit_period(rot_gt - dir_offset, dir_limit_offset,
+                                  2 * np.pi)
         dir_cls_targets = torch.floor(offset_rot /
                                       (2 * np.pi / num_bins)).long()
         dir_cls_targets = torch.clamp(dir_cls_targets, min=0, max=num_bins - 1)
@@ -377,7 +378,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
             if self.use_direction_classifier:
                 pos_dir_cls_targets = self.get_direction_target(
-                    pos_bbox_targets_3d, self.dir_offset, one_hot=False)
+                    pos_bbox_targets_3d,
+                    self.dir_offset,
+                    self.dir_limit_offset,
+                    one_hot=False)
 
             if self.diff_rad_by_sin:
                 pos_bbox_preds, pos_bbox_targets_3d = self.add_sin_difference(

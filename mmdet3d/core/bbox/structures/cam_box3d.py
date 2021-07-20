@@ -153,7 +153,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         # positive direction of the gravity axis
         # in cam coord system points to the earth
         # so the bev yaw angle needs to be reversed
-        bev[:, -1:] = -bev[:, -1:]
+        bev[:, -1] = -bev[:, -1]
         return bev
 
     @property
@@ -178,8 +178,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return bev_boxes
 
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angle (float | torch.Tensor | np.ndarray):
@@ -188,8 +188,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns \
-                None, otherwise it returns the rotated points and the \
+            tuple or None: When ``points`` is None, the function returns
+                None, otherwise it returns the rotated points and the
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
@@ -276,7 +276,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             polygon, we reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside \
+            torch.Tensor: Indicating whether each box is inside
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -320,7 +320,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`BoxMode`): The target Box mode.
+            dst (:obj:`Box3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
@@ -328,7 +328,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`:  \
+            :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
@@ -358,11 +358,11 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Find points that are in boxes (CUDA).
 
         Args:
-            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
+            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3],
                 3 dimensions are [x, y, z] in LiDAR coordinate.
 
         Returns:
-            torch.Tensor: The index of boxes each point lies in with shape \
+            torch.Tensor: The index of boxes each point lies in with shape
                 of (B, M, T).
         """
         from .coord_3d_mode import Coord3DMode

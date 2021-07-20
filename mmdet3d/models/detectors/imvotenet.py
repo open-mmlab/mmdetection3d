@@ -12,7 +12,7 @@ from .base import Base3DDetector
 def sample_valid_seeds(mask, num_sampled_seed=1024):
     r"""Randomly sample seeds from all imvotes.
 
-    Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_  # noqa
+    Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_
 
     Args:
         mask (torch.Tensor): Bool tensor in shape (
@@ -22,7 +22,7 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
 
     Returns:
         torch.Tensor: Indices with shape (num_sampled_seed).
-    """
+    """  # noqa: E501
     device = mask.device
     batch_size = mask.shape[0]
     sample_inds = mask.new_zeros((batch_size, num_sampled_seed),
@@ -600,10 +600,8 @@ class ImVoteNet(Base3DDetector):
                              img_metas,
                              proposals=None,
                              rescale=False):
-        """Test without augmentation, image network pretrain. May refer to
-        https://github.com/open-
-        mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py  #
-        noqa.
+        r"""Test without augmentation, image network pretrain. May refer to
+        `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.
 
         Args:
             img (torch.Tensor): Should have a shape NxCxHxW, which contains
@@ -616,7 +614,7 @@ class ImVoteNet(Base3DDetector):
 
         Returns:
             list[list[torch.Tensor]]: Predicted 2d boxes.
-        """
+        """  # noqa: E501
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'
@@ -701,10 +699,8 @@ class ImVoteNet(Base3DDetector):
         return bbox_results
 
     def aug_test_img_only(self, img, img_metas, rescale=False):
-        """Test function with augmentation, image network pretrain. May refer
-        to https://github.com/open-
-        mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py  #
-        noqa.
+        r"""Test function with augmentation, image network pretrain. May refer
+        to `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.
 
         Args:
             img (list[list[torch.Tensor]], optional): the outer
@@ -722,7 +718,7 @@ class ImVoteNet(Base3DDetector):
 
         Returns:
             list[list[torch.Tensor]]: Predicted 2d boxes.
-        """
+        """  # noqa: E501
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'

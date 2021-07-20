@@ -124,7 +124,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 # Model Complexity
 
-You can use `tools/analysis_tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
+You can use `tools/analysis_tools/get_flops.py` in MMDetection3D, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
 
 ```shell
 python tools/analysis_tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
@@ -134,9 +134,9 @@ You will get the results like this.
 
 ```text
 ==============================
-Input shape: (3, 1280, 800)
-Flops: 239.32 GFLOPs
-Params: 37.74 M
+Input shape: (40000, 4)
+Flops: 5.78 GFLOPs
+Params: 953.83 k
 ==============================
 ```
 
@@ -145,9 +145,9 @@ number is absolutely correct. You may well use the result for simple
 comparisons, but double check it before you adopt it in technical reports or papers.
 
 1. FLOPs are related to the input shape while parameters are not. The default
-   input shape is (1, 3, 1280, 800).
+   input shape is (1, 40000, 4).
 2. Some operators are not counted into FLOPs like GN and custom operators. Refer to [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py) for details.
-3. The FLOPs of two-stage detectors is dependent on the number of proposals.
+3. We currently only support FLOPs calculation of single-stage models with single-modality input (point cloud or image). We will support two-stage and multi-modality models in the future.
 
 &emsp;
 

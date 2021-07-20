@@ -131,8 +131,8 @@ class BaseInstance3DBoxes(object):
 
     @abstractmethod
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angle (float | torch.Tensor | np.ndarray):
@@ -170,7 +170,7 @@ class BaseInstance3DBoxes(object):
             polygon, we try to reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: A binary vector indicating whether each box is \
+            torch.Tensor: A binary vector indicating whether each box is
                 inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -190,7 +190,7 @@ class BaseInstance3DBoxes(object):
                 in order of (x_min, y_min, x_max, y_max).
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside \
+            torch.Tensor: Indicating whether each box is inside
                 the reference range.
         """
         pass
@@ -200,7 +200,7 @@ class BaseInstance3DBoxes(object):
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`BoxMode`): The target Box mode.
+            dst (:obj:`Box3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -208,7 +208,7 @@ class BaseInstance3DBoxes(object):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: The converted box of the same type \
+            :obj:`BaseInstance3DBoxes`: The converted box of the same type
                 in the `dst` mode.
         """
         pass
@@ -241,7 +241,7 @@ class BaseInstance3DBoxes(object):
             threshold (float): The threshold of minimal sizes.
 
         Returns:
-            torch.Tensor: A binary vector which represents whether each \
+            torch.Tensor: A binary vector which represents whether each
                 box is empty (False) or non-empty (True).
         """
         box = self.tensor
@@ -267,7 +267,7 @@ class BaseInstance3DBoxes(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            :obj:`BaseInstances3DBoxes`: A new object of  \
+            :obj:`BaseInstances3DBoxes`: A new object of
                 :class:`BaseInstances3DBoxes` after indexing.
         """
         original_type = type(self)
@@ -294,10 +294,10 @@ class BaseInstance3DBoxes(object):
         """Concatenate a list of Boxes into a single Boxes.
 
         Args:
-            boxes_list (list[:obj:`BaseInstances3DBoxes`]): List of boxes.
+            boxes_list (list[:obj:`BaseInstance3DBoxes`]): List of boxes.
 
         Returns:
-            :obj:`BaseInstances3DBoxes`: The concatenated Boxes.
+            :obj:`BaseInstance3DBoxes`: The concatenated Boxes.
         """
         assert isinstance(boxes_list, (list, tuple))
         if len(boxes_list) == 0:
@@ -319,7 +319,7 @@ class BaseInstance3DBoxes(object):
             device (str | :obj:`torch.device`): The name of the device.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: A new boxes object on the \
+            :obj:`BaseInstance3DBoxes`: A new boxes object on the
                 specific device.
         """
         original_type = type(self)
@@ -332,7 +332,7 @@ class BaseInstance3DBoxes(object):
         """Clone the Boxes.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: Box object with the same properties \
+            :obj:`BaseInstance3DBoxes`: Box object with the same properties
                 as self.
         """
         original_type = type(self)
@@ -361,8 +361,8 @@ class BaseInstance3DBoxes(object):
             boxes2,  boxes1 and boxes2 should be in the same type.
 
         Args:
-            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
-            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
@@ -393,8 +393,8 @@ class BaseInstance3DBoxes(object):
             ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
 
         Args:
-            boxes1 (:obj:`BaseInstanceBoxes`): Boxes 1 contain N boxes.
-            boxes2 (:obj:`BaseInstanceBoxes`): Boxes 2 contain M boxes.
+            boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
+            boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
@@ -444,14 +444,14 @@ class BaseInstance3DBoxes(object):
     def new_box(self, data):
         """Create a new box object with data.
 
-        The new box and its tensor has the similar properties \
+        The new box and its tensor has the similar properties
             as self and self.tensor, respectively.
 
         Args:
             data (torch.Tensor | numpy.array | list): Data to be copied.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`: A new bbox object with ``data``, \
+            :obj:`BaseInstance3DBoxes`: A new bbox object with ``data``,
                 the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \
@@ -482,11 +482,11 @@ class BaseInstance3DBoxes(object):
         """Find points that are in boxes (CUDA).
 
         Args:
-            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
+            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3],
                 3 dimensions are [x, y, z] in LiDAR coordinate.
 
         Returns:
-            torch.Tensor: The index of boxes each point lies in with shape \
+            torch.Tensor: The index of boxes each point lies in with shape
                 of (B, M, T).
         """
         if boxes_override is not None:
@@ -494,7 +494,7 @@ class BaseInstance3DBoxes(object):
         else:
             boxes = self.tensor
 
-        points_clone = points.clone()[:, :3]
+        points_clone = points.clone()[..., :3]
         if points_clone.dim() == 2:
             points_clone = points_clone.unsqueeze(0)
         else:
