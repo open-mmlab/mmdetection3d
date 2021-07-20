@@ -278,7 +278,7 @@ class PartA2RPNHead(Anchor3DHead):
             dir_rot = limit_period(bboxes[-1][..., 6] - self.dir_offset,
                                    self.dir_limit_offset, np.pi)
             bboxes[-1][..., 6] = (
-                dir_rot + self.dir_offset -
+                dir_rot + self.dir_offset +
                 np.pi * dir_scores[-1].to(bboxes[-1].dtype))
 
         if bboxes:
