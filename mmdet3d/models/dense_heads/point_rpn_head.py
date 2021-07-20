@@ -96,8 +96,7 @@ class PointRPNHead(BaseModule):
         Returns:
             dict: Losses of PointRCNN.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   bbox_preds)
+        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
          box_loss_weights, gt_targets, point_targets) = targets
 
