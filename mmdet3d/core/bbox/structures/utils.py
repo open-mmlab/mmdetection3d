@@ -97,7 +97,10 @@ def rotation_3d_in_axis(points,
     if clockwise:
         rot_mat_T = rot_mat_T.transpose(0, 1)
 
-    points_new = torch.einsum('aij,jka->aik', points, rot_mat_T)
+    if points.shape[0] == 0:
+        points_new = points
+    else:
+        points_new = torch.einsum('aij,jka->aik', points, rot_mat_T)
 
     if batch_free:
         points_new = points_new.squeeze(0)
