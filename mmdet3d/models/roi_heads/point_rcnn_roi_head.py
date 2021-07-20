@@ -46,6 +46,10 @@ class PointRCNNROIHead(Base3DRoIHead):
         """Initialize box head."""
         self.bbox_head = build_head(bbox_head)
 
+    def init_mask_head(self):
+        """Initialize maek head."""
+        pass
+
     def init_assigner_sampler(self):
         """Initialize assigner and sampler."""
         self.bbox_assigner = None
