@@ -119,7 +119,7 @@ model = dict(
             nms_post=512,
             max_output_num=100,
             score_thr=0,
-            nms_cfg=dict(type='nms', iou_thr=0.8),
+            nms_cfg=dict(type='nms', iou_thr=0.85),
             per_class_proposal=False,
             use_rotate_nms=True),
         rcnn=dict(
