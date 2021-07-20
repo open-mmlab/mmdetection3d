@@ -23,7 +23,7 @@ class LyftDataset(Custom3DDataset):
     This class serves as the API for experiments on the Lyft Dataset.
 
     Please refer to
-    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data>`_  # noqa
+    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data>`_
     for data downloading.
 
     Args:
@@ -49,7 +49,7 @@ class LyftDataset(Custom3DDataset):
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-    """
+    """  # noqa: E501
     NameMapping = {
         'bicycle': 'bicycle',
         'bus': 'bus',

@@ -14,7 +14,7 @@ class FreeAnchor3DHead(Anchor3DHead):
 
     Note:
         This implementation is directly modified from the `mmdet implementation
-        <https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/dense_heads/free_anchor_retina_head.py>`_  # noqa
+        <https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/dense_heads/free_anchor_retina_head.py>`_.
         We find it also works on 3D detection with minor modification, i.e.,
         different hyper-parameters and a additional direction classifier.
 
@@ -25,7 +25,7 @@ class FreeAnchor3DHead(Anchor3DHead):
         gamma (float): Gamma parameter in focal loss.
         alpha (float): Alpha parameter in focal loss.
         kwargs (dict): Other arguments are the same as those in :class:`Anchor3DHead`.
-    """
+    """  # noqa: E501
 
     def __init__(self,
                  pre_anchor_topk=50,
