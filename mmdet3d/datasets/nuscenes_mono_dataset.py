@@ -173,9 +173,6 @@ class NuScenesMonoDataset(CocoDataset):
                 gt_masks_ann.append(ann.get('segmentation', None))
                 # 3D annotations in camera coordinates
                 bbox_cam3d = np.array(ann['bbox_cam3d']).reshape(1, -1)
-                # change orientation to local yaw
-                bbox_cam3d[0, 6] = -np.arctan2(
-                    bbox_cam3d[0, 0], bbox_cam3d[0, 2]) + bbox_cam3d[0, 6]
                 velo_cam3d = np.array(ann['velo_cam3d']).reshape(1, 2)
                 nan_mask = np.isnan(velo_cam3d[:, 0])
                 velo_cam3d[nan_mask] = [0.0, 0.0]
@@ -666,6 +663,10 @@ def output_to_nusc_box(detection):
     box_dims = box3d.dims.numpy()
     box_yaw = box3d.yaw.numpy()
 
+    # convert the dim/rot to nuscbox convention
+    box_dims[:, [0, 1, 2]] = box_dims[:, [2, 0, 1]]
+    box_yaw = -box_yaw
+
     box_list = []
     for i in range(len(box3d)):
         q1 = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
@@ -778,6 +779,11 @@ def nusc_box_to_cam_box3d(boxes):
     rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
                          for b in boxes]).view(-1, 1)
     velocity = torch.Tensor([b.velocity[:2] for b in boxes]).view(-1, 2)
+
+    # convert nusbox to cambox convention
+    dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
+    rots = -rots
+
     boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
     cam_boxes3d = CameraInstance3DBoxes(
         boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
