@@ -14,13 +14,13 @@ python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title
 
 示例：
 
--   绘制出某次运行的分类损失 loss。
+-   绘制出某次运行的分类 loss。
 
     ```shell
     python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
     ```
 
--   绘制出某次运行的分类和回归损失 loss，并且保存图片为 pdf 格式。
+-   绘制出某次运行的分类和回归 loss，并且保存图片为 pdf 格式。
 
     ```shell
     python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
@@ -57,13 +57,13 @@ average iter time: 1.1959 s/iter
 
 ## 结果
 
-为了看见训练模型的预测结果，您可以运行下面的指令
+为了观察模型的预测结果，您可以运行下面的指令
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 ```
 
-在运行这个指令后，包括输入数据和在输入上可视化的网络输出（例如：3D单模态检测任务中的 `***_points.obj` 和 `***_pred.obj` ）的绘制结果将会被保存在 `${SHOW_DIR}`。
+在运行这个指令后，所有的绘制结果包括输入数据，以及在输入数据基础上可视化的网络输出和真值（例如： 3D 单模态检测任务中的 `***_points.obj` 和 `***_pred.obj`），将会被保存在 `${SHOW_DIR}`。
 
 要在评估期间看见预测结果，您可以运行下面的指令
 
@@ -75,7 +75,7 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --eval-options 'sh
 
 至于离线可视化，您将有两个选择。
 利用 `Open3D` 后端可视化结果，您可以运行下面的指令
-
+
 ```bash
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
@@ -85,11 +85,11 @@ python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} -
 
 或者您可以使用 3D 可视化软件，例如 [MeshLab](http://www.meshlab.net/) 来打开这些在 `${SHOW_DIR}` 目录下的文件，从而查看 3D 检测输出。具体来说，打开 `***_points.obj` 查看输入点云，打开 `***_pred.obj` 查看预测的 3D 边界框。这允许推理和结果生成在远程服务器中完成，用户可以使用 GUI 在他们的主机上打开它们。
 
-**注意**：可视化接口有一些不稳定，因为我们计划和 MMDetection 一起重构这一部分。
+**注意**：可视化接口有一些不稳定，我们将计划和 MMDetection 一起重构这一部分。
 
 ## 数据集
 
-我们也提供脚本可视化数据集而无需推理。您可以使用 `tools/misc/browse_dataset.py` 来在线显示载入的数据和真值标签，并且保存进磁盘。现在我们支持所有数据集上的单模态 3D 检测和 3D 分割，支持 KITTI 和 SUN RGB-D 数据集上的多模态 3D 检测，同时支持 nuScenes 数据集上的单目 3D 检测。为了浏览 KITTI 数据集，您可以运行下面的指令
+我们也提供脚本用来可视化数据集，而无需推理。您可以使用 `tools/misc/browse_dataset.py` 来在线显示载入的数据和真值标签，并且保存进磁盘。现在我们支持所有数据集上的单模态 3D 检测和 3D 分割，支持 KITTI 和 SUN RGB-D 数据集上的多模态 3D 检测，同时支持 nuScenes 数据集上的单目 3D 检测。为了浏览 KITTI 数据集，您可以运行下面的指令
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --output-dir ${OUTPUT_DIR} --online
@@ -97,7 +97,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 
 **注意**：一旦指定 `--output-dir` ，当按下 open3d 窗口的 `_ESC_`，用户指定的视图图像将被保存。如果您没有显示器，您可以移除 `--online` 标志，从而仅仅保存可视化结果并且进行离线浏览。
 
-如果您还想显示带有投影到其上的 3D 边界框的 2D 图像，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi_modality-det`。一个例子如下所示
+如果您还想显示 2D 图像以及投影的 3D 边界框，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi_modality-det`。一个例子如下所示
 
 ```shell
 python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
@@ -175,8 +175,7 @@ python tools/detectron2pytorch.py ${SRC} ${DST} ${DEPTH} [-h]
 
 1. 将模型权重转换为 CPU 张量
 2. 删除记录优化器状态 (optimizer states) 的相关信息
-3. 计算检查点 (checkpoint) 文件的哈希编码 (hash id) 并且把哈希编码加到
-   文件名里
+3. 计算检查点 (checkpoint) 文件的哈希编码 (hash id) 并且把哈希编码加到文件名里
 
 ```shell
 python tools/model_converters/publish_model.py ${INPUT_FILENAME} ${OUTPUT_FILENAME}
