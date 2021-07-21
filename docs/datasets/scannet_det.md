@@ -6,7 +6,7 @@ For the overall process, please refer to the [README](https://github.com/open-mm
 
 ### Export ScanNet point cloud data
 
-By exporting ScanNet point cloud data, we load the raw point cloud data and generate the relevant annotations including semantic label, instance label and ground truth bounding boxes.
+By exporting ScanNet data, we load the raw point cloud data and generate the relevant annotations including semantic labels, instance labels and ground truth bounding boxes.
 
 ```shell
 python batch_load_scannet_data.py
