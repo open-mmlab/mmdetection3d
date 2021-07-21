@@ -75,6 +75,8 @@ class Box3DMode(IntEnum):
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
+            with_yaw (bool): If `box` is an instance of `BaseInstance3DBoxes`,
+                whether or not it has a yaw angle. Defaults to True.
 
         Returns:
             (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes):

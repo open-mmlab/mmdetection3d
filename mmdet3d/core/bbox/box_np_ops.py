@@ -27,7 +27,10 @@ def camera_to_lidar(points, r_rect, velo2cam):
 
 
 def box_camera_to_lidar(data, r_rect, velo2cam):
-    """Covert boxes in camera coordinate to lidar coordinate.
+    """Convert boxes in camera coordinate to lidar coordinate.
+
+    Note:
+        This function is for KITTI only.
 
     Args:
         data (np.ndarray, shape=[N, 7]): Boxes in camera coordinate.
@@ -39,11 +42,11 @@ def box_camera_to_lidar(data, r_rect, velo2cam):
     Returns:
         np.ndarray, shape=[N, 3]: Boxes in lidar coordinate.
     """
-    # TODO raw coords?
     xyz = data[:, 0:3]
     dx, dy, dz = data[:, 3:4], data[:, 4:5], data[:, 5:6]
     r = data[:, 6:7]
     xyz_lidar = camera_to_lidar(xyz, r_rect, velo2cam)
+    # yaw and dims also needs to be converted
     r_new = -r - np.pi / 2
     r_new = limit_period(r_new, period=np.pi * 2)
     return np.concatenate([xyz_lidar, dx, dz, dy, r_new], axis=1)

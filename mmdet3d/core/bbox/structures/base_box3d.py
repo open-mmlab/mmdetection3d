@@ -267,8 +267,8 @@ class BaseInstance3DBoxes(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            :obj:`BaseInstances3DBoxes`: A new object of
-                :class:`BaseInstances3DBoxes` after indexing.
+            :obj:`BaseInstance3DBoxes`: A new object of
+                :class:`BaseInstance3DBoxes` after indexing.
         """
         original_type = type(self)
         if isinstance(item, int):

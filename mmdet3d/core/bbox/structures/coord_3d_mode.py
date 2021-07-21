@@ -60,10 +60,34 @@ class Coord3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def convert(input, src, dst, rt_mat=None, is_point=True):
-        """Convert boxes or points from `src` mode to `dst` mode."""
+    def convert(input, src, dst, rt_mat=None, with_yaw=True, is_point=True):
+        """Convert boxes or points from `src` mode to `dst` mode.
+
+        Args:
+            input (tuple | list | np.ndarray | torch.Tensor |
+                BaseInstance3DBoxes | BasePoints):
+                Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
+            src (:obj:`Box3DMode` | :obj:`Coord3DMode`): The source mode.
+            dst (:obj:`Box3DMode` | :obj:`Coord3DMode`): The target mode.
+            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
+                matrix between different coordinates. Defaults to None.
+                The conversion from `src` coordinates to `dst` coordinates
+                usually comes along the change of sensors, e.g., from camera
+                to LiDAR. This requires a transformation matrix.
+            with_yaw (bool): If `box` is an instance of `BaseInstance3DBoxes`,
+                whether or not it has a yaw angle. Defaults to True.
+            is_point (bool): If `input` is neither an instance of
+                `BaseInstance3DBoxes` nor an instance of `BasePoints`,
+                whether or not it is point data. Defaults to True.
+
+        Returns:
+            (tuple | list | np.ndarray | torch.Tensor |
+                BaseInstance3DBoxes | BasePoints):
+                The converted box of the same type.
+        """
         if isinstance(input, BaseInstance3DBoxes):
-            return Coord3DMode.convert_box(input, src, dst, rt_mat=rt_mat)
+            return Coord3DMode.convert_box(
+                input, src, dst, rt_mat=rt_mat, with_yaw=with_yaw)
         elif isinstance(input, BasePoints):
             return Coord3DMode.convert_point(input, src, dst, rt_mat=rt_mat)
         elif isinstance(input, (tuple, list, np.ndarray, torch.Tensor)):
@@ -71,25 +95,28 @@ class Coord3DMode(IntEnum):
                 return Coord3DMode.convert_point(
                     input, src, dst, rt_mat=rt_mat)
             else:
-                return Coord3DMode.convert_box(input, src, dst, rt_mat=rt_mat)
+                return Coord3DMode.convert_box(
+                    input, src, dst, rt_mat=rt_mat, with_yaw=with_yaw)
         else:
             raise NotImplementedError
 
     @staticmethod
-    def convert_box(box, src, dst, rt_mat=None):
+    def convert_box(box, src, dst, rt_mat=None, with_yaw=True):
         """Convert boxes from `src` mode to `dst` mode.
 
         Args:
             box (tuple | list | np.ndarray |
                 torch.Tensor | BaseInstance3DBoxes):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
-            src (:obj:`Coord3DMode`): The src Box mode.
-            dst (:obj:`Coord3DMode`): The target Box mode.
+            src (:obj:`Box3DMode`): The src Box mode.
+            dst (:obj:`Box3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
+            with_yaw (bool): If `box` is an instance of `BaseInstance3DBoxes`,
+                whether or not it has a yaw angle. Defaults to True.
 
         Returns:
             (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes):
@@ -138,8 +165,6 @@ class Coord3DMode(IntEnum):
                 arr = point.clone()
 
         # convert point from `src` mode to `dst` mode.
-        # TODO: LIDAR
-        # only implemented provided Rt matrix in cam-depth conversion
         if src == Coord3DMode.LIDAR and dst == Coord3DMode.CAM:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
