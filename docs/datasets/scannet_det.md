@@ -4,9 +4,9 @@
 
 For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) page for ScanNet.
 
-### Export ScanNet data
+### Export ScanNet point cloud data
 
-By exporting ScanNet data, we load the raw point cloud data and generate the relevant annotations including semantic label, instance label and ground truth bounding boxes.
+By exporting ScanNet point cloud data, we load the raw point cloud data and generate the relevant annotations including semantic label, instance label and ground truth bounding boxes.
 
 ```shell
 python batch_load_scannet_data.py
@@ -127,6 +127,16 @@ def export(mesh_file,
 
 After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large. In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
 
+### Export ScanNet RGB data
+
+By exporting ScanNet RGB data, for each scene we load a set of RGB images with corresponding 4x4 pose matrices, and a single 4x4 camera intrinsic matrix. Note, that this step is optional and can be skipped if multi-view detection is not planned to use.
+
+```shell
+python extract_posed_images.py
+```
+
+Each of 1201 train, 312 validation and 100 test scenes contains a single `.sens` file. For instance, for scene `0001_01` we have `data/scannet/scans/scene0001_01/0001_01.sens`. For this scene all images and poses are extracted to `data/scannet/posed_images/scene0001_01`. Specifically, there will be 300 image files xxxxx.jpg, 300 camera pose files xxxxx.txt and a single `intrinsic.txt` file. Typically, single scene contains several thousand images. By default, we extract only 300 of them with resulting weight of <100 Gb. To extract more images, use `--max-images-per-scene` parameter.
+
 ### Create dataset
 
 ```shell
@@ -201,6 +211,11 @@ scannet
 │   ├── train_resampled_scene_idxs.npy
 │   ├── val_label_weight.npy
 │   ├── val_resampled_scene_idxs.npy
+├── posed_images
+│   ├── scenexxxx_xx
+│   │   ├── xxxxxx.txt
+│   │   ├── xxxxxx.jpg
+│   │   ├── intrinsic.txt
 ├── scannet_infos_train.pkl
 ├── scannet_infos_val.pkl
 ├── scannet_infos_test.pkl
@@ -209,6 +224,7 @@ scannet
 - `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Note: the point would be axis-aligned in pre-processing `GlobalAlignment` of 3d detection task.
 - `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id will be mapped to train id in train pipeline `PointSegClassMapping`.
+- `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
     - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
     - info['pts_path']: The path of `points/xxxxx.bin`.
