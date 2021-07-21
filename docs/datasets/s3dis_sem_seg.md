@@ -100,56 +100,7 @@ python tools/create_data.py s3dis --root-path ./data/s3dis \
 --out-dir ./data/s3dis --extra-tag s3dis
 ```
 
-The above exported point cloud file, semantic label file and instance label file are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for each area. The core function `process_single_scene` of getting data infos is as follows.
-
-```python
-def process_single_scene(sample_idx):
-
-    # save point cloud, instance label and semantic label in .bin file respectively, get info['pts_path'], info['pts_instance_mask_path'] and info['pts_semantic_mask_path']
-
-    print(f'{self.split} sample_idx: {sample_idx}')
-    info = dict()
-    pc_info = {
-        'num_features': 6,
-        'lidar_idx': f'{self.split}_{sample_idx}'
-    }
-    info['point_cloud'] = pc_info
-    pts_filename = osp.join(self.root_dir, 's3dis_data',
-                            f'{self.split}_{sample_idx}_point.npy')
-    pts_instance_mask_path = osp.join(
-        self.root_dir, 's3dis_data',
-        f'{self.split}_{sample_idx}_ins_label.npy')
-    pts_semantic_mask_path = osp.join(
-        self.root_dir, 's3dis_data',
-        f'{self.split}_{sample_idx}_sem_label.npy')
-
-    points = np.load(pts_filename).astype(np.float32)
-    pts_instance_mask = np.load(pts_instance_mask_path).astype(np.int)
-    pts_semantic_mask = np.load(pts_semantic_mask_path).astype(np.int)
-
-    mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
-    mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
-    mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
-
-    points.tofile(
-        osp.join(self.root_dir, 'points',
-                    f'{self.split}_{sample_idx}.bin'))
-    pts_instance_mask.tofile(
-        osp.join(self.root_dir, 'instance_mask',
-                    f'{self.split}_{sample_idx}.bin'))
-    pts_semantic_mask.tofile(
-        osp.join(self.root_dir, 'semantic_mask',
-                    f'{self.split}_{sample_idx}.bin'))
-
-    info['pts_path'] = osp.join('points',
-                                f'{self.split}_{sample_idx}.bin')
-    info['pts_instance_mask_path'] = osp.join(
-        'instance_mask', f'{self.split}_{sample_idx}.bin')
-    info['pts_semantic_mask_path'] = osp.join(
-        'semantic_mask', f'{self.split}_{sample_idx}.bin')
-
-    return info
-```
+The above exported point cloud files, semantic label files and instance label files are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for each area.
 
 The directory structure after process should be as below
 
