@@ -112,7 +112,7 @@ pip install -v -e .  # or "python setup.py develop"
 **e. Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
-pip install mmsegmentation==0.14.1
+pip install mmsegmentation>=0.14.1
 ```
 
 Optionally, you could also build MMSegmentation from source in case you want to modify the code:
@@ -227,7 +227,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 ```
 
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
-Note that you need to install pandas and plyfile before using this script. This function can also be used for data preprocessing for training ```ply data```.
+Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training ```ply data```.
 
 ```python
 import numpy as np
@@ -252,7 +252,7 @@ Examples:
 convert_ply('./test.ply', './test.bin')
 ```
 
-If you have point clouds in other format (`off`, `obj`, etc.), you can use trimesh to convert them into `ply`.
+If you have point clouds in other format (`off`, `obj`, etc.), you can use `trimesh` to convert them into `ply`.
 
 ```python
 import trimesh
