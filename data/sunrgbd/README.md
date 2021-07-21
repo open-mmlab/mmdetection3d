@@ -2,7 +2,7 @@
 
 We follow the procedure in [votenet](https://github.com/facebookresearch/votenet/).
 
-1. Download SUNRGBD v2 data [HERE](http://rgbd.cs.princeton.edu/data/). Then, move SUNRGBD.zip, SUNRGBDMeta2DBB_v2.mat, SUNRGBDMeta3DBB_v2.mat and SUNRGBDtoolbox.zip to the OFFICIAL_SUNRGBD folder, unzip the zip files.
+1. Download SUNRGBD data [HERE](http://rgbd.cs.princeton.edu/data/). Then, move SUNRGBD.zip, SUNRGBDMeta2DBB_v2.mat, SUNRGBDMeta3DBB_v2.mat and SUNRGBDtoolbox.zip to the OFFICIAL_SUNRGBD folder, unzip the zip files.
 
 2. Enter the `matlab` folder, Extract point clouds and annotations by running `extract_split.m`, `extract_rgbd_data_v2.m` and `extract_rgbd_data_v1.m`.
 
@@ -47,12 +47,12 @@ sunrgbd
 │   ├── SUNRGBDtoolbox
 ├── sunrgbd_trainval
 │   ├── calib
-│   ├── image
-│   ├── label_v1
-│   ├── train_data_idx.txt
 │   ├── depth
+│   ├── image
 │   ├── label
+│   ├── label_v1
 │   ├── seg_label
+│   ├── train_data_idx.txt
 │   ├── val_data_idx.txt
 ├── points
 ├── sunrgbd_infos_train.pkl

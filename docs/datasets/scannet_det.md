@@ -113,7 +113,7 @@ def export(mesh_file,
         # bbox format is [x, y, z, dx, dy, dz, label_id]
         # [x, y, z] is gravity center of bbox, [dx, dy, dz] is axis-aligned
         # [label_id] is semantic label id in 'nyu40id' standard
-        # Note: since 3d bbox is axis-aligned, the yaw is 0.
+        # Note: since 3D bbox is axis-aligned, the yaw is 0.
         unaligned_bboxes = extract_bbox(mesh_vertices, object_id_to_segs,
                                         object_id_to_label_id, instance_ids)
         aligned_bboxes = extract_bbox(aligned_mesh_vertices, object_id_to_segs,
@@ -206,7 +206,7 @@ scannet
 ├── scannet_infos_test.pkl
 ```
 
-- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Note: the point would be axis-aligned in pre-processing `GlobalAlignment` of 3d detection task.
+- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Note: the point would be axis-aligned in pre-processing `GlobalAlignment` of 3D detection task.
 - `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id will be mapped to train id in train pipeline `PointSegClassMapping`.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
@@ -215,21 +215,21 @@ scannet
     - info['pts_instance_mask_path']: The path of `instance_mask/xxxxx.bin`.
     - info['pts_semantic_mask_path']: The path of `semantic_mask/xxxxx.bin`.
     - info['annos']: The annotations of each scan.
-        - annotations['gt_num']: The number of ground truth.
+        - annotations['gt_num']: The number of ground truths.
         - annotations['name']： The semantic name of all ground truths, e.g. `chair`.
-        - annotations['location']: The gravity center of axis-aligned 3d bounding box. Shape: [K, 3], K is the number of ground truth.
-        - annotations['dimensions']: The dimensions of axis-aligned 3d bounding box, i.e. x_size, y_size, z_size, shape: [K, 3].
-        - annotations['gt_boxes_upright_depth']: Axis-aligned 3d bounding box, each bounding box is x, y, z, x_size, y_size, z_size, shape: [K, 6].
-        - annotations['unaligned_location']: The gravity center of axis-unaligned 3d bounding box.
-        - annotations['unaligned_dimensions']: The dimensions of axis-unaligned 3d bounding box.
-        - annotations['unaligned_gt_boxes_upright_depth']: Axis-unaligned 3d bounding box.
+        - annotations['location']: The gravity center of the axis-aligned 3D bounding boxes. Shape: [K, 3], K is the number of ground truths.
+        - annotations['dimensions']: The dimensions of the axis-aligned 3D bounding boxes, i.e. (x_size, y_size, z_size), shape: [K, 3].
+        - annotations['gt_boxes_upright_depth']: The axis-aligned 3D bounding boxes, each bounding box is (x, y, z, x_size, y_size, z_size), shape: [K, 6].
+        - annotations['unaligned_location']: The gravity center of the axis-unaligned 3D bounding boxes.
+        - annotations['unaligned_dimensions']: The dimensions of the axis-unaligned 3D bounding boxes.
+        - annotations['unaligned_gt_boxes_upright_depth']: The axis-unaligned 3D bounding boxes.
         - annotations['index']: The index of all ground truths, i.e. [0, K).
-        - annotations['class']: The train class id of each bounding box, value range: [0, 18), shape: [K, ].
+        - annotations['class']: The train class id of the bounding boxes, value range: [0, 18), shape: [K, ].
 
 
 ## Train pipeline
 
-A typical train pipeline of ScanNet for 3d detection is as below.
+A typical train pipeline of ScanNet for 3D detection is as below.
 
 ```python
 train_pipeline = [
@@ -271,14 +271,16 @@ train_pipeline = [
         ])
 ]
 ```
+
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
 - `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 18).
 - Data augmentation:
     - `IndoorPointSample`: downsample input point cloud.
     - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate input point cloud, usually [-5, 5] degree.
+    - `GlobalRotScaleTrans`: rotate input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet.
 
 ## Metrics
 
-Typically mean average precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3d object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
-As introduced in section `Export ScanNet data`, all ground truth 3d bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3d bounding box is also zero and axis-aligned 3d non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.
+Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py).
+
+As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.

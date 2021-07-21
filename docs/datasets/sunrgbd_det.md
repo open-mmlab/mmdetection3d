@@ -2,17 +2,13 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) page for ScanNet.
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) page for SUN RGB-D.
 
-### Export SUN RGB-D data
+### Download SUN RGB-D data and toolbox
 
-By exporting ScanNet data, we load the raw point cloud data and generate the relevant annotations including semantic label, instance label and ground truth bounding boxes.
+Download SUNRGBD data [HERE](http://rgbd.cs.princeton.edu/data/). Then, move SUNRGBD.zip, SUNRGBDMeta2DBB_v2.mat, SUNRGBDMeta3DBB_v2.mat and SUNRGBDtoolbox.zip to the OFFICIAL_SUNRGBD folder, unzip the zip files. Currently, we use v1 data for training and testing, so the data files with suffix `_v2` is unnecessary.
 
-```shell
-python batch_load_scannet_data.py
-```
-
-The directory structure before data preparation should be as below
+The directory structure before data preparation should be as below：
 
 ```
 ```
@@ -29,164 +25,143 @@ sunrgbd
 │   ├── SUNRGBDtoolbox
 ├── sunrgbd_trainval
 │   ├── calib
-│   ├── image
-│   ├── label_v1
-│   ├── train_data_idx.txt
 │   ├── depth
+│   ├── image
 │   ├── label
+│   ├── label_v1
 │   ├── seg_label
-│   ├── val_data_idx.txt
-├── points
-├── sunrgbd_infos_train.pkl
-├── sunrgbd_infos_val.pkl
-
 ```
 ```
 
-Under folder `scans` there are overall 1201 train and 312 validation folders in which raw point cloud data and relevant annotations are saved. For instance, under folder `scene0001_01` the files are as below:
+Under each following directory there are overall 5285 train files and 5050 val files:
 
-- `scene0001_01_vh_clean_2.ply`: Mesh file including raw point cloud data.
-- `scene0001_01.aggregation.json`: Aggregation file including object id, segments id and label.
-- `scene0001_01_vh_clean_2.0.010000.segs.json`: Segmentation file including segments id and vertex.
-- `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
-- `scene0001_01_vh_clean_2.labels.ply`
+- 'calib': Camera calibration information in `.txt`
+- `depth`: Point cloud saved in `.mat` (xyz+rgb)
+- `image`: Image data in `.jpg`
+- `label`: Detection nnotation data in `.txt` (version 2)
+- `label_v1`: Detection annotation data in `.txt` (version 1)
+- `seg_label`: Segmentation annotation data in `.txt`
 
-Export ScanNet data by running `python batch_load_scannet_data.py`. The main steps include:
+Extract SUN RGB-D annotation data by running:
 
-- Export original files to point cloud, instance label, semantic label and bounding box file.
-- Downsample raw point cloud and filter invalid classes.
-- Save point cloud data and relevant annotation files.
+```bash
+matlab -nosplash -nodesktop -r 'extract_split;quit;'
+matlab -nosplash -nodesktop -r 'extract_rgbd_data_v1;quit;'
+```
 
- And the core function `export` in `load_scannet_data.py` is as follows:
+The main steps include:
+
+- Extract train and val split.
+- Extract and format detection annotation from raw data.
+
+The main component of `extract_rgbd_data_v1.m` which extracts annotation is as follows:
 
 ```python
-def export(mesh_file,
-           agg_file,
-           seg_file,
-           meta_file,
-           label_map_file,
-           output_file=None,
-           test_mode=False):
-
-    # label map file: ./data/scannet/meta_data/scannetv2-labels.combined.tsv
-    # the various label standards in the label map file, e.g. 'nyu40id'
-    label_map = scannet_utils.read_label_mapping(
-        label_map_file, label_from='raw_category', label_to='nyu40id')
-    # load raw point cloud data, 6-dims feature: XYZRGB
-    mesh_vertices = scannet_utils.read_mesh_vertices_rgb(mesh_file)
-
-    # Load scene axis alignment matrix: a 4x4 transformation matrix
-    # transform raw points in sensor coordinate system to a coordinate system
-    # which is axis-aligned with the length/width of the room
-    lines = open(meta_file).readlines()
-    # test set data doesn't have align_matrix
-    axis_align_matrix = np.eye(4)
-    for line in lines:
-        if 'axisAlignment' in line:
-            axis_align_matrix = [
-                float(x)
-                for x in line.rstrip().strip('axisAlignment = ').split(' ')
-            ]
-            break
-    axis_align_matrix = np.array(axis_align_matrix).reshape((4, 4))
-
-    # perform global alignment of mesh vertices
-    pts = np.ones((mesh_vertices.shape[0], 4))
-    # raw point cloud in homogeneous coordinats, each row: [x, y, z, 1]
-    pts[:, 0:3] = mesh_vertices[:, 0:3]
-    # transform raw mesh vertices to aligned mesh vertices
-    pts = np.dot(pts, axis_align_matrix.transpose())  # Nx4
-    aligned_mesh_vertices = np.concatenate([pts[:, 0:3], mesh_vertices[:, 3:]],
-                                           axis=1)
-
-    # Load semantic and instance labels
-    if not test_mode:
-        # each object has one semantic label and consists of several segments
-        object_id_to_segs, label_to_segs = read_aggregation(agg_file)
-        # many points may belong to the same segment
-        seg_to_verts, num_verts = read_segmentation(seg_file)
-        label_ids = np.zeros(shape=(num_verts), dtype=np.uint32)
-        object_id_to_label_id = {}
-        for label, segs in label_to_segs.items():
-            label_id = label_map[label]
-            for seg in segs:
-                verts = seg_to_verts[seg]
-                # each point has one semantic label
-                label_ids[verts] = label_id
-        instance_ids = np.zeros(
-            shape=(num_verts), dtype=np.uint32)  # 0: unannotated
-        for object_id, segs in object_id_to_segs.items():
-            for seg in segs:
-                verts = seg_to_verts[seg]
-                # object_id is 1-indexed, i.e. 1,2,3,.,,,.NUM_INSTANCES
-                # each point belongs to one object
-                instance_ids[verts] = object_id
-                if object_id not in object_id_to_label_id:
-                    object_id_to_label_id[object_id] = label_ids[verts][0]
-        # bbox format is [x, y, z, dx, dy, dz, label_id]
-        # [x, y, z] is gravity center of bbox, [dx, dy, dz] is axis-aligned
-        # [label_id] is semantic label id in 'nyu40id' standard
-        # Note: since 3d bbox is axis-aligned, the yaw is 0.
-        unaligned_bboxes = extract_bbox(mesh_vertices, object_id_to_segs,
-                                        object_id_to_label_id, instance_ids)
-        aligned_bboxes = extract_bbox(aligned_mesh_vertices, object_id_to_segs,
-                                      object_id_to_label_id, instance_ids)
-    ...
-
-    return mesh_vertices, label_ids, instance_ids, unaligned_bboxes, \
-        aligned_bboxes, object_id_to_label_id, axis_align_matrix
+% Write 2D and 3D box label
+data2d = data;
+fid = fopen(strcat(det_label_folder, txt_filename), 'w');
+for j = 1:length(data.groundtruth3DBB)
+    centroid = data.groundtruth3DBB(j).centroid;
+    classname = data.groundtruth3DBB(j).classname;
+    orientation = data.groundtruth3DBB(j).orientation;
+    coeffs = abs(data.groundtruth3DBB(j).coeffs);
+    box2d = data2d.groundtruth2DBB(j).gtBb2D;
+    fprintf(fid, '%s %d %d %d %d %f %f %f %f %f %f %f %f\n', classname, box2d(1), box2d(2), box2d(3), box2d(4), centroid(1), centroid(2), centroid(3), coeffs(1), coeffs(2), coeffs(3), orientation(1), orientation(2));
+end
+fclose(fid);
 
 ```
 
-After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large. In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
+The above script uses the class `groundtruth3DBB` from the [toolbox](https://rgbd.cs.princeton.edu/data/SUNRGBDtoolbox.zip) provided by SUN RGB-D.
 
 ### Create dataset
 
 ```shell
-python tools/create_data.py scannet --root-path ./data/scannet \
---out-dir ./data/scannet --extra-tag scannet
+python tools/create_data.py sunrgbd --root-path ./data/sunrgbd \
+--out-dir ./data/sunrgbd --extra-tag sunrgbd
 ```
 
-The above exported point cloud file, semantic label file and instance label file are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for train or validation. The core function `process_single_scene` of getting data infos is as follows.
+The above point cloud data are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for train or validation. The core function `process_single_scene` of getting data infos is as follows.
 
 ```python
 def process_single_scene(sample_idx):
+    print(f'{self.split} sample_idx: {sample_idx}')
+    # convert depth to points
+    # and downsample the points
+    SAMPLE_NUM = 50000
+    pc_upright_depth = self.get_depth(sample_idx)
+    pc_upright_depth_subsampled = random_sampling(
+        pc_upright_depth, SAMPLE_NUM)
 
-    # save point cloud, instance label and semantic label in .bin file respectively, get info['pts_path'], info['pts_instance_mask_path'] and info['pts_semantic_mask_path']
-    ...
+    info = dict()
+    pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
+    info['point_cloud'] = pc_info
 
-    # get annotations
+    # save point cloud data in `.bin` format
+    mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+    pc_upright_depth_subsampled.tofile(
+        osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
+
+    # save point cloud file path
+    info['pts_path'] = osp.join('points', f'{sample_idx:06d}.bin')
+
+    # save image file path and metainfo
+    img_path = osp.join('image', f'{sample_idx:06d}.jpg')
+    image_info = {
+        'image_idx': sample_idx,
+        'image_shape': self.get_image_shape(sample_idx),
+        'image_path': img_path
+    }
+    info['image'] = image_info
+
+    # save calibration information
+    K, Rt = self.get_calibration(sample_idx)
+    calib_info = {'K': K, 'Rt': Rt}
+    info['calib'] = calib_info
+
+    # save all annotation
     if has_label:
+        obj_list = self.get_label_objects(sample_idx)
         annotations = {}
-        # box is of shape [k, 6 + class]
-        aligned_box_label = self.get_aligned_box_label(sample_idx)
-        unaligned_box_label = self.get_unaligned_box_label(sample_idx)
-        annotations['gt_num'] = aligned_box_label.shape[0]
+        annotations['gt_num'] = len([
+            obj.classname for obj in obj_list
+            if obj.classname in self.cat2label.keys()
+        ])
         if annotations['gt_num'] != 0:
-            aligned_box = aligned_box_label[:, :-1]  # k, 6
-            unaligned_box = unaligned_box_label[:, :-1]
-            classes = aligned_box_label[:, -1]  # k
             annotations['name'] = np.array([
-                self.label2cat[self.cat_ids2class[classes[i]]]
-                for i in range(annotations['gt_num'])
+                obj.classname for obj in obj_list
+                if obj.classname in self.cat2label.keys()
             ])
-            # default names are given to aligned bbox for compatibility
-            # we also save unaligned bbox info with marked names
-            annotations['location'] = aligned_box[:, :3]
-            annotations['dimensions'] = aligned_box[:, 3:6]
-            annotations['gt_boxes_upright_depth'] = aligned_box
-            annotations['unaligned_location'] = unaligned_box[:, :3]
-            annotations['unaligned_dimensions'] = unaligned_box[:, 3:6]
-            annotations[
-                'unaligned_gt_boxes_upright_depth'] = unaligned_box
+            annotations['bbox'] = np.concatenate([
+                obj.box2d.reshape(1, 4) for obj in obj_list
+                if obj.classname in self.cat2label.keys()
+            ],
+                                                    axis=0)
+            annotations['location'] = np.concatenate([
+                obj.centroid.reshape(1, 3) for obj in obj_list
+                if obj.classname in self.cat2label.keys()
+            ],
+                                                        axis=0)
+            annotations['dimensions'] = 2 * np.array([
+                [obj.l, obj.h, obj.w] for obj in obj_list
+                if obj.classname in self.cat2label.keys()
+            ])  # lhw(depth) format
+            annotations['rotation_y'] = np.array([
+                obj.heading_angle for obj in obj_list
+                if obj.classname in self.cat2label.keys()
+            ])
             annotations['index'] = np.arange(
-                annotations['gt_num'], dtype=np.int32)
+                len(obj_list), dtype=np.int32)
             annotations['class'] = np.array([
-                self.cat_ids2class[classes[i]]
-                for i in range(annotations['gt_num'])
+                self.cat2label[obj.classname] for obj in obj_list
+                if obj.classname in self.cat2label.keys()
             ])
-        axis_align_matrix = self.get_axis_align_matrix(sample_idx)
-        annotations['axis_align_matrix'] = axis_align_matrix  # 4x4
+            annotations['gt_boxes_upright_depth'] = np.stack(
+                [
+                    obj.box3d for obj in obj_list
+                    if obj.classname in self.cat2label.keys()
+                ],
+                axis=0)  # (K,8)
         info['annos'] = annotations
     return info
 ```
@@ -194,55 +169,56 @@ def process_single_scene(sample_idx):
 The directory structure after process should be as below
 
 ```
-scannet
-├── scannet_utils.py
-├── batch_load_scannet_data.py
-├── load_scannet_data.py
-├── scannet_utils.py
+sunrgbd
 ├── README.md
-├── scans
-├── scans_test
-├── scannet_instance_data
+├── matlab
+│   ├── extract_rgbd_data_v1.m
+│   ├── extract_rgbd_data_v2.m
+│   ├── extract_split.m
+├── OFFICIAL_SUNRGBD
+│   ├── SUNRGBD
+│   ├── SUNRGBDMeta2DBB_v2.mat
+│   ├── SUNRGBDMeta3DBB_v2.mat
+│   ├── SUNRGBDtoolbox
+├── sunrgbd_trainval
+│   ├── calib
+│   ├── depth
+│   ├── image
+│   ├── label
+│   ├── label_v1
+│   ├── seg_label
+│   ├── train_data_idx.txt
+│   ├── val_data_idx.txt
 ├── points
-│   ├── xxxxx.bin
-├── instance_mask
-│   ├── xxxxx.bin
-├── semantic_mask
-│   ├── xxxxx.bin
-├── seg_info
-│   ├── train_label_weight.npy
-│   ├── train_resampled_scene_idxs.npy
-│   ├── val_label_weight.npy
-│   ├── val_resampled_scene_idxs.npy
-├── scannet_infos_train.pkl
-├── scannet_infos_val.pkl
-├── scannet_infos_test.pkl
+├── sunrgbd_infos_train.pkl
+├── sunrgbd_infos_val.pkl
+
 ```
 
-- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Note: the point would be axis-aligned in pre-processing `GlobalAlignment` of 3d detection task.
-- `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
-- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id will be mapped to train id in train pipeline `PointSegClassMapping`.
-- `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
+- `points/0xxxxx.bin`: The point cloud data after downsample.
+- `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
     - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
-    - info['pts_path']: The path of `points/xxxxx.bin`.
-    - info['pts_instance_mask_path']: The path of `instance_mask/xxxxx.bin`.
-    - info['pts_semantic_mask_path']: The path of `semantic_mask/xxxxx.bin`.
+    - info['pts_path']: The path of `points/0xxxxx.bin`.
+    - info['image']: The image path and metainfo:
+        - image['image_idx']: The index of the image.
+        - image['image_shape']: The shape of the image tensor.
+        - image['image_path']: The path of the image.
     - info['annos']: The annotations of each scan.
-        - annotations['gt_num']: The number of ground truth.
+        - annotations['gt_num']: The number of ground truths.
         - annotations['name']： The semantic name of all ground truths, e.g. `chair`.
-        - annotations['location']: The gravity center of axis-aligned 3d bounding box. Shape: [K, 3], K is the number of ground truth.
-        - annotations['dimensions']: The dimensions of axis-aligned 3d bounding box, i.e. x_size, y_size, z_size, shape: [K, 3].
-        - annotations['gt_boxes_upright_depth']: Axis-aligned 3d bounding box, each bounding box is x, y, z, x_size, y_size, z_size, shape: [K, 6].
-        - annotations['unaligned_location']: The gravity center of axis-unaligned 3d bounding box.
-        - annotations['unaligned_dimensions']: The dimensions of axis-unaligned 3d bounding box.
-        - annotations['unaligned_gt_boxes_upright_depth']: Axis-unaligned 3d bounding box.
+        - annotations['location']: The gravity center of the 3D bounding boxes. Shape: [K, 3], K is the number of ground truths.
+        - annotations['dimensions']: The dimensions of the 3D bounding boxes, i.e. (x_size, y_size, z_size), shape: [K, 3].
+        - annotations['rotation_y']: The yaw angle of the 3D bounding boxes. Shape: [K, ].
+        - annotations['gt_boxes_upright_depth']: The 3D bounding boxes, each bounding box is (x, y, z, x_size, y_size, z_size), shape: [K, 7].
+        - annotations['bbox']: The 2D bounding boxes, each bounding box is (x, y, x_size, y_size), shape: [K, 4].
         - annotations['index']: The index of all ground truths, i.e. [0, K).
-        - annotations['class']: The train class id of each bounding box, value range: [0, 18), shape: [K, ].
+        - annotations['class']: The train class id of the bounding boxes, value range: [0, 10), shape: [K, ].
+- `sunrgbd_infos_val.pkl`: The val data infos, which shares the same format as `sunrgbd_infos_train.pkl`.
 
 
 ## Train pipeline
 
-A typical train pipeline of ScanNet for 3d detection is as below.
+A typical train pipeline of SUN RGB-D for point cloud only 3D detection is as below.
 
 ```python
 train_pipeline = [
@@ -252,46 +228,28 @@ train_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_mask_3d=True,
-        with_seg_3d=True),
-    dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39),
-        max_cat_id=40),
-    dict(type='IndoorPointSample', num_points=40000),
+    dict(type='LoadAnnotations3D'),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
         flip_ratio_bev_horizontal=0.5,
-        flip_ratio_bev_vertical=0.5),
+    ),
     dict(
         type='GlobalRotScaleTrans',
-        rot_range=[-0.087266, 0.087266],
-        scale_ratio_range=[1.0, 1.0],
+        rot_range=[-0.523599, 0.523599],
+        scale_ratio_range=[0.85, 1.15],
         shift_height=True),
+    dict(type='IndoorPointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(
-        type='Collect3D',
-        keys=[
-            'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
-            'pts_instance_mask'
-        ])
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 ```
-- `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
-- `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 18).
+
 - Data augmentation:
-    - `IndoorPointSample`: downsample input point cloud.
     - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate input point cloud, usually [-5, 5] degree.
+    - `GlobalRotScaleTrans`: rotate input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D.
+    - `IndoorPointSample`: downsample input point cloud.
 
 ## Metrics
 
-Typically mean average precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3d object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
-As introduced in section `Export ScanNet data`, all ground truth 3d bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3d bounding box is also zero and axis-aligned 3d non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.
+Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
