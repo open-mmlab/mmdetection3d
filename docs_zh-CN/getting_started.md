@@ -122,7 +122,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 **注意：**
 
-1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c 。版本号将保存在训练的模型里。推荐在在每一次执行步骤 d 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
+1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c 。版本号将保存在训练的模型里。推荐在每一次执行步骤 d 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
 
     > 重要: 如果你重装了不同版本的 CUDA 或者 PyTorch 的 mmdet，请务必移除 `./build` 文件。
 
@@ -209,7 +209,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 
 如果你想输入一个 `ply` 格式的文件，你可以使用如下函数将它转换为 `bin` 的文件格式。然后就可以使用转化成 `bin` 格式的文件去运行样例程序。
 
-请注意在使用此脚本前，你需要先安装 pandas 和 plyfile。 这个函数也可使用在数据预处理当中，为了能够直接训练 ```ply data```。
+请注意在使用此脚本前，你需要先安装 `pandas` 和 `plyfile`。 这个函数也可使用在数据预处理当中，为了能够直接训练 ```ply data```。
 
 ```python
 import numpy as np
@@ -234,7 +234,7 @@ def convert_ply(input_path, output_path):
 convert_ply('./test.ply', './test.bin')
 ```
 
-如果你有其他格式的点云文件 (例：`off`, `obj`), 你可以使用 trimesh 将它们转化成 `ply`.
+如果你有其他格式的点云文件 (例：`off`, `obj`), 你可以使用 `trimesh` 将它们转化成 `ply`.
 
 ```python
 import trimesh
@@ -256,7 +256,7 @@ to_ply('./test.obj', './test.ply', 'obj')
 
 ### 同步接口
 
-这里有一个例子去说明如何构建模型以及测试给出的点云
+这里有一个例子去说明如何构建模型以及测试给出的点云：
 
 ```python
 from mmdet3d.apis import init_model, inference_detector
