@@ -734,5 +734,5 @@ def test_points_sample():
 
     repr_str = repr(point_sample)
     expected_repr_str = f'PointSample(num_points={num_points},'\
-                        ' sample_range={sample_range})'
+                        + f' sample_range={sample_range})'
     assert repr_str == expected_repr_str
