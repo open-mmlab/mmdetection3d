@@ -48,24 +48,21 @@ mmdetection3d
 KITTI 官方提供的目标检测开发[工具包]((https://s3.eu-central-1.amazonaws.com/avg-kitti/devkit_object.zip))详细描述了 KITTI 数据集的标注格式，例如，KITTI 标注格式包含了以下的标注信息：
 
 ```
-#Values    Name      Description
+#  值    名称      描述
 ----------------------------------------------------------------------------
-   1    type         Describes the type of object: 'Car', 'Van', 'Truck',
-                     'Pedestrian', 'Person_sitting', 'Cyclist', 'Tram',
-                     'Misc' or 'DontCare'
-   1    truncated    Float from 0 (non-truncated) to 1 (truncated), where
-                     truncated refers to the object leaving image boundaries
-   1    occluded     Integer (0,1,2,3) indicating occlusion state:
-                     0 = fully visible, 1 = partly occluded
-                     2 = largely occluded, 3 = unknown
-   1    alpha        Observation angle of object, ranging [-pi..pi]
-   4    bbox         2D bounding box of object in the image (0-based index):
-                     contains left, top, right, bottom pixel coordinates
-   3    dimensions   3D object dimensions: height, width, length (in meters)
-   3    location     3D object location x,y,z in camera coordinates (in meters)
-   1    rotation_y   Rotation ry around Y-axis in camera coordinates [-pi..pi]
-   1    score        Only for results: Float, indicating confidence in
-                     detection, needed for p/r curves, higher is better.
+   1    类型      描述检测目标的类型：'Car'，'Van'，'Truck'，
+                  'Pedestrian'，'Person_sitting'，'Cyclist'，'Tram'，
+                  'Misc' 或 'DontCare'
+   1    截断程度  从0（非截断）到1（截断）的浮点数，其中截断指的是离开检测图像边界的检测目标
+   1    遮挡程度  用来表示遮挡状态的四种整数（0，1，2，3）:
+                  0 = 可见，1 = 部分遮挡
+                  2 = 大面积遮挡，3 = 未知
+   1    观测角    观测目标的角度，取值范围为 [-pi..pi]
+   4    标注框    检测目标在图像中的2维标注框（以0为初始下标）：包括每个检测目标的左上角和右下角的坐标
+   3    维度      检测目标的3维维度：高度、宽度、长度（以米为单位）
+   3    位置      相机坐标系下的3维位置 x，y，z（以米为单位）
+   1    y 旋转    相机坐标系下检测目标绕着Y轴的旋转角，取值范围为 [-pi..pi]
+   1    得分      仅在计算结果时使用，检测中表示置信度的浮点数，用于生成 p/r 曲线，在p/r 图中，越高的曲线表示结果越好。
 ```
 
 接下来本文将对 Waymo 数据集原始格式进行转换。
@@ -102,4 +99,4 @@ python tools/test.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_way
 
 **注意**：为了使用 Waymo 数据集的评估方法，需要参考[说明文档](https://mmdetection3d.readthedocs.io/en/latest/tutorials/waymo.html)并按照官方指导来准备与评估相关联的文件。
 
-更多有关测试和推理的使用细节，请参考 [案例 1]((https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html)) 。
+更多有关测试和推理的使用细节，请参考 [案例 1](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html) 。
