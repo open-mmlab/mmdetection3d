@@ -23,4 +23,4 @@
 
   ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``
 
-    请将 numpy 的版本降级至 < 1.20.0，或者从源码安装 numba == 0.48，这是由于 numpy == 1.20.0 改变了 API，使得在调用 `np.dtype` 会产生子类。
+    请将 numpy 的版本降级至 < 1.20.0，或者从源码安装 numba == 0.48，这是由于 numpy == 1.20.0 改变了 API，使得在调用 `np.dtype` 会产生子类。请参考 [这里](https://github.com/numba/numba/issues/6041) 获取更多细节。

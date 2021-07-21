@@ -23,4 +23,4 @@ We list some potential troubles encountered by users and developers, along with 
 
   ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``
 
-  please downgrade numpy to < 1.20.0 or install numba == 0.48 from source, because in numpy == 1.20.0, `np.dtype` produces subclass due to API change.
+  please downgrade numpy to < 1.20.0 or install numba == 0.48 from source, because in numpy == 1.20.0, `np.dtype` produces subclass due to API change. Please refer to [here](https://github.com/numba/numba/issues/6041) for more details.
