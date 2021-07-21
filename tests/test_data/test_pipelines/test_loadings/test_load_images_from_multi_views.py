@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import torch
 from mmcv.parallel import DataContainer
 
@@ -47,18 +48,14 @@ def test_load_multi_view_image_from_files():
 
 
 def test_multi_view_pipeline():
+    file_names = ['00000.jpg', '00011.jpg', '00102.jpg']
     input_dict = dict(
         img_prefix=None,
         img_info=[
             dict(
-                filename='tests/data/scannet/posed_images/scene0000_00/00000.jpg'
-            ),  # noqa
-            dict(
-                filename='tests/data/scannet/posed_images/scene0000_00/00011.jpg'
-            ),  # noqa
-            dict(
-                filename='tests/data/scannet/posed_images/scene0000_00/00102.jpg'
-            ),  # noqa
+                filename=os.path.join(
+                    'tests/data/scannet/posed_images/scene0000_00', file_name))
+            for file_name in file_names
         ],
         depth2img=[np.eye(4), np.eye(4) + 0.1,
                    np.eye(4) - 0.1])

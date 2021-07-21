@@ -1,6 +1,5 @@
 import mmcv
 import numpy as np
-import warnings
 from collections import defaultdict
 
 from mmdet3d.core.points import BasePoints, get_points_type
@@ -9,7 +8,6 @@ from mmdet.datasets.pipelines import (Compose, LoadAnnotations,
                                       LoadImageFromFile)
 
 
-# TODO: It is not used now. Remove in favour of MultiViewPipeline.
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
     """Load multi channel images from a list of separate channel files.
@@ -23,9 +21,6 @@ class LoadMultiViewImageFromFiles(object):
     """
 
     def __init__(self, to_float32=False, color_type='unchanged'):
-        warnings.warn('DeprecationWarning: LoadMultiViewImageFromFiles'
-                      'is deprecated, please use MultiViewPipeline('
-                      'transforms=[dict(type="LoadImageFromFile")]) instead')
         self.to_float32 = to_float32
         self.color_type = color_type
 
@@ -681,6 +676,10 @@ class MultiViewPipeline(object):
 
     Args:
         transforms (list[dict]): Transforms to apply for each image.
+            The list of transforms for MultiViewPipeline and
+            MultiScaleFlipAug differs. Here LoadImageFromFile is
+            required as the first transform. Other transforms as usual
+            can include Normalize, Pad, Resize etc.
         n_images (int): Number of images to sample. Defaults to -1.
         pose_keys (list[str]): Keys to be used to sample simultaneously
             with images. Defaults to ('lidar2img', 'depth2img', 'cam2img').
@@ -691,6 +690,7 @@ class MultiViewPipeline(object):
                  n_images=-1,
                  pose_keys=('lidar2img', 'depth2img', 'cam2img')):
         self.transforms = Compose(transforms)
+        assert isinstance(self.transforms.transforms[0], LoadImageFromFile)
         self.n_images = n_images
         self.pose_keys = pose_keys
 
