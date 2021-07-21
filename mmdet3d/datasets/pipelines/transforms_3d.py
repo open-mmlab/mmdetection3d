@@ -860,16 +860,15 @@ class PointSample(object):
         if replace is None:
             replace = (points.shape[0] < num_samples)
         point_range = range(len(points))
-        if sample_range:
+        if sample_range is not None and not replace:
+            # Only sampling the near points when len(points) >= num_samples
             depth = points.coord[:, 2]
             far_inds = np.where(depth > sample_range)[0]
             near_inds = np.where(depth <= sample_range)[0]
-            if not replace:
-                # Only sampling the near points when len(points) >= num_samples
-                point_range = near_inds
-                num_samples -= len(far_inds)
+            point_range = near_inds
+            num_samples -= len(far_inds)
         choices = np.random.choice(point_range, num_samples, replace=replace)
-        if sample_range and not replace:
+        if sample_range is not None and not replace:
             choices = np.concatenate((far_inds, choices))
             # Shuffle points after sampling
             np.random.shuffle(choices)
