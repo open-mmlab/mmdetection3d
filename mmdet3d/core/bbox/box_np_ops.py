@@ -9,6 +9,9 @@ from .structures.utils import limit_period, points_cam2img, rotation_3d_in_axis
 def camera_to_lidar(points, r_rect, velo2cam):
     """Convert points in camera coordinate to lidar coordinate.
 
+    Note:
+        This function is for KITTI only.
+
     Args:
         points (np.ndarray, shape=[N, 3]): Points in camera coordinate.
         r_rect (np.ndarray, shape=[4, 4]): Matrix to project points in
