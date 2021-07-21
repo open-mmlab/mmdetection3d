@@ -66,7 +66,7 @@ class Box3DMode(IntEnum):
 
         Args:
             box (tuple | list | np.ndarray |
-                torch.Tensor | BaseInstance3DBoxes):
+                torch.Tensor | :obj:`BaseInstance3DBoxes`):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
             src (:obj:`Box3DMode`): The src Box mode.
             dst (:obj:`Box3DMode`): The target Box mode.
@@ -75,11 +75,13 @@ class Box3DMode(IntEnum):
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
-            with_yaw (bool): If `box` is an instance of `BaseInstance3DBoxes`,
-                whether or not it has a yaw angle. Defaults to True.
+            with_yaw (bool): If `box` is an instance of
+                :obj:`BaseInstance3DBoxes`, whether or not it has a yaw angle.
+                Defaults to True.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor | BaseInstance3DBoxes):
+            (tuple | list | np.ndarray | torch.Tensor |
+                :obj:`BaseInstance3DBoxes`):
                 The converted box of the same type.
         """
         if src == dst:
