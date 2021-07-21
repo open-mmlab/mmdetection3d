@@ -193,7 +193,7 @@ python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth 
 
 # 数据集转换
 
-`tools/data_converter/` 包含转换数据集为其他格式的一些工具。其中大多数转换数据集为基于 pickle 的信息文件，比如 KITTI，nuscense 和 lyft。Waymo 转换器被用来重组织 waymo 原始数据为 KITTI 风格。用户能够参考它们了解我们转换数据格式的方法。将它们修改为 nuImages 转换器等脚本也很方便。
+`tools/data_converter/` 包含转换数据集为其他格式的一些工具。其中大多数转换数据集为基于 pickle 的信息文件，比如 KITTI，nuscense 和 lyft。Waymo 转换器被用来重新组织 waymo 原始数据为 KITTI 风格。用户能够参考它们了解我们转换数据格式的方法。将它们修改为 nuImages 转换器等脚本也很方便。
 
 为了转换 nuImages 数据集为 COCO 格式，请使用下面的指令：
 
