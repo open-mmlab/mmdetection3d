@@ -680,3 +680,49 @@ def test_seg_format_results():
     expected_txt_path = osp.join(tmp_dir.name, 'results', 'scene0000_00.txt')
     assert np.all(result_files[0]['seg_mask'] == expected_label)
     mmcv.check_file_exist(expected_txt_path)
+
+
+def test_multiview_getitem():
+    np.random.seed(0)
+    root_path = './tests/data/scannet/'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                   'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'garbagebin')
+    img_norm_cfg = dict(
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True)
+    pipelines = [
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=True,
+            with_label_3d=True,
+            with_mask_3d=True,
+            with_seg_3d=True),
+        dict(
+            type='MultiViewPipeline',
+            n_images=2,
+            transforms=[
+                dict(type='LoadImageFromFile'),
+                dict(type='Normalize', **img_norm_cfg),
+                dict(type='Pad', size_divisor=32)
+            ]),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(type='Collect3D', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d']),
+    ]
+
+    scannet_dataset = ScanNetDataset(
+        root_path,
+        ann_file,
+        pipelines,
+        modality=dict(use_camera=True, use_depth=False))
+    data = scannet_dataset[0]
+    assert data['img']._data.shape == torch.Size([2, 3, 992, 1312])
+    assert data['img_metas']._data['ori_shape'] == (968, 1296, 3)
+    assert data['img_metas']._data['img_shape'] == (968, 1296, 3)
+    assert data['img_metas']._data['pad_shape'] == (992, 1312, 3)
+    assert len(data['img_metas']._data['depth2img']) == 2
+    for depth2img in data['img_metas']._data['depth2img']:
+        assert depth2img.shape == (4, 4)

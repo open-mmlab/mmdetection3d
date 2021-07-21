@@ -677,6 +677,14 @@ class LoadAnnotations3D(LoadAnnotations):
 
 @PIPELINES.register_module()
 class MultiViewPipeline(object):
+    """Load and transform multi-view images.
+
+    Args:
+        transforms (list[dict]): Transforms to apply for each image.
+        n_images (int): Number of images to sample. Defaults to -1.
+        pose_keys (list[str]): Keys to be used to sample simultaneously
+            with images. Defaults to ('lidar2img', 'depth2img', 'cam2img').
+    """
 
     def __init__(self,
                  transforms,
@@ -687,6 +695,16 @@ class MultiViewPipeline(object):
         self.pose_keys = pose_keys
 
     def __call__(self, results):
+        """Call function to load multi-view image from files.
+
+        Args:
+            results (dict): Result dict containing multi-view image filenames.
+
+        Returns:
+            dict: The result dict containing the multi-view image data.
+                Added keys are deducted from all pipelines from
+                self.transforms.
+        """
         assert len(results['img_info'])
         pose_keys = [k for k in results if k in self.pose_keys]
         for key in pose_keys:
@@ -706,13 +724,13 @@ class MultiViewPipeline(object):
                 img_info=results['img_info'][i])
             img_results = self.transforms(img_results)
             img_pose_dict['img'].append(img_results['img'])
+            img_pose_dict['img_info'].append(img_results['img_info'])
             for key in pose_keys:
                 img_pose_dict[key].append(results[key][i])
 
         # copy image keys to results
         for key in img_results.keys():
-            if key not in ['img', 'img_prefix', 'img_info']:
-                results[key] = img_results[key]
+            results[key] = img_results[key]
         for key in img_pose_dict:
             results[key] = img_pose_dict[key]
         return results

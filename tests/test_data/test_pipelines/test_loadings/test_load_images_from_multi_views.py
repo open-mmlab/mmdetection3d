@@ -3,7 +3,8 @@ import torch
 from mmcv.parallel import DataContainer
 
 from mmdet3d.datasets.pipelines import (DefaultFormatBundle,
-                                        LoadMultiViewImageFromFiles)
+                                        LoadMultiViewImageFromFiles,
+                                        MultiViewPipeline)
 
 
 def test_load_multi_view_image_from_files():
@@ -43,3 +44,35 @@ def test_load_multi_view_image_from_files():
 
     assert isinstance(img, DataContainer)
     assert img._data.shape == torch.Size((num_views, 3, 1280, 1920))
+
+
+def test_multi_view_pipeline():
+    input_dict = dict(
+        img_prefix=None,
+        img_info=[
+            dict(
+                filename='tests/data/scannet/posed_images/scene0000_00/00000.jpg'
+            ),  # noqa
+            dict(
+                filename='tests/data/scannet/posed_images/scene0000_00/00011.jpg'
+            ),  # noqa
+            dict(
+                filename='tests/data/scannet/posed_images/scene0000_00/00102.jpg'
+            ),  # noqa
+        ],
+        depth2img=[np.eye(4), np.eye(4) + 0.1,
+                   np.eye(4) - 0.1])
+
+    pipeline = MultiViewPipeline(
+        transforms=[dict(type='LoadImageFromFile')], n_images=2)
+    results = pipeline(input_dict)
+
+    assert len(results['img']) == 2
+    assert len(results['depth2img']) == 2
+    shape = (968, 1296, 3)
+    for img in results['img']:
+        assert img.shape == shape
+    file_names = set(img_info['filename'] for img_info in results['img_info'])
+    assert len(file_names) == 2
+    depth2img = set(str(x) for x in results['depth2img'])
+    assert len(depth2img) == 2
