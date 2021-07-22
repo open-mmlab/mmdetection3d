@@ -292,6 +292,7 @@ class AnchorTrainMixin(object):
                 sampling_result.pos_bboxes,
                 pos_bbox_targets,
                 self.dir_offset,
+                self.dir_limit_offset,
                 one_hot=False)
             bbox_targets[pos_inds, :] = pos_bbox_targets
             bbox_weights[pos_inds, :] = 1.0
@@ -317,6 +318,7 @@ class AnchorTrainMixin(object):
 def get_direction_target(anchors,
                          reg_targets,
                          dir_offset=0,
+                         dir_limit_offset=0,
                          num_bins=2,
                          one_hot=True):
     """Encode direction to 0 ~ num_bins-1.
@@ -332,7 +334,7 @@ def get_direction_target(anchors,
         torch.Tensor: Encoded direction targets.
     """
     rot_gt = reg_targets[..., 6] + anchors[..., 6]
-    offset_rot = limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
+    offset_rot = limit_period(rot_gt - dir_offset, dir_limit_offset, 2 * np.pi)
     dir_cls_targets = torch.floor(offset_rot / (2 * np.pi / num_bins)).long()
     dir_cls_targets = torch.clamp(dir_cls_targets, min=0, max=num_bins - 1)
     if one_hot:
