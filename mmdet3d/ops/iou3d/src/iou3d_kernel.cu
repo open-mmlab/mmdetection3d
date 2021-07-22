@@ -61,9 +61,9 @@ __device__ inline int check_in_box2d(const float *box, const Point &p) {
         angle_sin =
             sin(-box[4]);  // rotate the point in the opposite direction of box
   float rot_x =
-      (p.x - center_x) * angle_cos + (p.y - center_y) * angle_sin + center_x;
+      (p.x - center_x) * angle_cos - (p.y - center_y) * angle_sin + center_x;
   float rot_y =
-      -(p.x - center_x) * angle_sin + (p.y - center_y) * angle_cos + center_y;
+      (p.x - center_x) * angle_sin + (p.y - center_y) * angle_cos + center_y;
 #ifdef DEBUG
   printf("box: (%.3f, %.3f, %.3f, %.3f, %.3f)\n", box[0], box[1], box[2],
          box[3], box[4]);
@@ -112,9 +112,9 @@ __device__ inline void rotate_around_center(const Point &center,
                                             const float angle_cos,
                                             const float angle_sin, Point &p) {
   float new_x =
-      (p.x - center.x) * angle_cos + (p.y - center.y) * angle_sin + center.x;
+      (p.x - center.x) * angle_cos - (p.y - center.y) * angle_sin + center.x;
   float new_y =
-      -(p.x - center.x) * angle_sin + (p.y - center.y) * angle_cos + center.y;
+      (p.x - center.x) * angle_sin + (p.y - center.y) * angle_cos + center.y;
   p.set(new_x, new_y);
 }
 
