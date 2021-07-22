@@ -2,9 +2,9 @@
 
 ## 使用已有模型进行推理
 
-这里我们提供了评测 SUNRGBD、ScanNet、KITTI 等多个数据集的测试脚本
+这里我们提供了评测 SUNRGBD、ScanNet、KITTI 等多个数据集的测试脚本。
 
-请参考[开始](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html)下的验证/样例来获取更容易集成到其它项目和基本样例的高级接口
+请参考[开始](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html)下的验证/样例来获取更容易集成到其它项目和基本样例的高级接口。
 
 ### 在标准数据集上测试已有模型
 
@@ -24,7 +24,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 可选参数：
 - `RESULT_FILE`: 输出结果（pickle 格式）的文件名，如果未指定，结果不会被保存。
-- `EVAL_METRICS`: 在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测 2D 检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较。
+- `EVAL_METRICS`: 在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说在检测任务上可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测 2D 检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较；同样地，对 S3DIS、ScanNet 这些数据集来说，在分割任务上的度量方法可以设置为 `mIoU`。
 - `--show`: 如果被指定，检测结果会在静默模式下被保存，用于调试和可视化，但只在单块GPU测试的情况下生效，和 `--show-dir` 搭配使用。
 - `--show-dir`: 如果被指定，检测结果会被保存在指定文件夹下的 `***_points.obj` 和 `***_pred.obj` 文件中，用于调试和可视化，但只在单块GPU测试的情况下生效，对于这个选项，图形化界面在你的环境中不是必需的。
 
@@ -32,7 +32,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 假定你已经把模型权重文件下载到 `checkpoints/` 文件夹下：
 
-1. 在 ScanNet 数据集上测试 votenet，保存模型，可视化预测结果
+1. 在 ScanNet 数据集上测试 VoteNet，保存模型，可视化预测结果
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -40,7 +40,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --show --show-dir ./data/scannet/show_results
    ```
 
-2. 在 ScanNet 数据集上测试 votenet，保存模型，可视化预测结果，可视化真实标签，计算 mAP
+2. 在 ScanNet 数据集上测试 VoteNet，保存模型，可视化预测结果，可视化真实标签，计算 mAP
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -49,7 +49,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --eval-options 'show=True' 'out_dir=./data/scannet/show_results'
    ```
 
-3. 在 ScanNet 数据集上测试 votenet（不保存测试结果），计算 mAP
+3. 在 ScanNet 数据集上测试 VoteNet（不保存测试结果），计算 mAP
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -57,7 +57,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --eval mAP
    ```
 
-4. 使用8块显卡测试 SECONDs, 计算 mAP
+4. 使用8块显卡测试 SECOND, 计算 mAP
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
@@ -65,7 +65,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --out results.pkl --eval mAP
    ```
 
-5. 使用8块显卡在 nuscenes 数据集上测试 PointPillars, 生成提交给官方评测服务器的 json 文件
+5. 使用8块显卡在 nuScenes 数据集上测试 PointPillars, 生成提交给官方评测服务器的 json 文件
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
@@ -122,7 +122,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 ## 在标准数据集上训练预定义模型
 
-MMDetection3D 分别用 `MMDistributedDataParallel` and `MMDataParallel` 实现了分布式训练和非分布式训练
+MMDetection3D 分别用 `MMDistributedDataParallel` and `MMDataParallel` 实现了分布式训练和非分布式训练。
 
 所有的输出（日志文件和模型权重文件）都会被保存到工作目录下，通过配置文件里的 `work_dir` 指定。
 
@@ -200,13 +200,13 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29501 ./tools/dist_train.sh ${CONFIG_FILE} 4
 
 2. 修改配置文件（通常在配置文件的倒数第6行）来设置不同的通信端口
 
-   In `config1.py`,
+   在 `config1.py` 中,
 
    ```python
    dist_params = dict(backend='nccl', port=29500)
    ```
 
-   In `config2.py`,
+   在 `config2.py` 中,
 
    ```python
    dist_params = dict(backend='nccl', port=29501)
