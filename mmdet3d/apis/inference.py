@@ -8,10 +8,9 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from os import path as osp
 
-from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
-                          DepthInstance3DBoxes, LiDARInstance3DBoxes,
-                          show_multi_modality_result, show_result,
-                          show_seg_result)
+from mmdet3d.core import (Box3DMode, Coord3DMode, DepthInstance3DBoxes,
+                          LiDARInstance3DBoxes, show_multi_modality_result,
+                          show_result, show_seg_result)
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_model
@@ -316,8 +315,7 @@ def show_det_result_meshlab(data,
     # for now we convert points into depth mode
     box_mode = data['img_metas'][0][0]['box_mode_3d']
     if box_mode != Box3DMode.DEPTH:
-        points = points[..., [1, 0, 2]]
-        points[..., 0] *= -1
+        points = Coord3DMode.convert(points, box_mode, Coord3DMode.DEPTH)
         show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
     else:
         show_bboxes = deepcopy(pred_bboxes)

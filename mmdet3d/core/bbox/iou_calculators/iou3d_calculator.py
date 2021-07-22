@@ -31,8 +31,10 @@ class BboxOverlapsNearest3D(object):
             between each aligned pair of bboxes1 and bboxes2.
 
         Args:
-            bboxes1 (torch.Tensor): shape (N, 7+N) [x, y, z, h, w, l, ry, v].
-            bboxes2 (torch.Tensor): shape (M, 7+N) [x, y, z, h, w, l, ry, v].
+            bboxes1 (torch.Tensor): shape (N, 7+N)
+                [x, y, z, dx, dy, dz, ry, v].
+            bboxes2 (torch.Tensor): shape (M, 7+N)
+                [x, y, z, dx, dy, dz, ry, v].
             mode (str): "iou" (intersection over union) or iof
                 (intersection over foreground).
             is_aligned (bool): Whether the calculation is aligned.
@@ -74,8 +76,8 @@ class BboxOverlaps3D(object):
             calculate the actual 3D IoUs of boxes.
 
         Args:
-            bboxes1 (torch.Tensor): shape (N, 7+C) [x, y, z, h, w, l, ry].
-            bboxes2 (torch.Tensor): shape (M, 7+C) [x, y, z, h, w, l, ry].
+            bboxes1 (torch.Tensor): shape (N, 7+C) [x, y, z, dx, dy, dz, ry].
+            bboxes2 (torch.Tensor): shape (M, 7+C) [x, y, z, dx, dy, dz, ry].
             mode (str): "iou" (intersection over union) or
                 iof (intersection over foreground).
 
@@ -110,8 +112,8 @@ def bbox_overlaps_nearest_3d(bboxes1,
         aligned pair of bboxes1 and bboxes2.
 
     Args:
-        bboxes1 (torch.Tensor): shape (N, 7+C) [x, y, z, h, w, l, ry, v].
-        bboxes2 (torch.Tensor): shape (M, 7+C) [x, y, z, h, w, l, ry, v].
+        bboxes1 (torch.Tensor): shape (N, 7+C) [x, y, z, dx, dy, dz, ry, v].
+        bboxes2 (torch.Tensor): shape (M, 7+C) [x, y, z, dx, dy, dz, ry, v].
         mode (str): "iou" (intersection over union) or iof
             (intersection over foreground).
         is_aligned (bool): Whether the calculation is aligned
@@ -148,8 +150,8 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
         calculate the actual IoUs of boxes.
 
     Args:
-        bboxes1 (torch.Tensor): shape (N, 7+C) [x, y, z, h, w, l, ry].
-        bboxes2 (torch.Tensor): shape (M, 7+C) [x, y, z, h, w, l, ry].
+        bboxes1 (torch.Tensor): shape (N, 7+C) [x, y, z, dx, dy, dz, ry].
+        bboxes2 (torch.Tensor): shape (M, 7+C) [x, y, z, dx, dy, dz, ry].
         mode (str): "iou" (intersection over union) or
             iof (intersection over foreground).
         coordinate (str): 'camera' or 'lidar' coordinate system.

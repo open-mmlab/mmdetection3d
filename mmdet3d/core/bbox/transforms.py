@@ -32,7 +32,7 @@ def bbox3d2roi(bbox_list):
             corresponding to a batch of images.
 
     Returns:
-        torch.Tensor: Region of interests in shape (n, c), where \
+        torch.Tensor: Region of interests in shape (n, c), where
             the channels are in order of [batch_ind, x, y ...].
     """
     rois_list = []
@@ -54,7 +54,7 @@ def bbox3d2result(bboxes, scores, labels, attrs=None):
         bboxes (torch.Tensor): Bounding boxes with shape of (n, 5).
         labels (torch.Tensor): Labels with shape of (n, ).
         scores (torch.Tensor): Scores with shape of (n, ).
-        attrs (torch.Tensor, optional): Attributes with shape of (n, ). \
+        attrs (torch.Tensor, optional): Attributes with shape of (n, ).
             Defaults to None.
 
     Returns:

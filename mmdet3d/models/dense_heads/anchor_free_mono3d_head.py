@@ -79,6 +79,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             use_direction_classifier=True,
             diff_rad_by_sin=True,
             dir_offset=0,
+            dir_limit_offset=0,
             loss_cls=dict(
                 type='FocalLoss',
                 use_sigmoid=True,

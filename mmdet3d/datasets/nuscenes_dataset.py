@@ -588,9 +588,9 @@ def output_to_nusc_box(detection):
     box_gravity_center = box3d.gravity_center.numpy()
     box_dims = box3d.dims.numpy()
     box_yaw = box3d.yaw.numpy()
-    # TODO: check whether this is necessary
-    # with dir_offset & dir_limit in the head
-    box_yaw = -box_yaw - np.pi / 2
+
+    # our LiDAR coordinate system -> nuScenes box coordinate system
+    nus_box_dims = box_dims[:, [1, 0, 2]]
 
     box_list = []
     for i in range(len(box3d)):
@@ -602,7 +602,7 @@ def output_to_nusc_box(detection):
         # velo_val * np.cos(velo_ori), velo_val * np.sin(velo_ori), 0.0)
         box = NuScenesBox(
             box_gravity_center[i],
-            box_dims[i],
+            nus_box_dims[i],
             quat,
             label=labels[i],
             score=scores[i],

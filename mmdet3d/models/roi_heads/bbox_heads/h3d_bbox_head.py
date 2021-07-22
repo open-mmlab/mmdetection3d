@@ -502,7 +502,7 @@ class H3DBboxHead(BaseModule):
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
             origin=(0.5, 0.5, 0.5))
-        box_indices = bbox.points_in_boxes(points)
+        box_indices = bbox.points_in_boxes_batch(points)
 
         corner3d = bbox.corners
         minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))

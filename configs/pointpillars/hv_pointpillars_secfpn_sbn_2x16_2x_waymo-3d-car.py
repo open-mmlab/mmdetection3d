@@ -17,7 +17,7 @@ model = dict(
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[[-74.88, -74.88, -0.0345, 74.88, 74.88, -0.0345]],
-            sizes=[[2.08, 4.73, 1.77]],
+            sizes=[[4.73, 2.08, 1.77]],
             rotations=[0, 1.57],
             reshape_out=True)),
     # model training and testing settings

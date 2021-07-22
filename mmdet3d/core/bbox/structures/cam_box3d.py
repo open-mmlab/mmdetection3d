@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 
-from mmdet3d.core.points import BasePoints
+from ...points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -38,6 +38,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
+    YAW_AXIS = 1
 
     def __init__(self,
                  tensor,
@@ -117,16 +118,16 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                           / |           /  |
             (x0, y0, z0) + ----------- +   + (x1, y1, z1)
                          |  /      .   |  /
-                         | / oriign    | /
+                         | / origin    | /
             (x0, y1, z0) + ----------- + -------> x right
                          |             (x1, y1, z0)
                          |
                          v
                     down y
         """
-        # TODO: rotation_3d_in_axis function do not support
-        #  empty tensor currently.
-        assert len(self.tensor) != 0
+        if self.tensor.numel() == 0:
+            return torch.empty([0, 8, 3], device=self.tensor.device)
+
         dims = self.dims
         corners_norm = torch.from_numpy(
             np.stack(np.unravel_index(np.arange(8), [2] * 3), axis=1)).to(
@@ -137,8 +138,11 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         corners_norm = corners_norm - dims.new_tensor([0.5, 1, 0.5])
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
-        # rotate around y axis
-        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=1)
+        # positive direction of the gravity axis
+        # in cam coord system points to the earth
+        # so the rotation is clockwise if viewed from above
+        corners = rotation_3d_in_axis(
+            corners, self.tensor[:, 6], axis=self.YAW_AXIS, clockwise=True)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
@@ -146,7 +150,12 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     def bev(self):
         """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
         with rotation in XYWHR format."""
-        return self.tensor[:, [0, 2, 3, 5, 6]]
+        bev = self.tensor[:, [0, 2, 3, 5, 6]].clone()
+        # positive direction of the gravity axis
+        # in cam coord system points to the earth
+        # so the bev yaw angle needs to be reversed
+        bev[:, -1] = -bev[:, -1]
+        return bev
 
     @property
     def nearest_bev(self):
@@ -170,8 +179,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return bev_boxes
 
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angle (float | torch.Tensor | np.ndarray):
@@ -180,39 +189,43 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns \
-                None, otherwise it returns the rotated points and the \
+            tuple or None: When ``points`` is None, the function returns
+                None, otherwise it returns the rotated points and the
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
+
         assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1, \
             f'invalid rotation angle shape {angle.shape}'
 
         if angle.numel() == 1:
-            rot_sin = torch.sin(angle)
-            rot_cos = torch.cos(angle)
-            rot_mat_T = self.tensor.new_tensor([[rot_cos, 0, -rot_sin],
-                                                [0, 1, 0],
-                                                [rot_sin, 0, rot_cos]])
+            self.tensor[:, 0:3], rot_mat_T = rotation_3d_in_axis(
+                self.tensor[:, 0:3],
+                angle,
+                axis=self.YAW_AXIS,
+                return_mat=True,
+                # positive direction of the gravity axis
+                # in cam coord system points to the earth
+                # so the rotation is clockwise if viewed from above
+                clockwise=True)
         else:
             rot_mat_T = angle
             rot_sin = rot_mat_T[2, 0]
             rot_cos = rot_mat_T[0, 0]
             angle = np.arctan2(rot_sin, rot_cos)
+            self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
 
-        self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
         self.tensor[:, 6] += angle
 
         if points is not None:
             if isinstance(points, torch.Tensor):
                 points[:, :3] = points[:, :3] @ rot_mat_T
             elif isinstance(points, np.ndarray):
-                rot_mat_T = rot_mat_T.numpy()
+                rot_mat_T = rot_mat_T.cpu().numpy()
                 points[:, :3] = np.dot(points[:, :3], rot_mat_T)
             elif isinstance(points, BasePoints):
-                # clockwise
-                points.rotate(-angle)
+                points.rotate(rot_mat_T)
             else:
                 raise ValueError
             return points, rot_mat_T
@@ -264,7 +277,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             polygon, we reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside \
+            torch.Tensor: Indicating whether each box is inside
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -296,8 +309,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         boxes2_top_height = boxes2.top_height.view(1, -1)
         boxes2_bottom_height = boxes2.bottom_height.view(1, -1)
 
-        # In camera coordinate system
-        # from up to down is the positive direction
+        # positive direction of the gravity axis
+        # in cam coord system points to the earth
         heighest_of_bottom = torch.min(boxes1_bottom_height,
                                        boxes2_bottom_height)
         lowest_of_top = torch.max(boxes1_top_height, boxes2_top_height)
@@ -316,9 +329,50 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BaseInstance3DBoxes`:  \
+            :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
             box=self, src=Box3DMode.CAM, dst=dst, rt_mat=rt_mat)
+
+    def points_in_boxes(self, points):
+        """Find the box which the points are in.
+
+        Args:
+            points (torch.Tensor): Points in shape (N, 3).
+
+        Returns:
+            torch.Tensor: The index of box where each point are in.
+        """
+        from .coord_3d_mode import Coord3DMode
+
+        points_lidar = Coord3DMode.convert(points, Coord3DMode.CAM,
+                                           Coord3DMode.LIDAR)
+        boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
+                                          Coord3DMode.LIDAR)
+
+        box_idx = super().points_in_boxes(self, points_lidar, boxes_lidar)
+        return box_idx
+
+    def points_in_boxes_batch(self, points):
+        """Find points that are in boxes (CUDA).
+
+        Args:
+            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3],
+                3 dimensions are [x, y, z] in LiDAR coordinate.
+
+        Returns:
+            torch.Tensor: The index of boxes each point lies in with shape
+                of (B, M, T).
+        """
+        from .coord_3d_mode import Coord3DMode
+
+        points_lidar = Coord3DMode.convert(points, Coord3DMode.CAM,
+                                           Coord3DMode.LIDAR)
+        boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
+                                          Coord3DMode.LIDAR)
+
+        box_idx = super().points_in_boxes_batch(self, points_lidar,
+                                                boxes_lidar)
+        return box_idx

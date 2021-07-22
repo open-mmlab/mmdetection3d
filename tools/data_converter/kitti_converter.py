@@ -5,7 +5,7 @@ from collections import OrderedDict
 from nuscenes.utils.geometry_utils import view_points
 from pathlib import Path
 
-from mmdet3d.core.bbox import box_np_ops
+from mmdet3d.core.bbox import box_np_ops, points_cam2img
 from .kitti_data_utils import get_kitti_image_info, get_waymo_image_info
 from .nuscenes_converter import post_process_coords
 
@@ -471,7 +471,7 @@ def get_2d_boxes(info, occluded, mono3d=True):
             repro_rec['velo_cam3d'] = -1  # no velocity in KITTI
 
             center3d = np.array(loc).reshape([1, 3])
-            center2d = box_np_ops.points_cam2img(
+            center2d = points_cam2img(
                 center3d, camera_intrinsic, with_depth=True)
             repro_rec['center2d'] = center2d.squeeze().tolist()
             # normalized center2D + depth

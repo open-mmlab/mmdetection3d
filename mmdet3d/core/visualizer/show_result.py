@@ -111,16 +111,14 @@ def show_result(points,
     if gt_bboxes is not None:
         # bottom center to gravity center
         gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
-        # the positive direction for yaw in meshlab is clockwise
-        gt_bboxes[:, 6] *= -1
+
         _write_oriented_bbox(gt_bboxes,
                              osp.join(result_path, f'{filename}_gt.obj'))
 
     if pred_bboxes is not None:
         # bottom center to gravity center
         pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
-        # the positive direction for yaw in meshlab is clockwise
-        pred_bboxes[:, 6] *= -1
+
         _write_oriented_bbox(pred_bboxes,
                              osp.join(result_path, f'{filename}_pred.obj'))
 

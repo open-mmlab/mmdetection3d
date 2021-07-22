@@ -53,11 +53,11 @@ def test_PointwiseSemanticHead():
     gt_bboxes = [
         LiDARInstance3DBoxes(
             torch.tensor(
-                [[6.4118, -3.4305, -1.7291, 1.7033, 3.4693, 1.6197, -0.9091]],
+                [[6.4118, -3.4305, -1.7291, 1.7033, 3.4693, 1.6197, 0.9091]],
                 dtype=torch.float32).cuda()),
         LiDARInstance3DBoxes(
             torch.tensor(
-                [[16.9107, 9.7925, -1.9201, 1.6097, 3.2786, 1.5307, -2.4056]],
+                [[16.9107, 9.7925, -1.9201, 1.6097, 3.2786, 1.5307, 2.4056]],
                 dtype=torch.float32).cuda())
     ]
     # batch size is 2 in the unit test

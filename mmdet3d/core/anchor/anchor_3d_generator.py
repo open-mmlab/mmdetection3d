@@ -32,7 +32,7 @@ class Anchor3DRangeGenerator(object):
 
     def __init__(self,
                  ranges,
-                 sizes=[[1.6, 3.9, 1.56]],
+                 sizes=[[3.9, 1.6, 1.56]],
                  scales=[1],
                  rotations=[0, 1.5707963],
                  custom_values=(),
@@ -149,7 +149,7 @@ class Anchor3DRangeGenerator(object):
                              feature_size,
                              anchor_range,
                              scale=1,
-                             sizes=[[1.6, 3.9, 1.56]],
+                             sizes=[[3.9, 1.6, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
         """Generate anchors in a single range.
@@ -245,7 +245,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
                              feature_size,
                              anchor_range,
                              scale,
-                             sizes=[[1.6, 3.9, 1.56]],
+                             sizes=[[3.9, 1.6, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
         """Generate anchors in a single range.

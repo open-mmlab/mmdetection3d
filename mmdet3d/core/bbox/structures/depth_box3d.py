@@ -3,7 +3,6 @@ import numpy as np
 import torch
 
 from mmdet3d.core.points import BasePoints
-from mmdet3d.ops import points_in_boxes_batch
 from .base_box3d import BaseInstance3DBoxes
 from .utils import limit_period, rotation_3d_in_axis
 
@@ -38,6 +37,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
+    YAW_AXIS = 2
 
     @property
     def gravity_center(self):
@@ -67,7 +67,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                              / |           /  |
                (x0, y0, z1) + ----------- +   + (x1, y1, z0)
                             |  /      .   |  /
-                            | / oriign    | /
+                            | / origin    | /
                (x0, y0, z0) + ----------- + --------> right x
                                           (x1, y0, z0)
         """
@@ -85,7 +85,8 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
         # rotate around z axis
-        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=2)
+        corners = rotation_3d_in_axis(
+            corners, self.tensor[:, 6], axis=self.YAW_AXIS)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
@@ -117,8 +118,8 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         return bev_boxes
 
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angle (float | torch.Tensor | np.ndarray):
@@ -127,30 +128,31 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns \
-                None, otherwise it returns the rotated points and the \
+            tuple or None: When ``points`` is None, the function returns
+                None, otherwise it returns the rotated points and the
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
+
         assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1, \
             f'invalid rotation angle shape {angle.shape}'
 
         if angle.numel() == 1:
-            rot_sin = torch.sin(angle)
-            rot_cos = torch.cos(angle)
-            rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
-                                                [rot_sin, rot_cos, 0],
-                                                [0, 0, 1]]).T
+            self.tensor[:, 0:3], rot_mat_T = rotation_3d_in_axis(
+                self.tensor[:, 0:3],
+                angle,
+                axis=self.YAW_AXIS,
+                return_mat=True)
         else:
-            rot_mat_T = angle.T
+            rot_mat_T = angle
             rot_sin = rot_mat_T[0, 1]
             rot_cos = rot_mat_T[0, 0]
             angle = np.arctan2(rot_sin, rot_cos)
+            self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
 
-        self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
         if self.with_yaw:
-            self.tensor[:, 6] -= angle
+            self.tensor[:, 6] += angle
         else:
             corners_rot = self.corners @ rot_mat_T
             new_x_size = corners_rot[..., 0].max(
@@ -165,11 +167,10 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             if isinstance(points, torch.Tensor):
                 points[:, :3] = points[:, :3] @ rot_mat_T
             elif isinstance(points, np.ndarray):
-                rot_mat_T = rot_mat_T.numpy()
+                rot_mat_T = rot_mat_T.cpu().numpy()
                 points[:, :3] = np.dot(points[:, :3], rot_mat_T)
             elif isinstance(points, BasePoints):
-                # anti-clockwise
-                points.rotate(angle)
+                points.rotate(rot_mat_T)
             else:
                 raise ValueError
             return points, rot_mat_T
@@ -221,7 +222,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             polygon, we try to reduce the burdun for simpler cases.
 
         Returns:
-            torch.Tensor: Indicating whether each box is inside \
+            torch.Tensor: Indicating whether each box is inside
                 the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
@@ -242,40 +243,12 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`DepthInstance3DBoxes`: \
+            :obj:`DepthInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
             box=self, src=Box3DMode.DEPTH, dst=dst, rt_mat=rt_mat)
-
-    def points_in_boxes(self, points):
-        """Find points that are in boxes (CUDA).
-
-        Args:
-            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
-                3 dimensions are [x, y, z] in LiDAR coordinate.
-
-        Returns:
-            torch.Tensor: The index of boxes each point lies in with shape \
-                of (B, M, T).
-        """
-        from .box_3d_mode import Box3DMode
-
-        # to lidar
-        points_lidar = points.clone()
-        points_lidar = points_lidar[..., [1, 0, 2]]
-        points_lidar[..., 1] *= -1
-        if points.dim() == 2:
-            points_lidar = points_lidar.unsqueeze(0)
-        else:
-            assert points.dim() == 3 and points_lidar.shape[0] == 1
-
-        boxes_lidar = self.convert_to(Box3DMode.LIDAR).tensor
-        boxes_lidar = boxes_lidar.to(points.device).unsqueeze(0)
-        box_idxs_of_pts = points_in_boxes_batch(points_lidar, boxes_lidar)
-
-        return box_idxs_of_pts.squeeze(0)
 
     def enlarged_box(self, extra_width):
         """Enlarge the length, width and height boxes.
@@ -331,13 +304,12 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                        -1, 3)
 
         surface_rot = rot_mat_T.repeat(6, 1, 1)
-        surface_3d = torch.matmul(
-            surface_3d.unsqueeze(-2), surface_rot.transpose(2, 1)).squeeze(-2)
+        surface_3d = torch.matmul(surface_3d.unsqueeze(-2),
+                                  surface_rot).squeeze(-2)
         surface_center = center.repeat(1, 6, 1).reshape(-1, 3) + surface_3d
 
         line_rot = rot_mat_T.repeat(12, 1, 1)
-        line_3d = torch.matmul(
-            line_3d.unsqueeze(-2), line_rot.transpose(2, 1)).squeeze(-2)
+        line_3d = torch.matmul(line_3d.unsqueeze(-2), line_rot).squeeze(-2)
         line_center = center.repeat(1, 12, 1).reshape(-1, 3) + line_3d
 
         return surface_center, line_center
