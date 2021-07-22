@@ -31,7 +31,7 @@ mmdetection3d
 
 ### Create KITTI dataset
 
-By Creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation.Subsequently, create KITTI data by running
+By Creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation. Subsequently, create KITTI data by running
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -48,7 +48,7 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else.
 
 The folder structure after process should be as below
-
+```
 kitti
 ├── ImageSets
 │   ├── test.txt
@@ -73,6 +73,7 @@ kitti
 ├── kitti_dbinfos_train.pkl
 ├── kitti_infos_test.pkl
 ├── kitti_infos_trainval.pkl
+```
 
 - `kitti_gt_database/xxxxx.bin`: an single object point cloud data in training dataset
 - `kitti_infos_train.pkl`: training dataset infos, the details info of each data frame is as follows:
