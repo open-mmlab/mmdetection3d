@@ -41,18 +41,17 @@ class SUNRGBDInstance(object):
         self.ymax = data[2] + data[4]
         self.box2d = np.array([self.xmin, self.ymin, self.xmax, self.ymax])
         self.centroid = np.array([data[5], data[6], data[7]])
-        self.w = data[8]
-        self.l = data[9]  # noqa: E741
-        self.h = data[10]
+        # data[9] is dx (l), data[8] is dy (w), data[10] is dz (h)
+        # in our depth coordinate system,
+        # l corresponds to the size along the x axis
+        self.size = np.array([data[9], data[8], data[10]]) * 2
         self.orientation = np.zeros((3, ))
         self.orientation[0] = data[11]
         self.orientation[1] = data[12]
-        self.heading_angle = -1 * np.arctan2(self.orientation[1],
-                                             self.orientation[0])
-        self.box3d = np.concatenate([
-            self.centroid,
-            np.array([self.l * 2, self.w * 2, self.h * 2, self.heading_angle])
-        ])
+        self.heading_angle = np.arctan2(self.orientation[1],
+                                        self.orientation[0])
+        self.box3d = np.concatenate(
+            [self.centroid, self.size, self.heading_angle[None]])
 
 
 class SUNRGBDData(object):
