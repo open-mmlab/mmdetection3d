@@ -4,7 +4,10 @@ from mmcv.utils import Registry
 
 from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
                                   ROI_EXTRACTORS, SHARED_HEADS)
+<<<<<<< HEAD
 from mmseg.models.builder import SEGMENTORS
+=======
+>>>>>>> pointrcnn_3class_rpn_rcnn
 
 MODELS = Registry('models', parent=MMCV_MODELS)
 

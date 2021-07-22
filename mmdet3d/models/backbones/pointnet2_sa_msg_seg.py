@@ -3,14 +3,14 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
-from mmdet3d.ops import build_sa_module
+from mmdet3d.ops import PointFPModule, build_sa_module
 from mmdet.models import BACKBONES
 from .base_pointnet import BasePointNet
 
 
 @BACKBONES.register_module()
-class PointNet2SAMSG(BasePointNet):
-    """PointNet2 with Multi-scale grouping.
+class PointNet2Seg(BasePointNet):
+    """PointNet2 Segmentation backbone with Multi-scale grouping .
 
     Args:
         in_channels (int): Input channels of point cloud.
@@ -20,6 +20,7 @@ class PointNet2SAMSG(BasePointNet):
         num_samples (tuple[int]): The number of samples for ball
             query in each SA module.
         sa_channels (tuple[tuple[int]]): Out channels of each mlp in SA module.
+        fp_channels (tuple[tuple[int]]): Out channels of each mlp in FP module.
         aggregation_channels (tuple[int]): Out channels of aggregation
             multi-scale grouping features.
         fps_mods (tuple[int]): Mod of FPS for each SA module.
@@ -46,24 +47,25 @@ class PointNet2SAMSG(BasePointNet):
                               ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                               ((128, 128, 256), (128, 192, 256), (128, 256,
                                                                   256))),
-                 aggregation_channels=(64, 128, 256),
+                 fp_channels=((256, 256), (256, 256)),
                  fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
                  fps_sample_range_lists=((-1), (-1), (512, -1)),
-                 dilated_group=(True, True, True),
-                 out_indices=(2, ),
+                 aggregation_channels=None,
                  norm_cfg=dict(type='BN2d'),
                  sa_cfg=dict(
                      type='PointSAModuleMSG',
                      pool_mod='max',
                      use_xyz=True,
                      normalize_xyz=False),
-                 init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
+                 init_cfg=None,
+                 pretrained=None):
+        super().__init__(init_cfg=None, pretrained=None)
         self.num_sa = len(sa_channels)
-        self.out_indices = out_indices
-        assert max(out_indices) < self.num_sa
+        self.num_fp = len(fp_channels)
+
         assert len(num_points) == len(radii) == len(num_samples) == len(
-            sa_channels) == len(aggregation_channels)
+            sa_channels)
+        assert len(sa_channels) >= len(fp_channels)
 
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
@@ -98,26 +100,35 @@ class PointNet2SAMSG(BasePointNet):
                     mlp_channels=cur_sa_mlps,
                     fps_mod=cur_fps_mod,
                     fps_sample_range_list=cur_fps_sample_range_list,
-                    dilated_group=dilated_group[sa_index],
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
-                    bias=True))
+                    bias=False))
             skip_channel_list.append(sa_out_channel)
-
-            cur_aggregation_channel = aggregation_channels[sa_index]
-            if cur_aggregation_channel is None:
+            if aggregation_channels is None:
                 self.aggregation_mlps.append(None)
                 sa_in_channel = sa_out_channel
             else:
                 self.aggregation_mlps.append(
                     ConvModule(
                         sa_out_channel,
-                        cur_aggregation_channel,
+                        aggregation_channels[sa_index],
                         conv_cfg=dict(type='Conv1d'),
                         norm_cfg=dict(type='BN1d'),
                         kernel_size=1,
                         bias=True))
-                sa_in_channel = cur_aggregation_channel
+                sa_in_channel = aggregation_channels[sa_index]
+                skip_channel_list.append(sa_in_channel)
+
+        self.FP_modules = nn.ModuleList()
+        fp_source_channel = skip_channel_list.pop()
+        fp_target_channel = skip_channel_list.pop()
+        for fp_index in range(len(fp_channels)):
+            cur_fp_mlps = list(fp_channels[fp_index])
+            cur_fp_mlps = [fp_source_channel + fp_target_channel] + cur_fp_mlps
+            self.FP_modules.append(PointFPModule(mlp_channels=cur_fp_mlps))
+            if fp_index != len(fp_channels) - 1:
+                fp_source_channel = cur_fp_mlps[-1]
+                fp_target_channel = skip_channel_list.pop()
 
     @auto_fp16(apply_to=('points', ))
     def forward(self, points):
@@ -128,12 +139,13 @@ class PointNet2SAMSG(BasePointNet):
                 with shape (B, N, 3 + input_feature_dim).
 
         Returns:
-            dict[str, torch.Tensor]: Outputs of the last SA module.
+            dict[str, torch.Tensor]: Outputs of the last FP module.
 
-                - sa_xyz (torch.Tensor): The coordinates of sa features.
-                - sa_features (torch.Tensor): The features from the
-                    last Set Aggregation Layers.
-                - sa_indices (torch.Tensor): Indices of the \
+                - fp_xyz (list[torch.Tensor]): The coordinates of \
+                    each fp features.
+                - fp_features (list[torch.Tensor]): The features \
+                    from each Feature Propagate Layers.
+                - fp_indices (list[torch.Tensor]): Indices of the \
                     input points.
         """
         xyz, features = self._split_point_feats(points)
@@ -146,10 +158,6 @@ class PointNet2SAMSG(BasePointNet):
         sa_features = [features]
         sa_indices = [indices]
 
-        out_sa_xyz = [xyz]
-        out_sa_features = [features]
-        out_sa_indices = [indices]
-
         for i in range(self.num_sa):
             cur_xyz, cur_features, cur_indices = self.SA_modules[i](
                 sa_xyz[i], sa_features[i])
@@ -159,11 +167,17 @@ class PointNet2SAMSG(BasePointNet):
             sa_features.append(cur_features)
             sa_indices.append(
                 torch.gather(sa_indices[-1], 1, cur_indices.long()))
-            if i in self.out_indices:
-                out_sa_xyz.append(sa_xyz[-1])
-                out_sa_features.append(sa_features[-1])
-                out_sa_indices.append(sa_indices[-1])
-        return dict(
-            sa_xyz=out_sa_xyz,
-            sa_features=out_sa_features,
-            sa_indices=out_sa_indices)
+
+        fp_xyz = [sa_xyz[-1]]
+        fp_features = [sa_features[-1]]
+        fp_indices = [sa_indices[-1]]
+        for i in range(self.num_fp):
+            fp_features.append(self.FP_modules[i](
+                sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
+                sa_features[self.num_sa - i - 1], fp_features[-1]))
+            fp_xyz.append(sa_xyz[self.num_sa - i - 1])
+            fp_indices.append(sa_indices[self.num_sa - i - 1])
+
+        ret = dict(
+            fp_xyz=fp_xyz, fp_features=fp_features, fp_indices=fp_indices)
+        return ret

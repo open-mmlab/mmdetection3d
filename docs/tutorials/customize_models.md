@@ -26,7 +26,7 @@ from ..builder import VOXEL_ENCODERS
 
 
 @VOXEL_ENCODERS.register_module()
-class HardVFE(nn.Module):
+class HardVFE(BaseModule):
 
     def __init__(self, arg1, arg2):
         pass

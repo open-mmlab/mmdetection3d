@@ -96,7 +96,7 @@ class PartA2(TwoStage3DDetector):
 
         Args:
             points (list[torch.Tensor]): Point cloud of each sample.
-            img_metas (list[dict]): Meta information of each sample
+            img_metas (list[dict]): Meta information of each sample.
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 boxes for each sample.
             gt_labels_3d (list[torch.Tensor]): Ground truth labels for
@@ -110,7 +110,6 @@ class PartA2(TwoStage3DDetector):
         feats_dict, voxels_dict = self.extract_feat(points, img_metas)
 
         losses = dict()
-
         if self.with_rpn:
             rpn_outs = self.rpn_head(feats_dict['neck_feats'])
             rpn_loss_inputs = rpn_outs + (gt_bboxes_3d, gt_labels_3d,
@@ -125,7 +124,6 @@ class PartA2(TwoStage3DDetector):
             proposal_list = self.rpn_head.get_bboxes(*proposal_inputs)
         else:
             proposal_list = proposals
-
         roi_losses = self.roi_head.forward_train(feats_dict, voxels_dict,
                                                  img_metas, proposal_list,
                                                  gt_bboxes_3d, gt_labels_3d)

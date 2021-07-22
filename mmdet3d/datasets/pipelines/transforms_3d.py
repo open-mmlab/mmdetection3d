@@ -832,6 +832,110 @@ class ObjectNameFilter(object):
 
 
 @PIPELINES.register_module()
+class OutdoorPointSample(object):
+    """Indoor point sample.
+
+    Sampling data to a certain number.
+
+    Args:
+        name (str): Name of the dataset.
+        num_points (int): Number of points to be sampled.
+    """
+
+    def __init__(self, num_points):
+        self.num_points = num_points
+
+    def points_random_sampling(self,
+                               points,
+                               num_samples,
+                               far_distance=40.0,
+                               return_choices=False):
+        """Points random sampling.
+
+        Sample points to a certain number.
+
+        Args:
+            points (np.ndarray | :obj:`BasePoints`): 3D Points.
+            num_samples (int): Number of samples to be sampled.
+            far_distance(float): far distance threshold.
+            Defaults to None.
+            return_choices (bool): Whether return choice. Defaults to False.
+
+        Returns:
+            tuple[np.ndarray] | np.ndarray:
+
+                - points (np.ndarray | :obj:`BasePoints`): 3D Points.
+                - choices (np.ndarray, optional): The generated random samples.
+        """
+        num_points = num_samples
+        points_numpy = points.tensor.clone().numpy()
+        if num_points < len(points):
+            pts_depth = np.linalg.norm(points_numpy[:, 0:3], axis=1)
+            pts_near_flag = pts_depth < far_distance
+            far_idxs_choice = np.where(pts_near_flag == 0)[0]
+            near_idxs = np.where(pts_near_flag == 1)[0]
+            choices = []
+            if num_points > len(far_idxs_choice):
+                near_idxs_choice = np.random.choice(
+                    near_idxs,
+                    num_points - len(far_idxs_choice),
+                    replace=False)
+                choices = np.concatenate(
+                    (near_idxs_choice, far_idxs_choice), axis=0) \
+                    if len(far_idxs_choice) > 0 else near_idxs_choice
+            else:
+                choices = np.arange(0, len(points), dtype=np.int32)
+                choices = np.random.choice(choices, num_points, replace=False)
+            np.random.shuffle(choices)
+        else:
+            choices = np.arange(0, len(points), dtype=np.int32)
+            if num_points > len(points):
+                extra_choice = np.random.choice(
+                    choices, num_points - len(points), replace=False)
+                choices = np.concatenate((choices, extra_choice), axis=0)
+            np.random.shuffle(choices)
+
+        if return_choices:
+            return points[choices], choices
+        else:
+            return points[choices]
+
+    def __call__(self, results):
+        """Call function to sample points to in indoor scenes.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after sampling, 'points', 'pts_instance_mask' \
+                and 'pts_semantic_mask' keys are updated in the result dict.
+        """
+        points = results['points']
+        points, choices = self.points_random_sampling(
+            points, self.num_points, return_choices=True)
+        results['points'] = points
+
+        pts_instance_mask = results.get('pts_instance_mask', None)
+        pts_semantic_mask = results.get('pts_semantic_mask', None)
+
+        if pts_instance_mask is not None:
+            pts_instance_mask = pts_instance_mask[choices]
+            results['pts_instance_mask'] = pts_instance_mask
+
+        if pts_semantic_mask is not None:
+            pts_semantic_mask = pts_semantic_mask[choices]
+            results['pts_semantic_mask'] = pts_semantic_mask
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(num_points={self.num_points})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class IndoorPointSample(object):
     """Indoor point sample.
 
