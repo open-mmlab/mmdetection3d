@@ -20,8 +20,8 @@ def _rotation_box2d_jit_(corners, angle, rot_mat_T):
     rot_sin = np.sin(angle)
     rot_cos = np.cos(angle)
     rot_mat_T[0, 0] = rot_cos
-    rot_mat_T[0, 1] = -rot_sin
-    rot_mat_T[1, 0] = rot_sin
+    rot_mat_T[0, 1] = rot_sin
+    rot_mat_T[1, 0] = -rot_sin
     rot_mat_T[1, 1] = rot_cos
     corners[:] = corners @ rot_mat_T
 
@@ -210,8 +210,8 @@ def noise_per_box_v2_(boxes, valid_mask, loc_noises, rot_noises,
                 rot_sin = np.sin(current_box[0, -1])
                 rot_cos = np.cos(current_box[0, -1])
                 rot_mat_T[0, 0] = rot_cos
-                rot_mat_T[0, 1] = -rot_sin
-                rot_mat_T[1, 0] = rot_sin
+                rot_mat_T[0, 1] = rot_sin
+                rot_mat_T[1, 0] = -rot_sin
                 rot_mat_T[1, 1] = rot_cos
                 current_corners[:] = current_box[
                     0, 2:4] * corners_norm @ rot_mat_T + current_box[0, :2]
@@ -263,18 +263,18 @@ def _rotation_matrix_3d_(rot_mat_T, angle, axis):
     rot_mat_T[:] = np.eye(3)
     if axis == 1:
         rot_mat_T[0, 0] = rot_cos
-        rot_mat_T[0, 2] = -rot_sin
-        rot_mat_T[2, 0] = rot_sin
+        rot_mat_T[0, 2] = rot_sin
+        rot_mat_T[2, 0] = -rot_sin
         rot_mat_T[2, 2] = rot_cos
     elif axis == 2 or axis == -1:
         rot_mat_T[0, 0] = rot_cos
-        rot_mat_T[0, 1] = -rot_sin
-        rot_mat_T[1, 0] = rot_sin
+        rot_mat_T[0, 1] = rot_sin
+        rot_mat_T[1, 0] = -rot_sin
         rot_mat_T[1, 1] = rot_cos
     elif axis == 0:
         rot_mat_T[1, 1] = rot_cos
-        rot_mat_T[1, 2] = -rot_sin
-        rot_mat_T[2, 1] = rot_sin
+        rot_mat_T[1, 2] = rot_sin
+        rot_mat_T[2, 1] = -rot_sin
         rot_mat_T[2, 2] = rot_cos
 
 

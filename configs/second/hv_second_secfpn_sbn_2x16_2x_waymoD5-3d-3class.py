@@ -21,7 +21,10 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10),
     points_loader=dict(
-        type='LoadPointsFromFile', load_dim=5, use_dim=[0, 1, 2, 3, 4]))
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=[0, 1, 2, 3, 4]))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=6, use_dim=5),

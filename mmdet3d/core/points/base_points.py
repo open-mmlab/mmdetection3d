@@ -3,6 +3,8 @@ import torch
 import warnings
 from abc import abstractmethod
 
+from ..bbox.structures.utils import rotation_3d_in_axis
+
 
 class BasePoints(object):
     """Base class for Points.
@@ -140,7 +142,7 @@ class BasePoints(object):
         """Rotate points with the given rotation matrix or angle.
 
         Args:
-            rotation (float, np.ndarray, torch.Tensor): Rotation matrix
+            rotation (float | np.ndarray | torch.Tensor): Rotation matrix
                 or angle.
             axis (int): Axis to rotate at. Defaults to None.
         """
@@ -153,28 +155,14 @@ class BasePoints(object):
             axis = self.rotation_axis
 
         if rotation.numel() == 1:
-            rot_sin = torch.sin(rotation)
-            rot_cos = torch.cos(rotation)
-            if axis == 1:
-                rot_mat_T = rotation.new_tensor([[rot_cos, 0, -rot_sin],
-                                                 [0, 1, 0],
-                                                 [rot_sin, 0, rot_cos]])
-            elif axis == 2 or axis == -1:
-                rot_mat_T = rotation.new_tensor([[rot_cos, -rot_sin, 0],
-                                                 [rot_sin, rot_cos, 0],
-                                                 [0, 0, 1]])
-            elif axis == 0:
-                rot_mat_T = rotation.new_tensor([[0, rot_cos, -rot_sin],
-                                                 [0, rot_sin, rot_cos],
-                                                 [1, 0, 0]])
-            else:
-                raise ValueError('axis should in range')
-            rot_mat_T = rot_mat_T.T
-        elif rotation.numel() == 9:
-            rot_mat_T = rotation
+            rotated_points, rot_mat_T = rotation_3d_in_axis(
+                self.tensor[:, :3][None], rotation, axis=axis, return_mat=True)
+            self.tensor[:, :3] = rotated_points.squeeze(0)
+            rot_mat_T = rot_mat_T.squeeze(0)
         else:
-            raise NotImplementedError
-        self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
+            # rotation.numel() == 9
+            self.tensor[:, :3] = self.tensor[:, :3] @ rotation
+            rot_mat_T = rotation
 
         return rot_mat_T
 
