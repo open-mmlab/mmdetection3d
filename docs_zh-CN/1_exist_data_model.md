@@ -30,7 +30,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 示例：
 
-假定你已经把模型权重文件下载到 `checkpoints/` 文件夹下：
+假定你已经把模型权重文件下载到 `checkpoints/` 文件夹下，
 
 1. 在 ScanNet 数据集上测试 VoteNet，保存模型，可视化预测结果
 
@@ -162,7 +162,7 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 
 ### 使用多个机器进行训练
 
-如果要在 [slurm](https://slurm.schedmd.com/) 管理的集群上运行 MMDectection3D，你可以使用 `slurm_train.sh` 脚本。（该脚本也支持单机训练）
+如果要在 [slurm](https://slurm.schedmd.com/) 管理的集群上运行 MMDectection3D，你可以使用 `slurm_train.sh` 脚本（该脚本也支持单机训练）
 
 ```shell
 [GPUS=${GPUS}] ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} ${CONFIG_FILE} ${WORK_DIR}
@@ -182,7 +182,7 @@ GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_16
 
 如果你在单个机器上启动多个任务，比如，在具有8块显卡的机器上进行2个4块显卡训练的任务，你需要为每个任务指定不同的端口（默认为29500）以避免通信冲突。
 
-如果你使用 `dist_train.sh` 启动训练任务，可以在命令中设置端口。
+如果你使用 `dist_train.sh` 启动训练任务，可以在命令中设置端口：
 
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG_FILE} 4
