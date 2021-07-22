@@ -1,7 +1,5 @@
-import numpy as np
 import torch
 from torch import nn as nn
-from torch.nn import functional as F
 
 
 class DiceLoss(nn.Module):
@@ -34,8 +32,10 @@ class SigmoidFocalClassificationLoss(nn.Module):
         """Constructor.
         Args:
             gamma: exponent of the modulating factor (1 - p_t) ^ gamma.
-            alpha: optional alpha weighting factor to balance positives vs negatives.
-            all_zero_negative: bool. if True, will treat all zero as background.
+            alpha: optional alpha weighting factor to balance positives
+                vs negatives.
+            all_zero_negative: bool. if True, will treat all zero as
+                background.
             else, will treat first label as background. only affect alpha.
         """
         super().__init__()
@@ -46,8 +46,9 @@ class SigmoidFocalClassificationLoss(nn.Module):
         """Compute loss function.
 
         Args:
-            prediction_tensor: A float tensor of shape [batch_size, num_anchors,
-              num_classes] representing the predicted logits for each class
+            prediction_tensor: A float tensor of shape [batch_size,
+              num_anchors, num_classes] representing the predicted logits
+              for each class
             target_tensor: A float tensor of shape [batch_size, num_anchors,
               num_classes] representing one-hot encoded classification targets
             weights: a float tensor of shape [batch_size, num_anchors]

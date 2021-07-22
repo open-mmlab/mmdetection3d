@@ -45,12 +45,11 @@ def test_single_roipoint_extractor():
          [0.8, 1.2, 3.9], [-9.2, 21.0, 18.2], [3.8, 7.9, 6.3],
          [4.7, 3.5, -12.2], [3.8, 7.6, -2], [-10.6, -12.9, -20], [-16, -18, 9],
          [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4]],
-        dtype=torch.float32).cuda()
+        dtype=torch.float32).unsqueeze(0).cuda()
     points = feats.clone()
-    batch_inds = torch.zeros(feats.shape[0]).cuda()
+    batch_inds = feats.shape[0]
     rois = torch.tensor([[0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0.3],
                          [0, -10.0, 23.0, 16.0, 10, 20, 20, 0.5]],
                         dtype=torch.float32).cuda()
     pooled_feats = self(feats, points, batch_inds, rois)
-    assert torch.allclose(pooled_feats.sum(),
-                          torch.tensor(51.100).cuda(), 1e-3)
+    assert pooled_feats.shape == torch.Size([2, 512, 6])
