@@ -119,9 +119,16 @@ class RandomFlip3D(RandomFlip):
         if 'centers2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
                 'Only support sync_2d=True and horizontal flip with images'
-            w = input_dict['img_shape'][1]
+            w = input_dict['ori_shape'][1]
             input_dict['centers2d'][..., 0] = \
                 w - input_dict['centers2d'][..., 0]
+            # need to modify the horizontal position of camera center
+            # along u-axis in the image (flip like centers2d)
+            # ['cam_intrinsic'][0][2] = c_u
+            # see more details and examples at
+            # https://github.com/open-mmlab/mmdetection3d/pull/744
+            input_dict['cam_intrinsic'][0][2] = \
+                w - input_dict['cam_intrinsic'][0][2]
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \
