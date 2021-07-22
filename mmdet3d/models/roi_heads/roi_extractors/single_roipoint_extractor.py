@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn as nn
 
@@ -56,7 +57,7 @@ class Single3DRoIPointExtractor(nn.Module):
                                                    pooled_roi_feat.shape[-1])
             pooled_roi_feat[:, :, 0:3] = rotation_3d_in_axis(
                 pooled_roi_feat[:, :, 0:3],
-                -(rois.view(-1, rois.shape[-1])[:, 6]))
+                -(rois.view(-1, rois.shape[-1])[:, 6] + np.pi / 2))
             pooled_roi_feat[pooled_empty_flag.view(-1) > 0] = 0
 
         return pooled_roi_feat
