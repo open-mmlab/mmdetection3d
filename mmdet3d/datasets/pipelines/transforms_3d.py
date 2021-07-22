@@ -890,7 +890,7 @@ class PointSample(object):
         points = results['points']
         # Points in Camera coord can provide the depth information.
         # TODO: Need to suport distance-based sampling for other coord system.
-        if self.sample_range:
+        if self.sample_range is not None:
             assert isinstance(points, CameraPoints), \
                 'Sampling based on distance is only appliable for CAMERA coord'
         points, choices = self._points_random_sampling(
