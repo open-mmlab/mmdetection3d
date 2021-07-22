@@ -516,16 +516,16 @@ def output_to_lyft_box(detection):
     box_gravity_center = box3d.gravity_center.numpy()
     box_dims = box3d.dims.numpy()
     box_yaw = box3d.yaw.numpy()
-    # TODO: check whether this is necessary
-    # with dir_offset & dir_limit in the head
-    box_yaw = -box_yaw - np.pi / 2
+
+    # our LiDAR coordinate system -> Lyft box coordinate system
+    lyft_box_dims = box_dims[:, [1, 0, 2]]
 
     box_list = []
     for i in range(len(box3d)):
         quat = Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
         box = LyftBox(
             box_gravity_center[i],
-            box_dims[i],
+            lyft_box_dims[i],
             quat,
             label=labels[i],
             score=scores[i])
