@@ -388,7 +388,7 @@ class ObjectNoise(object):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         points = input_dict['points']
 
-        # TODO: check this inplace function
+        # TODO: this is inplace operation
         numpy_box = gt_bboxes_3d.tensor.numpy()
         numpy_points = points.tensor.numpy()
 
@@ -583,6 +583,7 @@ class GlobalRotScaleTrans(object):
         if len(input_dict['bbox3d_fields']) == 0:
             rot_mat_T = input_dict['points'].rotate(noise_rotation)
             input_dict['pcd_rotation'] = rot_mat_T
+            input_dict['pcd_rotation_angle'] = noise_rotation
             return
 
         # rotate points with bboxes
@@ -592,6 +593,7 @@ class GlobalRotScaleTrans(object):
                     noise_rotation, input_dict['points'])
                 input_dict['points'] = points
                 input_dict['pcd_rotation'] = rot_mat_T
+                input_dict['pcd_rotation_angle'] = noise_rotation
 
     def _scale_bbox_points(self, input_dict):
         """Private function to scale bounding boxes and points.
