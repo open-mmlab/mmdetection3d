@@ -4,6 +4,7 @@ from torch.autograd import Function
 from typing import Tuple
 
 from ..ball_query import ball_query
+from ..knn import knn
 from . import group_points_ext
 
 
@@ -13,7 +14,8 @@ class QueryAndGroup(nn.Module):
     Groups with a ball query of radius
 
     Args:
-        max_radius (float): The maximum radius of the balls.
+        max_radius (float | None): The maximum radius of the balls.
+            If None is given, we will use kNN sampling instead of ball query.
         sample_num (int): Maximum number of features to gather in the ball.
         min_radius (float): The minimum radius of the balls.
         use_xyz (bool): Whether to use xyz.
@@ -27,6 +29,8 @@ class QueryAndGroup(nn.Module):
         return_unique_cnt (bool): Whether to return the count of
             unique samples.
             Default: False.
+        return_grouped_idx (bool): Whether to return grouped idx.
+            Default: False.
     """
 
     def __init__(self,
@@ -37,7 +41,8 @@ class QueryAndGroup(nn.Module):
                  return_grouped_xyz=False,
                  normalize_xyz=False,
                  uniform_sample=False,
-                 return_unique_cnt=False):
+                 return_unique_cnt=False,
+                 return_grouped_idx=False):
         super(QueryAndGroup, self).__init__()
         self.max_radius = max_radius
         self.min_radius = min_radius
@@ -47,8 +52,14 @@ class QueryAndGroup(nn.Module):
         self.normalize_xyz = normalize_xyz
         self.uniform_sample = uniform_sample
         self.return_unique_cnt = return_unique_cnt
+        self.return_grouped_idx = return_grouped_idx
         if self.return_unique_cnt:
-            assert self.uniform_sample
+            assert self.uniform_sample, \
+                'uniform_sample should be True when ' \
+                'returning the count of unique samples'
+        if self.max_radius is None:
+            assert not self.normalize_xyz, \
+                'can not normalize grouped xyz when max_radius is None'
 
     def forward(self, points_xyz, center_xyz, features=None):
         """forward.
@@ -61,8 +72,14 @@ class QueryAndGroup(nn.Module):
         Return：
             Tensor: (B, 3 + C, npoint, sample_num) Grouped feature.
         """
-        idx = ball_query(self.min_radius, self.max_radius, self.sample_num,
-                         points_xyz, center_xyz)
+        # if self.max_radius is None, we will perform kNN instead of ball query
+        # idx is of shape [B, npoint, sample_num]
+        if self.max_radius is None:
+            idx = knn(self.sample_num, points_xyz, center_xyz, False)
+            idx = idx.transpose(1, 2).contiguous()
+        else:
+            idx = ball_query(self.min_radius, self.max_radius, self.sample_num,
+                             points_xyz, center_xyz)
 
         if self.uniform_sample:
             unique_cnt = torch.zeros((idx.shape[0], idx.shape[1]))
@@ -103,6 +120,8 @@ class QueryAndGroup(nn.Module):
             ret.append(grouped_xyz)
         if self.return_unique_cnt:
             ret.append(unique_cnt)
+        if self.return_grouped_idx:
+            ret.append(idx)
         if len(ret) == 1:
             return ret[0]
         else:

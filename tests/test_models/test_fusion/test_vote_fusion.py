@@ -32,16 +32,16 @@ def test_vote_fusion():
         'transformation_3d_flow': ['HF', 'R', 'S', 'T']
     }
 
-    calibs = {
-        'Rt':
-        torch.tensor([[[0.979570, 0.047954, -0.195330],
-                       [0.047954, 0.887470, 0.458370],
-                       [0.195330, -0.458370, 0.867030]]]),
-        'K':
-        torch.tensor([[[529.5000, 0.0000, 365.0000],
-                       [0.0000, 529.5000, 265.0000], [0.0000, 0.0000,
-                                                      1.0000]]])
-    }
+    rt_mat = torch.tensor([[0.979570, 0.047954, -0.195330],
+                           [0.047954, 0.887470, 0.458370],
+                           [0.195330, -0.458370, 0.867030]])
+    k_mat = torch.tensor([[529.5000, 0.0000, 365.0000],
+                          [0.0000, 529.5000, 265.0000],
+                          [0.0000, 0.0000, 1.0000]])
+    rt_mat = rt_mat.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                                ]) @ rt_mat.transpose(1, 0)
+    depth2img = k_mat @ rt_mat
+    img_meta['depth2img'] = depth2img
 
     bboxes = torch.tensor([[[
         5.4286e+02, 9.8283e+01, 6.1700e+02, 1.6742e+02, 9.7922e-01, 3.0000e+00
@@ -309,12 +309,12 @@ def test_vote_fusion():
           ]]])
 
     fusion = VoteFusion()
-    out1, out2 = fusion(imgs, bboxes, seeds_3d, [img_meta], calibs)
+    out1, out2 = fusion(imgs, bboxes, seeds_3d, [img_meta])
     assert torch.allclose(expected_tensor1, out1[:, :, :15], 1e-3)
     assert torch.allclose(expected_tensor2.float(), out2.float(), 1e-3)
     assert torch.allclose(expected_tensor3, out1[:, :, 30:45], 1e-3)
 
-    out1, out2 = fusion(imgs, bboxes[:, :2], seeds_3d, [img_meta], calibs)
+    out1, out2 = fusion(imgs, bboxes[:, :2], seeds_3d, [img_meta])
     out1 = out1[:, :15, 30:45]
     out2 = out2[:, 30:45].float()
     assert torch.allclose(torch.zeros_like(out1), out1, 1e-3)

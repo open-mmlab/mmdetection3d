@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本v0.13.0.
+**新闻**: 我们发布了版本v0.15.0.
 
 在第三届[ nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
@@ -62,7 +62,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v0.13.0 在 2021.05.01发布。
+最新的版本 v0.15.0 在 2021.07.01发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/changelog.md)。
 
 ## 基准测试和模型库
@@ -89,6 +89,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
 - [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
+- [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -104,6 +105,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
 | ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
+| PointNet++           | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 
 其他特性
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
@@ -117,6 +119,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 ## 快速入门
 
 请参考[快速入门文档](docs/get_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/1_exist_data_model.md)和[新数据集](docs/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/tutorials/config.md), [增加数据集支持](docs/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/tutorials/data_pipeline.md), [增加自定义模型](docs/tutorials/customize_models.md), [增加自定义的运行时配置](docs/tutorials/customize_runtime.md)和 [Waymo 数据集](docs/tutorials/waymo.md).
+
+请参考 [FAQ](docs/faq.md) 查看一些常见的问题与解答。在升级 MMDetection3D 的版本时，请查看[兼容性文档](docs/compatibility.md)以知晓每个版本引入的不与之前版本兼容的更新。
 
 ## 引用
 

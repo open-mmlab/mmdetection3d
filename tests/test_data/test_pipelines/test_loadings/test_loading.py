@@ -5,10 +5,15 @@ from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.points import DepthPoints, LiDARPoints
-from mmdet3d.datasets.pipelines import (LoadAnnotations3D, LoadPointsFromFile,
+# yapf: disable
+from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
+                                        LoadImageFromFileMono3D,
+                                        LoadPointsFromFile,
                                         LoadPointsFromMultiSweeps,
                                         NormalizePointsColor,
                                         PointSegClassMapping)
+
+# yapf: enable
 
 
 def test_load_points_from_indoor_file():
@@ -286,6 +291,25 @@ def test_load_points_from_multi_sweeps():
     expected_repr_str = 'LoadPointsFromMultiSweeps(sweeps_num=10)'
     assert repr_str == expected_repr_str
     assert points.shape == (403, 4)
+
+
+def test_load_image_from_file_mono_3d():
+    load_image_from_file_mono_3d = LoadImageFromFileMono3D()
+    filename = 'tests/data/nuscenes/samples/CAM_BACK_LEFT/' \
+        'n015-2018-07-18-11-07-57+0800__CAM_BACK_LEFT__1531883530447423.jpg'
+    cam_intrinsic = np.array([[1256.74, 0.0, 792.11], [0.0, 1256.74, 492.78],
+                              [0.0, 0.0, 1.0]])
+    input_dict = dict(
+        img_prefix=None,
+        img_info=dict(filename=filename, cam_intrinsic=cam_intrinsic.copy()))
+    results = load_image_from_file_mono_3d(input_dict)
+    assert results['img'].shape == (900, 1600, 3)
+    assert np.all(results['cam_intrinsic'] == cam_intrinsic)
+
+    repr_str = repr(load_image_from_file_mono_3d)
+    expected_repr_str = 'LoadImageFromFileMono3D(to_float32=False, ' \
+        "color_type='color', file_client_args={'backend': 'disk'})"
+    assert repr_str == expected_repr_str
 
 
 def test_point_seg_class_mapping():

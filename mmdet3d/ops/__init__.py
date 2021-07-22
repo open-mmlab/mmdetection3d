@@ -11,7 +11,10 @@ from .group_points import (GroupAll, QueryAndGroup, group_points,
 from .interpolate import three_interpolate, three_nn
 from .knn import knn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
-from .pointnet_modules import (PointFPModule, PointSAModule, PointSAModuleMSG,
+from .paconv import PAConv, PAConvCUDA, assign_score_withk
+from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
+                               PAConvSAModule, PAConvSAModuleMSG,
+                               PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
                               points_in_boxes_cpu, points_in_boxes_gpu)
@@ -31,7 +34,8 @@ __all__ = [
     'furthest_point_sample_with_dist', 'three_interpolate', 'three_nn',
     'gather_points', 'grouping_operation', 'group_points', 'GroupAll',
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
-    'points_in_boxes_batch', 'get_compiler_version',
+    'points_in_boxes_batch', 'get_compiler_version', 'assign_score_withk',
     'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module',
-    'ROIPointPool3d'
+    'PAConv', 'PAConvCUDA', 'PAConvSAModuleMSG', 'PAConvSAModule',
+    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG', 'ROIPointPool3d'
 ]

@@ -10,7 +10,7 @@ from ..builder import MIDDLE_ENCODERS
 class SparseUNet(BaseModule):
     r"""SparseUNet for PartA^2.
 
-    See the `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
+    See the `paper <https://arxiv.org/abs/1907.03670>`_ for more details.
 
     Args:
         in_channels (int): The number of input channels.

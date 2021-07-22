@@ -1,5 +1,6 @@
 m2r
+opencv-python
 recommonmark
-sphinx==3.1.2
+sphinx
 sphinx_markdown_tables
 sphinx_rtd_theme

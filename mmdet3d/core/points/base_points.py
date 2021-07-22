@@ -147,7 +147,7 @@ class BasePoints(object):
         if not isinstance(rotation, torch.Tensor):
             rotation = self.tensor.new_tensor(rotation)
         assert rotation.shape == torch.Size([3, 3]) or \
-            rotation.numel() == 1
+            rotation.numel() == 1, f'invalid rotation shape {rotation.shape}'
 
         if axis is None:
             axis = self.rotation_axis
@@ -175,6 +175,8 @@ class BasePoints(object):
         else:
             raise NotImplementedError
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
+
+        return rot_mat_T
 
     @abstractmethod
     def flip(self, bev_direction='horizontal'):

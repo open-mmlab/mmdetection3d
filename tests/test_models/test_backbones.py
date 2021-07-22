@@ -58,6 +58,20 @@ def test_pointnet2_sa_ssg():
     assert sa_indices[1].shape == torch.Size([1, 32])
     assert sa_indices[2].shape == torch.Size([1, 16])
 
+    # test only xyz input without features
+    cfg['in_channels'] = 3
+    self = build_backbone(cfg)
+    self.cuda()
+    ret_dict = self(xyz[..., :3])
+    assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
+    assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3
+    assert fp_features[0].shape == torch.Size([1, 16, 16])
+    assert fp_features[1].shape == torch.Size([1, 16, 32])
+    assert fp_features[2].shape == torch.Size([1, 16, 100])
+    assert sa_features[0].shape == torch.Size([1, 3, 100])
+    assert sa_features[1].shape == torch.Size([1, 16, 32])
+    assert sa_features[2].shape == torch.Size([1, 16, 16])
+
 
 def test_multi_backbone():
     if not torch.cuda.is_available():

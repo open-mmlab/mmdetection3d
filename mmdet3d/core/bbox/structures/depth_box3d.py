@@ -116,10 +116,12 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         return bev_boxes
 
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle.
+        """Rotate boxes with points (optional) with the given angle or \
+        rotation matrix.
 
         Args:
-            angle (float, torch.Tensor): Rotation angle.
+            angle (float | torch.Tensor | np.ndarray):
+                Rotation angle or rotation matrix.
             points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
 
@@ -130,11 +132,21 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
-        rot_sin = torch.sin(angle)
-        rot_cos = torch.cos(angle)
-        rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
-                                            [rot_sin, rot_cos, 0], [0, 0,
-                                                                    1]]).T
+        assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1, \
+            f'invalid rotation angle shape {angle.shape}'
+
+        if angle.numel() == 1:
+            rot_sin = torch.sin(angle)
+            rot_cos = torch.cos(angle)
+            rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
+                                                [rot_sin, rot_cos, 0],
+                                                [0, 0, 1]]).T
+        else:
+            rot_mat_T = angle.T
+            rot_sin = rot_mat_T[0, 1]
+            rot_cos = rot_mat_T[0, 0]
+            angle = np.arctan2(rot_sin, rot_cos)
+
         self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
         if self.with_yaw:
             self.tensor[:, 6] -= angle
@@ -221,7 +233,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`BoxMode`): The target Box mode.
+            dst (:obj:`Box3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates

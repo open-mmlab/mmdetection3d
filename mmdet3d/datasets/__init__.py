@@ -7,12 +7,14 @@ from .kitti_mono_dataset import KittiMonoDataset
 from .lyft_dataset import LyftDataset
 from .nuscenes_dataset import NuScenesDataset
 from .nuscenes_mono_dataset import NuScenesMonoDataset
-from .pipelines import (BackgroundPointsFilter, GlobalRotScaleTrans,
+from .pipelines import (BackgroundPointsFilter, GlobalAlignment,
+                        GlobalRotScaleTrans, IndoorPatchPointSample,
                         IndoorPointSample, LoadAnnotations3D,
                         LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                        NormalizePointsColor, ObjectNoise, ObjectRangeFilter,
-                        ObjectSample, PointShuffle, PointsRangeFilter,
-                        RandomFlip3D, VoxelBasedPointSampler)
+                        NormalizePointsColor, ObjectNameFilter, ObjectNoise,
+                        ObjectRangeFilter, ObjectSample, PointShuffle,
+                        PointsRangeFilter, RandomDropPointsColor, RandomFlip3D,
+                        RandomJitterPoints, VoxelBasedPointSampler)
 from .s3dis_dataset import S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
@@ -26,10 +28,11 @@ __all__ = [
     'DATASETS', 'build_dataset', 'CocoDataset', 'NuScenesDataset',
     'NuScenesMonoDataset', 'LyftDataset', 'ObjectSample', 'RandomFlip3D',
     'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle', 'ObjectRangeFilter',
-    'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile',
-    'NormalizePointsColor', 'IndoorPointSample', 'LoadAnnotations3D',
-    'SUNRGBDDataset', 'ScanNetDataset', 'ScanNetSegDataset', 'S3DISSegDataset',
-    'SemanticKITTIDataset', 'Custom3DDataset', 'Custom3DSegDataset',
-    'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
-    'VoxelBasedPointSampler', 'get_loading_pipeline'
+    'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile', 'S3DISSegDataset',
+    'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
+    'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset', 'ScanNetDataset',
+    'ScanNetSegDataset', 'SemanticKITTIDataset', 'Custom3DDataset',
+    'Custom3DSegDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
+    'BackgroundPointsFilter', 'VoxelBasedPointSampler', 'get_loading_pipeline',
+    'RandomDropPointsColor', 'RandomJitterPoints', 'ObjectNameFilter'
 ]

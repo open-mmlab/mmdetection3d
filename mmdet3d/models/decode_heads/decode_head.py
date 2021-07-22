@@ -1,12 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from mmcv.cnn import normal_init
-from mmcv.runner import auto_fp16, force_fp32
+from mmcv.runner import BaseModule, auto_fp16, force_fp32
 from torch import nn as nn
 
 from mmseg.models.builder import build_loss
 
 
-class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
+class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
 
     Args:
@@ -37,8 +37,9 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
                      use_sigmoid=False,
                      class_weight=None,
                      loss_weight=1.0),
-                 ignore_index=255):
-        super(Base3DDecodeHead, self).__init__()
+                 ignore_index=255,
+                 init_cfg=None):
+        super(Base3DDecodeHead, self).__init__(init_cfg=init_cfg)
         self.channels = channels
         self.num_classes = num_classes
         self.dropout_ratio = dropout_ratio
@@ -57,6 +58,7 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
 
     def init_weights(self):
         """Initialize weights of classification layer."""
+        super().init_weights()
         normal_init(self.conv_seg, mean=0, std=0.01)
 
     @auto_fp16()
@@ -65,13 +67,13 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
         """Placeholder of forward function."""
         pass
 
-    def forward_train(self, inputs, img_metas, gt_semantic_seg, train_cfg):
+    def forward_train(self, inputs, img_metas, pts_semantic_mask, train_cfg):
         """Forward function for training.
 
         Args:
-            inputs (list[Tensor]): List of multi-level point features.
+            inputs (list[torch.Tensor]): List of multi-level point features.
             img_metas (list[dict]): Meta information of each sample.
-            gt_semantic_seg (torch.Tensor): Semantic segmentation masks
+            pts_semantic_mask (torch.Tensor): Semantic segmentation masks
                 used if the architecture supports semantic segmentation task.
             train_cfg (dict): The training config.
 
@@ -79,7 +81,7 @@ class Base3DDecodeHead(nn.Module, metaclass=ABCMeta):
             dict[str, Tensor]: a dictionary of loss components
         """
         seg_logits = self.forward(inputs)
-        losses = self.losses(seg_logits, gt_semantic_seg)
+        losses = self.losses(seg_logits, pts_semantic_mask)
         return losses
 
     def forward_test(self, inputs, img_metas, test_cfg):

@@ -1,5 +1,79 @@
 ## Changelog
 
+### v0.15.0 (1/7/2021)
+
+#### Compatibility
+
+In order to fix the problem that the priority of EvalHook is too low, all hook priorities have been re-adjusted in 1.3.8, so MMDetection 2.14.0 needs to rely on the latest MMCV 1.3.8 version. For related information, please refer to [#1120](https://github.com/open-mmlab/mmcv/pull/1120), for related issues, please refer to [#5343](https://github.com/open-mmlab/mmdetection/issues/5343).
+
+#### Highlights
+
+- Support [PAConv](https://arxiv.org/abs/2103.14635)
+- Support monocular/multi-view 3D detector [ImVoxelNet](https://arxiv.org/abs/2106.01178) on KITTI
+- Support Transformer-based 3D detection method [Group-Free-3D](https://arxiv.org/abs/2104.00678) on ScanNet
+- Add documentation for tasks including LiDAR-based 3D detection, vision-only 3D detection and point-based 3D semantic segmentation
+- Add dataset documents like ScanNet
+
+#### New Features
+
+- Support Group-Free-3D on ScanNet (#539)
+- Support PAConv modules (#598, #599)
+- Support ImVoxelNet on KITTI (#627, #654)
+
+#### Improvements
+
+- Add unit tests for pipeline functions `LoadImageFromFileMono3D`, `ObjectNameFilter` and `ObjectRangeFilter` (#615)
+- Enhance [IndoorPatchPointSample](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) (#617)
+- Refactor model initialization methods based MMCV (#622)
+- Add Chinese docs (#629)
+- Add documentation for LiDAR-based 3D detection (#642)
+- Unify intrinsic and extrinsic matrices for all datasets (#653)
+- Add documentation for point-based 3D semantic segmentation (#663)
+- Add documentation of ScanNet for 3D detection (#664)
+- Refine docs for tutorials (#666)
+- Add documentation for vision-only 3D detection (#669)
+- Refine docs for Quick Run and Useful Tools (#686)
+
+
+#### Bug Fixes
+
+- Fix the bug of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) using the bottom center of ground truth (#609)
+- Fix [LoadMultiViewImageFromFiles](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/loading.py) to unravel stacked multi-view images to list to be consistent with DefaultFormatBundle (#611)
+- Fix the potential bug in [analyze_logs](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) when the training resumes from a checkpoint or is stopped before evaluation (#634)
+- Fix test commands in docs and make some refinements (#635)
+- Fix wrong config paths in unit tests (#641)
+
+
+### v0.14.0 (1/6/2021)
+
+#### Highlights
+- Support the point cloud segmentation method [PointNet++](https://arxiv.org/abs/1706.02413)
+
+#### New Features
+
+- Support PointNet++ (#479, #528, #532, #541)
+- Support RandomJitterPoints transform for point cloud segmentation (#584)
+- Support RandomDropPointsColor transform for point cloud segmentation (#585)
+
+#### Improvements
+
+- Move the point alignment of ScanNet from data pre-processing to pipeline (#439, #470)
+- Add compatibility document to provide detailed descriptions of BC-breaking changes (#504)
+- Add MMSegmentation installation requirement (#535)
+- Support points rotation even without bounding box in GlobalRotScaleTrans for point cloud segmentaiton (#540)
+- Support visualization of detection results and dataset browse for nuScenes Mono-3D dataset (#542, #582)
+- Support faster implementation of KNN (#586)
+- Support RegNetX models on Lyft dataset (#589)
+- Remove a useless parameter `label_weight` from segmentation datasets including `Custom3DSegDataset`, `ScanNetSegDataset` and `S3DISSegDataset` (#607)
+
+#### Bug Fixes
+- Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)
+- Fix evaluation bugs in nuScenes and Lyft dataset (#549)
+- Fix converting points between coordinates with specific transformation matrix in the [coord_3d_mode.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/coord_3d_mode.py) (#556)
+- Support PointPillars models on Lyft dataset (#578)
+- Fix the bug of demo with pre-trained VoteNet model on ScanNet (#600)
+
+
 ### v0.13.0 (1/5/2021)
 
 #### Highlights
@@ -101,7 +175,7 @@
 
 - Refactor unit tests (#303)
 - Move the key `train_cfg` and `test_cfg` into the model configs (#307)
-- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md). (#310, #316)
+- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md/) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md/) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md/). (#310, #316)
 - Support a faster and more memory-efficient implementation of DynamicScatter (#318, #326)
 
 #### Bug Fixes
@@ -127,7 +201,7 @@
 
 - Add tag to README in configurations for specifying different uses (#262)
 - Update instructions for evaluation metrics in the documentation (#265)
-- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
+- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md/) and gif demo (#266, #268)
 - Add unit test for voxelization (#275)
 
 #### Bug Fixes
@@ -135,7 +209,7 @@
 - Fixed the issue of unpacking size in [furthest_point_sample.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/furthest_point_sample/furthest_point_sample.py) (#248)
 - Fix bugs for 3DSSD triggered by empty ground truths (#258)
 - Remove models without checkpoints in model zoo statistics of documentation (#259)
-- Fix some unclear installation instructions in [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md) (#269)
+- Fix some unclear installation instructions in [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md/) (#269)
 - Fix relative paths/links in the documentation (#271)
 - Fix a minor bug in [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) when num_features != 4 (#275)
 - Fix the bug about missing text files when testing on KITTI (#278)

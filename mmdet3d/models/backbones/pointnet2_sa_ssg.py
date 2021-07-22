@@ -45,7 +45,7 @@ class PointNet2SASSG(BasePointNet):
                      use_xyz=True,
                      normalize_xyz=True),
                  init_cfg=None):
-        super().__init__(init_cfg=None)
+        super().__init__(init_cfg=init_cfg)
         self.num_sa = len(sa_channels)
         self.num_fp = len(fp_channels)
 
