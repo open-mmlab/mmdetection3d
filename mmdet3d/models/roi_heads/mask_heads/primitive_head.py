@@ -354,7 +354,7 @@ class PrimitiveHead(BaseModule):
 
         # Generate pts_semantic_mask and pts_instance_mask when they are None
         if pts_semantic_mask is None or pts_instance_mask is None:
-            points2box_mask = gt_bboxes_3d.points_in_boxes(points)
+            points2box_mask = gt_bboxes_3d.points_in_boxes_batch(points)
             assignment = points2box_mask.argmax(1)
             background_mask = points2box_mask.max(1)[0] == 0
 

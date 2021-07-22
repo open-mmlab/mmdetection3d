@@ -227,7 +227,7 @@ parser.add_argument(
     '--out-dir',
     type=str,
     default='./data/kitti',
-    required='False',
+    required=False,
     help='name of info pkl')
 parser.add_argument('--extra-tag', type=str, default='kitti')
 parser.add_argument(

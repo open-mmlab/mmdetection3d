@@ -8,8 +8,8 @@ from . import RandomSampler, SamplingResult
 class IoUNegPiecewiseSampler(RandomSampler):
     """IoU Piece-wise Sampling.
 
-    Sampling negtive proposals according to a list of IoU thresholds.
-    The negtive proposals are divided into several pieces according
+    Sampling negative proposals according to a list of IoU thresholds.
+    The negative proposals are divided into several pieces according
     to `neg_iou_piece_thrs`. And the ratio of each piece is indicated
     by `neg_piece_fractions`.
 
@@ -17,11 +17,11 @@ class IoUNegPiecewiseSampler(RandomSampler):
         num (int): Number of proposals.
         pos_fraction (float): The fraction of positive proposals.
         neg_piece_fractions (list): A list contains fractions that indicates
-            the ratio of each piece of total negtive samplers.
+            the ratio of each piece of total negative samplers.
         neg_iou_piece_thrs (list): A list contains IoU thresholds that
             indicate the upper bound of this piece.
         neg_pos_ub (float): The total ratio to limit the upper bound
-            number of negtive samples.
+            number of negative samples.
         add_gt_as_proposals (bool): Whether to add gt as proposals.
     """
 
