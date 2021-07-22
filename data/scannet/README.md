@@ -27,7 +27,7 @@ The directory structure after pre-processing should be as below
 
 ```
 scannet
-├── scannet_utils.py
+├── meta_data
 ├── batch_load_scannet_data.py
 ├── load_scannet_data.py
 ├── scannet_utils.py
