@@ -195,6 +195,7 @@ lr_config = dict(policy='step', warmup=None, step=[280, 340])
 
 # runtime settings
 runner = dict(type='EpochBasedRunner', max_epochs=400)
+checkpoint_config = dict(interval=1, max_keep_ckpts=10)
 # yapf:disable
 log_config = dict(
     interval=30,
