@@ -37,5 +37,5 @@ __all__ = [
     'points_in_boxes_batch', 'get_compiler_version', 'assign_score_withk',
     'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module',
     'PAConv', 'PAConvCUDA', 'PAConvSAModuleMSG', 'PAConvSAModule',
-    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG', 'ROIPointPool3d'
+    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG', 'RoIPointPool3d'
 ]
