@@ -1,4 +1,4 @@
-# 1: 使用已有模型在标准数据集上进行推理和训练
+# 1：使用已有模型在标准数据集上进行推理和训练
 
 ## 使用已有模型进行推理
 
@@ -23,10 +23,10 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 ```
 
 可选参数：
-- `RESULT_FILE`: 输出结果（pickle 格式）的文件名，如果未指定，结果不会被保存。
-- `EVAL_METRICS`: 在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说在检测任务上可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测 2D 检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较；同样地，对 S3DIS、ScanNet 这些数据集来说，在分割任务上的度量方法可以设置为 `mIoU`。
-- `--show`: 如果被指定，检测结果会在静默模式下被保存，用于调试和可视化，但只在单块GPU测试的情况下生效，和 `--show-dir` 搭配使用。
-- `--show-dir`: 如果被指定，检测结果会被保存在指定文件夹下的 `***_points.obj` 和 `***_pred.obj` 文件中，用于调试和可视化，但只在单块GPU测试的情况下生效，对于这个选项，图形化界面在你的环境中不是必需的。
+- `RESULT_FILE`：输出结果（pickle 格式）的文件名，如果未指定，结果不会被保存。
+- `EVAL_METRICS`：在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说在检测任务上可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测 2D 检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较；同样地，对 S3DIS、ScanNet 这些数据集来说，在分割任务上的度量方法可以设置为 `mIoU`。
+- `--show`：如果被指定，检测结果会在静默模式下被保存，用于调试和可视化，但只在单块GPU测试的情况下生效，和 `--show-dir` 搭配使用。
+- `--show-dir`：如果被指定，检测结果会被保存在指定文件夹下的 `***_points.obj` 和 `***_pred.obj` 文件中，用于调试和可视化，但只在单块GPU测试的情况下生效，对于这个选项，图形化界面在你的环境中不是必需的。
 
 示例：
 
@@ -57,7 +57,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --eval mAP
    ```
 
-4. 使用8块显卡测试 SECOND, 计算 mAP
+4. 使用8块显卡测试 SECOND，计算 mAP
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
@@ -65,7 +65,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --out results.pkl --eval mAP
    ```
 
-5. 使用8块显卡在 nuScenes 数据集上测试 PointPillars, 生成提交给官方评测服务器的 json 文件
+5. 使用8块显卡在 nuScenes 数据集上测试 PointPillars，生成提交给官方评测服务器的 json 文件
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
@@ -75,7 +75,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
    生成的结果会保存在 `./pointpillars_nuscenes_results` 目录。
 
-6. 使用8块显卡在 KITTI 数据集上测试 PointPillars, 生成提交给官方评测服务器的 json 文件
+6. 使用8块显卡在 KITTI 数据集上测试 PointPillars，生成提交给官方评测服务器的 json 文件
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
@@ -85,7 +85,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
    生成的结果会保存在 `./second_kitti_results` 目录。
 
-7. 使用8块显卡在 Lyft 数据集上测试 PointPillars, 生成提交给排行榜的 pkl 文件
+7. 使用8块显卡在 Lyft 数据集上测试 PointPillars，生成提交给排行榜的 pkl 文件
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-2x8_2x_lyft-3d.py \
@@ -94,11 +94,11 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        'csv_savepath=results/pp_lyft/results_challenge.csv'
    ```
 
-   **注意**: 为了生成 Lyft 数据集的提交结果，`--eval-options` 必须指定 `csv_savepath`。生成 csv 文件后，你可以使用[网站](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit)上给出的 kaggle 命令提交结果。
+   **注意**：为了生成 Lyft 数据集的提交结果，`--eval-options` 必须指定 `csv_savepath`。生成 csv 文件后，你可以使用[网站](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit)上给出的 kaggle 命令提交结果。
 
-   注意在 [Lyft 数据集的配置文件](../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`, 是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
+   注意在 [Lyft 数据集的配置文件](../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`，是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
 
-8. 使用8块显卡在 waymo 数据集上测试 PointPillars, 使用 waymo 度量方法计算 mAP
+8. 使用8块显卡在 waymo 数据集上测试 PointPillars，使用 waymo 度量方法计算 mAP
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
@@ -107,9 +107,9 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 
-   **注意**: 对于 waymo 数据集上的评估，请根据[说明](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建二值文件 `compute_detection_metrics_main` 来做度量计算，并把它放在 `mmdet3d/core/evaluation/waymo_utils/`。（在使用 bazel 构建  `compute_detection_metrics_main` 时，有时会出现 `'round' is not a member of 'std'` 的错误，我们只需要把那个文件中 `round` 前的 `std::` 去掉。）二值文件生成时需要在 `--eval-options` 中给定 `pklfile_prefix`。对于度量方法，`waymo` 是推荐的官方评估策略，目前 `kitti` 评估是依照 KITTI 而来的，每个难度的结果和 KITTI 的定义并不完全一致。目前大多数物体都被标记为0难度，会在未来修复。它的不稳定原因包括评估的计算大、转换后的数据缺乏遮挡和截断、难度的定义不同以及平均精度的计算方法不同。
+   **注意**：对于 waymo 数据集上的评估，请根据[说明](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建二进制文件 `compute_detection_metrics_main` 来做度量计算，并把它放在 `mmdet3d/core/evaluation/waymo_utils/`。（在使用 bazel 构建  `compute_detection_metrics_main` 时，有时会出现 `'round' is not a member of 'std'` 的错误，我们只需要把那个文件中 `round` 前的 `std::` 去掉。）二进制文件生成时需要在 `--eval-options` 中给定 `pklfile_prefix`。对于度量方法，`waymo` 是推荐的官方评估策略，目前 `kitti` 评估是依照 KITTI 而来的，每个难度的结果和 KITTI 的定义并不完全一致。目前大多数物体都被标记为0难度，会在未来修复。它的不稳定原因包括评估的计算大、转换后的数据缺乏遮挡和截断、难度的定义不同以及平均精度的计算方法不同。
 
-9. 使用8块显卡在 waymo 数据集上测试 PointPillars, 生成 bin 文件并提交到排行榜
+9. 使用8块显卡在 waymo 数据集上测试 PointPillars，生成 bin 文件并提交到排行榜
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
@@ -118,7 +118,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 
-   **注意**: 生成 bin 文件后，你可以简单地构建二值文件  `create_submission`，并根据[说明](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)创建提交的文件。要在验证服务器上评测验证数据集，你也可以用同样的方式生成提交的文件。
+   **注意**：生成 bin 文件后，你可以简单地构建二进制文件  `create_submission`，并根据[说明](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)创建提交的文件。要在验证服务器上评测验证数据集，你也可以用同样的方式生成提交的文件。
 
 ## 在标准数据集上训练预定义模型
 
@@ -133,7 +133,7 @@ evaluation = dict(interval=12)  # 每12个周期评估一次模型
 ```
 
 **重要**：配置文件中的默认学习率对应8块显卡，配置文件名里有具体的批量大小，比如'2x8'表示一共8块显卡，每块显卡2个样本。
-根据 [Linear Scaling Rule](https://arxiv.org/abs/1706.02677)，如果你用不同数量的显卡或每块显卡有不同数量的图像，你需要依批量大小按比例调整学习率，比如，4块显卡、每块显卡2幅图像的情况下学习率应设为0.01，16块显卡、每块显卡4幅图像的情况下学习率应设为0.08。然而，由于大多数模型使用 ADAM 而不是 SGD 进行优化，上述规则可能并不适用，用户需要自己调整学习率。
+根据 [Linear Scaling Rule](https://arxiv.org/abs/1706.02677)，如果你用不同数量的显卡或每块显卡有不同数量的图像，就需要依批量大小按比例调整学习率，比如，如果用4块显卡、每块显卡2幅图像，学习率应设为0.01，如果用16块显卡、每块显卡4幅图像，学习率应设为0.08。然而，由于大多数模型使用 ADAM 而不是 SGD 进行优化，上述规则可能并不适用，用户需要自己调整学习率。
 
 ### 使用单块显卡进行训练
 
@@ -151,14 +151,14 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 
 可选参数：
 
-- `--no-validate` (**不推荐**): 默认情况下，代码在训练阶段每 k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
-- `--work-dir ${WORK_DIR}`: 覆盖配置文件中的指定工作目录。
-- `--resume-from ${CHECKPOINT_FILE}`: 从之前的模型权重文件中恢复。
-- `--options 'Key=value'`: 覆盖使用的配置中的一些设定。
+- `--no-validate`（**不推荐**）：默认情况下，代码在训练阶段每 k（默认值是1，可以像[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)一样修改）个周期做一次评测，如果要取消评测，使用 `--no-validate`。
+- `--work-dir ${WORK_DIR}`：覆盖配置文件中的指定工作目录。
+- `--resume-from ${CHECKPOINT_FILE}`：从之前的模型权重文件中恢复。
+- `--options 'Key=value'`：覆盖使用的配置中的一些设定。
 
-`resume-from` 和 `load-from` 的不同点:
-`resume-from` 加载模型权重和优化器状态，同时周期数也从特定的模型权重文件中继承，通常用于恢复偶然中断的训练过程。
-`load-from` 仅加载模型权重，训练周期从0开始，通常用于微调。
+`resume-from` 和 `load-from` 的不同点：
+- `resume-from` 加载模型权重和优化器状态，同时周期数也从特定的模型权重文件中继承，通常用于恢复偶然中断的训练过程。
+- `load-from` 仅加载模型权重，训练周期从0开始，通常用于微调。
 
 ### 使用多个机器进行训练
 
@@ -200,13 +200,13 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29501 ./tools/dist_train.sh ${CONFIG_FILE} 4
 
 2. 修改配置文件（通常在配置文件的倒数第6行）来设置不同的通信端口
 
-   在 `config1.py` 中,
+   在 `config1.py` 中，
 
    ```python
    dist_params = dict(backend='nccl', port=29500)
    ```
 
-   在 `config2.py` 中,
+   在 `config2.py` 中，
 
    ```python
    dist_params = dict(backend='nccl', port=29501)
