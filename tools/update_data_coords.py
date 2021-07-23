@@ -119,7 +119,7 @@ if __name__ == '__main__':
         pkl_files = ['kitti_dbinfos_train.pkl']
         update_outdoor_dbinfos(
             root_dir=args.root_dir, out_dir=args.out_dir, pkl_files=pkl_files)
-    elif args.dataset == 'nuscenes' and args.version != 'v1.0-mini':
+    elif args.dataset == 'nuscenes':
         # nuScenes infos is in LIDAR coord sys (changed)
         # nuScenes dbinfos is in LIDAR coord sys (changed)
         # so we update both infos and dbinfos
@@ -130,13 +130,12 @@ if __name__ == '__main__':
             pkl_files.append('nuscenes_infos_train_tiny.pkl')
         update_nuscenes_or_lyft_infos(
             root_dir=args.root_dir, out_dir=args.out_dir, pkl_files=pkl_files)
-
-        pkl_files = ['nuscenes_dbinfos_train.pkl']
-        update_outdoor_dbinfos(
-            root_dir=args.root_dir, out_dir=args.out_dir, pkl_files=pkl_files)
-    elif args.dataset == 'nuscenes' and args.version == 'v1.0-mini':
-        train_version = f'{args.version}'
-        pass
+        if args.version != 'v1.0-mini':
+            pkl_files = ['nuscenes_dbinfos_train.pkl']
+            update_outdoor_dbinfos(
+                root_dir=args.root_dir,
+                out_dir=args.out_dir,
+                pkl_files=pkl_files)
     elif args.dataset == 'lyft':
         # Lyft infos is in LIDAR coord sys (changed)
         # Lyft has no dbinfos
