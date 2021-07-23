@@ -158,7 +158,7 @@ def add_mim_extention():
     else:
         return
 
-    filenames = ['tools', 'configs', 'demo', 'ops', 'model-index.yml']
+    filenames = ['tools', 'configs', 'demo', 'model-index.yml']
     repo_path = osp.dirname(__file__)
     mim_path = osp.join(repo_path, 'mmdet3d', '.mim')
     os.makedirs(mim_path, exist_ok=True)
@@ -188,6 +188,7 @@ def add_mim_extention():
 
 
 if __name__ == '__main__':
+    add_mim_extention()
     setup(
         name='mmdet3d',
         version=get_version(),
@@ -309,6 +310,3 @@ if __name__ == '__main__':
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
-
-    # in order to support mim with compiled ops
-    add_mim_extention()

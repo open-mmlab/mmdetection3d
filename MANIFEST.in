@@ -2,5 +2,4 @@ include mmdet3d/.mim/model-index.yml
 include requirements/*.txt
 recursive-include mmdet3d/.mim/configs *.py *.yml
 recursive-include mmdet3d/.mim/tools *.sh *.py
-recursive-include mmdet3d/.mim/ops *.cpp *.cu *.h *.cc
 recursive-include mmdet3d/.mim/demo *.png *.jpg *.bin *.pkl *.py
