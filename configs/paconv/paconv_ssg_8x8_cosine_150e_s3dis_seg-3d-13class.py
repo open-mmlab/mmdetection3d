@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/paconv_cuda_ssg.py', '../_base_/default_runtime.py'
+    '../_base_/models/paconv_ssg.py', '../_base_/default_runtime.py'
 ]
 
 # data settings
@@ -37,7 +37,7 @@ train_pipeline = [
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         type='GlobalRotScaleTrans',
-        rot_range=[-3.141592653589793, 3.141592653589793],  # [-pi, pi]
+        rot_range=[0.0, 6.283185307179586],  # [0, 2 * pi]
         scale_ratio_range=[0.8, 1.2],
         translation_std=[0, 0, 0]),
     dict(
@@ -75,4 +75,4 @@ lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=lr * 0.01)
 momentum_config = None
 
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=200)
+runner = dict(type='EpochBasedRunner', max_epochs=150)
