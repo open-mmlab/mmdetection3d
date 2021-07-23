@@ -80,6 +80,8 @@ class ScoreNet(nn.Module):
             return
         # the official code applies xavier_init to all the Conv layers
         # refer to https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/paconv.py#L105  # noqa
+        # however in our experiments, we did not find much difference in
+        # applying the xavier initialization or not
         for m in self.mlps.modules():
             if isinstance(m, nn.Conv2d):
                 xavier_init(m)
