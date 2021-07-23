@@ -38,15 +38,15 @@ mmdetection3d
 │   │   │   ├── ImageSets
 │   ├── lyft
 │   │   ├── v1.01-train
-│   │   │   ├── v1.01-train (train_data)
-│   │   │   ├── lidar (train_lidar)
-│   │   │   ├── images (train_images)
-│   │   │   ├── maps (train_maps)
+│   │   │   ├── v1.01-train (训练数据)
+│   │   │   ├── lidar (训练激光雷达)
+│   │   │   ├── images (训练图片)
+│   │   │   ├── maps (训练地图)
 │   │   ├── v1.01-test
-│   │   │   ├── v1.01-test (test_data)
-│   │   │   ├── lidar (test_lidar)
-│   │   │   ├── images (test_images)
-│   │   │   ├── maps (test_maps)
+│   │   │   ├── v1.01-test (测试数据)
+│   │   │   ├── lidar (测试激光雷达)
+│   │   │   ├── images (测试图片)
+│   │   │   ├── maps (测试地图)
 │   │   ├── train.txt
 │   │   ├── val.txt
 │   │   ├── test.txt
@@ -60,6 +60,7 @@ mmdetection3d
 │   ├── scannet
 │   │   ├── meta_data
 │   │   ├── scans
+│   │   ├── scans_test
 │   │   ├── batch_load_scannet_data.py
 │   │   ├── load_scannet_data.py
 │   │   ├── scannet_utils.py
@@ -82,7 +83,7 @@ mmdetection3d
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
 
-# Download data split
+# 下载数据划分文件
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/test.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/test.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/train.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/train.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt

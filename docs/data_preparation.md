@@ -60,6 +60,7 @@ mmdetection3d
 │   ├── scannet
 │   │   ├── meta_data
 │   │   ├── scans
+│   │   ├── scans_test
 │   │   ├── batch_load_scannet_data.py
 │   │   ├── load_scannet_data.py
 │   │   ├── scannet_utils.py
