@@ -27,7 +27,6 @@ class PAConvHead(PointNet2Head):
         # https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/pointnet2_paconv_seg.py#L53
         # PointNet++'s decoder conv has bias while PAConv's doesn't have
         # so we need to rebuild it here
-        delattr(self, 'pre_seg_conv')
         self.pre_seg_conv = ConvModule(
             fp_channels[-1][-1],
             self.channels,

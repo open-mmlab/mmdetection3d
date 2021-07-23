@@ -17,7 +17,8 @@ def weight_correlation(conv):
     Returns:
         torch.Tensor: Correlations between each kernel weights in weight bank.
     """
-    assert isinstance(conv, (PAConv, PAConvCUDA))
+    assert isinstance(conv, (PAConv, PAConvCUDA)), \
+        f'unsupported module type {type(conv)}'
     kernels = conv.weight_bank  # [C_in, num_kernels * C_out]
     in_channels = conv.in_channels
     out_channels = conv.out_channels

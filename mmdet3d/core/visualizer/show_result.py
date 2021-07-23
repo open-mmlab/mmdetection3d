@@ -131,7 +131,7 @@ def show_seg_result(points,
                     filename,
                     palette,
                     ignore_index=None,
-                    show=True,
+                    show=False,
                     snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
@@ -205,7 +205,7 @@ def show_multi_modality_result(img,
                                filename,
                                box_mode,
                                img_metas=None,
-                               show=True,
+                               show=False,
                                gt_bbox_color=(61, 102, 255),
                                pred_bbox_color=(241, 101, 72)):
     """Convert multi-modality detection results into 2D results.
