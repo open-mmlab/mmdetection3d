@@ -7,8 +7,8 @@ MMDetection3D uses three different coordinate systems. The existence of differen
 Despite the variety of datasets and equipments, by summarizing the line of works on 3D object detection we can roughly categorize coordinate systems into three:
 
 - Camera coordinate system -- the coordinate system of most cameras, in which the positive direction of the y-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the z-axis points to the front.
-- LiDAR coordinate system -- the coordinate systems of many LiDARs, in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the front, and the positive direction of the z-axis points to the left.
-- Depth coordinate system, the coordinate systems used by VoteNet, H3DNet, etc., in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the z-axis points to the front.
+- LiDAR coordinate system -- the coordinate system of many LiDARs, in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the front, and the positive direction of the y-axis points to the left.
+- Depth coordinate system, the coordinate system used by VoteNet, H3DNet, etc., in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the y-axis points to the front.
 
 The definition of coordinate systems in this tutorial is actually **more than just defining the three axes**. For a box in the form of <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)">, our coordinate systems also define how to interpret the box dimensions <img src="https://render.githubusercontent.com/render/math?math=(dx, dy, dz)"> and the yaw angle <img src="https://render.githubusercontent.com/render/math?math=r">.
 
@@ -95,7 +95,7 @@ The illustration of the three coordinate systems is shown below:
 
 ![coord_sys_all](https://github.com/open-mmlab/mmdetection3d/blob/master/resources/coord_sys_all.png)
 
-The three figures above are the 3D coordinate system while the three figures below are the bird's eye view.
+The three figures above are the 3D coordinate systems while the three figures below are the bird's eye view.
 
 ## Relation with raw coordinate systems of supported datasets
 
@@ -172,7 +172,7 @@ See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmde
 
 ### Bird's Eye View
 
-The BEV of a camera coordinate system box is <img src="https://render.githubusercontent.com/render/math?math=(x, y, dx, dy, -r)"> if the 3D box is <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)">. The inversion of the sign of the yaw angle is because the positive direction of the gravity axis of the Camera coordinate system points to the ground.
+The BEV of a camera coordinate system box is <img src="https://render.githubusercontent.com/render/math?math=(x, z, dx, dz, -r)"> if the 3D box is <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)">. The inversion of the sign of the yaw angle is because the positive direction of the gravity axis of the Camera coordinate system points to the ground.
 
 See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py) for more details.
 
