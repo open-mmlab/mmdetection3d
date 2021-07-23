@@ -825,7 +825,7 @@ class PointSample(object):
 
     Args:
         num_points (int): Number of points to be sampled.
-        sample_range (int, optional): The range where to sample points.
+        sample_range (float, optional): The range where to sample points.
     """
 
     def __init__(self, num_points, sample_range=None):
@@ -845,8 +845,8 @@ class PointSample(object):
         Args:
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
-            sample_range (int, optional): Indicating the range where the points
-                will be sampled.
+            sample_range (float, optional): Indicating the range where the
+                points will be sampled.
                 Defaults to None.
             replace (bool, optional): Sampling with or without replacement.
                 Defaults to None.
@@ -862,7 +862,7 @@ class PointSample(object):
         point_range = range(len(points))
         if sample_range is not None and not replace:
             # Only sampling the near points when len(points) >= num_samples
-            depth = points.coord[:, 2]
+            depth = np.linalg.norm(points.tensor, axis=1)
             far_inds = np.where(depth > sample_range)[0]
             near_inds = np.where(depth <= sample_range)[0]
             point_range = near_inds
