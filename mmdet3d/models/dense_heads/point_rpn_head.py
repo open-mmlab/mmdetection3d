@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule, force_fp32
+from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core import xywhr2xyxyr
@@ -10,7 +11,6 @@ from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
-from .base_linear_bbox_head import BaseLinearBboxHead
 
 
 @HEADS.register_module()
@@ -49,10 +49,30 @@ class PointRPNHead(BaseModule):
 
         # build box coder
         self.bbox_coder = build_bbox_coder(bbox_coder)
-        self.conv_pred = BaseLinearBboxHead(
-            **pred_layer_cfg,
-            num_cls_out_channels=self._get_cls_out_channels(),
-            num_reg_out_channels=self._get_reg_out_channels())
+
+        # build pred conv
+        self.cls_layers = self._make_fc_layers(
+            fc_cfg=pred_layer_cfg.cls_linear_channels,
+            input_channels=pred_layer_cfg.in_channels,
+            output_channels=self._get_cls_out_channels())
+
+        self.reg_layers = self._make_fc_layers(
+            fc_cfg=pred_layer_cfg.reg_linear_channels,
+            input_channels=pred_layer_cfg.in_channels,
+            output_channels=self._get_reg_out_channels())
+
+    def _make_fc_layers(self, fc_cfg, input_channels, output_channels):
+        fc_layers = []
+        c_in = input_channels
+        for k in range(0, fc_cfg.__len__()):
+            fc_layers.extend([
+                nn.Linear(c_in, fc_cfg[k], bias=False),
+                nn.BatchNorm1d(fc_cfg[k]),
+                nn.ReLU(),
+            ])
+            c_in = fc_cfg[k]
+        fc_layers.append(nn.Linear(c_in, output_channels, bias=True))
+        return nn.Sequential(*fc_layers)
 
     def _get_cls_out_channels(self):
         """Return the channel number of classification outputs."""
@@ -68,9 +88,16 @@ class PointRPNHead(BaseModule):
 
     def forward(self, feat_dict):
         point_features = feat_dict['fp_features'][-1]
-        point_cls_preds, point_box_preds = self.conv_pred(point_features)
-        return (point_box_preds.transpose(2,
-                                          1), point_cls_preds.transpose(2, 1))
+        point_features = point_features.permute(0, 2, 1).contiguous()
+        bs = point_features.shape[0]
+        x_cls = point_features.view(-1, point_features.shape[-1])
+        x_reg = point_features.view(-1, point_features.shape[-1])
+
+        point_cls_preds = self.cls_layers(x_cls).reshape(
+            bs, -1, self._get_cls_out_channels())
+        point_box_preds = self.reg_layers(x_reg).reshape(
+            bs, -1, self._get_reg_out_channels())
+        return (point_box_preds, point_cls_preds)
 
     @force_fp32(apply_to=('bbox_preds'))
     def loss(self,
