@@ -86,9 +86,10 @@ class PointRCNNROIHead(Base3DRoIHead):
         """
         features = feats_dict['features']
         points = feats_dict['points']
-        point_scores = feats_dict['points_scores']
+        point_cls_preds = feats_dict['points_cls_preds']
+        sem_scores = torch.sigmoid(point_cls_preds)
+        point_scores = sem_scores.max(-1)[0]
 
-        losses = dict()
         sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
 
@@ -103,6 +104,7 @@ class PointRCNNROIHead(Base3DRoIHead):
 
         bbox_results = self._bbox_forward_train(features, points,
                                                 sample_results)
+        losses = dict()
         losses.update(bbox_results['loss_bbox'])
 
         return losses
@@ -126,7 +128,9 @@ class PointRCNNROIHead(Base3DRoIHead):
 
         features = feats_dict['features']
         points = feats_dict['points']
-        point_scores = feats_dict['points_scores']
+        point_cls_preds = feats_dict['points_cls_preds']
+        sem_scores = torch.sigmoid(point_cls_preds)
+        point_scores = sem_scores.max(-1)[0]
 
         features = features.transpose(1, 2).contiguous()
         point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5

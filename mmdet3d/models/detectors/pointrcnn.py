@@ -1,5 +1,4 @@
 import torch
-from torch.nn import functional as F
 
 from mmdet.models import DETECTORS
 from .two_stage import TwoStage3DDetector
@@ -65,32 +64,28 @@ class PointRCNN(TwoStage3DDetector):
         backbone_xyz = x['fp_xyz'][-1].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
 
-        if self.with_rpn:
-            bbox_preds, cls_preds = self.rpn_head(x)
-            rpn_loss = self.rpn_head.loss(
-                bbox_preds=bbox_preds,
-                cls_preds=cls_preds,
-                points=points,
-                gt_bboxes_3d=gt_bboxes_3d,
-                gt_labels_3d=gt_labels_3d,
-                img_metas=img_metas)
-            losses.update(rpn_loss)
+        bbox_preds, cls_preds = self.rpn_head(x)
 
-            sem_scores = F.sigmoid(cls_preds).detach()
-            obj_scores = sem_scores.max(-1)[0]
-            is_training = True
-            bbox_list = self.rpn_head.get_bboxes(points_cat, bbox_preds,
-                                                 cls_preds, img_metas,
-                                                 is_training)
-            proposal_list = [
-                dict(
-                    boxes_3d=bboxes,
-                    scores_3d=scores,
-                    labels_3d=labels,
-                    cls_preds=preds_cls)
-                for bboxes, scores, labels, preds_cls in bbox_list
-            ]
-            rcnn_feats.update({'points_scores': obj_scores})
+        rpn_loss = self.rpn_head.loss(
+            bbox_preds=bbox_preds,
+            cls_preds=cls_preds,
+            points=points,
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=gt_labels_3d,
+            img_metas=img_metas)
+        losses.update(rpn_loss)
+
+        bbox_list = self.rpn_head.get_bboxes(points_cat, bbox_preds, cls_preds,
+                                             img_metas)
+        proposal_list = [
+            dict(
+                boxes_3d=bboxes,
+                scores_3d=scores,
+                labels_3d=labels,
+                cls_preds=preds_cls)
+            for bboxes, scores, labels, preds_cls in bbox_list
+        ]
+        rcnn_feats.update({'points_cls_preds': cls_preds})
 
         roi_losses = self.roi_head.forward_train(rcnn_feats, img_metas,
                                                  proposal_list, gt_bboxes_3d,
@@ -118,9 +113,8 @@ class PointRCNN(TwoStage3DDetector):
         backbone_xyz = x['fp_xyz'][-1].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
         bbox_preds, cls_preds = self.rpn_head(x)
-        sem_scores = F.sigmoid(cls_preds).detach()
-        obj_scores = sem_scores.max(-1)[0]
-        rcnn_feats.update({'points_scores': obj_scores})
+        rcnn_feats.update({'points_cls_preds': cls_preds})
+
         bbox_list = self.rpn_head.get_bboxes(
             points_cat, bbox_preds, cls_preds, img_metas, rescale=rescale)
 

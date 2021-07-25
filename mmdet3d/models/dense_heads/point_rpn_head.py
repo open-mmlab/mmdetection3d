@@ -254,7 +254,6 @@ class PointRPNHead(BaseModule):
                    bbox_preds,
                    cls_preds,
                    input_metas,
-                   training_flag=False,
                    rescale=False):
         """Generate bboxes from sdd3d head predictions.
 
@@ -280,7 +279,7 @@ class PointRPNHead(BaseModule):
                 self.multiclass_nms_single(
                     obj_scores[b], sem_scores[b],
                     bbox3d, points[b, ..., :3],
-                    input_metas[b], training_flag)
+                    input_metas[b])
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -350,7 +349,7 @@ class PointRPNHead(BaseModule):
         return bbox_selected, score_selected, labels, cls_preds
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
-                              input_meta, training_flag):
+                              input_meta):
         """Multi-class nms in single batch.
 
         Args:
@@ -367,7 +366,7 @@ class PointRPNHead(BaseModule):
         num_rpn_proposal = self.test_cfg.max_output_num
         nms_cfg = self.test_cfg.nms_cfg
         score_thr = self.test_cfg.score_thr
-        if training_flag:
+        if self.training:
             num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
             nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
             score_thr = self.train_cfg.rpn_proposal.score_thr
