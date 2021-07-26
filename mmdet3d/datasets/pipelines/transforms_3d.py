@@ -1069,7 +1069,7 @@ class IndoorPatchPointSample(object):
                                                         (cur_max + self.eps)),
                 axis=1) == 3
 
-            # two criterions for patch sampling, adopted from PointNet++
+            # two criteria for patch sampling, adopted from PointNet++
             # 1. selected patch should contain enough unique points
             if self.min_unique_num is None:
                 # use PointNet++'s method as default

@@ -26,6 +26,9 @@ model = dict(
                 last_bn=False))),
     decode_head=dict(
         type='PAConvHead',
+        # PAConv model's decoder takes skip connections from beckbone
+        # different from PointNet++, it also concats input features in the last
+        # level of decoder, leading to `128 + 6` as the channel number
         fp_channels=((768, 256, 256), (384, 256, 256), (320, 256, 128),
                      (128 + 6, 128, 128, 128)),
         channels=128,
