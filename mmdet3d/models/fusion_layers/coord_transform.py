@@ -9,7 +9,7 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
 
     Args:
         pcd (torch.Tensor): The point cloud to be transformed.
-        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'
+        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
         img_meta(dict): Meta info regarding data transformation.
         reverse (bool): Reversed transformation or not.
 

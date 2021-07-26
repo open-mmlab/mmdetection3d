@@ -4,31 +4,32 @@ from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
+from mmdet3d.core.bbox.structures import points_cam2img
 from ..builder import FUSION_LAYERS
 from . import apply_3d_transformation
 
 
-def point_sample(
-    img_meta,
-    img_features,
-    points,
-    lidar2img_rt,
-    img_scale_factor,
-    img_crop_offset,
-    img_flip,
-    img_pad_shape,
-    img_shape,
-    aligned=True,
-    padding_mode='zeros',
-    align_corners=True,
-):
+def point_sample(img_meta,
+                 img_features,
+                 points,
+                 proj_mat,
+                 coords_type,
+                 img_scale_factor,
+                 img_crop_offset,
+                 img_flip,
+                 img_pad_shape,
+                 img_shape,
+                 aligned=True,
+                 padding_mode='zeros',
+                 align_corners=True):
     """Obtain image features using points.
 
     Args:
         img_meta (dict): Meta info.
         img_features (torch.Tensor): 1 x C x H x W image features.
         points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
-        lidar2img_rt (torch.Tensor): 4x4 transformation matrix.
+        proj_mat (torch.Tensor): 4x4 transformation matrix.
+        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
         img_scale_factor (torch.Tensor): Scale factor with shape of \
             (w_scale, h_scale).
         img_crop_offset (torch.Tensor): Crop offset used to crop \
@@ -50,19 +51,11 @@ def point_sample(
     """
 
     # apply transformation based on info in img_meta
-    points = apply_3d_transformation(points, 'LIDAR', img_meta, reverse=True)
+    points = apply_3d_transformation(
+        points, coords_type, img_meta, reverse=True)
 
-    # project points from velo coordinate to camera coordinate
-    num_points = points.shape[0]
-    pts_4d = torch.cat([points, points.new_ones(size=(num_points, 1))], dim=-1)
-    pts_2d = pts_4d @ lidar2img_rt.t()
-
-    # cam_points is Tensor of Nx4 whose last column is 1
-    # transform camera coordinate to image coordinate
-
-    pts_2d[:, 2] = torch.clamp(pts_2d[:, 2], min=1e-5)
-    pts_2d[:, 0] /= pts_2d[:, 2]
-    pts_2d[:, 1] /= pts_2d[:, 2]
+    # project points to camera coordinate
+    pts_2d = points_cam2img(points, proj_mat)
 
     # img transformation: scale -> crop -> flip
     # the image is resized by img_scale_factor
@@ -293,6 +286,7 @@ class PointFusion(BaseModule):
             img_feats,
             pts,
             pts.new_tensor(img_meta['lidar2img']),
+            'LIDAR',
             img_scale_factor,
             img_crop_offset,
             img_flip=img_flip,
