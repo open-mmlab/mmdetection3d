@@ -1,3 +1,10 @@
+/*
+Modified for
+https://github.com/open-mmlab/OpenPCDet/blob/master/pcdet/ops/roipoint_pool3d/src/roipoint_pool3d_kernel.cu
+Point cloud feature pooling
+Written by Shaoshuai Shi
+All Rights Reserved 2018.
+*/
 #include <torch/serialize/tensor.h>
 #include <torch/extension.h>
 
@@ -57,4 +64,3 @@ int roipool3d_gpu(at::Tensor xyz, at::Tensor boxes3d, at::Tensor pts_feature, at
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("forward", &roipool3d_gpu, "roipool3d forward (CUDA)");
 }
-

@@ -7,7 +7,7 @@ from mmdet.core.bbox.builder import BBOX_CODERS
 
 @BBOX_CODERS.register_module()
 class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
-    """Bbox Coder for 3D boxes.
+    """Point based Bbox Coder for 3D boxes.
 
     Args:
         code_size (int): The dimension of boxes to be encoded.
@@ -27,11 +27,12 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         dz are offset of the bbox center .
 
         Args:
-            gt_boxes: (N, 7 + C) [x, y, z, dx, dy, dz, heading, ...]
-            points: (N, 3) [x, y, z]
-            gt_classes: (N) [0, num_classes - 1]
+            gt_boxes(BaseInstance3DBoxes): Ground truth bboxes \
+                with shape (n, 7).
+            points(torch.Tensor): Point cloud with shape(n, 3)
+            gt_classes(torch.Tensor): Ground truth classes
         Returns:
-            box_coding: (N, 8 + C)
+            torch.tensor: Encoded boxes with shape(n, 8)
         """
 
         gt_boxes[:, 3:6] = torch.clamp_min(gt_boxes[:, 3:6], min=1e-5)
@@ -68,11 +69,11 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
     def decode(self, box_encodings, points, pred_classes=None):
         """
         Args:
-            box_encodings: (N, 8 + C) [x, y, z, dx, dy, dz, cos, sin, ...]
-            points: [x, y, z]
-            pred_classes: (N) [0, num_classes - 1]
+            box_encodings(torch.Tensor): Encoded boxes with shape(n, 8)
+            points(torch.Tensor): point cloud
+            pred_classes(torch.Tensor): bbox predicted class
         Returns:
-
+            torch.Tensor: Decoded boxes
         """
         xt, yt, zt, dxt, dyt, dzt, cost, sint, *cts = torch.split(
             box_encodings, 1, dim=-1)
