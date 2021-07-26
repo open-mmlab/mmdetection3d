@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
+from mmcv.cnn.bricks import build_conv_layer
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule
 from torch import nn as nn
@@ -8,7 +9,6 @@ from torch import nn as nn
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
-from mmdet3d.models.dense_heads import BaseSeparateConvBboxHead
 from mmdet3d.ops import build_sa_module
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
@@ -38,6 +38,10 @@ class PointRCNNBboxHead(BaseModule):
             sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
             bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
             sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
+            conv_cfg=dict(type='Conv1d'),
+            norm_cfg=dict(type='BN1d'),
+            act_cfg=dict(type='ReLU'),
+            bias='auto',
             loss_bbox=dict(
                 type='SmoothL1Loss',
                 beta=1.0 / 9.0,
@@ -55,6 +59,10 @@ class PointRCNNBboxHead(BaseModule):
         self.num_classes = num_classes
         self.num_sa = len(sa_channels)
         self.with_corner_loss = with_corner_loss
+        self.conv_cfg = conv_cfg
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        self.bias = bias
 
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_cls = build_loss(loss_cls)
@@ -106,13 +114,46 @@ class PointRCNNBboxHead(BaseModule):
                     mlp_channels=cur_sa_mlps,
                     cfg=sa_cfg))
             sa_in_channel = sa_out_channel
+        self.cls_convs = self._add_conv_branch(
+            pred_layer_cfg.in_channels, pred_layer_cfg.cls_conv_channels)
+        self.reg_convs = self._add_conv_branch(
+            pred_layer_cfg.in_channels, pred_layer_cfg.reg_conv_channels)
 
-        self.conv_pred = BaseSeparateConvBboxHead(
-            **pred_layer_cfg,
-            num_cls_out_channels=1,
-            num_reg_out_channels=self.bbox_coder.code_size)
+        prev_channel = pred_layer_cfg.cls_conv_channels[-1]
+        self.conv_cls = build_conv_layer(
+            self.conv_cfg,
+            in_channels=prev_channel,
+            out_channels=self.num_classes,
+            kernel_size=1)
+        prev_channel = pred_layer_cfg.reg_conv_channels[-1]
+        self.conv_reg = build_conv_layer(
+            self.conv_cfg,
+            in_channels=prev_channel,
+            out_channels=self.bbox_coder.code_size,
+            kernel_size=1)
+
         if init_cfg is None:
             self.init_cfg = dict(type='Xavier', layer=['Conv2d', 'Conv1d'])
+
+    def _add_conv_branch(self, in_channels, conv_channels):
+        """Add shared or separable branch."""
+        conv_spec = [in_channels] + list(conv_channels)
+        # add branch specific conv layers
+        conv_layers = nn.Sequential()
+        for i in range(len(conv_spec) - 1):
+            conv_layers.add_module(
+                f'layer{i}',
+                ConvModule(
+                    conv_spec[i],
+                    conv_spec[i + 1],
+                    kernel_size=1,
+                    padding=0,
+                    conv_cfg=self.conv_cfg,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg,
+                    bias=self.bias,
+                    inplace=True))
+        return conv_layers
 
     def init_weights(self):
         super().init_weights()
@@ -120,7 +161,7 @@ class PointRCNNBboxHead(BaseModule):
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv1d):
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
-        normal_init(self.conv_pred.conv_reg.weight, mean=0, std=0.001)
+        normal_init(self.conv_reg.weight, mean=0, std=0.001)
 
     def forward(self, feats):
         input_data = feats.clone().detach()
@@ -139,9 +180,14 @@ class PointRCNNBboxHead(BaseModule):
             l_features.append(li_features)
 
         shared_features = l_features[-1]
-        rcnn_cls, rcnn_reg = self.conv_pred(shared_features)
-        rcnn_reg = rcnn_reg.transpose(1, 2).contiguous().squeeze(dim=1)
+        x_cls = shared_features
+        x_reg = shared_features
+        x_cls = self.cls_convs(x_cls)
+        rcnn_cls = self.conv_cls(x_cls)
+        x_reg = self.reg_convs(x_reg)
+        rcnn_reg = self.conv_reg(x_reg)
         rcnn_cls = rcnn_cls.transpose(1, 2).contiguous().squeeze(dim=1)
+        rcnn_reg = rcnn_reg.transpose(1, 2).contiguous().squeeze(dim=1)
         return (rcnn_cls, rcnn_reg)
 
     def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
