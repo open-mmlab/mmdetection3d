@@ -158,7 +158,7 @@ def add_mim_extention():
     else:
         return
 
-    filenames = ['tools', 'configs', 'demo', 'model-index.yml']
+    filenames = ['tools', 'configs', 'model-index.yml']
     repo_path = osp.dirname(__file__)
     mim_path = osp.join(repo_path, 'mmdet3d', '.mim')
     os.makedirs(mim_path, exist_ok=True)
