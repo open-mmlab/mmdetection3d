@@ -187,8 +187,3 @@ def test_show():
     mmcv.check_file_exist(gt_file_path)
     mmcv.check_file_exist(pred_file_path)
     tmp_dir.cleanup()
-
-
-if __name__ == '__main__':
-    test_getitem()
-    test_format_results()
