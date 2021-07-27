@@ -13,7 +13,7 @@ def point_sample(img_meta,
                  img_features,
                  points,
                  proj_mat,
-                 coords_type,
+                 coord_type,
                  img_scale_factor,
                  img_crop_offset,
                  img_flip,
@@ -29,7 +29,7 @@ def point_sample(img_meta,
         img_features (torch.Tensor): 1 x C x H x W image features.
         points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
         proj_mat (torch.Tensor): 4x4 transformation matrix.
-        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
         img_scale_factor (torch.Tensor): Scale factor with shape of \
             (w_scale, h_scale).
         img_crop_offset (torch.Tensor): Crop offset used to crop \
@@ -52,7 +52,7 @@ def point_sample(img_meta,
 
     # apply transformation based on info in img_meta
     points = apply_3d_transformation(
-        points, coords_type, img_meta, reverse=True)
+        points, coord_type, img_meta, reverse=True)
 
     # project points to camera coordinate
     pts_2d = points_cam2img(points, proj_mat)
@@ -89,6 +89,22 @@ def point_sample(img_meta,
     return point_features.squeeze().t()
 
 
+# TODO: 1. move it to another file. This also should be used
+#          to unify draw_*_bbox3d_on_img and in ImVoxelNet.
+#       2. update when refactor cam_intrinsic to cam2img.
+#       3. update when refactor coord_type and box_type to
+#          the same case.
+def get_proj_mat_by_coord_type(img_meta, coord_type):
+    coord_type = coord_type.upper()
+    mapping = {
+        'LIDAR': 'lidar2img',
+        'DEPTH': 'depth2img',
+        'CAMERA': 'cam_intrinsic'
+    }
+    assert coord_type in mapping.keys()
+    return img_meta[mapping[coord_type]]
+
+
 @FUSION_LAYERS.register_module()
 class PointFusion(BaseModule):
     """Fuse image features from multi-scale features.
@@ -100,6 +116,8 @@ class PointFusion(BaseModule):
         mid_channels (int): Channels of middle layers
         out_channels (int): Channels of output fused features
         img_levels (int, optional): Number of image levels. Defaults to 3.
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
+            Defaults to 'LIDAR'.
         conv_cfg (dict, optional): Dict config of conv layers of middle
             layers. Defaults to None.
         norm_cfg (dict, optional): Dict config of norm layers of middle
@@ -129,6 +147,7 @@ class PointFusion(BaseModule):
                  mid_channels,
                  out_channels,
                  img_levels=3,
+                 coord_type='LIDAR',
                  conv_cfg=None,
                  norm_cfg=None,
                  act_cfg=None,
@@ -150,6 +169,7 @@ class PointFusion(BaseModule):
         assert len(img_channels) == len(img_levels)
 
         self.img_levels = img_levels
+        self.coord_type = coord_type
         self.act_cfg = act_cfg
         self.activate_out = activate_out
         self.fuse_out = fuse_out
@@ -281,14 +301,15 @@ class PointFusion(BaseModule):
         img_crop_offset = (
             pts.new_tensor(img_meta['img_crop_offset'])
             if 'img_crop_offset' in img_meta.keys() else 0)
+        proj_mat = get_proj_mat_by_coord_type(img_meta, self.coord_type)
         img_pts = point_sample(
-            img_meta,
-            img_feats,
-            pts,
-            pts.new_tensor(img_meta['lidar2img']),
-            'LIDAR',
-            img_scale_factor,
-            img_crop_offset,
+            img_meta=img_meta,
+            img_features=img_feats,
+            points=pts,
+            proj_mat=pts.new_tensor(proj_mat),
+            coord_type=self.coord_type,
+            img_scale_factor=img_scale_factor,
+            img_crop_offset=img_crop_offset,
             img_flip=img_flip,
             img_pad_shape=img_meta['input_shape'][:2],
             img_shape=img_meta['img_shape'][:2],

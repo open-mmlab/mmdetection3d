@@ -61,7 +61,7 @@ class ImVoxelNet(BaseDetector):
                 img_features=feature[None, ...],
                 points=points,
                 proj_mat=points.new_tensor(img_meta['lidar2img']),
-                coords_type='LIDAR',
+                coord_type='LIDAR',
                 img_scale_factor=img_scale_factor,
                 img_crop_offset=img_crop_offset,
                 img_flip=img_flip,
