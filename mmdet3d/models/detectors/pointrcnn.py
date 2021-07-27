@@ -60,8 +60,8 @@ class PointRCNN(TwoStage3DDetector):
         x = self.extract_feat(points_cat)
 
         # features for rcnn
-        backbone_feats = x['fp_features'][-1].clone()
-        backbone_xyz = x['fp_xyz'][-1].clone()
+        backbone_feats = x['fp_features'].clone()
+        backbone_xyz = x['fp_xyz'].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
 
         bbox_preds, cls_preds = self.rpn_head(x)
@@ -109,8 +109,8 @@ class PointRCNN(TwoStage3DDetector):
 
         x = self.extract_feat(points_cat)
         # features for rcnn
-        backbone_feats = x['fp_features'][-1].clone()
-        backbone_xyz = x['fp_xyz'][-1].clone()
+        backbone_feats = x['fp_features'].clone()
+        backbone_xyz = x['fp_xyz'].clone()
         rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
         bbox_preds, cls_preds = self.rpn_head(x)
         rcnn_feats.update({'points_cls_preds': cls_preds})

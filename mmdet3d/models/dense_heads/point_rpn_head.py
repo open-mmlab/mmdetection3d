@@ -81,7 +81,7 @@ class PointRPNHead(BaseModule):
         return 3 + 3 + 2
 
     def forward(self, feat_dict):
-        point_features = feat_dict['fp_features'][-1]
+        point_features = feat_dict['fp_features']
         point_features = point_features.permute(0, 2, 1).contiguous()
         bs = point_features.shape[0]
         x_cls = point_features.view(-1, point_features.shape[-1])
@@ -133,7 +133,7 @@ class PointRPNHead(BaseModule):
             pred_bbox3d.clone(), box_dim=pred_bbox3d.shape[-1], with_yaw=True)
         # pred_corners3d = pred_bbox3d.corners.reshape(-1, 8, 3)
         gt_targets = gt_targets.reshape(-1, gt_targets.shape[-1])
-        corner_loss = self.get_corner_loss_lidar(
+        corner_loss = self.get_corner_loss(
             pred_bbox3d.tensor[positive_mask.reshape(-1)],
             gt_targets[positive_mask.reshape(-1)])
 
@@ -154,7 +154,7 @@ class PointRPNHead(BaseModule):
             corner_loss=corner_loss)
         return losses
 
-    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0 / 9.0):
+    def get_corner_loss(self, pred_bbox3d, gt_bbox3d, delta=1.0 / 9.0):
         """Calculate corner loss of given boxes.
 
         Args:

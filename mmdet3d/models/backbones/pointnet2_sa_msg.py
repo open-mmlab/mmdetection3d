@@ -63,7 +63,9 @@ class PointNet2SAMSG(BasePointNet):
         self.out_indices = out_indices
         assert max(out_indices) < self.num_sa
         assert len(num_points) == len(radii) == len(num_samples) == len(
-            sa_channels) == len(aggregation_channels)
+            sa_channels)
+        if aggregation_channels is not None:
+            assert len(sa_channels) == len(aggregation_channels)
 
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
@@ -103,21 +105,19 @@ class PointNet2SAMSG(BasePointNet):
                     cfg=sa_cfg,
                     bias=True))
             skip_channel_list.append(sa_out_channel)
-
-            cur_aggregation_channel = aggregation_channels[sa_index]
-            if cur_aggregation_channel is None:
+            if aggregation_channels is None:
                 self.aggregation_mlps.append(None)
                 sa_in_channel = sa_out_channel
             else:
                 self.aggregation_mlps.append(
                     ConvModule(
                         sa_out_channel,
-                        cur_aggregation_channel,
+                        aggregation_channels[sa_index],
                         conv_cfg=dict(type='Conv1d'),
                         norm_cfg=dict(type='BN1d'),
                         kernel_size=1,
                         bias=True))
-                sa_in_channel = cur_aggregation_channel
+                sa_in_channel = aggregation_channels[sa_index]
 
     @auto_fp16(apply_to=('points', ))
     def forward(self, points):
