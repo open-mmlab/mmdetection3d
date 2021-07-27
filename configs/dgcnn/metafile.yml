@@ -1,0 +1,24 @@
+Collections:
+  - Name: DGCNN
+    Metadata:
+      Training Techniques:
+        - SGD
+      Training Resources: 1x Titan XP GPU
+      Architecture:
+        - DGCNN
+    Paper: https://arxiv.org/abs/1801.07829
+    README: configs/dgcnn/README.md
+
+Models:
+  - Name: dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py
+    In Collection: DGCNN
+    Config: configs/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py
+    Metadata:
+      Training Data: S3DIS
+      Training Memory (GB): 6.6
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: S3DIS
+        Metrics:
+          mIoU: -
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth
