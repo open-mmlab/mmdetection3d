@@ -24,13 +24,13 @@ class PointsObjClsModule(BaseModule):
 
     Args:
         in_channel (int): number of channels of seed point features.
-        num_convs (int): number of conv layers.
+        num_convs (int, optional): number of conv layers.
             Default: 3.
-        conv_cfg (dict): Config of convolution.
+        conv_cfg (dict, optional): Config of convolution.
             Default: dict(type='Conv1d').
-        norm_cfg (dict): Config of normalization.
+        norm_cfg (dict, optional): Config of normalization.
             Default: dict(type='BN1d').
-        act_cfg (dict): Config of activation.
+        act_cfg (dict, optional): Config of activation.
             Default: dict(type='ReLU').
     """
 

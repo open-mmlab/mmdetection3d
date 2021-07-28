@@ -21,7 +21,7 @@ class RandomDropPointsColor(object):
     util/transform.py#L223>`_ for more details.
 
     Args:
-        drop_ratio (float): The probability of dropping point colors.
+        drop_ratio (float, optional): The probability of dropping point colors.
             Defaults to 0.2.
     """
 
@@ -507,15 +507,15 @@ class GlobalRotScaleTrans(object):
     """Apply global rotation, scaling and translation to a 3D scene.
 
     Args:
-        rot_range (list[float]): Range of rotation angle.
+        rot_range (list[float], optional): Range of rotation angle.
             Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
-        scale_ratio_range (list[float]): Range of scale ratio.
+        scale_ratio_range (list[float], optional): Range of scale ratio.
             Defaults to [0.95, 1.05].
-        translation_std (list[float]): The standard deviation of translation
-            noise. This applies random translation to a scene by a noise, which
+        translation_std (list[float], optional): The standard deviation of
+            translation noise applied to a scene, which
             is sampled from a gaussian distribution whose standard deviation
             is set by ``translation_std``. Defaults to [0, 0, 0]
-        shift_height (bool): Whether to shift height.
+        shift_height (bool, optional): Whether to shift height.
             (the fourth dimension of indoor points) when scaling.
             Defaults to False.
     """

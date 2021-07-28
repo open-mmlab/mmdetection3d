@@ -259,7 +259,7 @@ class MVXTwoStageDetector(Base3DDetector):
                 of 2D boxes in images. Defaults to None.
             gt_bboxes (list[torch.Tensor], optional): Ground truth 2D boxes in
                 images. Defaults to None.
-            img (torch.Tensor optional): Images of each sample with shape
+            img (torch.Tensor, optional): Images of each sample with shape
                 (N, C, H, W). Defaults to None.
             proposals ([list[torch.Tensor], optional): Predicted proposals
                 used for training Fast RCNN. Defaults to None.

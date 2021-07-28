@@ -109,7 +109,7 @@ class DynamicVFE(nn.Module):
         mode (str, optional): The mode when pooling features of points
             inside a voxel. Available options include 'max' and 'avg'.
             Defaults to 'max'.
-        fusion_layer (dict | None, optional): The config dict of fusion
+        fusion_layer (dict, optional): The config dict of fusion
             layer used in multi-modal detectors. Defaults to None.
         return_point_feats (bool, optional): Whether to return the features
             of each points. Defaults to False.
@@ -309,7 +309,7 @@ class HardVFE(nn.Module):
         mode (str, optional): The mode when pooling features of points inside a
             voxel. Available options include 'max' and 'avg'.
             Defaults to 'max'.
-        fusion_layer (dict | None, optional): The config dict of fusion layer
+        fusion_layer (dict, optional): The config dict of fusion layer
             used in multi-modal detectors. Defaults to None.
         return_point_feats (bool, optional): Whether to return the
             features of each points. Defaults to False.
