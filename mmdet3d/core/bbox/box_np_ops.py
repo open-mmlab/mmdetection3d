@@ -406,7 +406,7 @@ def create_anchors_3d_range(feature_size,
         rotations (list[float] | np.ndarray | torch.Tensor, optional):
             Rotations of anchors in a single feature grid.
             Defaults to (0, np.pi / 2).
-        dtype (type, optional): Data type. Default to np.float32.
+        dtype (type, optional): Data type. Defaults to np.float32.
 
     Returns:
         np.ndarray: Range based anchors with shape of

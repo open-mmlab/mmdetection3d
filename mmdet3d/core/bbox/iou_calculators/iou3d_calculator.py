@@ -192,7 +192,7 @@ class AxisAlignedBboxOverlaps3D(object):
             mode (str): "iou" (intersection over union) or "giou" (generalized
                 intersection over union).
             is_aligned (bool, optional): If True, then m and n must be equal.
-                Default False.
+                Defaults to False.
         Returns:
             Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
         """
@@ -226,9 +226,9 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
         mode (str): "iou" (intersection over union) or "giou" (generalized
             intersection over union).
         is_aligned (bool, optional): If True, then m and n must be equal.
-            Default False.
+            Defaults to False.
         eps (float, optional): A value added to the denominator for numerical
-            stability. Default 1e-6.
+            stability. Defaults to 1e-6.
 
     Returns:
         Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)

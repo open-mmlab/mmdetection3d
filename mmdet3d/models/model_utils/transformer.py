@@ -14,15 +14,16 @@ class GroupFree3DMHA(MultiheadAttention):
         embed_dims (int): The embedding dimension.
         num_heads (int): Parallel attention heads. Same as
             `nn.MultiheadAttention`.
-        attn_drop (float): A Dropout layer on attn_output_weights. Default 0.0.
-        proj_drop (float): A Dropout layer. Default 0.0.
+        attn_drop (float): A Dropout layer on attn_output_weights.
+            Defaults to 0.0.
+        proj_drop (float): A Dropout layer. Defaults 0.0.
         dropout_layer (obj:`ConfigDict`): The dropout_layer used
             when adding the shortcut.
         init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
             Default: None.
         batch_first (bool): Key, Query and Value are shape of
             (batch, n, embed_dim)
-            or (n, batch, embed_dim). Default to False.
+            or (n, batch, embed_dim). Defaults to False.
     """
 
     def __init__(self,

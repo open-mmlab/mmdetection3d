@@ -86,8 +86,10 @@ def show_result(points,
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        show (bool): Visualize the results online. Defaults to False.
-        snapshot (bool): Whether to save the online results. Defaults to False.
+        show (bool, optional): Visualize the results online.
+            Defaults to False.
+        snapshot (bool, optional): Whether to save the online results.
+            Defaults to False.
     """
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
@@ -221,7 +223,7 @@ def show_multi_modality_result(img,
         box_mode (str): Coordinate system the boxes are in. Should be one of
            'depth', 'lidar' and 'camera'. Defaults to 'lidar'.
         img_metas (dict): Used in projecting depth bbox.
-        show (bool): Visualize the results online. Defaults to False.
+        show (bool, optional): Visualize the results online. Defaults to False.
         gt_bbox_color (str or tuple(int)): Color of bbox lines.
            The tuple of color should be in BGR order. Default: (255, 102, 61)
         pred_bbox_color (str or tuple(int)): Color of bbox lines.

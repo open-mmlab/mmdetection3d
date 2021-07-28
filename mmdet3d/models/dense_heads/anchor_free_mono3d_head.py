@@ -37,10 +37,10 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         loss_attr (dict): Config of attribute classifier loss, which is only
             active when pred_attrs=True.
         bbox_code_size (int): Dimensions of predicted bounding boxes.
-        pred_attrs (bool): Whether to predict attributes. Default to False.
+        pred_attrs (bool): Whether to predict attributes. Defaults to False.
         num_attrs (int): The number of attributes to be predicted. Default: 9.
-        pred_velo (bool): Whether to predict velocity. Default to False.
-        pred_bbox2d (bool): Whether to predict 2D boxes. Default to False.
+        pred_velo (bool): Whether to predict velocity. Defaults to False.
+        pred_bbox2d (bool): Whether to predict 2D boxes. Defaults to False.
         group_reg_dims (tuple[int]): The dimension of each regression target
             group. Default: (2, 1, 3, 1, 2).
         cls_branch (tuple[int]): Channels for classification branch.

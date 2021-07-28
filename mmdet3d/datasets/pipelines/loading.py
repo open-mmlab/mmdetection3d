@@ -15,7 +15,8 @@ class LoadMultiViewImageFromFiles(object):
     Args:
         to_float32 (bool): Whether to convert the img to float32.
             Defaults to False.
-        color_type (str): Color type of the file. Defaults to 'unchanged'.
+        color_type (str, optional): Color type of the file.
+            Defaults to 'unchanged'.
     """
 
     def __init__(self, to_float32=False, color_type='unchanged'):
@@ -101,9 +102,11 @@ class LoadPointsFromMultiSweeps(object):
     This is usually used for nuScenes dataset to utilize previous sweeps.
 
     Args:
-        sweeps_num (int): Number of sweeps. Defaults to 10.
-        load_dim (int): Dimension number of the loaded points. Defaults to 5.
-        use_dim (list[int]): Which dimension to use. Defaults to [0, 1, 2, 4].
+        sweeps_num (int, optional): Number of sweeps. Defaults to 10.
+        load_dim (int, optional): Dimension number of the loaded points.
+            Defaults to 5.
+        use_dim (list[int], optional): Which dimension to use.
+            Defaults to [0, 1, 2, 4].
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
@@ -346,8 +349,10 @@ class LoadPointsFromFile(object):
         use_dim (list[int]): Which dimensions of the points to be used.
             Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
-        shift_height (bool): Whether to use shifted height. Defaults to False.
-        use_color (bool): Whether to use color features. Defaults to False.
+        shift_height (bool, optional): Whether to use shifted height.
+            Defaults to False.
+        use_color (bool, optional): Whether to use color features.
+            Defaults to False.
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
