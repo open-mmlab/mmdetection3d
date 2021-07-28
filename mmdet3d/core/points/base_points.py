@@ -46,7 +46,7 @@ class BasePoints(object):
 
     @property
     def coord(self):
-        """torch.Tensor: Coordinates of each point with size (N, 3)."""
+        """torch.Tensor: Coordinates of each point in shape (N, 3)."""
         return self.tensor[:, :3]
 
     @coord.setter
