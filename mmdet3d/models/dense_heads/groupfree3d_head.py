@@ -709,7 +709,7 @@ class GroupFree3DHead(BaseModule):
         if self.bbox_coder.with_rot:
             vote_targets = points.new_zeros([num_points, 4 * self.gt_per_seed])
             vote_target_idx = points.new_zeros([num_points], dtype=torch.long)
-            box_indices_all = gt_bboxes_3d.points_in_boxes(points)
+            box_indices_all = gt_bboxes_3d.points_in_boxes_part(points)
             for i in range(gt_labels_3d.shape[0]):
                 box_indices = box_indices_all[:, i]
                 indices = torch.nonzero(
@@ -950,7 +950,7 @@ class GroupFree3DHead(BaseModule):
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
             origin=(0.5, 0.5, 0.5))
-        box_indices = bbox.points_in_boxes_batch(points)
+        box_indices = bbox.points_in_boxes_all(points)
 
         corner3d = bbox.corners
         minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
