@@ -16,6 +16,12 @@ class Base3DSegmentor(BaseSegmentor):
     data_dict and use a 3D seg specific visualization function.
     """
 
+    @property
+    def with_regularization_loss(self):
+        """bool: whether the segmentor has regularization loss for weight"""
+        return hasattr(self, 'loss_regularization') and \
+            self.loss_regularization is not None
+
     def forward_test(self, points, img_metas, **kwargs):
         """Calls either simple_test or aug_test depending on the length of
         outer list of points. If len(points) == 1, call simple_test. Otherwise
@@ -108,5 +114,12 @@ class Base3DSegmentor(BaseSegmentor):
 
             pred_sem_mask = result[batch_id]['semantic_mask'].cpu().numpy()
 
-            show_seg_result(points, None, pred_sem_mask, out_dir, file_name,
-                            palette, ignore_index)
+            show_seg_result(
+                points,
+                None,
+                pred_sem_mask,
+                out_dir,
+                file_name,
+                palette,
+                ignore_index,
+                show=True)
