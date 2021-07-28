@@ -337,16 +337,17 @@ def noise_per_object_v3_(gt_boxes,
 
     Args:
         gt_boxes (np.ndarray): Ground truth boxes with shape (N, 7).
-        points (np.ndarray | None): Input point cloud with shape (M, 4).
-            Default: None.
-        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
-            Default: None.
-        rotation_perturb (float): Rotation perturbation. Default: pi / 4.
-        center_noise_std (float): Center noise standard deviation.
+        points (np.ndarray | None, optional): Input point cloud with
+            shape (M, 4). Default: None.
+        valid_mask (np.ndarray | None, optional): Mask to indicate which
+            boxes are valid. Default: None.
+        rotation_perturb (float, optional): Rotation perturbation.
+            Default: pi / 4.
+        center_noise_std (float, optional): Center noise standard deviation.
             Default: 1.0.
-        global_random_rot_range (float): Global random rotation range.
-            Default: pi/4.
-        num_try (int): Number of try. Default: 100.
+        global_random_rot_range (float, optional): Global random rotation
+            range. Default: pi/4.
+        num_try (int, optional): Number of try. Default: 100.
     """
     num_boxes = gt_boxes.shape[0]
     if not isinstance(rotation_perturb, (list, tuple, np.ndarray)):

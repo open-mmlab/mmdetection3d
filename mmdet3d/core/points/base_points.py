@@ -22,7 +22,7 @@ class BasePoints(object):
             Each row is (x, y, z, ...).
         attribute_dims (bool): Dictionary to indicate the meaning of extra
             dimension. Defaults to None.
-        rotation_axis (int): Defaults rotation axis for points rotation.
+        rotation_axis (int): Default rotation axis for points rotation.
     """
 
     def __init__(self, tensor, points_dim=3, attribute_dims=None):

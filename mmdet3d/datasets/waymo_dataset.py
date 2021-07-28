@@ -146,8 +146,8 @@ class WaymoDataset(KittiDataset):
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
                 Default: None.
-            data_format (str | None): Output data format. Default: 'waymo'.
-                Another supported choice is 'kitti'.
+            data_format (str | None, optional): Output data format.
+                Default: 'waymo'. Another supported choice is 'kitti'.
 
         Returns:
             tuple: (result_files, tmp_dir), result_files is a dict containing

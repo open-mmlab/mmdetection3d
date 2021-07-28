@@ -375,7 +375,8 @@ class NuScenesDataset(Custom3DDataset):
             result_path (str): Path of the result file.
             logger (logging.Logger | str | None): Logger used for printing
                 related information during evaluation. Default: None.
-            metric (str): Metric name used for evaluation. Default: 'bbox'.
+            metric (str, optional): Metric name used for evaluation.
+                Default: 'bbox'.
             result_name (str): Result name in the metric prefix.
                 Default: 'pts_bbox'.
 

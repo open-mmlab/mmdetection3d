@@ -29,15 +29,17 @@ class BaseShapeHead(BaseModule):
         num_base_anchors (int): Number of anchors per location.
         box_code_size (int): The dimension of boxes to be encoded.
         in_channels (int): Input channels for convolutional layers.
-        shared_conv_channels (tuple): Channels for shared convolutional \
-            layers. Default: (64, 64). \
-        shared_conv_strides (tuple): Strides for shared convolutional \
-            layers. Default: (1, 1).
-        use_direction_classifier (bool, optional): Whether to use direction \
+        shared_conv_channels (tuple, optional): Channels for shared
+            convolutional layers. Default: (64, 64). \
+        shared_conv_strides (tuple, optional): Strides for shared
+            convolutional layers. Default: (1, 1).
+        use_direction_classifier (bool, optional): Whether to use direction
             classifier. Default: True.
-        conv_cfg (dict): Config of conv layer. Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer. Default: dict(type='BN2d').
-        bias (bool|str, optional): Type of bias. Default: False.
+        conv_cfg (dict, optional): Config of conv layer.
+            Default: dict(type='Conv2d')
+        norm_cfg (dict, optional): Config of norm layer.
+            Default: dict(type='BN2d').
+        bias (bool | str, optional): Type of bias. Default: False.
     """
 
     def __init__(self,

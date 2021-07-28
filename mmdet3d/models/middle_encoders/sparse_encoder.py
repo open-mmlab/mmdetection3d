@@ -140,9 +140,9 @@ class SparseEncoder(nn.Module):
             make_block (method): A bounded function to build blocks.
             norm_cfg (dict[str]): Config of normalization layer.
             in_channels (int): The number of encoder input channels.
-            block_type (str): Type of the block to use. Defaults to
-                'conv_module'.
-            conv_cfg (dict): Config of conv layer. Defaults to
+            block_type (str, optional): Type of the block to use.
+                Defaults to 'conv_module'.
+            conv_cfg (dict, optional): Config of conv layer. Defaults to
                 dict(type='SubMConv3d').
 
         Returns:

@@ -153,7 +153,7 @@ def _fill_trainval_infos(nusc,
         val_scenes (list[str]): Basic information of validation scenes.
         test (bool): Whether use the test mode. In the test mode, no
             annotations can be accessed. Default: False.
-        max_sweeps (int): Max number of sweeps. Default: 10.
+        max_sweeps (int, optional): Max number of sweeps. Default: 10.
 
     Returns:
         tuple[list[dict]]: Information of training set and validation set
@@ -290,7 +290,7 @@ def obtain_sensor2top(nusc,
         e2g_t (np.ndarray): Translation from ego to global in shape (1, 3).
         e2g_r_mat (np.ndarray): Rotation matrix from ego to global
             in shape (3, 3).
-        sensor_type (str): Sensor to calibrate. Default: 'lidar'.
+        sensor_type (str, optional): Sensor to calibrate. Default: 'lidar'.
 
     Returns:
         sweep (dict): Sweep information after transformation.
@@ -339,7 +339,8 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
         root_path (str): Root path of the raw data.
         info_path (str): Path of the info file.
         version (str): Dataset version.
-        mono3d (bool): Whether to export mono3d annotation. Default: True.
+        mono3d (bool, optional): Whether to export mono3d annotation.
+            Default: True.
     """
     # get bbox annotations for camera
     camera_types = [

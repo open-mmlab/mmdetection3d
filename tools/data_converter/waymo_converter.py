@@ -30,8 +30,8 @@ class Waymo2KITTI(object):
         save_dir (str): Directory to save data in KITTI format.
         prefix (str): Prefix of filename. In general, 0 for training, 1 for
             validation and 2 for testing.
-        workers (str): Number of workers for the parallel process.
-        test_mode (bool): Whether in the test_mode. Default: False.
+        workers (int, optional): Number of workers for the parallel process.
+        test_mode (bool, optional): Whether in the test_mode. Default: False.
     """
 
     def __init__(self,

@@ -16,7 +16,7 @@ class GroupFree3DMHA(MultiheadAttention):
             `nn.MultiheadAttention`.
         attn_drop (float): A Dropout layer on attn_output_weights.
             Defaults to 0.0.
-        proj_drop (float): A Dropout layer. Defaults 0.0.
+        proj_drop (float, optional): A Dropout layer. Defaults to 0.0.
         dropout_layer (obj:`ConfigDict`): The dropout_layer used
             when adding the shortcut.
         init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.

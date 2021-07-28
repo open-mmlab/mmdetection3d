@@ -104,10 +104,11 @@ class RandomFlip3D(RandomFlip):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
-            direction (str): Flip direction. Default: horizontal.
+            direction (str, optional): Flip direction.
+                Default: 'horizontal'.
 
         Returns:
-            dict: Flipped results, 'points', 'bbox3d_fields' keys are \
+            dict: Flipped results, 'points', 'bbox3d_fields' keys are
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']

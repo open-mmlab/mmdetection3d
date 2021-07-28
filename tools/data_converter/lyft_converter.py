@@ -101,7 +101,7 @@ def _fill_trainval_infos(lyft,
         val_scenes (list[str]): Basic information of validation scenes.
         test (bool): Whether use the test mode. In the test mode, no
             annotations can be accessed. Default: False.
-        max_sweeps (int): Max number of sweeps. Default: 10.
+        max_sweeps (int, optional): Max number of sweeps. Default: 10.
 
     Returns:
         tuple[list[dict]]: Information of training set and
