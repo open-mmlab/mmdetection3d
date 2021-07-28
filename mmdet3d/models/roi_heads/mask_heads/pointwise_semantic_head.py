@@ -98,8 +98,8 @@ class PointwiseSemanticHead(BaseModule):
 
         part_targets = voxel_centers.new_zeros((voxel_centers.shape[0], 3),
                                                dtype=torch.float32)
-        box_idx = gt_bboxes_3d.points_in_boxes(voxel_centers)
-        enlarge_box_idx = enlarged_gt_boxes.points_in_boxes(
+        box_idx = gt_bboxes_3d.points_in_boxes_part(voxel_centers)
+        enlarge_box_idx = enlarged_gt_boxes.points_in_boxes_part(
             voxel_centers).long()
 
         gt_labels_pad = F.pad(

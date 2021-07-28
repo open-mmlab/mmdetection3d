@@ -1408,7 +1408,7 @@ def test_depth_boxes3d():
 
     # test points in boxes
     if torch.cuda.is_available():
-        box_idxs_of_pts = boxes.points_in_boxes_batch(points.cuda())
+        box_idxs_of_pts = boxes.points_in_boxes_all(points.cuda())
         expected_idxs_of_pts = torch.tensor(
             [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
             device='cuda:0',

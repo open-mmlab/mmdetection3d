@@ -492,7 +492,7 @@ class SSD3DHead(VoteHead):
             origin=(0.5, 0.5, 0.5))
 
         if isinstance(bbox, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
-            box_indices = bbox.points_in_boxes_batch(points)
+            box_indices = bbox.points_in_boxes_all(points)
             nonempty_box_mask = box_indices.T.sum(1) >= 0
         else:
             raise NotImplementedError('Unsupported bbox type!')
@@ -548,7 +548,7 @@ class SSD3DHead(VoteHead):
                 inside bbox and the index of box where each point are in.
         """
         if isinstance(bboxes_3d, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
-            points_mask = bboxes_3d.points_in_boxes_batch(points)
+            points_mask = bboxes_3d.points_in_boxes_all(points)
             assignment = points_mask.argmax(dim=-1)
         else:
             raise NotImplementedError('Unsupported bbox type!')

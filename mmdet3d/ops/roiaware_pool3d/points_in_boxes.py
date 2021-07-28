@@ -3,8 +3,8 @@ import torch
 from . import roiaware_pool3d_ext
 
 
-def points_in_boxes_gpu(points, boxes):
-    """Find points that are in boxes (CUDA)
+def points_in_boxes_part(points, boxes):
+    """Find the box in which each point is (CUDA).
 
     Args:
         points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR/DEPTH coordinate
@@ -43,15 +43,16 @@ def points_in_boxes_gpu(points, boxes):
     if torch.cuda.current_device() != points_device:
         torch.cuda.set_device(points_device)
 
-    roiaware_pool3d_ext.points_in_boxes_gpu(boxes.contiguous(),
-                                            points.contiguous(),
-                                            box_idxs_of_pts)
+    roiaware_pool3d_ext.points_in_boxes_part(boxes.contiguous(),
+                                             points.contiguous(),
+                                             box_idxs_of_pts)
 
     return box_idxs_of_pts
 
 
 def points_in_boxes_cpu(points, boxes):
-    """Find points that are in boxes (CPU)
+    """Find all boxes in which each point is (CPU). The CPU version of
+    :meth:`points_in_boxes_all`.
 
     Args:
         points (torch.Tensor): [B, M, 3], [x, y, z] in
@@ -61,7 +62,7 @@ def points_in_boxes_cpu(points, boxes):
             (x, y, z) is the bottom center.
 
     Returns:
-        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0
+        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0.
     """
     assert points.shape[0] == boxes.shape[0], \
         f'Points and boxes should have the same batch size, ' \
@@ -86,8 +87,8 @@ def points_in_boxes_cpu(points, boxes):
     return point_indices
 
 
-def points_in_boxes_batch(points, boxes):
-    """Find points that are in boxes (CUDA)
+def points_in_boxes_all(points, boxes):
+    """Find all boxes in which each point is (CUDA).
 
     Args:
         points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR/DEPTH coordinate
@@ -96,7 +97,7 @@ def points_in_boxes_batch(points, boxes):
             (x, y, z) is the bottom center.
 
     Returns:
-        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0
+        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0.
     """
     assert boxes.shape[0] == points.shape[0], \
         f'Points and boxes should have the same batch size, ' \
@@ -120,8 +121,8 @@ def points_in_boxes_batch(points, boxes):
     if torch.cuda.current_device() != points_device:
         torch.cuda.set_device(points_device)
 
-    roiaware_pool3d_ext.points_in_boxes_batch(boxes.contiguous(),
-                                              points.contiguous(),
-                                              box_idxs_of_pts)
+    roiaware_pool3d_ext.points_in_boxes_all(boxes.contiguous(),
+                                            points.contiguous(),
+                                            box_idxs_of_pts)
 
     return box_idxs_of_pts

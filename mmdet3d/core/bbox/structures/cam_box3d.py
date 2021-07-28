@@ -335,43 +335,55 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return Box3DMode.convert(
             box=self, src=Box3DMode.CAM, dst=dst, rt_mat=rt_mat)
 
-    def points_in_boxes(self, points):
-        """Find the box which the points are in.
+    def points_in_boxes_part(self, points, boxes_override=None):
+        """Find the box in which each point is.
 
         Args:
-            points (torch.Tensor): Points in shape (N, 3).
+            points (torch.Tensor): Points with size (1, M, 3) or (M, 3),
+                3 dimensions are (x, y, z) in LiDAR or depth coordinate.
+            boxes_override (torch.Tensor, optional): Boxes to override
+                `self.tensor `. Defaults to None.
 
         Returns:
-            torch.Tensor: The index of box where each point are in.
+            torch.Tensor: The index of the box in which
+                each point is, with size (M, ). Default value is -1
+                (if the point is not enclosed by any box).
         """
         from .coord_3d_mode import Coord3DMode
 
         points_lidar = Coord3DMode.convert(points, Coord3DMode.CAM,
                                            Coord3DMode.LIDAR)
-        boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
-                                          Coord3DMode.LIDAR)
+        if boxes_override is not None:
+            boxes_lidar = boxes_override
+        else:
+            boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
+                                              Coord3DMode.LIDAR)
 
-        box_idx = super().points_in_boxes(self, points_lidar, boxes_lidar)
+        box_idx = super().points_in_boxes_part(self, points_lidar, boxes_lidar)
         return box_idx
 
-    def points_in_boxes_batch(self, points):
-        """Find points that are in boxes (CUDA).
+    def points_in_boxes_all(self, points, boxes_override=None):
+        """Find all boxes in which each point is.
 
         Args:
-            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3],
-                3 dimensions are [x, y, z] in LiDAR coordinate.
+            points (torch.Tensor): Points in shape (1, M, 3) or (M, 3),
+                3 dimensions are (x, y, z) in LiDAR or depth coordinate.
+            boxes_override (torch.Tensor, optional): Boxes to override
+                `self.tensor `. Defaults to None.
 
         Returns:
-            torch.Tensor: The index of boxes each point lies in with shape
-                of (B, M, T).
+            torch.Tensor: The index of all boxes in which each point is,
+                with size (B, M, T).
         """
         from .coord_3d_mode import Coord3DMode
 
         points_lidar = Coord3DMode.convert(points, Coord3DMode.CAM,
                                            Coord3DMode.LIDAR)
-        boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
-                                          Coord3DMode.LIDAR)
+        if boxes_override is not None:
+            boxes_lidar = boxes_override
+        else:
+            boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
+                                              Coord3DMode.LIDAR)
 
-        box_idx = super().points_in_boxes_batch(self, points_lidar,
-                                                boxes_lidar)
+        box_idx = super().points_in_boxes_all(self, points_lidar, boxes_lidar)
         return box_idx
