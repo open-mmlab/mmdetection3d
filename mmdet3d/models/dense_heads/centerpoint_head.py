@@ -21,16 +21,16 @@ class SeparateHead(BaseModule):
     Args:
         in_channels (int): Input channels for conv_layer.
         heads (dict): Conv information.
-        head_conv (int): Output channels.
+        head_conv (int, optional): Output channels.
             Default: 64.
-        final_kernal (int): Kernal size for the last conv layer.
+        final_kernal (int, optional): Kernal size for the last conv layer.
             Deafult: 1.
-        init_bias (float): Initial bias. Default: -2.19.
-        conv_cfg (dict): Config of conv layer.
+        init_bias (float, optional): Initial bias. Default: -2.19.
+        conv_cfg (dict, optional): Config of conv layer.
             Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer.
+        norm_cfg (dict, optional): Config of norm layer.
             Default: dict(type='BN2d').
-        bias (str): Type of bias. Default: 'auto'.
+        bias (str, optional): Type of bias. Default: 'auto'.
     """
 
     def __init__(self,
@@ -131,18 +131,19 @@ class DCNSeparateHead(BaseModule):
 
     Args:
         in_channels (int): Input channels for conv_layer.
+        num_cls (int): Number of classes.
         heads (dict): Conv information.
         dcn_config (dict): Config of dcn layer.
-        num_cls (int): Output channels.
+        head_conv (int, optional): Output channels.
             Default: 64.
-        final_kernal (int): Kernal size for the last conv layer.
-            Deafult: 1.
-        init_bias (float): Initial bias. Default: -2.19.
-        conv_cfg (dict): Config of conv layer.
+        final_kernal (int, optional): Kernal size for the last conv
+            layer. Deafult: 1.
+        init_bias (float, optional): Initial bias. Default: -2.19.
+        conv_cfg (dict, optional): Config of conv layer.
             Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer.
+        norm_cfg (dict, optional): Config of norm layer.
             Default: dict(type='BN2d').
-        bias (str): Type of bias. Default: 'auto'.
+        bias (str, optional): Type of bias. Default: 'auto'.
     """  # noqa: W605
 
     def __init__(self,
@@ -243,31 +244,30 @@ class CenterHead(BaseModule):
     """CenterHead for CenterPoint.
 
     Args:
-        mode (str): Mode of the head. Default: '3d'.
-        in_channels (list[int] | int): Channels of the input feature map.
-            Default: [128].
-        tasks (list[dict]): Task information including class number
+        in_channels (list[int] | int, optional): Channels of the input
+            feature map. Default: [128].
+        tasks (list[dict], optional): Task information including class number
             and class names. Default: None.
-        dataset (str): Name of the dataset. Default: 'nuscenes'.
-        weight (float): Weight for location loss. Default: 0.25.
-        code_weights (list[int]): Code weights for location loss. Default: [].
-        common_heads (dict): Conv information for common heads.
+        train_cfg (dict, optional): Train-time configs. Default: None.
+        test_cfg (dict, optional): Test-time configs. Default: None.
+        bbox_coder (dict, optional): Bbox coder configs. Default: None.
+        common_heads (dict, optional): Conv information for common heads.
             Default: dict().
-        loss_cls (dict): Config of classification loss function.
+        loss_cls (dict, optional): Config of classification loss function.
             Default: dict(type='GaussianFocalLoss', reduction='mean').
-        loss_bbox (dict): Config of regression loss function.
+        loss_bbox (dict, optional): Config of regression loss function.
             Default: dict(type='L1Loss', reduction='none').
-        separate_head (dict): Config of separate head. Default: dict(
+        separate_head (dict, optional): Config of separate head. Default: dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3)
-        share_conv_channel (int): Output channels for share_conv_layer.
-            Default: 64.
-        num_heatmap_convs (int): Number of conv layers for heatmap conv layer.
-            Default: 2.
-        conv_cfg (dict): Config of conv layer.
+        share_conv_channel (int, optional): Output channels for share_conv
+            layer. Default: 64.
+        num_heatmap_convs (int, optional): Number of conv layers for heatmap
+            conv layer. Default: 2.
+        conv_cfg (dict, optional): Config of conv layer.
             Default: dict(type='Conv2d')
-        norm_cfg (dict): Config of norm layer.
+        norm_cfg (dict, optional): Config of norm layer.
             Default: dict(type='BN2d').
-        bias (str): Type of bias. Default: 'auto'.
+        bias (str, optional): Type of bias. Default: 'auto'.
     """
 
     def __init__(self,
@@ -366,8 +366,8 @@ class CenterHead(BaseModule):
             feat (torch.tensor): Feature map with the shape of [B, H*W, 10].
             ind (torch.Tensor): Index of the ground truth boxes with the
                 shape of [B, max_obj].
-            mask (torch.Tensor): Mask of the feature map with the shape
-                of [B, max_obj]. Default: None.
+            mask (torch.Tensor, optional): Mask of the feature map with the
+                shape of [B, max_obj]. Default: None.
 
         Returns:
             torch.Tensor: Feature map after gathering with the shape

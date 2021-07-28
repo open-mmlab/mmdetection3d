@@ -98,10 +98,11 @@ class RandomFlip3D(RandomFlip):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
-            direction (str): Flip direction. Default: horizontal.
+            direction (str, optional): Flip direction.
+                Default: 'horizontal'.
 
         Returns:
-            dict: Flipped results, 'points', 'bbox3d_fields' keys are \
+            dict: Flipped results, 'points', 'bbox3d_fields' keys are
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
@@ -859,13 +860,13 @@ class IndoorPointSample(object):
         Args:
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
-            replace (bool): Whether the sample is with or without replacement.
-            Defaults to None.
-            return_choices (bool): Whether return choice. Defaults to False.
+            replace (bool, optional): Whether the sample is with or
+                without replacement. Defaults to None.
+            return_choices (bool, optional): Whether return choice.
+                Defaults to False.
 
         Returns:
             tuple[np.ndarray] | np.ndarray:
-
                 - points (np.ndarray | :obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """

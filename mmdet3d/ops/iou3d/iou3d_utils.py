@@ -30,8 +30,10 @@ def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
             ([x1, y1, x2, y2, ry]).
         scores (torch.Tensor): Scores of boxes with the shape of [N].
         thresh (int): Threshold.
-        pre_maxsize (int): Max size of boxes before nms. Default: None.
-        post_maxsize (int): Max size of boxes after nms. Default: None.
+        pre_maxsize (int, optional): Max size of boxes before nms.
+            Default: None.
+        post_maxsize (int, optional): Max size of boxes after nms.
+            Default: None.
 
     Returns:
         torch.Tensor: Indexes after nms.

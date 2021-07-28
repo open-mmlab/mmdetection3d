@@ -43,8 +43,9 @@ class NuScenesMonoDataset(CocoDataset):
             - 'Camera': Box in camera coordinates.
         eval_version (str, optional): Configuration version of evaluation.
             Defaults to  'detection_cvpr_2019'.
-        use_valid_flag (bool): Whether to use `use_valid_flag` key in the info
-            file as mask to filter gt_boxes and gt_names. Defaults to False.
+        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
+            in the info file as mask to filter gt_boxes and gt_names.
+            Defaults to False.
         version (str, optional): Dataset version. Defaults to 'v1.0-trainval'.
     """
     CLASSES = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
@@ -395,8 +396,9 @@ class NuScenesMonoDataset(CocoDataset):
             result_path (str): Path of the result file.
             logger (logging.Logger | str | None): Logger used for printing
                 related information during evaluation. Default: None.
-            metric (str): Metric name used for evaluation. Default: 'bbox'.
-            result_name (str): Result name in the metric prefix.
+            metric (str, optional): Metric name used for evaluation.
+                Default: 'bbox'.
+            result_name (str, optional): Result name in the metric prefix.
                 Default: 'img_bbox'.
 
         Returns:

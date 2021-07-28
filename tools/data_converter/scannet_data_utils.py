@@ -12,7 +12,7 @@ class ScanNetData(object):
 
     Args:
         root_path (str): Root path of the raw data.
-        split (str): Set split type of the data. Default: 'train'.
+        split (str, optional): Set split type of the data. Default: 'train'.
     """
 
     def __init__(self, root_path, split='train'):
@@ -89,9 +89,11 @@ class ScanNetData(object):
         This method gets information from the raw data.
 
         Args:
-            num_workers (int): Number of threads to be used. Default: 4.
-            has_label (bool): Whether the data has label. Default: True.
-            sample_id_list (list[int]): Index list of the sample.
+            num_workers (int, optional): Number of threads to be used.
+                Default: 4.
+            has_label (bool, optional): Whether the data has label.
+                Default: True.
+            sample_id_list (list[int], optional): Index list of the sample.
                 Default: None.
 
         Returns:
@@ -200,10 +202,11 @@ class ScanNetSegData(object):
     Args:
         data_root (str): Root path of the raw data.
         ann_file (str): The generated scannet infos.
-        split (str): Set split type of the data. Default: 'train'.
-        num_points (int): Number of points in each data input. Default: 8192.
-        label_weight_func (function): Function to compute the label weight.
-            Default: None.
+        split (str, optional): Set split type of the data. Default: 'train'.
+        num_points (int, optional): Number of points in each data input.
+            Default: 8192.
+        label_weight_func (function, optional): Function to compute the
+            label weight. Default: None.
     """
 
     def __init__(self,

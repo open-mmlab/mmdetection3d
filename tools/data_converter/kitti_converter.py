@@ -237,11 +237,12 @@ def _create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         info_path (str): Path of data info.
-        save_path (str | None): Path to save reduced point cloud data.
-            Default: None.
-        back (bool): Whether to flip the points to back.
-        num_features (int): Number of point features. Default: 4.
-        front_camera_id (int): The referenced/front camera ID. Default: 2.
+        save_path (str | None, optional): Path to save reduced point cloud
+            data. Default: None.
+        back (bool, optional): Whether to flip the points to back.
+        num_features (int, optional): Number of point features. Default: 4.
+        front_camera_id (int, optional): The referenced/front camera ID.
+            Default: 2.
     """
     kitti_infos = mmcv.load(info_path)
 
@@ -334,7 +335,8 @@ def export_2d_annotation(root_path, info_path, mono3d=True):
     Args:
         root_path (str): Root path of the raw data.
         info_path (str): Path of the info file.
-        mono3d (bool): Whether to export mono3d annotation. Default: True.
+        mono3d (bool, optional): Whether to export mono3d annotation.
+            Default: True.
     """
     # get bbox annotations for camera
     kitti_infos = mmcv.load(info_path)

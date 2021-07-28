@@ -16,7 +16,7 @@ class HardSimpleVFE(nn.Module):
     It simply averages the values of points in a voxel.
 
     Args:
-        num_features (int): Number of features to use. Default: 4.
+        num_features (int, optional): Number of features to use. Default: 4.
     """
 
     def __init__(self, num_features=4):

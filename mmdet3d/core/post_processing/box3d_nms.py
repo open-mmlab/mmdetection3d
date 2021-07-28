@@ -187,8 +187,8 @@ def circle_nms(dets, thresh, post_max_size=83):
     Args:
         dets (torch.Tensor): Detection results with the shape of [N, 3].
         thresh (float): Value of threshold.
-        post_max_size (int): Max number of prediction to be kept. Defaults
-            to 83
+        post_max_size (int, optional): Max number of prediction to be kept.
+            Defaults to 83.
 
     Returns:
         torch.Tensor: Indexes of the detections to be kept.

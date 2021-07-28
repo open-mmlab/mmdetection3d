@@ -61,8 +61,8 @@ class SUNRGBDData(object):
 
     Args:
         root_path (str): Root path of the raw data.
-        split (str): Set split type of the data. Default: 'train'.
-        use_v1 (bool): Whether to use v1. Default: False.
+        split (str, optional): Set split type of the data. Default: 'train'.
+        use_v1 (bool, optional): Whether to use v1. Default: False.
     """
 
     def __init__(self, root_path, split='train', use_v1=False):
@@ -127,9 +127,11 @@ class SUNRGBDData(object):
         This method gets information from the raw data.
 
         Args:
-            num_workers (int): Number of threads to be used. Default: 4.
-            has_label (bool): Whether the data has label. Default: True.
-            sample_id_list (list[int]): Index list of the sample.
+            num_workers (int, optional): Number of threads to be used.
+                Default: 4.
+            has_label (bool, optional): Whether the data has label.
+                Default: True.
+            sample_id_list (list[int], optional): Index list of the sample.
                 Default: None.
 
         Returns:

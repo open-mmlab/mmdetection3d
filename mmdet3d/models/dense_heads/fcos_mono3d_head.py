@@ -20,25 +20,25 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        regress_ranges (tuple[tuple[int, int]]): Regress range of multiple
+        regress_ranges (tuple[tuple[int, int]], optional): Regress range of multiple
             level points.
-        center_sampling (bool): If true, use center sampling. Default: True.
-        center_sample_radius (float): Radius of center sampling. Default: 1.5.
-        norm_on_bbox (bool): If true, normalize the regression targets
+        center_sampling (bool, optional): If true, use center sampling. Default: True.
+        center_sample_radius (float, optional): Radius of center sampling. Default: 1.5.
+        norm_on_bbox (bool, optional): If true, normalize the regression targets
             with FPN strides. Default: True.
-        centerness_on_reg (bool): If true, position centerness on the
+        centerness_on_reg (bool, optional): If true, position centerness on the
             regress branch. Please refer to https://github.com/tianzhi0549/FCOS/issues/89#issuecomment-516877042.
             Default: True.
-        centerness_alpha: Parameter used to adjust the intensity attenuation
-            from the center to the periphery. Default: 2.5.
-        loss_cls (dict): Config of classification loss.
-        loss_bbox (dict): Config of localization loss.
-        loss_dir (dict): Config of direction classification loss.
-        loss_attr (dict): Config of attribute classification loss.
-        loss_centerness (dict): Config of centerness loss.
-        norm_cfg (dict): dictionary to construct and config norm layer.
+        centerness_alpha (int, optional): Parameter used to adjust the intensity
+            attenuation from the center to the periphery. Default: 2.5.
+        loss_cls (dict, optional): Config of classification loss.
+        loss_bbox (dict, optional): Config of localization loss.
+        loss_dir (dict, optional): Config of direction classification loss.
+        loss_attr (dict, optional): Config of attribute classification loss.
+        loss_centerness (dict, optional): Config of centerness loss.
+        norm_cfg (dict, optional): dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
-        centerness_branch (tuple[int]): Channels for centerness branch.
+        centerness_branch (tuple[int], optional): Channels for centerness branch.
             Default: (64, ).
     """  # noqa: E501
 
