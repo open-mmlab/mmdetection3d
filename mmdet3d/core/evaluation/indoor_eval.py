@@ -169,10 +169,9 @@ def eval_map_recall(pred, gt, ovthresh=None):
     Args:
         pred (dict): Information of detection results,
             which maps class_id and predictions.
-        gt (dict): Information of ground truths, which maps class_id and \
+        gt (dict): Information of ground truths, which maps class_id and
             ground truths.
-        ovthresh (list[float]): iou threshold.
-            Default: None.
+        ovthresh (list[float], optional): iou threshold. Default: None.
 
     Return:
         tuple[dict]: dict results of recall, AP, and precision for all classes.
@@ -217,12 +216,12 @@ def indoor_eval(gt_annos,
             includes the following keys
 
             - labels_3d (torch.Tensor): Labels of boxes.
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): \
+            - boxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bounding boxes in Depth coordinate.
             - scores_3d (torch.Tensor): Scores of boxes.
         metric (list[float]): IoU thresholds for computing average precisions.
         label2cat (dict): Map from label to category.
-        logger (logging.Logger | str | None): The way to print the mAP
+        logger (logging.Logger | str, optional): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 
     Return:

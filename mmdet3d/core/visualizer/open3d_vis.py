@@ -21,12 +21,12 @@ def _draw_points(points,
         points (numpy.array | torch.tensor, shape=[N, 3+C]):
             points to visualize.
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
-        points_size (int): the size of points to show on visualizer.
+        points_size (int, optional): the size of points to show on visualizer.
             Default: 2.
-        point_color (tuple[float]): the color of points.
+        point_color (tuple[float], optional): the color of points.
             Default: (0.5, 0.5, 0.5).
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points,
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
 
     Returns:
         tuple: points, color of each point.
@@ -291,7 +291,7 @@ def show_pts_index_boxes(points,
             Default: (0.5, 0.5, 0.5).
         bbox_color (tuple[float], optional): the color of bbox.
             Default: (0, 1, 0).
-        points_in_box_color (tuple[float]):
+        points_in_box_color (tuple[float], optional):
             the color of points which are in bbox3d. Default: (1, 0, 0).
         rot_axis (int, optional): rotation axis of bbox. Default: 2.
         center_mode (bool, optional): indicate the center of bbox is

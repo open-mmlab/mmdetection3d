@@ -220,14 +220,16 @@ def show_multi_modality_result(img,
             according to the camera intrinsic parameters.
         out_dir (str): Path of output directory.
         filename (str): Filename of the current frame.
-        box_mode (str): Coordinate system the boxes are in. Should be one of
-           'depth', 'lidar' and 'camera'. Defaults to 'lidar'.
-        img_metas (dict): Used in projecting depth bbox.
+        box_mode (str, optional): Coordinate system the boxes are in.
+            Should be one of 'depth', 'lidar' and 'camera'.
+            Defaults to 'lidar'.
+        img_metas (dict, optional): Used in projecting depth bbox.
+            Defaults to None.
         show (bool, optional): Visualize the results online. Defaults to False.
-        gt_bbox_color (str or tuple(int)): Color of bbox lines.
-           The tuple of color should be in BGR order. Default: (255, 102, 61)
-        pred_bbox_color (str or tuple(int)): Color of bbox lines.
-           The tuple of color should be in BGR order. Default: (72, 101, 241)
+        gt_bbox_color (str or tuple(int), optional): Color of bbox lines.
+           The tuple of color should be in BGR order. Default: (255, 102, 61).
+        pred_bbox_color (str or tuple(int), optional): Color of bbox lines.
+           The tuple of color should be in BGR order. Default: (72, 101, 241).
     """
     if box_mode == 'depth':
         draw_bbox = draw_depth_bbox3d_on_img

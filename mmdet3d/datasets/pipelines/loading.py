@@ -13,7 +13,7 @@ class LoadMultiViewImageFromFiles(object):
     Expects results['img_filename'] to be a list of filenames.
 
     Args:
-        to_float32 (bool): Whether to convert the img to float32.
+        to_float32 (bool, optional): Whether to convert the img to float32.
             Defaults to False.
         color_type (str, optional): Color type of the file.
             Defaults to 'unchanged'.
@@ -30,7 +30,7 @@ class LoadMultiViewImageFromFiles(object):
             results (dict): Result dict containing multi-view image filenames.
 
         Returns:
-            dict: The result dict containing the multi-view image data. \
+            dict: The result dict containing the multi-view image data.
                 Added keys and values are described below.
 
                 - filename (str): Multi-view image filenames.
@@ -107,14 +107,15 @@ class LoadPointsFromMultiSweeps(object):
             Defaults to 5.
         use_dim (list[int], optional): Which dimension to use.
             Defaults to [0, 1, 2, 4].
-        file_client_args (dict): Config dict of file clients, refer to
+        file_client_args (dict, optional): Config dict of file clients,
+            refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
-        pad_empty_sweeps (bool): Whether to repeat keyframe when
+        pad_empty_sweeps (bool, optional): Whether to repeat keyframe when
             sweeps is empty. Defaults to False.
-        remove_close (bool): Whether to remove close points.
+        remove_close (bool, optional): Whether to remove close points.
             Defaults to False.
-        test_mode (bool): If test_model=True used for testing, it will not
+        test_mode (bool, optional): If `test_mode=True`, it will not
             randomly sample sweeps but select the nearest N frames.
             Defaults to False.
     """
@@ -163,7 +164,7 @@ class LoadPointsFromMultiSweeps(object):
 
         Args:
             points (np.ndarray | :obj:`BasePoints`): Sweep points.
-            radius (float): Radius below which points are removed.
+            radius (float, optional): Radius below which points are removed.
                 Defaults to 1.0.
 
         Returns:
@@ -184,7 +185,7 @@ class LoadPointsFromMultiSweeps(object):
         """Call function to load multi-sweep point clouds from files.
 
         Args:
-            results (dict): Result dict containing multi-sweep point cloud \
+            results (dict): Result dict containing multi-sweep point cloud
                 filenames.
 
         Returns:
@@ -245,8 +246,8 @@ class PointSegClassMapping(object):
 
     Args:
         valid_cat_ids (tuple[int]): A tuple of valid category.
-        max_cat_id (int): The max possible cat_id in input segmentation mask.
-            Defaults to 40.
+        max_cat_id (int, optional): The max possible cat_id in input
+            segmentation mask. Defaults to 40.
     """
 
     def __init__(self, valid_cat_ids, max_cat_id=40):
@@ -344,9 +345,9 @@ class LoadPointsFromFile(object):
             - 'LIDAR': Points in LiDAR coordinates.
             - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
             - 'CAMERA': Points in camera coordinates.
-        load_dim (int): The dimension of the loaded points.
+        load_dim (int, optional): The dimension of the loaded points.
             Defaults to 6.
-        use_dim (list[int]): Which dimensions of the points to be used.
+        use_dim (list[int], optional): Which dimensions of the points to use.
             Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
         shift_height (bool, optional): Whether to use shifted height.

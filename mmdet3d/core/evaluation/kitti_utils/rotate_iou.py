@@ -349,7 +349,8 @@ def rotate_iou_gpu_eval(boxes, query_boxes, criterion=-1, device_id=0):
     Args:
         boxes (torch.Tensor): rbboxes. format: centers, dims,
             angles(clockwise when positive) with the shape of [N, 5].
-        query_boxes (float tensor: [K, 5]): rbboxes to compute iou with boxes.
+        query_boxes (torch.FloatTensor, shape=(K, 5)):
+            rbboxes to compute iou with boxes.
         device_id (int, optional): Defaults to 0. Device to use.
         criterion (int, optional): Indicate different type of iou.
             -1 indicate `area_inter / (area1 + area2 - area_inter)`,

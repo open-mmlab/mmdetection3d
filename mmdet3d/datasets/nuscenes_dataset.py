@@ -47,8 +47,9 @@ class NuScenesDataset(Custom3DDataset):
             Defaults to False.
         eval_version (bool, optional): Configuration version of evaluation.
             Defaults to  'detection_cvpr_2019'.
-        use_valid_flag (bool): Whether to use `use_valid_flag` key in the info
-            file as mask to filter gt_boxes and gt_names. Defaults to False.
+        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
+            in the info file as mask to filter gt_boxes and gt_names.
+            Defaults to False.
     """
     NameMapping = {
         'movable_object.barrier': 'barrier',
@@ -373,11 +374,11 @@ class NuScenesDataset(Custom3DDataset):
 
         Args:
             result_path (str): Path of the result file.
-            logger (logging.Logger | str | None): Logger used for printing
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
             metric (str, optional): Metric name used for evaluation.
                 Default: 'bbox'.
-            result_name (str): Result name in the metric prefix.
+            result_name (str, optional): Result name in the metric prefix.
                 Default: 'pts_bbox'.
 
         Returns:
@@ -480,15 +481,16 @@ class NuScenesDataset(Custom3DDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | str | None): Logger used for printing
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Default: 'bbox'.
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str, optional): The prefix of json files including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            show (bool): Whether to visualize.
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
@@ -624,7 +626,7 @@ def lidar_nusc_box_to_global(info,
         boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
         classes (list[str]): Mapped classes in the evaluation.
         eval_configs (object): Evaluation configuration object.
-        eval_version (str): Evaluation version.
+        eval_version (str, optional): Evaluation version.
             Default: 'detection_cvpr_2019'
 
     Returns:

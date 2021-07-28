@@ -238,12 +238,15 @@ class SUNRGBDDataset(Custom3DDataset):
 
         Args:
             results (list[dict]): List of results.
-            metric (str | list[str]): Metrics to be evaluated.
-            iou_thr (list[float]): AP IoU thresholds.
-            iou_thr_2d (list[float]): AP IoU thresholds for 2d evaluation.
-            show (bool): Whether to visualize.
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Default: None.
+            iou_thr (list[float], optional): AP IoU thresholds for 3D
+                evaluation. Default: (0.25, 0.5).
+            iou_thr_2d (list[float], optional): AP IoU thresholds for 2D
+                evaluation. Default: (0.5, ).
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.

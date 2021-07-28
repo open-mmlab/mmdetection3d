@@ -225,7 +225,7 @@ class BasePoints(object):
                 in order of (x_min, y_min, x_max, y_max).
 
         Returns:
-            torch.Tensor: Indicating whether each point is inside \
+            torch.Tensor: Indicating whether each point is inside
                 the reference range.
         """
         pass
@@ -236,14 +236,15 @@ class BasePoints(object):
 
         Args:
             dst (:obj:`CoordMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BasePoints`: The converted box of the same type \
+            :obj:`BasePoints`: The converted box of the same type
                 in the `dst` mode.
         """
         pass

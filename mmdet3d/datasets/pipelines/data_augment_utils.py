@@ -33,8 +33,8 @@ def box_collision_test(boxes, qboxes, clockwise=True):
     Args:
         boxes (np.ndarray): Corners of current boxes.
         qboxes (np.ndarray): Boxes to be avoid colliding.
-        clockwise (bool): Whether the corners are in clockwise order.
-            Default: True.
+        clockwise (bool, optional): Whether the corners are in
+            clockwise order. Default: True.
     """
     N = boxes.shape[0]
     K = qboxes.shape[0]
@@ -337,9 +337,9 @@ def noise_per_object_v3_(gt_boxes,
 
     Args:
         gt_boxes (np.ndarray): Ground truth boxes with shape (N, 7).
-        points (np.ndarray | None, optional): Input point cloud with
+        points (np.ndarray, optional): Input point cloud with
             shape (M, 4). Default: None.
-        valid_mask (np.ndarray | None, optional): Mask to indicate which
+        valid_mask (np.ndarray, optional): Mask to indicate which
             boxes are valid. Default: None.
         rotation_perturb (float, optional): Rotation perturbation.
             Default: pi / 4.
