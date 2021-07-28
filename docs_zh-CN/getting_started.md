@@ -87,7 +87,7 @@ pip install mmcv-full
 **d. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
 ```shell
-pip install mmdet>=2.14.0
+pip install mmdet==2.14.0
 ```
 
 同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMDetection： 
