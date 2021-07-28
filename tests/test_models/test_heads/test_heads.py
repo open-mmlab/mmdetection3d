@@ -1088,9 +1088,9 @@ def test_fcos_mono3d_head():
     attr_labels = [torch.randint(0, 9, [3], device='cuda') for i in range(2)]
     img_metas = [
         dict(
-            cam_intrinsic=[[1260.8474446004698, 0.0, 807.968244525554],
-                           [0.0, 1260.8474446004698, 495.3344268742088],
-                           [0.0, 0.0, 1.0]],
+            cam2img=[[1260.8474446004698, 0.0, 807.968244525554],
+                     [0.0, 1260.8474446004698, 495.3344268742088],
+                     [0.0, 0.0, 1.0]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
             box_type_3d=CameraInstance3DBoxes) for i in range(2)
     ]

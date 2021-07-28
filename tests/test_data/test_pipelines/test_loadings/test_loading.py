@@ -297,14 +297,14 @@ def test_load_image_from_file_mono_3d():
     load_image_from_file_mono_3d = LoadImageFromFileMono3D()
     filename = 'tests/data/nuscenes/samples/CAM_BACK_LEFT/' \
         'n015-2018-07-18-11-07-57+0800__CAM_BACK_LEFT__1531883530447423.jpg'
-    cam_intrinsic = np.array([[1256.74, 0.0, 792.11], [0.0, 1256.74, 492.78],
-                              [0.0, 0.0, 1.0]])
+    cam2img = np.array([[1256.74, 0.0, 792.11], [0.0, 1256.74, 492.78],
+                        [0.0, 0.0, 1.0]])
     input_dict = dict(
         img_prefix=None,
-        img_info=dict(filename=filename, cam_intrinsic=cam_intrinsic.copy()))
+        img_info=dict(filename=filename, cam2img=cam2img.copy()))
     results = load_image_from_file_mono_3d(input_dict)
     assert results['img'].shape == (900, 1600, 3)
-    assert np.all(results['cam_intrinsic'] == cam_intrinsic)
+    assert np.all(results['cam2img'] == cam2img)
 
     repr_str = repr(load_image_from_file_mono_3d)
     expected_repr_str = 'LoadImageFromFileMono3D(to_float32=False, ' \
