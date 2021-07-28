@@ -47,7 +47,6 @@ class RandomDropPointsColor(object):
 
         if np.random.rand() < self.drop_ratio:
             points.color = points.color * 0.0
-        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
@@ -236,7 +235,6 @@ class RandomJitterPoints(object):
                                    self.clip_range[1])
 
         points.translate(jitter_noise)
-        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
