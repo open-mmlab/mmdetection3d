@@ -1151,7 +1151,8 @@ class IndoorPatchPointSample(object):
         repr_str += f' use_normalized_coord={self.use_normalized_coord},'
         repr_str += f' num_try={self.num_try},'
         repr_str += f' enlarge_size={self.enlarge_size},'
-        repr_str += f' min_unique_num={self.min_unique_num})'
+        repr_str += f' min_unique_num={self.min_unique_num},'
+        repr_str += f' eps={self.eps})'
         return repr_str
 
 
