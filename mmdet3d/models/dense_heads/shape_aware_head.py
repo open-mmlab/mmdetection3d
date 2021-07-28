@@ -30,7 +30,7 @@ class BaseShapeHead(BaseModule):
         box_code_size (int): The dimension of boxes to be encoded.
         in_channels (int): Input channels for convolutional layers.
         shared_conv_channels (tuple, optional): Channels for shared
-            convolutional layers. Default: (64, 64). \
+            convolutional layers. Default: (64, 64).
         shared_conv_strides (tuple, optional): Strides for shared
             convolutional layers. Default: (1, 1).
         use_direction_classifier (bool, optional): Whether to use direction
