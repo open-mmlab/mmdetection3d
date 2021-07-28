@@ -305,7 +305,7 @@ class Custom3DSegDataset(Dataset):
         Args:
             results (list[dict]): List of results.
             metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | None | str): Logger used for printing
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Defaults to None.
             show (bool, optional): Whether to visualize.
                 Defaults to False.

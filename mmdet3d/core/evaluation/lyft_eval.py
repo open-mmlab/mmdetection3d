@@ -17,7 +17,7 @@ def load_lyft_gts(lyft, data_root, eval_split, logger=None):
         lyft (:obj:`LyftDataset`): Lyft class in the sdk.
         data_root (str): Root of data for reading splits.
         eval_split (str): Name of the split for evaluation.
-        logger (logging.Logger | str | None): Logger used for printing
+        logger (logging.Logger | str, optional): Logger used for printing
         related information during evaluation. Default: None.
 
     Returns:
@@ -95,7 +95,7 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
         res_path (str): Path of result json file recording detections.
         eval_set (str): Name of the split for evaluation.
         output_dir (str): Output directory for output json files.
-        logger (logging.Logger | str | None): Logger used for printing
+        logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
 
     Returns:

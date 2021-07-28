@@ -17,7 +17,7 @@ def project_pts_on_img(points,
         raw_img (numpy.array): The numpy array of image.
         lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
             according to the camera intrinsic parameters.
-        max_distance (float): the max distance of the points cloud.
+        max_distance (float, optional): the max distance of the points cloud.
             Default: 70.
         thickness (int, optional): The thickness of 2D points. Default: -1.
     """

@@ -45,8 +45,9 @@ class WaymoDataset(KittiDataset):
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list): The range of point cloud used to filter
-            invalid predicted boxes. Default: [-85, -85, -5, 85, 85, 5].
+        pcd_limit_range (list(float), optional): The range of point cloud used
+            to filter invalid predicted boxes.
+            Default: [-85, -85, -5, 85, 85, 5].
     """
 
     CLASSES = ('Car', 'Cyclist', 'Pedestrian')
@@ -146,7 +147,7 @@ class WaymoDataset(KittiDataset):
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
                 Default: None.
-            data_format (str | None, optional): Output data format.
+            data_format (str, optional): Output data format.
                 Default: 'waymo'. Another supported choice is 'kitti'.
 
         Returns:
@@ -225,18 +226,18 @@ class WaymoDataset(KittiDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
+            metric (str | list[str], optional): Metrics to be evaluated.
                 Default: 'waymo'. Another supported metric is 'kitti'.
-            logger (logging.Logger | str | None): Logger used for printing
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            pklfile_prefix (str | None): The prefix of pkl files. It includes
+            pklfile_prefix (str, optional): The prefix of pkl files including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str | None): The prefix of submission datas.
+            submission_prefix (str, optional): The prefix of submission datas.
                 If not specified, the submission data will not be generated.
-            show (bool): Whether to visualize.
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.

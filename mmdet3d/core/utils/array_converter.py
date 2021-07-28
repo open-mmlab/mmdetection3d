@@ -14,16 +14,16 @@ def array_converter(to_torch=True,
     for middle calculation, then convert output to original data-type.
 
     Args:
-        to_torch (Bool): Whether convert to PyTorch tensors
+        to_torch (Bool, optional): Whether convert to PyTorch tensors
             for middle calculation. Defaults to True.
-        apply_to (tuple[str]): The arguments to which we apply data-type
-            conversion. Defaults to an empty tuple.
-        template_arg_name_ (str): Argument serving as the template (
+        apply_to (tuple[str], optional): The arguments to which we apply
+            data-type conversion. Defaults to an empty tuple.
+        template_arg_name_ (str, optional): Argument serving as the template (
             return arrays should have the same dtype and device
             as the template). Defaults to None. If None, we will use the
             first argument in `apply_to` as the template argument.
-        recover (Bool): Whether or not recover the wrapped function outputs
-            to the `template_arg_name_` type. Defaults to True.
+        recover (Bool, optional): Whether or not recover the wrapped function
+            outputs to the `template_arg_name_` type. Defaults to True.
 
     Raises:
         ValueError: When template_arg_name_ is not among all args, or
@@ -254,9 +254,10 @@ class ArrayConverter:
             input_array (tuple | list | np.ndarray |
                 torch.Tensor | int | float ):
                 Input array. Defaults to None.
-            target_type (<class 'np.ndarray'> | <class 'torch.Tensor'>):
+            target_type (<class 'np.ndarray'> | <class 'torch.Tensor'>,
+                optional):
                 Type to which input array is converted. Defaults to None.
-            target_array (np.ndarray | torch.Tensor):
+            target_array (np.ndarray | torch.Tensor, optional):
                 Template array to which input array is converted.
                 Defaults to None.
 

@@ -274,11 +274,11 @@ class LyftDataset(Custom3DDataset):
 
         Args:
             result_path (str): Path of the result file.
-            logger (logging.Logger | str | None): Logger used for printing
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
             metric (str, optional): Metric name used for evaluation.
                 Default: 'bbox'.
-            result_name (str): Result name in the metric prefix.
+            result_name (str, optional): Result name in the metric prefix.
                 Default: 'pts_bbox'.
 
         Returns:
@@ -372,19 +372,22 @@ class LyftDataset(Custom3DDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | str | None): Logger used for printing
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Default: 'bbox'.
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str, optional): The prefix of json files including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            csv_savepath (str | None): The path for saving csv files.
+            csv_savepath (str, optional): The path for saving csv files.
                 It includes the file path and the csv filename,
                 e.g., "a/b/filename.csv". If not specified,
                 the result will not be converted to csv file.
-            show (bool): Whether to visualize.
+            result_names (list[str], optional): Result names in the
+                metric prefix. Default: ['pts_bbox'].
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.

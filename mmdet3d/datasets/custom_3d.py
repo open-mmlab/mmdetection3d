@@ -236,11 +236,14 @@ class Custom3DDataset(Dataset):
 
         Args:
             results (list[dict]): List of results.
-            metric (str | list[str]): Metrics to be evaluated.
-            iou_thr (list[float]): AP IoU thresholds.
-            show (bool): Whether to visualize.
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Defaults to None.
+            iou_thr (list[float]): AP IoU thresholds. Defaults to (0.25, 0.5).
+            logger (logging.Logger | str, optional): Logger used for printing
+                related information during evaluation. Defaults to None.
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.

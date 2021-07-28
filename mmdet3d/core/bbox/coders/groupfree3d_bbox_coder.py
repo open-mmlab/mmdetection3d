@@ -76,7 +76,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
                 - size_class: predicted bbox size class.
                 - size_res: predicted bbox size residual.
                 - size: predicted class-agnostic bbox size
-            prefix (str): Decode predictions with specific prefix.
+            prefix (str, optional): Decode predictions with specific prefix.
                 Defaults to ''.
 
         Returns:
@@ -122,7 +122,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
             cls_preds (torch.Tensor): Class predicted features to split.
             reg_preds (torch.Tensor): Regression predicted features to split.
             base_xyz (torch.Tensor): Coordinates of points.
-            prefix (str): Decode predictions with specific prefix.
+            prefix (str, optional): Decode predictions with specific prefix.
                 Defaults to ''.
 
         Returns:

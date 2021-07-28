@@ -7,7 +7,7 @@ def gaussian_2d(shape, sigma=1):
 
     Args:
         shape (list[int]): Shape of the map.
-        sigma (float): Sigma to generate gaussian map.
+        sigma (float, optional): Sigma to generate gaussian map.
             Defaults to 1.
 
     Returns:
