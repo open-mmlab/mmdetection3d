@@ -401,8 +401,8 @@ class Waymo2KITTI(object):
                 camera projections corresponding with two returns.
             range_image_top_pose (:obj:`Transform`): Range image pixel pose for
                 top lidar.
-            ri_index (int): 0 for the first return, 1 for the second return.
-                Default: 0.
+            ri_index (int, optional): 0 for the first return,
+                1 for the second return. Default: 0.
 
         Returns:
             tuple[list[np.ndarray]]: (List of points with shape [N, 3],

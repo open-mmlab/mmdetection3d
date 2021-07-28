@@ -237,9 +237,10 @@ def _create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         info_path (str): Path of data info.
-        save_path (str | None, optional): Path to save reduced point cloud
+        save_path (str, optional): Path to save reduced point cloud
             data. Default: None.
         back (bool, optional): Whether to flip the points to back.
+            Default: False.
         num_features (int, optional): Number of point features. Default: 4.
         front_camera_id (int, optional): The referenced/front camera ID.
             Default: 2.
@@ -298,14 +299,16 @@ def create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         pkl_prefix (str): Prefix of info files.
-        train_info_path (str | None): Path of training set info.
+        train_info_path (str, optional): Path of training set info.
             Default: None.
-        val_info_path (str | None): Path of validation set info.
+        val_info_path (str, optional): Path of validation set info.
             Default: None.
-        test_info_path (str | None): Path of test set info.
+        test_info_path (str, optional): Path of test set info.
             Default: None.
-        save_path (str | None): Path to save reduced point cloud data.
-        with_back (bool): Whether to flip the points to back.
+        save_path (str, optional): Path to save reduced point cloud data.
+            Default: None.
+        with_back (bool, optional): Whether to flip the points to back.
+            Default: False.
     """
     if train_info_path is None:
         train_info_path = Path(data_path) / f'{pkl_prefix}_infos_train.pkl'

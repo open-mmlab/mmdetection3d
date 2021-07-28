@@ -354,7 +354,8 @@ class LoadPointsFromFile(object):
             Defaults to False.
         use_color (bool, optional): Whether to use color features.
             Defaults to False.
-        file_client_args (dict): Config dict of file clients, refer to
+        file_client_args (dict, optional): Config dict of file clients,
+            refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
     """

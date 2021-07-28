@@ -389,7 +389,7 @@ class ShapeAwareHead(Anchor3DHead):
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
             input_metas (list[dict]): Contain pcd and img's meta info.
-            cfg (None | :obj:`ConfigDict`): Training or testing config.
+            cfg (:obj:`ConfigDict`, optional): Training or testing config.
                 Default: None.
             rescale (list[torch.Tensor], optional): Whether to rescale bbox.
                 Default: False.

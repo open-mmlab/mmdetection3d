@@ -33,10 +33,10 @@ def create_nuscenes_infos(root_path,
     Args:
         root_path (str): Path of the data root.
         info_prefix (str): Prefix of the info file to be generated.
-        version (str): Version of the data.
-            Default: 'v1.0-trainval'
-        max_sweeps (int): Max number of sweeps.
-            Default: 10
+        version (str, optional): Version of the data.
+            Default: 'v1.0-trainval'.
+        max_sweeps (int, optional): Max number of sweeps.
+            Default: 10.
     """
     from nuscenes.nuscenes import NuScenes
     nusc = NuScenes(version=version, dataroot=root_path, verbose=True)
@@ -151,7 +151,7 @@ def _fill_trainval_infos(nusc,
         nusc (:obj:`NuScenes`): Dataset class in the nuScenes dataset.
         train_scenes (list[str]): Basic information of training scenes.
         val_scenes (list[str]): Basic information of validation scenes.
-        test (bool): Whether use the test mode. In the test mode, no
+        test (bool, optional): Whether use the test mode. In test mode, no
             annotations can be accessed. Default: False.
         max_sweeps (int, optional): Max number of sweeps. Default: 10.
 

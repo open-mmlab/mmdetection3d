@@ -238,11 +238,12 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
 
         Args:
             points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
-            features (Tensor): (B, C, N) features of each point.
+            features (Tensor, optional): (B, C, N) features of each point.
                 Default: None.
-            indices (Tensor): (B, num_point) Index of the features.
+            indices (Tensor, optional): (B, num_point) Index of the features.
                 Default: None.
-            target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
+            target_xyz (Tensor, optional): (B, M, 3) new coords of the outputs.
+                Default: None.
 
         Returns:
             Tensor: (B, M, 3) where M is the number of points.
