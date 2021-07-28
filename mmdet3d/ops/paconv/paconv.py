@@ -1,7 +1,7 @@
 import copy
 import torch
 from mmcv.cnn import (ConvModule, build_activation_layer, build_norm_layer,
-                      constant_init, xavier_init)
+                      constant_init)
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -10,7 +10,7 @@ from .utils import assign_kernel_withoutk, assign_score, calc_euclidian_dist
 
 
 class ScoreNet(nn.Module):
-    """ScoreNet that outputs coefficient scores to assemble kernel weights in
+    r"""ScoreNet that outputs coefficient scores to assemble kernel weights in
     the weight bank according to the relative position of point pairs.
 
     Args:
@@ -26,8 +26,13 @@ class ScoreNet(nn.Module):
         bias (bool | str, optional): If specified as `auto`, it will be decided
             by the norm_cfg. Bias will be set as True if `norm_cfg` is None,
             otherwise False. Defaults to 'auto'.
-        use_xavier_init (bool, optional): Apply xavier_init to Conv modules.
-            Defaults to False.
+
+    Note:
+        The official code applies xavier_init to all Conv layers in ScoreNet,
+            see `PAConv <https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg
+            /model/pointnet2/paconv.py#L105>`_. However in our experiments, we
+            did not find much difference in applying such xavier initialization
+            or not. So we neglect this initialization in our implementation.
     """
 
     def __init__(self,
@@ -36,8 +41,7 @@ class ScoreNet(nn.Module):
                  score_norm='softmax',
                  temp_factor=1.0,
                  norm_cfg=dict(type='BN2d'),
-                 bias='auto',
-                 use_xavier_init=False):
+                 bias='auto'):
         super(ScoreNet, self).__init__()
 
         assert score_norm in ['softmax', 'sigmoid', 'identity'], \
@@ -45,7 +49,6 @@ class ScoreNet(nn.Module):
 
         self.score_norm = score_norm
         self.temp_factor = temp_factor
-        self.use_xavier_init = use_xavier_init
 
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 2):
@@ -73,18 +76,6 @@ class ScoreNet(nn.Module):
                 norm_cfg=norm_cfg if last_bn else None,
                 act_cfg=None,
                 bias=bias))
-
-    def init_weights(self):
-        """Initialize weights of shared MLP layers."""
-        if not self.use_xavier_init:
-            return
-        # the official code applies xavier_init to all the Conv layers
-        # refer to https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/paconv.py#L105  # noqa
-        # however in our experiments, we did not find much difference in
-        # applying the xavier initialization or not
-        for m in self.mlps.modules():
-            if isinstance(m, nn.Conv2d):
-                xavier_init(m)
 
     def forward(self, xyz_features):
         """Forward.
@@ -226,8 +217,7 @@ class PAConv(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        """Initialize weights of shared MLP layers."""
-        self.scorenet.init_weights()
+        """Initialize weights of shared MLP layers and BN layers."""
         if self.bn is not None:
             constant_init(self.bn, val=1, bias=0)
 
