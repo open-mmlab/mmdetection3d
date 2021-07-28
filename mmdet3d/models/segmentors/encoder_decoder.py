@@ -172,7 +172,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                 x, img_metas, pts_semantic_mask_cat)
             losses.update(loss_aux)
 
-        if self.with_loss_regularization:
+        if self.with_regularization_loss:
             loss_regularize = self._loss_regularization_forward_train()
             losses.update(loss_regularize)
 

@@ -17,7 +17,7 @@ class Base3DSegmentor(BaseSegmentor):
     """
 
     @property
-    def with_loss_regularization(self):
+    def with_regularization_loss(self):
         """bool: whether the segmentor has regularization loss for weight"""
         return hasattr(self, 'loss_regularization') and \
             self.loss_regularization is not None
