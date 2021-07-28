@@ -3,6 +3,8 @@ from mmcv.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
                       sigmoid_focal_loss)
 
 from .ball_query import ball_query
+from .dgcnn_modules import (DGCNNFAModule, DGCNNFPModule, DGCNNGFModule,
+                            build_fa_module, build_gf_module)
 from .furthest_point_sample import (Points_Sampler, furthest_point_sample,
                                     furthest_point_sample_with_dist)
 from .gather_points import gather_points
@@ -16,8 +18,6 @@ from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                PAConvSAModule, PAConvSAModuleMSG,
                                PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
-from .dgcnn_modules import (DGCNNFPModule, DGCNNGFModule, DGCNNFAModule,
-                            build_gf_module, build_fa_module)
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
                               points_in_boxes_cpu, points_in_boxes_gpu)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
