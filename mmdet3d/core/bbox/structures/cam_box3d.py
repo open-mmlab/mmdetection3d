@@ -3,7 +3,7 @@ import torch
 
 from ...points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
-from .utils import limit_period, rotation_3d_in_axis
+from .utils import rotation_3d_in_axis
 
 
 class CameraInstance3DBoxes(BaseInstance3DBoxes):
@@ -27,15 +27,12 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     The yaw is 0 at the positive direction of x axis, and decreases from
     the positive direction of x to the positive direction of z.
 
-    A refactor is ongoing to make the three coordinate systems
-    easier to understand and convert between each other.
-
     Attributes:
-        tensor (torch.Tensor): Float matrix of N x box_dim.
-        box_dim (int): Integer indicates the dimension of a box
+        tensor (torch.Tensor): Float matrix in shape (N, box_dim).
+        box_dim (int): Integer indicating the dimension of a box
             Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
-        with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
-            boxes.
+        with_yaw (bool): If True, the value of yaw will be set to 0 as
+            axis-aligned boxes tightly enclosing the original boxes.
     """
     YAW_AXIS = 1
 
@@ -76,23 +73,25 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def height(self):
-        """torch.Tensor: A vector with height of each box."""
+        """torch.Tensor: A vector with height of each box in shape (N, )."""
         return self.tensor[:, 4]
 
     @property
     def top_height(self):
-        """torch.Tensor: A vector with the top height of each box."""
+        """torch.Tensor:
+            A vector with the top height of each box in shape (N, )."""
         # the positive direction is down rather than up
         return self.bottom_height - self.height
 
     @property
     def bottom_height(self):
-        """torch.Tensor: A vector with bottom's height of each box."""
+        """torch.Tensor:
+            A vector with bottom's height of each box in shape (N, )."""
         return self.tensor[:, 1]
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box."""
+        """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, [0, 2]] = bottom_center[:, [0, 2]]
@@ -147,35 +146,14 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def bev(self):
-        """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
-        with rotation in XYWHR format."""
+        """torch.Tensor: 2D BEV box of each box with rotation
+            in XYWHR format, in shape (N, 5)."""
         bev = self.tensor[:, [0, 2, 3, 5, 6]].clone()
         # positive direction of the gravity axis
         # in cam coord system points to the earth
         # so the bev yaw angle needs to be reversed
         bev[:, -1] = -bev[:, -1]
         return bev
-
-    @property
-    def nearest_bev(self):
-        """torch.Tensor: A tensor of 2D BEV box of each box
-        without rotation."""
-        # Obtain BEV boxes with rotation in XZWHR format
-        bev_rotated_boxes = self.bev
-        # convert the rotation to a valid range
-        rotations = bev_rotated_boxes[:, -1]
-        normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
-
-        # find the center of boxes
-        conditions = (normed_rotations > np.pi / 4)[..., None]
-        bboxes_xywh = torch.where(conditions, bev_rotated_boxes[:,
-                                                                [0, 1, 3, 2]],
-                                  bev_rotated_boxes[:, :4])
-
-        centers = bboxes_xywh[:, :2]
-        dims = bboxes_xywh[:, 2:]
-        bev_boxes = torch.cat([centers - dims / 2, centers + dims / 2], dim=-1)
-        return bev_boxes
 
     def rotate(self, angle, points=None):
         """Rotate boxes with points (optional) with the given angle or rotation
@@ -263,28 +241,6 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range.
-
-        Args:
-            box_range (list | torch.Tensor): The range of box
-                (x_min, z_min, x_max, z_max).
-
-        Note:
-            The original implementation of SECOND checks whether boxes in
-            a range by checking whether the points are in a convex
-            polygon, we reduce the burden for simpler cases.
-
-        Returns:
-            torch.Tensor: Indicating whether each box is inside
-                the reference range.
-        """
-        in_range_flags = ((self.tensor[:, 0] > box_range[0])
-                          & (self.tensor[:, 2] > box_range[1])
-                          & (self.tensor[:, 0] < box_range[2])
-                          & (self.tensor[:, 2] < box_range[3]))
-        return in_range_flags
-
     @classmethod
     def height_overlaps(cls, boxes1, boxes2, mode='iou'):
         """Calculate height overlaps of two boxes.
@@ -339,14 +295,14 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         """Find the box in which each point is.
 
         Args:
-            points (torch.Tensor): Points with size (1, M, 3) or (M, 3),
+            points (torch.Tensor): Points in shape (1, M, 3) or (M, 3),
                 3 dimensions are (x, y, z) in LiDAR or depth coordinate.
             boxes_override (torch.Tensor, optional): Boxes to override
                 `self.tensor `. Defaults to None.
 
         Returns:
             torch.Tensor: The index of the box in which
-                each point is, with size (M, ). Default value is -1
+                each point is, in shape (M, ). Default value is -1
                 (if the point is not enclosed by any box).
         """
         from .coord_3d_mode import Coord3DMode
@@ -373,7 +329,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
 
         Returns:
             torch.Tensor: The index of all boxes in which each point is,
-                with size (B, M, T).
+                in shape (B, M, T).
         """
         from .coord_3d_mode import Coord3DMode
 
