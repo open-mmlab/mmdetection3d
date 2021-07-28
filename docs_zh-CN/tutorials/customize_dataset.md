@@ -56,7 +56,7 @@
 ]
 ```
 
-在此之上，用户可以通过继承 `Custom3DDataset` 来实现新的数据集类，并重载相关的方法，如 [KITTI 数据集](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py)和 [ScanNetDataset 数据集](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/scannet_dataset.py)所示。
+在此之上，用户可以通过继承 `Custom3DDataset` 来实现新的数据集类，并重载相关的方法，如 [KITTI 数据集](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py)和 [ScanNet 数据集](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/scannet_dataset.py)所示。
 
 ### 自定义数据集的例子
 
@@ -125,7 +125,7 @@ class MyDataset(Custom3DDataset):
             test_mode=test_mode)
 
     def get_ann_info(self, index):
-        # Use index to get the annos, thus the evalhook could also use this api
+        # 通过下标来获取标注信息，evalhook 也能够通过此接口来获取标注信息
         info = self.data_infos[index]
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
@@ -135,7 +135,7 @@ class MyDataset(Custom3DDataset):
             gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
             gt_labels_3d = np.zeros((0, ), dtype=np.long)
 
-        # to target box structure
+        # 转换为目标标注框的结构
         gt_bboxes_3d = DepthInstance3DBoxes(
             gt_bboxes_3d,
             box_dim=gt_bboxes_3d.shape[-1],
@@ -166,9 +166,9 @@ dataset_A_train = dict(
 )
 ```
 
-### 使用 dataset wrappers 来自定义数据集
+### 使用数据集包装器来自定义数据集
 
-与 MMDetection 类似，MMDetection3D 也提供了许多 dataset 包装器来统合数据集或者修改数据集的分布，并应用到模型的训练中。
+与 MMDetection 类似，MMDetection3D 也提供了许多数据集包装器来统合数据集或者修改数据集的分布，并应用到模型的训练中。
 目前 MMDetection3D 支持3种数据集包装器
 
 - `RepeatDataset`：简单地重复整个数据集
@@ -183,7 +183,7 @@ dataset_A_train = dict(
 dataset_A_train = dict(
         type='RepeatDataset',
         times=N,
-        dataset=dict(  # This is the original config of Dataset_A
+        dataset=dict(  # 这是 Dataset_A 的原始配置文件
             type='Dataset_A',
             ...
             pipeline=train_pipeline
@@ -199,7 +199,7 @@ dataset_A_train = dict(
 dataset_A_train = dict(
         type='ClassBalancedDataset',
         oversample_thr=1e-3,
-        dataset=dict(  # This is the original config of Dataset_A
+        dataset=dict(  # 这是 Dataset_A 的原始配置文件
             type='Dataset_A',
             ...
             pipeline=train_pipeline
