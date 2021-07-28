@@ -112,7 +112,7 @@ pip install -v -e .  # or "python setup.py develop"
 **e. Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
-pip install mmsegmentation>=0.14.1
+pip install mmsegmentation==0.14.1
 ```
 
 Optionally, you could also build MMSegmentation from source in case you want to modify the code:
