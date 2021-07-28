@@ -250,7 +250,7 @@ def _fill_trainval_infos(nusc,
             names = np.array(names)
             # we need to convert box size to
             # the format of our lidar coordinate system
-            # which is dx, dy, dz (corresponding to l, w, h)
+            # which is x_size, y_size, z_size (corresponding to l, w, h)
             gt_boxes = np.concatenate([locs, dims[:, [1, 0, 2]], rots], axis=1)
             assert len(gt_boxes) == len(
                 annotations), f'{len(gt_boxes)}, {len(annotations)}'

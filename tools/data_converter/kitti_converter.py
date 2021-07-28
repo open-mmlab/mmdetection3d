@@ -507,7 +507,7 @@ def generate_record(ann_rec, x1, y1, x2, y2, sample_data_token, filename):
             - area (float): 2d box area
             - category_name (str): category name
             - category_id (int): category id
-            - bbox (list[float]): left x, top y, dx, dy of 2d box
+            - bbox (list[float]): left x, top y, x_size, y_size of 2d box
             - iscrowd (int): whether the area is crowd
     """
     repro_rec = OrderedDict()

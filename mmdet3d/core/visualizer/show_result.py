@@ -34,7 +34,7 @@ def _write_oriented_bbox(scene_bbox, out_filename):
 
     Args:
         scene_bbox(list[ndarray] or ndarray): xyz pos of center and
-            3 lengths (dx,dy,dz) and heading angle around Z axis.
+            3 lengths (x_size, y_size, z_size) and heading angle around Z axis.
             Y forward, X right, Z upward. heading angle of positive X is 0,
             heading angle of positive Y is 90 degrees.
         out_filename(str): Filename.

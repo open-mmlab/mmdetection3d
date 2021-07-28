@@ -68,7 +68,7 @@ def _draw_bboxes(bbox3d,
 
     Args:
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+            3d bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
         points_colors (numpy.array): color of each points.
         pcd (:obj:`open3d.geometry.PointCloud`): point cloud. Default: None.
@@ -135,7 +135,8 @@ def show_pts_boxes(points,
         points (numpy.array | torch.tensor, shape=[N, 3+C]):
             points to visualize.
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize. Default: None.
+            3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            Defaults to None.
         show (bool): whether to show the visualization results. Default: True.
         save_path (str): path to save visualized results. Default: None.
         points_size (int): the size of points to show on visualizer.
@@ -195,7 +196,7 @@ def _draw_bboxes_ind(bbox3d,
 
     Args:
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+            3d bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
         indices (numpy.array | torch.tensor, shape=[N, M]):
             indicate which bbox3d that each point lies in.
@@ -269,7 +270,8 @@ def show_pts_index_boxes(points,
         points (numpy.array | torch.tensor, shape=[N, 3+C]):
             points to visualize.
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize. Default: None.
+            3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            Defaults to None.
         show (bool): whether to show the visualization results. Default: True.
         indices (numpy.array | torch.tensor, shape=[N, M]):
             indicate which bbox3d that each point lies in. Default: None.
@@ -323,8 +325,9 @@ class Visualizer(object):
         points (numpy.array, shape=[N, 3+C]): Points to visualize. The Points
             cloud is in mode of Coord3DMode.DEPTH (please refer to
             core.structures.coord_3d_mode).
-        bbox3d (numpy.array, shape=[M, 7]): 3d bbox (x, y, z, dx, dy, dz, yaw)
-            to visualize. The 3d bbox is in mode of Box3DMode.DEPTH with
+        bbox3d (numpy.array, shape=[M, 7]): 3D bbox
+            (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            The 3D bbox is in mode of Box3DMode.DEPTH with
             gravity_center (please refer to core.structures.box_3d_mode).
             Default: None.
         save_path (str): path to save visualized results. Default: None.
@@ -389,9 +392,10 @@ class Visualizer(object):
 
         Args:
             bbox3d (numpy.array, shape=[M, 7]):
-                3D bbox (x, y, z, dx, dy, dz, yaw) to be visualized.
-                The 3d bbox is in mode of Box3DMode.DEPTH with
-                gravity_center (please refer to core.structures.box_3d_mode).
+                3D bbox (x, y, z, x_size, y_size, z_size, yaw)
+                to be visualized. The 3d bbox is in mode of
+                Box3DMode.DEPTH with gravity_center (please refer to
+                core.structures.box_3d_mode).
             bbox_color (tuple[float]): the color of bbox. Defaule: None.
             points_in_box_color (tuple[float]): the color of points which
                 are in bbox3d. Defaule: None.

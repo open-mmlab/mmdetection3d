@@ -9,7 +9,7 @@ def points_in_boxes_part(points, boxes):
     Args:
         points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR/DEPTH coordinate
         boxes (torch.Tensor): [B, T, 7],
-            num_valid_boxes <= T, [x, y, z, dx, dy, dz, rz] in
+            num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz] in
             LiDAR/DEPTH coordinate, (x, y, z) is the bottom center
 
     Returns:
@@ -58,7 +58,7 @@ def points_in_boxes_cpu(points, boxes):
         points (torch.Tensor): [B, M, 3], [x, y, z] in
             LiDAR/DEPTH coordinate
         boxes (torch.Tensor): [B, T, 7],
-            num_valid_boxes <= T, [x, y, z, dx, dy, dz, rz],
+            num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
             (x, y, z) is the bottom center.
 
     Returns:
@@ -93,7 +93,7 @@ def points_in_boxes_all(points, boxes):
     Args:
         points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR/DEPTH coordinate
         boxes (torch.Tensor): [B, T, 7],
-            num_valid_boxes <= T, [x, y, z, dx, dy, dz, rz],
+            num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
             (x, y, z) is the bottom center.
 
     Returns:
