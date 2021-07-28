@@ -1,6 +1,6 @@
 _base_ = [
-    '../../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../../_base_/models/paconv_cuda_ssg.py', '../../_base_/default_runtime.py'
+    '../_base_/datasets/s3dis_seg-3d-13class.py',
+    '../_base_/models/paconv_cuda_ssg.py', '../_base_/default_runtime.py'
 ]
 
 # data settings
