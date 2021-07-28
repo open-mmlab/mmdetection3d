@@ -63,7 +63,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
 
         Args:
             scores (torch.Tensor): scores with the shape of [B, N, W, H].
-            K (int): Number to be kept. Defaults to 80.
+            K (int, optional): Number to be kept. Defaults to 80.
 
         Returns:
             tuple[torch.Tensor]

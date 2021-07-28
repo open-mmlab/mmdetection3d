@@ -18,12 +18,12 @@ class BaseInstance3DBoxes(object):
         tensor (torch.Tensor | np.ndarray | list): a N x box_dim matrix.
         box_dim (int): Number of the dimension of a box.
             Each row is (x, y, z, x_size, y_size, z_size, yaw).
-            Default to 7.
+            Defaults to 7.
         with_yaw (bool): Whether the box is with yaw rotation.
             If False, the value of yaw will be set to 0 as minmax boxes.
-            Default to True.
+            Defaults to True.
         origin (tuple[float]): The relative position of origin in the box.
-            Default to (0.5, 0.5, 0). This will guide the box be converted to
+            Defaults to (0.5, 0.5, 0). This will guide the box be converted to
             (0.5, 0.5, 0) mode.
 
     Attributes:

@@ -235,7 +235,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             use_normalized_coord (bool, optional): Whether to use normalized \
                 xyz as additional features. Defaults to False.
             eps (float, optional): A value added to patch boundary to guarantee
-                points coverage. Default 1e-3.
+                points coverage. Defaults to 1e-3.
 
         Returns:
             np.ndarray | np.ndarray:

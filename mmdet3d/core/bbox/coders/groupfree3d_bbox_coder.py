@@ -13,9 +13,10 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         num_dir_bins (int): Number of bins to encode direction angle.
         num_sizes (int): Number of size clusters.
         mean_sizes (list[list[int]]): Mean size of bboxes in each class.
-        with_rot (bool): Whether the bbox is with rotation. Defaults to True.
-        size_cls_agnostic (bool): Whether the predicted size is class-agnostic.
+        with_rot (bool, optional): Whether the bbox is with rotation.
             Defaults to True.
+        size_cls_agnostic (bool, optional): Whether the predicted size is
+            class-agnostic. Defaults to True.
     """
 
     def __init__(self,

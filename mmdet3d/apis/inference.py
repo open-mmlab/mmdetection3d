@@ -463,8 +463,9 @@ def show_result_meshlab(data,
         result (dict): Predicted result from model.
         out_dir (str): Directory to save visualized result.
         score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
-        show (bool): Visualize the results online. Defaults to False.
-        snapshot (bool): Whether to save the online results. Defaults to False.
+        show (bool, optional): Visualize the results online. Defaults to False.
+        snapshot (bool, optional): Whether to save the online results.
+            Defaults to False.
         task (str): Distinguish which task result to visualize. Currently we
             support 3D detection, multi-modality detection and 3D segmentation.
             Defaults to 'det'.
