@@ -1,5 +1,8 @@
 # TODO: clean the functions in this file and move the APIs into box structures
 # in the future
+# All functions in this file are valid for LiDAR or depth boxes only
+# if we use default parameters.
+
 import numba
 import numpy as np
 
@@ -46,13 +49,13 @@ def box_camera_to_lidar(data, r_rect, velo2cam):
         np.ndarray, shape=[N, 3]: Boxes in lidar coordinate.
     """
     xyz = data[:, 0:3]
-    dx, dy, dz = data[:, 3:4], data[:, 4:5], data[:, 5:6]
+    x_size, y_size, z_size = data[:, 3:4], data[:, 4:5], data[:, 5:6]
     r = data[:, 6:7]
     xyz_lidar = camera_to_lidar(xyz, r_rect, velo2cam)
     # yaw and dims also needs to be converted
     r_new = -r - np.pi / 2
     r_new = limit_period(r_new, period=np.pi * 2)
-    return np.concatenate([xyz_lidar, dx, dz, dy, r_new], axis=1)
+    return np.concatenate([xyz_lidar, x_size, z_size, y_size, r_new], axis=1)
 
 
 def corners_nd(dims, origin=0.5):
@@ -91,7 +94,7 @@ def corners_nd(dims, origin=0.5):
 
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     """Convert kitti locations, dimensions and angles to corners.
-    format: center(xy), dims(xy), angles(clockwise when positive)
+    format: center(xy), dims(xy), angles(counterclockwise when positive)
 
     Args:
         centers (np.ndarray): Locations in kitti label file with shape (N, 2).
@@ -690,7 +693,7 @@ def points_in_convex_polygon_3d_jit(points,
 
 
 @numba.jit
-def points_in_convex_polygon_jit(points, polygon, clockwise=True):
+def points_in_convex_polygon_jit(points, polygon, clockwise=False):
     """Check points is in 2d convex polygons. True when point in polygon.
 
     Args:
@@ -748,8 +751,8 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
 
     Args:
         boxes3d (np.ndarray): Boxes with shape of (N, 7)
-            [x, y, z, dx, dy, dz, ry] in LiDAR coords, see the definition of
-            ry in KITTI dataset.
+            [x, y, z, x_size, y_size, z_size, ry] in LiDAR coords,
+            see the definition of ry in KITTI dataset.
         bottom_center (bool, optional): Whether z is on the bottom center
             of object. Defaults to True.
 
@@ -757,25 +760,25 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
         np.ndarray: Box corners with the shape of [N, 8, 3].
     """
     boxes_num = boxes3d.shape[0]
-    dx, dy, dz = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
+    x_size, y_size, z_size = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
     x_corners = np.array([
-        dx / 2., -dx / 2., -dx / 2., dx / 2., dx / 2., -dx / 2., -dx / 2.,
-        dx / 2.
+        x_size / 2., -x_size / 2., -x_size / 2., x_size / 2., x_size / 2.,
+        -x_size / 2., -x_size / 2., x_size / 2.
     ],
                          dtype=np.float32).T
     y_corners = np.array([
-        -dy / 2., -dy / 2., dy / 2., dy / 2., -dy / 2., -dy / 2., dy / 2.,
-        dy / 2.
+        -y_size / 2., -y_size / 2., y_size / 2., y_size / 2., -y_size / 2.,
+        -y_size / 2., y_size / 2., y_size / 2.
     ],
                          dtype=np.float32).T
     if bottom_center:
         z_corners = np.zeros((boxes_num, 8), dtype=np.float32)
-        z_corners[:, 4:8] = dz.reshape(boxes_num, 1).repeat(
+        z_corners[:, 4:8] = z_size.reshape(boxes_num, 1).repeat(
             4, axis=1)  # (N, 8)
     else:
         z_corners = np.array([
-            -dz / 2., -dz / 2., -dz / 2., -dz / 2., dz / 2., dz / 2., dz / 2.,
-            dz / 2.
+            -z_size / 2., -z_size / 2., -z_size / 2., -z_size / 2.,
+            z_size / 2., z_size / 2., z_size / 2., z_size / 2.
         ],
                              dtype=np.float32).T
 

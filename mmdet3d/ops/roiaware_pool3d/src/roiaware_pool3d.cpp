@@ -49,7 +49,7 @@ int points_in_boxes_all(at::Tensor boxes_tensor, at::Tensor pts_tensor,
 int roiaware_pool3d_gpu(at::Tensor rois, at::Tensor pts, at::Tensor pts_feature,
                         at::Tensor argmax, at::Tensor pts_idx_of_voxels,
                         at::Tensor pooled_features, int pool_method) {
-  // params rois: (N, 7) [x, y, z, w, l, h, ry] in LiDAR coordinate
+  // params rois: (N, 7) [x, y, z, x_size, y_size, z_size, ry] in LiDAR coordinate
   // params pts: (npoints, 3) [x, y, z] in LiDAR coordinate
   // params pts_feature: (npoints, C)
   // params argmax: (N, out_x, out_y, out_z, C)
