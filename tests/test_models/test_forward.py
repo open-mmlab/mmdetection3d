@@ -147,7 +147,7 @@ def _demo_mm_inputs(input_shape=(1, 3, 300, 300),
         input_shape (tuple):
             input batch dimensions
 
-        num_items (None | List[int]):
+        num_items (List[int]):
             specifies the number of boxes in each batch item
 
         num_classes (int):

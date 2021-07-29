@@ -83,7 +83,7 @@ class ScanNetDataset(Custom3DDataset):
                 - sample_idx (str): Sample index.
                 - pts_filename (str): Filename of point clouds.
                 - file_name (str): Filename of point clouds.
-                - img_prefix (str | None, optional): Prefix of image files.
+                - img_prefix (str, optional): Prefix of image files.
                 - img_info (dict, optional): Image info.
                 - ann_info (dict): Annotation info.
         """
@@ -423,7 +423,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
 
         Args:
             outputs (list[dict]): Testing results of the dataset.
-            txtfile_prefix (str | None): The prefix of saved files. It includes
+            txtfile_prefix (str): The prefix of saved files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
 

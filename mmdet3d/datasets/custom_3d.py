@@ -176,7 +176,7 @@ class Custom3DDataset(Dataset):
         """Get class names of current dataset.
 
         Args:
-            classes (Sequence[str] | str | None): If classes is None, use
+            classes (Sequence[str] | str): If classes is None, use
                 default CLASSES defined by builtin dataset. If classes is a
                 string, take it as a file name. The file contains the name of
                 classes where each line contains one class name. If classes is
@@ -206,7 +206,7 @@ class Custom3DDataset(Dataset):
 
         Args:
             outputs (list[dict]): Testing results of the dataset.
-            pklfile_prefix (str | None): The prefix of pkl files. It includes
+            pklfile_prefix (str): The prefix of pkl files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
 
@@ -283,7 +283,7 @@ class Custom3DDataset(Dataset):
         """Get data loading pipeline in self.show/evaluate function.
 
         Args:
-            pipeline (list[dict] | None): Input pipeline. If None is given, \
+            pipeline (list[dict]): Input pipeline. If None is given, \
                 get from self.pipeline.
         """
         if pipeline is None:

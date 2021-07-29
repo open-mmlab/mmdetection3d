@@ -14,7 +14,7 @@ class SparseBottleneck(Bottleneck, spconv.SparseModule):
         inplanes (int): inplanes of block.
         planes (int): planes of block.
         stride (int, optional): stride of the first block. Default: 1.
-        downsample (None | Module, optional): down sample module for block.
+        downsample (Module, optional): down sample module for block.
         conv_cfg (dict, optional): dictionary to construct and config conv
             layer. Default: None.
         norm_cfg (dict, optional): dictionary to construct and config norm

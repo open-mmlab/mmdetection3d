@@ -14,7 +14,7 @@ class QueryAndGroup(nn.Module):
     Groups with a ball query of radius
 
     Args:
-        max_radius (float | None): The maximum radius of the balls.
+        max_radius (float): The maximum radius of the balls.
             If None is given, we will use kNN sampling instead of ball query.
         sample_num (int): Maximum number of features to gather in the ball.
         min_radius (float, optional): The minimum radius of the balls.

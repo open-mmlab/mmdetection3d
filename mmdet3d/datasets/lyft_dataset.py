@@ -312,10 +312,10 @@ class LyftDataset(Custom3DDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            csv_savepath (str | None): The path for saving csv files.
+            csv_savepath (str): The path for saving csv files.
                 It includes the file path and the csv filename,
                 e.g., "a/b/filename.csv". If not specified,
                 the result will not be converted to csv file.

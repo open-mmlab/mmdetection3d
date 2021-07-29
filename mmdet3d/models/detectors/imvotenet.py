@@ -392,9 +392,9 @@ class ImVoteNet(Base3DDetector):
                 with shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
             gt_labels (list[torch.Tensor]): class indices for each
                 2d bounding box.
-            gt_bboxes_ignore (None | list[torch.Tensor]): specify which
+            gt_bboxes_ignore (list[torch.Tensor]): specify which
                 2d bounding boxes can be ignored when computing the loss.
-            gt_masks (None | torch.Tensor): true segmentation masks for each
+            gt_masks (torch.Tensor): true segmentation masks for each
                 2d bbox, used if the architecture supports a segmentation task.
             proposals: override rpn proposals (2d) with custom proposals.
                 Use when `with_rpn` is False.
@@ -402,9 +402,9 @@ class ImVoteNet(Base3DDetector):
                 not supported yet.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): 3d gt bboxes.
             gt_labels_3d (list[torch.Tensor]): gt class labels for 3d bboxes.
-            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
+            pts_semantic_mask (list[torch.Tensor]): point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): point-wise instance
+            pts_instance_mask (list[torch.Tensor]): point-wise instance
                 label of each batch.
 
         Returns:

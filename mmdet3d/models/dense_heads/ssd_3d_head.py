@@ -129,12 +129,12 @@ class SSD3DHead(VoteHead):
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
+            pts_semantic_mask (list[torch.Tensor]): Point-wise
                 semantic mask.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise
+            pts_instance_mask (list[torch.Tensor]): Point-wise
                 instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
@@ -232,9 +232,9 @@ class SSD3DHead(VoteHead):
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise semantic
+            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
+            pts_instance_mask (list[torch.Tensor]): Point-wise instance
                 label of each batch.
             bbox_preds (torch.Tensor): Bounding box predictions of ssd3d head.
 
@@ -321,9 +321,9 @@ class SSD3DHead(VoteHead):
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (None | torch.Tensor): Point-wise semantic
+            pts_semantic_mask (torch.Tensor): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | torch.Tensor): Point-wise instance
+            pts_instance_mask (torch.Tensor): Point-wise instance
                 label of each batch.
             aggregated_points (torch.Tensor): Aggregated points from
                 candidate points layer.

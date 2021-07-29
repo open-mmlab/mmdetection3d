@@ -205,7 +205,7 @@ class Kitti2DDataset(CustomDataset):
         Args:
             outputs (list[np.ndarray]): List of arrays storing the inferenced
                 bounding boxes and scores.
-            out (str | None, optional): The prefix of output file.
+            out (str, optional): The prefix of output file.
                 Default: None.
 
         Returns:

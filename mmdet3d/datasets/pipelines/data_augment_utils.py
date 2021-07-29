@@ -316,7 +316,7 @@ def box3d_transform_(boxes, loc_transform, rot_transform, valid_mask):
         boxes (np.ndarray): 3D boxes to be transformed.
         loc_transform (np.ndarray): Location transform to be applied.
         rot_transform (np.ndarray): Rotation transform to be applied.
-        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
+        valid_mask (np.ndarray): Mask to indicate which boxes are valid.
     """
     num_box = boxes.shape[0]
     for i in range(num_box):

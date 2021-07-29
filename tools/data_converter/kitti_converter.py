@@ -158,7 +158,7 @@ def create_waymo_info_file(data_path,
     Args:
         data_path (str): Path of the data root.
         pkl_prefix (str): Prefix of the info file to be generated.
-        save_path (str | None): Path to save the info file.
+        save_path (str): Path to save the info file.
         relative_path (bool): Whether to use relative path.
         max_sweeps (int): Max sweeps before the detection frame to be used.
     """

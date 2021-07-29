@@ -294,7 +294,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             attr_labels (list[Tensor]): Attributes indices of each box.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
+            gt_bboxes_ignore (list[Tensor]): specify which bounding
                 boxes can be ignored when computing the loss.
 
         Returns:

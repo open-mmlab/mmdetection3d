@@ -326,7 +326,7 @@ class ShapeAwareHead(Anchor3DHead):
                 of each sample.
             gt_labels (list[torch.Tensor]): Gt labels of each sample.
             input_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
@@ -444,7 +444,7 @@ class ShapeAwareHead(Anchor3DHead):
             mlvl_anchors (List[torch.Tensor]): Multi-level anchors
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
-            cfg (None | :obj:`ConfigDict`): Training or testing config.
+            cfg (:obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor], optional): whether to rescale bbox. \
                 Default: False.
 

@@ -79,7 +79,7 @@ class SUNRGBDDataset(Custom3DDataset):
                 - sample_idx (str): Sample index.
                 - pts_filename (str, optional): Filename of point clouds.
                 - file_name (str, optional): Filename of point clouds.
-                - img_prefix (str | None, optional): Prefix of image files.
+                - img_prefix (str, optional): Prefix of image files.
                 - img_info (dict, optional): Image info.
                 - calib (dict, optional): Camera calibration info.
                 - ann_info (dict): Annotation info.

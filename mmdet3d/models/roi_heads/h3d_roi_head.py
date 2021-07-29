@@ -67,11 +67,11 @@ class H3DRoIHead(Base3DRoIHead):
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
+            pts_semantic_mask (list[torch.Tensor]): Point-wise
                 semantic mask.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise
+            pts_instance_mask (list[torch.Tensor]): Point-wise
                 instance mask.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:

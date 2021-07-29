@@ -195,7 +195,7 @@ class RandomJitterPoints(object):
             This applies random noise to all points in a 3D scene, which is \
             sampled from a gaussian distribution whose standard deviation is \
             set by ``jitter_std``. Defaults to [0.01, 0.01, 0.01]
-        clip_range (list[float] | None): Clip the randomly generated jitter \
+        clip_range (list[float]): Clip the randomly generated jitter \
             noise into this range. If None is given, don't perform clipping.
             Defaults to [-0.05, 0.05]
 
@@ -994,10 +994,10 @@ class IndoorPatchPointSample(object):
             additional features. Defaults to False.
         num_try (int, optional): Number of times to try if the patch selected
             is invalid. Defaults to 10.
-        enlarge_size (float | None, optional): Enlarge the sampled patch to
+        enlarge_size (float, optional): Enlarge the sampled patch to
             [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
             an augmentation. If None, set it as 0. Defaults to 0.2.
-        min_unique_num (int | None, optional): Minimum number of unique points
+        min_unique_num (int, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
         eps (float, optional): A value added to patch boundary to guarantee

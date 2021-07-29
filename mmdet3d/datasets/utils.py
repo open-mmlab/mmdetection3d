@@ -24,7 +24,7 @@ def is_loading_function(transform):
         transform (dict | :obj:`Pipeline`): A transform config or a function.
 
     Returns:
-        bool | None: Whether it is a loading function. None means can't judge.
+        bool: Whether it is a loading function. None means can't judge.
             When transform is `MultiScaleFlipAug3D`, we return None.
     """
     # TODO: use more elegant way to distinguish loading modules
@@ -125,7 +125,7 @@ def extract_result_dict(results, key):
         key (str): Key of the desired data.
 
     Returns:
-        np.ndarray | torch.Tensor | None: Data term.
+        np.ndarray | torch.Tensor: Data term.
     """
     if key not in results.keys():
         return None

@@ -55,7 +55,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
             depths (list[Tensor]): Depth of projected centers on 2D images.
             attr_labels (list[Tensor], optional): Attribute indices
                 corresponding to each box
-            gt_bboxes_ignore (None | list[Tensor]): Specify which bounding
+            gt_bboxes_ignore (list[Tensor]): Specify which bounding
                 boxes can be ignored when computing the loss.
 
         Returns:

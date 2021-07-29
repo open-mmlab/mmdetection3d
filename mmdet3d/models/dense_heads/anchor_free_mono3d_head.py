@@ -26,7 +26,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         conv_bias (bool | str, optional): If specified as `auto`, it will be
             decided by the norm_cfg. Bias of conv will be set as True
             if `norm_cfg` is None, otherwise False. Default: 'auto'.
-        background_label (int | None, optional): Label ID of background,
+        background_label (int, optional): Label ID of background,
             set as 0 for RPN and num_classes for other heads.
             It will automatically set as `num_classes` if None is given.
         use_direction_classifier (bool, optional):
@@ -413,7 +413,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 corresponding to each box
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
+            gt_bboxes_ignore (list[Tensor]): specify which bounding
                 boxes can be ignored when computing the loss.
         """
 

@@ -317,7 +317,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
                 of each sample.
             gt_labels (list[torch.Tensor]): Gt labels of each sample.
             input_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
@@ -384,7 +384,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
             input_metas (list[dict]): Contain pcd and img's meta info.
-            cfg (None | :obj:`ConfigDict`): Training or testing config.
+            cfg (:obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): Whether th rescale bbox.
 
         Returns:
@@ -438,7 +438,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             mlvl_anchors (List[torch.Tensor]): Multi-level anchors
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
-            cfg (None | :obj:`ConfigDict`): Training or testing config.
+            cfg (:obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:

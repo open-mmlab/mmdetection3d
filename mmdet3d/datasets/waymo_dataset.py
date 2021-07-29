@@ -100,7 +100,7 @@ class WaymoDataset(KittiDataset):
 
                 - sample_idx (str): sample index
                 - pts_filename (str): filename of point clouds
-                - img_prefix (str | None): prefix of image files
+                - img_prefix (str): prefix of image files
                 - img_info (dict): image info
                 - lidar2img (list[np.ndarray], optional): transformations from
                     lidar to different cameras
@@ -140,10 +140,10 @@ class WaymoDataset(KittiDataset):
 
         Args:
             outputs (list[dict]): Testing results of the dataset.
-            pklfile_prefix (str | None): The prefix of pkl files. It includes
+            pklfile_prefix (str): The prefix of pkl files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str | None): The prefix of submitted files. It
+            submission_prefix (str): The prefix of submitted files. It
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
                 Default: None.
@@ -364,8 +364,8 @@ class WaymoDataset(KittiDataset):
             net_outputs (List[np.ndarray]): list of array storing the
                 bbox and score
             class_nanes (List[String]): A list of class names
-            pklfile_prefix (str | None): The prefix of pkl file.
-            submission_prefix (str | None): The prefix of submission file.
+            pklfile_prefix (str): The prefix of pkl file.
+            submission_prefix (str): The prefix of submission file.
 
         Returns:
             List[dict]: A list of dict have the kitti 3d format

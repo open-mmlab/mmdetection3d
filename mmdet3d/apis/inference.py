@@ -467,7 +467,7 @@ def show_result_meshlab(data,
         task (str, optional): Distinguish which task result to visualize.
             Currently we support 3D detection, multi-modality detection and
             3D segmentation. Defaults to 'det'.
-        palette (list[list[int]]] | np.ndarray | None, optional): The palette
+        palette (list[list[int]]] | np.ndarray, optional): The palette
             of segmentation map. If None is given, random palette will be
             generated. Defaults to None.
     """

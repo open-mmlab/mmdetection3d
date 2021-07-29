@@ -105,7 +105,7 @@ class KittiDataset(Custom3DDataset):
 
                 - sample_idx (str): Sample index.
                 - pts_filename (str): Filename of point clouds.
-                - img_prefix (str | None): Prefix of image files.
+                - img_prefix (str): Prefix of image files.
                 - img_info (dict): Image info.
                 - lidar2img (list[np.ndarray], optional): Transformations \
                     from lidar to different cameras.
@@ -248,10 +248,10 @@ class KittiDataset(Custom3DDataset):
 
         Args:
             outputs (list[dict]): Testing results of the dataset.
-            pklfile_prefix (str | None): The prefix of pkl files. It includes
+            pklfile_prefix (str): The prefix of pkl files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str | None): The prefix of submitted files. It
+            submission_prefix (str): The prefix of submitted files. It
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
                 Default: None.
@@ -375,8 +375,8 @@ class KittiDataset(Custom3DDataset):
             net_outputs (list[np.ndarray]): List of array storing the \
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
-            pklfile_prefix (str | None): The prefix of pkl file.
-            submission_prefix (str | None): The prefix of submission file.
+            pklfile_prefix (str): The prefix of pkl file.
+            submission_prefix (str): The prefix of submission file.
 
         Returns:
             list[dict]: A list of dictionaries with the kitti format.
@@ -490,8 +490,8 @@ class KittiDataset(Custom3DDataset):
             net_outputs (list[np.ndarray]): List of array storing the \
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
-            pklfile_prefix (str | None): The prefix of pkl file.
-            submission_prefix (str | None): The prefix of submission file.
+            pklfile_prefix (str): The prefix of pkl file.
+            submission_prefix (str): The prefix of submission file.
 
         Returns:
             list[dict]: A list of dictionaries have the kitti format
