@@ -191,9 +191,9 @@ class SUNRGBDData(object):
                     ],
                                                              axis=0)
                     annotations['dimensions'] = 2 * np.array([
-                        [obj.l, obj.h, obj.w] for obj in obj_list
+                        [obj.l, obj.w, obj.h] for obj in obj_list
                         if obj.classname in self.cat2label.keys()
-                    ])  # lhw(depth) format
+                    ])  # lwh (depth) format
                     annotations['rotation_y'] = np.array([
                         obj.heading_angle for obj in obj_list
                         if obj.classname in self.cat2label.keys()

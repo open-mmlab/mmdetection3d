@@ -275,9 +275,9 @@ train_pipeline = [
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
 - `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 18).
 - Data augmentation:
-    - `IndoorPointSample`: downsample input point cloud.
-    - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet.
+    - `IndoorPointSample`: downsample the input point cloud.
+    - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
+    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet.
 
 ## Metrics
 
