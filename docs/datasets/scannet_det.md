@@ -293,7 +293,7 @@ train_pipeline = [
 - Data augmentation:
     - `IndoorPointSample`: downsample the input point cloud.
     - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet.
+    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet; then scale the input point cloud, usually in the range of [0.85, 1.15] for ScanNet; finally translate the input point cloud, usually 0 for ScanNet.
 
 ## Metrics
 
