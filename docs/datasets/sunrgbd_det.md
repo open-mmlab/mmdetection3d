@@ -11,7 +11,6 @@ Download SUNRGBD data [HERE](http://rgbd.cs.princeton.edu/data/). Then, move SUN
 The directory structure before data preparation should be as below：
 
 ```
-```
 sunrgbd
 ├── README.md
 ├── matlab
@@ -31,14 +30,13 @@ sunrgbd
 │   ├── label_v1
 │   ├── seg_label
 ```
-```
 
 Under each following directory there are overall 5285 train files and 5050 val files:
 
-- 'calib': Camera calibration information in `.txt`
+- `calib`: Camera calibration information in `.txt`
 - `depth`: Point cloud saved in `.mat` (xyz+rgb)
 - `image`: Image data in `.jpg`
-- `label`: Detection nnotation data in `.txt` (version 2)
+- `label`: Detection annotation data in `.txt` (version 2)
 - `label_v1`: Detection annotation data in `.txt` (version 1)
 - `seg_label`: Segmentation annotation data in `.txt`
 
@@ -166,7 +164,7 @@ def process_single_scene(sample_idx):
     return info
 ```
 
-The directory structure after process should be as below
+The directory structure after processing should be as follows.
 
 ```
 sunrgbd
@@ -218,7 +216,7 @@ sunrgbd
 
 ## Train pipeline
 
-A typical train pipeline of SUN RGB-D for point cloud only 3D detection is as below.
+A typical train pipeline of SUN RGB-D for point cloud only 3D detection is as follows.
 
 ```python
 train_pipeline = [
@@ -252,4 +250,4 @@ train_pipeline = [
 
 ## Metrics
 
-Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
+Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
