@@ -17,8 +17,10 @@ We list some potential troubles encountered by users and developers, along with 
   pip install mmpycocotools
   ```
 
-- If you face the error shown below, and your environment contains numba == 0.48.0 with numpy >= 1.20.0
+  **NOTE**: We have migrated to use pycocotools in mmdet3d >= 0.13.0.
+
+- If you face the error shown below, and your environment contains numba == 0.48.0 with numpy >= 1.20.0:
 
   ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``
 
-  please downgrade numpy to < 1.20.0 or install numba == 0.48 from source, because in numpy==1.20.0, `np.dtype` produces subclass due to API change.
+  please downgrade numpy to < 1.20.0 or install numba == 0.48 from source, because in numpy == 1.20.0, `np.dtype` produces subclass due to API change. Please refer to [here](https://github.com/numba/numba/issues/6041) for more details.
