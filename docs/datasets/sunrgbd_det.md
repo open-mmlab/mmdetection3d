@@ -6,7 +6,7 @@ For the overall process, please refer to the [README](https://github.com/open-mm
 
 ### Download SUN RGB-D data and toolbox
 
-Download SUNRGBD data [HERE](http://rgbd.cs.princeton.edu/data/). Then, move SUNRGBD.zip, SUNRGBDMeta2DBB_v2.mat, SUNRGBDMeta3DBB_v2.mat and SUNRGBDtoolbox.zip to the OFFICIAL_SUNRGBD folder, unzip the zip files. Currently, we use v1 data for training and testing, so the data files with suffix `_v2` are unnecessary.
+Download SUNRGBD data [HERE](http://rgbd.cs.princeton.edu/data/). Then, move `SUNRGBD.zip`, `SUNRGBDMeta2DBB_v2.mat`, `SUNRGBDMeta3DBB_v2.mat` and `SUNRGBDtoolbox.zip` to the `OFFICIAL_SUNRGBD` folder, unzip the zip files. Currently, we use v1 data for training and testing, so the data files with suffix `_v2` are unnecessary.
 
 The directory structure before data preparation should be as below：
 
@@ -40,7 +40,7 @@ Under each following directory there are overall 5285 train files and 5050 val f
 - `label_v1`: Detection annotation data in `.txt` (version 1)
 - `seg_label`: Segmentation annotation data in `.txt`
 
-Extract SUN RGB-D annotation data by running:
+Extract SUN RGB-D annotation data by running (this requires MATLAB installed on your machine):
 
 ```bash
 matlab -nosplash -nodesktop -r 'extract_split;quit;'
