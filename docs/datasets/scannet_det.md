@@ -4,9 +4,9 @@
 
 For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) page for ScanNet.
 
-### Export ScanNet data
+### Export ScanNet point cloud data
 
-By exporting ScanNet data, we load the raw point cloud data and generate the relevant annotations including semantic label, instance label and ground truth bounding boxes.
+By exporting ScanNet data, we load the raw point cloud data and generate the relevant annotations including semantic labels, instance labels and ground truth bounding boxes.
 
 ```shell
 python batch_load_scannet_data.py
@@ -32,7 +32,7 @@ mmdetection3d
 
 Under folder `scans` there are overall 1201 train and 312 validation folders in which raw point cloud data and relevant annotations are saved. For instance, under folder `scene0001_01` the files are as below:
 
-- `scene0001_01_vh_clean_2.ply`: Mesh file including raw point cloud data.
+- `scene0001_01_vh_clean_2.ply`: Mesh file storing coordinates and colors of each vertex. The mesh's vertices are taken as raw point cloud data.
 - `scene0001_01.aggregation.json`: Aggregation file including object id, segments id and label.
 - `scene0001_01_vh_clean_2.0.010000.segs.json`: Segmentation file including segments id and vertex.
 - `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
@@ -44,7 +44,7 @@ Export ScanNet data by running `python batch_load_scannet_data.py`. The main ste
 - Downsample raw point cloud and filter invalid classes.
 - Save point cloud data and relevant annotation files.
 
- And the core function `export` in `load_scannet_data.py` is as follows:
+And the core function `export` in `load_scannet_data.py` is as follows:
 
 ```python
 def export(mesh_file,
@@ -125,7 +125,17 @@ def export(mesh_file,
 
 ```
 
-After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large. In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
+After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large (the raw point cloud won't be downsampled if it's also used in 3d semantic segmentation task). In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
+
+### Export ScanNet RGB data
+
+By exporting ScanNet RGB data, for each scene we load a set of RGB images with corresponding 4x4 pose matrices, and a single 4x4 camera intrinsic matrix. Note, that this step is optional and can be skipped if multi-view detection is not planned to use.
+
+```shell
+python extract_posed_images.py
+```
+
+Each of 1201 train, 312 validation and 100 test scenes contains a single `.sens` file. For instance, for scene `0001_01` we have `data/scannet/scans/scene0001_01/0001_01.sens`. For this scene all images and poses are extracted to `data/scannet/posed_images/scene0001_01`. Specifically, there will be 300 image files xxxxx.jpg, 300 camera pose files xxxxx.txt and a single `intrinsic.txt` file. Typically, single scene contains several thousand images. By default, we extract only 300 of them with resulting weight of <100 Gb. To extract more images, use `--max-images-per-scene` parameter.
 
 ### Create dataset
 
@@ -182,7 +192,7 @@ The directory structure after process should be as below
 
 ```
 scannet
-├── scannet_utils.py
+├── meta_data
 ├── batch_load_scannet_data.py
 ├── load_scannet_data.py
 ├── scannet_utils.py
@@ -201,14 +211,20 @@ scannet
 │   ├── train_resampled_scene_idxs.npy
 │   ├── val_label_weight.npy
 │   ├── val_resampled_scene_idxs.npy
+├── posed_images
+│   ├── scenexxxx_xx
+│   │   ├── xxxxxx.txt
+│   │   ├── xxxxxx.jpg
+│   │   ├── intrinsic.txt
 ├── scannet_infos_train.pkl
 ├── scannet_infos_val.pkl
 ├── scannet_infos_test.pkl
 ```
 
-- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Note: the point would be axis-aligned in pre-processing `GlobalAlignment` of 3D detection task.
+- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Since ScanNet 3D detection task takes axis-aligned point clouds as input, while ScanNet 3D semantic segmentation task takes unaligned points, we choose to store unaligned points and their axis-align transform matrix. Note: the points would be axis-aligned in pre-processing pipeline `GlobalAlignment` of 3D detection task.
 - `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id will be mapped to train id in train pipeline `PointSegClassMapping`.
+- `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
     - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
     - info['pts_path']: The path of `points/xxxxx.bin`.
@@ -227,9 +243,9 @@ scannet
         - annotations['class']: The train class id of the bounding boxes, value range: [0, 18), shape: [K, ].
 
 
-## Train pipeline
+## Training pipeline
 
-A typical train pipeline of ScanNet for 3D detection is as below.
+A typical training pipeline of ScanNet for 3D detection is as follows.
 
 ```python
 train_pipeline = [
@@ -273,14 +289,14 @@ train_pipeline = [
 ```
 
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
-- `PointSegClassMapping`: Only the valid category id will be mapped to train class label id like [0, 18).
+- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 18) during training.
 - Data augmentation:
-    - `IndoorPointSample`: downsample input point cloud.
-    - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet.
+    - `IndoorPointSample`: downsample the input point cloud.
+    - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
+    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet.
 
 ## Metrics
 
-Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic functions to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py).
+Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py).
 
 As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.
