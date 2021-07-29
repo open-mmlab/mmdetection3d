@@ -231,7 +231,7 @@ def inference_mono_3d_detector(model, image, ann_file):
 
     # camera points to image conversion
     if box_mode_3d == Box3DMode.CAM:
-        data['img_info'].update(dict(cam2img=img_info['cam2img']))
+        data['img_info'].update(dict(cam_intrinsic=img_info['cam_intrinsic']))
 
     data = test_pipeline(data)
 
