@@ -190,7 +190,7 @@ def test_show_result_meshlab():
             [[6.4495, -3.9097, -1.7409, 1.5063, 3.1819, 1.4716, 1.8782]]))
     img = np.random.randn(1, 3, 384, 1280)
     cam2img = np.array([[100.0, 0.0, 50.0], [0.0, 100.0, 50.0],
-                              [0.0, 0.0, 1.0]])
+                        [0.0, 0.0, 1.0]])
     img_meta = dict(
         filename=filename,
         pcd_horizontal_flip=False,

@@ -189,8 +189,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
             if isinstance(data['img_metas'][0], DC):
                 img_filename = data['img_metas'][0]._data[0][batch_id][
                     'filename']
-                cam2img = data['img_metas'][0]._data[0][batch_id][
-                    'cam2img']
+                cam2img = data['img_metas'][0]._data[0][batch_id]['cam2img']
             elif mmcv.is_list_of(data['img_metas'][0], dict):
                 img_filename = data['img_metas'][0][batch_id]['filename']
                 cam2img = data['img_metas'][0][batch_id]['cam2img']

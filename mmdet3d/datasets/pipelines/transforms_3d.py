@@ -127,8 +127,7 @@ class RandomFlip3D(RandomFlip):
             # ['cam2img'][0][2] = c_u
             # see more details and examples at
             # https://github.com/open-mmlab/mmdetection3d/pull/744
-            input_dict['cam2img'][0][2] = \
-                w - input_dict['cam2img'][0][2]
+            input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \
