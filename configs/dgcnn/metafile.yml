@@ -20,5 +20,5 @@ Models:
       - Task: 3D Semantic Segmentation
         Dataset: S3DIS
         Metrics:
-          mIoU: 46.96
+          mIoU: 48.31
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth
