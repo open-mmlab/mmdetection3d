@@ -3,7 +3,8 @@ from mmcv.cnn import ConvModule
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.ops import GroupAll, PAConv, QueryAndGroup, grouping_operation
+from ..group_points import GroupAll, QueryAndGroup, grouping_operation
+from ..paconv import PAConv
 from .builder import GF_MODULES
 
 
