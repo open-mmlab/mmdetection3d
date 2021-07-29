@@ -210,7 +210,7 @@ train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for
         flip_ratio_xz=0.5),  # Probability of being flipped along xz plane
     dict(
         type='IndoorGlobalRotScale',  # Augmentation pipeline that rotate and scale points and 3d boxes, refer to mmdet3d.datasets.pipelines.indoor_augment for more details
-        shift_height=True,  # Whether the loaded points use shift_height attribute
+        shift_height=True,  # Whether the loaded points use `shift_height` attribute
         rot_range=[-0.027777777777777776, 0.027777777777777776],  # Range of rotation
         scale_range=None),  # Range of scale
     dict(
