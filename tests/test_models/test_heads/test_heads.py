@@ -1121,7 +1121,7 @@ def test_groupfree3d_head():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
     vote_head_cfg = _get_vote_head_cfg(
-        'groupfree3d/groupfree3d_8x8_scannet-3d-18class-L6-O256.py')
+        'groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py')
     self = build_head(vote_head_cfg).cuda()
 
     fp_xyz = [torch.rand([2, 256, 3], dtype=torch.float32).cuda()]
