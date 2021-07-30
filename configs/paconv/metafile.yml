@@ -10,25 +10,12 @@ Collections:
     README: configs/paconv/README.md
 
 Models:
-  - Name: paconv_ssg_8x8_cosine_200e_s3dis_seg-3d-13class.py
+  - Name: paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
     In Collection: PAConv
-    Config: configs/paconv/paconv_ssg_8x8_cosine_200e_s3dis_seg-3d-13class.py
+    Config: configs/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 5.8
-    Results:
-      - Task: 3D Semantic Segmentation
-        Dataset: S3DIS
-        Metrics:
-          mIoU: 00
-    Weights: https
-
-  - Name: paconv_cuda_ssg_8x8_cosine_200e_s3dis_seg-3d-13class.py
-    In Collection: PAConv
-    Config: configs/paconv/paconv_cuda_ssg_8x8_cosine_200e_s3dis_seg-3d-13class.py
-    Metadata:
-      Training Data: S3DIS
-      Training Memory (GB): 3.8
     Results:
       - Task: 3D Semantic Segmentation
         Dataset: S3DIS
