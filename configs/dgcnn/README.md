@@ -23,7 +23,7 @@ We implement DGCNN and provide the result and checkpoints on S3DIS dataset.
 
 |                                   Method                                    | Split  |  Lr schd   | Mem (GB) | Inf time (fps) | mIoU (Val set) |         Download         |
 | :-------------------------------------------------------------------------: | :----: | :--------: | :------: | :------------: | :------------: | :----------------------: |
-| [DGCNN](./dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py) | Area_5 | cosine 100e |   6.7    |                |     48.31      | [model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628.log.json) |
+| [DGCNN](./dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py) | Area_5 | cosine 100e |   13.3    |                |     50.50      | [model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628.log.json) |
 
 **Notes:**
 
