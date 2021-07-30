@@ -3,7 +3,7 @@ Collections:
     Metadata:
       Training Techniques:
         - SGD
-      Training Resources: 1x Titan XP GPU
+      Training Resources: 4x Titan XP GPUs
       Architecture:
         - DGCNN
     Paper: https://arxiv.org/abs/1801.07829
