@@ -80,7 +80,7 @@ end
 fclose(fid);
 ```
 
-上面的脚本使用了 SUN RGB-D 提供的[工具包](https://rgbd.cs.princeton.edu/data/SUNRGBDtoolbox.zip)中的 `groundtruth3DBB`。
+上面的两个脚本调用了 SUN RGB-D 提供的[工具包](https://rgbd.cs.princeton.edu/data/SUNRGBDtoolbox.zip)中的一些函数，如 `read3dPoints`。
 
 使用上述脚本提取数据后，文件目录结构应如下：
 
@@ -287,10 +287,10 @@ train_pipeline = [
 ]
 ```
 
-- 点云上的数据增强
-    - `RandomFlip3D`：随机左右或前后翻转输入点云。
-    - `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1。15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0。
-    - `IndoorPointSample`：降采样输入点云。
+点云上的数据增强
+- `RandomFlip3D`：随机左右或前后翻转输入点云。
+- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0。
+- `IndoorPointSample`：降采样输入点云。
 
 SUN RGB-D 上多模态（点云和图像） 3D 物体检测的经典流程如下：
 
@@ -330,11 +330,11 @@ train_pipeline = [
 ]
 ```
 
-- 图像上的数据增强/归一化
-    - `Resize`: 改变输入图像的大小, `keep_ratio=True` 意味着图像的比例不改变。
-    - `Normalize`: 归一化图像的 RGB 通道。
-    - `RandomFlip`: 随机地翻折图像。
-    - `Pad`: 扩大图像，默认情况下用零填充图像的边缘。
+图像上的数据增强/归一化
+- `Resize`: 改变输入图像的大小, `keep_ratio=True` 意味着图像的比例不改变。
+- `Normalize`: 归一化图像的 RGB 通道。
+- `RandomFlip`: 随机地翻折图像。
+- `Pad`: 扩大图像，默认情况下用零填充图像的边缘。
 
 图像增强和归一化函数的实现取自 [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines)。
 

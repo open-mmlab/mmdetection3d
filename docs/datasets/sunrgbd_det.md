@@ -288,10 +288,10 @@ train_pipeline = [
 ]
 ```
 
-- Data augmentation for point clouds:
-    - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually 0 for SUN RGB-D.
-    - `IndoorPointSample`: downsample the input point cloud.
+Data augmentation for point clouds:
+- `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
+- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D.
+- `IndoorPointSample`: downsample the input point cloud.
 
 A typical train pipeline of SUN RGB-D for multi-modality (point cloud and image) 3D detection is as follows.
 
@@ -331,11 +331,11 @@ train_pipeline = [
 ]
 ```
 
-- Data augmentation/normalization for images:
-    - `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
-    - `Normalize`: normalize the RGB channels of the input image.
-    - `RandomFlip`: randomly flip the input image.
-    - `Pad`: pad the input image with zeros by default.
+Data augmentation/normalization for images:
+- `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
+- `Normalize`: normalize the RGB channels of the input image.
+- `RandomFlip`: randomly flip the input image.
+- `Pad`: pad the input image with zeros by default.
 
 The image augmentation and normalization functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines).
 
