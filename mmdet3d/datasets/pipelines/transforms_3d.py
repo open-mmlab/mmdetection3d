@@ -45,7 +45,13 @@ class RandomDropPointsColor(object):
             'color' in points.attribute_dims, \
             'Expect points have color attribute'
 
-        if np.random.rand() < self.drop_ratio:
+        # this if-expression is a bit strange
+        # `RandomDropPointsColor` is used in training 3D segmentor PAConv
+        # we discovered in our experiments that, using
+        # `if np.random.rand() > 1.0 - self.drop_ratio` consistently leads to
+        # better results than using `if np.random.rand() < self.drop_ratio`
+        # so we keep this hack in our codebase
+        if np.random.rand() > 1.0 - self.drop_ratio:
             points.color = points.color * 0.0
         return input_dict
 
