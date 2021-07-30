@@ -20,5 +20,5 @@ Models:
       - Task: 3D Semantic Segmentation
         Dataset: S3DIS
         Metrics:
-          mIoU: 00
+          mIoU: 66.65
     Weights: https
