@@ -150,7 +150,7 @@ It is recommended that you run step d each time you pull some updates from githu
     find . -name "*.so" | xargs rm
     ```
 
-2. Following the above instructions, mmdetection is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
+2. Following the above instructions, MMDetection3D is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
 
 3. If you would like to use `opencv-python-headless` instead of `opencv-python`,
 you can install it before installing MMCV.
@@ -176,7 +176,7 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 
 ## A from-scratch setup script
 
-Here is a full script for setting up mmdetection with conda.
+Here is a full script for setting up MMdetection3D with conda.
 
 ```shell
 conda create -n open-mmlab python=3.7 -y
@@ -227,7 +227,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 ```
 
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
-Note that you need to install pandas and plyfile before using this script. This function can also be used for data preprocessing for training ```ply data```.
+Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training ```ply data```.
 
 ```python
 import numpy as np
@@ -252,7 +252,7 @@ Examples:
 convert_ply('./test.ply', './test.bin')
 ```
 
-If you have point clouds in other format (`off`, `obj`, etc.), you can use trimesh to convert them into `ply`.
+If you have point clouds in other format (`off`, `obj`, etc.), you can use `trimesh` to convert them into `ply`.
 
 ```python
 import trimesh
