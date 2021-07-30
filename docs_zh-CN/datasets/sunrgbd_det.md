@@ -1,4 +1,4 @@
-# 3D目标检测SUN RGB-D数据集
+# 3D 目标检测 SUN RGB-D 数据集
 
 ## 数据集的准备
 
@@ -66,15 +66,15 @@ parsave(strcat(depth_folder, mat_filename), points3d_rgb);
 用于提取并组织检测任务标注的 `extract_rgbd_data_v1.m` 的主要部分如下：
 
 ```matlab
-% 输出 2D 和 3D 包围盒
+% 输出 2D 和 3D 包围框
 data2d = data;
 fid = fopen(strcat(det_label_folder, txt_filename), 'w');
 for j = 1:length(data.groundtruth3DBB)
-    centroid = data.groundtruth3DBB(j).centroid;  % 3D 包围盒中心
+    centroid = data.groundtruth3DBB(j).centroid;  % 3D 包围框中心
     classname = data.groundtruth3DBB(j).classname;  % 类名
-    orientation = data.groundtruth3DBB(j).orientation;  % 3D 包围盒方向
-    coeffs = abs(data.groundtruth3DBB(j).coeffs);  % 3D 包围盒大小
-    box2d = data2d.groundtruth2DBB(j).gtBb2D;  % 2D 包围盒
+    orientation = data.groundtruth3DBB(j).orientation;  % 3D 包围框方向
+    coeffs = abs(data.groundtruth3DBB(j).coeffs);  % 3D 包围框大小
+    box2d = data2d.groundtruth2DBB(j).gtBb2D;  % 2D 包围框
     fprintf(fid, '%s %d %d %d %d %f %f %f %f %f %f %f %f\n', classname, box2d(1), box2d(2), box2d(3), box2d(4), centroid(1), centroid(2), centroid(3), coeffs(1), coeffs(2), coeffs(3), orientation(1), orientation(2));
 end
 fclose(fid);
@@ -184,22 +184,22 @@ def process_single_scene(sample_idx):
                 obj.classname for obj in obj_list
                 if obj.classname in self.cat2label.keys()
             ])
-            # 二维图像包围盒
+            # 二维图像包围框
             annotations['bbox'] = np.concatenate([
                 obj.box2d.reshape(1, 4) for obj in obj_list
                 if obj.classname in self.cat2label.keys()
             ], axis=0)
-            # depth 坐标系下的三维包围盒中心坐标
+            # depth 坐标系下的三维包围框中心坐标
             annotations['location'] = np.concatenate([
                 obj.centroid.reshape(1, 3) for obj in obj_list
                 if obj.classname in self.cat2label.keys()
             ], axis=0)
-            # depth 坐标系下的三维包围盒大小
+            # depth 坐标系下的三维包围框大小
             annotations['dimensions'] = 2 * np.array([
                 [obj.l, obj.h, obj.w] for obj in obj_list
                 if obj.classname in self.cat2label.keys()
             ])
-            # depth 坐标系下的三维包围盒旋转角
+            # depth 坐标系下的三维包围框旋转角
             annotations['rotation_y'] = np.array([
                 obj.heading_angle for obj in obj_list
                 if obj.classname in self.cat2label.keys()
@@ -211,7 +211,7 @@ def process_single_scene(sample_idx):
                 self.cat2label[obj.classname] for obj in obj_list
                 if obj.classname in self.cat2label.keys()
             ])
-            # depth 坐标系下的三维包围盒
+            # depth 坐标系下的三维包围框
             annotations['gt_boxes_upright_depth'] = np.stack(
                 [
                     obj.box3d for obj in obj_list
@@ -248,11 +248,11 @@ sunrgbd
     - info['annos']：每个场景的标注：
         - annotations['gt_num']：真实物体（ground truth）的数量
         - annotations['name']：所有真实物体的语义类别名称，比如 `chair`（椅子）。
-        - annotations['location']：depth 坐标系下三维包围盒的重力（gravity center）中心，形状为 [K, 3]，其中 K 是真实物体的数量。
-        - annotations['dimensions']：depth 坐标系下三维包围盒的大小，形状为 [K, 3]。
-        - annotations['rotation_y']：depth 坐标系下三维包围盒的旋转角，形状为 [K, ]。
-        - annotations['gt_boxes_upright_depth']：depth 坐标系下三维包围盒 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 [K, 7]。
-        - annotations['bbox']：二维包围盒 `(x, y, x_size, y_size)`，形状为 [K, 4]。
+        - annotations['location']：depth 坐标系下三维包围框的重力（gravity center）中心，形状为 [K, 3]，其中 K 是真实物体的数量。
+        - annotations['dimensions']：depth 坐标系下三维包围框的大小，形状为 [K, 3]。
+        - annotations['rotation_y']：depth 坐标系下三维包围框的旋转角，形状为 [K, ]。
+        - annotations['gt_boxes_upright_depth']：depth 坐标系下三维包围框 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 [K, 7]。
+        - annotations['bbox']：二维包围框 `(x, y, x_size, y_size)`，形状为 [K, 4]。
         - annotations['index']：所有真实物体的索引，范围为 [0, K)。
         - annotations['class']：所有真实物体类别的标号范围为 [0, 10)，形状为 [K, ]。
 - `sunrgbd_infos_val.pkl`：验证集上的数据信息，与 `sunrgbd_infos_train.pkl` 格式完全一致。
@@ -292,7 +292,7 @@ train_pipeline = [
 - `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0。
 - `IndoorPointSample`：降采样输入点云。
 
-SUN RGB-D 上多模态（点云和图像） 3D 物体检测的经典流程如下：
+SUN RGB-D 上多模态（点云和图像）3D 物体检测的经典流程如下：
 
 ```python
 train_pipeline = [
