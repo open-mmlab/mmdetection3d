@@ -1,6 +1,7 @@
 _base_ = [
     '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/paconv_ssg.py', '../_base_/default_runtime.py'
+    '../_base_/models/paconv_ssg.py', '../_base_/schedules/seg_cosine_150e.py',
+    '../_base_/default_runtime.py'
 ]
 
 # data settings
@@ -63,23 +64,3 @@ model = dict(
         sample_rate=0.5,
         use_normalized_coord=True,
         batch_size=12))
-
-# runtime settings
-checkpoint_config = dict(interval=1)
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        # dict(type='TensorboardLoggerHook')
-    ])
-dist_params = dict(port=29502)
-
-# optimizer
-lr = 0.2
-optimizer = dict(type='SGD', lr=lr, weight_decay=0.0001, momentum=0.9)
-optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='CosineAnnealing', warmup=None, min_lr=lr * 0.01)
-momentum_config = None
-
-# runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=200)
