@@ -24,7 +24,7 @@ We implement PAConv and provide the result and checkpoints on S3DIS dataset.
 
 |                                   Method                                    | Split  |   Lr schd   | Mem (GB) | Inf time (fps) | mIoU (Val set) |         Download         |
 | :-------------------------------------------------------------------------: | :----: | :---------: | :------: | :------------: | :------------: | :----------------------: |
-|    [PAConv (SSG)](./paconv_ssg_8x8_cosine_200e_s3dis_seg-3d-13class.py)     | Area_5 | cosine 200e |   5.8    |                |       -        | [model]() &#124; [log]() |
+|    [PAConv (SSG)](./paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py)     | Area_5 | cosine 200e |   5.8    |                |       -        | [model]() &#124; [log]() |
 
 **Notes:**
 
