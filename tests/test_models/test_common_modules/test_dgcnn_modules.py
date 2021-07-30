@@ -10,7 +10,6 @@ def test_dgcnn_gf_module():
 
     self = DGCNNGFModule(
         mlp_channels=[18, 64, 64],
-        num_point=200,
         num_sample=20,
         knn_mod='D-KNN',
         radius=None,
@@ -35,7 +34,6 @@ def test_dgcnn_gf_module():
     # test F-KNN mod
     self = DGCNNGFModule(
         mlp_channels=[6, 64, 64],
-        num_point=200,
         num_sample=20,
         knn_mod='F-KNN',
         radius=None,
@@ -50,7 +48,6 @@ def test_dgcnn_gf_module():
     # test ball query
     self = DGCNNGFModule(
         mlp_channels=[6, 64, 64],
-        num_point=200,
         num_sample=20,
         knn_mod='F-KNN',
         radius=0.2,

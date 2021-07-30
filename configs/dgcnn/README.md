@@ -4,7 +4,7 @@
 
 <!-- [ALGORITHM] -->
 
-We implement DGCNN and provide the result and checkpoints on ScanNet and S3DIS datasets.
+We implement DGCNN and provide the result and checkpoints on S3DIS dataset.
 
 ```
 @article{dgcnn,

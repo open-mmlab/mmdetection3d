@@ -40,8 +40,8 @@ def test_dgcnn_decode_head_loss():
     assert self.pre_seg_conv.bn.num_features == 256
 
     # test forward
-    fp_points = torch.rand(2, 4096, 1024).float().cuda()
-    input_dict = dict(fp_points=fp_points)
+    fa_points = torch.rand(2, 4096, 1024).float().cuda()
+    input_dict = dict(fa_points=fa_points)
     seg_logits = self(input_dict)
     assert seg_logits.shape == torch.Size([2, 13, 4096])
 
