@@ -40,6 +40,29 @@ The main steps include:
 - Extract data for 3D detection from raw data.
 - Extract and format detection annotation from raw data.
 
+The main component of `extract_rgbd_data_v2.m` which extracts point cloud data from depth map is as follows:
+
+```matlab
+data = SUNRGBDMeta(imageId);
+data.depthpath(1:16) = '';
+data.depthpath = strcat('../OFFICIAL_SUNRGBD', data.depthpath);
+data.rgbpath(1:16) = '';
+data.rgbpath = strcat('../OFFICIAL_SUNRGBD', data.rgbpath);
+
+% extract point cloud from depth map
+[rgb,points3d,depthInpaint,imsize]=read3dPoints(data);
+rgb(isnan(points3d(:,1)),:) = [];
+points3d(isnan(points3d(:,1)),:) = [];
+points3d_rgb = [points3d, rgb];
+
+% MAT files are 3x smaller than TXT files. In Python we can use
+% scipy.io.loadmat('xxx.mat')['points3d_rgb'] to load the data.
+mat_filename = strcat(num2str(imageId,'%06d'), '.mat');
+txt_filename = strcat(num2str(imageId,'%06d'), '.txt');
+% save point cloud data
+parsave(strcat(depth_folder, mat_filename), points3d_rgb);
+```
+
 The main component of `extract_rgbd_data_v1.m` which extracts annotation is as follows:
 
 ```matlab
@@ -57,7 +80,7 @@ end
 fclose(fid);
 ```
 
-The above script uses the class `groundtruth3DBB` from the [toolbox](https://rgbd.cs.princeton.edu/data/SUNRGBDtoolbox.zip) provided by SUN RGB-D.
+The above two scripts call functions such as `read3dPoints` from the [toolbox](https://rgbd.cs.princeton.edu/data/SUNRGBDtoolbox.zip) provided by SUN RGB-D.
 
 The directory structure after extraction should be as follows.
 

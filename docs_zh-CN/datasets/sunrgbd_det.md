@@ -40,6 +40,29 @@ matlab -nosplash -nodesktop -r 'extract_rgbd_data_v1;quit;'
 - 从原始数据中提取出 3D 检测所需要的数据；
 - 从原始的标注数据中提取并组织检测任务使用的标注数据。
 
+用于从深度图中提取点云数据的 `extract_rgbd_data_v2.m` 的主要部分如下：
+
+```matlab
+data = SUNRGBDMeta(imageId);
+data.depthpath(1:16) = '';
+data.depthpath = strcat('../OFFICIAL_SUNRGBD', data.depthpath);
+data.rgbpath(1:16) = '';
+data.rgbpath = strcat('../OFFICIAL_SUNRGBD', data.rgbpath);
+
+% 从深度图获取点云
+[rgb,points3d,depthInpaint,imsize]=read3dPoints(data);
+rgb(isnan(points3d(:,1)),:) = [];
+points3d(isnan(points3d(:,1)),:) = [];
+points3d_rgb = [points3d, rgb];
+
+% MAT 文件比 TXT 文件小三倍。在 Python 中我们可以使用
+% scipy.io.loadmat('xxx.mat')['points3d_rgb'] 来加载数据
+mat_filename = strcat(num2str(imageId,'%06d'), '.mat');
+txt_filename = strcat(num2str(imageId,'%06d'), '.txt');
+% 保存点云数据
+parsave(strcat(depth_folder, mat_filename), points3d_rgb);
+```
+
 用于提取并组织检测任务标注的 `extract_rgbd_data_v1.m` 的主要部分如下：
 
 ```matlab
