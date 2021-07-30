@@ -5,9 +5,9 @@ echo 'configs/3dssd/3dssd_4x4_kitti-3d-car.py' &
 GPUS=4  GPUS_PER_NODE=4  CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION 3dssd_4x4_kitti-3d-car configs/3dssd/3dssd_4x4_kitti-3d-car.py \
 $CHECKPOINT_DIR/3dssd_4x4_kitti-3d-car --cfg-options checkpoint_config.max_keep_ckpts=1 >/dev/null &
 
-echo 'configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py' &
-GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py \
-$CHECKPOINT_DIR/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus --cfg-options checkpoint_config.max_keep_ckpts=1 >/dev/null &
+echo 'configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py \
+$CHECKPOINT_DIR/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus --cfg-options checkpoint_config.max_keep_ckpts=1 >/dev/null &
 
 echo 'configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py' &
 GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py \
