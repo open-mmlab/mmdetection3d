@@ -4,7 +4,6 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from ..group_points import GroupAll, QueryAndGroup, grouping_operation
-from ..paconv import PAConv
 from .builder import GF_MODULES
 
 
@@ -12,7 +11,6 @@ class BaseDGCNNGFModule(nn.Module):
     """Base module for point graph feature module used in DGCNN.
 
     Args:
-        num_point (int): Number of points.
         radii (list[float]): List of radius in each knn or ball query.
         sample_nums (list[int]): Number of samples in each knn or ball query.
         mlp_channels (list[list[int]]): Specify of the dgcnn before
@@ -30,7 +28,6 @@ class BaseDGCNNGFModule(nn.Module):
     """
 
     def __init__(self,
-                 num_point,
                  radii,
                  sample_nums,
                  mlp_channels,
@@ -51,13 +48,6 @@ class BaseDGCNNGFModule(nn.Module):
             mlp_channels = list(map(list, mlp_channels))
         self.mlp_channels = mlp_channels
 
-        if isinstance(num_point, int):
-            self.num_point = [num_point]
-        elif isinstance(num_point, list) or isinstance(num_point, tuple):
-            self.num_point = num_point
-        else:
-            raise NotImplementedError('Error type of num_point!')
-
         self.pool_mod = pool_mod
         self.groupers = nn.ModuleList()
         self.mlps = nn.ModuleList()
@@ -65,7 +55,7 @@ class BaseDGCNNGFModule(nn.Module):
 
         for i in range(len(sample_nums)):
             sample_num = sample_nums[i]
-            if num_point is not None:
+            if sample_num is not None:
                 if self.knn_mod[i] == 'D-KNN':
                     grouper = QueryAndGroup(
                         radii[i],
@@ -144,16 +134,10 @@ class BaseDGCNNGFModule(nn.Module):
                 1, 1, 1, grouped_results.shape[-1])
             new_points = torch.cat([grouped_results, new_points], dim=1)
 
-            # (B, mlp[-1], num_point, nsample)
+            # (B, mlp[-1], N, K)
             new_points = self.mlps[i](new_points)
 
-            # this is a bit hack because PAConv outputs two values
-            # we take the first one as feature
-            if isinstance(self.mlps[i][0], PAConv):
-                assert isinstance(new_points, tuple)
-                new_points = new_points[0]
-
-            # (B, mlp[-1], num_point)
+            # (B, mlp[-1], N)
             new_points = self._pool_features(new_points)
             new_points = new_points.transpose(1, 2).contiguous()
             new_points_list.append(new_points)
@@ -168,17 +152,15 @@ class DGCNNGFModule(BaseDGCNNGFModule):
     Args:
         mlp_channels (list[int]): Specify of the dgcnn before
             the global pooling for each graph feature module.
-        num_point (int): Number of points.
-            Default: None.
         num_sample (int): Number of samples in each knn or ball query.
             Default: None.
         knn_mod (list[str]: Type of KNN method, valid mod
             ['F-KNN', 'D-KNN'], Default: ['F-KNN'].
         radius (float): Radius to group with.
             Default: None.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict, optional): Type of normalization method.
             Default: dict(type='BN2d').
-        act_cfg (dict): Type of activation method.
+        act_cfg (dict, optional): Type of activation method.
             Default: dict(type='ReLU').
         pool_mod (str): Type of pooling method.
             Default: 'max_pool'.
@@ -189,7 +171,6 @@ class DGCNNGFModule(BaseDGCNNGFModule):
 
     def __init__(self,
                  mlp_channels,
-                 num_point=None,
                  num_sample=None,
                  knn_mod=['F-KNN'],
                  radius=None,
@@ -202,7 +183,6 @@ class DGCNNGFModule(BaseDGCNNGFModule):
                  bias='auto'):
         super(DGCNNGFModule, self).__init__(
             mlp_channels=[mlp_channels],
-            num_point=num_point,
             sample_nums=[num_sample],
             knn_mod=[knn_mod],
             radii=[radius],

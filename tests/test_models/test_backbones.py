@@ -305,15 +305,13 @@ def test_dgcnn_gf():
 
     # DGCNNGF used in segmentation
     cfg = dict(
-        type='DGCNNGF',
+        type='DGCNN',
         in_channels=6,
-        num_points=(100, 100, 100),
         num_samples=(20, 20, 20),
         knn_mods=['D-KNN', 'F-KNN', 'F-KNN'],
         radius=(None, None, None),
         gf_channels=((64, 64), (64, 64), (64, )),
         fa_channels=(1024, ),
-        fp_channels=(512, ),
         act_cfg=dict(type='ReLU'),
         gf_cfg=dict(type='DGCNNGFModule', pool_mod='max'))
 
@@ -326,7 +324,6 @@ def test_dgcnn_gf():
     ret_dict = self(xyz)
     gf_points = ret_dict['gf_points']
     fa_points = ret_dict['fa_points']
-    fp_points = ret_dict['fp_points']
 
     assert len(gf_points) == 4
     assert gf_points[0].shape == torch.Size([1, 100, 6])
@@ -334,4 +331,3 @@ def test_dgcnn_gf():
     assert gf_points[2].shape == torch.Size([1, 100, 64])
     assert gf_points[3].shape == torch.Size([1, 100, 64])
     assert fa_points.shape == torch.Size([1, 100, 1216])
-    assert fp_points.shape == torch.Size([1, 100, 512])

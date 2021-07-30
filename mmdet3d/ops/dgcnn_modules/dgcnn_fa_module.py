@@ -2,7 +2,6 @@ import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
-from typing import List
 
 from .builder import FA_MODULES
 
@@ -15,14 +14,16 @@ class DGCNNFAModule(BaseModule):
 
     Args:
         mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict): Type of normalization method.
-            Default: dict(type='BN2d').
+        norm_cfg (dict, optional): Type of normalization method.
+            Default: dict(type='BN1d').
+        act_cfg (dict, optional): Type of activation method.
+            Default: dict(type='ReLU').
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 norm_cfg: dict = dict(type='BN1d'),
-                 act_cfg: dict = dict(type='ReLU'),
+                 mlp_channels,
+                 norm_cfg=dict(type='BN1d'),
+                 act_cfg=dict(type='ReLU'),
                  init_cfg=None):
         super().__init__(init_cfg=init_cfg)
         self.fp16_enabled = False
@@ -40,17 +41,17 @@ class DGCNNFAModule(BaseModule):
                     act_cfg=act_cfg))
 
     @force_fp32()
-    def forward(self, points: List[torch.Tensor]) -> torch.Tensor:
+    def forward(self, points):
         """forward.
 
         Args:
             points (List[Tensor]): tensor of the features to be aggregated.
 
-        Return:
+        Returns:
             Tensor: (B, N, M) M = mlp[-1], tensor of the output points.
         """
 
-        if points is not None and len(points) > 1:
+        if len(points) > 1:
             new_points = torch.cat(points[1:], dim=-1)
             new_points = new_points.transpose(1, 2).contiguous()  # (B, C, N)
             new_points_copy = new_points
@@ -61,7 +62,7 @@ class DGCNNFAModule(BaseModule):
             new_fa_points = new_points.max(dim=-1, keepdim=True)[0]
             new_fa_points = new_fa_points.repeat(1, 1, new_points.shape[-1])
 
-            new_points = torch.cat([new_points_copy, new_fa_points], dim=1)
+            new_points = torch.cat([new_fa_points, new_points_copy], dim=1)
             new_points = new_points.transpose(1, 2).contiguous()
         else:
             new_points = points

@@ -1,8 +1,6 @@
-import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
-from typing import List
 
 
 class DGCNNFPModule(BaseModule):
@@ -12,16 +10,16 @@ class DGCNNFPModule(BaseModule):
 
     Args:
         mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict): Type of activation method.
+        norm_cfg (dict, optional): Type of activation method.
             Default: dict(type='BN1d').
-        act_cfg (dict): Type of activation method.
+        act_cfg (dict, optional): Type of activation method.
             Default: dict(type='ReLU').
     """
 
     def __init__(self,
-                 mlp_channels: List[int],
-                 norm_cfg: dict = dict(type='BN1d'),
-                 act_cfg: dict = dict(type='ReLU'),
+                 mlp_channels,
+                 norm_cfg=dict(type='BN1d'),
+                 act_cfg=dict(type='ReLU'),
                  init_cfg=None):
         super().__init__(init_cfg=init_cfg)
         self.fp16_enabled = False
@@ -39,13 +37,13 @@ class DGCNNFPModule(BaseModule):
                     act_cfg=act_cfg))
 
     @force_fp32()
-    def forward(self, points: torch.Tensor) -> torch.Tensor:
+    def forward(self, points):
         """forward.
 
         Args:
             points (Tensor): (B, N, C) tensor of the input points.
 
-        Return:
+        Returns:
             Tensor: (B, N, M) M = mlp[-1], tensor of the new points.
         """
 

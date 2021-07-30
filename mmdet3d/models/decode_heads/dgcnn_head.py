@@ -14,10 +14,10 @@ class DGCNNHead(Base3DDecodeHead):
     `reimplementation code <https://github.com/AnTao97/dgcnn.pytorch>`_.
 
     Args:
-        fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
+        fp_channels (tuple[int]): Tuple of mlp channels in FP modules.
     """
 
-    def __init__(self, fp_channels=(512, ), **kwargs):
+    def __init__(self, fp_channels=(1216, 512), **kwargs):
         super(DGCNNHead, self).__init__(**kwargs)
 
         self.FP_module = DGCNNFPModule(
@@ -28,7 +28,7 @@ class DGCNNHead(Base3DDecodeHead):
             fp_channels[-1],
             self.channels,
             kernel_size=1,
-            bias=True,
+            bias=False,
             conv_cfg=self.conv_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
@@ -42,9 +42,9 @@ class DGCNNHead(Base3DDecodeHead):
         Returns:
             torch.Tensor: points for decoder.
         """
-        fp_points = feat_dict['fp_points']
+        fa_points = feat_dict['fa_points']
 
-        return fp_points
+        return fa_points
 
     def forward(self, feat_dict):
         """Forward pass.
@@ -55,9 +55,9 @@ class DGCNNHead(Base3DDecodeHead):
         Returns:
             torch.Tensor: Segmentation map of shape [B, num_classes, N].
         """
-        fp_points = self._extract_input(feat_dict)
+        fa_points = self._extract_input(feat_dict)
 
-        fp_points = self.FP_module(fp_points)
+        fp_points = self.FP_module(fa_points)
         fp_points = fp_points.transpose(1, 2).contiguous()
         output = self.pre_seg_conv(fp_points)
         output = self.cls_seg(output)
