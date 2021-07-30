@@ -1,1 +1,1 @@
-# 3D目标检测Scannet数据集
+# 3D 目标检测 Scannet 数据集
