@@ -10,15 +10,15 @@ Collections:
     README: configs/dgcnn/README.md
 
 Models:
-  - Name: dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py
+  - Name: dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py
     In Collection: DGCNN
-    Config: configs/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py
+    Config: configs/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py
     Metadata:
       Training Data: S3DIS
-      Training Memory (GB): 6.7
+      Training Memory (GB): 13.3
     Results:
       - Task: 3D Semantic Segmentation
         Dataset: S3DIS
         Metrics:
-          mIoU: 48.31
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth
+          mIoU: 50.50
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth
