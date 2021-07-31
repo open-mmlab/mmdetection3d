@@ -5,7 +5,7 @@ from mmcv.parallel import DataContainer as DC
 from os import path as osp
 
 from mmdet3d.core import (CameraInstance3DBoxes, bbox3d2result,
-                          mono_cam_box2vis, show_multi_modality_result)
+                          show_multi_modality_result)
 from mmdet.models.builder import DETECTORS
 from mmdet.models.detectors.single_stage import SingleStageDetector
 
@@ -206,9 +206,6 @@ class SingleStageMono3DDetector(SingleStageDetector):
             pred_bboxes = result[batch_id]['img_bbox']['boxes_3d']
             assert isinstance(pred_bboxes, CameraInstance3DBoxes), \
                 f'unsupported predicted bbox type {type(pred_bboxes)}'
-
-            # TODO: remove the hack of box from NuScenesMonoDataset
-            pred_bboxes = mono_cam_box2vis(pred_bboxes)
 
             show_multi_modality_result(
                 img,
