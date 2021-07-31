@@ -168,8 +168,9 @@ def mono_cam_box2vis(cam_box):
     Returns:
         :obj:`CameraInstance3DBoxes`: Box after conversion.
     """
-    warning.warn('DeprecationWarning: The hack for visualizing monocular 3D '
-                 'detection results will be removed.')
+    warning.warn('DeprecationWarning: The hack of yaw and dimension in the '
+                 'monocular 3D detection on nuScenes has been removed. The '
+                 'function mono_cam_box2vis will be deprecated.')
     from . import CameraInstance3DBoxes
     assert isinstance(cam_box, CameraInstance3DBoxes), \
         'input bbox should be CameraInstance3DBoxes!'
