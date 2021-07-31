@@ -71,8 +71,8 @@ Next, we will elaborate on the details recorded in these info files.
         - info['sweeps'][i]['data_path']: The data path of i-th sweep.
         - info['sweeps'][i]['type']: The sweep data type, e.g., `'lidar'`.
         - info['sweeps'][i]['sample_data_token']: The sweep sample data token.
-          - info['sweeps'][i]['sensor2ego_translation']: The translation from the current sensor (for collecting the sweep data) to ego vehicle. (1x3 list)
-          - info['sweeps'][i]['sensor2ego_rotation']: The rotation from the current sensor (for collecting the sweep data) to ego vehicle. (1x4 list in the quaternion format)
+        - info['sweeps'][i]['sensor2ego_translation']: The translation from the current sensor (for collecting the sweep data) to ego vehicle. (1x3 list)
+        - info['sweeps'][i]['sensor2ego_rotation']: The rotation from the current sensor (for collecting the sweep data) to ego vehicle. (1x4 list in the quaternion format)
         - info['sweeps'][i]['ego2global_translation']: The translation from the ego vehicle to global coordinates. (1x3 list)
         - info['sweeps'][i]['ego2global_rotation']: The rotation from the ego vehicle to global coordinates. (1x4 list in the quaternion format)
         - info['sweeps'][i]['timestamp']: Timestamp of the sweep data.
@@ -127,11 +127,11 @@ Here we only explain the data recorded in the training info files. The same appl
 The core function to get `nuscenes_infos_xxx.pkl` and `nuscenes_infos_xxx_mono3d.coco.json` are [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L143) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L397), respectively.
 Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py) for more details.
 
-## Train pipeline
+## Training pipeline
 
 ### LiDAR-Based Methods
 
-A typical train pipeline of LiDAR-based 3D detection (including multi-modality methods) on nuScenes is as below.
+A typical training pipeline of LiDAR-based 3D detection (including multi-modality methods) on nuScenes is as below.
 
 ```python
 train_pipeline = [
@@ -168,7 +168,7 @@ Intensity is not used by default due to its yielded noise when concatenating the
 
 ### Vision-Based Methods
 
-A typical train pipeline of image-based 3D detection on nuScenes is as below.
+A typical training pipeline of image-based 3D detection on nuScenes is as below.
 
 ```python
 train_pipeline = [
@@ -206,7 +206,7 @@ Currently we do not support more augmentation methods, because how to transfer a
 An example to evaluate PointPillars with 8 GPUs with nuScenes metrics is as follows
 
 ```shell
-bash configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8 --eval bbox
+bash ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8 --eval bbox
 ```
 
 ## Metrics
