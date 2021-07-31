@@ -8,7 +8,6 @@ ScanNet 3D 语义分割数据集的准备和 3D 检测任务的准备很相似�
 ### 提取 ScanNet 数据
 
 因为 ScanNet 测试集对 3D 语义分割任务提供在线评测的基准，我们也需要下载其测试集并置于 `scannet` 目录下。
-
 数据预处理前的文件目录结构应如下所示：
 
 
@@ -37,7 +36,7 @@ mmdetection3d
 - `scene0707_00.txt`：数据的元文件，包含数据采集传感器的参数等信息。注意，与 `scans` 目录下的数据 (训练集和验证集) 不同，测试集 scan 并没有提供用于和坐标轴对齐的变换矩阵 (`axis-aligned matrix`)。
 
 用户可以通过运行 `python batch_load_scannet_data.py` 指令来从原始文件中提取 ScanNet 数据。
-注意，测试集只会保存下点云数据，因为没有提供标准信息。
+注意，测试集只会保存下点云数据，因为没有提供标注信息。
 
 ### 创建数据集
 
@@ -128,7 +127,7 @@ train_pipeline = [
 如果你也想在在线基准上测试模型的性能，请在测试命令中加上 `--format-only` 的标记，同时也要将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126)中的 `ann_file=data_root + 'scannet_infos_val.pkl'` 改成 `ann_file=data_root + 'scannet_infos_test.pkl'`。
 请记得通过 `txt_prefix` 来指定想要保存测试结果的文件夹名称。
 
-以 PointNet++ (SSG) 在 ScanNet 上的测试为例，你可以运行一下命令来完成测试结果的保存：
+以 PointNet++ (SSG) 在 ScanNet 上的测试为例，你可以运行以下命令来完成测试结果的保存：
 
 ```
 ./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py \

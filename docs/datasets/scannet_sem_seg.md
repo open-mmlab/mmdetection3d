@@ -38,7 +38,7 @@ Export ScanNet data by running `python batch_load_scannet_data.py`. Note: only p
 ### Create dataset
 
 Similar to the 3D detection task, we create dataset by running `python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet`.
-The directory structure after process should be as below:
+The directory structure after processing should be as below:
 
 ```
 scannet
