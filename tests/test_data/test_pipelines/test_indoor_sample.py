@@ -114,7 +114,8 @@ def test_indoor_seg_sample():
                         'use_normalized_coord=True, ' \
                         'num_try=10, ' \
                         'enlarge_size=0.2, ' \
-                        'min_unique_num=None)'
+                        'min_unique_num=None, ' \
+                        'eps=0.01)'
     assert repr_str == expected_repr_str
 
     # when enlarge_size and min_unique_num are set
