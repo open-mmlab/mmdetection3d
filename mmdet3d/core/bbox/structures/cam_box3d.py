@@ -316,7 +316,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
                                               Coord3DMode.LIDAR)
 
-        box_idx = super().points_in_boxes_part(self, points_lidar, boxes_lidar)
+        box_idx = super().points_in_boxes_part(points_lidar, boxes_lidar)
         return box_idx
 
     def points_in_boxes_all(self, points, boxes_override=None):
@@ -342,5 +342,5 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
             boxes_lidar = Coord3DMode.convert(self.tensor, Coord3DMode.CAM,
                                               Coord3DMode.LIDAR)
 
-        box_idx = super().points_in_boxes_all(self, points_lidar, boxes_lidar)
+        box_idx = super().points_in_boxes_all(points_lidar, boxes_lidar)
         return box_idx
