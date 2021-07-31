@@ -1143,7 +1143,7 @@ def test_groupfree3d_head():
     assert ret_dict['s5.sem_scores'].shape == torch.Size([2, 256, 18])
 
     # test losses
-    points = [torch.rand([50000, 4], device='cuda') for i in range(2)]
+    points = [torch.rand([5000, 4], device='cuda') for i in range(2)]
     gt_bbox1 = torch.rand([10, 7], dtype=torch.float32).cuda()
     gt_bbox2 = torch.rand([10, 7], dtype=torch.float32).cuda()
 
@@ -1151,12 +1151,12 @@ def test_groupfree3d_head():
     gt_bbox2 = DepthInstance3DBoxes(gt_bbox2)
     gt_bboxes = [gt_bbox1, gt_bbox2]
 
-    pts_instance_mask_1 = torch.randint(0, 10, [50000], device='cuda')
-    pts_instance_mask_2 = torch.randint(0, 10, [50000], device='cuda')
+    pts_instance_mask_1 = torch.randint(0, 10, [5000], device='cuda')
+    pts_instance_mask_2 = torch.randint(0, 10, [5000], device='cuda')
     pts_instance_mask = [pts_instance_mask_1, pts_instance_mask_2]
 
-    pts_semantic_mask_1 = torch.randint(0, 19, [50000], device='cuda')
-    pts_semantic_mask_2 = torch.randint(0, 19, [50000], device='cuda')
+    pts_semantic_mask_1 = torch.randint(0, 19, [5000], device='cuda')
+    pts_semantic_mask_2 = torch.randint(0, 19, [5000], device='cuda')
     pts_semantic_mask = [pts_semantic_mask_1, pts_semantic_mask_2]
 
     labels_1 = torch.randint(0, 18, [10], device='cuda')
@@ -1177,7 +1177,7 @@ def test_groupfree3d_head():
     # test multiclass_nms_single
     obj_scores = torch.rand([256], device='cuda')
     sem_scores = torch.rand([256, 18], device='cuda')
-    points = torch.rand([50000, 3], device='cuda')
+    points = torch.rand([5000, 3], device='cuda')
     bbox = torch.rand([256, 7], device='cuda')
     input_meta = dict(box_type_3d=DepthInstance3DBoxes)
     bbox_selected, score_selected, labels = \
@@ -1192,9 +1192,9 @@ def test_groupfree3d_head():
     assert labels.shape[0] >= 0
 
     # test get_boxes
-    points = torch.rand([1, 50000, 3], device='cuda')
+    points = torch.rand([1, 5000, 3], device='cuda')
     seed_points = torch.rand([1, 1024, 3], device='cuda')
-    seed_indices = torch.randint(0, 50000, [1, 1024], device='cuda')
+    seed_indices = torch.randint(0, 5000, [1, 1024], device='cuda')
     obj_scores = torch.rand([1, 256, 1], device='cuda')
     center = torch.rand([1, 256, 3], device='cuda')
     dir_class = torch.rand([1, 256, 1], device='cuda')

@@ -137,6 +137,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         self.use_direction_classifier = use_direction_classifier
         self.diff_rad_by_sin = diff_rad_by_sin
         self.dir_offset = dir_offset
+        self.dir_limit_offset = dir_limit_offset
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_dir = build_loss(loss_dir)
