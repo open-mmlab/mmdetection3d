@@ -40,7 +40,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box."""
+        """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, :2] = bottom_center[:, :2]

@@ -88,10 +88,10 @@ class Anchor3DRangeGenerator(object):
             device (str): Device where the anchors will be put on.
 
         Returns:
-            list[torch.Tensor]: Anchors in multiple feature levels. \
-                The sizes of each tensor should be [N, 4], where \
-                N = width * height * num_base_anchors, width and height \
-                are the sizes of the corresponding feature lavel, \
+            list[torch.Tensor]: Anchors in multiple feature levels.
+                The sizes of each tensor should be [N, 4], where
+                N = width * height * num_base_anchors, width and height
+                are the sizes of the corresponding feature lavel,
                 num_base_anchors is the number of anchors for that level.
         """
         assert self.num_levels == len(featmap_sizes)
@@ -167,7 +167,7 @@ class Anchor3DRangeGenerator(object):
             device (str): Devices that the anchors will be put on.
 
         Returns:
-            torch.Tensor: Anchors with shape \
+            torch.Tensor: Anchors with shape
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
@@ -263,7 +263,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             device (str): Devices that the anchors will be put on.
 
         Returns:
-            torch.Tensor: Anchors with shape \
+            torch.Tensor: Anchors with shape
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
@@ -333,7 +333,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
     Note that feature maps of different classes may be different.
 
     Args:
-        kwargs (dict): Arguments are the same as those in \
+        kwargs (dict): Arguments are the same as those in
             :class:`AlignedAnchor3DRangeGenerator`.
     """
 
@@ -346,15 +346,15 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         """Generate grid anchors in multiple feature levels.
 
         Args:
-            featmap_sizes (list[tuple]): List of feature map sizes for \
+            featmap_sizes (list[tuple]): List of feature map sizes for
                 different classes in a single feature level.
             device (str): Device where the anchors will be put on.
 
         Returns:
-            list[list[torch.Tensor]]: Anchors in multiple feature levels. \
-                Note that in this anchor generator, we currently only \
-                support single feature level. The sizes of each tensor \
-                should be [num_sizes/ranges*num_rots*featmap_size, \
+            list[list[torch.Tensor]]: Anchors in multiple feature levels.
+                Note that in this anchor generator, we currently only
+                support single feature level. The sizes of each tensor
+                should be [num_sizes/ranges*num_rots*featmap_size,
                 box_code_size].
         """
         multi_level_anchors = []
@@ -370,7 +370,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         This function is usually called by method ``self.grid_anchors``.
 
         Args:
-            featmap_sizes (list[tuple]): List of feature map sizes for \
+            featmap_sizes (list[tuple]): List of feature map sizes for
                 different classes in a single feature level.
             scale (float): Scale factor of the anchors in the current level.
             device (str, optional): Device the tensor will be put on.

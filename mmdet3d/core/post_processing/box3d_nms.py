@@ -14,13 +14,15 @@ def box3d_multiclass_nms(mlvl_bboxes,
                          mlvl_dir_scores=None,
                          mlvl_attr_scores=None,
                          mlvl_bboxes2d=None):
-    """Multi-class nms for 3D boxes.
+    """Multi-class NMS for 3D boxes. The IoU used for NMS is defined as the 2D
+    IoU between BEV boxes.
 
     Args:
         mlvl_bboxes (torch.Tensor): Multi-level boxes with shape (N, M).
             M is the dimensions of boxes.
         mlvl_bboxes_for_nms (torch.Tensor): Multi-level boxes with shape
             (N, 5) ([x1, y1, x2, y2, ry]). N is the number of boxes.
+            The coordinate system of the BEV boxes is counterclockwise.
         mlvl_scores (torch.Tensor): Multi-level boxes with shape
             (N, C + 1). N is the number of boxes. C is the number of classes.
         score_thr (float): Score thredhold to filter boxes with low
@@ -35,8 +37,8 @@ def box3d_multiclass_nms(mlvl_bboxes,
             boxes. Defaults to None.
 
     Returns:
-        tuple[torch.Tensor]: Return results after nms, including 3D \
-            bounding boxes, scores, labels, direction scores, attribute \
+        tuple[torch.Tensor]: Return results after nms, including 3D
+            bounding boxes, scores, labels, direction scores, attribute
             scores (optional) and 2D bounding boxes (optional).
     """
     # do multi class nms
@@ -127,13 +129,13 @@ def box3d_multiclass_nms(mlvl_bboxes,
 
 
 def aligned_3d_nms(boxes, scores, classes, thresh):
-    """3d nms for aligned boxes.
+    """3D NMS for aligned boxes.
 
     Args:
         boxes (torch.Tensor): Aligned box with shape [n, 6].
         scores (torch.Tensor): Scores of each box.
         classes (torch.Tensor): Class of each box.
-        thresh (float): Iou threshold for nms.
+        thresh (float): IoU threshold for nms.
 
     Returns:
         torch.Tensor: Indices of selected boxes.

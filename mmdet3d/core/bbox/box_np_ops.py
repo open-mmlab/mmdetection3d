@@ -1,6 +1,6 @@
 # TODO: clean the functions in this file and move the APIs into box structures
 # in the future
-# All functions in this file are valid for LiDAR or depth boxes only
+# NOTICE: All functions in this file are valid for LiDAR or depth boxes only
 # if we use default parameters.
 
 import numba

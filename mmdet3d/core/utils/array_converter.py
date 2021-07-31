@@ -11,7 +11,8 @@ def array_converter(to_torch=True,
     """Wrapper function for data-type agnostic processing.
 
     First converts input arrays to PyTorch tensors or NumPy ndarrays
-    for middle calculation, then convert output to original data-type.
+    for middle calculation, then convert output to original data-type if
+    `recover=True`.
 
     Args:
         to_torch (Bool, optional): Whether convert to PyTorch tensors
