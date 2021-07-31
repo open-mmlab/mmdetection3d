@@ -1,6 +1,6 @@
 # 教程 1: 学习配置文件
 
-我们在配置文件中支持了继承和模块化，这便于进行各种实验。
+我们在配置文件中支持了继承和模块化来方便进行各种实验。
 如果需要检查配置文件，可以通过运行 `python tools/misc/print_config.py /PATH/TO/CONFIG` 来查看完整的配置。
 你也可以传入 `--options xxx.yyy=zzz` 参数来查看更新后的配置。
 
@@ -15,7 +15,7 @@
 为了便于理解，我们建议贡献者继承现有方法。
 例如，如果在 PointPillars 的基础上做了一些修改，用户首先可以通过指定 `_base_ = ../pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py` 来继承基础的 PointPillars 结构，然后修改配置文件中的必要参数以完成继承。
 
-如果你在构建一个与任何现有方法不共享结构的全新方法，那么可以在 `configs` 文件夹下创建一个新的例如 `xxx_rcnn` 文件夹。
+如果你在构建一个与任何现有方法不共享结构的全新方法，可以在 `configs` 文件夹下创建一个新的例如 `xxx_rcnn` 文件夹。
 
 更多细节请参考 [MMCV](https://mmcv.readthedocs.io/en/latest/understand_mmcv/config.html) 文档。
 
@@ -415,10 +415,10 @@ gpu_ids = range(0, 1)  # 所使用的 GPU 编号
 
 ### 忽略基础配置文件里的部分内容
 
-有时，您也许会设置 `_delete_=True` 去忽略基础配置文件里的一些域内容。
-您也许可以参照 [mmcv](https://mmcv.readthedocs.io/en/latest/understand_mmcv/config.html#inherit-from-base-config-with-ignored-fields) 来获得一些简单的指导。
+有时，您也许会需要通过设置 `_delete_=True` 来忽略基础配置文件里的一些域内容。
+请参照 [mmcv](https://mmcv.readthedocs.io/en/latest/understand_mmcv/config.html#inherit-from-base-config-with-ignored-fields) 来获得一些简单的指导。
 
-在 MMDetection3D 中，例如为了改变如下所示 PointPillars FPN 颈部的某些配置：
+例如在 MMDetection3D 中，为了改变如下所示 PointPillars FPN 模块的某些配置：
 
 ```python
 model = dict(
