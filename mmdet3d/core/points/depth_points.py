@@ -26,28 +26,15 @@ class DepthPoints(BasePoints):
         self.rotation_axis = 2
 
     def flip(self, bev_direction='horizontal'):
-        """Flip the boxes in BEV along given BEV direction."""
+        """Flip the points along given BEV direction.
+
+        Args:
+            bev_direction (str): Flip direction (horizontal or vertical).
+        """
         if bev_direction == 'horizontal':
             self.tensor[:, 0] = -self.tensor[:, 0]
         elif bev_direction == 'vertical':
             self.tensor[:, 1] = -self.tensor[:, 1]
-
-    def in_range_bev(self, point_range):
-        """Check whether the points are in the given range.
-
-        Args:
-            point_range (list | torch.Tensor): The range of point
-                in order of (x_min, y_min, x_max, y_max).
-
-        Returns:
-            torch.Tensor: Indicating whether each point is inside \
-                the reference range.
-        """
-        in_range_flags = ((self.tensor[:, 0] > point_range[0])
-                          & (self.tensor[:, 1] > point_range[1])
-                          & (self.tensor[:, 0] < point_range[2])
-                          & (self.tensor[:, 1] < point_range[3]))
-        return in_range_flags
 
     def convert_to(self, dst, rt_mat=None):
         """Convert self to ``dst`` mode.

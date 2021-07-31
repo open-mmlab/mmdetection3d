@@ -201,9 +201,9 @@ def get_single_class_aps(gt, predictions, iou_thresholds):
 
     Args:
         gt (list[dict]): list of dictionaries in the format described above.
-        predictions (list[dict]): list of dictionaries in the format \
+        predictions (list[dict]): list of dictionaries in the format
             described below.
-        iou_thresholds (list[float]): IOU thresholds used to calculate \
+        iou_thresholds (list[float]): IOU thresholds used to calculate
             TP / FN
 
     Returns:

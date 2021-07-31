@@ -62,7 +62,8 @@ class BasePoints(object):
 
     @property
     def height(self):
-        """torch.Tensor: A vector with height of each point."""
+        """torch.Tensor:
+            A vector with height of each point in shape (N, 1), or None."""
         if self.attribute_dims is not None and \
                 'height' in self.attribute_dims.keys():
             return self.tensor[:, self.attribute_dims['height']]
@@ -92,7 +93,8 @@ class BasePoints(object):
 
     @property
     def color(self):
-        """torch.Tensor: A vector with color of each point."""
+        """torch.Tensor:
+            A vector with color of each point in shape (N, 3), or None."""
         if self.attribute_dims is not None and \
                 'color' in self.attribute_dims.keys():
             return self.tensor[:, self.attribute_dims['color']]
@@ -168,7 +170,11 @@ class BasePoints(object):
 
     @abstractmethod
     def flip(self, bev_direction='horizontal'):
-        """Flip the points in BEV along given BEV direction."""
+        """Flip the points along given BEV direction.
+
+        Args:
+            bev_direction (str): Flip direction (horizontal or vertical).
+        """
         pass
 
     def translate(self, trans_vector):
@@ -205,7 +211,7 @@ class BasePoints(object):
             polygon, we try to reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: A binary vector indicating whether each point is \
+            torch.Tensor: A binary vector indicating whether each point is
                 inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > point_range[0])
@@ -216,7 +222,11 @@ class BasePoints(object):
                           & (self.tensor[:, 2] < point_range[5]))
         return in_range_flags
 
-    @abstractmethod
+    @property
+    def bev(self):
+        """torch.Tensor: BEV of the points in shape (N, 2)."""
+        return self.tensor[:, [0, 1]]
+
     def in_range_bev(self, point_range):
         """Check whether the points are in the given range.
 
@@ -228,7 +238,11 @@ class BasePoints(object):
             torch.Tensor: Indicating whether each point is inside
                 the reference range.
         """
-        pass
+        in_range_flags = ((self.bev[:, 0] > point_range[0])
+                          & (self.bev[:, 1] > point_range[1])
+                          & (self.bev[:, 1] < point_range[2])
+                          & (self.bev[:, 1] < point_range[3]))
+        return in_range_flags
 
     @abstractmethod
     def convert_to(self, dst, rt_mat=None):
@@ -276,7 +290,7 @@ class BasePoints(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            :obj:`BasePoints`: A new object of  \
+            :obj:`BasePoints`: A new object of
                 :class:`BasePoints` after indexing.
         """
         original_type = type(self)
@@ -367,7 +381,7 @@ class BasePoints(object):
             device (str | :obj:`torch.device`): The name of the device.
 
         Returns:
-            :obj:`BasePoints`: A new boxes object on the \
+            :obj:`BasePoints`: A new boxes object on the
                 specific device.
         """
         original_type = type(self)
@@ -380,7 +394,7 @@ class BasePoints(object):
         """Clone the Points.
 
         Returns:
-            :obj:`BasePoints`: Box object with the same properties \
+            :obj:`BasePoints`: Box object with the same properties
                 as self.
         """
         original_type = type(self)
@@ -405,14 +419,14 @@ class BasePoints(object):
     def new_point(self, data):
         """Create a new point object with data.
 
-        The new point and its tensor has the similar properties \
+        The new point and its tensor has the similar properties
             as self and self.tensor, respectively.
 
         Args:
             data (torch.Tensor | numpy.array | list): Data to be copied.
 
         Returns:
-            :obj:`BasePoints`: A new point object with ``data``, \
+            :obj:`BasePoints`: A new point object with ``data``,
                 the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \

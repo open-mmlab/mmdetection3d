@@ -8,9 +8,9 @@ def average_precision(recalls, precisions, mode='area'):
     """Calculate average precision (for single or multiple scales).
 
     Args:
-        recalls (np.ndarray): Recalls with shape of (num_scales, num_dets) \
+        recalls (np.ndarray): Recalls with shape of (num_scales, num_dets)
             or (num_dets, ).
-        precisions (np.ndarray): Precisions with shape of \
+        precisions (np.ndarray): Precisions with shape of
             (num_scales, num_dets) or (num_dets, ).
         mode (str): 'area' or '11points', 'area' means calculating the area
             under precision-recall curve, '11points' means calculating
@@ -57,13 +57,13 @@ def eval_det_cls(pred, gt, iou_thr=None):
     single class.
 
     Args:
-        pred (dict): Predictions mapping from image id to bounding boxes \
+        pred (dict): Predictions mapping from image id to bounding boxes
             and scores.
         gt (dict): Ground truths mapping from image id to bounding boxes.
         iou_thr (list[float]): A list of iou thresholds.
 
     Return:
-        tuple (np.ndarray, np.ndarray, float): Recalls, precisions and \
+        tuple (np.ndarray, np.ndarray, float): Recalls, precisions and
             average precision.
     """
 
