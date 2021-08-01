@@ -1652,7 +1652,6 @@ def test_points_in_boxes():
         dtype=torch.float32).cuda()
 
     point_indices = depth_boxes.points_in_boxes_all(depth_pts)
-    print(point_indices)
     expected_point_indices = torch.tensor(
         [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [0, 1], [0, 0], [0, 0],
          [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
@@ -1674,13 +1673,9 @@ def test_points_in_boxes():
     cam_pts = DepthPoints(depth_pts).convert_to(Coord3DMode.CAM).tensor
 
     point_indices = cam_boxes.points_in_boxes_all(cam_pts)
-    print(point_indices)
     expected_point_indices = torch.tensor(
         [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [0, 1], [0, 0], [0, 0],
          [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
         dtype=torch.int32).cuda()
     assert point_indices.shape == torch.Size([15, 2])
     assert (point_indices == expected_point_indices).all()
-
-
-test_points_in_boxes()

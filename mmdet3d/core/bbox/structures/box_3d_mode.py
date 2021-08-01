@@ -128,13 +128,13 @@ class Box3DMode(IntEnum):
                 yaw = limit_period(yaw, period=np.pi * 2)
         elif src == Box3DMode.DEPTH and dst == Box3DMode.CAM:
             if rt_mat is None:
-                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
+                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
             if with_yaw:
                 yaw = -yaw
         elif src == Box3DMode.CAM and dst == Box3DMode.DEPTH:
             if rt_mat is None:
-                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+                rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
             if with_yaw:
                 yaw = -yaw
