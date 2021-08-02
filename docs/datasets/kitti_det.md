@@ -73,10 +73,14 @@ kitti
 ├── kitti_dbinfos_train.pkl
 ├── kitti_infos_test.pkl
 ├── kitti_infos_trainval.pkl
+├── kitti_infos_train_mono3d.coco.json
+├── kitti_infos_trainval_mono3d.coco.json
+├── kitti_infos_test_mono3d.coco.json
+├── kitti_infos_val_mono3d.coco.json
 ```
 
-- `kitti_gt_database/xxxxx.bin`: an single object point cloud data in training dataset
-- `kitti_infos_train.pkl`: training dataset infos, the details info of each data frame is as follows:
+- `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
+- `kitti_infos_train.pkl`: training dataset infos, each frame info contains following details:
     - info['point_cloud']: {'num_features': 4, 'velodyne_path': velodyne_path}.
     - info['annos']: {
             location: [num_gt, 3] array
@@ -86,87 +90,9 @@ kitti
             [optional]difficulty: kitti difficulty
             [optional]group_ids: used for multi-part object
         }
-    - (optional) info['calib']: the calibration info including R0_rect, Tr_velo_to_cam, P2.
+    - (optional) info['calib']: the calibration info.
     - (optional) info['image']:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
-
-The core function `map_func` of getting data infos is as follows.
-```python
-def map_func(idx):
-        info = {}
-        pc_info = {'num_features': 4}
-        calib_info = {}
-
-        image_info = {'image_idx': idx}
-        annotations = None
-        if velodyne:
-            pc_info['velodyne_path'] = get_velodyne_path(
-                idx, path, training, relative_path)
-        image_info['image_path'] = get_image_path(idx, path, training,
-                                                  relative_path)
-        if with_imageshape:
-            img_path = image_info['image_path']
-            if relative_path:
-                img_path = str(root_path / img_path)
-            image_info['image_shape'] = np.array(
-                io.imread(img_path).shape[:2], dtype=np.int32)
-        if label_info:
-            label_path = get_label_path(idx, path, training, relative_path)
-            if relative_path:
-                label_path = str(root_path / label_path)
-            annotations = get_label_anno(label_path)
-        info['image'] = image_info
-        info['point_cloud'] = pc_info
-        if calib:
-            calib_path = get_calib_path(
-                idx, path, training, relative_path=False)
-            with open(calib_path, 'r') as f:
-                lines = f.readlines()
-            P0 = np.array([float(info) for info in lines[0].split(' ')[1:13]
-                           ]).reshape([3, 4])
-            P1 = np.array([float(info) for info in lines[1].split(' ')[1:13]
-                           ]).reshape([3, 4])
-            P2 = np.array([float(info) for info in lines[2].split(' ')[1:13]
-                           ]).reshape([3, 4])
-            P3 = np.array([float(info) for info in lines[3].split(' ')[1:13]
-                           ]).reshape([3, 4])
-            if extend_matrix:
-                P0 = _extend_matrix(P0)
-                P1 = _extend_matrix(P1)
-                P2 = _extend_matrix(P2)
-                P3 = _extend_matrix(P3)
-            R0_rect = np.array([
-                float(info) for info in lines[4].split(' ')[1:10]
-            ]).reshape([3, 3])
-            if extend_matrix:
-                rect_4x4 = np.zeros([4, 4], dtype=R0_rect.dtype)
-                rect_4x4[3, 3] = 1.
-                rect_4x4[:3, :3] = R0_rect
-            else:
-                rect_4x4 = R0_rect
-
-            Tr_velo_to_cam = np.array([
-                float(info) for info in lines[5].split(' ')[1:13]
-            ]).reshape([3, 4])
-            Tr_imu_to_velo = np.array([
-                float(info) for info in lines[6].split(' ')[1:13]
-            ]).reshape([3, 4])
-            if extend_matrix:
-                Tr_velo_to_cam = _extend_matrix(Tr_velo_to_cam)
-                Tr_imu_to_velo = _extend_matrix(Tr_imu_to_velo)
-            calib_info['P0'] = P0
-            calib_info['P1'] = P1
-            calib_info['P2'] = P2
-            calib_info['P3'] = P3
-            calib_info['R0_rect'] = rect_4x4
-            calib_info['Tr_velo_to_cam'] = Tr_velo_to_cam
-            calib_info['Tr_imu_to_velo'] = Tr_imu_to_velo
-            info['calib'] = calib_info
-
-        if annotations is not None:
-            info['annos'] = annotations
-            add_difficulty_to_annos(info)
-        return info
-```
+**Note:** the info['annos'] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
 
 ## Train pipeline
 
