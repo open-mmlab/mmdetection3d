@@ -58,8 +58,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
         neg_inds = torch.nonzero(assign_result.gt_inds == 0, as_tuple=False)
         if neg_inds.numel() != 0:
             neg_inds = neg_inds.squeeze(1)
-        if len(neg_inds) <= num_expected:
-            return neg_inds
+        if len(neg_inds) <= 0:
+            return False
         else:
             neg_inds_choice = neg_inds.new_zeros([0])
             extend_num = 0
@@ -87,12 +87,32 @@ class IoUNegPiecewiseSampler(RandomSampler):
                     neg_inds_choice = torch.cat(
                         [neg_inds_choice, neg_inds[piece_neg_inds]], dim=0)
                     extend_num += piece_expected_num - len(piece_neg_inds)
+
+                    if piece_inds == self.neg_piece_num - 1:
+                        extend_neg_num = num_expected - len(neg_inds_choice)
+                        if piece_neg_inds.numel() > 0:
+                            rand_idx = torch.randint(
+                                low=0,
+                                high=piece_neg_inds.numel(),
+                                size=(extend_neg_num, )).long()
+                            neg_inds_choice = torch.cat(
+                                [neg_inds_choice, piece_neg_inds[rand_idx]],
+                                dim=0)
+                        else:
+                            rand_idx = torch.randint(
+                                low=0,
+                                high=neg_inds_choice.numel(),
+                                size=(extend_neg_num, )).long()
+                            neg_inds_choice = torch.cat(
+                                [neg_inds_choice, neg_inds_choice[rand_idx]],
+                                dim=0)
                 else:
                     piece_choice = self.random_choice(piece_neg_inds,
                                                       piece_expected_num)
                     neg_inds_choice = torch.cat(
                         [neg_inds_choice, neg_inds[piece_choice]], dim=0)
                     extend_num = 0
+            assert len(neg_inds_choice) == num_expected
             return neg_inds_choice
 
     def sample(self,
@@ -144,7 +164,6 @@ class IoUNegPiecewiseSampler(RandomSampler):
                 num_expected_neg = neg_upper_bound
         neg_inds = self.neg_sampler._sample_neg(
             assign_result, num_expected_neg, bboxes=bboxes, **kwargs)
-        neg_inds = neg_inds.unique()
 
         sampling_result = SamplingResult(pos_inds, neg_inds, bboxes, gt_bboxes,
                                          assign_result, gt_flags)
