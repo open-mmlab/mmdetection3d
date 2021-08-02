@@ -828,15 +828,16 @@ class PointSample(object):
         sample_range (float, optional): The range where to sample points.
     """
 
-    def __init__(self, num_points, sample_range=None):
+    def __init__(self, num_points, sample_range=None, replace=False):
         self.num_points = num_points
         self.sample_range = sample_range
+        self.replace = replace
 
     def _points_random_sampling(self,
                                 points,
                                 num_samples,
                                 sample_range=None,
-                                replace=None,
+                                replace=False,
                                 return_choices=False):
         """Points random sampling.
 
@@ -857,7 +858,7 @@ class PointSample(object):
                 - points (np.ndarray | :obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
-        if replace is None:
+        if not replace:
             replace = (points.shape[0] < num_samples)
         point_range = range(len(points))
         if sample_range is not None and not replace:
@@ -894,7 +895,11 @@ class PointSample(object):
             assert isinstance(points, CameraPoints), \
                 'Sampling based on distance is only appliable for CAMERA coord'
         points, choices = self._points_random_sampling(
-            points, self.num_points, self.sample_range, return_choices=True)
+            points,
+            self.num_points,
+            self.sample_range,
+            self.replace,
+            return_choices=True)
         results['points'] = points
 
         pts_instance_mask = results.get('pts_instance_mask', None)
