@@ -72,4 +72,8 @@ Please refer to [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob
 
 ### ImVoxelNet
 
-Please refer to [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvoxelnet) for details. We provide  ImVoxelNet baselines on KITTI dataset.
+Please refer to [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvoxelnet) for details. We provide ImVoxelNet baselines on KITTI dataset.
+
+### PAConv
+
+Please refer to [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) for details. We provide PAConv baselines on S3DIS dataset.

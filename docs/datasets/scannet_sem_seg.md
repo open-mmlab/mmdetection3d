@@ -2,13 +2,13 @@
 
 ## Dataset preparation
 
-The overall process is similar to ScanNet 3d detection task. Please refer to this [section](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/scannet_det.md#dataset-preparation). Only a few differences and additional information about the 3d semantic segmentation data will be listed below.
+The overall process is similar to ScanNet 3D detection task. Please refer to this [section](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/scannet_det.md#dataset-preparation). Only a few differences and additional information about the 3D semantic segmentation data will be listed below.
 
 ### Export ScanNet data
 
-Since ScanNet provides online benchmark for 3d semantic segmentation evaluation on the test set, we need to also download the test scans and put it under `scannet` folder.
+Since ScanNet provides online benchmark for 3D semantic segmentation evaluation on the test set, we need to also download the test scans and put it under `scannet` folder.
 
-The directory structure before data preparation should be as below
+The directory structure before data preparation should be as below:
 
 ```
 mmdetection3d
@@ -28,7 +28,7 @@ mmdetection3d
 │   │   ├── README.md
 ```
 
-Under folder `scans_test` there are 100 test folders in which only raw point cloud data is saved. For instance, under folder `scene0707_00` the files are as below:
+Under folder `scans_test` there are 100 test folders in which only raw point cloud data and its meta file are saved. For instance, under folder `scene0707_00` the files are as below:
 
 - `scene0707_00_vh_clean_2.ply`: Mesh file storing coordinates and colors of each vertex. The mesh's vertices are taken as raw point cloud data.
 - `scene0707_00.txt`: Meta file including sensor parameters, etc. Note: different from data under `scans`, axis-aligned matrix is not provided for test scans.
@@ -37,7 +37,8 @@ Export ScanNet data by running `python batch_load_scannet_data.py`. Note: only p
 
 ### Create dataset
 
-The directory structure after process should be as below
+Similar to the 3D detection task, we create dataset by running `python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet`.
+The directory structure after processing should be as below:
 
 ```
 scannet
@@ -67,11 +68,11 @@ scannet
 
 - `seg_info`: The generated infos to support semantic segmentation model training.
     - `train_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
-    - `train_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points.
+    - `train_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
 
 ## Training pipeline
 
-A typical training pipeline of ScanNet for 3d semantic segmentation is as below.
+A typical training pipeline of ScanNet for 3D semantic segmentation is as below:
 
 ```python
 train_pipeline = [
@@ -113,12 +114,13 @@ train_pipeline = [
 
 ## Metrics
 
-Typically mean intersection over union (mIoU) is used for evaluation on ScanNet. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
+Typically mean Intersection over Union (mIoU) is used for evaluation on ScanNet. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
 
 ## Testing and Making a Submission
 
 By default, our codebase evaluates semantic segmentation results on the validation set.
 If you would like to test the model performance on the online benchmark, add `--format-only` flag in the evaluation script and change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126). Remember to specify the `txt_prefix` as the directory to save the testing results.
+
 Taking PointNet++ (SSG) on ScanNet for example, the following command can be used to do inference on test set:
 
 ```

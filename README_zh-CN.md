@@ -90,6 +90,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
 - [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
+- [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
+- [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
+- [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -106,6 +109,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
 | PointNet++           | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
+| PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 
 其他特性
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)

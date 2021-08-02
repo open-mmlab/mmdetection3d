@@ -11,7 +11,7 @@ from os import path as osp
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset
 from ..core import show_multi_modality_result
-from ..core.bbox import CameraInstance3DBoxes, get_box_type, mono_cam_box2vis
+from ..core.bbox import CameraInstance3DBoxes, get_box_type
 from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
 
@@ -624,9 +624,6 @@ class NuScenesMonoDataset(CocoDataset):
             img = img.numpy().transpose(1, 2, 0)
             gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d']
             pred_bboxes = result['boxes_3d']
-            # TODO: remove the hack of box from NuScenesMonoDataset
-            gt_bboxes = mono_cam_box2vis(gt_bboxes)
-            pred_bboxes = mono_cam_box2vis(pred_bboxes)
             show_multi_modality_result(
                 img,
                 gt_bboxes,
