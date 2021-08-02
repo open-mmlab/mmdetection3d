@@ -7,7 +7,7 @@ We basically categorize model components into 6 types.
 - neck: the component between backbones and heads, e.g., FPN, SECONDFPN.
 - head: the component for specific tasks, e.g., bbox prediction and mask prediction.
 - roi extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
-- loss: the component in head for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
+- loss: the component in heads for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
 
 ## Develop new components
 
@@ -457,7 +457,7 @@ model = dict(
 ```
 
 Since MMDetection 2.0, the config system supports to inherit configs such that the users can focus on the modification.
-The second stage of PartA2 Head mainly uses a new PartAggregationROIHead and a new
+The second stage of PartA2 Head mainly uses a new `PartAggregationROIHead` and a new
 `PartA2BboxHead`, the arguments are set according to the `__init__` function of each module.
 
 ### Add new loss
