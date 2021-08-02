@@ -41,7 +41,7 @@
 - Update the structure of Chinese Documentation (#722)
 - Fix FCOS3D FPN BC-Breaking caused by the code refactoring in MMDetection (#739)
 - Fix wrong `in_channels` when `with_distance=True` in the [Dynamic VFE Layers](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/voxel_encoder.py#L87) (#749)
-- Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795)
+- Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795, #818)
 
 #### Contributors
 
