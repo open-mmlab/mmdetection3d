@@ -141,7 +141,7 @@ def show_proj_bbox_img(idx,
             img,
             gt_bboxes,
             None,
-            example['calib'],
+            None,
             out_dir,
             filename,
             box_mode='depth',
@@ -159,10 +159,6 @@ def show_proj_bbox_img(idx,
             img_metas=img_metas,
             show=show)
     elif isinstance(gt_bboxes, CameraInstance3DBoxes):
-        # TODO: remove the hack of box from NuScenesMonoDataset
-        if is_nus_mono:
-            from mmdet3d.core.bbox import mono_cam_box2vis
-            gt_bboxes = mono_cam_box2vis(gt_bboxes)
         show_multi_modality_result(
             img,
             gt_bboxes,

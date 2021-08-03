@@ -1,5 +1,100 @@
 ## Changelog
 
+### v0.16.0 (1/8/2021)
+
+#### Compatibility
+
+- Remove the rotation and dimension hack in the monocular 3D detection on nuScenes by applying corresponding transformation in the pre-processing and post-processing. The modification only influences nuScenes coco-style json files. Please re-run the data preparation scripts if necessary. See more details in the PR #744.
+- Add a new pre-processing module for the ScanNet dataset in order to support multi-view detectors. Please run the updated scripts to extract the RGB data and its annotations. See more details in the PR #696.
+
+#### Highlights
+
+- Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation
+- Support PAConv [models and benchmarks](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/paconv) on S3DIS
+- Enhance the documentation especially on dataset tutorials
+
+#### New Features
+
+- Support RGB images on ScanNet for multi-view detectors (#696)
+- Support FLOPs and number of parameters calculation (#736)
+- Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation (#782)
+- Support PAConv models and benchmarks on the S3DIS dataset (#783, #809)
+
+#### Improvements
+
+- Refactor Group-Free-3D to make it inherit BaseModule from MMCV (#704)
+- Modify the initialization methods of FCOS3D to be consistent with the refactored approach (#705)
+- Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/groupfree3d) on ScanNet (#710)
+- Add Chinese Documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
+- Add documentation for semantic segmentation on ScanNet and S3DIS (#743, #747, #806, #807)
+- Add a parameter `max_keep_ckpts` to limit the maximum number of saved Group-Free-3D checkpoints (#765)
+- Add documentation for 3D detection on SUN RGB-D and nuScenes (#770, #793)
+- Remove mmpycocotools in the Dockerfile (#785)
+
+#### Bug Fixes
+
+- Fix versions of OpenMMLab dependencies (#708)
+- Convert `rt_mat` to `torch.Tensor` in coordinate transformation for compatibility (#709)
+- Fix the `bev_range` initialization in `ObjectRangeFilter` according to the `gt_bboxes_3d` type (#717)
+- Fix Chinese documentation and incorrect doc format due to the incompatible Sphinx version (#718)
+- Fix a potential bug when setting `interval == 1` in [analyze_logs.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) (#720)
+- Update the structure of Chinese Documentation (#722)
+- Fix FCOS3D FPN BC-Breaking caused by the code refactoring in MMDetection (#739)
+- Fix wrong `in_channels` when `with_distance=True` in the [Dynamic VFE Layers](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/voxel_encoder.py#L87) (#749)
+- Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795, #818)
+- Fix the missing default `bbox_mode` in the `show_multi_modality_result` (#825)
+
+#### Contributors
+
+A total of 12 developers contributed to this release.
+
+@yinchimaoliang, @gopi231091, @filaPro, @ZwwWayne, @ZCMax, @hjin2902, @wHao-Wu, @Wuziyi616, @xiliu8006, @THU17cyz, @DCNSW, @Tai-Wang
+
+
+### v0.15.0 (1/7/2021)
+
+#### Compatibility
+
+In order to fix the problem that the priority of EvalHook is too low, all hook priorities have been re-adjusted in 1.3.8, so MMDetection 2.14.0 needs to rely on the latest MMCV 1.3.8 version. For related information, please refer to [#1120](https://github.com/open-mmlab/mmcv/pull/1120), for related issues, please refer to [#5343](https://github.com/open-mmlab/mmdetection/issues/5343).
+
+#### Highlights
+
+- Support [PAConv](https://arxiv.org/abs/2103.14635)
+- Support monocular/multi-view 3D detector [ImVoxelNet](https://arxiv.org/abs/2106.01178) on KITTI
+- Support Transformer-based 3D detection method [Group-Free-3D](https://arxiv.org/abs/2104.00678) on ScanNet
+- Add documentation for tasks including LiDAR-based 3D detection, vision-only 3D detection and point-based 3D semantic segmentation
+- Add dataset documents like ScanNet
+
+#### New Features
+
+- Support Group-Free-3D on ScanNet (#539)
+- Support PAConv modules (#598, #599)
+- Support ImVoxelNet on KITTI (#627, #654)
+
+#### Improvements
+
+- Add unit tests for pipeline functions `LoadImageFromFileMono3D`, `ObjectNameFilter` and `ObjectRangeFilter` (#615)
+- Enhance [IndoorPatchPointSample](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) (#617)
+- Refactor model initialization methods based MMCV (#622)
+- Add Chinese docs (#629)
+- Add documentation for LiDAR-based 3D detection (#642)
+- Unify intrinsic and extrinsic matrices for all datasets (#653)
+- Add documentation for point-based 3D semantic segmentation (#663)
+- Add documentation of ScanNet for 3D detection (#664)
+- Refine docs for tutorials (#666)
+- Add documentation for vision-only 3D detection (#669)
+- Refine docs for Quick Run and Useful Tools (#686)
+
+
+#### Bug Fixes
+
+- Fix the bug of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) using the bottom center of ground truth (#609)
+- Fix [LoadMultiViewImageFromFiles](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/loading.py) to unravel stacked multi-view images to list to be consistent with DefaultFormatBundle (#611)
+- Fix the potential bug in [analyze_logs](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) when the training resumes from a checkpoint or is stopped before evaluation (#634)
+- Fix test commands in docs and make some refinements (#635)
+- Fix wrong config paths in unit tests (#641)
+
+
 ### v0.14.0 (1/6/2021)
 
 #### Highlights
@@ -20,7 +115,7 @@
 - Support visualization of detection results and dataset browse for nuScenes Mono-3D dataset (#542, #582)
 - Support faster implementation of KNN (#586)
 - Support RegNetX models on Lyft dataset (#589)
-- Remove a useless parameter [label_weight] from segmentation datasets including [Custom3DSegDataset], [ScanNetSegDataset] and [S3DISSegDataset] (#607)
+- Remove a useless parameter `label_weight` from segmentation datasets including `Custom3DSegDataset`, `ScanNetSegDataset` and `S3DISSegDataset` (#607)
 
 #### Bug Fixes
 - Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)

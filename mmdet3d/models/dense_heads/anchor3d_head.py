@@ -1,7 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import bias_init_with_prob, normal_init
-from mmcv.runner import force_fp32
+from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
@@ -14,7 +13,7 @@ from .train_mixins import AnchorTrainMixin
 
 
 @HEADS.register_module()
-class Anchor3DHead(nn.Module, AnchorTrainMixin):
+class Anchor3DHead(BaseModule, AnchorTrainMixin):
     """Anchor head for SECOND/PointPillars/MVXNet/PartA2.
 
     Args:
@@ -67,8 +66,9 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
                      loss_weight=1.0),
                  loss_bbox=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
-                 loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2)):
-        super().__init__()
+                 loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2),
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.feat_channels = feat_channels
@@ -103,6 +103,14 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         self._init_layers()
         self._init_assigner_sampler()
 
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
+
     def _init_assigner_sampler(self):
         """Initialize the target assigner and sampler of the head."""
         if self.train_cfg is None:
@@ -128,12 +136,6 @@ class Anchor3DHead(nn.Module, AnchorTrainMixin):
         if self.use_direction_classifier:
             self.conv_dir_cls = nn.Conv2d(self.feat_channels,
                                           self.num_anchors * 2, 1)
-
-    def init_weights(self):
-        """Initialize the weights of head."""
-        bias_cls = bias_init_with_prob(0.01)
-        normal_init(self.conv_cls, std=0.01, bias=bias_cls)
-        normal_init(self.conv_reg, std=0.01)
 
     def forward_single(self, x):
         """Forward function on a single-scale feature map.

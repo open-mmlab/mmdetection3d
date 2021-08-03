@@ -65,7 +65,7 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 
 After running this command, plotted results including input data and the output of networks visualized on the input (e.g. `***_points.obj` and `***_pred.obj` in single-modality 3D detection task) will be saved in `${SHOW_DIR}`.
 
-To see the prediction results during evaluation time, you can run the following command
+To see the prediction results during evaluation, you can run the following command
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --eval-options 'show=True' 'out_dir=${SHOW_DIR}'
@@ -80,9 +80,9 @@ To visualize the results with `Open3D` backend, you can run the following comman
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
 
-![Open3D_visualization](../resources/open3d_visual.gif)
+![](../resources/open3d_visual.gif)
 
-Or you can use 3D visualization software such as the [MeshLab](http://www.meshlab.net/) to open the these files under `${SHOW_DIR}` to see the 3D detection output. Specifically, open `***_points.obj` to see the input point cloud and open `***_pred.obj` to see the predicted 3D bounding boxes. This allows the inference and results generation be done in remote server and the users can open them on their host with GUI.
+Or you can use 3D visualization software such as the [MeshLab](http://www.meshlab.net/) to open these files under `${SHOW_DIR}` to see the 3D detection output. Specifically, open `***_points.obj` to see the input point cloud and open `***_pred.obj` to see the predicted 3D bounding boxes. This allows the inference and results generation to be done in remote server and the users can open them on their host with GUI.
 
 **Notice**: The visualization API is a little unstable since we plan to refactor these parts together with MMDetection in the future.
 
@@ -102,7 +102,7 @@ If you also want to show 2D images with 3D bounding boxes projected onto them, y
 python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
 ```
 
-![Open3D_visualization](../resources/browse_dataset_multi_modality.png)
+![](../resources/browse_dataset_multi_modality.png)
 
 You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
 
@@ -110,7 +110,7 @@ You can simply browse different datasets using different configs, e.g. visualizi
 python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
-![Open3D_visualization](../resources/browse_dataset_seg.png)
+![](../resources/browse_dataset_seg.png)
 
 And browsing the nuScenes dataset in monocular 3D detection task
 
@@ -118,13 +118,13 @@ And browsing the nuScenes dataset in monocular 3D detection task
 python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono-det --output-dir ${OUTPUT_DIR} --online
 ```
 
-![Open3D_visualization](../resources/browse_dataset_mono.png)
+![](../resources/browse_dataset_mono.png)
 
 &emsp;
 
 # Model Complexity
 
-You can use `tools/analysis_tools/get_flops.py` in MMDetection, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
+You can use `tools/analysis_tools/get_flops.py` in MMDetection3D, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
 
 ```shell
 python tools/analysis_tools/get_flops.py ${CONFIG_FILE} [--shape ${INPUT_SHAPE}]
@@ -134,9 +134,9 @@ You will get the results like this.
 
 ```text
 ==============================
-Input shape: (3, 1280, 800)
-Flops: 239.32 GFLOPs
-Params: 37.74 M
+Input shape: (40000, 4)
+Flops: 5.78 GFLOPs
+Params: 953.83 k
 ==============================
 ```
 
@@ -145,9 +145,9 @@ number is absolutely correct. You may well use the result for simple
 comparisons, but double check it before you adopt it in technical reports or papers.
 
 1. FLOPs are related to the input shape while parameters are not. The default
-   input shape is (1, 3, 1280, 800).
+   input shape is (1, 40000, 4).
 2. Some operators are not counted into FLOPs like GN and custom operators. Refer to [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py) for details.
-3. The FLOPs of two-stage detectors is dependent on the number of proposals.
+3. We currently only support FLOPs calculation of single-stage models with single-modality input (point cloud or image). We will support two-stage and multi-modality models in the future.
 
 &emsp;
 
@@ -198,7 +198,7 @@ The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth
 
 # Dataset Conversion
 
-`tools/data_converter/` contains tools to convert datasets to other formats. Most of them convert datasets to pickle based info files, like kitti, nuscenes and lyft. Waymo converter is used to reorganize waymo raw data like KITTI style. Users could refer to them for our approach to converting data format. It is also convenient to modify them to use as scripts like nuImages converter.
+`tools/data_converter/` contains tools for converting datasets to other formats. Most of them convert datasets to pickle based info files, like kitti, nuscenes and lyft. Waymo converter is used to reorganize waymo raw data like KITTI style. Users could refer to them for our approach to converting data format. It is also convenient to modify them to use as scripts like nuImages converter.
 
 To convert the nuImages dataset into COCO format, please use the command below:
 

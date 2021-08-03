@@ -6,6 +6,7 @@ Welcome to MMDetection3D's documentation!
    :caption: Get Started
 
    getting_started.md
+   demo.md
    model_zoo.md
    data_preparation.md
 
@@ -13,7 +14,6 @@ Welcome to MMDetection3D's documentation!
    :maxdepth: 2
    :caption: Quick Run
 
-   0_demo.md
    1_exist_data_model.md
    2_new_data_model.md
 
@@ -22,6 +22,12 @@ Welcome to MMDetection3D's documentation!
    :caption: Supported Tasks
 
    supported_tasks/index.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Datasets
+
+   datasets/index.rst
 
 .. toctree::
    :maxdepth: 2

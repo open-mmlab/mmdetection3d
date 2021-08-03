@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本v0.14.0.
+**新闻**: 我们发布了版本 v0.16.0.
 
 在第三届[ nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
@@ -62,7 +62,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v0.14.0 在 2021.06.01发布。
+最新的版本 v0.16.0 在 2021.08.01发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/changelog.md)。
 
 ## 基准测试和模型库
@@ -90,6 +90,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
 - [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
+- [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
+- [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
+- [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -106,6 +109,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
 | PointNet++           | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
+| PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 
 其他特性
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
@@ -146,6 +152,7 @@ MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与
 ## OpenMMLab 的其他项目
 
 - [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab 计算机视觉基础库
+- [MIM](https://github.com/open-mmlab/mim): MIM 是 OpenMMlab 项目、算法、模型的统一入口
 - [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab 图像分类工具箱
 - [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab 目标检测工具箱
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab 新一代通用 3D 目标检测平台

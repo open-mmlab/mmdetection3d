@@ -227,21 +227,11 @@ class Coord3DMode(IntEnum):
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
         elif src == Coord3DMode.DEPTH and dst == Coord3DMode.CAM:
-            # LIDAR-CAM conversion is different from DEPTH-CAM conversion
-            # because SUNRGB-D camera calibration files are different from
-            # that of KITTI, and currently we keep this hack
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
-            else:
-                rt_mat = rt_mat.new_tensor(
-                    [[1, 0, 0], [0, 0, -1], [0, 1, 0]]) @ \
-                    rt_mat.transpose(1, 0)
         elif src == Coord3DMode.CAM and dst == Coord3DMode.DEPTH:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
-            else:
-                rt_mat = rt_mat @ rt_mat.new_tensor([[1, 0, 0], [0, 0, 1],
-                                                     [0, -1, 0]])
         elif src == Coord3DMode.LIDAR and dst == Coord3DMode.DEPTH:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
@@ -253,6 +243,8 @@ class Coord3DMode(IntEnum):
                 f'Conversion from Coord3DMode {src} to {dst} '
                 'is not supported yet')
 
+        if not isinstance(rt_mat, torch.Tensor):
+            rt_mat = arr.new_tensor(rt_mat)
         if rt_mat.size(1) == 4:
             extended_xyz = torch.cat(
                 [arr[:, :3], arr.new_ones(arr.size(0), 1)], dim=-1)

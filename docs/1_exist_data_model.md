@@ -16,7 +16,7 @@ You can use the following commands to test a dataset.
 
 ```shell
 # single-gpu testing
-python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show]
+python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
 
 # multi-gpu testing
 ./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}]
@@ -24,7 +24,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 Optional arguments:
 - `RESULT_FILE`: Filename of the output results in pickle format. If not specified, the results will not be saved to a file.
-- `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset. Typically we default to use official metrics for evaluation on different datasets, so it can be simply set to `mAP` as a placeholder, which applies to nuScenes, Lyft, ScanNet and SUNRGBD. For KITTI, if we only want to evaluate the 2D detection performance, we can simply set the metric to `img_bbox` (unstable, stay tuned). For Waymo, we provide both KITTI-style evaluation (unstable) and Waymo-style official protocol, corresponding to metric `kitti` and `waymo` respectively. We recommend to use the default official metric for stable performance and fair comparison with other methods.
+- `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset. Typically we default to use official metrics for evaluation on different datasets, so it can be simply set to `mAP` as a placeholder for detection tasks, which applies to nuScenes, Lyft, ScanNet and SUNRGBD. For KITTI, if we only want to evaluate the 2D detection performance, we can simply set the metric to `img_bbox` (unstable, stay tuned). For Waymo, we provide both KITTI-style evaluation (unstable) and Waymo-style official protocol, corresponding to metric `kitti` and `waymo` respectively. We recommend to use the default official metric for stable performance and fair comparison with other methods. Similarly, the metric can be set to `mIoU` for segmentation tasks, which applies to S3DIS and ScanNet.
 - `--show`: If specified, detection results will be plotted in the silient mode. It is only applicable to single GPU testing and used for debugging and visualization. This should be used with `--show-dir`.
 - `--show-dir`: If specified, detection results will be plotted on the `***_points.obj` and `***_pred.obj` files in the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option.
 
@@ -32,7 +32,7 @@ Examples:
 
 Assume that you have already downloaded the checkpoints to the directory `checkpoints/`.
 
-1. Test votenet on ScanNet and save the points and prediction visualization results.
+1. Test VoteNet on ScanNet and save the points and prediction visualization results.
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -40,7 +40,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --show --show-dir ./data/scannet/show_results
    ```
 
-2. Test votenet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
+2. Test VoteNet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -49,7 +49,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --eval-options 'show=True' 'out_dir=./data/scannet/show_results'
    ```
 
-3. Test votenet on ScanNet (without saving the test results) and evaluate the mAP.
+3. Test VoteNet on ScanNet (without saving the test results) and evaluate the mAP.
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -65,7 +65,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --out results.pkl --eval mAP
    ```
 
-5. Test PointPillars on nuscenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
+5. Test PointPillars on nuScenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
@@ -122,7 +122,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 
 ## Train predefined models on standard datasets
 
-MMDetection implements distributed training and non-distributed training,
+MMDetection3D implements distributed training and non-distributed training,
 which uses `MMDistributedDataParallel` and `MMDataParallel` respectively.
 
 All outputs (log files and checkpoints) will be saved to the working directory,
@@ -153,18 +153,18 @@ If you want to specify the working directory in the command, you can add an argu
 
 Optional arguments are:
 
-- `--no-validate` (**not suggested**): By default, the codebase will perform evaluation at every k (default value is 1, which can be modified like [this](https://github.com/open-mmlab/mmdetection/blob/master/configs/mask_rcnn/mask_rcnn_r50_fpn_1x_coco.py#L174)) epochs during the training. To disable this behavior, use `--no-validate`.
+- `--no-validate` (**not suggested**): By default, the codebase will perform evaluation at every k (default value is 1, which can be modified like [this](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py#L75)) epochs during the training. To disable this behavior, use `--no-validate`.
 - `--work-dir ${WORK_DIR}`: Override the working directory specified in the config file.
 - `--resume-from ${CHECKPOINT_FILE}`: Resume from a previous checkpoint file.
 - `--options 'Key=value'`: Overide some settings in the used config.
 
 Difference between `resume-from` and `load-from`:
-`resume-from` loads both the model weights and optimizer status, and the epoch is also inherited from the specified checkpoint. It is usually used for resuming the training process that is interrupted accidentally.
-`load-from` only loads the model weights and the training epoch starts from 0. It is usually used for finetuning.
+- `resume-from` loads both the model weights and optimizer status, and the epoch is also inherited from the specified checkpoint. It is usually used for resuming the training process that is interrupted accidentally.
+- `load-from` only loads the model weights and the training epoch starts from 0. It is usually used for finetuning.
 
 ### Train with multiple machines
 
-If you run MMDetection on a cluster managed with [slurm](https://slurm.schedmd.com/), you can use the script `slurm_train.sh`. (This script also supports single machine training.)
+If you run MMDetection3D on a cluster managed with [slurm](https://slurm.schedmd.com/), you can use the script `slurm_train.sh`. (This script also supports single machine training.)
 
 ```shell
 [GPUS=${GPUS}] ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} ${CONFIG_FILE} ${WORK_DIR}
@@ -173,13 +173,13 @@ If you run MMDetection on a cluster managed with [slurm](https://slurm.schedmd.c
 Here is an example of using 16 GPUs to train Mask R-CNN on the dev partition.
 
 ```shell
-GPUS=16 ./tools/slurm_train.sh dev mask_r50_1x configs/mask_rcnn_r50_fpn_1x_coco.py /nfs/xxxx/mask_rcnn_r50_fpn_1x
+GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
 ```
 
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
 
 If you have just multiple machines connected with ethernet, you can refer to
-PyTorch [launch utility](https://pytorch.org/docs/stable/distributed_deprecated.html#launch-utility).
+PyTorch [launch utility](https://pytorch.org/docs/stable/distributed.html).
 Usually it is slow if you do not have high speed networking like InfiniBand.
 
 ### Launch multiple jobs on a single machine
@@ -217,7 +217,7 @@ If you use launch training jobs with Slurm, there are two ways to specify the po
    dist_params = dict(backend='nccl', port=29501)
    ```
 
-   Then you can launch two jobs with `config1.py` ang `config2.py`.
+   Then you can launch two jobs with `config1.py` and `config2.py`.
 
    ```shell
    CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR}

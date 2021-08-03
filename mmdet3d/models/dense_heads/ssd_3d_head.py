@@ -58,7 +58,8 @@ class SSD3DHead(VoteHead):
                  dir_res_loss=None,
                  size_res_loss=None,
                  corner_loss=None,
-                 vote_loss=None):
+                 vote_loss=None,
+                 init_cfg=None):
         super(SSD3DHead, self).__init__(
             num_classes,
             bbox_coder,
@@ -75,7 +76,8 @@ class SSD3DHead(VoteHead):
             dir_res_loss=dir_res_loss,
             size_class_loss=None,
             size_res_loss=size_res_loss,
-            semantic_loss=None)
+            semantic_loss=None,
+            init_cfg=init_cfg)
 
         self.corner_loss = build_loss(corner_loss)
         self.vote_loss = build_loss(vote_loss)
