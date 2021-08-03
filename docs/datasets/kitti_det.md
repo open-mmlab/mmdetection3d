@@ -88,7 +88,7 @@ kitti
             location: x,y,z in camera coordinate system (in meters), an Nx3 array
             dimensions: height, width, length (in meters), an Nx3 array
             rotation_y: Rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
-            name: [num_gt] ground truth name array
+            name:  ground truth name array, an N array
             difficulty: kitti difficulty, Easy, Moderate, Hard
             group_ids: used for multi-part object
         }
