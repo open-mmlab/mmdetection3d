@@ -2,6 +2,8 @@
 
 This page provides specific tutorials about the usage of MMDetection3D for kitti dataset.
 
+**Note**: Current tutorial is only for LiDAR-based and multi-modality 3D detection methods, Contents related to monocular methods will be supplemented afterward
+
 ## Prepare dataset
 
 You can download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d) and unzip all zip files.
@@ -31,7 +33,7 @@ mmdetection3d
 
 ### Create KITTI dataset
 
-By Creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation. Subsequently, create KITTI data by running
+By creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation. Subsequently, creating KITTI data by running
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -47,7 +49,7 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 
 Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else.
 
-The folder structure after process should be as below
+The folder structure after processing should be as below
 ```
 kitti
 ├── ImageSets
@@ -90,9 +92,19 @@ kitti
             [optional]difficulty: kitti difficulty
             [optional]group_ids: used for multi-part object
         }
-    - (optional) info['calib']: the calibration info.
+    - (optional) info['calib']: {
+        P0: camera0 projection matrix after rectification, an 3x4 array
+        P1: camera1 projection matrix after rectification, an 3x4 array
+        P2: camera2 projection matrix after rectification, an 3x4 array
+        P2: camera2 projection matrix after rectification, an 3x4 array
+        R0_rect: rectifying rotation matrix, an 4x4 array
+        Tr_velo_to_cam: transformation from Velodyne coordinate to camera coordinate, an 4x4 array
+        Tr_imu_to_velo: transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
+    }
     - (optional) info['image']:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
 **Note:** the info['annos'] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
+
+The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378). Please refer to [kitti_converter.py]https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py
 
 ## Train pipeline
 
@@ -103,8 +115,8 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=4, # x, y, z, intensity
+        use_dim=4, # x, y, z, intensity
         file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
@@ -142,10 +154,26 @@ An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows
 ```shell
 bash tools/dist_test.sh configs/pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py work_dirs/pointrcnn_2x8_kitti-3d-3classes/latest.pth 8 --eval bbox
 ```
+## Metrics
+KITTI evaluates 3D object detection performance using mean Average Precision (mAP) and Average Orientation Similarity (AOS), Please refer to its [official website](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php) and [original paper](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf).
+
+We also adopt this approach for evaluation on KITTI. An example of printed evaluation results is as follows:
+```
+Car AP@0.70, 0.70, 0.70:
+bbox AP:97.9252, 89.6183, 88.1564
+bev  AP:90.4196, 87.9491, 85.1700
+3d   AP:88.3891, 77.1624, 74.4654
+aos  AP:97.70, 89.11, 87.38
+Car AP@0.70, 0.50, 0.50:
+bbox AP:97.9252, 89.6183, 88.1564
+bev  AP:98.3509, 90.2042, 89.6102
+3d   AP:98.2800, 90.1480, 89.4736
+aos  AP:97.70, 89.11, 87.38
+```
 
 ## Testing and make a submission
 
-An example to test PointPillars on kitti with 8 GPUs and generate a submission to the leaderboard is as follows
+An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows
 
 ```shell
 mkdir -p results/kitti-3class
@@ -153,4 +181,4 @@ mkdir -p results/kitti-3class
 ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --out results/kitti-3class/results_eval.pkl --format-only --eval-options 'pklfile_prefix=results/kitti-3class/kitti_results' 'submission_prefix=results/kitti-3class/kitti_results'
 ```
 
-After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to kitti benchmark, More informations please refer to the [KITTI offical website](http://www.cvlibs.net/datasets/kitti/index.php)
+After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark, More informations please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php).
