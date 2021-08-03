@@ -85,12 +85,12 @@ kitti
 - `kitti_infos_train.pkl`: training dataset infos, each frame info contains following details:
     - info['point_cloud']: {'num_features': 4, 'velodyne_path': velodyne_path}.
     - info['annos']: {
-            location: [num_gt, 3] array
-            dimensions: [num_gt, 3] array
-            rotation_y: [num_gt] angle array
+            location: x,y,z in camera coordinate system (in meters), an Nx3 array
+            dimensions: height, width, length (in meters), an Nx3 array
+            rotation_y: Rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
             name: [num_gt] ground truth name array
-            [optional]difficulty: kitti difficulty
-            [optional]group_ids: used for multi-part object
+            difficulty: kitti difficulty, Easy, Moderate, Hard
+            group_ids: used for multi-part object
         }
     - (optional) info['calib']: {
         P0: camera0 projection matrix after rectification, an 3x4 array
