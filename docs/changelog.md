@@ -1,5 +1,56 @@
 ## Changelog
 
+### v0.16.0 (1/8/2021)
+
+#### Compatibility
+
+- Remove the rotation and dimension hack in the monocular 3D detection on nuScenes by applying corresponding transformation in the pre-processing and post-processing. The modification only influences nuScenes coco-style json files. Please re-run the data preparation scripts if necessary. See more details in the PR #744.
+- Add a new pre-processing module for the ScanNet dataset in order to support multi-view detectors. Please run the updated scripts to extract the RGB data and its annotations. See more details in the PR #696.
+
+#### Highlights
+
+- Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation
+- Support PAConv [models and benchmarks](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/paconv) on S3DIS
+- Enhance the documentation especially on dataset tutorials
+
+#### New Features
+
+- Support RGB images on ScanNet for multi-view detectors (#696)
+- Support FLOPs and number of parameters calculation (#736)
+- Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation (#782)
+- Support PAConv models and benchmarks on the S3DIS dataset (#783, #809)
+
+#### Improvements
+
+- Refactor Group-Free-3D to make it inherit BaseModule from MMCV (#704)
+- Modify the initialization methods of FCOS3D to be consistent with the refactored approach (#705)
+- Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/groupfree3d) on ScanNet (#710)
+- Add Chinese Documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
+- Add documentation for semantic segmentation on ScanNet and S3DIS (#743, #747, #806, #807)
+- Add a parameter `max_keep_ckpts` to limit the maximum number of saved Group-Free-3D checkpoints (#765)
+- Add documentation for 3D detection on SUN RGB-D and nuScenes (#770, #793)
+- Remove mmpycocotools in the Dockerfile (#785)
+
+#### Bug Fixes
+
+- Fix versions of OpenMMLab dependencies (#708)
+- Convert `rt_mat` to `torch.Tensor` in coordinate transformation for compatibility (#709)
+- Fix the `bev_range` initialization in `ObjectRangeFilter` according to the `gt_bboxes_3d` type (#717)
+- Fix Chinese documentation and incorrect doc format due to the incompatible Sphinx version (#718)
+- Fix a potential bug when setting `interval == 1` in [analyze_logs.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) (#720)
+- Update the structure of Chinese Documentation (#722)
+- Fix FCOS3D FPN BC-Breaking caused by the code refactoring in MMDetection (#739)
+- Fix wrong `in_channels` when `with_distance=True` in the [Dynamic VFE Layers](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/voxel_encoder.py#L87) (#749)
+- Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795, #818)
+- Fix the missing default `bbox_mode` in the `show_multi_modality_result` (#825)
+
+#### Contributors
+
+A total of 12 developers contributed to this release.
+
+@yinchimaoliang, @gopi231091, @filaPro, @ZwwWayne, @ZCMax, @hjin2902, @wHao-Wu, @Wuziyi616, @xiliu8006, @THU17cyz, @DCNSW, @Tai-Wang
+
+
 ### v0.15.0 (1/7/2021)
 
 #### Compatibility
