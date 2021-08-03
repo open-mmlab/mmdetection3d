@@ -1,0 +1,24 @@
+Collections:
+  - Name: PAConv
+    Metadata:
+      Training Techniques:
+        - SGD
+      Training Resources: 8x Titan XP GPUs
+      Architecture:
+        - PAConv
+    Paper: https://arxiv.org/abs/2103.14635
+    README: configs/paconv/README.md
+
+Models:
+  - Name: paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
+    In Collection: PAConv
+    Config: configs/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
+    Metadata:
+      Training Data: S3DIS
+      Training Memory (GB): 5.8
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: S3DIS
+        Metrics:
+          mIoU: 66.65
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class_20210729_200615-2147b2d1.pth

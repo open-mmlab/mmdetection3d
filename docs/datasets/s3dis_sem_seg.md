@@ -8,11 +8,7 @@ For the overall process, please refer to the [README](https://github.com/open-mm
 
 By exporting S3DIS data, we load the raw point cloud data and generate the relevant annotations including semantic labels and instance labels.
 
-```shell
-python collect_indoor3d_data.py
-```
-
-The directory structure before data preparation should be as below
+The directory structure before exporting should be as below:
 
 ```
 mmdetection3d
@@ -43,9 +39,11 @@ Under folder `Stanford3dDataset_v1.2_Aligned_Version`, the rooms are spilted int
 - `Annotations/`: This folder contains txt files for different object instances. Each txt file represents one instance, e.g.
     - `chair_1.txt`: A txt file storing raw point cloud data of one chair in this room.
 
+    If we concat all the txt files under `Annotations/`, we will get the same point cloud as denoted by `office_1.txt`.
+
 Export S3DIS data by running `python collect_indoor3d_data.py`. The main steps include:
 
-- Export original files to point cloud, instance label and semantic label.
+- Export original txt files to point cloud, instance label and semantic label.
 - Save point cloud data and relevant annotation files.
 
 And the core function `export` in `indoor3d_util.py` is as follows:
@@ -57,7 +55,7 @@ def export(anno_path, out_filename):
 
     Args:
         anno_path (str): path to annotations. e.g. Area_1/office_2/Annotations/
-        out_filename (str): path to save collected points and labels
+        out_filename (str): path to save collected points and labels.
         file_format (str): txt or numpy, determines what file format to save.
 
     Note:
@@ -67,7 +65,7 @@ def export(anno_path, out_filename):
     points_list = []
     ins_idx = 1  # instance ids should be indexed from 1, so 0 is unannotated
 
-    # an example of anno_path: Area_1/office_1/Annotations
+    # an example of `anno_path`: Area_1/office_1/Annotations
     # which contains all object instances in this room as txt files
     for f in glob.glob(osp.join(anno_path, '*.txt')):
         # get class name of this instance
@@ -91,7 +89,7 @@ def export(anno_path, out_filename):
 
 ```
 
-where we load and concatenate all the point cloud instances under `Annotations` to form raw point cloud and generate semantic/instance labels. After exporting each room, the point cloud data, semantic labels and instance labels should be saved in `.npy` files.
+where we load and concatenate all the point cloud instances under `Annotations/` to form raw point cloud and generate semantic/instance labels. After exporting each room, the point cloud data, semantic labels and instance labels should be saved in `.npy` files.
 
 ### Create dataset
 
@@ -102,7 +100,7 @@ python tools/create_data.py s3dis --root-path ./data/s3dis \
 
 The above exported point cloud files, semantic label files and instance label files are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for each area.
 
-The directory structure after process should be as below
+The directory structure after process should be as below:
 
 ```
 s3dis
@@ -140,7 +138,7 @@ s3dis
 ```
 
 - `points/xxxxx.bin`: The exported point cloud data.
-- `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
+- `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, ${NUM_INSTANCES}], 0: unannotated.
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [0, 12].
 - `s3dis_infos_Area_1.pkl`: Area 1 data infos, the detailed info of each room is as follows:
     - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
@@ -149,11 +147,11 @@ s3dis
     - info['pts_semantic_mask_path']: The path of `semantic_mask/xxxxx.bin`.
 - `seg_info`: The generated infos to support semantic segmentation model training.
     - `Area_1_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
-    - `Area_1_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points.
+    - `Area_1_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
 
 ## Training pipeline
 
-A typical training pipeline of S3DIS for 3d semantic segmentation is as below.
+A typical training pipeline of S3DIS for 3D semantic segmentation is as below.
 
 ```python
 class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
@@ -181,10 +179,11 @@ train_pipeline = [
         type='IndoorPatchPointSample',
         num_points=num_points,
         block_size=1.0,
-        ignore_index=len(class_names),
+        ignore_index=None,
         use_normalized_coord=True,
-        enlarge_size=0.01,
-        min_unique_num=num_points // 4),
+        enlarge_size=None,
+        min_unique_num=num_points // 4,
+        eps=0.0),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         type='GlobalRotScaleTrans',
@@ -207,13 +206,14 @@ train_pipeline = [
 - Data augmentation:
     - `GlobalRotScaleTrans`: randomly rotate and scale input point cloud.
     - `RandomJitterPoints`: randomly jitter point cloud by adding different noise vector to each point.
-    - `RandomDropPointsColor`: set the colors of point cloud to all zeros by a probability.
+    - `RandomDropPointsColor`: set the colors of point cloud to all zeros by a probability `drop_ratio`.
 
 ## Metrics
 
-Typically mean intersection over union (mIoU) is used for evaluation on S3DIS. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
+Typically mean intersection over union (mIoU) is used for evaluation on S3DIS. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
 
-As introduced in section `Export S3DIS data`, S3DIS trains on 5 areas and evaluates on the remaining 1 area. To enable flexible combination of train-val splits, we use sub-dataset to represent one area, and concatenate them to form a larger training set. An example of training on area 1, 2, 3, 4, 6 and evaluating on area 5 is shown as below:
+As introduced in section `Export S3DIS data`, S3DIS trains on 5 areas and evaluates on the remaining 1 area. But there are also other area split schemes in different papers.
+To enable flexible combination of train-val splits, we use sub-dataset to represent one area, and concatenate them to form a larger training set. An example of training on area 1, 2, 3, 4, 6 and evaluating on area 5 is shown as below:
 
 ```python
 dataset_type = 'S3DISSegDataset'
@@ -249,4 +249,4 @@ data = dict(
         f'seg_info/Area_{test_area}_resampled_scene_idxs.npy'))
 ```
 
-where we specify the areas used for training/validation/testing by setting `ann_files` and `scene_idxs` with lists that include corresponding paths. The train-val split can be simply modified via changing the `train_area` and `test_area` variables.
+where we specify the areas used for training/validation by setting `ann_files` and `scene_idxs` with lists that include corresponding paths. The train-val split can be simply modified via changing the `train_area` and `test_area` variables.

@@ -23,12 +23,20 @@ We implement DGCNN and provide the result and checkpoints on S3DIS dataset.
 
 |                                   Method                                    | Split  |  Lr schd   | Mem (GB) | Inf time (fps) | mIoU (Val set) |         Download         |
 | :-------------------------------------------------------------------------: | :----: | :--------: | :------: | :------------: | :------------: | :----------------------: |
-| [DGCNN](./dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class.py) | Area_5 | cosine 100e |   13.3    |                |     50.50      | [model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628-4e341a48.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dgcnn/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class/dgcnn_32x1_cosine_100e_s3dis_seg-3d-13class_20210514_143628.log.json) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | Area_1 | cosine 100e |   13.1    |                |     68.33      | [model](https://download.openmmlab.com/mmdetection3d) &#124; [log](https://download.openmmlab.com/mmdetection3d) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | Area_2 | cosine 100e |   13.1    |                |     40.68      | [model](https://download.openmmlab.com/mmdetection3d) &#124; [log](https://download.openmmlab.com/mmdetection3d) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | Area_3 | cosine 100e |   13.1    |                |     69.38      | [model](https://download.openmmlab.com/mmdetection3d) &#124; [log](https://download.openmmlab.com/mmdetection3d) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | Area_4 | cosine 100e |   13.1    |                |     50.07      | [model](https://download.openmmlab.com/mmdetection3d) &#124; [log](https://download.openmmlab.com/mmdetection3d) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | Area_5 | cosine 100e |   13.1    |                |     50.59      | [model](https://download.openmmlab.com/mmdetection3d) &#124; [log](https://download.openmmlab.com/mmdetection3d) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | Area_6 | cosine 100e |   13.1    |                |     77.94      | [model](https://download.openmmlab.com/mmdetection3d) &#124; [log](https://download.openmmlab.com/mmdetection3d) |
+| [DGCNN](./dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py) | 6-fold |           |           |                |     59.43      |        |
 
 **Notes:**
 
--   We use XYZ+Color+Normalized_XYZ as input in all the experiments on S3DIS datasets.
+-   We use XYZ+Color+Normalized_XYZ as input in all the experiments on S3DIS dataset.
 -   `Area_5` Split means training the model on Area_1, 2, 3, 4, 6 and testing on Area_5.
+-   `6-fold` Split means the overall result of 6 different splits (Area_1, Area_2, Area_3, Area_4, Area_5 and Area_6 Splits).
+-   Modify `train_area` and `test_area` in the S3DIS dataset's [config](./configs/_base_/datasets/s3dis_seg-3d-13class.py) to set the training areas and testing areas respectively.
 
 ## Indeterminism
 

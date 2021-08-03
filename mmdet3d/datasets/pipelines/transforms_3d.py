@@ -45,7 +45,13 @@ class RandomDropPointsColor(object):
             'color' in points.attribute_dims, \
             'Expect points have color attribute'
 
-        if np.random.rand() < self.drop_ratio:
+        # this if-expression is a bit strange
+        # `RandomDropPointsColor` is used in training 3D segmentor PAConv
+        # we discovered in our experiments that, using
+        # `if np.random.rand() > 1.0 - self.drop_ratio` consistently leads to
+        # better results than using `if np.random.rand() < self.drop_ratio`
+        # so we keep this hack in our codebase
+        if np.random.rand() > 1.0 - self.drop_ratio:
             points.color = points.color * 0.0
         return input_dict
 
@@ -1151,7 +1157,8 @@ class IndoorPatchPointSample(object):
         repr_str += f' use_normalized_coord={self.use_normalized_coord},'
         repr_str += f' num_try={self.num_try},'
         repr_str += f' enlarge_size={self.enlarge_size},'
-        repr_str += f' min_unique_num={self.min_unique_num})'
+        repr_str += f' min_unique_num={self.min_unique_num},'
+        repr_str += f' eps={self.eps})'
         return repr_str
 
 
@@ -1194,10 +1201,10 @@ class BackgroundPointsFilter(object):
         enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
         enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
         points_numpy = points.tensor.clone().numpy()
-        foreground_masks = box_np_ops.points_in_rbbox(points_numpy,
-                                                      gt_bboxes_3d_np)
+        foreground_masks = box_np_ops.points_in_rbbox(
+            points_numpy, gt_bboxes_3d_np, origin=(0.5, 0.5, 0.5))
         enlarge_foreground_masks = box_np_ops.points_in_rbbox(
-            points_numpy, enlarged_gt_bboxes_3d)
+            points_numpy, enlarged_gt_bboxes_3d, origin=(0.5, 0.5, 0.5))
         foreground_masks = foreground_masks.max(1)
         enlarge_foreground_masks = enlarge_foreground_masks.max(1)
         valid_masks = ~np.logical_and(~foreground_masks,

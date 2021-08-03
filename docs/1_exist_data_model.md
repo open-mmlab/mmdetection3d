@@ -24,7 +24,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
 Optional arguments:
 - `RESULT_FILE`: Filename of the output results in pickle format. If not specified, the results will not be saved to a file.
-- `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset. Typically we default to use official metrics for evaluation on different datasets, so it can be simply set to `mAP` as a placeholder, which applies to nuScenes, Lyft, ScanNet and SUNRGBD. For KITTI, if we only want to evaluate the 2D detection performance, we can simply set the metric to `img_bbox` (unstable, stay tuned). For Waymo, we provide both KITTI-style evaluation (unstable) and Waymo-style official protocol, corresponding to metric `kitti` and `waymo` respectively. We recommend to use the default official metric for stable performance and fair comparison with other methods.
+- `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset. Typically we default to use official metrics for evaluation on different datasets, so it can be simply set to `mAP` as a placeholder for detection tasks, which applies to nuScenes, Lyft, ScanNet and SUNRGBD. For KITTI, if we only want to evaluate the 2D detection performance, we can simply set the metric to `img_bbox` (unstable, stay tuned). For Waymo, we provide both KITTI-style evaluation (unstable) and Waymo-style official protocol, corresponding to metric `kitti` and `waymo` respectively. We recommend to use the default official metric for stable performance and fair comparison with other methods. Similarly, the metric can be set to `mIoU` for segmentation tasks, which applies to S3DIS and ScanNet.
 - `--show`: If specified, detection results will be plotted in the silient mode. It is only applicable to single GPU testing and used for debugging and visualization. This should be used with `--show-dir`.
 - `--show-dir`: If specified, detection results will be plotted on the `***_points.obj` and `***_pred.obj` files in the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option.
 
@@ -32,7 +32,7 @@ Examples:
 
 Assume that you have already downloaded the checkpoints to the directory `checkpoints/`.
 
-1. Test votenet on ScanNet and save the points and prediction visualization results.
+1. Test VoteNet on ScanNet and save the points and prediction visualization results.
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -40,7 +40,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --show --show-dir ./data/scannet/show_results
    ```
 
-2. Test votenet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
+2. Test VoteNet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -49,7 +49,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --eval-options 'show=True' 'out_dir=./data/scannet/show_results'
    ```
 
-3. Test votenet on ScanNet (without saving the test results) and evaluate the mAP.
+3. Test VoteNet on ScanNet (without saving the test results) and evaluate the mAP.
 
    ```shell
    python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
@@ -65,7 +65,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --out results.pkl --eval mAP
    ```
 
-5. Test PointPillars on nuscenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
+5. Test PointPillars on nuScenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
@@ -159,8 +159,8 @@ Optional arguments are:
 - `--options 'Key=value'`: Overide some settings in the used config.
 
 Difference between `resume-from` and `load-from`:
-`resume-from` loads both the model weights and optimizer status, and the epoch is also inherited from the specified checkpoint. It is usually used for resuming the training process that is interrupted accidentally.
-`load-from` only loads the model weights and the training epoch starts from 0. It is usually used for finetuning.
+- `resume-from` loads both the model weights and optimizer status, and the epoch is also inherited from the specified checkpoint. It is usually used for resuming the training process that is interrupted accidentally.
+- `load-from` only loads the model weights and the training epoch starts from 0. It is usually used for finetuning.
 
 ### Train with multiple machines
 
