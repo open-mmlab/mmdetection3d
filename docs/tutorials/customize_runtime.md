@@ -67,7 +67,7 @@ The module `mmdet3d.core.optimizer.my_optimizer` will be imported at the beginni
 Note that only the package containing the class `MyOptimizer` should be imported.
 `mmdet3d.core.optimizer.my_optimizer.MyOptimizer` **cannot** be imported directly.
 
-Actually users can use a totally different file directory structure using this importing method, as long as the module root can be located in `PYTHONPATH`.
+Actually users can use a totally different file directory structure in this importing method, as long as the module root can be located in `PYTHONPATH`.
 
 #### 3. Specify the optimizer in the config file
 
@@ -87,7 +87,7 @@ optimizer = dict(type='MyOptimizer', a=a_value, b=b_value, c=c_value)
 ### Customize optimizer constructor
 
 Some models may have some parameter-specific settings for optimization, e.g. weight decay for BatchNorm layers.
-The users can do those fine-grained parameter tuning through customizing optimizer constructor.
+The users can tune those fine-grained parameters through customizing optimizer constructor.
 
 ```python
 from mmcv.utils import build_from_cfg
@@ -122,7 +122,7 @@ Tricks not implemented by the optimizer should be implemented through optimizer 
         _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
     ```
 
-    If your config inherits the base config which already sets the `optimizer_config`, you might need `_delete_=True` to overide the unnecessary settings. See the [config documenetation](https://mmdetection.readthedocs.io/en/latest/tutorials/config.html) for more details.
+    If your config inherits the base config which already sets the `optimizer_config`, you might need `_delete_=True` to overide the unnecessary settings in the base config. See the [config documentation](https://mmdetection.readthedocs.io/en/latest/tutorials/config.html) for more details.
 
 - __Use momentum schedule to accelerate model convergence__:
     We support momentum scheduler to modify model's momentum according to learning rate, which could make the model converge in a faster way.
