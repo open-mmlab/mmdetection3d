@@ -1,9 +1,11 @@
 import mmcv
 import numpy as np
+from collections import defaultdict
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
+from mmdet.datasets.pipelines import (Compose, LoadAnnotations,
+                                      LoadImageFromFile)
 
 
 @PIPELINES.register_module()
@@ -665,4 +667,77 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_seg={self.with_seg}, '
         repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
+        return repr_str
+
+
+@PIPELINES.register_module()
+class MultiViewPipeline(object):
+    """Load and transform multi-view images.
+
+    Args:
+        transforms (list[dict]): Transforms to apply for each image.
+            The list of transforms for MultiViewPipeline and
+            MultiScaleFlipAug differs. Here LoadImageFromFile is
+            required as the first transform. Other transforms as usual
+            can include Normalize, Pad, Resize etc.
+        n_images (int): Number of images to sample. Defaults to -1.
+        pose_keys (list[str]): Keys to be used to sample simultaneously
+            with images. Defaults to ('lidar2img', 'depth2img', 'cam2img').
+    """
+
+    def __init__(self,
+                 transforms,
+                 n_images=-1,
+                 pose_keys=('lidar2img', 'depth2img', 'cam2img')):
+        self.transforms = Compose(transforms)
+        assert isinstance(self.transforms.transforms[0], LoadImageFromFile)
+        self.n_images = n_images
+        self.pose_keys = pose_keys
+
+    def __call__(self, results):
+        """Call function to load multi-view image from files.
+
+        Args:
+            results (dict): Result dict containing multi-view image filenames.
+
+        Returns:
+            dict: The result dict containing the multi-view image data.
+                Added keys are deducted from all pipelines from
+                self.transforms.
+        """
+        assert len(results['img_info'])
+        pose_keys = [k for k in results if k in self.pose_keys]
+        for key in pose_keys:
+            assert len(results[key]) == len(results['img_info'])
+        img_pose_dict = defaultdict(list)
+        ids = np.arange(len(results['img_info']))
+
+        # sample self.n_images from all images
+        if self.n_images > 0:
+            replace = True if self.n_images > len(ids) else False
+            ids = np.random.choice(ids, self.n_images, replace=replace)
+
+        # apply self.transforms to sampled images
+        for i in ids.tolist():
+            img_results = dict(
+                img_prefix=results['img_prefix'],
+                img_info=results['img_info'][i])
+            img_results = self.transforms(img_results)
+            img_pose_dict['img'].append(img_results['img'])
+            img_pose_dict['img_info'].append(img_results['img_info'])
+            for key in pose_keys:
+                img_pose_dict[key].append(results[key][i])
+
+        # copy image keys to results
+        for key in img_results.keys():
+            results[key] = img_results[key]
+        for key in img_pose_dict:
+            results[key] = img_pose_dict[key]
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(transforms={self.transforms}, '
+        repr_str += f'n_images={self.n_images})'
         return repr_str
