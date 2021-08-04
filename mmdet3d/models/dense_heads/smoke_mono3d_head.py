@@ -84,7 +84,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                                   1)
         self.conv_reg_prevs = nn.ModuleList()
         self.conv_regs = nn.ModuleList()
-        for i in range(len(self.group_reg_dims)):  # regression根据不同的分支进行单独的reg_prevs, 
+        for i in range(len(self.group_reg_dims)):  
             reg_dim = self.group_reg_dims[i]
             reg_branch_channels = self.reg_branch[i]  # （ 256， ）
             out_channel = self.out_channels[i]  # 256
@@ -121,11 +121,11 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         cls_score = cls_score.sigmoid()  # turn to 0-1 
         cls_score = cls_score.clamp(min=1e-4, max=1 - 1e-4)
         # (N, C, H, W)
-        offset_dims = bbox_pred[:, self.dim_channel, ...].clone()  # 预测的是 dim_offset, 我们有一个 predefined 的平均 h, w, l.
-        bbox_pred[:, self.dim_channel, ...] = torch.sigmoid(offset_dims) - 0.5  # 统一范围
+        offset_dims = bbox_pred[:, self.dim_channel, ...].clone()  
+        bbox_pred[:, self.dim_channel, ...] = torch.sigmoid(offset_dims) - 0.5  
 
         vector_ori = bbox_pred[:, self.ori_channel, ...].clone()
-        bbox_pred[:, self.ori_channel, ...] = F.normalize(vector_ori)  # 转换为 sin 和 cos结果
+        bbox_pred[:, self.ori_channel, ...] = F.normalize(vector_ori)  
         return cls_score, bbox_pred
 
     def get_bboxes(self,
@@ -164,7 +164,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         Args:
             class_score (Tensor): center predict heatmap,
                shape (B, num_classes, H, W).
-            img_shape (list[int]): image shape in [h, w] format.
+            bbox_preds(Tensor): box predict regression map
+               shape (B,8, H, W).
+            view(Tensor): camera intrinsic matrix for batch images
             k (int): Get top k center keypoints from heatmap. Default 100.
             kernel (int): Max pooling kernel for extract local maximum pixels.
                Default 3.
@@ -172,6 +174,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             tuple[torch.Tensor]: Decoded output of CenterNetHead, containing
                the following Tensors:
               - batch_bboxes (Tensor): Coords of each box with shape (B, k, 5)
+               - batch_scores (Tensor): score of each box with shape (B, k)
               - batch_topk_labels (Tensor): Categories of each box with \
                   shape (B, k)
         """
@@ -200,16 +203,11 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             pred_proj_offsets,
             pred_depths,
             view,
-        )  # 先放回rescale回原图，再利用cam_intrinsic放回cam坐标系的位置  （ B*K, 3)
-        # 这里注意每个图片的 K 应该是不同的？
+        ) 
         pred_dimensions = self.decode_dimension(
             batch_topk_labels,
             pred_dimensions_offsets
         )
-        # we need to change center location to bottom location
-        # bboxes = input_meta['box_type_3d'](
-        #     pred_locations, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
-
         pred_rotys = self.decode_orientation(
             pred_orientation,
             pred_locations
@@ -241,7 +239,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             points: projected points on feature map in (x, y)
             points_offset: project points offset in (delata_x, delta_y)
             depths: object depth z
-            Ks: camera intrinsic matrix, shape = [N, 3, 3]  # 这里的 N 表示 N_batch, 不同图片的的camera intrinsic matrix不同？
+            Ks: camera intrinsic matrix, shape = [N, 3, 3]  
             trans_mats: transformation matrix from image to feature map, shape = [N, 3, 3]   # image -> feature map
 
         Returns:
@@ -260,7 +258,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         obj_id = batch_id.repeat(1, N // N_batch).flatten()  # (N_batch, k) ->  (N_batch * k)
 
         trans_mats_inv = trans_mats.inverse()[obj_id]  # (N_batch * k, 3, 3)
-        Ks_inv = Ks.inverse()[obj_id]  # (N_batch * k, 3, 3) 这是逆变换后的matrix了
+        Ks_inv = Ks.inverse()[obj_id]  # (N_batch * k, 3, 3)
 
         points = points.view(-1, 2)   # （N_batch * k, 2)
         assert points.shape[0] == N
