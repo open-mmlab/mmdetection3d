@@ -65,11 +65,11 @@ custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_fai
 注意到只有包含 `MyOptimizer` 类的包应该被引入。
 `mmdet3d.core.optimizer.my_optimizer.MyOptimizer` **不能** 被直接引入。
 
-事实上用户可以在这种引入的方法中使用完全不同的文件目录结构，只要保证根目录能在 `PYTHONPATH` 中被定位。
+事实上，用户可以在这种引入的方法中使用完全不同的文件目录结构，只要保证根目录能在 `PYTHONPATH` 中被定位。
 
 #### 3. 在配置文件中指定优化器
 
-截下来你可以在配置文件的 `optimizer` 字段中使用 `MyOptimizer`。
+接下来您可以在配置文件的 `optimizer` 字段中使用 `MyOptimizer`。
 在配置文件中，优化器在 `optimizer` 字段中以如下方式定义：
 
 ```python
@@ -112,7 +112,8 @@ class MyOptimizerConstructor(object):
 
 没有在优化器部分实现的技巧应该通过优化器构造器或者钩子来实现 （比如逐参数的学习率设置）。我们列举了一些常用的可以稳定训练过程或者加速训练的设置。我们欢迎提供更多类似设置的 PR 和 issue。
 
-- __使用梯度裁剪 (gradient clip) 来稳定训练过程__:
+- __使用梯度裁剪 (gradient clip) 来稳定训练过程__：
+
     一些模型依赖梯度裁剪技术来裁剪训练中的梯度，以稳定训练过程。举例如下：
 
     ```python
@@ -120,9 +121,10 @@ class MyOptimizerConstructor(object):
         _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
     ```
 
-    如果您的配置集成了一个已经设置了 `optimizer_config` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection.readthedocs.io/en/latest/tutorials/config.html)。
+    如果您的配置继承了一个已经设置了 `optimizer_config` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection.readthedocs.io/en/latest/tutorials/config.html)。
 
-- __使用动量规划器来加速模型收敛__:
+- __使用动量规划器 (momentum scheduler) 来加速模型收敛__：
+
     我们支持用动量规划器来根据学习率更改模型的动量，这样可以使模型更快地收敛。
     动量规划器通常和学习率规划器一起使用，比如说，如下配置文件在 3D 检测中被用于加速模型收敛。
     更多细节详见 [CyclicLrUpdater](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L358) 和 [CyclicMomentumUpdater](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/momentum_updater.py#L225) 的实现。
@@ -145,7 +147,7 @@ class MyOptimizerConstructor(object):
 ## 自定义训练规程
 
 默认情况，我们使用阶梯式学习率衰减的 1 倍训练规程。这会调用 `MMCV` 中的 [`StepLRHook`](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L167)。
-我们在[这里](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py)支持很多其他学习率规划方案，比如 `余弦退火`和`多项式衰减`规程。下面是一些样例：
+我们在[这里](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py)支持很多其他学习率规划方案，比如`余弦退火`和`多项式衰减`规程。下面是一些样例：
 
 - 多项式衰减规程:
 
@@ -186,18 +188,18 @@ workflow = [('train', 1)]
 **请注意**:
 
 1. 模型参数在验证期间不会被更新。
-2. Keyword `max_epochs` in `runner` in the config only controls the number of training epochs and will not affect the validation workflow.
-3. Workflows `[('train', 1), ('val', 1)]` and `[('train', 1)]` will not change the behavior of `EvalHook` because `EvalHook` is called by `after_train_epoch` and validation workflow only affect hooks that are called through `after_val_epoch`. Therefore, the only difference between `[('train', 1), ('val', 1)]` and `[('train', 1)]` is that the runner will calculate losses on validation set after each training epoch.
+2. 配置文件中，`runner` 里的 `max_epochs` 字段只控制训练 epoch 的数量，而不会影响验证工作流。
+3. `[('train', 1), ('val', 1)]` 和 `[('train', 1)]` 工作流不会改变 `EvalHook` 的行为，这是因为 `EvalHook` 被 `after_train_epoch` 调用，且验证工作流只会影响通过 `after_val_epoch` 调用的钩子。因此，`[('train', 1), ('val', 1)]` 和 `[('train', 1)]` 的唯一区别就是执行器 (runner) 会在每个训练 epoch 之后在验证集上计算损失。
 
-## Customize hooks
+## 自定义钩子
 
-### Customize self-implemented hooks
+### 自定义自己实现的钩子
 
-#### 1. Implement a new hook
+#### 1. 实现一个新钩子
 
-There are some occasions when the users might need to implement a new hook. MMDetection supports customized hooks in training (#3395) since v2.3.0. Thus the users could implement a hook directly in mmdet or their mmdet-based codebases and use the hook by only modifying the config in training.
-Before v2.3.0, the users need to modify the code to get the hook registered before training starts.
-Here we give an example of creating a new hook in mmdet3d and using it in training.
+存在一些情况下用户可能需要实现新钩子。在版本 v2.3.0 之后，MMDetection 支持自定义训练过程中的钩子 (#3395)。因此用户可以直接在 mmdet 中，或者在其基于 mmdet 的代码库中实现钩子并通过更改训练配置来使用钩子。
+在 v2.3.0 之前，用户需要更改代码以使得训练开始之前钩子已经注册完毕。
+这里我们给出一个，在 mmdet3d 中创建并使用新钩子的例子。
 
 ```python
 from mmcv.runner import HOOKS, Hook
@@ -228,16 +230,15 @@ class MyHook(Hook):
         pass
 ```
 
-Depending on the functionality of the hook, the users need to specify what the hook will do at each stage of the training in `before_run`, `after_run`, `before_epoch`, `after_epoch`, `before_iter`, and `after_iter`.
+取决于钩子的功能，用户需要指定钩子在每个训练阶段时的行为，具体包括如下阶段：`before_run`，`after_run`，`before_epoch`，`after_epoch`，`before_iter`，和 `after_iter`。
 
-#### 2. Register the new hook
+#### 2. 注册新钩子
 
-Then we need to make `MyHook` imported. Assuming the file is in `mmdet3d/core/utils/my_hook.py` there are two ways to do that:
+接下来我们需要引入 `MyHook`。假设新钩子位于文件 `mmdet3d/core/utils/my_hook.py` 中，有两种方法可以实现之：
 
-- Modify `mmdet3d/core/utils/__init__.py` to import it.
+- 更改 `mmdet3d/core/utils/__init__.py` 来引入之：
 
-    The newly defined module should be imported in `mmdet3d/core/utils/__init__.py` so that the registry will
-    find the new module and add it:
+    新定义的模块应在 `mmdet3d/core/utils/__init__.py` 中引入，以使得注册器可以找到新模块并注册之：
 
 ```python
 from .my_hook import MyHook
@@ -246,13 +247,13 @@ __all__ = [..., 'MyHook']
 
 ```
 
-Or use `custom_imports` in the config to manually import it
+或者在配置中使用 `custom_imports` 来人为地引入之
 
 ```python
 custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
 ```
 
-#### 3. Modify the config
+#### 3. 更改配置文件
 
 ```python
 custom_hooks = [
@@ -260,7 +261,7 @@ custom_hooks = [
 ]
 ```
 
-You can also set the priority of the hook by adding key `priority` to `'NORMAL'` or `'HIGHEST'` as below
+您可以将字段 `priority` 设置为 `'NORMAL'` 或者 `'HIGHEST'`，来设置钩子的优先级，如下所示：
 
 ```python
 custom_hooks = [
@@ -268,11 +269,11 @@ custom_hooks = [
 ]
 ```
 
-By default the hook's priority is set as `NORMAL` during registration.
+默认情况，在注册阶段钩子的优先级被设置为 `NORMAL`。
 
-### Use hooks implemented in MMCV
+### 使用 MMCV 中实现的钩子
 
-If the hook is already implemented in MMCV, you can directly modify the config to use the hook as below
+如果钩子已经在 MMCV 中被实现了，您可以直接通过更改配置文件来使用该钩子：
 
 ```python
 custom_hooks = [
@@ -280,35 +281,35 @@ custom_hooks = [
 ]
 ```
 
-### Modify default runtime hooks
+### 更改默认的运行时钩子
 
-There are some common hooks that are not registerd through `custom_hooks`, they are
+有一些常用的钩子并没有通过 `custom_hooks` 注册，它们是：
 
-- log_config
-- checkpoint_config
-- evaluation
-- lr_config
-- optimizer_config
-- momentum_config
+- 日志配置 (log_config)
+- 检查点配置 (checkpoint_config)
+- 评估 (evaluation)
+- 学习率配置 (lr_config)
+- 优化器配置 (optimizer_config)
+- 动量配置 (momentum_config)
 
-In those hooks, only the logger hook has the `VERY_LOW` priority, others' priority are `NORMAL`.
-The above-mentioned tutorials already covers how to modify `optimizer_config`, `momentum_config`, and `lr_config`.
-Here we reveal what we can do with `log_config`, `checkpoint_config`, and `evaluation`.
+在这些钩子中，只有日志钩子拥有 `VERY_LOW` 的优先级，其他钩子的优先级均为 `NORMAL`。
+上述教程已经覆盖了如何更改 `optimizer_config`，`momentum_config`，和 `lr_config`。
+下面我们展示如何在 `log_config`，`checkpoint_config`，和 `evaluation` 上做文章。
 
-#### Checkpoint config
+#### 检查点配置
 
-The MMCV runner will use `checkpoint_config` to initialize [`CheckpointHook`](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/checkpoint.py#L9).
+MMCV 执行器会使用 `checkpoint_config` 来初始化 [`CheckpointHook`](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/checkpoint.py#L9)。
 
 ```python
 checkpoint_config = dict(interval=1)
 ```
 
-The users could set `max_keep_ckpts` to save only small number of checkpoints or decide whether to store state dict of optimizer by `save_optimizer`. More details of the arguments are [here](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.CheckpointHook)
+用户可以设置 `max_keep_ckpts` 来保存一定少量的检查点，或者用 `save_optimizer` 来决定是否保存优化器的状态。更多参数的细节详见[这里](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.CheckpointHook)。
 
-#### Log config
+#### 日志配置
 
-The `log_config` wraps multiple logger hooks and enables to set intervals. Now MMCV supports `WandbLoggerHook`, `MlflowLoggerHook`, and `TensorboardLoggerHook`.
-The detail usages can be found in the [doc](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.LoggerHook).
+`log_config` 将多个日志钩子封装在一起，并允许设置日志记录间隔。现在 MMCV 支持 `WandbLoggerHook`，`MlflowLoggerHook`，和 `TensorboardLoggerHook`。
+更详细的使用方法请移步 [MMCV 文档](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.LoggerHook)。
 
 ```python
 log_config = dict(
@@ -319,10 +320,10 @@ log_config = dict(
     ])
 ```
 
-#### Evaluation config
+#### 评估配置
 
-The config of `evaluation` will be used to initialize the [`EvalHook`](https://github.com/open-mmlab/mmdetection/blob/v2.13.0/mmdet/core/evaluation/eval_hooks.py#L9).
-Except the key `interval`, other arguments such as `metric` will be passed to the `dataset.evaluate()`
+`evaluation` 的配置会被用于初始化 [`EvalHook`](https://github.com/open-mmlab/mmdetection/blob/v2.13.0/mmdet/core/evaluation/eval_hooks.py#L9)。
+除了 `interval` 字段，其他参数，比如 `metric`，会被传递给 `dataset.evaluate()`。
 
 ```python
 evaluation = dict(interval=1, metric='bbox')
