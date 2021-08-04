@@ -13,9 +13,6 @@ def fill_fc_weights(layers):
                 nn.init.constant_(m.bias, 0)
 
 
-BN_MOMENTUM = 0.1
-
-
 def fill_up_weights(up):
     w = up.weight.data
     f = math.ceil(w.size(2) / 2)
@@ -86,7 +83,8 @@ class IDAUp(nn.Module):
 
 class DLAUp(nn.Module):
 
-    def __init__(self, startp, channels, scales, in_channels=None, norm_cfg=nn.BatchNorm2d):
+    def __init__(self, startp, channels, scales, 
+                 in_channels=None, norm_cfg=nn.BatchNorm2d):
         super(DLAUp, self).__init__()
         self.startp = startp
         if in_channels is None:
@@ -98,7 +96,8 @@ class DLAUp(nn.Module):
             j = -i - 2
             setattr(
                 self, 'ida_{}'.format(i),
-                IDAUp(channels[j], in_channels[j:], scales[j:] // scales[j], norm_cfg))
+                IDAUp(channels[j], in_channels[j:], 
+                      scales[j:] // scales[j], norm_cfg))
             scales[j + 1:] = scales[j]
             in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
@@ -123,10 +122,8 @@ class DLA_Neck(nn.Module):
         self.start_level = start_level
         self.end_level = end_level
         scales = [2**i for i in range(len(in_channels[self.start_level:]))]
-        # self.dla_up = DLAUp(self.start_level, in_channels[self.start_level:],
-        #                   scales, norm_cfg = norm_cfg)
         self.dla_up = DLAUp(startp=self.start_level,  # 2
-                            channels=in_channels[self.start_level:],  # [64, 128, 256, 512]
+                            channels=in_channels[self.start_level:],  
                             scales=scales,  # [1, 2, 4, 8]
                             norm_cfg=norm_cfg)
         self.ida_up = IDAUp(
@@ -163,3 +160,4 @@ class DLA_Neck(nn.Module):
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
+                
