@@ -36,7 +36,7 @@ Under folder `scans` there are overall 1201 train and 312 validation folders in 
 - `scene0001_01.aggregation.json`: Aggregation file including object id, segments id and label.
 - `scene0001_01_vh_clean_2.0.010000.segs.json`: Segmentation file including segments id and vertex.
 - `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
-- `scene0001_01_vh_clean_2.labels.ply`
+- `scene0001_01_vh_clean_2.labels.ply`: Annotation file containing the category of each vertex.
 
 Export ScanNet data by running `python batch_load_scannet_data.py`. The main steps include:
 
