@@ -9,8 +9,6 @@ from mmcv.cnn import build_norm_layer
 from mmdet.models.builder import BACKBONES
 from mmdet.utils import get_root_logger
 
-# BN_MOMENTUM = 0.1
-
 
 def dla_build_norm_layer(cfg, out_channels):  
     cfg_ = cfg.copy()
@@ -69,7 +67,8 @@ class BasicBlock(nn.Module):
 
 class Root(nn.Module):
 
-    def __init__(self, in_channels, out_channels, norm_cfg, kernel_size, residual):
+    def __init__(self, in_channels, out_channels, norm_cfg, 
+                 kernel_size, residual):
         super(Root, self).__init__()
         self.conv = nn.Conv2d(
             in_channels,
@@ -140,8 +139,8 @@ class Tree(nn.Module):
                 dilation=dilation,
                 root_residual=root_residual)
         if levels == 1:
-            self.root = Root(root_dim, out_channels, norm_cfg, root_kernel_size,
-                             root_residual)
+            self.root = Root(root_dim, out_channels, norm_cfg,
+                             root_kernel_size, root_residual)
         self.level_root = level_root
         self.root_dim = root_dim
         self.downsample = None
@@ -234,7 +233,8 @@ class DLANet(nn.Module):
             level_root=True,
             root_residual=residual_root)
 
-    def _make_conv_level(self, inplanes, planes, convs, norm_cfg, stride=1, dilation=1):
+    def _make_conv_level(self, inplanes, planes, convs, 
+                         norm_cfg, stride=1, dilation=1):
         modules = []
         for i in range(convs):
             modules.extend([
@@ -278,3 +278,4 @@ class DLANet(nn.Module):
 
         else:
             raise TypeError('pretrained must be a str or None')
+            
