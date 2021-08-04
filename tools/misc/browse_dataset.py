@@ -200,7 +200,7 @@ def main():
             data_path = data_info['point_cloud']['velodyne_path']
         elif dataset_type in [
                 'ScanNetDataset', 'SUNRGBDDataset', 'ScanNetSegDataset',
-                'S3DISSegDataset'
+                'S3DISSegDataset', 'S3DISDataset'
         ]:
             data_path = data_info['pts_path']
         elif dataset_type in ['NuScenesDataset', 'LyftDataset']:
