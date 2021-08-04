@@ -182,7 +182,7 @@ Here is a full script for setting up MMdetection3D with conda.
 conda create -n open-mmlab python=3.7 -y
 conda activate open-mmlab
 
-# install latest pytorch prebuilt with the default prebuilt CUDA version (usually the latest)
+# install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
 conda install -c pytorch pytorch torchvision -y
 
 # install mmcv

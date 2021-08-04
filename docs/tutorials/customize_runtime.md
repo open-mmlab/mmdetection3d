@@ -2,7 +2,7 @@
 
 ## Customize optimization settings
 
-### Customize optimizer supported by Pytorch
+### Customize optimizer supported by PyTorch
 
 We already support to use all the optimizers implemented by PyTorch, and the only modification is to change the `optimizer` field of config files.
 For example, if you want to use `ADAM` (note that the performance could drop a lot), the modification could be as the following.
@@ -312,7 +312,7 @@ The users could set `max_keep_ckpts` to save only small number of checkpoints or
 #### Log config
 
 The `log_config` wraps multiple logger hooks and enables to set intervals. Now MMCV supports `WandbLoggerHook`, `MlflowLoggerHook`, and `TensorboardLoggerHook`.
-The detail usages can be found in the [docs](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.LoggerHook).
+The detailed usages can be found in the [docs](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.LoggerHook).
 
 ```python
 log_config = dict(
