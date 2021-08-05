@@ -722,7 +722,7 @@ def test_points_sample():
         points.copy(), points_dim=4).convert_to(Coord3DMode.CAM, rect @ Trv2c)
     num_points = 20
     sample_range = 40
-    input_dict = dict(points=points)
+    input_dict = dict(points=points.clone())
 
     point_sample = PointSample(
         num_points=num_points, sample_range=sample_range)
@@ -736,6 +736,13 @@ def test_points_sample():
     assert np.allclose(sampled_pts.tensor.numpy(), expected_pts)
 
     repr_str = repr(point_sample)
-    expected_repr_str = f'PointSample(num_points={num_points},'\
-                        + f' sample_range={sample_range})'
+    expected_repr_str = f'PointSample(num_points={num_points}, ' \
+                        f'sample_range={sample_range}, ' \
+                        'replace=False)'
     assert repr_str == expected_repr_str
+
+    # test when number of far points are larger than number of sampled points
+    np.random.seed(0)
+    point_sample = PointSample(num_points=2, sample_range=sample_range)
+    input_dict = dict(points=points.clone())
+    sampled_pts = point_sample(input_dict)['points']
