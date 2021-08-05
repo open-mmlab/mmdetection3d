@@ -20,23 +20,13 @@ class S3DISData(object):
         self.split = split
         self.data_dir = osp.join(root_path,
                                  'Stanford3dDataset_v1.2_Aligned_Version')
-        self.classes = [
-            'ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
-            'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter'
-        ]
 
-        # Use all 13 classes for segmentation.
-        self.cat_ids = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+        # Following `GSDN <https://arxiv.org/abs/2006.12356>`_, use 5 furniture
+        # classes for detection: table, chair, sofa, bookcase, board.
+        self.cat_ids = np.array([7, 8, 9, 10, 11])
         self.cat_ids2class = {
             cat_id: i
             for i, cat_id in enumerate(list(self.cat_ids))
-        }
-        # Following https://arxiv.org/abs/2006.12356, use 5 furniture classes
-        # for detection: table, chair, sofa, bookcase, board.
-        self.furniture_cat_ids = np.array([7, 8, 9, 10, 11])
-        self.furniture_cat_ids2class = {
-            cat_id: i
-            for i, cat_id in enumerate(list(self.furniture_cat_ids))
         }
 
         assert split in [
@@ -114,7 +104,7 @@ class S3DISData(object):
 
         sample_id_list = sample_id_list if sample_id_list is not None \
             else self.sample_id_list
-        with futures.ThreadPoolExecutor(1) as executor:
+        with futures.ThreadPoolExecutor(num_workers) as executor:
             infos = executor.map(process_single_scene, sample_id_list)
         return list(infos)
 
@@ -123,11 +113,16 @@ class S3DISData(object):
 
         Args:
             points (np.array): Scene points of shape (n, 6).
-            pts_instance_mask (np.array): Instance labels of shape (n,).
-            pts_semantic_mask (np.array): Semantic labels of shape (n,).
+            pts_instance_mask (np.ndarray): Instance labels of shape (n,).
+            pts_semantic_mask (np.ndarray): Semantic labels of shape (n,).
 
         Returns:
-            infos (dict): Bounding boxes with labels.
+            dict: A dict containing detection infos with following keys:
+
+                - gt_boxes_upright_depth (np.ndarray): Bounding boxes
+                    of shape (n, 6)
+                - class (np.ndarray): Box labels of shape (n,)
+                - gt_num (int): Number of boxes.
         """
         bboxes, labels = [], []
         for i in range(1, pts_instance_mask.max()):
@@ -136,9 +131,8 @@ class S3DISData(object):
             assert pts_semantic_mask[ids].min() == pts_semantic_mask[ids].max()
             label = pts_semantic_mask[ids][0]
             # keep only furniture objects
-            if label in self.furniture_cat_ids2class:
-                labels.append(
-                    self.furniture_cat_ids2class[pts_semantic_mask[ids][0]])
+            if label in self.cat_ids2class:
+                labels.append(self.cat_ids2class[pts_semantic_mask[ids][0]])
                 pts = points[:, :3][ids]
                 min_pts = pts.min(axis=0)
                 max_pts = pts.max(axis=0)

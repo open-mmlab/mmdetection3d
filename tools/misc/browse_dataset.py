@@ -9,6 +9,7 @@ from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
 from mmdet3d.core.visualizer import (show_multi_modality_result, show_result,
                                      show_seg_result)
 from mmdet3d.datasets import build_dataset
+from mmdet.datasets.dataset_wrappers import ConcatDataset
 
 
 def parse_args():
@@ -189,6 +190,10 @@ def main():
             cfg.data.train, default_args=dict(filter_empty_gt=False))
     except TypeError:  # seg dataset doesn't have `filter_empty_gt` key
         dataset = build_dataset(cfg.data.train)
+
+    # use only first dataset for ConcatDataset
+    if isinstance(dataset, ConcatDataset):
+        dataset = dataset.datasets[0]
     data_infos = dataset.data_infos
     dataset_type = cfg.dataset_type
 
