@@ -204,7 +204,7 @@ train_pipeline = [  # 训练流水线，更多细节请参考 mmdet3d.datasets.p
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),  # 所有有效类别的编号
         max_cat_id=40),  # 输入语义分割掩码中可能存在的最大类别编号
-    dict(type='IndoorPointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
+    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(type='IndoorFlipData',  # 数据增广流程，随机翻转点和 3D 框
         flip_ratio_yz=0.5,  # 沿着 yz 平面被翻转的概率
@@ -233,7 +233,7 @@ test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.pi
         shift_height=True,  # 是否使用变换高度
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
-    dict(type='IndoorPointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
+    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(
         type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formating
@@ -287,7 +287,7 @@ data = dict(
                     valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
                                    28, 33, 34, 36, 39),
                     max_cat_id=40),
-                dict(type='IndoorPointSample', num_points=40000),
+                dict(type='PointSample', num_points=40000),
                 dict(
                     type='IndoorFlipData',
                     flip_ratio_yz=0.5,
@@ -326,7 +326,7 @@ data = dict(
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
@@ -351,7 +351,7 @@ data = dict(
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',

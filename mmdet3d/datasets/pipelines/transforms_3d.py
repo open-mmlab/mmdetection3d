@@ -846,6 +846,10 @@ class PointSample(object):
     Args:
         num_points (int): Number of points to be sampled.
         sample_range (float, optional): The range where to sample points.
+            If not None, the points with depth larger than `sample_range` are
+            prior to be sampled. Defaults to None.
+        replace (bool, optional): Whether the sampling is with or without
+            replacement. Defaults to False.
     """
 
     def __init__(self, num_points, sample_range=None, replace=False):
@@ -867,8 +871,7 @@ class PointSample(object):
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
             sample_range (float, optional): Indicating the range where the
-                points will be sampled.
-                Defaults to None.
+                points will be sampled. Defaults to None.
             replace (bool, optional): Sampling with or without replacement.
                 Defaults to None.
             return_choices (bool, optional): Whether return choice.
@@ -886,6 +889,10 @@ class PointSample(object):
             depth = np.linalg.norm(points.tensor, axis=1)
             far_inds = np.where(depth > sample_range)[0]
             near_inds = np.where(depth <= sample_range)[0]
+            # in case there are too many far points
+            if len(far_inds) > num_samples:
+                far_inds = np.random.choice(
+                    far_inds, num_samples, replace=False)
             point_range = near_inds
             num_samples -= len(far_inds)
         choices = np.random.choice(point_range, num_samples, replace=replace)
@@ -907,11 +914,11 @@ class PointSample(object):
             dict: Results after sampling, 'points', 'pts_instance_mask' \
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
-        from mmdet3d.core.points import CameraPoints
         points = results['points']
         # Points in Camera coord can provide the depth information.
         # TODO: Need to suport distance-based sampling for other coord system.
         if self.sample_range is not None:
+            from mmdet3d.core.points import CameraPoints
             assert isinstance(points, CameraPoints), \
                 'Sampling based on distance is only appliable for CAMERA coord'
         points, choices = self._points_random_sampling(
@@ -939,7 +946,8 @@ class PointSample(object):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(num_points={self.num_points},'
-        repr_str += f' sample_range={self.sample_range})'
+        repr_str += f' sample_range={self.sample_range},'
+        repr_str += f' replace={self.replace})'
 
         return repr_str
 
