@@ -7,9 +7,10 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from os import path as osp
 
-from mmdet3d.core import (Box3DMode, Coord3DMode, DepthInstance3DBoxes,
-                          LiDARInstance3DBoxes, show_multi_modality_result,
-                          show_result, show_seg_result)
+from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
+                          DepthInstance3DBoxes, LiDARInstance3DBoxes,
+                          show_multi_modality_result, show_result,
+                          show_seg_result)
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_model
