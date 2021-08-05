@@ -21,6 +21,7 @@ train_pipeline = [
         flip_ratio_bev_vertical=0.5),
     dict(
         type='GlobalRotScaleTrans',
+        # following ScanNet dataset the rotation range is 5 degrees
         rot_range=[-0.087266, 0.087266],
         scale_ratio_range=[1.0, 1.0],
         shift_height=True),
