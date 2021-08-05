@@ -122,7 +122,7 @@ We use the KITTI format data of Waymo dataset. Therefore, KITTI and Waymo also s
 
 ### NuScenes
 
-NuScenes provides a toolkit for evaluation, in which each box is wrapped into a `Box` instance. The coordinate system of `Box` is different from our LiDAR coordinate system in that the first two elements of the box dimension correspond to <img src="https://render.githubusercontent.com/render/math?math=(dy, dx)">, or <img src="https://render.githubusercontent.com/render/math?math=(w, l)">, respectively, instead of the reverse.
+NuScenes provides a toolkit for evaluation, in which each box is wrapped into a `Box` instance. The coordinate system of `Box` is different from our LiDAR coordinate system in that the first two elements of the box dimension correspond to <img src="https://render.githubusercontent.com/render/math?math=(dy, dx)">, or <img src="https://render.githubusercontent.com/render/math?math=(w, l)">, respectively, instead of the reverse. For more details, please refer to the NuScenes [tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/nuscenes_det.md#notes).
 
 Readers may refer to the [NuScenes development kit](https://github.com/nutonomy/nuscenes-devkit/tree/master/python-sdk/nuscenes/eval/detection) for the definition of a [NuScenes box](https://github.com/nutonomy/nuscenes-devkit/blob/2c6a752319f23910d5f55cc995abc547a9e54142/python-sdk/nuscenes/utils/data_classes.py#L457) and implementation of [NuScenes evaluation](https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/eval/detection/evaluate.py).
 
