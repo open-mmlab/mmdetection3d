@@ -267,7 +267,7 @@ train_pipeline = [
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),
         max_cat_id=40),
-    dict(type='IndoorPointSample', num_points=40000),
+    dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -291,7 +291,7 @@ train_pipeline = [
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
 - `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 18) during training.
 - Data augmentation:
-    - `IndoorPointSample`: downsample the input point cloud.
+    - `PointSample`: downsample the input point cloud.
     - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
     - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet; then scale the input point cloud, usually by 1.0 for ScanNet; finally translate the input point cloud, usually by 0 for ScanNet.
 

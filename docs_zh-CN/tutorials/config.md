@@ -29,19 +29,19 @@
 
 `{xxx}` 是被要求填写的字段而 `[yyy]` 是可选的。
 
-- `{model}`：模型种类，例如 `hv_pointpillars` (Hard Voxelization PointPillars)、`VoteNet` 等。
-- `[model setting]`：某些模型的特殊设定。
-- `{backbone}`： 主干网络种类例如 `regnet-400mf`、`regnet-1.6gf` 等。
-- `{neck}`：模型颈部的种类包括 `fpn`、`secfpn` 等。
-- `[norm_setting]`：如无特殊声明，默认使用 `bn` (Batch Normalization)，其他类型可以有 `gn` (Group Normalization)、`sbn` (Synchronized Batch Normalization) 等。
+-   `{model}`：模型种类，例如 `hv_pointpillars` (Hard Voxelization PointPillars)、`VoteNet` 等。
+-   `[model setting]`：某些模型的特殊设定。
+-   `{backbone}`： 主干网络种类例如 `regnet-400mf`、`regnet-1.6gf` 等。
+-   `{neck}`：模型颈部的种类包括 `fpn`、`secfpn` 等。
+-   `[norm_setting]`：如无特殊声明，默认使用 `bn` (Batch Normalization)，其他类型可以有 `gn` (Group Normalization)、`sbn` (Synchronized Batch Normalization) 等。
     `gn-head`/`gn-neck` 表示 GN 仅应用于网络的头部或颈部，而 `gn-all` 表示 GN 用于整个模型，例如主干网络、颈部和头部。
-- `[misc]`：模型中各式各样的设置/插件，例如 `strong-aug` 意味着在训练过程中使用更强的数据增广策略。
-- `[batch_per_gpu x gpu]`：每个 GPU 的样本数和 GPU 数量，默认使用 `4x8`。
-- `{schedule}`：训练方案，选项是 `1x`、`2x`、`20e` 等。
+-   `[misc]`：模型中各式各样的设置/插件，例如 `strong-aug` 意味着在训练过程中使用更强的数据增广策略。
+-   `[batch_per_gpu x gpu]`：每个 GPU 的样本数和 GPU 数量，默认使用 `4x8`。
+-   `{schedule}`：训练方案，选项是 `1x`、`2x`、`20e` 等。
     `1x` 和 `2x` 分别代表训练 12 和 24 轮。
     `20e` 在级联模型中使用，表示训练 20 轮。
     对于 `1x`/`2x`，初始学习率在第 8/16 和第 11/22 轮衰减 10 倍；对于 `20e`，初始学习率在第 16 和第 19 轮衰减 10 倍。
-- `{dataset}`：数据集，例如 `nus-3d`、`kitti-3d`、`lyft-3d`、`scannet-3d`、`sunrgbd-3d` 等。
+-   `{dataset}`：数据集，例如 `nus-3d`、`kitti-3d`、`lyft-3d`、`scannet-3d`、`sunrgbd-3d` 等。
     当某一数据集存在多种设定时，我们也标记下所使用的类别数量，例如 `kitti-3d-3class` 和 `kitti-3d-car` 分别意味着在 KITTI 的所有三类上和单独车这一类上进行训练。
 
 ## 弃用的 train_cfg/test_cfg
@@ -204,7 +204,7 @@ train_pipeline = [  # 训练流水线，更多细节请参考 mmdet3d.datasets.p
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),  # 所有有效类别的编号
         max_cat_id=40),  # 输入语义分割掩码中可能存在的最大类别编号
-    dict(type='IndoorPointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
+    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(type='IndoorFlipData',  # 数据增广流程，随机翻转点和 3D 框
         flip_ratio_yz=0.5,  # 沿着 yz 平面被翻转的概率
@@ -233,7 +233,7 @@ test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.pi
         shift_height=True,  # 是否使用变换高度
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
-    dict(type='IndoorPointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
+    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(
         type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formating
@@ -287,7 +287,7 @@ data = dict(
                     valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
                                    28, 33, 34, 36, 39),
                     max_cat_id=40),
-                dict(type='IndoorPointSample', num_points=40000),
+                dict(type='PointSample', num_points=40000),
                 dict(
                     type='IndoorFlipData',
                     flip_ratio_yz=0.5,
@@ -326,7 +326,7 @@ data = dict(
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
@@ -351,7 +351,7 @@ data = dict(
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
