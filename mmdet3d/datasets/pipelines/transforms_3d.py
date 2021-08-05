@@ -846,6 +846,10 @@ class PointSample(object):
     Args:
         num_points (int): Number of points to be sampled.
         sample_range (float, optional): The range where to sample points.
+            If not None, the points with depth larger than `sample_range` are
+            prior to be sampled. Defaults to None.
+        replace (bool, optional): Whether the sampling is with or without
+            replacement. Defaults to False.
     """
 
     def __init__(self, num_points, sample_range=None, replace=False):
@@ -867,8 +871,7 @@ class PointSample(object):
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
             sample_range (float, optional): Indicating the range where the
-                points will be sampled.
-                Defaults to None.
+                points will be sampled. Defaults to None.
             replace (bool, optional): Sampling with or without replacement.
                 Defaults to None.
             return_choices (bool, optional): Whether return choice.
@@ -907,11 +910,11 @@ class PointSample(object):
             dict: Results after sampling, 'points', 'pts_instance_mask' \
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
-        from mmdet3d.core.points import CameraPoints
         points = results['points']
         # Points in Camera coord can provide the depth information.
         # TODO: Need to suport distance-based sampling for other coord system.
         if self.sample_range is not None:
+            from mmdet3d.core.points import CameraPoints
             assert isinstance(points, CameraPoints), \
                 'Sampling based on distance is only appliable for CAMERA coord'
         points, choices = self._points_random_sampling(
