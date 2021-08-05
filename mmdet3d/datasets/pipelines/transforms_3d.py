@@ -946,7 +946,7 @@ class PointSample(object):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(num_points={self.num_points},'
-        repr_str += f' sample_range={self.sample_range}, '
+        repr_str += f' sample_range={self.sample_range},'
         repr_str += f' replace={self.replace})'
 
         return repr_str

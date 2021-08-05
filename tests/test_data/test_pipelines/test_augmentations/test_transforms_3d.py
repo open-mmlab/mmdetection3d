@@ -746,3 +746,7 @@ def test_points_sample():
     point_sample = PointSample(num_points=2, sample_range=sample_range)
     input_dict = dict(points=points.clone())
     sampled_pts = point_sample(input_dict)['points']
+
+    select_idx = np.array([444, 449])
+    expected_pts = points.tensor.numpy()[select_idx]
+    assert np.allclose(sampled_pts.tensor.numpy(), expected_pts)
