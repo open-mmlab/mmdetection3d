@@ -889,6 +889,10 @@ class PointSample(object):
             depth = np.linalg.norm(points.tensor, axis=1)
             far_inds = np.where(depth > sample_range)[0]
             near_inds = np.where(depth <= sample_range)[0]
+            # in case there are too many far points
+            if len(far_inds) > num_samples:
+                far_inds = np.random.choice(
+                    far_inds, num_samples, replace=False)
             point_range = near_inds
             num_samples -= len(far_inds)
         choices = np.random.choice(point_range, num_samples, replace=replace)
