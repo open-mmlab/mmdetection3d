@@ -18,6 +18,7 @@ class DGCNN(BaseModule):
         gf_channels (tuple[tuple[int]]): Out channels of each mlp in GF module.
         fa_channels (tuple[int]): Out channels of each mlp in FA module.
         act_cfg (dict, optional): Config of activation layer.
+            Default: dict(type='ReLU').
         gf_cfg (dict): Config of graph feature module, which may contain the
             following keys and values:
 
