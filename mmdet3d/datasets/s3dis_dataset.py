@@ -12,7 +12,7 @@ from .pipelines import Compose
 
 @DATASETS.register_module()
 class S3DISDataset(Custom3DDataset):
-    """S3DIS Dataset for Detection Task.
+    r"""S3DIS Dataset for Detection Task.
 
     This class is the inner dataset for S3DIS. Since S3DIS has 6 areas, we
     often train on 5 of them and test on the remaining one. The one for

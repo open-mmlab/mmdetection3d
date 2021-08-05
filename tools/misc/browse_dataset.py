@@ -63,6 +63,9 @@ def build_data_cfg(config_path, skip_type, cfg_options):
     # so we don't need to worry about it later
     if cfg.data.train['type'] == 'RepeatDataset':
         cfg.data.train = cfg.data.train.dataset
+    # use only first dataset for `ConcatDataset`
+    if cfg.data.train['type'] == 'ConcatDataset':
+        cfg.data.train = cfg.data.train.datasets[0]
     train_data_cfg = cfg.data.train
     # eval_pipeline purely consists of loading functions
     # use eval_pipeline for data loading
@@ -190,10 +193,6 @@ def main():
             cfg.data.train, default_args=dict(filter_empty_gt=False))
     except TypeError:  # seg dataset doesn't have `filter_empty_gt` key
         dataset = build_dataset(cfg.data.train)
-
-    # use only first dataset for ConcatDataset
-    if isinstance(dataset, ConcatDataset):
-        dataset = dataset.datasets[0]
     data_infos = dataset.data_infos
     dataset_type = cfg.dataset_type
 

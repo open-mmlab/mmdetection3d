@@ -13,7 +13,7 @@ train_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5]),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    dict(type='IndoorPointSample', num_points=40000),
+    dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -51,7 +51,7 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.5,
                 flip_ratio_bev_vertical=0.5),
-            dict(type='IndoorPointSample', num_points=40000),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
