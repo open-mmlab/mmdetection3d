@@ -64,8 +64,8 @@ class BaseDGCNNGFModule(nn.Module):
                     grouper = QueryAndGroup(
                         radii[i],
                         sample_num,
-                        use_xyz=use_xyz,  # True
-                        normalize_xyz=normalize_xyz,  # False
+                        use_xyz=use_xyz,
+                        normalize_xyz=normalize_xyz,
                         return_grouped_xyz=grouper_return_grouped_xyz,
                         return_grouped_idx=True)
                 else:
