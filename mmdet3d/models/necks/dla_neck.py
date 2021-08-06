@@ -1,8 +1,9 @@
 import math
 import numpy as np
-import torch.nn as nn
-from mmcv.ops import ModulatedDeformConv2dPack
 from mmcv.cnn import build_norm_layer
+from mmcv.ops import ModulatedDeformConv2dPack
+from torch import nn as nn
+
 from mmdet.models.builder import NECKS
 
 
@@ -26,8 +27,15 @@ def fill_up_weights(up):
 
 
 class DeformConv(nn.Module):
+    """DCNv2 specially designed for DLA Neck.
 
-    def __init__(self, chi, cho, norm_cfg):
+    Args:
+        chi (int): Number of input channels.
+        cho (int): Number of output channels.
+        norm_cfg (dict): Config dict for normalization layer. Default: None.
+    """
+
+    def __init__(self, chi, cho, norm_cfg=None):
         super(DeformConv, self).__init__()
         self.norm = build_norm_layer(norm_cfg, cho)[1]
         self.relu = nn.ReLU(inplace=True)
@@ -48,8 +56,17 @@ class DeformConv(nn.Module):
 
 
 class IDAUp(nn.Module):
+    """IDAUp module for upsamling different scale's features to same scale.
 
-    def __init__(self, o, channels, up_f, norm_cfg):
+    Args:
+        o (int): Number of output channels for DeformConv.
+        channels (List[int]): List of input channels of different scales.
+        up_f (List[int]): List of size of the convolving kernel of
+                          different scales.
+        norm_cfg (dict): Config dict for normalization layer. Default: None.
+    """
+
+    def __init__(self, o, channels, up_f, norm_cfg=None):
         super(IDAUp, self).__init__()
         for i in range(1, len(channels)):
             c = channels[i]
@@ -83,8 +100,12 @@ class IDAUp(nn.Module):
 
 class DLAUp(nn.Module):
 
-    def __init__(self, startp, channels, scales, 
-                 in_channels=None, norm_cfg=nn.BatchNorm2d):
+    def __init__(self,
+                 startp,
+                 channels,
+                 scales,
+                 in_channels=None,
+                 norm_cfg=nn.BatchNorm2d):
         super(DLAUp, self).__init__()
         self.startp = startp
         if in_channels is None:
@@ -96,8 +117,8 @@ class DLAUp(nn.Module):
             j = -i - 2
             setattr(
                 self, 'ida_{}'.format(i),
-                IDAUp(channels[j], in_channels[j:], 
-                      scales[j:] // scales[j], norm_cfg))
+                IDAUp(channels[j], in_channels[j:], scales[j:] // scales[j],
+                      norm_cfg))
             scales[j + 1:] = scales[j]
             in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
@@ -112,24 +133,33 @@ class DLAUp(nn.Module):
 
 @NECKS.register_module()
 class DLA_Neck(nn.Module):
+    """DLA Neck.
+
+    Args:
+        in_channels (list[int]): Number of input channels per scale.
+        start_level (int): the scale level where upsampling starts. Default: 2.
+        end_level (int): the scale level where upsampling ends. Default: 5.
+        norm_cfg (dict): Config dict for normalization layer. Default: None.
+    """
 
     def __init__(self,
                  in_channels=[16, 32, 64, 128, 256, 512],
                  start_level=2,
                  end_level=5,
-                 norm_cfg=nn.BatchNorm2d):
+                 norm_cfg=None):
         super(DLA_Neck, self).__init__()
         self.start_level = start_level
         self.end_level = end_level
         scales = [2**i for i in range(len(in_channels[self.start_level:]))]
-        self.dla_up = DLAUp(startp=self.start_level,  # 2
-                            channels=in_channels[self.start_level:],  
-                            scales=scales,  # [1, 2, 4, 8]
-                            norm_cfg=norm_cfg)
+        self.dla_up = DLAUp(
+            startp=self.start_level,  # 2
+            channels=in_channels[self.start_level:],
+            scales=scales,  # [1, 2, 4, 8]
+            norm_cfg=norm_cfg)
         self.ida_up = IDAUp(
-           in_channels[self.start_level],
-           in_channels[self.start_level:self.end_level],
-           [2**i for i in range(self.end_level - self.start_level)], norm_cfg)
+            in_channels[self.start_level],
+            in_channels[self.start_level:self.end_level],
+            [2**i for i in range(self.end_level - self.start_level)], norm_cfg)
 
     def forward(self, x):
         x = self.dla_up(x)
@@ -160,4 +190,3 @@ class DLA_Neck(nn.Module):
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-                

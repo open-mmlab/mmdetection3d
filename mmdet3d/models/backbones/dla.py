@@ -10,16 +10,30 @@ from mmdet.models.builder import BACKBONES
 from mmdet.utils import get_root_logger
 
 
-def dla_build_norm_layer(cfg, out_channels):
+def dla_build_norm_layer(cfg, num_features):
+    """Build normalization layer specially desgined for DLANet.
+
+    Args:
+        cfg (dict): The norm layer config, which should contain:
+
+            - type (str): Layer type.
+            - layer args: Args needed to instantiate a norm layer.
+            - requires_grad (bool, optional): Whether stop gradient updates.
+        num_features (int): Number of input channels.
+
+
+    Returns:
+        Function: Build normalization layer in mmcv.
+    """
     cfg_ = cfg.copy()
     if cfg_['type'] == 'GN':
-        if out_channels % 32 == 0:
-            return build_norm_layer(cfg_, out_channels)
+        if num_features % 32 == 0:
+            return build_norm_layer(cfg_, num_features)
         else:
             cfg_['num_groups'] = cfg_['num_groups'] // 2
-            return build_norm_layer(cfg_, out_channels)
+            return build_norm_layer(cfg_, num_features)
     else:
-        return build_norm_layer(cfg_, out_channels)
+        return build_norm_layer(cfg_, num_features)
 
 
 class BasicBlock(nn.Module):
@@ -173,11 +187,23 @@ class Tree(nn.Module):
 
 @BACKBONES.register_module()
 class DLANet(nn.Module):
+    """DLA backbone.
+
+    Args:
+        depth (int): Depth of dla. Default: 34.
+        in_channels (int): Number of input image channels. Default: 3.
+        norm_cfg (dict): Dictionary to construct and config norm layer.
+        residual_root (bool): whether to use residual in root layer
+    """
     arch_settings = {
         34: (BasicBlock, (1, 1, 1, 2, 2, 1), (16, 32, 64, 128, 256, 512)),
     }
 
-    def __init__(self, depth, norm_cfg, residual_root=False):
+    def __init__(self,
+                 depth=34,
+                 in_channels=3,
+                 norm_cfg=None,
+                 residual_root=False):
         super(DLANet, self).__init__()
         if depth not in self.arch_settings:
             raise KeyError(f'invalida depth {depth} for DLA')
@@ -186,7 +212,11 @@ class DLANet(nn.Module):
         # self.num_classes = num_classes
         self.base_layer = nn.Sequential(
             nn.Conv2d(
-                3, channels[0], kernel_size=7, stride=1, padding=3,
+                in_channels,
+                channels[0],
+                kernel_size=7,
+                stride=1,
+                padding=3,
                 bias=False),
             dla_build_norm_layer(norm_cfg, channels[0])[1],
             nn.ReLU(inplace=True))
