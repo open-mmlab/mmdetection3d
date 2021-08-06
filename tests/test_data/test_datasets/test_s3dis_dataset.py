@@ -42,6 +42,8 @@ def test_getitem():
 
 
 def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip()
     from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
     root_path = './tests/data/s3dis'
     ann_file = './tests/data/s3dis/s3dis_infos.pkl'
