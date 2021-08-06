@@ -8,33 +8,41 @@ class RoIPointPool3d(nn.Module):
 
     def __init__(self, num_sampled_points=512, pool_extra_width=1.0):
         super().__init__()
+        """
+
+        Args:
+            num_sampled_points (int): Number of samples in each roi
+            extra_width (float): Extra width to enlarge the box
+        """
         self.num_sampled_points = num_sampled_points
         self.pool_extra_width = pool_extra_width
 
     def forward(self, points, point_features, boxes3d):
         """
         Args:
-            points: (B, N, 3)
+            points (torch.Tensor): Input points whose shape is BxNx3
             point_features: (B, N, C)
             boxes3d: (B, M, 7), [x, y, z, dx, dy, dz, heading]
 
         Returns:
-            pooled_features: (B, M, 512, 3 + C)
-            pooled_empty_flag: (B, M)
+            torch.Tensor: (B, M, 512, 3 + C) pooled_features
+            torch.Tensor: (B, M) pooled_empty_flag
         """
         return RoIPointPool3dFunction.apply(points, point_features, boxes3d,
                                             self.pool_extra_width,
                                             self.num_sampled_points)
 
 
-def enlarge_box3d(boxes3d, extra_width=(0, 0, 0)):
+def enlarge_box3d(boxes3d, extra_width=0):
     """
     Args:
-        boxes3d: [x, y, z, dx, dy, dz, heading], (x, y, z) is the box center
-        extra_width: [extra_x, extra_y, extra_z]
+        boxes3d(torch.Tensor): Float matrix of N x box_dim, \
+            Each row is (x, y, z, dx, dy, dz, yaw), and (x, y, z) is \
+            bottom_center
+        extra_width (float): Extra width to enlarge the box.
 
     Returns:
-
+        torch.Tensor: (B, M, 7) the enlarged bounding boxes
     """
     large_boxes3d = boxes3d.clone()
 
@@ -54,16 +62,17 @@ class RoIPointPool3dFunction(Function):
                 num_sampled_points=512):
         """
         Args:
-            ctx:
-            points: (B, N, 3)
-            point_features: (B, N, C)
-            boxes3d: (B, num_boxes, 7), [x, y, z, dx, dy, dz, heading]
-            pool_extra_width:
-            num_sampled_points:
+            points (torch.Tensor): Input points whose shape is (B, N, 3)
+            point_features (torch.Tensor): Input points features shape is \
+                (B, N, C)
+            boxes3d (torch.Tensor): Input bounding boxes whose shape is \
+                (B, M, 7)
+            pool_extra_width (float): Extra width to enlarge the box
+            num_sampled_points (int): the num of sampled points
 
         Returns:
-            pooled_features: (B, num_boxes, 512, 3 + C)
-            pooled_empty_flag: (B, num_boxes)
+            torch.Tensor: (B, M, 512, 3 + C) pooled_features
+            torch.Tensor: (B, M) pooled_empty_flag
         """
         assert points.shape.__len__() == 3 and points.shape[2] == 3
         batch_size, boxes_num, feature_len = points.shape[0], boxes3d.shape[
