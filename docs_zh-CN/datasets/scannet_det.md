@@ -2,7 +2,7 @@
 
 ## 数据集准备
 
-请参考 ScanNet 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) 以查看总体流程。
+请参考 ScanNet 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/)以查看总体流程。
 
 ### 提取 ScanNet 点云数据
 
@@ -35,7 +35,7 @@ mmdetection3d
 - `scene0001_01_vh_clean_2.ply`: 存有每个顶点坐标和颜色的网格文件。网格的顶点被直接用作未处理的点云数据。
 - `scene0001_01.aggregation.json`: 包含物体 ID，分割部分 ID，和标签的标注文件。
 - `scene0001_01_vh_clean_2.0.010000.segs.json`: 包含分割部分 ID 和顶点的分割标注文件。
-- `scene0001_01.txt`: 包括与坐标轴平行的矩阵等的元文件。
+- `scene0001_01.txt`: 包括对齐矩阵等的元文件。
 - `scene0001_01_vh_clean_2.labels.ply`：包含每个顶点类别的标注文件。
 
 通过运行 `python batch_load_scannet_data.py` 来提取 ScanNet 数据。主要步骤包括：
@@ -111,9 +111,9 @@ def export(mesh_file,
                 if object_id not in object_id_to_label_id:
                     object_id_to_label_id[object_id] = label_ids[verts][0]
         # 包围框格式为 [x, y, z, dx, dy, dz, label_id]
-        # [x, y, z] 是包围框的重力中心, [dx, dy, dz] 是坐标轴平行的
+        # [x, y, z] 是包围框的重力中心, [dx, dy, dz] 是与坐标轴平行的
         # [label_id] 是 'nyu40id' 标准下的语义标签
-        # 注意：因为三维包围框是坐标轴平行的，所以旋转角是 0
+        # 注意：因为三维包围框是与坐标轴平行的，所以旋转角是 0
         unaligned_bboxes = extract_bbox(mesh_vertices, object_id_to_segs,
                                         object_id_to_label_id, instance_ids)
         aligned_bboxes = extract_bbox(aligned_mesh_vertices, object_id_to_segs,
@@ -125,7 +125,7 @@ def export(mesh_file,
 
 ```
 
-在从每个场景的扫描文件提取数据后，如果原始点云点数过多，可以将其下采样（比如到 50000 个点），但对于三维语义分割任务点云不会被下采样。此外，在 `nyu40id` 标准之外的不合法语义标签或者可选的 `DONOT CARE` 类别标签应被过滤。最终，点云文件、语义标签、实例标签和真实物体的集合应被存储于 `.npy` 文件中。
+在从每个场景的扫描文件提取数据后，如果原始点云点数过多，可以将其下采样（比如到 50000 个点），但在三维语义分割任务中，点云不会被下采样。此外，在 `nyu40id` 标准之外的不合法语义标签或者可选的 `DONOT CARE` 类别标签应被过滤。最终，点云文件、语义标签、实例标签和真实物体的集合应被存储于 `.npy` 文件中。
 
 ### 提取 ScanNet RGB 色彩数据
 
@@ -290,7 +290,7 @@ train_pipeline = [
 ]
 ```
 
-- `GlobalAlignment`：输入的点云在施加了坐标轴平行的矩阵后应被转换为坐标轴平行的。
+- `GlobalAlignment`：输入的点云在施加了坐标轴平行的矩阵后应被转换为与坐标轴平行的形式。
 - `PointSegClassMapping`：训练中，只有合法的类别 ID 才会被映射到类别标签，比如 [0, 18)。
 - 数据增强:
     - `IndoorPointSample`：下采样输入点云。
@@ -301,4 +301,4 @@ train_pipeline = [
 
 通常 mAP（全类平均精度）被用于 ScanNet 的检测任务的评估，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时一个通用的计算 3D 物体检测多个类别的精度和召回率的函数被调用，可以参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py)。
 
-与在章节`提取 ScanNet 数据` 中介绍的那样，所有真实物体的三维包围框是坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于坐标轴平行包围框的非极大值抑制 (NMS) ，该过程不会考虑包围框的旋转。
+与在章节`提取 ScanNet 数据` 中介绍的那样，所有真实物体的三维包围框是与坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于与坐标轴平行的包围框的非极大值抑制 (NMS) ，该过程不会考虑包围框的旋转。
