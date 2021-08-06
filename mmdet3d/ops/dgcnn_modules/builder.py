@@ -10,7 +10,7 @@ def build_gf_module(cfg, *args, **kwargs):
     Args:
         cfg (None or dict): The GF module config, which should contain:
             - type (str): Module type.
-            - module args: Args needed to instantiate a GF module.
+            - module args: Args needed to instantiate an GF module.
         args (argument list): Arguments passed to the `__init__`
             method of the corresponding module.
         kwargs (keyword arguments): Keyword arguments passed to the `__init__`
@@ -45,7 +45,7 @@ def build_fa_module(cfg, *args, **kwargs):
     Args:
         cfg (None or dict): The FA module config, which should contain:
             - type (str): Module type.
-            - module args: Args needed to instantiate a FA module.
+            - module args: Args needed to instantiate an FA module.
         args (argument list): Arguments passed to the `__init__`
             method of the corresponding module.
         kwargs (keyword arguments): Keyword arguments passed to the `__init__`
