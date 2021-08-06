@@ -318,15 +318,15 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             gt_labels (list[torch.Tensor]): Gt labels of each sample.
             input_metas (list[dict]): Contain pcd and img's meta info.
             gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding.
+                which bounding boxes to ignore.
 
         Returns:
-            dict[str, list[torch.Tensor]]: Classification, bbox, and \
+            dict[str, list[torch.Tensor]]: Classification, bbox, and
                 direction losses of each level.
 
                 - loss_cls (list[torch.Tensor]): Classification losses.
                 - loss_bbox (list[torch.Tensor]): Box regression losses.
-                - loss_dir (list[torch.Tensor]): Direction classification \
+                - loss_dir (list[torch.Tensor]): Direction classification
                     losses.
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]

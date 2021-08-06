@@ -46,10 +46,10 @@ __device__ inline int check_pt_in_box3d(const float *pt, const float *box3d,
   return in_flag;
 }
 
-__global__ void points_in_boxes_kernel(int batch_size, int boxes_num,
-                                       int pts_num, const float *boxes,
-                                       const float *pts,
-                                       int *box_idx_of_points) {
+__global__ void points_in_boxes_part_kernel(int batch_size, int boxes_num,
+                                            int pts_num, const float *boxes,
+                                            const float *pts,
+                                            int *box_idx_of_points) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
   // the bottom center, each box DO NOT overlaps params pts: (B, npoints, 3) [x,
   // y, z] in LiDAR coordinate params boxes_idx_of_points: (B, npoints), default
@@ -75,9 +75,9 @@ __global__ void points_in_boxes_kernel(int batch_size, int boxes_num,
 }
 
 __global__ void points_in_boxes_all_kernel(int batch_size, int boxes_num,
-                                             int pts_num, const float *boxes,
-                                             const float *pts,
-                                             int *box_idx_of_points) {
+                                           int pts_num, const float *boxes,
+                                           const float *pts,
+                                           int *box_idx_of_points) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
   // the bottom center, each box DO NOT overlaps params pts: (B, npoints, 3) [x,
   // y, z] in LiDAR coordinate params boxes_idx_of_points: (B, npoints), default
@@ -102,7 +102,7 @@ __global__ void points_in_boxes_all_kernel(int batch_size, int boxes_num,
   }
 }
 
-void points_in_boxes_launcher(int batch_size, int boxes_num, int pts_num,
+void points_in_boxes_part_launcher(int batch_size, int boxes_num, int pts_num,
                               const float *boxes, const float *pts,
                               int *box_idx_of_points) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
@@ -113,8 +113,8 @@ void points_in_boxes_launcher(int batch_size, int boxes_num, int pts_num,
 
   dim3 blocks(DIVUP(pts_num, THREADS_PER_BLOCK), batch_size);
   dim3 threads(THREADS_PER_BLOCK);
-  points_in_boxes_kernel<<<blocks, threads>>>(batch_size, boxes_num, pts_num,
-                                              boxes, pts, box_idx_of_points);
+  points_in_boxes_part_kernel<<<blocks, threads>>>(batch_size, boxes_num, pts_num,
+                                                   boxes, pts, box_idx_of_points);
 
   err = cudaGetLastError();
   if (cudaSuccess != err) {
@@ -128,8 +128,8 @@ void points_in_boxes_launcher(int batch_size, int boxes_num, int pts_num,
 }
 
 void points_in_boxes_all_launcher(int batch_size, int boxes_num, int pts_num,
-                                    const float *boxes, const float *pts,
-                                    int *box_idx_of_points) {
+                                  const float *boxes, const float *pts,
+                                  int *box_idx_of_points) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
   // the bottom center, each box params pts: (B, npoints, 3) [x, y, z] in
   // LiDAR coordinate params boxes_idx_of_points: (B, npoints), default -1
@@ -152,7 +152,7 @@ void points_in_boxes_all_launcher(int batch_size, int boxes_num, int pts_num,
 }
 
 int points_in_boxes_part(at::Tensor boxes_tensor, at::Tensor pts_tensor,
-                        at::Tensor box_idx_of_points_tensor) {
+                         at::Tensor box_idx_of_points_tensor) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
   // the bottom center, each box DO NOT overlaps params pts: (B, npoints, 3) [x,
   // y, z] in LiDAR coordinate params boxes_idx_of_points: (B, npoints), default
@@ -170,14 +170,14 @@ int points_in_boxes_part(at::Tensor boxes_tensor, at::Tensor pts_tensor,
   const float *pts = pts_tensor.data_ptr<float>();
   int *box_idx_of_points = box_idx_of_points_tensor.data_ptr<int>();
 
-  points_in_boxes_launcher(batch_size, boxes_num, pts_num, boxes, pts,
-                           box_idx_of_points);
+  points_in_boxes_part_launcher(batch_size, boxes_num, pts_num, boxes, pts,
+                                box_idx_of_points);
 
   return 1;
 }
 
 int points_in_boxes_all(at::Tensor boxes_tensor, at::Tensor pts_tensor,
-                          at::Tensor box_idx_of_points_tensor) {
+                        at::Tensor box_idx_of_points_tensor) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
   // the bottom center. params pts: (B, npoints, 3) [x, y, z] in LiDAR
   // coordinate params boxes_idx_of_points: (B, npoints), default -1
@@ -195,7 +195,7 @@ int points_in_boxes_all(at::Tensor boxes_tensor, at::Tensor pts_tensor,
   int *box_idx_of_points = box_idx_of_points_tensor.data_ptr<int>();
 
   points_in_boxes_all_launcher(batch_size, boxes_num, pts_num, boxes, pts,
-                                 box_idx_of_points);
+                               box_idx_of_points);
 
   return 1;
 }

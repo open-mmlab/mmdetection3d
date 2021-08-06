@@ -35,7 +35,7 @@ def nms_gpu(boxes, scores, thresh, pre_max_size=None, post_max_size=None):
         thresh (int): Threshold.
         pre_max_size (int, optional): Max size of boxes before NMS.
             Default: None.
-        post_maxsize (int, optional): Max size of boxes after NMS.
+        post_max_size (int, optional): Max size of boxes after NMS.
             Default: None.
 
     Returns:

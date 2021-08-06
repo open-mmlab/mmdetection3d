@@ -513,12 +513,16 @@ class BaseInstance3DBoxes(object):
             points (torch.Tensor): Points in shape (1, M, 3) or (M, 3),
                 3 dimensions are (x, y, z) in LiDAR or depth coordinate.
             boxes_override (torch.Tensor, optional): Boxes to override
-                `self.tensor `. Defaults to None.
+                `self.tensor`. Defaults to None.
 
         Returns:
-            torch.Tensor: The index of the box in which
-                each point is, in shape (M, ). Default value is -1
+            torch.Tensor: The index of the first box that each point
+                is in, in shape (M, ). Default value is -1
                 (if the point is not enclosed by any box).
+
+        Note:
+            If a point is enclosed by multiple boxes, the index of the
+            first box will be returned.
         """
         if boxes_override is not None:
             boxes = boxes_override
@@ -538,11 +542,13 @@ class BaseInstance3DBoxes(object):
             points (torch.Tensor): Points in shape (1, M, 3) or (M, 3),
                 3 dimensions are (x, y, z) in LiDAR or depth coordinate.
             boxes_override (torch.Tensor, optional): Boxes to override
-                `self.tensor `. Defaults to None.
+                `self.tensor`. Defaults to None.
 
         Returns:
-            torch.Tensor: The index of all boxes in which each point is,
-                in shape (B, M, T).
+            torch.Tensor: A tensor indicating whether a point is in a box,
+                in shape (M, T). T is the number of boxes. Denote this
+                tensor as A, if the m^th point is in the t^th box, then
+                `A[m, t] == 1`, elsewise `A[m, t] == 0`.
         """
         if boxes_override is not None:
             boxes = boxes_override
