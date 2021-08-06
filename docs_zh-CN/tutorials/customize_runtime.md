@@ -13,7 +13,7 @@ optimizer = dict(type='Adam', lr=0.0003, weight_decay=0.0001)
 
 为了修改模型的学习率，用户只需要修改优化器配置中的 `lr` 字段。用户可以根据 PyTorch 的 [API 文档](https://pytorch.org/docs/stable/optim.html?highlight=optim#module-torch.optim) 直接设置参数。
 
-### 自定义自己实现的优化器
+### 自定义并实现优化器
 
 #### 1. 定义新的优化器
 
@@ -193,7 +193,7 @@ workflow = [('train', 1)]
 
 ## 自定义钩子
 
-### 自定义自己实现的钩子
+### 自定义并实现钩子
 
 #### 1. 实现一个新钩子
 
@@ -293,7 +293,7 @@ custom_hooks = [
 - 动量配置 (momentum_config)
 
 在这些钩子中，只有日志钩子拥有 `VERY_LOW` 的优先级，其他钩子的优先级均为 `NORMAL`。
-上述教程已经覆盖了如何更改 `optimizer_config`，`momentum_config`，和 `lr_config`。
+上述教程已经涉及了如何更改 `optimizer_config`，`momentum_config`，和 `lr_config`。
 下面我们展示如何在 `log_config`，`checkpoint_config`，和 `evaluation` 上做文章。
 
 #### 检查点配置
