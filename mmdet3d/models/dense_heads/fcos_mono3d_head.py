@@ -590,7 +590,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         Returns:
             tuples[Tensor]: Predicted 3D boxes, scores, labels and attributes.
         """
-        view = np.array(input_meta['cam_intrinsic'])
+        view = np.array(input_meta['cam2img'])
         scale_factor = input_meta['scale_factor']
         cfg = self.test_cfg if cfg is None else cfg
         assert len(cls_scores) == len(bbox_preds) == len(mlvl_points)
