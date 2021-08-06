@@ -1,16 +1,16 @@
 from __future__ import absolute_import, division, print_function
 
 import torch
-from mmcv.cnn import constant_init, kaiming_init
+from mmcv.cnn import build_norm_layer, constant_init, kaiming_init
 from mmcv.runner import load_checkpoint
 from torch import nn
 from torch.nn.modules.batchnorm import _BatchNorm
-from mmcv.cnn import build_norm_layer
+
 from mmdet.models.builder import BACKBONES
 from mmdet.utils import get_root_logger
 
 
-def dla_build_norm_layer(cfg, out_channels):  
+def dla_build_norm_layer(cfg, out_channels):
     cfg_ = cfg.copy()
     if cfg_['type'] == 'GN':
         if out_channels % 32 == 0:
@@ -51,14 +51,11 @@ class BasicBlock(nn.Module):
     def forward(self, x, residual=None):
         if residual is None:
             residual = x
-
         out = self.conv1(x)
         out = self.norm1(out)
         out = self.relu(out)
-
         out = self.conv2(out)
         out = self.norm2(out)
-
         out += residual
         out = self.relu(out)
 
@@ -67,8 +64,8 @@ class BasicBlock(nn.Module):
 
 class Root(nn.Module):
 
-    def __init__(self, in_channels, out_channels, norm_cfg, 
-                 kernel_size, residual):
+    def __init__(self, in_channels, out_channels, norm_cfg, kernel_size,
+                 residual):
         super(Root, self).__init__()
         self.conv = nn.Conv2d(
             in_channels,
@@ -180,7 +177,7 @@ class DLANet(nn.Module):
         34: (BasicBlock, (1, 1, 1, 2, 2, 1), (16, 32, 64, 128, 256, 512)),
     }
 
-    def __init__(self, depth, norm_cfg, residual_root=False, type=None):
+    def __init__(self, depth, norm_cfg, residual_root=False):
         super(DLANet, self).__init__()
         if depth not in self.arch_settings:
             raise KeyError(f'invalida depth {depth} for DLA')
@@ -190,7 +187,8 @@ class DLANet(nn.Module):
         self.base_layer = nn.Sequential(
             nn.Conv2d(
                 3, channels[0], kernel_size=7, stride=1, padding=3,
-                bias=False), dla_build_norm_layer(norm_cfg, channels[0])[1],
+                bias=False),
+            dla_build_norm_layer(norm_cfg, channels[0])[1],
             nn.ReLU(inplace=True))
         self.level0 = self._make_conv_level(channels[0], channels[0],
                                             levels[0], norm_cfg)
@@ -233,8 +231,13 @@ class DLANet(nn.Module):
             level_root=True,
             root_residual=residual_root)
 
-    def _make_conv_level(self, inplanes, planes, convs, 
-                         norm_cfg, stride=1, dilation=1):
+    def _make_conv_level(self,
+                         inplanes,
+                         planes,
+                         convs,
+                         norm_cfg,
+                         stride=1,
+                         dilation=1):
         modules = []
         for i in range(convs):
             modules.extend([
@@ -262,6 +265,7 @@ class DLANet(nn.Module):
 
     def init_weights(self, pretrained=None):
         """Initialize the weights in backbone.
+
         Args:
             pretrained (str, optional): Path to pre-trained weights.
                 Defaults to None.
@@ -275,7 +279,5 @@ class DLANet(nn.Module):
                     kaiming_init(m)
                 elif isinstance(m, (_BatchNorm, nn.GroupNorm)):
                     constant_init(m, 1)
-
         else:
             raise TypeError('pretrained must be a str or None')
-            
