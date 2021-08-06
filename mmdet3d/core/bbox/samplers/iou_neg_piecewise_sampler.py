@@ -59,7 +59,9 @@ class IoUNegPiecewiseSampler(RandomSampler):
         if neg_inds.numel() != 0:
             neg_inds = neg_inds.squeeze(1)
         if len(neg_inds) <= 0:
-            return False
+            raise NotImplementedError(
+                'Not support to sample the negative samples when the length '
+                'of negative samples is 0')
         else:
             neg_inds_choice = neg_inds.new_zeros([0])
             extend_num = 0
@@ -88,8 +90,11 @@ class IoUNegPiecewiseSampler(RandomSampler):
                         [neg_inds_choice, neg_inds[piece_neg_inds]], dim=0)
                     extend_num += piece_expected_num - len(piece_neg_inds)
 
+                    # for the last piece
                     if piece_inds == self.neg_piece_num - 1:
                         extend_neg_num = num_expected - len(neg_inds_choice)
+                        # if the numbers of nagetive samples > 0, we will
+                        # randomly select num_expected samples in last piece
                         if piece_neg_inds.numel() > 0:
                             rand_idx = torch.randint(
                                 low=0,
@@ -98,6 +103,9 @@ class IoUNegPiecewiseSampler(RandomSampler):
                             neg_inds_choice = torch.cat(
                                 [neg_inds_choice, piece_neg_inds[rand_idx]],
                                 dim=0)
+                        # if the numbers of nagetive samples == 0, we will
+                        # randomly select num_expected samples in all \
+                        # previous pieces
                         else:
                             rand_idx = torch.randint(
                                 low=0,
