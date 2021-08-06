@@ -29,7 +29,7 @@ def _generate_sunrgbd_dataset_config():
             rot_range=[-0.523599, 0.523599],
             scale_ratio_range=[0.85, 1.15],
             shift_height=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',
@@ -74,7 +74,7 @@ def _generate_sunrgbd_multi_modality_dataset_config():
             rot_range=[-0.523599, 0.523599],
             scale_ratio_range=[0.85, 1.15],
             shift_height=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',

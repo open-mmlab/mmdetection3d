@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <cmath>
+#include <cstdint>
 #include <vector>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -49,7 +50,7 @@ __global__ void assign_score_withk_forward_kernel(const int B, const int N0, con
                                                   const float* points,
                                                   const float* centers,
                                                   const float* scores,
-                                                  const long* knn_idx,
+                                                  const int64_t* knn_idx,
                                                   float* output) {
 
     // ----- parallel loop for B, N1, K and O ---------
@@ -82,7 +83,7 @@ __global__ void assign_score_withk_backward_points_kernel(const int B, const int
                                                           const int K, const int O, const int aggregate,
                                                           const float* grad_out,
                                                           const float* scores,
-                                                          const long* knn_idx,
+                                                          const int64_t* knn_idx,
                                                           float* grad_points,
                                                           float* grad_centers) {
 
@@ -116,7 +117,7 @@ __global__ void assign_score_withk_backward_scores_kernel(const int B, const int
                                                           const float* grad_out,
                                                           const float* points,
                                                           const float* centers,
-                                                          const long* knn_idx,
+                                                          const int64_t* knn_idx,
                                                           float* grad_scores) {
 
     // ----- parallel loop for B, N, K, M ---------
@@ -156,7 +157,7 @@ void assign_score_withk_forward_wrapper(int B, int N0, int N1, int M, int K, int
     const float* points_data = points.data_ptr<float>();
     const float* centers_data = centers.data_ptr<float>();
     const float* scores_data = scores.data_ptr<float>();
-    const long* knn_idx_data = knn_idx.data_ptr<long>();
+    const int64_t* knn_idx_data = knn_idx.data_ptr<int64_t>();
     float* output_data = output.data_ptr<float>();
 
     dim3 blocks(DIVUP(B*O*N1*K, THREADS_PER_BLOCK));
@@ -191,7 +192,7 @@ void assign_score_withk_backward_wrapper(int B, int N0, int N1, int M, int K, in
     const float* points_data = points.data_ptr<float>();
     const float* centers_data = centers.data_ptr<float>();
     const float* scores_data = scores.data_ptr<float>();
-    const long* knn_idx_data = knn_idx.data_ptr<long>();
+    const int64_t* knn_idx_data = knn_idx.data_ptr<int64_t>();
     float* grad_points_data = grad_points.data_ptr<float>();
     float* grad_centers_data = grad_centers.data_ptr<float>();
     float* grad_scores_data = grad_scores.data_ptr<float>();

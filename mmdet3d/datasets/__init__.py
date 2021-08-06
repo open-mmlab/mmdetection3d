@@ -7,14 +7,17 @@ from .kitti_mono_dataset import KittiMonoDataset
 from .lyft_dataset import LyftDataset
 from .nuscenes_dataset import NuScenesDataset
 from .nuscenes_mono_dataset import NuScenesMonoDataset
+# yapf: disable
 from .pipelines import (BackgroundPointsFilter, GlobalAlignment,
                         GlobalRotScaleTrans, IndoorPatchPointSample,
                         IndoorPointSample, LoadAnnotations3D,
                         LoadPointsFromFile, LoadPointsFromMultiSweeps,
                         NormalizePointsColor, ObjectNameFilter, ObjectNoise,
-                        ObjectRangeFilter, ObjectSample, PointShuffle,
-                        PointsRangeFilter, RandomDropPointsColor, RandomFlip3D,
-                        RandomJitterPoints, VoxelBasedPointSampler)
+                        ObjectRangeFilter, ObjectSample, PointSample,
+                        PointShuffle, PointsRangeFilter, RandomDropPointsColor,
+                        RandomFlip3D, RandomJitterPoints,
+                        VoxelBasedPointSampler)
+# yapf: enable
 from .s3dis_dataset import S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
@@ -30,9 +33,10 @@ __all__ = [
     'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle', 'ObjectRangeFilter',
     'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile', 'S3DISSegDataset',
     'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
-    'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset', 'ScanNetDataset',
-    'ScanNetSegDataset', 'SemanticKITTIDataset', 'Custom3DDataset',
-    'Custom3DSegDataset', 'LoadPointsFromMultiSweeps', 'WaymoDataset',
-    'BackgroundPointsFilter', 'VoxelBasedPointSampler', 'get_loading_pipeline',
-    'RandomDropPointsColor', 'RandomJitterPoints', 'ObjectNameFilter'
+    'PointSample', 'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset',
+    'ScanNetDataset', 'ScanNetSegDataset', 'SemanticKITTIDataset',
+    'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
+    'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
+    'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
+    'ObjectNameFilter'
 ]
