@@ -311,7 +311,7 @@ def test_dgcnn():
 
     set_random_seed(0, True)
     dgcnn_cfg = _get_segmentor_cfg(
-        'dgcnn/dgcnn_32x1_consine_100e_s3dis_seg-3d-13class.py')
+        'dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py')
     dgcnn_cfg.test_cfg.num_points = 32
     self = build_segmentor(dgcnn_cfg).cuda()
     points = [torch.rand(4096, 9).float().cuda() for _ in range(2)]
