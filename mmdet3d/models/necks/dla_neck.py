@@ -1,113 +1,104 @@
 import math
 import numpy as np
-from mmcv.cnn import build_norm_layer
-from mmcv.ops import ModulatedDeformConv2dPack
+from mmcv.cnn import ConvModule, build_conv_layer
 from torch import nn as nn
 
 from mmdet.models.builder import NECKS
-
-
-def fill_fc_weights(layers):
-    for m in layers.modules():
-        if isinstance(m, nn.Conv2d):
-            if m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-
-
-def fill_up_weights(up):
-    w = up.weight.data
-    f = math.ceil(w.size(2) / 2)
-    c = (2 * f - 1 - f % 2) / (2. * f)
-    for i in range(w.size(2)):
-        for j in range(w.size(3)):
-            w[0, 0, i, j] = \
-                (1 - math.fabs(i / f - c)) * (1 - math.fabs(j / f - c))
-    for c in range(1, w.size(0)):
-        w[c, 0, :, :] = w[0, 0, :, :]
-
-
-class DeformConv(nn.Module):
-    """DCNv2 specially designed for DLA Neck.
-
-    Args:
-        chi (int): Number of input channels.
-        cho (int): Number of output channels.
-        norm_cfg (dict): Config dict for normalization layer. Default: None.
-    """
-
-    def __init__(self, chi, cho, norm_cfg=None):
-        super(DeformConv, self).__init__()
-        self.norm = build_norm_layer(norm_cfg, cho)[1]
-        self.relu = nn.ReLU(inplace=True)
-        self.deform_conv = ModulatedDeformConv2dPack(
-            chi,
-            cho,
-            kernel_size=(3, 3),
-            stride=1,
-            padding=1,
-            dilation=1,
-            deform_groups=1)
-
-    def forward(self, x):
-        x = self.deform_conv(x)
-        x = self.norm(x)
-        x = self.relu(x)
-        return x
 
 
 class IDAUp(nn.Module):
     """IDAUp module for upsamling different scale's features to same scale.
 
     Args:
-        o (int): Number of output channels for DeformConv.
-        channels (List[int]): List of input channels of different scales.
-        up_f (List[int]): List of size of the convolving kernel of
-                          different scales.
+        out_channel (int): Number of output channels for DeformConv.
+        in_channels_list (List[int]): List of input channels of multi-scale
+                                    feature map.
+        up_kernel_size_list (List[int]): List of size of the convolving
+                                        kernel of different scales.
         norm_cfg (dict): Config dict for normalization layer. Default: None.
+        use_dcn (bool): If True, use DCNv2. Default: True.
     """
 
-    def __init__(self, o, channels, up_f, norm_cfg=None):
+    def __init__(
+        self,
+        out_channel,
+        in_channels_list,
+        up_kernel_size_list,
+        norm_cfg=None,
+        use_dcn=True,
+    ):
         super(IDAUp, self).__init__()
-        for i in range(1, len(channels)):
-            c = channels[i]
-            f = int(up_f[i])
-            proj = DeformConv(c, o, norm_cfg)
-            node = DeformConv(o, o, norm_cfg)
-
-            up = nn.ConvTranspose2d(
-                o,
-                o,
-                f * 2,
-                stride=f,
-                padding=f // 2,
+        self.use_dcn = use_dcn
+        for i in range(1, len(in_channels_list)):
+            in_channel = in_channels_list[i]
+            up_kernel_size = int(up_kernel_size_list[i])
+            proj = ConvModule(
+                in_channel,
+                out_channel,
+                3,
+                padding=1,
+                bias=True,
+                conv_cfg=dict(type='DCNv2') if self.use_dcn else None,
+                norm_cfg=norm_cfg)
+            node = ConvModule(
+                out_channel,
+                out_channel,
+                3,
+                padding=1,
+                bias=True,
+                conv_cfg=dict(type='DCNv2') if self.use_dcn else None,
+                norm_cfg=norm_cfg)
+            up = build_conv_layer(
+                dict(type='deconv'),
+                out_channel,
+                out_channel,
+                up_kernel_size * 2,
+                stride=up_kernel_size,
+                padding=up_kernel_size // 2,
                 output_padding=0,
-                groups=o,
+                groups=out_channel,
                 bias=False)
-            fill_up_weights(up)
-
             setattr(self, 'proj_' + str(i), proj)
             setattr(self, 'up_' + str(i), up)
             setattr(self, 'node_' + str(i), node)
 
-    def forward(self, layers, startp, endp):
-        for i in range(startp + 1, endp):
-            upsample = getattr(self, 'up_' + str(i - startp))
-            project = getattr(self, 'proj_' + str(i - startp))
+    def forward(self, layers, start_level, end_level):
+        """Forward function.
+
+        Args:
+            layers (list[torch.Tensor]): features from multiple layers.
+            start_level (int): start layer for feature upsampling
+            end_level (int): end layer for feature upsampling
+        """
+        for i in range(start_level + 1, end_level):
+            upsample = getattr(self, 'up_' + str(i - start_level))
+            project = getattr(self, 'proj_' + str(i - start_level))
             layers[i] = upsample(project(layers[i]))
-            node = getattr(self, 'node_' + str(i - startp))
+            node = getattr(self, 'node_' + str(i - start_level))
             layers[i] = node(layers[i] + layers[i - 1])
 
 
 class DLAUp(nn.Module):
+    """DLAUp module for multiple layers feature extraction and fusion.
+
+    Args:
+        start_level (int): the start layer.
+        channels (List[int]): List of input channels of multi-scale
+                            feature map.
+        scales(List[int]): List of scale of different layers' feature.
+        in_channels (bool): List of input channels of different scales.
+                            Default: False.
+        norm_cfg (dict): Config dict for normalization layer. Default: None.
+    """
 
     def __init__(self,
-                 startp,
+                 start_level,
                  channels,
                  scales,
                  in_channels=None,
-                 norm_cfg=nn.BatchNorm2d):
+                 norm_cfg=None):
         super(DLAUp, self).__init__()
-        self.startp = startp
+        self.start_level = start_level
         if in_channels is None:
             in_channels = channels
         self.channels = channels
@@ -123,12 +114,17 @@ class DLAUp(nn.Module):
             in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
     def forward(self, layers):
-        out = [layers[-1]]  # start with 32
-        for i in range(len(layers) - self.startp - 1):
+        """Forward function.
+
+        Args:
+            layers (tuple[torch.Tensor]): features from multi-scale layers.
+        """
+        outs = [layers[-1]]
+        for i in range(len(layers) - self.start_level - 1):
             ida = getattr(self, 'ida_{}'.format(i))
             ida(layers, len(layers) - i - 2, len(layers))
-            out.insert(0, layers[-1])
-        return out
+            outs.insert(0, layers[-1])
+        return outs
 
 
 @NECKS.register_module()
@@ -136,7 +132,8 @@ class DLA_Neck(nn.Module):
     """DLA Neck.
 
     Args:
-        in_channels (list[int]): Number of input channels per scale.
+        in_channels (list[int]): List of input channels of multi-scale
+                                feature map.
         start_level (int): the scale level where upsampling starts. Default: 2.
         end_level (int): the scale level where upsampling ends. Default: 5.
         norm_cfg (dict): Config dict for normalization layer. Default: None.
@@ -152,9 +149,9 @@ class DLA_Neck(nn.Module):
         self.end_level = end_level
         scales = [2**i for i in range(len(in_channels[self.start_level:]))]
         self.dla_up = DLAUp(
-            startp=self.start_level,  # 2
+            start_level=self.start_level,
             channels=in_channels[self.start_level:],
-            scales=scales,  # [1, 2, 4, 8]
+            scales=scales,
             norm_cfg=norm_cfg)
         self.ida_up = IDAUp(
             in_channels[self.start_level],
@@ -162,21 +159,21 @@ class DLA_Neck(nn.Module):
             [2**i for i in range(self.end_level - self.start_level)], norm_cfg)
 
     def forward(self, x):
+        x = list(x)
         x = self.dla_up(x)
-        y = []
+        outs = []
         for i in range(self.end_level - self.start_level):
-            y.append(x[i].clone())
-        self.ida_up(y, 0, len(y))
-        return y[-1]
+            outs.append(x[i].clone())
+        self.ida_up(outs, 0, len(outs))
+        return outs[-1]
 
-    def init_weights(self, pretrained=True):
-        """Initialize the weights of FPN module."""
+    def init_weights(self):
         for m in self.modules():
-            if isinstance(m, (nn.ConvTranspose2d, nn.Conv2d)):
-                nn.init.normal_(m.weight, std=0.001)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, ModulatedDeformConv2dPack):
+            if isinstance(m, nn.ConvTranspose2d):
+                # In order to be consistent with the source code,
+                # reset the ConvTranspose2d initialization parameters
+                m.reset_parameters()
+                # Simulated bilinear upsampling kernel
                 w = m.weight.data
                 f = math.ceil(w.size(2) / 2)
                 c = (2 * f - 1 - f % 2) / (2. * f)
@@ -184,9 +181,13 @@ class DLA_Neck(nn.Module):
                     for j in range(w.size(3)):
                         w[0, 0, i, j] = \
                             (1 - math.fabs(i / f - c)) * (
-                                        1 - math.fabs(j / f - c))
+                                    1 - math.fabs(j / f - c))
                 for c in range(1, w.size(0)):
                     w[c, 0, :, :] = w[0, 0, :, :]
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Conv2d):
+                # In order to be consistent with the source code,
+                # reset the Conv2d initialization parameters
+                m.reset_parameters()
