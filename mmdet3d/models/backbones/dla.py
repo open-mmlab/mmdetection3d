@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
 import torch
-from mmcv.cnn import build_norm_layer, constant_init, kaiming_init
+from mmcv.cnn import (build_conv_layer, build_norm_layer, constant_init,
+                      kaiming_init)
 from mmcv.runner import load_checkpoint
 from torch import nn
 from torch.nn.modules.batchnorm import _BatchNorm
@@ -38,31 +39,40 @@ def dla_build_norm_layer(cfg, num_features):
 
 class BasicBlock(nn.Module):
 
-    def __init__(self, inplanes, planes, norm_cfg, stride=1, dilation=1):
+    def __init__(self,
+                 inplanes,
+                 planes,
+                 norm_cfg,
+                 conv_cfg,
+                 stride=1,
+                 dilation=1):
         super(BasicBlock, self).__init__()
-        self.conv1 = nn.Conv2d(
+        self.conv1 = build_conv_layer(
+            conv_cfg,
             inplanes,
             planes,
-            kernel_size=3,
+            3,
             stride=stride,
             padding=dilation,
-            bias=False,
-            dilation=dilation)
-        # self.norm1 = nn.BatchNorm2d(planes, momentum=BN_MOMENTUM)
+            dilation=dilation,
+            bias=False)
         self.norm1 = dla_build_norm_layer(norm_cfg, planes)[1]
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(
+        self.conv2 = build_conv_layer(
+            conv_cfg,
             planes,
             planes,
-            kernel_size=3,
+            3,
             stride=1,
             padding=dilation,
-            bias=False,
-            dilation=dilation)
+            dilation=dilation,
+            bias=False)
         self.norm2 = dla_build_norm_layer(norm_cfg, planes)[1]
         self.stride = stride
 
     def forward(self, x, residual=None):
+        """Forward function."""
+
         if residual is None:
             residual = x
         out = self.conv1(x)
@@ -78,23 +88,30 @@ class BasicBlock(nn.Module):
 
 class Root(nn.Module):
 
-    def __init__(self, in_channels, out_channels, norm_cfg, kernel_size,
-                 residual):
+    def __init__(self, in_channels, out_channels, norm_cfg, conv_cfg,
+                 kernel_size, residual):
         super(Root, self).__init__()
-        self.conv = nn.Conv2d(
+        self.conv = build_conv_layer(
+            conv_cfg,
             in_channels,
             out_channels,
             1,
             stride=1,
-            bias=False,
-            padding=(kernel_size - 1) // 2)
+            padding=(kernel_size - 1) // 2,
+            bias=False)
         self.norm = dla_build_norm_layer(norm_cfg, out_channels)[1]
         self.relu = nn.ReLU(inplace=True)
         self.residual = residual
 
-    def forward(self, *x):
-        children = x
-        x = self.conv(torch.cat(x, 1))
+    def forward(self, feat_list):
+        """Forward function.
+
+        Args:
+            feat_list (list[torch.Tensor]): Output features from
+                                            multiple layers.
+        """
+        children = feat_list
+        x = self.conv(torch.cat(feat_list, 1))
         x = self.norm(x)
         if self.residual:
             x += children[0]
@@ -111,6 +128,7 @@ class Tree(nn.Module):
                  in_channels,
                  out_channels,
                  norm_cfg,
+                 conv_cfg,
                  stride=1,
                  level_root=False,
                  root_dim=0,
@@ -124,9 +142,19 @@ class Tree(nn.Module):
             root_dim += in_channels
         if levels == 1:
             self.tree1 = block(
-                in_channels, out_channels, norm_cfg, stride, dilation=dilation)
+                in_channels,
+                out_channels,
+                norm_cfg,
+                conv_cfg,
+                stride,
+                dilation=dilation)
             self.tree2 = block(
-                out_channels, out_channels, norm_cfg, 1, dilation=dilation)
+                out_channels,
+                out_channels,
+                norm_cfg,
+                conv_cfg,
+                1,
+                dilation=dilation)
         else:
             self.tree1 = Tree(
                 levels - 1,
@@ -134,6 +162,7 @@ class Tree(nn.Module):
                 in_channels,
                 out_channels,
                 norm_cfg,
+                conv_cfg,
                 stride,
                 root_dim=0,
                 root_kernel_size=root_kernel_size,
@@ -145,12 +174,13 @@ class Tree(nn.Module):
                 out_channels,
                 out_channels,
                 norm_cfg,
+                conv_cfg,
                 root_dim=root_dim + out_channels,
                 root_kernel_size=root_kernel_size,
                 dilation=dilation,
                 root_residual=root_residual)
         if levels == 1:
-            self.root = Root(root_dim, out_channels, norm_cfg,
+            self.root = Root(root_dim, out_channels, norm_cfg, conv_cfg,
                              root_kernel_size, root_residual)
         self.level_root = level_root
         self.root_dim = root_dim
@@ -161,24 +191,26 @@ class Tree(nn.Module):
             self.downsample = nn.MaxPool2d(stride, stride=stride)
         if in_channels != out_channels:
             self.project = nn.Sequential(
-                nn.Conv2d(
+                build_conv_layer(
+                    conv_cfg,
                     in_channels,
                     out_channels,
-                    kernel_size=1,
+                    1,
                     stride=1,
                     bias=False),
                 dla_build_norm_layer(norm_cfg, out_channels)[1])
 
     def forward(self, x, residual=None, children=None):
         children = [] if children is None else children
-        bottom = self.downsample(x) if self.downsample else x
-        residual = self.project(bottom) if self.project else bottom
+        bottom = self.downsample(x) if self.downsample is not None else x
+        residual = self.project(bottom) if self.project is not None else bottom
         if self.level_root:
             children.append(bottom)
         x1 = self.tree1(x, residual)
         if self.levels == 1:
             x2 = self.tree2(x1)
-            x = self.root(x2, x1, *children)
+            feat_list = [x2, x1] + children
+            x = self.root(feat_list)
         else:
             children.append(x1)
             x = self.tree2(x1, children=children)
@@ -187,13 +219,18 @@ class Tree(nn.Module):
 
 @BACKBONES.register_module()
 class DLANet(nn.Module):
-    """DLA backbone.
+    """DLA backbone <https://arxiv.org/abs/1707.06484>`_.
 
     Args:
         depth (int): Depth of dla. Default: 34.
         in_channels (int): Number of input image channels. Default: 3.
         norm_cfg (dict): Dictionary to construct and config norm layer.
-        residual_root (bool): whether to use residual in root layer
+                         Default: None.
+        conv_cfg (dict): Dictionary to construct and config conv layer.
+                         Default: None.
+        layer_level_root (list[bool]): dla layer to apply level_root. this
+                                 is only used for tree level.
+        residual_root (bool): whether to use residual in root layer.
     """
     arch_settings = {
         34: (BasicBlock, (1, 1, 1, 2, 2, 1), (16, 32, 64, 128, 256, 512)),
@@ -203,78 +240,68 @@ class DLANet(nn.Module):
                  depth=34,
                  in_channels=3,
                  norm_cfg=None,
+                 conv_cfg=None,
+                 layer_level_root=(False, True, True, True),
                  residual_root=False):
         super(DLANet, self).__init__()
         if depth not in self.arch_settings:
             raise KeyError(f'invalida depth {depth} for DLA')
         block, levels, channels = self.arch_settings[depth]
         self.channels = channels
-        # self.num_classes = num_classes
+        self.num_levels = len(levels)
         self.base_layer = nn.Sequential(
-            nn.Conv2d(
+            build_conv_layer(
+                conv_cfg,
                 in_channels,
                 channels[0],
-                kernel_size=7,
+                7,
                 stride=1,
                 padding=3,
                 bias=False),
             dla_build_norm_layer(norm_cfg, channels[0])[1],
             nn.ReLU(inplace=True))
-        self.level0 = self._make_conv_level(channels[0], channels[0],
-                                            levels[0], norm_cfg)
-        self.level1 = self._make_conv_level(
-            channels[0], channels[1], levels[1], norm_cfg, stride=2)
-        self.level2 = Tree(
-            levels[2],
-            block,
-            channels[1],
-            channels[2],
-            norm_cfg,
-            2,
-            level_root=False,
-            root_residual=residual_root)
-        self.level3 = Tree(
-            levels[3],
-            block,
-            channels[2],
-            channels[3],
-            norm_cfg,
-            2,
-            level_root=True,
-            root_residual=residual_root)
-        self.level4 = Tree(
-            levels[4],
-            block,
-            channels[3],
-            channels[4],
-            norm_cfg,
-            2,
-            level_root=True,
-            root_residual=residual_root)
-        self.level5 = Tree(
-            levels[5],
-            block,
-            channels[4],
-            channels[5],
-            norm_cfg,
-            2,
-            level_root=True,
-            root_residual=residual_root)
+
+        for i in range(2):
+            level_layer = self._make_conv_level(
+                channels[0],
+                channels[i],
+                levels[i],
+                norm_cfg,
+                conv_cfg,
+                stride=i + 1)
+            layer_name = f'level{i}'
+            self.add_module(layer_name, level_layer)
+
+        for i in range(2, self.num_levels):
+            dla_layer = Tree(
+                levels[i],
+                block,
+                channels[i - 1],
+                channels[i],
+                norm_cfg,
+                conv_cfg,
+                2,
+                level_root=layer_level_root[i - 2],
+                root_residual=residual_root)
+            layer_name = f'level{i}'
+            self.add_module(layer_name, dla_layer)
 
     def _make_conv_level(self,
                          inplanes,
                          planes,
                          convs,
                          norm_cfg,
+                         conv_cfg,
                          stride=1,
                          dilation=1):
         modules = []
         for i in range(convs):
             modules.extend([
-                nn.Conv2d(
+                build_conv_layer(
+                    conv_cfg,
                     inplanes,
                     planes,
-                    kernel_size=3,
+                    3,
                     stride=stride if i == 0 else 1,
                     padding=dilation,
                     bias=False,
@@ -286,12 +313,12 @@ class DLANet(nn.Module):
         return nn.Sequential(*modules)
 
     def forward(self, x):
-        y = []
+        outs = []
         x = self.base_layer(x)
-        for i in range(6):
+        for i in range(self.num_levels):
             x = getattr(self, 'level{}'.format(i))(x)
-            y.append(x)
-        return y
+            outs.append(x)
+        return tuple(outs)
 
     def init_weights(self, pretrained=None):
         """Initialize the weights in backbone.
