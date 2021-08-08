@@ -49,12 +49,10 @@ mmdetection3d
 |   |   ├── v1.0-trainval
 │   │   ├── nuscenes_database
 │   │   ├── nuscenes_infos_train.pkl
-│   │   ├── nuscenes_infos_trainval.pkl
 │   │   ├── nuscenes_infos_val.pkl
 │   │   ├── nuscenes_infos_test.pkl
 │   │   ├── nuscenes_dbinfos_train.pkl
 │   │   ├── nuscenes_infos_train_mono3d.coco.json
-│   │   ├── nuscenes_infos_trainval_mono3d.coco.json
 │   │   ├── nuscenes_infos_val_mono3d.coco.json
 │   │   ├── nuscenes_infos_test_mono3d.coco.json
 ```
