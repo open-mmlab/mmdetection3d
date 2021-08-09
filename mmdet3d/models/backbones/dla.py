@@ -222,16 +222,18 @@ class DLANet(nn.Module):
     r"""`DLA backbone <https://arxiv.org/abs/1707.06484>`_.
 
     Args:
-        depth (int): Depth of DLA. Default: 34.
-        in_channels (int): Number of input image channels. Default: 3.
-        norm_cfg (dict): Dictionary to construct and config norm layer.
-            Default: None.
-        conv_cfg (dict): Dictionary to construct and config conv layer.
-            Default: None.
-        layer_level_root (list[bool]): Whether to apply level_root in
-            each DLA layer, this is only used for tree levels.
-        residual_root (bool): Whether to use residual in root layer.
-            Default: False.
+        depth (int, optional): Depth of DLA. Default: 34.
+        in_channels (int, optional): Number of input image channels.
+            Default: 3.
+        norm_cfg (dict, optional): Dictionary to construct and config
+            norm layer. Default: None.
+        conv_cfg (dict, optional): Dictionary to construct and config
+            conv layer. Default: None.
+        layer_level_root (list[bool], optional): Whether to apply
+            level_root in each DLA layer, this is only used for
+            tree levels. Default: (False, True, True, True).
+        residual_root (bool, optional): Whether to use residual
+            in root layer. Default: False.
     """
     arch_settings = {
         34: (BasicBlock, (1, 1, 1, 2, 2, 1), (16, 32, 64, 128, 256, 512)),
@@ -263,7 +265,7 @@ class DLANet(nn.Module):
             nn.ReLU(inplace=True))
 
         # DLANet first uses two conv layers then uses several
-        # Tree layers.
+        # Tree layers
         for i in range(2):
             level_layer = self._make_conv_level(
                 channels[0],

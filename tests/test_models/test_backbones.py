@@ -333,7 +333,7 @@ def test_dgcnn_gf():
 
 
 def test_dla_net():
-
+    # test DLANet used in SMOKE
     # test list config
     cfg = dict(
         type='DLANet',
