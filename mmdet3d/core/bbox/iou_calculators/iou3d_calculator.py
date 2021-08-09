@@ -39,8 +39,8 @@ class BboxOverlapsNearest3D(object):
             is_aligned (bool): Whether the calculation is aligned.
 
         Return:
-            torch.Tensor: If ``is_aligned`` is ``True``, return ious between \
-                bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is \
+            torch.Tensor: If ``is_aligned`` is ``True``, return ious between
+                bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
                 ``False``, return shape is M.
         """
         return bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode, is_aligned,
@@ -83,7 +83,7 @@ class BboxOverlaps3D(object):
                 iof (intersection over foreground).
 
         Return:
-            torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2 \
+            torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
                 with shape (M, N) (aligned mode is not supported currently).
         """
         return bbox_overlaps_3d(bboxes1, bboxes2, mode, self.coordinate)
@@ -122,8 +122,8 @@ def bbox_overlaps_nearest_3d(bboxes1,
         is_aligned (bool): Whether the calculation is aligned
 
     Return:
-        torch.Tensor: If ``is_aligned`` is ``True``, return ious between \
-            bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is \
+        torch.Tensor: If ``is_aligned`` is ``True``, return ious between
+            bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
             ``False``, return shape is M.
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
@@ -162,7 +162,7 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
         coordinate (str): 'camera' or 'lidar' coordinate system.
 
     Return:
-        torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2 \
+        torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
             with shape (M, N) (aligned mode is not supported currently).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
