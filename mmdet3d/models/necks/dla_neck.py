@@ -6,15 +6,32 @@ from torch import nn as nn
 from mmdet.models.builder import NECKS
 
 
+def fill_up_weights(up):
+    """Simulated bilinear upsampling kernel.
+
+    Args:
+        up (Module): ConvTranspose2d module.
+    """
+    w = up.weight.data
+    f = math.ceil(w.size(2) / 2)
+    c = (2 * f - 1 - f % 2) / (2. * f)
+    for i in range(w.size(2)):
+        for j in range(w.size(3)):
+            w[0, 0, i, j] = \
+                (1 - math.fabs(i / f - c)) * (1 - math.fabs(j / f - c))
+    for c in range(1, w.size(0)):
+        w[c, 0, :, :] = w[0, 0, :, :]
+
+
 class IDAUp(nn.Module):
     """IDAUp module for upsamling different scale's features to same scale.
 
     Args:
         out_channel (int): Number of output channels for DeformConv.
         in_channels_list (List[int]): List of input channels of multi-scale
-                                    feature map.
+            feature map.
         up_kernel_size_list (List[int]): List of size of the convolving
-                                        kernel of different scales.
+            kernel of different scales.
         norm_cfg (dict): Config dict for normalization layer. Default: None.
         use_dcn (bool): If True, use DCNv2. Default: True.
     """
@@ -66,9 +83,9 @@ class IDAUp(nn.Module):
         """Forward function.
 
         Args:
-            layers (list[torch.Tensor]): features from multiple layers.
-            start_level (int): start layer for feature upsampling
-            end_level (int): end layer for feature upsampling
+            layers (list[torch.Tensor]): Features from multiple layers.
+            start_level (int): Start layer for feature upsampling.
+            end_level (int): End layer for feature upsampling.
         """
         for i in range(start_level + 1, end_level):
             upsample = getattr(self, 'up_' + str(i - start_level))
@@ -82,12 +99,12 @@ class DLAUp(nn.Module):
     """DLAUp module for multiple layers feature extraction and fusion.
 
     Args:
-        start_level (int): the start layer.
+        start_level (int): The start layer.
         channels (List[int]): List of input channels of multi-scale
-                            feature map.
+            feature map.
         scales(List[int]): List of scale of different layers' feature.
-        in_channels (bool): List of input channels of different scales.
-                            Default: False.
+        in_channels (NoneType): List of input channels of different scales.
+            Default: None.
         norm_cfg (dict): Config dict for normalization layer. Default: None.
     """
 
@@ -117,7 +134,10 @@ class DLAUp(nn.Module):
         """Forward function.
 
         Args:
-            layers (tuple[torch.Tensor]): features from multi-scale layers.
+            layers (tuple[torch.Tensor]): Features from multi-scale layers.
+
+        Returns:
+            tuple[torch.Tensor]: Up-sampled features of different layers.
         """
         outs = [layers[-1]]
         for i in range(len(layers) - self.start_level - 1):
@@ -128,14 +148,14 @@ class DLAUp(nn.Module):
 
 
 @NECKS.register_module()
-class DLA_Neck(nn.Module):
+class DLANeck(nn.Module):
     """DLA Neck.
 
     Args:
         in_channels (list[int]): List of input channels of multi-scale
-                                feature map.
-        start_level (int): the scale level where upsampling starts. Default: 2.
-        end_level (int): the scale level where upsampling ends. Default: 5.
+            feature map.
+        start_level (int): The scale level where upsampling starts. Default: 2.
+        end_level (int): The scale level where upsampling ends. Default: 5.
         norm_cfg (dict): Config dict for normalization layer. Default: None.
     """
 
@@ -144,7 +164,7 @@ class DLA_Neck(nn.Module):
                  start_level=2,
                  end_level=5,
                  norm_cfg=None):
-        super(DLA_Neck, self).__init__()
+        super(DLANeck, self).__init__()
         self.start_level = start_level
         self.end_level = end_level
         scales = [2**i for i in range(len(in_channels[self.start_level:]))]
@@ -174,16 +194,7 @@ class DLA_Neck(nn.Module):
                 # reset the ConvTranspose2d initialization parameters
                 m.reset_parameters()
                 # Simulated bilinear upsampling kernel
-                w = m.weight.data
-                f = math.ceil(w.size(2) / 2)
-                c = (2 * f - 1 - f % 2) / (2. * f)
-                for i in range(w.size(2)):
-                    for j in range(w.size(3)):
-                        w[0, 0, i, j] = \
-                            (1 - math.fabs(i / f - c)) * (
-                                    1 - math.fabs(j / f - c))
-                for c in range(1, w.size(0)):
-                    w[c, 0, :, :] = w[0, 0, :, :]
+                fill_up_weights(m)
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)

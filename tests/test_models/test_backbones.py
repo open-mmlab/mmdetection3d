@@ -334,9 +334,6 @@ def test_dgcnn_gf():
 
 def test_dla_net():
 
-    if not torch.cuda.is_available():
-        pytest.skip()
-
     # test list config
     cfg = dict(
         type='DLANet',
@@ -344,10 +341,14 @@ def test_dla_net():
         in_channels=3,
         norm_cfg=dict(type='GN', num_groups=32))
 
-    img = torch.randn((4, 3, 32, 32)).cuda()
+    img = torch.randn((4, 3, 32, 32))
     self = build_backbone(cfg)
     self.init_weights()
-    self.cuda()
+
+    if torch.cuda.is_available():
+        img.cuda()
+        self.cuda()
+
     results = self(img)
     assert len(results) == 6
     assert results[0].shape == torch.Size([4, 16, 32, 32])
