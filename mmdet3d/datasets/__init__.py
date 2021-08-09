@@ -18,7 +18,7 @@ from .pipelines import (BackgroundPointsFilter, GlobalAlignment,
                         RandomFlip3D, RandomJitterPoints,
                         VoxelBasedPointSampler)
 # yapf: enable
-from .s3dis_dataset import S3DISSegDataset
+from .s3dis_dataset import S3DISDataset, S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
 from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
@@ -26,12 +26,11 @@ from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
 __all__ = [
-    'KittiDataset', 'KittiMonoDataset', 'GroupSampler',
-    'DistributedGroupSampler', 'build_dataloader', 'RepeatFactorDataset',
-    'DATASETS', 'build_dataset', 'CocoDataset', 'NuScenesDataset',
-    'NuScenesMonoDataset', 'LyftDataset', 'ObjectSample', 'RandomFlip3D',
-    'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle', 'ObjectRangeFilter',
-    'PointsRangeFilter', 'Collect3D', 'LoadPointsFromFile', 'S3DISSegDataset',
+    'KittiDataset', 'KittiMonoDataset', 'build_dataloader', 'DATASETS',
+    'build_dataset', 'NuScenesDataset', 'NuScenesMonoDataset', 'LyftDataset',
+    'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
+    'PointShuffle', 'ObjectRangeFilter', 'PointsRangeFilter',
+    'LoadPointsFromFile', 'S3DISSegDataset', 'S3DISDataset',
     'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
     'PointSample', 'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset',
     'ScanNetDataset', 'ScanNetSegDataset', 'SemanticKITTIDataset',
