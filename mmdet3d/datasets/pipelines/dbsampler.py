@@ -197,7 +197,7 @@ class DataBaseSampler(object):
         Returns:
             dict: Dict of sampled 'pseudo ground truths'.
 
-                - gt_labels_3d (np.ndarray): ground truths labels \
+                - gt_labels_3d (np.ndarray): ground truths labels
                     of sampled objects.
                 - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`):
                     sampled ground truth 3D bounding boxes

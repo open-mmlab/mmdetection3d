@@ -99,7 +99,7 @@ class PartA2RPNHead(Anchor3DHead):
             bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth boxes \
+            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth boxes
                 of each sample.
             gt_labels (list[torch.Tensor]): Labels of each sample.
             input_metas (list[dict]): Point cloud and image's meta info.
@@ -107,7 +107,7 @@ class PartA2RPNHead(Anchor3DHead):
                 which bounding.
 
         Returns:
-            dict[str, list[torch.Tensor]]: Classification, bbox, and \
+            dict[str, list[torch.Tensor]]: Classification, bbox, and
                 direction losses of each level.
 
                 - loss_rpn_cls (list[torch.Tensor]): Classification losses.

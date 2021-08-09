@@ -100,7 +100,7 @@ class KittiDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Data information that will be passed to the data \
+            dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): Sample index.
@@ -605,7 +605,7 @@ class KittiDataset(Custom3DDataset):
             dict: Valid predicted boxes.
 
                 - bbox (np.ndarray): 2D bounding boxes.
-                - box3d_camera (np.ndarray): 3D bounding boxes in \
+                - box3d_camera (np.ndarray): 3D bounding boxes in
                     camera coordinate.
                 - box3d_lidar (np.ndarray): 3D bounding boxes in
                     LiDAR coordinate.

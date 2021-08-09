@@ -128,7 +128,7 @@ class ScanNetDataset(Custom3DDataset):
         Returns:
             dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`):
                     3D ground truth bboxes
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - pts_instance_mask_path (str): Path of instance masks.

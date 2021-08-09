@@ -559,23 +559,23 @@ class H3DBboxHead(BaseModule):
 
         Args:
             bbox_preds (dict): Predictions from forward of vote head.
-            size_class_targets (torch.Tensor): Ground truth \
+            size_class_targets (torch.Tensor): Ground truth
                 size class of each prediction bounding box.
-            size_res_targets (torch.Tensor): Ground truth \
+            size_res_targets (torch.Tensor): Ground truth
                 size residual of each prediction bounding box.
-            dir_class_targets (torch.Tensor): Ground truth \
+            dir_class_targets (torch.Tensor): Ground truth
                 direction class of each prediction bounding box.
-            dir_res_targets (torch.Tensor): Ground truth \
+            dir_res_targets (torch.Tensor): Ground truth
                 direction residual of each prediction bounding box.
-            center_targets (torch.Tensor): Ground truth center \
+            center_targets (torch.Tensor): Ground truth center
                 of each prediction bounding box.
-            mask_targets (torch.Tensor): Validation of each \
+            mask_targets (torch.Tensor): Validation of each
                 prediction bounding box.
-            objectness_targets (torch.Tensor): Ground truth \
+            objectness_targets (torch.Tensor): Ground truth
                 objectness label of each prediction bounding box.
-            objectness_weights (torch.Tensor): Weights of objectness \
+            objectness_weights (torch.Tensor): Weights of objectness
                 loss for each prediction bounding box.
-            box_loss_weights (torch.Tensor): Weights of regression \
+            box_loss_weights (torch.Tensor): Weights of regression
                 loss for each prediction bounding box.
             valid_gt_weights (torch.Tensor): Validation of each
                 ground truth bounding box.
@@ -768,7 +768,7 @@ class H3DBboxHead(BaseModule):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
             pts_semantic_mask (torch.Tensor): Point-wise semantic
@@ -779,9 +779,9 @@ class H3DBboxHead(BaseModule):
                 vote aggregation layer.
             pred_surface_center (torch.Tensor): Prediction of surface center.
             pred_line_center (torch.Tensor): Prediction of line center.
-            pred_obj_surface_center (torch.Tensor): Objectness prediction \
+            pred_obj_surface_center (torch.Tensor): Objectness prediction
                 of surface center.
-            pred_obj_line_center (torch.Tensor): Objectness prediction of \
+            pred_obj_line_center (torch.Tensor): Objectness prediction of
                 line center.
             pred_surface_sem (torch.Tensor): Semantic prediction of
                 surface center.

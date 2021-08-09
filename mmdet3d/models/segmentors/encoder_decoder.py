@@ -186,7 +186,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                           use_normalized_coord=False):
         """Generating model input.
 
-        Generate input by subtracting patch center and adding additional \
+        Generate input by subtracting patch center and adding additional
             features. Currently support colors and normalized xyz as features.
 
         Args:
@@ -232,7 +232,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             block_size (float, optional): Size of a patch to sample.
             sample_rate (float, optional): Stride used in sliding patch.
                 Defaults to 0.5.
-            use_normalized_coord (bool, optional): Whether to use normalized \
+            use_normalized_coord (bool, optional): Whether to use normalized
                 xyz as additional features. Defaults to False.
             eps (float, optional): A value added to patch boundary to guarantee
                 points coverage. Defaults to 1e-3.
@@ -240,7 +240,7 @@ class EncoderDecoder3D(Base3DSegmentor):
         Returns:
             np.ndarray | np.ndarray:
 
-                - patch_points (torch.Tensor): Points of different patches of \
+                - patch_points (torch.Tensor): Points of different patches of
                     shape [K, N, 3+C].
                 - patch_idxs (torch.Tensor): Index of each point in
                     `patch_points`, of shape [K, N].

@@ -189,7 +189,7 @@ class LoadPointsFromMultiSweeps(object):
                 filenames.
 
         Returns:
-            dict: The result dict containing the multi-sweep points data. \
+            dict: The result dict containing the multi-sweep points data.
                 Added key and value are described below.
 
                 - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point

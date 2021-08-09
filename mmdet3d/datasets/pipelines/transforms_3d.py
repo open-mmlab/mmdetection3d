@@ -137,14 +137,14 @@ class RandomFlip3D(RandomFlip):
             input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
 
     def __call__(self, input_dict):
-        """Call function to flip points, values in the ``bbox3d_fields`` and \
+        """Call function to flip points, values in the ``bbox3d_fields`` and
         also flip 2D image and its annotations.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Flipped results, 'flip', 'flip_direction', \
+            dict: Flipped results, 'flip', 'flip_direction',
                 'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added
                 into result dict.
         """
@@ -187,15 +187,15 @@ class RandomFlip3D(RandomFlip):
 class RandomJitterPoints(object):
     """Randomly jitter point coordinates.
 
-    Different from the global translation in ``GlobalRotScaleTrans``, here we \
+    Different from the global translation in ``GlobalRotScaleTrans``, here we
         apply different noises to each point in a scene.
 
     Args:
         jitter_std (list[float]): The standard deviation of jittering noise.
-            This applies random noise to all points in a 3D scene, which is \
-            sampled from a gaussian distribution whose standard deviation is \
+            This applies random noise to all points in a 3D scene, which is
+            sampled from a gaussian distribution whose standard deviation is
             set by ``jitter_std``. Defaults to [0.01, 0.01, 0.01]
-        clip_range (list[float]): Clip the randomly generated jitter \
+        clip_range (list[float]): Clip the randomly generated jitter
             noise into this range. If None is given, don't perform clipping.
             Defaults to [-0.05, 0.05]
 
@@ -291,7 +291,7 @@ class ObjectSample(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after object sampling augmentation, \
+            dict: Results after object sampling augmentation,
                 'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated
                 in the result dict.
         """
@@ -428,8 +428,8 @@ class GlobalAlignment(object):
         rotation_axis (int): Rotation axis for points and bboxes rotation.
 
     Note:
-        We do not record the applied rotation and translation as in \
-            GlobalRotScaleTrans. Because usually, we do not need to reverse \
+        We do not record the applied rotation and translation as in
+            GlobalRotScaleTrans. Because usually, we do not need to reverse
             the alignment step.
         For example, ScanNet 3D detection task uses aligned ground-truth
             bounding boxes for evaluation.
@@ -559,7 +559,7 @@ class GlobalRotScaleTrans(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after translation, 'points', 'pcd_trans' \
+            dict: Results after translation, 'points', 'pcd_trans'
                 and keys in input_dict['bbox3d_fields'] are updated
                 in the result dict.
         """
@@ -578,7 +578,7 @@ class GlobalRotScaleTrans(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after rotation, 'points', 'pcd_rotation' \
+            dict: Results after rotation, 'points', 'pcd_rotation'
                 and keys in input_dict['bbox3d_fields'] are updated
                 in the result dict.
         """
@@ -638,7 +638,7 @@ class GlobalRotScaleTrans(object):
         input_dict['pcd_scale_factor'] = scale_factor
 
     def __call__(self, input_dict):
-        """Private function to rotate, scale and translate bounding boxes and \
+        """Private function to rotate, scale and translate bounding boxes and
         points.
 
         Args:

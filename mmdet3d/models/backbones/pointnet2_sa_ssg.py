@@ -96,9 +96,9 @@ class PointNet2SASSG(BasePointNet):
         Returns:
             dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
 
-                - fp_xyz (list[torch.Tensor]): The coordinates of \
+                - fp_xyz (list[torch.Tensor]): The coordinates of
                     each fp features.
-                - fp_features (list[torch.Tensor]): The features \
+                - fp_features (list[torch.Tensor]): The features
                     from each Feature Propagate Layers.
                 - fp_indices (list[torch.Tensor]): Indices of the
                     input points.

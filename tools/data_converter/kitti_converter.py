@@ -385,7 +385,7 @@ def get_2d_boxes(info, occluded, mono3d=True):
 
     Args:
         info: Information of the given sample data.
-        occluded: Integer (0, 1, 2, 3) indicating occlusion state: \
+        occluded: Integer (0, 1, 2, 3) indicating occlusion state:
             0 = fully visible, 1 = partly occluded, 2 = largely occluded,
             3 = unknown, -1 = DontCare
         mono3d (bool): Whether to get boxes with mono3d annotation.

@@ -97,9 +97,9 @@ class VoteModule(nn.Module):
         Returns:
             tuple[torch.Tensor]:
 
-                - vote_points: Voted xyz based on the seed points \
+                - vote_points: Voted xyz based on the seed points
                     with shape (B, M, 3), ``M=num_seed*vote_per_seed``.
-                - vote_features: Voted features based on the seed points with \
+                - vote_features: Voted features based on the seed points with
                     shape (B, C, M) where ``M=num_seed*vote_per_seed``,
                     ``C=vote_feature_dim``.
         """

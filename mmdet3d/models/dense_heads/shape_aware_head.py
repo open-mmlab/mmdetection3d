@@ -128,10 +128,10 @@ class BaseShapeHead(BaseModule):
                 [B, C, H, W].
 
         Returns:
-            dict[torch.Tensor]: Contain score of each class, bbox \
-                regression and direction classification predictions. \
-                Note that all the returned tensors are reshaped as \
-                [bs*num_base_anchors*H*W, num_cls/box_code_size/dir_bins]. \
+            dict[torch.Tensor]: Contain score of each class, bbox
+                regression and direction classification predictions.
+                Note that all the returned tensors are reshaped as
+                [bs*num_base_anchors*H*W, num_cls/box_code_size/dir_bins].
                 It is more convenient to concat anchors for different
                 classes even though they have different feature map sizes.
         """
@@ -169,7 +169,7 @@ class ShapeAwareHead(Anchor3DHead):
 
     Args:
         tasks (dict): Shape-aware groups of multi-class objects.
-        assign_per_class (bool, optional): Whether to do assignment for each \
+        assign_per_class (bool, optional): Whether to do assignment for each
             class. Default: True.
         kwargs (dict): Other arguments are the same as those in
             :class:`Anchor3DHead`.
@@ -330,7 +330,7 @@ class ShapeAwareHead(Anchor3DHead):
                 which bounding.
 
         Returns:
-            dict[str, list[torch.Tensor]]: Classification, bbox, and \
+            dict[str, list[torch.Tensor]]: Classification, bbox, and
                 direction losses of each level.
 
                 - loss_cls (list[torch.Tensor]): Classification losses.

@@ -91,7 +91,7 @@ def get_loading_pipeline(pipeline):
         ...    dict(type='Collect3D',
         ...         keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d'])
         ...    ]
-        >>> assert expected_pipelines ==\
+        >>> assert expected_pipelines == \
         ...        get_loading_pipeline(pipelines)
     """
     loading_pipeline = []

@@ -196,7 +196,7 @@ class NuScenesDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Data information that will be passed to the data \
+            dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): Sample index.

@@ -82,11 +82,11 @@ class PointwiseSemanticHead(BaseModule):
         sample.
 
         Args:
-            voxel_centers (torch.Tensor): The center of voxels in shape \
+            voxel_centers (torch.Tensor): The center of voxels in shape
                 (voxel_num, 3).
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in
                 shape (box_num, 7).
-            gt_labels_3d (torch.Tensor): Class labels of ground truths in \
+            gt_labels_3d (torch.Tensor): Class labels of ground truths in
                 shape (box_num).
 
         Returns:
@@ -130,17 +130,17 @@ class PointwiseSemanticHead(BaseModule):
         """generate segmentation and part prediction targets.
 
         Args:
-            voxel_centers (torch.Tensor): The center of voxels in shape \
+            voxel_centers (torch.Tensor): The center of voxels in shape
                 (voxel_num, 3).
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in
                 shape (box_num, 7).
-            gt_labels_3d (torch.Tensor): Class labels of ground truths in \
+            gt_labels_3d (torch.Tensor): Class labels of ground truths in
                 shape (box_num).
 
         Returns:
             dict: Prediction targets
 
-                - seg_targets (torch.Tensor): Segmentation targets \
+                - seg_targets (torch.Tensor): Segmentation targets
                     with shape [voxel_num].
                 - part_targets (torch.Tensor): Part prediction targets
                     with shape [voxel_num, 3].

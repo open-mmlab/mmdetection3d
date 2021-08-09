@@ -29,7 +29,7 @@ def point_sample(
         img_features (torch.Tensor): 1 x C x H x W image features.
         points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
         lidar2img_rt (torch.Tensor): 4x4 transformation matrix.
-        img_scale_factor (torch.Tensor): Scale factor with shape of \
+        img_scale_factor (torch.Tensor): Scale factor with shape of
             (w_scale, h_scale).
         img_crop_offset (torch.Tensor): Crop offset used to crop
             image during data augmentation with shape of (w_offset, h_offset).

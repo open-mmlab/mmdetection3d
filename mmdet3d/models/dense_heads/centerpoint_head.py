@@ -100,15 +100,15 @@ class SeparateHead(BaseModule):
         Returns:
             dict[str: torch.Tensor]: contains the following keys:
 
-                -reg （torch.Tensor): 2D regression value with the \
+                -reg （torch.Tensor): 2D regression value with the
                     shape of [B, 2, H, W].
-                -height (torch.Tensor): Height value with the \
+                -height (torch.Tensor): Height value with the
                     shape of [B, 1, H, W].
-                -dim (torch.Tensor): Size value with the shape \
+                -dim (torch.Tensor): Size value with the shape
                     of [B, 3, H, W].
-                -rot (torch.Tensor): Rotation value with the \
+                -rot (torch.Tensor): Rotation value with the
                     shape of [B, 2, H, W].
-                -vel (torch.Tensor): Velocity value with the \
+                -vel (torch.Tensor): Velocity value with the
                     shape of [B, 2, H, W].
                 -heatmap (torch.Tensor): Heatmap with the shape of
                     [B, N, H, W].
@@ -216,15 +216,15 @@ class DCNSeparateHead(BaseModule):
         Returns:
             dict[str: torch.Tensor]: contains the following keys:
 
-                -reg （torch.Tensor): 2D regression value with the \
+                -reg （torch.Tensor): 2D regression value with the
                     shape of [B, 2, H, W].
-                -height (torch.Tensor): Height value with the \
+                -height (torch.Tensor): Height value with the
                     shape of [B, 1, H, W].
-                -dim (torch.Tensor): Size value with the shape \
+                -dim (torch.Tensor): Size value with the shape
                     of [B, 3, H, W].
-                -rot (torch.Tensor): Rotation value with the \
+                -rot (torch.Tensor): Rotation value with the
                     shape of [B, 2, H, W].
-                -vel (torch.Tensor): Velocity value with the \
+                -vel (torch.Tensor): Velocity value with the
                     shape of [B, 2, H, W].
                 -heatmap (torch.Tensor): Heatmap with the shape of
                     [B, N, H, W].
@@ -392,12 +392,12 @@ class CenterHead(BaseModule):
 
         Returns:
             Returns:
-                tuple[list[torch.Tensor]]: Tuple of target including \
+                tuple[list[torch.Tensor]]: Tuple of target including
                     the following results in order.
 
                     - list[torch.Tensor]: Heatmap scores.
                     - list[torch.Tensor]: Ground truth boxes.
-                    - list[torch.Tensor]: Indexes indicating the \
+                    - list[torch.Tensor]: Indexes indicating the
                         position of the valid boxes.
                     - list[torch.Tensor]: Masks indicating which
                         boxes are valid.
@@ -427,12 +427,12 @@ class CenterHead(BaseModule):
             gt_labels_3d (torch.Tensor): Labels of boxes.
 
         Returns:
-            tuple[list[torch.Tensor]]: Tuple of target including \
+            tuple[list[torch.Tensor]]: Tuple of target including
                 the following results in order.
 
                 - list[torch.Tensor]: Heatmap scores.
                 - list[torch.Tensor]: Ground truth boxes.
-                - list[torch.Tensor]: Indexes indicating the position \
+                - list[torch.Tensor]: Indexes indicating the position
                     of the valid boxes.
                 - list[torch.Tensor]: Masks indicating which boxes
                     are valid.
@@ -718,9 +718,9 @@ class CenterHead(BaseModule):
         Returns:
             list[dict[str: torch.Tensor]]: contains the following keys:
 
-                -bboxes (torch.Tensor): Prediction bboxes after nms with the \
+                -bboxes (torch.Tensor): Prediction bboxes after nms with the
                     shape of [N, 9].
-                -scores (torch.Tensor): Prediction scores after nms with the \
+                -scores (torch.Tensor): Prediction scores after nms with the
                     shape of [N].
                 -labels (torch.Tensor): Prediction labels after nms with the
                     shape of [N].

@@ -506,10 +506,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             rescale (bool): If True, return boxes in original image space
 
         Returns:
-            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple. \
-                The first item is an (n, 5) tensor, where the first 4 columns \
-                are bounding box positions (tl_x, tl_y, br_x, br_y) and the \
-                5-th column is a score between 0 and 1. The second item is a \
+            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple.
+                The first item is an (n, 5) tensor, where the first 4 columns
+                are bounding box positions (tl_x, tl_y, br_x, br_y) and the
+                5-th column is a score between 0 and 1. The second item is a
                 (n,) tensor where each item is the predicted class label of
                 the corresponding box.
         """
@@ -766,7 +766,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
         Returns:
             tuple:
-                concat_lvl_labels (list[Tensor]): Labels of each level. \
+                concat_lvl_labels (list[Tensor]): Labels of each level.
                 concat_lvl_bbox_targets (list[Tensor]): BBox targets of each
                     level.
         """

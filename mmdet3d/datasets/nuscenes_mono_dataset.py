@@ -140,7 +140,7 @@ class NuScenesMonoDataset(CocoDataset):
             ann_info (list[dict]): Annotation info of an image.
 
         Returns:
-            dict: A dict containing the following keys: bboxes, labels, \
+            dict: A dict containing the following keys: bboxes, labels,
                 gt_bboxes_3d, gt_labels_3d, attr_labels, centers2d,
                 depths, bboxes_ignore, masks, seg_map
         """
