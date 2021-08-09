@@ -56,8 +56,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
             with_mask (bool): Whether to parse mask annotations.
 
         Returns:
-            dict: A dict containing the following keys: bboxes, bboxes_ignore,\
-                labels, masks, seg_map. "masks" are raw annotations and not \
+            dict: A dict containing the following keys: bboxes, bboxes_ignore,
+                labels, masks, seg_map. "masks" are raw annotations and not
                 decoded into binary masks.
         """
         gt_bboxes = []
@@ -155,8 +155,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
                 Default: None.
 
         Returns:
-            tuple: (result_files, tmp_dir), result_files is a dict containing \
-                the json filepaths, tmp_dir is the temporal directory created \
+            tuple: (result_files, tmp_dir), result_files is a dict containing
+                the json filepaths, tmp_dir is the temporal directory created
                 for saving json files when jsonfile_prefix is not specified.
         """
         if pklfile_prefix is None:

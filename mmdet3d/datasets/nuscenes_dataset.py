@@ -433,9 +433,9 @@ class NuScenesDataset(Custom3DDataset):
                 If not specified, a temp file will be created. Default: None.
 
         Returns:
-            tuple: Returns (result_files, tmp_dir), where `result_files` is a \
-                dict containing the json filepaths, `tmp_dir` is the temporal \
-                directory created for saving json files when \
+            tuple: Returns (result_files, tmp_dir), where `result_files` is a
+                dict containing the json filepaths, `tmp_dir` is the temporal
+                directory created for saving json files when
                 `jsonfile_prefix` is not specified.
         """
         assert isinstance(results, list), 'results must be a list'
