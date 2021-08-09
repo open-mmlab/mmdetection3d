@@ -211,8 +211,8 @@ class Custom3DDataset(Dataset):
                 If not specified, a temp file will be created. Default: None.
 
         Returns:
-            tuple: (outputs, tmp_dir), outputs is the detection results, \
-                tmp_dir is the temporal directory created for saving json \
+            tuple: (outputs, tmp_dir), outputs is the detection results,
+                tmp_dir is the temporal directory created for saving json
                 files when ``jsonfile_prefix`` is not specified.
         """
         if pklfile_prefix is None:

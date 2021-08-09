@@ -699,12 +699,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     def pts2Dto3D(points, view):
         """
         Args:
-            points (torch.Tensor): points in 2D images, [N, 3], \
+            points (torch.Tensor): points in 2D images, [N, 3],
                 3 corresponds with x, y in the image and depth.
             view (np.ndarray): camera instrinsic, [3, 3]
 
         Returns:
-            torch.Tensor: points in 3D space. [N, 3], \
+            torch.Tensor: points in 3D space. [N, 3],
                 3 corresponds with x, y, z in 3D space.
         """
         assert view.shape[0] <= 4
