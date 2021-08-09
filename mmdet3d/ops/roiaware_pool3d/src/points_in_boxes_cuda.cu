@@ -103,8 +103,8 @@ __global__ void points_in_boxes_all_kernel(int batch_size, int boxes_num,
 }
 
 void points_in_boxes_part_launcher(int batch_size, int boxes_num, int pts_num,
-                              const float *boxes, const float *pts,
-                              int *box_idx_of_points) {
+                                   const float *boxes, const float *pts,
+                                   int *box_idx_of_points) {
   // params boxes: (B, N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate, z is
   // the bottom center, each box DO NOT overlaps params pts: (B, npoints, 3) [x,
   // y, z] in LiDAR coordinate params boxes_idx_of_points: (B, npoints), default
