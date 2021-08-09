@@ -885,7 +885,7 @@ class GroupFree3DHead(BaseModule):
 
         prefixes = list()
         if self.test_cfg['prediction_stages'] == 'last':
-            prefixes = [f'_{self.num_decoder_layers - 1}']
+            prefixes = [f's{self.num_decoder_layers - 1}.']
         elif self.test_cfg['prediction_stages'] == 'all':
             prefixes = ['proposal.'] + \
                 [f's{i}.' for i in range(self.num_decoder_layers)]
