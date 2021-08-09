@@ -6,7 +6,7 @@ from . import roipoint_pool3d_ext
 
 class RoIPointPool3d(nn.Module):
 
-    def __init__(self, num_sampled_points=512, pool_extra_width=1.0):
+    def __init__(self, num_sampled_points=512):
         super().__init__()
         """
 
@@ -15,7 +15,6 @@ class RoIPointPool3d(nn.Module):
             extra_width (float): Extra width to enlarge the box
         """
         self.num_sampled_points = num_sampled_points
-        self.pool_extra_width = pool_extra_width
 
     def forward(self, points, point_features, boxes3d):
         """
@@ -29,19 +28,13 @@ class RoIPointPool3d(nn.Module):
             torch.Tensor: (B, M) pooled_empty_flag
         """
         return RoIPointPool3dFunction.apply(points, point_features, boxes3d,
-                                            self.pool_extra_width,
                                             self.num_sampled_points)
 
 
 class RoIPointPool3dFunction(Function):
 
     @staticmethod
-    def forward(ctx,
-                points,
-                point_features,
-                boxes3d,
-                pool_extra_width,
-                num_sampled_points=512):
+    def forward(ctx, points, point_features, boxes3d, num_sampled_points=512):
         """
         Args:
             points (torch.Tensor): Input points whose shape is (B, N, 3)
@@ -49,7 +42,6 @@ class RoIPointPool3dFunction(Function):
                 (B, N, C)
             boxes3d (torch.Tensor): Input bounding boxes whose shape is \
                 (B, M, 7)
-            pool_extra_width (float): Extra width to enlarge the box
             num_sampled_points (int): the num of sampled points
 
         Returns:
