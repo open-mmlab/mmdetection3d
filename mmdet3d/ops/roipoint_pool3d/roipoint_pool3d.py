@@ -33,24 +33,6 @@ class RoIPointPool3d(nn.Module):
                                             self.num_sampled_points)
 
 
-def enlarge_box3d(boxes3d, extra_width=0):
-    """
-    Args:
-        boxes3d(torch.Tensor): Float matrix of N x box_dim, \
-            Each row is (x, y, z, dx, dy, dz, yaw), and (x, y, z) is \
-            bottom_center
-        extra_width (float): Extra width to enlarge the box.
-
-    Returns:
-        torch.Tensor: (B, M, 7) the enlarged bounding boxes
-    """
-    large_boxes3d = boxes3d.clone()
-
-    large_boxes3d[..., 3:6] += boxes3d.new_tensor(extra_width)
-    large_boxes3d[..., 2] -= boxes3d.new_tensor(extra_width / 2)
-    return large_boxes3d
-
-
 class RoIPointPool3dFunction(Function):
 
     @staticmethod
@@ -77,10 +59,7 @@ class RoIPointPool3dFunction(Function):
         assert points.shape.__len__() == 3 and points.shape[2] == 3
         batch_size, boxes_num, feature_len = points.shape[0], boxes3d.shape[
             1], point_features.shape[2]
-        pooled_boxes3d = enlarge_box3d(boxes3d.view(-1, 7),
-                                       pool_extra_width).view(
-                                           batch_size, -1, 7)
-
+        pooled_boxes3d = boxes3d.view(batch_size, -1, 7)
         pooled_features = point_features.new_zeros(
             (batch_size, boxes_num, num_sampled_points, 3 + feature_len))
         pooled_empty_flag = point_features.new_zeros(
