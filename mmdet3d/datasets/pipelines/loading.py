@@ -77,7 +77,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
     detection, additional camera parameters need to be loaded.
 
     Args:
-        kwargs (dict): Arguments are the same as those in \
+        kwargs (dict): Arguments are the same as those in
             :class:`LoadImageFromFile`.
     """
 
@@ -192,7 +192,7 @@ class LoadPointsFromMultiSweeps(object):
             dict: The result dict containing the multi-sweep points data. \
                 Added key and value are described below.
 
-                - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point \
+                - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point
                     cloud arrays.
         """
         points = results['points']
@@ -271,7 +271,7 @@ class PointSegClassMapping(object):
             results (dict): Result dict containing point semantic masks.
 
         Returns:
-            dict: The result dict containing the mapped category ids. \
+            dict: The result dict containing the mapped category ids.
                 Updated key and value are described below.
 
                 - pts_semantic_mask (np.ndarray): Mapped semantic masks.
@@ -310,7 +310,7 @@ class NormalizePointsColor(object):
             results (dict): Result dict containing point clouds data.
 
         Returns:
-            dict: The result dict containing the normalized points. \
+            dict: The result dict containing the normalized points.
                 Updated key and value are described below.
 
                 - points (:obj:`BasePoints`): Points after color normalization.
@@ -411,7 +411,7 @@ class LoadPointsFromFile(object):
             results (dict): Result dict containing point clouds data.
 
         Returns:
-            dict: The result dict containing the point clouds data. \
+            dict: The result dict containing the point clouds data.
                 Added key and value are described below.
 
                 - points (:obj:`BasePoints`): Point clouds data.

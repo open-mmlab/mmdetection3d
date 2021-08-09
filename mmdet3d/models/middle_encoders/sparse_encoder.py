@@ -100,7 +100,7 @@ class SparseEncoder(nn.Module):
 
         Args:
             voxel_features (torch.float32): Voxel features in shape (N, C).
-            coors (torch.int32): Coordinates in shape (N, 4), \
+            coors (torch.int32): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
             batch_size (int): Batch size.
 

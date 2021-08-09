@@ -100,7 +100,7 @@ class VoteModule(nn.Module):
                 - vote_points: Voted xyz based on the seed points \
                     with shape (B, M, 3), ``M=num_seed*vote_per_seed``.
                 - vote_features: Voted features based on the seed points with \
-                    shape (B, C, M) where ``M=num_seed*vote_per_seed``, \
+                    shape (B, C, M) where ``M=num_seed*vote_per_seed``,
                     ``C=vote_feature_dim``.
         """
         if self.num_points != -1:

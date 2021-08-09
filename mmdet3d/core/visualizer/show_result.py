@@ -142,10 +142,10 @@ def show_seg_result(points,
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
         palette (np.ndarray): Mapping between class labels and colors.
-        ignore_index (int, optional): The label index to be ignored, e.g. \
+        ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. Defaults to None.
         show (bool, optional): Visualize the results online. Defaults to False.
-        snapshot (bool, optional): Whether to save the online results. \
+        snapshot (bool, optional): Whether to save the online results.
             Defaults to False.
     """
     # we need 3D coordinates to visualize segmentation mask

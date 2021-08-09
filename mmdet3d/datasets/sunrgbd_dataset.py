@@ -73,7 +73,7 @@ class SUNRGBDDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Data information that will be passed to the data \
+            dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): Sample index.
@@ -124,7 +124,7 @@ class SUNRGBDDataset(Custom3DDataset):
         Returns:
             dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`):
                     3D ground truth bboxes
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - pts_instance_mask_path (str): Path of instance masks.

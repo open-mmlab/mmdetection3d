@@ -268,7 +268,7 @@ class KittiMonoDataset(NuScenesMonoDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): List of array storing the \
+            net_outputs (list[np.ndarray]): List of array storing the
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
             pklfile_prefix (str): The prefix of pkl file.
@@ -383,7 +383,7 @@ class KittiMonoDataset(NuScenesMonoDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): List of array storing the \
+            net_outputs (list[np.ndarray]): List of array storing the
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
             pklfile_prefix (str): The prefix of pkl file.
@@ -498,7 +498,7 @@ class KittiMonoDataset(NuScenesMonoDataset):
         Returns:
             dict: Valid predicted boxes.
                 - bbox (np.ndarray): 2D bounding boxes.
-                - box3d_camera (np.ndarray): 3D bounding boxes in \
+                - box3d_camera (np.ndarray): 3D bounding boxes in
                     camera coordinate.
                 - scores (np.ndarray): Scores of boxes.
                 - label_preds (np.ndarray): Class label predictions.

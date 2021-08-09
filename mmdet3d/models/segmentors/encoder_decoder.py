@@ -194,7 +194,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             patch_center (torch.Tensor): Center coordinate of the patch.
             coord_max (torch.Tensor): Max coordinate of all 3D points.
             feats (torch.Tensor): Features of sampled points of shape [S, C].
-            use_normalized_coord (bool, optional): Whether to use normalized \
+            use_normalized_coord (bool, optional): Whether to use normalized
                 xyz as additional features. Defaults to False.
 
         Returns:
@@ -242,7 +242,7 @@ class EncoderDecoder3D(Base3DSegmentor):
 
                 - patch_points (torch.Tensor): Points of different patches of \
                     shape [K, N, 3+C].
-                - patch_idxs (torch.Tensor): Index of each point in \
+                - patch_idxs (torch.Tensor): Index of each point in
                     `patch_points`, of shape [K, N].
         """
         device = points.device

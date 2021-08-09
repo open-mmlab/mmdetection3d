@@ -136,7 +136,7 @@ class LyftDataset(Custom3DDataset):
                 - sweeps (list[dict]): infos of sweeps
                 - timestamp (float): sample timestamp
                 - img_filename (str, optional): image filename
-                - lidar2img (list[np.ndarray], optional): transformations \
+                - lidar2img (list[np.ndarray], optional): transformations
                     from lidar to different cameras
                 - ann_info (dict): annotation info
         """
@@ -189,7 +189,7 @@ class LyftDataset(Custom3DDataset):
         Returns:
             dict: Annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                     3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_names (list[str]): Class names of ground truths.

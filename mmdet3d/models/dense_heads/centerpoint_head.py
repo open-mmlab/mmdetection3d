@@ -110,7 +110,7 @@ class SeparateHead(BaseModule):
                     shape of [B, 2, H, W].
                 -vel (torch.Tensor): Velocity value with the \
                     shape of [B, 2, H, W].
-                -heatmap (torch.Tensor): Heatmap with the shape of \
+                -heatmap (torch.Tensor): Heatmap with the shape of
                     [B, N, H, W].
         """
         ret_dict = dict()
@@ -226,7 +226,7 @@ class DCNSeparateHead(BaseModule):
                     shape of [B, 2, H, W].
                 -vel (torch.Tensor): Velocity value with the \
                     shape of [B, 2, H, W].
-                -heatmap (torch.Tensor): Heatmap with the shape of \
+                -heatmap (torch.Tensor): Heatmap with the shape of
                     [B, N, H, W].
         """
         center_feat = self.feature_adapt_cls(x)
@@ -399,7 +399,7 @@ class CenterHead(BaseModule):
                     - list[torch.Tensor]: Ground truth boxes.
                     - list[torch.Tensor]: Indexes indicating the \
                         position of the valid boxes.
-                    - list[torch.Tensor]: Masks indicating which \
+                    - list[torch.Tensor]: Masks indicating which
                         boxes are valid.
         """
         heatmaps, anno_boxes, inds, masks = multi_apply(
@@ -434,7 +434,7 @@ class CenterHead(BaseModule):
                 - list[torch.Tensor]: Ground truth boxes.
                 - list[torch.Tensor]: Indexes indicating the position \
                     of the valid boxes.
-                - list[torch.Tensor]: Masks indicating which boxes \
+                - list[torch.Tensor]: Masks indicating which boxes
                     are valid.
         """
         device = gt_labels_3d.device
@@ -722,7 +722,7 @@ class CenterHead(BaseModule):
                     shape of [N, 9].
                 -scores (torch.Tensor): Prediction scores after nms with the \
                     shape of [N].
-                -labels (torch.Tensor): Prediction labels after nms with the \
+                -labels (torch.Tensor): Prediction labels after nms with the
                     shape of [N].
         """
         predictions_dicts = []

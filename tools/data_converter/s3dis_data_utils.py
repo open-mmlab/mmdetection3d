@@ -211,7 +211,7 @@ class S3DISSegData(object):
         return label
 
     def get_scene_idxs_and_label_weight(self):
-        """Compute scene_idxs for data sampling and label weight for loss \
+        """Compute scene_idxs for data sampling and label weight for loss
         calculation.
 
         We sample more times for scenes with more points. Label_weight is

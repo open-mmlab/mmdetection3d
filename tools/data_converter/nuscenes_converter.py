@@ -404,7 +404,7 @@ def get_2d_boxes(nusc,
     """Get the 2D annotation records for a given `sample_data_token`.
 
     Args:
-        sample_data_token (str): Sample data token belonging to a camera \
+        sample_data_token (str): Sample data token belonging to a camera
             keyframe.
         visibilities (list[str]): Visibility filter.
         mono3d (bool): Whether to get boxes with mono3d annotation.

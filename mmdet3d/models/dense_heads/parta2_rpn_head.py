@@ -112,7 +112,7 @@ class PartA2RPNHead(Anchor3DHead):
 
                 - loss_rpn_cls (list[torch.Tensor]): Classification losses.
                 - loss_rpn_bbox (list[torch.Tensor]): Box regression losses.
-                - loss_rpn_dir (list[torch.Tensor]): Direction classification \
+                - loss_rpn_dir (list[torch.Tensor]): Direction classification
                     losses.
         """
         loss_dict = super().loss(cls_scores, bbox_preds, dir_cls_preds,

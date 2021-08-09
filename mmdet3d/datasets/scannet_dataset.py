@@ -77,7 +77,7 @@ class ScanNetDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Data information that will be passed to the data \
+            dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): Sample index.
@@ -133,7 +133,7 @@ class ScanNetDataset(Custom3DDataset):
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - pts_instance_mask_path (str): Path of instance masks.
                 - pts_semantic_mask_path (str): Path of semantic masks.
-                - axis_align_matrix (np.ndarray): Transformation matrix for \
+                - axis_align_matrix (np.ndarray): Transformation matrix for
                     global scene alignment.
         """
         # Use index to get the annos, thus the evalhook could also use this api
@@ -171,7 +171,7 @@ class ScanNetDataset(Custom3DDataset):
     def prepare_test_data(self, index):
         """Prepare data for testing.
 
-        We should take axis_align_matrix from self.data_infos since we need \
+        We should take axis_align_matrix from self.data_infos since we need
             to align point clouds.
 
         Args:
@@ -271,7 +271,7 @@ class ScanNetSegDataset(Custom3DSegDataset):
             as input. Defaults to None.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        ignore_index (int, optional): The label index to be ignored, e.g. \
+        ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. If None is given, set to len(self.CLASSES).
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load

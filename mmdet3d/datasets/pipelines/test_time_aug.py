@@ -70,7 +70,7 @@ class MultiScaleFlipAug3D(object):
             results (dict): Result dict contains the data to augment.
 
         Returns:
-            dict: The result dict contains the data that is augmented with \
+            dict: The result dict contains the data that is augmented with
                 different scales and flips.
         """
         aug_data = []

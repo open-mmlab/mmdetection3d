@@ -577,7 +577,7 @@ class H3DBboxHead(BaseModule):
                 loss for each prediction bounding box.
             box_loss_weights (torch.Tensor): Weights of regression \
                 loss for each prediction bounding box.
-            valid_gt_weights (torch.Tensor): Validation of each \
+            valid_gt_weights (torch.Tensor): Validation of each
                 ground truth bounding box.
 
         Returns:
@@ -783,7 +783,7 @@ class H3DBboxHead(BaseModule):
                 of surface center.
             pred_obj_line_center (torch.Tensor): Objectness prediction of \
                 line center.
-            pred_surface_sem (torch.Tensor): Semantic prediction of \
+            pred_surface_sem (torch.Tensor): Semantic prediction of
                 surface center.
             pred_line_sem (torch.Tensor): Semantic prediction of line center.
         Returns:

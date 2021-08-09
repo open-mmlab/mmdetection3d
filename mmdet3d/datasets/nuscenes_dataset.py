@@ -204,7 +204,7 @@ class NuScenesDataset(Custom3DDataset):
                 - sweeps (list[dict]): Infos of sweeps.
                 - timestamp (float): Sample timestamp.
                 - img_filename (str, optional): Image filename.
-                - lidar2img (list[np.ndarray], optional): Transformations \
+                - lidar2img (list[np.ndarray], optional): Transformations
                     from lidar to different cameras.
                 - ann_info (dict): Annotation info.
         """
@@ -256,7 +256,7 @@ class NuScenesDataset(Custom3DDataset):
         Returns:
             dict: Annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                     3D ground truth bboxes
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_names (list[str]): Class names of ground truths.

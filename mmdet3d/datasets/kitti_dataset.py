@@ -107,7 +107,7 @@ class KittiDataset(Custom3DDataset):
                 - pts_filename (str): Filename of point clouds.
                 - img_prefix (str): Prefix of image files.
                 - img_info (dict): Image info.
-                - lidar2img (list[np.ndarray], optional): Transformations \
+                - lidar2img (list[np.ndarray], optional): Transformations
                     from lidar to different cameras.
                 - ann_info (dict): Annotation info.
         """
@@ -145,7 +145,7 @@ class KittiDataset(Custom3DDataset):
         Returns:
             dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                     3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
@@ -372,7 +372,7 @@ class KittiDataset(Custom3DDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): List of array storing the \
+            net_outputs (list[np.ndarray]): List of array storing the
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
             pklfile_prefix (str): The prefix of pkl file.
@@ -487,7 +487,7 @@ class KittiDataset(Custom3DDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): List of array storing the \
+            net_outputs (list[np.ndarray]): List of array storing the
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
             pklfile_prefix (str): The prefix of pkl file.
@@ -607,7 +607,7 @@ class KittiDataset(Custom3DDataset):
                 - bbox (np.ndarray): 2D bounding boxes.
                 - box3d_camera (np.ndarray): 3D bounding boxes in \
                     camera coordinate.
-                - box3d_lidar (np.ndarray): 3D bounding boxes in \
+                - box3d_lidar (np.ndarray): 3D bounding boxes in
                     LiDAR coordinate.
                 - scores (np.ndarray): Scores of boxes.
                 - label_preds (np.ndarray): Class label predictions.

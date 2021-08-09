@@ -302,7 +302,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 a 4D-tensor.
 
         Returns:
-            tuple: Usually contain classification scores, bbox predictions, \
+            tuple: Usually contain classification scores, bbox predictions,
                 and direction class predictions.
                 cls_scores (list[Tensor]): Box scores for each scale level,
                     each is a 4D-tensor, the channel number is

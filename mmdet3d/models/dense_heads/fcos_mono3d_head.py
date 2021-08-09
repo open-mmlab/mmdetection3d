@@ -152,7 +152,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 is True.
 
         Returns:
-            tuple: scores for each class, bbox and direction class \
+            tuple: scores for each class, bbox and direction class
                 predictions, centerness predictions of input feature maps.
         """
         cls_score, bbox_pred, dir_cls_pred, attr_pred, cls_feat, reg_feat = \
@@ -200,7 +200,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 the 7th dimension is rotation dimension.
 
         Returns:
-            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th \
+            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th
                 dimensions are changed.
         """
         rad_pred_encoding = torch.sin(boxes1[..., 6:7]) * torch.cos(
@@ -510,7 +510,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 The first item is an (n, 5) tensor, where the first 4 columns \
                 are bounding box positions (tl_x, tl_y, br_x, br_y) and the \
                 5-th column is a score between 0 and 1. The second item is a \
-                (n,) tensor where each item is the predicted class label of \
+                (n,) tensor where each item is the predicted class label of
                 the corresponding box.
         """
         assert len(cls_scores) == len(bbox_preds) == len(dir_cls_preds) == \
@@ -579,7 +579,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             bbox_preds (list[Tensor]): Box energies / deltas for a single scale
                 level with shape (num_points * bbox_code_size, H, W).
             dir_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on a single scale level with shape \
+                predictions on a single scale level with shape
                 (num_points * 2, H, W)
             attr_preds (list[Tensor]): Attribute scores for each scale level
                 Has shape (N, num_points * num_attrs, H, W)
@@ -767,7 +767,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         Returns:
             tuple:
                 concat_lvl_labels (list[Tensor]): Labels of each level. \
-                concat_lvl_bbox_targets (list[Tensor]): BBox targets of each \
+                concat_lvl_bbox_targets (list[Tensor]): BBox targets of each
                     level.
         """
         assert len(points) == len(self.regress_ranges)

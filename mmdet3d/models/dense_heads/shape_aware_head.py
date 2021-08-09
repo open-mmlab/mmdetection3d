@@ -132,7 +132,7 @@ class BaseShapeHead(BaseModule):
                 regression and direction classification predictions. \
                 Note that all the returned tensors are reshaped as \
                 [bs*num_base_anchors*H*W, num_cls/box_code_size/dir_bins]. \
-                It is more convenient to concat anchors for different \
+                It is more convenient to concat anchors for different
                 classes even though they have different feature map sizes.
         """
         x = self.shared_conv(x)
@@ -171,7 +171,7 @@ class ShapeAwareHead(Anchor3DHead):
         tasks (dict): Shape-aware groups of multi-class objects.
         assign_per_class (bool, optional): Whether to do assignment for each \
             class. Default: True.
-        kwargs (dict): Other arguments are the same as those in \
+        kwargs (dict): Other arguments are the same as those in
             :class:`Anchor3DHead`.
     """
 
@@ -218,7 +218,7 @@ class ShapeAwareHead(Anchor3DHead):
         Args:
             x (torch.Tensor): Input features.
         Returns:
-            tuple[torch.Tensor]: Contain score of each class, bbox \
+            tuple[torch.Tensor]: Contain score of each class, bbox
                 regression and direction classification predictions.
         """
         results = []
@@ -264,7 +264,7 @@ class ShapeAwareHead(Anchor3DHead):
             num_total_samples (int): The number of valid samples.
 
         Returns:
-            tuple[torch.Tensor]: Losses of class, bbox \
+            tuple[torch.Tensor]: Losses of class, bbox
                 and direction, respectively.
         """
         # classification loss
@@ -335,7 +335,7 @@ class ShapeAwareHead(Anchor3DHead):
 
                 - loss_cls (list[torch.Tensor]): Classification losses.
                 - loss_bbox (list[torch.Tensor]): Box regression losses.
-                - loss_dir (list[torch.Tensor]): Direction classification \
+                - loss_dir (list[torch.Tensor]): Direction classification
                     losses.
         """
         device = cls_scores[0].device
@@ -445,7 +445,7 @@ class ShapeAwareHead(Anchor3DHead):
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
             cfg (:obj:`ConfigDict`): Training or testing config.
-            rescale (list[torch.Tensor], optional): whether to rescale bbox. \
+            rescale (list[torch.Tensor], optional): whether to rescale bbox.
                 Default: False.
 
         Returns:

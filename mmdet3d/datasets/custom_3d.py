@@ -87,7 +87,7 @@ class Custom3DDataset(Dataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Data information that will be passed to the data \
+            dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): Sample index.
@@ -283,7 +283,7 @@ class Custom3DDataset(Dataset):
         """Get data loading pipeline in self.show/evaluate function.
 
         Args:
-            pipeline (list[dict]): Input pipeline. If None is given, \
+            pipeline (list[dict]): Input pipeline. If None is given,
                 get from self.pipeline.
         """
         if pipeline is None:

@@ -404,7 +404,7 @@ class GroupFree3DHead(BaseModule):
         Args:
             bbox_preds (dict): Predictions from forward of vote head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
             pts_semantic_mask (list[torch.Tensor]): Point-wise
@@ -544,7 +544,7 @@ class GroupFree3DHead(BaseModule):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
             pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
@@ -656,7 +656,7 @@ class GroupFree3DHead(BaseModule):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
             pts_semantic_mask (torch.Tensor): Point-wise semantic

@@ -90,7 +90,7 @@ class PointwiseSemanticHead(BaseModule):
                 shape (box_num).
 
         Returns:
-            tuple[torch.Tensor]: Segmentation targets with shape [voxel_num] \
+            tuple[torch.Tensor]: Segmentation targets with shape [voxel_num]
                 part prediction targets with shape [voxel_num, 3]
         """
         gt_bboxes_3d = gt_bboxes_3d.to(voxel_centers.device)
@@ -142,7 +142,7 @@ class PointwiseSemanticHead(BaseModule):
 
                 - seg_targets (torch.Tensor): Segmentation targets \
                     with shape [voxel_num].
-                - part_targets (torch.Tensor): Part prediction targets \
+                - part_targets (torch.Tensor): Part prediction targets
                     with shape [voxel_num, 3].
         """
         batch_size = len(gt_labels_3d)

@@ -141,7 +141,7 @@ class NuScenesMonoDataset(CocoDataset):
 
         Returns:
             dict: A dict containing the following keys: bboxes, labels, \
-                gt_bboxes_3d, gt_labels_3d, attr_labels, centers2d, \
+                gt_bboxes_3d, gt_labels_3d, attr_labels, centers2d,
                 depths, bboxes_ignore, masks, seg_map
         """
         gt_bboxes = []
@@ -580,7 +580,7 @@ class NuScenesMonoDataset(CocoDataset):
         """Get data loading pipeline in self.show/evaluate function.
 
         Args:
-            pipeline (list[dict]): Input pipeline. If None is given, \
+            pipeline (list[dict]): Input pipeline. If None is given,
                 get from self.pipeline.
         """
         if pipeline is None:
@@ -773,7 +773,7 @@ def nusc_box_to_cam_box3d(boxes):
         boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
 
     Returns:
-        tuple (:obj:`CameraInstance3DBoxes` | torch.Tensor | torch.Tensor): \
+        tuple (:obj:`CameraInstance3DBoxes` | torch.Tensor | torch.Tensor):
             Converted 3D bounding boxes, scores and labels.
     """
     locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)

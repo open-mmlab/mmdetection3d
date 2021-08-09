@@ -34,7 +34,7 @@ def chamfer_distance(src,
                 from destination to source.
             - indices1 (torch.Tensor): Index the min distance point \
                 for each point in source to destination.
-            - indices2 (torch.Tensor): Index the min distance point \
+            - indices2 (torch.Tensor): Index the min distance point
                 for each point in destination to source.
     """
 
@@ -127,7 +127,7 @@ class ChamferDistance(nn.Module):
             tuple[torch.Tensor]: If ``return_indices=True``, return losses of \
                 source and target with their corresponding indices in the \
                 order of ``(loss_source, loss_target, indices1, indices2)``. \
-                If ``return_indices=False``, return \
+                If ``return_indices=False``, return
                 ``(loss_source, loss_target)``.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
