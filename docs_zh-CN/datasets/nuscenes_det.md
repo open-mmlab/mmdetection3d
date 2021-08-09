@@ -70,18 +70,18 @@ mmdetection3d
         - info['sweeps'][i]['data_path']：第 i 次扫描的数据路径。
         - info['sweeps'][i]['type']：扫描数据类型，例如“激光雷达”。
         - info['sweeps'][i]['sample_data_token']：扫描样本数据标记。
-        - info['sweeps'][i]['sensor2ego_translation']：从当前传感器（用于收集扫描数据）到本车的转换。 （1x3 列表）
-        - info['sweeps'][i]['sensor2ego_rotation']：从当前传感器（用于收集扫描数据）到本车的旋转。 （四元数格式的 1x4 列表）
-        - info['sweeps'][i]['ego2global_translation']：从本车到全局坐标的转换。 （1x3 列表）
-        - info['sweeps'][i]['ego2global_rotation']：从本车到全局坐标的旋转。 （四元数格式的 1x4 列表）
+        - info['sweeps'][i]['sensor2ego_translation']：从当前传感器（用于收集扫描数据）到自车的转换。 （1x3 列表）
+        - info['sweeps'][i]['sensor2ego_rotation']：从当前传感器（用于收集扫描数据）到自车的旋转。 （四元数格式的 1x4 列表）
+        - info['sweeps'][i]['ego2global_translation']：从自车到全局坐标的转换。 （1x3 列表）
+        - info['sweeps'][i]['ego2global_rotation']：从自车到全局坐标的旋转。 （四元数格式的 1x4 列表）
         - info['sweeps'][i]['timestamp']：扫描数据的时间戳。
         - info['sweeps'][i]['sensor2lidar_translation']：从当前传感器（用于收集扫描数据）到激光雷达的转换。 （1x3 列表）
         - info['sweeps'][i]['sensor2lidar_rotation']：从当前传感器（用于收集扫描数据）到激光雷达的旋转。 （四元数格式的 1x4 列表）
     - info['cams']：相机校准信息。它包含与每个摄像头对应的六个键值： `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。
     每个字典包含每个扫描数据按照上述方式的详细信息（每个信息的关键字与上述相同）。
-    - info['lidar2ego_translation']：从激光雷达到本车的转换。 （1x3 列表）
-    - info['lidar2ego_rotation']：从激光雷达到本车的旋转。 （四元数格式的 1x4 列表）
-    - info['ego2global_translation']：从本车到全局坐标的转换。 （1x3 列表）
+    - info['lidar2ego_translation']：从激光雷达到自车的转换。 （1x3 列表）
+    - info['lidar2ego_rotation']：从激光雷达到自车的旋转。 （四元数格式的 1x4 列表）
+    - info['ego2global_translation']：从自车到全局坐标的转换。 （1x3 列表）
     - info['ego2global_rotation']：从自我车辆到全局坐标的旋转。 （四元数格式的 1x4 列表）
     - info['timestamp']：样本数据的时间戳。
     - info['gt_boxes']：3D 边界框的 7-DoF 标注，一个 Nx7 数组。
@@ -96,10 +96,10 @@ mmdetection3d
         - info['images'][i]['file_name']：第 i 张图像的文件名。
         - info['images'][i]['id']：第 i 张图像的样本数据标记。
         - info['images'][i]['token']：与该帧对应的样本标记。
-        - info['images'][i]['cam2ego_rotation']：从相机到本车的旋转。 （四元数格式的 1x4 列表）
-        - info['images'][i]['cam2ego_translation']：从相机到本车的转换。 （1x3 列表）
-        - info['images'][i]['ego2global_rotation'']：从本车到全局坐标的旋转。 （四元数格式的 1x4 列表）
-        - info['images'][i]['ego2global_translation']：从本车到全局坐标的转换。 （1x3 列表）
+        - info['images'][i]['cam2ego_rotation']：从相机到自车的旋转。 （四元数格式的 1x4 列表）
+        - info['images'][i]['cam2ego_translation']：从相机到自车的转换。 （1x3 列表）
+        - info['images'][i]['ego2global_rotation'']：从自车到全局坐标的旋转。 （四元数格式的 1x4 列表）
+        - info['images'][i]['ego2global_translation']：从自车到全局坐标的转换。 （1x3 列表）
         - info['images'][i]['cam_intrinsic']: 相机内参矩阵。 （3x3 列表）
         - info['images'][i]['width']：图片宽度， nuScenes 中默认为 1600。
         - info['images'][i]['height']：图像高度， nuScenes 中默认为 900。
