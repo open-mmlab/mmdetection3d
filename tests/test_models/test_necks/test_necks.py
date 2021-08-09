@@ -62,7 +62,7 @@ def test_dla_neck():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     neck_cfg = dict(
-        type='DLA_Neck',
+        type='DLANeck',
         in_channels=[16, 32, 64, 128, 256, 512],
         start_level=2,
         end_level=5,
