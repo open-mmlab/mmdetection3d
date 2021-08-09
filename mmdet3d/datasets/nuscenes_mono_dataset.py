@@ -18,7 +18,7 @@ from .utils import extract_result_dict, get_loading_pipeline
 
 @DATASETS.register_module()
 class NuScenesMonoDataset(CocoDataset):
-    r"""Monocular 3D detection on NuScenes Dataset.
+    """Monocular 3D detection on NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.
 

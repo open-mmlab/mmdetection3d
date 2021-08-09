@@ -182,6 +182,8 @@ def draw_camera_bbox3d_on_img(bboxes3d,
 
     img = raw_img.copy()
     cam2img = copy.deepcopy(cam2img)
+    if len(bboxes3d.tensor) is 0:
+        return img
     corners_3d = bboxes3d.corners
     num_bbox = corners_3d.shape[0]
     points_3d = corners_3d.reshape(-1, 3)

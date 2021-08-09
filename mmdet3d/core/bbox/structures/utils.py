@@ -175,10 +175,10 @@ def mono_cam_box2vis(cam_box):
     assert isinstance(cam_box, CameraInstance3DBoxes), \
         'input bbox should be CameraInstance3DBoxes!'
 
-    loc = cam_box.gravity_center
-    dim = cam_box.dims
-    yaw = cam_box.yaw
-    feats = cam_box.tensor[:, 7:]
+    loc = cam_box.gravity_center.clone()
+    dim = cam_box.dims.clone()
+    yaw = cam_box.yaw.clone()
+    feats = cam_box.tensor[:, 7:].clone()
     # rotate along x-axis for np.pi / 2
     # see also here: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L557  # noqa
     dim[:, [1, 2]] = dim[:, [2, 1]]
@@ -189,8 +189,8 @@ def mono_cam_box2vis(cam_box):
     # this is because mono 3D box class such as `NuScenesBox` has different
     # definition of rotation with our `CameraInstance3DBoxes`
     yaw = -yaw - np.pi / 2
-    cam_box = torch.cat([loc, dim, yaw[:, None], feats], dim=1)
-    cam_box = CameraInstance3DBoxes(
-        cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))
+    new_cam_box = torch.cat([loc, dim, yaw[:, None], feats], dim=1)
+    new_cam_box = CameraInstance3DBoxes(
+        new_cam_box, box_dim=new_cam_box.shape[-1], origin=(0.5, 0.5, 0.5))
 
-    return cam_box
+    return new_cam_box

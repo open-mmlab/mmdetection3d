@@ -14,7 +14,7 @@ from .pipelines import Compose
 
 @DATASETS.register_module()
 class NuScenesDataset(Custom3DDataset):
-    r"""NuScenes Dataset.
+    """NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.
 
