@@ -299,7 +299,7 @@ def test_pointnet2_sa_msg():
 
 
 def test_dla_net():
-
+    # test DLANet used in SMOKE
     # test list config
     cfg = dict(
         type='DLANet',

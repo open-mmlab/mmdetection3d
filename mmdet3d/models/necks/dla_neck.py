@@ -103,9 +103,10 @@ class DLAUp(nn.Module):
         channels (List[int]): List of input channels of multi-scale
             feature map.
         scales(List[int]): List of scale of different layers' feature.
-        in_channels (NoneType): List of input channels of different scales.
+        in_channels (NoneType, optional): List of input channels of
+            different scales. Default: None.
+        norm_cfg (dict, optional): Config dict for normalization layer.
             Default: None.
-        norm_cfg (dict): Config dict for normalization layer. Default: None.
     """
 
     def __init__(self,
@@ -152,11 +153,14 @@ class DLANeck(nn.Module):
     """DLA Neck.
 
     Args:
-        in_channels (list[int]): List of input channels of multi-scale
-            feature map.
-        start_level (int): The scale level where upsampling starts. Default: 2.
-        end_level (int): The scale level where upsampling ends. Default: 5.
-        norm_cfg (dict): Config dict for normalization layer. Default: None.
+        in_channels (list[int], optional): List of input channels
+            of multi-scale feature map.
+        start_level (int, optioanl): The scale level where upsampling
+            starts. Default: 2.
+        end_level (int, optional): The scale level where upsampling
+            ends. Default: 5.
+        norm_cfg (dict, optional): Config dict for normalization
+            layer. Default: None.
     """
 
     def __init__(self,
