@@ -9,10 +9,8 @@ class RoIPointPool3d(nn.Module):
     def __init__(self, num_sampled_points=512):
         super().__init__()
         """
-
         Args:
             num_sampled_points (int): Number of samples in each roi
-            extra_width (float): Extra width to enlarge the box
         """
         self.num_sampled_points = num_sampled_points
 
