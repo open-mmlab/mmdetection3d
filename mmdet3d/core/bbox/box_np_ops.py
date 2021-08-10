@@ -350,7 +350,10 @@ def corner_to_surfaces_3d(corners):
 
 
 def points_in_rbbox(points, rbbox, z_axis=2, origin=(0.5, 0.5, 0)):
-    """Check points in rotated bbox and return indicces.
+    """Check points in rotated bbox and return indices.
+
+    Note:
+        This function is for counterclockwise boxes.
 
     Args:
         points (np.ndarray, shape=[N, 3+dim]): Points to query.
@@ -480,6 +483,9 @@ def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
     """Calculate box iou. Note that jit version runs ~10x faster than the
     box_overlaps function in mmdet3d.core.evaluation.
 
+    Note:
+        This function is for counterclockwise boxes.
+
     Args:
         boxes (np.ndarray): Input bounding boxes with shape of (N, 4).
         query_boxes (np.ndarray): Query boxes with shape of (K, 4).
@@ -517,7 +523,10 @@ def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
 
 
 def projection_matrix_to_CRT_kitti(proj):
-    """Split projection matrix of kitti.
+    """Split projection matrix of KITTI.
+
+    Note:
+        This function is for KITTI only.
 
     P = C @ [R|T]
     C is upper triangular matrix, so we need to inverse CR and use QR
@@ -542,6 +551,9 @@ def projection_matrix_to_CRT_kitti(proj):
 
 def remove_outside_points(points, rect, Trv2c, P2, image_shape):
     """Remove points which are outside of image.
+
+    Note:
+        This function is for KITTI only.
 
     Args:
         points (np.ndarray, shape=[N, 3+dims]): Total points.
@@ -748,6 +760,9 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
       . 3 -------- 0
       |/         |/
       2 -------- 1
+
+    Note:
+        This function is for LiDAR boxes only.
 
     Args:
         boxes3d (np.ndarray): Boxes with shape of (N, 7)

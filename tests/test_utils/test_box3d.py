@@ -1403,6 +1403,11 @@ def test_depth_boxes3d():
     mask = boxes.nonempty()
     assert (mask == expected_tensor).all()
 
+    # test bbox in_range
+    expected_tensor = torch.tensor([0, 1], dtype=torch.bool)
+    mask = boxes.in_range_3d([1, 0, -2, 2, 1, 5])
+    assert (mask == expected_tensor).all()
+
     expected_tensor = torch.tensor([[[-0.1030, 0.6649, 0.1056],
                                      [-0.1030, 0.6649, 0.3852],
                                      [-0.1030, 0.9029, 0.3852],
@@ -1707,6 +1712,13 @@ def test_points_in_boxes():
          [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
         dtype=torch.int32).cuda()
     assert point_indices.shape == torch.Size([15, 2])
+    assert (point_indices == expected_point_indices).all()
+
+    point_indices = depth_boxes.points_in_boxes_part(depth_pts)
+    expected_point_indices = torch.tensor(
+        [0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+        dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([15])
     assert (point_indices == expected_point_indices).all()
 
     depth_boxes = torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0.3],
