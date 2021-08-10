@@ -239,7 +239,7 @@ def test_paconv_cuda_ssg():
 
     set_random_seed(0, True)
     paconv_cuda_ssg_cfg = _get_segmentor_cfg(
-        'paconv/paconv_ssg_8x2_step_100e_s3dis_seg-3d-13class.py')
+        'paconv/paconv_cuda_ssg_8x8_cosine_200e_s3dis_seg-3d-13class.py')
     # for GPU memory consideration
     paconv_cuda_ssg_cfg.backbone.num_points = (256, 64, 16, 4)
     paconv_cuda_ssg_cfg.test_cfg.num_points = 32

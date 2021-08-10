@@ -1,26 +1,30 @@
-dataset_type = 'SUNRGBDDataset'
-data_root = 'data/sunrgbd/'
-class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
-               'night_stand', 'bookshelf', 'bathtub')
+# dataset settings
+dataset_type = 'S3DISDataset'
+data_root = './data/s3dis/'
+class_names = ('table', 'chair', 'sofa', 'bookcase', 'board')
+train_area = [1, 2, 3, 4, 6]
+test_area = 5
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
-        use_dim=[0, 1, 2]),
-    dict(type='LoadAnnotations3D'),
+        use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
         flip_ratio_bev_horizontal=0.5,
-    ),
+        flip_ratio_bev_vertical=0.5),
     dict(
         type='GlobalRotScaleTrans',
-        rot_range=[-0.523599, 0.523599],
-        scale_ratio_range=[0.85, 1.15],
+        # following ScanNet dataset the rotation range is 5 degrees
+        rot_range=[-0.087266, 0.087266],
+        scale_ratio_range=[1.0, 1.0],
         shift_height=True),
-    dict(type='PointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
@@ -30,7 +34,7 @@ test_pipeline = [
         coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2, 3, 4, 5]),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -46,8 +50,8 @@ test_pipeline = [
                 type='RandomFlip3D',
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.5,
-            ),
-            dict(type='PointSample', num_points=20000),
+                flip_ratio_bev_vertical=0.5),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
@@ -63,7 +67,7 @@ eval_pipeline = [
         coord_type='DEPTH',
         shift_height=False,
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2, 3, 4, 5]),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
@@ -72,25 +76,28 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=16,
+    samples_per_gpu=8,
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
         times=5,
         dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'sunrgbd_infos_train.pkl',
-            pipeline=train_pipeline,
-            classes=class_names,
-            filter_empty_gt=False,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')),
+            type='ConcatDataset',
+            datasets=[
+                dict(
+                    type=dataset_type,
+                    data_root=data_root,
+                    ann_file=data_root + f's3dis_infos_Area_{i}.pkl',
+                    pipeline=train_pipeline,
+                    filter_empty_gt=False,
+                    classes=class_names,
+                    box_type_3d='Depth') for i in train_area
+            ],
+            separate_eval=False)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
+        ann_file=data_root + f's3dis_infos_Area_{test_area}.pkl',
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
@@ -98,7 +105,7 @@ data = dict(
     test=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
+        ann_file=data_root + f's3dis_infos_Area_{test_area}.pkl',
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,

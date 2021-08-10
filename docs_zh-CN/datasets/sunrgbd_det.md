@@ -281,7 +281,7 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='IndoorPointSample', num_points=20000),
+    dict(type='PointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
@@ -290,7 +290,7 @@ train_pipeline = [
 点云上的数据增强
 - `RandomFlip3D`：随机左右或前后翻转输入点云。
 - `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0。
-- `IndoorPointSample`：降采样输入点云。
+- `PointSample`：降采样输入点云。
 
 SUN RGB-D 上多模态（点云和图像）3D 物体检测的经典流程如下：
 
@@ -319,7 +319,7 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='IndoorPointSample', num_points=20000),
+    dict(type='PointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Collect3D',

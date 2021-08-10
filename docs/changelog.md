@@ -175,7 +175,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 #### Highlights
 
 - Support a new multi-modality method [ImVoteNet](https://arxiv.org/abs/2001.10692).
-- Support pytorch 1.7 and 1.8
+- Support PyTorch 1.7 and 1.8
 - Refactor the structure of tools and [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py)/[test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py)
 
 #### New Features
@@ -208,7 +208,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
 - Fix the incorrect adopted pipeline when adding val to workflow (#370)
 - Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
-- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in pytorch 1.7 (#393)
+- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in PyTorch 1.7 (#393)
 
 ### v0.11.0 (1/3/2021)
 
@@ -234,7 +234,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Fix an unsupported bias setting in the unit test for centerpoint head (#304)
 - Fix errors due to typos in the centerpoint head (#308)
 - Fix a minor bug in [points_in_boxes.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) when tensors are not in the same device. (#317)
-- Fix warning of deprecated usages of nonzero during training with pytorch 1.6 (#330)
+- Fix warning of deprecated usages of nonzero during training with PyTorch 1.6 (#330)
 
 ### v0.10.0 (1/2/2021)
 
@@ -336,7 +336,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 #### Highlights
 
 - Support mixed precision training of voxel-based methods
-- Support docker with pytorch 1.6.0
+- Support docker with PyTorch 1.6.0
 - Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
 - Switch model zoo to download.openmmlab.com
 
@@ -344,7 +344,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 - Support dataset pipeline `VoxelBasedPointSampler` to sample multi-sweep points based on voxelization. (#125)
 - Support mixed precision training of voxel-based methods (#132)
-- Support docker with pytorch 1.6.0 (#160)
+- Support docker with PyTorch 1.6.0 (#160)
 
 #### Improvements
 
@@ -401,7 +401,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 #### Improvements
 
-- Fix all warnings and bugs in Pytorch 1.6.0 (#70, #72)
+- Fix all warnings and bugs in PyTorch 1.6.0 (#70, #72)
 - Update issue templates (#43)
 - Update unit tests (#20, #24, #30)
 - Update documentation for using `ply` format point cloud data (#41)
