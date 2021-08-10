@@ -22,7 +22,7 @@ pip install -r requirements/optional.txt
 ```
 
 和准备数据集的通用方法一致，我们推荐将数据集根目录软链接至 `$MMDETECTION3D/data`。
-由于原始 Waymo 数据的格式基于 `tfrecord`，我们需要将原始数据预处理以供训练和测试时便于使用。我们的方法是将它们转换为 KITTI 格式。
+由于原始 Waymo 数据的格式基于 `tfrecord`，我们需要将原始数据进行预处理，以便于训练和测试时使用。我们的方法是将它们转换为 KITTI 格式。
 
 处理之前，文件目录结构组织如下：
 
@@ -43,13 +43,13 @@ mmdetection3d
 
 ```
 
-您可以在[这里](https://waymo.com/open/download/)下载 1.2 版本的 Waymo 公开数据，并在[这里](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing)下载其训练/验证/测试集拆分文件。接下来，请将 `tfrecord` 文件放入 `data/waymo/waymo_format/` 下的对应文件夹，并将数据集拆分 txt 文件放入 `data/waymo/kitti_format/ImageSets`。在[这里](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects)下载验证集使用的真实标注 bin 文件并放入 `data/waymo/waymo_format/`。小窍门：您可以使用 `gsutil` 来在命令行下载大规模数据集。您可以将该[工具](https://github.com/RalphMao/Waymo-Dataset-Tool) 作为一个例子来查看更多细节。之后，通过运行如下指令准备 Waymo 数据：
+您可以在[这里](https://waymo.com/open/download/)下载 1.2 版本的 Waymo 公开数据集，并在[这里](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing)下载其训练/验证/测试集拆分文件。接下来，请将 `tfrecord` 文件放入 `data/waymo/waymo_format/` 下的对应文件夹，并将 txt 格式的数据集拆分文件放入 `data/waymo/kitti_format/ImageSets`。在[这里](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects)下载验证集使用的 bin 格式真实标注 (Ground Truth) 文件并放入 `data/waymo/waymo_format/`。小窍门：您可以使用 `gsutil` 来在命令行下载大规模数据集。您可以将该[工具](https://github.com/RalphMao/Waymo-Dataset-Tool) 作为一个例子来查看更多细节。之后，通过运行如下指令准备 Waymo 数据：
 
 ```bash
 python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
 ```
 
-请注意，如果您的本地磁盘没有足够空间保存转换后的数据，您可以将 `out-dir` 改为其他目录；只要在创建文件夹、准备数据并转换格式后，将数据文件链接到 `data/waymo/kitti_format` 即可。
+请注意，如果您的本地磁盘没有足够空间保存转换后的数据，您可以将 `--out-dir` 改为其他目录；只要在创建文件夹、准备数据并转换格式后，将数据文件链接到 `data/waymo/kitti_format` 即可。
 
 在数据转换后，文件目录结构应组织如下：
 
@@ -93,7 +93,7 @@ mmdetection3d
 
 ```
 
-因为 Waymo 数据的来源包含数个相机，这里我们将每个相机对应的图像和标签文件分别存储，并将位姿文件存储以供后续处理连续多帧的点云。我们使用 `{a}{bbb}{ccc}` 的名称编码方式以为每帧数据命名，其中 `a` 是不同数据拆分的前缀（`0` 指代训练集，`1` 指代验证集，`2` 指代测试集），`bbb` 是分割部分 (segment) 的索引，而 `ccc` 是帧索引。您可以轻而易举地按照如上命名规则定位到所需的帧。我们将训练和验证所需数据按 KITTI 的方式集合在一起，然后将训练集/验证集/测试集的索引存储在 `ImageSet` 文件中。
+因为 Waymo 数据的来源包含数个相机，这里我们将每个相机对应的图像和标签文件分别存储，并将位姿文件存储下来以供后续处理连续多帧的点云。我们使用 `{a}{bbb}{ccc}` 的名称编码方式为每帧数据命名，其中 `a` 是不同数据拆分的前缀（`0` 指代训练集，`1` 指代验证集，`2` 指代测试集），`bbb` 是分割部分 (segment) 的索引，而 `ccc` 是帧索引。您可以轻而易举地按照如上命名规则定位到所需的帧。我们将训练和验证所需数据按 KITTI 的方式集合在一起，然后将训练集/验证集/测试集的索引存储在 `ImageSet` 下的文件中。
 
 ## 训练
 
@@ -101,7 +101,7 @@ mmdetection3d
 
 ## 评估
 
-为了在 Waymo 数据集上进行检测性能评估，请按照[此处指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建用于计算评估指标的二进制文件 `compute_detection_metrics_main`，并将它置于 `mmdet3d/core/evaluation/waymo_utils/`.。您基本上可以按照下方命令安装 `bazel`，然后构建二进制文件：
+为了在 Waymo 数据集上进行检测性能评估，请按照[此处指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建用于计算评估指标的二进制文件 `compute_detection_metrics_main`，并将它置于 `mmdet3d/core/evaluation/waymo_utils/` 下。您基本上可以按照下方命令安装 `bazel`，然后构建二进制文件：
 
    ```shell
    git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
@@ -167,4 +167,4 @@ mmdetection3d
    gzip results/waymo-car/submission/my_model.tar
    ```
 
-如果想用官方评估服务器评估您在验证集上的结果，您可以使用同样的方法生成提交文件，只需确保您在运行如上指令前更改 `submission.txtpb` 中的字段值 即可。
+如果想用官方评估服务器评估您在验证集上的结果，您可以使用同样的方法生成提交文件，只需确保您在运行如上指令前更改 `submission.txtpb` 中的字段值即可。
