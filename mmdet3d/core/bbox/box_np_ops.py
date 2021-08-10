@@ -189,7 +189,7 @@ def center_to_corner_box3d(centers,
         np.ndarray: Corners with the shape of (N, 8, 3).
     """
     # 'length' in kitti format is in x axis.
-    # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
+    # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(lwh)(lidar)
     # center in kitti format is [0.5, 1.0, 0.5] in xyz.
     corners = corners_nd(dims, origin=origin)
     # corners: [N, 8, 3]
