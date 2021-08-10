@@ -408,6 +408,13 @@ def test_lidar_boxes3d():
     assert torch.allclose(boxes.tensor, expected_tensor)
 
     # test bbox in_range_bev
+    expected_tensor = torch.tensor(
+        [[1.1282, -3.0508, 1.7598, 3.4090, -1.2079],
+         [8.0981, -4.9332, 1.5486, 4.0325, -1.3479],
+         [27.6424, -7.2409, 1.4782, 2.2425, 1.8421],
+         [20.0183, -28.4773, 1.5687, 3.4995, 1.9621],
+         [28.2147, -16.5020, 1.7497, 3.7911, -2.5179]])
+    assert torch.allclose(boxes.bev, expected_tensor, atol=1e-3)
     expected_tensor = torch.tensor([1, 1, 1, 1, 1], dtype=torch.bool)
     mask = boxes.in_range_bev([0., -40., 70.4, 40.])
     assert (mask == expected_tensor).all()
@@ -998,6 +1005,14 @@ def test_camera_boxes3d():
     expected_tensor = torch.tensor([1, 1, 0, 0, 0], dtype=torch.bool)
     mask = boxes.in_range_3d([-2, -5, 0, 20, 2, 22])
     assert (mask == expected_tensor).all()
+
+    expected_tensor = torch.tensor(
+        [[3.0508, 1.1282, 1.7598, 3.4090, -5.9203],
+         [4.9332, 8.0981, 1.5486, 4.0325, -6.0603],
+         [7.2409, 27.6424, 1.4782, 2.2425, -2.8703],
+         [28.4773, 20.0183, 1.5687, 3.4995, -2.7503],
+         [16.5020, 28.2147, 1.7497, 3.7911, -0.9471]])
+    assert torch.allclose(boxes.bev, expected_tensor, atol=1e-3)
 
     # test properties
     assert torch.allclose(boxes.bottom_center, boxes.tensor[:, :3])
