@@ -33,7 +33,7 @@ mmdetection3d
 在 `scans` 文件夹下总共有 1201 个训练样本文件夹和 312 个验证样本文件夹，其中存有未处理的点云数据和相关的标注。比如说，在文件夹 `scene0001_01` 下文件是这样组织的：
 
 - `scene0001_01_vh_clean_2.ply`: 存有每个顶点坐标和颜色的网格文件。网格的顶点被直接用作未处理的点云数据。
-- `scene0001_01.aggregation.json`: 包含物体 ID，分割部分 ID，和标签的标注文件。
+- `scene0001_01.aggregation.json`: 包含物体 ID、分割部分 ID、标签的标注文件。
 - `scene0001_01_vh_clean_2.0.010000.segs.json`: 包含分割部分 ID 和顶点的分割标注文件。
 - `scene0001_01.txt`: 包括对齐矩阵等的元文件。
 - `scene0001_01_vh_clean_2.labels.ply`：包含每个顶点类别的标注文件。
@@ -127,9 +127,9 @@ def export(mesh_file,
 
 在从每个场景的扫描文件提取数据后，如果原始点云点数过多，可以将其下采样（比如到 50000 个点），但在三维语义分割任务中，点云不会被下采样。此外，在 `nyu40id` 标准之外的不合法语义标签或者可选的 `DONOT CARE` 类别标签应被过滤。最终，点云文件、语义标签、实例标签和真实物体的集合应被存储于 `.npy` 文件中。
 
-### 提取 ScanNet RGB 色彩数据
+### 提取 ScanNet RGB 色彩数据（可选的）
 
-通过提取ScanNet RGB 色彩数据，对于每个场景我们加载 RGB 图像与配套 4x4 位姿矩阵、单个 4x4 相机内参矩阵的集合。请注意，这一步是可选的，除非要运行多视图物体检测，否则可以略去这步。
+通过提取 ScanNet RGB 色彩数据，对于每个场景我们加载 RGB 图像与配套 4x4 位姿矩阵、单个 4x4 相机内参矩阵的集合。请注意，这一步是可选的，除非要运行多视图物体检测，否则可以略去这步。
 
 ```shell
 python extract_posed_images.py
@@ -222,7 +222,7 @@ scannet
 ├── scannet_infos_test.pkl
 ```
 
-- `points/xxxxx.bin`：下采样后，未与坐标轴平行（即没有对齐）的点云。因为 ScanNet 3D 检测任务将与坐标轴平行的点云作为输入，而 ScanNet 3D 语义分割任务将对齐前的点云作为输入，我们选择存储对齐前的点云和它们的对齐矩阵。请注意：在 3D 检测的预处理流程 `GlobalAlignment` 后，点云就都是与坐标轴平行的了。
+- `points/xxxxx.bin`：下采样后，未与坐标轴平行（即没有对齐）的点云。因为 ScanNet 3D 检测任务将与坐标轴平行的点云作为输入，而 ScanNet 3D 语义分割任务将对齐前的点云作为输入，我们选择存储对齐前的点云和它们的对齐矩阵。请注意：在 3D 检测的预处理流程 [`GlobalAlignment`](https://github.com/open-mmlab/mmdetection3d/blob/9f0b01caf6aefed861ef4c3eb197c09362d26b32/mmdet3d/datasets/pipelines/transforms_3d.py#L423) 后，点云就都是与坐标轴平行的了。
 - `instance_mask/xxxxx.bin`：每个点的实例标签，值的范围为：[0, NUM_INSTANCES]，其中 0 表示没有标注。
 - `semantic_mask/xxxxx.bin`：每个点的语义标签，值的范围为：[1, 40], 也就是 `nyu40id` 的标准。请注意：在训练流程 `PointSegClassMapping` 中，`nyu40id` 的 ID 会被映射到训练 ID。
 - `posed_images/scenexxxx_xx`：`.jpg` 图像的集合，还包含 `.txt` 格式的 4x4 相机姿态和单个 `.txt` 格式的相机内参矩阵文件。
@@ -245,9 +245,9 @@ scannet
 - `scannet_infos_val.pkl`：验证集上的数据信息，与 `scannet_infos_train.pkl` 格式完全一致。
 - `scannet_infos_test.pkl`：测试集上的数据信息，与 `scannet_infos_train.pkl` 格式几乎完全一致，除了缺少标注。
 
-## Training pipeline
+## 训练流程
 
-ScanNet 上 3D 物体检测的经典流程如下：
+ScanNet 上 3D 物体检测的典型流程如下：
 
 ```python
 train_pipeline = [
@@ -269,7 +269,7 @@ train_pipeline = [
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),
         max_cat_id=40),
-    dict(type='IndoorPointSample', num_points=40000),
+    dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -293,9 +293,9 @@ train_pipeline = [
 - `GlobalAlignment`：输入的点云在施加了坐标轴平行的矩阵后应被转换为与坐标轴平行的形式。
 - `PointSegClassMapping`：训练中，只有合法的类别 ID 才会被映射到类别标签，比如 [0, 18)。
 - 数据增强:
-    - `IndoorPointSample`：下采样输入点云。
+    - `PointSample`：下采样输入点云。
     - `RandomFlip3D`：随机左右或前后翻转点云。
-    - `GlobalRotScaleTrans`: 旋转输入点云，对于 ScanNet 角度通常落入 [-5, 5] （度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0；最后平移输入点云，对于 ScanNet 通常位移量为 0。
+    - `GlobalRotScaleTrans`: 旋转输入点云，对于 ScanNet 角度通常落入 [-5, 5] （度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0（即不做缩放）；最后平移输入点云，对于 ScanNet 通常位移量为 0（即不做位移）。
 
 ## 评估指标
 

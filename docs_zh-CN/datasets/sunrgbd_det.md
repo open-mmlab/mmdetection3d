@@ -260,7 +260,7 @@ sunrgbd
 
 ## 训练流程
 
-SUN RGB-D 上纯点云 3D 物体检测的经典流程如下：
+SUN RGB-D 上纯点云 3D 物体检测的典型流程如下：
 
 ```python
 train_pipeline = [
@@ -289,10 +289,10 @@ train_pipeline = [
 
 点云上的数据增强
 - `RandomFlip3D`：随机左右或前后翻转输入点云。
-- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0。
+- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0（即不做位移）。
 - `PointSample`：降采样输入点云。
 
-SUN RGB-D 上多模态（点云和图像）3D 物体检测的经典流程如下：
+SUN RGB-D 上多模态（点云和图像）3D 物体检测的典型流程如下：
 
 ```python
 train_pipeline = [
