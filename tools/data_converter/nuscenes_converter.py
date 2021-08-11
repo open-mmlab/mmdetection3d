@@ -33,10 +33,10 @@ def create_nuscenes_infos(root_path,
     Args:
         root_path (str): Path of the data root.
         info_prefix (str): Prefix of the info file to be generated.
-        version (str): Version of the data.
-            Default: 'v1.0-trainval'
-        max_sweeps (int): Max number of sweeps.
-            Default: 10
+        version (str, optional): Version of the data.
+            Default: 'v1.0-trainval'.
+        max_sweeps (int, optional): Max number of sweeps.
+            Default: 10.
     """
     from nuscenes.nuscenes import NuScenes
     nusc = NuScenes(version=version, dataroot=root_path, verbose=True)
@@ -151,9 +151,9 @@ def _fill_trainval_infos(nusc,
         nusc (:obj:`NuScenes`): Dataset class in the nuScenes dataset.
         train_scenes (list[str]): Basic information of training scenes.
         val_scenes (list[str]): Basic information of validation scenes.
-        test (bool): Whether use the test mode. In the test mode, no
+        test (bool, optional): Whether use the test mode. In test mode, no
             annotations can be accessed. Default: False.
-        max_sweeps (int): Max number of sweeps. Default: 10.
+        max_sweeps (int, optional): Max number of sweeps. Default: 10.
 
     Returns:
         tuple[list[dict]]: Information of training set and validation set
@@ -250,7 +250,7 @@ def _fill_trainval_infos(nusc,
             names = np.array(names)
             # we need to convert box size to
             # the format of our lidar coordinate system
-            # which is dx, dy, dz (corresponding to l, w, h)
+            # which is x_size, y_size, z_size (corresponding to l, w, h)
             gt_boxes = np.concatenate([locs, dims[:, [1, 0, 2]], rots], axis=1)
             assert len(gt_boxes) == len(
                 annotations), f'{len(gt_boxes)}, {len(annotations)}'
@@ -290,7 +290,7 @@ def obtain_sensor2top(nusc,
         e2g_t (np.ndarray): Translation from ego to global in shape (1, 3).
         e2g_r_mat (np.ndarray): Rotation matrix from ego to global
             in shape (3, 3).
-        sensor_type (str): Sensor to calibrate. Default: 'lidar'.
+        sensor_type (str, optional): Sensor to calibrate. Default: 'lidar'.
 
     Returns:
         sweep (dict): Sweep information after transformation.
@@ -339,7 +339,8 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
         root_path (str): Root path of the raw data.
         info_path (str): Path of the info file.
         version (str): Dataset version.
-        mono3d (bool): Whether to export mono3d annotation. Default: True.
+        mono3d (bool, optional): Whether to export mono3d annotation.
+            Default: True.
     """
     # get bbox annotations for camera
     camera_types = [
@@ -403,7 +404,7 @@ def get_2d_boxes(nusc,
     """Get the 2D annotation records for a given `sample_data_token`.
 
     Args:
-        sample_data_token (str): Sample data token belonging to a camera \
+        sample_data_token (str): Sample data token belonging to a camera
             keyframe.
         visibilities (list[str]): Visibility filter.
         mono3d (bool): Whether to get boxes with mono3d annotation.

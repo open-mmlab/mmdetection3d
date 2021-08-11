@@ -56,8 +56,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
             with_mask (bool): Whether to parse mask annotations.
 
         Returns:
-            dict: A dict containing the following keys: bboxes, bboxes_ignore,\
-                labels, masks, seg_map. "masks" are raw annotations and not \
+            dict: A dict containing the following keys: bboxes, bboxes_ignore,
+                labels, masks, seg_map. "masks" are raw annotations and not
                 decoded into binary masks.
         """
         gt_bboxes = []
@@ -146,17 +146,17 @@ class KittiMonoDataset(NuScenesMonoDataset):
 
         Args:
             outputs (list[dict]): Testing results of the dataset.
-            pklfile_prefix (str | None): The prefix of pkl files. It includes
+            pklfile_prefix (str): The prefix of pkl files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str | None): The prefix of submitted files. It
+            submission_prefix (str): The prefix of submitted files. It
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
                 Default: None.
 
         Returns:
-            tuple: (result_files, tmp_dir), result_files is a dict containing \
-                the json filepaths, tmp_dir is the temporal directory created \
+            tuple: (result_files, tmp_dir), result_files is a dict containing
+                the json filepaths, tmp_dir is the temporal directory created
                 for saving json files when jsonfile_prefix is not specified.
         """
         if pklfile_prefix is None:
@@ -206,17 +206,18 @@ class KittiMonoDataset(NuScenesMonoDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | str | None): Logger used for printing
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Defaults to None.
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            pklfile_prefix (str | None): The prefix of pkl files. It includes
+            pklfile_prefix (str, optional): The prefix of pkl files, including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str | None): The prefix of submission datas.
+            submission_prefix (str, optional): The prefix of submission datas.
                 If not specified, the submission data will not be generated.
-            show (bool): Whether to visualize.
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
 
         Returns:
@@ -267,11 +268,11 @@ class KittiMonoDataset(NuScenesMonoDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): List of array storing the \
+            net_outputs (list[np.ndarray]): List of array storing the
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
-            pklfile_prefix (str | None): The prefix of pkl file.
-            submission_prefix (str | None): The prefix of submission file.
+            pklfile_prefix (str): The prefix of pkl file.
+            submission_prefix (str): The prefix of submission file.
 
         Returns:
             list[dict]: A list of dictionaries with the kitti format.
@@ -382,11 +383,11 @@ class KittiMonoDataset(NuScenesMonoDataset):
         submission.
 
         Args:
-            net_outputs (list[np.ndarray]): List of array storing the \
+            net_outputs (list[np.ndarray]): List of array storing the
                 inferenced bounding boxes and scores.
             class_names (list[String]): A list of class names.
-            pklfile_prefix (str | None): The prefix of pkl file.
-            submission_prefix (str | None): The prefix of submission file.
+            pklfile_prefix (str): The prefix of pkl file.
+            submission_prefix (str): The prefix of submission file.
 
         Returns:
             list[dict]: A list of dictionaries have the kitti format
@@ -497,7 +498,7 @@ class KittiMonoDataset(NuScenesMonoDataset):
         Returns:
             dict: Valid predicted boxes.
                 - bbox (np.ndarray): 2D bounding boxes.
-                - box3d_camera (np.ndarray): 3D bounding boxes in \
+                - box3d_camera (np.ndarray): 3D bounding boxes in
                     camera coordinate.
                 - scores (np.ndarray): Scores of boxes.
                 - label_preds (np.ndarray): Class label predictions.

@@ -17,35 +17,45 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        feat_channels (int): Number of hidden channels. Used in child classes.
-        stacked_convs (int): Number of stacking convs of the head.
-        strides (tuple): Downsample factor of each feature map.
-        dcn_on_last_conv (bool): If true, use dcn in the last layer of
-            towers. Default: False.
-        conv_bias (bool | str): If specified as `auto`, it will be decided by
-            the norm_cfg. Bias of conv will be set as True if `norm_cfg` is
-            None, otherwise False. Default: "auto".
-        background_label (int | None): Label ID of background, set as 0 for
-            RPN and num_classes for other heads. It will automatically set as
-            num_classes if None is given.
-        use_direction_classifier (bool): Whether to add a direction classifier.
-        diff_rad_by_sin (bool): Whether to change the difference into sin
-            difference for box regression loss.
-        loss_cls (dict): Config of classification loss.
-        loss_bbox (dict): Config of localization loss.
-        loss_dir (dict): Config of direction classifier loss.
-        loss_attr (dict): Config of attribute classifier loss, which is only
-            active when pred_attrs=True.
-        bbox_code_size (int): Dimensions of predicted bounding boxes.
-        pred_attrs (bool): Whether to predict attributes. Default to False.
-        num_attrs (int): The number of attributes to be predicted. Default: 9.
-        pred_velo (bool): Whether to predict velocity. Default to False.
-        pred_bbox2d (bool): Whether to predict 2D boxes. Default to False.
-        group_reg_dims (tuple[int]): The dimension of each regression target
-            group. Default: (2, 1, 3, 1, 2).
-        cls_branch (tuple[int]): Channels for classification branch.
+        feat_channels (int, optional): Number of hidden channels.
+            Used in child classes. Defaults to 256.
+        stacked_convs (int, optional): Number of stacking convs of the head.
+        strides (tuple, optional): Downsample factor of each feature map.
+        dcn_on_last_conv (bool, optional): If true, use dcn in the last
+            layer of towers. Default: False.
+        conv_bias (bool | str, optional): If specified as `auto`, it will be
+            decided by the norm_cfg. Bias of conv will be set as True
+            if `norm_cfg` is None, otherwise False. Default: 'auto'.
+        background_label (int, optional): Label ID of background,
+            set as 0 for RPN and num_classes for other heads.
+            It will automatically set as `num_classes` if None is given.
+        use_direction_classifier (bool, optional):
+            Whether to add a direction classifier.
+        diff_rad_by_sin (bool, optional): Whether to change the difference
+            into sin difference for box regression loss. Defaults to True.
+        dir_offset (float, optional): Parameter used in direction
+            classification. Defaults to 0.
+        dir_limit_offset (float, optional): Parameter used in direction
+            classification. Defaults to 0.
+        loss_cls (dict, optional): Config of classification loss.
+        loss_bbox (dict, optional): Config of localization loss.
+        loss_dir (dict, optional): Config of direction classifier loss.
+        loss_attr (dict, optional): Config of attribute classifier loss,
+            which is only active when `pred_attrs=True`.
+        bbox_code_size (int, optional): Dimensions of predicted bounding boxes.
+        pred_attrs (bool, optional): Whether to predict attributes.
+            Defaults to False.
+        num_attrs (int, optional): The number of attributes to be predicted.
+            Default: 9.
+        pred_velo (bool, optional): Whether to predict velocity.
+            Defaults to False.
+        pred_bbox2d (bool, optional): Whether to predict 2D boxes.
+            Defaults to False.
+        group_reg_dims (tuple[int], optional): The dimension of each regression
+            target group. Default: (2, 1, 3, 1, 2).
+        cls_branch (tuple[int], optional): Channels for classification branch.
             Default: (128, 64).
-        reg_branch (tuple[tuple]): Channels for regression branch.
+        reg_branch (tuple[tuple], optional): Channels for regression branch.
             Default: (
                 (128, 64),  # offset
                 (128, 64),  # depth
@@ -53,14 +63,16 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 (64, ),  # rot
                 ()  # velo
             ),
-        dir_branch (tuple[int]): Channels for direction classification branch.
+        dir_branch (tuple[int], optional): Channels for direction
+            classification branch. Default: (64, ).
+        attr_branch (tuple[int], optional): Channels for classification branch.
             Default: (64, ).
-        attr_branch (tuple[int]): Channels for classification branch.
-            Default: (64, ).
-        conv_cfg (dict): Config dict for convolution layer. Default: None.
-        norm_cfg (dict): Config dict for normalization layer. Default: None.
-        train_cfg (dict): Training config of anchor head.
-        test_cfg (dict): Testing config of anchor head.
+        conv_cfg (dict, optional): Config dict for convolution layer.
+            Default: None.
+        norm_cfg (dict, optional): Config dict for normalization layer.
+            Default: None.
+        train_cfg (dict, optional): Training config of anchor head.
+        test_cfg (dict, optional): Testing config of anchor head.
     """  # noqa: W605
 
     _version = 1
@@ -125,6 +137,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         self.use_direction_classifier = use_direction_classifier
         self.diff_rad_by_sin = diff_rad_by_sin
         self.dir_offset = dir_offset
+        self.dir_limit_offset = dir_limit_offset
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_dir = build_loss(loss_dir)
@@ -289,7 +302,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 a 4D-tensor.
 
         Returns:
-            tuple: Usually contain classification scores, bbox predictions, \
+            tuple: Usually contain classification scores, bbox predictions,
                 and direction class predictions.
                 cls_scores (list[Tensor]): Box scores for each scale level,
                     each is a 4D-tensor, the channel number is
@@ -401,7 +414,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 corresponding to each box
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
+            gt_bboxes_ignore (list[Tensor]): specify which bounding
                 boxes can be ignored when computing the loss.
         """
 

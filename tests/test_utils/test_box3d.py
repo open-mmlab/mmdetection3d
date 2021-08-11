@@ -4,9 +4,9 @@ import torch
 import unittest
 
 from mmdet3d.core.bbox import (BaseInstance3DBoxes, Box3DMode,
-                               CameraInstance3DBoxes, DepthInstance3DBoxes,
-                               LiDARInstance3DBoxes, bbox3d2roi,
-                               bbox3d_mapping_back)
+                               CameraInstance3DBoxes, Coord3DMode,
+                               DepthInstance3DBoxes, LiDARInstance3DBoxes,
+                               bbox3d2roi, bbox3d_mapping_back)
 from mmdet3d.core.bbox.structures.utils import (get_box_type, limit_period,
                                                 points_cam2img,
                                                 rotation_3d_in_axis,
@@ -408,6 +408,13 @@ def test_lidar_boxes3d():
     assert torch.allclose(boxes.tensor, expected_tensor)
 
     # test bbox in_range_bev
+    expected_tensor = torch.tensor(
+        [[1.1282, -3.0508, 1.7598, 3.4090, -1.2079],
+         [8.0981, -4.9332, 1.5486, 4.0325, -1.3479],
+         [27.6424, -7.2409, 1.4782, 2.2425, 1.8421],
+         [20.0183, -28.4773, 1.5687, 3.4995, 1.9621],
+         [28.2147, -16.5020, 1.7497, 3.7911, -2.5179]])
+    assert torch.allclose(boxes.bev, expected_tensor, atol=1e-3)
     expected_tensor = torch.tensor([1, 1, 1, 1, 1], dtype=torch.bool)
     mask = boxes.in_range_bev([0., -40., 70.4, 40.])
     assert (mask == expected_tensor).all()
@@ -999,6 +1006,14 @@ def test_camera_boxes3d():
     mask = boxes.in_range_3d([-2, -5, 0, 20, 2, 22])
     assert (mask == expected_tensor).all()
 
+    expected_tensor = torch.tensor(
+        [[3.0508, 1.1282, 1.7598, 3.4090, -5.9203],
+         [4.9332, 8.0981, 1.5486, 4.0325, -6.0603],
+         [7.2409, 27.6424, 1.4782, 2.2425, -2.8703],
+         [28.4773, 20.0183, 1.5687, 3.4995, -2.7503],
+         [16.5020, 28.2147, 1.7497, 3.7911, -0.9471]])
+    assert torch.allclose(boxes.bev, expected_tensor, atol=1e-3)
+
     # test properties
     assert torch.allclose(boxes.bottom_center, boxes.tensor[:, :3])
     expected_tensor = (
@@ -1388,6 +1403,11 @@ def test_depth_boxes3d():
     mask = boxes.nonempty()
     assert (mask == expected_tensor).all()
 
+    # test bbox in_range
+    expected_tensor = torch.tensor([0, 1], dtype=torch.bool)
+    mask = boxes.in_range_3d([1, 0, -2, 2, 1, 5])
+    assert (mask == expected_tensor).all()
+
     expected_tensor = torch.tensor([[[-0.1030, 0.6649, 0.1056],
                                      [-0.1030, 0.6649, 0.3852],
                                      [-0.1030, 0.9029, 0.3852],
@@ -1408,7 +1428,7 @@ def test_depth_boxes3d():
 
     # test points in boxes
     if torch.cuda.is_available():
-        box_idxs_of_pts = boxes.points_in_boxes_batch(points.cuda())
+        box_idxs_of_pts = boxes.points_in_boxes_all(points.cuda())
         expected_idxs_of_pts = torch.tensor(
             [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
             device='cuda:0',
@@ -1466,23 +1486,25 @@ def test_depth_boxes3d():
 
 
 def test_rotation_3d_in_axis():
-    # # clockwise
-    # points = torch.tensor([[[-0.4599, -0.0471, 0.0000],
-    #                         [-0.4599, -0.0471, 1.8433],
-    #                         [-0.4599, 0.0471, 1.8433]],
-    #                        [[-0.2555, -0.2683, 0.0000],
-    #                         [-0.2555, -0.2683, 0.9072],
-    #                         [-0.2555, 0.2683, 0.9072]]])
-    # rotated = rotation_3d_in_axis(
-    #     points, torch.tensor([-np.pi / 10, np.pi / 10]),
-    # axis=0, clockwise=True)
-    # expected_rotated = torch.tensor([[[0.0000, -0.4228, -0.1869],
-    #                                   [1.8433, -0.4228, -0.1869],
-    #                                   [1.8433, -0.4519, -0.0973]],
-    #                                  [[0.0000, -0.3259, -0.1762],
-    #                                   [0.9072, -0.3259, -0.1762],
-    #                                   [0.9072, -0.1601, 0.3341]]])
-    # assert torch.allclose(rotated, expected_rotated, 1e-3)
+    # clockwise
+    points = torch.tensor([[[-0.4599, -0.0471, 0.0000],
+                            [-0.4599, -0.0471, 1.8433],
+                            [-0.4599, 0.0471, 1.8433]],
+                           [[-0.2555, -0.2683, 0.0000],
+                            [-0.2555, -0.2683, 0.9072],
+                            [-0.2555, 0.2683, 0.9072]]])
+    rotated = rotation_3d_in_axis(
+        points,
+        torch.tensor([-np.pi / 10, np.pi / 10]),
+        axis=0,
+        clockwise=True)
+    expected_rotated = torch.tensor(
+        [[[-0.4599, -0.0448, -0.0146], [-0.4599, -0.6144, 1.7385],
+          [-0.4599, -0.5248, 1.7676]],
+         [[-0.2555, -0.2552, 0.0829], [-0.2555, 0.0252, 0.9457],
+          [-0.2555, 0.5355, 0.7799]]],
+        dtype=torch.float32)
+    assert torch.allclose(rotated, expected_rotated, atol=1e-3)
 
     # anti-clockwise with return rotation mat
     points = torch.tensor([[[-0.4599, -0.0471, 0.0000],
@@ -1621,3 +1643,128 @@ def test_points_cam2img():
     point_2d_res = points_cam2img(points, proj_mat)
     expected_point_2d_res = torch.from_numpy(expected_point_2d_res)
     assert torch.allclose(point_2d_res, expected_point_2d_res, 1e-3)
+
+    point_2d_res = points_cam2img(points, proj_mat, with_depth=True)
+    expected_point_2d_res = torch.tensor([[0.5832, 0.6496, 1.7577],
+                                          [0.6146, 0.7910, 1.5477],
+                                          [0.6994, 0.7782, 2.0091],
+                                          [0.5623, 0.6303, 1.8739],
+                                          [0.4359, 0.6532, 1.2056]])
+    assert torch.allclose(point_2d_res, expected_point_2d_res, 1e-3)
+
+
+def test_points_in_boxes():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    lidar_pts = torch.tensor([[1.0, 4.3, 0.1], [1.0, 4.4,
+                                                0.1], [1.1, 4.3, 0.1],
+                              [0.9, 4.3, 0.1], [1.0, -0.3, 0.1],
+                              [1.0, -0.4, 0.1], [2.9, 0.1, 6.0],
+                              [-0.9, 3.9, 6.0]]).cuda()
+    lidar_boxes = torch.tensor([[1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 6],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 2],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, 7 * np.pi / 6],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, -np.pi / 6]],
+                               dtype=torch.float32).cuda()
+    lidar_boxes = LiDARInstance3DBoxes(lidar_boxes)
+
+    point_indices = lidar_boxes.points_in_boxes_all(lidar_pts)
+    expected_point_indices = torch.tensor(
+        [[1, 0, 1, 1], [0, 0, 0, 0], [1, 0, 1, 0], [0, 0, 0, 1], [1, 0, 1, 1],
+         [0, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
+        dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([8, 4])
+    assert (point_indices == expected_point_indices).all()
+
+    lidar_pts = torch.tensor([[1.0, 4.3, 0.1], [1.0, 4.4,
+                                                0.1], [1.1, 4.3, 0.1],
+                              [0.9, 4.3, 0.1], [1.0, -0.3, 0.1],
+                              [1.0, -0.4, 0.1], [2.9, 0.1, 6.0],
+                              [-0.9, 3.9, 6.0]]).cuda()
+    lidar_boxes = torch.tensor([[1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 6],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 2],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, 7 * np.pi / 6],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, -np.pi / 6]],
+                               dtype=torch.float32).cuda()
+    lidar_boxes = LiDARInstance3DBoxes(lidar_boxes)
+
+    point_indices = lidar_boxes.points_in_boxes_part(lidar_pts)
+    expected_point_indices = torch.tensor([0, -1, 0, 3, 0, -1, 1, 1],
+                                          dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([8])
+    assert (point_indices == expected_point_indices).all()
+
+    depth_boxes = torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0.3],
+                                [-10.0, 23.0, 16.0, 10, 20, 20, 0.5]],
+                               dtype=torch.float32).cuda()
+    depth_boxes = DepthInstance3DBoxes(depth_boxes)
+    depth_pts = torch.tensor(
+        [[[1, 2, 3.3], [1.2, 2.5, 3.0], [0.8, 2.1, 3.5], [1.6, 2.6, 3.6],
+          [0.8, 1.2, 3.9], [-9.2, 21.0, 18.2], [3.8, 7.9, 6.3],
+          [4.7, 3.5, -12.2], [3.8, 7.6, -2], [-10.6, -12.9, -20], [
+              -16, -18, 9
+          ], [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4]]],
+        dtype=torch.float32).cuda()
+
+    point_indices = depth_boxes.points_in_boxes_all(depth_pts)
+    expected_point_indices = torch.tensor(
+        [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [0, 1], [0, 0], [0, 0],
+         [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
+        dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([15, 2])
+    assert (point_indices == expected_point_indices).all()
+
+    point_indices = depth_boxes.points_in_boxes_part(depth_pts)
+    expected_point_indices = torch.tensor(
+        [0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+        dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([15])
+    assert (point_indices == expected_point_indices).all()
+
+    depth_boxes = torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0.3],
+                                [-10.0, 23.0, 16.0, 10, 20, 20, 0.5],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 6],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 2],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, 7 * np.pi / 6],
+                                [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, -np.pi / 6]],
+                               dtype=torch.float32).cuda()
+    cam_boxes = DepthInstance3DBoxes(depth_boxes).convert_to(Box3DMode.CAM)
+    depth_pts = torch.tensor(
+        [[1, 2, 3.3], [1.2, 2.5, 3.0], [0.8, 2.1, 3.5], [1.6, 2.6, 3.6],
+         [0.8, 1.2, 3.9], [-9.2, 21.0, 18.2], [3.8, 7.9, 6.3],
+         [4.7, 3.5, -12.2], [3.8, 7.6, -2], [-10.6, -12.9, -20], [-16, -18, 9],
+         [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4], [1.0, 4.3, 0.1],
+         [1.0, 4.4, 0.1], [1.1, 4.3, 0.1], [0.9, 4.3, 0.1], [1.0, -0.3, 0.1],
+         [1.0, -0.4, 0.1], [2.9, 0.1, 6.0], [-0.9, 3.9, 6.0]],
+        dtype=torch.float32).cuda()
+
+    cam_pts = DepthPoints(depth_pts).convert_to(Coord3DMode.CAM).tensor
+
+    point_indices = cam_boxes.points_in_boxes_all(cam_pts)
+    expected_point_indices = torch.tensor(
+        [[1, 0, 1, 1, 1, 1], [1, 0, 1, 1, 1, 1], [1, 0, 1, 1, 1, 1],
+         [1, 0, 1, 1, 1, 1], [1, 0, 1, 1, 1, 1], [0, 1, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 1, 0, 1], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
+         [0, 0, 1, 1, 1, 1], [0, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 1],
+         [0, 0, 1, 1, 1, 0], [0, 0, 1, 1, 1, 1], [0, 0, 0, 1, 0, 0],
+         [1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]],
+        dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([23, 6])
+    assert (point_indices == expected_point_indices).all()
+
+    point_indices = cam_boxes.points_in_boxes_batch(cam_pts)
+    assert (point_indices == expected_point_indices).all()
+
+    point_indices = cam_boxes.points_in_boxes_part(cam_pts)
+    expected_point_indices = torch.tensor([
+        0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, 3, -1, -1, 2, 3, 3, 2, 2, 3,
+        0, 0
+    ],
+                                          dtype=torch.int32).cuda()
+    assert point_indices.shape == torch.Size([23])
+    assert (point_indices == expected_point_indices).all()
+
+    point_indices = cam_boxes.points_in_boxes(cam_pts)
+    assert (point_indices == expected_point_indices).all()

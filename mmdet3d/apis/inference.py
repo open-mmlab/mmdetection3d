@@ -459,15 +459,17 @@ def show_result_meshlab(data,
         data (dict): Contain data from pipeline.
         result (dict): Predicted result from model.
         out_dir (str): Directory to save visualized result.
-        score_thr (float): Minimum score of bboxes to be shown. Default: 0.0
-        show (bool): Visualize the results online. Defaults to False.
-        snapshot (bool): Whether to save the online results. Defaults to False.
-        task (str): Distinguish which task result to visualize. Currently we
-            support 3D detection, multi-modality detection and 3D segmentation.
-            Defaults to 'det'.
-        palette (list[list[int]]] | np.ndarray | None): The palette of
-                segmentation map. If None is given, random palette will be
-                generated. Defaults to None.
+        score_thr (float, optional): Minimum score of bboxes to be shown.
+            Default: 0.0
+        show (bool, optional): Visualize the results online. Defaults to False.
+        snapshot (bool, optional): Whether to save the online results.
+            Defaults to False.
+        task (str, optional): Distinguish which task result to visualize.
+            Currently we support 3D detection, multi-modality detection and
+            3D segmentation. Defaults to 'det'.
+        palette (list[list[int]]] | np.ndarray, optional): The palette
+            of segmentation map. If None is given, random palette will be
+            generated. Defaults to None.
     """
     assert task in ['det', 'multi_modality-det', 'seg', 'mono-det'], \
         f'unsupported visualization task {task}'

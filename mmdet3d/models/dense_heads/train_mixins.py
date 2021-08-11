@@ -24,7 +24,7 @@ class AnchorTrainMixin(object):
             gt_bboxes_list (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each image.
             input_metas (list[dict]): Meta info of each image.
-            gt_bboxes_ignore_list (None | list): Ignore list of gt bboxes.
+            gt_bboxes_ignore_list (list): Ignore list of gt bboxes.
             gt_labels_list (list[torch.Tensor]): Gt labels of batches.
             label_channels (int): The channel of labels.
             num_classes (int): The number of classes.

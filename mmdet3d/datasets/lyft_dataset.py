@@ -128,7 +128,7 @@ class LyftDataset(Custom3DDataset):
             index (int): Index of the sample data to get.
 
         Returns:
-            dict: Data information that will be passed to the data \
+            dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:
 
                 - sample_idx (str): sample index
@@ -136,7 +136,7 @@ class LyftDataset(Custom3DDataset):
                 - sweeps (list[dict]): infos of sweeps
                 - timestamp (float): sample timestamp
                 - img_filename (str, optional): image filename
-                - lidar2img (list[np.ndarray], optional): transformations \
+                - lidar2img (list[np.ndarray], optional): transformations
                     from lidar to different cameras
                 - ann_info (dict): annotation info
         """
@@ -189,7 +189,7 @@ class LyftDataset(Custom3DDataset):
         Returns:
             dict: Annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                     3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_names (list[str]): Class names of ground truths.
@@ -274,10 +274,11 @@ class LyftDataset(Custom3DDataset):
 
         Args:
             result_path (str): Path of the result file.
-            logger (logging.Logger | str | None): Logger used for printing
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            metric (str): Metric name used for evaluation. Default: 'bbox'.
-            result_name (str): Result name in the metric prefix.
+            metric (str, optional): Metric name used for evaluation.
+                Default: 'bbox'.
+            result_name (str, optional): Result name in the metric prefix.
                 Default: 'pts_bbox'.
 
         Returns:
@@ -311,18 +312,18 @@ class LyftDataset(Custom3DDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            csv_savepath (str | None): The path for saving csv files.
+            csv_savepath (str): The path for saving csv files.
                 It includes the file path and the csv filename,
                 e.g., "a/b/filename.csv". If not specified,
                 the result will not be converted to csv file.
 
         Returns:
-            tuple: Returns (result_files, tmp_dir), where `result_files` is a \
-                dict containing the json filepaths, `tmp_dir` is the temporal \
-                directory created for saving json files when \
+            tuple: Returns (result_files, tmp_dir), where `result_files` is a
+                dict containing the json filepaths, `tmp_dir` is the temporal
+                directory created for saving json files when
                 `jsonfile_prefix` is not specified.
         """
         assert isinstance(results, list), 'results must be a list'
@@ -371,19 +372,22 @@ class LyftDataset(Custom3DDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | str | None): Logger used for printing
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Default: 'bbox'.
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str, optional): The prefix of json files including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            csv_savepath (str | None): The path for saving csv files.
+            csv_savepath (str, optional): The path for saving csv files.
                 It includes the file path and the csv filename,
                 e.g., "a/b/filename.csv". If not specified,
                 the result will not be converted to csv file.
-            show (bool): Whether to visualize.
+            result_names (list[str], optional): Result names in the
+                metric prefix. Default: ['pts_bbox'].
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.

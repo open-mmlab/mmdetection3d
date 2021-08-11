@@ -18,10 +18,11 @@ def create_indoor_info_file(data_path,
 
     Args:
         data_path (str): Path of the data.
-        pkl_prefix (str): Prefix of the pkl to be saved. Default: 'sunrgbd'.
-        save_path (str): Path of the pkl to be saved. Default: None.
-        use_v1 (bool): Whether to use v1. Default: False.
-        workers (int): Number of threads to be used. Default: 4.
+        pkl_prefix (str, optional): Prefix of the pkl to be saved.
+            Default: 'sunrgbd'.
+        save_path (str, optional): Path of the pkl to be saved. Default: None.
+        use_v1 (bool, optional): Whether to use v1. Default: False.
+        workers (int, optional): Number of threads to be used. Default: 4.
     """
     assert os.path.exists(data_path)
     assert pkl_prefix in ['sunrgbd', 'scannet', 's3dis'], \

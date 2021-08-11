@@ -34,7 +34,7 @@ def _write_oriented_bbox(scene_bbox, out_filename):
 
     Args:
         scene_bbox(list[ndarray] or ndarray): xyz pos of center and
-            3 lengths (dx,dy,dz) and heading angle around Z axis.
+            3 lengths (x_size, y_size, z_size) and heading angle around Z axis.
             Y forward, X right, Z upward. heading angle of positive X is 0,
             heading angle of positive Y is 90 degrees.
         out_filename(str): Filename.
@@ -86,8 +86,10 @@ def show_result(points,
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        show (bool): Visualize the results online. Defaults to False.
-        snapshot (bool): Whether to save the online results. Defaults to False.
+        show (bool, optional): Visualize the results online.
+            Defaults to False.
+        snapshot (bool, optional): Whether to save the online results.
+            Defaults to False.
     """
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
@@ -140,10 +142,10 @@ def show_seg_result(points,
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
         palette (np.ndarray): Mapping between class labels and colors.
-        ignore_index (int, optional): The label index to be ignored, e.g. \
+        ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. Defaults to None.
         show (bool, optional): Visualize the results online. Defaults to False.
-        snapshot (bool, optional): Whether to save the online results. \
+        snapshot (bool, optional): Whether to save the online results.
             Defaults to False.
     """
     # we need 3D coordinates to visualize segmentation mask
@@ -218,14 +220,16 @@ def show_multi_modality_result(img,
             according to the camera intrinsic parameters.
         out_dir (str): Path of output directory.
         filename (str): Filename of the current frame.
-        box_mode (str): Coordinate system the boxes are in. Should be one of
-           'depth', 'lidar' and 'camera'. Defaults to 'lidar'.
-        img_metas (dict): Used in projecting depth bbox.
-        show (bool): Visualize the results online. Defaults to False.
-        gt_bbox_color (str or tuple(int)): Color of bbox lines.
-           The tuple of color should be in BGR order. Default: (255, 102, 61)
-        pred_bbox_color (str or tuple(int)): Color of bbox lines.
-           The tuple of color should be in BGR order. Default: (72, 101, 241)
+        box_mode (str, optional): Coordinate system the boxes are in.
+            Should be one of 'depth', 'lidar' and 'camera'.
+            Defaults to 'lidar'.
+        img_metas (dict, optional): Used in projecting depth bbox.
+            Defaults to None.
+        show (bool, optional): Visualize the results online. Defaults to False.
+        gt_bbox_color (str or tuple(int), optional): Color of bbox lines.
+           The tuple of color should be in BGR order. Default: (255, 102, 61).
+        pred_bbox_color (str or tuple(int), optional): Color of bbox lines.
+           The tuple of color should be in BGR order. Default: (72, 101, 241).
     """
     if box_mode == 'depth':
         draw_bbox = draw_depth_bbox3d_on_img

@@ -3,7 +3,7 @@ import torch
 
 from mmdet3d.core.points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
-from .utils import limit_period, rotation_3d_in_axis
+from .utils import rotation_3d_in_axis
 
 
 class DepthInstance3DBoxes(BaseInstance3DBoxes):
@@ -40,7 +40,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box."""
+        """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, :2] = bottom_center[:, :2]
@@ -70,8 +70,6 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                (x0, y0, z0) + ----------- + --------> right x
                                           (x1, y0, z0)
         """
-        # TODO: rotation_3d_in_axis function do not support
-        #  empty tensor currently.
         assert len(self.tensor) != 0
         dims = self.dims
         corners_norm = torch.from_numpy(
@@ -89,33 +87,6 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
-    @property
-    def bev(self):
-        """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
-        in XYWHR format."""
-        return self.tensor[:, [0, 1, 3, 4, 6]]
-
-    @property
-    def nearest_bev(self):
-        """torch.Tensor: A tensor of 2D BEV box of each box
-        without rotation."""
-        # Obtain BEV boxes with rotation in XYWHR format
-        bev_rotated_boxes = self.bev
-        # convert the rotation to a valid range
-        rotations = bev_rotated_boxes[:, -1]
-        normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
-
-        # find the center of boxes
-        conditions = (normed_rotations > np.pi / 4)[..., None]
-        bboxes_xywh = torch.where(conditions, bev_rotated_boxes[:,
-                                                                [0, 1, 3, 2]],
-                                  bev_rotated_boxes[:, :4])
-
-        centers = bboxes_xywh[:, :2]
-        dims = bboxes_xywh[:, 2:]
-        bev_boxes = torch.cat([centers - dims / 2, centers + dims / 2], dim=-1)
-        return bev_boxes
-
     def rotate(self, angle, points=None):
         """Rotate boxes with points (optional) with the given angle or rotation
         matrix.
@@ -123,7 +94,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         Args:
             angle (float | torch.Tensor | np.ndarray):
                 Rotation angle or rotation matrix.
-            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, optional):
+            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
 
         Returns:
@@ -153,6 +124,8 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         if self.with_yaw:
             self.tensor[:, 6] += angle
         else:
+            # for axis-aligned boxes, we take the new
+            # enclosing axis-aligned boxes after rotation
             corners_rot = self.corners @ rot_mat_T
             new_x_size = corners_rot[..., 0].max(
                 dim=1, keepdim=True)[0] - corners_rot[..., 0].min(
@@ -180,8 +153,9 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         In Depth coordinates, it flips x (horizontal) or y (vertical) axis.
 
         Args:
-            bev_direction (str): Flip direction (horizontal or vertical).
-            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, None):
+            bev_direction (str, optional): Flip direction
+                (horizontal or vertical). Defaults to 'horizontal'.
+            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
                 Points to flip. Defaults to None.
 
         Returns:
@@ -208,35 +182,14 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range.
-
-        Args:
-            box_range (list | torch.Tensor): The range of box
-                (x_min, y_min, x_max, y_max).
-
-        Note:
-            In the original implementation of SECOND, checking whether
-            a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burdun for simpler cases.
-
-        Returns:
-            torch.Tensor: Indicating whether each box is inside
-                the reference range.
-        """
-        in_range_flags = ((self.tensor[:, 0] > box_range[0])
-                          & (self.tensor[:, 1] > box_range[1])
-                          & (self.tensor[:, 0] < box_range[2])
-                          & (self.tensor[:, 1] < box_range[3]))
-        return in_range_flags
-
     def convert_to(self, dst, rt_mat=None):
         """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
@@ -256,7 +209,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             extra_width (float | torch.Tensor): Extra width to enlarge the box.
 
         Returns:
-            :obj:`LiDARInstance3DBoxes`: Enlarged boxes.
+            :obj:`DepthInstance3DBoxes`: Enlarged boxes.
         """
         enlarged_boxes = self.tensor.clone()
         enlarged_boxes[:, 3:6] += extra_width * 2

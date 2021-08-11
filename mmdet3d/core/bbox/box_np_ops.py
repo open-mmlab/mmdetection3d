@@ -1,5 +1,8 @@
 # TODO: clean the functions in this file and move the APIs into box structures
 # in the future
+# NOTICE: All functions in this file are valid for LiDAR or depth boxes only
+# if we use default parameters.
+
 import numba
 import numpy as np
 
@@ -46,13 +49,13 @@ def box_camera_to_lidar(data, r_rect, velo2cam):
         np.ndarray, shape=[N, 3]: Boxes in lidar coordinate.
     """
     xyz = data[:, 0:3]
-    dx, dy, dz = data[:, 3:4], data[:, 4:5], data[:, 5:6]
+    x_size, y_size, z_size = data[:, 3:4], data[:, 4:5], data[:, 5:6]
     r = data[:, 6:7]
     xyz_lidar = camera_to_lidar(xyz, r_rect, velo2cam)
     # yaw and dims also needs to be converted
     r_new = -r - np.pi / 2
     r_new = limit_period(r_new, period=np.pi * 2)
-    return np.concatenate([xyz_lidar, dx, dz, dy, r_new], axis=1)
+    return np.concatenate([xyz_lidar, x_size, z_size, y_size, r_new], axis=1)
 
 
 def corners_nd(dims, origin=0.5):
@@ -91,7 +94,7 @@ def corners_nd(dims, origin=0.5):
 
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     """Convert kitti locations, dimensions and angles to corners.
-    format: center(xy), dims(xy), angles(clockwise when positive)
+    format: center(xy), dims(xy), angles(counterclockwise when positive)
 
     Args:
         centers (np.ndarray): Locations in kitti label file with shape (N, 2).
@@ -186,7 +189,7 @@ def center_to_corner_box3d(centers,
         np.ndarray: Corners with the shape of (N, 8, 3).
     """
     # 'length' in kitti format is in x axis.
-    # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(wlh)(lidar)
+    # yzx(hwl)(kitti label file)<->xyz(lhw)(camera)<->z(-x)(-y)(lwh)(lidar)
     # center in kitti format is [0.5, 1.0, 0.5] in xyz.
     corners = corners_nd(dims, origin=origin)
     # corners: [N, 8, 3]
@@ -347,7 +350,10 @@ def corner_to_surfaces_3d(corners):
 
 
 def points_in_rbbox(points, rbbox, z_axis=2, origin=(0.5, 0.5, 0)):
-    """Check points in rotated bbox and return indicces.
+    """Check points in rotated bbox and return indices.
+
+    Note:
+        This function is for counterclockwise boxes.
 
     Args:
         points (np.ndarray, shape=[N, 3+dim]): Points to query.
@@ -403,7 +409,7 @@ def create_anchors_3d_range(feature_size,
         rotations (list[float] | np.ndarray | torch.Tensor, optional):
             Rotations of anchors in a single feature grid.
             Defaults to (0, np.pi / 2).
-        dtype (type, optional): Data type. Default to np.float32.
+        dtype (type, optional): Data type. Defaults to np.float32.
 
     Returns:
         np.ndarray: Range based anchors with shape of
@@ -477,6 +483,9 @@ def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
     """Calculate box iou. Note that jit version runs ~10x faster than the
     box_overlaps function in mmdet3d.core.evaluation.
 
+    Note:
+        This function is for counterclockwise boxes.
+
     Args:
         boxes (np.ndarray): Input bounding boxes with shape of (N, 4).
         query_boxes (np.ndarray): Query boxes with shape of (K, 4).
@@ -514,7 +523,10 @@ def iou_jit(boxes, query_boxes, mode='iou', eps=0.0):
 
 
 def projection_matrix_to_CRT_kitti(proj):
-    """Split projection matrix of kitti.
+    """Split projection matrix of KITTI.
+
+    Note:
+        This function is for KITTI only.
 
     P = C @ [R|T]
     C is upper triangular matrix, so we need to inverse CR and use QR
@@ -539,6 +551,9 @@ def projection_matrix_to_CRT_kitti(proj):
 
 def remove_outside_points(points, rect, Trv2c, P2, image_shape):
     """Remove points which are outside of image.
+
+    Note:
+        This function is for KITTI only.
 
     Args:
         points (np.ndarray, shape=[N, 3+dims]): Total points.
@@ -690,7 +705,7 @@ def points_in_convex_polygon_3d_jit(points,
 
 
 @numba.jit
-def points_in_convex_polygon_jit(points, polygon, clockwise=True):
+def points_in_convex_polygon_jit(points, polygon, clockwise=False):
     """Check points is in 2d convex polygons. True when point in polygon.
 
     Args:
@@ -746,10 +761,13 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
       |/         |/
       2 -------- 1
 
+    Note:
+        This function is for LiDAR boxes only.
+
     Args:
         boxes3d (np.ndarray): Boxes with shape of (N, 7)
-            [x, y, z, dx, dy, dz, ry] in LiDAR coords, see the definition of
-            ry in KITTI dataset.
+            [x, y, z, x_size, y_size, z_size, ry] in LiDAR coords,
+            see the definition of ry in KITTI dataset.
         bottom_center (bool, optional): Whether z is on the bottom center
             of object. Defaults to True.
 
@@ -757,25 +775,25 @@ def boxes3d_to_corners3d_lidar(boxes3d, bottom_center=True):
         np.ndarray: Box corners with the shape of [N, 8, 3].
     """
     boxes_num = boxes3d.shape[0]
-    dx, dy, dz = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
+    x_size, y_size, z_size = boxes3d[:, 3], boxes3d[:, 4], boxes3d[:, 5]
     x_corners = np.array([
-        dx / 2., -dx / 2., -dx / 2., dx / 2., dx / 2., -dx / 2., -dx / 2.,
-        dx / 2.
+        x_size / 2., -x_size / 2., -x_size / 2., x_size / 2., x_size / 2.,
+        -x_size / 2., -x_size / 2., x_size / 2.
     ],
                          dtype=np.float32).T
     y_corners = np.array([
-        -dy / 2., -dy / 2., dy / 2., dy / 2., -dy / 2., -dy / 2., dy / 2.,
-        dy / 2.
+        -y_size / 2., -y_size / 2., y_size / 2., y_size / 2., -y_size / 2.,
+        -y_size / 2., y_size / 2., y_size / 2.
     ],
                          dtype=np.float32).T
     if bottom_center:
         z_corners = np.zeros((boxes_num, 8), dtype=np.float32)
-        z_corners[:, 4:8] = dz.reshape(boxes_num, 1).repeat(
+        z_corners[:, 4:8] = z_size.reshape(boxes_num, 1).repeat(
             4, axis=1)  # (N, 8)
     else:
         z_corners = np.array([
-            -dz / 2., -dz / 2., -dz / 2., -dz / 2., dz / 2., dz / 2., dz / 2.,
-            dz / 2.
+            -z_size / 2., -z_size / 2., -z_size / 2., -z_size / 2.,
+            z_size / 2., z_size / 2., z_size / 2., z_size / 2.
         ],
                              dtype=np.float32).T
 

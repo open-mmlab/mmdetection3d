@@ -36,13 +36,13 @@ class Points_Sampler(nn.Module):
 
     Args:
         num_point (list[int]): Number of sample points.
-        fps_mod_list (list[str]: Type of FPS method, valid mod
+        fps_mod_list (list[str], optional): Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
             F-FPS: using feature distances for FPS.
             D-FPS: using Euclidean distances of points for FPS.
             FS: using F-FPS and D-FPS simultaneously.
-        fps_sample_range_list (list[int]): Range of points to apply FPS.
-            Default: [-1].
+        fps_sample_range_list (list[int], optional):
+            Range of points to apply FPS. Default: [-1].
     """
 
     def __init__(self,
