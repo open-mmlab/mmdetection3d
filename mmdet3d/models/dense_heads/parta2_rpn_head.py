@@ -100,20 +100,20 @@ class PartA2RPNHead(Anchor3DHead):
             bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth boxes \
+            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth boxes
                 of each sample.
             gt_labels (list[torch.Tensor]): Labels of each sample.
             input_metas (list[dict]): Point cloud and image's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
-            dict[str, list[torch.Tensor]]: Classification, bbox, and \
+            dict[str, list[torch.Tensor]]: Classification, bbox, and
                 direction losses of each level.
 
                 - loss_rpn_cls (list[torch.Tensor]): Classification losses.
                 - loss_rpn_bbox (list[torch.Tensor]): Box regression losses.
-                - loss_rpn_dir (list[torch.Tensor]): Direction classification \
+                - loss_rpn_dir (list[torch.Tensor]): Direction classification
                     losses.
         """
         loss_dict = super().loss(cls_scores, bbox_preds, dir_cls_preds,
@@ -143,7 +143,7 @@ class PartA2RPNHead(Anchor3DHead):
             mlvl_anchors (List[torch.Tensor]): Multi-level anchors
                 in single batch.
             input_meta (list[dict]): Contain pcd and img's meta info.
-            cfg (None | :obj:`ConfigDict`): Training or testing config.
+            cfg (:obj:`ConfigDict`): Training or testing config.
             rescale (list[torch.Tensor]): whether th rescale bbox.
 
         Returns:
@@ -240,7 +240,7 @@ class PartA2RPNHead(Anchor3DHead):
                 Multi-level bbox.
             score_thr (int): Score threshold.
             max_num (int): Max number of bboxes after nms.
-            cfg (None | :obj:`ConfigDict`): Training or testing config.
+            cfg (:obj:`ConfigDict`): Training or testing config.
             input_meta (dict): Contain pcd and img's meta info.
 
         Returns:

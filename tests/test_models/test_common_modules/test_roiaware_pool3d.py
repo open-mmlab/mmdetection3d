@@ -3,9 +3,9 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.ops.roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
+from mmdet3d.ops.roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_all,
                                          points_in_boxes_cpu,
-                                         points_in_boxes_gpu)
+                                         points_in_boxes_part)
 
 
 def test_RoIAwarePool3d():
@@ -42,7 +42,7 @@ def test_RoIAwarePool3d():
                           torch.tensor(49.750).cuda(), 1e-3)
 
 
-def test_points_in_boxes_gpu():
+def test_points_in_boxes_part():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     boxes = torch.tensor(
@@ -58,7 +58,7 @@ def test_points_in_boxes_gpu():
           [0, 0, 0], [6, 7, 8], [-2, -3, -4], [6, 4, 9]]],
         dtype=torch.float32).cuda()  # points (b, m, 3) in lidar coordinate
 
-    point_indices = points_in_boxes_gpu(points=pts, boxes=boxes)
+    point_indices = points_in_boxes_part(points=pts, boxes=boxes)
     expected_point_indices = torch.tensor(
         [[0, 0, 0, 0, 0, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1, -1]],
         dtype=torch.int32).cuda()
@@ -71,7 +71,7 @@ def test_points_in_boxes_gpu():
         [[[4, 6.928, 0], [6.928, 4, 0], [4, -6.928, 0], [6.928, -4, 0],
           [-4, 6.928, 0], [-6.928, 4, 0], [-4, -6.928, 0], [-6.928, -4, 0]]],
         dtype=torch.float32).cuda()
-    point_indices = points_in_boxes_gpu(points=pts, boxes=boxes)
+    point_indices = points_in_boxes_part(points=pts, boxes=boxes)
     expected_point_indices = torch.tensor([[-1, -1, 0, -1, 0, -1, -1, -1]],
                                           dtype=torch.int32).cuda()
     assert (point_indices == expected_point_indices).all()
@@ -80,7 +80,7 @@ def test_points_in_boxes_gpu():
         pts = pts.to('cuda:1')
         boxes = boxes.to('cuda:1')
         expected_point_indices = expected_point_indices.to('cuda:1')
-        point_indices = points_in_boxes_gpu(points=pts, boxes=boxes)
+        point_indices = points_in_boxes_part(points=pts, boxes=boxes)
         assert point_indices.shape == torch.Size([2, 8])
         assert (point_indices == expected_point_indices).all()
 
@@ -119,7 +119,7 @@ def test_points_in_boxes_cpu():
     assert (point_indices == expected_point_indices).all()
 
 
-def test_points_in_boxes_batch():
+def test_points_in_boxes_all():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
@@ -136,7 +136,7 @@ def test_points_in_boxes_batch():
           ], [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4]]],
         dtype=torch.float32).cuda()  # points (n, 3) in lidar coordinate
 
-    point_indices = points_in_boxes_batch(points=pts, boxes=boxes)
+    point_indices = points_in_boxes_all(points=pts, boxes=boxes)
     expected_point_indices = torch.tensor(
         [[[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [0, 1], [0, 0], [0, 0],
           [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]],
@@ -148,6 +148,6 @@ def test_points_in_boxes_batch():
         pts = pts.to('cuda:1')
         boxes = boxes.to('cuda:1')
         expected_point_indices = expected_point_indices.to('cuda:1')
-        point_indices = points_in_boxes_batch(points=pts, boxes=boxes)
+        point_indices = points_in_boxes_all(points=pts, boxes=boxes)
         assert point_indices.shape == torch.Size([1, 15, 2])
         assert (point_indices == expected_point_indices).all()

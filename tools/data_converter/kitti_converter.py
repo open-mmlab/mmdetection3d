@@ -159,7 +159,7 @@ def create_waymo_info_file(data_path,
     Args:
         data_path (str): Path of the data root.
         pkl_prefix (str): Prefix of the info file to be generated.
-        save_path (str | None): Path to save the info file.
+        save_path (str): Path to save the info file.
         relative_path (bool): Whether to use relative path.
         max_sweeps (int): Max sweeps before the detection frame to be used.
     """
@@ -238,11 +238,13 @@ def _create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         info_path (str): Path of data info.
-        save_path (str | None): Path to save reduced point cloud data.
-            Default: None.
-        back (bool): Whether to flip the points to back.
-        num_features (int): Number of point features. Default: 4.
-        front_camera_id (int): The referenced/front camera ID. Default: 2.
+        save_path (str, optional): Path to save reduced point cloud
+            data. Default: None.
+        back (bool, optional): Whether to flip the points to back.
+            Default: False.
+        num_features (int, optional): Number of point features. Default: 4.
+        front_camera_id (int, optional): The referenced/front camera ID.
+            Default: 2.
     """
     kitti_infos = mmcv.load(info_path)
 
@@ -298,14 +300,16 @@ def create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         pkl_prefix (str): Prefix of info files.
-        train_info_path (str | None): Path of training set info.
+        train_info_path (str, optional): Path of training set info.
             Default: None.
-        val_info_path (str | None): Path of validation set info.
+        val_info_path (str, optional): Path of validation set info.
             Default: None.
-        test_info_path (str | None): Path of test set info.
+        test_info_path (str, optional): Path of test set info.
             Default: None.
-        save_path (str | None): Path to save reduced point cloud data.
-        with_back (bool): Whether to flip the points to back.
+        save_path (str, optional): Path to save reduced point cloud data.
+            Default: None.
+        with_back (bool, optional): Whether to flip the points to back.
+            Default: False.
     """
     if train_info_path is None:
         train_info_path = Path(data_path) / f'{pkl_prefix}_infos_train.pkl'
@@ -335,7 +339,8 @@ def export_2d_annotation(root_path, info_path, mono3d=True):
     Args:
         root_path (str): Root path of the raw data.
         info_path (str): Path of the info file.
-        mono3d (bool): Whether to export mono3d annotation. Default: True.
+        mono3d (bool, optional): Whether to export mono3d annotation.
+            Default: True.
     """
     # get bbox annotations for camera
     kitti_infos = mmcv.load(info_path)
@@ -381,8 +386,8 @@ def get_2d_boxes(info, occluded, mono3d=True):
 
     Args:
         info: Information of the given sample data.
-        occluded: Integer (0, 1, 2, 3) indicating occlusion state: \
-            0 = fully visible, 1 = partly occluded, 2 = largely occluded, \
+        occluded: Integer (0, 1, 2, 3) indicating occlusion state:
+            0 = fully visible, 1 = partly occluded, 2 = largely occluded,
             3 = unknown, -1 = DontCare
         mono3d (bool): Whether to get boxes with mono3d annotation.
 
@@ -508,7 +513,7 @@ def generate_record(ann_rec, x1, y1, x2, y2, sample_data_token, filename):
             - area (float): 2d box area
             - category_name (str): category name
             - category_id (int): category id
-            - bbox (list[float]): left x, top y, dx, dy of 2d box
+            - bbox (list[float]): left x, top y, x_size, y_size of 2d box
             - iscrowd (int): whether the area is crowd
     """
     repro_rec = OrderedDict()

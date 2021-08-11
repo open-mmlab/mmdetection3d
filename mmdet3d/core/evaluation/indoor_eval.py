@@ -9,9 +9,9 @@ def average_precision(recalls, precisions, mode='area'):
     """Calculate average precision (for single or multiple scales).
 
     Args:
-        recalls (np.ndarray): Recalls with shape of (num_scales, num_dets) \
+        recalls (np.ndarray): Recalls with shape of (num_scales, num_dets)
             or (num_dets, ).
-        precisions (np.ndarray): Precisions with shape of \
+        precisions (np.ndarray): Precisions with shape of
             (num_scales, num_dets) or (num_dets, ).
         mode (str): 'area' or '11points', 'area' means calculating the area
             under precision-recall curve, '11points' means calculating
@@ -58,13 +58,13 @@ def eval_det_cls(pred, gt, iou_thr=None):
     single class.
 
     Args:
-        pred (dict): Predictions mapping from image id to bounding boxes \
+        pred (dict): Predictions mapping from image id to bounding boxes
             and scores.
         gt (dict): Ground truths mapping from image id to bounding boxes.
         iou_thr (list[float]): A list of iou thresholds.
 
     Return:
-        tuple (np.ndarray, np.ndarray, float): Recalls, precisions and \
+        tuple (np.ndarray, np.ndarray, float): Recalls, precisions and
             average precision.
     """
 
@@ -170,10 +170,9 @@ def eval_map_recall(pred, gt, ovthresh=None):
     Args:
         pred (dict): Information of detection results,
             which maps class_id and predictions.
-        gt (dict): Information of ground truths, which maps class_id and \
+        gt (dict): Information of ground truths, which maps class_id and
             ground truths.
-        ovthresh (list[float]): iou threshold.
-            Default: None.
+        ovthresh (list[float], optional): iou threshold. Default: None.
 
     Return:
         tuple[dict]: dict results of recall, AP, and precision for all classes.
@@ -218,12 +217,12 @@ def indoor_eval(gt_annos,
             includes the following keys
 
             - labels_3d (torch.Tensor): Labels of boxes.
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): \
+            - boxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bounding boxes in Depth coordinate.
             - scores_3d (torch.Tensor): Scores of boxes.
         metric (list[float]): IoU thresholds for computing average precisions.
         label2cat (dict): Map from label to category.
-        logger (logging.Logger | str | None): The way to print the mAP
+        logger (logging.Logger | str, optional): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 
     Return:

@@ -33,7 +33,7 @@ class PillarFeatureNet(nn.Module):
             Defaults to dict(type='BN1d', eps=1e-3, momentum=0.01).
         mode (str, optional): The mode to gather point features. Options are
             'max' or 'avg'. Defaults to 'max'.
-        legacy (bool): Whether to use the new behavior or
+        legacy (bool, optional): Whether to use the new behavior or
             the original behavior. Defaults to True.
     """
 

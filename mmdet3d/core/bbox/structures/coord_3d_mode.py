@@ -70,8 +70,9 @@ class Coord3DMode(IntEnum):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
             src (:obj:`Box3DMode` | :obj:`Coord3DMode`): The source mode.
             dst (:obj:`Box3DMode` | :obj:`Coord3DMode`): The target mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
@@ -113,8 +114,9 @@ class Coord3DMode(IntEnum):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
             src (:obj:`Box3DMode`): The src Box mode.
             dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
@@ -139,8 +141,9 @@ class Coord3DMode(IntEnum):
                 Can be a k-tuple, k-list or an Nxk array/tensor.
             src (:obj:`CoordMode`): The src Point mode.
             dst (:obj:`CoordMode`): The target Point mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.

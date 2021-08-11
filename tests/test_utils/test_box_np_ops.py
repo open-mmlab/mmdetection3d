@@ -63,3 +63,21 @@ def test_center_to_corner_box2d():
     expected_corner = np.array([[[-4.24264, -1.41421], [1.41421, 4.24264],
                                  [4.24264, 1.41421], [-1.41421, -4.24264]]])
     assert np.allclose(corner, expected_corner)
+
+
+def test_points_in_convex_polygon_jit():
+    from mmdet3d.core.bbox.box_np_ops import points_in_convex_polygon_jit
+    points = np.array([[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]])
+    polygons = np.array([[[1.0, 0.0], [0.0, 1.0], [0.0, 0.5], [0.0, 0.0]],
+                         [[1.0, 0.0], [1.0, 1.0], [0.5, 1.0], [0.0, 1.0]],
+                         [[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, -1.0]]])
+    res = points_in_convex_polygon_jit(points, polygons)
+    expected_res = np.array([[1, 0, 1], [0, 0, 0], [0, 1, 0]]).astype(np.bool)
+    assert np.allclose(res, expected_res)
+
+    polygons = np.array([[[0.0, 0.0], [0.0, 1.0], [0.5, 0.5], [1.0, 0.0]],
+                         [[0.0, 1.0], [1.0, 1.0], [1.0, 0.5], [1.0, 0.0]],
+                         [[1.0, 0.0], [0.0, -1.0], [-1.0, 0.0], [0.0, 1.1]]])
+    res = points_in_convex_polygon_jit(points, polygons, clockwise=True)
+    expected_res = np.array([[1, 0, 1], [0, 0, 1], [0, 1, 0]]).astype(np.bool)
+    assert np.allclose(res, expected_res)

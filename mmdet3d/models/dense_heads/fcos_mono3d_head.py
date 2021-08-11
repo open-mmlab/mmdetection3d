@@ -21,25 +21,25 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        regress_ranges (tuple[tuple[int, int]]): Regress range of multiple
+        regress_ranges (tuple[tuple[int, int]], optional): Regress range of multiple
             level points.
-        center_sampling (bool): If true, use center sampling. Default: True.
-        center_sample_radius (float): Radius of center sampling. Default: 1.5.
-        norm_on_bbox (bool): If true, normalize the regression targets
+        center_sampling (bool, optional): If true, use center sampling. Default: True.
+        center_sample_radius (float, optional): Radius of center sampling. Default: 1.5.
+        norm_on_bbox (bool, optional): If true, normalize the regression targets
             with FPN strides. Default: True.
-        centerness_on_reg (bool): If true, position centerness on the
+        centerness_on_reg (bool, optional): If true, position centerness on the
             regress branch. Please refer to https://github.com/tianzhi0549/FCOS/issues/89#issuecomment-516877042.
             Default: True.
-        centerness_alpha: Parameter used to adjust the intensity attenuation
-            from the center to the periphery. Default: 2.5.
-        loss_cls (dict): Config of classification loss.
-        loss_bbox (dict): Config of localization loss.
-        loss_dir (dict): Config of direction classification loss.
-        loss_attr (dict): Config of attribute classification loss.
-        loss_centerness (dict): Config of centerness loss.
-        norm_cfg (dict): dictionary to construct and config norm layer.
+        centerness_alpha (int, optional): Parameter used to adjust the intensity
+            attenuation from the center to the periphery. Default: 2.5.
+        loss_cls (dict, optional): Config of classification loss.
+        loss_bbox (dict, optional): Config of localization loss.
+        loss_dir (dict, optional): Config of direction classification loss.
+        loss_attr (dict, optional): Config of attribute classification loss.
+        loss_centerness (dict, optional): Config of centerness loss.
+        norm_cfg (dict, optional): dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
-        centerness_branch (tuple[int]): Channels for centerness branch.
+        centerness_branch (tuple[int], optional): Channels for centerness branch.
             Default: (64, ).
     """  # noqa: E501
 
@@ -153,7 +153,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 is True.
 
         Returns:
-            tuple: scores for each class, bbox and direction class \
+            tuple: scores for each class, bbox and direction class
                 predictions, centerness predictions of input feature maps.
         """
         cls_score, bbox_pred, dir_cls_pred, attr_pred, cls_feat, reg_feat = \
@@ -201,7 +201,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 the 7th dimension is rotation dimension.
 
         Returns:
-            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th \
+            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th
                 dimensions are changed.
         """
         rad_pred_encoding = torch.sin(boxes1[..., 6:7]) * torch.cos(
@@ -295,7 +295,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             attr_labels (list[Tensor]): Attributes indices of each box.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
+            gt_bboxes_ignore (list[Tensor]): specify which bounding
                 boxes can be ignored when computing the loss.
 
         Returns:
@@ -507,11 +507,11 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             rescale (bool): If True, return boxes in original image space
 
         Returns:
-            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple. \
-                The first item is an (n, 5) tensor, where the first 4 columns \
-                are bounding box positions (tl_x, tl_y, br_x, br_y) and the \
-                5-th column is a score between 0 and 1. The second item is a \
-                (n,) tensor where each item is the predicted class label of \
+            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple.
+                The first item is an (n, 5) tensor, where the first 4 columns
+                are bounding box positions (tl_x, tl_y, br_x, br_y) and the
+                5-th column is a score between 0 and 1. The second item is a
+                (n,) tensor where each item is the predicted class label of
                 the corresponding box.
         """
         assert len(cls_scores) == len(bbox_preds) == len(dir_cls_preds) == \
@@ -580,7 +580,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             bbox_preds (list[Tensor]): Box energies / deltas for a single scale
                 level with shape (num_points * bbox_code_size, H, W).
             dir_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on a single scale level with shape \
+                predictions on a single scale level with shape
                 (num_points * 2, H, W)
             attr_preds (list[Tensor]): Attribute scores for each scale level
                 Has shape (N, num_points * num_attrs, H, W)
@@ -700,12 +700,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     def pts2Dto3D(points, view):
         """
         Args:
-            points (torch.Tensor): points in 2D images, [N, 3], \
+            points (torch.Tensor): points in 2D images, [N, 3],
                 3 corresponds with x, y in the image and depth.
             view (np.ndarray): camera instrinsic, [3, 3]
 
         Returns:
-            torch.Tensor: points in 3D space. [N, 3], \
+            torch.Tensor: points in 3D space. [N, 3],
                 3 corresponds with x, y, z in 3D space.
         """
         assert view.shape[0] <= 4
@@ -767,8 +767,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
         Returns:
             tuple:
-                concat_lvl_labels (list[Tensor]): Labels of each level. \
-                concat_lvl_bbox_targets (list[Tensor]): BBox targets of each \
+                concat_lvl_labels (list[Tensor]): Labels of each level.
+                concat_lvl_bbox_targets (list[Tensor]): BBox targets of each
                     level.
         """
         assert len(points) == len(self.regress_ranges)

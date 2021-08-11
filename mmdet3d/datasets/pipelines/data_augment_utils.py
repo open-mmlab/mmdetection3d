@@ -34,8 +34,8 @@ def box_collision_test(boxes, qboxes, clockwise=True):
     Args:
         boxes (np.ndarray): Corners of current boxes.
         qboxes (np.ndarray): Boxes to be avoid colliding.
-        clockwise (bool): Whether the corners are in clockwise order.
-            Default: True.
+        clockwise (bool, optional): Whether the corners are in
+            clockwise order. Default: True.
     """
     N = boxes.shape[0]
     K = qboxes.shape[0]
@@ -317,7 +317,7 @@ def box3d_transform_(boxes, loc_transform, rot_transform, valid_mask):
         boxes (np.ndarray): 3D boxes to be transformed.
         loc_transform (np.ndarray): Location transform to be applied.
         rot_transform (np.ndarray): Rotation transform to be applied.
-        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
+        valid_mask (np.ndarray): Mask to indicate which boxes are valid.
     """
     num_box = boxes.shape[0]
     for i in range(num_box):
@@ -338,16 +338,17 @@ def noise_per_object_v3_(gt_boxes,
 
     Args:
         gt_boxes (np.ndarray): Ground truth boxes with shape (N, 7).
-        points (np.ndarray | None): Input point cloud with shape (M, 4).
-            Default: None.
-        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
-            Default: None.
-        rotation_perturb (float): Rotation perturbation. Default: pi / 4.
-        center_noise_std (float): Center noise standard deviation.
+        points (np.ndarray, optional): Input point cloud with
+            shape (M, 4). Default: None.
+        valid_mask (np.ndarray, optional): Mask to indicate which
+            boxes are valid. Default: None.
+        rotation_perturb (float, optional): Rotation perturbation.
+            Default: pi / 4.
+        center_noise_std (float, optional): Center noise standard deviation.
             Default: 1.0.
-        global_random_rot_range (float): Global random rotation range.
-            Default: pi/4.
-        num_try (int): Number of try. Default: 100.
+        global_random_rot_range (float, optional): Global random rotation
+            range. Default: pi/4.
+        num_try (int, optional): Number of try. Default: 100.
     """
     num_boxes = gt_boxes.shape[0]
     if not isinstance(rotation_perturb, (list, tuple, np.ndarray)):

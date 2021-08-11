@@ -139,7 +139,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
             assign_result (:obj:`AssignResult`): Bbox assigning results.
             bboxes (torch.Tensor): Boxes to be sampled from.
             gt_bboxes (torch.Tensor): Ground truth bboxes.
-            gt_labels (torch.Tensor, optional): Class labels of ground truth \
+            gt_labels (torch.Tensor, optional): Class labels of ground truth
                 bboxes.
 
         Returns:

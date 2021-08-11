@@ -47,11 +47,11 @@ class H3DNet(TwoStage3DDetector):
             img_metas (list): Image metas.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): point-wise semantic
+            pts_semantic_mask (list[torch.Tensor]): point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): point-wise instance
+            pts_instance_mask (list[torch.Tensor]): point-wise instance
                 label of each batch.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:

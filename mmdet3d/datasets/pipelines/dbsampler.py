@@ -15,10 +15,10 @@ class BatchSampler:
 
     Args:
         sample_list (list[dict]): List of samples.
-        name (str | None): The category of samples. Default: None.
-        epoch (int | None): Sampling epoch. Default: None.
-        shuffle (bool): Whether to shuffle indices. Default: False.
-        drop_reminder (bool): Drop reminder. Default: False.
+        name (str, optional): The category of samples. Default: None.
+        epoch (int, optional): Sampling epoch. Default: None.
+        shuffle (bool, optional): Whether to shuffle indices. Default: False.
+        drop_reminder (bool, optional): Drop reminder. Default: False.
     """
 
     def __init__(self,
@@ -87,9 +87,9 @@ class DataBaseSampler(object):
         rate (float): Rate of actual sampled over maximum sampled number.
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
-        classes (list[str]): List of classes. Default: None.
-        points_loader(dict): Config of points loader. Default: dict(
-            type='LoadPointsFromFile', load_dim=4, use_dim=[0,1,2,3])
+        classes (list[str], optional): List of classes. Default: None.
+        points_loader(dict, optional): Config of points loader. Default:
+            dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0,1,2,3])
     """
 
     def __init__(self,
@@ -198,9 +198,9 @@ class DataBaseSampler(object):
         Returns:
             dict: Dict of sampled 'pseudo ground truths'.
 
-                - gt_labels_3d (np.ndarray): ground truths labels \
+                - gt_labels_3d (np.ndarray): ground truths labels
                     of sampled objects.
-                - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`):
                     sampled ground truth 3D bounding boxes
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths

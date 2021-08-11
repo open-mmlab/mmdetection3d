@@ -34,7 +34,7 @@ def point_sample(img_meta,
         coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
         img_scale_factor (torch.Tensor): Scale factor with shape of \
             (w_scale, h_scale).
-        img_crop_offset (torch.Tensor): Crop offset used to crop \
+        img_crop_offset (torch.Tensor): Crop offset used to crop
             image during data augmentation with shape of (w_offset, h_offset).
         img_flip (bool): Whether the image is flipped.
         img_pad_shape (tuple[int]): int tuple indicates the h & w after

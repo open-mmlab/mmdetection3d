@@ -15,7 +15,7 @@ class PointFPModule(BaseModule):
 
     Args:
         mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict, optional): Type of normalization method.
             Default: dict(type='BN2d').
     """
 

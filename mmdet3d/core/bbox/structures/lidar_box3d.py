@@ -4,7 +4,7 @@ import torch
 
 from mmdet3d.core.points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
-from .utils import limit_period, rotation_3d_in_axis
+from .utils import rotation_3d_in_axis
 
 
 class LiDARInstance3DBoxes(BaseInstance3DBoxes):
@@ -39,7 +39,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box."""
+        """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, :2] = bottom_center[:, :2]
@@ -88,33 +88,6 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
-    @property
-    def bev(self):
-        """torch.Tensor: 2D BEV box of each box with rotation
-        in XYWHR format."""
-        return self.tensor[:, [0, 1, 3, 4, 6]]
-
-    @property
-    def nearest_bev(self):
-        """torch.Tensor: A tensor of 2D BEV box of each box
-        without rotation."""
-        # Obtain BEV boxes with rotation in XYWHR format
-        bev_rotated_boxes = self.bev
-        # convert the rotation to a valid range
-        rotations = bev_rotated_boxes[:, -1]
-        normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
-
-        # find the center of boxes
-        conditions = (normed_rotations > np.pi / 4)[..., None]
-        bboxes_xywh = torch.where(conditions, bev_rotated_boxes[:,
-                                                                [0, 1, 3, 2]],
-                                  bev_rotated_boxes[:, :4])
-
-        centers = bboxes_xywh[:, :2]
-        dims = bboxes_xywh[:, 2:]
-        bev_boxes = torch.cat([centers - dims / 2, centers + dims / 2], dim=-1)
-        return bev_boxes
-
     def rotate(self, angle, points=None):
         """Rotate boxes with points (optional) with the given angle or rotation
         matrix.
@@ -122,7 +95,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         Args:
             angles (float | torch.Tensor | np.ndarray):
                 Rotation angle or rotation matrix.
-            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, optional):
+            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
 
         Returns:
@@ -174,7 +147,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
 
         Args:
             bev_direction (str): Flip direction (horizontal or vertical).
-            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, None):
+            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
                 Points to flip. Defaults to None.
 
         Returns:
@@ -201,34 +174,14 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range.
-
-        Args:
-            box_range (list | torch.Tensor): the range of box
-                (x_min, y_min, x_max, y_max)
-
-        Note:
-            The original implementation of SECOND checks whether boxes in
-            a range by checking whether the points are in a convex
-            polygon, we reduce the burden for simpler cases.
-
-        Returns:
-            torch.Tensor: Whether each box is inside the reference range.
-        """
-        in_range_flags = ((self.tensor[:, 0] > box_range[0])
-                          & (self.tensor[:, 1] > box_range[1])
-                          & (self.tensor[:, 0] < box_range[2])
-                          & (self.tensor[:, 1] < box_range[3]))
-        return in_range_flags
-
     def convert_to(self, dst, rt_mat=None):
         """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`Box3DMode`): the target Box mode
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.

@@ -291,7 +291,8 @@ def rotate_iou_kernel_eval(N,
                            dev_query_boxes,
                            dev_iou,
                            criterion=-1):
-    """Kernel of computing rotated iou.
+    """Kernel of computing rotated IoU. This function is for bev boxes in
+    camera coordinate system ONLY (the rotation is clockwise).
 
     Args:
         N (int): The number of boxes.
@@ -343,10 +344,14 @@ def rotate_iou_gpu_eval(boxes, query_boxes, criterion=-1, device_id=0):
     in one example with numba.cuda code). convert from [this project](
     https://github.com/hongzhenwang/RRPN-revise/tree/master/lib/rotation).
 
+    This function is for bev boxes in camera coordinate system ONLY
+    (the rotation is clockwise).
+
     Args:
         boxes (torch.Tensor): rbboxes. format: centers, dims,
             angles(clockwise when positive) with the shape of [N, 5].
-        query_boxes (float tensor: [K, 5]): rbboxes to compute iou with boxes.
+        query_boxes (torch.FloatTensor, shape=(K, 5)):
+            rbboxes to compute iou with boxes.
         device_id (int, optional): Defaults to 0. Device to use.
         criterion (int, optional): Indicate different type of iou.
             -1 indicate `area_inter / (area1 + area2 - area_inter)`,

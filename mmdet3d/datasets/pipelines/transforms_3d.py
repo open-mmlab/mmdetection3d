@@ -22,7 +22,7 @@ class RandomDropPointsColor(object):
     util/transform.py#L223>`_ for more details.
 
     Args:
-        drop_ratio (float): The probability of dropping point colors.
+        drop_ratio (float, optional): The probability of dropping point colors.
             Defaults to 0.2.
     """
 
@@ -38,7 +38,7 @@ class RandomDropPointsColor(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after color dropping, \
+            dict: Results after color dropping,
                 'points' key is updated in the result dict.
         """
         points = input_dict['points']
@@ -105,10 +105,11 @@ class RandomFlip3D(RandomFlip):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
-            direction (str): Flip direction. Default: horizontal.
+            direction (str, optional): Flip direction.
+                Default: 'horizontal'.
 
         Returns:
-            dict: Flipped results, 'points', 'bbox3d_fields' keys are \
+            dict: Flipped results, 'points', 'bbox3d_fields' keys are
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
@@ -137,15 +138,15 @@ class RandomFlip3D(RandomFlip):
             input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
 
     def __call__(self, input_dict):
-        """Call function to flip points, values in the ``bbox3d_fields`` and \
+        """Call function to flip points, values in the ``bbox3d_fields`` and
         also flip 2D image and its annotations.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Flipped results, 'flip', 'flip_direction', \
-                'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added \
+            dict: Flipped results, 'flip', 'flip_direction',
+                'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added
                 into result dict.
         """
         # filp 2D image and its annotations
@@ -187,20 +188,20 @@ class RandomFlip3D(RandomFlip):
 class RandomJitterPoints(object):
     """Randomly jitter point coordinates.
 
-    Different from the global translation in ``GlobalRotScaleTrans``, here we \
+    Different from the global translation in ``GlobalRotScaleTrans``, here we
         apply different noises to each point in a scene.
 
     Args:
         jitter_std (list[float]): The standard deviation of jittering noise.
-            This applies random noise to all points in a 3D scene, which is \
-            sampled from a gaussian distribution whose standard deviation is \
+            This applies random noise to all points in a 3D scene, which is
+            sampled from a gaussian distribution whose standard deviation is
             set by ``jitter_std``. Defaults to [0.01, 0.01, 0.01]
-        clip_range (list[float] | None): Clip the randomly generated jitter \
+        clip_range (list[float]): Clip the randomly generated jitter
             noise into this range. If None is given, don't perform clipping.
             Defaults to [-0.05, 0.05]
 
     Note:
-        This transform should only be used in point cloud segmentation tasks \
+        This transform should only be used in point cloud segmentation tasks
             because we don't transform ground-truth bboxes accordingly.
         For similar transform in detection task, please refer to `ObjectNoise`.
     """
@@ -229,7 +230,7 @@ class RandomJitterPoints(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after adding noise to each point, \
+            dict: Results after adding noise to each point,
                 'points' key is updated in the result dict.
         """
         points = input_dict['points']
@@ -291,8 +292,8 @@ class ObjectSample(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after object sampling augmentation, \
-                'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated \
+            dict: Results after object sampling augmentation,
+                'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated
                 in the result dict.
         """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
@@ -388,7 +389,7 @@ class ObjectNoise(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after adding noise to each object, \
+            dict: Results after adding noise to each object,
                 'points', 'gt_bboxes_3d' keys are updated in the result dict.
         """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
@@ -428,10 +429,10 @@ class GlobalAlignment(object):
         rotation_axis (int): Rotation axis for points and bboxes rotation.
 
     Note:
-        We do not record the applied rotation and translation as in \
-            GlobalRotScaleTrans. Because usually, we do not need to reverse \
+        We do not record the applied rotation and translation as in
+            GlobalRotScaleTrans. Because usually, we do not need to reverse
             the alignment step.
-        For example, ScanNet 3D detection task uses aligned ground-truth \
+        For example, ScanNet 3D detection task uses aligned ground-truth
             bounding boxes for evaluation.
     """
 
@@ -483,7 +484,7 @@ class GlobalAlignment(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after global alignment, 'points' and keys in \
+            dict: Results after global alignment, 'points' and keys in
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
         assert 'axis_align_matrix' in input_dict['ann_info'].keys(), \
@@ -512,15 +513,15 @@ class GlobalRotScaleTrans(object):
     """Apply global rotation, scaling and translation to a 3D scene.
 
     Args:
-        rot_range (list[float]): Range of rotation angle.
+        rot_range (list[float], optional): Range of rotation angle.
             Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
-        scale_ratio_range (list[float]): Range of scale ratio.
+        scale_ratio_range (list[float], optional): Range of scale ratio.
             Defaults to [0.95, 1.05].
-        translation_std (list[float]): The standard deviation of translation
-            noise. This applies random translation to a scene by a noise, which
+        translation_std (list[float], optional): The standard deviation of
+            translation noise applied to a scene, which
             is sampled from a gaussian distribution whose standard deviation
             is set by ``translation_std``. Defaults to [0, 0, 0]
-        shift_height (bool): Whether to shift height.
+        shift_height (bool, optional): Whether to shift height.
             (the fourth dimension of indoor points) when scaling.
             Defaults to False.
     """
@@ -559,8 +560,8 @@ class GlobalRotScaleTrans(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after translation, 'points', 'pcd_trans' \
-                and keys in input_dict['bbox3d_fields'] are updated \
+            dict: Results after translation, 'points', 'pcd_trans'
+                and keys in input_dict['bbox3d_fields'] are updated
                 in the result dict.
         """
         translation_std = np.array(self.translation_std, dtype=np.float32)
@@ -578,8 +579,8 @@ class GlobalRotScaleTrans(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after rotation, 'points', 'pcd_rotation' \
-                and keys in input_dict['bbox3d_fields'] are updated \
+            dict: Results after rotation, 'points', 'pcd_rotation'
+                and keys in input_dict['bbox3d_fields'] are updated
                 in the result dict.
         """
         rotation = self.rot_range
@@ -608,7 +609,7 @@ class GlobalRotScaleTrans(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after scaling, 'points'and keys in \
+            dict: Results after scaling, 'points'and keys in
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
@@ -630,7 +631,7 @@ class GlobalRotScaleTrans(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after scaling, 'pcd_scale_factor' are updated \
+            dict: Results after scaling, 'pcd_scale_factor' are updated
                 in the result dict.
         """
         scale_factor = np.random.uniform(self.scale_ratio_range[0],
@@ -638,7 +639,7 @@ class GlobalRotScaleTrans(object):
         input_dict['pcd_scale_factor'] = scale_factor
 
     def __call__(self, input_dict):
-        """Private function to rotate, scale and translate bounding boxes and \
+        """Private function to rotate, scale and translate bounding boxes and
         points.
 
         Args:
@@ -646,7 +647,7 @@ class GlobalRotScaleTrans(object):
 
         Returns:
             dict: Results after scaling, 'points', 'pcd_rotation',
-                'pcd_scale_factor', 'pcd_trans' and keys in \
+                'pcd_scale_factor', 'pcd_trans' and keys in
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
         if 'transformation_3d_flow' not in input_dict:
@@ -684,7 +685,7 @@ class PointShuffle(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points', 'pts_instance_mask' \
+            dict: Results after filtering, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         idx = input_dict['points'].shuffle()
@@ -723,7 +724,7 @@ class ObjectRangeFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d' \
+            dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d'
                 keys are updated in the result dict.
         """
         # Check points instance type and initialise bev_range
@@ -775,7 +776,7 @@ class PointsRangeFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points', 'pts_instance_mask' \
+            dict: Results after filtering, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
@@ -821,7 +822,7 @@ class ObjectNameFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d' \
+            dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d'
                 keys are updated in the result dict.
         """
         gt_labels_3d = input_dict['gt_labels_3d']
@@ -913,7 +914,7 @@ class PointSample(object):
         Args:
             input_dict (dict): Result dict from loading pipeline.
         Returns:
-            dict: Results after sampling, 'points', 'pts_instance_mask' \
+            dict: Results after sampling, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
@@ -994,10 +995,10 @@ class IndoorPatchPointSample(object):
             additional features. Defaults to False.
         num_try (int, optional): Number of times to try if the patch selected
             is invalid. Defaults to 10.
-        enlarge_size (float | None, optional): Enlarge the sampled patch to
+        enlarge_size (float, optional): Enlarge the sampled patch to
             [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
             an augmentation. If None, set it as 0. Defaults to 0.2.
-        min_unique_num (int | None, optional): Minimum number of unique points
+        min_unique_num (int, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
         eps (float, optional): A value added to patch boundary to guarantee
@@ -1038,7 +1039,7 @@ class IndoorPatchPointSample(object):
                           attribute_dims, point_type):
         """Generating model input.
 
-        Generate input by subtracting patch center and adding additional \
+        Generate input by subtracting patch center and adding additional
             features. Currently support colors and normalized xyz as features.
 
         Args:
@@ -1182,7 +1183,7 @@ class IndoorPatchPointSample(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after sampling, 'points', 'pts_instance_mask' \
+            dict: Results after sampling, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
@@ -1242,7 +1243,7 @@ class BackgroundPointsFilter(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after filtering, 'points', 'pts_instance_mask' \
+            dict: Results after filtering, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
@@ -1340,7 +1341,7 @@ class VoxelBasedPointSampler(object):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after sampling, 'points', 'pts_instance_mask' \
+            dict: Results after sampling, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']

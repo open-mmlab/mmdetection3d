@@ -128,15 +128,15 @@ class SSD3DHead(VoteHead):
         Args:
             bbox_preds (dict): Predictions from forward of SSD3DHead.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
+            pts_semantic_mask (list[torch.Tensor]): Point-wise
                 semantic mask.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise
+            pts_instance_mask (list[torch.Tensor]): Point-wise
                 instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
@@ -231,12 +231,12 @@ class SSD3DHead(VoteHead):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise semantic
+            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
+            pts_instance_mask (list[torch.Tensor]): Point-wise instance
                 label of each batch.
             bbox_preds (torch.Tensor): Bounding box predictions of ssd3d head.
 
@@ -320,12 +320,12 @@ class SSD3DHead(VoteHead):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (None | torch.Tensor): Point-wise semantic
+            pts_semantic_mask (torch.Tensor): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | torch.Tensor): Point-wise instance
+            pts_instance_mask (torch.Tensor): Point-wise instance
                 label of each batch.
             aggregated_points (torch.Tensor): Aggregated points from
                 candidate points layer.
@@ -494,7 +494,7 @@ class SSD3DHead(VoteHead):
             origin=(0.5, 0.5, 0.5))
 
         if isinstance(bbox, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
-            box_indices = bbox.points_in_boxes_batch(points)
+            box_indices = bbox.points_in_boxes_all(points)
             nonempty_box_mask = box_indices.T.sum(1) >= 0
         else:
             raise NotImplementedError('Unsupported bbox type!')
@@ -550,7 +550,7 @@ class SSD3DHead(VoteHead):
                 inside bbox and the index of box where each point are in.
         """
         if isinstance(bboxes_3d, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
-            points_mask = bboxes_3d.points_in_boxes_batch(points)
+            points_mask = bboxes_3d.points_in_boxes_all(points)
             assignment = points_mask.argmax(dim=-1)
         else:
             raise NotImplementedError('Unsupported bbox type!')
