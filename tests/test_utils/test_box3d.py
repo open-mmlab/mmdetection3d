@@ -1754,6 +1754,9 @@ def test_points_in_boxes():
     assert point_indices.shape == torch.Size([23, 6])
     assert (point_indices == expected_point_indices).all()
 
+    point_indices = cam_boxes.points_in_boxes_batch(cam_pts)
+    assert (point_indices == expected_point_indices).all()
+
     point_indices = cam_boxes.points_in_boxes_part(cam_pts)
     expected_point_indices = torch.tensor([
         0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, 3, -1, -1, 2, 3, 3, 2, 2, 3,
@@ -1761,4 +1764,7 @@ def test_points_in_boxes():
     ],
                                           dtype=torch.int32).cuda()
     assert point_indices.shape == torch.Size([23])
+    assert (point_indices == expected_point_indices).all()
+
+    point_indices = cam_boxes.points_in_boxes(cam_pts)
     assert (point_indices == expected_point_indices).all()

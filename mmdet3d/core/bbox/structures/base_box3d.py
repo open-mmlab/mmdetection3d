@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import warnings
 from abc import abstractmethod
 
 from mmdet3d.ops import points_in_boxes_all, points_in_boxes_part
@@ -565,3 +566,15 @@ class BaseInstance3DBoxes(object):
         box_idxs_of_pts = points_in_boxes_all(points_clone, boxes)
 
         return box_idxs_of_pts.squeeze(0)
+
+    def points_in_boxes(self, points, boxes_override=None):
+        warnings.warn('DeprecationWarning: points_in_boxes is a '
+                      'deprecated method, please consider using '
+                      'points_in_boxes_part.')
+        return self.points_in_boxes_part(points, boxes_override)
+
+    def points_in_boxes_batch(self, points, boxes_override=None):
+        warnings.warn('DeprecationWarning: points_in_boxes_batch is a '
+                      'deprecated method, please consider using '
+                      'points_in_boxes_all.')
+        return self.points_in_boxes_all(points, boxes_override)
