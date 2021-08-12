@@ -63,7 +63,9 @@ class PointNet2SAMSG(BasePointNet):
         self.out_indices = out_indices
         assert max(out_indices) < self.num_sa
         assert len(num_points) == len(radii) == len(num_samples) == len(
-            sa_channels) == len(aggregation_channels)
+            sa_channels)
+        if aggregation_channels is not None:
+            assert len(sa_channels) == len(aggregation_channels)
 
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
@@ -133,7 +135,7 @@ class PointNet2SAMSG(BasePointNet):
                 - sa_xyz (torch.Tensor): The coordinates of sa features.
                 - sa_features (torch.Tensor): The features from the
                     last Set Aggregation Layers.
-                - sa_indices (torch.Tensor): Indices of the
+                - sa_indices (torch.Tensor): Indices of the \
                     input points.
         """
         xyz, features = self._split_point_feats(points)
@@ -163,7 +165,6 @@ class PointNet2SAMSG(BasePointNet):
                 out_sa_xyz.append(sa_xyz[-1])
                 out_sa_features.append(sa_features[-1])
                 out_sa_indices.append(sa_indices[-1])
-
         return dict(
             sa_xyz=out_sa_xyz,
             sa_features=out_sa_features,
