@@ -6,7 +6,7 @@
 
 您可以在[这里](https://www.nuscenes.org/download)下载 nuScenes 3D 检测数据并解压缩所有 zip 文件。
 
-像准备数据集的一般方法一样，建议将数据集根目录链接 `$MMDETECTION3D/data`。
+像准备数据集的一般方法一样，建议将数据集根目录链接到 `$MMDETECTION3D/data`。
 
 在我们处理之前，文件夹结构应按如下方式组织。
 
@@ -62,7 +62,7 @@ mmdetection3d
 这里，.pkl 文件一般用于涉及点云的方法，coco 风格的 .json 文件更适合基于图像的方法，例如基于图像的 2D 和 3D 检测。
 接下来，我们将详细说明这些信息文件中记录的细节。
 
-- `nuscenes_database/xxxxx.bin`：训练数据集的每个 3D 边界框中包含的点云数据
+- `nuscenes_database/xxxxx.bin`：训练数据集的每个 3D 包围框中包含的点云数据。
 - `nuscenes_infos_train.pkl`：训练数据集信息，每帧信息有两个键值： `metadata` 和 `infos`。 `metadata` 包含数据集本身的基本信息，例如 `{'version': 'v1.0-trainval'}`，而 `infos` 包含详细信息如下：
     - info['lidar_path']：激光雷达点云数据的文件路径。
     - info['token']：样本数据标记。
@@ -70,54 +70,54 @@ mmdetection3d
         - info['sweeps'][i]['data_path']：第 i 次扫描的数据路径。
         - info['sweeps'][i]['type']：扫描数据类型，例如“激光雷达”。
         - info['sweeps'][i]['sample_data_token']：扫描样本数据标记。
-        - info['sweeps'][i]['sensor2ego_translation']：从当前传感器（用于收集扫描数据）到自车的转换。 （1x3 列表）
-        - info['sweeps'][i]['sensor2ego_rotation']：从当前传感器（用于收集扫描数据）到自车的旋转。 （四元数格式的 1x4 列表）
-        - info['sweeps'][i]['ego2global_translation']：从自车到全局坐标的转换。 （1x3 列表）
-        - info['sweeps'][i]['ego2global_rotation']：从自车到全局坐标的旋转。 （四元数格式的 1x4 列表）
+        - info['sweeps'][i]['sensor2ego_translation']：从当前传感器（用于收集扫描数据）到自车（包含感知周围环境传感器的车辆，车辆坐标系固连在自车上）的转换（1x3 列表）。
+        - info['sweeps'][i]['sensor2ego_rotation']：从当前传感器（用于收集扫描数据）到自车的旋转（四元数格式的 1x4 列表）。
+        - info['sweeps'][i]['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
+        - info['sweeps'][i]['ego2global_rotation']：从自车到全局坐标的旋转（四元数格式的 1x4 列表）。
         - info['sweeps'][i]['timestamp']：扫描数据的时间戳。
-        - info['sweeps'][i]['sensor2lidar_translation']：从当前传感器（用于收集扫描数据）到激光雷达的转换。 （1x3 列表）
-        - info['sweeps'][i]['sensor2lidar_rotation']：从当前传感器（用于收集扫描数据）到激光雷达的旋转。 （四元数格式的 1x4 列表）
+        - info['sweeps'][i]['sensor2lidar_translation']：从当前传感器（用于收集扫描数据）到激光雷达的转换（1x3 列表）。
+        - info['sweeps'][i]['sensor2lidar_rotation']：从当前传感器（用于收集扫描数据）到激光雷达的旋转（四元数格式的 1x4 列表）。
     - info['cams']：相机校准信息。它包含与每个摄像头对应的六个键值： `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。
     每个字典包含每个扫描数据按照上述方式的详细信息（每个信息的关键字与上述相同）。
-    - info['lidar2ego_translation']：从激光雷达到自车的转换。 （1x3 列表）
-    - info['lidar2ego_rotation']：从激光雷达到自车的旋转。 （四元数格式的 1x4 列表）
-    - info['ego2global_translation']：从自车到全局坐标的转换。 （1x3 列表）
-    - info['ego2global_rotation']：从自我车辆到全局坐标的旋转。 （四元数格式的 1x4 列表）
+    - info['lidar2ego_translation']：从激光雷达到自车的转换（1x3 列表）。
+    - info['lidar2ego_rotation']：从激光雷达到自车的旋转（四元数格式的 1x4 列表）。
+    - info['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
+    - info['ego2global_rotation']：从自我车辆到全局坐标的旋转（四元数格式的 1x4 列表）。
     - info['timestamp']：样本数据的时间戳。
-    - info['gt_boxes']：3D 边界框的 7-DoF 标注，一个 Nx7 数组。
-    - info['gt_names']：3D 边界框的类别，一个 1xN 数组。
-    - info['gt_velocity']：3D 边界框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
-    - info['num_lidar_pts']：每个 3D 边界框中包含的激光雷达点数。
-    - info['num_radar_pts']：每个 3D 边界框中包含的雷达点数。
-    - info['valid_flag']：每个边界框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
-- `nuscenes_infos_train_mono3d.coco.json`：训练数据集 coco 风格的信息。该文件将基于图像的数据组织为三类（键值）： `'categories'`, `'images'`, `'annotations'`。
+    - info['gt_boxes']：3D 包围框的 7-DoF 标注，一个 Nx7 数组。
+    - info['gt_names']：3D 包围框的类别，一个 1xN 数组。
+    - info['gt_velocity']：3D 包围框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
+    - info['num_lidar_pts']：每个 3D 包围框中包含的激光雷达点数。
+    - info['num_radar_pts']：每个 3D 包围框中包含的雷达点数。
+    - info['valid_flag']：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
+- `nuscenes_infos_train_mono3d.coco.json`：训练数据集 coco 风格的信息。该文件将基于图像的数据组织为三类（键值）：`'categories'`, `'images'`, `'annotations'`。
     - info['categories']：包含所有类别名称的列表。每个元素都遵循字典格式并由两个键值组成：`'id'` 和 `'name'`。
     - info['images']：包含所有图像信息的列表。
         - info['images'][i]['file_name']：第 i 张图像的文件名。
         - info['images'][i]['id']：第 i 张图像的样本数据标记。
         - info['images'][i]['token']：与该帧对应的样本标记。
-        - info['images'][i]['cam2ego_rotation']：从相机到自车的旋转。 （四元数格式的 1x4 列表）
-        - info['images'][i]['cam2ego_translation']：从相机到自车的转换。 （1x3 列表）
-        - info['images'][i]['ego2global_rotation'']：从自车到全局坐标的旋转。 （四元数格式的 1x4 列表）
-        - info['images'][i]['ego2global_translation']：从自车到全局坐标的转换。 （1x3 列表）
-        - info['images'][i]['cam_intrinsic']: 相机内参矩阵。 （3x3 列表）
+        - info['images'][i]['cam2ego_rotation']：从相机到自车的旋转（四元数格式的 1x4 列表）。
+        - info['images'][i]['cam2ego_translation']：从相机到自车的转换（1x3 列表）。
+        - info['images'][i]['ego2global_rotation'']：从自车到全局坐标的旋转（四元数格式的 1x4 列表）。
+        - info['images'][i]['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
+        - info['images'][i]['cam_intrinsic']: 相机内参矩阵（3x3 列表）。
         - info['images'][i]['width']：图片宽度， nuScenes 中默认为 1600。
         - info['images'][i]['height']：图像高度， nuScenes 中默认为 900。
     - info['annotations']: 包含所有标注信息的列表。
         - info['annotations'][i]['file_name']：对应图像的文件名。
         - info['annotations'][i]['image_id']：对应图像的图像 ID （标记）。
-        - info['annotations'][i]['area']： 2D 边界框的面积。
+        - info['annotations'][i]['area']：2D 包围框的面积。
         - info['annotations'][i]['category_name']：类别名称。
         - info['annotations'][i]['category_id']：类别 id。
-        - info['annotations'][i]['bbox']： 2D 边界框标注（3D 投影框的外部矩形），1x4 列表跟随 [x1, y1, x2-x1, y2-y1]。x1/y1 是沿图像水平/垂直方向的最小坐标。
+        - info['annotations'][i]['bbox']：2D 包围框标注（3D 投影框的外部矩形），1x4 列表跟随 [x1, y1, x2-x1, y2-y1]。x1/y1 是沿图像水平/垂直方向的最小坐标。
         - info['annotations'][i]['iscrowd']：该区域是否拥挤。默认为 0。
-        - info['annotations'][i]['bbox_cam3d']：3D 边界框（重力）中心位置（3）、大小（3）、（全局）偏航角（1）、1x7 列表。
-        - info['annotations'][i]['velo_cam3d']：3D 边界框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
-        - info['annotations'][i]['center2d']：包含 2.5D 信息的投影 3D 中心：图像上的投影中心位置 (2) 和深度 (1)，1x3 列表。
+        - info['annotations'][i]['bbox_cam3d']：3D 包围框（重力）中心位置（3）、大小（3）、（全局）偏航角（1）、1x7 列表。
+        - info['annotations'][i]['velo_cam3d']：3D 包围框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
+        - info['annotations'][i]['center2d']：包含 2.5D 信息的投影 3D 中心：图像上的投影中心位置（2）和深度（1），1x3 列表。
         - info['annotations'][i]['attribute_name']：属性名称。
-        - info['annotations'][i]['attribute_id']：属性 id。
+        - info['annotations'][i]['attribute_id']：属性 ID。
         我们为属性分类维护了一个属性集合和映射。更多的细节请参考[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L53)。
-        - info['annotations'][i]['id']：标注 id。默认为 `i`。
+        - info['annotations'][i]['id']：标注 ID。默认为 `i`。
 
 这里我们只解释训练信息文件中记录的数据。这同样适用于验证和测试集。
 获取 `nuscenes_infos_xxx.pkl` 和 `nuscenes_infos_xxx_mono3d.coco.json` 的核心函数分别为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L143) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py)。
@@ -159,7 +159,7 @@ train_pipeline = [
 与一般情况相比，nuScenes 有一个特定的 `'LoadPointsFromMultiSweeps'` 流水线来从连续帧加载点云。这是此设置中使用的常见做法。
 更多细节请参考 nuScenes [原始论文](https://arxiv.org/abs/1903.11027)。
 `'LoadPointsFromMultiSweeps'` 中的默认 `use_dim` 是 `[0, 1, 2, 4]`，其中前 3 个维度是指点坐标，最后一个是指时间戳差异。
-由于在拼接来自不同帧的点时会产生噪声，因此默认情况下不使用强度。
+由于在拼接来自不同帧的点时使用点云的强度信息会产生噪声，因此默认情况下不使用点云的强度信息。
 
 ### 基于视觉的方法
 
@@ -206,7 +206,7 @@ bash ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2
 
 ## 指标
 
-NuScenes 提出了一个综合指标，即 nuScenes 检测分数 (NDS)，以评估不同的方法并设置基准测试。
+NuScenes 提出了一个综合指标，即 nuScenes 检测分数（NDS），以评估不同的方法并设置基准测试。
 它由平均精度（mAP）、平均平移误差（ATE）、平均尺度误差（ASE）、平均方向误差（AOE）、平均速度误差（AVE）和平均属性误差（AAE）组成。
 更多细节请参考其[官方网站](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)。
 
@@ -254,6 +254,6 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 ### `NuScenesBox` 和我们的 `CameraInstanceBoxes` 之间的转换。
 
-总的来说，`NuScenesBox` 和我们的 `CameraInstanceBoxes` 的主要区别主要体现在 yaw 定义上。 `NuScenesBox` 定义了一个四元数或三个欧拉角的旋转，而我们的由于实际情况只定义了一个偏航角。它需要我们在预处理和后处理中手动添加一些额外的旋转，例如[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L673)。
+总的来说，`NuScenesBox` 和我们的 `CameraInstanceBoxes` 的主要区别主要体现在偏航角（yaw）定义上。 `NuScenesBox` 定义了一个四元数或三个欧拉角的旋转，而我们的由于实际情况只定义了一个偏航角（yaw）。它需要我们在预处理和后处理中手动添加一些额外的旋转，例如[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L673)。
 
-另外，请注意，角点和位置的定义在 `NuScenesBox` 中是分离的。例如，在单目 3D 检测中，框位置的定义在其相机坐标中（有关汽车设置，请参阅其官方[插图](https://www.nuscenes.org/nuscenes#data-collection)），即与[我们的](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py)一致。相比之下，它的角点是通过 [convention](https://github.com/nutonomy/nuscenes-devkit/blob/02e9200218977193a1058dd7234f935834378319/python-sdk/nuscenes/utils/data_classes.py#L527) 定义的，“x 向前， y 向左， z 向上”。它导致了与我们的 `CameraInstanceBoxes` 不同的维度和旋转定义理念。一个移除相似冲突的例子是 PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744)。同样的问题也存在于 LiDAR 系统中。为了解决它们，我们通常会在预处理和后处理中添加一些转换，以保证在整个训练和推理过程中都在我们的坐标系系统中。
+另外，请注意，角点和位置的定义在 `NuScenesBox` 中是分离的。例如，在单目 3D 检测中，框位置的定义在其相机坐标中（有关汽车设置，请参阅其官方[插图](https://www.nuscenes.org/nuscenes#data-collection)），即与[我们的](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py)一致。相比之下，它的角点是通过 [惯例](https://github.com/nutonomy/nuscenes-devkit/blob/02e9200218977193a1058dd7234f935834378319/python-sdk/nuscenes/utils/data_classes.py#L527) 定义的，“x 向前， y 向左， z 向上”。它导致了与我们的 `CameraInstanceBoxes` 不同的维度和旋转定义理念。一个移除相似冲突的例子是 PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744)。同样的问题也存在于 LiDAR 系统中。为了解决它们，我们通常会在预处理和后处理中添加一些转换，以保证在整个训练和推理过程中都在我们的坐标系系统中。
