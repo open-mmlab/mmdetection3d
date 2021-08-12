@@ -384,4 +384,4 @@ def test_point_xyzwhlr_bbox_coder():
     assert torch.allclose(expected_bbox_target, bbox_target, atol=1e-4)
     # test decode
     bbox3d_out = boxcoder.decode(bbox_target, points.cuda(), gt_labels_3d)
-    assert torch.allclose(bbox3d_out, gt_bboxes_3d, atol=1e-4)
+    assert torch.allclose(bbox3d_out, gt_bboxes_3d.cuda(), atol=1e-4)
