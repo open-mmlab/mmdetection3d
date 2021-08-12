@@ -4,6 +4,7 @@ networkx>=2.2,<2.3
 numba==0.48.0
 numpy<1.20.0
 nuscenes-devkit
+packaging
 plyfile
 scikit-image
 # by default we also use tensorboard to log results
