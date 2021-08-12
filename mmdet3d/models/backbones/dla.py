@@ -12,7 +12,7 @@ from mmdet.utils import get_root_logger
 
 
 def dla_build_norm_layer(cfg, num_features):
-    """Build normalization layer specially desgined for DLANet.
+    """Build normalization layer specially designed for DLANet.
 
     Args:
         cfg (dict): The norm layer config, which should contain:
@@ -38,6 +38,18 @@ def dla_build_norm_layer(cfg, num_features):
 
 
 class BasicBlock(nn.Module):
+    """BasicBlock in DLANet.
+
+    Args:
+        inplanes (int): Input feature channel.
+        planes (int): Output feature channel.
+        norm_cfg (dict): Dictionary to construct and config
+            norm layer.
+        conv_cfg (dict): Dictionary to construct and config
+            conv layer.
+        stride (int, optional): Conv stride. Default: 1.
+        dilation (int, optional): Conv dilation. Default: 1.
+    """
 
     def __init__(self,
                  inplanes,
@@ -108,7 +120,7 @@ class Root(nn.Module):
 
         Args:
             feat_list (list[torch.Tensor]): Output features from
-                                            multiple layers.
+                multiple layers.
         """
         children = feat_list
         x = self.conv(torch.cat(feat_list, 1))
@@ -299,6 +311,19 @@ class DLANet(nn.Module):
                          conv_cfg,
                          stride=1,
                          dilation=1):
+        """Conv modules.
+
+        Args:
+            inplanes (int): Input feature channel.
+            planes (int): Output feature channel.
+            convs (int): Number of Conv module.
+            norm_cfg (dict): Dictionary to construct and config
+                norm layer.
+            conv_cfg (dict): Dictionary to construct and config
+                conv layer.
+            stride (int, optional): Conv stride. Default: 1.
+            dilation (int, optional): Conv dilation. Default: 1.
+        """
         modules = []
         for i in range(convs):
             modules.extend([
