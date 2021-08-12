@@ -10,7 +10,7 @@ def fill_up_weights(up):
     """Simulated bilinear upsampling kernel.
 
     Args:
-        up (Module): ConvTranspose2d module.
+        up (nn.Module): ConvTranspose2d module.
     """
     w = up.weight.data
     f = math.ceil(w.size(2) / 2)
@@ -32,8 +32,9 @@ class IDAUp(nn.Module):
             feature map.
         up_kernel_size_list (List[int]): List of size of the convolving
             kernel of different scales.
-        norm_cfg (dict): Config dict for normalization layer. Default: None.
-        use_dcn (bool): If True, use DCNv2. Default: True.
+        norm_cfg (dict, optional): Config dict for normalization layer.
+            Default: None.
+        use_dcn (bool, optional): If True, use DCNv2. Default: True.
     """
 
     def __init__(
@@ -46,6 +47,10 @@ class IDAUp(nn.Module):
     ):
         super(IDAUp, self).__init__()
         self.use_dcn = use_dcn
+        self.projs = nn.ModuleList()
+        self.ups = nn.ModuleList()
+        self.nodes = nn.ModuleList()
+
         for i in range(1, len(in_channels_list)):
             in_channel = in_channels_list[i]
             up_kernel_size = int(up_kernel_size_list[i])
@@ -75,9 +80,10 @@ class IDAUp(nn.Module):
                 output_padding=0,
                 groups=out_channel,
                 bias=False)
-            setattr(self, 'proj_' + str(i), proj)
-            setattr(self, 'up_' + str(i), up)
-            setattr(self, 'node_' + str(i), node)
+
+            self.projs.append(proj)
+            self.ups.append(up)
+            self.nodes.append(node)
 
     def forward(self, layers, start_level, end_level):
         """Forward function.
@@ -87,12 +93,12 @@ class IDAUp(nn.Module):
             start_level (int): Start layer for feature upsampling.
             end_level (int): End layer for feature upsampling.
         """
-        for i in range(start_level + 1, end_level):
-            upsample = getattr(self, 'up_' + str(i - start_level))
-            project = getattr(self, 'proj_' + str(i - start_level))
-            layers[i] = upsample(project(layers[i]))
-            node = getattr(self, 'node_' + str(i - start_level))
-            layers[i] = node(layers[i] + layers[i - 1])
+        for i in range(start_level, end_level - 1):
+            upsample = self.ups[i - start_level]
+            project = self.projs[i - start_level]
+            layers[i + 1] = upsample(project(layers[i + 1]))
+            node = self.nodes[i - start_level]
+            layers[i + 1] = node(layers[i + 1] + layers[i])
 
 
 class DLAUp(nn.Module):
