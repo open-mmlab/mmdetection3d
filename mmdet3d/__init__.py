@@ -1,6 +1,5 @@
-import warnings
-
 import mmcv
+import warnings
 from packaging.version import parse
 
 import mmdet
@@ -10,6 +9,7 @@ from .version import __version__, short_version
 
 def digit_version(version_str: str, length: int = 4):
     """Convert a version string into a tuple of integers.
+
     This method is usually used for comparing two versions. For pre-release
     versions: alpha < beta < rc.
     Args:
