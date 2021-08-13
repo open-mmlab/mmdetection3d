@@ -300,28 +300,27 @@ class PointSAModuleMSG(BasePointSAModule):
 class PointSAModule(PointSAModuleMSG):
     """Point set abstraction module with single-scale grouping (SSG) used in
     PointNets.
-
     Args:
         mlp_channels (list[int]): Specify of the pointnet before
             the global pooling for each scale.
-        num_point (int): Number of points.
+        num_point (int, optional): Number of points.
             Default: None.
-        radius (float): Radius to group with.
+        radius (float, optional): Radius to group with.
             Default: None.
-        num_sample (int): Number of samples in each ball query.
+        num_sample (int, optional): Number of samples in each ball query.
             Default: None.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict, optional): Type of normalization method.
             Default: dict(type='BN2d').
-        use_xyz (bool): Whether to use xyz.
+        use_xyz (bool, optional): Whether to use xyz.
             Default: True.
-        pool_mod (str): Type of pooling method.
+        pool_mod (str, optional): Type of pooling method.
             Default: 'max_pool'.
-        fps_mod (list[str]: Type of FPS method, valid mod
+        fps_mod (list[str], optional): Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
-        fps_sample_range_list (list[int]): Range of points to apply FPS.
-            Default: [-1].
-        normalize_xyz (bool): Whether to normalize local XYZ with radius.
-            Default: False.
+        fps_sample_range_list (list[int], optional): Range of points
+            to apply FPS. Default: [-1].
+        normalize_xyz (bool, optional): Whether to normalize local XYZ
+            with radius. Default: False.
     """
 
     def __init__(self,
