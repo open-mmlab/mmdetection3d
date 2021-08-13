@@ -181,6 +181,7 @@ class BasePointSAModule(nn.Module):
                 Default: None.
             target_xyz (Tensor, optional): (B, M, 3) new coords of the outputs.
                 Default: None.
+
         Returns:
             Tensor: (B, M, 3) where M is the number of points.
                 New features xyz.
@@ -300,6 +301,7 @@ class PointSAModuleMSG(BasePointSAModule):
 class PointSAModule(PointSAModuleMSG):
     """Point set abstraction module with single-scale grouping (SSG) used in
     PointNets.
+
     Args:
         mlp_channels (list[int]): Specify of the pointnet before
             the global pooling for each scale.

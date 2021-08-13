@@ -135,7 +135,7 @@ class PointNet2SAMSG(BasePointNet):
                 - sa_xyz (torch.Tensor): The coordinates of sa features.
                 - sa_features (torch.Tensor): The features from the
                     last Set Aggregation Layers.
-                - sa_indices (torch.Tensor): Indices of the \
+                - sa_indices (torch.Tensor): Indices of the
                     input points.
         """
         xyz, features = self._split_point_feats(points)
