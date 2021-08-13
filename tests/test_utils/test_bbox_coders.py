@@ -1,4 +1,3 @@
-import pytest
 import torch
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
@@ -355,8 +354,6 @@ def test_centerpoint_bbox_coder():
 
 
 def test_point_xyzwhlr_bbox_coder():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
     bbox_coder_cfg = dict(
         type='PointXYZWHLRBBoxCoder',
         use_mean_size=True,
@@ -374,14 +371,13 @@ def test_point_xyzwhlr_bbox_coder():
 
     gt_labels_3d = torch.tensor([2, 0, 1])
 
-    bbox_target = boxcoder.encode(gt_bboxes_3d.cuda(), points.cuda(),
-                                  gt_labels_3d)
+    bbox_target = boxcoder.encode(gt_bboxes_3d, points, gt_labels_3d)
     expected_bbox_target = torch.tensor([[
         -0.1974, -0.0261, -0.4742, -0.0052, -0.2438, 0.0346, -0.9960, -0.0893
     ], [-0.2356, 0.0713, -0.3383, -0.0076, 0.0369, 0.0808, -0.3287, -0.9444
         ], [-0.1731, 0.3085, -0.3543, 0.3626, 0.2884, 0.0878, -0.5686,
-            0.8226]]).cuda()
+            0.8226]])
     assert torch.allclose(expected_bbox_target, bbox_target, atol=1e-4)
     # test decode
-    bbox3d_out = boxcoder.decode(bbox_target, points.cuda(), gt_labels_3d)
-    assert torch.allclose(bbox3d_out, gt_bboxes_3d.cuda(), atol=1e-4)
+    bbox3d_out = boxcoder.decode(bbox_target, points, gt_labels_3d)
+    assert torch.allclose(bbox3d_out, gt_bboxes_3d, atol=1e-4)

@@ -15,13 +15,12 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
             Defaults to True.
     """
 
-    def __init__(self, code_size=7, use_mean_size=True, **kwargs):
+    def __init__(self, code_size=7, use_mean_size=True, mean_size=None):
         super(PointXYZWHLRBBoxCoder, self).__init__()
         self.code_size = code_size
         self.use_mean_size = use_mean_size
         if self.use_mean_size:
-            self.mean_size = torch.from_numpy(np.array(
-                kwargs['mean_size'])).cuda().float()
+            self.mean_size = torch.from_numpy(np.array(mean_size)).float()
             assert self.mean_size.min() > 0, \
                 f'the min of mean_size should > 0, however currently it is '\
                 f'{self.mean_size.min()}, please check it in your config'
@@ -39,7 +38,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Encoded boxes with shape (N, 8 + C).
         """
-
+        device = gt_bboxes_3d.device
         gt_bboxes_3d[:, 3:6] = torch.clamp_min(gt_bboxes_3d[:, 3:6], min=1e-5)
 
         xg, yg, zg, dxg, dyg, dzg, rg, *cgs = torch.split(
@@ -50,6 +49,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
             assert gt_labels_3d.max() <= self.mean_size.shape[0] - 1, \
                 f'the max gt label {gt_labels_3d.max()} is bigger than' \
                 f'anchor types {self.mean_size.shape[0] - 1}.'
+            self.mean_size = self.mean_size.to(device)
             point_anchor_size = self.mean_size[gt_labels_3d]
             dxa, dya, dza = torch.split(point_anchor_size, 1, dim=-1)
             diagonal = torch.sqrt(dxa**2 + dya**2)
@@ -67,11 +67,10 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
             dyt = torch.log(dyg)
             dzt = torch.log(dzg)
 
-        cts = [g for g in cgs]
         return torch.cat(
             [xt, yt, zt, dxt, dyt, dzt,
              torch.cos(rg),
-             torch.sin(rg), *cts],
+             torch.sin(rg), *cgs],
             dim=-1)
 
     def decode(self, box_encodings, points, pred_labels_3d=None):
@@ -85,6 +84,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Decoded boxes with shape (N, 7 + C)
         """
+        device = box_encodings.device
         xt, yt, zt, dxt, dyt, dzt, cost, sint, *cts = torch.split(
             box_encodings, 1, dim=-1)
         xa, ya, za = torch.split(points, 1, dim=-1)
@@ -93,6 +93,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
             assert pred_labels_3d.max() <= self.mean_size.shape[0] - 1, \
                 f'the max pred label {pred_labels_3d.max()} is bigger than' \
                 f'anchor types {self.mean_size.shape[0] - 1} .'
+            self.mean_size = self.mean_size.to(device)
             point_anchor_size = self.mean_size[pred_labels_3d]
             dxa, dya, dza = torch.split(point_anchor_size, 1, dim=-1)
             diagonal = torch.sqrt(dxa**2 + dya**2)
@@ -112,5 +113,4 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
 
         rg = torch.atan2(sint, cost)
 
-        cgs = [t for t in cts]
-        return torch.cat([xg, yg, zg, dxg, dyg, dzg, rg, *cgs], dim=-1)
+        return torch.cat([xg, yg, zg, dxg, dyg, dzg, rg, *cts], dim=-1)
