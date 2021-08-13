@@ -11,6 +11,17 @@ class PointNetFPNeck(BaseModule):
 
     Refer to the `official code <https://github.com/charlesq34/pointnet2>`_.
 
+    sa_n ----------------------------------------
+                                                 |
+    ... --------------------------------         |
+                                         |       |
+    sa_1 -------------                   |       |
+                      |                  |       |
+    sa_0 -> fp_0 -> fp_module ->fp_1 -> ... -> fp_module -> fp_n
+
+    sa_n including sa_xyz (torch.Tensor) and sa_features (torch.Tensor)
+    fp_n including fp_xyz (torch.Tensor) and fp_features (torch.Tensor)
+
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
     """
@@ -27,7 +38,8 @@ class PointNetFPNeck(BaseModule):
         """Extract inputs from features dictionary.
 
         Args:
-            feat_dict (dict): Feature dict from backbone.
+            feat_dict (dict): Feature dict from backbone including points
+                and point features.
 
         Returns:
             list[torch.Tensor]: Coordinates of multiple levels of points.
@@ -46,7 +58,8 @@ class PointNetFPNeck(BaseModule):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: Neck feature with shape [B, fp_channels[-1][-1], N].
+            dict(torch.Tensor, torch.Tensor): Neck feature with shape
+                [B, fp_channels[-1][-1], N].
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 
