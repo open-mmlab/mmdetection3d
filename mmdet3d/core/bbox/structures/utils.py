@@ -204,10 +204,6 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
         torch.Tensor: transformation matrix.
     """
     coord_type = coord_type.upper()
-    mapping = {
-        'LIDAR': 'lidar2img',
-        'DEPTH': 'depth2img',
-        'CAMERA': 'cam2img'
-    }
+    mapping = {'LIDAR': 'lidar2img', 'DEPTH': 'depth2img', 'CAMERA': 'cam2img'}
     assert coord_type in mapping.keys()
     return img_meta[mapping[coord_type]]
