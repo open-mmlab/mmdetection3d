@@ -192,11 +192,6 @@ def mono_cam_box2vis(cam_box):
     return cam_box
 
 
-# TODO: 1. this also should be used
-#          to unify draw_*_bbox3d_on_img and in ImVoxelNet.
-#       2. update when refactor cam_intrinsic to cam2img.
-#       3. update when refactor coord_type and box_type to
-#          the same case.
 def get_proj_mat_by_coord_type(img_meta, coord_type):
     """Obtain image features using points.
 
@@ -212,7 +207,7 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
     mapping = {
         'LIDAR': 'lidar2img',
         'DEPTH': 'depth2img',
-        'CAMERA': 'cam_intrinsic'
+        'CAMERA': 'cam2img'
     }
     assert coord_type in mapping.keys()
     return img_meta[mapping[coord_type]]
