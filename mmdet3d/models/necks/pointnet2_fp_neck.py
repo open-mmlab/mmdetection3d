@@ -24,7 +24,7 @@ class PointNetFPNeck(BaseModule):
 
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
-    """
+    """  # noqa: W605
 
     def __init__(self, fp_channels, init_cfg=None):
         super(PointNetFPNeck, self).__init__(init_cfg=init_cfg)
