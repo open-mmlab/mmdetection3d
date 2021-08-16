@@ -4,7 +4,6 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from ..group_points import GroupAll, QueryAndGroup, grouping_operation
-from .builder import GF_MODULES
 
 
 class BaseDGCNNGFModule(nn.Module):
@@ -149,7 +148,6 @@ class BaseDGCNNGFModule(nn.Module):
         return new_points
 
 
-@GF_MODULES.register_module()
 class DGCNNGFModule(BaseDGCNNGFModule):
     """Point graph feature module used in DGCNN.
 

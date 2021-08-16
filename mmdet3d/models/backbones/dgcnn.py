@@ -1,7 +1,7 @@
 from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
-from mmdet3d.ops import DGCNNFAModule, build_gf_module
+from mmdet3d.ops import DGCNNFAModule, DGCNNGFModule
 from mmdet.models import BACKBONES
 
 
@@ -51,13 +51,12 @@ class DGCNN(BaseModule):
             gf_out_channel = cur_gf_mlps[-1]
 
             self.GF_modules.append(
-                build_gf_module(
+                DGCNNGFModule(
                     mlp_channels=cur_gf_mlps,
                     num_sample=num_samples[gf_index],
                     knn_mod=knn_mods[gf_index],
                     radius=radius[gf_index],
-                    act_cfg=act_cfg,
-                    cfg=gf_cfg))
+                    act_cfg=act_cfg))
             skip_channel_list.append(gf_out_channel)
             gf_in_channel = gf_out_channel * 2
 
@@ -90,5 +89,5 @@ class DGCNN(BaseModule):
 
         fa_points = self.FA_module(gf_points)
 
-        ret = dict(gf_points=gf_points, fa_points=fa_points)
-        return ret
+        out = dict(gf_points=gf_points, fa_points=fa_points)
+        return out
