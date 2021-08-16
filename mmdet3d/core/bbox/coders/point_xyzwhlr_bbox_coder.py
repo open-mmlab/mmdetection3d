@@ -13,7 +13,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         code_size (int): The dimension of boxes to be encoded.
         use_mean_size (bool, optional): Whether using anchors based on class.
             Defaults to True.
-        mean_size(list[list[float]], optional): Mean size of bboxes in
+        mean_size (list[list[float]], optional): Mean size of bboxes in
             each class. Defaults to None.
     """
 
