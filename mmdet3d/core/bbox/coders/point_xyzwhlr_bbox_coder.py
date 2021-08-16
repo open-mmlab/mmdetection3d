@@ -22,15 +22,15 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         if self.use_mean_size:
             self.mean_size = torch.from_numpy(np.array(mean_size)).float()
             assert self.mean_size.min() > 0, \
-                f'the min of mean_size should > 0, however currently it is '\
-                f'{self.mean_size.min()}, please check it in your config'
+                f'The min of mean_size should > 0, however currently it is '\
+                f'{self.mean_size.min()}, please check it in your config.'
 
     def encode(self, gt_bboxes_3d, points, gt_labels_3d=None):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (`BaseInstance3DBoxes`): Ground truth bboxes with
-                shape (N, 7 + C).
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth bboxes
+                with shape (N, 7 + C).
             points (torch.Tensor): Point cloud with shape (N, 3).
             gt_labels_3d (torch.Tensor, optional): Ground truth classes.
                 Defaults to None.
@@ -76,9 +76,9 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
         """Decode predicted parts and points to bbox3d.
 
         Args:
-            box_encodings (torch.Tensor): Encoded boxes with shape (N, 8 + C)
-            points (torch.Tensor): point cloud with shape (N, 3)
-            pred_labels_3d (torch.Tensor): bbox predicted labels (N, M)
+            box_encodings (torch.Tensor): Encoded boxes with shape (N, 8 + C).
+            points (torch.Tensor): Point cloud with shape (N, 3).
+            pred_labels_3d (torch.Tensor): Bbox predicted labels (N, M).
 
         Returns:
             torch.Tensor: Decoded boxes with shape (N, 7 + C)
@@ -89,8 +89,8 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
 
         if self.use_mean_size:
             assert pred_labels_3d.max() <= self.mean_size.shape[0] - 1, \
-                f'the max pred label {pred_labels_3d.max()} is bigger than' \
-                f'anchor types {self.mean_size.shape[0] - 1} .'
+                f'The max pred label {pred_labels_3d.max()} is bigger than' \
+                f'anchor types {self.mean_size.shape[0] - 1}.'
             self.mean_size = self.mean_size.to(pred_labels_3d.device)
             point_anchor_size = self.mean_size[pred_labels_3d]
             dxa, dya, dza = torch.split(point_anchor_size, 1, dim=-1)
