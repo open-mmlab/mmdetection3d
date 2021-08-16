@@ -3,10 +3,7 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
-from .builder import FA_MODULES
 
-
-@FA_MODULES.register_module()
 class DGCNNFAModule(BaseModule):
     """Point feature aggregation module used in DGCNN.
 
@@ -56,8 +53,7 @@ class DGCNNFAModule(BaseModule):
             new_points = new_points.transpose(1, 2).contiguous()  # (B, C, N)
             new_points_copy = new_points
 
-            for i in range(len(self.mlps)):
-                new_points = self.mlps[i](new_points)
+            new_points = self.mlps(new_points)
 
             new_fa_points = new_points.max(dim=-1, keepdim=True)[0]
             new_fa_points = new_fa_points.repeat(1, 1, new_points.shape[-1])

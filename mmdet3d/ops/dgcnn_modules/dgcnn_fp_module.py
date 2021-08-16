@@ -49,10 +49,7 @@ class DGCNNFPModule(BaseModule):
 
         if points is not None:
             new_points = points.transpose(1, 2).contiguous()  # (B, C, N)
-
-            for i in range(len(self.mlps)):
-                new_points = self.mlps[i](new_points)
-
+            new_points = self.mlps(new_points)
             new_points = new_points.transpose(1, 2).contiguous()
         else:
             new_points = points

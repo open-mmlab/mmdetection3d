@@ -4,8 +4,7 @@ from mmcv.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
                       sigmoid_focal_loss)
 
 from .ball_query import ball_query
-from .dgcnn_modules import (DGCNNFAModule, DGCNNFPModule, DGCNNGFModule,
-                            build_fa_module, build_gf_module)
+from .dgcnn_modules import DGCNNFAModule, DGCNNFPModule, DGCNNGFModule
 from .furthest_point_sample import (Points_Sampler, furthest_point_sample,
                                     furthest_point_sample_with_dist)
 from .gather_points import gather_points
@@ -38,7 +37,7 @@ __all__ = [
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
     'DGCNNFPModule', 'DGCNNGFModule', 'DGCNNFAModule', 'points_in_boxes_all',
     'get_compiler_version', 'assign_score_withk', 'get_compiling_cuda_version',
-    'Points_Sampler', 'build_sa_module', 'build_gf_module', 'build_fa_module',
-    'PAConv', 'PAConvCUDA', 'PAConvSAModuleMSG', 'PAConvSAModule',
-    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG'
+    'Points_Sampler', 'build_sa_module', 'PAConv', 'PAConvCUDA',
+    'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
+    'PAConvCUDASAModuleMSG'
 ]
