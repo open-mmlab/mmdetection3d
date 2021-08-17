@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 #ifndef MP_HELPER_H_
 #define MP_HELPER_H_
 #include <type_traits>

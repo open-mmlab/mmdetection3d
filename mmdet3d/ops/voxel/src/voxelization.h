@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 #pragma once
 #include <torch/extension.h>
 

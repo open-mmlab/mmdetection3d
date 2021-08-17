@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 #include <ATen/cuda/CUDAContext.h>
 #include <THC/THC.h>
 #include <torch/extension.h>

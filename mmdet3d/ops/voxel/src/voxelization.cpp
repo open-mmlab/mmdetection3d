@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 #include <torch/extension.h>
 #include "voxelization.h"
 

@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 // Modified from
 // https://github.com/open-mmlab/OpenPCDet/blob/master/pcdet/ops/iou3d_nms/src/iou3d_nms_kernel.cu
 

@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 // Modified from
 // https://github.com/sshaoshuai/PCDet/blob/master/pcdet/ops/roiaware_pool3d/src/roiaware_pool3d_kernel.cu
 // Written by Shaoshuai Shi

@@ -1,3 +1,4 @@
+// Copyright (c) OpenMMLab. All rights reserved.
 // Modified from https://github.com/CVMI-Lab/PAConv/tree/main/scene_seg/lib/pointops/src/knnquery_heap
 
 #include <torch/serialize/tensor.h>
