@@ -19,10 +19,6 @@ class DGCNN(BaseModule):
         fa_channels (tuple[int]): Out channels of each mlp in FA module.
         act_cfg (dict, optional): Config of activation layer.
             Default: dict(type='ReLU').
-        gf_cfg (dict): Config of graph feature module, which may contain the
-            following keys and values:
-
-            - pool_mod (str): Pool method ('max' or 'avg') for GF modules.
     """
 
     def __init__(self,
@@ -33,7 +29,6 @@ class DGCNN(BaseModule):
                  gf_channels=((64, 64), (64, 64), (64, )),
                  fa_channels=(1024, ),
                  act_cfg=dict(type='ReLU'),
-                 gf_cfg=dict(type='DGCNNGFModule', pool_mod='max'),
                  init_cfg=None):
         super().__init__(init_cfg=init_cfg)
         self.num_gf = len(gf_channels)
