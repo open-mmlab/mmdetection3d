@@ -293,8 +293,6 @@ def _check_pointrcnn_roi_extractor(config, roi_extractor):
     assert config['type'] == roi_extractor.__class__.__name__
     assert config.roi_layer.num_sampled_points == \
         roi_extractor.roi_layer.num_sampled_points
-    assert config.roi_layer.pool_extra_width == \
-        roi_extractor.roi_layer.pool_extra_width
 
 
 def _check_pointrcnn_bbox_head(bbox_cfg, bbox_head):
