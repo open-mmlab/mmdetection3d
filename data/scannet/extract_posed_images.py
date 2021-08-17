@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 # Modified from https://github.com/ScanNet/ScanNet/blob/master/SensReader/python/SensorData.py # noqa
 import imageio
 import mmcv

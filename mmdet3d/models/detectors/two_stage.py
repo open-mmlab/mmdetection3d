@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models import DETECTORS, TwoStageDetector
 from .base import Base3DDetector
 

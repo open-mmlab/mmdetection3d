@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models.backbones import RegNet
 from ..builder import BACKBONES
 

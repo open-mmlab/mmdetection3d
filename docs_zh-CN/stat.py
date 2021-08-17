@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 #!/usr/bin/env python
 import functools as func
 import glob

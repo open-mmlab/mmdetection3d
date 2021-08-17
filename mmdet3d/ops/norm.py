@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import NORM_LAYERS
 from mmcv.runner import force_fp32

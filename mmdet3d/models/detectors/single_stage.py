@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from .base import Base3DDetector
 

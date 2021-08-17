@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from torch import nn as nn
 from torch.nn.functional import l1_loss, mse_loss, smooth_l1_loss

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from argparse import ArgumentParser
 
 from mmdet3d.apis import (inference_mono_3d_detector, init_model,
