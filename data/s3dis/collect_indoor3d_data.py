@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import mmcv
 from indoor3d_util import export

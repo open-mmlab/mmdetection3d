@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import glob
 import numpy as np
 from os import path as osp

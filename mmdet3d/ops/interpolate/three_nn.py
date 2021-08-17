@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from torch.autograd import Function
 from typing import Tuple

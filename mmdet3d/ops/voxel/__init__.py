@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from .scatter_points import DynamicScatter, dynamic_scatter
 from .voxelize import Voxelization, voxelization
 

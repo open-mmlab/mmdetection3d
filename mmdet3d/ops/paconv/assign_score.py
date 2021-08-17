@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from torch.autograd import Function
 
 from . import assign_score_withk_ext

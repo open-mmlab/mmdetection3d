@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.runner import force_fp32
 from torch import nn as nn

@@ -1,4 +1,3 @@
-// Copyright (c) OpenMMLab. All rights reserved.
 #pragma once
 // from tensorflow
 namespace tv {

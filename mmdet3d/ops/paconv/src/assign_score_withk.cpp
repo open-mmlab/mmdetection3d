@@ -1,4 +1,3 @@
-// Copyright (c) OpenMMLab. All rights reserved.
 // Modified from https://github.com/CVMI-Lab/PAConv/tree/main/scene_seg/lib/paconv_lib/src/gpu
 
 #include <torch/torch.h>
