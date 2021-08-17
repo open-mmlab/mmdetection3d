@@ -9,8 +9,7 @@ model = dict(
         radius=(None, None, None),
         gf_channels=((64, 64), (64, 64), (64, )),
         fa_channels=(1024, ),
-        act_cfg=dict(type='LeakyReLU', negative_slope=0.2),
-        gf_cfg=dict(type='DGCNNGFModule', pool_mod='max')),
+        act_cfg=dict(type='LeakyReLU', negative_slope=0.2)),
     decode_head=dict(
         type='DGCNNHead',
         fp_channels=(1216, 512),
