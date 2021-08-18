@@ -27,6 +27,7 @@ class PointRCNN(TwoStage3DDetector):
                  roi_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 pretrained=None,
                  init_cfg=None):
         super(PointRCNN, self).__init__(
             backbone=backbone,
@@ -35,6 +36,7 @@ class PointRCNN(TwoStage3DDetector):
             roi_head=roi_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
+            pretrained=pretrained,
             init_cfg=init_cfg)
 
     def extract_feat(self, points):

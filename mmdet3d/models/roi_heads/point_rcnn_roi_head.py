@@ -29,11 +29,13 @@ class PointRCNNROIHead(Base3DRoIHead):
                  train_cfg,
                  test_cfg,
                  depth_normalizer=70.0,
+                 pretrained=None,
                  init_cfg=None):
         super(PointRCNNROIHead, self).__init__(
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
+            pretrained=pretrained,
             init_cfg=init_cfg)
         self.depth_normalizer = depth_normalizer
 
