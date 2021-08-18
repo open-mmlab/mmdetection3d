@@ -146,6 +146,14 @@ def _get_parta2_bbox_head_cfg(fname):
     return vote_head
 
 
+def _get_pointrcnn_bbox_head_cfg(fname):
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+
+    vote_head = model.roi_head.bbox_head
+    return vote_head
+
+
 def test_anchor3d_head_loss():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
@@ -369,6 +377,18 @@ def test_parta2_bbox_head():
     assert bbox_pred.shape == (256, 7)
 
 
+def test_pointrcnn_bbox_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pointrcnn_bbox_head_cfg = _get_pointrcnn_bbox_head_cfg(
+        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+    self = build_head(pointrcnn_bbox_head_cfg).cuda()
+    feats = torch.rand([100, 512, 133]).cuda()
+    rcnn_cls, rcnn_reg = self.forward(feats)
+    assert rcnn_cls.shape == (100, 1)
+    assert rcnn_reg.shape == (100, 7)
+
+
 def test_part_aggregation_ROI_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
@@ -441,6 +461,50 @@ def test_part_aggregation_ROI_head():
     assert boxes_3d.tensor.shape == (12, 7)
     assert scores_3d.shape == (12, )
     assert labels_3d.shape == (12, )
+
+
+def test_pointrcnn_RoI_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    roi_head_cfg = _get_roi_head_cfg(
+        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+
+    self = build_head(roi_head_cfg).cuda()
+
+    features = torch.rand([3, 128, 16384]).cuda()
+    points = torch.rand([3, 16384, 3]).cuda()
+    points_cls_preds = torch.rand([3, 16384, 3]).cuda()
+    rcnn_feats = {
+        'features': features,
+        'points': points,
+        'points_cls_preds': points_cls_preds
+    }
+    boxes_3d = LiDARInstance3DBoxes(torch.rand(50, 7).cuda())
+    labels_3d = torch.randint(low=0, high=2, size=[50]).cuda()
+    proposal = {'boxes_3d': boxes_3d, 'labels_3d': labels_3d}
+    proposal_list = [proposal for i in range(3)]
+    gt_bboxes_3d = [
+        LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
+        for i in range(3)
+    ]
+    gt_labels_3d = [torch.randint(0, 2, [5], device='cuda') for i in range(3)]
+    box_type_3d = LiDARInstance3DBoxes
+    img_metas = [dict(box_type_3d=box_type_3d) for i in range(3)]
+
+    losses = self.forward_train(rcnn_feats, img_metas, proposal_list,
+                                gt_bboxes_3d, gt_labels_3d)
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
+    assert losses['loss_corner'] >= 0
+
+    bbox_results = self.simple_test(rcnn_feats, img_metas, proposal_list)
+    boxes_3d = bbox_results[0]['boxes_3d']
+    scores_3d = bbox_results[0]['scores_3d']
+    labels_3d = bbox_results[0]['labels_3d']
+    assert boxes_3d.tensor.shape[1] == 7
+    assert boxes_3d.tensor.shape[0] == scores_3d.shape[0]
+    assert scores_3d.shape[0] == labels_3d.shape[0]
 
 
 def test_free_anchor_3D_head():
