@@ -6,9 +6,18 @@ from .two_stage import TwoStage3DDetector
 
 @DETECTORS.register_module()
 class PointRCNN(TwoStage3DDetector):
-    r"""PointRCNN model.
+    r"""PointRCNN detector.
 
-      Please refer to the `paper <https://arxiv.org/abs/1812.04244>`_
+    Please refer to the `paper <https://arxiv.org/abs/1812.04244>`
+
+    Args:
+        backbone (dict): Config dict of detector's backbone.
+        neck (dict, optional): Config dict of neck. Defaults to None.
+        rpn_head (dict, optional): Config of RPN head. Defaults to None.
+        roi_head (dict, optional): Config of ROI head. Defaults to None.
+        train_cfg (dict, optional): Train configs. Defaults to None.
+        test_cfg (dict, optional): Test configs. Defaults to None.
+        init_cfg (dict, optional): Config of initalization. Defaults to None.
     """
 
     def __init__(self,
@@ -18,8 +27,6 @@ class PointRCNN(TwoStage3DDetector):
                  roi_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 fp_channels=None,
-                 pretrained=None,
                  init_cfg=None):
         super(PointRCNN, self).__init__(
             backbone=backbone,
@@ -28,10 +35,9 @@ class PointRCNN(TwoStage3DDetector):
             roi_head=roi_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
             init_cfg=init_cfg)
 
-    def extract_feat(self, points, img_metas=None):
+    def extract_feat(self, points):
         """Directly extract features from the backbone+neck.
 
         Args:

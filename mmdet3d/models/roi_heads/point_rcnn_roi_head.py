@@ -11,30 +11,30 @@ from .base_3droi_head import Base3DRoIHead
 
 @HEADS.register_module()
 class PointRCNNROIHead(Base3DRoIHead):
-    """PointRCNN roi head for PointRCNN.
+    """Roi head for PointRCNN.
 
     Args:
-        bbox_head (ConfigDict): Config of bbox_head.
-        point_roi_extractor(ConfigDict): Config of ROIPointPooling
-        depth_normalizer (float): Depth normaizer args, default: 70
-        train_cfg (ConfigDict): Training config.
-        test_cfg (ConfigDict): Testing config.
+        bbox_head (dict): Config of bbox_head.
+        point_roi_extractor (dict): Config of RoI extractor.
+        train_cfg (dict): Train configs.
+        test_cfg (dict): Test configs.
+        depth_normalizer (float, optional): Normalize depth feature.
+            Defaults to 70.0.
+        init_cfg (dict, optional): Config of initalization. Defaults to None.
     """
 
     def __init__(self,
                  bbox_head,
-                 depth_normalizer=70,
-                 point_roi_extractor=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None,
-                 pretrained=None):
+                 point_roi_extractor,
+                 train_cfg,
+                 test_cfg,
+                 depth_normalizer=70.0,
+                 init_cfg=None):
         super(PointRCNNROIHead, self).__init__(
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            init_cfg=init_cfg,
-            pretrained=pretrained)
+            init_cfg=init_cfg)
         self.depth_normalizer = depth_normalizer
 
         if point_roi_extractor is not None:
@@ -65,7 +65,7 @@ class PointRCNNROIHead(Base3DRoIHead):
 
     def forward_train(self, feats_dict, input_metas, proposal_list,
                       gt_bboxes_3d, gt_labels_3d):
-        """Training forward function of PartAggregationROIHead.
+        """Training forward function of PointRCNNROIHead.
 
         Args:
             feats_dict (dict): Contains features from the first stage.
@@ -110,7 +110,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         return losses
 
     def simple_test(self, feats_dict, img_metas, proposal_list, **kwargs):
-        """Simple testing forward function of PartAggregationROIHead.
+        """Simple testing forward function of PointRCNNROIHead.
 
         Note:
             This function assumes that the batch size is 1
@@ -142,12 +142,12 @@ class PointRCNNROIHead(Base3DRoIHead):
         features = torch.cat(features_list, dim=2)
         batch_size = features.shape[0]
         bbox_results = self._bbox_forward(features, points, batch_size, rois)
+        object_score = bbox_results['cls_score'].sigmoid()
         bbox_list = self.bbox_head.get_bboxes(
             rois,
-            torch.sigmoid(bbox_results['cls_score']),
+            object_score,
             bbox_results['bbox_pred'],
             labels_3d,
-            torch.sigmoid(bbox_results['cls_score']),
             img_metas,
             cfg=self.test_cfg)
 

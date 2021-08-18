@@ -2,7 +2,6 @@ import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
 from mmcv.cnn.bricks import build_conv_layer
-from mmcv.ops.nms import batched_nms
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -25,6 +24,49 @@ class PointRCNNBboxHead(BaseModule):
             convolution layer
         conv_channels (list(int)): Out channels of each
             pointrcnn convolution layer.
+    """
+    """PointRCNN ROI Bbox head
+
+    Args:
+        num_classes (int): The number of classes to prediction.
+        mlp_channels (list[int]): the number of mlp channels
+        pred_layer_cfg (dict, optional): Config of classfication and
+            regression prediction layers. Defaults to None.
+        num_points (tuple, optional): The number of points which each SA
+            module samples. Defaults to (128, 32, -1).
+        radius (tuple, optional): Sampling radius of each SA module.
+            Defaults to (0.2, 0.4, 100).
+        num_samples (tuple, optional): The number of samples for ball query
+            in each SA module. Defaults to (64, 64, 64).
+        sa_channels (tuple, optional): Out channels of each mlp in SA module.
+            Defaults to ((128, 128, 128), (128, 128, 256), (256, 256, 512)).
+        bbox_coder ([type], optional): Config dict of box coders.
+            Defaults to dict(type='DeltaXYZWLHRBBoxCoder').
+        sa_cfg ([type], optional): Config of set abstraction module, which may
+            contain the following keys and values:
+
+            - pool_mod (str): Pool method ('max' or 'avg') for SA modules.
+            - use_xyz (bool): Whether to use xyz as a part of features.
+            - normalize_xyz (bool): Whether to normalize xyz with radii in
+              each SA module.
+            Defaults to dict(type='PointSAModule', pool_mod='max',
+                use_xyz=True).
+        conv_cfg (dict, optional): Config dict of convolutional layers.
+             Defaults to dict(type='Conv1d').
+        norm_cfg (dict, optional): Config dict of normalization layers.
+             Defaults to dict(type='BN1d').
+        act_cfg (dict, optional): Config dict of activation layers.
+            Defaults to dict(type='ReLU').
+        bias (str, optional): Type of bias. Defaults to 'auto'.
+        loss_bbox (dict, optional): Config of regression loss function.
+            Defaults to dict( type='SmoothL1Loss', beta=1.0 / 9.0,
+                reduction='sum', loss_weight=1.0).
+        loss_cls ([type], optional): Config of classification loss function.
+             Defaults to dict( type='CrossEntropyLoss', use_sigmoid=True,
+                reduction='sum', loss_weight=1.0).
+        with_corner_loss (bool, optional): Whether using corner loss.
+            Defaults to True.
+        init_cfg (dict, optional): Config of initalization. Defaults to None.
     """
 
     def __init__(
@@ -53,8 +95,7 @@ class PointRCNNBboxHead(BaseModule):
                 reduction='sum',
                 loss_weight=1.0),
             with_corner_loss=True,
-            init_cfg=None,
-            pretrained=None):
+            init_cfg=None):
         super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.num_sa = len(sa_channels)
@@ -245,12 +286,13 @@ class PointRCNNBboxHead(BaseModule):
 
         return losses
 
-    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1):
+    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0):
         """Calculate corner loss of given boxes.
 
         Args:
             pred_bbox3d (torch.FloatTensor): Predicted boxes in shape (N, 7).
             gt_bbox3d (torch.FloatTensor): Ground truth boxes in shape (N, 7).
+            delta (float): huber loss threshold. Defaults to 1.0
 
         Returns:
             torch.FloatTensor: Calculated corner loss in shape (N).
@@ -286,7 +328,8 @@ class PointRCNNBboxHead(BaseModule):
             sampling_results (list[:obj:`SamplingResult`]):
                 Sampled results from rois.
             rcnn_train_cfg (:obj:`ConfigDict`): Training config of rcnn.
-            concat (bool): Whether to concatenate targets between batches.
+            concat (bool, optional): Whether to concatenate targets between
+                batches. Defaults to True.
 
         Returns:
             tuple[torch.Tensor]: Targets of boxes and class prediction.
@@ -387,7 +430,6 @@ class PointRCNNBboxHead(BaseModule):
                    cls_score,
                    bbox_pred,
                    class_labels,
-                   class_pred,
                    img_metas,
                    cfg=None):
         """Generate bboxes from bbox head predictions.
@@ -397,7 +439,6 @@ class PointRCNNBboxHead(BaseModule):
             cls_score (torch.Tensor): Scores of bounding boxes.
             bbox_pred (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
-            class_pred (torch.Tensor): Score for nms.
             img_metas (list[dict]): Point cloud and image's meta info.
             cfg (:obj:`ConfigDict`): Testing config.
 
@@ -424,7 +465,7 @@ class PointRCNNBboxHead(BaseModule):
             cur_class_labels = class_labels[batch_id]
             cur_cls_score = cls_score[roi_batch_id == batch_id].view(-1)
 
-            cur_box_prob = class_pred[batch_id]
+            cur_box_prob = cls_score[batch_id]
             cur_box_prob = cur_cls_score.unsqueeze(1)
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
@@ -439,25 +480,6 @@ class PointRCNNBboxHead(BaseModule):
                                                     self.bbox_coder.code_size),
                  selected_scores, selected_label_preds))
         return result_list
-
-    def class_agnostic_nms(self, box_probs, box_preds, score_thr, nms_thr,
-                           input_meta, cur_class_labels):
-        nms_cfg = dict(type='nms', iou_thr=nms_thr)
-        bbox = input_meta['box_type_3d'](
-            box_preds.clone(), box_dim=box_preds.shape[-1], with_yaw=True)
-        corner3d = bbox.corners
-        minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))
-        minmax_box3d[:, :3] = torch.min(corner3d, dim=1)[0]
-        minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
-        class_scores_keep = (box_probs >= score_thr).view(-1)
-        original_idxs = class_scores_keep.nonzero(as_tuple=False).view(-1)
-        nms_selected = batched_nms(
-            minmax_box3d[class_scores_keep][:, [0, 1, 3, 4]].detach(),
-            box_probs[class_scores_keep].view(-1).detach(),
-            cur_class_labels[class_scores_keep].detach(), nms_cfg, True)[1]
-        selected = original_idxs[nms_selected]
-
-        return selected
 
     def multi_class_nms(self,
                         box_probs,

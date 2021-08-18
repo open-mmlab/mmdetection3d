@@ -4,41 +4,54 @@ from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import xywhr2xyxyr
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 
 
 @HEADS.register_module()
 class PointRPNHead(BaseModule):
+    """RPN module for PointRCNN.
+
+    Args:
+        num_classes (int): Number of classes.
+        train_cfg (dict): Train configs.
+        test_cfg (dict): Test configs.
+        pred_layer_cfg (dict, optional): Config of classfication and
+            regression prediction layers. Defaults to None.
+        enlarge_width (float, optinal): Enlarge bbox to igonre close points.
+            Defaults to 0.1.
+        cls_loss (dict, optional): Config of direction classification loss.
+            Defaults to None.
+        bbox_loss (dict, optional): Config of localization loss.
+            Defaults to None.
+        bbox_coder (dict, optional): Config dict of box coders.
+            Defaults to None.
+        init_cfg (dict, optional): Config of initalization. Defaults to None.
+    """
 
     def __init__(self,
                  num_classes,
-                 num_dir_bins,
                  train_cfg,
                  test_cfg,
-                 pred_layer_cfg=None,
+                 pred_layer_cfg,
+                 enlarge_width=0.1,
                  cls_loss=None,
                  bbox_loss=None,
-                 corner_loss=None,
                  bbox_coder=None,
-                 init_cfg=None,
-                 pretrained=None):
+                 init_cfg=None):
         super().__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
-        self.num_dir_bins = num_dir_bins
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+        self.enlarge_width = enlarge_width
 
         # build loss function
         self.bbox_loss = build_loss(bbox_loss)
         self.cls_loss = build_loss(cls_loss)
-        self.corner_loss = build_loss(corner_loss)
 
         # build box coder
         self.bbox_coder = build_bbox_coder(bbox_coder)
@@ -55,6 +68,16 @@ class PointRPNHead(BaseModule):
             output_channels=self._get_reg_out_channels())
 
     def _make_fc_layers(self, fc_cfg, input_channels, output_channels):
+        """Make fully connect layers.
+
+        Args:
+            fc_cfg (dict): Config of fully connect.
+            input_channels (dict): Input channels for fc_layers.
+            output_channels (dict): Input channels for fc_layers.
+
+        Returns:
+            nn.Sequential: fully connect layers.
+        """
         fc_layers = []
         c_in = input_channels
         for k in range(0, fc_cfg.__len__()):
@@ -111,10 +134,11 @@ class PointRPNHead(BaseModule):
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            img_metas (list[dict]): Contain pcd and img's meta info.
+            img_metas (list[dict], Optional): Contain pcd and img's meta info.
+                Defaults to None.
 
         Returns:
-            dict: Losses of PointRCNN.
+            dict: Losses of PointRCNN RPN moudle.
         """
         targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
@@ -139,7 +163,7 @@ class PointRPNHead(BaseModule):
         return losses
 
     def get_targets(self, points, gt_bboxes_3d, gt_labels_3d):
-        """Generate targets of ssd3d head.
+        """Generate targets of PointRCNN RPN head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
@@ -172,18 +196,13 @@ class PointRPNHead(BaseModule):
                 box_loss_weights, point_targets)
 
     def get_targets_single(self, points, gt_bboxes_3d, gt_labels_3d):
-        """Generate targets of ssd3d head for single batch.
+        """Generate targets of PointRCNN RPN head for single batch.
 
         Args:
             points (torch.Tensor): Points of each batch.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (None | torch.Tensor): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (None | torch.Tensor): Point-wise instance
-                label of each batch.
-            seed_points (torch.Tensor): Seed points of candidate points.
 
         Returns:
             tuple[torch.Tensor]: Targets of ssd3d head.
@@ -209,7 +228,7 @@ class PointRPNHead(BaseModule):
         positive_mask = (points_mask.max(1)[0] > 0)
         negative_mask = (points_mask.max(1)[0] == 0)
         # add ignore_mask
-        extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(0.1)
+        extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(self.enlarge_width)
         points_mask, _ = self._assign_targets_by_points_inside(
             extend_gt_bboxes_3d, points)
         negative_mask = (points_mask.max(1)[0] == 0)
@@ -255,67 +274,6 @@ class PointRPNHead(BaseModule):
                 with_yaw=True)
             results.append((bbox, score_selected, labels, cls_preds_selected))
         return results
-
-    def class_agnostic_nms(self, obj_scores, sem_scores, bbox, points,
-                           input_meta, training_flag):
-        """Multi-class nms in single batch.
-
-        Args:
-            obj_scores (torch.Tensor): Objectness score of bounding boxes.
-            sem_scores (torch.Tensor): semantic class score of bounding boxes.
-            bbox (torch.Tensor): Predicted bounding boxes.
-            points (torch.Tensor): Input points.
-            input_meta (dict): Point cloud and image's meta info.
-
-        Returns:
-            tuple[torch.Tensor]: Bounding boxes, scores and labels.
-        """
-        bbox = input_meta['box_type_3d'](
-            bbox.clone(),
-            box_dim=bbox.shape[-1],
-            with_yaw=True,
-            origin=(0.5, 0.5, 0.5))
-        bbox_for_nms = xywhr2xyxyr(bbox.bev)
-
-        bbox_selected = []
-        score_selected = []
-        labels = []
-        cls_preds = []
-
-        num_rpn_proposal = self.test_cfg.max_output_num
-        nms_cfg = self.test_cfg.nms_cfg
-        score_thr = self.test_cfg.score_thr
-        nms_pre = self.test_cfg.nms_pre
-        if training_flag:
-            num_rpn_proposal = self.train_cfg.rpn_proposal.max_num
-            nms_cfg = self.train_cfg.rpn_proposal.nms_cfg
-            score_thr = self.train_cfg.rpn_proposal.score_thr
-            nms_pre = self.train_cfg.rpn_proposal.nms_pre
-
-        score_thr_inds = obj_scores >= score_thr
-        _scores = obj_scores[score_thr_inds]
-        _bboxes_for_nms = bbox_for_nms[score_thr_inds, :]
-        _sem_scores = sem_scores[score_thr_inds]
-        classes = torch.argmax(_sem_scores, -1)
-        _classes = classes[score_thr_inds]
-        _bbox = bbox[score_thr_inds]
-        # select top k bbox
-        _, indices = _scores.topk(min(nms_pre, _scores.shape[0]))
-        _scores = _scores[indices]
-        _bboxes_for_nms = _bboxes_for_nms[indices]
-        _classes = _classes[indices]
-        _sem_scores = _sem_scores[indices]
-        _bbox = _bbox[indices]
-        selected = nms_gpu(_bboxes_for_nms, _scores, nms_cfg.iou_thr)
-        if selected.shape[0] > num_rpn_proposal:
-            selected = selected[:num_rpn_proposal]
-
-        if len(selected) > 0:
-            bbox_selected = _bbox[selected].tensor
-            score_selected = _scores[selected]
-            labels = _classes[selected]
-            cls_preds = _sem_scores[selected]
-        return bbox_selected, score_selected, labels, cls_preds
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta):
