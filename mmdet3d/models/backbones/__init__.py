@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models.backbones import SSDVGG, HRNet, ResNet, ResNetV1d, ResNeXt
 from .dgcnn import DGCNN
 from .multi_backbone import MultiBackbone
