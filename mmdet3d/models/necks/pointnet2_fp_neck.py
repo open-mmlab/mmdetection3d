@@ -9,22 +9,24 @@ from mmdet.models import NECKS
 class PointNetFPNeck(BaseModule):
     r"""PointNet FP Module used in PointRCNN.
 
-    Refer to the `official code <https://github.com/charlesq34/pointnet2>`_.
+    Refer to the `official code <https://github.com/charlesq34/pointnet2>`.
 
-    sa_n ----------------------------------------
-                                                 |
-    ... --------------------------------         |
-                                         |       |
-    sa_1 -------------                   |       |
-                      |                  |       |
-    sa_0 -> fp_0 -> fp_module ->fp_1 -> ... -> fp_module -> fp_n
+    .. code-block:: none
+
+        sa_n ----------------------------------------
+                                                     |
+        ... ---------------------------------        |
+                                             |       |
+        sa_1 -------------                   |       |
+                          |                  |       |
+        sa_0 -> fp_0 -> fp_module ->fp_1 -> ... -> fp_module -> fp_n
 
     sa_n including sa_xyz (torch.Tensor) and sa_features (torch.Tensor)
     fp_n including fp_xyz (torch.Tensor) and fp_features (torch.Tensor)
 
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
-    """  # noqa: W605
+    """
 
     def __init__(self, fp_channels, init_cfg=None):
         super(PointNetFPNeck, self).__init__(init_cfg=init_cfg)
@@ -38,8 +40,13 @@ class PointNetFPNeck(BaseModule):
         """Extract inputs from features dictionary.
 
         Args:
-            feat_dict (dict): Feature dict from backbone including points
-                and point features.
+            feat_dict (dict): Feature dict from backbone, which may contain
+                the following keys and values:
+
+                - sa_xyz (list[torch.Tensor]): Points of each sa module
+                    in shape (N, 3).
+                - sa_features (list[torch.Tensor]): Output features of
+                    each sa module in shape (N, M).
 
         Returns:
             list[torch.Tensor]: Coordinates of multiple levels of points.

@@ -112,12 +112,12 @@ class BasePointSAModule(nn.Module):
         Otherwise sample points using `self.points_sampler`.
 
         Args:
-            points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
-            features (Tensor): (B, C, N) features of each point.
-                Default: None.
-            indices (Tensor): (B, num_point) Index of the features.
-                Default: None.
-            target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
+            points_xyz (tensor.Tensor): (B, N, 3) xyz coordinates of the
+                features.
+            features (tensor.Tensor): (B, C, N) features of each point.
+            indices (tensor.Tensor): (B, num_point) Index of the features.
+            target_xyz (tensor.Tensor): (B, M, 3) new_xyz coordinates of
+                the outputs.
 
         Returns:
             Tensor: (B, num_point, 3) sampled xyz coordinates of points.
