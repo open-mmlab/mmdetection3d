@@ -290,7 +290,7 @@ train_pipeline = [
 
 Data augmentation for point clouds:
 - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D.
+- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D (which means no translation).
 - `PointSample`: downsample the input point cloud.
 
 A typical train pipeline of SUN RGB-D for multi-modality (point cloud and image) 3D detection is as follows.
