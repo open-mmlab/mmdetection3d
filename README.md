@@ -75,6 +75,7 @@ Support backbones:
 - [x] PointNet (CVPR'2017)
 - [x] PointNet++ (NeurIPS'2017)
 - [x] RegNet (CVPR'2020)
+- [x] DGCNN (TOG'2019)
 
 Support methods
 
@@ -94,6 +95,7 @@ Support methods
 - [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
 - [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
+- [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -113,6 +115,7 @@ Support methods
 | Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
 | PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| DGCNN               | ✗        | ✗        | ✗        | ☐         | ✗     | ✗        | ✗     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)

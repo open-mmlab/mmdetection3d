@@ -77,3 +77,7 @@ Please refer to [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/ma
 ### PAConv
 
 Please refer to [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) for details. We provide PAConv baselines on S3DIS dataset.
+
+### DGCNN
+
+Please refer to [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) for details. We provide DGCNN baselines on S3DIS dataset.

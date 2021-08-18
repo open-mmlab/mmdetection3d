@@ -74,6 +74,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] PointNet (CVPR'2017)
 - [x] PointNet++ (NeurIPS'2017)
 - [x] RegNet (CVPR'2020)
+- [x] DGCNN (TOG'2019)
 
 已支持的算法：
 
@@ -93,6 +94,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
 - [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
+- [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
@@ -112,6 +114,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
 | PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+| DGCNN               | ✗        | ✗        | ✗        | ☐         | ✗     | ✗        | ✗     |
 
 其他特性
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)

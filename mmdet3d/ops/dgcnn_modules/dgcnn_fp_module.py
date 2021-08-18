@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
