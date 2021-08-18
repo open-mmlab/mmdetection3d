@@ -72,8 +72,8 @@ class PointRPNHead(BaseModule):
 
         Args:
             fc_cfg (dict): Config of fully connect.
-            input_channels (dict): Input channels for fc_layers.
-            output_channels (dict): Input channels for fc_layers.
+            input_channels (int): Input channels for fc_layers.
+            output_channels (int): Input channels for fc_layers.
 
         Returns:
             nn.Sequential: fully connect layers.
@@ -126,12 +126,11 @@ class PointRPNHead(BaseModule):
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of PointRCNN \
-                RPN_Head.
-            cls_preds (dict): Classification from forward of PointRCNN \
+            bbox_preds (dict): Predictions from forward of PointRCNN RPN_Head.
+            cls_preds (dict): Classification from forward of PointRCNN
                 RPN_Head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
             img_metas (list[dict], Optional): Contain pcd and img's meta info.
@@ -167,7 +166,7 @@ class PointRPNHead(BaseModule):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
 
@@ -200,7 +199,7 @@ class PointRPNHead(BaseModule):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
 

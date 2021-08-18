@@ -11,7 +11,7 @@ from .base_3droi_head import Base3DRoIHead
 
 @HEADS.register_module()
 class PointRCNNROIHead(Base3DRoIHead):
-    """Roi head for PointRCNN.
+    """RoI head for PointRCNN.
 
     Args:
         bbox_head (dict): Config of bbox_head.
@@ -190,7 +190,7 @@ class PointRCNNROIHead(Base3DRoIHead):
         training and testing.
 
         Args:
-            features (torch.Tensor): backbone features with depth and \
+            features (torch.Tensor): backbone features with depth and
                 semantic features.
             points (torch.Tensor): pointcloud.
             rois (Tensor): Roi boxes.

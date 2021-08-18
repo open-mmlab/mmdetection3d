@@ -16,16 +16,7 @@ from mmdet.models import HEADS
 
 @HEADS.register_module()
 class PointRCNNBboxHead(BaseModule):
-    """PointRCNN ROI head.
-
-    Args:
-        num_classes (int): The number of classes to prediction.
-        in_channels (int): Input channels of RCNN
-            convolution layer
-        conv_channels (list(int)): Out channels of each
-            pointrcnn convolution layer.
-    """
-    """PointRCNN ROI Bbox head
+    """PointRCNN ROI Bbox head.
 
     Args:
         num_classes (int): The number of classes to prediction.
