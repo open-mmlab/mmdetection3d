@@ -129,7 +129,7 @@ mmdetection3d
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 
-如果需要生成 bin 文件，应在 `--eval-options` 中给出 `pklfile_prefix`。对于评价指标， `waymo` 是我们推荐的官方评估原型。目前，`kitti` 这一评估选项是从 KITTI 迁移而来的，且每个难度下的评估结果和 KITTI 数据集中定义得到的不尽相同——目前大多数物体被标记为难度 0（日后会修复）。`kitti` 评估选项的不稳定来源于很大的计算量，转换的数据中遮挡 (occlusion) 和舍弃 (truncation) 的缺失，难度的不同定义方式，以及不同的平均精度 (Average Precision) 计算方式。
+如果需要生成 bin 文件，应在 `--eval-options` 中给出 `pklfile_prefix`。对于评价指标， `waymo` 是我们推荐的官方评估原型。目前，`kitti` 这一评估选项是从 KITTI 迁移而来的，且每个难度下的评估结果和 KITTI 数据集中定义得到的不尽相同——目前大多数物体被标记为难度 0（日后会修复）。`kitti` 评估选项的不稳定来源于很大的计算量，转换的数据中遮挡 (occlusion) 和截断 (truncation) 的缺失，难度的不同定义方式，以及不同的平均精度 (Average Precision) 计算方式。
 
 **注意**:
 
