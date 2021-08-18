@@ -1,6 +1,6 @@
 # KITTI Dataset
 
-This page provides specific tutorials about the usage of MMDetection3D for kitti dataset.
+This page provides specific tutorials about the usage of MMDetection3D for KITTI dataset.
 
 **Note**: Current tutorial is only for LiDAR-based and multi-modality 3D detection methods, Contents related to monocular methods will be supplemented afterward
 
@@ -85,7 +85,7 @@ kitti
 - `kitti_infos_train.pkl`: training dataset infos, each frame info contains following details:
     - info['point_cloud']: {'num_features': 4, 'velodyne_path': velodyne_path}.
     - info['annos']: {
-        - location: x,y,z in camera coordinate system (in meters), an Nx3 array
+        - location: x,y,z in referenced camera coordinate system (in meters), an Nx3 array
         - dimensions: height, width, length (in meters), an Nx3 array
         - rotation_y: Rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
         - name:  ground truth name array, an N array
@@ -102,6 +102,7 @@ kitti
         - Tr_imu_to_velo: transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
     }
     - (optional) info['image']:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
+
 **Note:** the info['annos'] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
 
 The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py) for more details.
