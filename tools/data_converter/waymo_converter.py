@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 r"""Adapted from `Waymo to KITTI converter
     <https://github.com/caizhongang/waymo_kitti_converter>`_.
 """

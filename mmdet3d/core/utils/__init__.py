@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .array_converter import ArrayConverter, array_converter
 from .gaussian import draw_heatmap_gaussian, gaussian_2d, gaussian_radius
 

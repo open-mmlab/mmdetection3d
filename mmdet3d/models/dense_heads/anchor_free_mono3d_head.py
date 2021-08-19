@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from abc import abstractmethod
 from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.utils import Registry
 
 SA_MODULES = Registry('point_sa_module')
