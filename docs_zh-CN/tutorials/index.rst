@@ -6,4 +6,4 @@
    data_pipeline.md
    customize_models.md
    customize_runtime.md
-   waymo.md
+   coord_sys_tutorial.md
