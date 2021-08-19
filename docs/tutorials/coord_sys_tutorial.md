@@ -12,6 +12,12 @@ Despite the variety of datasets and equipments, by summarizing the line of works
 
 The definition of coordinate systems in this tutorial is actually **more than just defining the three axes**. For a box in the form of <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)">, our coordinate systems also define how to interpret the box dimensions <img src="https://render.githubusercontent.com/render/math?math=(dx, dy, dz)"> and the yaw angle <img src="https://render.githubusercontent.com/render/math?math=r">.
 
+The illustration of the three coordinate systems is shown below:
+
+![coord_sys_all](https://github.com/open-mmlab/mmdetection3d/blob/master/resources/coord_sys_all.png)
+
+The three figures above are the 3D coordinate systems while the three figures below are the bird's eye view.
+
 We will stick to the three coordinate systems defined in this tutorial in the future.
 
 ## Definition of the yaw angle
@@ -53,7 +59,7 @@ __|____|____|____|______\ x right
 
 ## Definition of the box dimensions
 
-The definition of the box dimensions cannot be disentangled with the definition of the yaw angle. In last section, we said that the direction of a box is defined to be parallel with the x-axis if its yaw angle is 0. Then naturally, the dimension of a box which corresponds to the x-axis should be <img src="https://render.githubusercontent.com/render/math?math=dx">. However, this is not always the case in some datasets (we will address that later).
+The definition of the box dimensions cannot be disentangled with the definition of the yaw angle. In the previous section, we said that the direction of a box is defined to be parallel with the x-axis if its yaw angle is 0. Then naturally, the dimension of a box which corresponds to the x-axis should be <img src="https://render.githubusercontent.com/render/math?math=dx">. However, this is not always the case in some datasets (we will address that later).
 
 The following figures show the meaning of the correspondence between the x-axis and <img src="https://render.githubusercontent.com/render/math?math=dx">, and between the y-axis and <img src="https://render.githubusercontent.com/render/math?math=dy">.
 
@@ -88,14 +94,6 @@ __|____|____|____|_________\ x right
   |         dx
   |
 ```
-
-## Illustration of the three coordinate systems
-
-The illustration of the three coordinate systems is shown below:
-
-![coord_sys_all](https://github.com/open-mmlab/mmdetection3d/blob/master/resources/coord_sys_all.png)
-
-The three figures above are the 3D coordinate systems while the three figures below are the bird's eye view.
 
 ## Relation with raw coordinate systems of supported datasets
 
@@ -144,7 +142,7 @@ For the conversion from raw annotation to annotation under our Depth coordinate 
 
 ### S3DIS
 
-S3DIS shares the same coordinate system as ScanNet in our implementation. However, S3DIS is a segmentation-task-only dataset, thus no annotation is coordinate system sensitive.
+S3DIS shares the same coordinate system as ScanNet in our implementation. However, S3DIS is a segmentation-task-only dataset, and thus no annotation is coordinate system sensitive.
 
 ## Examples
 
@@ -206,6 +204,6 @@ For IoU calculation, a phase difference of <img src="https://render.githubuserco
 
 However, for angle prediction evaluation, this will result in the exact opposite direction.
 
-Just think about a car. The yaw angle is the angle between the direction of the car front and the positive direction of the x-axis. If we add <img src="https://render.githubusercontent.com/render/math?math=\pi"> to this angle, the car front becomes the car rear.
+Just think about a car. The yaw angle is the angle between the direction of the car front and the positive direction of the x-axis. If we add <img src="https://render.githubusercontent.com/render/math?math=\pi"> to this angle, the car front will become the car rear.
 
 For categories such as barrier, the front and the rear have no difference, therefore a phase difference of <img src="https://render.githubusercontent.com/render/math?math=\pi"> will not affect the angle prediction score.
