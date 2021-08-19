@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.core.post_processing import (merge_aug_bboxes, merge_aug_masks,
                                         merge_aug_proposals, merge_aug_scores,
                                         multiclass_nms)

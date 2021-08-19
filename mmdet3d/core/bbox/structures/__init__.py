@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .base_box3d import BaseInstance3DBoxes
 from .box_3d_mode import Box3DMode
 from .cam_box3d import CameraInstance3DBoxes

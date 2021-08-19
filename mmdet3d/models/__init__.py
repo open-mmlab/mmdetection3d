@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .backbones import *  # noqa: F401,F403
 from .builder import (FUSION_LAYERS, MIDDLE_ENCODERS, VOXEL_ENCODERS,
                       build_backbone, build_detector, build_fusion_layer,
