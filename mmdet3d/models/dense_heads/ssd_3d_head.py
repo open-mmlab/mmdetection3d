@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import force_fp32
