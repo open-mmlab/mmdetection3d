@@ -4,7 +4,7 @@ _base_ = [
 ]
 
 # data settings
-data = dict(samples_per_gpu=32)
+data = dict(samples_per_gpu=2)
 evaluation = dict(interval=2)
 
 # model settings

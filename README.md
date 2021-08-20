@@ -115,7 +115,6 @@ Support methods
 | Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
 | PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| DGCNN               | ✗        | ✗        | ✗        | ☐         | ✗     | ✗        | ✗     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)

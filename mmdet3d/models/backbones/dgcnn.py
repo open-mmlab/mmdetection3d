@@ -14,7 +14,7 @@ class DGCNN(BaseModule):
         in_channels (int): Input channels of point cloud.
         num_samples (tuple[int]): The number of samples for knn or ball query
             in each GF module.
-        knn_mods (tuple[str]): If knn, mod of KNN of each GF module.
+        knn_modes (tuple[str]): If knn, mode of KNN of each GF module.
         radius (tuple[float]): Sampling radii of each GF module.
         gf_channels (tuple[tuple[int]]): Out channels of each mlp in GF module.
         fa_channels (tuple[int]): Out channels of each mlp in FA module.
@@ -25,7 +25,7 @@ class DGCNN(BaseModule):
     def __init__(self,
                  in_channels,
                  num_samples=(20, 20, 20),
-                 knn_mods=['D-KNN', 'F-KNN', 'F-KNN'],
+                 knn_modes=['D-KNN', 'F-KNN', 'F-KNN'],
                  radius=(None, None, None),
                  gf_channels=((64, 64), (64, 64), (64, )),
                  fa_channels=(1024, ),
@@ -34,7 +34,7 @@ class DGCNN(BaseModule):
         super().__init__(init_cfg=init_cfg)
         self.num_gf = len(gf_channels)
 
-        assert len(num_samples) == len(knn_mods) == len(radius) == len(
+        assert len(num_samples) == len(knn_modes) == len(radius) == len(
             gf_channels)
 
         self.GF_modules = nn.ModuleList()
@@ -50,7 +50,7 @@ class DGCNN(BaseModule):
                 DGCNNGFModule(
                     mlp_channels=cur_gf_mlps,
                     num_sample=num_samples[gf_index],
-                    knn_mod=knn_mods[gf_index],
+                    knn_mode=knn_modes[gf_index],
                     radius=radius[gf_index],
                     act_cfg=act_cfg))
             skip_channel_list.append(gf_out_channel)
