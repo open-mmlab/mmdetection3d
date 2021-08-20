@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .base import Base3DDetector
 from .centerpoint import CenterPoint
 from .dynamic_voxelnet import DynamicVoxelNet

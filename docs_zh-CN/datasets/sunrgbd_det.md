@@ -244,23 +244,23 @@ sunrgbd
     - info['image']：图像路径与元信息：
         - image['image_idx']：图像索引。
         - image['image_shape']：图像张量的形状（即其尺寸）。
-        - image['image_path']图像路径。
+        - image['image_path']：图像路径。
     - info['annos']：每个场景的标注：
-        - annotations['gt_num']：真实物体（ground truth）的数量
+        - annotations['gt_num']：真实物体 (ground truth) 的数量。
         - annotations['name']：所有真实物体的语义类别名称，比如 `chair`（椅子）。
-        - annotations['location']：depth 坐标系下三维包围框的重力（gravity center）中心，形状为 [K, 3]，其中 K 是真实物体的数量。
+        - annotations['location']：depth 坐标系下三维包围框的重力中心 (gravity center)，形状为 [K, 3]，其中 K 是真实物体的数量。
         - annotations['dimensions']：depth 坐标系下三维包围框的大小，形状为 [K, 3]。
         - annotations['rotation_y']：depth 坐标系下三维包围框的旋转角，形状为 [K, ]。
         - annotations['gt_boxes_upright_depth']：depth 坐标系下三维包围框 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 [K, 7]。
         - annotations['bbox']：二维包围框 `(x, y, x_size, y_size)`，形状为 [K, 4]。
         - annotations['index']：所有真实物体的索引，范围为 [0, K)。
-        - annotations['class']：所有真实物体类别的标号范围为 [0, 10)，形状为 [K, ]。
+        - annotations['class']：所有真实物体类别的标号，范围为 [0, 10)，形状为 [K, ]。
 - `sunrgbd_infos_val.pkl`：验证集上的数据信息，与 `sunrgbd_infos_train.pkl` 格式完全一致。
 
 
 ## 训练流程
 
-SUN RGB-D 上纯点云 3D 物体检测的经典流程如下：
+SUN RGB-D 上纯点云 3D 物体检测的典型流程如下：
 
 ```python
 train_pipeline = [
@@ -289,10 +289,10 @@ train_pipeline = [
 
 点云上的数据增强
 - `RandomFlip3D`：随机左右或前后翻转输入点云。
-- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0。
+- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 [-30, 30] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 [0.85, 1.15] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0（即不做位移）。
 - `PointSample`：降采样输入点云。
 
-SUN RGB-D 上多模态（点云和图像）3D 物体检测的经典流程如下：
+SUN RGB-D 上多模态（点云和图像）3D 物体检测的典型流程如下：
 
 ```python
 train_pipeline = [
@@ -340,6 +340,6 @@ train_pipeline = [
 
 ## 度量指标
 
-与 ScanNet 一样，通常 mAP（全类平均精度）被用于SUN RGB-D 的检测任务的评估，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时一个通用的计算 3D 物体检测多个类别的精度和召回率的函数被调用，可以参考 [`indoor_eval.py`](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py)。
+与 ScanNet 一样，通常 mAP（全类平均精度）被用于 SUN RGB-D 的检测任务的评估，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时一个通用的计算 3D 物体检测多个类别的精度和召回率的函数被调用，可以参考 [`indoor_eval.py`](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py)。
 
 因为 SUN RGB-D 包含有图像数据，所以图像上的物体检测也是可行的。举个例子，在 ImVoteNet 中，我们首先训练了一个图像检测器，并且也使用 mAP 指标，如 `mAP@0.5`，来评估其表现。我们使用 [MMDetection](https://github.com/open-mmlab/mmdetection) 库中的 `eval_map` 函数来计算 mAP。

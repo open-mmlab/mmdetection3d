@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet3d.core.bbox import bbox3d2result
 from mmdet.models import HEADS
 from ..builder import build_head

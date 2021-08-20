@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d

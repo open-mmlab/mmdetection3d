@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 from os import path as osp
 
@@ -81,44 +82,22 @@ def nuscenes_data_prep(root_path,
                                 f'{out_dir}/{info_prefix}_infos_train.pkl')
 
 
-def lyft_data_prep(root_path,
-                   info_prefix,
-                   version,
-                   dataset_name,
-                   out_dir,
-                   max_sweeps=10):
+def lyft_data_prep(root_path, info_prefix, version, max_sweeps=10):
     """Prepare data related to Lyft dataset.
 
-    Related data consists of '.pkl' files recording basic infos,
-    and 2D annotations.
-    Although the ground truth database is not used in Lyft, it can also be
-    generated like nuScenes.
+    Related data consists of '.pkl' files recording basic infos.
+    Although the ground truth database and 2D annotations are not used in
+    Lyft, it can also be generated like nuScenes.
 
     Args:
         root_path (str): Path of dataset root.
         info_prefix (str): The prefix of info filenames.
         version (str): Dataset version.
-        dataset_name (str): The dataset class name.
-        out_dir (str): Output directory of the groundtruth database info.
-            Not used here if the groundtruth database is not generated.
-        max_sweeps (int): Number of input consecutive frames. Default: 10
+        max_sweeps (int, optional): Number of input consecutive frames.
+            Defaults to 10.
     """
     lyft_converter.create_lyft_infos(
         root_path, info_prefix, version=version, max_sweeps=max_sweeps)
-
-    if version == 'v1.01-test':
-        return
-
-    train_info_name = f'{info_prefix}_infos_train'
-    val_info_name = f'{info_prefix}_infos_val'
-
-    info_train_path = osp.join(root_path, f'{train_info_name}.pkl')
-    info_val_path = osp.join(root_path, f'{val_info_name}.pkl')
-
-    lyft_converter.export_2d_annotation(
-        root_path, info_train_path, version=version)
-    lyft_converter.export_2d_annotation(
-        root_path, info_val_path, version=version)
 
 
 def scannet_data_prep(root_path, info_prefix, out_dir, workers):
@@ -273,16 +252,12 @@ if __name__ == '__main__':
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             version=train_version,
-            dataset_name='LyftDataset',
-            out_dir=args.out_dir,
             max_sweeps=args.max_sweeps)
         test_version = f'{args.version}-test'
         lyft_data_prep(
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             version=test_version,
-            dataset_name='LyftDataset',
-            out_dir=args.out_dir,
             max_sweeps=args.max_sweeps)
     elif args.dataset == 'waymo':
         waymo_data_prep(

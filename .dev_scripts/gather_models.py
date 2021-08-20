@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 """Script to gather benchmarked models and prepare them for upload.
 
 Usage:

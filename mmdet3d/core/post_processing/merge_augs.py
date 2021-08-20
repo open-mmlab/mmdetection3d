@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu

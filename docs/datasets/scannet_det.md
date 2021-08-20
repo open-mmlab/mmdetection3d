@@ -33,10 +33,10 @@ mmdetection3d
 Under folder `scans` there are overall 1201 train and 312 validation folders in which raw point cloud data and relevant annotations are saved. For instance, under folder `scene0001_01` the files are as below:
 
 - `scene0001_01_vh_clean_2.ply`: Mesh file storing coordinates and colors of each vertex. The mesh's vertices are taken as raw point cloud data.
-- `scene0001_01.aggregation.json`: Aggregation file including object id, segments id and label.
-- `scene0001_01_vh_clean_2.0.010000.segs.json`: Segmentation file including segments id and vertex.
+- `scene0001_01.aggregation.json`: Aggregation file including object ID, segments ID and label.
+- `scene0001_01_vh_clean_2.0.010000.segs.json`: Segmentation file including segments ID and vertex.
 - `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
-- `scene0001_01_vh_clean_2.labels.ply`
+- `scene0001_01_vh_clean_2.labels.ply`: Annotation file containing the category of each vertex.
 
 Export ScanNet data by running `python batch_load_scannet_data.py`. The main steps include:
 
@@ -79,7 +79,7 @@ def export(mesh_file,
 
     # perform global alignment of mesh vertices
     pts = np.ones((mesh_vertices.shape[0], 4))
-    # raw point cloud in homogeneous coordinats, each row: [x, y, z, 1]
+    # raw point cloud in homogeneous coordinates, each row: [x, y, z, 1]
     pts[:, 0:3] = mesh_vertices[:, 0:3]
     # transform raw mesh vertices to aligned mesh vertices
     pts = np.dot(pts, axis_align_matrix.transpose())  # Nx4
@@ -125,9 +125,9 @@ def export(mesh_file,
 
 ```
 
-After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large (the raw point cloud won't be downsampled if it's also used in 3d semantic segmentation task). In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
+After exporting each scan, the raw point cloud could be downsampled, e.g. to 50000, if the number of points is too large (the raw point cloud won't be downsampled if it's also used in 3D semantic segmentation task). In addition, invalid semantic labels outside of `nyu40id` standard or optional `DONOT CARE` classes should be filtered. Finally, the point cloud data, semantic labels, instance labels and ground truth bounding boxes should be saved in `.npy` files.
 
-### Export ScanNet RGB data
+### Export ScanNet RGB data (optional)
 
 By exporting ScanNet RGB data, for each scene we load a set of RGB images with corresponding 4x4 pose matrices, and a single 4x4 camera intrinsic matrix. Note, that this step is optional and can be skipped if multi-view detection is not planned to use.
 
@@ -135,7 +135,7 @@ By exporting ScanNet RGB data, for each scene we load a set of RGB images with c
 python extract_posed_images.py
 ```
 
-Each of 1201 train, 312 validation and 100 test scenes contains a single `.sens` file. For instance, for scene `0001_01` we have `data/scannet/scans/scene0001_01/0001_01.sens`. For this scene all images and poses are extracted to `data/scannet/posed_images/scene0001_01`. Specifically, there will be 300 image files xxxxx.jpg, 300 camera pose files xxxxx.txt and a single `intrinsic.txt` file. Typically, single scene contains several thousand images. By default, we extract only 300 of them with resulting weight of <100 Gb. To extract more images, use `--max-images-per-scene` parameter.
+Each of 1201 train, 312 validation and 100 test scenes contains a single `.sens` file. For instance, for scene `0001_01` we have `data/scannet/scans/scene0001_01/0001_01.sens`. For this scene all images and poses are extracted to `data/scannet/posed_images/scene0001_01`. Specifically, there will be 300 image files xxxxx.jpg, 300 camera pose files xxxxx.txt and a single `intrinsic.txt` file. Typically, single scene contains several thousand images. By default, we extract only 300 of them with resulting space occupation of <100 Gb. To extract more images, use `--max-images-per-scene` parameter.
 
 ### Create dataset
 
@@ -221,9 +221,9 @@ scannet
 ├── scannet_infos_test.pkl
 ```
 
-- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Since ScanNet 3D detection task takes axis-aligned point clouds as input, while ScanNet 3D semantic segmentation task takes unaligned points, we choose to store unaligned points and their axis-align transform matrix. Note: the points would be axis-aligned in pre-processing pipeline `GlobalAlignment` of 3D detection task.
+- `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Since ScanNet 3D detection task takes axis-aligned point clouds as input, while ScanNet 3D semantic segmentation task takes unaligned points, we choose to store unaligned points and their axis-align transform matrix. Note: the points would be axis-aligned in pre-processing pipeline [`GlobalAlignment`](https://github.com/open-mmlab/mmdetection3d/blob/9f0b01caf6aefed861ef4c3eb197c09362d26b32/mmdet3d/datasets/pipelines/transforms_3d.py#L423) of 3D detection task.
 - `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
-- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` id will be mapped to train id in train pipeline `PointSegClassMapping`.
+- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
 - `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
     - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
@@ -233,14 +233,16 @@ scannet
     - info['annos']: The annotations of each scan.
         - annotations['gt_num']: The number of ground truths.
         - annotations['name']： The semantic name of all ground truths, e.g. `chair`.
-        - annotations['location']: The gravity center of the axis-aligned 3D bounding boxes. Shape: [K, 3], K is the number of ground truths.
-        - annotations['dimensions']: The dimensions of the axis-aligned 3D bounding boxes, i.e. (x_size, y_size, z_size), shape: [K, 3].
-        - annotations['gt_boxes_upright_depth']: The axis-aligned 3D bounding boxes, each bounding box is (x, y, z, x_size, y_size, z_size), shape: [K, 6].
-        - annotations['unaligned_location']: The gravity center of the axis-unaligned 3D bounding boxes.
-        - annotations['unaligned_dimensions']: The dimensions of the axis-unaligned 3D bounding boxes.
-        - annotations['unaligned_gt_boxes_upright_depth']: The axis-unaligned 3D bounding boxes.
+        - annotations['location']: The gravity center of the axis-aligned 3D bounding boxes in depth coordinate system. Shape: [K, 3], K is the number of ground truths.
+        - annotations['dimensions']: The dimensions of the axis-aligned 3D bounding boxes in depth coordinate system, i.e. (x_size, y_size, z_size), shape: [K, 3].
+        - annotations['gt_boxes_upright_depth']: The axis-aligned 3D bounding boxes in depth coordinate system, each bounding box is (x, y, z, x_size, y_size, z_size), shape: [K, 6].
+        - annotations['unaligned_location']: The gravity center of the axis-unaligned 3D bounding boxes in depth coordinate system.
+        - annotations['unaligned_dimensions']: The dimensions of the axis-unaligned 3D bounding boxes in depth coordinate system.
+        - annotations['unaligned_gt_boxes_upright_depth']: The axis-unaligned 3D bounding boxes in depth coordinate system.
         - annotations['index']: The index of all ground truths, i.e. [0, K).
-        - annotations['class']: The train class id of the bounding boxes, value range: [0, 18), shape: [K, ].
+        - annotations['class']: The train class ID of the bounding boxes, value range: [0, 18), shape: [K, ].
+- `scannet_infos_val.pkl`: The val data infos, which shares the same format as `scannet_infos_train.pkl`.
+- `scannet_infos_test.pkl`: The test data infos, which almost shares the same format as `scannet_infos_train.pkl` except for the lack of annotation.
 
 
 ## Training pipeline
@@ -289,14 +291,14 @@ train_pipeline = [
 ```
 
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
-- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 18) during training.
+- `PointSegClassMapping`: Only the valid category IDs will be mapped to class label IDs like [0, 18) during training.
 - Data augmentation:
     - `PointSample`: downsample the input point cloud.
     - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet; then scale the input point cloud, usually by 1.0 for ScanNet; finally translate the input point cloud, usually by 0 for ScanNet.
+    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet; then scale the input point cloud, usually by 1.0 for ScanNet (which means no scaling); finally translate the input point cloud, usually by 0 for ScanNet  (which means no translation).
 
 ## Metrics
 
 Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py).
 
-As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D non-maximum suppression (NMS) is adopted during post-processing without reagrd to rotation.
+As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D Non-Maximum Suppression (NMS), which is regardless of rotation, is adopted during post-processing .

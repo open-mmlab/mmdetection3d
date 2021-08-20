@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .assigners import AssignResult, BaseAssigner, MaxIoUAssigner
 from .coders import DeltaXYZWLHRBBoxCoder
 # from .bbox_target import bbox_target

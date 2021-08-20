@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.apis import train_detector
 from mmseg.apis import train_segmentor
 
