@@ -3,6 +3,7 @@ import mmcv
 import numpy as np
 import trimesh
 from os import path as osp
+from os import environ
 
 from .image_vis import (draw_camera_bbox3d_on_img, draw_depth_bbox3d_on_img,
                         draw_lidar_bbox3d_on_img)
@@ -93,7 +94,7 @@ def show_result(points,
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
 
-    if show:
+    if show and environ.get('DISPLAY'):
         from .open3d_vis import Visualizer
 
         vis = Visualizer(points)
@@ -242,7 +243,7 @@ def show_multi_modality_result(img,
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
 
-    if show:
+    if show and environ.get('DISPLAY'):
         show_img = img.copy()
         if gt_bboxes is not None:
             show_img = draw_bbox(
