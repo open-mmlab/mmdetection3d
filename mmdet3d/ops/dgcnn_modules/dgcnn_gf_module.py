@@ -15,7 +15,7 @@ class BaseDGCNNGFModule(nn.Module):
         sample_nums (list[int]): Number of samples in each knn or ball query.
         mlp_channels (list[list[int]]): Specify of the dgcnn before
             the global pooling for each graph feature module.
-        knn_mod (list[str], optional): Type of KNN method, valid mod
+        knn_modes (list[str], optional): Type of KNN method, valid mode
             ['F-KNN', 'D-KNN'], Default: ['F-KNN'].
         dilated_group (bool, optional): Whether to use dilated ball query.
             Default: False.
@@ -35,7 +35,7 @@ class BaseDGCNNGFModule(nn.Module):
                  radii,
                  sample_nums,
                  mlp_channels,
-                 knn_mod=['F-KNN'],
+                 knn_modes=['F-KNN'],
                  dilated_group=False,
                  use_xyz=True,
                  pool_mod='max',
@@ -46,7 +46,7 @@ class BaseDGCNNGFModule(nn.Module):
 
         assert len(sample_nums) == len(mlp_channels)
         assert pool_mod in ['max', 'avg']
-        assert isinstance(knn_mod, list) or isinstance(knn_mod, tuple)
+        assert isinstance(knn_modes, list) or isinstance(knn_modes, tuple)
 
         if isinstance(mlp_channels, tuple):
             mlp_channels = list(map(list, mlp_channels))
@@ -55,12 +55,12 @@ class BaseDGCNNGFModule(nn.Module):
         self.pool_mod = pool_mod
         self.groupers = nn.ModuleList()
         self.mlps = nn.ModuleList()
-        self.knn_mod = knn_mod
+        self.knn_modes = knn_modes
 
         for i in range(len(sample_nums)):
             sample_num = sample_nums[i]
             if sample_num is not None:
-                if self.knn_mod[i] == 'D-KNN':
+                if self.knn_modes[i] == 'D-KNN':
                     grouper = QueryAndGroup(
                         radii[i],
                         sample_num,
@@ -122,7 +122,7 @@ class BaseDGCNNGFModule(nn.Module):
             new_points_trans = new_points.transpose(
                 1, 2).contiguous()  # (B, C, N)
 
-            if self.knn_mod[i] == 'D-KNN':
+            if self.knn_modes[i] == 'D-KNN':
                 # (B, N, C) -> (B, N, K)
                 idx = self.groupers[i](new_points[..., -3:].contiguous(),
                                        new_points[..., -3:].contiguous())[-1]
@@ -157,8 +157,8 @@ class DGCNNGFModule(BaseDGCNNGFModule):
             the global pooling for each graph feature module.
         num_sample (int, optional): Number of samples in each knn or ball
             query. Default: None.
-        knn_mod (list[str], optional): Type of KNN method, valid mod
-            ['F-KNN', 'D-KNN'], Default: ['F-KNN'].
+        knn_mode (str, optional): Type of KNN method, valid mode
+            ['F-KNN', 'D-KNN'], Default: 'F-KNN'.
         radius (float, optional): Radius to group with.
             Default: None.
         dilated_group (bool, optional): Whether to use dilated ball query.
@@ -181,7 +181,7 @@ class DGCNNGFModule(BaseDGCNNGFModule):
     def __init__(self,
                  mlp_channels,
                  num_sample=None,
-                 knn_mod=['F-KNN'],
+                 knn_mode='F-KNN',
                  radius=None,
                  dilated_group=False,
                  norm_cfg=dict(type='BN2d'),
@@ -193,7 +193,7 @@ class DGCNNGFModule(BaseDGCNNGFModule):
         super(DGCNNGFModule, self).__init__(
             mlp_channels=[mlp_channels],
             sample_nums=[num_sample],
-            knn_mod=[knn_mod],
+            knn_modes=[knn_mode],
             radii=[radius],
             use_xyz=use_xyz,
             pool_mod=pool_mod,

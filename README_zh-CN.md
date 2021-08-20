@@ -114,7 +114,6 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
 | ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
 | PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| DGCNN               | ✗        | ✗        | ✗        | ☐         | ✗     | ✗        | ✗     |
 
 其他特性
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
