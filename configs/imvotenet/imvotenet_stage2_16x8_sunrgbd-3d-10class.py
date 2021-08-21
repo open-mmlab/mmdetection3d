@@ -174,14 +174,13 @@ train_pipeline = [
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.0),
     dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
         flip_ratio_bev_horizontal=0.5,
     ),
+    dict(type='Pad', size_divisor=32),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.523599, 0.523599],
@@ -212,9 +211,7 @@ test_pipeline = [
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip', flip_ratio=0.0),
             dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
             dict(
                 type='GlobalRotScaleTrans',
                 rot_range=[0, 0],
@@ -225,7 +222,8 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.5,
             ),
-            dict(type='PointSample', num_points=20000),
+            dict(type='Pad', size_divisor=32),
+            dict(type='IndoorPointSample', num_points=20000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
