@@ -149,7 +149,7 @@ Our LiDAR coordinate system has two changes:
 
 ### Waymo
 
-We use the KITTI format data of Waymo dataset. Therefore, KITTI and Waymo also share the same coordinate system in our implementation.
+We use the KITTI-format data of Waymo dataset. Therefore, KITTI and Waymo also share the same coordinate system in our implementation.
 
 ### NuScenes
 
@@ -169,7 +169,7 @@ The raw data of ScanNet is not point cloud but mesh. The sampled point cloud dat
 
 ### SUN RGB-D
 
-The raw data of SUN RGB-D is not point cloud but RGB-D image. By back projection, we obtain the corresponding point cloud for each image, which is under our Depth coordinate system. However, the annotation is not under our system, hence needing conversion.
+The raw data of SUN RGB-D is not point cloud but RGB-D image. By back projection, we obtain the corresponding point cloud for each image, which is under our Depth coordinate system. However, the annotation is not under our system and thus needs conversion.
 
 For the conversion from raw annotation to annotation under our Depth coordinate system, please refer to [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/sunrgbd_data_utils.py).
 
@@ -229,7 +229,7 @@ No. For example, in KITTI, we need a calibration matrix when converting from Cam
 
 For IoU calculation, a phase difference of <img src="https://render.githubusercontent.com/render/math?math=2\pi"> in the yaw angle will result in the same box, thus not affecting evaluation.
 
-For angle prediction evaluation such as the NDS metric in NuScenes and the AoS metric in KITTI, the angle of predicted boxes will be first standardized, so the phase difference will not change the result.
+For angle prediction evaluation such as the NDS metric in NuScenes and the AOS metric in KITTI, the angle of predicted boxes will be first standardized, so the phase difference will not change the result.
 
 #### Q4: How does a phase difference of <img src="https://render.githubusercontent.com/render/math?math=\pi"> in the yaw angle of a box affect evaluation?
 
