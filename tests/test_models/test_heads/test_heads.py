@@ -361,10 +361,41 @@ def test_smoke_mono3d_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
-    smoke_head_cfg = _get_head_cfg(
-        'smoke/smoke_dla34_pytorch_dlaneck_gn-head_kitti_mono3d.py')
 
-    self = build_head(smoke_head_cfg).cuda()
+    head_cfg = dict(
+        type='SMOKEMono3DHead',
+        num_classes=3,
+        in_channels=64,
+        stacked_convs=0,
+        feat_channels=64,
+        use_direction_classifier=False,
+        diff_rad_by_sin=False,
+        pred_attrs=False,
+        pred_velo=False,
+        dir_offset=0,
+        strides=None,
+        group_reg_dims=(8, ),
+        cls_branch=(256, ),
+        reg_branch=((256, ), ),
+        num_attrs=0,
+        bbox_code_size=7,
+        dir_branch=(),
+        attr_branch=(),
+        bbox_coder=dict(
+            type='SMOKECoder',
+            base_depth=(28.01, 16.32),
+            base_dim=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73,
+                                                               0.67)),
+            code_size=7),
+        loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=1.0),
+        loss_dir=dict(
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+        loss_attr=None,
+        conv_bias=True,
+        dcn_on_last_conv=False)
+
+    self = build_head(head_cfg).cuda()
 
     feats = [torch.rand([2, 64, 32, 32], dtype=torch.float32).cuda()]
 
