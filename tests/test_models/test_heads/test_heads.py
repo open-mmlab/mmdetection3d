@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 import random
 import torch
-from collections import OrderedDict
 from os.path import dirname, exists, join
 
 from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
@@ -359,53 +358,47 @@ def test_vote_head():
     assert results[0][2].shape[0] >= 0
 
 
-def smoke_paras_converter():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
-    _setup_seed(0)
-    smoke_head_cfg = _get_head_cfg(
-        'smoke/smoke_dla34_pytorch_dlaneck_gn-head_kitti_mono3d.py')
-    # print(smoke_head_cfg)
-    model = build_head(smoke_head_cfg).cuda()
-    model_key_list = []
-    new_state_dict = OrderedDict()
-    for name, parameters in model.named_parameters():
-        # print(name, ':', parameters.size())
-        model_key_list.append(name)
-
-    pretrained_model = 'checkpoints/model_final.pth'
-    pretrained_dict = torch.load(pretrained_model)
-
-    for i, (k, v) in enumerate(pretrained_dict['model'].items()):
-        if not k.startswith('module.backbone.body'):
-            new_state_dict[model_key_list[i]] = v
-
-    torch.save(new_state_dict, 'checkpoints/smoke_head.pth')
-
-
 def test_smoke_mono3d_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
     smoke_head_cfg = _get_head_cfg(
         'smoke/smoke_dla34_pytorch_dlaneck_gn-head_kitti_mono3d.py')
-    print(smoke_head_cfg)
-    # from mmdet3d.models.dense_heads import SMOKEMono3DHead
-    model = build_head(smoke_head_cfg).cuda()
 
-    for name, parameters in model.named_parameters():
-        print(name, ':', parameters.size())
+    self = build_head(smoke_head_cfg).cuda()
 
     feats = [torch.rand([2, 64, 32, 32], dtype=torch.float32).cuda()]
 
     # test forward
-    ret_dict = model(feats)
+    ret_dict = self(feats)
     print(ret_dict)
     assert len(ret_dict) == 2
-    assert len(ret_dict[0]) == 1  # 1 level features
-    assert ret_dict[0][0].shape == torch.Size([2, 3, 8, 8])
-    assert ret_dict[1][0].shape == torch.Size([2, 8, 8, 8])
+    assert len(ret_dict[0]) == 1
+    assert ret_dict[0][0].shape == torch.Size([2, 3, 32, 32])
+    assert ret_dict[1][0].shape == torch.Size([2, 8, 32, 32])
 
+    # test loss
+    gt_bboxes = [
+        torch.Tensor([[1.0, 2.0, 20.0, 40.0], [45.0, 50.0, 80.0, 70.1],
+                      [34.0, 39.0, 65.0, 64.0]]).cuda(),
+        torch.Tensor([[11.0, 22.0, 29.0, 31.0], [41.0, 55.0, 60.0, 99.0],
+                      [29.0, 29.0, 65.0, 56.0]]).cuda()
+    ]
+    gt_bboxes_3d = [
+        CameraInstance3DBoxes(torch.rand([3, 7], device='cuda'), box_dim=7),
+        CameraInstance3DBoxes(torch.rand([3, 7], device='cuda'), box_dim=7)
+    ]
+    gt_labels = [torch.randint(0, 3, [3], device='cuda') for i in range(2)]
+    gt_labels_3d = gt_labels
+    centers2d = [
+        torch.randint(0, 60, (3, 2)).cuda(),
+        torch.randint(0, 40, (3, 2)).cuda()
+    ]
+    depths = [
+        torch.rand([3], dtype=torch.float32).cuda(),
+        torch.rand([3], dtype=torch.float32).cuda()
+    ]
+    attr_labels = None
     img_metas = [
         dict(
             cam_intrinsic=[[
@@ -413,11 +406,17 @@ def test_smoke_mono3d_head():
             ], [0.0, 1260.8474446004698, 495.3344268742088, 2.34422],
                            [0.0, 0.0, 1.0, 0.00333333], [0.0, 0.0, 0.0, 1.0]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
+            pad_shape=[128, 128],
             box_type_3d=CameraInstance3DBoxes) for i in range(2)
     ]
+    losses = self.loss(*ret_dict, gt_bboxes, gt_labels, gt_bboxes_3d,
+                       gt_labels_3d, centers2d, depths, attr_labels, img_metas)
+
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
 
     # test get_boxes
-    results = model.get_bboxes(*ret_dict, img_metas)
+    results = self.get_bboxes(*ret_dict, img_metas)
     assert len(results) == 2
     assert len(results[0]) == 4
     assert results[0][0].tensor.shape == torch.Size([100, 7])
@@ -1290,6 +1289,3 @@ def test_groupfree3d_head():
     assert results[0][0].tensor.shape[1] == 7
     assert results[0][1].shape[0] >= 0
     assert results[0][2].shape[0] >= 0
-
-
-test_smoke_mono3d_head()
