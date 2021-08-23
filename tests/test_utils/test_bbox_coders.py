@@ -1,6 +1,7 @@
 import torch
 
-from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes)
 from mmdet.core import build_bbox_coder
 
 
@@ -351,3 +352,27 @@ def test_centerpoint_bbox_coder():
         assert temp[i]['bboxes'].shape == torch.Size([500, 9])
         assert temp[i]['scores'].shape == torch.Size([500])
         assert temp[i]['labels'].shape == torch.Size([500])
+
+
+def test_smoke_bbox_coder():
+    bbox_coder_cfg = dict(
+        type='SMOKECoder',
+        base_depth=(28.01, 16.32),
+        base_dim=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73, 0.67)),
+        code_size=7)
+
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    regression = torch.rand([200, 8])
+    points = torch.rand([200, 2])
+    labels = torch.ones([2, 100])
+    cam_intrinsics = torch.rand([2, 4, 4])
+    ratio = 0.25
+
+    img_metas = [dict(box_type_3d=CameraInstance3DBoxes) for i in range(2)]
+    locations, dimensions, orientations = bbox_coder.decode(
+        regression, points, labels, cam_intrinsics, ratio)
+    assert locations.shape == torch.Size([200, 3])
+    assert dimensions.shape == torch.Size([200, 3])
+    assert orientations.shape == torch.Size([200, 1])
+    bboxes = bbox_coder.encode(locations, dimensions, orientations, img_metas)
+    assert bboxes.tensor.shape == torch.Size([200, 7])
