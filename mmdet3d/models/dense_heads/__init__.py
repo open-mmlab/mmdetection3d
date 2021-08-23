@@ -8,9 +8,9 @@ from .free_anchor3d_head import FreeAnchor3DHead
 from .groupfree3d_head import GroupFree3DHead
 from .parta2_rpn_head import PartA2RPNHead
 from .shape_aware_head import ShapeAwareHead
+from .smoke_mono3d_head import SMOKEMono3DHead
 from .ssd_3d_head import SSD3DHead
 from .vote_head import VoteHead
-from .smoke_mono3d_head import SMOKEMono3DHead
 
 __all__ = [
     'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
