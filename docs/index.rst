@@ -55,7 +55,7 @@ Welcome to MMDetection3D's documentation!
    api.rst
 
 .. toctree::
-   :caption: 语言切换
+   :caption: Switch Language
 
    switch_language.md
 
