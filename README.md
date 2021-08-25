@@ -97,24 +97,25 @@ Support methods
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 
-|                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
-|--------------------|:--------:|:--------:|:--------:|:---------:|:-----:|:--------:|:-----:|
-| SECOND             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| PointPillars       | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| H3DNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| 3DSSD            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| Part-A2            | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| MVXNet             | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| CenterPoint        | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| SSN                | ☐        | ☐        | ☐        | ✗         | ☐     | ✓        | ☐     |
-| ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| FCOS3D               | ✓        | ☐        | ☐        | ✗         | ☐     | ☐        | ☐     |
-| PointNet++           | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
-| ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗     | ✗        | ✗     |
-| PAConv               | ✗        | ✗        | ✗        | ✓         | ✗     | ✗        | ✗     |
+|                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net |
+|--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|
+| SECOND             | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| PointPillars       | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| VoteNet            | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| H3DNet            | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| 3DSSD            | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| Part-A2            | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| MVXNet             | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| CenterPoint        | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| SSN                | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     |
+| ImVoteNet            | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| FCOS3D               | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     |
+| PointNet++           | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| Group-Free-3D        | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| ImVoxelNet           | ✓         | ✗        | ✗        | ✗        | ✗         | ✗     | ✗        | ✗     |
+| PAConv               | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     |
+| DGCNN                | ✗        | ✗        | ✗        | ✗         | ✓         | ✗     | ✗        | ✗     |
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
