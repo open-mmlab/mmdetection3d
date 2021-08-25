@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import numpy as np
 import pytest
@@ -344,9 +345,9 @@ def test_fcos3d():
     attr_labels = [torch.randint(0, 9, [3], device='cuda')]
     img_metas = [
         dict(
-            cam_intrinsic=[[1260.8474446004698, 0.0, 807.968244525554],
-                           [0.0, 1260.8474446004698, 495.3344268742088],
-                           [0.0, 0.0, 1.0]],
+            cam2img=[[1260.8474446004698, 0.0, 807.968244525554],
+                     [0.0, 1260.8474446004698, 495.3344268742088],
+                     [0.0, 0.0, 1.0]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
             box_type_3d=CameraInstance3DBoxes)
     ]
@@ -385,7 +386,7 @@ def test_groupfree3dnet():
 
     _setup_seed(0)
     groupfree3d_cfg = _get_detector_cfg(
-        'groupfree3d/groupfree3d_8x8_scannet-3d-18class-L6-O256.py')
+        'groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py')
     self = build_detector(groupfree3d_cfg).cuda()
 
     points_0 = torch.rand([50000, 3], device='cuda')

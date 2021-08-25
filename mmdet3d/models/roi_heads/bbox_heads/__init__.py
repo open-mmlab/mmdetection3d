@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models.roi_heads.bbox_heads import (BBoxHead, ConvFCBBoxHead,
                                                DoubleConvFCBBoxHead,
                                                Shared2FCBBoxHead,

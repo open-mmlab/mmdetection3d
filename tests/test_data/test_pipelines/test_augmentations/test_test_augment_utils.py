@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 
@@ -17,7 +18,7 @@ def test_multi_scale_flip_aug_3D():
         'sync_2d': False,
         'flip_ratio_bev_horizontal': 0.5
     }, {
-        'type': 'IndoorPointSample',
+        'type': 'PointSample',
         'num_points': 5
     }, {
         'type':

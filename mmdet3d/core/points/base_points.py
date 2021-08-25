@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 import warnings
@@ -281,6 +282,8 @@ class BasePoints(object):
                 Nonzero elements in the vector will be selected.
             4. `new_points = points[3:11, vector]`:
                 return a slice of points and attribute dims.
+            5. `new_points = points[4:12, 2]`:
+                return a slice of points with single attribute.
             Note that the returned Points might share storage with this Points,
             subject to Pytorch's indexing semantics.
 
@@ -302,6 +305,10 @@ class BasePoints(object):
                 step = 1 if item[1].step is None else item[1].step
                 item = list(item)
                 item[1] = list(range(start, stop, step))
+                item = tuple(item)
+            elif isinstance(item[1], int):
+                item = list(item)
+                item[1] = [item[1]]
                 item = tuple(item)
             p = self.tensor[item[0], item[1]]
 

@@ -33,7 +33,7 @@ To prepare these files for nuScenes, run the following command:
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
-The folder structure after processing should be as below
+The folder structure after processing should be as below.
 
 ```
 mmdetection3d
@@ -49,12 +49,10 @@ mmdetection3d
 |   |   ├── v1.0-trainval
 │   │   ├── nuscenes_database
 │   │   ├── nuscenes_infos_train.pkl
-│   │   ├── nuscenes_infos_trainval.pkl
 │   │   ├── nuscenes_infos_val.pkl
 │   │   ├── nuscenes_infos_test.pkl
 │   │   ├── nuscenes_dbinfos_train.pkl
 │   │   ├── nuscenes_infos_train_mono3d.coco.json
-│   │   ├── nuscenes_infos_trainval_mono3d.coco.json
 │   │   ├── nuscenes_infos_val_mono3d.coco.json
 │   │   ├── nuscenes_infos_test_mono3d.coco.json
 ```
@@ -63,7 +61,7 @@ Here, .pkl files are generally used for methods involving point clouds and coco-
 Next, we will elaborate on the details recorded in these info files.
 
 - `nuscenes_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
-- `nuscenes_infos_train.pkl`: training dataset infos, each frame info has two keys: `metadata` and `infos`.
+- `nuscenes_infos_train.pkl`: training dataset info, each frame info has two keys: `metadata` and `infos`.
 `metadata` contains the basic information for the dataset itself, such as `{'version': 'v1.0-trainval'}`, while `infos` contains the detailed information as follows:
     - info['lidar_path']: The file path of the lidar point cloud data.
     - info['token']: Sample data token.
@@ -91,9 +89,9 @@ Next, we will elaborate on the details recorded in these info files.
     - info['num_lidar_pts']: Number of lidar points included in each 3D bounding box.
     - info['num_radar_pts']: Number of radar points included in each 3D bounding box.
     - info['valid_flag']: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
-- `nuscenes_infos_train_mono3d.coco.json`: training dataset coco-style infos. This file organizes image-based data into three categories (keys): `'categories'`, `'images'`, `'annotations'`.
+- `nuscenes_infos_train_mono3d.coco.json`: training dataset coco-style info. This file organizes image-based data into three categories (keys): `'categories'`, `'images'`, `'annotations'`.
     - info['categories']: A list containing all the category names. Each element follows the dictionary format and consists of two keys: `'id'` and `'name'`.
-    - info['images']: A list containing all the image infos.
+    - info['images']: A list containing all the image info.
         - info['images'][i]['file_name']: The file name of the i-th image.
         - info['images'][i]['id']: Sample data token of the i-th image.
         - info['images'][i]['token']: Sample token corresponding to this frame.
@@ -104,7 +102,7 @@ Next, we will elaborate on the details recorded in these info files.
         - info['images'][i]['cam_intrinsic']: Camera intrinsic matrix. (3x3 list)
         - info['images'][i]['width']: Image width, 1600 by default in nuScenes.
         - info['images'][i]['height']: Image height, 900 by default in nuScenes.
-    - info['annotations']: A list containing all the annotation infos.
+    - info['annotations']: A list containing all the annotation info.
         - info['annotations'][i]['file_name']: The file name of the corresponding image.
         - info['annotations'][i]['image_id']: The image id (token) of the corresponding image.
         - info['annotations'][i]['area']: Area of the 2D bounding box.
@@ -203,7 +201,7 @@ Currently we do not support more augmentation methods, because how to transfer a
 
 ## Evaluation
 
-An example to evaluate PointPillars with 8 GPUs with nuScenes metrics is as follows
+An example to evaluate PointPillars with 8 GPUs with nuScenes metrics is as follows.
 
 ```shell
 bash ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8 --eval bbox
@@ -243,10 +241,10 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 ## Testing and make a submission
 
-An example to test PointPillars on kitti with 8 GPUs and generate a submission to the leaderboard is as follows
+An example to test PointPillars on nuScenes with 8 GPUs and generate a submission to the leaderboard is as follows.
 
 ```shell
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --out work_dirs/pp-nus/results_eval.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-nus/results_eval'
+./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py work_dirs/pp-nus/latest.pth 8 --out work_dirs/pp-nus/results_eval.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-nus/results_eval'
 ```
 
 Note that the testing info should be changed to that for testing set instead of validation set [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-3d.py#L132).

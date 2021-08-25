@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import torch
@@ -189,11 +190,10 @@ class SingleStageMono3DDetector(SingleStageDetector):
             if isinstance(data['img_metas'][0], DC):
                 img_filename = data['img_metas'][0]._data[0][batch_id][
                     'filename']
-                cam_intrinsic = data['img_metas'][0]._data[0][batch_id][
-                    'cam_intrinsic']
+                cam2img = data['img_metas'][0]._data[0][batch_id]['cam2img']
             elif mmcv.is_list_of(data['img_metas'][0], dict):
                 img_filename = data['img_metas'][0][batch_id]['filename']
-                cam_intrinsic = data['img_metas'][0][batch_id]['cam_intrinsic']
+                cam2img = data['img_metas'][0][batch_id]['cam2img']
             else:
                 ValueError(
                     f"Unsupported data type {type(data['img_metas'][0])} "
@@ -211,7 +211,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
                 img,
                 None,
                 pred_bboxes,
-                cam_intrinsic,
+                cam2img,
                 out_dir,
                 file_name,
                 'camera',

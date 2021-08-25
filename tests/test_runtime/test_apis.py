@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import os
 import pytest
@@ -189,8 +190,8 @@ def test_show_result_meshlab():
         torch.tensor(
             [[6.4495, -3.9097, -1.7409, 1.5063, 3.1819, 1.4716, 1.8782]]))
     img = np.random.randn(1, 3, 384, 1280)
-    cam_intrinsic = np.array([[100.0, 0.0, 50.0], [0.0, 100.0, 50.0],
-                              [0.0, 0.0, 1.0]])
+    cam2img = np.array([[100.0, 0.0, 50.0], [0.0, 100.0, 50.0],
+                        [0.0, 0.0, 1.0]])
     img_meta = dict(
         filename=filename,
         pcd_horizontal_flip=False,
@@ -199,7 +200,7 @@ def test_show_result_meshlab():
         box_type_3d=CameraInstance3DBoxes,
         pcd_trans=np.array([0., 0., 0.]),
         pcd_scale_factor=1.0,
-        cam_intrinsic=cam_intrinsic)
+        cam2img=cam2img)
     data = dict(
         points=[[torch.tensor(points)]], img_metas=[[img_meta]], img=[img])
     result = [

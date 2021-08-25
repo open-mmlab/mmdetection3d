@@ -282,7 +282,7 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='IndoorPointSample', num_points=20000),
+    dict(type='PointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
@@ -290,8 +290,8 @@ train_pipeline = [
 
 Data augmentation for point clouds:
 - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D.
-- `IndoorPointSample`: downsample the input point cloud.
+- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D (which means no translation).
+- `PointSample`: downsample the input point cloud.
 
 A typical train pipeline of SUN RGB-D for multi-modality (point cloud and image) 3D detection is as follows.
 
@@ -320,7 +320,7 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='IndoorPointSample', num_points=20000),
+    dict(type='PointSample', num_points=20000),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Collect3D',

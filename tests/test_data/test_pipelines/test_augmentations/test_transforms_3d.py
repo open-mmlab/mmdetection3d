@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import pytest
@@ -5,11 +6,12 @@ import torch
 
 from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
                           DepthInstance3DBoxes, LiDARInstance3DBoxes)
+from mmdet3d.core.bbox import Coord3DMode
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
                               GlobalRotScaleTrans, ObjectNameFilter,
                               ObjectNoise, ObjectRangeFilter, ObjectSample,
-                              PointShuffle, PointsRangeFilter,
+                              PointSample, PointShuffle, PointsRangeFilter,
                               RandomDropPointsColor, RandomFlip3D,
                               RandomJitterPoints, VoxelBasedPointSampler)
 
@@ -705,3 +707,47 @@ def test_voxel_based_point_filter():
     assert pts_instance_mask.min() >= 0
     assert pts_semantic_mask.max() < 6
     assert pts_semantic_mask.min() >= 0
+
+
+def test_points_sample():
+    np.random.seed(0)
+    points = np.fromfile(
+        './tests/data/kitti/training/velodyne_reduced/000000.bin',
+        np.float32).reshape(-1, 4)
+    annos = mmcv.load('./tests/data/kitti/kitti_infos_train.pkl')
+    info = annos[0]
+    rect = torch.tensor(info['calib']['R0_rect'].astype(np.float32))
+    Trv2c = torch.tensor(info['calib']['Tr_velo_to_cam'].astype(np.float32))
+
+    points = LiDARPoints(
+        points.copy(), points_dim=4).convert_to(Coord3DMode.CAM, rect @ Trv2c)
+    num_points = 20
+    sample_range = 40
+    input_dict = dict(points=points.clone())
+
+    point_sample = PointSample(
+        num_points=num_points, sample_range=sample_range)
+    sampled_pts = point_sample(input_dict)['points']
+
+    select_idx = np.array([
+        622, 146, 231, 444, 504, 533, 80, 401, 379, 2, 707, 562, 176, 491, 496,
+        464, 15, 590, 194, 449
+    ])
+    expected_pts = points.tensor.numpy()[select_idx]
+    assert np.allclose(sampled_pts.tensor.numpy(), expected_pts)
+
+    repr_str = repr(point_sample)
+    expected_repr_str = f'PointSample(num_points={num_points}, ' \
+                        f'sample_range={sample_range}, ' \
+                        'replace=False)'
+    assert repr_str == expected_repr_str
+
+    # test when number of far points are larger than number of sampled points
+    np.random.seed(0)
+    point_sample = PointSample(num_points=2, sample_range=sample_range)
+    input_dict = dict(points=points.clone())
+    sampled_pts = point_sample(input_dict)['points']
+
+    select_idx = np.array([449, 444])
+    expected_pts = points.tensor.numpy()[select_idx]
+    assert np.allclose(sampled_pts.tensor.numpy(), expected_pts)

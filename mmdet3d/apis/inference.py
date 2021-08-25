@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import re
@@ -423,7 +424,7 @@ def show_proj_det_result_meshlab(data,
             img_metas=data['img_metas'][0][0],
             show=show)
     elif box_mode == Box3DMode.CAM:
-        if 'cam_intrinsic' not in data['img_metas'][0][0]:
+        if 'cam2img' not in data['img_metas'][0][0]:
             raise NotImplementedError(
                 'camera intrinsic matrix is not provided')
 
@@ -434,7 +435,7 @@ def show_proj_det_result_meshlab(data,
             img,
             None,
             show_bboxes,
-            data['img_metas'][0][0]['cam_intrinsic'],
+            data['img_metas'][0][0]['cam2img'],
             out_dir,
             file_name,
             box_mode='camera',

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 from logging import warning
@@ -194,3 +195,20 @@ def mono_cam_box2vis(cam_box):
         cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))
 
     return cam_box
+
+
+def get_proj_mat_by_coord_type(img_meta, coord_type):
+    """Obtain image features using points.
+
+    Args:
+        img_meta (dict): Meta info.
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
+            Can be case-insensitive.
+
+    Returns:
+        torch.Tensor: transformation matrix.
+    """
+    coord_type = coord_type.upper()
+    mapping = {'LIDAR': 'lidar2img', 'DEPTH': 'depth2img', 'CAMERA': 'cam2img'}
+    assert coord_type in mapping.keys()
+    return img_meta[mapping[coord_type]]

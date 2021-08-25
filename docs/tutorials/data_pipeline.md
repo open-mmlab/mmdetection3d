@@ -5,7 +5,7 @@
 Following typical conventions, we use `Dataset` and `DataLoader` for data loading
 with multiple workers. `Dataset` returns a dict of data items corresponding
 the arguments of models' forward method.
-Since the data in object detection may not be the same size (image size, gt bbox size, etc.),
+Since the data in object detection may not be the same size (point number, gt bbox size, etc.),
 we introduce a new `DataContainer` type in MMCV to help collect and distribute
 data of different size.
 See [here](https://github.com/open-mmlab/mmcv/blob/master/mmcv/parallel/data_container.py) for more details.
@@ -15,7 +15,7 @@ defines how to process the annotations and a data pipeline defines all the steps
 A pipeline consists of a sequence of operations. Each operation takes a dict as input and also output a dict for the next transform.
 
 We present a classical pipeline in the following figure. The blue blocks are pipeline operations. With the pipeline going on, each operator can add new keys (marked as green) to the result dict or update the existing keys (marked as orange).
-![](../../resources/data_pipeline.png)
+![](https://github.com/open-mmlab/mmdetection3d/blob/master/resources/data_pipeline.png)
 
 The operations are categorized into data loading, pre-processing, formatting and test-time augmentation.
 

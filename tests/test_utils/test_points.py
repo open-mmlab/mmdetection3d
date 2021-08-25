@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import pytest
 import torch
@@ -193,6 +194,8 @@ def test_base_points():
         [[9.0722, 47.3678, -2.5382, 0.6666, 0.1956, 0.4974, 0.9409],
          [6.8547, 42.2509, -2.5955, 0.6565, 0.6248, 0.6954, 0.2538]])
     assert torch.allclose(expected_tensor, base_points[mask].tensor, 1e-4)
+    expected_tensor = torch.tensor([[0.6666], [0.1502], [0.6565], [0.2803]])
+    assert torch.allclose(expected_tensor, base_points[:, 3].tensor, 1e-4)
 
     # test length
     assert len(base_points) == 4
@@ -451,6 +454,8 @@ def test_cam_points():
         [[9.0722, 47.3678, -2.5382, 0.6666, 0.1956, 0.4974, 0.9409],
          [6.8547, 42.2509, -2.5955, 0.6565, 0.6248, 0.6954, 0.2538]])
     assert torch.allclose(expected_tensor, cam_points[mask].tensor, 1e-4)
+    expected_tensor = torch.tensor([[0.6666], [0.1502], [0.6565], [0.2803]])
+    assert torch.allclose(expected_tensor, cam_points[:, 3].tensor, 1e-4)
 
     # test length
     assert len(cam_points) == 4
@@ -725,6 +730,8 @@ def test_lidar_points():
         [[9.0722, 47.3678, -2.5382, 0.6666, 0.1956, 0.4974, 0.9409],
          [6.8547, 42.2509, -2.5955, 0.6565, 0.6248, 0.6954, 0.2538]])
     assert torch.allclose(expected_tensor, lidar_points[mask].tensor, 1e-4)
+    expected_tensor = torch.tensor([[0.6666], [0.1502], [0.6565], [0.2803]])
+    assert torch.allclose(expected_tensor, lidar_points[:, 3].tensor, 1e-4)
 
     # test length
     assert len(lidar_points) == 4
@@ -999,6 +1006,8 @@ def test_depth_points():
         [[9.0722, 47.3678, -2.5382, 0.6666, 0.1956, 0.4974, 0.9409],
          [6.8547, 42.2509, -2.5955, 0.6565, 0.6248, 0.6954, 0.2538]])
     assert torch.allclose(expected_tensor, depth_points[mask].tensor, 1e-4)
+    expected_tensor = torch.tensor([[0.6666], [0.1502], [0.6565], [0.2803]])
+    assert torch.allclose(expected_tensor, depth_points[:, 3].tensor, 1e-4)
 
     # test length
     assert len(depth_points) == 4

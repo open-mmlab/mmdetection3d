@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 from mmcv.parallel import DataContainer as DC
 
@@ -101,6 +102,7 @@ class Collect3D(object):
         - 'pad_shape': image shape after padding
         - 'lidar2img': transform from lidar to image
         - 'depth2img': transform from depth to image
+        - 'cam2img': transform from camera to image
         - 'pcd_horizontal_flip': a boolean indicating if point cloud is \
             flipped horizontally
         - 'pcd_vertical_flip': a boolean indicating if point cloud is \
@@ -108,13 +110,9 @@ class Collect3D(object):
         - 'box_mode_3d': 3D box mode
         - 'box_type_3d': 3D box type
         - 'img_norm_cfg': a dict of normalization information:
-
             - mean: per channel mean subtraction
             - std: per channel std divisor
             - to_rgb: bool indicating if bgr was converted to rgb
-        - 'rect': rectification matrix
-        - 'Trv2c': transformation from velodyne to camera coordinate
-        - 'P2': transformation betweeen cameras
         - 'pcd_trans': point cloud transformations
         - 'sample_idx': sample index
         - 'pcd_scale_factor': point cloud scale factor
@@ -125,22 +123,22 @@ class Collect3D(object):
         keys (Sequence[str]): Keys of results to be collected in ``data``.
         meta_keys (Sequence[str], optional): Meta keys to be converted to
             ``mmcv.DataContainer`` and collected in ``data[img_metas]``.
-            Default: ('filename', 'ori_shape', 'img_shape', 'lidar2img', \
-            'pad_shape', 'scale_factor', 'flip', 'pcd_horizontal_flip', \
-            'pcd_vertical_flip', 'box_mode_3d', 'box_type_3d', \
-            'img_norm_cfg', 'rect', 'Trv2c', 'P2', 'pcd_trans', \
+            Default: ('filename', 'ori_shape', 'img_shape', 'lidar2img',
+            'depth2img', 'cam2img', 'pad_shape', 'scale_factor', 'flip',
+            'pcd_horizontal_flip', 'pcd_vertical_flip', 'box_mode_3d',
+            'box_type_3d', 'img_norm_cfg', 'pcd_trans',
             'sample_idx', 'pcd_scale_factor', 'pcd_rotation', 'pts_filename')
     """
 
     def __init__(self,
                  keys,
                  meta_keys=('filename', 'ori_shape', 'img_shape', 'lidar2img',
-                            'depth2img', 'pad_shape', 'scale_factor', 'flip',
-                            'cam_intrinsic', 'pcd_horizontal_flip',
+                            'depth2img', 'cam2img', 'pad_shape',
+                            'scale_factor', 'flip', 'pcd_horizontal_flip',
                             'pcd_vertical_flip', 'box_mode_3d', 'box_type_3d',
-                            'img_norm_cfg', 'rect', 'Trv2c', 'P2', 'pcd_trans',
-                            'sample_idx', 'pcd_scale_factor', 'pcd_rotation',
-                            'pts_filename', 'transformation_3d_flow')):
+                            'img_norm_cfg', 'pcd_trans', 'sample_idx',
+                            'pcd_scale_factor', 'pcd_rotation', 'pts_filename',
+                            'transformation_3d_flow')):
         self.keys = keys
         self.meta_keys = meta_keys
 

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,

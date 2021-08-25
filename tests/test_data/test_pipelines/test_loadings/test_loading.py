@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import pytest
@@ -304,7 +305,7 @@ def test_load_image_from_file_mono_3d():
         img_info=dict(filename=filename, cam_intrinsic=cam_intrinsic.copy()))
     results = load_image_from_file_mono_3d(input_dict)
     assert results['img'].shape == (900, 1600, 3)
-    assert np.all(results['cam_intrinsic'] == cam_intrinsic)
+    assert np.all(results['cam2img'] == cam_intrinsic)
 
     repr_str = repr(load_image_from_file_mono_3d)
     expected_repr_str = 'LoadImageFromFileMono3D(to_float32=False, ' \

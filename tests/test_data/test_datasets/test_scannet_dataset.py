@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import numpy as np
 import pytest
@@ -32,7 +33,7 @@ def test_getitem():
             type='PointSegClassMapping',
             valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
                            34, 36, 39)),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(
             type='RandomFlip3D',
             sync_2d=False,

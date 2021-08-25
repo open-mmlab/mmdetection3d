@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import mmcv
 import numpy as np
@@ -628,7 +629,7 @@ class NuScenesMonoDataset(CocoDataset):
                 img,
                 gt_bboxes,
                 pred_bboxes,
-                img_metas['cam_intrinsic'],
+                img_metas['cam2img'],
                 out_dir,
                 file_name,
                 box_mode='camera',
