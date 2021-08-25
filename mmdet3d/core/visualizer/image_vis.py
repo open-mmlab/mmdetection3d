@@ -188,7 +188,10 @@ def draw_camera_bbox3d_on_img(bboxes3d,
     points_3d = corners_3d.reshape(-1, 3)
     if not isinstance(cam2img, torch.Tensor):
         cam2img = torch.from_numpy(np.array(cam2img))
-    cam2img = cam2img.reshape(3, 3).float().cpu()
+    if cam2img.shape[0] == 3:
+        cam2img = cam2img.reshape(3, 3).float().cpu()
+    else:
+        cam2img = cam2img.reshape(4, 4).float().cpu()
 
     # project to 2d to get image coords (uv)
     uv_origin = points_cam2img(points_3d, cam2img)
