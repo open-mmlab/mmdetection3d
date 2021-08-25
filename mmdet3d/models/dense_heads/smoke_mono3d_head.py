@@ -133,9 +133,16 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         result_list = []
         for img_id in range(len(img_metas)):
+
             bboxes = batch_bboxes[img_id]
             scores = batch_scores[img_id]
             labels = batch_topk_labels[img_id]
+
+            keep_idx = scores > 0.25
+            bboxes = bboxes[keep_idx]
+            scores = scores[keep_idx]
+            labels = labels[keep_idx]
+
             bboxes = img_metas[img_id]['box_type_3d'](
                 bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
             attrs = None
