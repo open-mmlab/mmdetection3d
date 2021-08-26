@@ -15,7 +15,8 @@ class DGCNNHead(Base3DDecodeHead):
     `reimplementation code <https://github.com/AnTao97/dgcnn.pytorch>`_.
 
     Args:
-        fp_channels (tuple[int]): Tuple of mlp channels in FP modules.
+        fp_channels (tuple[int], optional): Tuple of mlp channels in feature
+            propagation (FP) modules. Defaults to (1216, 512).
     """
 
     def __init__(self, fp_channels=(1216, 512), **kwargs):

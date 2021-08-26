@@ -12,9 +12,10 @@ class DGCNNFPModule(BaseModule):
     Args:
         mlp_channels (list[int]): List of mlp channels.
         norm_cfg (dict, optional): Type of activation method.
-            Default: dict(type='BN1d').
+            Defaults to dict(type='BN1d').
         act_cfg (dict, optional): Type of activation method.
-            Default: dict(type='ReLU').
+            Defaults to dict(type='ReLU').
+        init_cfg (dict, optional): Initialization config. Defaults to None.
     """
 
     def __init__(self,

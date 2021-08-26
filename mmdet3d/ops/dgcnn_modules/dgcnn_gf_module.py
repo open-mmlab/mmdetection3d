@@ -16,19 +16,18 @@ class BaseDGCNNGFModule(nn.Module):
         mlp_channels (list[list[int]]): Specify of the dgcnn before
             the global pooling for each graph feature module.
         knn_modes (list[str], optional): Type of KNN method, valid mode
-            ['F-KNN', 'D-KNN'], Default: ['F-KNN'].
+            ['F-KNN', 'D-KNN'], Defaults to ['F-KNN'].
         dilated_group (bool, optional): Whether to use dilated ball query.
-            Default: False.
+            Defaults to False.
         use_xyz (bool, optional): Whether to use xyz as point features.
-            Default: True.
-        pool_mod (str, optional): Type of pooling method.
-            Default: 'max_pool'.
+            Defaults to True.
+        pool_mode (str, optional): Type of pooling method. Defaults to 'max'.
         normalize_xyz (bool, optional): If ball query, whether to normalize
-            local XYZ with radius. Default: False.
+            local XYZ with radius. Defaults to False.
         grouper_return_grouped_xyz (bool, optional): Whether to return grouped
-            xyz in `QueryAndGroup`. Default: False.
+            xyz in `QueryAndGroup`. Defaults to False.
         grouper_return_grouped_idx (bool, optional): Whether to return grouped
-            idx in `QueryAndGroup`. Default: False.
+            idx in `QueryAndGroup`. Defaults to False.
     """
 
     def __init__(self,
@@ -38,21 +37,25 @@ class BaseDGCNNGFModule(nn.Module):
                  knn_modes=['F-KNN'],
                  dilated_group=False,
                  use_xyz=True,
-                 pool_mod='max',
+                 pool_mode='max',
                  normalize_xyz=False,
                  grouper_return_grouped_xyz=False,
                  grouper_return_grouped_idx=False):
         super(BaseDGCNNGFModule, self).__init__()
 
-        assert len(sample_nums) == len(mlp_channels)
-        assert pool_mod in ['max', 'avg']
-        assert isinstance(knn_modes, list) or isinstance(knn_modes, tuple)
+        assert len(sample_nums) == len(
+            mlp_channels
+        ), 'Num_samples and mlp_channels should have the same length.'
+        assert pool_mode in ['max', 'avg'
+                             ], "Pool_mode should be one of ['max', 'avg']."
+        assert isinstance(knn_modes, list) or isinstance(
+            knn_modes, tuple), 'The type of knn_modes should be list or tuple.'
 
         if isinstance(mlp_channels, tuple):
             mlp_channels = list(map(list, mlp_channels))
         self.mlp_channels = mlp_channels
 
-        self.pool_mod = pool_mod
+        self.pool_mode = pool_mode
         self.groupers = nn.ModuleList()
         self.mlps = nn.ModuleList()
         self.knn_modes = knn_modes
@@ -91,11 +94,11 @@ class BaseDGCNNGFModule(nn.Module):
             torch.Tensor: (B, C, N)
                 Pooled features aggregating local information.
         """
-        if self.pool_mod == 'max':
+        if self.pool_mode == 'max':
             # (B, C, N, 1)
             new_features = F.max_pool2d(
                 features, kernel_size=[1, features.size(3)])
-        elif self.pool_mod == 'avg':
+        elif self.pool_mode == 'avg':
             # (B, C, N, 1)
             new_features = F.avg_pool2d(
                 features, kernel_size=[1, features.size(3)])
@@ -156,26 +159,26 @@ class DGCNNGFModule(BaseDGCNNGFModule):
         mlp_channels (list[int]): Specify of the dgcnn before
             the global pooling for each graph feature module.
         num_sample (int, optional): Number of samples in each knn or ball
-            query. Default: None.
+            query. Defaults to None.
         knn_mode (str, optional): Type of KNN method, valid mode
-            ['F-KNN', 'D-KNN'], Default: 'F-KNN'.
+            ['F-KNN', 'D-KNN']. Defaults to 'F-KNN'.
         radius (float, optional): Radius to group with.
-            Default: None.
+            Defaults to None.
         dilated_group (bool, optional): Whether to use dilated ball query.
-            Default: False.
+            Defaults to False.
         norm_cfg (dict, optional): Type of normalization method.
-            Default: dict(type='BN2d').
+            Defaults to dict(type='BN2d').
         act_cfg (dict, optional): Type of activation method.
-            Default: dict(type='ReLU').
+            Defaults to dict(type='ReLU').
         use_xyz (bool, optional): Whether to use xyz as point features.
-            Default: True.
-        pool_mod (str, optional): Type of pooling method.
-            Default: 'max_pool'.
+            Defaults to True.
+        pool_mode (str, optional): Type of pooling method.
+            Defaults to 'max'.
         normalize_xyz (bool, optional): If ball query, whether to normalize
-            local XYZ with radius. Default: False.
+            local XYZ with radius. Defaults to False.
         bias (bool | str, optional): If specified as `auto`, it will be decided
             by the norm_cfg. Bias will be set as True if `norm_cfg` is None,
-            otherwise False. Default: "auto".
+            otherwise False. Defaults to 'auto'.
     """
 
     def __init__(self,
@@ -187,7 +190,7 @@ class DGCNNGFModule(BaseDGCNNGFModule):
                  norm_cfg=dict(type='BN2d'),
                  act_cfg=dict(type='ReLU'),
                  use_xyz=True,
-                 pool_mod='max',
+                 pool_mode='max',
                  normalize_xyz=False,
                  bias='auto'):
         super(DGCNNGFModule, self).__init__(
@@ -196,7 +199,7 @@ class DGCNNGFModule(BaseDGCNNGFModule):
             knn_modes=[knn_mode],
             radii=[radius],
             use_xyz=use_xyz,
-            pool_mod=pool_mod,
+            pool_mode=pool_mode,
             normalize_xyz=normalize_xyz,
             dilated_group=dilated_group)
 

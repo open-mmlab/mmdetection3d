@@ -4,7 +4,7 @@
 
 <!-- [ALGORITHM] -->
 
-We implement DGCNN and provide the result and checkpoints on S3DIS dataset.
+We implement DGCNN and provide the results and checkpoints on S3DIS dataset.
 
 ```
 @article{dgcnn,
@@ -35,6 +35,8 @@ We implement DGCNN and provide the result and checkpoints on S3DIS dataset.
 
 -   We use XYZ+Color+Normalized_XYZ as input in all the experiments on S3DIS datasets.
 -   `Area_5` Split means training the model on Area_1, 2, 3, 4, 6 and testing on Area_5.
+-   `6-fold` Split means the overall result of 6 different splits (Area_1, Area_2, Area_3, Area_4, Area_5 and Area_6 Splits).
+-   Users need to modify `train_area` and `test_area` in the S3DIS dataset's [config](./configs/_base_/datasets/s3dis_seg-3d-13class.py) to set the training and testing areas, respectively.
 
 ## Indeterminism
 
