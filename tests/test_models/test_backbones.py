@@ -305,15 +305,14 @@ def test_dgcnn_gf():
 
     # DGCNNGF used in segmentation
     cfg = dict(
-        type='DGCNN',
+        type='DGCNNBackbone',
         in_channels=6,
         num_samples=(20, 20, 20),
-        knn_mods=['D-KNN', 'F-KNN', 'F-KNN'],
+        knn_modes=['D-KNN', 'F-KNN', 'F-KNN'],
         radius=(None, None, None),
         gf_channels=((64, 64), (64, 64), (64, )),
         fa_channels=(1024, ),
-        act_cfg=dict(type='ReLU'),
-        gf_cfg=dict(type='DGCNNGFModule', pool_mod='max'))
+        act_cfg=dict(type='ReLU'))
 
     self = build_backbone(cfg)
     self.cuda()
