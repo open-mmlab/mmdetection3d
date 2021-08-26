@@ -7,25 +7,32 @@ from mmdet.models import BACKBONES
 
 
 @BACKBONES.register_module()
-class DGCNN(BaseModule):
+class DGCNNBackbone(BaseModule):
     """Backbone network for DGCNN.
 
     Args:
         in_channels (int): Input channels of point cloud.
-        num_samples (tuple[int]): The number of samples for knn or ball query
-            in each GF module.
-        knn_modes (tuple[str]): If knn, mode of KNN of each GF module.
-        radius (tuple[float]): Sampling radii of each GF module.
-        gf_channels (tuple[tuple[int]]): Out channels of each mlp in GF module.
-        fa_channels (tuple[int]): Out channels of each mlp in FA module.
+        num_samples (tuple[int], optional): The number of samples for knn or
+            ball query in each graph feature (GF) module.
+            Defaults to (20, 20, 20).
+        knn_modes (tuple[str], optional): Mode of KNN of each knn module.
+            Defaults to ('D-KNN', 'F-KNN', 'F-KNN').
+        radius (tuple[float], optional): Sampling radii of each GF module.
+            Defaults to (None, None, None).
+        gf_channels (tuple[tuple[int]], optional): Out channels of each mlp in
+            GF module. Defaults to ((64, 64), (64, 64), (64, )).
+        fa_channels (tuple[int], optional): Out channels of each mlp in FA
+            module. Defaults to (1024, ).
         act_cfg (dict, optional): Config of activation layer.
-            Default: dict(type='ReLU').
+            Defaults to dict(type='ReLU').
+        init_cfg (dict, optional): Initialization config.
+            Defaults to None.
     """
 
     def __init__(self,
                  in_channels,
-                 num_samples=(20, 20, 20),
-                 knn_modes=['D-KNN', 'F-KNN', 'F-KNN'],
+                 num_samples,
+                 knn_modes=('D-KNN', 'F-KNN', 'F-KNN'),
                  radius=(None, None, None),
                  gf_channels=((64, 64), (64, 64), (64, )),
                  fa_channels=(1024, ),
@@ -72,7 +79,8 @@ class DGCNN(BaseModule):
                 with shape (B, N, in_channels).
 
         Returns:
-            dict[str, list[torch.Tensor]]: Outputs after GF and FA modules.
+            dict[str, list[torch.Tensor]]: Outputs after graph feature (GF) and
+                feature aggregation (FA) modules.
 
                 - gf_points (list[torch.Tensor]): Outputs after each GF module.
                 - fa_points (torch.Tensor): Outputs after FA module.

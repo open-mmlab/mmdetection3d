@@ -2,7 +2,7 @@
 model = dict(
     type='EncoderDecoder3D',
     backbone=dict(
-        type='DGCNN',
+        type='DGCNNBackbone',
         in_channels=9,  # [xyz, rgb, normal_xyz], modified with dataset
         num_samples=(20, 20, 20),
         knn_modes=('D-KNN', 'F-KNN', 'F-KNN'),
