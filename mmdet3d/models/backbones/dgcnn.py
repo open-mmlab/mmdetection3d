@@ -31,7 +31,7 @@ class DGCNNBackbone(BaseModule):
 
     def __init__(self,
                  in_channels,
-                 num_samples,
+                 num_samples=(20, 20, 20),
                  knn_modes=('D-KNN', 'F-KNN', 'F-KNN'),
                  radius=(None, None, None),
                  gf_channels=((64, 64), (64, 64), (64, )),
