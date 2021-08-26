@@ -42,7 +42,8 @@ class DGCNNBackbone(BaseModule):
         self.num_gf = len(gf_channels)
 
         assert len(num_samples) == len(knn_modes) == len(radius) == len(
-            gf_channels)
+            gf_channels), 'Num_samples, knn_modes, radius and gf_channels \
+            should have the same length.'
 
         self.GF_modules = nn.ModuleList()
         gf_in_channel = in_channels * 2
