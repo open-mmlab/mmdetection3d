@@ -1,11 +1,12 @@
 _base_ = './hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py'
 
 model = dict(
-    pretrained=dict(pts='open-mmlab://regnetx_400mf'),
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',
         arch='regnetx_400mf',
+        init_cfg=dict(
+            type='Pretrained', checkpoint='open-mmlab://regnetx_400mf'),
         out_indices=(1, 2, 3),
         frozen_stages=-1,
         strides=(1, 2, 2, 2),
