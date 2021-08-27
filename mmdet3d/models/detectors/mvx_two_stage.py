@@ -96,7 +96,7 @@ class MVXTwoStageDetector(Base3DDetector):
                     type='Pretrained', checkpoint=img_pretrained)
 
         if self.with_pts_backbone:
-            if img_pretrained is not None:
+            if pts_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated \
                     key, please consider using init_cfg')
                 self.pts_backbone.init_cfg = dict(
