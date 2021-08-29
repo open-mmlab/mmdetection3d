@@ -122,8 +122,8 @@ class CenterPoint(MVXTwoStageDetector):
                                 task_id][0][key][:, 1, ...]
                         elif key == 'rot':
                             outs[task_id][0][
-                                key][:, 1,
-                                     ...] = -outs[task_id][0][key][:, 1, ...]
+                                key][:, 0,
+                                     ...] = -outs[task_id][0][key][:, 0, ...]
                         elif key == 'vel':
                             outs[task_id][0][
                                 key][:, 1,
@@ -136,8 +136,8 @@ class CenterPoint(MVXTwoStageDetector):
                                 task_id][0][key][:, 0, ...]
                         elif key == 'rot':
                             outs[task_id][0][
-                                key][:, 0,
-                                     ...] = -outs[task_id][0][key][:, 0, ...]
+                                key][:, 1,
+                                     ...] = -outs[task_id][0][key][:, 1, ...]
                         elif key == 'vel':
                             outs[task_id][0][
                                 key][:, 0,
