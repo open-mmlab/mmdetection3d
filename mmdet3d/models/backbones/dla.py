@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import torch
 from mmcv.cnn import (build_conv_layer, build_norm_layer, constant_init,
                       kaiming_init)
