@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7]
+        python-version: [3.6, 3.7, 3.9]
         torch: [1.5.0+cu101, 1.6.0+cu101, 1.7.0+cu101, 1.8.0+cu101]
         include:
           - torch: 1.5.0+cu101
