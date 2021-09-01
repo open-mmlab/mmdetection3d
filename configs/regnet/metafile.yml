@@ -15,68 +15,93 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
-      Training Memory (GB): 16.4
+      Training Memory(GB): 17.0
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 41.2
-          NDS: 55.2
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230334-53044f32.pth
-
-  - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d
-    In Collection: RegNetX
-    Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py
-    Metadata:
-      Training Data: nuScenes
-      Training Memory (GB): 17.3
-    Results:
-      - Task: 3D Object Detection
-        Dataset: nuScenes
-        Metrics:
-          mAP: 44.8
-          NDS: 56.4
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d_20200620_230239-c694dce7.pth
+          mAP: 41.40
+          NDS: 54.60
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d_20210827_013628-08b5cf1e.pth
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
-      Training Memory (GB): 24.0
+      Training Memory(GB): 23.9
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 48.2
-          NDS: 59.3
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d_20200629_050311-dcd4e090.pth
+          mAP: 48.77
+          NDS: 59.47
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d_20210827_013647-4ed9ea6b.pth
 
   - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
-      Training Memory (GB): 15.9
+      Training Memory (GB): 16.1
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 14.9
+          Private Score: 14.8
           Public Score: 15.1
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d_20210524_092151-42513826.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d_20210828_124252-2624a744.pth
+
+  - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d
+    In Collection: RegNetX
+    Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+      Training Memory (GB): 19.8
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 17.3
+          Public Score: 17.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d_LOG_ALL-093f7ea6.pth
+
+  - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_range100_2x8_2x_lyft-3d
+    In Collection: RegNetX
+    Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_range100_2x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+      Training Memory (GB): 24.5
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 15.9
+          Public Score: 16.0
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_range100_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_range100_2x8_2x_lyft-3d_20210828_222452-4db050dc.pth
+
+  - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d
+    In Collection: RegNetX
+    Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py
+    Metadata:
+      Training Memory(GB): 17.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 45.12
+          NDS: 57.01
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d_20210827_095804-4239f111.pth
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
-      Training Memory (GB): 13.0
+      Training Memory (GB): 13.1
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 16.0
-          Public Score: 16.1
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d_20210521_115618-823dcf18.pth
+          Private Score: 16.2
+          Public Score: 16.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d_20210828_234451-79c31b63.pth
