@@ -59,23 +59,42 @@ def test_imvoxel_neck():
 
 
 def test_dla_neck():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
-    neck_cfg = dict(
-        type='DLANeck',
-        in_channels=[16, 32, 64, 128, 256, 512],
-        start_level=2,
-        end_level=5,
-        norm_cfg=dict(type='GN', num_groups=32))
-    neck = build_neck(neck_cfg)
-    neck.init_weights()
-    neck.cuda()
-    feat1 = torch.rand([4, 16, 32, 32], device='cuda')
-    feat2 = torch.rand([4, 32, 16, 16], device='cuda')
-    feat3 = torch.rand([4, 64, 8, 8], device='cuda')
-    feat4 = torch.rand([4, 128, 4, 4], device='cuda')
-    feat5 = torch.rand([4, 256, 2, 2], device='cuda')
-    feat6 = torch.rand([4, 512, 1, 1], device='cuda')
-    feats = [feat1, feat2, feat3, feat4, feat5, feat6]
-    outputs = neck(feats)
-    assert outputs.shape == (4, 64, 8, 8)
+
+    s = 32
+    in_channels = [16, 32, 64, 128, 256, 512]
+    feat_sizes = [s // 2**i for i in range(6)]  # [32, 16, 8, 4, 2, 1]
+
+    if torch.cuda.is_available():
+        # Test DLA Neck with DCNv2 on GPU
+        neck_cfg = dict(
+            type='DLANeck',
+            in_channels=[16, 32, 64, 128, 256, 512],
+            start_level=2,
+            end_level=5,
+            norm_cfg=dict(type='GN', num_groups=32))
+        neck = build_neck(neck_cfg)
+        neck.init_weights()
+        neck.cuda()
+        feats = [
+            torch.rand(4, in_channels[i], feat_sizes[i], feat_sizes[i]).cuda()
+            for i in range(len(in_channels))
+        ]
+        outputs = neck(feats)
+        assert outputs.shape == (4, 64, 8, 8)
+    else:
+        # Test DLA Neck without DCNv2 on CPU
+        neck_cfg = dict(
+            type='DLANeck',
+            in_channels=[16, 32, 64, 128, 256, 512],
+            start_level=2,
+            end_level=5,
+            norm_cfg=dict(type='GN', num_groups=32),
+            use_dcn=False)
+        neck = build_neck(neck_cfg)
+        neck.init_weights()
+        feats = [
+            torch.rand(4, in_channels[i], feat_sizes[i], feat_sizes[i])
+            for i in range(len(in_channels))
+        ]
+        outputs = neck(feats)
+        assert outputs.shape == (4, 64, 8, 8)

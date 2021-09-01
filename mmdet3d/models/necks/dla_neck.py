@@ -27,10 +27,10 @@ class IDAUp(nn.Module):
     """IDAUp module for upsamling different scale's features to same scale.
 
     Args:
-        out_channel (int): Number of output channels for DeformConv.
-        in_channels_list (List[int]): List of input channels of multi-scale
+        out_channels (int): Number of output channels for DeformConv.
+        in_channels (List[int]): List of input channels of multi-scale
             feature map.
-        up_kernel_size_list (List[int]): List of size of the convolving
+        kernel_sizes (List[int]): List of size of the convolving
             kernel of different scales.
         norm_cfg (dict, optional): Config dict for normalization layer.
             Default: None.
@@ -39,9 +39,9 @@ class IDAUp(nn.Module):
 
     def __init__(
         self,
-        out_channel,
-        in_channels_list,
-        up_kernel_size_list,
+        out_channels,
+        in_channels,
+        kernel_sizes,
         norm_cfg=None,
         use_dcn=True,
     ):
@@ -51,20 +51,20 @@ class IDAUp(nn.Module):
         self.ups = nn.ModuleList()
         self.nodes = nn.ModuleList()
 
-        for i in range(1, len(in_channels_list)):
-            in_channel = in_channels_list[i]
-            up_kernel_size = int(up_kernel_size_list[i])
+        for i in range(1, len(in_channels)):
+            in_channel = in_channels[i]
+            up_kernel_size = int(kernel_sizes[i])
             proj = ConvModule(
                 in_channel,
-                out_channel,
+                out_channels,
                 3,
                 padding=1,
                 bias=True,
                 conv_cfg=dict(type='DCNv2') if self.use_dcn else None,
                 norm_cfg=norm_cfg)
             node = ConvModule(
-                out_channel,
-                out_channel,
+                out_channels,
+                out_channels,
                 3,
                 padding=1,
                 bias=True,
@@ -72,13 +72,13 @@ class IDAUp(nn.Module):
                 norm_cfg=norm_cfg)
             up = build_conv_layer(
                 dict(type='deconv'),
-                out_channel,
-                out_channel,
+                out_channels,
+                out_channels,
                 up_kernel_size * 2,
                 stride=up_kernel_size,
                 padding=up_kernel_size // 2,
                 output_padding=0,
-                groups=out_channel,
+                groups=out_channels,
                 bias=False)
 
             self.projs.append(proj)
@@ -113,6 +113,8 @@ class DLAUp(nn.Module):
             different scales. Default: None.
         norm_cfg (dict, optional): Config dict for normalization layer.
             Default: None.
+        use_dcn (bool, optional): Whether to use dcn in IDAup module.
+            Default: True.
     """
 
     def __init__(self,
@@ -120,7 +122,8 @@ class DLAUp(nn.Module):
                  channels,
                  scales,
                  in_channels=None,
-                 norm_cfg=None):
+                 norm_cfg=None,
+                 use_dcn=True):
         super(DLAUp, self).__init__()
         self.start_level = start_level
         if in_channels is None:
@@ -133,7 +136,7 @@ class DLAUp(nn.Module):
             setattr(
                 self, 'ida_{}'.format(i),
                 IDAUp(channels[j], in_channels[j:], scales[j:] // scales[j],
-                      norm_cfg))
+                      norm_cfg, use_dcn))
             scales[j + 1:] = scales[j]
             in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
@@ -167,13 +170,16 @@ class DLANeck(nn.Module):
             ends. Default: 5.
         norm_cfg (dict, optional): Config dict for normalization
             layer. Default: None.
+        use_dcn (bool, optional): Whether to use dcn in IDAup module.
+            Default: True.
     """
 
     def __init__(self,
                  in_channels=[16, 32, 64, 128, 256, 512],
                  start_level=2,
                  end_level=5,
-                 norm_cfg=None):
+                 norm_cfg=None,
+                 use_dcn=True):
         super(DLANeck, self).__init__()
         self.start_level = start_level
         self.end_level = end_level
@@ -182,11 +188,13 @@ class DLANeck(nn.Module):
             start_level=self.start_level,
             channels=in_channels[self.start_level:],
             scales=scales,
-            norm_cfg=norm_cfg)
+            norm_cfg=norm_cfg,
+            use_dcn=use_dcn)
         self.ida_up = IDAUp(
             in_channels[self.start_level],
             in_channels[self.start_level:self.end_level],
-            [2**i for i in range(self.end_level - self.start_level)], norm_cfg)
+            [2**i for i in range(self.end_level - self.start_level)], norm_cfg,
+            use_dcn)
 
     def forward(self, x):
         x = list(x)
