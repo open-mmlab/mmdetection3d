@@ -73,6 +73,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        run: pip install pip --upgrade
       - name: Install CUDA
         run: |
           export INSTALLER=cuda-repo-${UBUNTU_VERSION}_${CUDA}_amd64.deb
@@ -116,7 +118,7 @@ jobs:
       # Only upload coverage report for python3.7 && pytorch1.5
       - name: Upload coverage to Codecov
         if: ${{matrix.torch == '1.5.0+cu101' && matrix.python-version == '3.7'}}
-        uses: codecov/codecov-action@v1.0.10
+        uses: codecov/codecov-action@v1.0.14
         with:
           file: ./coverage.xml
           flags: unittests
