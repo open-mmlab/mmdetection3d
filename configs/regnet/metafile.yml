@@ -63,7 +63,7 @@ Models:
         Metrics:
           Private Score: 17.3
           Public Score: 17.4
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d_LOG_ALL-093f7ea6.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d_20210828_115849-093f7ea6.pth
 
   - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_range100_2x8_2x_lyft-3d
     In Collection: RegNetX
