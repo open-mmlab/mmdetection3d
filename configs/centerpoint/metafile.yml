@@ -11,80 +11,197 @@ Collections:
     README: configs/centerpoint/README.md
 
 Models:
-  - Name: centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
+  - Name: centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory (GB): 4.9
+      Training Memory(GB): 8.7
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 56.19
-          NDS: 64.43
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20201001_135205-5db91e00.pth
+          mAP: 57.13
+          NDS: 65.54
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus_20210814_032429-68486946.pth
 
-  - Name: centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
+  - Name: centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory (GB): 5.2
+      Training Memory(GB): 5.3
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 56.34
-          NDS: 64.81
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20201004_075317-26d8176c.pth
-
-  - Name: centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
-    In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
-    Metadata:
-      Training Memory (GB): 7.8
-    Results:
-      - Task: 3D Object Detection
-        Dataset: nuScenes
-        Metrics:
-          mAP: 57.34
-          NDS: 65.23
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20200925_230905-358fbe3b.pth
-
-  - Name: centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
-    In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
-    Metadata:
-      Training Memory (GB): 8.5
-    Results:
-      - Task: 3D Object Detection
-        Dataset: nuScenes
-        Metrics:
-          mAP: 57.27
-          NDS: 65.58
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20200930_201619-67c8496f.pth
+          mAP: 56.03
+          NDS: 64.62
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus_20210816_072453-d2bbdc71.pth
 
   - Name: centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory (GB): 4.4
+      Training Memory(GB): 4.4
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 49.07
-          NDS: 59.66
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20201004_170716-a134a233.pth
+          mAP: 48.33
+          NDS: 59.12
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210816_064624-0f3299c0.pth
+
+  - Name: centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 5.3
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 56.44
+          NDS: 64.63
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210815_085857-9ba7f3a5.pth
+
+  - Name: centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus.py
+    Metadata:
+      Training Memory(GB): 8.7
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 57.34
+          NDS: 59.04
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus_20210822_021103-48ee1a9a.pth
+
+  - Name: centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 8.5
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 56.35
+          NDS: 65.21
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20210827_161135-1782af3e.pth
+
+  - Name: centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_tta_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_tta_20e_nus.py
+    Metadata:
+      Training Memory(GB): 8.7
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 60.23
+          NDS: 67.34
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_tta_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_tta_20e_nus_20210824_090810-3b7add71.pth
+
+  - Name: centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_flip-tta_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_flip-tta_20e_nus.py
+    Metadata:
+      Training Memory(GB): 8.7
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 59.51
+          NDS: 67.12
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_flip-tta_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_flip-tta_20e_nus_20210814_065655-4eb563f6.pth
+
+  - Name: centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 8.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 57.39
+          NDS: 65.45
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus_20210814_132346-340fe7d5.pth
+
+  - Name: centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 5.5
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 56.45
+          NDS: 64.48
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus_20210815_023812-fbf8dd33.pth
+
+  - Name: centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 4.6
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 48.63
+          NDS: 59.27
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20210815_005003-7561138d.pth
+
+  - Name: centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 4.4
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 48.15
+          NDS: 58.83
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus_20210814_162937-be654cec.pth
 
   - Name: centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory (GB): 4.6
+      Training Memory(GB): 4.6
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 48.8
-          NDS: 59.67
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20200930_103722-3bb135f2.pth
+          mAP: 48.57
+          NDS: 59.50
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20210815_202702-f03ab9e4.pth
+
+  - Name: centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 5.5
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 56.00
+          NDS: 64.44
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20210814_060754-c9d535d2.pth
+
+  - Name: centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
+    In Collection: CenterPoint
+    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
+    Metadata:
+      Training Memory(GB): 8.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 56.62
+          NDS: 64.79
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210814_113418-76ae0cf0.pth
