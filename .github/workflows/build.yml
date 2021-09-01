@@ -7,7 +7,7 @@ on: [push, pull_request]
 
 jobs:
   lint:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.7
@@ -34,7 +34,7 @@ jobs:
       UBUNTU_VERSION: ubuntu1804
       FORCE_CUDA: 1
       CUDA_ARCH: ${{matrix.cuda_arch}}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.6, 3.7]
@@ -65,7 +65,7 @@ jobs:
             torch_version: torch1.8.0
             mmcv: 1.8.0+cu101
             torchvision: 0.9.0+cu101
-            cuda_arch: "8.0"
+            cuda_arch: "7.0"
 
     steps:
       - uses: actions/checkout@v2
@@ -93,7 +93,7 @@ jobs:
         run: pip install Pillow==6.2.2
         if: ${{matrix.torchvision < 0.5}}
       - name: Install PyTorch
-        run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
+        run: pip install numpy==1.19.5 torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
           pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
