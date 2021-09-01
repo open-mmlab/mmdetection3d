@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.9]
+        python-version: [3.6, 3.7]
         torch: [1.5.0+cu101, 1.6.0+cu101, 1.7.0+cu101, 1.8.0+cu101]
         include:
           - torch: 1.5.0+cu101
@@ -56,6 +56,12 @@ jobs:
             torchvision: 0.8.1+cu101
             cuda_arch: "7.0"
           - torch: 1.8.0+cu101
+            torch_version: torch1.8.0
+            mmcv: 1.8.0+cu101
+            torchvision: 0.9.0+cu101
+            cuda_arch: "7.0"
+          - python-version: 3.9
+            torch: 1.8.0+cu101
             torch_version: torch1.8.0
             mmcv: 1.8.0+cu101
             torchvision: 0.9.0+cu101
