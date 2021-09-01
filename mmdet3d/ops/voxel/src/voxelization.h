@@ -29,6 +29,13 @@ int hard_voxelize_gpu(const at::Tensor &points, at::Tensor &voxels,
                       const int max_points, const int max_voxels,
                       const int NDim = 3);
 
+int nondisterministic_hard_voxelize_gpu(const at::Tensor &points, at::Tensor &voxels,
+                                        at::Tensor &coors, at::Tensor &num_points_per_voxel,
+                                        const std::vector<float> voxel_size,
+                                        const std::vector<float> coors_range,
+                                        const int max_points, const int max_voxels,
+                                        const int NDim = 3);
+
 void dynamic_voxelize_gpu(const at::Tensor &points, at::Tensor &coors,
                           const std::vector<float> voxel_size,
                           const std::vector<float> coors_range,
@@ -53,12 +60,17 @@ inline int hard_voxelize(const at::Tensor &points, at::Tensor &voxels,
                          const std::vector<float> voxel_size,
                          const std::vector<float> coors_range,
                          const int max_points, const int max_voxels,
-                         const int NDim = 3) {
+                         const int NDim = 3, const bool deterministic = true) {
   if (points.device().is_cuda()) {
 #ifdef WITH_CUDA
-    return hard_voxelize_gpu(points, voxels, coors, num_points_per_voxel,
-                             voxel_size, coors_range, max_points, max_voxels,
-                             NDim);
+    if (deterministic) {
+      return hard_voxelize_gpu(points, voxels, coors, num_points_per_voxel,
+                               voxel_size, coors_range, max_points, max_voxels,
+                               NDim);
+    }
+    return nondisterministic_hard_voxelize_gpu(points, voxels, coors, num_points_per_voxel,
+                                               voxel_size, coors_range, max_points, max_voxels,
+                                               NDim);
 #else
     AT_ERROR("Not compiled with GPU support");
 #endif

@@ -15,7 +15,8 @@ class _Voxelization(Function):
                 voxel_size,
                 coors_range,
                 max_points=35,
-                max_voxels=20000):
+                max_voxels=20000,
+                deterministic=True):
         """convert kitti points(N, >=3) to voxels.
 
         Args:
@@ -50,7 +51,8 @@ class _Voxelization(Function):
                 size=(max_voxels, ), dtype=torch.int)
             voxel_num = hard_voxelize(points, voxels, coors,
                                       num_points_per_voxel, voxel_size,
-                                      coors_range, max_points, max_voxels, 3)
+                                      coors_range, max_points, max_voxels, 3,
+                                      deterministic)
             # select the valid voxels
             voxels_out = voxels[:voxel_num]
             coors_out = coors[:voxel_num]
@@ -67,7 +69,8 @@ class Voxelization(nn.Module):
                  voxel_size,
                  point_cloud_range,
                  max_num_points,
-                 max_voxels=20000):
+                 max_voxels=20000,
+                 deterministic=True):
         super(Voxelization, self).__init__()
         """
         Args:
@@ -85,6 +88,7 @@ class Voxelization(nn.Module):
             self.max_voxels = max_voxels
         else:
             self.max_voxels = _pair(max_voxels)
+        self.deterministic = deterministic
 
         point_cloud_range = torch.tensor(
             point_cloud_range, dtype=torch.float32)
@@ -110,7 +114,8 @@ class Voxelization(nn.Module):
             max_voxels = self.max_voxels[1]
 
         return voxelization(input, self.voxel_size, self.point_cloud_range,
-                            self.max_num_points, max_voxels)
+                            self.max_num_points, max_voxels,
+                            self.deterministic)
 
     def __repr__(self):
         tmpstr = self.__class__.__name__ + '('
@@ -118,5 +123,6 @@ class Voxelization(nn.Module):
         tmpstr += ', point_cloud_range=' + str(self.point_cloud_range)
         tmpstr += ', max_num_points=' + str(self.max_num_points)
         tmpstr += ', max_voxels=' + str(self.max_voxels)
+        tmpstr += ', deterministic=' + str(self.deterministic)
         tmpstr += ')'
         return tmpstr
