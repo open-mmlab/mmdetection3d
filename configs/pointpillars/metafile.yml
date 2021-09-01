@@ -72,7 +72,7 @@ Models:
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
-      Training Memory(GB): 16.3
+      Training Memory (GB): 16.3
       Training Resources: 8x V100 GPUs
     Results:
       - Task: 3D Object Detection
@@ -87,7 +87,7 @@ Models:
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
-      Training Memory(GB): 16.2
+      Training Memory (GB): 16.2
       Training Resources: 8x V100 GPUs
     Results:
       - Task: 3D Object Detection

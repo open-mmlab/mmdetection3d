@@ -15,7 +15,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.7
+      Training Memory (GB): 8.7
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -28,7 +28,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 5.3
+      Training Memory (GB): 5.3
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -41,7 +41,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 4.4
+      Training Memory (GB): 4.4
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -54,7 +54,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 5.3
+      Training Memory (GB): 5.3
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -67,7 +67,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.7
+      Training Memory (GB): 8.7
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -80,7 +80,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.5
+      Training Memory (GB): 8.5
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -93,7 +93,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_tta_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.7
+      Training Memory (GB): 8.7
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -106,7 +106,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_flip-tta_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.7
+      Training Memory (GB): 8.7
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -119,7 +119,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.2
+      Training Memory (GB): 8.2
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -132,7 +132,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 5.5
+      Training Memory (GB): 5.5
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -145,7 +145,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 4.6
+      Training Memory (GB): 4.6
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -158,7 +158,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 4.4
+      Training Memory (GB): 4.4
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -171,7 +171,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 4.6
+      Training Memory (GB): 4.6
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -184,7 +184,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 5.5
+      Training Memory (GB): 5.5
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -197,7 +197,7 @@ Models:
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
     Metadata:
-      Training Memory(GB): 8.2
+      Training Memory (GB): 8.2
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
