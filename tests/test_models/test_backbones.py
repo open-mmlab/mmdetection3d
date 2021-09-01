@@ -345,10 +345,6 @@ def test_dla_net():
     self = build_backbone(cfg)
     self.init_weights()
 
-    if torch.cuda.is_available():
-        img.cuda()
-        self.cuda()
-
     results = self(img)
     assert len(results) == 6
     assert results[0].shape == torch.Size([4, 16, 32, 32])
