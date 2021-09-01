@@ -6,12 +6,12 @@
 #### Compatibility
 
 - Unify the camera keys for consistent transformation between coodinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
-- The next release will begin to move cuda op files to [mmcv](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. Please stay tuned.
+- The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
 
 #### Highlights
 
-- Support a new task, 3D object detection, on the S3DIS dataset
-- Support compilation on windows
+- Support 3D object detection on the S3DIS dataset
+- Support compilation on Windows
 - Full benchmark for PAConv on S3DIS
 - Further enhancement for documentation, especially on the Chinese documentation
 
@@ -33,7 +33,7 @@
 
 #### Bug Fixes
 
-- Fix compiling errors on windows (#766)
+- Fix compiling errors on Windows (#766)
 - Fix the deprecated nms setting in the ImVoteNet config (#828)
 - Use the latest `wrap_fp16_model` import from mmcv (#861)
 - Remove 2D annotations generation on Lyft (#867)
