@@ -7,7 +7,7 @@ on: [push, pull_request]
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.7
@@ -34,7 +34,7 @@ jobs:
       UBUNTU_VERSION: ubuntu1804
       FORCE_CUDA: 1
       CUDA_ARCH: ${{matrix.cuda_arch}}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         python-version: [3.6, 3.7]
