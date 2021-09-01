@@ -32,6 +32,7 @@ jobs:
       CUDA: 10.1.105-1
       CUDA_SHORT: 10.1
       UBUNTU_VERSION: ubuntu1804
+      FORCE_CUDA: 1
       CUDA_ARCH: ${{matrix.cuda_arch}}
     runs-on: ubuntu-18.04
     strategy:
@@ -64,7 +65,7 @@ jobs:
             torch_version: torch1.8.0
             mmcv: 1.8.0+cu101
             torchvision: 0.9.0+cu101
-            cuda_arch: "7.0"
+            cuda_arch: "7.5"
 
     steps:
       - uses: actions/checkout@v2
