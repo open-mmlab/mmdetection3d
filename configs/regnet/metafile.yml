@@ -15,6 +15,7 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory(GB): 17.0
     Results:
       - Task: 3D Object Detection
@@ -28,6 +29,7 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory(GB): 23.9
     Results:
       - Task: 3D Object Detection
@@ -83,6 +85,7 @@ Models:
     In Collection: RegNetX
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory(GB): 17.2
     Results:
       - Task: 3D Object Detection

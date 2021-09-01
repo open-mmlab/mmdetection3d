@@ -37,35 +37,80 @@ Models:
           AP: 59.5
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20200620_230421-aa0f3adb.pth
 
-  - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d
+  - Name: hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
+    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
-      Training Data: nuScenes
-      Training Memory (GB): 16.4
+      Training Data: Lyft
+      Training Memory (GB): 9.3
       Training Resources: 8x V100 GPUs
     Results:
       - Task: 3D Object Detection
-        Dataset: nuScenes
+        Dataset: Lyft
         Metrics:
-          mAP: 35.17
-          NDS: 49.7
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230725-0817d270.pth
+          Private Score: 14.8
+          Public Score: 15.0
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210822_095429-0b3d6196.pth
+
+  - Name: hv_pointpillars_fpn_sbn-all_range100_2x8_2x_lyft-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_range100_2x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+      Training Memory (GB): 13.8
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 15.5
+          Public Score: 15.7
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_fpn_sbn-all_range100_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_range100_2x8_2x_lyft-3d_20210829_053451-3ad1d9fc.pth
 
   - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d
     In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
-      Training Memory (GB): 16.4
+      Training Memory(GB): 16.3
       Training Resources: 8x V100 GPUs
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 40.0
-          NDS: 53.3
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth
+          mAP: 39.71
+          NDS: 53.15
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20210826_104936-fca299c1.pth
+
+  - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
+    Metadata:
+      Training Data: nuScenes
+      Training Memory(GB): 16.2
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 34.33
+          NDS: 49.08
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20210826_225857-f19d00a3.pth
+
+  - Name: hv_pointpillars_secfpn_sbn-all_range100_2x8_2x_lyft-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_range100_2x8_2x_lyft-3d.py
+    Metadata:
+      Training Data: Lyft
+      Training Memory (GB): 18.5
+      Training Resources: 8x V100 GPUs
+    Results:
+      - Task: 3D Object Detection
+        Dataset: Lyft
+        Metrics:
+          Private Score: 14.8
+          Public Score: 15.0
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_secfpn_sbn-all_range100_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_range100_2x8_2x_lyft-3d_20210829_204415-2043eef3.pth
 
   - Name: hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
@@ -78,24 +123,9 @@ Models:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 13.9
+          Private Score: 13.8
           Public Score: 14.1
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d_20210517_204807-2518e3de.pth
-
-  - Name: hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d
-    In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py
-    Metadata:
-      Training Data: Lyft
-      Training Memory (GB): 9.2
-      Training Resources: 8x V100 GPUs
-    Results:
-      - Task: 3D Object Detection
-        Dataset: Lyft
-        Metrics:
-          Private Score: 14.9
-          Public Score: 15.1
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d_20210829_100455-82b81c39.pth
 
   - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car
     In Collection: PointPillars

@@ -42,6 +42,7 @@ Models:
     In Collection: SSN
     Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory(GB): 3.6
     Results:
       - Task: 3D Object Detection
@@ -55,6 +56,7 @@ Models:
     In Collection: SSN
     Config: configs/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d.py
     Metadata:
+      Training Data: nuScenes
       Training Memory(GB): 5.1
     Results:
       - Task: 3D Object Detection
