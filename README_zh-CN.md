@@ -10,9 +10,9 @@
 
 **新闻**: 我们发布了版本 v0.17.0.
 
-在第三届[ nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
+在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
-最好的纯视觉方法[FCOS3D](https://arxiv.org/abs/2104.10956)的代码和模型已经发布。请继续关注我们的多模态检测器[MoCa](https://arxiv.org/abs/2012.12741)。
+最好的纯视觉方法 [FCOS3D](https://arxiv.org/abs/2104.10956) 的代码和模型已经发布。请继续关注我们的多模态检测器 [MoCa](https://arxiv.org/abs/2012.12741)。
 
 文档: https://mmdetection3d.readthedocs.io/
 
