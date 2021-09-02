@@ -72,8 +72,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 57.34
-          NDS: 59.04
+          mAP: 59.64
+          NDS: 67.46
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_flip-tta_20e_nus_20210822_021103-48ee1a9a.pth
 
   - Name: centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus

@@ -16,7 +16,6 @@ Models:
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
       Training Memory (GB): 29.4
     Results:
       - Task: 3D Object Detection
@@ -30,7 +29,6 @@ Models:
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
       Training Memory (GB): 24.3
     Results:
       - Task: 3D Object Detection
@@ -44,7 +42,6 @@ Models:
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
       Training Memory (GB): 29.2
     Results:
       - Task: 3D Object Detection
@@ -58,7 +55,6 @@ Models:
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
       Training Memory (GB): 24.4
     Results:
       - Task: 3D Object Detection
@@ -72,7 +68,6 @@ Models:
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
       Training Memory (GB): 16.3
     Results:
       - Task: 3D Object Detection
@@ -86,7 +81,6 @@ Models:
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Data: nuScenes
       Training Memory (GB): 17.6
     Results:
       - Task: 3D Object Detection
