@@ -31,6 +31,10 @@ class _Voxelization(Function):
             max_voxels: int. indicate maximum voxels this function create.
                 for second, 20000 is a good choice. Users should shuffle points
                 before call this function because max_voxels may drop points.
+            deterministic: bool. whether to invoke the non-deterministic
+                version of hard-voxelization implementations. non-deterministic
+                version is considerablly fast but is not deterministic. only
+                affects hard voxelization. default True.
 
         Returns:
             voxels: [M, max_points, ndim] float tensor. only contain points
@@ -80,6 +84,10 @@ class Voxelization(nn.Module):
             max_num_points (int): max number of points per voxel
             max_voxels (tuple or int): max number of voxels in
                 (training, testing) time
+            deterministic: bool. whether to invoke the non-deterministic
+                version of hard-voxelization implementations. non-deterministic
+                version is considerablly fast but is not deterministic. only
+                affects hard voxelization. default True.
         """
         self.voxel_size = voxel_size
         self.point_cloud_range = point_cloud_range
