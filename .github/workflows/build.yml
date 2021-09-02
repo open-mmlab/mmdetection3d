@@ -96,8 +96,7 @@ jobs:
         run: pip install numpy==1.19.5 torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH}
-          pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
+          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
           pip install mmdet==2.14.0
           pip install mmsegmentation==0.14.1
           pip install -r requirements.txt
