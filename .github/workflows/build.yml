@@ -60,12 +60,6 @@ jobs:
             mmcv: 1.8.0+cu101
             torchvision: 0.9.0+cu101
             cuda_arch: "7.0"
-          - python-version: 3.9
-            torch: 1.8.0+cu101
-            torch_version: torch1.8.0
-            mmcv: 1.8.0+cu101
-            torchvision: 0.9.0+cu101
-            cuda_arch: "7.0"
 
     steps:
       - uses: actions/checkout@v2
@@ -89,7 +83,6 @@ jobs:
           export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/include:${LD_LIBRARY_PATH}
           export PATH=${CUDA_HOME}/bin:${PATH}
           sudo apt-get install -y ninja-build
-          sudo apt-get install nvidia-modprobe
       - name: Install Pillow
         run: pip install Pillow==6.2.2
         if: ${{matrix.torchvision < 0.5}}
@@ -101,9 +94,6 @@ jobs:
           pip install mmdet==2.14.0
           pip install mmsegmentation==0.14.1
           pip install -r requirements.txt
-      - name: Install dependencies for compiling onnx when python=3.9
-        run: pip install protobuf && sudo apt-get install libprotobuf-dev protobuf-compiler
-        if: ${{matrix.python-version == '3.9'}} 
       - name: Build and install
         run: |
           rm -rf .eggs
@@ -117,7 +107,7 @@ jobs:
       # Only upload coverage report for python3.7 && pytorch1.5
       - name: Upload coverage to Codecov
         if: ${{matrix.torch == '1.5.0+cu101' && matrix.python-version == '3.7'}}
-        uses: codecov/codecov-action@v1.0.14
+        uses: codecov/codecov-action@v1.0.10
         with:
           file: ./coverage.xml
           flags: unittests
