@@ -71,9 +71,9 @@ def rotation_3d_in_axis(points,
     if points.shape[-1] == 3:
         if axis == 1 or axis == -2:
             rot_mat_T = torch.stack([
-                torch.stack([rot_cos, zeros, rot_sin]),
+                torch.stack([rot_cos, zeros, -rot_sin]),
                 torch.stack([zeros, ones, zeros]),
-                torch.stack([-rot_sin, zeros, rot_cos])
+                torch.stack([rot_sin, zeros, rot_cos])
             ])
         elif axis == 2 or axis == -1:
             rot_mat_T = torch.stack([
