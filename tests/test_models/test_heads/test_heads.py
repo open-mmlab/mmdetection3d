@@ -359,8 +359,7 @@ def test_vote_head():
 
 
 def test_smoke_mono3d_head():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
+
     _setup_seed(0)
 
     head_cfg = dict(
