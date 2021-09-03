@@ -34,8 +34,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 64.41
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_6x8_80e_kitti-3d-3class/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth
+          mAP: 65.74
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/second/hv_second_secfpn_6x8_80e_kitti-3d-3class/hv_second_secfpn_6x8_80e_kitti-3d-3class_20210831_022017-ae782e87.pth
 
   - Name: hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class
     In Collection: SECOND

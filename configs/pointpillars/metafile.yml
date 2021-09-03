@@ -34,8 +34,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          AP: 59.5
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20200620_230421-aa0f3adb.pth
+          AP: 59.72
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0/models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20210831_025034-eba82093.pth
 
   - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d
     In Collection: PointPillars
