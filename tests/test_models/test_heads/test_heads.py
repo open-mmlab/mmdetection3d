@@ -385,11 +385,11 @@ def test_smoke_mono3d_head():
         bbox_coder=dict(
             type='SMOKECoder',
             base_depth=(28.01, 16.32),
-            base_dim=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73,
-                                                               0.67)),
+            base_dim=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63,
+                                                               1.53)),
             code_size=7),
-        loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=1.0),
+        loss_cls=dict(type='GaussianFocalLoss', loss_weight=1.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=10.0),
         loss_dir=dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_attr=None,
@@ -438,6 +438,8 @@ def test_smoke_mono3d_head():
                            [0.0, 0.0, 1.0, 0.00333333], [0.0, 0.0, 0.0, 1.0]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
             pad_shape=[128, 128],
+            trans_mat=np.array([[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],
+                               dtype=np.float32),
             box_type_3d=CameraInstance3DBoxes) for i in range(2)
     ]
     losses = self.loss(*ret_dict, gt_bboxes, gt_labels, gt_bboxes_3d,

@@ -31,7 +31,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         loss_bbox (dict): Config of localization loss.
         loss_dir (dict): Config of direction classification loss.
             In SMOKE, Default: None.
-        loss_attr (dict): Config of attribute classification loss.
+        loss_attr (dict, optional): Config of attribute classification loss.
             In SMOKE, Default: None.
         loss_centerness (dict): Config of centerness loss.
         norm_cfg (dict): Dictionary to construct and config norm layer.
@@ -123,11 +123,16 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             cls_scores[0].new_tensor(img_meta['cam_intrinsic'])
             for img_meta in img_metas
         ])
+        trans_mats = torch.stack([
+            cls_scores[0].new_tensor(img_meta['trans_mat'])
+            for img_meta in img_metas
+        ])
         batch_bboxes, batch_scores, batch_topk_labels = self.decode_heatmap(
             cls_scores[0],
             bbox_preds[0],
             img_metas,
             cam_intrinsics=cam_intrinsics,
+            trans_mats=trans_mats,
             topk=100,
             kernel=3)
 
@@ -154,6 +159,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                        reg_pred,
                        img_metas,
                        cam_intrinsics,
+                       trans_mats,
                        topk=100,
                        kernel=3):
         """Transform outputs into detections raw bbox predictions.
@@ -183,7 +189,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         """
         img_h, img_w = img_metas[0]['pad_shape'][:2]
         bs, _, feat_h, feat_w = cls_score.shape
-        ratio = float(feat_w / img_w)
+
         center_heatmap_pred = get_local_maximum(cls_score, kernel=kernel)
 
         *batch_dets, topk_ys, topk_xs = get_topk_from_heatmap(
@@ -197,14 +203,14 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                             topk_ys.view(-1, 1).float()],
                            dim=1)
         locations, dimensions, orientations = self.bbox_coder.decode(
-            regression, points, batch_topk_labels, cam_intrinsics, ratio)
+            regression, points, batch_topk_labels, cam_intrinsics, trans_mats)
 
         batch_bboxes = torch.cat((locations, dimensions, orientations), dim=1)
         batch_bboxes = batch_bboxes.view(bs, -1, self.bbox_code_size)
         return batch_bboxes, batch_scores, batch_topk_labels
 
     def get_predictions(self, labels3d, centers2d, gt_locations, gt_dimensions,
-                        gt_orientations, indexs, img_metas, pred_reg, ratio):
+                        gt_orientations, indexs, img_metas, pred_reg):
         """Prepare predictions for computing loss.
 
         Args:
@@ -224,7 +230,6 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 e.g., image size, scaling factor, etc.
             pre_reg (Tensor): Box regression map.
                 shape (B, channel, H , W).
-            ratio (float): The ratio between heatmap and input shape.
 
         Returns:
             dict: the dict has components below:
@@ -241,13 +246,18 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             gt_locations.new_tensor(img_meta['cam_intrinsic'])
             for img_meta in img_metas
         ])
+        trans_mats = torch.stack([
+            gt_locations.new_tensor(img_meta['trans_mat'])
+            for img_meta in img_metas
+        ])
         centers2d_inds = centers2d[:, 1] * w + centers2d[:, 0]
         centers2d_inds = centers2d_inds.view(batch, -1)
         pred_regression = transpose_and_gather_feat(pred_reg, centers2d_inds)
         pred_regression_pois = pred_regression.view(-1, channel)
 
         locations, dimensions, orientations = self.bbox_coder.decode(
-            pred_regression_pois, centers2d, labels3d, cam_intrinsics, ratio)
+            pred_regression_pois, centers2d, labels3d, cam_intrinsics,
+            trans_mats)
 
         locations, dimensions, orientations = locations[indexs], dimensions[
             indexs], orientations[indexs]
@@ -310,19 +320,21 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         width_ratio = float(feat_w / img_w)  # 1/4
         height_ratio = float(feat_h / img_h)  # 1/4
 
+        assert width_ratio == height_ratio
+
         center_heatmap_target = gt_bboxes[-1].new_zeros(
             [bs, self.num_classes, feat_h, feat_w])
+
+        gt_centers2d = centers2d.copy()
 
         for batch_id in range(bs):
             gt_bbox = gt_bboxes[batch_id]
             gt_label = gt_labels[batch_id]
-            center_x = (gt_bbox[:, [0]] + gt_bbox[:, [2]]) * width_ratio / 2
-            center_y = (gt_bbox[:, [1]] + gt_bbox[:, [3]]) * height_ratio / 2
-            gt_centers = torch.cat((center_x, center_y), dim=1)
+            # project centers2d from input image to feat map
+            gt_center2d = gt_centers2d[batch_id] * width_ratio
 
-            for j, ct in enumerate(gt_centers):
-                ctx_int, cty_int = ct.int()
-                ctx, cty = ct
+            for j, center in enumerate(gt_center2d):
+                center_x_int, center_y_int = center.int()
                 scale_box_h = (gt_bbox[j][3] - gt_bbox[j][1]) * height_ratio
                 scale_box_w = (gt_bbox[j][2] - gt_bbox[j][0]) * width_ratio
                 radius = gaussian_radius([scale_box_h, scale_box_w],
@@ -330,7 +342,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 radius = max(0, int(radius))
                 ind = gt_label[j]
                 gen_gaussian_target(center_heatmap_target[batch_id, ind],
-                                    [ctx_int, cty_int], radius)
+                                    [center_x_int, center_y_int], radius)
 
         ct_num = [center2d.shape[0] for center2d in centers2d]
         max_objs = max(ct_num)
@@ -418,10 +430,6 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         center2d_heatmap = cls_scores[0]
         pred_reg = bbox_preds[0]
 
-        img_h, img_w = img_metas[0]['pad_shape']
-        bs, _, feat_h, feat_w = center2d_heatmap.shape
-        ratio = float(feat_w / img_w)
-
         center2d_heatmap_target, target_labels = \
             self.get_targets(gt_bboxes, gt_labels, gt_bboxes_3d,
                              gt_labels_3d, centers2d,
@@ -436,8 +444,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             gt_orientations=target_labels['gt_rotys'],
             indexs=target_labels['indexs'],
             img_metas=img_metas,
-            pred_reg=pred_reg,
-            ratio=ratio)
+            pred_reg=pred_reg)
 
         loss_cls = self.loss_cls(center2d_heatmap, center2d_heatmap_target)
 
