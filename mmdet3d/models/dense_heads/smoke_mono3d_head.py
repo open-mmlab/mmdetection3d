@@ -25,11 +25,17 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        bbox_coder (:obj:`CameraInstance3DBoxes`): Bbox coder for encoding
-            and decoding boxes. Default: None.
-        loss_cls (dict): Config of classification loss.
-        loss_bbox (dict): Config of localization loss.
-        loss_dir (dict): Config of direction classification loss.
+        dim_channel (list[int]): indexs of dimension offset preds in
+            regression heatmap channels.
+        ori_channel (list[int]): indexs of orientation offset pred in
+            regression heatmap channels.
+        bbox_coder (:obj:`CameraInstance3DBoxes`, optional): Bbox coder
+            for encoding and decoding boxes. Default: None.
+        loss_cls (dict, optional): Config of classification loss.
+            Default: loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0).
+        loss_bbox (dict, optional): Config of localization loss.
+            Default: loss_bbox=dict(type='L1Loss', loss_weight=10.0).
+        loss_dir (dict, optional): Config of direction classification loss.
             In SMOKE, Default: None.
         loss_attr (dict, optional): Config of attribute classification loss.
             In SMOKE, Default: None.
@@ -42,10 +48,11 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
     def __init__(self,
                  num_classes,
                  in_channels,
+                 dim_channel,
+                 ori_channel,
                  bbox_coder=None,
                  loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
-                 loss_bbox=dict(
-                     type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+                 loss_bbox=dict(type='L1Loss', loss_weight=10.0),
                  loss_dir=None,
                  loss_attr=None,
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
@@ -61,8 +68,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             norm_cfg=norm_cfg,
             init_cfg=init_cfg,
             **kwargs)
-        self.dim_channel = [3, 4, 5]
-        self.ori_channel = [6, 7]
+        self.dim_channel = dim_channel
+        self.ori_channel = ori_channel
         self.bbox_coder = build_bbox_coder(bbox_coder)
 
     def forward(self, feats):
@@ -152,6 +159,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
             attrs = None
             result_list.append((bboxes, scores, labels, attrs))
+
         return result_list
 
     def decode_heatmap(self,
