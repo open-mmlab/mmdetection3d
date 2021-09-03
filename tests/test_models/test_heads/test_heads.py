@@ -360,12 +360,12 @@ def test_vote_head():
 
 def test_smoke_mono3d_head():
 
-    _setup_seed(0)
-
     head_cfg = dict(
         type='SMOKEMono3DHead',
         num_classes=3,
         in_channels=64,
+        dim_channel=[3, 4, 5],
+        ori_channel=[6, 7],
         stacked_convs=0,
         feat_channels=64,
         use_direction_classifier=False,
