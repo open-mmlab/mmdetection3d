@@ -174,7 +174,7 @@ aos  AP:97.70, 89.11, 87.38
 
 ## Testing and make a submission
 
-An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows
+An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
 
 ```shell
 mkdir -p results/kitti-3class
