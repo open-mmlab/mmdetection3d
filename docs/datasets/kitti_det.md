@@ -1,8 +1,8 @@
-# KITTI Dataset
+# KITTI Dataset for 3D Object Detection
 
 This page provides specific tutorials about the usage of MMDetection3D for KITTI dataset.
 
-**Note**: Current tutorial is only for LiDAR-based and multi-modality 3D detection methods, Contents related to monocular methods will be supplemented afterward
+**Note**: Current tutorial is only for LiDAR-based and multi-modality 3D detection methods. Contents related to monocular methods will be supplemented afterward
 
 ## Prepare dataset
 
@@ -33,7 +33,7 @@ mmdetection3d
 
 ### Create KITTI dataset
 
-By creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation. Subsequently, creating KITTI data by running
+By creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation. Subsequently, create KITTI data by running
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -87,7 +87,7 @@ kitti
     - info['annos']: {
         - location: x,y,z in referenced camera coordinate system (in meters), an Nx3 array
         - dimensions: height, width, length (in meters), an Nx3 array
-        - rotation_y: Rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
+        - rotation_y: rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
         - name:  ground truth name array, an N array
         - difficulty: kitti difficulty, Easy, Moderate, Hard
         - group_ids: used for multi-part object
@@ -150,7 +150,7 @@ train_pipeline = [
     - `GlobalRotScaleTrans`: rotate input point cloud.
 
 ## Evaluation
-An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows
+An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows:
 
 ```shell
 bash tools/dist_test.sh configs/pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py work_dirs/pointrcnn_2x8_kitti-3d-3classes/latest.pth 8 --eval bbox
