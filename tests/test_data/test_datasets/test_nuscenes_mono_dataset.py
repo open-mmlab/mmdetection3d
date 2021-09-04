@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import pytest
@@ -135,11 +136,8 @@ def test_format_results():
     expected_token = 'e93e98b63d3b40209056d129dc53ceee'
     expected_trans = torch.tensor(
         [1018.753821915645, 605.190386124652, 0.7266818822266328])
-    expected_size = torch.tensor([1.6380000114440918, 4.25, 1.440000057220459])
-    expected_rotation = torch.tensor([
-        -0.9924980733795628, -0.013604682549109839, 0.01027292674776989,
-        -0.12106590736714223
-    ])
+    expected_size = torch.tensor([1.440000057220459, 1.6380000114440918, 4.25])
+    expected_rotation = torch.tensor([-0.5717, -0.0014, 0.0170, -0.8203])
     expected_detname = 'car'
     expected_attr = 'vehicle.moving'
 
@@ -148,7 +146,7 @@ def test_format_results():
         torch.tensor(det['translation']), expected_trans, 1e-5)
     assert torch.allclose(torch.tensor(det['size']), expected_size, 1e-5)
     assert torch.allclose(
-        torch.tensor(det['rotation']), expected_rotation, 1e-5)
+        torch.tensor(det['rotation']), expected_rotation, atol=1e-4)
     assert det['detection_name'] == expected_detname
     assert det['attribute_name'] == expected_attr
 

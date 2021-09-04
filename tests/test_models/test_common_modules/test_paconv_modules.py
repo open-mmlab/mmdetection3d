@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import pytest
 import torch
@@ -37,10 +38,10 @@ def test_paconv_sa_module_msg():
         pool_mod='max',
         paconv_kernel_input='w_neighbor').cuda()
 
-    assert self.mlps[0].layer0.weight_bank.shape[0] == 12 * 2
-    assert self.mlps[0].layer0.weight_bank.shape[1] == 16 * 4
-    assert self.mlps[1].layer0.weight_bank.shape[0] == 12 * 2
-    assert self.mlps[1].layer0.weight_bank.shape[1] == 32 * 8
+    assert self.mlps[0].layer0.in_channels == 12 * 2
+    assert self.mlps[0].layer0.out_channels == 16
+    assert self.mlps[1].layer0.in_channels == 12 * 2
+    assert self.mlps[1].layer0.out_channels == 32
     assert self.mlps[0].layer0.bn.num_features == 16
     assert self.mlps[1].layer0.bn.num_features == 32
 
@@ -80,10 +81,12 @@ def test_paconv_sa_module_msg():
         pool_mod='max',
         paconv_kernel_input='identity').cuda()
 
-    assert self.mlps[0].layer0.weight_bank.shape[0] == 12 * 1
-    assert self.mlps[0].layer0.weight_bank.shape[1] == 16 * 4
-    assert self.mlps[1].layer0.weight_bank.shape[0] == 12 * 1
-    assert self.mlps[1].layer0.weight_bank.shape[1] == 32 * 8
+    assert self.mlps[0].layer0.in_channels == 12 * 1
+    assert self.mlps[0].layer0.out_channels == 16
+    assert self.mlps[0].layer0.num_kernels == 4
+    assert self.mlps[1].layer0.in_channels == 12 * 1
+    assert self.mlps[1].layer0.out_channels == 32
+    assert self.mlps[1].layer0.num_kernels == 8
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
@@ -116,8 +119,9 @@ def test_paconv_sa_module():
         paconv_kernel_input='w_neighbor')
     self = build_sa_module(sa_cfg).cuda()
 
-    assert self.mlps[0].layer0.weight_bank.shape[0] == 15 * 2
-    assert self.mlps[0].layer0.weight_bank.shape[1] == 32 * 8
+    assert self.mlps[0].layer0.in_channels == 15 * 2
+    assert self.mlps[0].layer0.out_channels == 32
+    assert self.mlps[0].layer0.num_kernels == 8
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
@@ -145,7 +149,7 @@ def test_paconv_sa_module():
         pool_mod='max',
         paconv_kernel_input='identity')
     self = build_sa_module(sa_cfg).cuda()
-    assert self.mlps[0].layer0.weight_bank.shape[0] == 15 * 1
+    assert self.mlps[0].layer0.in_channels == 15 * 1
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
@@ -191,11 +195,13 @@ def test_paconv_cuda_sa_module_msg():
         pool_mod='max',
         paconv_kernel_input='w_neighbor').cuda()
 
-    assert self.mlps[0][0].weight_bank.shape[0] == 12 * 2
-    assert self.mlps[0][0].weight_bank.shape[1] == 16 * 4
-    assert self.mlps[1][0].weight_bank.shape[0] == 12 * 2
-    assert self.mlps[1][0].weight_bank.shape[1] == 32 * 8
+    assert self.mlps[0][0].in_channels == 12 * 2
+    assert self.mlps[0][0].out_channels == 16
+    assert self.mlps[0][0].num_kernels == 4
     assert self.mlps[0][0].bn.num_features == 16
+    assert self.mlps[1][0].in_channels == 12 * 2
+    assert self.mlps[1][0].out_channels == 32
+    assert self.mlps[1][0].num_kernels == 8
     assert self.mlps[1][0].bn.num_features == 32
 
     assert self.mlps[0][0].scorenet.mlps.layer0.conv.in_channels == 7
@@ -253,8 +259,9 @@ def test_paconv_cuda_sa_module():
         paconv_kernel_input='w_neighbor')
     self = build_sa_module(sa_cfg).cuda()
 
-    assert self.mlps[0][0].weight_bank.shape[0] == 15 * 2
-    assert self.mlps[0][0].weight_bank.shape[1] == 32 * 8
+    assert self.mlps[0][0].in_channels == 15 * 2
+    assert self.mlps[0][0].out_channels == 32
+    assert self.mlps[0][0].num_kernels == 8
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 

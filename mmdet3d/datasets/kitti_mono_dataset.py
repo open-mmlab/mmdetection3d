@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import mmcv
 import numpy as np
@@ -88,9 +89,6 @@ class KittiMonoDataset(NuScenesMonoDataset):
                 gt_masks_ann.append(ann.get('segmentation', None))
                 # 3D annotations in camera coordinates
                 bbox_cam3d = np.array(ann['bbox_cam3d']).reshape(-1, )
-                # change orientation to local yaw
-                bbox_cam3d[6] = -np.arctan2(bbox_cam3d[0],
-                                            bbox_cam3d[2]) + bbox_cam3d[6]
                 gt_bboxes_cam3d.append(bbox_cam3d)
                 # 2.5D annotations in camera coordinates
                 center2d = ann['center2d'][:2]

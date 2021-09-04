@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import trimesh
@@ -131,7 +132,7 @@ def show_seg_result(points,
                     filename,
                     palette,
                     ignore_index=None,
-                    show=False,
+                    show=True,
                     snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
@@ -203,9 +204,9 @@ def show_multi_modality_result(img,
                                proj_mat,
                                out_dir,
                                filename,
-                               box_mode,
+                               box_mode='lidar',
                                img_metas=None,
-                               show=False,
+                               show=True,
                                gt_bbox_color=(61, 102, 255),
                                pred_bbox_color=(241, 101, 72)):
     """Convert multi-modality detection results into 2D results.
@@ -220,8 +221,8 @@ def show_multi_modality_result(img,
             according to the camera intrinsic parameters.
         out_dir (str): Path of output directory.
         filename (str): Filename of the current frame.
-        box_mode (str): Coordinate system the boxes are in.
-            Should be one of 'depth', 'lidar' and 'camera'.
+        box_mode (str): Coordinate system the boxes are in. Should be one of
+           'depth', 'lidar' and 'camera'. Defaults to 'lidar'.
         img_metas (dict): Used in projecting depth bbox.
         show (bool): Visualize the results online. Defaults to False.
         gt_bbox_color (str or tuple(int)): Color of bbox lines.

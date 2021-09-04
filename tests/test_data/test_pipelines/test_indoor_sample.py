@@ -1,14 +1,14 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 
 from mmdet3d.core.points import DepthPoints
-from mmdet3d.datasets.pipelines import (IndoorPatchPointSample,
-                                        IndoorPointSample,
+from mmdet3d.datasets.pipelines import (IndoorPatchPointSample, PointSample,
                                         PointSegClassMapping)
 
 
 def test_indoor_sample():
     np.random.seed(0)
-    scannet_sample_points = IndoorPointSample(5)
+    scannet_sample_points = PointSample(5)
     scannet_results = dict()
     scannet_points = np.array([[1.0719866, -0.7870435, 0.8408122, 0.9196809],
                                [1.103661, 0.81065744, 2.6616862, 2.7405548],
@@ -39,7 +39,7 @@ def test_indoor_sample():
                   scannet_semantic_labels_result)
 
     np.random.seed(0)
-    sunrgbd_sample_points = IndoorPointSample(5)
+    sunrgbd_sample_points = PointSample(5)
     sunrgbd_results = dict()
     sunrgbd_point_cloud = np.array(
         [[-1.8135729e-01, 1.4695230e+00, -1.2780589e+00, 7.8938007e-03],
@@ -58,7 +58,9 @@ def test_indoor_sample():
     sunrgbd_choices = np.array([2, 8, 4, 9, 1])
     sunrgbd_points_result = sunrgbd_results['points'].tensor.numpy()
     repr_str = repr(sunrgbd_sample_points)
-    expected_repr_str = 'IndoorPointSample(num_points=5)'
+    expected_repr_str = 'PointSample(num_points=5, ' \
+                        'sample_range=None, ' \
+                        'replace=False)'
     assert repr_str == expected_repr_str
     assert np.allclose(sunrgbd_point_cloud[sunrgbd_choices],
                        sunrgbd_points_result)
@@ -114,7 +116,8 @@ def test_indoor_seg_sample():
                         'use_normalized_coord=True, ' \
                         'num_try=10, ' \
                         'enlarge_size=0.2, ' \
-                        'min_unique_num=None)'
+                        'min_unique_num=None, ' \
+                        'eps=0.01)'
     assert repr_str == expected_repr_str
 
     # when enlarge_size and min_unique_num are set

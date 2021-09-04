@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import numpy as np
 import pytest
@@ -1088,9 +1089,9 @@ def test_fcos_mono3d_head():
     attr_labels = [torch.randint(0, 9, [3], device='cuda') for i in range(2)]
     img_metas = [
         dict(
-            cam_intrinsic=[[1260.8474446004698, 0.0, 807.968244525554],
-                           [0.0, 1260.8474446004698, 495.3344268742088],
-                           [0.0, 0.0, 1.0]],
+            cam2img=[[1260.8474446004698, 0.0, 807.968244525554],
+                     [0.0, 1260.8474446004698, 495.3344268742088],
+                     [0.0, 0.0, 1.0]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
             box_type_3d=CameraInstance3DBoxes) for i in range(2)
     ]
@@ -1121,7 +1122,7 @@ def test_groupfree3d_head():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
     vote_head_cfg = _get_vote_head_cfg(
-        'groupfree3d/groupfree3d_8x8_scannet-3d-18class-L6-O256.py')
+        'groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py')
     self = build_head(vote_head_cfg).cuda()
 
     fp_xyz = [torch.rand([2, 256, 3], dtype=torch.float32).cuda()]
@@ -1134,13 +1135,13 @@ def test_groupfree3d_head():
     # test forward
     ret_dict = self(input_dict, 'kps')
     assert ret_dict['seeds_obj_cls_logits'].shape == torch.Size([2, 1, 256])
-    assert ret_dict['s5.center'].shape == torch.Size([2, 128, 3])
-    assert ret_dict['s5.dir_class'].shape == torch.Size([2, 128, 1])
-    assert ret_dict['s5.dir_res'].shape == torch.Size([2, 128, 1])
-    assert ret_dict['s5.size_class'].shape == torch.Size([2, 128, 18])
-    assert ret_dict['s5.size_res'].shape == torch.Size([2, 128, 18, 3])
-    assert ret_dict['s5.obj_scores'].shape == torch.Size([2, 128, 1])
-    assert ret_dict['s5.sem_scores'].shape == torch.Size([2, 128, 18])
+    assert ret_dict['s5.center'].shape == torch.Size([2, 256, 3])
+    assert ret_dict['s5.dir_class'].shape == torch.Size([2, 256, 1])
+    assert ret_dict['s5.dir_res'].shape == torch.Size([2, 256, 1])
+    assert ret_dict['s5.size_class'].shape == torch.Size([2, 256, 18])
+    assert ret_dict['s5.size_res'].shape == torch.Size([2, 256, 18, 3])
+    assert ret_dict['s5.obj_scores'].shape == torch.Size([2, 256, 1])
+    assert ret_dict['s5.sem_scores'].shape == torch.Size([2, 256, 18])
 
     # test losses
     points = [torch.rand([50000, 4], device='cuda') for i in range(2)]
@@ -1215,7 +1216,7 @@ def test_groupfree3d_head():
     bbox_preds['s5.size_res'] = size_res
     bbox_preds['s5.sem_scores'] = sem_scores
 
-    self.test_cfg['prediction_stages'] == 'last'
+    self.test_cfg['prediction_stages'] = 'last'
     results = self.get_bboxes(points, bbox_preds, [input_meta])
     assert results[0][0].tensor.shape[0] >= 0
     assert results[0][0].tensor.shape[1] == 7

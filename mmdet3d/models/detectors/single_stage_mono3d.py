@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import torch
@@ -5,7 +6,7 @@ from mmcv.parallel import DataContainer as DC
 from os import path as osp
 
 from mmdet3d.core import (CameraInstance3DBoxes, bbox3d2result,
-                          mono_cam_box2vis, show_multi_modality_result)
+                          show_multi_modality_result)
 from mmdet.models.builder import DETECTORS
 from mmdet.models.detectors.single_stage import SingleStageDetector
 
@@ -189,11 +190,10 @@ class SingleStageMono3DDetector(SingleStageDetector):
             if isinstance(data['img_metas'][0], DC):
                 img_filename = data['img_metas'][0]._data[0][batch_id][
                     'filename']
-                cam_intrinsic = data['img_metas'][0]._data[0][batch_id][
-                    'cam_intrinsic']
+                cam2img = data['img_metas'][0]._data[0][batch_id]['cam2img']
             elif mmcv.is_list_of(data['img_metas'][0], dict):
                 img_filename = data['img_metas'][0][batch_id]['filename']
-                cam_intrinsic = data['img_metas'][0][batch_id]['cam_intrinsic']
+                cam2img = data['img_metas'][0][batch_id]['cam2img']
             else:
                 ValueError(
                     f"Unsupported data type {type(data['img_metas'][0])} "
@@ -207,14 +207,11 @@ class SingleStageMono3DDetector(SingleStageDetector):
             assert isinstance(pred_bboxes, CameraInstance3DBoxes), \
                 f'unsupported predicted bbox type {type(pred_bboxes)}'
 
-            # TODO: remove the hack of box from NuScenesMonoDataset
-            pred_bboxes = mono_cam_box2vis(pred_bboxes)
-
             show_multi_modality_result(
                 img,
                 None,
                 pred_bboxes,
-                cam_intrinsic,
+                cam2img,
                 out_dir,
                 file_name,
                 'camera',

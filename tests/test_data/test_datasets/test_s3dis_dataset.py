@@ -1,8 +1,69 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import pytest
 import torch
 
-from mmdet3d.datasets import S3DISSegDataset
+from mmdet3d.datasets import S3DISDataset, S3DISSegDataset
+
+
+def test_getitem():
+    np.random.seed(0)
+    root_path = './tests/data/s3dis/'
+    ann_file = './tests/data/s3dis/s3dis_infos.pkl'
+    class_names = ('table', 'chair', 'sofa', 'bookcase', 'board')
+    pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+        dict(type='PointSample', num_points=40000),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    ]
+    s3dis_dataset = S3DISDataset(
+        data_root=root_path, ann_file=ann_file, pipeline=pipeline)
+
+    data = s3dis_dataset[0]
+    points = data['points']._data
+    gt_bboxes_3d = data['gt_bboxes_3d']._data
+    gt_labels_3d = data['gt_labels_3d']._data
+    expected_gt_bboxes_3d = torch.tensor(
+        [[2.3080, 2.4175, 0.2010, 0.8820, 0.8690, 0.6970, 0.0000],
+         [2.4730, 0.7090, 0.2010, 0.9080, 0.9620, 0.7030, 0.0000],
+         [5.3235, 0.4910, 0.0740, 0.8410, 0.9020, 0.8790, 0.0000]])
+    expected_gt_labels = np.array([1, 1, 3, 1, 2, 0, 0, 0, 3])
+
+    assert tuple(points.shape) == (40000, 6)
+    assert torch.allclose(gt_bboxes_3d[:3].tensor, expected_gt_bboxes_3d, 1e-2)
+    assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
+
+
+def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip()
+    from mmdet3d.core.bbox.structures import DepthInstance3DBoxes
+    root_path = './tests/data/s3dis'
+    ann_file = './tests/data/s3dis/s3dis_infos.pkl'
+    s3dis_dataset = S3DISDataset(root_path, ann_file)
+    results = []
+    pred_boxes = dict()
+    pred_boxes['boxes_3d'] = DepthInstance3DBoxes(
+        torch.tensor([[2.3080, 2.4175, 0.2010, 0.8820, 0.8690, 0.6970, 0.0000],
+                      [2.4730, 0.7090, 0.2010, 0.9080, 0.9620, 0.7030, 0.0000],
+                      [5.3235, 0.4910, 0.0740, 0.8410, 0.9020, 0.8790,
+                       0.0000]]))
+    pred_boxes['labels_3d'] = torch.tensor([1, 1, 3])
+    pred_boxes['scores_3d'] = torch.tensor([0.5, 1.0, 1.0])
+    results.append(pred_boxes)
+    ret_dict = s3dis_dataset.evaluate(results)
+    assert abs(ret_dict['chair_AP_0.25'] - 0.666) < 0.01
+    assert abs(ret_dict['chair_AP_0.50'] - 0.666) < 0.01
+    assert abs(ret_dict['bookcase_AP_0.25'] - 0.5) < 0.01
+    assert abs(ret_dict['bookcase_AP_0.50'] - 0.5) < 0.01
 
 
 def test_seg_getitem():

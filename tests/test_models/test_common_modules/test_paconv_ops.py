@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
 
@@ -193,10 +194,13 @@ def test_paconv():
     out_channels = 12
     npoint = 4
     K = 3
+    num_kernels = 4
     points_xyz = torch.randn(B, 3, npoint, K)
     features = torch.randn(B, in_channels, npoint, K)
 
-    paconv = PAConv(in_channels, out_channels, 4)
+    paconv = PAConv(in_channels, out_channels, num_kernels)
+    assert paconv.weight_bank.shape == torch.Size(
+        [in_channels * 2, out_channels * num_kernels])
 
     with torch.no_grad():
         new_features, _ = paconv((features, points_xyz))
@@ -213,11 +217,14 @@ def test_paconv_cuda():
     N = 32
     npoint = 4
     K = 3
+    num_kernels = 4
     points_xyz = torch.randn(B, 3, npoint, K).float().cuda()
     features = torch.randn(B, in_channels, N).float().cuda()
     points_idx = torch.randint(0, N, (B, npoint, K)).long().cuda()
 
-    paconv = PAConvCUDA(in_channels, out_channels, 4).cuda()
+    paconv = PAConvCUDA(in_channels, out_channels, num_kernels).cuda()
+    assert paconv.weight_bank.shape == torch.Size(
+        [in_channels * 2, out_channels * num_kernels])
 
     with torch.no_grad():
         new_features, _, _ = paconv((features, points_xyz, points_idx))

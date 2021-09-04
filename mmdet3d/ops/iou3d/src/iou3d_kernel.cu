@@ -13,7 +13,7 @@ All Rights Reserved 2019-2020.
 
 //#define DEBUG
 const int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
-const float EPS = 1e-8;
+__device__ const float EPS = 1e-8;
 struct Point {
   float x, y;
   __device__ Point() {}

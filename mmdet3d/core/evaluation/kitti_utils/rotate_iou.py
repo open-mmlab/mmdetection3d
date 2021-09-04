@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 #####################
 # Based on https://github.com/hongzhenwang/RRPN-revise
 # Licensed under The MIT License

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
                       get_compiling_cuda_version, nms, roi_align,
                       sigmoid_focal_loss)

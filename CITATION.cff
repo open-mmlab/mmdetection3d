@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - name: "MMDetection3D Contributors"
+title: "OpenMMLab's Next-generation Platform for General 3D Object Detection"
+date-released: 2020-07-23
+url: "https://github.com/open-mmlab/mmdetection3d"
+license: Apache-2.0

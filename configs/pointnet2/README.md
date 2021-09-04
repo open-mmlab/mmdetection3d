@@ -50,8 +50,8 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 
 **Notes:**
 
--   We use XYZ+Color+Normalized_XYZ as input in all the experiments on S3DIS datasets.
--   `Area_5` Split means training the model on Area_1, 2, 3, 4, 6 and testing on Area_5.
+- We use XYZ+Color+Normalized_XYZ as input in all the experiments on S3DIS datasets.
+- `Area_5` Split means training the model on Area_1, 2, 3, 4, 6 and testing on Area_5.
 
 ## Indeterminism
 

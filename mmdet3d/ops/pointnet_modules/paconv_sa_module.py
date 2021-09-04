@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from torch import nn as nn
 
@@ -15,10 +16,10 @@ class PAConvSAModuleMSG(BasePointSAModule):
     See the `paper <https://arxiv.org/abs/2103.14635>`_ for more details.
 
     Args:
-        paconv_num_kernels (list[list[int]]): Number of weight kernels in the
+        paconv_num_kernels (list[list[int]]): Number of kernel weights in the
             weight banks of each layer's PAConv.
         paconv_kernel_input (str, optional): Input features to be multiplied
-            with weight kernels. Can be 'identity' or 'w_neighbor'.
+            with kernel weights. Can be 'identity' or 'w_neighbor'.
             Defaults to 'w_neighbor'.
         scorenet_input (str, optional): Type of the input to ScoreNet.
             Defaults to 'w_neighbor_dist'. Can be the following values:
@@ -77,7 +78,7 @@ class PAConvSAModuleMSG(BasePointSAModule):
         assert len(paconv_num_kernels) == len(mlp_channels)
         for i in range(len(mlp_channels)):
             assert len(paconv_num_kernels[i]) == len(mlp_channels[i]) - 1, \
-                'PAConv number of weight kernels wrong'
+                'PAConv number of kernel weights wrong'
 
         # in PAConv, bias only exists in ScoreNet
         scorenet_cfg['bias'] = bias
@@ -197,7 +198,7 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
         assert len(paconv_num_kernels) == len(mlp_channels)
         for i in range(len(mlp_channels)):
             assert len(paconv_num_kernels[i]) == len(mlp_channels[i]) - 1, \
-                'PAConv number of weight kernels wrong'
+                'PAConv number of kernel weights wrong'
 
         # in PAConv, bias only exists in ScoreNet
         scorenet_cfg['bias'] = bias

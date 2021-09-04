@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import torch
@@ -32,7 +33,7 @@ def test_scannet_pipeline():
             type='PointSegClassMapping',
             valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
                            34, 36, 39)),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(
             type='RandomFlip3D',
             sync_2d=False,
@@ -278,7 +279,7 @@ def test_sunrgbd_pipeline():
             rot_range=[-0.523599, 0.523599],
             scale_ratio_range=[0.85, 1.15],
             shift_height=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),

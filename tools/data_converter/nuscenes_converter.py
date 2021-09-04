@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import os
@@ -483,8 +484,13 @@ def get_2d_boxes(nusc,
         # If mono3d=True, add 3D annotations in camera coordinates
         if mono3d and (repro_rec is not None):
             loc = box.center.tolist()
-            dim = box.wlh.tolist()
-            rot = [box.orientation.yaw_pitch_roll[0]]
+
+            dim = box.wlh
+            dim[[0, 1, 2]] = dim[[1, 2, 0]]  # convert wlh to our lhw
+            dim = dim.tolist()
+
+            rot = box.orientation.yaw_pitch_roll[0]
+            rot = [-rot]  # convert the rot to our cam coordinate
 
             global_velo2d = nusc.box_velocity(box.token)[:2]
             global_velo3d = np.array([*global_velo2d, 0.0])

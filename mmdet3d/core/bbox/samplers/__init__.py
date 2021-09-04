@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.core.bbox.samplers import (BaseSampler, CombinedSampler,
                                       InstanceBalancedPosSampler,
                                       IoUBalancedNegSampler, OHEMSampler,

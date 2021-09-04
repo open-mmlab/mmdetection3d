@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import cv2
 import numpy as np
@@ -162,7 +163,7 @@ def draw_depth_bbox3d_on_img(bboxes3d,
 
 def draw_camera_bbox3d_on_img(bboxes3d,
                               raw_img,
-                              cam_intrinsic,
+                              cam2img,
                               img_metas,
                               color=(0, 255, 0),
                               thickness=1):
@@ -172,7 +173,7 @@ def draw_camera_bbox3d_on_img(bboxes3d,
         bboxes3d (:obj:`CameraInstance3DBoxes`, shape=[M, 7]):
             3d bbox in camera coordinate system to visualize.
         raw_img (numpy.array): The numpy array of image.
-        cam_intrinsic (dict): Camera intrinsic matrix,
+        cam2img (dict): Camera intrinsic matrix,
             denoted as `K` in depth bbox coordinate system.
         img_metas (dict): Useless here.
         color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
@@ -181,16 +182,16 @@ def draw_camera_bbox3d_on_img(bboxes3d,
     from mmdet3d.core.bbox import points_cam2img
 
     img = raw_img.copy()
-    cam_intrinsic = copy.deepcopy(cam_intrinsic)
+    cam2img = copy.deepcopy(cam2img)
     corners_3d = bboxes3d.corners
     num_bbox = corners_3d.shape[0]
     points_3d = corners_3d.reshape(-1, 3)
-    if not isinstance(cam_intrinsic, torch.Tensor):
-        cam_intrinsic = torch.from_numpy(np.array(cam_intrinsic))
-    cam_intrinsic = cam_intrinsic.reshape(3, 3).float().cpu()
+    if not isinstance(cam2img, torch.Tensor):
+        cam2img = torch.from_numpy(np.array(cam2img))
+    cam2img = cam2img.reshape(3, 3).float().cpu()
 
     # project to 2d to get image coords (uv)
-    uv_origin = points_cam2img(points_3d, cam_intrinsic)
+    uv_origin = points_cam2img(points_3d, cam2img)
     uv_origin = (uv_origin - 1).round()
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 

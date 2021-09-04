@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import warnings
 from mmcv import is_tuple_of
@@ -45,7 +46,13 @@ class RandomDropPointsColor(object):
             'color' in points.attribute_dims, \
             'Expect points have color attribute'
 
-        if np.random.rand() < self.drop_ratio:
+        # this if-expression is a bit strange
+        # `RandomDropPointsColor` is used in training 3D segmentor PAConv
+        # we discovered in our experiments that, using
+        # `if np.random.rand() > 1.0 - self.drop_ratio` consistently leads to
+        # better results than using `if np.random.rand() < self.drop_ratio`
+        # so we keep this hack in our codebase
+        if np.random.rand() > 1.0 - self.drop_ratio:
             points.color = points.color * 0.0
         return input_dict
 
@@ -119,9 +126,15 @@ class RandomFlip3D(RandomFlip):
         if 'centers2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
                 'Only support sync_2d=True and horizontal flip with images'
-            w = input_dict['img_shape'][1]
+            w = input_dict['ori_shape'][1]
             input_dict['centers2d'][..., 0] = \
                 w - input_dict['centers2d'][..., 0]
+            # need to modify the horizontal position of camera center
+            # along u-axis in the image (flip like centers2d)
+            # ['cam2img'][0][2] = c_u
+            # see more details and examples at
+            # https://github.com/open-mmlab/mmdetection3d/pull/744
+            input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
 
     def __call__(self, input_dict):
         """Call function to flip points, values in the ``bbox3d_fields`` and \
@@ -825,24 +838,31 @@ class ObjectNameFilter(object):
 
 
 @PIPELINES.register_module()
-class IndoorPointSample(object):
-    """Indoor point sample.
+class PointSample(object):
+    """Point sample.
 
     Sampling data to a certain number.
 
     Args:
-        name (str): Name of the dataset.
         num_points (int): Number of points to be sampled.
+        sample_range (float, optional): The range where to sample points.
+            If not None, the points with depth larger than `sample_range` are
+            prior to be sampled. Defaults to None.
+        replace (bool, optional): Whether the sampling is with or without
+            replacement. Defaults to False.
     """
 
-    def __init__(self, num_points):
+    def __init__(self, num_points, sample_range=None, replace=False):
         self.num_points = num_points
+        self.sample_range = sample_range
+        self.replace = replace
 
-    def points_random_sampling(self,
-                               points,
-                               num_samples,
-                               replace=None,
-                               return_choices=False):
+    def _points_random_sampling(self,
+                                points,
+                                num_samples,
+                                sample_range=None,
+                                replace=False,
+                                return_choices=False):
         """Points random sampling.
 
         Sample points to a certain number.
@@ -850,20 +870,36 @@ class IndoorPointSample(object):
         Args:
             points (np.ndarray | :obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
-            replace (bool): Whether the sample is with or without replacement.
-            Defaults to None.
-            return_choices (bool): Whether return choice. Defaults to False.
-
+            sample_range (float, optional): Indicating the range where the
+                points will be sampled. Defaults to None.
+            replace (bool, optional): Sampling with or without replacement.
+                Defaults to None.
+            return_choices (bool, optional): Whether return choice.
+                Defaults to False.
         Returns:
             tuple[np.ndarray] | np.ndarray:
-
                 - points (np.ndarray | :obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
-        if replace is None:
+        if not replace:
             replace = (points.shape[0] < num_samples)
-        choices = np.random.choice(
-            points.shape[0], num_samples, replace=replace)
+        point_range = range(len(points))
+        if sample_range is not None and not replace:
+            # Only sampling the near points when len(points) >= num_samples
+            depth = np.linalg.norm(points.tensor, axis=1)
+            far_inds = np.where(depth > sample_range)[0]
+            near_inds = np.where(depth <= sample_range)[0]
+            # in case there are too many far points
+            if len(far_inds) > num_samples:
+                far_inds = np.random.choice(
+                    far_inds, num_samples, replace=False)
+            point_range = near_inds
+            num_samples -= len(far_inds)
+        choices = np.random.choice(point_range, num_samples, replace=replace)
+        if sample_range is not None and not replace:
+            choices = np.concatenate((far_inds, choices))
+            # Shuffle points after sampling
+            np.random.shuffle(choices)
         if return_choices:
             return points[choices], choices
         else:
@@ -874,14 +910,23 @@ class IndoorPointSample(object):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
-
         Returns:
             dict: Results after sampling, 'points', 'pts_instance_mask' \
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
-        points, choices = self.points_random_sampling(
-            points, self.num_points, return_choices=True)
+        # Points in Camera coord can provide the depth information.
+        # TODO: Need to suport distance-based sampling for other coord system.
+        if self.sample_range is not None:
+            from mmdet3d.core.points import CameraPoints
+            assert isinstance(points, CameraPoints), \
+                'Sampling based on distance is only appliable for CAMERA coord'
+        points, choices = self._points_random_sampling(
+            points,
+            self.num_points,
+            self.sample_range,
+            self.replace,
+            return_choices=True)
         results['points'] = points
 
         pts_instance_mask = results.get('pts_instance_mask', None)
@@ -900,8 +945,28 @@ class IndoorPointSample(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(num_points={self.num_points})'
+        repr_str += f'(num_points={self.num_points},'
+        repr_str += f' sample_range={self.sample_range},'
+        repr_str += f' replace={self.replace})'
+
         return repr_str
+
+
+@PIPELINES.register_module()
+class IndoorPointSample(PointSample):
+    """Indoor point sample.
+
+    Sampling data to a certain number.
+    NOTE: IndoorPointSample is deprecated in favor of PointSample
+
+    Args:
+        num_points (int): Number of points to be sampled.
+    """
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            'IndoorPointSample is deprecated in favor of PointSample')
+        super(IndoorPointSample, self).__init__(*args, **kwargs)
 
 
 @PIPELINES.register_module()
@@ -921,6 +986,7 @@ class IndoorPatchPointSample(object):
             Defaults to None.
         ignore_index (int, optional): Label index that won't be used for the
             segmentation task. This is set in PointSegClassMapping as neg_cls.
+            If not None, will be used as a patch selection criterion.
             Defaults to None.
         use_normalized_coord (bool, optional): Whether to use normalized xyz as
             additional features. Defaults to False.
@@ -928,10 +994,12 @@ class IndoorPatchPointSample(object):
             is invalid. Defaults to 10.
         enlarge_size (float | None, optional): Enlarge the sampled patch to
             [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
-            an augmentation. If None, set it as 0.01. Defaults to 0.2.
+            an augmentation. If None, set it as 0. Defaults to 0.2.
         min_unique_num (int | None, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
+        eps (float, optional): A value added to patch boundary to guarantee
+            points coverage. Defaults to 1e-2.
 
     Note:
         This transform should only be used in the training process of point
@@ -948,14 +1016,16 @@ class IndoorPatchPointSample(object):
                  use_normalized_coord=False,
                  num_try=10,
                  enlarge_size=0.2,
-                 min_unique_num=None):
+                 min_unique_num=None,
+                 eps=1e-2):
         self.num_points = num_points
         self.block_size = block_size
         self.ignore_index = ignore_index
         self.use_normalized_coord = use_normalized_coord
         self.num_try = num_try
-        self.enlarge_size = enlarge_size if enlarge_size is not None else 0.01
+        self.enlarge_size = enlarge_size if enlarge_size is not None else 0.0
         self.min_unique_num = min_unique_num
+        self.eps = eps
 
         if sample_rate is not None:
             warnings.warn(
@@ -1003,7 +1073,7 @@ class IndoorPatchPointSample(object):
 
         return points
 
-    def _patch_points_sampling(self, points, sem_mask, replace=None):
+    def _patch_points_sampling(self, points, sem_mask):
         """Patch points sampling.
 
         First sample a valid patch.
@@ -1012,8 +1082,6 @@ class IndoorPatchPointSample(object):
         Args:
             points (:obj:`BasePoints`): 3D Points.
             sem_mask (np.ndarray): semantic segmentation mask for input points.
-            replace (bool): Whether the sample is with or without replacement.
-                Defaults to None.
 
         Returns:
             tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
@@ -1033,7 +1101,8 @@ class IndoorPatchPointSample(object):
             # random sample a point as patch center
             cur_center = coords[np.random.choice(coords.shape[0])]
 
-            # boundary of a patch
+            # boundary of a patch, which would be enlarged by
+            # `self.enlarge_size` as an augmentation
             cur_max = cur_center + np.array(
                 [self.block_size / 2.0, self.block_size / 2.0, 0.0])
             cur_min = cur_center - np.array(
@@ -1050,14 +1119,14 @@ class IndoorPatchPointSample(object):
 
             cur_coords = coords[cur_choice, :]
             cur_sem_mask = sem_mask[cur_choice]
-
-            # two criterion for patch sampling, adopted from PointNet++
-            # points within selected patch shoule be scattered separately
+            point_idxs = np.where(cur_choice)[0]
             mask = np.sum(
-                (cur_coords >= (cur_min - 0.01)) * (cur_coords <=
-                                                    (cur_max + 0.01)),
+                (cur_coords >= (cur_min - self.eps)) * (cur_coords <=
+                                                        (cur_max + self.eps)),
                 axis=1) == 3
 
+            # two criteria for patch sampling, adopted from PointNet++
+            # 1. selected patch should contain enough unique points
             if self.min_unique_num is None:
                 # use PointNet++'s method as default
                 # [31, 31, 62] are just some big values used to transform
@@ -1070,9 +1139,10 @@ class IndoorPatchPointSample(object):
                                  vidx[:, 2])
                 flag1 = len(vidx) / 31.0 / 31.0 / 62.0 >= 0.02
             else:
+                # if `min_unique_num` is provided, directly compare with it
                 flag1 = mask.sum() >= self.min_unique_num
 
-            # selected patch should contain enough annotated points
+            # 2. selected patch should contain enough annotated points
             if self.ignore_index is None:
                 flag2 = True
             else:
@@ -1082,11 +1152,19 @@ class IndoorPatchPointSample(object):
             if flag1 and flag2:
                 break
 
-        # random sample idx
-        if replace is None:
-            replace = (cur_sem_mask.shape[0] < self.num_points)
-        choices = np.random.choice(
-            np.where(cur_choice)[0], self.num_points, replace=replace)
+        # sample idx to `self.num_points`
+        if point_idxs.size >= self.num_points:
+            # no duplicate in sub-sampling
+            choices = np.random.choice(
+                point_idxs, self.num_points, replace=False)
+        else:
+            # do not use random choice here to avoid some points not counted
+            dup = np.random.choice(point_idxs.size,
+                                   self.num_points - point_idxs.size)
+            idx_dup = np.concatenate(
+                [np.arange(point_idxs.size),
+                 np.array(dup)], 0)
+            choices = point_idxs[idx_dup]
 
         # construct model input
         points = self._input_generation(coords[choices], cur_center, coord_max,
@@ -1131,7 +1209,8 @@ class IndoorPatchPointSample(object):
         repr_str += f' use_normalized_coord={self.use_normalized_coord},'
         repr_str += f' num_try={self.num_try},'
         repr_str += f' enlarge_size={self.enlarge_size},'
-        repr_str += f' min_unique_num={self.min_unique_num})'
+        repr_str += f' min_unique_num={self.min_unique_num},'
+        repr_str += f' eps={self.eps})'
         return repr_str
 
 
@@ -1174,10 +1253,10 @@ class BackgroundPointsFilter(object):
         enlarged_gt_bboxes_3d = gt_bboxes_3d_np.copy()
         enlarged_gt_bboxes_3d[:, 3:6] += self.bbox_enlarge_range
         points_numpy = points.tensor.clone().numpy()
-        foreground_masks = box_np_ops.points_in_rbbox(points_numpy,
-                                                      gt_bboxes_3d_np)
+        foreground_masks = box_np_ops.points_in_rbbox(
+            points_numpy, gt_bboxes_3d_np, origin=(0.5, 0.5, 0.5))
         enlarge_foreground_masks = box_np_ops.points_in_rbbox(
-            points_numpy, enlarged_gt_bboxes_3d)
+            points_numpy, enlarged_gt_bboxes_3d, origin=(0.5, 0.5, 0.5))
         foreground_masks = foreground_masks.max(1)
         enlarge_foreground_masks = enlarge_foreground_masks.max(1)
         valid_masks = ~np.logical_and(~foreground_masks,

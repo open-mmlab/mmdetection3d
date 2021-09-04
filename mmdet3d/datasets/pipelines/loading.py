@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 
@@ -90,7 +91,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             dict: The dict contains loaded image and meta information.
         """
         super().__call__(results)
-        results['cam_intrinsic'] = results['img_info']['cam_intrinsic']
+        results['cam2img'] = results['img_info']['cam_intrinsic']
         return results
 
 

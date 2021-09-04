@@ -1,11 +1,12 @@
 _base_ = './hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py'
 
 model = dict(
-    pretrained=dict(pts='open-mmlab://regnetx_3.2gf'),
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',
         arch='regnetx_3.2gf',
+        init_cfg=dict(
+            type='Pretrained', checkpoint='open-mmlab://regnetx_3.2gf'),
         out_indices=(1, 2, 3),
         frozen_stages=-1,
         strides=(1, 2, 2, 2),
@@ -24,16 +25,16 @@ class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/nuscenes/': 's3://nuscenes/nuscenes/',
-        'data/nuscenes/': 's3://nuscenes/nuscenes/'
-    }))
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/nuscenes/': 's3://nuscenes/nuscenes/',
+#         'data/nuscenes/': 's3://nuscenes/nuscenes/'
+#     }))
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',

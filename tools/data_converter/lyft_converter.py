@@ -1,6 +1,8 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import os
+from logging import warning
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
 from os import path as osp
 from pyquaternion import Quaternion
@@ -217,6 +219,9 @@ def export_2d_annotation(root_path, info_path, version):
         info_path (str): Path of the info file.
         version (str): Dataset version.
     """
+    warning.warn('DeprecationWarning: 2D annotations are not used on the '
+                 'Lyft dataset. The function export_2d_annotation will be '
+                 'deprecated.')
     # get bbox annotations for camera
     camera_types = [
         'CAM_FRONT',

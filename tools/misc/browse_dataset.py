@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import numpy as np
 import warnings
@@ -62,6 +63,9 @@ def build_data_cfg(config_path, skip_type, cfg_options):
     # so we don't need to worry about it later
     if cfg.data.train['type'] == 'RepeatDataset':
         cfg.data.train = cfg.data.train.dataset
+    # use only first dataset for `ConcatDataset`
+    if cfg.data.train['type'] == 'ConcatDataset':
+        cfg.data.train = cfg.data.train.datasets[0]
     train_data_cfg = cfg.data.train
     # eval_pipeline purely consists of loading functions
     # use eval_pipeline for data loading
@@ -159,15 +163,11 @@ def show_proj_bbox_img(idx,
             img_metas=img_metas,
             show=show)
     elif isinstance(gt_bboxes, CameraInstance3DBoxes):
-        # TODO: remove the hack of box from NuScenesMonoDataset
-        if is_nus_mono:
-            from mmdet3d.core.bbox import mono_cam_box2vis
-            gt_bboxes = mono_cam_box2vis(gt_bboxes)
         show_multi_modality_result(
             img,
             gt_bboxes,
             None,
-            img_metas['cam_intrinsic'],
+            img_metas['cam2img'],
             out_dir,
             filename,
             box_mode='camera',
@@ -204,7 +204,7 @@ def main():
             data_path = data_info['point_cloud']['velodyne_path']
         elif dataset_type in [
                 'ScanNetDataset', 'SUNRGBDDataset', 'ScanNetSegDataset',
-                'S3DISSegDataset'
+                'S3DISSegDataset', 'S3DISDataset'
         ]:
             data_path = data_info['pts_path']
         elif dataset_type in ['NuScenesDataset', 'LyftDataset']:

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import re
@@ -7,11 +8,11 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from os import path as osp
 
-from mmdet3d.core import (Box3DMode, DepthInstance3DBoxes,
-                          LiDARInstance3DBoxes, show_multi_modality_result,
-                          show_result, show_seg_result)
+from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
+                          DepthInstance3DBoxes, LiDARInstance3DBoxes,
+                          show_multi_modality_result, show_result,
+                          show_seg_result)
 from mmdet3d.core.bbox import get_box_type
-from mmdet3d.core.bbox.structures.cam_box3d import CameraInstance3DBoxes
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_model
 
@@ -423,21 +424,18 @@ def show_proj_det_result_meshlab(data,
             img_metas=data['img_metas'][0][0],
             show=show)
     elif box_mode == Box3DMode.CAM:
-        if 'cam_intrinsic' not in data['img_metas'][0][0]:
+        if 'cam2img' not in data['img_metas'][0][0]:
             raise NotImplementedError(
                 'camera intrinsic matrix is not provided')
 
-        from mmdet3d.core.bbox import mono_cam_box2vis
         show_bboxes = CameraInstance3DBoxes(
             pred_bboxes, box_dim=pred_bboxes.shape[-1], origin=(0.5, 1.0, 0.5))
-        # TODO: remove the hack of box from NuScenesMonoDataset
-        show_bboxes = mono_cam_box2vis(show_bboxes)
 
         show_multi_modality_result(
             img,
             None,
             show_bboxes,
-            data['img_metas'][0][0]['cam_intrinsic'],
+            data['img_metas'][0][0]['cam2img'],
             out_dir,
             file_name,
             box_mode='camera',

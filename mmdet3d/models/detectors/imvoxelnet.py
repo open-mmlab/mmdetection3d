@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from mmdet3d.core import bbox3d2result, build_anchor_generator
@@ -60,7 +61,8 @@ class ImVoxelNet(BaseDetector):
                 img_meta,
                 img_features=feature[None, ...],
                 points=points,
-                lidar2img_rt=points.new_tensor(img_meta['lidar2img']),
+                proj_mat=points.new_tensor(img_meta['lidar2img']),
+                coord_type='LIDAR',
                 img_scale_factor=img_scale_factor,
                 img_crop_offset=img_crop_offset,
                 img_flip=img_flip,

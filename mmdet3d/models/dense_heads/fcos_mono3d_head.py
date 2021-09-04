@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 from mmcv.cnn import Scale
@@ -590,7 +591,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         Returns:
             tuples[Tensor]: Predicted 3D boxes, scores, labels and attributes.
         """
-        view = np.array(input_meta['cam_intrinsic'])
+        view = np.array(input_meta['cam2img'])
         scale_factor = input_meta['scale_factor']
         cfg = self.test_cfg if cfg is None else cfg
         assert len(cls_scores) == len(bbox_preds) == len(mlvl_points)
@@ -860,6 +861,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                    gt_bboxes_3d.new_zeros((num_points,)), \
                    attr_labels.new_full(
                        (num_points,), self.attr_background_label)
+
+        # change orientation to local yaw
+        gt_bboxes_3d[..., 6] = -torch.atan2(
+            gt_bboxes_3d[..., 0], gt_bboxes_3d[..., 2]) + gt_bboxes_3d[..., 6]
 
         areas = (gt_bboxes[:, 2] - gt_bboxes[:, 0]) * (
             gt_bboxes[:, 3] - gt_bboxes[:, 1])
