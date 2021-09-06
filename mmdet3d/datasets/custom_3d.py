@@ -230,7 +230,8 @@ class Custom3DDataset(Dataset):
                  logger=None,
                  show=False,
                  out_dir=None,
-                 pipeline=None):
+                 pipeline=None,
+                 axis_aligned_lw=False):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -246,8 +247,11 @@ class Custom3DDataset(Dataset):
                 Default: False.
             out_dir (str, optional): Path to save the visualization results.
                 Default: None.
-            pipeline (list[dict], optional): raw data loading for showing.
+            pipeline (list[dict], optional): Raw data loading for showing.
                 Default: None.
+            axis_aligned_lw (bool, optional): Whether to use axis-aligned
+                length and width to replace the real length and width.
+                Default: False.
 
         Returns:
             dict: Evaluation results.
@@ -269,7 +273,8 @@ class Custom3DDataset(Dataset):
             label2cat,
             logger=logger,
             box_type_3d=self.box_type_3d,
-            box_mode_3d=self.box_mode_3d)
+            box_mode_3d=self.box_mode_3d,
+            axis_aligned_lw=axis_aligned_lw)
         if show:
             self.show(results, out_dir, pipeline=pipeline)
 
