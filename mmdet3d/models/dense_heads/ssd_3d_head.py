@@ -391,7 +391,8 @@ class SSD3DHead(VoteHead):
             # LiDARInstance3DBoxes and DepthInstance3DBoxes
             canonical_xyz = rotation_3d_in_axis(
                 canonical_xyz.unsqueeze(0).transpose(0, 1),
-                -gt_bboxes_3d.yaw[assignment], 2).squeeze(1)
+                -gt_bboxes_3d.yaw[assignment],
+                axis=2).squeeze(1)
         distance_front = torch.clamp(
             size_res_targets[:, 0] - canonical_xyz[:, 0], min=0)
         distance_back = torch.clamp(
