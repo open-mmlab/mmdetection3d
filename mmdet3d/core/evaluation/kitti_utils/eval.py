@@ -576,6 +576,13 @@ def get_mAP(prec):
     return sums / 11 * 100
 
 
+def get_mAP40(prec):
+    sums = 0
+    for i in range(1, prec.shape[-1]):
+        sums = sums + prec[..., i]
+    return sums / 40 * 100
+
+
 def print_str(value, *arg, sstream=None):
     if sstream is None:
         sstream = sysio.StringIO()
@@ -594,6 +601,8 @@ def do_eval(gt_annos,
     difficultys = [0, 1, 2]
     mAP_bbox = None
     mAP_aos = None
+    mAP40_bbox = None
+    mAP40_aos = None
     if 'bbox' in eval_types:
         ret = eval_class(
             gt_annos,
@@ -605,21 +614,28 @@ def do_eval(gt_annos,
             compute_aos=('aos' in eval_types))
         # ret: [num_class, num_diff, num_minoverlap, num_sample_points]
         mAP_bbox = get_mAP(ret['precision'])
+        mAP40_bbox = get_mAP40(ret['precision'])
         if 'aos' in eval_types:
             mAP_aos = get_mAP(ret['orientation'])
+            mAP40_aos = get_mAP40(ret['orientation'])
 
     mAP_bev = None
+    mAP40_bev = None
     if 'bev' in eval_types:
         ret = eval_class(gt_annos, dt_annos, current_classes, difficultys, 1,
                          min_overlaps)
         mAP_bev = get_mAP(ret['precision'])
+        mAP40_bev = get_mAP40(ret['precision'])
 
     mAP_3d = None
+    mAP40_3d = None
     if '3d' in eval_types:
         ret = eval_class(gt_annos, dt_annos, current_classes, difficultys, 2,
                          min_overlaps)
         mAP_3d = get_mAP(ret['precision'])
-    return mAP_bbox, mAP_bev, mAP_3d, mAP_aos
+        mAP40_3d = get_mAP40(ret['precision'])
+    return (mAP_bbox, mAP_bev, mAP_3d, mAP_aos, mAP40_bbox, mAP40_bev,
+            mAP40_3d, mAP40_aos)
 
 
 def do_coco_style_eval(gt_annos, dt_annos, current_classes, overlap_ranges,
@@ -703,9 +719,10 @@ def kitti_eval(gt_annos,
     if compute_aos:
         eval_types.append('aos')
 
-    mAPbbox, mAPbev, mAP3d, mAPaos = do_eval(gt_annos, dt_annos,
-                                             current_classes, min_overlaps,
-                                             eval_types)
+    mAPbbox, mAPbev, mAP3d, mAPaos, mAP40_bbox, mAP40_bev,\
+        mAP40_3d, mAP40_aos = do_eval(gt_annos, dt_annos,
+                                      current_classes, min_overlaps,
+                                      eval_types)
 
     ret_dict = {}
     difficulty = ['easy', 'moderate', 'hard']
@@ -715,21 +732,31 @@ def kitti_eval(gt_annos,
         curcls_name = class_to_name[curcls]
         for i in range(min_overlaps.shape[0]):
             # prepare results for print
-            result += ('{} AP@{:.2f}, {:.2f}, {:.2f}:\n'.format(
+            result += ('{} AP/AP40@{:.2f}, {:.2f}, {:.2f}:\n'.format(
                 curcls_name, *min_overlaps[i, :, j]))
             if mAPbbox is not None:
                 result += 'bbox AP:{:.4f}, {:.4f}, {:.4f}\n'.format(
                     *mAPbbox[j, :, i])
+            if mAP40_bbox is not None:
+                result += 'bbox AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                    *mAP40_bbox[j, :, i])
             if mAPbev is not None:
                 result += 'bev  AP:{:.4f}, {:.4f}, {:.4f}\n'.format(
                     *mAPbev[j, :, i])
+            if mAP40_bev is not None:
+                result += 'bev  AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                    *mAP40_bev[j, :, i])
             if mAP3d is not None:
                 result += '3d   AP:{:.4f}, {:.4f}, {:.4f}\n'.format(
                     *mAP3d[j, :, i])
-
+            if mAP40_3d is not None:
+                result += '3d   AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                    *mAP40_3d[j, :, i])
             if compute_aos:
                 result += 'aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(
                     *mAPaos[j, :, i])
+                result += 'aos  AP40:{:.2f}, {:.2f}, {:.2f}\n'.format(
+                    *mAP40_aos[j, :, i])
 
             # prepare results for logger
             for idx in range(3):
@@ -740,37 +767,70 @@ def kitti_eval(gt_annos,
                 prefix = f'KITTI/{curcls_name}'
                 if mAP3d is not None:
                     ret_dict[f'{prefix}_3D_{postfix}'] = mAP3d[j, idx, i]
+                if mAP40_3d is not None:
+                    ret_dict[f'{prefix}_3D_AR40_{postfix}'] =\
+                        mAP40_3d[j, idx, i]
                 if mAPbev is not None:
                     ret_dict[f'{prefix}_BEV_{postfix}'] = mAPbev[j, idx, i]
+                if mAP40_bev is not None:
+                    ret_dict[f'{prefix}_BEV_AR40_{postfix}'] =\
+                        mAP40_bev[j, idx, i]
                 if mAPbbox is not None:
                     ret_dict[f'{prefix}_2D_{postfix}'] = mAPbbox[j, idx, i]
+                if mAP40_bbox is not None:
+                    ret_dict[f'{prefix}_2D_AR40_{postfix}'] =\
+                        mAP40_bbox[j, idx, i]
 
     # calculate mAP over all classes if there are multiple classes
     if len(current_classes) > 1:
         # prepare results for print
-        result += ('\nOverall AP@{}, {}, {}:\n'.format(*difficulty))
+        result += ('\nOverall AP/AP40@{}, {}, {}:\n'.format(*difficulty))
         if mAPbbox is not None:
             mAPbbox = mAPbbox.mean(axis=0)
             result += 'bbox AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbbox[:, 0])
+        if mAP40_bbox is not None:
+            mAP40_bbox = mAP40_bbox.mean(axis=0)
+            result += 'bbox AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                *mAP40_bbox[:, 0])
         if mAPbev is not None:
             mAPbev = mAPbev.mean(axis=0)
             result += 'bev  AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAPbev[:, 0])
+        if mAP40_bev is not None:
+            mAP40_bev = mAP40_bev.mean(axis=0)
+            result += 'bev  AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
+                *mAP40_bev[:, 0])
         if mAP3d is not None:
             mAP3d = mAP3d.mean(axis=0)
             result += '3d   AP:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP3d[:, 0])
+        if mAP40_3d is not None:
+            mAP40_3d = mAP40_3d.mean(axis=0)
+            result += '3d   AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP40_3d[:,
+                                                                            0])
         if compute_aos:
             mAPaos = mAPaos.mean(axis=0)
             result += 'aos  AP:{:.2f}, {:.2f}, {:.2f}\n'.format(*mAPaos[:, 0])
+            mAP40_aos = mAP40_aos.mean(axis=0)
+            result += 'aos  AP40:{:.2f}, {:.2f}, {:.2f}\n'.format(
+                *mAP40_aos[:, 0])
 
         # prepare results for logger
         for idx in range(3):
             postfix = f'{difficulty[idx]}'
             if mAP3d is not None:
                 ret_dict[f'KITTI/Overall_3D_{postfix}'] = mAP3d[idx, 0]
+            if mAP40_3d is not None:
+                ret_dict[f'KITTI/Overall_3D_AR40_{postfix}'] =\
+                    mAP40_3d[idx, 0]
             if mAPbev is not None:
                 ret_dict[f'KITTI/Overall_BEV_{postfix}'] = mAPbev[idx, 0]
+            if mAP40_bev is not None:
+                ret_dict[f'KITTI/Overall_BEV_AR40_{postfix}'] =\
+                    mAP40_bev[idx, 0]
             if mAPbbox is not None:
                 ret_dict[f'KITTI/Overall_2D_{postfix}'] = mAPbbox[idx, 0]
+            if mAP40_bbox is not None:
+                ret_dict[f'KITTI/Overall_2D_AR40_{postfix}'] =\
+                    mAP40_bbox[idx, 0]
 
     return result, ret_dict
 
