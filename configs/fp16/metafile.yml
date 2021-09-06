@@ -8,9 +8,16 @@ Collections:
       Architecture:
         - Hard Voxelization
     Paper:
-      - https://www.mdpi.com/1424-8220/18/10/3337
-      - https://arxiv.org/abs/1812.05784
+      URL:
+        - https://www.mdpi.com/1424-8220/18/10/3337
+        - https://arxiv.org/abs/1812.05784
+      Title:
+        - 'SECOND: Sparsely Embedded Convolutional Detection'
+        - 'PointPillars: Fast Encoders for Object Detection from Point Clouds'
     README: configs/fp16/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmcv/blob/c47c9196d067a0900b7b8987a8e82768edab2fff/mmcv/runner/fp16_utils.py#L55
+      Version: v0.1.0
 
 Models:
   - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-car
