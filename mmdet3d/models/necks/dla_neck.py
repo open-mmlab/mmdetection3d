@@ -29,7 +29,7 @@ class IDAUp(nn.Module):
     Args:
         out_channels (int): Number of output channels for DeformConv.
         in_channels (List[int]): List of input channels of multi-scale
-            feature map.
+            feature maps.
         kernel_sizes (List[int]): List of size of the convolving
             kernel of different scales.
         norm_cfg (dict, optional): Config dict for normalization layer.
@@ -107,7 +107,7 @@ class DLAUp(nn.Module):
     Args:
         start_level (int): The start layer.
         channels (List[int]): List of input channels of multi-scale
-            feature map.
+            feature maps.
         scales(List[int]): List of scale of different layers' feature.
         in_channels (NoneType, optional): List of input channels of
             different scales. Default: None.
