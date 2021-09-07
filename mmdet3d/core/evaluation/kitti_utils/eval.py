@@ -645,17 +645,17 @@ def do_coco_style_eval(gt_annos, dt_annos, current_classes, overlap_ranges,
     for i in range(overlap_ranges.shape[1]):
         for j in range(overlap_ranges.shape[2]):
             min_overlaps[:, i, j] = np.linspace(*overlap_ranges[:, i, j])
-    mAPbbox, mAPbev, mAP3d, mAPaos, _, _, \
+    mAP_bbox, mAP_bev, mAP_3d, mAP_aos, _, _, \
         _, _ = do_eval(gt_annos, dt_annos,
                        current_classes, min_overlaps,
                        compute_aos)
     # ret: [num_class, num_diff, num_minoverlap]
-    mAPbbox = mAPbbox.mean(-1)
-    mAPbev = mAPbev.mean(-1)
-    mAP3d = mAP3d.mean(-1)
-    if mAPaos is not None:
-        mAPaos = mAPaos.mean(-1)
-    return mAPbbox, mAPbev, mAP3d
+    mAP_bbox = mAP_bbox.mean(-1)
+    mAP_bev = mAP_bev.mean(-1)
+    mAP_3d = mAP_3d.mean(-1)
+    if mAP_aos is not None:
+        mAP_aos = mAP_aos.mean(-1)
+    return mAP_bbox, mAP_bev, mAP_3d, mAP_aos
 
 
 def kitti_eval(gt_annos,
