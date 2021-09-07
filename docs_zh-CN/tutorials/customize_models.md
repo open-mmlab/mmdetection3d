@@ -15,7 +15,7 @@
 
 接下来我们以 HardVFE 为例展示如何开发新的组成模块。
 
-#### 1. 定义一个新的 voxel encoder（如 HardVFE）
+#### 1. 定义一个新的 voxel encoder（如 HardVFE：即 DV-SECOND 中所提出的 Voxel 特征提取器）
 
 创建一个新文件 `mmdet3d/models/voxel_encoders/voxel_encoder.py` ：
 
@@ -65,7 +65,7 @@ model = dict(
 
 ### 添加新建 backbone
 
-接下来我们以 SECOND（Sparsely Embedded Convolutional Detection） 为例展示如何开发新的组成模块。
+接下来我们以 [SECOND](https://www.mdpi.com/1424-8220/18/10/3337)（Sparsely Embedded Convolutional Detection） 为例展示如何开发新的组成模块。
 
 #### 1. 定义一个新的 backbone（如 SECOND）
 

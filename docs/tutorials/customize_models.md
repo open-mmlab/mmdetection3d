@@ -15,7 +15,7 @@ We basically categorize model components into 6 types.
 
 Here we show how to develop new components with an example of HardVFE.
 
-#### 1. Define a new voxel encoder (e.g. HardVFE)
+#### 1. Define a new voxel encoder (e.g. HardVFE: Voxel feature encoder used in DV-SECOND)
 
 Create a new file `mmdet3d/models/voxel_encoders/voxel_encoder.py`.
 
@@ -67,7 +67,7 @@ model = dict(
 
 ### Add a new backbone
 
-Here we show how to develop new components with an example of SECOND (Sparsely Embedded Convolutional Detection).
+Here we show how to develop new components with an example of [SECOND](https://www.mdpi.com/1424-8220/18/10/3337) (Sparsely Embedded Convolutional Detection).
 
 #### 1. Define a new backbone (e.g. SECOND)
 
