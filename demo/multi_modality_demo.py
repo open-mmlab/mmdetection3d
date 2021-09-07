@@ -19,7 +19,9 @@ def main():
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
-        '--show', action='store_true', help='show online visualization results')
+        '--show',
+        action='store_true',
+        help='show online visualization results')
     parser.add_argument(
         '--snapshot',
         action='store_true',
