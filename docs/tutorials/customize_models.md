@@ -457,7 +457,7 @@ model = dict(
 ```
 
 Since MMDetection 2.0, the config system supports to inherit configs such that the users can focus on the modification.
-The second stage of PartA2 Head mainly uses a new PartAggregationROIHead and a new
+The second stage of PartA2 Head mainly uses a new `PartAggregationROIHead` and a new
 `PartA2BboxHead`, the arguments are set according to the `__init__` function of each module.
 
 ### Add new loss

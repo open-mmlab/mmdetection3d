@@ -2,12 +2,12 @@
 
 我们通常把模型的各个组成成分分成6种类型：
 
-- encoder：包括 voxel layer、voxel encoder 和 middle encoder 等进入 backbone 前所使用的基于 voxel 的方法，如 HardVFE 和 PointPillarsScatter。
-- backbone：通常采用 FCN 网络来提取特征图，如 ResNet 和 SECOND。
-- neck：位于 backbones 和 heads 之间的组成模块，如 FPN 和 SECONDFPN。
-- head：用于特定任务的组成模块，如检测框的预测和掩码的预测。
-- roi extractor：用于从特征图中提取 RoI 特征的组成模块，如 H3DRoIHead 和 PartAggregationROIHead。
-- loss：heads 中用于计算损失函数的组成模块，如 FocalLoss、L1Loss 和 GHMLoss。
+- 编码器（encoder）：包括 voxel layer、voxel encoder 和 middle encoder 等进入 backbone 前所使用的基于 voxel 的方法，如 HardVFE 和 PointPillarsScatter。
+- 骨干网络（backbone）：通常采用 FCN 网络来提取特征图，如 ResNet 和 SECOND。
+- 颈部网络（neck）：位于 backbones 和 heads 之间的组成模块，如 FPN 和 SECONDFPN。
+- 检测头（head）：用于特定任务的组成模块，如检测框的预测和掩码的预测。
+- roi 提取器（roi extractor）：用于从特征图中提取 RoI 特征的组成模块，如 H3DRoIHead 和 PartAggregationROIHead。
+- 损失函数（loss）：heads 中用于计算损失函数的组成模块，如 FocalLoss、L1Loss 和 GHMLoss。
 
 ## 开发新的组成模块
 
@@ -221,7 +221,7 @@ class PartA2BboxHead(BaseModule):
 
 ```
 
-其次，如果有必要的话，用户还需要实现一个新的 RoI Head，此处我们从 `Base3DRoIHead` 中继承得到一个新类 `PartAggregationROIHead` ，此时我们就能发现 `Base3DRoIHead` 已经实现了下面的功能：
+其次，如果有必要的话，用户还需要实现一个新的 RoI Head，此处我们从 `Base3DRoIHead` 中继承得到一个新类 `PartAggregationROIHead`，此时我们就能发现 `Base3DRoIHead` 已经实现了下面的功能：
 
 ```python
 from abc import ABCMeta, abstractmethod
@@ -285,4 +285,228 @@ class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
         """
         pass
 
+```
+
+接着将会对 bbox_forward 的逻辑进行修改，同时，bbox_forward 还会继承来自 `Base3DRoIHead` 的其他逻辑，在 `mmdet3d/models/roi_heads/part_aggregation_roi_head.py` 中，我们实现了新的 RoI Head，如下所示：
+
+```python
+from torch.nn import functional as F
+
+from mmdet3d.core import AssignResult
+from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
+from mmdet.core import build_assigner, build_sampler
+from mmdet.models import HEADS
+from ..builder import build_head, build_roi_extractor
+from .base_3droi_head import Base3DRoIHead
+
+
+@HEADS.register_module()
+class PartAggregationROIHead(Base3DRoIHead):
+    """Part aggregation roi head for PartA2.
+    Args:
+        semantic_head (ConfigDict): Config of semantic head.
+        num_classes (int): The number of classes.
+        seg_roi_extractor (ConfigDict): Config of seg_roi_extractor.
+        part_roi_extractor (ConfigDict): Config of part_roi_extractor.
+        bbox_head (ConfigDict): Config of bbox_head.
+        train_cfg (ConfigDict): Training config.
+        test_cfg (ConfigDict): Testing config.
+    """
+
+    def __init__(self,
+                 semantic_head,
+                 num_classes=3,
+                 seg_roi_extractor=None,
+                 part_roi_extractor=None,
+                 bbox_head=None,
+                 train_cfg=None,
+                 test_cfg=None,
+                 init_cfg=None):
+        super(PartAggregationROIHead, self).__init__(
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
+        self.num_classes = num_classes
+        assert semantic_head is not None
+        self.semantic_head = build_head(semantic_head)
+
+        if seg_roi_extractor is not None:
+            self.seg_roi_extractor = build_roi_extractor(seg_roi_extractor)
+        if part_roi_extractor is not None:
+            self.part_roi_extractor = build_roi_extractor(part_roi_extractor)
+
+        self.init_assigner_sampler()
+
+    def _bbox_forward(self, seg_feats, part_feats, voxels_dict, rois):
+        """Forward function of roi_extractor and bbox_head used in both
+        training and testing.
+        Args:
+            seg_feats (torch.Tensor): Point-wise semantic features.
+            part_feats (torch.Tensor): Point-wise part prediction features.
+            voxels_dict (dict): Contains information of voxels.
+            rois (Tensor): Roi boxes.
+        Returns:
+            dict: Contains predictions of bbox_head and
+                features of roi_extractor.
+        """
+        pooled_seg_feats = self.seg_roi_extractor(seg_feats,
+                                                  voxels_dict['voxel_centers'],
+                                                  voxels_dict['coors'][..., 0],
+                                                  rois)
+        pooled_part_feats = self.part_roi_extractor(
+            part_feats, voxels_dict['voxel_centers'],
+            voxels_dict['coors'][..., 0], rois)
+        cls_score, bbox_pred = self.bbox_head(pooled_seg_feats,
+                                              pooled_part_feats)
+
+        bbox_results = dict(
+            cls_score=cls_score,
+            bbox_pred=bbox_pred,
+            pooled_seg_feats=pooled_seg_feats,
+            pooled_part_feats=pooled_part_feats)
+        return bbox_results
+```
+
+此处我们省略了与其他功能相关的细节，请参考 [此处](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/part_aggregation_roi_head.py) 获取更多细节。
+
+最后，用户需要在 `mmdet3d/models/bbox_heads/__init__.py` 和 `mmdet3d/models/roi_heads/__init__.py` 中添加新模块，使得对应的注册器能够发现并加载该模块。
+
+此外，用户也可以添加以下的代码到配置文件中，从而实现相同的目标。
+
+```python
+custom_imports=dict(
+    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'])
+```
+
+PartAggregationROIHead 的配置文件如下所示：
+
+```python
+model = dict(
+    ...
+    roi_head=dict(
+        type='PartAggregationROIHead',
+        num_classes=3,
+        semantic_head=dict(
+            type='PointwiseSemanticHead',
+            in_channels=16,
+            extra_width=0.2,
+            seg_score_thr=0.3,
+            num_classes=3,
+            loss_seg=dict(
+                type='FocalLoss',
+                use_sigmoid=True,
+                reduction='sum',
+                gamma=2.0,
+                alpha=0.25,
+                loss_weight=1.0),
+            loss_part=dict(
+                type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
+        seg_roi_extractor=dict(
+            type='Single3DRoIAwareExtractor',
+            roi_layer=dict(
+                type='RoIAwarePool3d',
+                out_size=14,
+                max_pts_per_voxel=128,
+                mode='max')),
+        part_roi_extractor=dict(
+            type='Single3DRoIAwareExtractor',
+            roi_layer=dict(
+                type='RoIAwarePool3d',
+                out_size=14,
+                max_pts_per_voxel=128,
+                mode='avg')),
+        bbox_head=dict(
+            type='PartA2BboxHead',
+            num_classes=3,
+            seg_in_channels=16,
+            part_in_channels=4,
+            seg_conv_channels=[64, 64],
+            part_conv_channels=[64, 64],
+            merge_conv_channels=[128, 128],
+            down_conv_channels=[128, 256],
+            bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
+            shared_fc_channels=[256, 512, 512, 512],
+            cls_channels=[256, 256],
+            reg_channels=[256, 256],
+            dropout_ratio=0.1,
+            roi_feat_size=14,
+            with_corner_loss=True,
+            loss_bbox=dict(
+                type='SmoothL1Loss',
+                beta=1.0 / 9.0,
+                reduction='sum',
+                loss_weight=1.0),
+            loss_cls=dict(
+                type='CrossEntropyLoss',
+                use_sigmoid=True,
+                reduction='sum',
+                loss_weight=1.0)))
+    ...
+    )
+```
+
+MMDetection 2.0 支持配置文件之间的继承，使得用户能够更加关注自己的配置文件的修改。
+PartA2 Head 的第二阶段主要使用新建的 `PartAggregationROIHead` 和 `PartA2BboxHead`，需要根据对应模块的 `__init__` 参数来设置对应的参数。
+
+### 添加新建 loss
+
+假定用户想要新添一个用于检测框回归的 loss，并命名为 `MyLoss`。
+为了添加一个新的 loss ，用于需要在 `mmdet3d/models/losses/my_loss.py` 中实现对应的逻辑。
+装饰器 `weighted_loss` 能够保证对 batch 中每个样本的 loss 进行加权平均。
+
+```python
+import torch
+import torch.nn as nn
+
+from ..builder import LOSSES
+from .utils import weighted_loss
+
+@weighted_loss
+def my_loss(pred, target):
+    assert pred.size() == target.size() and target.numel() > 0
+    loss = torch.abs(pred - target)
+    return loss
+
+@LOSSES.register_module()
+class MyLoss(nn.Module):
+
+    def __init__(self, reduction='mean', loss_weight=1.0):
+        super(MyLoss, self).__init__()
+        self.reduction = reduction
+        self.loss_weight = loss_weight
+
+    def forward(self,
+                pred,
+                target,
+                weight=None,
+                avg_factor=None,
+                reduction_override=None):
+        assert reduction_override in (None, 'none', 'mean', 'sum')
+        reduction = (
+            reduction_override if reduction_override else self.reduction)
+        loss_bbox = self.loss_weight * my_loss(
+            pred, target, weight, reduction=reduction, avg_factor=avg_factor)
+        return loss_bbox
+```
+
+接着，用户需要将 loss 添加到 `mmdet3d/models/losses/__init__.py`：
+
+```python
+from .my_loss import MyLoss, my_loss
+
+```
+
+此外，用户也可以添加以下的代码到配置文件中，从而实现相同的目标。
+
+```python
+custom_imports=dict(
+    imports=['mmdet3d.models.losses.my_loss'])
+```
+
+为了使用该 loss，需要对 `loss_xxx` 域进行修改。
+因为 MyLoss 主要用于检测框的回归，因此需要在对应的 head 中修改 `loss_bbox` 域的值。
+
+```python
+loss_bbox=dict(type='MyLoss', loss_weight=1.0))
 ```
