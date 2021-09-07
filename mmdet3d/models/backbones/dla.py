@@ -380,7 +380,7 @@ class DLANet(BaseModule):
     def _make_conv_level(self,
                          in_channels,
                          out_channels,
-                         convs,
+                         num_convs,
                          norm_cfg,
                          conv_cfg,
                          stride=1,
@@ -390,7 +390,7 @@ class DLANet(BaseModule):
         Args:
             in_channels (int): Input feature channel.
             out_channels (int): Output feature channel.
-            convs (int): Number of Conv module.
+            num_convs (int): Number of Conv module.
             norm_cfg (dict): Dictionary to construct and config
                 norm layer.
             conv_cfg (dict): Dictionary to construct and config
@@ -399,7 +399,7 @@ class DLANet(BaseModule):
             dilation (int, optional): Conv dilation. Default: 1.
         """
         modules = []
-        for i in range(convs):
+        for i in range(num_convs):
             modules.extend([
                 build_conv_layer(
                     conv_cfg,
