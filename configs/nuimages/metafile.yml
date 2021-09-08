@@ -8,15 +8,11 @@ Collections:
         - RoI Align
         - RPN
     Paper:
-      URL:
-        - https://arxiv.org/abs/1703.06870
-        - https://arxiv.org/abs/1712.00726v1
       Title:
         - Mask R-CNN
         - 'Cascade R-CNN: Delving into High Quality Object Detection'
     README: configs/nuimages/README.md
     Code:
-      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuimage_converter.py#L218
       Version: v0.6.0
 
 Models:
