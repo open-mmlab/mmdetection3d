@@ -12,7 +12,7 @@ Collections:
     README: configs/votenet/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/votenet.py#L10
-      Version: v0.1.0
+      Version: v0.5.0
 
 Models:
   - Name: votenet_16x8_sunrgbd-3d-10class.py

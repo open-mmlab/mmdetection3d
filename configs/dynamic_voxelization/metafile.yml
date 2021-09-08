@@ -13,7 +13,7 @@ Collections:
     README: configs/dynamic_voxelization/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/dynamic_voxelnet.py#L11
-      Version: v0.1.0
+      Version: v0.5.0
 
 Models:
   - Name: dv_second_secfpn_6x8_80e_kitti-3d-car
