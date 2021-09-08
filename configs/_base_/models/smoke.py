@@ -1,11 +1,12 @@
 model = dict(
     type='SMOKEMono3D',
-    pretrained=None,
+    pretrained=dict(pts='open-mmlab://smoke'),
     backbone=dict(
         type='DLANet',
         depth=34,
         in_channels=3,
-        norm_cfg=dict(type='GN', num_groups=32)),
+        norm_cfg=dict(type='GN', num_groups=32),
+        init_cfg=dict(type='Pretrained', checkpoint='open-mmlab://dla34')),
     neck=dict(
         type='DLANeck',
         in_channels=[16, 32, 64, 128, 256, 512],
@@ -16,6 +17,8 @@ model = dict(
         type='SMOKEMono3DHead',
         num_classes=3,
         in_channels=64,
+        dim_channel=[3, 4, 5],
+        ori_channel=[6, 7],
         stacked_convs=0,
         feat_channels=64,
         use_direction_classifier=False,
@@ -34,11 +37,11 @@ model = dict(
         bbox_coder=dict(
             type='SMOKECoder',
             base_depth=(28.01, 16.32),
-            base_dim=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73,
-                                                               0.67)),
+            base_dim=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63,
+                                                               1.53)),
             code_size=7),
         loss_cls=dict(type='GaussianFocalLoss', loss_weight=1.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=1.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=10.0),
         loss_dir=dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_attr=None,
