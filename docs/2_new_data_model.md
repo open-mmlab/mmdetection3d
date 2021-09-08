@@ -73,7 +73,7 @@ After downloading the data, we need to implement a function to convert both the 
 
 Specifically, we implement a waymo [converter](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/waymo_converter.py) to convert Waymo data into KITTI format and a waymo dataset [class](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/waymo_dataset.py) to process it. Because we preprocess the raw data and reorganize it like KITTI, the dataset class could be implemented more easily by inheriting from KittiDataset. The last thing needed to be noted is the evaluation protocol you would like to use. Because Waymo has its own evaluation approach, we further incorporate it into our dataset class. Afterwards, users can successfully convert the data format and use `WaymoDataset` to train and evaluate the model.
 
-For more details about the intermediate results of preprocessing of Waymo dataset, please refer to its [tutorial](https://mmdetection3d.readthedocs.io/en/latest/tutorials/waymo.html).
+For more details about the intermediate results of preprocessing of Waymo dataset, please refer to its [tutorial](https://mmdetection3d.readthedocs.io/en/latest/datasets/waymo_det.html).
 
 ## Prepare a config
 
@@ -99,6 +99,6 @@ To test the trained model, you can simply run
 python tools/test.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py work_dirs/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class/latest.pth --eval waymo
 ```
 
-**Note**: To use Waymo evaluation protocol, you need to follow the [tutorial](https://mmdetection3d.readthedocs.io/en/latest/tutorials/waymo.html) and prepare files related to metrics computation as official instructions.
+**Note**: To use Waymo evaluation protocol, you need to follow the [tutorial](https://mmdetection3d.readthedocs.io/en/latest/datasets/waymo_det.html) and prepare files related to metrics computation as official instructions.
 
 For more detailed usages for test and inference, please refer to the [Case 1](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html).
