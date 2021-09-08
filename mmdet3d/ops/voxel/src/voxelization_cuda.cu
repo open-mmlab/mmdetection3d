@@ -434,10 +434,15 @@ int nondisterministic_hard_voxelize_gpu(
   std::tie(temp_coors, coors_map, reduce_count) =
       at::unique_dim(coors_clean, 0, true, true, false);
 
-  // the first element of out_coors is always (-1,-1,-1) and should be removed
-  temp_coors = temp_coors.slice(0, 1);
+  if (temp_coors.index({0, 0}).lt(0).item<bool>()) {
+    // the first element of temp_coors is (-1,-1,-1) and should be removed
+    temp_coors = temp_coors.slice(0, 1);
+    coors_map = coors_map - 1;
+  }
+
   int num_coors = temp_coors.size(0);
-  coors_map = coors_map.to(torch::kInt32) - 1;
+  temp_coors = temp_coors.to(torch::kInt32);
+  coors_map = coors_map.to(torch::kInt32);
 
   coors_count = coors_map.new_zeros(1);
   coors_order = coors_map.new_empty(num_coors);

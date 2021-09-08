@@ -104,8 +104,13 @@ def test_voxelization_nondeterministic():
                                         max_num_points)
 
     max_num_points = 10
+    max_voxels = 50
     hard_voxelization = Voxelization(
-        voxel_size, point_cloud_range, max_num_points, 50, deterministic=False)
+        voxel_size,
+        point_cloud_range,
+        max_num_points,
+        max_voxels,
+        deterministic=False)
 
     # test hard_voxelization (non-deterministic version) on gpu
     points = torch.tensor(points).contiguous().to(device='cuda:0')
@@ -141,3 +146,20 @@ def test_voxelization_nondeterministic():
                 assert max(p) == min(p) == 0
         else:
             assert len(voxel_points_set - ideal_voxel_points_set) == 0
+
+    # test hard_voxelization (non-deterministic version) on gpu
+    # with all input point in range
+    points = torch.tensor(points).contiguous().to(device='cuda:0')[:max_voxels]
+    coors_all = dynamic_voxelization.forward(points)
+    valid_mask = coors_all.ge(0).all(-1)
+    points = points[valid_mask]
+    coors_all = coors_all[valid_mask]
+    coors_all = coors_all.cpu().detach().numpy().tolist()
+
+    voxels, coors, num_points_per_voxel = hard_voxelization.forward(points)
+    coors = coors.cpu().detach().numpy().tolist()
+
+    coors_set = set([tuple(c) for c in coors])
+    coors_all_set = set([tuple(c) for c in coors_all])
+
+    assert len(coors_set) == len(coors) == len(coors_all_set)

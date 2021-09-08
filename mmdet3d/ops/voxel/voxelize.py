@@ -34,7 +34,13 @@ class _Voxelization(Function):
             deterministic: bool. whether to invoke the non-deterministic
                 version of hard-voxelization implementations. non-deterministic
                 version is considerablly fast but is not deterministic. only
-                affects hard voxelization. default True.
+                affects hard voxelization. default True. for more information
+                of this argument and the implementation insights, please refer
+                to the following links:
+                https://github.com/open-mmlab/mmdetection3d/issues/894
+                https://github.com/open-mmlab/mmdetection3d/pull/904
+                it is an experimental feature and we will appreciate it if
+                you could share with us the failing cases.
 
         Returns:
             voxels: [M, max_points, ndim] float tensor. only contain points
