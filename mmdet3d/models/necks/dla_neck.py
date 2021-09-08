@@ -23,8 +23,9 @@ def fill_up_weights(up):
         w[c, 0, :, :] = w[0, 0, :, :]
 
 
-class IDAUp(nn.Module):
-    """IDAUp module for upsamling different scale's features to same scale.
+class IDAUpsample(nn.Module):
+    """Iterative Deep Aggregation (IDA) Upsampling module to upsample features
+    of different scales to a similar scale.
 
     Args:
         out_channels (int): Number of output channels for DeformConv.
@@ -45,7 +46,7 @@ class IDAUp(nn.Module):
         norm_cfg=None,
         use_dcn=True,
     ):
-        super(IDAUp, self).__init__()
+        super(IDAUpsample, self).__init__()
         self.use_dcn = use_dcn
         self.projs = nn.ModuleList()
         self.ups = nn.ModuleList()
@@ -85,24 +86,27 @@ class IDAUp(nn.Module):
             self.ups.append(up)
             self.nodes.append(node)
 
-    def forward(self, layers, start_level, end_level):
+    def forward(self, mlvl_features, start_level, end_level):
         """Forward function.
 
         Args:
-            layers (list[torch.Tensor]): Features from multiple layers.
+            mlvl_features (list[torch.Tensor]): Features from multiple layers.
             start_level (int): Start layer for feature upsampling.
             end_level (int): End layer for feature upsampling.
         """
         for i in range(start_level, end_level - 1):
             upsample = self.ups[i - start_level]
             project = self.projs[i - start_level]
-            layers[i + 1] = upsample(project(layers[i + 1]))
+            mlvl_features[i + 1] = upsample(project(mlvl_features[i + 1]))
             node = self.nodes[i - start_level]
-            layers[i + 1] = node(layers[i + 1] + layers[i])
+            mlvl_features[i + 1] = node(mlvl_features[i + 1] +
+                                        mlvl_features[i])
 
 
-class DLAUp(nn.Module):
-    """DLAUp module for multiple layers feature extraction and fusion.
+class DLAUpsample(nn.Module):
+    """Deep Layer Aggregation (DLA) Upsampling module for different scales
+    feature extraction, upsampling and fusion, It consists of groups of
+    IDAupsample modules.
 
     Args:
         start_level (int): The start layer.
@@ -124,7 +128,7 @@ class DLAUp(nn.Module):
                  in_channels=None,
                  norm_cfg=None,
                  use_dcn=True):
-        super(DLAUp, self).__init__()
+        super(DLAUpsample, self).__init__()
         self.start_level = start_level
         if in_channels is None:
             in_channels = channels
@@ -135,25 +139,26 @@ class DLAUp(nn.Module):
             j = -i - 2
             setattr(
                 self, 'ida_{}'.format(i),
-                IDAUp(channels[j], in_channels[j:], scales[j:] // scales[j],
-                      norm_cfg, use_dcn))
+                IDAUpsample(channels[j], in_channels[j:],
+                            scales[j:] // scales[j], norm_cfg, use_dcn))
             scales[j + 1:] = scales[j]
             in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
-    def forward(self, layers):
+    def forward(self, mlvl_features):
         """Forward function.
 
         Args:
-            layers (tuple[torch.Tensor]): Features from multi-scale layers.
+            mlvl_features(list[torch.Tensor]): Features from multi-scale
+                layers.
 
         Returns:
             tuple[torch.Tensor]: Up-sampled features of different layers.
         """
-        outs = [layers[-1]]
-        for i in range(len(layers) - self.start_level - 1):
+        outs = [mlvl_features[-1]]
+        for i in range(len(mlvl_features) - self.start_level - 1):
             ida = getattr(self, 'ida_{}'.format(i))
-            ida(layers, len(layers) - i - 2, len(layers))
-            outs.insert(0, layers[-1])
+            ida(mlvl_features, len(mlvl_features) - i - 2, len(mlvl_features))
+            outs.insert(0, mlvl_features[-1])
         return outs
 
 
@@ -184,13 +189,13 @@ class DLANeck(nn.Module):
         self.start_level = start_level
         self.end_level = end_level
         scales = [2**i for i in range(len(in_channels[self.start_level:]))]
-        self.dla_up = DLAUp(
+        self.dla_up = DLAUpsample(
             start_level=self.start_level,
             channels=in_channels[self.start_level:],
             scales=scales,
             norm_cfg=norm_cfg,
             use_dcn=use_dcn)
-        self.ida_up = IDAUp(
+        self.ida_up = IDAUpsample(
             in_channels[self.start_level],
             in_channels[self.start_level:self.end_level],
             [2**i for i in range(self.end_level - self.start_level)], norm_cfg,
