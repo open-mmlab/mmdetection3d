@@ -85,7 +85,7 @@ kitti
 - `kitti_infos_train.pkl`: training dataset infos, each frame info contains following details:
     - info['point_cloud']: {'num_features': 4, 'velodyne_path': velodyne_path}.
     - info['annos']: {
-        - location: x,y,z in referenced camera coordinate system (in meters), an Nx3 array
+        - location: x,y,z are bottom center in referenced camera coordinate system (in meters), an Nx3 array
         - dimensions: height, width, length (in meters), an Nx3 array
         - rotation_y: rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
         - name:  ground truth name array, an N array
