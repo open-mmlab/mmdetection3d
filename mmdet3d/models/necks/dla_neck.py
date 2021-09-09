@@ -202,7 +202,7 @@ class DLANeck(nn.Module):
             use_dcn)
 
     def forward(self, x):
-        mlvl_features = [x[i] for i in len(x)]
+        mlvl_features = [x[i] for i in range(len(x))]
         mlvl_features = self.dla_up(mlvl_features)
         outs = []
         for i in range(self.end_level - self.start_level):
