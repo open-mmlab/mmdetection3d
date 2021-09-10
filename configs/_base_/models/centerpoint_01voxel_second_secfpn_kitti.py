@@ -1,4 +1,4 @@
-voxel_size = [0.05, 0.05, 0.1]
+voxel_size = [0.1, 0.1, 0.2]
 model = dict(
     type='CenterPoint',
     pts_voxel_layer=dict(
