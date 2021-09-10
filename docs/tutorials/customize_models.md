@@ -6,7 +6,7 @@ We basically categorize model components into 6 types.
 - backbone: usually an FCN network to extract feature maps, e.g., ResNet, SECOND.
 - neck: the component between backbones and heads, e.g., FPN, SECONDFPN.
 - head: the component for specific tasks, e.g., bbox prediction and mask prediction.
-- roi extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
+- RoI extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
 - loss: the component in heads for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
 
 ## Develop new components

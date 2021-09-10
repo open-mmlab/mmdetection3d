@@ -6,7 +6,7 @@
 - 骨干网络（backbone）：通常采用 FCN 网络来提取特征图，如 ResNet 和 SECOND。
 - 颈部网络（neck）：位于 backbones 和 heads 之间的组成模块，如 FPN 和 SECONDFPN。
 - 检测头（head）：用于特定任务的组成模块，如检测框的预测和掩码的预测。
-- roi 提取器（roi extractor）：用于从特征图中提取 RoI 特征的组成模块，如 H3DRoIHead 和 PartAggregationROIHead。
+- RoI 提取器（RoI extractor）：用于从特征图中提取 RoI 特征的组成模块，如 H3DRoIHead 和 PartAggregationROIHead。
 - 损失函数（loss）：heads 中用于计算损失函数的组成模块，如 FocalLoss、L1Loss 和 GHMLoss。
 
 ## 开发新的组成模块
