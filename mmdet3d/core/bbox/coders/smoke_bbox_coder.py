@@ -119,24 +119,18 @@ class SMOKECoder(BaseBBoxCoder):
         N_batch = cam2imgs.shape[0]
         batch_id = torch.arange(N_batch).unsqueeze(1)
         obj_id = batch_id.repeat(1, N // N_batch).flatten()
-
         trans_mats_inv = trans_mats.inverse()[obj_id]
-
         cam2imgs_inv = cam2imgs.inverse()[obj_id]
         centers2d = points + centers2d_offsets
         centers2d_extend = torch.cat((centers2d, centers2d.new_ones(N, 1)),
                                      dim=1)
-
         # expand project points as [N, 3, 1]
         centers2d_extend = centers2d_extend.unsqueeze(-1)
-
         # transform project points back on original image
         centers2d_img = torch.matmul(trans_mats_inv, centers2d_extend)
-
         centers2d_img = centers2d_img * depths.view(N, -1, 1)
         centers2d_img_extend = torch.cat(
             (centers2d_img, centers2d.new_ones(N, 1, 1)), dim=1)
-
         locations = torch.matmul(cam2imgs_inv, centers2d_img_extend).squeeze(2)
 
         return locations[:, :3]
@@ -167,7 +161,7 @@ class SMOKECoder(BaseBBoxCoder):
                 shape: (N, 3)
 
         Return:
-            Tensor: roty(Orientation). Notice that the roty's
+            Tensor: yaw(Orientation). Notice that the yaw's
                 range is [-np.pi, np.pi].
                 shape：(N, 1）
         """
@@ -183,15 +177,15 @@ class SMOKECoder(BaseBBoxCoder):
         alphas[cos_neg_idx] += np.pi / 2
 
         # retrieve object rotation y angle.
-        rotys = alphas + rays
+        yaws = alphas + rays
 
-        larger_idx = (rotys > np.pi).nonzero()
-        small_idx = (rotys < -np.pi).nonzero()
+        larger_idx = (yaws > np.pi).nonzero()
+        small_idx = (yaws < -np.pi).nonzero()
 
         if len(larger_idx) != 0:
-            rotys[larger_idx] -= 2 * np.pi
+            yaws[larger_idx] -= 2 * np.pi
         if len(small_idx) != 0:
-            rotys[small_idx] += 2 * np.pi
+            yaws[small_idx] += 2 * np.pi
 
-        rotys = rotys.unsqueeze(-1)
-        return rotys
+        yaws = yaws.unsqueeze(-1)
+        return yaws

@@ -13,7 +13,7 @@ from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 @HEADS.register_module()
 class SMOKEMono3DHead(AnchorFreeMono3DHead):
-    r"""Anchor-free head used in SMOKE <https://arxiv.org/abs/2002.10111>.
+    r"""Anchor-free head used in `SMOKE <https://arxiv.org/abs/2002.10111>`_
 
     .. code-block:: none
 
@@ -29,8 +29,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             regression heatmap channels.
         ori_channel (list[int]): indexs of orientation offset pred in
             regression heatmap channels.
-        bbox_coder (:obj:`CameraInstance3DBoxes`, optional): Bbox coder
-            for encoding and decoding boxes. Default: None.
+        bbox_coder (:obj:`CameraInstance3DBoxes`): Bbox coder
+            for encoding and decoding boxes.
         loss_cls (dict, optional): Config of classification loss.
             Default: loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0).
         loss_bbox (dict, optional): Config of localization loss.
@@ -50,7 +50,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                  in_channels,
                  dim_channel,
                  ori_channel,
-                 bbox_coder=None,
+                 bbox_coder,
                  loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
                  loss_bbox=dict(type='L1Loss', loss_weight=10.0),
                  loss_dir=None,
@@ -230,7 +230,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 shape (B * max_objs, 3)
             gt_dimensions (Tensor): Dimensions of each 3D box.
                 shape (B * max_objs, 3)
-            gt_orientations (Tensor): Orientation(roty) of each 3D box.
+            gt_orientations (Tensor): Orientation(yaw) of each 3D box.
                 shape (B * max_objs, 1)
             indexs (Tensor): Indexs of the existence of the 3D box.
                 shape (B * max_objs, )
@@ -241,7 +241,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         Returns:
             dict: the dict has components below:
-            - bbox3d_rotys (:obj:`CameraInstance3DBoxes`):
+            - bbox3d_yaws (:obj:`CameraInstance3DBoxes`):
                 bbox calculated using pred orientations.
             - bbox3d_dims (:obj:`CameraInstance3DBoxes`):
                 bbox calculated using pred dimentions.
@@ -273,14 +273,14 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         assert len(locations) == len(gt_locations)
         assert len(dimensions) == len(gt_dimensions)
         assert len(orientations) == len(gt_orientations)
-        bbox3d_rotys = self.bbox_coder.encode(gt_locations, gt_dimensions,
-                                              orientations, img_metas)
+        bbox3d_yaws = self.bbox_coder.encode(gt_locations, gt_dimensions,
+                                             orientations, img_metas)
         bbox3d_dims = self.bbox_coder.encode(gt_locations, dimensions,
                                              gt_orientations, img_metas)
         bbox3d_locs = self.bbox_coder.encode(locations, gt_dimensions,
                                              gt_orientations, img_metas)
 
-        pred_bboxes = dict(ori=bbox3d_rotys, dim=bbox3d_dims, loc=bbox3d_locs)
+        pred_bboxes = dict(ori=bbox3d_yaws, dim=bbox3d_dims, loc=bbox3d_locs)
 
         return pred_bboxes
 
@@ -317,7 +317,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                     shape (B * max_objs, 3)
               - gt_dims (Tensor): Dimensions of each 3D box.
                     shape (B * max_objs, 3)
-              - gt_rotys (Tensor): Orientation(roty) of each 3D box.
+              - gt_yaws (Tensor): Orientation(yaw) of each 3D box.
                     shape (B * max_objs, 1)
               - gt_cors (Tensor): Coords of the corners of each 3D box.
                     shape (B * max_objs, 8, 3)
@@ -352,8 +352,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 gen_gaussian_target(center_heatmap_target[batch_id, ind],
                                     [center_x_int, center_y_int], radius)
 
-        ct_num = [center2d.shape[0] for center2d in centers2d]
-        max_objs = max(ct_num)
+        avg_factor = max(1, center_heatmap_target.eq(1).sum())
+        num_ctrs = [center2d.shape[0] for center2d in centers2d]
+        max_objs = max(num_ctrs)
 
         indexs = torch.zeros((bs, max_objs),
                              dtype=torch.bool).to(centers2d[0].device)
@@ -361,12 +362,15 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         batch_centers2d = centers2d[0].new_zeros((bs, max_objs, 2))
         batch_labels_3d = gt_labels_3d[0].new_zeros((bs, max_objs))
         for i in range(bs):
-            indexs[i, :ct_num[i]] = 1
-            batch_centers2d[i, :ct_num[i]] = centers2d[i]
-            batch_labels_3d[i, :ct_num[i]] = gt_labels_3d[i]
+            indexs[i, :num_ctrs[i]] = 1
+            batch_centers2d[i, :num_ctrs[i]] = centers2d[i]
+            batch_labels_3d[i, :num_ctrs[i]] = gt_labels_3d[i]
 
         indexs = indexs.flatten()
         batch_centers2d = batch_centers2d.view(-1, 2) * width_ratio
+        gt_bboxes_3d = [
+            gt_bbox_3d.to(centers2d[0].device) for gt_bbox_3d in gt_bboxes_3d
+        ]
 
         gt_locations = torch.cat(
             [gt_bbox_3d.tensor[:, :3] for gt_bbox_3d in gt_bboxes_3d])
@@ -385,10 +389,10 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             indexs=indexs,
             gt_locs=gt_locations,
             gt_dims=gt_dimensions,
-            gt_rotys=gt_orientations,
+            gt_yaws=gt_orientations,
             gt_cors=gt_corners)
 
-        return center_heatmap_target, target_labels
+        return center_heatmap_target, avg_factor, target_labels
 
     def loss(self,
              cls_scores,
@@ -438,7 +442,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         center2d_heatmap = cls_scores[0]
         pred_reg = bbox_preds[0]
 
-        center2d_heatmap_target, target_labels = \
+        center2d_heatmap_target, avg_factor, target_labels = \
             self.get_targets(gt_bboxes, gt_labels, gt_bboxes_3d,
                              gt_labels_3d, centers2d,
                              center2d_heatmap.shape,
@@ -449,12 +453,13 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             centers2d=target_labels['gt_centers2d'],
             gt_locations=target_labels['gt_locs'],
             gt_dimensions=target_labels['gt_dims'],
-            gt_orientations=target_labels['gt_rotys'],
+            gt_orientations=target_labels['gt_yaws'],
             indexs=target_labels['indexs'],
             img_metas=img_metas,
             pred_reg=pred_reg)
 
-        loss_cls = self.loss_cls(center2d_heatmap, center2d_heatmap_target)
+        loss_cls = self.loss_cls(
+            center2d_heatmap, center2d_heatmap_target, avg_factor=avg_factor)
 
         loss_bbox_oris = self.loss_bbox(pred_bboxes['ori'].corners,
                                         target_labels['gt_cors'])
