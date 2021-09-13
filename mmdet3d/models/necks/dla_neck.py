@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from mmcv.cnn import ConvModule, build_conv_layer
+from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet.models.builder import NECKS
@@ -23,7 +24,7 @@ def fill_up_weights(up):
         w[c, 0, :, :] = w[0, 0, :, :]
 
 
-class IDAUpsample(nn.Module):
+class IDAUpsample(BaseModule):
     """Iterative Deep Aggregation (IDA) Upsampling module to upsample features
     of different scales to a similar scale.
 
@@ -45,8 +46,9 @@ class IDAUpsample(nn.Module):
         kernel_sizes,
         norm_cfg=None,
         use_dcn=True,
+        init_cfg=None,
     ):
-        super(IDAUpsample, self).__init__()
+        super(IDAUpsample, self).__init__(init_cfg)
         self.use_dcn = use_dcn
         self.projs = nn.ModuleList()
         self.ups = nn.ModuleList()
@@ -103,7 +105,7 @@ class IDAUpsample(nn.Module):
                                         mlvl_features[i])
 
 
-class DLAUpsample(nn.Module):
+class DLAUpsample(BaseModule):
     """Deep Layer Aggregation (DLA) Upsampling module for different scales
     feature extraction, upsampling and fusion, It consists of groups of
     IDAupsample modules.
@@ -127,8 +129,9 @@ class DLAUpsample(nn.Module):
                  scales,
                  in_channels=None,
                  norm_cfg=None,
-                 use_dcn=True):
-        super(DLAUpsample, self).__init__()
+                 use_dcn=True,
+                 init_cfg=None):
+        super(DLAUpsample, self).__init__(init_cfg)
         self.start_level = start_level
         if in_channels is None:
             in_channels = channels
@@ -163,7 +166,7 @@ class DLAUpsample(nn.Module):
 
 
 @NECKS.register_module()
-class DLANeck(nn.Module):
+class DLANeck(BaseModule):
     """DLA Neck.
 
     Args:
@@ -184,8 +187,9 @@ class DLANeck(nn.Module):
                  start_level=2,
                  end_level=5,
                  norm_cfg=None,
-                 use_dcn=True):
-        super(DLANeck, self).__init__()
+                 use_dcn=True,
+                 init_cfg=None):
+        super(DLANeck, self).__init__(init_cfg)
         self.start_level = start_level
         self.end_level = end_level
         scales = [2**i for i in range(len(in_channels[self.start_level:]))]
