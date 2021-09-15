@@ -1,11 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from logging import warning
 from mmcv.cnn import Scale
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
-from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
+from mmdet3d.core import (box3d_multiclass_nms, limit_period, points_img2cam,
+                          xywhr2xyxyr)
 from mmdet.core import multi_apply
 from mmdet.models.builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
@@ -639,7 +641,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             if rescale:
                 bbox_pred[:, :2] /= bbox_pred[:, :2].new_tensor(scale_factor)
             pred_center2d = bbox_pred[:, :3].clone()
-            bbox_pred[:, :3] = self.pts2Dto3D(bbox_pred[:, :3], view)
+            bbox_pred[:, :3] = points_img2cam(bbox_pred[:, :3], view)
             mlvl_centers2d.append(pred_center2d)
             mlvl_bboxes.append(bbox_pred)
             mlvl_scores.append(scores)
@@ -708,6 +710,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             torch.Tensor: points in 3D space. [N, 3],
                 3 corresponds with x, y, z in 3D space.
         """
+        warning.warn('DeprecationWarning: This static method has been moved '
+                     'out of this class to mmdet3d/core. The function '
+                     'pts2Dto3D will be deprecated.')
+
         assert view.shape[0] <= 4
         assert view.shape[1] <= 4
         assert points.shape[1] == 3

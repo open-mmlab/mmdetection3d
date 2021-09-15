@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core import array_converter, draw_heatmap_gaussian
+from mmdet3d.core import array_converter, draw_heatmap_gaussian, points_img2cam
 
 
 def test_gaussian():
@@ -178,3 +178,13 @@ def test_array_converter():
     with pytest.raises(TypeError):
         new_array_a, new_array_b = test_func_9(container,
                                                [True, np.array([3.0])])
+
+
+def test_points_img2cam():
+    points = torch.tensor([[0.5764, 0.9109, 0.7576], [0.6656, 0.5498, 0.9813]])
+    cam2img = torch.tensor([[700., 0., 450., 0.], [0., 700., 200., 0.],
+                            [0., 0., 1., 0.]])
+    xyzs = points_img2cam(points, cam2img)
+    expected_xyzs = torch.tensor([[-0.4864, -0.2155, 0.7576],
+                                  [-0.6299, -0.2796, 0.9813]])
+    assert torch.allclose(xyzs, expected_xyzs, atol=1e-3)
