@@ -9,7 +9,7 @@ Collections:
         - Hard Voxelization
     Paper:
       URL: https://arxiv.org/abs/2006.11275
-      Title: Center-based 3D Object Detection and Tracking
+      Title: 'Center-based 3D Object Detection and Tracking'
     README: configs/centerpoint/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/centerpoint.py#L10
