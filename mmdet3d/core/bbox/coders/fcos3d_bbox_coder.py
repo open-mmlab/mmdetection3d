@@ -35,13 +35,13 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
         # TODO: refactor the encoder in the FCOS3D and PGD head
         pass
 
-    def decode(self, bbox_out, scale, stride, training, cls_score=None):
+    def decode(self, bbox, scale, stride, training, cls_score=None):
         """Decode regressed results into 3D predictions.
 
         Note that offsets are not transformed to the projected 3D centers.
 
         Args:
-            bbox_out (torch.Tensor): Raw bounding box predictions in shape
+            bbox (torch.Tensor): Raw bounding box predictions in shape
                 [N, C, H, W].
             scale (tuple[`Scale`]): Learnable scale parameters.
             stride (tuple[int]): Stride for a specific feature level.
@@ -53,21 +53,21 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Decoded boxes.
         """
-        # scale the bbox_out of different level
+        # scale the bbox of different level
         # only apply to offset, depth and size prediction
         scale_offset, scale_depth, scale_size = scale[0:3]
 
-        clone_bbox_out = bbox_out.clone()
-        bbox_out[:, :2] = scale_offset(clone_bbox_out[:, :2]).float()
-        bbox_out[:, 2] = scale_depth(clone_bbox_out[:, 2]).float()
-        bbox_out[:, 3:6] = scale_size(clone_bbox_out[:, 3:6]).float()
+        clone_bbox = bbox.clone()
+        bbox[:, :2] = scale_offset(clone_bbox[:, :2]).float()
+        bbox[:, 2] = scale_depth(clone_bbox[:, 2]).float()
+        bbox[:, 3:6] = scale_size(clone_bbox[:, 3:6]).float()
 
         if self.base_depths is None:
-            bbox_out[:, 2] = bbox_out[:, 2].exp()
+            bbox[:, 2] = bbox[:, 2].exp()
         elif len(self.base_depths) == 1:  # only single prior
             mean = self.base_depths[0][0]
             std = self.base_depths[0][1]
-            bbox_out[:, 2] = mean + bbox_out.clone()[:, 2] * std
+            bbox[:, 2] = mean + bbox.clone()[:, 2] * std
         else:  # multi-class priors
             assert len(self.base_depths) == cls_score.shape[1], \
                 'The number of multi-class depth priors should be equal to ' \
@@ -77,9 +77,9 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
                 self.base_depths)[indices, :].permute(0, 3, 1, 2)
             mean = depth_priors[:, 0]
             std = depth_priors[:, 1]
-            bbox_out[:, 2] = mean + bbox_out.clone()[:, 2] * std
+            bbox[:, 2] = mean + bbox.clone()[:, 2] * std
 
-        bbox_out[:, 3:6] = bbox_out[:, 3:6].exp()
+        bbox[:, 3:6] = bbox[:, 3:6].exp()
         if self.base_dims is not None:
             assert len(self.base_dims) == cls_score.shape[1], \
                 'The number of anchor sizes should be equal to the number ' \
@@ -87,23 +87,23 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
             indices = cls_score.max(dim=1)[1]
             size_priors = cls_score.new_tensor(
                 self.base_dims)[indices, :].permute(0, 3, 1, 2)
-            bbox_out[:, 3:6] = size_priors * bbox_out.clone()[:, 3:6]
+            bbox[:, 3:6] = size_priors * bbox.clone()[:, 3:6]
 
         assert self.norm_on_bbox is True, 'Setting norm_on_bbox to False '\
             'has not been thoroughly tested for FCOS3D.'
         if self.norm_on_bbox:
             if not training:
                 # Note that this line is conducted only when testing
-                bbox_out[:, :2] *= stride
+                bbox[:, :2] *= stride
 
-        return bbox_out
+        return bbox
 
     @staticmethod
-    def decode_yaw(bbox_out, centers2d, dir_cls, dir_offset, cam2img):
+    def decode_yaw(bbox, centers2d, dir_cls, dir_offset, cam2img):
         """Decode yaw angle and change it from local to global.i.
 
         Args:
-            bbox_out (torch.Tensor): Bounding box predictions in shape
+            bbox (torch.Tensor): Bounding box predictions in shape
                 [N, C] with yaws to be decoded.
             centers2d (torch.Tensor): Projected 3D-center on the image planes
                 corresponding to the box predictions.
@@ -115,13 +115,12 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Bounding boxes with decoded yaws.
         """
-        if bbox_out.shape[0] > 0:
-            dir_rot = limit_period(bbox_out[..., 6] - dir_offset, 0, np.pi)
-            bbox_out[
-                ...,
-                6] = dir_rot + dir_offset + np.pi * dir_cls.to(bbox_out.dtype)
+        if bbox.shape[0] > 0:
+            dir_rot = limit_period(bbox[..., 6] - dir_offset, 0, np.pi)
+            bbox[..., 6] = \
+                dir_rot + dir_offset + np.pi * dir_cls.to(bbox.dtype)
 
-        bbox_out[:, 6] = torch.atan2(centers2d[:, 0] - cam2img[0, 2],
-                                     cam2img[0, 0]) + bbox_out[:, 6]
+        bbox[:, 6] = torch.atan2(centers2d[:, 0] - cam2img[0, 2],
+                                 cam2img[0, 0]) + bbox[:, 6]
 
-        return bbox_out
+        return bbox
