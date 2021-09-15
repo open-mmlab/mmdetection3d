@@ -144,6 +144,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 centernesses (list[Tensor]): Centerness for each scale level,
                     each is a 4D-tensor, the channel number is num_points * 1.
         """
+        # Note: we use [:5] to filter feats and only return predictions
         return multi_apply(self.forward_single, feats, self.scales,
                            self.strides)[:5]
 
