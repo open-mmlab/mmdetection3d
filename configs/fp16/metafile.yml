@@ -8,12 +8,11 @@ Collections:
       Architecture:
         - Hard Voxelization
     Paper:
-      Title:
-        - 'SECOND: Sparsely Embedded Convolutional Detection'
-        - 'PointPillars: Fast Encoders for Object Detection from Point Clouds'
+      URL: https://arxiv.org/abs/1710.03740
+      Title: 'Mixed Precision Training'
     README: configs/fp16/README.md
     Code:
-      Version: v0.5.0
+      Version: v0.7.0
 
 Models:
   - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-car

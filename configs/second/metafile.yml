@@ -11,7 +11,7 @@ Collections:
     README: configs/second/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/second.py#L11
-      Version: v0.7.0
+      Version: v0.5.0
 
 Models:
   - Name: hv_second_secfpn_6x8_80e_kitti-3d-car

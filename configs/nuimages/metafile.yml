@@ -7,10 +7,6 @@ Collections:
       Architecture:
         - RoI Align
         - RPN
-    Paper:
-      Title:
-        - Mask R-CNN
-        - 'Cascade R-CNN: Delving into High Quality Object Detection'
     README: configs/nuimages/README.md
     Code:
       Version: v0.6.0
