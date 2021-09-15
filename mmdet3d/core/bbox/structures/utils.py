@@ -219,7 +219,8 @@ def points_img2cam(points, view):
     Args:
         points (torch.Tensor): 2.5D points in 2D images, [N, 3],
             3 corresponds with x, y in the image and depth.
-        view (np.ndarray): camera instrinsic, [3, 3]
+        view (np.ndarray): Camera instrinsic matrix. The shape can be [3, 3],
+            [3, 4] or [4, 4].
 
     Returns:
         torch.Tensor: points in 3D space. [N, 3],
