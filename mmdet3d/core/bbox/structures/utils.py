@@ -213,6 +213,39 @@ def points_cam2img(points_3d, proj_mat, with_depth=False):
     return point_2d_res
 
 
+def points_img2cam(points, view):
+    """Project points in image coordinates to camera coordinates.
+
+    Args:
+        points (torch.Tensor): 2.5D points in 2D images, [N, 3],
+            3 corresponds with x, y in the image and depth.
+        view (np.ndarray): camera instrinsic, [3, 3]
+
+    Returns:
+        torch.Tensor: points in 3D space. [N, 3],
+            3 corresponds with x, y, z in 3D space.
+    """
+    assert view.shape[0] <= 4
+    assert view.shape[1] <= 4
+    assert points.shape[1] == 3
+
+    points2D = points[:, :2]
+    depths = points[:, 2].view(-1, 1)
+    unnorm_points2D = torch.cat([points2D * depths, depths], dim=1)
+
+    viewpad = torch.eye(4, dtype=points2D.dtype, device=points2D.device)
+    viewpad[:view.shape[0], :view.shape[1]] = points2D.new_tensor(view)
+    inv_viewpad = torch.inverse(viewpad).transpose(0, 1)
+
+    # Do operation in homogenous coordinates.
+    nbr_points = unnorm_points2D.shape[0]
+    homo_points2D = torch.cat(
+        [unnorm_points2D, points2D.new_ones((nbr_points, 1))], dim=1)
+    points3D = torch.mm(homo_points2D, inv_viewpad)[:, :3]
+
+    return points3D
+
+
 def mono_cam_box2vis(cam_box):
     """This is a post-processing function on the bboxes from Mono-3D task. If
     we want to perform projection visualization, we need to:
