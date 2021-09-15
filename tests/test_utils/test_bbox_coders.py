@@ -422,8 +422,8 @@ def test_fcos3d_bbox_coder():
     # test a config with priors
     prior_bbox_coder_cfg = dict(
         type='FCOS3DBBoxCoder',
-        base_depths=((28, 13), (25, 12)),
-        base_dims=((2, 3, 1), (1, 2, 3)),
+        base_depths=((28., 13.), (25., 12.)),
+        base_dims=((2., 3., 1.), (1., 2., 3.)),
         code_size=7,
         norm_on_bbox=True)
     prior_bbox_coder = build_bbox_coder(prior_bbox_coder_cfg)
@@ -452,11 +452,11 @@ def test_fcos3d_bbox_coder():
 
     # test decode_yaw
     decode_bbox_out = decode_bbox_out.permute(0, 2, 3, 1).view(-1, 7)
-    batch_centers2d = torch.tensor([[100, 150], [200, 100]])
-    batch_dir_cls = torch.tensor([0, 1])
+    batch_centers2d = torch.tensor([[100., 150.], [200., 100.]])
+    batch_dir_cls = torch.tensor([0., 1.])
     dir_offset = 0.7854
-    cam2img = torch.tensor([[700, 0, 450, 0], [0, 700, 200, 0], [0, 0, 1, 0],
-                            [0, 0, 0, 1]])
+    cam2img = torch.tensor([[700., 0., 450., 0.], [0., 700., 200., 0.],
+                            [0., 0., 1., 0.], [0., 0., 0., 1.]])
     decode_bbox_out = prior_bbox_coder.decode_yaw(decode_bbox_out,
                                                   batch_centers2d,
                                                   batch_dir_cls, dir_offset,
