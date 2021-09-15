@@ -104,7 +104,7 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
 
         Args:
             bbox_out (torch.Tensor): Bounding box predictions in shape
-                [N, C, H, W] with yaws to be decoded.
+                [N, C] with yaws to be decoded.
             centers2d (torch.Tensor): Projected 3D-center on the image planes
                 corresponding to the box predictions.
             dir_cls (torch.Tensor): Predicted direction classes.
