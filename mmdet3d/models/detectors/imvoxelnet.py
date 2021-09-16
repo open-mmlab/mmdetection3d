@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from mmdet3d.core import bbox3d2result, build_anchor_generator
+from mmdet3d.core import bbox3d2result, build_prior_generator
 from mmdet3d.models.fusion_layers.point_fusion import point_sample
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from mmdet.models.detectors import BaseDetector
@@ -30,7 +30,7 @@ class ImVoxelNet(BaseDetector):
         bbox_head.update(test_cfg=test_cfg)
         self.bbox_head = build_head(bbox_head)
         self.n_voxels = n_voxels
-        self.anchor_generator = build_anchor_generator(anchor_generator)
+        self.anchor_generator = build_prior_generator(anchor_generator)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
