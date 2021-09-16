@@ -8,8 +8,13 @@ Collections:
       Architecture:
         - Hard Voxelization
         - Free Anchor
-    Paper: https://arxiv.org/abs/1909.02466
+    Paper:
+      URL: https://arxiv.org/abs/1909.02466
+      Title: 'FreeAnchor: Learning to Match Anchors for Visual Object Detection'
     README: configs/free_anchor/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/dense_heads/free_anchor3d_head.py#L13
+      Version: v0.5.0
 
 Models:
   - Name: hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d

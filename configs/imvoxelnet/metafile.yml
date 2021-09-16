@@ -7,8 +7,13 @@ Collections:
       Training Resources: 8x Tesla P40
       Architecture:
         - Anchor3DHead
-    Paper: https://arxiv.org/abs/2106.01178
+    Paper:
+      URL: https://arxiv.org/abs/2106.01178
+      Title: 'ImVoxelNet: Image to Voxels Projection for Monocular and Multi-View General-Purpose 3D Object Detection'
     README: configs/imvoxelnet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/imvoxelnet.py#L11
+      Version: v0.15.0
 
 Models:
   - Name: imvoxelnet_kitti-3d-car
