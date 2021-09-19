@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import build_norm_layer
 from mmcv.runner import force_fp32
@@ -133,7 +134,7 @@ class DynamicVFE(nn.Module):
         if with_voxel_center:
             in_channels += 3
         if with_distance:
-            in_channels += 3
+            in_channels += 1
         self.in_channels = in_channels
         self._with_distance = with_distance
         self._with_cluster_center = with_cluster_center
@@ -331,7 +332,7 @@ class HardVFE(nn.Module):
         if with_voxel_center:
             in_channels += 3
         if with_distance:
-            in_channels += 3
+            in_channels += 1
         self.in_channels = in_channels
         self._with_distance = with_distance
         self._with_cluster_center = with_cluster_center

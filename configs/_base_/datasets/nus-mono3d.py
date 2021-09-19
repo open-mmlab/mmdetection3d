@@ -53,6 +53,17 @@ test_pipeline = [
             dict(type='Collect3D', keys=['img']),
         ])
 ]
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
+eval_pipeline = [
+    dict(type='LoadImageFromFileMono3D'),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=class_names,
+        with_label=False),
+    dict(type='Collect3D', keys=['img'])
+]
+
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,

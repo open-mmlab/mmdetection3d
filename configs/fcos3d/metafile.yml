@@ -1,0 +1,43 @@
+Collections:
+  - Name: FCOS3D
+    Metadata:
+      Training Data: NuScenes
+      Training Techniques:
+        - SGD
+      Training Resources: 8x GeForce RTX 2080 Ti
+      Architecture:
+        - FCOSMono3DHead
+    Paper:
+      URL: https://arxiv.org/abs/2104.10956
+      Title: 'FCOS3D: Fully Convolutional One-Stage Monocular 3D Object Detection'
+    README: configs/fcos3d/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/fcos_mono3d.py#L7
+      Version: v0.13.0
+
+Models:
+  - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d
+    In Collection: FCOS3D
+    Config: configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py
+    Metadata:
+      Training Memory (GB): 8.7
+    Results:
+      - Task: 3D Object Detection
+        Dataset: NuScenes
+        Metrics:
+          mAP: 29.9
+          NDS: 37.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_20210425_181341-8d5a21fe.pth
+
+  - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune
+    In Collection: FCOS3D
+    Config: configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py
+    Metadata:
+      Training Memory (GB): 8.7
+    Results:
+      - Task: 3D Object Detection
+        Dataset: NuScenes
+        Metrics:
+          mAP: 32.1
+          NDS: 39.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune_20210427_091419-35aaaad0.pth

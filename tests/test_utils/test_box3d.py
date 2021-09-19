@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import pytest
 import torch
@@ -11,6 +12,7 @@ from mmdet3d.core.bbox.structures.utils import (get_box_type, limit_period,
                                                 points_cam2img,
                                                 rotation_3d_in_axis,
                                                 xywhr2xyxyr)
+from mmdet3d.core.points import CameraPoints, DepthPoints, LiDARPoints
 
 
 def test_bbox3d_mapping_back():
@@ -225,6 +227,7 @@ def test_lidar_boxes3d():
     assert torch.allclose(points, expected_points)
 
     # test box rotation
+    # with input torch.Tensor points and angle
     expected_tensor = torch.tensor(
         [[1.4225, -2.7344, -1.7501, 1.7500, 3.3900, 1.6500, 1.7976],
          [8.5435, -3.6491, -1.6357, 1.5400, 4.0100, 1.5700, 1.6576],
@@ -244,6 +247,16 @@ def test_lidar_boxes3d():
     assert torch.allclose(points, expected_points, 1e-3)
     assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
 
+    # with input torch.Tensor points and rotation matrix
+    points, rot_mat_T = boxes.rotate(-0.13603681398218053, points)  # back
+    rot_mat = np.array([[0.99076125, -0.13561762, 0.],
+                        [0.13561762, 0.99076125, 0.], [0., 0., 1.]])
+    points, rot_mat_T = boxes.rotate(rot_mat, points)
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-3)
+    assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
+
+    # with input np.ndarray points and angle
     points_np = np.array([[-1.0280, 0.9888,
                            -1.4658], [-4.3695, 2.1310, -1.3857],
                           [-6.5263, 1.5595,
@@ -258,6 +271,15 @@ def test_lidar_boxes3d():
     expected_rot_mat_T_np = np.array([[0.9908, -0.1356, 0.0000],
                                       [0.1356, 0.9908, 0.0000],
                                       [0.0000, 0.0000, 1.0000]])
+
+    assert np.allclose(points_np, expected_points_np, 1e-3)
+    assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
+
+    # with input LiDARPoints and rotation matrix
+    points_np, rot_mat_T_np = boxes.rotate(-0.13603681398218053, points_np)
+    lidar_points = LiDARPoints(points_np)
+    lidar_points, rot_mat_T_np = boxes.rotate(rot_mat, lidar_points)
+    points_np = lidar_points.tensor.numpy()
 
     assert np.allclose(points_np, expected_points_np, 1e-3)
     assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
@@ -701,6 +723,7 @@ def test_camera_boxes3d():
     assert torch.allclose(points, expected_points)
 
     # test box rotation
+    # with input torch.Tensor points and angle
     expected_tensor = Box3DMode.convert(
         torch.tensor(
             [[1.4225, -2.7344, -1.7501, 1.7500, 3.3900, 1.6500, 1.7976],
@@ -722,6 +745,17 @@ def test_camera_boxes3d():
     assert torch.allclose(points, expected_points, 1e-3)
     assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
 
+    # with input torch.Tensor points and rotation matrix
+    points, rot_mat_T = boxes.rotate(
+        torch.tensor(-0.13603681398218053), points)  # back
+    rot_mat = np.array([[0.99076125, 0., -0.13561762], [0., 1., 0.],
+                        [0.13561762, 0., 0.99076125]])
+    points, rot_mat_T = boxes.rotate(rot_mat, points)
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-3)
+    assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
+
+    # with input np.ndarray points and angle
     points_np = np.array([[0.6762, 1.2559, -1.4658, 2.5359],
                           [0.8784, 4.7814, -1.3857, 0.7167],
                           [-0.2517, 6.7053, -0.9697, 0.5599],
@@ -738,6 +772,15 @@ def test_camera_boxes3d():
                                       [0.0000, 1.0000, 0.0000],
                                       [0.1356, 0.0000, 0.9908]])
 
+    assert np.allclose(points_np, expected_points_np, 1e-3)
+    assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
+
+    # with input CameraPoints and rotation matrix
+    points_np, rot_mat_T_np = boxes.rotate(
+        torch.tensor(-0.13603681398218053), points_np)
+    camera_points = CameraPoints(points_np, points_dim=4)
+    camera_points, rot_mat_T_np = boxes.rotate(rot_mat, camera_points)
+    points_np = camera_points.tensor.numpy()
     assert np.allclose(points_np, expected_points_np, 1e-3)
     assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
 
@@ -1007,7 +1050,7 @@ def test_depth_boxes3d():
     # test box concatenation
     expected_tensor = torch.tensor(
         [[1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601],
-         [2.3262, 3.3065, --0.44255, 0.8234, 0.5325, 1.0099, 2.9971],
+         [2.3262, 3.3065, 0.44255, 0.8234, 0.5325, 1.0099, 2.9971],
          [2.4593, 2.5870, -0.4321, 0.8597, 0.6193, 1.0204, 3.0693],
          [1.4856, 2.5299, -0.5570, 0.9385, 2.1404, 0.8954, 3.0601]])
     boxes = DepthInstance3DBoxes.cat([boxes_1, boxes_2])
@@ -1049,14 +1092,16 @@ def test_depth_boxes3d():
                                     [0.5358, -4.5870, -1.4741, 0.0556]])
     assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
     assert torch.allclose(points, expected_points)
+
     # test box rotation
+    # with input torch.Tensor points and angle
     boxes_rot = boxes.clone()
     expected_tensor = torch.tensor(
         [[-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585],
          [-2.4016, -3.2521, 0.4426, 0.8234, 0.5325, 1.0099, -0.1215],
          [-2.5181, -2.5298, -0.4321, 0.8597, 0.6193, 1.0204, -0.0493],
          [-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585]])
-    points, rot_mar_T = boxes_rot.rotate(-0.022998953275003075, points)
+    points, rot_mat_T = boxes_rot.rotate(-0.022998953275003075, points)
     expected_points = torch.tensor([[-0.7049, -1.2400, -1.4658, 2.5359],
                                     [-0.9881, -4.7599, -1.3857, 0.7167],
                                     [0.0974, -6.7093, -0.9697, 0.5599],
@@ -1067,14 +1112,24 @@ def test_depth_boxes3d():
                                        [0.0000, 0.0000, 1.0000]])
     assert torch.allclose(boxes_rot.tensor, expected_tensor, 1e-3)
     assert torch.allclose(points, expected_points, 1e-3)
-    assert torch.allclose(rot_mar_T, expected_rot_mat_T, 1e-3)
+    assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
 
+    # with input torch.Tensor points and rotation matrix
+    points, rot_mat_T = boxes.rotate(0.022998953275003075, points)  # back
+    rot_mat = np.array([[0.99973554, 0.02299693, 0.],
+                        [-0.02299693, 0.99973554, 0.], [0., 0., 1.]])
+    points, rot_mat_T = boxes.rotate(rot_mat, points)
+    assert torch.allclose(boxes_rot.tensor, expected_tensor, 1e-3)
+    assert torch.allclose(points, expected_points, 1e-3)
+    assert torch.allclose(rot_mat_T, expected_rot_mat_T, 1e-3)
+
+    # with input np.ndarray points and angle
     points_np = np.array([[0.6762, 1.2559, -1.4658, 2.5359],
                           [0.8784, 4.7814, -1.3857, 0.7167],
                           [-0.2517, 6.7053, -0.9697, 0.5599],
                           [0.5520, 0.6533, -0.5265, 1.0032],
                           [-0.5358, 4.5870, -1.4741, 0.0556]])
-    points_np, rot_mar_T_np = boxes.rotate(-0.022998953275003075, points_np)
+    points_np, rot_mat_T_np = boxes.rotate(-0.022998953275003075, points_np)
     expected_points_np = np.array([[0.7049, 1.2400, -1.4658, 2.5359],
                                    [0.9881, 4.7599, -1.3857, 0.7167],
                                    [-0.0974, 6.7093, -0.9697, 0.5599],
@@ -1090,7 +1145,17 @@ def test_depth_boxes3d():
          [-1.5434, -2.4951, -0.5570, 0.9385, 2.1404, 0.8954, -0.0585]])
     assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
     assert np.allclose(points_np, expected_points_np, 1e-3)
-    assert np.allclose(rot_mar_T_np, expected_rot_mat_T_np, 1e-3)
+    assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
+
+    # with input DepthPoints and rotation matrix
+    points_np, rot_mat_T_np = boxes.rotate(0.022998953275003075, points_np)
+    depth_points = DepthPoints(points_np, points_dim=4)
+    depth_points, rot_mat_T_np = boxes.rotate(rot_mat, depth_points)
+    points_np = depth_points.tensor.numpy()
+    assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
+    assert np.allclose(points_np, expected_points_np, 1e-3)
+    assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
+
     th_boxes = torch.tensor(
         [[0.61211395, 0.8129094, 0.10563634, 1.497534, 0.16927195, 0.27956772],
          [1.430009, 0.49797538, 0.9382923, 0.07694054, 0.9312509, 1.8919173]],

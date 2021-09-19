@@ -1,5 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
+import os
 from concurrent import futures as futures
 from os import path as osp
 
@@ -42,11 +44,45 @@ class ScanNetData(object):
     def __len__(self):
         return len(self.sample_id_list)
 
-    def get_box_label(self, idx):
+    def get_aligned_box_label(self, idx):
         box_file = osp.join(self.root_dir, 'scannet_instance_data',
-                            f'{idx}_bbox.npy')
+                            f'{idx}_aligned_bbox.npy')
         mmcv.check_file_exist(box_file)
         return np.load(box_file)
+
+    def get_unaligned_box_label(self, idx):
+        box_file = osp.join(self.root_dir, 'scannet_instance_data',
+                            f'{idx}_unaligned_bbox.npy')
+        mmcv.check_file_exist(box_file)
+        return np.load(box_file)
+
+    def get_axis_align_matrix(self, idx):
+        matrix_file = osp.join(self.root_dir, 'scannet_instance_data',
+                               f'{idx}_axis_align_matrix.npy')
+        mmcv.check_file_exist(matrix_file)
+        return np.load(matrix_file)
+
+    def get_images(self, idx):
+        paths = []
+        path = osp.join(self.root_dir, 'posed_images', idx)
+        for file in sorted(os.listdir(path)):
+            if file.endswith('.jpg'):
+                paths.append(osp.join('posed_images', idx, file))
+        return paths
+
+    def get_extrinsics(self, idx):
+        extrinsics = []
+        path = osp.join(self.root_dir, 'posed_images', idx)
+        for file in sorted(os.listdir(path)):
+            if file.endswith('.txt') and not file == 'intrinsic.txt':
+                extrinsics.append(np.loadtxt(osp.join(path, file)))
+        return extrinsics
+
+    def get_intrinsics(self, idx):
+        matrix_file = osp.join(self.root_dir, 'posed_images', idx,
+                               'intrinsic.txt')
+        mmcv.check_file_exist(matrix_file)
+        return np.loadtxt(matrix_file)
 
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
         """Get data infos.
@@ -75,6 +111,20 @@ class ScanNetData(object):
             points.tofile(
                 osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
             info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
+
+            # update with RGB image paths if exist
+            if os.path.exists(osp.join(self.root_dir, 'posed_images')):
+                info['intrinsics'] = self.get_intrinsics(sample_idx)
+                all_extrinsics = self.get_extrinsics(sample_idx)
+                all_img_paths = self.get_images(sample_idx)
+                # some poses in ScanNet are invalid
+                extrinsics, img_paths = [], []
+                for extrinsic, img_path in zip(all_extrinsics, all_img_paths):
+                    if np.all(np.isfinite(extrinsic)):
+                        img_paths.append(img_path)
+                        extrinsics.append(extrinsic)
+                info['extrinsics'] = extrinsics
+                info['img_paths'] = img_paths
 
             if not self.test_mode:
                 pts_instance_mask_path = osp.join(
@@ -106,25 +156,35 @@ class ScanNetData(object):
 
             if has_label:
                 annotations = {}
-                boxes_with_classes = self.get_box_label(
-                    sample_idx)  # k, 6 + class
-                annotations['gt_num'] = boxes_with_classes.shape[0]
+                # box is of shape [k, 6 + class]
+                aligned_box_label = self.get_aligned_box_label(sample_idx)
+                unaligned_box_label = self.get_unaligned_box_label(sample_idx)
+                annotations['gt_num'] = aligned_box_label.shape[0]
                 if annotations['gt_num'] != 0:
-                    minmax_boxes3d = boxes_with_classes[:, :-1]  # k, 6
-                    classes = boxes_with_classes[:, -1]  # k, 1
+                    aligned_box = aligned_box_label[:, :-1]  # k, 6
+                    unaligned_box = unaligned_box_label[:, :-1]
+                    classes = aligned_box_label[:, -1]  # k
                     annotations['name'] = np.array([
                         self.label2cat[self.cat_ids2class[classes[i]]]
                         for i in range(annotations['gt_num'])
                     ])
-                    annotations['location'] = minmax_boxes3d[:, :3]
-                    annotations['dimensions'] = minmax_boxes3d[:, 3:6]
-                    annotations['gt_boxes_upright_depth'] = minmax_boxes3d
+                    # default names are given to aligned bbox for compatibility
+                    # we also save unaligned bbox info with marked names
+                    annotations['location'] = aligned_box[:, :3]
+                    annotations['dimensions'] = aligned_box[:, 3:6]
+                    annotations['gt_boxes_upright_depth'] = aligned_box
+                    annotations['unaligned_location'] = unaligned_box[:, :3]
+                    annotations['unaligned_dimensions'] = unaligned_box[:, 3:6]
+                    annotations[
+                        'unaligned_gt_boxes_upright_depth'] = unaligned_box
                     annotations['index'] = np.arange(
                         annotations['gt_num'], dtype=np.int32)
                     annotations['class'] = np.array([
                         self.cat_ids2class[classes[i]]
                         for i in range(annotations['gt_num'])
                     ])
+                axis_align_matrix = self.get_axis_align_matrix(sample_idx)
+                annotations['axis_align_matrix'] = axis_align_matrix  # 4x4
                 info['annos'] = annotations
             return info
 
@@ -197,9 +257,6 @@ class ScanNetSegData(object):
                 mask = np.load(mask)
             else:
                 mask = np.fromfile(mask, dtype=np.long)
-        # first filter out unannotated points (labeled as 0)
-        mask = mask[mask != 0]
-        # then convert to [0, 20) labels
         label = self.cat_id2class[mask]
         return label
 
@@ -225,7 +282,7 @@ class ScanNetSegData(object):
         num_iter = int(np.sum(num_point_all) / float(self.num_points))
         scene_idxs = []
         for idx in range(len(self.data_infos)):
-            scene_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
+            scene_idxs.extend([idx] * int(round(sample_prob[idx] * num_iter)))
         scene_idxs = np.array(scene_idxs).astype(np.int32)
 
         # calculate label weight, adopted from PointNet++

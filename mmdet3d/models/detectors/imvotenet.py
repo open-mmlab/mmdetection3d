@@ -1,6 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
-from torch import nn as nn
+import warnings
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.models.utils import MLP
@@ -10,7 +11,9 @@ from .base import Base3DDetector
 
 
 def sample_valid_seeds(mask, num_sampled_seed=1024):
-    """Randomly sample seeds from all imvotes.
+    r"""Randomly sample seeds from all imvotes.
+
+    Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_
 
     Args:
         mask (torch.Tensor): Bool tensor in shape (
@@ -20,7 +23,7 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
 
     Returns:
         torch.Tensor: Indices with shape (num_sampled_seed).
-    """
+    """  # noqa: E501
     device = mask.device
     batch_size = mask.shape[0]
     sample_inds = mask.new_zeros((batch_size, num_sampled_seed),
@@ -67,9 +70,10 @@ class ImVoteNet(Base3DDetector):
                  num_sampled_seed=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
+                 pretrained=None,
+                 init_cfg=None):
 
-        super(ImVoteNet, self).__init__()
+        super(ImVoteNet, self).__init__(init_cfg=init_cfg)
 
         # point branch
         if pts_backbone is not None:
@@ -132,11 +136,7 @@ class ImVoteNet(Base3DDetector):
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.init_weights(pretrained=pretrained)
 
-    def init_weights(self, pretrained=None):
-        """Initialize model weights."""
-        super(ImVoteNet, self).init_weights(pretrained)
         if pretrained is None:
             img_pretrained = None
             pts_pretrained = None
@@ -146,29 +146,26 @@ class ImVoteNet(Base3DDetector):
         else:
             raise ValueError(
                 f'pretrained should be a dict, got {type(pretrained)}')
-        if self.with_img_backbone:
-            self.img_backbone.init_weights(pretrained=img_pretrained)
-        if self.with_img_neck:
-            if isinstance(self.img_neck, nn.Sequential):
-                for m in self.img_neck:
-                    m.init_weights()
-            else:
-                self.img_neck.init_weights()
 
+        if self.with_img_backbone:
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.img_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
         if self.with_img_roi_head:
-            self.img_roi_head.init_weights(img_pretrained)
-        if self.with_img_rpn:
-            self.img_rpn_head.init_weights()
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.img_roi_head.init_cfg = dict(
+                    type='Pretrained', checkpoint=img_pretrained)
+
         if self.with_pts_backbone:
-            self.pts_backbone.init_weights(pretrained=pts_pretrained)
-        if self.with_pts_bbox:
-            self.pts_bbox_head.init_weights()
-        if self.with_pts_neck:
-            if isinstance(self.pts_neck, nn.Sequential):
-                for m in self.pts_neck:
-                    m.init_weights()
-            else:
-                self.pts_neck.init_weights()
+            if img_pretrained is not None:
+                warnings.warn('DeprecationWarning: pretrained is a deprecated \
+                    key, please consider using init_cfg')
+                self.pts_backbone.init_cfg = dict(
+                    type='Pretrained', checkpoint=pts_pretrained)
 
     def freeze_img_branch_params(self):
         """Freeze all image branch parameters."""
@@ -376,7 +373,6 @@ class ImVoteNet(Base3DDetector):
                       gt_bboxes_ignore=None,
                       gt_masks=None,
                       proposals=None,
-                      calib=None,
                       bboxes_2d=None,
                       gt_bboxes_3d=None,
                       gt_labels_3d=None,
@@ -403,8 +399,6 @@ class ImVoteNet(Base3DDetector):
                 2d bbox, used if the architecture supports a segmentation task.
             proposals: override rpn proposals (2d) with custom proposals.
                 Use when `with_rpn` is False.
-            calib (dict[str, torch.Tensor]): camera calibration matrices,
-                Rt and K.
             bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
                 not supported yet.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): 3d gt bboxes.
@@ -450,7 +444,7 @@ class ImVoteNet(Base3DDetector):
                 self.extract_pts_feat(points)
 
             img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                    img_metas, calib)
+                                                    img_metas)
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
@@ -526,7 +520,6 @@ class ImVoteNet(Base3DDetector):
                      points=None,
                      img_metas=None,
                      img=None,
-                     calib=None,
                      bboxes_2d=None,
                      **kwargs):
         """Forwarding of test for image branch pretrain or stage 2 train.
@@ -544,9 +537,6 @@ class ImVoteNet(Base3DDetector):
                 list indicates test-time augmentations and inner Tensor
                 should have a shape NxCxHxW, which contains all images
                 in the batch. Defaults to None. Defaults to None.
-            calibs (list[dict[str, torch.Tensor]], optional): camera
-                calibration matrices, Rt and K.
-                List indicates test-time augs. Defaults to None.
             bboxes_2d (list[list[torch.Tensor]], optional):
                 Provided 2d bboxes, not supported yet. Defaults to None.
 
@@ -600,11 +590,10 @@ class ImVoteNet(Base3DDetector):
                     points[0],
                     img_metas[0],
                     img[0],
-                    calibs=calib[0],
                     bboxes_2d=bboxes_2d[0] if bboxes_2d is not None else None,
                     **kwargs)
             else:
-                return self.aug_test(points, img_metas, img, calib, bboxes_2d,
+                return self.aug_test(points, img_metas, img, bboxes_2d,
                                      **kwargs)
 
     def simple_test_img_only(self,
@@ -612,10 +601,8 @@ class ImVoteNet(Base3DDetector):
                              img_metas,
                              proposals=None,
                              rescale=False):
-        """Test without augmentation, image network pretrain. May refer to
-        https://github.com/open-
-        mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py  #
-        noqa.
+        r"""Test without augmentation, image network pretrain. May refer to
+        `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.
 
         Args:
             img (torch.Tensor): Should have a shape NxCxHxW, which contains
@@ -628,7 +615,7 @@ class ImVoteNet(Base3DDetector):
 
         Returns:
             list[list[torch.Tensor]]: Predicted 2d boxes.
-        """
+        """  # noqa: E501
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'
@@ -650,7 +637,6 @@ class ImVoteNet(Base3DDetector):
                     points=None,
                     img_metas=None,
                     img=None,
-                    calibs=None,
                     bboxes_2d=None,
                     rescale=False,
                     **kwargs):
@@ -664,8 +650,6 @@ class ImVoteNet(Base3DDetector):
                 images in a batch. Defaults to None.
             img (torch.Tensor, optional): Should have a shape NxCxHxW,
                 which contains all images in the batch. Defaults to None.
-            calibs (dict[str, torch.Tensor], optional): camera
-                calibration matrices, Rt and K. Defaults to None.
             bboxes_2d (list[torch.Tensor], optional):
                 Provided 2d bboxes, not supported yet. Defaults to None.
             rescale (bool, optional): Whether or not rescale bboxes.
@@ -682,7 +666,7 @@ class ImVoteNet(Base3DDetector):
             self.extract_pts_feat(points)
 
         img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                img_metas, calibs)
+                                                img_metas)
 
         inds = sample_valid_seeds(masks, self.num_sampled_seed)
         batch_size, img_feat_size = img_features.shape[:2]
@@ -716,10 +700,8 @@ class ImVoteNet(Base3DDetector):
         return bbox_results
 
     def aug_test_img_only(self, img, img_metas, rescale=False):
-        """Test function with augmentation, image network pretrain. May refer
-        to https://github.com/open-
-        mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py  #
-        noqa.
+        r"""Test function with augmentation, image network pretrain. May refer
+        to `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.
 
         Args:
             img (list[list[torch.Tensor]], optional): the outer
@@ -737,7 +719,7 @@ class ImVoteNet(Base3DDetector):
 
         Returns:
             list[list[torch.Tensor]]: Predicted 2d boxes.
-        """
+        """  # noqa: E501
         assert self.with_img_bbox, 'Img bbox head must be implemented.'
         assert self.with_img_backbone, 'Img backbone must be implemented.'
         assert self.with_img_rpn, 'Img rpn must be implemented.'
@@ -753,7 +735,6 @@ class ImVoteNet(Base3DDetector):
                  points=None,
                  img_metas=None,
                  imgs=None,
-                 calibs=None,
                  bboxes_2d=None,
                  rescale=False,
                  **kwargs):
@@ -772,9 +753,6 @@ class ImVoteNet(Base3DDetector):
                 list indicates test-time augmentations and inner Tensor
                 should have a shape NxCxHxW, which contains all images
                 in the batch. Defaults to None. Defaults to None.
-            calibs (list[dict[str, torch.Tensor]], optional): camera
-                calibration matrices, Rt and K.
-                List indicates test-time augs. Defaults to None.
             bboxes_2d (list[list[torch.Tensor]], optional):
                 Provided 2d bboxes, not supported yet. Defaults to None.
             rescale (bool, optional): Whether or not rescale bboxes.
@@ -788,8 +766,9 @@ class ImVoteNet(Base3DDetector):
 
         # only support aug_test for one sample
         aug_bboxes = []
-        for x, pts_cat, img_meta, bbox_2d, img, calib in zip(
-                feats, points_cat, img_metas, bboxes_2d, imgs, calibs):
+        for x, pts_cat, img_meta, bbox_2d, img in zip(feats, points_cat,
+                                                      img_metas, bboxes_2d,
+                                                      imgs):
 
             bbox_2d = self.extract_bboxes_2d(
                 img, img_metas, train=False, bboxes_2d=bbox_2d, **kwargs)
@@ -797,7 +776,7 @@ class ImVoteNet(Base3DDetector):
             seeds_3d, seed_3d_features, seed_indices = x
 
             img_features, masks = self.fusion_layer(img, bbox_2d, seeds_3d,
-                                                    img_metas, calib)
+                                                    img_metas)
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]

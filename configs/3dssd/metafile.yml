@@ -7,18 +7,23 @@ Collections:
       Training Resources: 4x TITAN X
       Architecture:
         - PointNet++
-    Paper: https://arxiv.org/abs/2002.10187
+    Paper:
+      URL: https://arxiv.org/abs/2002.10187
+      Title: '3DSSD: Point-based 3D Single Stage Object Detector'
     README: configs/3dssd/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/ssd3dnet.py#L7
+      Version: v0.6.0
 
 Models:
-  - Name: 3dssd_kitti-3d-car
+  - Name: 3dssd_4x4_kitti-3d-car
     In Collection: 3DSSD
-    Config: configs/3dssd/3dssd_kitti-3d-car.py
+    Config: configs/3dssd/3dssd_4x4_kitti-3d-car.py
     Metadata:
       Training Memory (GB): 4.7
     Results:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 78.39
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/3dssd/3dssd_kitti-3d-car_20210324_122002-07e9a19b.pth
+          mAP: 78.69
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/3dssd/3dssd_kitti-3d-car_20210602_124438-b4276f56.pth

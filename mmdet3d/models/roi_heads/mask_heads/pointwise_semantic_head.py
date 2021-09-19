@@ -1,4 +1,6 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -9,11 +11,11 @@ from mmdet.models import HEADS
 
 
 @HEADS.register_module()
-class PointwiseSemanticHead(nn.Module):
+class PointwiseSemanticHead(BaseModule):
     """Semantic segmentation head for point-wise segmentation.
 
     Predict point-wise segmentation and part regression results for PartA2.
-    See `paper <https://arxiv.org/abs/1907.03670>`_ for more detials.
+    See `paper <https://arxiv.org/abs/1907.03670>`_ for more details.
 
     Args:
         in_channels (int): The number of input channel.
@@ -28,6 +30,7 @@ class PointwiseSemanticHead(nn.Module):
                  num_classes=3,
                  extra_width=0.2,
                  seg_score_thr=0.3,
+                 init_cfg=None,
                  loss_seg=dict(
                      type='FocalLoss',
                      use_sigmoid=True,
@@ -39,7 +42,7 @@ class PointwiseSemanticHead(nn.Module):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      loss_weight=1.0)):
-        super(PointwiseSemanticHead, self).__init__()
+        super(PointwiseSemanticHead, self).__init__(init_cfg=init_cfg)
         self.extra_width = extra_width
         self.num_classes = num_classes
         self.seg_score_thr = seg_score_thr

@@ -1,2 +1,3 @@
-mmcv-full 1.2.4 1.4.0
-mmdet 2.10.0 2.11.0
+mmcv-full>=1.3.8,<=1.4.0
+mmdet>=2.14.0,<=3.0.0
+mmsegmentation>=0.14.1,<=1.0.0

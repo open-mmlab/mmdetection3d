@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from os.path import dirname, exists, join, relpath
 
 
@@ -16,12 +17,12 @@ def _get_config_directory():
     return config_dpath
 
 
-def test_config_build_detector():
+def test_config_build_model():
     """Test that all detection models defined in the configs can be
     initialized."""
     from mmcv import Config
 
-    from mmdet3d.models import build_detector
+    from mmdet3d.models import build_model
 
     config_dpath = _get_config_directory()
     print('Found config_dpath = {!r}'.format(config_dpath))
@@ -46,7 +47,7 @@ def test_config_build_detector():
         if 'pretrained' in config_mod.model:
             config_mod.model['pretrained'] = None
 
-        detector = build_detector(config_mod.model)
+        detector = build_model(config_mod.model)
         assert detector is not None
 
         if 'roi_head' in config_mod.model.keys():

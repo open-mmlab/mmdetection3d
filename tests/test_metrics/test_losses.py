@@ -1,5 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
+from torch import nn as nn
 
 
 def test_chamfer_disrance():
@@ -69,3 +71,41 @@ def test_chamfer_disrance():
             or torch.equal(indices1, indices1.new_tensor(expected_inds2)))
     assert (indices2 == indices2.new_tensor([[0, 0, 0, 0, 0], [0, 3, 6, 0,
                                                                0]])).all()
+
+
+def test_paconv_regularization_loss():
+    from mmdet3d.models.losses import PAConvRegularizationLoss
+    from mmdet3d.ops import PAConv, PAConvCUDA
+    from mmdet.apis import set_random_seed
+
+    class ToyModel(nn.Module):
+
+        def __init__(self):
+            super(ToyModel, self).__init__()
+
+            self.paconvs = nn.ModuleList()
+            self.paconvs.append(PAConv(8, 16, 8))
+            self.paconvs.append(PAConv(8, 16, 8, kernel_input='identity'))
+            self.paconvs.append(PAConvCUDA(8, 16, 8))
+
+            self.conv1 = nn.Conv1d(3, 8, 1)
+
+    set_random_seed(0, True)
+    model = ToyModel()
+
+    # reduction shoule be in ['none', 'mean', 'sum']
+    with pytest.raises(AssertionError):
+        paconv_corr_loss = PAConvRegularizationLoss(reduction='l2')
+
+    paconv_corr_loss = PAConvRegularizationLoss(reduction='mean')
+    mean_corr_loss = paconv_corr_loss(model.modules())
+    assert mean_corr_loss >= 0
+    assert mean_corr_loss.requires_grad
+
+    sum_corr_loss = paconv_corr_loss(model.modules(), reduction_override='sum')
+    assert torch.allclose(sum_corr_loss, mean_corr_loss * 3)
+
+    none_corr_loss = paconv_corr_loss(
+        model.modules(), reduction_override='none')
+    assert none_corr_loss.shape[0] == 3
+    assert torch.allclose(none_corr_loss.mean(), mean_corr_loss)

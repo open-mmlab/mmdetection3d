@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .base_3droi_head import Base3DRoIHead
 from .bbox_heads import PartA2BboxHead
 from .h3d_roi_head import H3DRoIHead

@@ -1,5 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from logging import warning
 
 
 def limit_period(val, offset=0.5, period=np.pi):
@@ -111,12 +113,14 @@ def get_box_type(box_type):
     return box_type_3d, box_mode_3d
 
 
-def points_cam2img(points_3d, proj_mat):
+def points_cam2img(points_3d, proj_mat, with_depth=False):
     """Project points from camera coordicates to image coordinates.
 
     Args:
-        points_3d (torch.Tensor): Points in shape (N, 3)
+        points_3d (torch.Tensor): Points in shape (N, 3).
         proj_mat (torch.Tensor): Transformation matrix between coordinates.
+        with_depth (bool, optional): Whether to keep depth in the output.
+            Defaults to False.
 
     Returns:
         torch.Tensor: Points in image coordinates with shape [N, 2].
@@ -141,4 +145,70 @@ def points_cam2img(points_3d, proj_mat):
         [points_3d, points_3d.new_ones(*points_shape)], dim=-1)
     point_2d = torch.matmul(points_4, proj_mat.t())
     point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
+
+    if with_depth:
+        return torch.cat([point_2d_res, point_2d[..., 2:3]], dim=-1)
     return point_2d_res
+
+
+def mono_cam_box2vis(cam_box):
+    """This is a post-processing function on the bboxes from Mono-3D task. If
+    we want to perform projection visualization, we need to:
+
+        1. rotate the box along x-axis for np.pi / 2 (roll)
+        2. change orientation from local yaw to global yaw
+        3. convert yaw by (np.pi / 2 - yaw)
+
+    After applying this function, we can project and draw it on 2D images.
+
+    Args:
+        cam_box (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate \
+            system before conversion. Could be gt bbox loaded from dataset or \
+                network prediction output.
+
+    Returns:
+        :obj:`CameraInstance3DBoxes`: Box after conversion.
+    """
+    warning.warn('DeprecationWarning: The hack of yaw and dimension in the '
+                 'monocular 3D detection on nuScenes has been removed. The '
+                 'function mono_cam_box2vis will be deprecated.')
+    from . import CameraInstance3DBoxes
+    assert isinstance(cam_box, CameraInstance3DBoxes), \
+        'input bbox should be CameraInstance3DBoxes!'
+
+    loc = cam_box.gravity_center
+    dim = cam_box.dims
+    yaw = cam_box.yaw
+    feats = cam_box.tensor[:, 7:]
+    # rotate along x-axis for np.pi / 2
+    # see also here: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L557  # noqa
+    dim[:, [1, 2]] = dim[:, [2, 1]]
+    # change local yaw to global yaw for visualization
+    # refer to https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L164-L166  # noqa
+    yaw += torch.atan2(loc[:, 0], loc[:, 2])
+    # convert yaw by (-yaw - np.pi / 2)
+    # this is because mono 3D box class such as `NuScenesBox` has different
+    # definition of rotation with our `CameraInstance3DBoxes`
+    yaw = -yaw - np.pi / 2
+    cam_box = torch.cat([loc, dim, yaw[:, None], feats], dim=1)
+    cam_box = CameraInstance3DBoxes(
+        cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))
+
+    return cam_box
+
+
+def get_proj_mat_by_coord_type(img_meta, coord_type):
+    """Obtain image features using points.
+
+    Args:
+        img_meta (dict): Meta info.
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
+            Can be case-insensitive.
+
+    Returns:
+        torch.Tensor: transformation matrix.
+    """
+    coord_type = coord_type.upper()
+    mapping = {'LIDAR': 'lidar2img', 'DEPTH': 'depth2img', 'CAMERA': 'cam2img'}
+    assert coord_type in mapping.keys()
+    return img_meta[mapping[coord_type]]

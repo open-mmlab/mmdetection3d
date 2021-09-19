@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import mmcv
 import numpy as np
@@ -740,4 +741,5 @@ class KittiDataset(Custom3DDataset):
                     img_metas['lidar2img'],
                     out_dir,
                     file_name,
-                    show=False)
+                    box_mode='lidar',
+                    show=show)

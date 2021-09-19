@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import gc
 import io as sysio
 import numba

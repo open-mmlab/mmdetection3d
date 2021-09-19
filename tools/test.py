@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import mmcv
 import os
@@ -11,7 +12,7 @@ from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
 
 from mmdet3d.apis import single_gpu_test
 from mmdet3d.datasets import build_dataloader, build_dataset
-from mmdet3d.models import build_detector
+from mmdet3d.models import build_model
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
@@ -165,7 +166,7 @@ def main():
 
     # build the model and load checkpoint
     cfg.model.train_cfg = None
-    model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+    model = build_model(cfg.model, test_cfg=cfg.get('test_cfg'))
     fp16_cfg = cfg.get('fp16', None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
@@ -178,6 +179,12 @@ def main():
         model.CLASSES = checkpoint['meta']['CLASSES']
     else:
         model.CLASSES = dataset.CLASSES
+    # palette for visualization in segmentation tasks
+    if 'PALETTE' in checkpoint.get('meta', {}):
+        model.PALETTE = checkpoint['meta']['PALETTE']
+    elif hasattr(dataset, 'PALETTE'):
+        # segmentation dataset has `PALETTE` attribute
+        model.PALETTE = dataset.PALETTE
 
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])

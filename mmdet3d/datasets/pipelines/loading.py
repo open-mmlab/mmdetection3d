@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 
@@ -41,12 +42,15 @@ class LoadMultiViewImageFromFiles(object):
                 - img_norm_cfg (dict): Normalization configuration of images.
         """
         filename = results['img_filename']
+        # img is of shape (h, w, c, num_views)
         img = np.stack(
             [mmcv.imread(name, self.color_type) for name in filename], axis=-1)
         if self.to_float32:
             img = img.astype(np.float32)
         results['filename'] = filename
-        results['img'] = img
+        # unravel to list, see `DefaultFormatBundle` in formating.py
+        # which will transpose each image separately and then stack into array
+        results['img'] = [img[..., i] for i in range(img.shape[-1])]
         results['img_shape'] = img.shape
         results['ori_shape'] = img.shape
         # Set initial values for default meta_keys
@@ -61,8 +65,10 @@ class LoadMultiViewImageFromFiles(object):
 
     def __repr__(self):
         """str: Return a string that describes the module."""
-        return f'{self.__class__.__name__} (to_float32={self.to_float32}, '\
-            f"color_type='{self.color_type}')"
+        repr_str = self.__class__.__name__
+        repr_str += f'(to_float32={self.to_float32}, '
+        repr_str += f"color_type='{self.color_type}')"
+        return repr_str
 
 
 @PIPELINES.register_module()
@@ -85,7 +91,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             dict: The dict contains loaded image and meta information.
         """
         super().__call__(results)
-        results['cam_intrinsic'] = results['img_info']['cam_intrinsic']
+        results['cam2img'] = results['img_info']['cam_intrinsic']
         return results
 
 

@@ -1,3 +1,5 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import force_fp32
@@ -57,7 +59,8 @@ class SSD3DHead(VoteHead):
                  dir_res_loss=None,
                  size_res_loss=None,
                  corner_loss=None,
-                 vote_loss=None):
+                 vote_loss=None,
+                 init_cfg=None):
         super(SSD3DHead, self).__init__(
             num_classes,
             bbox_coder,
@@ -74,7 +77,8 @@ class SSD3DHead(VoteHead):
             dir_res_loss=dir_res_loss,
             size_class_loss=None,
             size_res_loss=size_res_loss,
-            semantic_loss=None)
+            semantic_loss=None,
+            init_cfg=init_cfg)
 
         self.corner_loss = build_loss(corner_loss)
         self.vote_loss = build_loss(vote_loss)
@@ -460,6 +464,9 @@ class SSD3DHead(VoteHead):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
                 input_metas[b])
+            # fix the wrong direction
+            # To do: remove this ops
+            bbox_selected[..., 6] += np.pi
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -487,7 +494,7 @@ class SSD3DHead(VoteHead):
             bbox.clone(),
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
-            origin=(0.5, 0.5, 1.0))
+            origin=(0.5, 0.5, 0.5))
 
         if isinstance(bbox, LiDARInstance3DBoxes):
             box_idx = bbox.points_in_boxes(points)

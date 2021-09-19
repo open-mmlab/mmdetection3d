@@ -34,9 +34,10 @@ def export_one_scan(scan_name,
                         scan_name + '_vh_clean_2.0.010000.segs.json')
     # includes axisAlignment info for the train set scans.
     meta_file = osp.join(scannet_dir, scan_name, f'{scan_name}.txt')
-    mesh_vertices, semantic_labels, instance_labels, instance_bboxes, \
-        instance2semantic = export(mesh_file, agg_file, seg_file,
-                                   meta_file, label_map_file, None, test_mode)
+    mesh_vertices, semantic_labels, instance_labels, unaligned_bboxes, \
+        aligned_bboxes, instance2semantic, axis_align_matrix = export(
+            mesh_file, agg_file, seg_file, meta_file, label_map_file, None,
+            test_mode)
 
     if not test_mode:
         mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
@@ -47,9 +48,12 @@ def export_one_scan(scan_name,
         num_instances = len(np.unique(instance_labels))
         print(f'Num of instances: {num_instances}')
 
-        bbox_mask = np.in1d(instance_bboxes[:, -1], OBJ_CLASS_IDS)
-        instance_bboxes = instance_bboxes[bbox_mask, :]
-        print(f'Num of care instances: {instance_bboxes.shape[0]}')
+        bbox_mask = np.in1d(unaligned_bboxes[:, -1], OBJ_CLASS_IDS)
+        unaligned_bboxes = unaligned_bboxes[bbox_mask, :]
+        bbox_mask = np.in1d(aligned_bboxes[:, -1], OBJ_CLASS_IDS)
+        aligned_bboxes = aligned_bboxes[bbox_mask, :]
+        assert unaligned_bboxes.shape[0] == aligned_bboxes.shape[0]
+        print(f'Num of care instances: {unaligned_bboxes.shape[0]}')
 
     if max_num_point is not None:
         max_num_point = int(max_num_point)
@@ -65,7 +69,11 @@ def export_one_scan(scan_name,
     if not test_mode:
         np.save(f'{output_filename_prefix}_sem_label.npy', semantic_labels)
         np.save(f'{output_filename_prefix}_ins_label.npy', instance_labels)
-        np.save(f'{output_filename_prefix}_bbox.npy', instance_bboxes)
+        np.save(f'{output_filename_prefix}_unaligned_bbox.npy',
+                unaligned_bboxes)
+        np.save(f'{output_filename_prefix}_aligned_bbox.npy', aligned_bboxes)
+        np.save(f'{output_filename_prefix}_axis_align_matrix.npy',
+                axis_align_matrix)
 
 
 def batch_export(max_num_point,

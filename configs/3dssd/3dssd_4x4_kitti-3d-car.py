@@ -50,8 +50,9 @@ train_pipeline = [
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.9, 1.1]),
-    dict(type='BackgroundPointsFilter', bbox_enlarge_range=(0.5, 2.0, 0.5)),
-    dict(type='IndoorPointSample', num_points=16384),
+    # 3DSSD can get a higher performance without this transform
+    # dict(type='BackgroundPointsFilter', bbox_enlarge_range=(0.5, 2.0, 0.5)),
+    dict(type='PointSample', num_points=16384),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
@@ -77,7 +78,7 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='IndoorPointSample', num_points=16384),
+            dict(type='PointSample', num_points=16384),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
@@ -106,9 +107,9 @@ model = dict(
 lr = 0.002  # max learning rate
 optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[80, 120])
+lr_config = dict(policy='step', warmup=None, step=[45, 60])
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=150)
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 
 # yapf:disable
 log_config = dict(

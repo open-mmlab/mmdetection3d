@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 
@@ -17,7 +18,7 @@ def test_multi_scale_flip_aug_3D():
         'sync_2d': False,
         'flip_ratio_bev_horizontal': 0.5
     }, {
-        'type': 'IndoorPointSample',
+        'type': 'PointSample',
         'num_points': 5
     }, {
         'type':
@@ -52,9 +53,9 @@ def test_multi_scale_flip_aug_3D():
         bbox3d_fields=bbox3d_fields)
     results = multi_scale_flip_aug_3D(results)
     expected_points = torch.tensor(
-        [[-2.2095, 3.3160, -0.7707, 0.4417], [-1.3739, 3.8711, 0.8524, 2.0648],
-         [-1.8140, 3.5389, -1.0057, 0.2067], [0.2040, 1.4268, -1.0504, 0.1620],
-         [1.5090, 3.2764, -1.1914, 0.0210]],
+        [[-2.2418, 3.2942, -0.7707, 0.4417], [-1.4116, 3.8575, 0.8524, 2.0648],
+         [-1.8484, 3.5210, -1.0057, 0.2067], [0.1900, 1.4287, -1.0504, 0.1620],
+         [1.4770, 3.2910, -1.1914, 0.0210]],
         dtype=torch.float32)
 
     assert torch.allclose(

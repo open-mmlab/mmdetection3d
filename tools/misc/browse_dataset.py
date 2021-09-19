@@ -1,11 +1,12 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import numpy as np
 import warnings
 from mmcv import Config, DictAction, mkdir_or_exist, track_iter_progress
 from os import path as osp
 
-from mmdet3d.core.bbox import (Box3DMode, Coord3DMode, DepthInstance3DBoxes,
-                               LiDARInstance3DBoxes)
+from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
+                               DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.visualizer import (show_multi_modality_result, show_result,
                                      show_seg_result)
 from mmdet3d.datasets import build_dataset
@@ -26,11 +27,10 @@ def parse_args():
         type=str,
         help='If there is no display interface, you can save it')
     parser.add_argument(
-        '--multi-modality',
-        action='store_true',
-        help='Whether to visualize multi-modality data. If True, we will show '
-        'both 3D point clouds with 3D bounding boxes and 2D images with '
-        'projected bounding boxes.')
+        '--task',
+        type=str,
+        choices=['det', 'seg', 'multi_modality-det', 'mono-det'],
+        help='Determine the visualization method depending on the task.')
     parser.add_argument(
         '--online',
         action='store_true',
@@ -63,6 +63,9 @@ def build_data_cfg(config_path, skip_type, cfg_options):
     # so we don't need to worry about it later
     if cfg.data.train['type'] == 'RepeatDataset':
         cfg.data.train = cfg.data.train.dataset
+    # use only first dataset for `ConcatDataset`
+    if cfg.data.train['type'] == 'ConcatDataset':
+        cfg.data.train = cfg.data.train.datasets[0]
     train_data_cfg = cfg.data.train
     # eval_pipeline purely consists of loading functions
     # use eval_pipeline for data loading
@@ -118,9 +121,17 @@ def show_seg_data(idx, dataset, out_dir, filename, show=False):
         snapshot=True)
 
 
-def show_proj_bbox_img(idx, dataset, out_dir, filename, show=False):
+def show_proj_bbox_img(idx,
+                       dataset,
+                       out_dir,
+                       filename,
+                       show=False,
+                       is_nus_mono=False):
     """Visualize 3D bboxes on 2D image by projection."""
-    example = dataset.prepare_train_data(idx)
+    try:
+        example = dataset.prepare_train_data(idx)
+    except AttributeError:  # for Mono-3D datasets
+        example = dataset.prepare_train_img(idx)
     gt_bboxes = dataset.get_ann_info(idx)['gt_bboxes_3d']
     img_metas = example['img_metas']._data
     img = example['img']._data.numpy()
@@ -134,10 +145,10 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename, show=False):
             img,
             gt_bboxes,
             None,
-            example['calib'],
+            None,
             out_dir,
             filename,
-            depth_bbox=True,
+            box_mode='depth',
             img_metas=img_metas,
             show=show)
     elif isinstance(gt_bboxes, LiDARInstance3DBoxes):
@@ -148,26 +159,26 @@ def show_proj_bbox_img(idx, dataset, out_dir, filename, show=False):
             img_metas['lidar2img'],
             out_dir,
             filename,
-            depth_bbox=False,
+            box_mode='lidar',
+            img_metas=img_metas,
+            show=show)
+    elif isinstance(gt_bboxes, CameraInstance3DBoxes):
+        show_multi_modality_result(
+            img,
+            gt_bboxes,
+            None,
+            img_metas['cam2img'],
+            out_dir,
+            filename,
+            box_mode='camera',
             img_metas=img_metas,
             show=show)
     else:
         # can't project, just show img
+        warnings.warn(
+            f'unrecognized gt box type {type(gt_bboxes)}, only show image')
         show_multi_modality_result(
             img, None, None, None, out_dir, filename, show=show)
-
-
-def is_multi_modality(dataset):
-    """Judge whether a dataset loads multi-modality data (points+img)."""
-    if not hasattr(dataset, 'modality') or dataset.modality is None:
-        return False
-    if dataset.modality['use_camera']:
-        # even dataset with `use_camera=True` may not load img
-        # should check its loaded data
-        example = dataset.prepare_train_data(0)
-        if 'img' in example.keys():
-            return True
-    return False
 
 
 def main():
@@ -186,43 +197,40 @@ def main():
     dataset_type = cfg.dataset_type
 
     # configure visualization mode
-    vis_type = 'det'  # single-modality detection
-    if dataset_type in ['ScanNetSegDataset', 'S3DISSegDataset']:
-        vis_type = 'seg'  # segmentation
-    multi_modality = args.multi_modality
-    if multi_modality:
-        # check whether dataset really supports multi-modality input
-        if not is_multi_modality(dataset):
-            warnings.warn(
-                f'{dataset_type} with current config does not support multi-'
-                'modality data loading, only show point clouds here')
-            multi_modality = False
+    vis_task = args.task  # 'det', 'seg', 'multi_modality-det', 'mono-det'
 
     for idx, data_info in enumerate(track_iter_progress(data_infos)):
         if dataset_type in ['KittiDataset', 'WaymoDataset']:
-            pts_path = data_info['point_cloud']['velodyne_path']
+            data_path = data_info['point_cloud']['velodyne_path']
         elif dataset_type in [
                 'ScanNetDataset', 'SUNRGBDDataset', 'ScanNetSegDataset',
-                'S3DISSegDataset'
+                'S3DISSegDataset', 'S3DISDataset'
         ]:
-            pts_path = data_info['pts_path']
+            data_path = data_info['pts_path']
         elif dataset_type in ['NuScenesDataset', 'LyftDataset']:
-            pts_path = data_info['lidar_path']
+            data_path = data_info['lidar_path']
+        elif dataset_type in ['NuScenesMonoDataset']:
+            data_path = data_info['file_name']
         else:
             raise NotImplementedError(
                 f'unsupported dataset type {dataset_type}')
 
-        file_name = osp.splitext(osp.basename(pts_path))[0]
+        file_name = osp.splitext(osp.basename(data_path))[0]
 
-        if vis_type == 'det':
+        if vis_task in ['det', 'multi_modality-det']:
             # show 3D bboxes on 3D point clouds
             show_det_data(
                 idx, dataset, args.output_dir, file_name, show=args.online)
-            if multi_modality:
-                # project 3D bboxes to 2D image
-                show_proj_bbox_img(
-                    idx, dataset, args.output_dir, file_name, show=args.online)
-        elif vis_type == 'seg':
+        if vis_task in ['multi_modality-det', 'mono-det']:
+            # project 3D bboxes to 2D image
+            show_proj_bbox_img(
+                idx,
+                dataset,
+                args.output_dir,
+                file_name,
+                show=args.online,
+                is_nus_mono=(dataset_type == 'NuScenesMonoDataset'))
+        elif vis_task in ['seg']:
             # show 3D segmentation mask on 3D point clouds
             show_seg_data(
                 idx, dataset, args.output_dir, file_name, show=args.online)

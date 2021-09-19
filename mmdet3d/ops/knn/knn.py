@@ -5,7 +5,9 @@ from . import knn_ext
 
 
 class KNN(Function):
-    """KNN (CUDA).
+    r"""KNN (CUDA) based on heap data structure.
+    Modified from `PAConv <https://github.com/CVMI-Lab/PAConv/tree/main/
+    scene_seg/lib/pointops/src/knnquery_heap>`_.
 
     Find k-nearest points.
     """
@@ -14,9 +16,9 @@ class KNN(Function):
     def forward(ctx,
                 k: int,
                 xyz: torch.Tensor,
-                center_xyz: torch.Tensor,
+                center_xyz: torch.Tensor = None,
                 transposed: bool = False) -> torch.Tensor:
-        """forward.
+        """Forward.
 
         Args:
             k (int): number of nearest neighbors.
@@ -34,15 +36,15 @@ class KNN(Function):
         """
         assert k > 0
 
-        if not transposed:
+        if center_xyz is None:
+            center_xyz = xyz
+
+        if transposed:
             xyz = xyz.transpose(2, 1).contiguous()
             center_xyz = center_xyz.transpose(2, 1).contiguous()
 
-        B, _, npoint = center_xyz.shape
-        N = xyz.shape[2]
-
-        assert center_xyz.is_contiguous()
-        assert xyz.is_contiguous()
+        assert xyz.is_contiguous()  # [B, N, 3]
+        assert center_xyz.is_contiguous()  # [B, npoint, 3]
 
         center_xyz_device = center_xyz.get_device()
         assert center_xyz_device == xyz.get_device(), \
@@ -50,20 +52,21 @@ class KNN(Function):
         if torch.cuda.current_device() != center_xyz_device:
             torch.cuda.set_device(center_xyz_device)
 
-        idx = center_xyz.new_zeros((B, k, npoint)).long()
+        B, npoint, _ = center_xyz.shape
+        N = xyz.shape[1]
 
-        for bi in range(B):
-            knn_ext.knn_wrapper(xyz[bi], N, center_xyz[bi], npoint, idx[bi], k)
+        idx = center_xyz.new_zeros((B, npoint, k)).int()
+        dist2 = center_xyz.new_zeros((B, npoint, k)).float()
 
+        knn_ext.knn_wrapper(B, N, npoint, k, xyz, center_xyz, idx, dist2)
+        # idx shape to [B, k, npoint]
+        idx = idx.transpose(2, 1).contiguous()
         ctx.mark_non_differentiable(idx)
-
-        idx -= 1
-
         return idx
 
     @staticmethod
     def backward(ctx, a=None):
-        return None, None
+        return None, None, None
 
 
 knn = KNN.apply

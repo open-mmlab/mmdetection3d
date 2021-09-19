@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
@@ -22,6 +23,7 @@ class VoxelNet(SingleStage3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 init_cfg=None,
                  pretrained=None):
         super(VoxelNet, self).__init__(
             backbone=backbone,
@@ -29,13 +31,13 @@ class VoxelNet(SingleStage3DDetector):
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
-        )
+            init_cfg=init_cfg,
+            pretrained=pretrained)
         self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
-    def extract_feat(self, points, img_metas):
+    def extract_feat(self, points, img_metas=None):
         """Extract features from points."""
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)

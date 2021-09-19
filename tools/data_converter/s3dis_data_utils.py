@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import os
@@ -20,17 +21,15 @@ class S3DISData(object):
         self.split = split
         self.data_dir = osp.join(root_path,
                                  'Stanford3dDataset_v1.2_Aligned_Version')
-        self.classes = [
-            'ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
-            'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter'
-        ]
-        self.cat2label = {cat: self.classes.index(cat) for cat in self.classes}
-        self.label2cat = {self.cat2label[t]: t for t in self.cat2label}
-        self.cat_ids = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+
+        # Following `GSDN <https://arxiv.org/abs/2006.12356>`_, use 5 furniture
+        # classes for detection: table, chair, sofa, bookcase, board.
+        self.cat_ids = np.array([7, 8, 9, 10, 11])
         self.cat_ids2class = {
             cat_id: i
             for i, cat_id in enumerate(list(self.cat_ids))
         }
+
         assert split in [
             'Area_1', 'Area_2', 'Area_3', 'Area_4', 'Area_5', 'Area_6'
         ]
@@ -99,6 +98,8 @@ class S3DISData(object):
                 'instance_mask', f'{self.split}_{sample_idx}.bin')
             info['pts_semantic_mask_path'] = osp.join(
                 'semantic_mask', f'{self.split}_{sample_idx}.bin')
+            info['annos'] = self.get_bboxes(points, pts_instance_mask,
+                                            pts_semantic_mask)
 
             return info
 
@@ -107,6 +108,44 @@ class S3DISData(object):
         with futures.ThreadPoolExecutor(num_workers) as executor:
             infos = executor.map(process_single_scene, sample_id_list)
         return list(infos)
+
+    def get_bboxes(self, points, pts_instance_mask, pts_semantic_mask):
+        """Convert instance masks to axis-aligned bounding boxes.
+
+        Args:
+            points (np.array): Scene points of shape (n, 6).
+            pts_instance_mask (np.ndarray): Instance labels of shape (n,).
+            pts_semantic_mask (np.ndarray): Semantic labels of shape (n,).
+
+        Returns:
+            dict: A dict containing detection infos with following keys:
+
+                - gt_boxes_upright_depth (np.ndarray): Bounding boxes
+                    of shape (n, 6)
+                - class (np.ndarray): Box labels of shape (n,)
+                - gt_num (int): Number of boxes.
+        """
+        bboxes, labels = [], []
+        for i in range(1, pts_instance_mask.max()):
+            ids = pts_instance_mask == i
+            # check if all instance points have same semantic label
+            assert pts_semantic_mask[ids].min() == pts_semantic_mask[ids].max()
+            label = pts_semantic_mask[ids][0]
+            # keep only furniture objects
+            if label in self.cat_ids2class:
+                labels.append(self.cat_ids2class[pts_semantic_mask[ids][0]])
+                pts = points[:, :3][ids]
+                min_pts = pts.min(axis=0)
+                max_pts = pts.max(axis=0)
+                locations = (min_pts + max_pts) / 2
+                dimensions = max_pts - min_pts
+                bboxes.append(np.concatenate((locations, dimensions)))
+        annotation = dict()
+        # follow ScanNet and SUN RGB-D keys
+        annotation['gt_boxes_upright_depth'] = np.array(bboxes)
+        annotation['class'] = np.array(labels)
+        annotation['gt_num'] = len(labels)
+        return annotation
 
 
 class S3DISSegData(object):
@@ -191,7 +230,7 @@ class S3DISSegData(object):
         num_iter = int(np.sum(num_point_all) / float(self.num_points))
         scene_idxs = []
         for idx in range(len(self.data_infos)):
-            scene_idxs.extend([idx] * round(sample_prob[idx] * num_iter))
+            scene_idxs.extend([idx] * int(round(sample_prob[idx] * num_iter)))
         scene_idxs = np.array(scene_idxs).astype(np.int32)
 
         # calculate label weight, adopted from PointNet++

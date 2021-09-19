@@ -1,9 +1,10 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import torch
 from mmcv.runner import save_checkpoint
 from torch import nn as nn
 
-from mmdet.apis import init_detector
+from mmdet.apis import init_model
 
 
 def fuse_conv_bn(conv, bn):
@@ -56,7 +57,7 @@ def parse_args():
 def main():
     args = parse_args()
     # build the model from a config file and a checkpoint file
-    model = init_detector(args.config, args.checkpoint)
+    model = init_model(args.config, args.checkpoint)
     # fuse conv and bn layers of the model
     fused_model = fuse_module(model)
     save_checkpoint(fused_model, args.out)

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 import warnings
@@ -147,7 +148,7 @@ class BasePoints(object):
         if not isinstance(rotation, torch.Tensor):
             rotation = self.tensor.new_tensor(rotation)
         assert rotation.shape == torch.Size([3, 3]) or \
-            rotation.numel() == 1
+            rotation.numel() == 1, f'invalid rotation shape {rotation.shape}'
 
         if axis is None:
             axis = self.rotation_axis
@@ -175,6 +176,8 @@ class BasePoints(object):
         else:
             raise NotImplementedError
         self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
+
+        return rot_mat_T
 
     @abstractmethod
     def flip(self, bev_direction='horizontal'):
@@ -279,6 +282,8 @@ class BasePoints(object):
                 Nonzero elements in the vector will be selected.
             4. `new_points = points[3:11, vector]`:
                 return a slice of points and attribute dims.
+            5. `new_points = points[4:12, 2]`:
+                return a slice of points with single attribute.
             Note that the returned Points might share storage with this Points,
             subject to Pytorch's indexing semantics.
 
@@ -300,6 +305,10 @@ class BasePoints(object):
                 step = 1 if item[1].step is None else item[1].step
                 item = list(item)
                 item[1] = list(range(start, stop, step))
+                item = tuple(item)
+            elif isinstance(item[1], int):
+                item = list(item)
+                item[1] = [item[1]]
                 item = tuple(item)
             p = self.tensor[item[0], item[1]]
 

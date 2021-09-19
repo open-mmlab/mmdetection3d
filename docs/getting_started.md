@@ -8,20 +8,24 @@
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 
-The required versions of MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMCV and MMDetection to avoid installation issues.
+The required versions of MMCV, MMDetection and MMSegmentation for different versions of MMDetection3D are as below. Please install the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
 
-| MMDetection3D version | MMDetection version |    MMCV version     |
-|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.10.0, <=2.11.0| mmcv-full>=1.2.4, <=1.4|
-| 0.13.0              | mmdet>=2.10.0, <=2.11.0| mmcv-full>=1.2.4, <=1.4|
-| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.2.4, <=1.4|
-| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.1.5, <=1.4|
-| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | mmcv-full>=1.1.5, <=1.4|
-| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | mmcv-full>=1.1.3, <=1.2|
-| 0.5.0               | 2.3.0                  | mmcv-full==1.0.5|
+| MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
+|:-------------------:|:-------------------:|:-------------------:|:-------------------:|
+| master              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.17.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.16.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.4|
+| 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4|
+| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.4|
+| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.4|
+| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | Not required  | mmcv-full>=1.1.3, <=1.2|
+| 0.5.0               | 2.3.0                  | Not required  | mmcv-full==1.0.5|
 
 # Installation
 
@@ -93,12 +97,8 @@ pip install mmcv-full
 
 **d. Install [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
-Note:
-
-MMDetection3D v0.13.0 is only compatiable with MMDetection version `mmdet>=2.10.0, <=2.11.0`. The future versions will only support mmdet>=2.12.0 since the v0.14.0 (to be released in May).
-
 ```shell
-pip install git+https://github.com/open-mmlab/mmdetection.git
+pip install mmdet==2.14.0
 ```
 
 Optionally, you could also build MMDetection from source in case you want to modify the code:
@@ -106,18 +106,34 @@ Optionally, you could also build MMDetection from source in case you want to mod
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
+git checkout v2.14.0  # switch to v2.14.0 branch
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
-**e. Clone the MMDetection3D repository.**
+**e. Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
+
+```shell
+pip install mmsegmentation==0.14.1
+```
+
+Optionally, you could also build MMSegmentation from source in case you want to modify the code:
+
+```shell
+git clone https://github.com/open-mmlab/mmsegmentation.git
+cd mmsegmentation
+git checkout v0.14.1  # switch to v0.14.1 branch
+pip install -e .  # or "python setup.py develop"
+```
+
+**f. Clone the MMDetection3D repository.**
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 ```
 
-**f.Install build requirements and then install MMDetection3D.**
+**g.Install build requirements and then install MMDetection3D.**
 
 ```shell
 pip install -v -e .  # or "python setup.py develop"
@@ -136,7 +152,7 @@ It is recommended that you run step d each time you pull some updates from githu
     find . -name "*.so" | xargs rm
     ```
 
-2. Following the above instructions, mmdetection is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
+2. Following the above instructions, MMDetection3D is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
 
 3. If you would like to use `opencv-python-headless` instead of `opencv-python`,
 you can install it before installing MMCV.
@@ -162,13 +178,13 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 
 ## A from-scratch setup script
 
-Here is a full script for setting up mmdetection with conda.
+Here is a full script for setting up MMdetection3D with conda.
 
 ```shell
 conda create -n open-mmlab python=3.7 -y
 conda activate open-mmlab
 
-# install latest pytorch prebuilt with the default prebuilt CUDA version (usually the latest)
+# install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
 conda install -c pytorch pytorch torchvision -y
 
 # install mmcv
@@ -176,6 +192,9 @@ pip install mmcv-full
 
 # install mmdetection
 pip install git+https://github.com/open-mmlab/mmdetection.git
+
+# install mmsegmentation
+pip install git+https://github.com/open-mmlab/mmsegmentation.git
 
 # install mmdetection3d
 git clone https://github.com/open-mmlab/mmdetection3d.git
@@ -195,9 +214,7 @@ PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 
 # Verification
 
-## Demo
-
-### Point cloud demo
+## Verify with point cloud demo
 
 We provide several demo scripts to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md). To test a single-modality 3D detection on point cloud scenes:
 
@@ -212,7 +229,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 ```
 
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
-Note that you need to install pandas and plyfile before using this script. This function can also be used for data preprocessing for training ```ply data```.
+Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training ```ply data```.
 
 ```python
 import numpy as np
@@ -237,7 +254,7 @@ Examples:
 convert_ply('./test.ply', './test.bin')
 ```
 
-If you have point clouds in other format (`off`, `obj`, etc.), you can use trimesh to convert them into `ply`.
+If you have point clouds in other format (`off`, `obj`, etc.), you can use `trimesh` to convert them into `ply`.
 
 ```python
 import trimesh
@@ -253,7 +270,7 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](0_demo.md).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
 
 ## High-level APIs for testing point clouds
 
@@ -262,13 +279,13 @@ More demos about single/multi-modality and indoor/outdoor 3D detection can be fo
 Here is an example of building the model and test given point clouds.
 
 ```python
-from mmdet3d.apis import init_detector, inference_detector
+from mmdet3d.apis import init_model, inference_detector
 
 config_file = 'configs/votenet/votenet_8x8_scannet-3d-18class.py'
 checkpoint_file = 'checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth'
 
 # build the model from a config file and a checkpoint file
-model = init_detector(config_file, checkpoint_file, device='cuda:0')
+model = init_model(config_file, checkpoint_file, device='cuda:0')
 
 # test a single image and show the results
 point_cloud = 'test.bin'

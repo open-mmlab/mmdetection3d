@@ -52,6 +52,24 @@ def read_segmentation(filename):
     return seg_to_verts, num_verts
 
 
+def extract_bbox(mesh_vertices, object_id_to_segs, object_id_to_label_id,
+                 instance_ids):
+    num_instances = len(np.unique(list(object_id_to_segs.keys())))
+    instance_bboxes = np.zeros((num_instances, 7))
+    for obj_id in object_id_to_segs:
+        label_id = object_id_to_label_id[obj_id]
+        obj_pc = mesh_vertices[instance_ids == obj_id, 0:3]
+        if len(obj_pc) == 0:
+            continue
+        xyz_min = np.min(obj_pc, axis=0)
+        xyz_max = np.max(obj_pc, axis=0)
+        bbox = np.concatenate([(xyz_min + xyz_max) / 2.0, xyz_max - xyz_min,
+                               np.array([label_id])])
+        # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
+        instance_bboxes[obj_id - 1, :] = bbox
+    return instance_bboxes
+
+
 def export(mesh_file,
            agg_file,
            seg_file,
@@ -69,7 +87,7 @@ def export(mesh_file,
         label_map_file (str): Path of the label_map_file.
         output_file (str): Path of the output folder.
             Default: None.
-        test_mode (bool): Whether is generating training data without labels.
+        test_mode (bool): Whether is generating test data without labels.
             Default: False.
 
     It returns a tuple, which containts the the following things:
@@ -86,8 +104,7 @@ def export(mesh_file,
 
     # Load scene axis alignment matrix
     lines = open(meta_file).readlines()
-    # TODO: test set data doesn't have align_matrix!
-    # TODO: save align_matrix and move align step to pipeline in the future
+    # test set data doesn't have align_matrix
     axis_align_matrix = np.eye(4)
     for line in lines:
         if 'axisAlignment' in line:
@@ -97,10 +114,13 @@ def export(mesh_file,
             ]
             break
     axis_align_matrix = np.array(axis_align_matrix).reshape((4, 4))
+
+    # perform global alignment of mesh vertices
     pts = np.ones((mesh_vertices.shape[0], 4))
     pts[:, 0:3] = mesh_vertices[:, 0:3]
     pts = np.dot(pts, axis_align_matrix.transpose())  # Nx4
-    mesh_vertices[:, 0:3] = pts[:, 0:3]
+    aligned_mesh_vertices = np.concatenate([pts[:, 0:3], mesh_vertices[:, 3:]],
+                                           axis=1)
 
     # Load semantic and instance labels
     if not test_mode:
@@ -115,34 +135,21 @@ def export(mesh_file,
                 label_ids[verts] = label_id
         instance_ids = np.zeros(
             shape=(num_verts), dtype=np.uint32)  # 0: unannotated
-        num_instances = len(np.unique(list(object_id_to_segs.keys())))
         for object_id, segs in object_id_to_segs.items():
             for seg in segs:
                 verts = seg_to_verts[seg]
                 instance_ids[verts] = object_id
                 if object_id not in object_id_to_label_id:
                     object_id_to_label_id[object_id] = label_ids[verts][0]
-        instance_bboxes = np.zeros((num_instances, 7))
-        for obj_id in object_id_to_segs:
-            label_id = object_id_to_label_id[obj_id]
-            obj_pc = mesh_vertices[instance_ids == obj_id, 0:3]
-            if len(obj_pc) == 0:
-                continue
-            xmin = np.min(obj_pc[:, 0])
-            ymin = np.min(obj_pc[:, 1])
-            zmin = np.min(obj_pc[:, 2])
-            xmax = np.max(obj_pc[:, 0])
-            ymax = np.max(obj_pc[:, 1])
-            zmax = np.max(obj_pc[:, 2])
-            bbox = np.array([(xmin + xmax) / 2, (ymin + ymax) / 2,
-                             (zmin + zmax) / 2, xmax - xmin, ymax - ymin,
-                             zmax - zmin, label_id])
-            # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
-            instance_bboxes[obj_id - 1, :] = bbox
+        unaligned_bboxes = extract_bbox(mesh_vertices, object_id_to_segs,
+                                        object_id_to_label_id, instance_ids)
+        aligned_bboxes = extract_bbox(aligned_mesh_vertices, object_id_to_segs,
+                                      object_id_to_label_id, instance_ids)
     else:
         label_ids = None
         instance_ids = None
-        instance_bboxes = None
+        unaligned_bboxes = None
+        aligned_bboxes = None
         object_id_to_label_id = None
 
     if output_file is not None:
@@ -150,10 +157,12 @@ def export(mesh_file,
         if not test_mode:
             np.save(output_file + '_sem_label.npy', label_ids)
             np.save(output_file + '_ins_label.npy', instance_ids)
-            np.save(output_file + '_bbox.npy', instance_bboxes)
+            np.save(output_file + '_unaligned_bbox.npy', unaligned_bboxes)
+            np.save(output_file + '_aligned_bbox.npy', aligned_bboxes)
+            np.save(output_file + '_axis_align_matrix.npy', axis_align_matrix)
 
-    return mesh_vertices, label_ids, instance_ids, \
-        instance_bboxes, object_id_to_label_id
+    return mesh_vertices, label_ids, instance_ids, unaligned_bboxes, \
+        aligned_bboxes, object_id_to_label_id, axis_align_matrix
 
 
 def main():

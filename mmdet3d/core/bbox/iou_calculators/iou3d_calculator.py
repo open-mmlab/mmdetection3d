@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from mmdet.core.bbox import bbox_overlaps
@@ -176,17 +177,17 @@ class AxisAlignedBboxOverlaps3D(object):
 
         Args:
             bboxes1 (Tensor): shape (B, m, 6) in <x1, y1, z1, x2, y2, z2>
-            format or empty.
+                format or empty.
             bboxes2 (Tensor): shape (B, n, 6) in <x1, y1, z1, x2, y2, z2>
-            format or empty.
+                format or empty.
                 B indicates the batch dim, in shape (B1, B2, ..., Bn).
-                If ``is_aligned `` is ``True``, then m and n must be equal.
+                If ``is_aligned`` is ``True``, then m and n must be equal.
             mode (str): "iou" (intersection over union) or "giou" (generalized
                 intersection over union).
             is_aligned (bool, optional): If True, then m and n must be equal.
                 Default False.
         Returns:
-            Tensor: shape (m, n) if ``is_aligned `` is False else shape (m,)
+            Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
         """
         assert bboxes1.size(-1) == bboxes2.size(-1) == 6
         return axis_aligned_bbox_overlaps_3d(bboxes1, bboxes2, mode,
@@ -204,17 +205,17 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
                                   is_aligned=False,
                                   eps=1e-6):
     """Calculate overlap between two set of axis aligned 3D bboxes. If
-    ``is_aligned `` is ``False``, then calculate the overlaps between each bbox
+    ``is_aligned`` is ``False``, then calculate the overlaps between each bbox
     of bboxes1 and bboxes2, otherwise the overlaps between each aligned pair of
     bboxes1 and bboxes2.
 
     Args:
         bboxes1 (Tensor): shape (B, m, 6) in <x1, y1, z1, x2, y2, z2>
-        format or empty.
+            format or empty.
         bboxes2 (Tensor): shape (B, n, 6) in <x1, y1, z1, x2, y2, z2>
-        format or empty.
+            format or empty.
             B indicates the batch dim, in shape (B1, B2, ..., Bn).
-            If ``is_aligned `` is ``True``, then m and n must be equal.
+            If ``is_aligned`` is ``True``, then m and n must be equal.
         mode (str): "iou" (intersection over union) or "giou" (generalized
             intersection over union).
         is_aligned (bool, optional): If True, then m and n must be equal.
@@ -223,7 +224,7 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
             stability. Default 1e-6.
 
     Returns:
-        Tensor: shape (m, n) if ``is_aligned `` is False else shape (m,)
+        Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
 
     Example:
         >>> bboxes1 = torch.FloatTensor([

@@ -1,59 +1,43 @@
-// Modified from https://github.com/unlimblue/KNN_CUDA
+// Modified from https://github.com/CVMI-Lab/PAConv/tree/main/scene_seg/lib/pointops/src/knnquery_heap
 
-#include <vector>
+#include <torch/serialize/tensor.h>
 #include <torch/extension.h>
+#include <vector>
+#include <THC/THC.h>
 #include <ATen/cuda/CUDAContext.h>
 
-#define CHECK_CONTIGUOUS(x) AT_ASSERTM(x.is_contiguous(), #x " must be contiguous")
-#define CHECK_TYPE(x, t) AT_ASSERTM(x.dtype() == t, #x " must be " #t)
-#define CHECK_CUDA(x) AT_ASSERTM(x.device().type() == at::Device::Type::CUDA, #x " must be on CUDA")
-#define CHECK_INPUT(x, t) CHECK_CONTIGUOUS(x); CHECK_TYPE(x, t); CHECK_CUDA(x)
+extern THCState *state;
+
+#define CHECK_CUDA(x) TORCH_CHECK(x.is_cuda(), #x, " must be a CUDAtensor ")
+#define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x, " must be contiguous ")
+#define CHECK_INPUT(x) CHECK_CUDA(x);CHECK_CONTIGUOUS(x)
 
 
-void knn_kernels_launcher(
-    const float* ref_dev,
-    int ref_nb,
-    const float* query_dev,
-    int query_nb,
-    int dim,
-    int k,
-    float* dist_dev,
-    long* ind_dev,
+void knn_kernel_launcher(
+    int b,
+    int n,
+    int m,
+    int nsample,
+    const float *xyz,
+    const float *new_xyz,
+    int *idx,
+    float *dist2,
     cudaStream_t stream
     );
 
-// std::vector<at::Tensor> knn_wrapper(
-void knn_wrapper(
-    at::Tensor & ref,
-    int ref_nb,
-    at::Tensor & query,
-    int query_nb,
-    at::Tensor & ind,
-    const int k
-    ) {
+void knn_wrapper(int b, int n, int m, int nsample, at::Tensor xyz_tensor, at::Tensor new_xyz_tensor, at::Tensor idx_tensor, at::Tensor dist2_tensor)
+{
+    CHECK_INPUT(new_xyz_tensor);
+    CHECK_INPUT(xyz_tensor);
 
-    CHECK_INPUT(ref, at::kFloat);
-    CHECK_INPUT(query, at::kFloat);
-    const float * ref_dev = ref.data_ptr<float>();
-    const float * query_dev = query.data_ptr<float>();
-    int dim = query.size(0);
-    auto dist = at::empty({ref_nb, query_nb}, query.options().dtype(at::kFloat));
-    float * dist_dev = dist.data_ptr<float>();
-    long * ind_dev = ind.data_ptr<long>();
+    const float *new_xyz = new_xyz_tensor.data_ptr<float>();
+    const float *xyz = xyz_tensor.data_ptr<float>();
+    int *idx = idx_tensor.data_ptr<int>();
+    float *dist2 = dist2_tensor.data_ptr<float>();
 
     cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-    knn_kernels_launcher(
-        ref_dev,
-        ref_nb,
-        query_dev,
-        query_nb,
-        dim,
-        k,
-        dist_dev,
-        ind_dev,
-        stream
-    );
+    knn_kernel_launcher(b, n, m, nsample, xyz, new_xyz, idx, dist2, stream);
 }
 
 

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import pytest
 import torch
@@ -28,7 +29,7 @@ def _generate_sunrgbd_dataset_config():
             rot_range=[-0.523599, 0.523599],
             scale_ratio_range=[0.85, 1.15],
             shift_height=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',
@@ -73,13 +74,13 @@ def _generate_sunrgbd_multi_modality_dataset_config():
             rot_range=[-0.523599, 0.523599],
             scale_ratio_range=[0.85, 1.15],
             shift_height=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D',
             keys=[
                 'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-                'gt_labels_3d', 'calib'
+                'gt_labels_3d'
             ])
     ]
     modality = dict(use_lidar=True, use_camera=True)
@@ -158,20 +159,23 @@ def test_getitem():
     points = data['points']._data
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
-    calib = data['calib']
     img = data['img']._data
+    depth2img = data['img_metas']._data['depth2img']
 
-    expected_Rt = np.array([[0.97959, 0.012593, -0.20061],
-                            [0.012593, 0.99223, 0.12377],
-                            [0.20061, -0.12377, 0.97182]])
-    expected_K = np.array([[529.5, 0., 0.], [0., 529.5, 0.], [365., 265., 1.]])
+    expected_rt_mat = np.array([[0.97959, 0.012593, -0.20061],
+                                [0.012593, 0.99223, 0.12377],
+                                [0.20061, -0.12377, 0.97182]])
+    expected_k_mat = np.array([[529.5, 0., 0.], [0., 529.5, 0.],
+                               [365., 265., 1.]])
+    rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                       ]) @ expected_rt_mat.transpose(1, 0)
+    expected_depth2img = expected_k_mat @ rt_mat
 
     assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
     assert img.shape[:] == (3, 608, 832)
-    assert np.allclose(calib['Rt'], expected_Rt)
-    assert np.allclose(calib['K'], expected_K)
+    assert np.allclose(depth2img, expected_depth2img)
 
 
 def test_evaluate():
@@ -295,7 +299,7 @@ def test_show():
             type='DefaultFormatBundle3D',
             class_names=class_names,
             with_label=False),
-        dict(type='Collect3D', keys=['points', 'img', 'calib'])
+        dict(type='Collect3D', keys=['points', 'img'])
     ]
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name

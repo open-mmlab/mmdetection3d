@@ -1,8 +1,11 @@
 version: 2
 
+formats: all
+
 python:
   version: 3.7
   install:
     - requirements: requirements/docs.txt
     - requirements: requirements/runtime.txt
     - requirements: requirements/readthedocs.txt
+    - requirements: requirements/mminstall.txt

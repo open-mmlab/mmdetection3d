@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import numpy as np
 import pytest
@@ -27,7 +28,12 @@ def test_getitem():
             with_label_3d=True,
             with_mask_3d=True,
             with_seg_3d=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='GlobalAlignment', rotation_axis=2),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                           34, 36, 39)),
+        dict(type='PointSample', num_points=5),
         dict(
             type='RandomFlip3D',
             sync_2d=False,
@@ -63,11 +69,12 @@ def test_getitem():
     assert file_name == './tests/data/scannet/points/scene0000_00.bin'
     assert np.allclose(pcd_rotation, expected_rotation, 1e-3)
     assert sample_idx == 'scene0000_00'
-    expected_points = torch.tensor([[-2.7231, -2.2068, 2.3543, 2.3895],
-                                    [-0.4065, -3.4857, 2.1330, 2.1682],
-                                    [-1.4578, 1.3510, -0.0441, -0.0089],
-                                    [2.2428, -1.1323, -0.0288, 0.0064],
-                                    [0.7052, -2.9752, 1.5560, 1.5912]])
+    expected_points = torch.tensor(
+        [[1.8339e+00, 2.1093e+00, 2.2900e+00, 2.3895e+00],
+         [3.6079e+00, 1.4592e-01, 2.0687e+00, 2.1682e+00],
+         [4.1886e+00, 5.0614e+00, -1.0841e-01, -8.8736e-03],
+         [6.8790e+00, 1.5086e+00, -9.3154e-02, 6.3816e-03],
+         [4.8253e+00, 2.6668e-01, 1.4917e+00, 1.5912e+00]])
     expected_gt_bboxes_3d = torch.tensor(
         [[-1.1835, -3.6317, 1.5704, 1.7577, 0.3761, 0.5724, 0.0000],
          [-3.1832, 3.2269, 1.1911, 0.6727, 0.2251, 0.6715, 0.0000],
@@ -78,7 +85,7 @@ def test_getitem():
         6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
         0, 0, 0, 5, 5, 5
     ])
-    expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
+    expected_pts_semantic_mask = np.array([0, 18, 18, 18, 18])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     original_classes = scannet_dataset.CLASSES
 
@@ -165,6 +172,32 @@ def test_evaluate():
     assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
     assert abs(ret_dict['curtain_AP_0.25'] - 1.0) < 0.01
 
+    # test evaluate with pipeline
+    class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                   'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'garbagebin')
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(type='GlobalAlignment', rotation_axis=2),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=class_names,
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    ret_dict = scannet_dataset.evaluate(
+        results, metric, pipeline=eval_pipeline)
+    assert abs(ret_dict['table_AP_0.25'] - 0.3333) < 0.01
+    assert abs(ret_dict['window_AP_0.25'] - 1.0) < 0.01
+    assert abs(ret_dict['counter_AP_0.25'] - 1.0) < 0.01
+    assert abs(ret_dict['curtain_AP_0.25'] - 1.0) < 0.01
+
 
 def test_show():
     import mmcv
@@ -226,6 +259,7 @@ def test_show():
             shift_height=False,
             load_dim=6,
             use_dim=[0, 1, 2]),
+        dict(type='GlobalAlignment', rotation_axis=2),
         dict(
             type='DefaultFormatBundle3D',
             class_names=class_names,
@@ -277,12 +311,6 @@ def test_seg_getitem():
         [82, 84, 163],
     ]
     scene_idxs = [0 for _ in range(20)]
-    label_weight = [
-        2.389689, 2.7215734, 4.5944676, 4.8543367, 4.096086, 4.907941,
-        4.690836, 4.512031, 4.623311, 4.9242644, 5.358117, 5.360071, 5.019636,
-        4.967126, 5.3502126, 5.4023647, 5.4027233, 5.4169416, 5.3954206,
-        4.6971426
-    ]
 
     # test network inputs are (xyz, rgb, normalized_xyz)
     pipelines = [
@@ -308,9 +336,10 @@ def test_seg_getitem():
             type='IndoorPatchPointSample',
             num_points=5,
             block_size=1.5,
-            sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True),
+            use_normalized_coord=True,
+            enlarge_size=0.2,
+            min_unique_num=None),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
@@ -328,8 +357,7 @@ def test_seg_getitem():
         modality=None,
         test_mode=False,
         ignore_index=None,
-        scene_idxs=scene_idxs,
-        label_weight=label_weight)
+        scene_idxs=scene_idxs)
 
     data = scannet_dataset[0]
     points = data['points']._data
@@ -374,8 +402,6 @@ def test_seg_getitem():
     assert original_palette == palette
     assert scannet_dataset.scene_idxs.dtype == np.int32
     assert np.all(scannet_dataset.scene_idxs == np.array(scene_idxs))
-    assert np.allclose(scannet_dataset.label_weight, np.array(label_weight),
-                       1e-5)
 
     # test network inputs are (xyz, rgb)
     np.random.seed(0)
@@ -384,9 +410,10 @@ def test_seg_getitem():
         type='IndoorPatchPointSample',
         num_points=5,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False)
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None)
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
         ann_file=ann_file,
@@ -432,9 +459,10 @@ def test_seg_getitem():
         type='IndoorPatchPointSample',
         num_points=5,
         block_size=1.5,
-        sample_rate=1.0,
         ignore_index=len(class_names),
-        use_normalized_coord=False)
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None)
     new_pipelines.remove(new_pipelines[4])
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
@@ -463,7 +491,6 @@ def test_seg_getitem():
     assert scannet_dataset.VALID_CLASS_IDS == [3, 5]
     assert scannet_dataset.label_map == label_map
     assert scannet_dataset.label2cat == {0: 'cabinet', 1: 'chair'}
-    assert np.all(scannet_dataset.label_weight == np.ones(2))
 
     # test load classes from file
     import tempfile
@@ -501,7 +528,6 @@ def test_seg_getitem():
         test_mode=True,
         scene_idxs=scene_idxs)
     assert np.all(scannet_dataset.scene_idxs == np.array([0]))
-    assert np.all(scannet_dataset.label_weight == np.ones(len(class_names)))
 
 
 def test_seg_evaluate():

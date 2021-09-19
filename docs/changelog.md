@@ -1,5 +1,177 @@
 ## Changelog
 
+
+### v0.17.0 (1/9/2021)
+
+#### Compatibility
+
+- Unify the camera keys for consistent transformation between coodinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
+- The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
+
+#### Highlights
+
+- Support 3D object detection on the S3DIS dataset
+- Support compilation on Windows
+- Full benchmark for PAConv on S3DIS
+- Further enhancement for documentation, especially on the Chinese documentation
+
+#### New Features
+
+- Support 3D object detection on the S3DIS dataset (#835)
+
+#### Improvements
+
+- Support point sampling based on distance metric (#667, #840)
+- Update PointFusion to support unified camera keys (#791)
+- Add Chinese documentation for customized dataset (#792), data pipeline (#827), customized runtime (#829), 3D Detection on ScanNet (#836), nuScenes (#854) and Waymo (#859)
+- Unify camera keys used in transformation between different systems (#805)
+- Add a script to support benchmark regression (#808)
+- Benchmark PAConvCUDA on S3DIS (#847)
+- Add a tutorial for 3D detection on the Lyft dataset (#849)
+- Support to download pdf and epub documentation (#850)
+- Change the `repeat` setting in Group-Free-3D configs to reduce training epochs (#855)
+
+#### Bug Fixes
+
+- Fix compiling errors on Windows (#766)
+- Fix the deprecated nms setting in the ImVoteNet config (#828)
+- Use the latest `wrap_fp16_model` import from mmcv (#861)
+- Remove 2D annotations generation on Lyft (#867)
+- Update index files for the Chinese documentation to be consistent with the English version (#873)
+- Fix the nested list transpose in the CenterPoint head (#879)
+- Fix deprecated pretrained model loading for RegNet (#889)
+
+#### Contributors
+
+A total of 11 developers contributed to this release.
+
+@THU17cyz, @wHao-Wu, @wangruohui, @Wuziyi616, @filaPro, @ZwwWayne, @Tai-Wang, @DCNSW, @xieenze, @robin-karlsson0, @ZCMax
+
+### v0.16.0 (1/8/2021)
+
+#### Compatibility
+
+- Remove the rotation and dimension hack in the monocular 3D detection on nuScenes by applying corresponding transformation in the pre-processing and post-processing. The modification only influences nuScenes coco-style json files. Please re-run the data preparation scripts if necessary. See more details in the PR #744.
+- Add a new pre-processing module for the ScanNet dataset in order to support multi-view detectors. Please run the updated scripts to extract the RGB data and its annotations. See more details in the PR #696.
+
+#### Highlights
+
+- Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation
+- Support PAConv [models and benchmarks](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/paconv) on S3DIS
+- Enhance the documentation especially on dataset tutorials
+
+#### New Features
+
+- Support RGB images on ScanNet for multi-view detectors (#696)
+- Support FLOPs and number of parameters calculation (#736)
+- Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation (#782)
+- Support PAConv models and benchmarks on the S3DIS dataset (#783, #809)
+
+#### Improvements
+
+- Refactor Group-Free-3D to make it inherit BaseModule from MMCV (#704)
+- Modify the initialization methods of FCOS3D to be consistent with the refactored approach (#705)
+- Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/groupfree3d) on ScanNet (#710)
+- Add Chinese Documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
+- Add documentation for semantic segmentation on ScanNet and S3DIS (#743, #747, #806, #807)
+- Add a parameter `max_keep_ckpts` to limit the maximum number of saved Group-Free-3D checkpoints (#765)
+- Add documentation for 3D detection on SUN RGB-D and nuScenes (#770, #793)
+- Remove mmpycocotools in the Dockerfile (#785)
+
+#### Bug Fixes
+
+- Fix versions of OpenMMLab dependencies (#708)
+- Convert `rt_mat` to `torch.Tensor` in coordinate transformation for compatibility (#709)
+- Fix the `bev_range` initialization in `ObjectRangeFilter` according to the `gt_bboxes_3d` type (#717)
+- Fix Chinese documentation and incorrect doc format due to the incompatible Sphinx version (#718)
+- Fix a potential bug when setting `interval == 1` in [analyze_logs.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) (#720)
+- Update the structure of Chinese Documentation (#722)
+- Fix FCOS3D FPN BC-Breaking caused by the code refactoring in MMDetection (#739)
+- Fix wrong `in_channels` when `with_distance=True` in the [Dynamic VFE Layers](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/voxel_encoder.py#L87) (#749)
+- Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795, #818)
+- Fix the missing default `bbox_mode` in the `show_multi_modality_result` (#825)
+
+#### Contributors
+
+A total of 12 developers contributed to this release.
+
+@yinchimaoliang, @gopi231091, @filaPro, @ZwwWayne, @ZCMax, @hjin2902, @wHao-Wu, @Wuziyi616, @xiliu8006, @THU17cyz, @DCNSW, @Tai-Wang
+
+
+### v0.15.0 (1/7/2021)
+
+#### Compatibility
+
+In order to fix the problem that the priority of EvalHook is too low, all hook priorities have been re-adjusted in 1.3.8, so MMDetection 2.14.0 needs to rely on the latest MMCV 1.3.8 version. For related information, please refer to [#1120](https://github.com/open-mmlab/mmcv/pull/1120), for related issues, please refer to [#5343](https://github.com/open-mmlab/mmdetection/issues/5343).
+
+#### Highlights
+
+- Support [PAConv](https://arxiv.org/abs/2103.14635)
+- Support monocular/multi-view 3D detector [ImVoxelNet](https://arxiv.org/abs/2106.01178) on KITTI
+- Support Transformer-based 3D detection method [Group-Free-3D](https://arxiv.org/abs/2104.00678) on ScanNet
+- Add documentation for tasks including LiDAR-based 3D detection, vision-only 3D detection and point-based 3D semantic segmentation
+- Add dataset documents like ScanNet
+
+#### New Features
+
+- Support Group-Free-3D on ScanNet (#539)
+- Support PAConv modules (#598, #599)
+- Support ImVoxelNet on KITTI (#627, #654)
+
+#### Improvements
+
+- Add unit tests for pipeline functions `LoadImageFromFileMono3D`, `ObjectNameFilter` and `ObjectRangeFilter` (#615)
+- Enhance [IndoorPatchPointSample](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) (#617)
+- Refactor model initialization methods based MMCV (#622)
+- Add Chinese docs (#629)
+- Add documentation for LiDAR-based 3D detection (#642)
+- Unify intrinsic and extrinsic matrices for all datasets (#653)
+- Add documentation for point-based 3D semantic segmentation (#663)
+- Add documentation of ScanNet for 3D detection (#664)
+- Refine docs for tutorials (#666)
+- Add documentation for vision-only 3D detection (#669)
+- Refine docs for Quick Run and Useful Tools (#686)
+
+
+#### Bug Fixes
+
+- Fix the bug of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) using the bottom center of ground truth (#609)
+- Fix [LoadMultiViewImageFromFiles](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/loading.py) to unravel stacked multi-view images to list to be consistent with DefaultFormatBundle (#611)
+- Fix the potential bug in [analyze_logs](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) when the training resumes from a checkpoint or is stopped before evaluation (#634)
+- Fix test commands in docs and make some refinements (#635)
+- Fix wrong config paths in unit tests (#641)
+
+
+### v0.14.0 (1/6/2021)
+
+#### Highlights
+- Support the point cloud segmentation method [PointNet++](https://arxiv.org/abs/1706.02413)
+
+#### New Features
+
+- Support PointNet++ (#479, #528, #532, #541)
+- Support RandomJitterPoints transform for point cloud segmentation (#584)
+- Support RandomDropPointsColor transform for point cloud segmentation (#585)
+
+#### Improvements
+
+- Move the point alignment of ScanNet from data pre-processing to pipeline (#439, #470)
+- Add compatibility document to provide detailed descriptions of BC-breaking changes (#504)
+- Add MMSegmentation installation requirement (#535)
+- Support points rotation even without bounding box in GlobalRotScaleTrans for point cloud segmentaiton (#540)
+- Support visualization of detection results and dataset browse for nuScenes Mono-3D dataset (#542, #582)
+- Support faster implementation of KNN (#586)
+- Support RegNetX models on Lyft dataset (#589)
+- Remove a useless parameter `label_weight` from segmentation datasets including `Custom3DSegDataset`, `ScanNetSegDataset` and `S3DISSegDataset` (#607)
+
+#### Bug Fixes
+- Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)
+- Fix evaluation bugs in nuScenes and Lyft dataset (#549)
+- Fix converting points between coordinates with specific transformation matrix in the [coord_3d_mode.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/coord_3d_mode.py) (#556)
+- Support PointPillars models on Lyft dataset (#578)
+- Fix the bug of demo with pre-trained VoteNet model on ScanNet (#600)
+
+
 ### v0.13.0 (1/5/2021)
 
 #### Highlights
@@ -50,7 +222,7 @@
 #### Highlights
 
 - Support a new multi-modality method [ImVoteNet](https://arxiv.org/abs/2001.10692).
-- Support pytorch 1.7 and 1.8
+- Support PyTorch 1.7 and 1.8
 - Refactor the structure of tools and [train.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/train.py)/[test.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/test.py)
 
 #### New Features
@@ -83,7 +255,7 @@
 - Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
 - Fix the incorrect adopted pipeline when adding val to workflow (#370)
 - Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
-- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in pytorch 1.7 (#393)
+- Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in PyTorch 1.7 (#393)
 
 ### v0.11.0 (1/3/2021)
 
@@ -101,7 +273,7 @@
 
 - Refactor unit tests (#303)
 - Move the key `train_cfg` and `test_cfg` into the model configs (#307)
-- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md). (#310, #316)
+- Update [README](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md/) with [Chinese version](https://github.com/open-mmlab/mmdetection3d/blob/master/README_zh-CN.md/) and [instructions for getting started](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md/). (#310, #316)
 - Support a faster and more memory-efficient implementation of DynamicScatter (#318, #326)
 
 #### Bug Fixes
@@ -109,7 +281,7 @@
 - Fix an unsupported bias setting in the unit test for centerpoint head (#304)
 - Fix errors due to typos in the centerpoint head (#308)
 - Fix a minor bug in [points_in_boxes.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) when tensors are not in the same device. (#317)
-- Fix warning of deprecated usages of nonzero during training with pytorch 1.6 (#330)
+- Fix warning of deprecated usages of nonzero during training with PyTorch 1.6 (#330)
 
 ### v0.10.0 (1/2/2021)
 
@@ -127,7 +299,7 @@
 
 - Add tag to README in configurations for specifying different uses (#262)
 - Update instructions for evaluation metrics in the documentation (#265)
-- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) and gif demo (#266, #268)
+- Add nuImages entry in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md/) and gif demo (#266, #268)
 - Add unit test for voxelization (#275)
 
 #### Bug Fixes
@@ -135,7 +307,7 @@
 - Fixed the issue of unpacking size in [furthest_point_sample.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/furthest_point_sample/furthest_point_sample.py) (#248)
 - Fix bugs for 3DSSD triggered by empty ground truths (#258)
 - Remove models without checkpoints in model zoo statistics of documentation (#259)
-- Fix some unclear installation instructions in [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md) (#269)
+- Fix some unclear installation instructions in [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/getting_started.md/) (#269)
 - Fix relative paths/links in the documentation (#271)
 - Fix a minor bug in [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) when num_features != 4 (#275)
 - Fix the bug about missing text files when testing on KITTI (#278)
@@ -211,7 +383,7 @@
 #### Highlights
 
 - Support mixed precision training of voxel-based methods
-- Support docker with pytorch 1.6.0
+- Support docker with PyTorch 1.6.0
 - Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
 - Switch model zoo to download.openmmlab.com
 
@@ -219,7 +391,7 @@
 
 - Support dataset pipeline `VoxelBasedPointSampler` to sample multi-sweep points based on voxelization. (#125)
 - Support mixed precision training of voxel-based methods (#132)
-- Support docker with pytorch 1.6.0 (#160)
+- Support docker with PyTorch 1.6.0 (#160)
 
 #### Improvements
 
@@ -276,7 +448,7 @@
 
 #### Improvements
 
-- Fix all warnings and bugs in Pytorch 1.6.0 (#70, #72)
+- Fix all warnings and bugs in PyTorch 1.6.0 (#70, #72)
 - Update issue templates (#43)
 - Update unit tests (#20, #24, #30)
 - Update documentation for using `ply` format point cloud data (#41)

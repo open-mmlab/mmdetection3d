@@ -7,11 +7,12 @@ _base_ = [
 # model settings
 model = dict(
     type='MVXFasterRCNN',
-    pretrained=dict(pts='open-mmlab://regnetx_1.6gf'),
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',
         arch='regnetx_1.6gf',
+        init_cfg=dict(
+            type='Pretrained', checkpoint='open-mmlab://regnetx_1.6gf'),
         out_indices=(1, 2, 3),
         frozen_stages=-1,
         strides=(1, 2, 2, 2),

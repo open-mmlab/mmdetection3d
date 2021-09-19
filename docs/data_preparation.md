@@ -60,6 +60,7 @@ mmdetection3d
 │   ├── scannet
 │   │   ├── meta_data
 │   │   ├── scans
+│   │   ├── scans_test
 │   │   ├── batch_load_scannet_data.py
 │   │   ├── load_scannet_data.py
 │   │   ├── scannet_utils.py
@@ -77,7 +78,7 @@ mmdetection3d
 
 ### KITTI
 
-Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare kitti data by running
+Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare KITTI data by running
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -103,7 +104,7 @@ Note that if your local disk does not have enough space for saving converted dat
 
 ### NuScenes
 
-Download nuScenes V1.0 full dataset data [HERE]( https://www.nuscenes.org/download). Prepare nuscenes data by running
+Download nuScenes V1.0 full dataset data [HERE](https://www.nuscenes.org/download). Prepare nuscenes data by running
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
@@ -115,17 +116,18 @@ Download Lyft 3D detection data [HERE](https://www.kaggle.com/c/3d-object-detect
 
 ```bash
 python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
+python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
-Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above.
+Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above. Also note that the second command serves the purpose of fixing a corrupted lidar data file. Please refer to the discussion [here](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000) for more details.
 
 ### S3DIS, ScanNet and SUN RGB-D
 
-To prepare s3dis data, please see [s3dis](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md).
+To prepare S3DIS data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md/).
 
-To prepare scannet data, please see [scannet](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md).
+To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/).
 
-To prepare sunrgbd data, please see [sunrgbd](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md).
+To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/).
 
 ### Customized Datasets
 

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import torch
@@ -27,7 +28,12 @@ def test_scannet_pipeline():
             with_label_3d=True,
             with_mask_3d=True,
             with_seg_3d=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='GlobalAlignment', rotation_axis=2),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                           34, 36, 39)),
+        dict(type='PointSample', num_points=5),
         dict(
             type='RandomFlip3D',
             sync_2d=False,
@@ -66,6 +72,8 @@ def test_scannet_pipeline():
     results['ann_info']['gt_bboxes_3d'] = DepthInstance3DBoxes(
         scannet_gt_bboxes_3d, box_dim=6, with_yaw=False)
     results['ann_info']['gt_labels_3d'] = scannet_gt_labels_3d
+    results['ann_info']['axis_align_matrix'] = \
+        info['annos']['axis_align_matrix']
 
     results['img_fields'] = []
     results['bbox3d_fields'] = []
@@ -79,11 +87,12 @@ def test_scannet_pipeline():
     gt_labels_3d = results['gt_labels_3d']._data
     pts_semantic_mask = results['pts_semantic_mask']._data
     pts_instance_mask = results['pts_instance_mask']._data
-    expected_points = torch.tensor([[-2.7231, -2.2068, 2.3543, 2.3895],
-                                    [-0.4065, -3.4857, 2.1330, 2.1682],
-                                    [-1.4578, 1.3510, -0.0441, -0.0089],
-                                    [2.2428, -1.1323, -0.0288, 0.0064],
-                                    [0.7052, -2.9752, 1.5560, 1.5912]])
+    expected_points = torch.tensor(
+        [[1.8339e+00, 2.1093e+00, 2.2900e+00, 2.3895e+00],
+         [3.6079e+00, 1.4592e-01, 2.0687e+00, 2.1682e+00],
+         [4.1886e+00, 5.0614e+00, -1.0841e-01, -8.8736e-03],
+         [6.8790e+00, 1.5086e+00, -9.3154e-02, 6.3816e-03],
+         [4.8253e+00, 2.6668e-01, 1.4917e+00, 1.5912e+00]])
     expected_gt_bboxes_3d = torch.tensor(
         [[-1.1835, -3.6317, 1.8565, 1.7577, 0.3761, 0.5724, 0.0000],
          [-3.1832, 3.2269, 1.5268, 0.6727, 0.2251, 0.6715, 0.0000],
@@ -94,7 +103,7 @@ def test_scannet_pipeline():
         6, 6, 4, 9, 11, 11, 10, 0, 15, 17, 17, 17, 3, 12, 4, 4, 14, 1, 0, 0, 0,
         0, 0, 0, 5, 5, 5
     ])
-    expected_pts_semantic_mask = np.array([3, 1, 2, 2, 15])
+    expected_pts_semantic_mask = np.array([0, 18, 18, 18, 18])
     expected_pts_instance_mask = np.array([44, 22, 10, 10, 57])
     assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor[:5, :], expected_gt_bboxes_3d,
@@ -134,9 +143,10 @@ def test_scannet_seg_pipeline():
             type='IndoorPatchPointSample',
             num_points=5,
             block_size=1.5,
-            sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True),
+            use_normalized_coord=True,
+            enlarge_size=0.2,
+            min_unique_num=None),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
@@ -204,9 +214,10 @@ def test_s3dis_seg_pipeline():
             type='IndoorPatchPointSample',
             num_points=5,
             block_size=1.0,
-            sample_rate=1.0,
             ignore_index=len(class_names),
-            use_normalized_coord=True),
+            use_normalized_coord=True,
+            enlarge_size=0.2,
+            min_unique_num=None),
         dict(type='NormalizePointsColor', color_mean=None),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
@@ -268,7 +279,7 @@ def test_sunrgbd_pipeline():
             rot_range=[-0.523599, 0.523599],
             scale_ratio_range=[0.85, 1.15],
             shift_height=True),
-        dict(type='IndoorPointSample', num_points=5),
+        dict(type='PointSample', num_points=5),
         dict(type='DefaultFormatBundle3D', class_names=class_names),
         dict(
             type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d']),

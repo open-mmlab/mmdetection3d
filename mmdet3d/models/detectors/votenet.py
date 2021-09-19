@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
@@ -14,12 +15,14 @@ class VoteNet(SingleStage3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 init_cfg=None,
                  pretrained=None):
         super(VoteNet, self).__init__(
             backbone=backbone,
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
+            init_cfg=None,
             pretrained=pretrained)
 
     def forward_train(self,

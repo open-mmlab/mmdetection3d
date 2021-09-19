@@ -5,8 +5,13 @@ Collections:
         - AdamW
       Architecture:
         - Feature Pyramid Network
-    Paper: https://arxiv.org/abs/1812.05784
+    Paper:
+      URL: https://arxiv.org/abs/1812.05784
+      Title: 'PointPillars: Fast Encoders for Object Detection from Point Clouds'
     README: configs/pointpillars/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/pillar_encoder.py#L13
+      Version: v0.6.0
 
 Models:
   - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car
@@ -67,29 +72,35 @@ Models:
           NDS: 53.3
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth
 
-  - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d
+  - Name: hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_lyft-3d.py
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
+      Training Memory (GB): 12.2
+      Training Resources: 8x V100 GPUs
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 13.4
-          Public Score: 13.4
+          Private Score: 13.9
+          Public Score: 14.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d_20210517_204807-2518e3de.pth
 
-  - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d
+  - Name: hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_lyft-3d.py
+    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
+      Training Memory (GB): 9.2
+      Training Resources: 8x V100 GPUs
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 14.0
-          Public Score: 14.2
+          Private Score: 14.9
+          Public Score: 15.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth
 
   - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car
     In Collection: PointPillars

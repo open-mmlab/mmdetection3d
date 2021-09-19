@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 from enum import IntEnum, unique
@@ -67,8 +68,8 @@ class Box3DMode(IntEnum):
             box (tuple | list | np.ndarray |
                 torch.Tensor | BaseInstance3DBoxes):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
-            src (:obj:`BoxMode`): The src Box mode.
-            dst (:obj:`BoxMode`): The target Box mode.
+            src (:obj:`Box3DMode`): The src Box mode.
+            dst (:obj:`Box3DMode`): The target Box mode.
             rt_mat (np.ndarray | torch.Tensor): The rotation and translation
                 matrix between different coordinates. Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -87,7 +88,7 @@ class Box3DMode(IntEnum):
         single_box = isinstance(box, (list, tuple))
         if single_box:
             assert len(box) >= 7, (
-                'BoxMode.convert takes either a k-tuple/list or '
+                'Box3DMode.convert takes either a k-tuple/list or '
                 'an Nxk array/tensor, where k >= 7')
             arr = torch.tensor(box)[None, :]
         else:

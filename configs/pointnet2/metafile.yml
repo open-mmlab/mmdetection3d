@@ -1,0 +1,94 @@
+Collections:
+  - Name: PointNet++
+    Metadata:
+      Training Techniques:
+        - Adam
+      Training Resources: 2x Titan XP GPUs
+      Architecture:
+        - PointNet++
+    Paper:
+      URL: https://arxiv.org/abs/1706.02413
+      Title: 'PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space'
+    README: configs/pointnet2/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/pointnet2_sa_ssg.py#L12
+      Version: v0.14.0
+
+Models:
+  - Name: pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py
+    In Collection: PointNet++
+    Config: configs/pointnet/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 1.9
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: ScanNet
+        Metrics:
+          mIoU: 53.91
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class_20210514_143628-4e341a48.pth
+
+  - Name: pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py
+    In Collection: PointNet++
+    Config: configs/pointnet/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 1.9
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: ScanNet
+        Metrics:
+          mIoU: 54.44
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class_20210514_143644-ee73704a.pth
+
+  - Name: pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class.py
+    In Collection: PointNet++
+    Config: configs/pointnet/pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 2.4
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: ScanNet
+        Metrics:
+          mIoU: 54.26
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class/pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class_20210514_143838-b4a3cf89.pth
+
+  - Name: pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py
+    In Collection: PointNet++
+    Config: configs/pointnet/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 2.4
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: ScanNet
+        Metrics:
+          mIoU: 55.05
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class_20210514_144009-24477ab1.pth
+
+  - Name: pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class.py
+    In Collection: PointNet++
+    Config: configs/pointnet/pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class.py
+    Metadata:
+      Training Data: S3DIS
+      Training Memory (GB): 3.6
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: S3DIS
+        Metrics:
+          mIoU: 56.93
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class/pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class_20210514_144205-995d0119.pth
+
+  - Name: pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py
+    In Collection: PointNet++
+    Config: configs/pointnet/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py
+    Metadata:
+      Training Data: S3DIS
+      Training Memory (GB): 3.6
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: S3DIS
+        Metrics:
+          mIoU: 58.04
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class_20210514_144307-b2059817.pth

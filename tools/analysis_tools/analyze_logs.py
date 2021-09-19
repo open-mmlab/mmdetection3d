@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import json
 import numpy as np
@@ -53,10 +54,29 @@ def plot_curve(log_dicts, args):
                     f'{args.json_logs[i]} does not contain metric {metric}')
 
             if args.mode == 'eval':
-                xs = np.arange(args.interval, max(epochs) + 1, args.interval)
+                if min(epochs) == args.interval:
+                    x0 = args.interval
+                else:
+                    # if current training is resumed from previous checkpoint
+                    # we lost information in early epochs
+                    # `xs` should start according to `min(epochs)`
+                    if min(epochs) % args.interval == 0:
+                        x0 = min(epochs)
+                    else:
+                        # find the first epoch that do eval
+                        x0 = min(epochs) + args.interval - \
+                            min(epochs) % args.interval
+                xs = np.arange(x0, max(epochs) + 1, args.interval)
                 ys = []
                 for epoch in epochs[args.interval - 1::args.interval]:
                     ys += log_dict[epoch][metric]
+
+                # if training is aborted before eval of the last epoch
+                # `xs` and `ys` will have different length and cause an error
+                # check if `ys[-1]` is empty here
+                if not log_dict[epoch][metric]:
+                    xs = xs[:-1]
+
                 ax = plt.gca()
                 ax.set_xticks(xs)
                 plt.xlabel('epoch')

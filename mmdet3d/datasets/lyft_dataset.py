@@ -1,5 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
+import os
 import pandas as pd
 import tempfile
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
@@ -22,7 +24,7 @@ class LyftDataset(Custom3DDataset):
     This class serves as the API for experiments on the Lyft Dataset.
 
     Please refer to
-    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data>`_  # noqa
+    `<https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data>`_
     for data downloading.
 
     Args:
@@ -48,7 +50,7 @@ class LyftDataset(Custom3DDataset):
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-    """
+    """  # noqa: E501
     NameMapping = {
         'bicycle': 'bicycle',
         'bus': 'bus',
@@ -335,9 +337,16 @@ class LyftDataset(Custom3DDataset):
         else:
             tmp_dir = None
 
-        if not isinstance(results[0], dict):
+        # currently the output prediction results could be in two formats
+        # 1. list of dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...)
+        # 2. list of dict('pts_bbox' or 'img_bbox':
+        #     dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...))
+        # this is a workaround to enable evaluation of both formats on Lyft
+        # refer to https://github.com/open-mmlab/mmdetection3d/issues/449
+        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
             result_files = self._format_bbox(results, jsonfile_prefix)
         else:
+            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
             result_files = dict()
             for name in results[0]:
                 print(f'\nFormating bboxes of {name}')
@@ -488,6 +497,7 @@ class LyftDataset(Custom3DDataset):
             idx = Id_list.index(token)
             pred_list[idx] = prediction_str
         df = pd.DataFrame({'Id': Id_list, 'PredictionString': pred_list})
+        mmcv.mkdir_or_exist(os.path.dirname(csv_savepath))
         df.to_csv(csv_savepath, index=False)
 
 

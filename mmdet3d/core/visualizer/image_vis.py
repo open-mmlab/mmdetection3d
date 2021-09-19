@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import cv2
 import numpy as np
@@ -56,46 +57,31 @@ def project_pts_on_img(points,
     cv2.waitKey(100)
 
 
-def project_bbox3d_on_img(bboxes3d,
-                          raw_img,
-                          lidar2img_rt,
-                          color=(0, 255, 0),
-                          thickness=1):
-    """Project the 3D bbox on 2D image.
+def plot_rect3d_on_img(img,
+                       num_rects,
+                       rect_corners,
+                       color=(0, 255, 0),
+                       thickness=1):
+    """Plot the boundary lines of 3D rectangular on 2D images.
 
     Args:
-        bboxes3d (numpy.array, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
-        raw_img (numpy.array): The numpy array of image.
-        lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
-            according to the camera intrinsic parameters.
-        color (tuple[int]): the color to draw bboxes. Default: (0, 255, 0).
+        img (numpy.array): The numpy array of image.
+        num_rects (int): Number of 3D rectangulars.
+        rect_corners (numpy.array): Coordinates of the corners of 3D
+            rectangulars. Should be in the shape of [num_rect, 8, 2].
+        color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
-    img = raw_img.copy()
-    corners_3d = bboxes3d.corners
-    num_bbox = corners_3d.shape[0]
-    pts_4d = np.concatenate(
-        [corners_3d.reshape(-1, 3),
-         np.ones((num_bbox * 8, 1))], axis=-1)
-    pts_2d = pts_4d @ lidar2img_rt.T
-
-    pts_2d[:, 2] = np.clip(pts_2d[:, 2], a_min=1e-5, a_max=1e5)
-    pts_2d[:, 0] /= pts_2d[:, 2]
-    pts_2d[:, 1] /= pts_2d[:, 2]
-    imgfov_pts_2d = pts_2d[..., :2].reshape(num_bbox, 8, 2)
-
     line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
                     (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
-    for i in range(num_bbox):
-        corners = imgfov_pts_2d[i].astype(np.int)
+    for i in range(num_rects):
+        corners = rect_corners[i].astype(np.int)
         for start, end in line_indices:
             cv2.line(img, (corners[start, 0], corners[start, 1]),
                      (corners[end, 0], corners[end, 1]), color, thickness,
                      cv2.LINE_AA)
 
-    cv2.imshow('project_bbox3d_img', img.astype(np.uint8))
-    cv2.waitKey(0)
+    return img.astype(np.uint8)
 
 
 def draw_lidar_bbox3d_on_img(bboxes3d,
@@ -107,8 +93,8 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes3d (numpy.array, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+        bboxes3d (:obj:`LiDARInstance3DBoxes`):
+            3d bbox in lidar coordinate system to visualize.
         raw_img (numpy.array): The numpy array of image.
         lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
             according to the camera intrinsic parameters.
@@ -132,18 +118,10 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
     pts_2d[:, 1] /= pts_2d[:, 2]
     imgfov_pts_2d = pts_2d[..., :2].reshape(num_bbox, 8, 2)
 
-    line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
-                    (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
-    for i in range(num_bbox):
-        corners = imgfov_pts_2d[i].astype(np.int)
-        for start, end in line_indices:
-            cv2.line(img, (corners[start, 0], corners[start, 1]),
-                     (corners[end, 0], corners[end, 1]), color, thickness,
-                     cv2.LINE_AA)
-
-    return img.astype(np.uint8)
+    return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)
 
 
+# TODO: remove third parameter in all functions here in favour of img_metas
 def draw_depth_bbox3d_on_img(bboxes3d,
                              raw_img,
                              calibs,
@@ -153,53 +131,68 @@ def draw_depth_bbox3d_on_img(bboxes3d,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes3d (numpy.array, shape=[M, 7]):
-            3d camera bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+        bboxes3d (:obj:`DepthInstance3DBoxes`, shape=[M, 7]):
+            3d bbox in depth coordinate system to visualize.
         raw_img (numpy.array): The numpy array of image.
         calibs (dict): Camera calibration information, Rt and K.
         img_metas (dict): Used in coordinates transformation.
         color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
-    from mmdet3d.core import Coord3DMode
     from mmdet3d.core.bbox import points_cam2img
     from mmdet3d.models import apply_3d_transformation
 
     img = raw_img.copy()
-    calibs = copy.deepcopy(calibs)
     img_metas = copy.deepcopy(img_metas)
     corners_3d = bboxes3d.corners
     num_bbox = corners_3d.shape[0]
     points_3d = corners_3d.reshape(-1, 3)
-    assert ('Rt' in calibs.keys() and 'K' in calibs.keys()), \
-        'Rt and K matrix should be provided as camera caliberation information'
-    if not isinstance(calibs['Rt'], torch.Tensor):
-        calibs['Rt'] = torch.from_numpy(np.array(calibs['Rt']))
-    if not isinstance(calibs['K'], torch.Tensor):
-        calibs['K'] = torch.from_numpy(np.array(calibs['K']))
-    calibs['Rt'] = calibs['Rt'].reshape(3, 3).float().cpu()
-    calibs['K'] = calibs['K'].reshape(3, 3).float().cpu()
 
     # first reverse the data transformations
     xyz_depth = apply_3d_transformation(
         points_3d, 'DEPTH', img_metas, reverse=True)
 
-    # then convert from depth coords to camera coords
-    xyz_cam = Coord3DMode.convert_point(
-        xyz_depth, Coord3DMode.DEPTH, Coord3DMode.CAM, rt_mat=calibs['Rt'])
-
     # project to 2d to get image coords (uv)
-    uv_origin = points_cam2img(xyz_cam, calibs['K'])
+    uv_origin = points_cam2img(xyz_depth,
+                               xyz_depth.new_tensor(img_metas['depth2img']))
     uv_origin = (uv_origin - 1).round()
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 
-    line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
-                    (4, 5), (4, 7), (2, 6), (5, 6), (6, 7))
-    for i in range(num_bbox):
-        corners = imgfov_pts_2d[i].astype(np.int)
-        for start, end in line_indices:
-            cv2.line(img, (corners[start, 0], corners[start, 1]),
-                     (corners[end, 0], corners[end, 1]), color, thickness,
-                     cv2.LINE_AA)
+    return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)
 
-    return img.astype(np.uint8)
+
+def draw_camera_bbox3d_on_img(bboxes3d,
+                              raw_img,
+                              cam2img,
+                              img_metas,
+                              color=(0, 255, 0),
+                              thickness=1):
+    """Project the 3D bbox on 2D plane and draw on input image.
+
+    Args:
+        bboxes3d (:obj:`CameraInstance3DBoxes`, shape=[M, 7]):
+            3d bbox in camera coordinate system to visualize.
+        raw_img (numpy.array): The numpy array of image.
+        cam2img (dict): Camera intrinsic matrix,
+            denoted as `K` in depth bbox coordinate system.
+        img_metas (dict): Useless here.
+        color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
+        thickness (int, optional): The thickness of bboxes. Default: 1.
+    """
+    from mmdet3d.core.bbox import points_cam2img
+
+    img = raw_img.copy()
+    cam2img = copy.deepcopy(cam2img)
+    corners_3d = bboxes3d.corners
+    num_bbox = corners_3d.shape[0]
+    points_3d = corners_3d.reshape(-1, 3)
+    if not isinstance(cam2img, torch.Tensor):
+        cam2img = torch.from_numpy(np.array(cam2img))
+    cam2img = cam2img.reshape(3, 3).float().cpu()
+
+    # project to 2d to get image coords (uv)
+    uv_origin = points_cam2img(points_3d, cam2img)
+    uv_origin = (uv_origin - 1).round()
+    imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
+
+    return plot_rect3d_on_img(img, num_bbox, imgfov_pts_2d, color, thickness)

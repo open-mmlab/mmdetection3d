@@ -1,7 +1,12 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+import mmcv
 import numpy as np
 import torch
+from mmcv.parallel import DataContainer as DC
+from os import path as osp
 
-from mmdet3d.core import bbox3d2result
+from mmdet3d.core import (CameraInstance3DBoxes, bbox3d2result,
+                          show_multi_modality_result)
 from mmdet.models.builder import DETECTORS
 from mmdet.models.detectors.single_stage import SingleStageDetector
 
@@ -172,3 +177,42 @@ class SingleStageMono3DDetector(SingleStageDetector):
             bbox_list.update(img_bbox2d=bbox2d_img[0])
 
         return [bbox_list]
+
+    def show_results(self, data, result, out_dir):
+        """Results visualization.
+
+        Args:
+            data (list[dict]): Input images and the information of the sample.
+            result (list[dict]): Prediction results.
+            out_dir (str): Output directory of visualization result.
+        """
+        for batch_id in range(len(result)):
+            if isinstance(data['img_metas'][0], DC):
+                img_filename = data['img_metas'][0]._data[0][batch_id][
+                    'filename']
+                cam2img = data['img_metas'][0]._data[0][batch_id]['cam2img']
+            elif mmcv.is_list_of(data['img_metas'][0], dict):
+                img_filename = data['img_metas'][0][batch_id]['filename']
+                cam2img = data['img_metas'][0][batch_id]['cam2img']
+            else:
+                ValueError(
+                    f"Unsupported data type {type(data['img_metas'][0])} "
+                    f'for visualization!')
+            img = mmcv.imread(img_filename)
+            file_name = osp.split(img_filename)[-1].split('.')[0]
+
+            assert out_dir is not None, 'Expect out_dir, got none.'
+
+            pred_bboxes = result[batch_id]['img_bbox']['boxes_3d']
+            assert isinstance(pred_bboxes, CameraInstance3DBoxes), \
+                f'unsupported predicted bbox type {type(pred_bboxes)}'
+
+            show_multi_modality_result(
+                img,
+                None,
+                pred_bboxes,
+                cam2img,
+                out_dir,
+                file_name,
+                'camera',
+                show=True)

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import pyquaternion
@@ -98,6 +99,14 @@ class NuScenesDataset(Custom3DDataset):
         'vehicle.parked',
         'vehicle.stopped',
     ]
+    # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
+    ErrNameMapping = {
+        'trans_err': 'mATE',
+        'scale_err': 'mASE',
+        'orient_err': 'mAOE',
+        'vel_err': 'mAVE',
+        'attr_err': 'mAAE'
+    }
     CLASSES = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
                'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
                'barrier')
@@ -404,6 +413,10 @@ class NuScenesDataset(Custom3DDataset):
             for k, v in metrics['label_tp_errors'][name].items():
                 val = float('{:.4f}'.format(v))
                 detail['{}/{}_{}'.format(metric_prefix, name, k)] = val
+            for k, v in metrics['tp_errors'].items():
+                val = float('{:.4f}'.format(v))
+                detail['{}/{}'.format(metric_prefix,
+                                      self.ErrNameMapping[k])] = val
 
         detail['{}/NDS'.format(metric_prefix)] = metrics['nd_score']
         detail['{}/mAP'.format(metric_prefix)] = metrics['mean_ap']
@@ -435,9 +448,16 @@ class NuScenesDataset(Custom3DDataset):
         else:
             tmp_dir = None
 
-        if not isinstance(results[0], dict):
+        # currently the output prediction results could be in two formats
+        # 1. list of dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...)
+        # 2. list of dict('pts_bbox' or 'img_bbox':
+        #     dict('boxes_3d': ..., 'scores_3d': ..., 'labels_3d': ...))
+        # this is a workaround to enable evaluation of both formats on nuScenes
+        # refer to https://github.com/open-mmlab/mmdetection3d/issues/449
+        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
             result_files = self._format_bbox(results, jsonfile_prefix)
         else:
+            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
             result_files = dict()
             for name in results[0]:
                 print(f'\nFormating bboxes of {name}')

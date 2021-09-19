@@ -24,6 +24,7 @@ The directory structure after pre-processing should be as below
 
 ```
 s3dis
+├── meta_data
 ├── indoor3d_util.py
 ├── collect_indoor3d_data.py
 ├── README.md
