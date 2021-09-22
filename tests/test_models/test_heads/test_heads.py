@@ -383,11 +383,11 @@ def test_smoke_mono3d_head():
         bbox_coder=dict(
             type='SMOKECoder',
             base_depth=(28.01, 16.32),
-            base_dim=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63,
-                                                               1.53)),
+            base_dims=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63,
+                                                                1.53)),
             code_size=7),
         loss_cls=dict(type='GaussianFocalLoss', loss_weight=1.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=10.0),
+        loss_bbox=dict(type='L1Loss', reduction='sum', loss_weight=1 / 300),
         loss_dir=dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_attr=None,
