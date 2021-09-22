@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import cv2
 import numpy as np
+import random
 import warnings
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
@@ -1421,4 +1423,198 @@ class VoxelBasedPointSampler(object):
         repr_str += f'{_auto_indent(repr(self.cur_voxel_generator), 8)},\n'
         repr_str += ' ' * indent + 'prev_voxel_generator=\n'
         repr_str += f'{_auto_indent(repr(self.prev_voxel_generator), 8)})'
+        return repr_str
+
+
+@PIPELINES.register_module()
+class AffineResize(object):
+    """get the affine transform matrix to the tagert size."""
+
+    def __init__(self, img_scale=None, down_ratio=None, bbox_clip_border=True):
+
+        self.img_scale = img_scale
+        self.down_ratio = down_ratio
+        self.bbox_clip_border = bbox_clip_border
+
+    def __call__(self, results):
+
+        if 'center' not in results:
+            assert 'size' not in results
+            assert 'affine_aug' not in results
+            img = results['img']
+            height, width = img.shape[:2]
+            center = np.array([width / 2, height / 2], dtype=np.float32)
+            size = np.array([width, height], dtype=np.float32)
+            results['affine_aug'] = False
+        else:
+            img = results['img']
+            assert 'center' in results
+            assert 'size' in results
+            assert 'affine_aug' in results
+            center = results['center']
+            size = results['size']
+
+        center_size = [center, size]
+
+        trans_affine = self._get_transfrom_matrix(center_size, self.img_scale)
+
+        img = cv2.warpAffine(img, trans_affine[:2, :], self.img_scale)
+
+        if isinstance(self.down_ratio, tuple):
+            trans_mat = [
+                self._get_transfrom_matrix(
+                    center_size,
+                    (self.img_scale[0] // ratio, self.img_scale[1] // ratio))
+                for ratio in self.down_ratio
+            ]  # (3, 3)
+        else:
+            trans_mat = self._get_transfrom_matrix(
+                center_size, (self.img_scale[0] // self.down_ratio,
+                              self.img_scale[1] // self.down_ratio))
+
+        results['img'] = img
+        results['img_shape'] = img.shape
+        results['pad_shape'] = img.shape
+        results['trans_mat'] = trans_mat
+
+        self._affine_bboxes(results, trans_affine)
+
+        if 'centers2d' in results:
+            centers2d = self._affine_transform(results['centers2d'],
+                                               trans_affine)
+            valid_index = (centers2d[:, 0] >
+                           0) & (centers2d[:, 0] <
+                                 self.img_scale[0]) & (centers2d[:, 1] > 0) & (
+                                     centers2d[:, 1] < self.img_scale[1])
+            results['centers2d'] = centers2d[valid_index]
+
+            for key in results.get('bbox_fields', []):
+                if key in ['gt_bboxes']:
+                    results[key] = results[key][valid_index]
+                    if 'gt_labels' in results:
+                        results['gt_labels'] = results['gt_labels'][
+                            valid_index]
+                    if 'gt_masks' in results:
+                        raise NotImplementedError(
+                            'AffineResize only supports bbox.')
+
+            for key in results.get('bbox3d_fields', []):
+                if key in ['gt_bboxes_3d']:
+                    results[key].tensor = results[key].tensor[valid_index]
+                    if 'gt_labels_3d' in results:
+                        results['gt_labels_3d'] = results['gt_labels_3d'][
+                            valid_index]
+
+            results['depths'] = results['depths'][valid_index]
+
+        return results
+
+    def _affine_bboxes(self, results, trans_affine):
+        """affine transform bboxes to input image."""
+        for key in results.get('bbox_fields', []):
+            bboxes = results[key]
+            # point = affine_transform(point, trans_mat)
+            bboxes[:, :2] = self._affine_transform(bboxes[:, :2], trans_affine)
+            bboxes[:, 2:] = self._affine_transform(bboxes[:, 2:], trans_affine)
+            if self.bbox_clip_border:
+                bboxes[:,
+                       [0, 2]] = bboxes[:,
+                                        [0, 2]].clip(0, self.img_scale[0] - 1)
+                bboxes[:,
+                       [1, 3]] = bboxes[:,
+                                        [1, 3]].clip(0, self.img_scale[1] - 1)
+            results[key] = bboxes
+
+    def _affine_transform(self, point, matrix):
+        """point shape (bbox_num, 2) np.array.
+
+        matrix shape (3 * 3) np.array
+
+        return: (bbox_num, 2)
+        """
+        point_num = point.shape[0]
+        point_exd = np.concatenate((point, np.ones((point_num, 1))), axis=1)
+        point_exd_trans = point_exd.T
+        new_point = np.matmul(matrix, point_exd_trans).T
+        return new_point[:, :2]
+
+    def _get_transfrom_matrix(self, center_scale, output_size):
+        center, scale = center_scale[0], center_scale[1]
+        # todo: further add rot and shift here.
+        src_w = scale[0]
+        dst_w = output_size[0]
+        dst_h = output_size[1]
+
+        src_dir = np.array([0, src_w * -0.5])
+        dst_dir = np.array([0, dst_w * -0.5])
+
+        src = np.zeros((3, 2), dtype=np.float32)
+        dst = np.zeros((3, 2), dtype=np.float32)
+        src[0, :] = center
+        src[1, :] = center + src_dir
+        dst[0, :] = np.array([dst_w * 0.5, dst_h * 0.5])
+        dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5]) + dst_dir
+
+        src[2, :] = self._get_3rd_point(src[0, :], src[1, :])
+        dst[2, :] = self._get_3rd_point(dst[0, :], dst[1, :])
+
+        get_matrix = cv2.getAffineTransform(src, dst)
+
+        matrix = np.concatenate((get_matrix, [[0., 0., 1.]]))
+
+        return matrix.astype(np.float32)
+
+    def _get_3rd_point(self, point_a, point_b):
+        d = point_a - point_b
+        point_c = point_b + np.array([-d[1], d[0]])
+        return point_c
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(img_scale={self.img_scale}, '
+        repr_str += f'down_ratio={self.down_ratio}) '
+        return repr_str
+
+
+@PIPELINES.register_module()
+class RandomShiftScale(object):
+    """Random shift scale."""
+
+    def __init__(self, shift_scale, aug_prob):
+
+        self.shift_scale = shift_scale
+        self.aug_prob = aug_prob
+
+    def __call__(self, results):
+
+        img = results['img']
+
+        height, width = img.shape[:2]
+
+        center = np.array([width / 2, height / 2], dtype=np.float32)
+        size = np.array([width, height], dtype=np.float32)
+
+        if random.random() < self.aug_prob:
+            shift, scale = self.shift_scale[0], self.shift_scale[1]
+
+            shift_ranges = np.arange(-shift, shift + 0.1, 0.1)
+            center[0] += size[0] * random.choice(shift_ranges)
+            center[1] += size[1] * random.choice(shift_ranges)
+            scale_ranges = np.arange(1 - scale, 1 + scale + 0.1, 0.1)
+            size *= random.choice(scale_ranges)
+
+            results['center'] = center
+            results['size'] = size
+            results['affine_aug'] = True
+        else:
+            results['center'] = center
+            results['size'] = size
+            results['affine_aug'] = False
+
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(shift_scale={self.shift_scale}, '
+        repr_str += f'aug_prob={self.aug_prob}) '
         return repr_str
