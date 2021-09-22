@@ -8,12 +8,14 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes,
                           DepthInstance3DBoxes, LiDARInstance3DBoxes)
 from mmdet3d.core.bbox import Coord3DMode
 from mmdet3d.core.points import DepthPoints, LiDARPoints
-from mmdet3d.datasets import (BackgroundPointsFilter, GlobalAlignment,
-                              GlobalRotScaleTrans, ObjectNameFilter,
-                              ObjectNoise, ObjectRangeFilter, ObjectSample,
-                              PointSample, PointShuffle, PointsRangeFilter,
-                              RandomDropPointsColor, RandomFlip3D,
-                              RandomJitterPoints, VoxelBasedPointSampler)
+from mmdet3d.datasets import (AffineResize, BackgroundPointsFilter,
+                              GlobalAlignment, GlobalRotScaleTrans,
+                              ObjectNameFilter, ObjectNoise,
+                              ObjectRangeFilter, ObjectSample,
+                              PointSample, PointShuffle,
+                              PointsRangeFilter, RandomDropPointsColor,
+                              RandomFlip3D, RandomJitterPoints,
+                              RandomShiftScale, VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -755,3 +757,97 @@ def test_points_sample():
     select_idx = np.array([449, 444])
     expected_pts = points.tensor.numpy()[select_idx]
     assert np.allclose(sampled_pts.tensor.numpy(), expected_pts)
+
+
+def test_affine_resize():
+
+    def create_random_bboxes(num_bboxes, img_w, img_h):
+        bboxes_left_top = np.random.uniform(0, 0.5, size=(num_bboxes, 2))
+        bboxes_right_bottom = np.random.uniform(0.5, 1, size=(num_bboxes, 2))
+        bboxes = np.concatenate((bboxes_left_top, bboxes_right_bottom), 1)
+        bboxes = (bboxes * np.array([img_w, img_h, img_w, img_h])).astype(
+            np.float32)
+        return bboxes
+
+    affine_reszie = AffineResize(img_scale=(1290, 384), down_ratio=4)
+
+    # test the situation: not use Random_Scale_Shift before AffineResize
+    results = dict()
+    img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
+                      'color')
+    results['img'] = img
+    results['bbox_fields'] = ['gt_bboxes']
+    results['bbox3d_fields'] = ['gt_bboxes_3d']
+
+    h, w, _ = img.shape
+    gt_bboxes = create_random_bboxes(8, w, h)
+    gt_bboxes_3d = CameraInstance3DBoxes(torch.randn((8, 7)))
+    results['gt_labels'] = np.ones(gt_bboxes.shape[0], dtype=np.int64)
+    results['gt_labels3d'] = results['gt_labels']
+    results['gt_bboxes'] = gt_bboxes
+    results['gt_bboxes_3d'] = gt_bboxes_3d
+    results['depths'] = np.random.randn(gt_bboxes.shape[0])
+    centers2d_x = (gt_bboxes[:, [0]] + gt_bboxes[:, [2]]) / 2
+    centers2d_y = (gt_bboxes[:, [1]] + gt_bboxes[:, [3]]) / 2
+    centers2d = np.concatenate((centers2d_x, centers2d_y), axis=1)
+    results['centers2d'] = centers2d
+
+    results = affine_reszie(results)
+
+    assert results['gt_labels'].shape[0] == results['centers2d'].shape[0]
+    assert results['gt_labels3d'].shape[0] == results['centers2d'].shape[0]
+    assert results['gt_bboxes'].shape[0] == results['centers2d'].shape[0]
+    assert results['gt_bboxes_3d'].tensor.shape[0] == \
+           results['centers2d'].shape[0]
+    assert results['affine_aug'] is False
+
+    # test the situation: not use Random_Scale_Shift before AffineResize
+    results = dict()
+    img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
+                      'color')
+    results['img'] = img
+    results['bbox_fields'] = ['gt_bboxes']
+    results['bbox3d_fields'] = ['gt_bboxes_3d']
+    h, w, _ = img.shape
+    center = np.array([w / 2, h / 2], dtype=np.float32)
+    size = np.array([w, h], dtype=np.float32)
+
+    results['center'] = center
+    results['size'] = size
+    results['affine_aug'] = False
+
+    gt_bboxes = create_random_bboxes(8, w, h)
+    gt_bboxes_3d = CameraInstance3DBoxes(torch.randn((8, 7)))
+    results['gt_labels'] = np.ones(gt_bboxes.shape[0], dtype=np.int64)
+    results['gt_labels3d'] = results['gt_labels']
+    results['gt_bboxes'] = gt_bboxes
+    results['gt_bboxes_3d'] = gt_bboxes_3d
+    results['depths'] = np.random.randn(gt_bboxes.shape[0])
+    centers2d_x = (gt_bboxes[:, [0]] + gt_bboxes[:, [2]]) / 2
+    centers2d_y = (gt_bboxes[:, [1]] + gt_bboxes[:, [3]]) / 2
+    centers2d = np.concatenate((centers2d_x, centers2d_y), axis=1)
+    results['centers2d'] = centers2d
+
+    results = affine_reszie(results)
+
+    assert results['gt_labels'].shape[0] == results['centers2d'].shape[0]
+    assert results['gt_labels3d'].shape[0] == results['centers2d'].shape[0]
+    assert results['gt_bboxes'].shape[0] == results['centers2d'].shape[0]
+    assert results['gt_bboxes_3d'].tensor.shape[0] == results[
+        'centers2d'].shape[0]
+    assert 'center' in results
+    assert 'size' in results
+    assert 'affine_aug' in results
+
+
+def test_random_shift_scale():
+
+    random_shift_scale = RandomShiftScale(shift_scale=(0.2, 0.4), aug_prob=0.3)
+    results = dict()
+    img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
+                      'color')
+    results['img'] = img
+    results = random_shift_scale(results)
+    assert results['center'].dtype == np.float32
+    assert results['size'].dtype == np.float32
+    assert 'affine_aug' in results

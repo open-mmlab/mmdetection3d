@@ -9,14 +9,14 @@ from .lyft_dataset import LyftDataset
 from .nuscenes_dataset import NuScenesDataset
 from .nuscenes_mono_dataset import NuScenesMonoDataset
 # yapf: disable
-from .pipelines import (BackgroundPointsFilter, GlobalAlignment,
+from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                         GlobalRotScaleTrans, IndoorPatchPointSample,
                         IndoorPointSample, LoadAnnotations3D,
                         LoadPointsFromFile, LoadPointsFromMultiSweeps,
                         NormalizePointsColor, ObjectNameFilter, ObjectNoise,
                         ObjectRangeFilter, ObjectSample, PointSample,
                         PointShuffle, PointsRangeFilter, RandomDropPointsColor,
-                        RandomFlip3D, RandomJitterPoints,
+                        RandomFlip3D, RandomJitterPoints, RandomShiftScale,
                         VoxelBasedPointSampler)
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
@@ -38,5 +38,5 @@ __all__ = [
     'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
     'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
     'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
-    'ObjectNameFilter'
+    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale'
 ]
