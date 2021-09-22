@@ -1432,8 +1432,8 @@ class AffineResize(object):
 
     def __init__(self, img_scale=None, down_ratio=None, bbox_clip_border=True):
 
-        self.img_scale = img_scale  # (w, h)
-        self.down_ratio = down_ratio  # > 1
+        self.img_scale = img_scale
+        self.down_ratio = down_ratio
         self.bbox_clip_border = bbox_clip_border
 
     def __call__(self, results):
@@ -1489,8 +1489,6 @@ class AffineResize(object):
             results['centers2d'] = centers2d[valid_index]
 
             for key in results.get('bbox_fields', []):
-                # results[key] = results[key][valid_index]
-                # print('bbox_fields:', key)
                 if key in ['gt_bboxes']:
                     results[key] = results[key][valid_index]
                     if 'gt_labels' in results:
@@ -1501,7 +1499,6 @@ class AffineResize(object):
                             'AffineResize only supports bbox.')
 
             for key in results.get('bbox3d_fields', []):
-                # print('bbox3d_fields:', key)
                 if key in ['gt_bboxes_3d']:
                     results[key].tensor = results[key].tensor[valid_index]
                     if 'gt_labels_3d' in results:
@@ -1585,7 +1582,7 @@ class RandomShiftScale(object):
 
     def __init__(self, shift_scale, aug_prob):
 
-        self.shift_scale = shift_scale  # (shift, scale)
+        self.shift_scale = shift_scale
         self.aug_prob = aug_prob
 
     def __call__(self, results):

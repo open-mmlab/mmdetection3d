@@ -7,14 +7,14 @@ from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
                       LoadPointsFromMultiSweeps, NormalizePointsColor,
                       PointSegClassMapping)
 from .test_time_aug import MultiScaleFlipAug3D
+# yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,
                             GlobalAlignment, GlobalRotScaleTrans,
                             IndoorPatchPointSample, IndoorPointSample,
-                            ObjectNameFilter, ObjectNoise,
-                            ObjectRangeFilter, ObjectSample, PointSample,
-                            PointShuffle, PointsRangeFilter,
-                            RandomDropPointsColor, RandomFlip3D,
-                            RandomJitterPoints, RandomShiftScale,
+                            ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
+                            ObjectSample, PointSample, PointShuffle,
+                            PointsRangeFilter, RandomDropPointsColor,
+                            RandomFlip3D, RandomJitterPoints, RandomShiftScale,
                             VoxelBasedPointSampler)
 
 __all__ = [
