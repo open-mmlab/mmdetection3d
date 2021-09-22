@@ -151,6 +151,7 @@ train_pipeline = [
     - `GlobalRotScaleTrans`: rotate input point cloud.
 
 ## Evaluation
+
 An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows:
 
 ```shell
@@ -158,6 +159,7 @@ bash tools/dist_test.sh configs/pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py wor
 ```
 
 ## Metrics
+
 KITTI evaluates 3D object detection performance using mean Average Precision (mAP) and Average Orientation Similarity (AOS), Please refer to its [official website](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php) and [original paper](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf) for more details.
 
 We also adopt this approach for evaluation on KITTI. An example of printed evaluation results is as follows:
