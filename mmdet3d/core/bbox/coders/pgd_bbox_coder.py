@@ -32,10 +32,10 @@ class PGDBBoxCoder(FCOS3DBBoxCoder):
                 feature level.
             training (bool): Whether the decoding is in the training
                 procedure.
-            pred_keypoints (bool): Whether to predict keypoints. Defaults to
-                False.
-            pred_bbox2d (bool): Whether to predict 2D bounding boxes. Defaults
-                to False.
+            pred_keypoints (bool, optional): Whether to predict keypoints.
+                Defaults to False.
+            pred_bbox2d (bool, optional): Whether to predict 2D bounding
+                boxes. Defaults to False.
 
         Returns:
             torch.Tensor: Decoded boxes.
