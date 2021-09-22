@@ -44,7 +44,7 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
             bbox (torch.Tensor): Raw bounding box predictions in shape
                 [N, C, H, W].
             scale (tuple[`Scale`]): Learnable scale parameters.
-            stride (tuple[int]): Stride for a specific feature level.
+            stride (int): Stride for a specific feature level.
             training (bool): Whether the decoding is in the training
                 procedure.
             cls_score (torch.Tensor): Classification score map for deciding
