@@ -436,6 +436,7 @@ def test_smoke_mono3d_head():
             pad_shape=[128, 128],
             trans_mat=np.array([[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],
                                dtype=np.float32),
+            affine_aug=False,
             box_type_3d=CameraInstance3DBoxes) for i in range(2)
     ]
     losses = self.loss(*ret_dict, gt_bboxes, gt_labels, gt_bboxes_3d,
