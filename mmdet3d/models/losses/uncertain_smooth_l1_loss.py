@@ -1,4 +1,3 @@
-import mmcv
 import torch
 from torch import nn as nn
 
@@ -6,7 +5,6 @@ from mmdet.models.builder import LOSSES
 from mmdet.models.losses.utils import weighted_loss
 
 
-@mmcv.jit(derivate=True, coderize=True)
 @weighted_loss
 def uncertain_smooth_l1_loss(pred, target, sigma, alpha=1.0, beta=1.0):
     """Smooth L1 loss with uncertainty.
@@ -24,8 +22,10 @@ def uncertain_smooth_l1_loss(pred, target, sigma, alpha=1.0, beta=1.0):
         torch.Tensor: Calculated loss
     """
     assert beta > 0
-    assert pred.size() == target.size() == sigma.size() and \
-        target.numel() > 0
+    assert target.numel() > 0
+    assert pred.size() == target.size() == sigma.size(), 'The size of pred ' \
+        f'{pred.size()}, target {target.size()}, and sigma {sigma.size()} ' \
+        'are inconsistent.'
     diff = torch.abs(pred - target)
     loss = torch.where(diff < beta, 0.5 * diff * diff / beta,
                        diff - 0.5 * beta)
@@ -34,7 +34,6 @@ def uncertain_smooth_l1_loss(pred, target, sigma, alpha=1.0, beta=1.0):
     return loss
 
 
-@mmcv.jit(derivate=True, coderize=True)
 @weighted_loss
 def uncertain_l1_loss(pred, target, sigma, alpha=1.0):
     """L1 loss with uncertainty.
@@ -49,8 +48,10 @@ def uncertain_l1_loss(pred, target, sigma, alpha=1.0):
     Returns:
         torch.Tensor: Calculated loss
     """
-    assert pred.size() == target.size() == sigma.size() and \
-        target.numel() > 0
+    assert target.numel() > 0
+    assert pred.size() == target.size() == sigma.size(), 'The size of pred ' \
+        f'{pred.size()}, target {target.size()}, and sigma {sigma.size()} ' \
+        'are inconsistent.'
     loss = torch.abs(pred - target)
     loss = torch.exp(-sigma) * loss + alpha * sigma
     return loss
@@ -70,8 +71,8 @@ class UncertainSmoothL1Loss(nn.Module):
         beta (float, optional): The threshold in the piecewise function.
             Defaults to 1.0.
         reduction (str, optional): The method to reduce the loss.
-            Options are "none", "mean" and "sum". Defaults to "mean".
-        loss_weight (float, optional): The weight of loss.
+            Options are 'none', 'mean' and 'sum'. Defaults to 'mean'.
+        loss_weight (float, optional): The weight of loss. Defaults to 1.0
     """
 
     def __init__(self, alpha=1.0, beta=1.0, reduction='mean', loss_weight=1.0):
@@ -128,8 +129,8 @@ class UncertainL1Loss(nn.Module):
         alpha (float, optional): The coefficient of log(sigma).
             Defaults to 1.0.
         reduction (str, optional): The method to reduce the loss.
-            Options are "none", "mean" and "sum".
-        loss_weight (float, optional): The weight of loss.
+            Options are 'none', 'mean' and 'sum'. Defaults to 'mean'.
+        loss_weight (float, optional): The weight of loss. Defaults to 1.0.
     """
 
     def __init__(self, alpha=1.0, reduction='mean', loss_weight=1.0):
