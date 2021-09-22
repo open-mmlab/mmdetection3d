@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from abc import abstractmethod
-from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
+from mmcv.cnn import ConvModule
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
@@ -181,8 +181,29 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 type='Normal',
                 layer='Conv2d',
                 std=0.01,
-                override=dict(
-                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
+                override=[
+                    dict(
+                        type='Normal',
+                        name='conv_cls',
+                        std=0.01,
+                        bias_prob=0.01)
+                ])
+            if self.use_direction_classifier:
+                self.init_cfg['override'].append(
+                    dict(
+                        type='Normal',
+                        name='conv_dir_cls',
+                        std=0.01,
+                        bias_prob=0.01))
+            if self.pred_attrs:
+                self.init_cfg['override'].append(
+                    dict(
+                        type='Normal',
+                        name='conv_attr',
+                        std=0.01,
+                        bias_prob=0.01))
+        else:
+            self.init_cfg = init_cfg
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -286,14 +307,6 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 conv_channels=self.attr_branch,
                 conv_strides=(1, ) * len(self.attr_branch))
             self.conv_attr = nn.Conv2d(self.attr_branch[-1], self.num_attrs, 1)
-
-    def init_weights(self):
-        super().init_weights()
-        bias_cls = bias_init_with_prob(0.01)
-        if self.use_direction_classifier:
-            normal_init(self.conv_dir_cls, std=0.01, bias=bias_cls)
-        if self.pred_attrs:
-            normal_init(self.conv_attr, std=0.01, bias=bias_cls)
 
     def forward(self, feats):
         """Forward features from the upstream network.
