@@ -2,7 +2,7 @@
 
 This page provides specific tutorials about the usage of MMDetection3D for KITTI dataset.
 
-**Note**: Current tutorial is only for LiDAR-based and multi-modality 3D detection methods. Contents related to monocular methods will be supplemented afterward
+**Note**: Current tutorial is only for LiDAR-based and multi-modality 3D detection methods. Contents related to monocular methods will be supplemented afterwards.
 
 ## Prepare dataset
 
@@ -33,7 +33,7 @@ mmdetection3d
 
 ### Create KITTI dataset
 
-By creating KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile `.pkl` info files are also generated for train or validation. Subsequently, create KITTI data by running
+To create KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile, `.pkl` info files are also generated for training or validation. Subsequently, create KITTI data by running
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -109,7 +109,7 @@ The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.jso
 
 ## Train pipeline
 
-A typical train pipeline of KITTI for 3d detection is as below.
+A typical train pipeline of 3D detection on KITTI is as below.
 
 ```python
 train_pipeline = [
@@ -159,6 +159,7 @@ bash tools/dist_test.sh configs/pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py wor
 KITTI evaluates 3D object detection performance using mean Average Precision (mAP) and Average Orientation Similarity (AOS), Please refer to its [official website](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php) and [original paper](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf) for more details.
 
 We also adopt this approach for evaluation on KITTI. An example of printed evaluation results is as follows:
+
 ```
 Car AP@0.70, 0.70, 0.70:
 bbox AP:97.9252, 89.6183, 88.1564
