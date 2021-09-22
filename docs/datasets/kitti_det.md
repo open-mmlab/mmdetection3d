@@ -50,6 +50,7 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else.
 
 The folder structure after processing should be as below
+
 ```
 kitti
 ├── ImageSets
@@ -155,6 +156,7 @@ An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows
 ```shell
 bash tools/dist_test.sh configs/pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py work_dirs/pointrcnn_2x8_kitti-3d-3classes/latest.pth 8 --eval bbox
 ```
+
 ## Metrics
 KITTI evaluates 3D object detection performance using mean Average Precision (mAP) and Average Orientation Similarity (AOS), Please refer to its [official website](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php) and [original paper](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf) for more details.
 
