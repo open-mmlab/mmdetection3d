@@ -76,6 +76,7 @@ class UncertainSmoothL1Loss(nn.Module):
 
     def __init__(self, alpha=1.0, beta=1.0, reduction='mean', loss_weight=1.0):
         super(UncertainSmoothL1Loss, self).__init__()
+        assert reduction in ['none', 'sum', 'mean']
         self.alpha = alpha
         self.beta = beta
         self.reduction = reduction
@@ -133,6 +134,7 @@ class UncertainL1Loss(nn.Module):
 
     def __init__(self, alpha=1.0, reduction='mean', loss_weight=1.0):
         super(UncertainL1Loss, self).__init__()
+        assert reduction in ['none', 'sum', 'mean']
         self.alpha = alpha
         self.reduction = reduction
         self.loss_weight = loss_weight
