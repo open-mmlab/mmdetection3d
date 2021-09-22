@@ -6,8 +6,8 @@ from torch import nn as nn
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
                           xywhr2xyxyr)
-from mmdet.core import (build_anchor_generator, build_assigner,
-                        build_bbox_coder, build_sampler, multi_apply)
+from mmdet.core import (build_assigner, build_bbox_coder,
+                        build_prior_generator, build_sampler, multi_apply)
 from mmdet.models import HEADS
 from ..builder import build_loss
 from .train_mixins import AnchorTrainMixin
@@ -84,7 +84,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
         self.fp16_enabled = False
 
         # build anchor generator
-        self.anchor_generator = build_anchor_generator(anchor_generator)
+        self.anchor_generator = build_prior_generator(anchor_generator)
         # In 3D detection, the anchor stride is connected with anchor size
         self.num_anchors = self.anchor_generator.num_base_anchors
         # build box coder
