@@ -571,7 +571,7 @@ def test_smoke_bbox_coder():
     bbox_coder_cfg = dict(
         type='SMOKECoder',
         base_depth=(28.01, 16.32),
-        base_dim=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73, 0.67)),
+        base_dims=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73, 0.67)),
         code_size=7)
 
     bbox_coder = build_bbox_coder(bbox_coder_cfg)
@@ -593,10 +593,7 @@ def test_smoke_bbox_coder():
     # specically designed to test orientation decode function's
     # special cases.
 
-    vector_ori = torch.tensor([[-0.9, -0.01], [-0.9, 0.01]])
+    ori_vector = torch.tensor([[-0.9, -0.01], [-0.9, 0.01]])
     locations = torch.tensor([[15., 2., 1.], [15., 2., -1.]])
-    orientations = bbox_coder._decode_orientation(vector_ori, locations)
+    orientations = bbox_coder._decode_orientation(ori_vector, locations)
     assert orientations.shape == torch.Size([2, 1])
-
-
-test_smoke_bbox_coder()

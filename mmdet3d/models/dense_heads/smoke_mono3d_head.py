@@ -52,7 +52,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                  ori_channel,
                  bbox_coder,
                  loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
-                 loss_bbox=dict(type='L1Loss', loss_weight=10.0),
+                 loss_bbox=dict(type='L1Loss', loss_weight=0.1),
                  loss_dir=None,
                  loss_attr=None,
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
@@ -262,7 +262,6 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         centers2d_inds = centers2d_inds.view(batch, -1)
         pred_regression = transpose_and_gather_feat(pred_reg, centers2d_inds)
         pred_regression_pois = pred_regression.view(-1, channel)
-
         locations, dimensions, orientations = self.bbox_coder.decode(
             pred_regression_pois, centers2d, labels3d, cam_intrinsics,
             trans_mats)
@@ -285,9 +284,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         return pred_bboxes
 
     def get_targets(self, gt_bboxes, gt_labels, gt_bboxes_3d, gt_labels_3d,
-                    centers2d, feat_shape, img_shape):
+                    centers2d, feat_shape, img_shape, img_metas):
         """Get training targets for batch images.
-
+``
         Args:
             gt_bboxes (list[Tensor]): Ground truth bboxes of each image,
                 shape (num_gt, 4).
@@ -313,15 +312,24 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                     shpae (B, max_objs, )
               - indexs (Tensor): Indexs of the existence of the 3D box.
                     shape (B * max_objs, )
+              - affine_indexs (Tensor): Indexs of the affine of the 3D box.
+                    shape (N, )
               - gt_locs (Tensor): Coords of each 3D box's location.
-                    shape (B * max_objs, 3)
+                    shape (N, 3)
               - gt_dims (Tensor): Dimensions of each 3D box.
-                    shape (B * max_objs, 3)
+                    shape (N, 3)
               - gt_yaws (Tensor): Orientation(yaw) of each 3D box.
-                    shape (B * max_objs, 1)
+                    shape (N, 1)
               - gt_cors (Tensor): Coords of the corners of each 3D box.
-                    shape (B * max_objs, 8, 3)
+                    shape (N, 8, 3)
         """
+
+        reg_mask = torch.stack([
+            gt_bboxes[0].new_tensor(
+                not img_meta['affine_aug'], dtype=torch.long)
+            for img_meta in img_metas
+        ])
+
         img_h, img_w = img_shape[:2]
         bs, _, feat_h, feat_w = feat_shape
 
@@ -346,7 +354,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 scale_box_h = (gt_bbox[j][3] - gt_bbox[j][1]) * height_ratio
                 scale_box_w = (gt_bbox[j][2] - gt_bbox[j][0]) * width_ratio
                 radius = gaussian_radius([scale_box_h, scale_box_w],
-                                         min_overlap=0.3)
+                                         min_overlap=0.7)
                 radius = max(0, int(radius))
                 ind = gt_label[j]
                 gen_gaussian_target(center_heatmap_target[batch_id, ind],
@@ -356,20 +364,26 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         num_ctrs = [center2d.shape[0] for center2d in centers2d]
         max_objs = max(num_ctrs)
 
-        indexs = torch.zeros((bs, max_objs),
-                             dtype=torch.bool).to(centers2d[0].device)
+        reg_inds = torch.cat(
+            [reg_mask[i].repeat(num_ctrs[i]) for i in range(bs)])
+
+        inds = torch.zeros((bs, max_objs),
+                           dtype=torch.bool).to(centers2d[0].device)
 
         batch_centers2d = centers2d[0].new_zeros((bs, max_objs, 2))
         batch_labels_3d = gt_labels_3d[0].new_zeros((bs, max_objs))
         for i in range(bs):
-            indexs[i, :num_ctrs[i]] = 1
+            inds[i, :num_ctrs[i]] = 1
             batch_centers2d[i, :num_ctrs[i]] = centers2d[i]
             batch_labels_3d[i, :num_ctrs[i]] = gt_labels_3d[i]
 
-        indexs = indexs.flatten()
+        inds = inds.flatten()
         batch_centers2d = batch_centers2d.view(-1, 2) * width_ratio
+        # put gt bboxes 3d to gpu and filter the empty image, without
+        # gt_bboxes_3d
         gt_bboxes_3d = [
             gt_bbox_3d.to(centers2d[0].device) for gt_bbox_3d in gt_bboxes_3d
+            if gt_bbox_3d.tensor.shape[0] > 0
         ]
 
         gt_locations = torch.cat(
@@ -386,7 +400,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         target_labels = dict(
             gt_centers2d=batch_centers2d.long(),
             gt_labels3d=batch_labels_3d,
-            indexs=indexs,
+            indexs=inds,
+            reg_indexs=reg_inds,
             gt_locs=gt_locations,
             gt_dims=gt_dimensions,
             gt_yaws=gt_orientations,
@@ -446,7 +461,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             self.get_targets(gt_bboxes, gt_labels, gt_bboxes_3d,
                              gt_labels_3d, centers2d,
                              center2d_heatmap.shape,
-                             img_metas[0]['pad_shape'])
+                             img_metas[0]['pad_shape'],
+                             img_metas)
 
         pred_bboxes = self.get_predictions(
             labels3d=target_labels['gt_labels3d'],
@@ -461,14 +477,19 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         loss_cls = self.loss_cls(
             center2d_heatmap, center2d_heatmap_target, avg_factor=avg_factor)
 
-        loss_bbox_oris = self.loss_bbox(pred_bboxes['ori'].corners,
-                                        target_labels['gt_cors'])
+        reg_inds = target_labels['reg_indexs']
 
-        loss_bbox_dims = self.loss_bbox(pred_bboxes['dim'].corners,
-                                        target_labels['gt_cors'])
+        loss_bbox_oris = self.loss_bbox(
+            pred_bboxes['ori'].corners[reg_inds, ...],
+            target_labels['gt_cors'][reg_inds, ...])
 
-        loss_bbox_locs = self.loss_bbox(pred_bboxes['loc'].corners,
-                                        target_labels['gt_cors'])
+        loss_bbox_dims = self.loss_bbox(
+            pred_bboxes['dim'].corners[reg_inds, ...],
+            target_labels['gt_cors'][reg_inds, ...])
+
+        loss_bbox_locs = self.loss_bbox(
+            pred_bboxes['loc'].corners[reg_inds, ...],
+            target_labels['gt_cors'][reg_inds, ...])
 
         loss_bbox = loss_bbox_dims + loss_bbox_locs + loss_bbox_oris
 

@@ -11,18 +11,18 @@ class SMOKECoder(BaseBBoxCoder):
 
     Args:
         base_depth (tuple[float]): Depth references for decode box depth.
-        base_dim (tuple[tuple[float]]): Dimension references for decode
+        base_dims (tuple[tuple[float]]): Dimension references for decode
             box dimension for each category. fomat [l, w, h]
         code_size (int): The dimension of boxes to be encoded.
     """
 
-    def __init__(self, base_depth, base_dim, code_size):
+    def __init__(self, base_depth, base_dims, code_size):
         super(SMOKECoder, self).__init__()
         self.base_depth = base_depth
-        self.base_dim = base_dim
+        self.base_dims = base_dims
         self.bbox_code_size = code_size
 
-    def encode(self, locations, dimensions, orientations, img_metas):
+    def encode(self, locations, dimensions, orientations, input_metas):
         """Encode CameraInstance3DBoxes by locations, dimemsions, orientations.
 
         Args:
@@ -32,7 +32,7 @@ class SMOKECoder(BaseBBoxCoder):
                 shape (N, 3)
             orientations (Tensor): Orientations for 3D boxes.
                 shape (N, 1)
-            img_metas (list[dict]): Meta information of each image, e.g.,
+            input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
 
         Return:
@@ -43,7 +43,7 @@ class SMOKECoder(BaseBBoxCoder):
         bboxes = torch.cat((locations, dimensions, orientations), dim=1)
         assert bboxes.shape[1] == self.bbox_code_size, 'bboxes shape dose not'\
             'match the bbox_code_size.'
-        batch_bboxes = img_metas[0]['box_type_3d'](
+        batch_bboxes = input_metas[0]['box_type_3d'](
             bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
 
         return batch_bboxes
@@ -145,17 +145,17 @@ class SMOKECoder(BaseBBoxCoder):
                 shape: (N, 3)
         """
         labels = labels.flatten().long()
-        base_dim = dims_offset.new_tensor(self.base_dim)
-        dims_select = base_dim[labels, :]
+        base_dims = dims_offset.new_tensor(self.base_dims)
+        dims_select = base_dims[labels, :]
         dimensions = dims_offset.exp() * dims_select
 
         return dimensions
 
-    def _decode_orientation(self, vector_ori, locations):
+    def _decode_orientation(self, ori_vector, locations):
         """Retrieve object orientation.
 
         Args:
-            vector_ori(Tensor): Local orientation in [sin, cos] format.
+            ori_vector(Tensor): Local orientation in [sin, cos] format.
                 shape: (N, 2)
             locations(Tensor): Object location.
                 shape: (N, 3)
@@ -167,25 +167,25 @@ class SMOKECoder(BaseBBoxCoder):
         """
         locations = locations.view(-1, 3)
         rays = torch.atan(locations[:, 0] / (locations[:, 2] + 1e-7))
-        alphas = torch.atan(vector_ori[:, 0] / (vector_ori[:, 1] + 1e-7))
+        alphas = torch.atan(ori_vector[:, 0] / (ori_vector[:, 1] + 1e-7))
 
         # get cosine value positive and negtive index.
-        cos_pos_idx = (vector_ori[:, 1] >= 0).nonzero()
-        cos_neg_idx = (vector_ori[:, 1] < 0).nonzero()
+        cos_pos_inds = (ori_vector[:, 1] >= 0).nonzero()
+        cos_neg_inds = (ori_vector[:, 1] < 0).nonzero()
 
-        alphas[cos_pos_idx] -= np.pi / 2
-        alphas[cos_neg_idx] += np.pi / 2
+        alphas[cos_pos_inds] -= np.pi / 2
+        alphas[cos_neg_inds] += np.pi / 2
 
         # retrieve object rotation y angle.
         yaws = alphas + rays
 
-        larger_idx = (yaws > np.pi).nonzero()
-        small_idx = (yaws < -np.pi).nonzero()
+        larger_inds = (yaws > np.pi).nonzero()
+        small_inds = (yaws < -np.pi).nonzero()
 
-        if len(larger_idx) != 0:
-            yaws[larger_idx] -= 2 * np.pi
-        if len(small_idx) != 0:
-            yaws[small_idx] += 2 * np.pi
+        if len(larger_inds) != 0:
+            yaws[larger_inds] -= 2 * np.pi
+        if len(small_inds) != 0:
+            yaws[small_inds] += 2 * np.pi
 
         yaws = yaws.unsqueeze(-1)
         return yaws
