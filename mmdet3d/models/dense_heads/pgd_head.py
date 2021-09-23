@@ -146,7 +146,8 @@ class PGDHead(FCOSMono3DHead):
                 conv_strides=(1, ) * len(self.depth_branch))
             self.conv_depth_cls = nn.Conv2d(self.depth_branch[-1],
                                             self.num_depth_cls, 1)
-            self.bld_alpha = nn.Parameter(torch.tensor(10e-5))
+            # Data-agnostic single param lambda for local depth fusion
+            self.fuse_lambda = nn.Parameter(torch.tensor(10e-5))
 
         if self.weight_dim != -1:
             self.conv_weight_prevs = nn.ModuleList()
@@ -184,6 +185,9 @@ class PGDHead(FCOSMono3DHead):
                 dir_cls_preds (list[Tensor]): Box scores for direction class
                     predictions on each scale level, each is a 4D-tensor,
                     the channel number is num_points * 2. (bin = 2).
+                weight (list[Tensor]): Location-aware weight maps on each
+                    scale level, each is a 4D-tensor, the channel number is
+                    num_points * 1.
                 depth_cls_preds (list[Tensor]): Box scores for depth class
                     predictions on each scale level, each is a 4D-tensor,
                     the channel number is num_points * self.num_depth_cls.
@@ -208,8 +212,9 @@ class PGDHead(FCOSMono3DHead):
                 is True.
 
         Returns:
-            tuple: scores for each class, bbox and direction class \
-                predictions, centerness predictions of input feature maps.
+            tuple: scores for each class, bbox and direction class
+                predictions, depth class predictions, location-aware weights,
+                attribute and centerness predictions of input feature maps.
         """
         cls_score, bbox_pred, dir_cls_pred, attr_pred, centerness, cls_feat, \
             reg_feat = super().forward_single(x, scale, stride)
@@ -254,7 +259,41 @@ class PGDHead(FCOSMono3DHead):
                         pos_weights=None,
                         pos_cls_scores=None,
                         with_kpts=False):
-        """Add prob depth and geo depth related operations."""
+        """Decode box predictions and get projected 2D attributes.
+
+        Args:
+            bbox_preds (list[Tensor]): Box predictions for each scale
+                level, each is a 4D-tensor, the channel number is
+                num_points * bbox_code_size.
+            pos_dir_cls_preds (Tensor): Box scores for direction class
+                predictions of positive boxes on all the scale levels in shape
+                (num_pos_points, 2).
+            labels_3d (list[Tensor]): 3D box category labels for each scale
+                level, each is a 4D-tensor.
+            bbox_targets_3d (list[Tensor]): 3D box targets for each scale
+                level, each is a 4D-tensor, the channel number is
+                num_points * bbox_code_size.
+            pos_points (Tensor): Foreground points.
+            pos_inds (Tensor): Index of foreground points from flattened
+                tensors.
+            img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
+            pos_depth_cls_preds (Tensor, optional): Probabilistic depth map of
+                positive boxes on all the scale levels in shape
+                (num_pos_points, self.num_depth_cls). Defaults to None.
+            pos_weights (Tensor, optional): Location-aware weights of positive
+                boxes in shape (num_pos_points, self.weight_dim). Defaults to
+                None.
+            pos_cls_scores (Tensor, optional): Classification scores of
+                positive boxes in shape (num_pos_points, self.num_classes).
+                Defaults to None.
+            with_kpts (bool, optional): Whether to output keypoints targets.
+                Defaults to False.
+
+        Returns:
+            tuple[Tensor]: Exterior 2D boxes from projected 3D boxes,
+                predicted 2D boxes and keypoint targets (if necessary).
+        """
         views = [np.array(img_meta['cam2img']) for img_meta in img_metas]
         num_imgs = len(img_metas)
         img_idx = []
@@ -309,7 +348,7 @@ class PGDHead(FCOSMono3DHead):
             pos_prob_depth_preds = self.bbox_coder.decode_prob_depth(
                 pos_depth_cls_preds, self.depth_range, self.depth_unit,
                 self.division, self.num_depth_cls)
-            sig_alpha = torch.sigmoid(self.bld_alpha)
+            sig_alpha = torch.sigmoid(self.fuse_lambda)
             pos_strided_bbox_preds[:, 2] = \
                 sig_alpha * pos_strided_bbox_preds.clone()[:, 2] + \
                 (1 - sig_alpha) * pos_prob_depth_preds
@@ -338,9 +377,11 @@ class PGDHead(FCOSMono3DHead):
                 pos_strided_bbox_preds[mask, :3], views[idx])
             pos_bbox_targets_3d[mask, :3] = centers3d_targets
 
-            # depth fixed
+            # depth fixed when computing re-project 3D bboxes
             pos_strided_bbox_preds[mask, 2] = \
                 pos_bbox_targets_3d.clone()[mask, 2]
+
+            # decode yaws
             if self.use_direction_classifier:
                 pos_dir_cls_scores = torch.max(
                     pos_dir_cls_preds[mask], dim=-1)[1]
@@ -401,11 +442,15 @@ class PGDHead(FCOSMono3DHead):
                 num_points * num_attrs.
             centernesses (list[Tensor]): Centerness for each scale level, each
                 is a 4D-tensor, the channel number is num_points * 1.
+            pos_inds (Tensor): Index of foreground points from flattened
+                tensors.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
 
         Returns:
-            dict[str, Tensor]: A dictionary of loss components.
+            tuple[Tensor]: Box predictions, direction classes, probabilistic
+                depth maps, location-aware weight maps, attributes and
+                centerness predictions.
         """
         flatten_bbox_preds = [
             bbox_pred.permute(0, 2, 3, 1).reshape(-1, sum(self.group_reg_dims))
@@ -492,6 +537,9 @@ class PGDHead(FCOSMono3DHead):
             depth_cls_preds (list[Tensor]): Box scores for direction class
                 predictions on each scale level, each is a 4D-tensor,
                 the channel number is num_points * self.num_depth_cls.
+            weights (list[Tensor]): Location-aware weights for each scale
+                level, each is a 4D-tensor, the channel number is
+                num_points * self.weight_dim.
             attr_preds (list[Tensor]): Attribute scores for each scale level,
                 each is a 4D-tensor, the channel number is
                 num_points * num_attrs.
@@ -510,8 +558,8 @@ class PGDHead(FCOSMono3DHead):
             attr_labels (list[Tensor]): Attributes indices of each box.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
-                boxes can be ignored when computing the loss.
+            gt_bboxes_ignore (list[Tensor]): specify which bounding boxes can
+                be ignored when computing the loss. Defaults to None.
 
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
@@ -627,7 +675,7 @@ class PGDHead(FCOSMono3DHead):
                 pos_prob_depth_preds = self.bbox_coder.decode_prob_depth(
                     pos_depth_cls_preds, self.depth_range, self.depth_unit,
                     self.division, self.num_depth_cls)
-                sig_alpha = torch.sigmoid(self.bld_alpha)
+                sig_alpha = torch.sigmoid(self.fuse_lambda)
                 if self.weight_dim != -1:
                     loss_depth_bld = self.loss_depth(
                         sig_alpha * pos_bbox_preds[:, 2] +
@@ -702,7 +750,7 @@ class PGDHead(FCOSMono3DHead):
             if self.use_direction_classifier:
                 loss_dir = pos_dir_cls_preds.sum()
             if self.use_depth_classifier:
-                sig_alpha = torch.sigmoid(self.bld_alpha)
+                sig_alpha = torch.sigmoid(self.fuse_lambda)
                 if self.weight_dim != -1:
                     loss_depth_bld *= torch.exp(-pos_weights[:, 0].sum())
                 else:
@@ -768,23 +816,24 @@ class PGDHead(FCOSMono3DHead):
             depth_cls_preds (list[Tensor]): Box scores for direction class
                 predictions on each scale level, each is a 4D-tensor,
                 the channel number is num_points * self.num_depth_cls.
+            weights (list[Tensor]): Location-aware weights for each scale
+                level, each is a 4D-tensor, the channel number is
+                num_points * self.weight_dim.
             attr_preds (list[Tensor]): Attribute scores for each scale level
                 Has shape (N, num_points * num_attrs, H, W)
             centernesses (list[Tensor]): Centerness for each scale level with
                 shape (N, num_points * 1, H, W)
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            cfg (mmcv.Config): Test / postprocessing configuration,
-                if None, test_cfg would be used
-            rescale (bool): If True, return boxes in original image space
+            cfg (mmcv.Config, optional): Test / postprocessing configuration,
+                if None, test_cfg would be used. Defaults to None.
+            rescale (bool, optional): If True, return boxes in original image
+                space. Defaults to None.
 
         Returns:
-            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple. \
-                The first item is an (n, 5) tensor, where the first 4 columns \
-                are bounding box positions (tl_x, tl_y, br_x, br_y) and the \
-                5-th column is a score between 0 and 1. The second item is a \
-                (n,) tensor where each item is the predicted class label of \
-                the corresponding box.
+            list[tuple[Tensor]]: Each item in result_list is a tuple, which
+                consists of predicted 3D boxes, scores, labels, attributes and
+                2D boxes (if necessary).
         """
         assert len(cls_scores) == len(bbox_preds) == len(dir_cls_preds) == \
             len(depth_cls_preds) == len(weights) == len(centernesses) == \
@@ -876,11 +925,13 @@ class PGDHead(FCOSMono3DHead):
             bbox_preds (list[Tensor]): Box energies / deltas for a single scale
                 level with shape (num_points * bbox_code_size, H, W).
             dir_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on a single scale level with shape \
+                predictions on a single scale level with shape
                 (num_points * 2, H, W)
-            depth_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on a single scale level with shape \
+            depth_cls_preds (list[Tensor]): Box scores for probabilistic depth
+                predictions on a single scale level with shape
                 (num_points * self.num_depth_cls, H, W)
+            weights (list[Tensor]): Location-aware weight maps on a single
+                scale level with shape (num_points * self.weight_dim, H, W).
             attr_preds (list[Tensor]): Attribute scores for each scale level
                 Has shape (N, num_points * num_attrs, H, W)
             centernesses (list[Tensor]): Centerness for a single scale level
@@ -890,10 +941,12 @@ class PGDHead(FCOSMono3DHead):
             input_meta (dict): Metadata of input image.
             cfg (mmcv.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used.
-            rescale (bool): If True, return boxes in original image space.
+            rescale (bool, optional): If True, return boxes in original image
+                space. Defaults to False.
 
         Returns:
-            tuples[Tensor]: Predicted 3D boxes, scores, labels and attributes.
+            tuples[Tensor]: Predicted 3D boxes, scores, labels, attributes and
+                2D boxes (if necessary).
         """
         view = np.array(input_meta['cam2img'])
         scale_factor = input_meta['scale_factor']
@@ -972,7 +1025,7 @@ class PGDHead(FCOSMono3DHead):
                 prob_depth_pred = self.bbox_coder.decode_prob_depth(
                     depth_cls_pred, self.depth_range, self.depth_unit,
                     self.division, self.num_depth_cls)
-                sig_alpha = torch.sigmoid(self.bld_alpha)
+                sig_alpha = torch.sigmoid(self.fuse_lambda)
                 bbox_pred3d[:, 2] = sig_alpha * bbox_pred3d[:, 2] + \
                     (1 - sig_alpha) * prob_depth_pred
             pred_center2d = bbox_pred3d[:, :3].clone()
