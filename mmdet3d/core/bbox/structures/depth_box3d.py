@@ -67,7 +67,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                              / |           /  |
                (x0, y0, z1) + ----------- +   + (x1, y1, z0)
                             |  /      .   |  /
-                            | / oriign    | /
+                            | / origin    | /
                (x0, y0, z0) + ----------- + --------> right x
                                           (x1, y0, z0)
         """
