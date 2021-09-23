@@ -91,7 +91,7 @@ html_theme_options = {
     'menu': [
         {
             'name': 'GitHub',
-            'url': 'https://github.com/open-mmlab/mmcv'
+            'url': 'https://github.com/open-mmlab/mmdetection3d'
         },
         {
             'name':
@@ -106,12 +106,12 @@ html_theme_options = {
                     'url': 'https://github.com/open-mmlab/mmclassification',
                 },
                 {
-                    'name': 'MMDetection',
-                    'url': 'https://github.com/open-mmlab/mmdetection',
+                    'name': 'MMCV',
+                    'url': 'https://github.com/open-mmlab/mmmmcv',
                 },
                 {
-                    'name': 'MMDetection3D',
-                    'url': 'https://github.com/open-mmlab/mmdetection3d',
+                    'name': 'MMDetection',
+                    'url': 'https://github.com/open-mmlab/mmdetection',
                 },
                 {
                     'name': 'MMEditing',
