@@ -302,6 +302,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             feat_shape (tuple[int]): Feature map shape with value,
                 shape (B, _, H, W).
             img_shape (tuple[int]): Image shape in [h, w] format.
+            img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
 
         Returns:
             tuple[Tensor, dict]: The Tensor value is the targets of
