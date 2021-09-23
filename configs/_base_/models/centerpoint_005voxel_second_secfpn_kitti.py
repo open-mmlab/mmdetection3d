@@ -1,4 +1,4 @@
-voxel_size = [0.1, 0.1, 0.2]
+voxel_size = [0.05, 0.05, 0.1]
 model = dict(
     type='CenterPoint',
     pts_voxel_layer=dict(
@@ -45,7 +45,7 @@ model = dict(
             post_center_range=[-10, -50, -10, 80.4, 50, 10],
             max_num=100,
             score_threshold=0.1,
-            out_size_factor=8,
+            out_size_factor=4,
             voxel_size=voxel_size[:2],
             code_size=7,
         ),
@@ -59,7 +59,7 @@ model = dict(
         pts=dict(
             grid_size=[1408, 1600, 40],
             voxel_size=voxel_size,
-            out_size_factor=8,
+            out_size_factor=4,
             dense_reg=1,
             gaussian_overlap=0.1,
             max_objs=500,
