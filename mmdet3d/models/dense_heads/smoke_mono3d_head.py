@@ -126,7 +126,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 Each item in result_list is 4-tuple.
         """
         assert len(cls_scores) == len(bbox_preds) == 1
-        cam_intrinsics = torch.stack([
+        cam2imgs = torch.stack([
             cls_scores[0].new_tensor(img_meta['cam_intrinsic'])
             for img_meta in img_metas
         ])
@@ -138,7 +138,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             cls_scores[0],
             bbox_preds[0],
             img_metas,
-            cam_intrinsics=cam_intrinsics,
+            cam2imgs=cam2imgs,
             trans_mats=trans_mats,
             topk=100,
             kernel=3)
@@ -166,7 +166,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                        cls_score,
                        reg_pred,
                        img_metas,
-                       cam_intrinsics,
+                       cam2imgs,
                        trans_mats,
                        topk=100,
                        kernel=3):
@@ -179,7 +179,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 shape (B, channel, H , W).
             img_metas (List[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            cam_intrinsics (Tensor): Camera intrinsic matrix.
+            cam2imgs (Tensor): Camera intrinsic matrixs.
                 shape (B, 4, 4)
             topk (int): Get top k center keypoints from heatmap. Default 100.
             kernel (int): Max pooling kernel for extract local maximum pixels.
@@ -211,7 +211,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                             topk_ys.view(-1, 1).float()],
                            dim=1)
         locations, dimensions, orientations = self.bbox_coder.decode(
-            regression, points, batch_topk_labels, cam_intrinsics, trans_mats)
+            regression, points, batch_topk_labels, cam2imgs, trans_mats)
 
         batch_bboxes = torch.cat((locations, dimensions, orientations), dim=1)
         batch_bboxes = batch_bboxes.view(bs, -1, self.bbox_code_size)
@@ -250,7 +250,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         """
         batch, channel = pred_reg.shape[0], pred_reg.shape[1]
         w = pred_reg.shape[3]
-        cam_intrinsics = torch.stack([
+        cam2imgs = torch.stack([
             gt_locations.new_tensor(img_meta['cam_intrinsic'])
             for img_meta in img_metas
         ])
@@ -263,8 +263,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         pred_regression = transpose_and_gather_feat(pred_reg, centers2d_inds)
         pred_regression_pois = pred_regression.view(-1, channel)
         locations, dimensions, orientations = self.bbox_coder.decode(
-            pred_regression_pois, centers2d, labels3d, cam_intrinsics,
-            trans_mats)
+            pred_regression_pois, centers2d, labels3d, cam2imgs, trans_mats)
 
         locations, dimensions, orientations = locations[indexs], dimensions[
             indexs], orientations[indexs]
