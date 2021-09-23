@@ -8,10 +8,11 @@ model = dict(
         type='SparseEncoder',
         in_channels=4,
         sparse_shape=[41, 1600, 1408],
-        output_channels=128,
+        output_channels=64,
         order=('conv', 'norm', 'act'),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
                                                                       128)),
+        encoder_strides=(2, 2, 1, 1),
         encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, [0, 1, 1]), (0, 0)),
         block_type='basicblock'),
     pts_backbone=dict(

@@ -38,6 +38,7 @@ class SparseEncoder(nn.Module):
                  output_channels=128,
                  encoder_channels=((16, ), (32, 32, 32), (64, 64, 64), (64, 64,
                                                                         64)),
+                 encoder_strides=(2, 2, 2, 1),
                  encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1,
                                                                  1)),
                  block_type='conv_module'):
@@ -49,6 +50,7 @@ class SparseEncoder(nn.Module):
         self.base_channels = base_channels
         self.output_channels = output_channels
         self.encoder_channels = encoder_channels
+        self.encoder_strides = encoder_strides
         self.encoder_paddings = encoder_paddings
         self.stage_num = len(self.encoder_channels)
         self.fp16_enabled = False
@@ -154,6 +156,7 @@ class SparseEncoder(nn.Module):
             blocks_list = []
             for j, out_channels in enumerate(tuple(blocks)):
                 padding = tuple(self.encoder_paddings[i])[j]
+                stride = self.encoder_strides[i]
                 # each stage started with a spconv layer
                 # except the first stage
                 if i != 0 and j == 0 and block_type == 'conv_module':
@@ -163,7 +166,7 @@ class SparseEncoder(nn.Module):
                             out_channels,
                             3,
                             norm_cfg=norm_cfg,
-                            stride=2,
+                            stride=stride,
                             padding=padding,
                             indice_key=f'spconv{i + 1}',
                             conv_type='SparseConv3d'))
@@ -176,7 +179,7 @@ class SparseEncoder(nn.Module):
                                 out_channels,
                                 3,
                                 norm_cfg=norm_cfg,
-                                stride=2,
+                                stride=stride,
                                 padding=padding,
                                 indice_key=f'spconv{i + 1}',
                                 conv_type='SparseConv3d'))
