@@ -327,7 +327,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         reg_mask = torch.stack([
             gt_bboxes[0].new_tensor(
-                not img_meta['affine_aug'], dtype=torch.long)
+                not img_meta['affine_aug'], dtype=torch.bool)
             for img_meta in img_metas
         ])
 
