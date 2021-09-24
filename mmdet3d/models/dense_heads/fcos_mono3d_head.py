@@ -101,6 +101,13 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.loss_centerness = build_loss(loss_centerness)
         bbox_coder['code_size'] = self.bbox_code_size
         self.bbox_coder = build_bbox_coder(bbox_coder)
+        if init_cfg is None:
+            self.init_cfg = dict(
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""

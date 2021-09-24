@@ -6,8 +6,13 @@ Collections:
       Training Resources: 8x GeForce GTX 1080 Ti
       Architecture:
         - Hard Voxelization
-    Paper: https://arxiv.org/abs/2004.02774
+    Paper:
+      URL: https://arxiv.org/abs/2004.02774
+      Title: 'SSN: Shape Signature Networks for Multi-class Object Detection from Point Clouds'
     README: configs/ssn/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/dense_heads/shape_aware_head.py#L166
+      Version: v0.7.0
 
 Models:
   - Name: hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d
