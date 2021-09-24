@@ -86,7 +86,6 @@ class PGDHead(FCOSMono3DHead):
         self.use_depth_classifier = use_depth_classifier
         self.use_onlyreg_proj = use_onlyreg_proj
         self.depth_branch = depth_branch
-        self.pred_bbox2d = pred_bbox2d
         self.pred_keypoints = pred_keypoints
         self.weight_dim = weight_dim
         self.weight_branch = weight_branch
@@ -109,7 +108,8 @@ class PGDHead(FCOSMono3DHead):
                       'Uniform Division.')
         else:
             self.num_depth_cls = depth_bins
-        super().__init__(bbox_coder=bbox_coder, **kwargs)
+        super().__init__(
+            pred_bbox2d=pred_bbox2d, bbox_coder=bbox_coder, **kwargs)
         self.loss_depth = build_loss(loss_depth)
         if self.pred_bbox2d:
             self.loss_bbox2d = build_loss(loss_bbox2d)

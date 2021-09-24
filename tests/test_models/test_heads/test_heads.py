@@ -1222,3 +1222,75 @@ def test_groupfree3d_head():
     assert results[0][0].tensor.shape[1] == 7
     assert results[0][1].shape[0] >= 0
     assert results[0][2].shape[0] >= 0
+
+
+def test_pgd_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    _setup_seed(0)
+    pgd_head_cfg = _get_head_cfg(
+        'pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py')
+    self = build_head(pgd_head_cfg).cuda()
+
+    feats = [
+        torch.rand([2, 256, 96, 312], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 48, 156], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 24, 78], dtype=torch.float32).cuda(),
+        torch.rand([2, 256, 12, 39], dtype=torch.float32).cuda(),
+    ]
+
+    # test forward
+    ret_dict = self(feats)
+    assert len(ret_dict) == 7
+    assert len(ret_dict[0]) == 4
+    assert ret_dict[0][0].shape == torch.Size([2, 3, 96, 312])
+
+    # test loss
+    gt_bboxes = [
+        torch.rand([3, 4], dtype=torch.float32).cuda(),
+        torch.rand([3, 4], dtype=torch.float32).cuda()
+    ]
+    gt_bboxes_3d = CameraInstance3DBoxes(
+        torch.rand([3, 7], device='cuda'), box_dim=7)
+    gt_labels = [torch.randint(0, 3, [3], device='cuda') for i in range(2)]
+    gt_labels_3d = gt_labels
+    centers2d = [
+        torch.rand([3, 2], dtype=torch.float32).cuda(),
+        torch.rand([3, 2], dtype=torch.float32).cuda()
+    ]
+    depths = [
+        torch.rand([3], dtype=torch.float32).cuda(),
+        torch.rand([3], dtype=torch.float32).cuda()
+    ]
+    attr_labels = None
+    img_metas = [
+        dict(
+            img_shape=[384, 1248],
+            cam2img=[[721.5377, 0.0, 609.5593, 44.85728],
+                     [0.0, 721.5377, 172.854, 0.2163791],
+                     [0.0, 0.0, 1.0, 0.002745884], [0.0, 0.0, 0.0, 1.0]],
+            scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
+            box_type_3d=CameraInstance3DBoxes) for i in range(2)
+    ]
+    losses = self.loss(*ret_dict, gt_bboxes, gt_labels, gt_bboxes_3d,
+                       gt_labels_3d, centers2d, depths, attr_labels, img_metas)
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_offset'] >= 0
+    assert losses['loss_depth'] >= 0
+    assert losses['loss_size'] >= 0
+    assert losses['loss_rotsin'] >= 0
+    assert losses['loss_centerness'] >= 0
+    assert losses['loss_kpts'] >= 0
+    assert losses['loss_bbox2d'] >= 0
+    assert losses['loss_consistency'] >= 0
+    assert losses['loss_dir'] >= 0
+
+    # test get_boxes
+    results = self.get_bboxes(*ret_dict, img_metas)
+    assert len(results) == 2
+    assert len(results[0]) == 5
+    assert results[0][0].tensor.shape == torch.Size([20, 7])
+    assert results[0][1].shape == torch.Size([20])
+    assert results[0][2].shape == torch.Size([20])
+    assert results[0][3] is None
+    assert results[0][4].shape == torch.Size([20, 5])
