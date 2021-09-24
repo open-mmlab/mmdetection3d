@@ -566,7 +566,11 @@ class PGDHead(FCOSMono3DHead):
         """
         assert len(cls_scores) == len(bbox_preds) == len(dir_cls_preds) == \
             len(depth_cls_preds) == len(weights) == len(centernesses) == \
-            len(attr_preds)
+            len(attr_preds), 'The length of cls_scores, bbox_preds, ' \
+            'dir_cls_preds, depth_cls_preds, weights, centernesses, and' \
+            f'attr_preds: {len(cls_scores)}, {len(bbox_preds)}, ' \
+            f'{len(dir_cls_preds)}, {len(depth_cls_preds)}, {len(weights)}' \
+            f'{len(centernesses)}, {len(attr_preds)} are inconsistent.'
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         all_level_points = self.get_points(featmap_sizes, bbox_preds[0].dtype,
                                            bbox_preds[0].device)
@@ -837,7 +841,11 @@ class PGDHead(FCOSMono3DHead):
         """
         assert len(cls_scores) == len(bbox_preds) == len(dir_cls_preds) == \
             len(depth_cls_preds) == len(weights) == len(centernesses) == \
-            len(attr_preds)
+            len(attr_preds), 'The length of cls_scores, bbox_preds, ' \
+            'dir_cls_preds, depth_cls_preds, weights, centernesses, and' \
+            f'attr_preds: {len(cls_scores)}, {len(bbox_preds)}, ' \
+            f'{len(dir_cls_preds)}, {len(depth_cls_preds)}, {len(weights)}' \
+            f'{len(centernesses)}, {len(attr_preds)} are inconsistent.'
         num_levels = len(cls_scores)
 
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
