@@ -27,7 +27,7 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: 使用现有数据即模型
+   :caption: 使用现有数据及模型
 
    1_exist_data_model.md
 
