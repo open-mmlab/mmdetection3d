@@ -597,3 +597,4 @@ def test_smoke_bbox_coder():
     locations = torch.tensor([[15., 2., 1.], [15., 2., -1.]])
     orientations = bbox_coder._decode_orientation(ori_vector, locations)
     assert orientations.shape == torch.Size([2, 1])
+
