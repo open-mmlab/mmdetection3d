@@ -1,6 +1,5 @@
 model = dict(
     type='FCOSMono3D',
-    pretrained='open-mmlab://detectron2/resnet101_caffe',
     backbone=dict(
         type='ResNet',
         depth=101,
@@ -9,7 +8,10 @@ model = dict(
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=False),
         norm_eval=True,
-        style='caffe'),
+        style='caffe',
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='open-mmlab://detectron2/resnet101_caffe')),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
