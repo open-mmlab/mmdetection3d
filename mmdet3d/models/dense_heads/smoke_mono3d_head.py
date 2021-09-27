@@ -229,9 +229,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             gt_locations (Tensor): Coords of each 3D box's location.
                 shape (B * max_objs, 3)
             gt_dimensions (Tensor): Dimensions of each 3D box.
-                shape (B * max_objs, 3)
+                shape (N, 3)
             gt_orientations (Tensor): Orientation(yaw) of each 3D box.
-                shape (B * max_objs, 1)
+                shape (N, 1)
             indexs (Tensor): Indexs of the existence of the 3D box.
                 shape (B * max_objs, )
             img_metas (list[dict]): Meta information of each image,
@@ -263,10 +263,15 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         pred_regression = transpose_and_gather_feat(pred_reg, centers2d_inds)
         pred_regression_pois = pred_regression.view(-1, channel)
         locations, dimensions, orientations = self.bbox_coder.decode(
-            pred_regression_pois, centers2d, labels3d, cam2imgs, trans_mats)
+            pred_regression_pois, centers2d, labels3d, cam2imgs, trans_mats,
+            gt_locations)
 
         locations, dimensions, orientations = locations[indexs], dimensions[
             indexs], orientations[indexs]
+
+        locations[:, 1] += dimensions[:, 1] / 2
+
+        gt_locations = gt_locations[indexs]
 
         assert len(locations) == len(gt_locations)
         assert len(dimensions) == len(gt_dimensions)
@@ -371,24 +376,32 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         inds = torch.zeros((bs, max_objs),
                            dtype=torch.bool).to(centers2d[0].device)
 
+        # put gt 3d bboxes to gpu
+        gt_bboxes_3d = [
+            gt_bbox_3d.to(centers2d[0].device) for gt_bbox_3d in gt_bboxes_3d
+        ]
+
         batch_centers2d = centers2d[0].new_zeros((bs, max_objs, 2))
         batch_labels_3d = gt_labels_3d[0].new_zeros((bs, max_objs))
+        batch_gt_locations = \
+            gt_bboxes_3d[0].tensor.new_zeros((bs, max_objs, 3))
         for i in range(bs):
             inds[i, :num_ctrs[i]] = 1
             batch_centers2d[i, :num_ctrs[i]] = centers2d[i]
             batch_labels_3d[i, :num_ctrs[i]] = gt_labels_3d[i]
+            batch_gt_locations[i, :num_ctrs[i]] = \
+                gt_bboxes_3d[i].tensor[:, :3]
 
         inds = inds.flatten()
         batch_centers2d = batch_centers2d.view(-1, 2) * width_ratio
-        # put gt bboxes 3d to gpu and filter the empty image, without
-        # gt_bboxes_3d
+        batch_gt_locations = batch_gt_locations.view(-1, 3)
+
+        # filter the empty image, without gt_bboxes_3d
         gt_bboxes_3d = [
-            gt_bbox_3d.to(centers2d[0].device) for gt_bbox_3d in gt_bboxes_3d
+            gt_bbox_3d for gt_bbox_3d in gt_bboxes_3d
             if gt_bbox_3d.tensor.shape[0] > 0
         ]
 
-        gt_locations = torch.cat(
-            [gt_bbox_3d.tensor[:, :3] for gt_bbox_3d in gt_bboxes_3d])
         gt_dimensions = torch.cat(
             [gt_bbox_3d.tensor[:, 3:6] for gt_bbox_3d in gt_bboxes_3d])
         gt_orientations = torch.cat([
@@ -403,7 +416,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             gt_labels3d=batch_labels_3d,
             indexs=inds,
             reg_indexs=reg_inds,
-            gt_locs=gt_locations,
+            gt_locs=batch_gt_locations,
             gt_dims=gt_dimensions,
             gt_yaws=gt_orientations,
             gt_cors=gt_corners)

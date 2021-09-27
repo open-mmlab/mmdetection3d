@@ -44,11 +44,17 @@ class SMOKECoder(BaseBBoxCoder):
         assert bboxes.shape[1] == self.bbox_code_size, 'bboxes shape dose not'\
             'match the bbox_code_size.'
         batch_bboxes = input_metas[0]['box_type_3d'](
-            bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
+            bboxes, box_dim=self.bbox_code_size)
 
         return batch_bboxes
 
-    def decode(self, reg, points, labels, cam2imgs, trans_mats):
+    def decode(self,
+               reg,
+               points,
+               labels,
+               cam2imgs,
+               trans_mats,
+               locations=None):
         """Decode regression into locations, dimemsions, orientations.
 
         Args:
@@ -64,6 +70,10 @@ class SMOKECoder(BaseBBoxCoder):
             trans_mats (Tensor): transformation matrix from original image
                 to feature map.
                 shape: (batch, 3, 3)
+            locations (None | Tensor): if locations is None, this function
+                is used to decode while inference, otherwise, it's used while
+                training using the ground truth 3d bbox locations.
+                shape: (batch * K (max_objs), 3)
 
         Return:
             tuple(Tensor): The tuple has components below:
@@ -81,12 +91,17 @@ class SMOKECoder(BaseBBoxCoder):
         orientations = reg[:, 6:8]
         depths = self._decode_depth(depth_offsets)
         # get the 3D Bounding box's center location.
-        locations = self._decode_location(points, centers2d_offsets, depths,
-                                          cam2imgs, trans_mats)
-        dimensions = self._decode_dimension(labels, dimensions_offsets)
-        orientations = self._decode_orientation(orientations, locations)
+        pred_locations = self._decode_location(points, centers2d_offsets,
+                                               depths, cam2imgs, trans_mats)
+        pred_dimensions = self._decode_dimension(labels, dimensions_offsets)
+        if locations is None:
+            pred_orientations = self._decode_orientation(
+                orientations, pred_locations)
+        else:
+            pred_orientations = self._decode_orientation(
+                orientations, locations)
 
-        return locations, dimensions, orientations
+        return pred_locations, pred_dimensions, pred_orientations
 
     def _decode_depth(self, depth_offsets):
         """Transform depth offset to depth."""
@@ -165,6 +180,7 @@ class SMOKECoder(BaseBBoxCoder):
                 range is [-np.pi, np.pi].
                 shape：(N, 1）
         """
+        assert len(ori_vector) == len(locations)
         locations = locations.view(-1, 3)
         rays = torch.atan(locations[:, 0] / (locations[:, 2] + 1e-7))
         alphas = torch.atan(ori_vector[:, 0] / (ori_vector[:, 1] + 1e-7))
@@ -175,7 +191,6 @@ class SMOKECoder(BaseBBoxCoder):
 
         alphas[cos_pos_inds] -= np.pi / 2
         alphas[cos_neg_inds] += np.pi / 2
-
         # retrieve object rotation y angle.
         yaws = alphas + rays
 
