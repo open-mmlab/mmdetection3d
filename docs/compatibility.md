@@ -1,3 +1,13 @@
+## v1.0.0.dev0
+
+### Coordinate system refactoring
+
+In this version, we did a major code refactoring which improved the consistency among the three coordinate systems, LiDAR, Camera, and Depth. A brief summary for this refactoring is as follows:
+
+- The three coordinate systems are all right-handed coordinate systems now.
+- The LiDAR system `(x, y, z)` corresponds to `(l, w, h)` instead of `(w, l, h)`. This is more natural since `l` is parallel with the direction where the yaw angle is zero, and we prefer using the positive direction of the `x` axis as that direction, which is exactly how we define yaw angle in Depth and Camera coordinate systems.
+
+
 ## 0.16.0
 
 ### Returned values of `QueryAndGroup` operation
