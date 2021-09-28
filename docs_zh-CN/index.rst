@@ -72,7 +72,6 @@ Welcome to MMDetection3D's documentation!
    :caption: 常见问题
 
    faq.md
-   compatibility.md
 
 .. toctree::
    :maxdepth: 1

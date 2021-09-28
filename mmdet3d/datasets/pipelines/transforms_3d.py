@@ -1428,7 +1428,22 @@ class VoxelBasedPointSampler(object):
 
 @PIPELINES.register_module()
 class AffineResize(object):
-    """get the affine transform matrix to the tagert size."""
+    """Get the affine transform matrixs to the target size.
+
+    This class can record the affine transform matrixs while resizing
+    the input image to a fixed size. The affine transform matrixs include:
+    1) matrix transforming original image to the network input image
+        size.
+    2) matrix transforming original image to the network output feature
+        map size.
+
+    Args:
+        img_scale (tuple): Images scales for resizing.
+        down_ratio (int): The down ratio of feature map.
+            Actually the arg should be >= 1.
+        bbox_clip_border (bool, optional): Whether clip the objects
+            outside the border of the image. Defaults to True.
+    """
 
     def __init__(self, img_scale=None, down_ratio=None, bbox_clip_border=True):
 
@@ -1437,7 +1452,15 @@ class AffineResize(object):
         self.bbox_clip_border = bbox_clip_border
 
     def __call__(self, results):
+        """Call function to do affine transform to input image and labels.
 
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after affine resize, 'affine_aug', 'trans_mat'
+                keys are added in the result dict.
+        """
         if 'center' not in results:
             assert 'size' not in results
             assert 'affine_aug' not in results
@@ -1510,10 +1533,16 @@ class AffineResize(object):
         return results
 
     def _affine_bboxes(self, results, trans_affine):
-        """affine transform bboxes to input image."""
+        """Affine transform bboxes to input image.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            trans_affine (np.ndarray): Matrix transforming original
+                image to the network input image size.
+        """
+
         for key in results.get('bbox_fields', []):
             bboxes = results[key]
-            # point = affine_transform(point, trans_mat)
             bboxes[:, :2] = self._affine_transform(bboxes[:, :2], trans_affine)
             bboxes[:, 2:] = self._affine_transform(bboxes[:, 2:], trans_affine)
             if self.bbox_clip_border:
@@ -1526,11 +1555,16 @@ class AffineResize(object):
             results[key] = bboxes
 
     def _affine_transform(self, point, matrix):
-        """point shape (bbox_num, 2) np.array.
+        """Affine transform bbox points to input iamge.
 
-        matrix shape (3 * 3) np.array
+        Args:
+            points (np.ndarray): Points to be transformed.
+                shape: (N, 2)
+            matrix (np.ndarray): Affine transform matrix.
+                shape: (3, 3)
 
-        return: (bbox_num, 2)
+        Returns:
+            np.ndarray: Transformed points.
         """
         point_num = point.shape[0]
         point_exd = np.concatenate((point, np.ones((point_num, 1))), axis=1)
@@ -1539,6 +1573,16 @@ class AffineResize(object):
         return new_point[:, :2]
 
     def _get_transfrom_matrix(self, center_scale, output_size):
+        """Get affine transform matrix.
+
+        Args:
+            center_scale (list[tuple]): Center and scale of
+                current image.
+            output_size (tuple): The transform target size.
+
+        Returns:
+            np.ndarray: Affine transform matrix.
+        """
         center, scale = center_scale[0], center_scale[1]
         # todo: further add rot and shift here.
         src_w = scale[0]
@@ -1565,6 +1609,7 @@ class AffineResize(object):
         return matrix.astype(np.float32)
 
     def _get_3rd_point(self, point_a, point_b):
+        """Get 3rd point to calculate affine transfrom matrix."""
         d = point_a - point_b
         point_c = point_b + np.array([-d[1], d[0]])
         return point_c
@@ -1578,7 +1623,17 @@ class AffineResize(object):
 
 @PIPELINES.register_module()
 class RandomShiftScale(object):
-    """Random shift scale."""
+    """Random shift scale.
+
+    Different from the normal shift and scale function, it doesn't
+    directly shift or scale image. It can record the shift and scale
+    infos into loading pipelines. It's desgined to be used with
+    AffineResize together.
+
+    Args:
+        shift_scale (tuple): Shift and scale range.
+        aug_prob (float): The shifting and scaling probability.
+    """
 
     def __init__(self, shift_scale, aug_prob):
 
@@ -1586,7 +1641,15 @@ class RandomShiftScale(object):
         self.aug_prob = aug_prob
 
     def __call__(self, results):
+        """Call function to record random shift and scale infos.
 
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after random shift and scale, 'center', 'size'
+                and 'affine_aug' keys are added in the result dict.
+        """
         img = results['img']
 
         height, width = img.shape[:2]

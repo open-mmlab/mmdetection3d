@@ -841,7 +841,6 @@ def test_affine_resize():
 
 
 def test_random_shift_scale():
-
     random_shift_scale = RandomShiftScale(shift_scale=(0.2, 0.4), aug_prob=0.3)
     results = dict()
     img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
