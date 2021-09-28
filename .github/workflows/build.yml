@@ -28,6 +28,8 @@ jobs:
         run: interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 95 mmdet3d
 
   build:
+    env:
+      FORCE_CUDA: 1
     runs-on: ubuntu-18.04
     container:
       image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
