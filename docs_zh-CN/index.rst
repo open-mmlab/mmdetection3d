@@ -84,7 +84,7 @@ Welcome to MMDetection3D's documentation!
    :maxdepth: 1
    :caption: 接口文档（英文）
 
-   switch_language.md
+   api.rst
 
 .. toctree::
    :maxdepth: 1

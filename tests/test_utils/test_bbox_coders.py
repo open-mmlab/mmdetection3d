@@ -592,7 +592,6 @@ def test_smoke_bbox_coder():
 
     # specically designed to test orientation decode function's
     # special cases.
-
     ori_vector = torch.tensor([[-0.9, -0.01], [-0.9, 0.01]])
     locations = torch.tensor([[15., 2., 1.], [15., 2., -1.]])
     orientations = bbox_coder._decode_orientation(ori_vector, locations)

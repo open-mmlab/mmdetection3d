@@ -11,8 +11,8 @@ class SMOKECoder(BaseBBoxCoder):
 
     Args:
         base_depth (tuple[float]): Depth references for decode box depth.
-        base_dims (tuple[tuple[float]]): Dimension references for decode
-            box dimension for each category. fomat [l, w, h]
+        base_dims (tuple[tuple[float]]): Dimension references [l, h, w]
+            for decode box dimension for each category.
         code_size (int): The dimension of boxes to be encoded.
     """
 
@@ -119,7 +119,7 @@ class SMOKECoder(BaseBBoxCoder):
             points (Tensor): Projected points on feature map in (x, y)
                 shape: (batch * K, 2)
             centers2d_offset (Tensor): Project points offset in
-                (delata_x, delta_y). shape: (batch * K, 2)
+                (delta_x, delta_y). shape: (batch * K, 2)
             depths (Tensor): Object depth z.
                 shape: (batch * K)
             cam2imgs (Tensor): Batch camera intrinsics matrix.
@@ -154,9 +154,9 @@ class SMOKECoder(BaseBBoxCoder):
         """Transform dimension offsets to dimension according to its category.
 
         Args:
-            labels(Tensor): Each points' category id.
+            labels (Tensor): Each points' category id.
                 shape: (N, K)
-            dims_offset(Tensor): Dimension offsets.
+            dims_offset (Tensor): Dimension offsets.
                 shape: (N, 3)
         """
         labels = labels.flatten().long()
@@ -170,9 +170,9 @@ class SMOKECoder(BaseBBoxCoder):
         """Retrieve object orientation.
 
         Args:
-            ori_vector(Tensor): Local orientation in [sin, cos] format.
+            ori_vector (Tensor): Local orientation in [sin, cos] format.
                 shape: (N, 2)
-            locations(Tensor): Object location.
+            locations (Tensor): Object location.
                 shape: (N, 3)
 
         Return:
