@@ -1,6 +1,3 @@
-API Documentation
-=================
-
 mmdet3d.core
 --------------
 

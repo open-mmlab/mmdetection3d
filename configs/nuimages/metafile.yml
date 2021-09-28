@@ -7,10 +7,9 @@ Collections:
       Architecture:
         - RoI Align
         - RPN
-    Paper:
-      - https://arxiv.org/abs/1703.06870
-      - https://arxiv.org/abs/1712.00726v1
     README: configs/nuimages/README.md
+    Code:
+      Version: v0.6.0
 
 Models:
   - Name: mask_rcnn_r50_fpn_1x_nuim

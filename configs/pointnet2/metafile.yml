@@ -6,8 +6,13 @@ Collections:
       Training Resources: 2x Titan XP GPUs
       Architecture:
         - PointNet++
-    Paper: https://arxiv.org/abs/1706.02413
+    Paper:
+      URL: https://arxiv.org/abs/1706.02413
+      Title: 'PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space'
     README: configs/pointnet2/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/pointnet2_sa_ssg.py#L12
+      Version: v0.14.0
 
 Models:
   - Name: pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py
