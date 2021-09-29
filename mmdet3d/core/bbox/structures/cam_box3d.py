@@ -117,7 +117,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                           / |           /  |
             (x0, y0, z0) + ----------- +   + (x1, y1, z1)
                          |  /      .   |  /
-                         | / oriign    | /
+                         | / origin    | /
             (x0, y1, z0) + ----------- + -------> x right
                          |             (x1, y1, z0)
                          |

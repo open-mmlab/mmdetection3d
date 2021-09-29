@@ -65,7 +65,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                              / |           /  |
                (x0, y0, z1) + ----------- +   + (x1, y1, z0)
                             |  /      .   |  /
-                            | / oriign    | /
+                            | / origin    | /
             left y<-------- + ----------- + (x0, y1, z0)
                 (x0, y0, z0)
         """
