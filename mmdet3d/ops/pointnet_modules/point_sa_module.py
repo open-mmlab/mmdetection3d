@@ -79,10 +79,12 @@ class BasePointSAModule(nn.Module):
         self.fps_mod_list = fps_mod
         self.fps_sample_range_list = fps_sample_range_list
 
-        self.points_sampler = Points_Sampler(
-            self.num_point, self.fps_mod_list,
-            self.fps_sample_range_list) if self.num_point is not None \
-            else None
+        if self.num_point is not None:
+            self.points_sampler = Points_Sampler(self.num_point,
+                                                 self.fps_mod_list,
+                                                 self.fps_sample_range_list)
+        else:
+            self.points_sampler = None
 
         for i in range(len(radii)):
             radius = radii[i]
@@ -112,11 +114,11 @@ class BasePointSAModule(nn.Module):
         Otherwise sample points using `self.points_sampler`.
 
         Args:
-            points_xyz (tensor.Tensor): (B, N, 3) xyz coordinates of the
+            points_xyz (torch.Tensor): (B, N, 3) xyz coordinates of the
                 features.
-            features (tensor.Tensor): (B, C, N) features of each point.
-            indices (tensor.Tensor): (B, num_point) Index of the features.
-            target_xyz (tensor.Tensor): (B, M, 3) new_xyz coordinates of
+            features (torch.Tensor): (B, C, N) features of each point.
+            indices (torch.Tensor): (B, num_point) Index of the features.
+            target_xyz (torch.Tensor): (B, M, 3) new_xyz coordinates of
                 the outputs.
 
         Returns:

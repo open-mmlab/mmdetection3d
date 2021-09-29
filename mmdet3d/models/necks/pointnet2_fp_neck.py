@@ -26,6 +26,8 @@ class PointNetFPNeck(BaseModule):
 
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Default: None
     """
 
     def __init__(self, fp_channels, init_cfg=None):
@@ -65,8 +67,11 @@ class PointNetFPNeck(BaseModule):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            dict(torch.Tensor, torch.Tensor): Neck feature with shape
-                [B, fp_channels[-1][-1], N].
+            dict[str, torch.Tensor]: Outputs of the Neck.
+
+                - fp_xyz (torch.Tensor): The coordinates of fp features.
+                - fp_features (torch.Tensor): The features from the last
+                    Feature Propogation Layers.
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 

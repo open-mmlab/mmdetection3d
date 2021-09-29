@@ -66,6 +66,8 @@ class PointNet2SAMSG(BasePointNet):
             sa_channels)
         if aggregation_channels is not None:
             assert len(sa_channels) == len(aggregation_channels)
+        else:
+            aggregation_channels = [None] * len(sa_channels)
 
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
@@ -165,6 +167,7 @@ class PointNet2SAMSG(BasePointNet):
                 out_sa_xyz.append(sa_xyz[-1])
                 out_sa_features.append(sa_features[-1])
                 out_sa_indices.append(sa_indices[-1])
+
         return dict(
             sa_xyz=out_sa_xyz,
             sa_features=out_sa_features,
