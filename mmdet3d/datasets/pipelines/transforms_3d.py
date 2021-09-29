@@ -1430,8 +1430,9 @@ class VoxelBasedPointSampler(object):
 class AffineResize(object):
     """Get the affine transform matrixs to the target size.
 
-    This class can record the affine transform matrixs while resizing
-    the input image to a fixed size. The affine transform matrixs include:
+    Different from RandomAffine in MMDetection, this class can calculate
+    the affine transform matrixs while resizing the input image to a fixed
+    size. The affine transform matrixs include:
     1) matrix transforming original image to the network input image
         size.
     2) matrix transforming original image to the network output feature
