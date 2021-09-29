@@ -181,6 +181,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 image size, scaling factor, etc.
             cam2imgs (Tensor): Camera intrinsic matrixs.
                 shape (B, 4, 4)
+            trans_mats (Tensor): Transformation matrix from original image
+                to feature map.
+                shape: (batch, 3, 3)
             topk (int): Get top k center keypoints from heatmap. Default 100.
             kernel (int): Max pooling kernel for extract local maximum pixels.
                Default 3.
