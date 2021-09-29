@@ -1,14 +1,7 @@
 dataset_type = 'KittiMonoDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-# Input modality for nuScenes dataset, this is consistent with the submission
-# format which requires the information in input_modality.
-input_modality = dict(
-    use_lidar=False,
-    use_camera=True,
-    use_radar=False,
-    use_map=False,
-    use_external=False)
+input_modality = dict(use_lidar=False, use_camera=True)
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
