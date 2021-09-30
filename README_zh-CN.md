@@ -8,7 +8,9 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本 v0.17.0.
+**新闻**: 我们发布了版本 v0.17.1.
+
+我们在 v1.0.0.dev0 分支中进行了大规模的重构，以实现统一的坐标系统。其中只有很少的模型仍在测试中，所以您可以开始试验这套统一便捷的新的坐标系。请注意，之后我们的新特性将只支持在 v1.0.0 分支。
 
 在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
@@ -62,8 +64,10 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v0.17.0 在 2021.09.01发布。
+最新的版本 v0.17.1 在 2021.10.01 发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/changelog.md)。
+
+对于分支 [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) ，请参考 [v1.0 更新日志](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) 来了解我们的最新功能和更多细节。
 
 ## 基准测试和模型库
 
