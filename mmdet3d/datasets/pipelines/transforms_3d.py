@@ -1575,7 +1575,7 @@ class AffineResize(object):
         Args:
             center (tuple): Center of current image.
             scale (tuple): Scale of current image.
-            output_scale (tuple): The transform target image scales.
+            output_scale (tuple[float]): The transform target image scales.
 
         Returns:
             np.ndarray: Affine transform matrix.
@@ -1632,7 +1632,7 @@ class RandomShiftScale(object):
     AffineResize together.
 
     Args:
-        shift_scale (tuple): Shift and scale range.
+        shift_scale (tuple[float]): Shift and scale range.
         aug_prob (float): The shifting and scaling probability.
     """
 
@@ -1660,20 +1660,17 @@ class RandomShiftScale(object):
 
         if random.random() < self.aug_prob:
             shift, scale = self.shift_scale[0], self.shift_scale[1]
-
             shift_ranges = np.arange(-shift, shift + 0.1, 0.1)
             center[0] += size[0] * random.choice(shift_ranges)
             center[1] += size[1] * random.choice(shift_ranges)
             scale_ranges = np.arange(1 - scale, 1 + scale + 0.1, 0.1)
             size *= random.choice(scale_ranges)
-
-            results['center'] = center
-            results['size'] = size
             results['affine_aug'] = True
         else:
-            results['center'] = center
-            results['size'] = size
             results['affine_aug'] = False
+
+        results['center'] = center
+        results['size'] = size
 
         return results
 
