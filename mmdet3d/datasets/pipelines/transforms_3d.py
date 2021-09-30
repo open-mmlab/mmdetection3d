@@ -1604,16 +1604,16 @@ class AffineResize(object):
 
         return matrix.astype(np.float32)
 
-    def _get_ref_point(self, point_a, point_b):
+    def _get_ref_point(self, ref_point1, ref_point2):
         """Get reference point to calculate affine transfrom matrix.
 
         While using opencv to calculate the affine matrix, we need at least
         three corresponding points seperately on original image and target
         image. Here we use two points to get the the third reference point.
         """
-        d = point_a - point_b
-        ref_point = point_b + np.array([-d[1], d[0]])
-        return ref_point
+        d = ref_point1 - ref_point2
+        ref_point3 = ref_point2 + np.array([-d[1], d[0]])
+        return ref_point3
 
     def __repr__(self):
         repr_str = self.__class__.__name__
