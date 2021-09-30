@@ -1428,11 +1428,11 @@ class VoxelBasedPointSampler(object):
 
 @PIPELINES.register_module()
 class AffineResize(object):
-    """Get the affine transform matrixs to the target size.
+    """Get the affine transform matrices to the target size.
 
     Different from RandomAffine in MMDetection, this class can calculate
-    the affine transform matrixs while resizing the input image to a fixed
-    size. The affine transform matrixs include:
+    the affine transform matrices while resizing the input image to a fixed
+    size. The affine transform matrices include:
     1) matrix transforming original image to the network input image
         size.
     2) matrix transforming original image to the network output feature
@@ -1446,7 +1446,7 @@ class AffineResize(object):
             outside the border of the image. Defaults to True.
     """
 
-    def __init__(self, img_scale=None, down_ratio=None, bbox_clip_border=True):
+    def __init__(self, img_scale, down_ratio, bbox_clip_border=True):
 
         self.img_scale = img_scale
         self.down_ratio = down_ratio
@@ -1462,39 +1462,33 @@ class AffineResize(object):
             dict: Results after affine resize, 'affine_aug', 'trans_mat'
                 keys are added in the result dict.
         """
+        # Without passing RandomShiftScale before AffineResize
         if 'center' not in results:
-            assert 'size' not in results
-            assert 'affine_aug' not in results
             img = results['img']
             height, width = img.shape[:2]
             center = np.array([width / 2, height / 2], dtype=np.float32)
             size = np.array([width, height], dtype=np.float32)
             results['affine_aug'] = False
-        else:
+        else:  # Passing RandomShiftScale before AffineResize
             img = results['img']
-            assert 'center' in results
-            assert 'size' in results
-            assert 'affine_aug' in results
             center = results['center']
             size = results['size']
 
-        center_size = [center, size]
-
-        trans_affine = self._get_transfrom_matrix(center_size, self.img_scale)
+        trans_affine = self._get_transform_matrix(center, size, self.img_scale)
 
         img = cv2.warpAffine(img, trans_affine[:2, :], self.img_scale)
 
         if isinstance(self.down_ratio, tuple):
             trans_mat = [
-                self._get_transfrom_matrix(
-                    center_size,
+                self._get_transform_matrix(
+                    center, size,
                     (self.img_scale[0] // ratio, self.img_scale[1] // ratio))
                 for ratio in self.down_ratio
             ]  # (3, 3)
         else:
-            trans_mat = self._get_transfrom_matrix(
-                center_size, (self.img_scale[0] // self.down_ratio,
-                              self.img_scale[1] // self.down_ratio))
+            trans_mat = self._get_transform_matrix(
+                center, size, (self.img_scale[0] // self.down_ratio,
+                               self.img_scale[1] // self.down_ratio))
 
         results['img'] = img
         results['img_shape'] = img.shape
@@ -1533,19 +1527,20 @@ class AffineResize(object):
 
         return results
 
-    def _affine_bboxes(self, results, trans_affine):
+    def _affine_bboxes(self, results, matrix):
         """Affine transform bboxes to input image.
 
         Args:
             results (dict): Result dict from loading pipeline.
-            trans_affine (np.ndarray): Matrix transforming original
+            matrix (np.ndarray): Matrix transforming original
                 image to the network input image size.
+                shape: (3, 3)
         """
 
         for key in results.get('bbox_fields', []):
             bboxes = results[key]
-            bboxes[:, :2] = self._affine_transform(bboxes[:, :2], trans_affine)
-            bboxes[:, 2:] = self._affine_transform(bboxes[:, 2:], trans_affine)
+            bboxes[:, :2] = self._affine_transform(bboxes[:, :2], matrix)
+            bboxes[:, 2:] = self._affine_transform(bboxes[:, 2:], matrix)
             if self.bbox_clip_border:
                 bboxes[:,
                        [0, 2]] = bboxes[:,
@@ -1555,7 +1550,7 @@ class AffineResize(object):
                                         [1, 3]].clip(0, self.img_scale[1] - 1)
             results[key] = bboxes
 
-    def _affine_transform(self, point, matrix):
+    def _affine_transform(self, points, matrix):
         """Affine transform bbox points to input iamge.
 
         Args:
@@ -1567,28 +1562,28 @@ class AffineResize(object):
         Returns:
             np.ndarray: Transformed points.
         """
-        point_num = point.shape[0]
-        point_exd = np.concatenate((point, np.ones((point_num, 1))), axis=1)
-        point_exd_trans = point_exd.T
-        new_point = np.matmul(matrix, point_exd_trans).T
-        return new_point[:, :2]
+        num_points = points.shape[0]
+        hom_points_2d = np.concatenate((points, np.ones((num_points, 1))),
+                                       axis=1)
+        hom_points_2d = hom_points_2d.T
+        affined_points = np.matmul(matrix, hom_points_2d).T
+        return affined_points[:, :2]
 
-    def _get_transfrom_matrix(self, center_scale, output_size):
+    def _get_transform_matrix(self, center, scale, output_scale):
         """Get affine transform matrix.
 
         Args:
-            center_scale (list[tuple]): Center and scale of
-                current image.
-            output_size (tuple): The transform target size.
+            center (tuple): Center of current image.
+            scale (tuple): Scale of current image.
+            output_scale (tuple): The transform target image scales.
 
         Returns:
             np.ndarray: Affine transform matrix.
         """
-        center, scale = center_scale[0], center_scale[1]
-        # todo: further add rot and shift here.
+        # TODO: further add rot and shift here.
         src_w = scale[0]
-        dst_w = output_size[0]
-        dst_h = output_size[1]
+        dst_w = output_scale[0]
+        dst_h = output_scale[1]
 
         src_dir = np.array([0, src_w * -0.5])
         dst_dir = np.array([0, dst_w * -0.5])
@@ -1600,8 +1595,8 @@ class AffineResize(object):
         dst[0, :] = np.array([dst_w * 0.5, dst_h * 0.5])
         dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5]) + dst_dir
 
-        src[2, :] = self._get_3rd_point(src[0, :], src[1, :])
-        dst[2, :] = self._get_3rd_point(dst[0, :], dst[1, :])
+        src[2, :] = self._get_ref_point(src[0, :], src[1, :])
+        dst[2, :] = self._get_ref_point(dst[0, :], dst[1, :])
 
         get_matrix = cv2.getAffineTransform(src, dst)
 
@@ -1609,11 +1604,16 @@ class AffineResize(object):
 
         return matrix.astype(np.float32)
 
-    def _get_3rd_point(self, point_a, point_b):
-        """Get 3rd point to calculate affine transfrom matrix."""
+    def _get_ref_point(self, point_a, point_b):
+        """Get reference point to calculate affine transfrom matrix.
+
+        While using opencv to calculate the affine matrix, we need at least
+        three corresponding points seperately on original image and target
+        image. Here we use two points to get the the third reference point.
+        """
         d = point_a - point_b
-        point_c = point_b + np.array([-d[1], d[0]])
-        return point_c
+        ref_point = point_b + np.array([-d[1], d[0]])
+        return ref_point
 
     def __repr__(self):
         repr_str = self.__class__.__name__
