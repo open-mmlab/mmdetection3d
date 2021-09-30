@@ -8,7 +8,9 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.17.0.
+**News**: We released the codebase v0.17.1.
+
+We have made a large refactoring to achieve unified coordinate systems in branch v1.0.0.dev0. Only very few models are still being tested, so you can start experimenting with the new coordinate systems. Please note that our new features will only be supported in v1.0.0 branch afterward.
 
 In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
 
@@ -62,8 +64,9 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.17.0 was released in 1/9/2021.
+v0.17.1 was released in 1/10/2021.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
+For branch v1.0.0.dev0, please refer to [changelog_v1.0.md](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) for our latest features and more details.
 
 ## Benchmark and model zoo
 
