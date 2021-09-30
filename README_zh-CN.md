@@ -10,7 +10,7 @@
 
 **新闻**: 我们发布了版本 v0.17.1.
 
-我们在 v1.0.0.dev0 分支中进行了大规模的重构，以实现统一的坐标系统。其中只有很少的模型仍在测试中，所以您可以开始试验这套统一便捷的新的坐标系。请注意，之后我们的新特性将只支持在 v1.0.0 分支。
+我们在 [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) 分支中进行了大规模的重构，以实现统一的坐标系统。其中只有很少的模型仍在测试中，所以您可以开始试验这套统一便捷的新的坐标系。请注意，之后我们的新特性将只支持在 v1.0.0 分支。
 
 在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
