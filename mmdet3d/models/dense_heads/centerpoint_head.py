@@ -4,6 +4,7 @@ import torch
 from mmcv.cnn import ConvModule, build_conv_layer
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn
+from torch.nn import functional as F
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
                           xywhr2xyxyr)
@@ -597,6 +598,15 @@ class CenterHead(BaseModule):
             # heatmap focal loss
             preds_dict[0]['heatmap'] = clip_sigmoid(preds_dict[0]['heatmap'])
             num_pos = heatmaps[task_id].eq(1).float().sum().item()
+
+            # Interpolate all prediction output maps to target dimension
+            _, _, target_h, target_w = heatmaps[task_id].shape
+            for key in preds_dict[0].keys():
+                preds_dict[0][key] = F.interpolate(
+                    preds_dict[0][key],
+                    size=(target_h, target_w),
+                    mode='bilinear')
+
             loss_heatmap = self.loss_cls(
                 preds_dict[0]['heatmap'],
                 heatmaps[task_id],
