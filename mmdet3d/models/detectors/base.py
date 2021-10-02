@@ -102,8 +102,9 @@ class Base3DDetector(BaseDetector):
                                                    Coord3DMode.DEPTH)
                 pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
                                                 Box3DMode.DEPTH)
-                gt_bboxes = Box3DMode.convert(gt_bboxes, box_mode_3d,
-                                              Box3DMode.DEPTH)
+                if gt_bboxes is not None:
+                    gt_bboxes = Box3DMode.convert(gt_bboxes, box_mode_3d,
+                                                  Box3DMode.DEPTH)
             elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
