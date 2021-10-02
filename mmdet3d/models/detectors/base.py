@@ -60,13 +60,14 @@ class Base3DDetector(BaseDetector):
         else:
             return self.forward_test(**kwargs)
 
-    def show_results(self, data, result, out_dir):
+    def show_results(self, data, result, out_dir, gt_bboxes=None):
         """Results visualization.
 
         Args:
             data (list[dict]): Input points and the information of the sample.
             result (list[dict]): Prediction results.
             out_dir (str): Output directory of visualization result.
+            gt_bboxes (obj:`LIDARInstance3DBoxes): GT bbox annotations.
         """
         for batch_id in range(len(result)):
             if isinstance(data['points'][0], DC):
@@ -101,8 +102,12 @@ class Base3DDetector(BaseDetector):
                                                    Coord3DMode.DEPTH)
                 pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
                                                 Box3DMode.DEPTH)
+                gt_bboxes = Box3DMode.convert(gt_bboxes, box_mode_3d,
+                                              Box3DMode.DEPTH)
             elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
-            show_result(points, None, pred_bboxes, out_dir, file_name)
+            if gt_bboxes is not None:
+                gt_bboxes = gt_bboxes.tensor.cpu().numpy()
+            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name)
