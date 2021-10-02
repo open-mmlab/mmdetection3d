@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from torch.nn import functional as F
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet.models import DETECTORS
@@ -45,6 +46,9 @@ class CenterPoint(MVXTwoStageDetector):
         x = self.pts_backbone(x)
         if self.with_pts_neck:
             x = self.pts_neck(x)
+        # Upsample output feature map spatial dimension to match target
+        if self.train_cfg['pts']['out_size_factor'] == 4:
+            x[0] = F.interpolate(x[0], scale_factor=2, mode='bilinear')
         return x
 
     def forward_pts_train(self,
