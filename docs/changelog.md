@@ -5,7 +5,7 @@
 #### Highlights
 
 - Support a faster but non-deterministic version of hard voxelization
-- Perfection of dataset tutorials and the Chinese documentation
+- Completion of dataset tutorials and the Chinese documentation
 - Improved the aesthetics of the documentation format
 
 #### Improvements
