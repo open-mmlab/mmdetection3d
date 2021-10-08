@@ -97,9 +97,9 @@ Support methods
 - [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
-- [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
+- [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
-- [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
+- [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
 - [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 
