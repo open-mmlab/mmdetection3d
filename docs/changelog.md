@@ -1,5 +1,35 @@
 ## Changelog
 
+### v0.17.1 (1/10/2021)
+
+#### Highlights
+
+- Support a faster but non-deterministic version of hard voxelization
+- Completion of dataset tutorials and the Chinese documentation
+- Improved the aesthetics of the documentation format
+
+#### Improvements
+
+- Add Chinese Documentation for training on customized datasets and designing customized models (#729, #820)
+- Support a faster but non-deterministic version of hard voxelization (#904)
+- Update paper titles and code details for metafiles (#917)
+- Add a tutorial for KITTI dataset (#953)
+- Use Pytorch sphinx theme to improve the format of documentation (#958)
+- Use the docker to accelerate CI (#971)
+
+#### Bug Fixes
+
+- Fix the sphinx version used in the documentation (#902)
+- Fix a dynamic scatter bug that discards the first voxel by mistake when all input points are valid (#915)
+- Fix the inconsistent variable names used in the [unit test](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_voxel_encoder/test_voxel_generator.py) for voxel generater (#919)
+- Upgrade to use `build_prior_generator` to replace the legacy `build_anchor_generator` (#941)
+- Fix a minor bug caused by a too small difference set in the FreeAnchor Head (#944)
+
+#### Contributors
+
+A total of 8 developers contributed to this release.
+
+@DCNSW, @zhanggefan, @mickeyouyou, @ZCMax, @wHao-Wu, @tojimahammatov, @xiliu8006, @Tai-Wang
 
 ### v0.17.0 (1/9/2021)
 

@@ -8,7 +8,13 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本 v0.17.0.
+**新闻**: 我们发布了版本 v0.17.1.
+
+我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。因此，在接下来的几个月里，很少有功能会添加到主分支中。
+
+由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。
+
+如果您感兴趣，可以开始使用 [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) 分支进行实验。请注意，我们的新功能将只支持在 v1.0.0 分支。
 
 在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
@@ -62,8 +68,10 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v0.17.0 在 2021.09.01发布。
+最新的版本 v0.17.1 在 2021.10.01 发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/changelog.md)。
+
+对于分支 [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) ，请参考 [v1.0 更新日志](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) 来了解我们的最新功能和更多细节。
 
 ## 基准测试和模型库
 
@@ -89,9 +97,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
-- [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
+- [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
-- [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
+- [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
 - [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
