@@ -11,7 +11,9 @@
 **News**: We released the codebase v0.17.1.
 
 We are going through large refactoring to provide simpler and more unified usage of many modules. Thus, few features will be added to the master branch in the following months.
+
 The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked.
+
 You can start experiments with v1.0.0.dev0 if you are interested. Please note that our new features will only be supported in v1.0.0 branch afterward.
 
 In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
