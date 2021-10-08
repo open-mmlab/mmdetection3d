@@ -10,7 +10,7 @@ We implement Group-Free-3D and provide the result and checkpoints on ScanNet dat
 @article{liu2021,
   title={Group-Free 3D Object Detection via Transformers},
   author={Liu, Ze and Zhang, Zheng and Cao, Yue and Hu, Han and Tong, Xin},
-  journal={arXiv preprint arXiv:2104.00678},
+  journal={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
   year={2021}
 }
 ```
