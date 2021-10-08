@@ -11,14 +11,14 @@ Currently we first support the benchmark on the large-scale nuScenes dataset, wh
 
 ```
 @inproceedings{wang2021fcos3d,
-	title={{FCOS3D}: Fully Convolutional One-Stage Monocular 3D Object Detection},
+	title={{FCOS3D: Fully} Convolutional One-Stage Monocular 3D Object Detection},
 	author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
 	booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops},
 	year={2021}
 }
 # For the original 2D version
 @inproceedings{tian2019fcos,
-  title     =  {{FCOS}: Fully Convolutional One-Stage Object Detection},
+  title     =  {{FCOS: Fully} Convolutional One-Stage Object Detection},
   author    =  {Tian, Zhi and Shen, Chunhua and Chen, Hao and He, Tong},
   booktitle =  {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
   year      =  {2019}
