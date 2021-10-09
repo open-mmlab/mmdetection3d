@@ -461,6 +461,18 @@ class LoadPointsFromFile(object):
 
 
 @PIPELINES.register_module()
+class LoadPointsFromWeb(LoadPointsFromFile):
+    """Load Points From Web.
+
+    Load sunrgbd and scannet points from Web.
+    """
+
+    def __call__(self, results):
+        assert 'points' in results
+        return results
+
+
+@PIPELINES.register_module()
 class LoadAnnotations3D(LoadAnnotations):
     """Load Annotations3D.
 

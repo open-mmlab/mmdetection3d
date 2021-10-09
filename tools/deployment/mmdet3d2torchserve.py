@@ -19,14 +19,14 @@ def mmdet3d2torchserve(
     model_version: str = '1.0',
     force: bool = False,
 ):
-    """Converts MMDetection model (config + checkpoint) to TorchServe `.mar`.
+    """Converts MMDetection3D model (config + checkpoint) to TorchServe `.mar`.
 
     Args:
         config_file:
-            In MMDetection config format.
+            In MMDetection3D config format.
             The contents vary for each task repository.
         checkpoint_file:
-            In MMDetection checkpoint format.
+            In MMDetection3D checkpoint format.
             The contents vary for each task repository.
         output_folder:
             Folder where `{model_name}.mar` will be created.
@@ -52,7 +52,7 @@ def mmdet3d2torchserve(
             **{
                 'model_file': f'{tmpdir}/config.py',
                 'serialized_file': checkpoint_file,
-                'handler': f'{Path(__file__).parent}/mmdet_handler.py',
+                'handler': f'{Path(__file__).parent}/mmdet3d_handler.py',
                 'model_name': model_name or Path(checkpoint_file).stem,
                 'version': model_version,
                 'export_path': output_folder,
