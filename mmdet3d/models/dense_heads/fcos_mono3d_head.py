@@ -1,12 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from logging import warning
 from mmcv.cnn import Scale
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
-from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
+from mmdet3d.core import (box3d_multiclass_nms, limit_period, points_img2cam,
+                          xywhr2xyxyr)
 from mmdet.core import multi_apply
+from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
@@ -73,6 +76,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      loss_weight=1.0),
+                 bbox_coder=dict(type='FCOS3DBBoxCoder', code_size=9),
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  centerness_branch=(64, ),
                  init_cfg=None,
@@ -95,6 +99,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             init_cfg=init_cfg,
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
+        bbox_coder['code_size'] = self.bbox_code_size
+        self.bbox_coder = build_bbox_coder(bbox_coder)
         if init_cfg is None:
             self.init_cfg = dict(
                 type='Normal',
@@ -110,9 +116,11 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             conv_channels=self.centerness_branch,
             conv_strides=(1, ) * len(self.centerness_branch))
         self.conv_centerness = nn.Conv2d(self.centerness_branch[-1], 1, 1)
+        self.scale_dim = 3  # only for offset, depth and size regression
         self.scales = nn.ModuleList([
-            nn.ModuleList([Scale(1.0) for _ in range(3)]) for _ in self.strides
-        ])  # only for offset, depth and size regression
+            nn.ModuleList([Scale(1.0) for _ in range(self.scale_dim)])
+            for _ in self.strides
+        ])
 
     def forward(self, feats):
         """Forward features from the upstream network.
@@ -138,8 +146,9 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 centernesses (list[Tensor]): Centerness for each scale level,
                     each is a 4D-tensor, the channel number is num_points * 1.
         """
+        # Note: we use [:5] to filter feats and only return predictions
         return multi_apply(self.forward_single, feats, self.scales,
-                           self.strides)
+                           self.strides)[:5]
 
     def forward_single(self, x, scale, stride):
         """Forward features of a single scale levle.
@@ -169,26 +178,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             for conv_centerness_prev_layer in self.conv_centerness_prev:
                 clone_cls_feat = conv_centerness_prev_layer(clone_cls_feat)
             centerness = self.conv_centerness(clone_cls_feat)
-        # scale the bbox_pred of different level
-        # only apply to offset, depth and size prediction
-        scale_offset, scale_depth, scale_size = scale[0:3]
 
-        clone_bbox_pred = bbox_pred.clone()
-        bbox_pred[:, :2] = scale_offset(clone_bbox_pred[:, :2]).float()
-        bbox_pred[:, 2] = scale_depth(clone_bbox_pred[:, 2]).float()
-        bbox_pred[:, 3:6] = scale_size(clone_bbox_pred[:, 3:6]).float()
+        bbox_pred = self.bbox_coder.decode(bbox_pred, scale, stride,
+                                           self.training, cls_score)
 
-        bbox_pred[:, 2] = bbox_pred[:, 2].exp()
-        bbox_pred[:, 3:6] = bbox_pred[:, 3:6].exp() + 1e-6  # avoid size=0
-
-        assert self.norm_on_bbox is True, 'Setting norm_on_bbox to False '\
-            'has not been thoroughly tested for FCOS3D.'
-        if self.norm_on_bbox:
-            if not self.training:
-                # Note that this line is conducted only when testing
-                bbox_pred[:, :2] *= stride
-
-        return cls_score, bbox_pred, dir_cls_pred, attr_pred, centerness
+        return cls_score, bbox_pred, dir_cls_pred, attr_pred, centerness, \
+            cls_feat, reg_feat
 
     @staticmethod
     def add_sin_difference(boxes1, boxes2):
@@ -639,7 +634,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             if rescale:
                 bbox_pred[:, :2] /= bbox_pred[:, :2].new_tensor(scale_factor)
             pred_center2d = bbox_pred[:, :3].clone()
-            bbox_pred[:, :3] = self.pts2Dto3D(bbox_pred[:, :3], view)
+            bbox_pred[:, :3] = points_img2cam(bbox_pred[:, :3], view)
             mlvl_centers2d.append(pred_center2d)
             mlvl_bboxes.append(bbox_pred)
             mlvl_scores.append(scores)
@@ -652,19 +647,13 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
 
         # change local yaw to global yaw for 3D nms
-        if mlvl_bboxes.shape[0] > 0:
-            dir_rot = limit_period(mlvl_bboxes[..., 6] - self.dir_offset, 0,
-                                   np.pi)
-            mlvl_bboxes[..., 6] = (
-                dir_rot + self.dir_offset +
-                np.pi * mlvl_dir_scores.to(mlvl_bboxes.dtype))
-
-        cam_intrinsic = mlvl_centers2d.new_zeros((4, 4))
-        cam_intrinsic[:view.shape[0], :view.shape[1]] = \
+        cam2img = mlvl_centers2d.new_zeros((4, 4))
+        cam2img[:view.shape[0], :view.shape[1]] = \
             mlvl_centers2d.new_tensor(view)
-        mlvl_bboxes[:, 6] = torch.atan2(
-            mlvl_centers2d[:, 0] - cam_intrinsic[0, 2],
-            cam_intrinsic[0, 0]) + mlvl_bboxes[:, 6]
+        mlvl_bboxes = self.bbox_coder.decode_yaw(mlvl_bboxes, mlvl_centers2d,
+                                                 mlvl_dir_scores,
+                                                 self.dir_offset, cam2img)
+
         mlvl_bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
             mlvl_bboxes, box_dim=self.bbox_code_size,
             origin=(0.5, 0.5, 0.5)).bev)
@@ -708,6 +697,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             torch.Tensor: points in 3D space. [N, 3],
                 3 corresponds with x, y, z in 3D space.
         """
+        warning.warn('DeprecationWarning: This static method has been moved '
+                     'out of this class to mmdet3d/core. The function '
+                     'pts2Dto3D will be deprecated.')
+
         assert view.shape[0] <= 4
         assert view.shape[1] <= 4
         assert points.shape[1] == 3

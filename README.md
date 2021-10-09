@@ -8,9 +8,15 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.16.0.
+**News**: We released the codebase v0.17.1.
 
-In the recent [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
+We are going through large refactoring to provide simpler and more unified usage of many modules. Thus, few features will be added to the master branch in the following months.
+
+The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked.
+
+You can start experiments with v1.0.0.dev0 if you are interested. Please note that our new features will only be supported in v1.0.0 branch afterward.
+
+In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
 
 Code and models for the best vision-only method, [FCOS3D](https://arxiv.org/abs/2104.10956), have been released. Please stay tuned for [MoCa](https://arxiv.org/abs/2012.12741).
 
@@ -62,8 +68,10 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.16.0 was released in 1/8/2021.
+v0.17.1 was released in 1/10/2021.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
+
+For branch v1.0.0.dev0, please refer to [changelog_v1.0.md](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) for our latest features and more details.
 
 ## Benchmark and model zoo
 
@@ -90,9 +98,9 @@ Support methods
 - [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
 - [x] [SSN (ECCV'2020)](configs/ssn/README.md)
 - [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
-- [x] [FCOS3D (Arxiv'2021)](configs/fcos3d/README.md)
+- [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
-- [x] [Group-Free-3D (Arxiv'2021)](configs/groupfree3d/README.md)
+- [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
 - [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)

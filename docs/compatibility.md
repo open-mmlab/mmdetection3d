@@ -1,8 +1,4 @@
-# Compatibility with Previous Versions of MMDetection3D
-
-This document provides detailed descriptions of the BC-breaking changes in MMDetection3D.
-
-## MMDetection3D 0.16.0
+## 0.16.0
 
 ### Returned values of `QueryAndGroup` operation
 
@@ -26,7 +22,7 @@ We adopt a new pre-processing procedure for the ScanNet dataset in order to supp
 
 Please refer to the ScanNet [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) for more details.
 
-## MMDetection3D 0.15.0
+## 0.15.0
 
 ### MMCV Version
 
@@ -45,7 +41,7 @@ We modified the dataset augmentation function `BackgroundPointsFilter`([here](ht
 
 We enhance the pipeline function `IndoorPatchPointSample` used in point cloud segmentation task by adding more choices for patch selection. Also, we plan to remove the unused parameter `sample_rate` in the future. Please modify the code as well as the config files accordingly if you use this transform.
 
-## MMDetection3D 0.14.0
+## 0.14.0
 
 ### Dataset class for 3D segmentation task
 
@@ -65,7 +61,7 @@ We adopt new pre-processing and conversion steps of ScanNet dataset. In previous
 
 We have trained a [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet/votenet_8x8_scannet-3d-18class.py) model on the newly processed ScanNet dataset and get similar benchmark results. In order to prepare ScanNet data for both detection and segmentation tasks, please re-run the new pre-processing scripts following the ScanNet [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/).
 
-## MMDetection3D 0.12.0
+## 0.12.0
 
 ### SUNRGBD dataset for ImVoteNet
 
@@ -77,7 +73,7 @@ We adopt a new pre-processing procedure for the SUNRGBD dataset in order to supp
 
 Please refer to the SUNRGBD [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) for more details.
 
-## MMDetection3D 0.6.0
+## 0.6.0
 
 ### VoteNet model structure update
 
