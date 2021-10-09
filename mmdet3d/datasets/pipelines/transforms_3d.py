@@ -1432,11 +1432,9 @@ class AffineResize(object):
 
     Different from :class:`RandomAffine` in MMDetection, this class can
     calculate the affine transform matrices while resizing the input image
-    to a fixed size. The affine transform matrices include:
-    1) matrix transforming original image to the network input image
-        size.
-    2) matrix transforming original image to the network output feature
-        map size.
+    to a fixed size. The affine transform matrices include: 1) matrix
+    transforming original image to the network input image size. 2) matrix
+    transforming original image to the network output feature map size.
 
     Args:
         img_scale (tuple): Images scales for resizing.
