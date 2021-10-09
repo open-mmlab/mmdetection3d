@@ -1430,9 +1430,9 @@ class VoxelBasedPointSampler(object):
 class AffineResize(object):
     """Get the affine transform matrices to the target size.
 
-    Different from RandomAffine in MMDetection, this class can calculate
-    the affine transform matrices while resizing the input image to a fixed
-    size. The affine transform matrices include:
+    Different from :class:`RandomAffine` in MMDetection, this class can
+    calculate the affine transform matrices while resizing the input image
+    to a fixed size. The affine transform matrices include:
     1) matrix transforming original image to the network input image
         size.
     2) matrix transforming original image to the network output feature
@@ -1462,14 +1462,16 @@ class AffineResize(object):
             dict: Results after affine resize, 'affine_aug', 'trans_mat'
                 keys are added in the result dict.
         """
-        # Without passing RandomShiftScale before AffineResize
+        # The results have gone through RandomShiftScale before AffineResize
         if 'center' not in results:
             img = results['img']
             height, width = img.shape[:2]
             center = np.array([width / 2, height / 2], dtype=np.float32)
             size = np.array([width, height], dtype=np.float32)
             results['affine_aug'] = False
-        else:  # Passing RandomShiftScale before AffineResize
+        else:
+            # The results did not go through RandomShiftScale before
+            # AffineResize
             img = results['img']
             center = results['center']
             size = results['size']
