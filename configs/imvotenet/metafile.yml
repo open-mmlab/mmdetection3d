@@ -9,8 +9,13 @@ Collections:
         - Faster R-CNN
         - VoteNet
         - Feature Pyramid Network
-    Paper: https://arxiv.org/abs/2001.10692
+    Paper:
+      URL: https://arxiv.org/abs/2001.10692
+      Title: 'ImVoteNet: Boosting 3D Object Detection in Point Clouds with Image Votes'
     README: configs/imvotenet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/imvotenet.py#L56
+      Version: v0.12.0
 
 Models:
   - Name: imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class

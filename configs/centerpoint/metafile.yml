@@ -7,8 +7,13 @@ Collections:
       Training Resources: 8x V100 GPUs
       Architecture:
         - Hard Voxelization
-    Paper: https://arxiv.org/abs/2006.11275
+    Paper:
+      URL: https://arxiv.org/abs/2006.11275
+      Title: 'Center-based 3D Object Detection and Tracking'
     README: configs/centerpoint/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/centerpoint.py#L10
+      Version: v0.6.0
 
 Models:
   - Name: centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
