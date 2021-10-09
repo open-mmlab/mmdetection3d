@@ -7,8 +7,13 @@ Collections:
       Architecture:
         - Faster R-CNN
         - Hard Voxelization
-    Paper: https://arxiv.org/abs/2003.13678
+    Paper:
+      URL: https://arxiv.org/abs/2003.13678
+      Title: 'Designing Network Design Spaces'
     README: configs/regnet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/nostem_regnet.py#L7
+      Version: v0.5.0
 
 Models:
   - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d

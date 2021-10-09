@@ -75,3 +75,11 @@
 ### ImVoxelNet
 
 请参考 [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvoxelnet) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
+
+### PAConv
+
+请参考 [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果.
+
+### DGCNN
+
+请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果.
