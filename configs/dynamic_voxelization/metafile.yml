@@ -7,8 +7,13 @@ Collections:
       Training Resources: 8x V100 GPUs
       Architecture:
         - Dynamic Voxelization
-    Paper: https://arxiv.org/abs/1910.06528
+    Paper:
+      URL: https://arxiv.org/abs/1910.06528
+      Title: 'End-to-End Multi-View Fusion for 3D Object Detection in LiDAR Point Clouds'
     README: configs/dynamic_voxelization/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/dynamic_voxelnet.py#L11
+      Version: v0.5.0
 
 Models:
   - Name: dv_second_secfpn_6x8_80e_kitti-3d-car

@@ -204,10 +204,15 @@ std::vector<at::Tensor> dynamic_point_to_voxel_forward_gpu(
   std::tie(out_coors, coors_map, reduce_count) =
       at::unique_dim(coors_clean, 0, true, true, true);
 
-  // the first element of out_coors is always (-1,-1,-1) and should be removed
-  out_coors = out_coors.slice(0, 1);
-  reduce_count = reduce_count.slice(0, 1).to(torch::kInt32);
-  coors_map = coors_map.to(torch::kInt32) - 1;
+  if (out_coors.index({0, 0}).lt(0).item<bool>()) {
+    // the first element of out_coors (-1,-1,-1) and should be removed
+    out_coors = out_coors.slice(0, 1);
+    reduce_count = reduce_count.slice(0, 1);
+    coors_map = coors_map - 1;
+  }
+
+  coors_map = coors_map.to(torch::kInt32);
+  reduce_count = reduce_count.to(torch::kInt32);
 
   auto reduced_feats =
       at::empty({out_coors.size(0), num_feats}, feats.options());

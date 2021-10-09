@@ -437,7 +437,8 @@ def test_imvoxelnet():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
-    imvoxelnet_cfg = _get_detector_cfg('imvoxelnet/imvoxelnet_kitti-3d-car.py')
+    imvoxelnet_cfg = _get_detector_cfg(
+        'imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py')
     self = build_detector(imvoxelnet_cfg).cuda()
     imgs = torch.rand([1, 3, 384, 1280], dtype=torch.float32).cuda()
     gt_bboxes_3d = [LiDARInstance3DBoxes(torch.rand([3, 7], device='cuda'))]

@@ -6,8 +6,13 @@ Collections:
       Training Resources: 8x Titan XP GPUs
       Architecture:
         - PAConv
-    Paper: https://arxiv.org/abs/2103.14635
+    Paper:
+      URL: https://arxiv.org/abs/2103.14635
+      Title: 'PAConv: Position Adaptive Convolution with Dynamic Kernel Assembling on Point Clouds'
     README: configs/paconv/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/paconv/paconv.py#L106
+      Version: v0.16.0
 
 Models:
   - Name: paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py

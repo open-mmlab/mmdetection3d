@@ -5,8 +5,13 @@ Collections:
         - AdamW
       Architecture:
         - Feature Pyramid Network
-    Paper: https://arxiv.org/abs/1812.05784
+    Paper:
+      URL: https://arxiv.org/abs/1812.05784
+      Title: 'PointPillars: Fast Encoders for Object Detection from Point Clouds'
     README: configs/pointpillars/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/pillar_encoder.py#L13
+      Version: v0.6.0
 
 Models:
   - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car

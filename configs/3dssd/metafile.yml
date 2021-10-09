@@ -7,8 +7,13 @@ Collections:
       Training Resources: 4x TITAN X
       Architecture:
         - PointNet++
-    Paper: https://arxiv.org/abs/2002.10187
+    Paper:
+      URL: https://arxiv.org/abs/2002.10187
+      Title: '3DSSD: Point-based 3D Single Stage Object Detector'
     README: configs/3dssd/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/ssd3dnet.py#L7
+      Version: v0.6.0
 
 Models:
   - Name: 3dssd_4x4_kitti-3d-car
