@@ -25,7 +25,7 @@ We implement SMOKE and provide the results and checkpoints on KITTI dataset.
 
 Note: mAP represents Car moderate 3D strict AP11 results.
 
-Detailed performance on KITTI 3D detection (3D/BEV) is as follows:
+Detailed performance on KITTI 3D detection (3D/BEV) is as follows, evaluated by AP11 metric:
 
 |             |     Easy      |    Moderate    |     Hard     |
 |-------------|:-------------:|:--------------:|:------------:|
