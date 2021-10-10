@@ -30,5 +30,5 @@ Detailed performance on KITTI 3D detection (3D/BEV) is as follows, evaluated by 
 |             |     Easy      |    Moderate    |     Hard     |
 |-------------|:-------------:|:--------------:|:------------:|
 | Car         | 16.92 / 22.97 | 13.85 / 18.32  | 11.90 / 15.88|
-| Pedestrian  | 11.13  / 12.61| 11.10 / 11.32  | 10.67 / 11.14|
+| Pedestrian  | 11.13 / 12.61| 11.10 / 11.32  | 10.67 / 11.14|
 | Cyclist     | 0.99  / 1.47  | 0.54 / 0.65    | 0.55 / 0.67  |
