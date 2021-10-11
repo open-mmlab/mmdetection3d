@@ -7,7 +7,7 @@ Collections:
       Training Resources: 4x V100 GPUS
       Architecture:
         - SMOKEMono3DHead
-        - DLA-Net
+        - DLA
     Paper:
       URL: https://arxiv.org/abs/2002.10111
       Title: 'SMOKE: Single-Stage Monocular 3D Object Detection via Keypoint Estimation'
