@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import torch
 import warnings
@@ -93,11 +94,10 @@ class MVXTwoStageDetector(Base3DDetector):
                               'key, please consider using init_cfg.')
                 self.img_roi_head.init_cfg = dict(
                     type='Pretrained', checkpoint=img_pretrained)
-
         if self.with_pts_backbone:
-            if img_pretrained is not None:
+            if pts_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated '
-                              'key, please consider using init_cfg.')
+                              'key, please consider using init_cfg')
                 self.pts_backbone.init_cfg = dict(
                     type='Pretrained', checkpoint=pts_pretrained)
 

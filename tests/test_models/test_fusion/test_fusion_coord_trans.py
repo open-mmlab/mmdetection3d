@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 """Tests coords transformation in fusion modules.
 
 CommandLine:

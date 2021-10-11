@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import pytest
 import torch
@@ -1552,11 +1553,35 @@ def test_rotation_3d_in_axis():
                            [[-0.2555, -0.2683, 0.0000],
                             [-0.2555, -0.2683, 0.9072]]])
     angles = [np.pi / 2, -np.pi / 2]
-    rotated = rotation_3d_in_axis(points, angles, axis=0)
+    rotated = rotation_3d_in_axis(points, angles, axis=0).numpy()
     expected_rotated = np.array([[[-0.4599, 0.0000, -0.0471],
                                   [-0.4599, -1.8433, -0.0471]],
                                  [[-0.2555, 0.0000, 0.2683],
                                   [-0.2555, 0.9072, 0.2683]]])
+    assert np.allclose(rotated, expected_rotated, atol=1e-3)
+
+    points = torch.tensor([[[-0.4599, -0.0471, 0.0000],
+                            [-0.4599, -0.0471, 1.8433]],
+                           [[-0.2555, -0.2683, 0.0000],
+                            [-0.2555, -0.2683, 0.9072]]])
+    angles = [np.pi / 2, -np.pi / 2]
+    rotated = rotation_3d_in_axis(points, angles, axis=1).numpy()
+    expected_rotated = np.array([[[0.0000, -0.0471, 0.4599],
+                                  [1.8433, -0.0471, 0.4599]],
+                                 [[0.0000, -0.2683, -0.2555],
+                                  [-0.9072, -0.2683, -0.2555]]])
+    assert np.allclose(rotated, expected_rotated, atol=1e-3)
+
+    points = torch.tensor([[[-0.4599, -0.0471, 0.0000],
+                            [-0.4599, 0.0471, 1.8433]],
+                           [[-0.2555, -0.2683, 0.0000],
+                            [0.2555, -0.2683, 0.9072]]])
+    angles = [np.pi / 2, -np.pi / 2]
+    rotated = rotation_3d_in_axis(points, angles, axis=2).numpy()
+    expected_rotated = np.array([[[0.0471, -0.4599, 0.0000],
+                                  [-0.0471, -0.4599, 1.8433]],
+                                 [[-0.2683, 0.2555, 0.0000],
+                                  [-0.2683, -0.2555, 0.9072]]])
     assert np.allclose(rotated, expected_rotated, atol=1e-3)
 
     points = torch.tensor([[[-0.0471, 0.0000], [-0.0471, 1.8433]],

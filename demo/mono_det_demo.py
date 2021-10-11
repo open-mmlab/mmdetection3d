@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from argparse import ArgumentParser
 
 from mmdet3d.apis import (inference_mono_3d_detector, init_model,
@@ -17,11 +18,13 @@ def main():
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
-        '--show', action='store_true', help='show online visuliaztion results')
+        '--show',
+        action='store_true',
+        help='show online visualization results')
     parser.add_argument(
         '--snapshot',
         action='store_true',
-        help='whether to save online visuliaztion results')
+        help='whether to save online visualization results')
     args = parser.parse_args()
 
     # build the model from a config file and a checkpoint file

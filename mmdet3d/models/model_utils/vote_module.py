@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv import is_tuple_of
 from mmcv.cnn import ConvModule

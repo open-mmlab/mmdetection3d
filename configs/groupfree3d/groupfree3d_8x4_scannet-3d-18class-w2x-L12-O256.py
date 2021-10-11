@@ -162,7 +162,7 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
-        times=1,
+        times=5,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
@@ -207,16 +207,8 @@ optimizer = dict(
         }))
 
 optimizer_config = dict(grad_clip=dict(max_norm=0.1, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[280, 340])
+lr_config = dict(policy='step', warmup=None, step=[56, 68])
 
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=400)
+runner = dict(type='EpochBasedRunner', max_epochs=80)
 checkpoint_config = dict(interval=1, max_keep_ckpts=10)
-# yapf:disable
-log_config = dict(
-    interval=30,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable

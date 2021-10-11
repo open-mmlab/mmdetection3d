@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 from logging import warning
@@ -70,9 +71,9 @@ def rotation_3d_in_axis(points,
     if points.shape[-1] == 3:
         if axis == 1 or axis == -2:
             rot_mat_T = torch.stack([
-                torch.stack([rot_cos, zeros, rot_sin]),
+                torch.stack([rot_cos, zeros, -rot_sin]),
                 torch.stack([zeros, ones, zeros]),
-                torch.stack([-rot_sin, zeros, rot_cos])
+                torch.stack([rot_sin, zeros, rot_cos])
             ])
         elif axis == 2 or axis == -1:
             rot_mat_T = torch.stack([
@@ -212,6 +213,40 @@ def points_cam2img(points_3d, proj_mat, with_depth=False):
     return point_2d_res
 
 
+@array_converter(apply_to=('points', 'cam2img'))
+def points_img2cam(points, cam2img):
+    """Project points in image coordinates to camera coordinates.
+
+    Args:
+        points (torch.Tensor): 2.5D points in 2D images, [N, 3],
+            3 corresponds with x, y in the image and depth.
+        cam2img (torch.Tensor): Camera instrinsic matrix. The shape can be
+            [3, 3], [3, 4] or [4, 4].
+
+    Returns:
+        torch.Tensor: points in 3D space. [N, 3],
+            3 corresponds with x, y, z in 3D space.
+    """
+    assert cam2img.shape[0] <= 4
+    assert cam2img.shape[1] <= 4
+    assert points.shape[1] == 3
+
+    xys = points[:, :2]
+    depths = points[:, 2].view(-1, 1)
+    unnormed_xys = torch.cat([xys * depths, depths], dim=1)
+
+    pad_cam2img = torch.eye(4, dtype=xys.dtype, device=xys.device)
+    pad_cam2img[:cam2img.shape[0], :cam2img.shape[1]] = cam2img
+    inv_pad_cam2img = torch.inverse(pad_cam2img).transpose(0, 1)
+
+    # Do operation in homogenous coordinates.
+    num_points = unnormed_xys.shape[0]
+    homo_xys = torch.cat([unnormed_xys, xys.new_ones((num_points, 1))], dim=1)
+    points3D = torch.mm(homo_xys, inv_pad_cam2img)[:, :3]
+
+    return points3D
+
+
 def mono_cam_box2vis(cam_box):
     """This is a post-processing function on the bboxes from Mono-3D task. If
     we want to perform projection visualization, we need to:
@@ -256,3 +291,20 @@ def mono_cam_box2vis(cam_box):
         cam_box, box_dim=cam_box.shape[-1], origin=(0.5, 0.5, 0.5))
 
     return cam_box
+
+
+def get_proj_mat_by_coord_type(img_meta, coord_type):
+    """Obtain image features using points.
+
+    Args:
+        img_meta (dict): Meta info.
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
+            Can be case-insensitive.
+
+    Returns:
+        torch.Tensor: transformation matrix.
+    """
+    coord_type = coord_type.upper()
+    mapping = {'LIDAR': 'lidar2img', 'DEPTH': 'depth2img', 'CAMERA': 'cam2img'}
+    assert coord_type in mapping.keys()
+    return img_meta[mapping[coord_type]]

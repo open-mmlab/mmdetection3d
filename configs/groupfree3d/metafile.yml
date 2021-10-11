@@ -6,8 +6,13 @@ Collections:
       Training Resources: 4x V100 GPUs
       Architecture:
         - PointNet++
-    Paper: https://arxiv.org/abs/2104.00678
+    Paper:
+      URL: https://arxiv.org/abs/2104.00678
+      Title: 'Group-Free 3D Object Detection via Transformers'
     README: configs/groupfree3d/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/groupfree3dnet.py#L10
+      Version: v0.15.0
 
 Models:
   - Name: groupfree3d_8x4_scannet-3d-18class-L6-O256.py
@@ -20,8 +25,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 65.59
-          AP@0.5: 48.43
+          AP@0.25: 66.32
+          AP@0.5: 47.82
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256/groupfree3d_8x4_scannet-3d-18class-L6-O256_20210702_145347-3499eb55.pth
 
   - Name: groupfree3d_8x4_scannet-3d-18class-L12-O256.py
@@ -34,8 +39,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 67.68
-          AP@0.5: 49.30
+          AP@0.25: 66.57
+          AP@0.5: 48.21
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L12-O256/groupfree3d_8x4_scannet-3d-18class-L12-O256_20210702_150907-1c5551ad.pth
 
   - Name: groupfree3d_8x4_scannet-3d-18class-w2x-L12-O256.py
@@ -48,8 +53,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 67.09
-          AP@0.5: 50.76
+          AP@0.25: 68.20
+          AP@0.5: 51.02
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/groupfree3d/groupfree3d_8x4_scannet-3d-18class-w2x-L12-O256/groupfree3d_8x4_scannet-3d-18class-w2x-L12-O256_20210702_200301-944f0ac0.pth
 
   - Name: groupfree3d_8x4_scannet-3d-18class-w2x-L12-O512.py
@@ -62,6 +67,6 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 68.31
-          AP@0.5: 51.73
+          AP@0.25: 68.22
+          AP@0.5: 52.61
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/groupfree3d/groupfree3d_8x4_scannet-3d-18class-w2x-L12-O512/groupfree3d_8x4_scannet-3d-18class-w2x-L12-O512_20210702_220204-187b71c7.pth

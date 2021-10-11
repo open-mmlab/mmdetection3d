@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
@@ -121,8 +122,8 @@ class CenterPoint(MVXTwoStageDetector):
                                 task_id][0][key][:, 1, ...]
                         elif key == 'rot':
                             outs[task_id][0][
-                                key][:, 1,
-                                     ...] = -outs[task_id][0][key][:, 1, ...]
+                                key][:, 0,
+                                     ...] = -outs[task_id][0][key][:, 0, ...]
                         elif key == 'vel':
                             outs[task_id][0][
                                 key][:, 1,
@@ -135,8 +136,8 @@ class CenterPoint(MVXTwoStageDetector):
                                 task_id][0][key][:, 0, ...]
                         elif key == 'rot':
                             outs[task_id][0][
-                                key][:, 0,
-                                     ...] = -outs[task_id][0][key][:, 0, ...]
+                                key][:, 1,
+                                     ...] = -outs[task_id][0][key][:, 1, ...]
                         elif key == 'vel':
                             outs[task_id][0][
                                 key][:, 0,

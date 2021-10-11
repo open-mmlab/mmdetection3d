@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 """
 CommandLine:
     pytest tests/test_utils/test_anchor.py
@@ -6,7 +7,7 @@ CommandLine:
 """
 import torch
 
-from mmdet3d.core.anchor import build_anchor_generator
+from mmdet3d.core.anchor import build_prior_generator
 
 
 def test_anchor_3d_range_generator():
@@ -25,7 +26,7 @@ def test_anchor_3d_range_generator():
         rotations=[0, 1.57],
         reshape_out=False)
 
-    anchor_generator = build_anchor_generator(anchor_generator_cfg)
+    anchor_generator = build_prior_generator(anchor_generator_cfg)
     repr_str = repr(anchor_generator)
     expected_repr_str = 'Anchor3DRangeGenerator(anchor_range=' \
                         '[[0, -39.68, -0.6, 70.4, 39.68, -0.6], ' \
@@ -64,7 +65,7 @@ def test_aligned_anchor_generator():
         reshape_out=True)
 
     featmap_sizes = [(256, 256), (128, 128), (64, 64)]
-    anchor_generator = build_anchor_generator(anchor_generator_cfg)
+    anchor_generator = build_prior_generator(anchor_generator_cfg)
     assert anchor_generator.num_base_anchors == 8
 
     # check base anchors
@@ -199,7 +200,7 @@ def test_aligned_anchor_generator_per_cls():
         reshape_out=False)
 
     featmap_sizes = [(100, 100), (50, 50)]
-    anchor_generator = build_anchor_generator(anchor_generator_cfg)
+    anchor_generator = build_prior_generator(anchor_generator_cfg)
 
     # check base anchors
     expected_grid_anchors = [[

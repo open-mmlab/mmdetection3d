@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
@@ -119,7 +120,7 @@ class FreeAnchor3DHead(Anchor3DHead):
                 # object_box_prob: P{a_{j} -> b_{i}}, shape: [i, j]
                 t1 = self.bbox_thr
                 t2 = object_box_iou.max(
-                    dim=1, keepdim=True).values.clamp(min=t1 + 1e-12)
+                    dim=1, keepdim=True).values.clamp(min=t1 + 1e-6)
                 object_box_prob = ((object_box_iou - t1) / (t2 - t1)).clamp(
                     min=0, max=1)
 

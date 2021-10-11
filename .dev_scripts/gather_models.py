@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 """Script to gather benchmarked models and prepare them for upload.
 
 Usage:
@@ -24,6 +25,7 @@ SCHEDULES_LUT = {
     '_6x_': 73,
     '_50e_': 50,
     '_80e_': 80,
+    '_100e_': 100,
     '_150e_': 150,
     '_200e_': 200,
     '_250e_': 250,

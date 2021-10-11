@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
 
@@ -136,11 +137,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         corners_norm = corners_norm - dims.new_tensor([0.5, 1, 0.5])
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
-        # positive direction of the gravity axis
-        # in cam coord system points to the earth
-        # so the rotation is clockwise if viewed from above
         corners = rotation_3d_in_axis(
-            corners, self.tensor[:, 6], axis=self.YAW_AXIS, clockwise=True)
+            corners, self.tensor[:, 6], axis=self.YAW_AXIS)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
@@ -181,11 +179,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 self.tensor[:, 0:3],
                 angle,
                 axis=self.YAW_AXIS,
-                return_mat=True,
-                # positive direction of the gravity axis
-                # in cam coord system points to the earth
-                # so the rotation is clockwise if viewed from above
-                clockwise=True)
+                return_mat=True)
         else:
             rot_mat_T = angle
             rot_sin = rot_mat_T[2, 0]

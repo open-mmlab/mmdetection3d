@@ -7,8 +7,13 @@ Collections:
       Training Resources: 8x V100 GPUs
       Architecture:
         - Sparse U-Net
-    Paper: https://arxiv.org/abs/1907.03670
+    Paper:
+      URL: https://arxiv.org/abs/1907.03670
+      Title: 'From Points to Parts: 3D Object Detection from Point Cloud with Part-aware and Part-aggregation Network'
     README: configs/parta2/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/parta2.py#L12
+      Version: v0.5.0
 
 Models:
   - Name: hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class

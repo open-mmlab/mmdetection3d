@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 

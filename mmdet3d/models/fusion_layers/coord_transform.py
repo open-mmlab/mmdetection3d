@@ -1,15 +1,16 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from functools import partial
 
 from mmdet3d.core.points import get_points_type
 
 
-def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
+def apply_3d_transformation(pcd, coord_type, img_meta, reverse=False):
     """Apply transformation to input point cloud.
 
     Args:
         pcd (torch.Tensor): The point cloud to be transformed.
-        coords_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
         img_meta(dict): Meta info regarding data transformation.
         reverse (bool): Reversed transformation or not.
 
@@ -53,7 +54,7 @@ def apply_3d_transformation(pcd, coords_type, img_meta, reverse=False):
         if 'transformation_3d_flow' in img_meta else []
 
     pcd = pcd.clone()  # prevent inplace modification
-    pcd = get_points_type(coords_type)(pcd)
+    pcd = get_points_type(coord_type)(pcd)
 
     horizontal_flip_func = partial(pcd.flip, bev_direction='horizontal') \
         if pcd_horizontal_flip else lambda: None

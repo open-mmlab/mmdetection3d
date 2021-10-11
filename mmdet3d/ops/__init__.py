@@ -1,8 +1,10 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
                       get_compiling_cuda_version, nms, roi_align,
                       sigmoid_focal_loss)
 
 from .ball_query import ball_query
+from .dgcnn_modules import DGCNNFAModule, DGCNNFPModule, DGCNNGFModule
 from .furthest_point_sample import (Points_Sampler, furthest_point_sample,
                                     furthest_point_sample_with_dist)
 from .gather_points import gather_points
@@ -33,8 +35,9 @@ __all__ = [
     'furthest_point_sample_with_dist', 'three_interpolate', 'three_nn',
     'gather_points', 'grouping_operation', 'group_points', 'GroupAll',
     'QueryAndGroup', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
-    'points_in_boxes_all', 'get_compiler_version', 'assign_score_withk',
-    'get_compiling_cuda_version', 'Points_Sampler', 'build_sa_module',
-    'PAConv', 'PAConvCUDA', 'PAConvSAModuleMSG', 'PAConvSAModule',
-    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG'
+    'DGCNNFPModule', 'DGCNNGFModule', 'DGCNNFAModule', 'points_in_boxes_all',
+    'get_compiler_version', 'assign_score_withk', 'get_compiling_cuda_version',
+    'Points_Sampler', 'build_sa_module', 'PAConv', 'PAConvCUDA',
+    'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
+    'PAConvCUDASAModuleMSG'
 ]

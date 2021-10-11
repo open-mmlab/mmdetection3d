@@ -7,8 +7,13 @@ Collections:
       Training Resources: 8x GeForce RTX 2080 Ti
       Architecture:
         - FCOSMono3DHead
-    Paper: https://arxiv.org/abs/2104.10956
+    Paper:
+      URL: https://arxiv.org/abs/2104.10956
+      Title: 'FCOS3D: Fully Convolutional One-Stage Monocular 3D Object Detection'
     README: configs/fcos3d/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/fcos_mono3d.py#L7
+      Version: v0.13.0
 
 Models:
   - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d

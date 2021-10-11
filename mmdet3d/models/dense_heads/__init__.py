@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .anchor3d_head import Anchor3DHead
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 from .base_conv_bbox_head import BaseConvBboxHead
@@ -8,6 +9,7 @@ from .free_anchor3d_head import FreeAnchor3DHead
 from .groupfree3d_head import GroupFree3DHead
 from .parta2_rpn_head import PartA2RPNHead
 from .shape_aware_head import ShapeAwareHead
+from .smoke_mono3d_head import SMOKEMono3DHead
 from .ssd_3d_head import SSD3DHead
 from .vote_head import VoteHead
 
@@ -15,5 +17,5 @@ __all__ = [
     'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
     'SSD3DHead', 'BaseConvBboxHead', 'CenterHead', 'ShapeAwareHead',
     'BaseMono3DDenseHead', 'AnchorFreeMono3DHead', 'FCOSMono3DHead',
-    'GroupFree3DHead'
+    'GroupFree3DHead', 'SMOKEMono3DHead'
 ]

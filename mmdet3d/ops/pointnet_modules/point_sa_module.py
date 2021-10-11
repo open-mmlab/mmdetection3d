@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import ConvModule
 from torch import nn as nn
@@ -114,12 +115,10 @@ class BasePointSAModule(nn.Module):
         Otherwise sample points using `self.points_sampler`.
 
         Args:
-            points_xyz (torch.Tensor): (B, N, 3) xyz coordinates of the
-                features.
-            features (torch.Tensor): (B, C, N) features of each point.
-            indices (torch.Tensor): (B, num_point) Index of the features.
-            target_xyz (torch.Tensor): (B, M, 3) new_xyz coordinates of
-                the outputs.
+            points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
+            features (Tensor): (B, C, N) features of each point.
+            indices (Tensor): (B, num_point) Index of the features.
+            target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
 
         Returns:
             Tensor: (B, num_point, 3) sampled xyz coordinates of points.

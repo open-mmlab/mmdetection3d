@@ -6,8 +6,13 @@ Collections:
         - AdamW
       Training Resources: 8x GeForce GTX 1080 Ti
       Architecture:
-    Paper: https://arxiv.org/abs/2006.05682
+    Paper:
+      URL: https://arxiv.org/abs/2006.05682
+      Title: 'H3DNet: 3D Object Detection Using Hybrid Geometric Primitives'
     README: configs/h3dnet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/h3dnet.py#L10
+      Version: v0.6.0
 
 Models:
   - Name: h3dnet_3x8_scannet-3d-18class
