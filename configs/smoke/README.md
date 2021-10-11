@@ -7,10 +7,11 @@
 We implement SMOKE and provide the results and checkpoints on KITTI dataset.
 
 ```
-@article{liu2020SMOKE,
-  title={{SMOKE: Single}-Stage Monocular 3D Object Detection via Keypoint Estimation},
-  author={Zechen Liu and Zizhang Wu and Roland T\'oth},
-  journal={arXiv preprint arXiv:2002.10111},
+@inproceedings{liu2020smoke,
+  title={Smoke: Single-stage monocular 3d object detection via keypoint estimation},
+  author={Liu, Zechen and Wu, Zizhang and T{\'o}th, Roland},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops},
+  pages={996--997},
   year={2020}
 }
 ```

@@ -82,4 +82,8 @@
 
 ### DGCNN
 
-请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果.
+请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果.
+
+### SMOKE
+
+请考考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.
