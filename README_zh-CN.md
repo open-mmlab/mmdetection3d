@@ -83,7 +83,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] PointNet++ (NeurIPS'2017)
 - [x] RegNet (CVPR'2020)
 - [x] DGCNN (TOG'2019)
-- [x] DLANet (CVPR'2018)
+- [x] DLA (CVPR'2018)
 
 已支持的算法：
 
@@ -106,8 +106,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 - [x] [SMOKE (CVPRW'2020)](configs/smoke/README.md)
 
-|                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLANet |
-|--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:-----:|
+|                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLA |
+|--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:---:|
 | SECOND             | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     | ✗
 | PointPillars       | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     | ✗
 | FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     | ✗

@@ -84,7 +84,7 @@ Support backbones:
 - [x] PointNet++ (NeurIPS'2017)
 - [x] RegNet (CVPR'2020)
 - [x] DGCNN (TOG'2019)
-- [x] DLANet (CVPR'2018)
+- [x] DLA (CVPR'2018)
 
 Support methods
 
@@ -107,8 +107,8 @@ Support methods
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 - [x] [SMOKE (CVPRW'2020)](configs/smoke/README.md)
 
-|                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLANet |
-|--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:-----:|
+|                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLA |
+|--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:---:|
 | SECOND             | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     | ✗
 | PointPillars       | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     | ✗
 | FreeAnchor         | ☐        | ☐        | ☐        | ✗         | ✗         | ☐     | ✓        | ☐     | ✗
