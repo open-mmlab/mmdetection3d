@@ -59,6 +59,52 @@ def test_imvoxel_neck():
     assert outputs[0].shape == (1, 256, 248, 216)
 
 
+def test_fp_neck():
+
+    points = torch.rand(3, 100, 4)
+
+    backbone_cfg = dict(
+        type='PointNet2SAMSG',
+        in_channels=4,
+        num_points=(4096, 1024, 256, 64),
+        radii=((0.1, 0.5), (0.5, 1.0), (1.0, 2.0), (2.0, 4.0)),
+        num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
+        sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,
+                                                                    128)),
+                     ((128, 196, 256), (128, 196, 256)), ((256, 256, 512),
+                                                          (256, 384, 512))),
+        fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
+        fps_sample_range_lists=((-1), (-1), (-1), (-1)),
+        aggregation_channels=(None, None, None, None),
+        dilated_group=(False, False, False, False),
+        out_indices=(0, 1, 2, 3),
+        norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
+        sa_cfg=dict(
+            type='PointSAModuleMSG',
+            pool_mod='max',
+            use_xyz=True,
+            normalize_xyz=False))
+    neck_cfg = dict(
+        type='PointNetFPNeck',
+        fp_channels=((1536, 512, 512), (768, 512, 512), (608, 256, 256),
+                     (257, 128, 128)))
+
+    backbone = build_backbone(backbone_cfg)
+    backbone.init_weights()
+    neck = build_neck(neck_cfg)
+    neck.init_weights()
+
+    if torch.cuda.is_available():
+        points = points.cuda()
+        backbone.cuda()
+        neck.cuda()
+
+    feats_sa = backbone(points)
+    outputs = neck(feats_sa)
+    assert outputs['fp_xyz'].cpu().numpy().shape == (3, 100, 3)
+    assert outputs['fp_features'].detach().cpu().numpy().shape == (3, 128, 100)
+
+
 def test_dla_neck():
 
     s = 32
