@@ -21,7 +21,7 @@
 
 - Fix the sphinx version used in the documentation (#902)
 - Fix a dynamic scatter bug that discards the first voxel by mistake when all input points are valid (#915)
-- Fix the inconsistent variable names used in the [unit test](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_voxel_encoder/test_voxel_generator.py) for voxel generater (#919)
+- Fix the inconsistent variable names used in the [unit test](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_voxel_encoder/test_voxel_generator.py) for voxel generator (#919)
 - Upgrade to use `build_prior_generator` to replace the legacy `build_anchor_generator` (#941)
 - Fix a minor bug caused by a too small difference set in the FreeAnchor Head (#944)
 
@@ -35,7 +35,7 @@ A total of 8 developers contributed to this release.
 
 #### Compatibility
 
-- Unify the camera keys for consistent transformation between coodinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
+- Unify the camera keys for consistent transformation between coordinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
 - The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
 
 #### Highlights
@@ -489,7 +489,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 #### Bug Fixes
 
 - Rename CosineAnealing to CosineAnnealing (#57)
-- Fix device inconsistant bug in 3D IoU computation (#69)
+- Fix device inconsistent bug in 3D IoU computation (#69)
 - Fix a minor bug in json2csv of lyft dataset (#78)
 - Add missed test data for pointnet modules (#85)
 - Fix `use_valid_flag` bug in `CustomDataset` (#106)

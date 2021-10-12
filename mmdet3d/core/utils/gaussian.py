@@ -28,7 +28,7 @@ def draw_heatmap_gaussian(heatmap, center, radius, k=1):
     Args:
         heatmap (torch.Tensor): Heatmap to be masked.
         center (torch.Tensor): Center coord of the heatmap.
-        radius (int): Radius of gausian.
+        radius (int): Radius of gaussian.
         K (int, optional): Multiple of masked_gaussian. Defaults to 1.
 
     Returns:

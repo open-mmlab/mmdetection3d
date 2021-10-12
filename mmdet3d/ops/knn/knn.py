@@ -27,11 +27,11 @@ class KNN(Function):
             center_xyz (Tensor): (B, npoint, 3) if transposed == False,
                 else (B, 3, npoint). centers of the knn query.
             transposed (bool): whether the input tensors are transposed.
-                defaults to False. Should not expicitly use this keyword
+                defaults to False. Should not explicitly use this keyword
                 when calling knn (=KNN.apply), just add the fourth param.
 
         Returns:
-            Tensor: (B, k, npoint) tensor with the indicies of
+            Tensor: (B, k, npoint) tensor with the indices of
                 the features that form k-nearest neighbours.
         """
         assert k > 0

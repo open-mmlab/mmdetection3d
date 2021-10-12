@@ -73,7 +73,7 @@ void sstream_print(SStream &ss, T val, TArgs... args) {
     if (!(expr)) {                                      \
       std::stringstream __macro_s;                      \
       __macro_s << __FILE__ << " " << __LINE__ << "\n"; \
-      __macro_s << #expr << " assert faild. ";          \
+      __macro_s << #expr << " assert failed. ";          \
       tv::sstream_print(__macro_s, __VA_ARGS__);        \
       throw std::runtime_error(__macro_s.str());        \
     }                                                   \
@@ -84,7 +84,7 @@ void sstream_print(SStream &ss, T val, TArgs... args) {
     if (!(expr)) {                                      \
       std::stringstream __macro_s;                      \
       __macro_s << __FILE__ << " " << __LINE__ << "\n"; \
-      __macro_s << #expr << " assert faild. ";          \
+      __macro_s << #expr << " assert failed. ";          \
       tv::sstream_print(__macro_s, __VA_ARGS__);        \
       throw std::invalid_argument(__macro_s.str());     \
     }                                                   \

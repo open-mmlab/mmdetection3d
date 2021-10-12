@@ -111,7 +111,7 @@ Next, we will elaborate on the details recorded in these info files.
         - info['annotations'][i]['bbox']: 2D bounding box annotation (exterior rectangle of the projected 3D box), 1x4 list following [x1, y1, x2-x1, y2-y1].
         x1/y1 are minimum coordinates along horizontal/vertical direction of the image.
         - info['annotations'][i]['iscrowd']: Whether the region is crowded. Defaults to 0.
-        - info['annotations'][i]['bbox_cam3d']: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list. 
+        - info['annotations'][i]['bbox_cam3d']: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list.
         - info['annotations'][i]['velo_cam3d']: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), an Nx2 array.
         - info['annotations'][i]['center2d']: Projected 3D-center containing 2.5D information: projected center location on the image (2) and depth (1), 1x3 list.
         - info['annotations'][i]['attribute_name']: Attribute name.
@@ -249,7 +249,7 @@ An example to test PointPillars on nuScenes with 8 GPUs and generate a submissio
 
 Note that the testing info should be changed to that for testing set instead of validation set [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-3d.py#L132).
 
-After generating the `work_dirs/pp-nus/results_eval.json`, you can compress it and submit it to nuScenes benchmark. Please refer to the [nuScenes offical website](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) for more information.
+After generating the `work_dirs/pp-nus/results_eval.json`, you can compress it and submit it to nuScenes benchmark. Please refer to the [nuScenes official website](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) for more information.
 
 We can also visualize the prediction results with our developed visualization tools. Please refer to the [visualization doc](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization) for more details.
 

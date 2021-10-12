@@ -232,7 +232,7 @@ class DynamicVFE(nn.Module):
             coors (torch.Tensor): Coordinates of voxels, shape is  Nx(1+NDim).
             points (list[torch.Tensor], optional): Raw points used to guide the
                 multi-modality fusion. Defaults to None.
-            img_feats (list[torch.Tensor], optional): Image fetures used for
+            img_feats (list[torch.Tensor], optional): Image features used for
                 multi-modality fusion. Defaults to None.
             img_metas (dict, optional): [description]. Defaults to None.
 
@@ -397,7 +397,7 @@ class HardVFE(nn.Module):
             features (torch.Tensor): Features of voxels, shape is MxNxC.
             num_points (torch.Tensor): Number of points in each voxel.
             coors (torch.Tensor): Coordinates of voxels, shape is Mx(1+NDim).
-            img_feats (list[torch.Tensor], optional): Image fetures used for
+            img_feats (list[torch.Tensor], optional): Image features used for
                 multi-modality fusion. Defaults to None.
             img_metas (dict, optional): [description]. Defaults to None.
 

@@ -25,9 +25,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        dim_channel (list[int]): indexs of dimension offset preds in
+        dim_channel (list[int]): indices of dimension offset preds in
             regression heatmap channels.
-        ori_channel (list[int]): indexs of orientation offset pred in
+        ori_channel (list[int]): indices of orientation offset pred in
             regression heatmap channels.
         bbox_coder (:obj:`CameraInstance3DBoxes`): Bbox coder
             for encoding and decoding boxes.
@@ -221,12 +221,12 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         return batch_bboxes, batch_scores, batch_topk_labels
 
     def get_predictions(self, labels3d, centers2d, gt_locations, gt_dimensions,
-                        gt_orientations, indexs, img_metas, pred_reg):
+                        gt_orientations, indices, img_metas, pred_reg):
         """Prepare predictions for computing loss.
 
         Args:
             labels3d (Tensor): Labels of each 3D box.
-                shpae (B, max_objs, )
+                shape (B, max_objs, )
             centers2d (Tensor): Coords of each projected 3D box
                 center on image. shape (B * max_objs, 2)
             gt_locations (Tensor): Coords of each 3D box's location.
@@ -235,7 +235,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 shape (N, 3)
             gt_orientations (Tensor): Orientation(yaw) of each 3D box.
                 shape (N, 1)
-            indexs (Tensor): Indexs of the existence of the 3D box.
+            indices (Tensor): Indices of the existence of the 3D box.
                 shape (B * max_objs, )
             img_metas (list[dict]): Meta information of each image,
                 e.g., image size, scaling factor, etc.
@@ -247,7 +247,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             - bbox3d_yaws (:obj:`CameraInstance3DBoxes`):
                 bbox calculated using pred orientations.
             - bbox3d_dims (:obj:`CameraInstance3DBoxes`):
-                bbox calculated using pred dimentions.
+                bbox calculated using pred dimensions.
             - bbox3d_locs (:obj:`CameraInstance3DBoxes`):
                 bbox calculated using pred locations.
         """
@@ -269,12 +269,12 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             pred_regression_pois, centers2d, labels3d, cam2imgs, trans_mats,
             gt_locations)
 
-        locations, dimensions, orientations = locations[indexs], dimensions[
-            indexs], orientations[indexs]
+        locations, dimensions, orientations = locations[indices], dimensions[
+            indices], orientations[indices]
 
         locations[:, 1] += dimensions[:, 1] / 2
 
-        gt_locations = gt_locations[indexs]
+        gt_locations = gt_locations[indices]
 
         assert len(locations) == len(gt_locations)
         assert len(dimensions) == len(gt_dimensions)
@@ -293,7 +293,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
     def get_targets(self, gt_bboxes, gt_labels, gt_bboxes_3d, gt_labels_3d,
                     centers2d, feat_shape, img_shape, img_metas):
         """Get training targets for batch images.
-``
+
         Args:
             gt_bboxes (list[Tensor]): Ground truth bboxes of each image,
                 shape (num_gt, 4).
@@ -318,10 +318,10 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
               - gt_centers2d (Tensor): Coords of each projected 3D box
                     center on image. shape (B * max_objs, 2)
               - gt_labels3d (Tensor): Labels of each 3D box.
-                    shpae (B, max_objs, )
-              - indexs (Tensor): Indexs of the existence of the 3D box.
+                    shape (B, max_objs, )
+              - indices (Tensor): Indices of the existence of the 3D box.
                     shape (B * max_objs, )
-              - affine_indexs (Tensor): Indexs of the affine of the 3D box.
+              - affine_indices (Tensor): Indices of the affine of the 3D box.
                     shape (N, )
               - gt_locs (Tensor): Coords of each 3D box's location.
                     shape (N, 3)
@@ -417,8 +417,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         target_labels = dict(
             gt_centers2d=batch_centers2d.long(),
             gt_labels3d=batch_labels_3d,
-            indexs=inds,
-            reg_indexs=reg_inds,
+            indices=inds,
+            reg_indices=reg_inds,
             gt_locs=batch_gt_locations,
             gt_dims=gt_dimensions,
             gt_yaws=gt_orientations,
@@ -487,14 +487,14 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             gt_locations=target_labels['gt_locs'],
             gt_dimensions=target_labels['gt_dims'],
             gt_orientations=target_labels['gt_yaws'],
-            indexs=target_labels['indexs'],
+            indices=target_labels['indices'],
             img_metas=img_metas,
             pred_reg=pred_reg)
 
         loss_cls = self.loss_cls(
             center2d_heatmap, center2d_heatmap_target, avg_factor=avg_factor)
 
-        reg_inds = target_labels['reg_indexs']
+        reg_inds = target_labels['reg_indices']
 
         loss_bbox_oris = self.loss_bbox(
             pred_bboxes['ori'].corners[reg_inds, ...],

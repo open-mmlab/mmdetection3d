@@ -5,7 +5,7 @@
 # the learning rate will change from 0.0018 to 0.018, than go to 0.0018*1e-4
 lr = 0.0018
 # The optimizer follows the setting in SECOND.Pytorch, but here we use
-# the offcial AdamW optimizer implemented by PyTorch.
+# the official AdamW optimizer implemented by PyTorch.
 optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 # We use cyclic learning rate and momentum schedule following SECOND.Pytorch

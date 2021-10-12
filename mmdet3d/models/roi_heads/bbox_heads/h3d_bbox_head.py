@@ -20,7 +20,7 @@ class H3DBboxHead(BaseModule):
 
     Args:
         num_classes (int): The number of classes.
-        suface_matching_cfg (dict): Config for suface primitive matching.
+        surface_matching_cfg (dict): Config for surface primitive matching.
         line_matching_cfg (dict): Config for line primitive matching.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
@@ -36,7 +36,7 @@ class H3DBboxHead(BaseModule):
         primitive_refine_channels (tuple[int]): Convolution channels of
             prediction layer.
         upper_thresh (float): Threshold for line matching.
-        surface_thresh (float): Threshold for suface matching.
+        surface_thresh (float): Threshold for surface matching.
         line_thresh (float): Threshold for line matching.
         conv_cfg (dict): Config of convolution in prediction layer.
         norm_cfg (dict): Config of BN in prediction layer.

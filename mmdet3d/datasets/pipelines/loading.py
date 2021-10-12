@@ -49,7 +49,7 @@ class LoadMultiViewImageFromFiles(object):
         if self.to_float32:
             img = img.astype(np.float32)
         results['filename'] = filename
-        # unravel to list, see `DefaultFormatBundle` in formating.py
+        # unravel to list, see `DefaultFormatBundle` in formatting.py
         # which will transpose each image separately and then stack into array
         results['img'] = [img[..., i] for i in range(img.shape[-1])]
         results['img_shape'] = img.shape

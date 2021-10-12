@@ -5,7 +5,7 @@
 <!-- [ALGORITHM] -->
 
 We implement a monocular 3D detector ImVoxelNet and provide its results and checkpoints on KITTI dataset.
-Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNet authors 
+Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNet authors
 [repo](https://github.com/saic-vul/imvoxelnet) (based on mmdetection3d).
 
 ```

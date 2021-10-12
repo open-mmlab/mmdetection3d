@@ -468,7 +468,7 @@ def rbbox2d_to_near_bbox(rbboxes):
             (N, 5(x, y, xdim, ydim, rad)).
 
     Returns:
-        np.ndarray: Bounding boxes with the shpae of
+        np.ndarray: Bounding boxes with the shape of
             (N, 4(xmin, ymin, xmax, ymax)).
     """
     rots = rbboxes[..., -1]

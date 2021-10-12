@@ -23,8 +23,8 @@ class SeparateHead(BaseModule):
         heads (dict): Conv information.
         head_conv (int, optional): Output channels.
             Default: 64.
-        final_kernal (int, optional): Kernal size for the last conv layer.
-            Deafult: 1.
+        final_kernal (int, optional): Kernel size for the last conv layer.
+            Default: 1.
         init_bias (float, optional): Initial bias. Default: -2.19.
         conv_cfg (dict, optional): Config of conv layer.
             Default: dict(type='Conv2d')
@@ -136,8 +136,8 @@ class DCNSeparateHead(BaseModule):
         dcn_config (dict): Config of dcn layer.
         head_conv (int, optional): Output channels.
             Default: 64.
-        final_kernal (int, optional): Kernal size for the last conv
-            layer. Deafult: 1.
+        final_kernal (int, optional): Kernel size for the last conv
+            layer. Default: 1.
         init_bias (float, optional): Initial bias. Default: -2.19.
         conv_cfg (dict, optional): Config of conv layer.
             Default: dict(type='Conv2d')

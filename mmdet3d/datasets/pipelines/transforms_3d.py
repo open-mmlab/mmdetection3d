@@ -151,7 +151,7 @@ class RandomFlip3D(RandomFlip):
                 'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added
                 into result dict.
         """
-        # filp 2D image and its annotations
+        # flip 2D image and its annotations
         super(RandomFlip3D, self).__call__(input_dict)
 
         if self.sync_2d:
@@ -921,11 +921,11 @@ class PointSample(object):
         """
         points = results['points']
         # Points in Camera coord can provide the depth information.
-        # TODO: Need to suport distance-based sampling for other coord system.
+        # TODO: Need to support distance-based sampling for other coord system.
         if self.sample_range is not None:
             from mmdet3d.core.points import CameraPoints
-            assert isinstance(points, CameraPoints), \
-                'Sampling based on distance is only appliable for CAMERA coord'
+            assert isinstance(points, CameraPoints), 'Sampling based on' \
+                'distance is only applicable for CAMERA coord'
         points, choices = self._points_random_sampling(
             points,
             self.num_points,
@@ -1293,7 +1293,7 @@ class VoxelBasedPointSampler(object):
     Args:
         cur_sweep_cfg (dict): Config for sampling current points.
         prev_sweep_cfg (dict): Config for sampling previous points.
-        time_dim (int): Index that indicate the time dimention
+        time_dim (int): Index that indicate the time dimension
             for input points.
     """
 
@@ -1317,7 +1317,7 @@ class VoxelBasedPointSampler(object):
             points (np.ndarray): Points subset to be sampled.
             sampler (VoxelGenerator): Voxel based sampler for
                 each points subset.
-            point_dim (int): The dimention of each points
+            point_dim (int): The dimension of each points
 
         Returns:
             np.ndarray: Sampled points.
@@ -1398,7 +1398,7 @@ class VoxelBasedPointSampler(object):
             points_numpy = points_numpy.squeeze(1)
         results['points'] = points.new_point(points_numpy[..., :original_dim])
 
-        # Restore the correspoinding seg and mask fields
+        # Restore the corresponding seg and mask fields
         for key, dim_index in map_fields2dim:
             results[key] = points_numpy[..., dim_index]
 
@@ -1551,7 +1551,7 @@ class AffineResize(object):
             results[key] = bboxes
 
     def _affine_transform(self, points, matrix):
-        """Affine transform bbox points to input iamge.
+        """Affine transform bbox points to input image.
 
         Args:
             points (np.ndarray): Points to be transformed.
@@ -1605,10 +1605,10 @@ class AffineResize(object):
         return matrix.astype(np.float32)
 
     def _get_ref_point(self, ref_point1, ref_point2):
-        """Get reference point to calculate affine transfrom matrix.
+        """Get reference point to calculate affine transform matrix.
 
         While using opencv to calculate the affine matrix, we need at least
-        three corresponding points seperately on original image and target
+        three corresponding points separately on original image and target
         image. Here we use two points to get the the third reference point.
         """
         d = ref_point1 - ref_point2
@@ -1628,7 +1628,7 @@ class RandomShiftScale(object):
 
     Different from the normal shift and scale function, it doesn't
     directly shift or scale image. It can record the shift and scale
-    infos into loading pipelines. It's desgined to be used with
+    infos into loading pipelines. It's designed to be used with
     AffineResize together.
 
     Args:

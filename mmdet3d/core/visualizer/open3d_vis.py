@@ -80,10 +80,10 @@ def _draw_bboxes(bbox3d,
             the color of points inside bbox3d. Default: (1, 0, 0).
         rot_axis (int, optional): rotation axis of bbox. Default: 2.
         center_mode (bool, optional): indicate the center of bbox is
-            bottom center or gravity center. avaliable mode
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
         mode (str, optional):  indicate type of the input points,
-            avaliable mode ['xyz', 'xyzrgb']. Default: 'xyz'.
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     if isinstance(bbox3d, torch.Tensor):
         bbox3d = bbox3d.cpu().numpy()
@@ -154,9 +154,9 @@ def show_pts_boxes(points,
             the color of points which are in bbox3d. Default: (1, 0, 0).
         rot_axis (int, optional): rotation axis of bbox. Default: 2.
         center_mode (bool, optional): indicate the center of bbox is bottom
-            center or gravity center. avaliable mode
+            center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
-        mode (str, optional):  indicate type of the input points, avaliable
+        mode (str, optional):  indicate type of the input points, available
             mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     # TODO: support score and class info
@@ -215,10 +215,10 @@ def _draw_bboxes_ind(bbox3d,
             the color of points which are in bbox3d. Default: (1, 0, 0).
         rot_axis (int, optional): rotation axis of bbox. Default: 2.
         center_mode (bool, optional): indicate the center of bbox is
-            bottom center or gravity center. avaliable mode
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
         mode (str, optional):  indicate type of the input points,
-            avaliable mode ['xyz', 'xyzrgb']. Default: 'xyz'.
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     if isinstance(bbox3d, torch.Tensor):
         bbox3d = bbox3d.cpu().numpy()
@@ -296,10 +296,10 @@ def show_pts_index_boxes(points,
             the color of points which are in bbox3d. Default: (1, 0, 0).
         rot_axis (int, optional): rotation axis of bbox. Default: 2.
         center_mode (bool, optional): indicate the center of bbox is
-            bottom center or gravity center. avaliable mode
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
         mode (str, optional):  indicate type of the input points,
-            avaliable mode ['xyz', 'xyzrgb']. Default: 'xyz'.
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     # TODO: support score and class info
     assert 0 <= rot_axis <= 2
@@ -353,10 +353,10 @@ class Visualizer(object):
             the color of points which are in bbox3d. Default: (1, 0, 0).
         rot_axis (int, optional): rotation axis of bbox. Default: 2.
         center_mode (bool, optional): indicate the center of bbox is
-            bottom center or gravity center. avaliable mode
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
         mode (str, optional):  indicate type of the input points,
-            avaliable mode ['xyz', 'xyzrgb']. Default: 'xyz'.
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
 
     def __init__(self,
@@ -409,9 +409,9 @@ class Visualizer(object):
                 to be visualized. The 3d bbox is in mode of
                 Box3DMode.DEPTH with gravity_center (please refer to
                 core.structures.box_3d_mode).
-            bbox_color (tuple[float]): the color of bbox. Defaule: None.
+            bbox_color (tuple[float]): the color of bbox. Default: None.
             points_in_box_color (tuple[float]): the color of points which
-                are in bbox3d. Defaule: None.
+                are in bbox3d. Default: None.
         """
         if bbox_color is None:
             bbox_color = self.bbox_color
