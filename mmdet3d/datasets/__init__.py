@@ -17,7 +17,8 @@ from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                         ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointSample, PointShuffle,
                         PointsRangeFilter, RandomDropPointsColor, RandomFlip3D,
-                        RandomJitterPoints, VoxelBasedPointSampler)
+                        RandomJitterPoints, RandomShiftScale,
+                        VoxelBasedPointSampler)
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
 from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
@@ -38,6 +39,5 @@ __all__ = [
     'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
     'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
     'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
-    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale',
-    'LoadPointsFromWeb'
+    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale', 'LoadPointsFromWeb'
 ]

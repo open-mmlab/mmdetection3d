@@ -6,7 +6,7 @@ FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
 ARG MMCV="1.3.8"
 ARG MMSEGMENTATION="0.14.1"
 ARG MMDET="2.14.0"
-ARG MMDET3D="0.17.0"
+ARG MMDET3D="0.17.1"
 
 ENV PYTHONUNBUFFERED TRUE
 
@@ -15,7 +15,7 @@ RUN apt-get update && \
     ca-certificates \
     g++ \
     openjdk-11-jre-headless \
-    # MMDet Requirements
+    # MMDet3D Requirements
     ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
