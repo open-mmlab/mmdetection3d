@@ -132,7 +132,7 @@ class ConvBNPositionalEncoding(nn.Module):
             xyz (Tensor)： (B, N, 3) the coordinates to embed.
 
         Returns:
-            Tensor: (B, num_pos_feats, N) the embeded position features.
+            Tensor: (B, num_pos_feats, N) the embedded position features.
         """
         xyz = xyz.permute(0, 2, 1)
         position_embedding = self.position_embedding_head(xyz)

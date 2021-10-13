@@ -23,7 +23,7 @@ class SMOKECoder(BaseBBoxCoder):
         self.bbox_code_size = code_size
 
     def encode(self, locations, dimensions, orientations, input_metas):
-        """Encode CameraInstance3DBoxes by locations, dimemsions, orientations.
+        """Encode CameraInstance3DBoxes by locations, dimensions, orientations.
 
         Args:
             locations (Tensor): Center location for 3D boxes.
@@ -55,7 +55,7 @@ class SMOKECoder(BaseBBoxCoder):
                cam2imgs,
                trans_mats,
                locations=None):
-        """Decode regression into locations, dimemsions, orientations.
+        """Decode regression into locations, dimensions, orientations.
 
         Args:
             reg (Tensor): Batch regression for each predict center2d point.
@@ -80,7 +80,7 @@ class SMOKECoder(BaseBBoxCoder):
                 - locations (Tensor): Centers of 3D boxes.
                     shape: (batch * K (max_objs), 3)
                 - dimensions (Tensor): Dimensions of 3D boxes.
-                    shpae: (batch * K (max_objs), 3)
+                    shape: (batch * K (max_objs), 3)
                 - orientations (Tensor): Orientations of 3D
                     boxes.
                     shape: (batch * K (max_objs), 1)
@@ -185,7 +185,7 @@ class SMOKECoder(BaseBBoxCoder):
         rays = torch.atan(locations[:, 0] / (locations[:, 2] + 1e-7))
         alphas = torch.atan(ori_vector[:, 0] / (ori_vector[:, 1] + 1e-7))
 
-        # get cosine value positive and negtive index.
+        # get cosine value positive and negative index.
         cos_pos_inds = (ori_vector[:, 1] >= 0).nonzero()
         cos_neg_inds = (ori_vector[:, 1] < 0).nonzero()
 

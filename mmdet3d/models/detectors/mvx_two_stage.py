@@ -497,7 +497,7 @@ class MVXTwoStageDetector(Base3DDetector):
                                                 Box3DMode.DEPTH)
             elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
-                    f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
+                    f'Unsupported box_mode_3d {box_mode_3d} for conversion!')
 
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
             show_result(points, None, pred_bboxes, out_dir, file_name)

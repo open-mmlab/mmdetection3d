@@ -13,6 +13,7 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
 | master              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
+| 0.17.1              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
 | 0.17.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
 | 0.16.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
 | 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4|
@@ -61,7 +62,7 @@ PyTorch 1.3.1., you need to install the prebuilt PyTorch with CUDA 9.2.
 conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 ```
 
-If you build PyTorch from source instead of installing the prebuilt pacakge,
+If you build PyTorch from source instead of installing the prebuilt package,
 you can use more CUDA versions such as 9.0.
 
 **c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).**

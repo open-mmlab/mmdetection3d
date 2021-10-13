@@ -172,7 +172,7 @@ class DLANeck(BaseModule):
     Args:
         in_channels (list[int], optional): List of input channels
             of multi-scale feature map.
-        start_level (int, optioanl): The scale level where upsampling
+        start_level (int, optional): The scale level where upsampling
             starts. Default: 2.
         end_level (int, optional): The scale level where upsampling
             ends. Default: 5.

@@ -214,7 +214,7 @@ class KittiMonoDataset(NuScenesMonoDataset):
             pklfile_prefix (str, optional): The prefix of pkl files, including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str, optional): The prefix of submission datas.
+            submission_prefix (str, optional): The prefix of submission data.
                 If not specified, the submission data will not be generated.
             show (bool, optional): Whether to visualize.
                 Default: False.

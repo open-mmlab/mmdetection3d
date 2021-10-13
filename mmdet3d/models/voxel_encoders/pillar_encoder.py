@@ -233,7 +233,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
 
         Returns:
             torch.Tensor: Corresponding voxel centers of each points, shape
-                (M, C), where M is the numver of points.
+                (M, C), where M is the number of points.
         """
         # Step 1: scatter voxel into canvas
         # Calculate necessary things for canvas creation

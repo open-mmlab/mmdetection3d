@@ -143,7 +143,7 @@ class LyftDataset(Custom3DDataset):
         """
         info = self.data_infos[index]
 
-        # standard protocal modified from SECOND.Pytorch
+        # standard protocol modified from SECOND.Pytorch
         input_dict = dict(
             sample_idx=info['token'],
             pts_filename=info['lidar_path'],

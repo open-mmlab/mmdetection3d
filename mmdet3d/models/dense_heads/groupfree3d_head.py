@@ -299,7 +299,7 @@ class GroupFree3DHead(BaseModule):
         """Forward pass.
 
         Note:
-            The forward of GroupFree3DHead is devided into 2 steps:
+            The forward of GroupFree3DHead is divided into 2 steps:
 
                 1. Initial object candidates sampling.
                 2. Iterative object box prediction by transformer decoder.
@@ -880,7 +880,7 @@ class GroupFree3DHead(BaseModule):
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
-        # support multi-stage predicitons
+        # support multi-stage predictions
         assert self.test_cfg['prediction_stages'] in \
             ['last', 'all', 'last_three']
 

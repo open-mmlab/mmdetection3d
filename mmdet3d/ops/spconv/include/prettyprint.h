@@ -93,7 +93,7 @@ struct delimiters {
 };
 
 // Functor to print containers. You can use this directly if you want
-// to specificy a non-default delimiters type. The printing logic can
+// to specify a non-default delimiters type. The printing logic can
 // be customized by specializing the nested template.
 
 template <typename T, typename TChar = char,

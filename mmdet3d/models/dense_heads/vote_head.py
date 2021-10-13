@@ -136,7 +136,7 @@ class VoteHead(BaseModule):
         """Forward pass.
 
         Note:
-            The forward of VoteHead is devided into 4 steps:
+            The forward of VoteHead is divided into 4 steps:
 
                 1. Generate vote_points from seed_points.
                 2. Aggregate vote_points.
