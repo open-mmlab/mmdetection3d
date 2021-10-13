@@ -574,7 +574,7 @@ class PartA2BboxHead(BaseModule):
             box_preds (torch.Tensor): Predicted boxes in shape (N, 7+C).
             score_thr (float): Threshold of scores.
             nms_thr (float): Threshold for NMS.
-            input_meta (dict): Meta informations of the current sample.
+            input_meta (dict): Meta information of the current sample.
             use_rotate_nms (bool, optional): Whether to use rotated nms.
                 Defaults to True.
 

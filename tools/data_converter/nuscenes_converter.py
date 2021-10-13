@@ -565,7 +565,7 @@ def post_process_coords(
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
                     sample_data_token: str, filename: str) -> OrderedDict:
-    """Generate one 2D annotation record given various informations on top of
+    """Generate one 2D annotation record given various information on top of
     the 2D bounding box coordinates.
 
     Args:
@@ -580,7 +580,7 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
 
     Returns:
         dict: A sample 2D annotation record.
-            - file_name (str): flie name
+            - file_name (str): file name
             - image_id (str): sample data token
             - area (float): 2d box area
             - category_name (str): category name

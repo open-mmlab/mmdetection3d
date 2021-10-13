@@ -90,7 +90,7 @@ def export(mesh_file,
         test_mode (bool): Whether is generating test data without labels.
             Default: False.
 
-    It returns a tuple, which containts the the following things:
+    It returns a tuple, which contains the the following things:
         np.ndarray: Vertices of points data.
         np.ndarray: Indexes of label.
         np.ndarray: Indexes of instance.

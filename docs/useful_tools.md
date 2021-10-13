@@ -203,7 +203,7 @@ The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth
 To convert the nuImages dataset into COCO format, please use the command below:
 
 ```shell
-python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERIONS} \
+python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERSIONS} \
                                                     --out-dir ${OUT_DIR} --nproc ${NUM_WORKERS} --extra-tag ${TAG}
 ```
 

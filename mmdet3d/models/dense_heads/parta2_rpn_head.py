@@ -207,7 +207,7 @@ class PartA2RPNHead(Anchor3DHead):
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
         # shape [k, num_class] before sigmoid
         # PartA2 need to keep raw classification score
-        # becase the bbox head in the second stage does not have
+        # because the bbox head in the second stage does not have
         # classification branch,
         # roi head need this score as classification score
         mlvl_cls_score = torch.cat(mlvl_cls_score)

@@ -151,7 +151,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                            self.strides)[:5]
 
     def forward_single(self, x, scale, stride):
-        """Forward features of a single scale levle.
+        """Forward features of a single scale level.
 
         Args:
             x (Tensor): FPN feature maps of the specified stride.
@@ -691,7 +691,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         Args:
             points (torch.Tensor): points in 2D images, [N, 3],
                 3 corresponds with x, y in the image and depth.
-            view (np.ndarray): camera instrinsic, [3, 3]
+            view (np.ndarray): camera intrinsic, [3, 3]
 
         Returns:
             torch.Tensor: points in 3D space. [N, 3],
@@ -713,7 +713,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         viewpad[:view.shape[0], :view.shape[1]] = points2D.new_tensor(view)
         inv_viewpad = torch.inverse(viewpad).transpose(0, 1)
 
-        # Do operation in homogenous coordinates.
+        # Do operation in homogeneous coordinates.
         nbr_points = unnorm_points2D.shape[0]
         homo_points2D = torch.cat(
             [unnorm_points2D,

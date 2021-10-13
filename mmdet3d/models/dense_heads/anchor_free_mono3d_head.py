@@ -321,7 +321,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         return multi_apply(self.forward_single, feats)[:5]
 
     def forward_single(self, x):
-        """Forward features of a single scale levle.
+        """Forward features of a single scale level.
 
         Args:
             x (Tensor): FPN feature maps of the specified stride.

@@ -257,4 +257,3 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 总的来说，`NuScenesBox` 和我们的 `CameraInstanceBoxes` 的主要区别主要体现在转向角（yaw）定义上。 `NuScenesBox` 定义了一个四元数或三个欧拉角的旋转，而我们的由于实际情况只定义了一个转向角（yaw），它需要我们在预处理和后处理中手动添加一些额外的旋转，例如[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L673)。
 
 另外，请注意，角点和位置的定义在 `NuScenesBox` 中是分离的。例如，在单目 3D 检测中，框位置的定义在其相机坐标中（有关汽车设置，请参阅其官方[插图](https://www.nuscenes.org/nuscenes#data-collection)），即与[我们的](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py)一致。相比之下，它的角点是通过[惯例](https://github.com/nutonomy/nuscenes-devkit/blob/02e9200218977193a1058dd7234f935834378319/python-sdk/nuscenes/utils/data_classes.py#L527) 定义的，“x 向前， y 向左， z 向上”。它导致了与我们的 `CameraInstanceBoxes` 不同的维度和旋转定义理念。一个移除相似冲突的例子是 PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744)。同样的问题也存在于 LiDAR 系统中。为了解决它们，我们通常会在预处理和后处理中添加一些转换，以保证在整个训练和推理过程中框都在我们的坐标系系统里。
-
