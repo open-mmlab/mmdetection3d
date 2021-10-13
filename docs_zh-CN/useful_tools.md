@@ -149,7 +149,7 @@ docker build -t mmdet3d-serve:latest docker/serve/
 
 查看官网文档来 [使用 docker 运行 TorchServe](https://github.com/pytorch/serve/blob/master/docker/README.md#running-torchserve-in-a-production-docker-environment)。
 
-为了运行在 GPU，您需要安装 [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)。您可以忽略 `--gpus` 参数，从而在 CPU 上运行。
+为了在 GPU 上运行，您需要安装 [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)。您可以忽略 `--gpus` 参数，从而在 CPU 上运行。
 
 例子：
 

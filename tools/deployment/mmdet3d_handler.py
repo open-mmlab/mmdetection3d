@@ -26,7 +26,7 @@ class MMdet3dHandler(BaseHandler):
 
         Args:
             context (context): It is a JSON Object containing information
-            pertaining to the model artifacts parameters.
+                pertaining to the model artifacts parameters.
         """
         properties = context.system_properties
         self.map_location = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -43,13 +43,13 @@ class MMdet3dHandler(BaseHandler):
         self.initialized = True
 
     def preprocess(self, data):
-        """Preprocess function converts data into input tensor.
+        """Preprocess function converts data into LiDARPoints class.
 
         Args:
             data (List): Input data from the request.
 
         Returns:
-            LiDARPoints : The preprocess function returns the input
+            `LiDARPoints` : The preprocess function returns the input
                 point cloud data as LiDARPoints class.
         """
         for row in data:
@@ -77,11 +77,11 @@ class MMdet3dHandler(BaseHandler):
         given input request.
 
         Args:
-            data (LiDARPoints): LiDARPoints class passed to make
-                the Inference Request.
+            data (`LiDARPoints`): LiDARPoints class passed to make
+                the inference request.
 
         Returns:
-            List(dict) : The Predicted result is returned in this function.
+            List(dict) : The predicted result is returned in this function.
         """
         results, _ = inference_detector(self.model, data)
         return results
@@ -89,8 +89,8 @@ class MMdet3dHandler(BaseHandler):
     def postprocess(self, data):
         """Postprocess function.
 
-        This function makes use of the output from the inferenceand converts
-        into a Torchserve supported response output.
+        This function makes use of the output from the inference and
+        converts it into a torchserve supported response output.
 
         Args:
             data (List[dict]): The data received from the prediction

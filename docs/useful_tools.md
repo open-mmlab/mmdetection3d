@@ -128,7 +128,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 In order to serve an `MMDetection3D` model with [`TorchServe`](https://pytorch.org/serve/), you can follow the steps:
 
-## 1. Convert model from MMDetection3D to TorchServe
+## 1. Convert the model from MMDetection3D to TorchServe
 
 ```shell
 python tools/deployment/mmdet3d2torchserve.py ${CONFIG_FILE} ${CHECKPOINT_FILE} \
@@ -148,7 +148,7 @@ docker build -t mmdet3d-serve:latest docker/serve/
 
 Check the official docs for [running TorchServe with docker](https://github.com/pytorch/serve/blob/master/docker/README.md#running-torchserve-in-a-production-docker-environment).
 
-In order to run in GPU, you need to install [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html). You can omit the `--gpus` argument in order to run in CPU.
+In order to run it on the GPU, you need to install [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html). You can omit the `--gpus` argument in order to run on the CPU.
 
 Example:
 

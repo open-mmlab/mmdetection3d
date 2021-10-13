@@ -35,9 +35,9 @@ def mmdet3d2torchserve(
             If not None, used for naming the `{model_name}.mar` file
             that will be created under `output_folder`.
             If None, `{Path(checkpoint_file).stem}` will be used.
-        model_version (str):
+        model_version (str, optional):
             Model's version. Default: '1.0'.
-        force (bool):
+        force (bool, optional):
             If True, if there is an existing `{model_name}.mar`
             file under `output_folder` it will be overwritten.
             Default: False.
