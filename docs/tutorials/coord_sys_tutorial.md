@@ -32,7 +32,7 @@ Despite the variety of datasets and equipment, by summarizing the line of works 
                    |/
     y left <------ 0 ------ right
     ```
-- Depth coordinate system, the coordinate system used by VoteNet, H3DNet, etc., in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the y-axis points to the front.
+- Depth coordinate system -- the coordinate system used by VoteNet, H3DNet, etc., in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the y-axis points to the front.
     ```
               z up  y front
                 ^    ^
@@ -132,7 +132,7 @@ __|____|____|____|_________\ x right
 
 ### KITTI
 
-The raw annotation of KITTI is under Camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train models on KITTI, the data is first converted from camera to LiDAR, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/kitti_dataset.py).
+The raw annotation of KITTI is under camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train LiDAR-Based models on KITTI, the data is first converted from camera coordinate system to LiDAR coordinate system, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/kitti_dataset.py). For training Vision-Based models, the data is kept in the camera coordinate system.
 
 In SECOND, the LiDAR coordinate system for a box is defined as follows (a bird's eye view):
 
@@ -191,8 +191,8 @@ First, for points and box centers, the coordinates before and after the conversi
 
 Then, the box dimensions before and after the conversion satisfy the following relationship:
 
-- <img src="https://render.githubusercontent.com/render/math?math=dx_{LiDAR}=dz_{camera}">
-- <img src="https://render.githubusercontent.com/render/math?math=dy_{LiDAR}=dx_{camera}">
+- <img src="https://render.githubusercontent.com/render/math?math=dx_{LiDAR}=dx_{camera}">
+- <img src="https://render.githubusercontent.com/render/math?math=dy_{LiDAR}=dz_{camera}">
 - <img src="https://render.githubusercontent.com/render/math?math=dz_{LiDAR}=dy_{camera}">
 
 Finally, the yaw angle should also be converted:
