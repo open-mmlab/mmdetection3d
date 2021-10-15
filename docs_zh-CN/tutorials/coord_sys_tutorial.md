@@ -49,7 +49,7 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐
 
 三个坐标系的图示如下：
 
-![coord_sys_all](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/v1.0.0.dev0/resources/coord_sys_all.png)
+![](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/v1.0.0.dev0/resources/coord_sys_all.png)
 
 上面三张图是 3D 坐标系，下面三张图是鸟瞰图。
 
@@ -135,7 +135,7 @@ KITTI 数据集的原始标注是在相机坐标系下的，见 [get_label_anno]
 
 在 SECOND 中，框的激光雷达坐标系定义如下（鸟瞰图）：
 
-![lidar](https://raw.githubusercontent.com/traveller59/second.pytorch/master/images/kittibox.png)
+![](https://raw.githubusercontent.com/traveller59/second.pytorch/master/images/kittibox.png)
 
 对于每个框来说，尺寸为 ``$$`(w, l, h)`$$``，转向角 (yaw) 的参考方向 y 轴正方向。更多细节请参考 [repo](https://github.com/traveller59/second.pytorch#concepts)。
 
