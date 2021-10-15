@@ -8,39 +8,39 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域种不同坐
 
 - 相机坐标系 -- 大多数相机的坐标系，在该坐标系中 y 轴正方向指向地面，x 轴正方向指向右侧，z 轴正方向指向前方。
     ```
-               up  z front
+                上  z 前
                 |    ^
                 |   /
                 |  /
                 | /
                 |/
-    left ------ 0 ------> x right
+    左   ------ 0 ------> x 右
                 |
                 |
                 |
                 |
                 v
-              y down
+              y 下
     ```
 - 激光雷达坐标系 -- 众多激光雷达的坐标系，在该坐标系中 z 轴负方向指向地面，x 轴正方向指向前方，y 轴正方向指向左侧。
     ```
-                 z up  x front
+                  z 上   x 前
                    ^    ^
                    |   /
                    |  /
                    | /
                    |/
-    y left <------ 0 ------ right
+    y 左   <------ 0 ------ 右
     ```
 - 深度坐标系 -- VoteNet，H3DNet 等模型使用的坐标系，在该坐标系中 z 轴负方向指向地面，x 轴正方向指向右侧，y 轴正方向指向前方。
     ```
-              z up  y front
+               z 上   y 前
                 ^    ^
                 |   /
                 |  /
                 | /
                 |/
-    left ------ 0 ------> x right
+    左   ------ 0 ------> x 右
     ```
 
 该教程中的坐标系的定义实际上**不仅仅是定义三个轴**。对于形如 <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)"> 的框来说，我们的坐标系也定义了如何解释框的尺寸 <img src="https://render.githubusercontent.com/render/math?math=(dx, dy, dz)"> 和 转向角 (yaw) 角度<img src="https://render.githubusercontent.com/render/math?math=r">。
@@ -57,7 +57,7 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域种不同坐
 
 ## 转向角 (yaw) 的定义
 
-请参考 [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) 了解转向角的标准定义。在目标检测中，我们选择一个轴作为重力轴，并在垂直于重力轴的平面 <img src="https://render.githubusercontent.com/render/math?math=\Pi"> 上选取一个参考方向，那么参考方向的转向角为 0，在 <img src="https://render.githubusercontent.com/render/math?math=\Pi"> 上的其他方向有非零的转向角，其角度取决于其与参考方向的角度。
+请参考 [维基百科](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) 了解转向角的标准定义。在目标检测中，我们选择一个轴作为重力轴，并在垂直于重力轴的平面 <img src="https://render.githubusercontent.com/render/math?math=\Pi"> 上选取一个参考方向，那么参考方向的转向角为 0，在 <img src="https://render.githubusercontent.com/render/math?math=\Pi"> 上的其他方向有非零的转向角，其角度取决于其与参考方向的角度。
 
 目前，对于所有支持的数据集，标注不包括俯仰角 (pitch) 和滚动角 (roll)，这意味着我们在预测框和计算框之间的重叠时只需要考虑转向角 (yaw)。
 
@@ -66,13 +66,13 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域种不同坐
 下图显示，在右手坐标系中，如果我们设定 x 轴正方向为参考方向，那么 y 轴正方向的转向角 (yaw) 为 <img src="https://render.githubusercontent.com/render/math?math=\frac{\pi}{2}">。
 
 ```
-                     z up  y front (yaw=0.5*pi)
+                     z 上  y 前 (yaw=0.5*pi)
                       ^    ^
                       |   /
                       |  /
                       | /
                       |/
-left (yaw=pi)  ------ 0 ------> x right (yaw=0)
+左 (yaw=pi)    ------ 0 ------> x 右 (yaw=0)
 ```
 对于一个框来说，其转向角 (yaw) 的值等于其方向减去一个参考方向。在 MMDetection3D 的所有三个坐标系中，参考方向总是 x 轴的正方向，而如果一个框的转向角 (yaw) 为 0，则其方向被定义为与 x 轴平行。框的转向角 (yaw) 的定义如下图所示。
 
@@ -230,10 +230,10 @@ SUN RGB-D 的原始数据不是点云而是 RGB-D 图像，我们通过反投影
 
 #### Q4: 框中转向角 (yaw) <img src="https://render.githubusercontent.com/render/math?math=\pi"> 的相位差如何影响评估？
 
-对于交并比 (IoU) 计算，转向角 (yaw) 中 <img src="https://render.githubusercontent.com/render/math?math=pi"> 的相位差会导致相同的框，所以不会影响评估。
+对于交并比 (IoU) 计算，转向角 (yaw) 中 <img src="https://render.githubusercontent.com/render/math?math=\pi"> 的相位差会导致相同的框，所以不会影响评估。
 
 然而，对于角度预测评估，这会导致完全相反的方向。
 
 想想一辆汽车，转向角 (yaw) 是汽车前部方向与 x 轴正方向之间的夹角。如果我们将该角度增加 <img src="https://render.githubusercontent.com/render/math?math=\pi">，车前部将成为车后部。
 
-对于某些类别，例如障碍物，前后没有区别，所以<img src="https://render.githubusercontent.com/render/math?math=pi"> 的相位差不会对角度预测分数产生影响。
+对于某些类别，例如障碍物，前后没有区别，所以<img src="https://render.githubusercontent.com/render/math?math=\pi"> 的相位差不会对角度预测分数产生影响。
