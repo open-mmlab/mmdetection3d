@@ -49,7 +49,7 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐
 
 三个坐标系的图示如下：
 
-![coord_sys_all](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/resources/coord_sys_all.png)
+![coord_sys_all](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/v1.0.0.dev0/resources/coord_sys_all.png)
 
 上面三张图是 3D 坐标系，下面三张图是鸟瞰图。
 
