@@ -47,7 +47,7 @@ The definition of coordinate systems in this tutorial is actually **more than ju
 
 The illustration of the three coordinate systems is shown below:
 
-![coord_sys_all](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/resources/coord_sys_all.png)
+![coord_sys_all](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/resources/coord_sys_all.png)
 
 The three figures above are the 3D coordinate systems while the three figures below are the bird's eye view.
 
