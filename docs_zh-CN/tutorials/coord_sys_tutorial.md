@@ -137,7 +137,7 @@ KITTI 数据集的原始标注是在相机坐标系下的，见 [get_label_anno]
 
 ![](https://raw.githubusercontent.com/traveller59/second.pytorch/master/images/kittibox.png)
 
-对于每个框来说，尺寸为 ``$$`(w, l, h)`$$``，转向角 (yaw) 的参考方向 y 轴正方向。更多细节请参考 [repo](https://github.com/traveller59/second.pytorch#concepts)。
+对于每个框来说，尺寸为 ``$$`(w, l, h)`$$``，转向角 (yaw) 的参考方向 y 轴正方向。更多细节请参考 [代码库](https://github.com/traveller59/second.pytorch#concepts)。
 
 我们的激光雷达坐标系有两处改变：
 
