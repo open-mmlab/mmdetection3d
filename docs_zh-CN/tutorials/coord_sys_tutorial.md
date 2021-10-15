@@ -1,8 +1,8 @@
-# 坐标系教程
+# 教程 6: 坐标系教程
 
 ## 概述
 
-MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域种不同坐标系的存在是非常有必要的，因为对于各种 3D 数据采集设备来说，如激光雷达、深度相机等，使用的坐标系是不一致的，不同的 3D 数据集也遵循不同的数据格式。早期的工作，比如 SECOND、VoteNet 将原始数据转换为另一种格式，形成了一些后来的工作也遵循的约定，使得不同坐标系的之间的转换变得更加复杂。
+MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐标系的存在是非常有必要的，因为对于各种 3D 数据采集设备来说，如激光雷达、深度相机等，使用的坐标系是不一致的，不同的 3D 数据集也遵循不同的数据格式。早期的工作，比如 SECOND、VoteNet 将原始数据转换为另一种格式，形成了一些后来的工作也遵循的约定，使得不同坐标系的之间的转换变得更加复杂。
 
 尽管数据集和设备的多种多样，但是通过总结 3D 目标检测的工作线，我们可以将坐标系大致分为三类：
 
@@ -43,7 +43,7 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域种不同坐
     左   ------ 0 ------> x 右
     ```
 
-该教程中的坐标系的定义实际上**不仅仅是定义三个轴**。对于形如 <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)"> 的框来说，我们的坐标系也定义了如何解释框的尺寸 <img src="https://render.githubusercontent.com/render/math?math=(dx, dy, dz)"> 和 转向角 (yaw) 角度<img src="https://render.githubusercontent.com/render/math?math=r">。
+该教程中的坐标系的定义实际上**不仅仅是定义三个轴**。对于形如 ``$$`(x, y, z, dx, dy, dz, r)`$$`` 的框来说，我们的坐标系也定义了如何解释框的尺寸 ``$$`(dx, dy, dz)`$$`` 和 转向角 (yaw) 角度``$$`r`$$``。
 
 **注意**： yaw 角也被翻译为偏航角，这里为了契合自动驾驶场景，在 MMDetection3D 文档中我们称之为转向角。
 
@@ -57,13 +57,13 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域种不同坐
 
 ## 转向角 (yaw) 的定义
 
-请参考 [维基百科](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) 了解转向角的标准定义。在目标检测中，我们选择一个轴作为重力轴，并在垂直于重力轴的平面 <img src="https://render.githubusercontent.com/render/math?math=\Pi"> 上选取一个参考方向，那么参考方向的转向角为 0，在 <img src="https://render.githubusercontent.com/render/math?math=\Pi"> 上的其他方向有非零的转向角，其角度取决于其与参考方向的角度。
+请参考 [维基百科](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) 了解转向角的标准定义。在目标检测中，我们选择一个轴作为重力轴，并在垂直于重力轴的平面 ``$$`\Pi`$$`` 上选取一个参考方向，那么参考方向的转向角为 0，在 ``$$`\Pi`$$`` 上的其他方向有非零的转向角，其角度取决于其与参考方向的角度。
 
 目前，对于所有支持的数据集，标注不包括俯仰角 (pitch) 和滚动角 (roll)，这意味着我们在预测框和计算框之间的重叠时只需要考虑转向角 (yaw)。
 
 在 MMDetection3D 中，所有三个坐标系都是右手坐标系，这意味着如果从重力轴的负方向（轴的正方向对着人眼）看，转向角 (yaw) 的沿着逆时针方向增加的。
 
-下图显示，在右手坐标系中，如果我们设定 x 轴正方向为参考方向，那么 y 轴正方向的转向角 (yaw) 为 <img src="https://render.githubusercontent.com/render/math?math=\frac{\pi}{2}">。
+下图显示，在右手坐标系中，如果我们设定 x 轴正方向为参考方向，那么 y 轴正方向的转向角 (yaw) 为 ``$$`\frac{\pi}{2}`$$``。
 
 ```
                      z 上  y 前 (yaw=0.5*pi)
@@ -93,9 +93,9 @@ __|____|____|____|______\ x 右
 
 ## 框尺寸的定义
 
-框尺寸的定义与转向角 (yaw) 的定义是分不开的。在上一节中，我们说如果一个框的转向角 (yaw) 为 0，它的方向就被定义为与 x 轴平行。那么自然地，一个框对应于 x 轴的尺寸就应该是 <img src="https://render.githubusercontent.com/render/math?math=dx">，但是，这在某些数据集中并非总是如此（我们稍后会解决这个问题）。
+框尺寸的定义与转向角 (yaw) 的定义是分不开的。在上一节中，我们说如果一个框的转向角 (yaw) 为 0，它的方向就被定义为与 x 轴平行。那么自然地，一个框对应于 x 轴的尺寸就应该是 ``$$`dx`$$``，但是，这在某些数据集中并非总是如此（我们稍后会解决这个问题）。
 
-下图展示了 x 轴和 <img src="https://render.githubusercontent.com/render/math?math=dx"> ，y 轴和 <img src="https://render.githubusercontent.com/render/math?math=dy"> 对应的含义。
+下图展示了 x 轴和 ``$$`dx`$$`` ，y 轴和 ``$$`dy`$$`` 对应的含义。
 
 ```
 y 前
@@ -112,7 +112,7 @@ __|____|____|____|______\ x 右
   |         dy
 ```
 
-注意框的方向总是和 <img src="https://render.githubusercontent.com/render/math?math=dx"> 边平行。
+注意框的方向总是和 ``$$`dx`$$`` 边平行。
 
 ```
 y 前
@@ -137,12 +137,12 @@ KITTI 数据集的原始标注是在相机坐标系下的，见 [get_label_anno]
 
 ![lidar](https://raw.githubusercontent.com/traveller59/second.pytorch/master/images/kittibox.png)
 
-对于每个框来说，尺寸为 <img src="https://render.githubusercontent.com/render/math?math=(w, l, h)">，转向角 (yaw) 的参考方向 y 轴正方向。更多细节请参考 [repo](https://github.com/traveller59/second.pytorch#concepts)。
+对于每个框来说，尺寸为 ``$$`(w, l, h)`$$``，转向角 (yaw) 的参考方向 y 轴正方向。更多细节请参考 [repo](https://github.com/traveller59/second.pytorch#concepts)。
 
 我们的激光雷达坐标系有两处改变：
 
 - 转向角 (yaw) 被定义为右手而非左手，从而保证一致性；
-- 框的尺寸为 <img src="https://render.githubusercontent.com/render/math?math=(l, w, h)">， 而非 <img src="https://render.githubusercontent.com/render/math?math=(w, l, h)">，由于在 KITTI 数据集中 <img src="https://render.githubusercontent.com/render/math?math=w"> 对应于 <img src="https://render.githubusercontent.com/render/math?math=dy">，<img src="https://render.githubusercontent.com/render/math?math=l"> 对应 <img src="https://render.githubusercontent.com/render/math?math=dx"> 。
+- 框的尺寸为 ``$$`(l, w, h)`$$``， 而非 ``$$`(w, l, h)`$$``，由于在 KITTI 数据集中 ``$$`w`$$`` 对应于 ``$$`dy`$$``，``$$`l`$$`` 对应 ``$$`dx`$$`` 。
 
 ### Waymo
 
@@ -150,7 +150,7 @@ KITTI 数据集的原始标注是在相机坐标系下的，见 [get_label_anno]
 
 ### NuScenes
 
-NuScense 提供了一个评估工具包，其中每个框都被包装为一个 `Box` 实例。`Box` 的坐标系不同于我们的激光雷达坐标系，在 `Box` 坐标系中，前两个表示框尺寸的元素分别对应 <img src="https://render.githubusercontent.com/render/math?math=(dy, dx)"> 或者 <img src="https://render.githubusercontent.com/render/math?math=(w, l)">，和我们的表示方法相反。更多细节请参照 NuScenes [教程](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/docs/datasets/nuscenes_det.md#notes)。
+NuScense 提供了一个评估工具包，其中每个框都被包装为一个 `Box` 实例。`Box` 的坐标系不同于我们的激光雷达坐标系，在 `Box` 坐标系中，前两个表示框尺寸的元素分别对应 ``$$`(dy, dx)`$$`` 或者 ``$$`(w, l)`$$``，和我们的表示方法相反。更多细节请参照 NuScenes [教程](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/docs/datasets/nuscenes_det.md#notes)。
 
 读者可以参考 [NuScenes 开发工具](https://github.com/nutonomy/nuscenes-devkit/tree/master/python-sdk/nuscenes/eval/detection)，了解 [NuScenes 框](https://github.com/nutonomy/nuscenes-devkit/blob/2c6a752319f23910d5f55cc995abc547a9e54142/python-sdk/nuscenes/utils/data_classes.py#L457) 的定义和 [NuScenes 评估](https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/eval/detection/evaluate.py) 的过程。
 
@@ -182,25 +182,25 @@ SUN RGB-D 的原始数据不是点云而是 RGB-D 图像，我们通过反投影
 
 首先，对于点和框中心，坐标转换前后满足下列关系：
 
-- <img src="https://render.githubusercontent.com/render/math?math=x_{LiDAR}=z_{camera}">
-- <img src="https://render.githubusercontent.com/render/math?math=y_{LiDAR}=-x_{camera}">
-- <img src="https://render.githubusercontent.com/render/math?math=z_{LiDAR}=-y_{camera}">
+- ``$$`x_{LiDAR}=z_{camera}`$$``
+- ``$$`y_{LiDAR}=-x_{camera}`$$``
+- ``$$`z_{LiDAR}=-y_{camera}`$$``
 
 然后，框的尺寸转换前后满足下列关系：
 
-- <img src="https://render.githubusercontent.com/render/math?math=dx_{LiDAR}=dx_{camera}">
-- <img src="https://render.githubusercontent.com/render/math?math=dy_{LiDAR}=dz_{camera}">
-- <img src="https://render.githubusercontent.com/render/math?math=dz_{LiDAR}=dy_{camera}">
+- ``$$`dx_{LiDAR}=dx_{camera}`$$``
+- ``$$`dy_{LiDAR}=dz_{camera}`$$``
+- ``$$`dz_{LiDAR}=dy_{camera}`$$``
 
 最后，转向角 (yaw) 也应该被转换：
 
-- <img src="https://render.githubusercontent.com/render/math?math=r_{LiDAR}=-\frac{\pi}{2}-r_{camera}">
+- ``$$`r_{LiDAR}=-\frac{\pi}{2}-r_{camera}`$$``
 
 详见代码 [这里](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/box_3d_mode.py) 了解更多细节。
 
 ### 鸟瞰图
 
-如果 3D 框是 <img src="https://render.githubusercontent.com/render/math?math=(x, y, z, dx, dy, dz, r)">， 相机坐标系框的 BEV 是 <img src="https://render.githubusercontent.com/render/math?math=(x, z, dx, dz, -r)">。转向角 (yaw) 的符号取反是因为相机坐标系的重力轴正方向指向地面。
+如果 3D 框是 ``$$`(x, y, z, dx, dy, dz, r)`$$``， 相机坐标系框的 BEV 是 ``$$`(x, z, dx, dz, -r)`$$``。转向角 (yaw) 的符号取反是因为相机坐标系的重力轴正方向指向地面。
 
 详见代码 [这里](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/cam_box3d.py) 了解更多细节。
 
@@ -214,26 +214,26 @@ SUN RGB-D 的原始数据不是点云而是 RGB-D 图像，我们通过反投影
 
 #### Q1: 与框相关的算子是否适用于所有坐标系类型？
 
-不，举个例子，在 [该文件夹](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/ops/roiaware_pool3d) 下的算子只适用于深度坐标系和激光雷达坐标下的框。由于如果从上方看的话，旋转是顺时针的，所以KITTI 数据集 [这里](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/evaluation/kitti_utils) 的评估函数仅仅适用于相机坐标系下的框。
+否，例如：在 [该文件夹](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/ops/roiaware_pool3d) 下的算子只适用于深度坐标系和激光雷达坐标系下的框。由于如果从上方看的话，旋转是顺时针的，所以KITTI 数据集 [这里](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/evaluation/kitti_utils) 的评估函数仅仅适用于相机坐标系下的框。
 
 对于每一个和框相关的算子，我们标注了其所适用的框的类型。
 
 #### Q2: 在每个坐标系中，三个轴是否分别准确指向右侧、正面和地面？
 
-不，举个例子，在 KITTI 中，从相机坐标系转换为激光雷达坐标系时，我们需要一个校准矩阵。
+否，例如：在 KITTI 中，从相机坐标系转换为激光雷达坐标系时，我们需要一个校准矩阵。
 
-#### Q3: 框中转向角 (yaw) <img src="https://render.githubusercontent.com/render/math?math=2\pi"> 的相位差如何影响评估？
+#### Q3: 框中转向角 (yaw) ``$$`2\pi`$$`` 的相位差如何影响评估？
 
-对于交并比 (IoU) 计算，转向角 (yaw) 中 <img src="https://render.githubusercontent.com/render/math?math=2\pi"> 的相位差会导致相同的框，所以不会影响评估。
+对于交并比 (IoU) 计算，转向角 (yaw) 有 ``$$`2\pi`$$`` 的相位差的两个框是相同的，所以不会影响评估。
 
-对于角度预测评估，比如 NuScenes 中的 NDS 指标和 KITTI 中的 AOS 指标，会先对预测框的角度进行标准化，因此相位差不会改变结果。
+对于角度预测评估，比如 NuScenes 中的 NDS 指标和 KITTI 中的 AOS 指标，会先对预测框的角度进行标准化，因此 ``$$`2\pi`$$`` 的相位差不会改变结果。
 
-#### Q4: 框中转向角 (yaw) <img src="https://render.githubusercontent.com/render/math?math=\pi"> 的相位差如何影响评估？
+#### Q4: 框中转向角 (yaw) ``$$`\pi`$$`` 的相位差如何影响评估？
 
-对于交并比 (IoU) 计算，转向角 (yaw) 中 <img src="https://render.githubusercontent.com/render/math?math=\pi"> 的相位差会导致相同的框，所以不会影响评估。
+对于交并比 (IoU) 计算，转向角 (yaw) 有 ``$$`\pi`$$`` 的相位差的两个框是相同的，所以不会影响评估。
 
 然而，对于角度预测评估，这会导致完全相反的方向。
 
-想想一辆汽车，转向角 (yaw) 是汽车前部方向与 x 轴正方向之间的夹角。如果我们将该角度增加 <img src="https://render.githubusercontent.com/render/math?math=\pi">，车前部将成为车后部。
+考虑一辆汽车，转向角 (yaw) 是汽车前部方向与 x 轴正方向之间的夹角。如果我们将该角度增加 ``$$`\pi`$$``，车前部将成为车后部。
 
-对于某些类别，例如障碍物，前后没有区别，所以<img src="https://render.githubusercontent.com/render/math?math=\pi"> 的相位差不会对角度预测分数产生影响。
+对于某些类别，例如障碍物，前后没有区别，所以``$$`\pi`$$`` 的相位差不会对角度预测分数产生影响。
