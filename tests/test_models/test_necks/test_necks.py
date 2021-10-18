@@ -78,16 +78,10 @@ def test_fp_neck():
     neck = build_neck(neck_cfg)
     neck.init_weights()
 
-    if torch.cuda.is_available():
-        sa_xyz = [x.cuda() for x in sa_xyz]
-        sa_features = [x.cuda() for x in sa_features]
-        neck.cuda()
-
     feats_sa = {'sa_xyz': sa_xyz, 'sa_features': sa_features}
     outputs = neck(feats_sa)
-    assert outputs['fp_xyz'].cpu().numpy().shape == (3, 16384, 3)
-    assert outputs['fp_features'].detach().cpu().numpy().shape == (3, 128,
-                                                                   16384)
+    assert outputs['fp_xyz'].numpy().shape == (3, 16384, 3)
+    assert outputs['fp_features'].detach().numpy().shape == (3, 128, 16384)
 
 
 def test_dla_neck():
