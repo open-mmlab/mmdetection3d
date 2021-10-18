@@ -97,7 +97,7 @@ kitti
         - P0: camera0 projection matrix after rectification, an 3x4 array
         - P1: camera1 projection matrix after rectification, an 3x4 array
         - P2: camera2 projection matrix after rectification, an 3x4 array
-        - P2: camera2 projection matrix after rectification, an 3x4 array
+        - P3: camera3 projection matrix after rectification, an 3x4 array
         - R0_rect: rectifying rotation matrix, an 4x4 array
         - Tr_velo_to_cam: transformation from Velodyne coordinate to camera coordinate, an 4x4 array
         - Tr_imu_to_velo: transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
@@ -155,7 +155,7 @@ train_pipeline = [
 An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows:
 
 ```shell
-bash tools/dist_test.sh configs/pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py work_dirs/pointrcnn_2x8_kitti-3d-3classes/latest.pth 8 --eval bbox
+bash tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --eval bbox
 ```
 
 ## Metrics
