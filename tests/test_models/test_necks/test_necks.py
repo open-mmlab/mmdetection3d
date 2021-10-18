@@ -94,11 +94,6 @@ def test_fp_neck():
     neck = build_neck(neck_cfg)
     neck.init_weights()
 
-    if torch.cuda.is_available():
-        points = points.cuda()
-        backbone.cuda()
-        neck.cuda()
-
     feats_sa = backbone(points)
     outputs = neck(feats_sa)
     assert outputs['fp_xyz'].cpu().numpy().shape == (3, 100, 3)
