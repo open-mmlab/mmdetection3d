@@ -60,6 +60,8 @@ def test_imvoxel_neck():
 
 
 def test_fp_neck():
+    if not torch.cuda.is_available():
+        pytest.skip()
 
     xyzs = [16384, 4096, 1024, 256, 64]
     feat_channels = [1, 96, 256, 512, 1024]
