@@ -55,7 +55,7 @@ We will stick to the three coordinate systems defined in this tutorial in the fu
 
 ## Definition of the yaw angle
 
-Please refer to [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) for the standard definition of the yaw angle. In object detection, we choose an axis as the gravity axis, and a reference direction on the plane ``$$`Pi`$$`` perpendicular to the gravity axis, then the reference direction has a yaw angle of 0, and other directions on ``$$`Pi`$$`` have non-zero yaw angles depending on its angle with the reference direction.
+Please refer to [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) for the standard definition of the yaw angle. In object detection, we choose an axis as the gravity axis, and a reference direction on the plane ``$$`\Pi`$$`` perpendicular to the gravity axis, then the reference direction has a yaw angle of 0, and other directions on ``$$`\Pi`$$`` have non-zero yaw angles depending on its angle with the reference direction.
 
 Currently, for all supported datasets, annotations do not include pitch angle and roll angle, which means we need only consider the yaw angle when predicting boxes and calculating overlap between boxes.
 
@@ -132,7 +132,7 @@ __|____|____|____|_________\ x right
 
 ### KITTI
 
-The raw annotation of KITTI is under camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train LiDAR-Based models on KITTI, the data is first converted from camera coordinate system to LiDAR coordinate system, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/kitti_dataset.py). For training Vision-Based models, the data is kept in the camera coordinate system.
+The raw annotation of KITTI is under camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train LiDAR-based models on KITTI, the data is first converted from camera coordinate system to LiDAR coordinate system, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/kitti_dataset.py). For training vision-based models, the data is kept in the camera coordinate system.
 
 In SECOND, the LiDAR coordinate system for a box is defined as follows (a bird's eye view):
 
