@@ -9,7 +9,7 @@ from mmdet.models import NECKS
 class PointNetFPNeck(BaseModule):
     r"""PointNet FP Module used in PointRCNN.
 
-    Refer to the `official code <https://github.com/charlesq34/pointnet2>`.
+    Refer to the `official code <https://github.com/charlesq34/pointnet2>`_.
 
     .. code-block:: none
 
@@ -71,7 +71,7 @@ class PointNetFPNeck(BaseModule):
 
                 - fp_xyz (torch.Tensor): The coordinates of fp features.
                 - fp_features (torch.Tensor): The features from the last
-                    Feature Propogation Layers.
+                    feature propogation layers.
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 
