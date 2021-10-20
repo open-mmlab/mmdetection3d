@@ -212,16 +212,20 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     @staticmethod
     def get_direction_target(reg_targets,
                              dir_offset=0,
-                             dir_limit_offset=0,
+                             dir_limit_offset=0.0,
                              num_bins=2,
                              one_hot=True):
         """Encode direction to 0 ~ num_bins-1.
 
         Args:
             reg_targets (torch.Tensor): Bbox regression targets.
-            dir_offset (int): Direction offset.
-            num_bins (int): Number of bins to divide 2*PI.
-            one_hot (bool): Whether to encode as one hot.
+            dir_offset (int, optional): Direction offset. Default to 0.
+            dir_limit_offset (float, optional): Offset to set the direction
+                range. Default to 0.0.
+            num_bins (int, optional): Number of bins to divide 2*PI.
+                Default to 2.
+            one_hot (bool, optional): Whether to encode as one hot.
+                Default to True.
 
         Returns:
             torch.Tensor: Encoded direction targets.

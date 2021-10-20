@@ -94,7 +94,6 @@ class MVXTwoStageDetector(Base3DDetector):
                               'key, please consider using init_cfg.')
                 self.img_roi_head.init_cfg = dict(
                     type='Pretrained', checkpoint=img_pretrained)
-
         if self.with_pts_backbone:
             if pts_pretrained is not None:
                 warnings.warn('DeprecationWarning: pretrained is a deprecated '

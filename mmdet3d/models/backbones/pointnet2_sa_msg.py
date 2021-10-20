@@ -64,7 +64,11 @@ class PointNet2SAMSG(BasePointNet):
         self.out_indices = out_indices
         assert max(out_indices) < self.num_sa
         assert len(num_points) == len(radii) == len(num_samples) == len(
-            sa_channels) == len(aggregation_channels)
+            sa_channels)
+        if aggregation_channels is not None:
+            assert len(sa_channels) == len(aggregation_channels)
+        else:
+            aggregation_channels = [None] * len(sa_channels)
 
         self.SA_modules = nn.ModuleList()
         self.aggregation_mlps = nn.ModuleList()
