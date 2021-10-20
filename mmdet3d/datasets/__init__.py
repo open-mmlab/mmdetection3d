@@ -12,8 +12,8 @@ from .nuscenes_mono_dataset import NuScenesMonoDataset
 from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                         GlobalRotScaleTrans, IndoorPatchPointSample,
                         IndoorPointSample, LoadAnnotations3D,
-                        LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                        LoadPointsFromWeb, NormalizePointsColor,
+                        LoadPointsFromDict, LoadPointsFromFile,
+                        LoadPointsFromMultiSweeps, NormalizePointsColor,
                         ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
                         ObjectSample, PointSample, PointShuffle,
                         PointsRangeFilter, RandomDropPointsColor, RandomFlip3D,
@@ -39,5 +39,6 @@ __all__ = [
     'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
     'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
     'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
-    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale', 'LoadPointsFromWeb'
+    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale',
+    'LoadPointsFromDict'
 ]

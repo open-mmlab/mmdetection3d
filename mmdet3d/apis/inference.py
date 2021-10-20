@@ -86,7 +86,7 @@ def inference_detector(model, pcd):
     if not isinstance(pcd, str):
         cfg = cfg.copy()
         # set loading pipeline type
-        cfg.data.test.pipeline[0].type = 'LoadPointsFromWeb'
+        cfg.data.test.pipeline[0].type = 'LoadPointsFromDict'
 
     # build the data pipeline
     test_pipeline = deepcopy(cfg.data.test.pipeline)

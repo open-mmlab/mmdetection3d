@@ -461,8 +461,8 @@ class LoadPointsFromFile(object):
 
 
 @PIPELINES.register_module()
-class LoadPointsFromWeb(LoadPointsFromFile):
-    """Load Points From Web."""
+class LoadPointsFromDict(LoadPointsFromFile):
+    """Load Points From Dict."""
 
     def __call__(self, results):
         assert 'points' in results
