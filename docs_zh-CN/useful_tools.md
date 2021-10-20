@@ -123,6 +123,64 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 &emsp;
 
+# 模型部署
+
+**Note**: 此工具仍然处于试验阶段，目前只有 SECOND 支持用 [`TorchServe`](https://pytorch.org/serve/) 部署，我们将会在未来支持更多的模型。
+
+为了使用 [`TorchServe`](https://pytorch.org/serve/) 部署 `MMDetection3D` 模型，您可以遵循以下步骤：
+
+## 1. 将模型从 MMDetection3D 转换到 TorchServe
+
+```shell
+python tools/deployment/mmdet3d2torchserve.py ${CONFIG_FILE} ${CHECKPOINT_FILE} \
+--output-folder ${MODEL_STORE} \
+--model-name ${MODEL_NAME}
+```
+
+**Note**: ${MODEL_STORE} 需要为文件夹的绝对路径。
+
+## 2. 构建 `mmdet3d-serve` 镜像
+
+```shell
+docker build -t mmdet3d-serve:latest docker/serve/
+```
+
+## 3. 运行 `mmdet3d-serve`
+
+查看官网文档来 [使用 docker 运行 TorchServe](https://github.com/pytorch/serve/blob/master/docker/README.md#running-torchserve-in-a-production-docker-environment)。
+
+为了在 GPU 上运行，您需要安装 [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)。您可以忽略 `--gpus` 参数，从而在 CPU 上运行。
+
+例子：
+
+```shell
+docker run --rm \
+--cpus 8 \
+--gpus device=0 \
+-p8080:8080 -p8081:8081 -p8082:8082 \
+--mount type=bind,source=$MODEL_STORE,target=/home/model-server/model-store \
+mmdet3d-serve:latest
+```
+
+[阅读文档](https://github.com/pytorch/serve/blob/072f5d088cce9bb64b2a18af065886c9b01b317b/docs/rest_api.md/) 关于 Inference (8080), Management (8081) and Metrics (8082) 接口。
+
+## 4. 测试部署
+
+您可以使用 `test_torchserver.py` 进行部署， 同时比较 torchserver 和 pytorch 的结果。
+
+```shell
+python tools/deployment/test_torchserver.py ${IMAGE_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} ${MODEL_NAME}
+[--inference-addr ${INFERENCE_ADDR}] [--device ${DEVICE}] [--score-thr ${SCORE_THR}]
+```
+
+例子:
+
+```shell
+python tools/deployment/test_torchserver.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth second
+```
+
+&emsp;
+
 # 模型复杂度
 
 您可以使用 MMDetection 中的 `tools/analysis_tools/get_flops.py` 这个脚本文件，基于 [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch) 计算一个给定模型的计算量 (FLOPS) 和参数量 (params)。

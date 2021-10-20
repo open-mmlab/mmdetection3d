@@ -338,7 +338,7 @@ class NormalizePointsColor(object):
 class LoadPointsFromFile(object):
     """Load Points From File.
 
-    Load sunrgbd and scannet points from file.
+    Load points from file.
 
     Args:
         coord_type (str): The type of coordinates of points cloud.
@@ -458,6 +458,15 @@ class LoadPointsFromFile(object):
         repr_str += f'load_dim={self.load_dim}, '
         repr_str += f'use_dim={self.use_dim})'
         return repr_str
+
+
+@PIPELINES.register_module()
+class LoadPointsFromDict(LoadPointsFromFile):
+    """Load Points From Dict."""
+
+    def __call__(self, results):
+        assert 'points' in results
+        return results
 
 
 @PIPELINES.register_module()

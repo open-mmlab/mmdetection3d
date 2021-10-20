@@ -122,6 +122,64 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 &emsp;
 
+# Model Serving
+
+**Note**: This tool is still experimental now, only SECOND is supported to be served with [`TorchServe`](https://pytorch.org/serve/). We'll support more models in the future.
+
+In order to serve an `MMDetection3D` model with [`TorchServe`](https://pytorch.org/serve/), you can follow the steps:
+
+## 1. Convert the model from MMDetection3D to TorchServe
+
+```shell
+python tools/deployment/mmdet3d2torchserve.py ${CONFIG_FILE} ${CHECKPOINT_FILE} \
+--output-folder ${MODEL_STORE} \
+--model-name ${MODEL_NAME}
+```
+
+**Note**: ${MODEL_STORE} needs to be an absolute path to a folder.
+
+## 2. Build `mmdet3d-serve` docker image
+
+```shell
+docker build -t mmdet3d-serve:latest docker/serve/
+```
+
+## 3. Run `mmdet3d-serve`
+
+Check the official docs for [running TorchServe with docker](https://github.com/pytorch/serve/blob/master/docker/README.md#running-torchserve-in-a-production-docker-environment).
+
+In order to run it on the GPU, you need to install [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html). You can omit the `--gpus` argument in order to run on the CPU.
+
+Example:
+
+```shell
+docker run --rm \
+--cpus 8 \
+--gpus device=0 \
+-p8080:8080 -p8081:8081 -p8082:8082 \
+--mount type=bind,source=$MODEL_STORE,target=/home/model-server/model-store \
+mmdet3d-serve:latest
+```
+
+[Read the docs](https://github.com/pytorch/serve/blob/072f5d088cce9bb64b2a18af065886c9b01b317b/docs/rest_api.md/) about the Inference (8080), Management (8081) and Metrics (8082) APis
+
+## 4. Test deployment
+
+You can use `test_torchserver.py` to compare result of torchserver and pytorch.
+
+```shell
+python tools/deployment/test_torchserver.py ${IMAGE_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} ${MODEL_NAME}
+[--inference-addr ${INFERENCE_ADDR}] [--device ${DEVICE}] [--score-thr ${SCORE_THR}]
+```
+
+Example:
+
+```shell
+python tools/deployment/test_torchserver.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth second
+```
+
+&emsp;
+
 # Model Complexity
 
 You can use `tools/analysis_tools/get_flops.py` in MMDetection3D, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.

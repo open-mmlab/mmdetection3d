@@ -12,11 +12,12 @@ from .nuscenes_mono_dataset import NuScenesMonoDataset
 from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                         GlobalRotScaleTrans, IndoorPatchPointSample,
                         IndoorPointSample, LoadAnnotations3D,
-                        LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                        NormalizePointsColor, ObjectNameFilter, ObjectNoise,
-                        ObjectRangeFilter, ObjectSample, PointSample,
-                        PointShuffle, PointsRangeFilter, RandomDropPointsColor,
-                        RandomFlip3D, RandomJitterPoints, RandomShiftScale,
+                        LoadPointsFromDict, LoadPointsFromFile,
+                        LoadPointsFromMultiSweeps, NormalizePointsColor,
+                        ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
+                        ObjectSample, PointSample, PointShuffle,
+                        PointsRangeFilter, RandomDropPointsColor, RandomFlip3D,
+                        RandomJitterPoints, RandomShiftScale,
                         VoxelBasedPointSampler)
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
@@ -38,5 +39,6 @@ __all__ = [
     'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
     'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
     'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
-    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale'
+    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale',
+    'LoadPointsFromDict'
 ]
