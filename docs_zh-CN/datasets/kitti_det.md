@@ -148,7 +148,7 @@ train_pipeline = [
 ```
 
 - 数据增强：
-    - `ObjectNoise`：对场景中的每个真是标注框目标添加噪音。
+    - `ObjectNoise`：对场景中的每个真实标注框目标添加噪音。
     - `RandomFlip3D`：对输入点云数据进行随机地水平翻转或者垂直翻转。
     - `GlobalRotScaleTrans`：对输入点云数据进行旋转。
 
