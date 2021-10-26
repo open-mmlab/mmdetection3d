@@ -80,4 +80,8 @@ Please refer to [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master
 
 ### DGCNN
 
-Please refer to [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) for details. We provide DGCNN baselines on S3DIS dataset.
+Please refer to [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/dgcnn) for details. We provide DGCNN baselines on S3DIS dataset.
+
+### SMOKE
+
+Please refer to [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) for details. We provide SMOKE baselines on KITTI dataset.

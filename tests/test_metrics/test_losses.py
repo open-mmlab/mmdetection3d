@@ -95,7 +95,7 @@ def test_paconv_regularization_loss():
     set_random_seed(0, True)
     model = ToyModel()
 
-    # reduction shoule be in ['none', 'mean', 'sum']
+    # reduction should be in ['none', 'mean', 'sum']
     with pytest.raises(AssertionError):
         paconv_corr_loss = PAConvRegularizationLoss(reduction='l2')
 
@@ -116,7 +116,7 @@ def test_paconv_regularization_loss():
 def test_uncertain_smooth_l1_loss():
     from mmdet3d.models.losses import UncertainL1Loss, UncertainSmoothL1Loss
 
-    # reduction shoule be in ['none', 'mean', 'sum']
+    # reduction should be in ['none', 'mean', 'sum']
     with pytest.raises(AssertionError):
         uncertain_l1_loss = UncertainL1Loss(reduction='l2')
     with pytest.raises(AssertionError):

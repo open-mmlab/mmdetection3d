@@ -26,7 +26,7 @@ def box3d_multiclass_nms(mlvl_bboxes,
             The coordinate system of the BEV boxes is counterclockwise.
         mlvl_scores (torch.Tensor): Multi-level boxes with shape
             (N, C + 1). N is the number of boxes. C is the number of classes.
-        score_thr (float): Score thredhold to filter boxes with low
+        score_thr (float): Score threshold to filter boxes with low
             confidence.
         max_num (int): Maximum number of boxes will be kept.
         cfg (dict): Configuration dict of NMS.

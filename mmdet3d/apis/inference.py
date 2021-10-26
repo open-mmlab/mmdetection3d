@@ -82,26 +82,53 @@ def inference_detector(model, pcd):
     """
     cfg = model.cfg
     device = next(model.parameters()).device  # model device
+
+    if not isinstance(pcd, str):
+        cfg = cfg.copy()
+        # set loading pipeline type
+        cfg.data.test.pipeline[0].type = 'LoadPointsFromDict'
+
     # build the data pipeline
     test_pipeline = deepcopy(cfg.data.test.pipeline)
     test_pipeline = Compose(test_pipeline)
     box_type_3d, box_mode_3d = get_box_type(cfg.data.test.box_type_3d)
-    data = dict(
-        pts_filename=pcd,
-        box_type_3d=box_type_3d,
-        box_mode_3d=box_mode_3d,
-        # for ScanNet demo we need axis_align_matrix
-        ann_info=dict(axis_align_matrix=np.eye(4)),
-        sweeps=[],
-        # set timestamp = 0
-        timestamp=[0],
-        img_fields=[],
-        bbox3d_fields=[],
-        pts_mask_fields=[],
-        pts_seg_fields=[],
-        bbox_fields=[],
-        mask_fields=[],
-        seg_fields=[])
+
+    if isinstance(pcd, str):
+        # load from point clouds file
+        data = dict(
+            pts_filename=pcd,
+            box_type_3d=box_type_3d,
+            box_mode_3d=box_mode_3d,
+            # for ScanNet demo we need axis_align_matrix
+            ann_info=dict(axis_align_matrix=np.eye(4)),
+            sweeps=[],
+            # set timestamp = 0
+            timestamp=[0],
+            img_fields=[],
+            bbox3d_fields=[],
+            pts_mask_fields=[],
+            pts_seg_fields=[],
+            bbox_fields=[],
+            mask_fields=[],
+            seg_fields=[])
+    else:
+        # load from http
+        data = dict(
+            points=pcd,
+            box_type_3d=box_type_3d,
+            box_mode_3d=box_mode_3d,
+            # for ScanNet demo we need axis_align_matrix
+            ann_info=dict(axis_align_matrix=np.eye(4)),
+            sweeps=[],
+            # set timestamp = 0
+            timestamp=[0],
+            img_fields=[],
+            bbox3d_fields=[],
+            pts_mask_fields=[],
+            pts_seg_fields=[],
+            bbox_fields=[],
+            mask_fields=[],
+            seg_fields=[])
     data = test_pipeline(data)
     data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:

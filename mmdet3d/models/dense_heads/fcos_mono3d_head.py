@@ -157,7 +157,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                            self.strides)[:5]
 
     def forward_single(self, x, scale, stride):
-        """Forward features of a single scale levle.
+        """Forward features of a single scale level.
 
         Args:
             x (Tensor): FPN feature maps of the specified stride.
@@ -218,16 +218,20 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     @staticmethod
     def get_direction_target(reg_targets,
                              dir_offset=0,
-                             dir_limit_offset=0,
+                             dir_limit_offset=0.0,
                              num_bins=2,
                              one_hot=True):
         """Encode direction to 0 ~ num_bins-1.
 
         Args:
             reg_targets (torch.Tensor): Bbox regression targets.
-            dir_offset (int): Direction offset.
-            num_bins (int): Number of bins to divide 2*PI.
-            one_hot (bool): Whether to encode as one hot.
+            dir_offset (int, optional): Direction offset. Default to 0.
+            dir_limit_offset (float, optional): Offset to set the direction
+                range. Default to 0.0.
+            num_bins (int, optional): Number of bins to divide 2*PI.
+                Default to 2.
+            one_hot (bool, optional): Whether to encode as one hot.
+                Default to True.
 
         Returns:
             torch.Tensor: Encoded direction targets.
@@ -697,7 +701,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         Args:
             points (torch.Tensor): points in 2D images, [N, 3],
                 3 corresponds with x, y in the image and depth.
-            view (np.ndarray): camera instrinsic, [3, 3]
+            view (np.ndarray): camera intrinsic, [3, 3]
 
         Returns:
             torch.Tensor: points in 3D space. [N, 3],
@@ -719,7 +723,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         viewpad[:view.shape[0], :view.shape[1]] = points2D.new_tensor(view)
         inv_viewpad = torch.inverse(viewpad).transpose(0, 1)
 
-        # Do operation in homogenous coordinates.
+        # Do operation in homogeneous coordinates.
         nbr_points = unnorm_points2D.shape[0]
         homo_points2D = torch.cat(
             [unnorm_points2D,

@@ -20,7 +20,7 @@ class PrimitiveHead(BaseModule):
         num_dims (int): The dimension of primitive semantic information.
         num_classes (int): The number of class.
         primitive_mode (str): The mode of primitive module,
-            avaliable mode ['z', 'xy', 'line'].
+            available mode ['z', 'xy', 'line'].
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
         train_cfg (dict): Config for training.
@@ -30,7 +30,7 @@ class PrimitiveHead(BaseModule):
         feat_channels (tuple[int]): Convolution channels of
             prediction layer.
         upper_thresh (float): Threshold for line matching.
-        surface_thresh (float): Threshold for suface matching.
+        surface_thresh (float): Threshold for surface matching.
         conv_cfg (dict): Config of convolution in prediction layer.
         norm_cfg (dict): Config of BN in prediction layer.
         objectness_loss (dict): Config of objectness loss.

@@ -81,6 +81,10 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
         self.assign_per_class = assign_per_class
         self.dir_offset = dir_offset
         self.dir_limit_offset = dir_limit_offset
+        import warnings
+        warnings.warn(
+            'dir_offset and dir_limit_offset will be depressed and be '
+            'incorporated into box coder in the future')
         self.fp16_enabled = False
 
         # build anchor generator

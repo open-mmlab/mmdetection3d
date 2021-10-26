@@ -10,17 +10,17 @@ It serves as a baseline built on top of mmdetection and mmdetection3d for 3D det
 Currently we first support the benchmark on the large-scale nuScenes dataset, which achieved 1st place out of all the vision-only methods in the [nuScenes 3D detecton challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera) of NeurIPS 2020.
 
 ```
-@article{wang2021fcos3d,
-  title={{FCOS3D}: Fully Convolutional One-Stage Monocular 3D Object Detection},
-  author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
-  journal={arXiv preprint arXiv:2104.10956},
-  year={2021}
+@inproceedings{wang2021fcos3d,
+	title={{FCOS3D: Fully} Convolutional One-Stage Monocular 3D Object Detection},
+	author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
+	booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops},
+	year={2021}
 }
 # For the original 2D version
 @inproceedings{tian2019fcos,
-  title     =  {{FCOS}: Fully Convolutional One-Stage Object Detection},
+  title     =  {{FCOS: Fully} Convolutional One-Stage Object Detection},
   author    =  {Tian, Zhi and Shen, Chunhua and Chen, Hao and He, Tong},
-  booktitle =  {Proc. Int. Conf. Computer Vision (ICCV)},
+  booktitle =  {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
   year      =  {2019}
 }
 ```

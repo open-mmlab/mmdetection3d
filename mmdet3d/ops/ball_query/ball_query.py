@@ -23,7 +23,7 @@ class BallQuery(Function):
             center_xyz (Tensor): (B, npoint, 3) centers of the ball query.
 
         Returns:
-            Tensor: (B, npoint, nsample) tensor with the indicies of
+            Tensor: (B, npoint, nsample) tensor with the indices of
                 the features that form the query balls.
         """
         assert center_xyz.is_contiguous()

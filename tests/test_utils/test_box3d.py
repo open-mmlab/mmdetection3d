@@ -656,7 +656,7 @@ def test_boxes_conversion():
         dtype=torch.float32)
 
     rt_mat = rect @ Trv2c
-    # test coversion with Box type
+    # test conversion with Box type
     cam_to_lidar_box = Box3DMode.convert(camera_boxes, Box3DMode.CAM,
                                          Box3DMode.LIDAR, rt_mat.inverse())
     assert torch.allclose(cam_to_lidar_box.tensor, expected_tensor)

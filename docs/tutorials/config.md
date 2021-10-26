@@ -384,7 +384,7 @@ evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created befo
 lr = 0.008  # Learning rate of optimizers
 optimizer = dict(  # Config used to build optimizer, support all the optimizers in PyTorch whose arguments are also the same as those in PyTorch
     type='Adam',  # Type of optimizers, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12 for more details
-    lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentaion of PyTorch
+    lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentation of PyTorch
 optimizer_config = dict(  # Config used to build the optimizer hook, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/optimizer.py#L22 for implementation details.
     grad_clip=dict(  # Config used to grad_clip
     max_norm=10,  # max norm of the gradients

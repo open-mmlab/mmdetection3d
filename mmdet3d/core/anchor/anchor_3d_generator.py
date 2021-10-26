@@ -99,7 +99,7 @@ class Anchor3DRangeGenerator(object):
             list[torch.Tensor]: Anchors in multiple feature levels.
                 The sizes of each tensor should be [N, 4], where
                 N = width * height * num_base_anchors, width and height
-                are the sizes of the corresponding feature lavel,
+                are the sizes of the corresponding feature level,
                 num_base_anchors is the number of anchors for that level.
         """
         assert self.num_levels == len(featmap_sizes)
