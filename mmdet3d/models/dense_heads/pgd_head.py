@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from mmcv.cnn import Scale
+from mmcv.cnn import Scale, bias_init_with_prob, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn
 from torch.nn import functional as F
@@ -116,13 +116,6 @@ class PGDHead(FCOSMono3DHead):
             self.loss_consistency = build_loss(loss_consistency)
         if self.pred_keypoints:
             self.kpts_start = 9 if self.pred_velo else 7
-        if self.use_depth_classifier:
-            self.init_cfg['override'].append(
-                dict(
-                    type='Normal',
-                    name='conv_depth_cls',
-                    std=0.01,
-                    bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -166,6 +159,32 @@ class PGDHead(FCOSMono3DHead):
                     self.conv_weight_prevs.append(None)
                     self.conv_weights.append(
                         nn.Conv2d(self.feat_channels, 1, 1))
+
+    def init_weights(self):
+        """Initialize weights of the head.
+
+        We currently still use the customized defined init_weights because the
+        default init of DCN triggered by the init_cfg will init
+        conv_offset.weight, which mistakenly affects the training stability.
+        """
+        super().init_weights()
+
+        bias_cls = bias_init_with_prob(0.01)
+        if self.use_depth_classifier:
+            for m in self.conv_depth_cls_prev:
+                if isinstance(m.conv, nn.Conv2d):
+                    normal_init(m.conv, std=0.01)
+            normal_init(self.conv_depth_cls, std=0.01, bias=bias_cls)
+
+        if self.weight_dim != -1:
+            for conv_weight_prev in self.conv_weight_prevs:
+                if conv_weight_prev is None:
+                    continue
+                for m in conv_weight_prev:
+                    if isinstance(m.conv, nn.Conv2d):
+                        normal_init(m.conv, std=0.01)
+            for conv_weight in self.conv_weights:
+                normal_init(conv_weight, std=0.01)
 
     def forward(self, feats):
         """Forward features from the upstream network.
@@ -362,7 +381,10 @@ class PGDHead(FCOSMono3DHead):
             mask = (pos_img_idx == idx)
             if pos_strided_bbox_preds[mask].shape[0] == 0:
                 continue
-            cam2img = pos_strided_bbox_preds.new_zeros((4, 4))
+            cam2img = torch.eye(
+                4,
+                dtype=pos_strided_bbox_preds.dtype,
+                device=pos_strided_bbox_preds.device)
             view_shape = views[idx].shape
             cam2img[:view_shape[0], :view_shape[1]] = \
                 pos_strided_bbox_preds.new_tensor(views[idx])
@@ -1058,7 +1080,8 @@ class PGDHead(FCOSMono3DHead):
             mlvl_bboxes2d = torch.cat(mlvl_bboxes2d)
 
         # change local yaw to global yaw for 3D nms
-        cam2img = mlvl_centers2d.new_zeros((4, 4))
+        cam2img = torch.eye(
+            4, dtype=mlvl_centers2d.dtype, device=mlvl_centers2d.device)
         cam2img[:view.shape[0], :view.shape[1]] = \
             mlvl_centers2d.new_tensor(view)
         mlvl_bboxes = self.bbox_coder.decode_yaw(mlvl_bboxes, mlvl_centers2d,

@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 from logging import warning
-from mmcv.cnn import Scale
+from mmcv.cnn import Scale, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
@@ -114,6 +114,19 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             nn.ModuleList([Scale(1.0) for _ in range(self.scale_dim)])
             for _ in self.strides
         ])
+
+    def init_weights(self):
+        """Initialize weights of the head.
+
+        We currently still use the customized defined init_weights because the
+        default init of DCN triggered by the init_cfg will init
+        conv_offset.weight, which mistakenly affects the training stability.
+        """
+        super().init_weights()
+        for m in self.conv_centerness_prev:
+            if isinstance(m.conv, nn.Conv2d):
+                normal_init(m.conv, std=0.01)
+        normal_init(self.conv_centerness, std=0.01)
 
     def forward(self, feats):
         """Forward features from the upstream network.

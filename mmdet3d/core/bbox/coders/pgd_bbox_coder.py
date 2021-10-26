@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from torch.nn import functional as F
 
 from mmdet.core.bbox.builder import BBOX_CODERS
@@ -45,8 +46,9 @@ class PGDBBoxCoder(FCOS3DBBoxCoder):
             scale_kpts = scale[3]
             # 2 dimension of offsets x 8 corners of a 3D bbox
             bbox[:, self.bbox_code_size:self.bbox_code_size + 16] = \
-                scale_kpts(clone_bbox[
-                    :, self.bbox_code_size:self.bbox_code_size + 16]).float()
+                torch.tanh(scale_kpts(clone_bbox[
+                    :, self.bbox_code_size:self.bbox_code_size + 16]).float())
+
         if pred_bbox2d:
             scale_bbox2d = scale[-1]
             # The last four dimensions are offsets to four sides of a 2D bbox

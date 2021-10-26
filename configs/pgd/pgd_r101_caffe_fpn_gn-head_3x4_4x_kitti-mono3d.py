@@ -46,9 +46,7 @@ model = dict(
         pred_keypoints=True,
         weight_dim=1,
         loss_depth=dict(
-            type='UncertainSmoothL1Loss',
-            alpha=0.25,
-            beta=3.0,
+            type='UncertainSmoothL1Loss', alpha=1.0, beta=3.0,
             loss_weight=1.0),
         bbox_coder=dict(
             type='PGDBBoxCoder',
@@ -124,4 +122,4 @@ lr_config = dict(
 total_epochs = 48
 runner = dict(type='EpochBasedRunner', max_epochs=48)
 evaluation = dict(interval=2)
-checkpoint_config = dict(interval=2)
+checkpoint_config = dict(interval=8)

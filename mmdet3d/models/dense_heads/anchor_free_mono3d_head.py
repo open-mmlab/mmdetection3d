@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from abc import abstractmethod
-from mmcv.cnn import ConvModule
+from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
@@ -176,34 +176,6 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             self.attr_branch = attr_branch
 
         self._init_layers()
-        if init_cfg is None:
-            self.init_cfg = dict(
-                type='Normal',
-                layer='Conv2d',
-                std=0.01,
-                override=[
-                    dict(
-                        type='Normal',
-                        name='conv_cls',
-                        std=0.01,
-                        bias_prob=0.01)
-                ])
-            if self.use_direction_classifier:
-                self.init_cfg['override'].append(
-                    dict(
-                        type='Normal',
-                        name='conv_dir_cls',
-                        std=0.01,
-                        bias_prob=0.01))
-            if self.pred_attrs:
-                self.init_cfg['override'].append(
-                    dict(
-                        type='Normal',
-                        name='conv_attr',
-                        std=0.01,
-                        bias_prob=0.01))
-        else:
-            self.init_cfg = init_cfg
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -307,6 +279,40 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 conv_channels=self.attr_branch,
                 conv_strides=(1, ) * len(self.attr_branch))
             self.conv_attr = nn.Conv2d(self.attr_branch[-1], self.num_attrs, 1)
+
+    def init_weights(self):
+        """Initialize weights of the head.
+
+        We currently still use the customized defined init_weights because the
+        default init of DCN triggered by the init_cfg will init
+        conv_offset.weight, which mistakenly affects the training stability.
+        """
+        for modules in [self.cls_convs, self.reg_convs, self.conv_cls_prev]:
+            for m in modules:
+                if isinstance(m.conv, nn.Conv2d):
+                    normal_init(m.conv, std=0.01)
+        for conv_reg_prev in self.conv_reg_prevs:
+            if conv_reg_prev is None:
+                continue
+            for m in conv_reg_prev:
+                if isinstance(m.conv, nn.Conv2d):
+                    normal_init(m.conv, std=0.01)
+        if self.use_direction_classifier:
+            for m in self.conv_dir_cls_prev:
+                if isinstance(m.conv, nn.Conv2d):
+                    normal_init(m.conv, std=0.01)
+        if self.pred_attrs:
+            for m in self.conv_attr_prev:
+                if isinstance(m.conv, nn.Conv2d):
+                    normal_init(m.conv, std=0.01)
+        bias_cls = bias_init_with_prob(0.01)
+        normal_init(self.conv_cls, std=0.01, bias=bias_cls)
+        for conv_reg in self.conv_regs:
+            normal_init(conv_reg, std=0.01)
+        if self.use_direction_classifier:
+            normal_init(self.conv_dir_cls, std=0.01, bias=bias_cls)
+        if self.pred_attrs:
+            normal_init(self.conv_attr, std=0.01, bias=bias_cls)
 
     def forward(self, feats):
         """Forward features from the upstream network.
