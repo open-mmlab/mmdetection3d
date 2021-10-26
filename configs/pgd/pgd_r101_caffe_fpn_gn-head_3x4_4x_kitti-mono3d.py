@@ -53,6 +53,8 @@ model = dict(
             base_depths=((28.01, 16.32), ),
             base_dims=((0.8, 1.73, 0.6), (1.76, 1.73, 0.6), (3.9, 1.56, 1.6)),
             code_size=7)),
+    # set weight 1.0 for base 7 dims (offset, depth, size, rot)
+    # 0.2 for 16-dim keypoint offsets and 1.0 for 4-dim 2D distance targets
     train_cfg=dict(code_weight=[
         1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2,
         0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0
