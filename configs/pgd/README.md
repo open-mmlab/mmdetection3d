@@ -25,7 +25,7 @@ For clean implementation, our preliminary release supports base models with prop
 
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP_11 / mAP_40 | Download |
 | :---------: | :-----: | :------: | :------------: | :----: | :------: |
-|[ResNet101](./pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py)|4x|9.07||18.33 / 13.23|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608-7c5c9005.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608.log.json)
+|[ResNet101](./pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py)|4x|9.07||18.33 / 13.23|[model](https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608-7c5c9005.pth) &#124; [log](https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608.log.json)
 
 Detailed performance on KITTI 3D detection (3D/BEV) is as follows, evaluated by AP11 and AP40 metric:
 
