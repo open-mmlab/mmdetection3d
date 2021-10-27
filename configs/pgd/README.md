@@ -22,3 +22,16 @@ For clean implementation, our preliminary release supports base models with prop
 ## Results
 
 ### KITTI
+
+|  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP_11 / mAP_40 | Download |
+| :---------: | :-----: | :------: | :------------: | :----: | :------: |
+|[ResNet101](./pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py)|4x|9.07||18.33 / 13.23|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608-7c5c9005.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608.log.json)
+
+Detailed performance on KITTI 3D detection (3D/BEV) is as follows, evaluated by AP11 and AP40 metric:
+
+|             |     Easy      |    Moderate    |     Hard      |
+|-------------|:-------------:|:--------------:|:-------------:|
+| Car (AP11)  | 24.09 / 30.11 | 18.33 / 23.46  | 16.90 / 19.33 |
+| Car (AP40)  | 19.27 / 26.60 | 13.23 / 18.23  | 10.65 / 15.00 |
+
+Note: mAP represents Car moderate 3D strict AP11 / AP40 results. Because of the limited data for pedestrians and cyclists, the detection performance for these two classes is usually unstable. Therefore, we only list car detection results here. In addition, AP40 is a more recommended metric for reference due to its much better stability.
