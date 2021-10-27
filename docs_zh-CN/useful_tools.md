@@ -208,7 +208,7 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
 -   `--nproc`: 数据准备的进程数，默认为 `4`。由于图片是并行处理的，更大的进程数目能够减少准备时间。
 -   `--extra-tag`: 注释的额外标签，默认为 `nuimages`。这可用于将不同时间处理的不同注释分开以供研究。
 
-更多的数据准备细节参考 [doc](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html)，nuImages 数据集的细节参考 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md/)。
+更多的数据准备细节参考 [doc](https://mmdetection3d.readthedocs.io/zh_CN/latest/data_preparation.html)，nuImages 数据集的细节参考 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md/)。
 
 &emsp;
 

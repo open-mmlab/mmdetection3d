@@ -248,7 +248,7 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 生成 `work_dirs/pp-nus/results_eval.json` 后，您可以压缩并提交给 nuScenes 基准测试。更多信息请参考 [nuScenes 官方网站](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)。
 
-我们还可以使用我们开发的可视化工具将预测结果可视化。更多细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization)。
+我们还可以使用我们开发的可视化工具将预测结果可视化。更多细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)。
 
 ## Notes
 
