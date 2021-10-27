@@ -122,11 +122,11 @@ mmdetection3d
 这里我们只解释训练信息文件中记录的数据。这同样适用于验证和测试集。
 获取 `nuscenes_infos_xxx.pkl` 和 `nuscenes_infos_xxx_mono3d.coco.json` 的核心函数分别为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L143) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py)。
 
-## 训练流水线
+## 训练流程
 
 ### 基于 LiDAR 的方法
 
-nuScenes 上基于 LiDAR 的 3D 检测（包括多模态方法）的典型训练流水线如下。
+nuScenes 上基于 LiDAR 的 3D 检测（包括多模态方法）的典型训练流程如下。
 
 ```python
 train_pipeline = [
@@ -250,7 +250,7 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 我们还可以使用我们开发的可视化工具将预测结果可视化。更多细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)。
 
-## Notes
+## 注意
 
 ### `NuScenesBox` 和我们的 `CameraInstanceBoxes` 之间的转换。
 

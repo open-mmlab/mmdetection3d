@@ -108,7 +108,7 @@ Next, we will elaborate on the difference compared to nuScenes in terms of the d
 
 Here we only explain the data recorded in the training info files. The same applies to the testing set.
 
-The core function to get `lyft_infos_xxx.pkl` is [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py#L91).
+The core function to get `lyft_infos_xxx.pkl` is [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py#L93).
 Please refer to [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py) for more details.
 
 ## Training pipeline
