@@ -70,7 +70,7 @@ KITTI 官方提供的目标检测开发[工具包](https://s3.eu-central-1.amazo
 
 具体来说，首先使用[数据转换器](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/waymo_converter.py)将 Waymo 数据集转换成 KITTI 数据集的格式，并定义 [Waymo 类](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/waymo_dataset.py)对转换的数据进行处理。因为我们将 Waymo 原始数据集进行预处理并重新组织成 KITTI 数据集的格式，因此可以比较容易通过继承 KittiDataset 类来实现 WaymoDataset 类。需要注意的是，由于 Waymo 数据集有相应的官方评估方法，我们需要在定义新数据类的过程中引入官方评估方法，此时用户可以顺利的转换 Waymo 数据的格式，并使用 `WaymoDataset` 数据类进行模型的训练和评估。
 
-更多关于 Waymo 数据集预处理的中间结果的细节，请参照对应的[说明文档](https://mmdetection3d.readthedocs.io/en/latest/tutorials/waymo.html)。
+更多关于 Waymo 数据集预处理的中间结果的细节，请参照对应的[说明文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/datasets/waymo_det.html)。
 
 
 ## 准备配置文件
@@ -87,7 +87,7 @@ KITTI 官方提供的目标检测开发[工具包](https://s3.eu-central-1.amazo
 python tools/train.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
 ```
 
-更多的使用细节，请参考[案例 1](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html) 。
+更多的使用细节，请参考[案例 1](https://mmdetection3d.readthedocs.io/zh_CN/latest/1_exist_data_model.html)。
 
 ## 测试和推理
 
@@ -97,6 +97,6 @@ python tools/train.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_wa
 python tools/test.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py work_dirs/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class/latest.pth --eval waymo
 ```
 
-**注意**：为了使用 Waymo 数据集的评估方法，需要参考[说明文档](https://mmdetection3d.readthedocs.io/en/latest/tutorials/waymo.html)并按照官方指导来准备与评估相关联的文件。
+**注意**：为了使用 Waymo 数据集的评估方法，需要参考[说明文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/datasets/waymo_det.html)并按照官方指导来准备与评估相关联的文件。
 
-更多有关测试和推理的使用细节，请参考[案例 1](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html) 。
+更多有关测试和推理的使用细节，请参考[案例 1](https://mmdetection3d.readthedocs.io/zh_CN/latest/1_exist_data_model.html) 。
