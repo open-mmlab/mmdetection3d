@@ -36,11 +36,11 @@ mmdetection3d
 其中 `v1.01-train` 和 `v1.01-test` 包含与 nuScenes 数据集相同的元文件，`.txt` 文件包含数据划分的信息。
 Lyft 不提供训练集和验证集的官方划分方案，因此 MMDetection3D 对不同场景下的不同类别的目标数量进行分析，并提供了一个数据集划分方案。
 `sample_submission.csv` 是用于提交到 Kaggle 评估服务器的基本文件。
-需要注意的是，这里按照上面的文件夹名称进行数据集的组织，请按照上面的文件夹组织对原始的文件夹进行重命名。
+需要注意的是，我们遵循了 Lyft 最初的文件夹命名以实现更清楚的文件组织。请将下载下来的原始文件夹重命名按照上述组织结构重新命名。
 
 ## 数据准备
 
-组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 和 .json 文件，接着需要重点关注这两个数据集之间的不同点，请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/nuscenes_det.md)获取更加详细的数据集信息文件结构的说明。
+组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 和 .json 文件，接着需要重点关注这两个数据集之间的不同点，请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/master/docs_zh-CN/datasets/nuscenes_det.md)获取更加详细的数据集信息文件结构的说明。
 
 请通过运行下面的命令来生成 Lyft 的数据集信息文件：
 
@@ -49,7 +49,7 @@ python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft -
 python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
-请注意，上面的第二行命令用于修复被破坏的 lidar 数据文件，请参考[此处](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000)获取更多细节。
+请注意，上面的第二行命令用于修复损坏的 lidar 数据文件，请参考[此处](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000)获取更多细节。
 
 处理后的文件夹结构应该如下：
 
@@ -82,7 +82,7 @@ mmdetection3d
 │   │   ├── lyft_infos_test_mono3d.coco.json
 ```
 
-其中，.pkl 文件通常适用于涉及到点云的相关方法，coco 类型的 .json 文件更加适用于涉及到基于图像的相干方法，如基于图像的 2D 和 3D 目标检测。
+其中，.pkl 文件通常适用于涉及到点云的相关方法，coco 类型的 .json 文件更加适用于涉及到基于图像的相关方法，如基于图像的 2D 和 3D 目标检测。
 不同于 nuScenes 数据集，这里仅能使用 json 文件进行 2D 检测相关的实验，未来将会进一步支持基于图像的 3D 检测。
 
 接下来将详细介绍 Lyft 数据集和 nuScenes 数据集之间的数据集信息文件中的不同点：
