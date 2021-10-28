@@ -663,11 +663,6 @@ class PGDHead(FCOSMono3DHead):
                 pos_bbox_targets_3d[:, :2],
                 weight=bbox_weights[:, :2],
                 avg_factor=equal_weights.sum())
-            loss_depth = self.loss_bbox(
-                pos_bbox_preds[:, 2],
-                pos_bbox_targets_3d[:, 2],
-                weight=bbox_weights[:, 2],
-                avg_factor=equal_weights.sum())
             loss_size = self.loss_bbox(
                 pos_bbox_preds[:, 3:6],
                 pos_bbox_targets_3d[:, 3:6],
@@ -698,6 +693,12 @@ class PGDHead(FCOSMono3DHead):
                     equal_weights,
                     avg_factor=equal_weights.sum())
 
+            # init depth loss with the one computed from direct regression
+            loss_dict['loss_depth'] = self.loss_bbox(
+                pos_bbox_preds[:, 2],
+                pos_bbox_targets_3d[:, 2],
+                weight=bbox_weights[:, 2],
+                avg_factor=equal_weights.sum())
             # depth classification loss
             if self.use_depth_classifier:
                 pos_prob_depth_preds = self.bbox_coder.decode_prob_depth(
@@ -764,9 +765,9 @@ class PGDHead(FCOSMono3DHead):
         else:
             # need absolute due to possible negative delta x/y
             loss_offset = pos_bbox_preds[:, :2].sum()
-            loss_depth = pos_bbox_preds[:, 2].sum()
             loss_size = pos_bbox_preds[:, 3:6].sum()
             loss_rotsin = pos_bbox_preds[:, 6].sum()
+            loss_dict['loss_depth'] = pos_bbox_preds[:, 2].sum()
             if self.pred_velo:
                 loss_dict['loss_velo'] = pos_bbox_preds[:, 7:9].sum()
             if self.pred_keypoints:
@@ -795,7 +796,6 @@ class PGDHead(FCOSMono3DHead):
             dict(
                 loss_cls=loss_cls,
                 loss_offset=loss_offset,
-                loss_depth=loss_depth,
                 loss_size=loss_size,
                 loss_rotsin=loss_rotsin,
                 loss_centerness=loss_centerness))
