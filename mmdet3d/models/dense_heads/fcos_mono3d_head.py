@@ -118,9 +118,9 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     def init_weights(self):
         """Initialize weights of the head.
 
-        We currently still use the customized defined init_weights because the
-        default init of DCN triggered by the init_cfg will init
-        conv_offset.weight, which mistakenly affects the training stability.
+        We currently still use the customized init_weights because the default
+        init of DCN triggered by the init_cfg will init conv_offset.weight,
+        which mistakenly affects the training stability.
         """
         super().init_weights()
         for m in self.conv_centerness_prev:
