@@ -1,5 +1,25 @@
 ## Changelog
 
+### v0.17.2 (1/11/2021)
+
+#### Improvements
+
+- Update Group-Free-3D and FCOS3D bibtex (#985)
+- Update the solutions for incompatibility of pycocotools in the FAQ (#993)
+- Add Chinese documentation for the KITTI (#1003) and Lyft (#1010) dataset tutorial
+- Add the H3DNet checkpoint converter for incompatible keys (#1007)
+
+#### Bug Fixes
+
+- Update mmdetection and mmsegmentation version in the Dockerfile (#992)
+- Fix links in the Chinese documentation (#1015)
+
+#### Contributors
+
+A total of 8 developers contributed to this release.
+
+@Tai-Wang, @wHao-Wu, @ZwwWayne, @ZCMax
+
 ### v0.17.1 (1/10/2021)
 
 #### Highlights
