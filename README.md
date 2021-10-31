@@ -106,6 +106,7 @@ Support methods
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 - [x] [SMOKE (CVPRW'2020)](configs/smoke/README.md)
+- [x] [PGD (CoRL'2021)](configs/pgd/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLA |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:---:|
@@ -127,6 +128,7 @@ Support methods
 | PAConv               | ✗        | ✗        | ✗        | ✓         | ✗         | ✗     | ✗        | ✗     | ✗
 | DGCNN                | ✗        | ✗        | ✗        | ✗         | ✓         | ✗     | ✗        | ✗     | ✗
 | SMOKE                | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
+| PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
 
 Other features
 - [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
