@@ -8,9 +8,11 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本 v0.17.1.
+**新闻**: 我们发布了版本 v0.17.2.
 
-我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。因此，在接下来的几个月里，很少有功能会添加到主分支中。
+另外，我们在 [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) 分支初步支持了多个新模型，包括 [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/dgcnn/README.md), [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/smoke/README.md) 和 [PGD](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/pgd/README.md)。
+
+说明：我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。因此，在接下来的几个月里，很少有功能会添加到主分支中。
 
 由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。
 
@@ -68,7 +70,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v0.17.1 在 2021.10.01 发布。
+最新的版本 v0.17.2 在 2021.11.01 发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/changelog.md)。
 
 对于分支 [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) ，请参考 [v1.0 更新日志](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) 来了解我们的最新功能和更多细节。
