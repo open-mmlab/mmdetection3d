@@ -16,7 +16,7 @@
 
 #### Contributors
 
-A total of 8 developers contributed to this release.
+A total of 4 developers contributed to this release.
 
 @Tai-Wang, @wHao-Wu, @ZwwWayne, @ZCMax
 
