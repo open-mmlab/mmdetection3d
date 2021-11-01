@@ -85,3 +85,7 @@ Please refer to [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.
 ### SMOKE
 
 Please refer to [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) for details. We provide SMOKE baselines on KITTI dataset.
+
+### PGD
+
+Please refer to [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd) for details. We provide PGD baselines on KITTI dataset.
