@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 from logging import warning
-from mmcv.cnn import Scale
+from mmcv.cnn import Scale, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
@@ -101,13 +101,6 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.loss_centerness = build_loss(loss_centerness)
         bbox_coder['code_size'] = self.bbox_code_size
         self.bbox_coder = build_bbox_coder(bbox_coder)
-        if init_cfg is None:
-            self.init_cfg = dict(
-                type='Normal',
-                layer='Conv2d',
-                std=0.01,
-                override=dict(
-                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -121,6 +114,19 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             nn.ModuleList([Scale(1.0) for _ in range(self.scale_dim)])
             for _ in self.strides
         ])
+
+    def init_weights(self):
+        """Initialize weights of the head.
+
+        We currently still use the customized init_weights because the default
+        init of DCN triggered by the init_cfg will init conv_offset.weight,
+        which mistakenly affects the training stability.
+        """
+        super().init_weights()
+        for m in self.conv_centerness_prev:
+            if isinstance(m.conv, nn.Conv2d):
+                normal_init(m.conv, std=0.01)
+        normal_init(self.conv_centerness, std=0.01)
 
     def forward(self, feats):
         """Forward features from the upstream network.
