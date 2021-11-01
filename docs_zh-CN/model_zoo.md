@@ -86,4 +86,8 @@
 
 ### SMOKE
 
-请考考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.
+请参考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.
+
+### PGD
+
+请参考 [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.

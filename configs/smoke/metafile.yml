@@ -13,8 +13,8 @@ Collections:
       Title: 'SMOKE: Single-Stage Monocular 3D Object Detection via Keypoint Estimation'
     README: configs/smoke/README.md
     Code:
-      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/smoke_mono3d.py#L7
-      Version: v0.17.1
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/models/detectors/smoke_mono3d.py#L7
+      Version: v1.0.0
 
 Models:
   - Name: smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d
