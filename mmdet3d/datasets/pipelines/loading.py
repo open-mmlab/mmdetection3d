@@ -991,30 +991,24 @@ class TruncationHandle(object):
             a, b = np.polyfit([center2d[0], center[0]],
                               [center2d[1], center[1]], 1)
             valid_intersects = []
-            # valid_edge = []
 
             left_y = b
             if (0 <= left_y <= img_h - 1):
                 valid_intersects.append(np.array([0, left_y]))
-                # valid_edge.append(0)
 
             right_y = (img_w - 1) * a + b
             if (0 <= right_y <= img_h - 1):
                 valid_intersects.append(np.array([img_w - 1, right_y]))
-                # valid_edge.append(1)
 
             top_x = -b / a
             if (0 <= top_x <= img_w - 1):
                 valid_intersects.append(np.array([top_x, 0]))
-                # valid_edge.append(2)
 
             bottom_x = (img_h - 1 - b) / a
             if (0 <= bottom_x <= img_w - 1):
                 valid_intersects.append(np.array([bottom_x, img_h - 1]))
-                # valid_edge.append(3)
 
             valid_intersects = np.stack(valid_intersects)
-            # 找到距离proj center 最近的交点
             min_idx = np.argmin(
                 np.linalg.norm(
                     valid_intersects - center2d.reshape(1, 2), axis=1))
