@@ -4,11 +4,10 @@ import numpy as np
 import pytest
 from os import path as osp
 
-from mmdet3d.core.bbox import CameraInstance3DBoxes, DepthInstance3DBoxes
+from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 # yapf: disable
-from mmdet3d.datasets.pipelines import (GenerateEgdeIndices, GenerateKeypoints,
-                                        LoadAnnotations3D,
+from mmdet3d.datasets.pipelines import (GenerateEgdeIndices, LoadAnnotations3D,
                                         LoadImageFromFileMono3D,
                                         LoadPointsFromFile,
                                         LoadPointsFromMultiSweeps,
@@ -386,21 +385,3 @@ def test_generate_edge_indices():
 
     assert edge_indices.shape[0] == 3253
     assert edge_len == 3252
-
-
-def test_generate_keypoints():
-
-    input_dict = dict()
-    input_dict['ori_shape'] = (380, 1248)
-    input_dict['gt_bboxes_3d'] = CameraInstance3DBoxes(
-        np.random.random((8, 7)))
-    input_dict['cam_intrinsic'] = np.random.random((4, 4))
-    input_dict['target_centers2d'] = np.random.random((8, 2))
-    keypoitns_generator = GenerateKeypoints(use_local_coords=True)
-    input_dict = keypoitns_generator(input_dict)
-
-    keypoints = input_dict['keypoints2d']
-    mask = input_dict['keypoints_depth_mask']
-
-    assert keypoints.shape == (8, 10, 2)
-    assert mask.shape == (8, 3)
