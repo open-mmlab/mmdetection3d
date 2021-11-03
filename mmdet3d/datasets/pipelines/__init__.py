@@ -2,10 +2,12 @@
 from mmdet.datasets.pipelines import Compose
 from .dbsampler import DataBaseSampler
 from .formating import Collect3D, DefaultFormatBundle, DefaultFormatBundle3D
-from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
+from .loading import (GenerateEgdeIndices, GenerateKeypoints,
+                      LoadAnnotations3D, LoadImageFromFileMono3D,
                       LoadMultiViewImageFromFiles, LoadPointsFromDict,
                       LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                      NormalizePointsColor, PointSegClassMapping)
+                      NormalizePointsColor, PointSegClassMapping,
+                      TruncationHandle)
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,
@@ -28,5 +30,6 @@ __all__ = [
     'VoxelBasedPointSampler', 'GlobalAlignment', 'IndoorPatchPointSample',
     'LoadImageFromFileMono3D', 'ObjectNameFilter', 'RandomDropPointsColor',
     'RandomJitterPoints', 'AffineResize', 'RandomShiftScale',
-    'LoadPointsFromDict'
+    'LoadPointsFromDict', 'GenerateKeypoints', 'GenerateEgdeIndices',
+    'TruncationHandle'
 ]
