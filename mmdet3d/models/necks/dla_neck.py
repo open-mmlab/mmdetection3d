@@ -212,7 +212,7 @@ class DLANeck(BaseModule):
         for i in range(self.end_level - self.start_level):
             outs.append(mlvl_features[i].clone())
         self.ida_up(outs, 0, len(outs))
-        return outs[-1]
+        return [outs[-1]]
 
     def init_weights(self):
         for m in self.modules():
