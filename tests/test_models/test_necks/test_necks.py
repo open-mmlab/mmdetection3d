@@ -131,4 +131,4 @@ def test_dla_neck():
             for i in range(len(in_channels))
         ]
         outputs = neck(feats)
-        assert outputs.shape == (4, 64, 8, 8)
+        assert outputs[0].shape == (4, 64, 8, 8)

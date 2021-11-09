@@ -66,7 +66,7 @@ class SMOKECoder(BaseBBoxCoder):
                 center2d point.
                 shape: (batch, K (max_objs))
             cam2imgs (Tensor): Batch images' camera intrinsic matrix.
-                shape: (batch, 4, 4)
+                shape: kitti (batch, 4, 4)  nuscenes (batch, 3, 3)
             trans_mats (Tensor): transformation matrix from original image
                 to feature map.
                 shape: (batch, 3, 3)
@@ -123,7 +123,7 @@ class SMOKECoder(BaseBBoxCoder):
             depths (Tensor): Object depth z.
                 shape: (batch * K)
             cam2imgs (Tensor): Batch camera intrinsics matrix.
-                shape: (batch, 4, 4)
+                shape: kitti (batch, 4, 4)  nuscenes (batch, 3, 3)
             trans_mats (Tensor): transformation matrix from original image
                 to feature map.
                 shape: (batch, 3, 3)
@@ -144,9 +144,10 @@ class SMOKECoder(BaseBBoxCoder):
         # transform project points back on original image
         centers2d_img = torch.matmul(trans_mats_inv, centers2d_extend)
         centers2d_img = centers2d_img * depths.view(N, -1, 1)
-        centers2d_img_extend = torch.cat(
-            (centers2d_img, centers2d.new_ones(N, 1, 1)), dim=1)
-        locations = torch.matmul(cam2imgs_inv, centers2d_img_extend).squeeze(2)
+        if cam2imgs.shape[1] == 4:
+            centers2d_img = torch.cat(
+                (centers2d_img, centers2d.new_ones(N, 1, 1)), dim=1)
+        locations = torch.matmul(cam2imgs_inv, centers2d_img).squeeze(2)
 
         return locations[:, :3]
 
@@ -186,16 +187,16 @@ class SMOKECoder(BaseBBoxCoder):
         alphas = torch.atan(ori_vector[:, 0] / (ori_vector[:, 1] + 1e-7))
 
         # get cosine value positive and negative index.
-        cos_pos_inds = (ori_vector[:, 1] >= 0).nonzero()
-        cos_neg_inds = (ori_vector[:, 1] < 0).nonzero()
+        cos_pos_inds = (ori_vector[:, 1] >= 0).nonzero(as_tuple=False)
+        cos_neg_inds = (ori_vector[:, 1] < 0).nonzero(as_tuple=False)
 
         alphas[cos_pos_inds] -= np.pi / 2
         alphas[cos_neg_inds] += np.pi / 2
         # retrieve object rotation y angle.
         yaws = alphas + rays
 
-        larger_inds = (yaws > np.pi).nonzero()
-        small_inds = (yaws < -np.pi).nonzero()
+        larger_inds = (yaws > np.pi).nonzero(as_tuple=False)
+        small_inds = (yaws < -np.pi).nonzero(as_tuple=False)
 
         if len(larger_inds) != 0:
             yaws[larger_inds] -= 2 * np.pi
