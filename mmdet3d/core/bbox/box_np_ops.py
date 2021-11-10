@@ -200,7 +200,7 @@ def center_to_corner_box3d(centers,
     return corners
 
 
-@numba.jit('float32[:, :, :](float32[:, :])', nopython=True)
+@numba.jit(nopython=True)
 def box2d_to_corner_jit(boxes):
     """Convert box2d to corner.
 
