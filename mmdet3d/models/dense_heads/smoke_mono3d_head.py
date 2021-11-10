@@ -127,7 +127,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         """
         assert len(cls_scores) == len(bbox_preds) == 1
         cam2imgs = torch.stack([
-            cls_scores[0].new_tensor(img_meta['cam_intrinsic'])
+            cls_scores[0].new_tensor(img_meta['cam2img'])
             for img_meta in img_metas
         ])
         trans_mats = torch.stack([
@@ -254,7 +254,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         batch, channel = pred_reg.shape[0], pred_reg.shape[1]
         w = pred_reg.shape[3]
         cam2imgs = torch.stack([
-            gt_locations.new_tensor(img_meta['cam_intrinsic'])
+            gt_locations.new_tensor(img_meta['cam2img'])
             for img_meta in img_metas
         ])
         trans_mats = torch.stack([
