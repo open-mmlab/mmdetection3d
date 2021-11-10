@@ -119,7 +119,7 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     return corners
 
 
-@numba.jit(nopython=True)
+@numba.jit('float32[:, :](float32[:, :], int32)', nopython=True)
 def depth_to_points(depth, trunc_pixel):
     """Convert depth map to points.
 
@@ -200,7 +200,7 @@ def center_to_corner_box3d(centers,
     return corners
 
 
-@numba.jit(nopython=True)
+@numba.jit('float32[:, :, :](float32[:, :])', nopython=True)
 def box2d_to_corner_jit(boxes):
     """Convert box2d to corner.
 
@@ -705,7 +705,7 @@ def points_in_convex_polygon_3d_jit(points,
                                             normal_vec, d, num_surfaces)
 
 
-@numba.jit
+@numba.njit
 def points_in_convex_polygon_jit(points, polygon, clockwise=False):
     """Check points is in 2d convex polygons. True when point in polygon.
 
@@ -723,14 +723,16 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=False):
     num_points_of_polygon = polygon.shape[1]
     num_points = points.shape[0]
     num_polygons = polygon.shape[0]
-    # if clockwise:
-    #     vec1 = polygon - polygon[:, [num_points_of_polygon - 1] +
-    #                              list(range(num_points_of_polygon - 1)), :]
-    # else:
-    #     vec1 = polygon[:, [num_points_of_polygon - 1] +
-    #                    list(range(num_points_of_polygon - 1)), :] - polygon
-    # vec1: [num_polygon, num_points_of_polygon, 2]
-    vec1 = np.zeros((2), dtype=polygon.dtype)
+    # vec for all the polygons
+    if clockwise:
+        vec1 = polygon - polygon[:,
+                                 np.array([num_points_of_polygon - 1] + list(
+                                     range(num_points_of_polygon - 1))), :]
+    else:
+        vec1 = polygon[:,
+                       np.array([num_points_of_polygon - 1] +
+                                list(range(num_points_of_polygon -
+                                           1))), :] - polygon
     ret = np.zeros((num_points, num_polygons), dtype=np.bool_)
     success = True
     cross = 0.0
@@ -738,12 +740,9 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=False):
         for j in range(num_polygons):
             success = True
             for k in range(num_points_of_polygon):
-                if clockwise:
-                    vec1 = polygon[j, k] - polygon[j, k - 1]
-                else:
-                    vec1 = polygon[j, k - 1] - polygon[j, k]
-                cross = vec1[1] * (polygon[j, k, 0] - points[i, 0])
-                cross -= vec1[0] * (polygon[j, k, 1] - points[i, 1])
+                vec = vec1[j, k]
+                cross = vec[1] * (polygon[j, k, 0] - points[i, 0])
+                cross -= vec[0] * (polygon[j, k, 1] - points[i, 1])
                 if cross >= 0:
                     success = False
                     break
