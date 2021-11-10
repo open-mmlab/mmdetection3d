@@ -691,7 +691,7 @@ class GenerateEgdeIndices(object):
     """Generate edge indices for monocular 3d object deteciton.
 
     Args:
-        pad_mode (str): the pad mode of image.
+        pad_mode (str, optional): The pad mode of image.
             Default: default.
     """
 
@@ -703,6 +703,7 @@ class GenerateEgdeIndices(object):
 
         Args:
             results (dict): Result dict containing data.
+
         Returns:
             dict: The result dict containing the edge indices
                 and edge length. Updated key and value are
@@ -786,8 +787,8 @@ class GenerateKeypoints(object):
     """Generate keypoints for monocular 3d object deteciton.
 
     Args:
-        use_local_coords (list[float]): Whether to use local coordinate of
-            keypooints. Default: True.
+        use_local_coords (bool, optional): Whether to
+            use local coordinate of keypooints. Default: True.
     """
 
     def __init__(self, use_local_coords=True):
@@ -798,6 +799,7 @@ class GenerateKeypoints(object):
 
         Args:
             results (dict): Result dict containing data.
+
         Returns:
             dict: The result dict containing the generated keypoints and
                 its mask. Updated key and value are described below.
@@ -889,6 +891,7 @@ class TruncationHandle(object):
 
         Args:
             results (dict): Result dict containing data.
+
         Returns:
             dict: The result dict containing modified centers2d and
                 its offset to real centers2d, Updated key and value are
@@ -959,6 +962,7 @@ class TruncationHandle(object):
             centers2d (np.ndarray): Projected 3D centers onto 2D images.
             centers (np.ndarray): Centers of 2d gt bboxes.
             img_scale (tuple): Image original shape.
+
         Returns:
             np.ndarray: Target centers2d for real centers2d.
         """
