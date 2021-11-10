@@ -692,7 +692,7 @@ class GenerateEgdeIndices(object):
 
     Args:
         pad_mode (str): the pad mode of image.
-            Default: default
+            Default: default.
     """
 
     def __init__(self, pad_mode='default'):
@@ -700,14 +700,13 @@ class GenerateEgdeIndices(object):
 
     def __call__(self, results):
         """Call function to generate edge indices for image.
+
         Args:
             results (dict): Result dict containing data.
-
         Returns:
             dict: The result dict containing the edge indices
                 and edge length. Updated key and value are
                 described below.
-
                 - edge_indices (np.ndarray): edge indices of image boundary
                     after padding.
                 - edge_len (np.ndarray): the length of edge indices.
@@ -771,7 +770,6 @@ class GenerateEgdeIndices(object):
         edge_indices = np.concatenate([index for index in edge_indices],
                                       axis=0)
         results['edge_indices'] = edge_indices
-        # length is different to different images
         results['edge_len'] = edge_indices.shape[0] - 1
 
         return results
@@ -797,13 +795,12 @@ class GenerateKeypoints(object):
 
     def __call__(self, results):
         """Call function to generate keypoints and its visible mask.
+
         Args:
             results (dict): Result dict containing data.
-
         Returns:
             dict: The result dict containing the generated keypoints and
                 its mask. Updated key and value are described below.
-
                 - keypoints2d (np.ndarray): generated keypoints with
                     visible mask.
                 - keypoints_depth_mask (np.ndarray): mask of depth
@@ -811,16 +808,15 @@ class GenerateKeypoints(object):
         """
         img_h, img_w = results['ori_shape']
         gt_bboxes_3d = results['gt_bboxes_3d']
-        # shape (N, 8, 3)
+        # (N, 8, 3)
         corners3d = np.array(gt_bboxes_3d.corners)
         top_centers3d = corners3d[:, [0, 1, 4, 5], :].mean(axis=1)
         bot_centers3d = corners3d[:, [2, 3, 6, 7], :].mean(axis=1)
         # (N, 2, 3)
         top_bot_centers3d = np.stack((top_centers3d, bot_centers3d), axis=1)
-        keypoints3d = np.concatenate((corners3d, top_bot_centers3d),
-                                     axis=1)  # (N, 10, 3)
+        keypoints3d = np.concatenate((corners3d, top_bot_centers3d), axis=1)
         # (N, 10, 2)
-        keypoints2d = points_cam2img(keypoints3d, results['cam_intrinsic'])
+        keypoints2d = points_cam2img(keypoints3d, results['cam2img'])
 
         # keypoints mask: keypoints must be inside
         # the image and in front of the camera
@@ -830,32 +826,24 @@ class GenerateKeypoints(object):
             keypoints2d[..., 1] <= img_h - 1)
         keypoints_z_visible = (keypoints3d[..., -1] > 0)
 
-        # xyz visible
         # (N, 1O)
         keypoints_visible = keypoints_x_visible & \
             keypoints_y_visible & keypoints_z_visible
         # center, diag-02, diag-13
-        # (N, 3)
         keypoints_depth_valid = np.stack(
             (keypoints_visible[:, [8, 9]].all(axis=1),
              keypoints_visible[:, [0, 3, 5, 6]].all(axis=1),
              keypoints_visible[:, [1, 2, 4, 7]].all(axis=1)),
             axis=1)
 
-        if not self.use_local_coords:
+        if self.use_local_coords:
             keypoints2d = np.concatenate(
-                (keypoints2d, keypoints_visible[:, np.newaxis]), axis=1)
+                (keypoints2d - results['centers2d'][:, np.newaxis, :],
+                 keypoints_visible[..., np.newaxis]),
+                axis=2)
         else:
-            if 'target_centers2d' in results:
-                keypoints2d = np.concatenate(
-                    (keypoints2d - results['target_centers2d'].reshape(1, -1),
-                     keypoints_visible[:, np.newaxis]),
-                    axis=1)
-            else:
-                keypoints2d = np.concatenate(
-                    (keypoints2d - results['centers2d'].reshape(1, -1),
-                     keypoints_visible[:, np.newaxis]),
-                    axis=1)
+            keypoints2d = np.concatenate(
+                (keypoints2d, keypoints_visible[..., np.newaxis]), axis=2)
 
         results['keypoints2d'] = keypoints2d
         results['keypoints_depth_mask'] = keypoints_depth_valid
@@ -871,8 +859,7 @@ class GenerateKeypoints(object):
 
 @PIPELINES.register_module()
 class TruncationHandle(object):
-    """Pipeline to handle truncated objects.
-
+    """Pipeline to handle truncated objects(centers).
     First, it judges whether the projected 3d center is inside
     the image or not. If it's outside the image, it will choose
     to discard or retain it.
@@ -902,27 +889,24 @@ class TruncationHandle(object):
 
         Args:
             results (dict): Result dict containing data.
-
         Returns:
-            dict: The result dict containing target centers2d and
-                offset to centers2d, Updated key and value are
+            dict: The result dict containing modified centers2d and
+                its offset to real centers2d, Updated key and value are
                 described below.
-
-                - target_centers2d (np.ndarray): Target centers2d
-                    for objects outside image.
-                - offset2d (np.ndarray): Offsets between target
+                - centers2d (np.ndarray): modified centers2d.
+                - offset2d (np.ndarray): Offsets between modified
                     centers2d and real centers2d.
         """
 
         centers2d = results['centers2d']  # (N, 2)
         target_centers2d = centers2d.copy()
         inside_index = (centers2d[:, 0] > 0) & \
-            (centers2d[:, 0] < self.img_scale[0]) & \
+            (centers2d[:, 0] < results['ori_shape'][1]) & \
             (centers2d[:, 1] > 0) & \
-            (centers2d[:, 1] < self.img_scale[1])
+            (centers2d[:, 1] < results['ori_shape'][0])
 
         if self.keep_outside_objs is True:
-            outside_index = not inside_index
+            outside_index = np.invert(inside_index)
             gt_bboxes = results['gt_bboxes']  # (N, 4)
             centers = (gt_bboxes[:, :2] + gt_bboxes[:, 2:]) / 2  # (N, 2)
             # The num of projected center2d should be same as
@@ -932,23 +916,24 @@ class TruncationHandle(object):
             match_centers = centers[outside_index]
 
             if self.proj_center_mode == 'intersection':
-                target_outside_centers2d = self._approx_centers2d(
+                target_outside_centers2d = self._generate_target_centers2d(
                     outside_centers2d, match_centers, results['ori_shape'])
             else:
                 raise NotImplementedError
 
             target_centers2d[outside_index] = target_outside_centers2d
-            # translate target_centers2d from float to int,
-            # used for generating heatmap.
-            target_centers2d = target_centers2d.round().astype(np.int)
-            # (n, 2) np.float
-            offsets2d = centers2d - target_centers2d
-            results['target_centers2d'] = target_centers2d
-            results['offsets2d'] = offsets2d
+            results['centers2d'] = target_centers2d
+            results['offsets2d'] = centers2d - target_centers2d.round().astype(
+                np.int)
+            results['centers2d_trunc_mask'] = outside_index
 
         else:
             # keep only the center2d inside objects
-            results['centers2d'] = centers2d[inside_index]
+            centers2d = centers2d[inside_index]
+            results['centers2d'] = centers2d
+            results['centers2d_trunc_mask'] = np.full((sum(inside_index), ),
+                                                      False)
+            results['offsets2d'] = centers2d - centers2d.round().astype(np.int)
             for key in results.get('bbox_fields', []):
                 if key in ['gt_bboxes']:
                     results[key] = results[key][inside_index]
@@ -968,16 +953,14 @@ class TruncationHandle(object):
 
         return results
 
-    def _approx_centers2d(centers2d, centers, img_scale):
+    def _generate_target_centers2d(self, centers2d, centers, img_scale):
         """
         Args:
             centers2d (np.ndarray): Projected 3D centers onto 2D images.
             centers (np.ndarray): Centers of 2d gt bboxes.
             img_scale (tuple): Image original shape.
-
         Returns:
             np.ndarray: Target centers2d for real centers2d.
-
         """
         img_h, img_w = img_scale[0], img_scale[1]
 
