@@ -77,7 +77,7 @@ def show_result(points,
                 pred_bboxes,
                 out_dir,
                 filename,
-                show=True,
+                show=False,
                 snapshot=False):
     """Convert results into format that is directly readable for meshlab.
 
