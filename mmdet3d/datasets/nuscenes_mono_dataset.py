@@ -776,7 +776,7 @@ def nusc_box_to_cam_box3d(boxes):
     dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
     rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
                          for b in boxes]).view(-1, 1)
-    velocity = torch.Tensor([b.velocity[:2] for b in boxes]).view(-1, 2)
+    velocity = torch.Tensor([b.velocity[0::2] for b in boxes]).view(-1, 2)
 
     # convert nusbox to cambox convention
     dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
