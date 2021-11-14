@@ -78,7 +78,8 @@ def show_result(points,
                 out_dir,
                 filename,
                 show=False,
-                snapshot=False):
+                snapshot=False,
+                pred_labels=None):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -98,7 +99,19 @@ def show_result(points,
 
         vis = Visualizer(points)
         if pred_bboxes is not None:
-            vis.add_bboxes(bbox3d=pred_bboxes)
+            if pred_labels is None:
+                vis.add_bboxes(bbox3d=pred_bboxes)
+            else:
+                palette = np.random.randint(0, 255, size=(pred_labels.max() + 1, 3))
+                S = {}
+                for j in range(len(pred_labels)):
+                    i = int(pred_labels[j].numpy())
+                    if S.get(i) == None:
+                        S[i] = []
+                    S[i].append(pred_bboxes[j])
+                for i in S:
+                    vis.add_bboxes(bbox3d = np.array(S[i]), bbox_color=palette[i], points_in_box_color=palette[i])
+        
         if gt_bboxes is not None:
             vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
         show_path = osp.join(result_path,
