@@ -102,7 +102,7 @@ def show_result(points,
             if pred_labels is None:
                 vis.add_bboxes(bbox3d=pred_bboxes)
             else:
-                palette = np.random.randint(0, 255, size=(pred_labels.max() + 1, 3))
+                palette = np.random.randint(0, 255, size=(pred_labels.max() + 1, 3)) / 256
                 S = {}
                 for j in range(len(pred_labels)):
                     i = int(pred_labels[j].numpy())
