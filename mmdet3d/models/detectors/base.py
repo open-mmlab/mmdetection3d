@@ -60,7 +60,7 @@ class Base3DDetector(BaseDetector):
         else:
             return self.forward_test(**kwargs)
 
-    def show_results(self, data, result, out_dir):
+    def show_results(self, data, result, out_dir, show=False, score_thr=0.3):
         """Results visualization.
 
         Args:
@@ -93,6 +93,11 @@ class Base3DDetector(BaseDetector):
             assert out_dir is not None, 'Expect out_dir, got none.'
 
             pred_bboxes = result[batch_id]['boxes_3d']
+            pred_labels = result[batch_id]['labels_3d']
+
+            mask = result[batch_id]['scores_3d'] > score_thr
+            pred_bboxes = pred_bboxes[mask]
+            pred_labels = pred_labels[mask]
 
             # for now we convert points and bbox into depth mode
             if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
@@ -105,4 +110,4 @@ class Base3DDetector(BaseDetector):
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
-            show_result(points, None, pred_bboxes, out_dir, file_name)
+            show_result(points, None, pred_bboxes, out_dir, file_name, show=show, pred_labels = pred_labels)

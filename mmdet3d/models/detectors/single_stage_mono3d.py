@@ -178,7 +178,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
 
         return [bbox_list]
 
-    def show_results(self, data, result, out_dir):
+    def show_results(self, data, result, out_dir, show=False, score_thr=None):
         """Results visualization.
 
         Args:
@@ -215,4 +215,4 @@ class SingleStageMono3DDetector(SingleStageDetector):
                 out_dir,
                 file_name,
                 'camera',
-                show=True)
+                show=show)

@@ -72,7 +72,9 @@ class Base3DSegmentor(BaseSegmentor):
                      result,
                      palette=None,
                      out_dir=None,
-                     ignore_index=None):
+                     ignore_index=None,
+                     show=False,
+                     score_thr=None):
         """Results visualization.
 
         Args:
@@ -123,4 +125,4 @@ class Base3DSegmentor(BaseSegmentor):
                 file_name,
                 palette,
                 ignore_index,
-                show=True)
+                show=show)
