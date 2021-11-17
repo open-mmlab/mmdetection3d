@@ -65,6 +65,7 @@ def init_model(config, checkpoint=None, device='cuda:0'):
         if 'PALETTE' in checkpoint['meta']:  # 3D Segmentor
             model.PALETTE = checkpoint['meta']['PALETTE']
     model.cfg = config  # save the config in the model for convenience
+    torch.cuda.set_device(device)
     model.to(device)
     model.eval()
     return model
