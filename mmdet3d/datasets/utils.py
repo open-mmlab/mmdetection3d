@@ -12,7 +12,7 @@ from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
                                         PointSegClassMapping)
 # yapf: enable
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import LoadImageFromFile
+from mmdet.datasets.pipelines import LoadImageFromFile, MultiScaleFlipAug
 
 
 def is_loading_function(transform):
@@ -40,12 +40,12 @@ def is_loading_function(transform):
             return False
         if obj_cls in loading_functions:
             return True
-        if obj_cls in (MultiScaleFlipAug3D, ):
+        if obj_cls in (MultiScaleFlipAug3D, MultiScaleFlipAug):
             return None
     elif callable(transform):
         if isinstance(transform, loading_functions):
             return True
-        if isinstance(transform, MultiScaleFlipAug3D):
+        if isinstance(transform, (MultiScaleFlipAug3D, MultiScaleFlipAug)):
             return None
     return False
 
