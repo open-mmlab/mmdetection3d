@@ -17,3 +17,4 @@ Import:
   - configs/votenet/metafile.yml
   - configs/fcos3d/metafile.yml
   - configs/imvoxelnet/metafile.yml
+  - configs/pgd/metafile.yml
