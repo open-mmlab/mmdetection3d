@@ -90,6 +90,7 @@ def show_result(points,
         filename (str): Filename of the current frame.
         show (bool): Visualize the results online. Defaults to False.
         snapshot (bool): Whether to save the online results. Defaults to False.
+        pred_labels (np.ndarray): Predicted labels of boxes. Defaults to None, which means this parameter is optional.
     """
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
@@ -104,15 +105,15 @@ def show_result(points,
             else:
                 palette = np.random.randint(
                     0, 255, size=(pred_labels.max() + 1, 3)) / 256
-                S = {}
+                labelDict = {}
                 for j in range(len(pred_labels)):
                     i = int(pred_labels[j].numpy())
-                    if S.get(i) is None:
-                        S[i] = []
-                    S[i].append(pred_bboxes[j])
-                for i in S:
+                    if labelDict.get(i) is None:
+                        labelDict[i] = []
+                    labelDict[i].append(pred_bboxes[j])
+                for i in labelDict:
                     vis.add_bboxes(
-                        bbox3d=np.array(S[i]),
+                        bbox3d=np.array(labelDict[i]),
                         bbox_color=palette[i],
                         points_in_box_color=palette[i])
 
