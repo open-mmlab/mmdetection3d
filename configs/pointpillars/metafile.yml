@@ -13,6 +13,21 @@ Collections:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/pillar_encoder.py#L13
       Version: v0.6.0
 
+  - Name: PointPillars-FP16
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Hard Voxelization
+    Paper:
+      URL: https://arxiv.org/abs/1710.03740
+      Title: 'Mixed Precision Training'
+    README: configs/fp16/README.md
+    Code:
+      Version: v0.7.0
+
 Models:
   - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car
     In Collection: PointPillars
@@ -169,7 +184,7 @@ Models:
           mAPH@L2: 57.6
 
   - Name: hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d
-    In Collection: PointPillars
+    In Collection: PointPillars-FP16
     Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
@@ -183,7 +198,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d_20201020_222626-c3f0483e.pth
 
   - Name: hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d
-    In Collection: PointPillars
+    In Collection: PointPillars-FP16
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
