@@ -2,6 +2,8 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.models.model_utils import EdgeFusionModule
+from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
+                                  get_keypoints, handle_trunc_objs)
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.builder import HEADS
@@ -15,13 +17,10 @@ from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 @HEADS.register_module()
 class MonoFlexHead(AnchorFreeMono3DHead):
     r"""Anchor-free head used in `MonoFlex <https://arxiv.org/abs/2104.02323>`_
-
     .. code-block:: none
-
                 /-----> 3*3 conv -----> 1*1 conv -----> cls
         feature
                 \-----> 3*3 conv -----> 1*1 conv -----> reg
-
     Args:
         num_classes (int): Number of categories excluding the background
             category.
@@ -55,6 +54,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  use_edge_fusion,
                  edge_fusion_inds,
                  enable_edge_fusion,
+                 filter_outside_objs=False,
                  loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
                  loss_bbox=dict(type='L1Loss', loss_weight=0.1),
                  loss_dir=None,
@@ -81,6 +81,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         # group_reg_dims: ((4, ), (2, ), (3, ), (4, 2), (1, ))
         self.edge_fusion_inds = edge_fusion_inds
         self.use_edge_fusion = use_edge_fusion
+        self.filter_outside_objs = filter_outside_objs
 
     def _init_edge_module(self):
 
@@ -151,7 +152,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 ignored, shape (num_ignored_gts, 4).
             proposal_cfg (mmcv.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used
-
         Returns:
             tuple:
                 losses: (dict[str, Tensor]): A dictionary of loss components.
@@ -174,11 +174,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
     def forward(self, feats, img_metas):
         """Forward features from the upstream network.
-
         Args:
             feats (tuple[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
-
         Returns:
             tuple:
                 cls_scores (list[Tensor]): Box scores for each scale level,
@@ -196,7 +194,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         Args:
             x (Tensor): FPN feature maps of the specified stride.
-
         Returns:
             tuple: Scores for each class, bbox predictions, direction class,
                 and attributes, features after classification and regression
@@ -267,7 +264,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
             rescale (bool): If True, return boxes in original image space.
-
         Returns:
             list[tuple[:obj:`CameraInstance3DBoxes`, Tensor, Tensor, None]]:
                 Each item in result_list is 4-tuple.
@@ -318,7 +314,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                        topk=100,
                        kernel=3):
         """Transform outputs into detections raw bbox predictions.
-
         Args:
             class_score (Tensor): Center predict heatmap,
                 shape (B, num_classes, H, W).
@@ -331,7 +326,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             topk (int): Get top k center keypoints from heatmap. Default 100.
             kernel (int): Max pooling kernel for extract local maximum pixels.
                Default 3.
-
         Returns:
             tuple[torch.Tensor]: Decoded output of SMOKEHead, containing
                the following Tensors:
@@ -367,7 +361,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
     def get_predictions(self, labels3d, centers2d, gt_locations, gt_dimensions,
                         gt_orientations, indexes, img_metas, pred_reg):
         """Prepare predictions for computing loss.
-
         Args:
             labels3d (Tensor): Labels of each 3D box.
                 shape (B, max_objs, )
@@ -385,7 +378,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 e.g., image size, scaling factor, etc.
             pre_reg (Tensor): Box regression map.
                 shape (B, channel, H , W).
-
         Returns:
             dict: the dict has components below:
             - bbox3d_yaws (:obj:`CameraInstance3DBoxes`):
@@ -434,28 +426,28 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         return pred_bboxes
 
-    def get_targets(self, gt_bboxes, gt_labels, gt_bboxes_3d, gt_labels_3d,
-                    centers2d, feat_shape, img_shape, img_metas):
+    def get_targets(self, gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
+                    gt_labels_3d_list, centers2d_list, feat_shape, img_shape,
+                    img_metas):
         """Get training targets for batch images.
 ``
         Args:
-            gt_bboxes (list[Tensor]): Ground truth bboxes of each image,
-                shape (num_gt, 4).
-            gt_labels (list[Tensor]): Ground truth labels of each box,
-                shape (num_gt,).
-            gt_bboxes_3d (list[:obj:`CameraInstance3DBoxes`]): 3D Ground
-                truth bboxes of each image,
-                shape (num_gt, bbox_code_size).
-            gt_labels_3d (list[Tensor]): 3D Ground truth labels of each
+            gt_bboxes_list (list[Tensor]): Ground truth bboxes of each
+                image, shape (num_gt, 4).
+            gt_labels_list (list[Tensor]): Ground truth labels of each
                 box, shape (num_gt,).
-            centers2d (list[Tensor]): Projected 3D centers onto 2D image,
-                shape (num_gt, 2).
+            gt_bboxes_3d_list (list[:obj:`CameraInstance3DBoxes`]): 3D
+                Ground truth bboxes of each image,
+                shape (num_gt, bbox_code_size).
+            gt_labels_3d_list (list[Tensor]): 3D Ground truth labels of
+                each box, shape (num_gt,).
+            centers2d_list (list[Tensor]): Projected 3D centers onto 2D
+                image, shape (num_gt, 2).
             feat_shape (tuple[int]): Feature map shape with value,
                 shape (B, _, H, W).
             img_shape (tuple[int]): Image shape in [h, w] format.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-
         Returns:
             tuple[Tensor, dict]: The Tensor value is the targets of
                 center heatmap, the dict has components below:
@@ -477,12 +469,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     shape (N, 8, 3)
         """
 
-        reg_mask = torch.stack([
-            gt_bboxes[0].new_tensor(
-                not img_meta['affine_aug'], dtype=torch.bool)
-            for img_meta in img_metas
-        ])
-
         img_h, img_w = img_shape[:2]
         bs, _, feat_h, feat_w = feat_shape
 
@@ -491,14 +477,30 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         assert width_ratio == height_ratio
 
-        center_heatmap_target = gt_bboxes[-1].new_zeros(
+        if self.use_edge_fusion:
+            edge_indices, edge_len = get_edge_indices(img_metas)
+
+        if self.filter_outside_objs:
+            filter_outside_objs(gt_bboxes_list, gt_labels_list,
+                                gt_bboxes_3d_list, gt_labels_3d_list,
+                                centers2d_list, img_metas)
+        else:
+            # since there are probably centers2d outside the image. These
+            # centers2d should be especially handled.
+            target_centers2d_list, offsets2d_list, trunc_mask_list = \
+                handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas)
+
+        keypoints2d_list, keypoints_depth_mask_list = \
+            get_keypoints(gt_bboxes_3d_list, centers2d_list, img_metas)
+
+        center_heatmap_target = gt_bboxes_list[-1].new_zeros(
             [bs, self.num_classes, feat_h, feat_w])
 
-        gt_centers2d = centers2d.copy()
+        gt_centers2d = centers2d_list.copy()
 
         for batch_id in range(bs):
-            gt_bbox = gt_bboxes[batch_id]
-            gt_label = gt_labels[batch_id]
+            gt_bbox = gt_bboxes_list[batch_id]
+            gt_label = gt_labels_list[batch_id]
             # project centers2d from input image to feat map
             gt_center2d = gt_centers2d[batch_id] * width_ratio
 
@@ -514,28 +516,26 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                                     [center_x_int, center_y_int], radius)
 
         avg_factor = max(1, center_heatmap_target.eq(1).sum())
-        num_ctrs = [center2d.shape[0] for center2d in centers2d]
+        num_ctrs = [centers2d.shape[0] for centers2d in centers2d_list]
         max_objs = max(num_ctrs)
 
-        reg_inds = torch.cat(
-            [reg_mask[i].repeat(num_ctrs[i]) for i in range(bs)])
-
         inds = torch.zeros((bs, max_objs),
-                           dtype=torch.bool).to(centers2d[0].device)
+                           dtype=torch.bool).to(centers2d_list[0].device)
 
         # put gt 3d bboxes to gpu
         gt_bboxes_3d = [
-            gt_bbox_3d.to(centers2d[0].device) for gt_bbox_3d in gt_bboxes_3d
+            gt_bbox_3d.to(centers2d_list[0].device)
+            for gt_bbox_3d in gt_bboxes_3d_list
         ]
 
-        batch_centers2d = centers2d[0].new_zeros((bs, max_objs, 2))
-        batch_labels_3d = gt_labels_3d[0].new_zeros((bs, max_objs))
+        batch_centers2d = centers2d_list[0].new_zeros((bs, max_objs, 2))
+        batch_labels_3d = gt_labels_3d_list[0].new_zeros((bs, max_objs))
         batch_gt_locations = gt_bboxes_3d[0].tensor.new_zeros(
             (bs, max_objs, 3))
         for i in range(bs):
             inds[i, :num_ctrs[i]] = 1
-            batch_centers2d[i, :num_ctrs[i]] = centers2d[i]
-            batch_labels_3d[i, :num_ctrs[i]] = gt_labels_3d[i]
+            batch_centers2d[i, :num_ctrs[i]] = centers2d_list[i]
+            batch_labels_3d[i, :num_ctrs[i]] = gt_labels_3d_list[i]
             batch_gt_locations[i, :num_ctrs[i]] = gt_bboxes_3d[i].tensor[:, :3]
 
         inds = inds.flatten()
@@ -561,7 +561,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             gt_centers2d=batch_centers2d.long(),
             gt_labels3d=batch_labels_3d,
             indexes=inds,
-            reg_indexes=reg_inds,
             gt_locs=batch_gt_locations,
             gt_dims=gt_dimensions,
             gt_yaws=gt_orientations,
@@ -607,7 +606,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             gt_bboxes_ignore (None | list[Tensor]): Specify which bounding
                 boxes can be ignored when computing the loss.
                 Default: None.
-
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
