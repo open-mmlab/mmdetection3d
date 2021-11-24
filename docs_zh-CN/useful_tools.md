@@ -71,7 +71,7 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --eval-options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 
-在运行这个指令后，您将会在 `${SHOW_DIR}` 获得输入数据、可视化在输入上的网络输出和真值标签（例如：在多模态检测任务中的`***_points.obj`，`***_pred.obj`，`***_gt.obj`，`***_img.png` 和 `***_pred.png` ）。当 `show` 被激活，[Open3D](http://www.open3d.org/) 将会被用来在线可视化结果。当在没有 GUI 的远程服务器上运行测试的时候，您需要设定 `show=False`。
+在运行这个指令后，您将会在 `${SHOW_DIR}` 获得输入数据、可视化在输入上的网络输出和真值标签（例如：在多模态检测任务中的`***_points.obj`，`***_pred.obj`，`***_gt.obj`，`***_img.png` 和 `***_pred.png` ）。当 `show` 被激活，[Open3D](http://www.open3d.org/) 将会被用来在线可视化结果。当您在没有 GUI 的远程服务器上运行测试的时候，无法进行在线可视化，您可以设定 `show=False` 将输出结果保存在 `{SHOW_DIR}`。
 
 至于离线可视化，您将有两个选择。
 利用 `Open3D` 后端可视化结果，您可以运行下面的指令

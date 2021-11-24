@@ -513,8 +513,8 @@ class NuScenesDataset(Custom3DDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
 
-        if show:
-            self.show(results, out_dir, pipeline=pipeline)
+        if show or out_dir:
+            self.show(results, out_dir, show=show, pipeline=pipeline)
         return results_dict
 
     def _build_default_pipeline(self):
@@ -538,13 +538,14 @@ class NuScenesDataset(Custom3DDataset):
         ]
         return Compose(pipeline)
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self, results, out_dir, show=False, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
+            show (bool): Whether to visualize the results online.
+                Default: False.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
         """
