@@ -60,7 +60,7 @@ Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/mas
 
 ### FCOS3D
 
-Please refer to [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d) for details. We provide FCOS3D baselines on the nuScenes dataset currently.
+Please refer to [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d) for details. We provide FCOS3D baselines on the nuScenes dataset.
 
 ### PointNet++
 

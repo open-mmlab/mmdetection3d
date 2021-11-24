@@ -94,4 +94,4 @@
 
 ### Mixed Precision (FP16) Training
 
-请参考 [Mixed Precision (FP16) Training] 在 PointPillars 训练的样例 (https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py) for details.
+细节请参考 [Mixed Precision (FP16) Training] 在 PointPillars 训练的样例 (https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py).
