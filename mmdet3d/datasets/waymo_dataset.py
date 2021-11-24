@@ -350,8 +350,8 @@ class WaymoDataset(KittiDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
 
-        if show:
-            self.show(results, out_dir, pipeline=pipeline)
+        if show or out_dir:
+            self.show(results, out_dir, show=show, pipeline=pipeline)
         return ap_dict
 
     def bbox2result_kitti(self,

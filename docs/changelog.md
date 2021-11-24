@@ -1,5 +1,25 @@
 ## Changelog
 
+### v0.17.2 (1/11/2021)
+
+#### Improvements
+
+- Update Group-Free-3D and FCOS3D bibtex (#985)
+- Update the solutions for incompatibility of pycocotools in the FAQ (#993)
+- Add Chinese documentation for the KITTI (#1003) and Lyft (#1010) dataset tutorial
+- Add the H3DNet checkpoint converter for incompatible keys (#1007)
+
+#### Bug Fixes
+
+- Update mmdetection and mmsegmentation version in the Dockerfile (#992)
+- Fix links in the Chinese documentation (#1015)
+
+#### Contributors
+
+A total of 4 developers contributed to this release.
+
+@Tai-Wang, @wHao-Wu, @ZwwWayne, @ZCMax
+
 ### v0.17.1 (1/10/2021)
 
 #### Highlights
@@ -10,7 +30,7 @@
 
 #### Improvements
 
-- Add Chinese Documentation for training on customized datasets and designing customized models (#729, #820)
+- Add Chinese documentation for training on customized datasets and designing customized models (#729, #820)
 - Support a faster but non-deterministic version of hard voxelization (#904)
 - Update paper titles and code details for metafiles (#917)
 - Add a tutorial for KITTI dataset (#953)
@@ -102,7 +122,7 @@ A total of 11 developers contributed to this release.
 - Refactor Group-Free-3D to make it inherit BaseModule from MMCV (#704)
 - Modify the initialization methods of FCOS3D to be consistent with the refactored approach (#705)
 - Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/groupfree3d) on ScanNet (#710)
-- Add Chinese Documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
+- Add Chinese documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
 - Add documentation for semantic segmentation on ScanNet and S3DIS (#743, #747, #806, #807)
 - Add a parameter `max_keep_ckpts` to limit the maximum number of saved Group-Free-3D checkpoints (#765)
 - Add documentation for 3D detection on SUN RGB-D and nuScenes (#770, #793)
@@ -115,7 +135,7 @@ A total of 11 developers contributed to this release.
 - Fix the `bev_range` initialization in `ObjectRangeFilter` according to the `gt_bboxes_3d` type (#717)
 - Fix Chinese documentation and incorrect doc format due to the incompatible Sphinx version (#718)
 - Fix a potential bug when setting `interval == 1` in [analyze_logs.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) (#720)
-- Update the structure of Chinese Documentation (#722)
+- Update the structure of Chinese documentation (#722)
 - Fix FCOS3D FPN BC-Breaking caused by the code refactoring in MMDetection (#739)
 - Fix wrong `in_channels` when `with_distance=True` in the [Dynamic VFE Layers](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/voxel_encoder.py#L87) (#749)
 - Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795, #818)

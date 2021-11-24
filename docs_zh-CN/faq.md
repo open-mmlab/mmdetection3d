@@ -18,3 +18,16 @@
   ```
 
   **注意**： 我们已经在 0.13.0 及之后的版本中全面支持 pycocotools。
+
+- 如果您在导入 pycocotools 相关包时遇到下面的问题：
+
+  ``ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject``
+
+  请将 pycocotools 的版本降级至 2.0.1，这是由于最新版本的 pycocotools 与 numpy < 1.20.0 不兼容。或者通过下面的方式从源码进行编译来安装最新版本的 pycocotools ：
+
+  ``pip install -e "git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+
+  或者
+
+  ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+

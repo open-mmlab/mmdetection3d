@@ -121,7 +121,7 @@ class MyOptimizerConstructor(object):
         _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
     ```
 
-    如果您的配置继承了一个已经设置了 `optimizer_config` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection.readthedocs.io/en/latest/tutorials/config.html)。
+    如果您的配置继承了一个已经设置了 `optimizer_config` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection.readthedocs.io/zh_CN/latest/tutorials/config.html)。
 
 - __使用动量规划器 (momentum scheduler) 来加速模型收敛__：
 
