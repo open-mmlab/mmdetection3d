@@ -4,16 +4,15 @@ import numpy as np
 import pytest
 from os import path as osp
 
-from mmdet3d.core.bbox import CameraInstance3DBoxes, DepthInstance3DBoxes
+from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 # yapf: disable
-from mmdet3d.datasets.pipelines import (GenerateEgdeIndices, GenerateKeypoints,
-                                        LoadAnnotations3D,
+from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
                                         LoadImageFromFileMono3D,
                                         LoadPointsFromFile,
                                         LoadPointsFromMultiSweeps,
                                         NormalizePointsColor,
-                                        PointSegClassMapping, TruncationHandle)
+                                        PointSegClassMapping)
 
 # yapf: enable
 
@@ -373,83 +372,3 @@ def test_normalize_points_color():
     assert np.allclose(points.coord, coord)
     assert np.allclose(points.color,
                        (color - np.array(color_mean)[None, :]) / 255.0)
-
-
-def test_generate_edge_indices():
-
-    img_shape = (380, 1248)
-    edge_indices_generator = GenerateEgdeIndices(pad_mode='default')
-    input_dict = dict(ori_shape=img_shape)
-    input_dict = edge_indices_generator(input_dict)
-    edge_indices = input_dict['edge_indices']
-    edge_len = input_dict['edge_len']
-
-    assert edge_indices.shape[0] == 3253
-    assert edge_len == 3252
-
-
-def test_truncation_hanlde():
-
-    centers2d = np.array([[-99.86, 199.45], [499.50, 399.20], [201.20, 99.86]])
-    ori_shape = (300, 400)
-
-    gt_bboxes = np.array([[0.25, 99.8, 99.8, 199.6],
-                          [300.2, 250.1, 399.8, 299.6],
-                          [100.2, 20.1, 300.8, 180.7]])
-
-    # test keep outside objects
-    results = dict()
-    results['centers2d'] = centers2d
-    results['ori_shape'] = ori_shape
-    results['gt_bboxes'] = gt_bboxes
-    handletruncation = TruncationHandle(keep_outside_objs=True)
-    results = handletruncation(results)
-    target_centers2d = np.array([[0., 166.30435501], [379.03437877, 299.],
-                                 [201.2, 99.86]])
-    offsets2d = np.array([[-99.86, 33.45], [120.5, 100.2], [0.2, -0.14]])
-    trunc_mask = np.array([True, True, False])
-    assert np.allclose(results['centers2d'], target_centers2d)
-    assert np.allclose(results['offsets2d'], offsets2d)
-    assert np.all(results['centers2d_trunc_mask'] == trunc_mask)
-    assert np.allclose(
-        results['centers2d'].round().astype(np.int) + results['offsets2d'],
-        centers2d)
-
-    # test omit outside objects
-    results = dict()
-    results['centers2d'] = centers2d
-    results['ori_shape'] = ori_shape
-    results['gt_bboxes'] = gt_bboxes
-    handletruncation = TruncationHandle(keep_outside_objs=False)
-    results = handletruncation(results)
-    target_centers2d = np.array([[201.2, 99.86]])
-    offsets2d = np.array([[0.2, -0.14]])
-    trunc_mask = np.array([False])
-    assert np.allclose(results['centers2d'], target_centers2d)
-    assert np.allclose(results['offsets2d'], offsets2d)
-    assert np.all(results['centers2d_trunc_mask'] == trunc_mask)
-    assert np.allclose(
-        results['centers2d'].round().astype(np.int) + results['offsets2d'],
-        centers2d[2])
-
-
-def test_generate_keypoints():
-
-    centers2d = np.array([[-99.86, 199.45], [499.50, 399.20], [201.20, 99.86]])
-    ori_shape = (300, 400)
-    gt_bboxes_3d = CameraInstance3DBoxes(np.random.random((3, 7)))
-    cam2img = [[1260.8474446004698, 0.0, 807.968244525554, 40.1111],
-               [0.0, 1260.8474446004698, 495.3344268742088, 2.34422],
-               [0.0, 0.0, 1.0, 0.00333333], [0.0, 0.0, 0.0, 1.0]]
-    input_dict = dict()
-    input_dict['gt_bboxes_3d'] = gt_bboxes_3d
-    input_dict['ori_shape'] = ori_shape
-    input_dict['cam2img'] = cam2img
-    input_dict['centers2d'] = centers2d
-
-    keypointsgenerator = GenerateKeypoints(use_local_coords=True)
-
-    input_dict = keypointsgenerator(input_dict)
-
-    assert input_dict['keypoints2d'].shape == (3, 10, 3)
-    assert input_dict['keypoints_depth_mask'].shape == (3, 3)
