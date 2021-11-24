@@ -71,7 +71,7 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --eval-options 'show=True' 'out_dir=${SHOW_DIR}'
 ```
 
-在运行这个指令后，您将会在 `${SHOW_DIR}` 获得输入数据、可视化在输入上的网络输出和真值标签（例如：在多模态检测任务中的`***_points.obj`，`***_pred.obj`，`***_gt.obj`，`***_img.png` 和 `***_pred.png` ）。当 `show` 被激活，[Open3D](http://www.open3d.org/) 将会被用来在线可视化结果。当在没有 GUI 的远程服务器上运行测试的时候，您需要设定 `show=False`。
+在运行这个指令后，您将会在 `${SHOW_DIR}` 获得输入数据、可视化在输入上的网络输出和真值标签（例如：在多模态检测任务中的`***_points.obj`，`***_pred.obj`，`***_gt.obj`，`***_img.png` 和 `***_pred.png` ）。当 `show` 被激活，[Open3D](http://www.open3d.org/) 将会被用来在线可视化结果。当您在没有 GUI 的远程服务器上运行测试的时候，无法进行在线可视化，您可以设定 `show=False` 将输出结果保存在 `{SHOW_DIR}`。
 
 至于离线可视化，您将有两个选择。
 利用 `Open3D` 后端可视化结果，您可以运行下面的指令
@@ -266,7 +266,7 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
 -   `--nproc`: 数据准备的进程数，默认为 `4`。由于图片是并行处理的，更大的进程数目能够减少准备时间。
 -   `--extra-tag`: 注释的额外标签，默认为 `nuimages`。这可用于将不同时间处理的不同注释分开以供研究。
 
-更多的数据准备细节参考 [doc](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html)，nuImages 数据集的细节参考 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md/)。
+更多的数据准备细节参考 [doc](https://mmdetection3d.readthedocs.io/zh_CN/latest/data_preparation.html)，nuImages 数据集的细节参考 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md/)。
 
 &emsp;
 
