@@ -119,7 +119,7 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     return corners
 
 
-@numba.jit('float32[:, :](float32[:, :], int32)', nopython=True)
+@numba.jit(nopython=True)
 def depth_to_points(depth, trunc_pixel):
     """Convert depth map to points.
 
