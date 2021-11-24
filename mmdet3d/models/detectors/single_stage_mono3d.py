@@ -178,13 +178,14 @@ class SingleStageMono3DDetector(SingleStageDetector):
 
         return [bbox_list]
 
-    def show_results(self, data, result, out_dir):
+    def show_results(self, data, result, out_dir, gt_bboxes=None):
         """Results visualization.
 
         Args:
             data (list[dict]): Input images and the information of the sample.
             result (list[dict]): Prediction results.
             out_dir (str): Output directory of visualization result.
+            gt_bboxes (obj:`LIDARInstance3DBoxes): GT bbox annotations.
         """
         for batch_id in range(len(result)):
             if isinstance(data['img_metas'][0], DC):
@@ -209,7 +210,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
 
             show_multi_modality_result(
                 img,
-                None,
+                gt_bboxes,
                 pred_bboxes,
                 cam2img,
                 out_dir,
