@@ -13,21 +13,6 @@ Collections:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/second.py#L11
       Version: v0.5.0
 
-  - Name: SECOND-FP16
-    Metadata:
-      Training Techniques:
-        - AdamW
-        - Mixed Precision Training
-      Training Resources: 8x TITAN Xp
-      Architecture:
-        - Hard Voxelization
-    Paper:
-      URL: https://arxiv.org/abs/1710.03740
-      Title: 'Mixed Precision Training'
-    README: configs/fp16/README.md
-    Code:
-      Version: v0.7.0
-
 Models:
   - Name: hv_second_secfpn_6x8_80e_kitti-3d-car
     In Collection: SECOND
@@ -74,9 +59,13 @@ Models:
           mAPH@L2: 55.7
 
   - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-car
-    In Collection: SECOND-FP16
+    In Collection: SECOND
     Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py
     Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
       Training Data: KITTI
       Training Memory (GB): 2.9
     Results:
@@ -85,11 +74,17 @@ Models:
         Metrics:
           FP16 mAP: 78.72
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car_20200924_211301-1f5ad833.pth
+    Code:
+      Version: v0.7.0
 
   - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class
-    In Collection: SECOND-FP16
+    In Collection: SECOND
     Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
     Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
       Training Data: KITTI
       Training Memory (GB): 2.9
     Results:
@@ -98,3 +93,5 @@ Models:
         Metrics:
           FP16 mAP: 67.4
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class_20200925_110059-05f67bdf.pth
+    Code:
+      Version: v0.7.0
