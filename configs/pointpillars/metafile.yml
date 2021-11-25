@@ -191,7 +191,7 @@ Models:
       Version: v0.7.0
 
   - Name: hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d
-    In Collection: PointPillars-FP16
+    In Collection: PointPillars
     Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py
     Metadata:
       Training Techniques:
