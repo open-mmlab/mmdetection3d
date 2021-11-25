@@ -184,8 +184,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          FP16 mAP: 35.19
-          FP16 NDS: 50.27
+          mAP: 35.19
+          NDS: 50.27
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d_20201020_222626-c3f0483e.pth
     Code:
       Version: v0.7.0
@@ -206,8 +206,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          FP16 mAP: 39.26
-          FP16 NDS: 53.26
+          mAP: 39.26
+          NDS: 53.26
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth
     Code:
       Version: v0.7.0

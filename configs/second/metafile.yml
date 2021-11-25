@@ -72,7 +72,7 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          FP16 mAP: 78.72
+          mAP: 78.72
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car_20200924_211301-1f5ad833.pth
     Code:
       Version: v0.7.0
@@ -91,7 +91,7 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          FP16 mAP: 67.4
+          mAP: 67.4
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class_20200925_110059-05f67bdf.pth
     Code:
       Version: v0.7.0
