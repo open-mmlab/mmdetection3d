@@ -88,9 +88,11 @@ def show_result(points,
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        show (bool): Visualize the results online. Defaults to False.
-        snapshot (bool): Whether to save the online results. Defaults to False.
-        pred_labels (np.ndarray): Predicted labels of boxes. Defaults to None, which means this parameter is optional.
+        show (bool, optional): Visualize the results online. Defaults to False.
+        snapshot (bool, optional): Whether to save the online results.
+            Defaults to False.
+        pred_labels (np.ndarray, optional): Predicted labels of boxes.
+            Defaults to None.
     """
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)

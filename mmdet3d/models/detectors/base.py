@@ -60,13 +60,18 @@ class Base3DDetector(BaseDetector):
         else:
             return self.forward_test(**kwargs)
 
-    def show_results(self, data, result, out_dir, show=False, score_thr=0.3):
+    def show_results(self, data, result, out_dir, show=False, score_thr=None):
         """Results visualization.
 
         Args:
             data (list[dict]): Input points and the information of the sample.
             result (list[dict]): Prediction results.
             out_dir (str): Output directory of visualization result.
+            show (bool, optional): Determines whether you are
+                going to show result by open3d.
+                Defaults to False.
+            score_thr (float, optional): Score threshold of bounding boxes.
+                Default to None.
         """
         for batch_id in range(len(result)):
             if isinstance(data['points'][0], DC):
@@ -95,9 +100,10 @@ class Base3DDetector(BaseDetector):
             pred_bboxes = result[batch_id]['boxes_3d']
             pred_labels = result[batch_id]['labels_3d']
 
-            mask = result[batch_id]['scores_3d'] > score_thr
-            pred_bboxes = pred_bboxes[mask]
-            pred_labels = pred_labels[mask]
+            if score_thr is not None:
+                mask = result[batch_id]['scores_3d'] > score_thr
+                pred_bboxes = pred_bboxes[mask]
+                pred_labels = pred_labels[mask]
 
             # for now we convert points and bbox into depth mode
             if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
