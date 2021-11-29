@@ -9,7 +9,7 @@ Currently, there have been many kinds of voxel-based 3D single stage detectors, 
 <!-- [IMAGE] -->
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/30491025/143854187-54ed1257-a046-4764-81cd-d2c8404137d3.png" width="400"/>
+<img src="https://user-images.githubusercontent.com/30491025/143854187-54ed1257-a046-4764-81cd-d2c8404137d3.png" width="800"/>
 </div>
 
 <!-- [PAPER_TITLE: 3DSSD: Point-based 3D Single Stage Object Detector] -->
