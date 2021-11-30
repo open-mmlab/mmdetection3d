@@ -9,7 +9,7 @@ Multi-class 3D object detection aims to localize and classify objects of multipl
 <!-- [IMAGE] -->
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/79644370/143887479-8d493be7-8607-4bc2-acae-0d79ca0dd9e4.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/79644370/144024507-9c1f23c1-5e5a-49c8-b346-ff37e30adc3a.png" width="800"/>
 </div>
 
 <!-- [PAPER_TITLE: SSN: Shape Signature Networks for Multi-class Object Detection from Point Clouds] -->
