@@ -70,7 +70,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.17.2 was released in 1/11/2021.
+v0.17.3 was released in 1/12/2021.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
 
 For branch v1.0.0.dev0, please refer to [changelog_v1.0.md](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) for our latest features and more details.
