@@ -9,7 +9,7 @@ Modern CNN-based object detectors assign anchors for ground-truth objects under 
 <!-- [IMAGE] -->
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/36950400/143866685-e3ac08bb-cd0c-4ada-ba8a-18e03cccdd0f.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/36950400/143866685-e3ac08bb-cd0c-4ada-ba8a-18e03cccdd0f.png" width="600"/>
 </div>
 
 <!-- [PAPER_TITLE: FreeAnchor: Learning to Match Anchors for Visual
