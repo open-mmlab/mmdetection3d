@@ -14,7 +14,7 @@ Modern CNN-based object detectors assign anchors for ground-truth objects under 
 
 <!-- [PAPER_TITLE: FreeAnchor: Learning to Match Anchors for Visual
 Object Detection] -->
-<!-- [PAPER_URL: https://arxiv.org/pdf/1909.02466.pdf] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/1909.02466.pdf] -->
 
 ## Introduction
 
