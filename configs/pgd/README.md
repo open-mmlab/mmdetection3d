@@ -1,5 +1,20 @@
 # Probabilistic and Geometric Depth: Detecting Objects in Perspective
 
+## Abstract
+
+<!-- [ABSTRACT] -->
+
+3D object detection is an important capability needed in various practical applications such as driver assistance systems. Monocular 3D detection, as a representative general setting among image-based approaches, provides a more economical solution than conventional settings relying on LiDARs but still yields unsatisfactory results. This paper first presents a systematic study on this problem. We observe that the current monocular 3D detection can be simplified as an instance depth estimation problem: The inaccurate instance depth blocks all the other 3D attribute predictions from improving the overall detection performance. Moreover, recent methods directly estimate the depth based on isolated instances or pixels while ignoring the geometric relations across different objects. To this end, we construct geometric relation graphs across predicted objects and use the graph to facilitate depth estimation. As the preliminary depth estimation of each instance is usually inaccurate in this ill-posed setting, we incorporate a probabilistic representation to capture the uncertainty. It provides an important indicator to identify confident predictions and further guide the depth propagation. Despite the simplicity of the basic idea, our method, PGD, obtains significant improvements on KITTI and nuScenes benchmarks, achieving 1st place out of all monocular vision-only methods while still maintaining real-time efficiency. Code and models will be released at [this https URL](https://github.com/open-mmlab/mmdetection3d).
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/79644370/143884065-d1a19fdf-bcc0-4249-84cf-b7a85fa1eb2f.png" width="800"/>
+</div>
+
+<!-- [PAPER_TITLE: Probabilistic and Geometric Depth: Detecting Objects in Perspective] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/2107.14160] -->
+
 ## Introduction
 
 <!-- [ALGORITHM] -->
