@@ -196,12 +196,10 @@ def test_points_img2cam():
 def test_generate_edge_indices():
 
     img_metas = [dict(img_shape=[300, 400]), dict(img_shape=[500, 450])]
-    edge_indices_list, edge_len_list = get_edge_indices(img_metas)
+    edge_indices_list = get_edge_indices(img_metas)
 
-    assert edge_indices_list[0].shape[0] == 1397
-    assert edge_len_list[0] == 1396
-    assert edge_indices_list[1].shape[0] == 1897
-    assert edge_len_list[1] == 1896
+    assert edge_indices_list[0].shape[0] == 1396
+    assert edge_indices_list[1].shape[0] == 1896
 
 
 def test_truncation_hanlde():
