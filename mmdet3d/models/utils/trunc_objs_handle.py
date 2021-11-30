@@ -1,7 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
-
-from mmdet3d.core.utils import array_converter
+import torch
 
 
 def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
@@ -21,14 +19,11 @@ def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
             each has shape (num_gt, 2).
         img_metas (list[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
-
-    Returns:
-        None
     """
     bs = len(centers2d_list)
 
     for i in range(bs):
-        centers2d = centers2d_list[i].copy()
+        centers2d = centers2d_list[i].clone()
         img_shape = img_metas[i]['img_shape']
         keep_inds = (centers2d[:, 0] > 0) & \
             (centers2d[:, 0] < img_shape[1]) & \
@@ -43,51 +38,47 @@ def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
     return
 
 
-@array_converter(
-    to_torch=False,
-    apply_to=('centers2d', 'centers'),
-    template_arg_name_='centers2d')
 def get_target_centers2d(centers2d, centers, img_shape):
+    """Function to get target centers2d.
+    Args:
+        centers2d (Tensor): Projected 3D centers onto 2D images.
+        centers (Tensor): Centers of 2d gt bboxes.
+        img_shape (tuple): Resized image shape.
+
+    Returns:
+        torch.Tensor: Target centers2d for real centers2d.
     """
-        Args:
-            centers2d (Tensor): Projected 3D centers onto 2D images.
-            centers (Tensor): Centers of 2d gt bboxes.
-            img_shape (tuple): Resized image shape.
-
-        Returns:
-            torch.Tensor: Target centers2d for real centers2d.
-        """
+    N = centers2d.shape[0]
     h, w = img_shape[:2]
-    target_centers2d_list = []
-    for i in range(centers2d.shape[0]):
-        # y = ax + b
-        # get a line
-        center2d = centers2d[i]
-        center = centers[i]
-        a, b = np.polyfit([center2d[0], center[0]], [center2d[1], center[1]],
-                          1)
-        valid_intersects = []
-        left_y = b
-        if (0 <= left_y <= h - 1):
-            valid_intersects.append(np.array([0, left_y]))
+    valid_intersects = centers2d.new_zeros((N, 2))
+    a = (centers[:, 1] - centers2d[:, 1]) / (centers[:, 0] - centers2d[:, 0]
+                                             )  # (n, )
+    b = centers[:, 1] - a * centers[:, 0]  # (n, )
+    left_y = b  # (n, )
+    right_y = (w - 1) * a + b
+    top_x = -b / a
+    bottom_x = (h - 1 - b) / a
 
-        right_y = (w - 1) * a + b
-        if (0 <= right_y <= h - 1):
-            valid_intersects.append(np.array([w - 1, right_y]))
+    left_coors = torch.stack((left_y.new_zeros(N, ), left_y), dim=1)  # (n, 2)
+    right_coors = torch.stack((right_y.new_full((N, ), w - 1), right_y), dim=1)
+    top_coors = torch.stack((top_x, top_x.new_zeros(N, )), dim=1)
+    bottom_coors = torch.stack((bottom_x, bottom_x.new_full((N, ), h - 1)),
+                               dim=1)
 
-        top_x = -b / a
-        if (0 <= top_x <= w - 1):
-            valid_intersects.append(np.array([top_x, 0]))
+    intersects = torch.stack(
+        [left_coors, right_coors, top_coors, bottom_coors], dim=1)  # (n, 4, 2)
+    intersects_x = intersects[:, :, 0]
+    intersects_y = intersects[:, :, 1]
+    inds = (intersects_x >= 0) & (intersects_x <=
+                                  w - 1) & (intersects_y >= 0) & (
+                                      intersects_y <= h - 1)
+    valid_intersects = intersects[inds].reshape(N, 2, 2)
+    dist = torch.norm(
+        valid_intersects - centers2d.unsqueeze(1), dim=2)  # (n, 4)
+    min_idx = torch.argmin(dist, dim=1)  # (n, )
 
-        bottom_x = (h - 1 - b) / a
-        if (0 <= bottom_x <= w - 1):
-            valid_intersects.append(np.array([bottom_x, h - 1]))
-
-        valid_intersects = np.stack(valid_intersects)
-        min_idx = np.argmin(
-            np.linalg.norm(valid_intersects - center2d.reshape(1, 2), axis=1))
-        target_centers2d_list.append(valid_intersects[min_idx])
-    target_centers2d = np.stack(target_centers2d_list)
+    min_idx = min_idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, 2)
+    target_centers2d = valid_intersects.gather(dim=1, index=min_idx).squeeze(1)
 
     return target_centers2d
 
@@ -118,13 +109,13 @@ def handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas):
     target_centers2d_list = []
     trunc_mask_list = []
     offsets2d_list = []
-    # for now, only pad mode that img is padded by right
-    # and bottom side is supported.
+    # for now, only pad mode that img is padded by right and bottom side
+    # is supported.
     for i in range(bs):
         centers2d = centers2d_list[i]
         gt_bbox = gt_bboxes_list[i]
         img_shape = img_metas[i]['img_shape']
-        target_centers2d = centers2d.copy()
+        target_centers2d = centers2d.clone()
         inside_inds = (centers2d[:, 0] > 0) & \
             (centers2d[:, 0] < img_shape[1]) & \
             (centers2d[:, 1] > 0) & \
@@ -142,7 +133,7 @@ def handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas):
         offsets2d = centers2d - target_centers2d.round().int()
         trunc_mask = outside_inds
 
-        target_centers2d.append(target_centers2d)
+        target_centers2d_list.append(target_centers2d)
         trunc_mask_list.append(trunc_mask)
         offsets2d_list.append(offsets2d)
 

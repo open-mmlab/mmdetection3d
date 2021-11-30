@@ -66,6 +66,7 @@ def get_keypoints(gt_bboxes_3d_list,
              keypoints_visible[:, [0, 3, 5, 6]].all(dim=1),
              keypoints_visible[:, [1, 2, 4, 7]].all(dim=1)),
             dim=1)
+        keypoints_visible = keypoints_visible.float()
 
         if use_local_coords:
             keypoints2d = torch.cat((keypoints2d - centers2d.unsqueeze(1),
