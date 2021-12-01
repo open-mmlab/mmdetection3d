@@ -14,12 +14,14 @@
 - Update mmcv version in the Dockerfile (#1036)
 - Fix the memory-leak problem when loading checkpoints in [init_model](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/inference.py#L36) (#1045)
 - Fix incorrect velocity indexing when formatting boxes on nuScenes (#1049)
+- Explicitly set cuda device ID in [init_model](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/inference.py#L36) to avoid memory allocation on unexpected devices (#1056)
+- Fix PointPillars FLOPs calculation error (#1075)
 
 #### Contributors
 
-A total of 4 developers contributed to this release.
+A total of 6 developers contributed to this release.
 
-@wHao-Wu, @Tai-Wang, @ZCMax, @Otteri
+@wHao-Wu, @Tai-Wang, @ZCMax, @Otteri, @MilkClouds, @aldakata
 
 ### v0.17.2 (1/11/2021)
 
