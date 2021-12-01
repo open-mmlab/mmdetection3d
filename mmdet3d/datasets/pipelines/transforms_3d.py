@@ -892,8 +892,8 @@ class PointSample(object):
         if sample_range is not None and not replace:
             # Only sampling the near points when len(points) >= num_samples
             depth = np.linalg.norm(points.tensor, axis=1)
-            far_inds = np.where(depth > sample_range)[0]
-            near_inds = np.where(depth <= sample_range)[0]
+            far_inds = np.where(depth >= sample_range)[0]
+            near_inds = np.where(depth < sample_range)[0]
             # in case there are too many far points
             if len(far_inds) > num_samples:
                 far_inds = np.random.choice(
@@ -920,12 +920,6 @@ class PointSample(object):
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
-        # Points in Camera coord can provide the depth information.
-        # TODO: Need to support distance-based sampling for other coord system.
-        if self.sample_range is not None:
-            from mmdet3d.core.points import CameraPoints
-            assert isinstance(points, CameraPoints), 'Sampling based on' \
-                'distance is only applicable for CAMERA coord'
         points, choices = self._points_random_sampling(
             points,
             self.num_points,

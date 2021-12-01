@@ -61,6 +61,8 @@ def test_config_build_model():
                 check_parta2_roi_head(head_config, detector.roi_head)
             elif head_config.type == 'H3DRoIHead':
                 check_h3d_roi_head(head_config, detector.roi_head)
+            elif head_config.type == 'PointRCNNRoIHead':
+                check_pointrcnn_roi_head(head_config, detector.roi_head)
             else:
                 _check_roi_head(head_config, detector.roi_head)
         # else:
@@ -273,3 +275,28 @@ def _check_h3d_bbox_head(bbox_cfg, bbox_head):
         12 == bbox_head.line_center_matcher.num_point[0]
     assert bbox_cfg.suface_matching_cfg.mlp_channels[-1] * \
         18 == bbox_head.bbox_pred[0].in_channels
+
+
+def check_pointrcnn_roi_head(config, head):
+    assert config['type'] == head.__class__.__name__
+
+    # check point_roi_extractor
+    point_roi_cfg = config.point_roi_extractor
+    point_roi_extractor = head.point_roi_extractor
+    _check_pointrcnn_roi_extractor(point_roi_cfg, point_roi_extractor)
+    # check pointrcnn rcnn bboxhead
+    bbox_cfg = config.bbox_head
+    bbox_head = head.bbox_head
+    _check_pointrcnn_bbox_head(bbox_cfg, bbox_head)
+
+
+def _check_pointrcnn_roi_extractor(config, roi_extractor):
+    assert config['type'] == roi_extractor.__class__.__name__
+    assert config.roi_layer.num_sampled_points == \
+        roi_extractor.roi_layer.num_sampled_points
+
+
+def _check_pointrcnn_bbox_head(bbox_cfg, bbox_head):
+    assert bbox_cfg['type'] == bbox_head.__class__.__name__
+    assert bbox_cfg.num_classes == bbox_head.num_classes
+    assert bbox_cfg.with_corner_loss == bbox_head.with_corner_loss

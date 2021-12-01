@@ -441,7 +441,7 @@ class SSD3DHead(VoteHead):
                 negative_mask)
 
     def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
-        """Generate bboxes from sdd3d head predictions.
+        """Generate bboxes from 3DSSD head predictions.
 
         Args:
             points (torch.Tensor): Input points.
