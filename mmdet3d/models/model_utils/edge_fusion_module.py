@@ -4,17 +4,11 @@ from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
+from mmdet3d.models.utils import get_edge_indices
+
 
 class EdgeFusionModule(BaseModule):
-    """Forward pass.
-
-    Args:
-        feats (list[torch.Tensor]): Different representative features.
-
-    Returns:
-        tuple[list[torch.Tensor]]: Multi-level class score, bbox \
-            and direction predictions.
-    """
+    """Edge Fusion Module for feature map."""
 
     def __init__(self,
                  num_classes,
@@ -45,50 +39,58 @@ class EdgeFusionModule(BaseModule):
                 act_cfg=act_cfg,
                 padding_mode='replicate,'),
             nn.Conv1d(feat_channels, 2, kernel_size=1))
+        self.feat_channels = feat_channels
 
-    def forward(self, features, out_features, img_metas):
+    def forward(self, features, fused_features, img_metas):
         """Forward pass.
 
         Args:
-            feats (list[torch.Tensor]): Different representative features.
+            features (list[torch.Tensor]): Different representative features
+                for fusion.
+            fused_features (list[torch.Tensor]): Different representative
+                features to be fused.
+            img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
 
         Returns:
-            tuple[list[torch.Tensor]]: Multi-level class score, bbox \
-                and direction predictions.
+            list[torch.Tensor]
         """
-        assert len(features) == len(out_features)
         bs = features.shape[0]
-        edge_indices = torch.stack(
-            [img_meta['edge_indices'] for img_meta in img_metas])
-        edge_lens = torch.stack(
-            [img_meta['edge_len'] for img_meta in img_metas])
+        edge_indices_list = get_edge_indices(img_metas, device=features.device)
+        edge_lens_list = [
+            edge_indices.shape[0] for edge_indices in edge_indices_list
+        ]
+        max_edge_lens = max(edge_lens_list)
+        batch_edge_indices = features.new_zeros((bs, max_edge_lens, 2))
+        # assert len(features) == len(out_features)
+        for i in range(bs):
+            batch_edge_indices[i, :edge_lens_list[i]] = edge_indices_list[i]
+
         # normalize
-        grid_edge_indices = edge_indices.view(bs, -1, 1, 2).float()
-        grid_edge_indices[..., 0] = grid_edge_indices[..., 0] / (
-            self.output_width - 1) * 2 - 1  # -》（-1，1）
-        grid_edge_indices[
-            ...,
-            1] = grid_edge_indices[..., 1] / (self.output_height - 1) * 2 - 1
+        grid_edge_indices = batch_edge_indices.view(bs, -1, 1, 2).float()
+        grid_edge_indices[..., 0] = \
+            grid_edge_indices[..., 0] / (self.output_width - 1) * 2 - 1
+        grid_edge_indices[..., 1] = \
+            grid_edge_indices[..., 1] / (self.output_height - 1) * 2 - 1
 
         # apply edge fusion for both offset and heatmap
-        feature_for_fusion = torch.cat(
-            features, dim=1)  # cls_feat + reg_feat，两个concat在一起，一起sample
+        feature_for_fusion = torch.cat(features, dim=1)
         edge_features = F.grid_sample(
             feature_for_fusion, grid_edge_indices,
             align_corners=True).squeeze(-1)
 
-        edge_cls_feature = edge_features[:, :self.head_conv, ...]
-        edge_reg_feature = edge_features[:, self.head_conv:, ...]
+        edge_cls_feature = edge_features[:, :self.feat_channels, ...]
+        edge_reg_feature = edge_features[:, self.feat_channels:, ...]
         edge_cls_output = self.edge_cls_convs(edge_cls_feature)
         edge_reg_output = self.edge_reg_convs(edge_reg_feature)
 
         for k in range(bs):
-            edge_indice_k = edge_indices[k, :edge_lens[k]]
-            out_features[0][k, :, edge_indice_k[:, 1],
-                            edge_indice_k[:, 0]] += edge_cls_output[
-                                k, :, :edge_lens[k]]
-            out_features[1][k, :, edge_indice_k[:, 1],
-                            edge_indice_k[:, 0]] += edge_reg_output[
-                                k, :, :edge_lens[k]]
+            edge_indice_k = edge_indices_list[k]
+            fused_features[0][k, :, edge_indice_k[:, 1],
+                              edge_indice_k[:, 0]] += edge_cls_output[
+                                  k, :, :edge_lens_list[k]]
+            fused_features[1][k, :, edge_indice_k[:, 1],
+                              edge_indice_k[:, 0]] += edge_reg_output[
+                                  k, :, :edge_lens_list[k]]
 
-        return out_features
+        return fused_features

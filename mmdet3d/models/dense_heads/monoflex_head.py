@@ -1,9 +1,10 @@
 import torch
 from torch import nn as nn
 
+from mmdet3d.core.utils import gen_ellip_gaussian_2D
 from mmdet3d.models.model_utils import EdgeFusionModule
-from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
-                                  get_keypoints, handle_trunc_objs)
+from mmdet3d.models.utils import (filter_outside_objs, get_keypoints,
+                                  handle_proj_objs)
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.builder import HEADS
@@ -54,6 +55,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  use_edge_fusion,
                  edge_fusion_inds,
                  enable_edge_fusion,
+                 edge_heatmap_ratio,
                  filter_outside_objs=False,
                  loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
                  loss_bbox=dict(type='L1Loss', loss_weight=0.1),
@@ -82,6 +84,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         self.edge_fusion_inds = edge_fusion_inds
         self.use_edge_fusion = use_edge_fusion
         self.filter_outside_objs = filter_outside_objs
+        self.edge_heatmap_ratio = edge_heatmap_ratio
 
     def _init_edge_module(self):
 
@@ -363,7 +366,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         """Prepare predictions for computing loss.
         Args:
             labels3d (Tensor): Labels of each 3D box.
-                shape (B, max_objs, )
+                shape (B * max_objs, )
             centers2d (Tensor): Coords of each projected 3D box
                 center on image. shape (B * max_objs, 2)
             gt_locations (Tensor): Coords of each 3D box's location.
@@ -400,7 +403,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         centers2d_inds = centers2d[:, 1] * w + centers2d[:, 0]
         centers2d_inds = centers2d_inds.view(batch, -1)
         pred_regression = transpose_and_gather_feat(pred_reg, centers2d_inds)
-        pred_regression_pois = pred_regression.view(-1, channel)
+        pred_regression_pois = pred_regression.view(-1, channel)[indexes]
         locations, dimensions, orientations = self.bbox_coder.decode(
             pred_regression_pois, centers2d, labels3d, cam2imgs, trans_mats,
             gt_locations)
@@ -477,70 +480,91 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         assert width_ratio == height_ratio
 
-        if self.use_edge_fusion:
-            edge_indices, edge_len = get_edge_indices(img_metas)
-
         if self.filter_outside_objs:
             filter_outside_objs(gt_bboxes_list, gt_labels_list,
                                 gt_bboxes_3d_list, gt_labels_3d_list,
                                 centers2d_list, img_metas)
-        else:
-            # since there are probably centers2d outside the image. These
-            # centers2d should be especially handled.
-            target_centers2d_list, offsets2d_list, trunc_mask_list = \
-                handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas)
 
-        keypoints2d_list, keypoints_depth_mask_list = \
+        target_centers2d_list, offsets2d_list, trunc_mask_list = \
+            handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas)
+
+        keypoints2d_list, keypoints2d_depth_mask_list = \
             get_keypoints(gt_bboxes_3d_list, centers2d_list, img_metas)
 
         center_heatmap_target = gt_bboxes_list[-1].new_zeros(
             [bs, self.num_classes, feat_h, feat_w])
 
-        gt_centers2d = centers2d_list.copy()
-
         for batch_id in range(bs):
-            gt_bbox = gt_bboxes_list[batch_id]
-            gt_label = gt_labels_list[batch_id]
+            # project gt_bboxes from input image to feat map
+            gt_bboxes = gt_bboxes_list[batch_id] * width_ratio
+            gt_labels = gt_labels_list[batch_id]
             # project centers2d from input image to feat map
-            gt_center2d = gt_centers2d[batch_id] * width_ratio
+            gt_target_centers2d = target_centers2d_list[batch_id] * width_ratio
+            trunc_masks = trunc_mask_list[batch_id]
 
-            for j, center in enumerate(gt_center2d):
-                center_x_int, center_y_int = center.int()
-                scale_box_h = (gt_bbox[j][3] - gt_bbox[j][1]) * height_ratio
-                scale_box_w = (gt_bbox[j][2] - gt_bbox[j][0]) * width_ratio
-                radius = gaussian_radius([scale_box_h, scale_box_w],
-                                         min_overlap=0.7)
-                radius = max(0, int(radius))
-                ind = gt_label[j]
-                gen_gaussian_target(center_heatmap_target[batch_id, ind],
-                                    [center_x_int, center_y_int], radius)
+            for j, target_center2d in enumerate(gt_target_centers2d):
+                if trunc_masks[j]:
+                    # for outside objects, generate ellipse heatmap
+                    target_center2d_x_int, target_center2d_y_int = \
+                        target_center2d.round().int()
+                    scale_box_w = min(target_center2d_x_int - gt_bboxes[j][0],
+                                      gt_bboxes[j][2] - target_center2d_x_int)
+                    scale_box_h = min(target_center2d_y_int - gt_bboxes[j][1],
+                                      gt_bboxes[j][3] - target_center2d_y_int)
+                    radius_x = scale_box_w * self.edge_heatmap_ratio
+                    radius_y = scale_box_h * self.edge_heatmap_ratio
+                    radius_x, radius_y = max(0, int(radius_x)), max(
+                        0, int(radius_y))
+                    assert min(radius_x, radius_y) == 0
+                    ind = gt_labels[j]
+                    gen_ellip_gaussian_2D(
+                        center_heatmap_target[batch_id, ind],
+                        [target_center2d_x_int, target_center2d_y_int],
+                        radius_x, radius_y)
+                else:
+                    target_center2d_x_int, target_center2d_y_int = \
+                        target_center2d.round().int()
+                    scale_box_h = (gt_bboxes[j][3] - gt_bboxes[j][1])
+                    scale_box_w = (gt_bboxes[j][2] - gt_bboxes[j][0])
+                    radius = gaussian_radius([scale_box_h, scale_box_w],
+                                             min_overlap=0.7)
+                    radius = max(0, int(radius))
+                    ind = gt_labels[j]
+                    gen_gaussian_target(
+                        center_heatmap_target[batch_id, ind],
+                        [target_center2d_x_int, target_center2d_y_int], radius)
 
         avg_factor = max(1, center_heatmap_target.eq(1).sum())
         num_ctrs = [centers2d.shape[0] for centers2d in centers2d_list]
         max_objs = max(num_ctrs)
 
-        inds = torch.zeros((bs, max_objs),
-                           dtype=torch.bool).to(centers2d_list[0].device)
+        inds = torch.zeros(
+            (bs, max_objs),
+            dtype=torch.bool).to(target_centers2d_list[0].device)
 
         # put gt 3d bboxes to gpu
         gt_bboxes_3d = [
-            gt_bbox_3d.to(centers2d_list[0].device)
+            gt_bbox_3d.to(target_centers2d_list[0].device)
             for gt_bbox_3d in gt_bboxes_3d_list
         ]
 
-        batch_centers2d = centers2d_list[0].new_zeros((bs, max_objs, 2))
+        batch_target_centers2d = target_centers2d_list[0].new_zeros(
+            (bs, max_objs, 2))
         batch_labels_3d = gt_labels_3d_list[0].new_zeros((bs, max_objs))
         batch_gt_locations = gt_bboxes_3d[0].tensor.new_zeros(
             (bs, max_objs, 3))
+
         for i in range(bs):
             inds[i, :num_ctrs[i]] = 1
-            batch_centers2d[i, :num_ctrs[i]] = centers2d_list[i]
+            batch_target_centers2d[i, :num_ctrs[i]] = target_centers2d_list[i]
             batch_labels_3d[i, :num_ctrs[i]] = gt_labels_3d_list[i]
             batch_gt_locations[i, :num_ctrs[i]] = gt_bboxes_3d[i].tensor[:, :3]
 
         inds = inds.flatten()
-        batch_centers2d = batch_centers2d.view(-1, 2) * width_ratio
+        batch_target_centers2d = batch_target_centers2d.view(-1,
+                                                             2) * width_ratio
         batch_gt_locations = batch_gt_locations.view(-1, 3)
+        batch_labels_3d = batch_labels_3d.view(-1)
 
         # filter the empty image, without gt_bboxes_3d
         gt_bboxes_3d = [
@@ -557,11 +581,18 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         gt_corners = torch.cat(
             [gt_bbox_3d.corners for gt_bbox_3d in gt_bboxes_3d])
 
+        keypoints2d = torch.cat(keypoints2d_list)
+        keypoints2d_depth_mask = torch.cat(keypoints2d_depth_mask_list)
+        offsets2d = torch.cat(offsets2d_list)
+
         target_labels = dict(
-            gt_centers2d=batch_centers2d.long(),
+            gt_target_centers2d=batch_target_centers2d.long(),
             gt_labels3d=batch_labels_3d,
             indexes=inds,
             gt_locs=batch_gt_locations,
+            gt_keypoints2d=keypoints2d,
+            gt_keypoints2d_depth_mask=keypoints2d_depth_mask,
+            gt_offsets2d=offsets2d,
             gt_dims=gt_dimensions,
             gt_yaws=gt_orientations,
             gt_cors=gt_corners)
