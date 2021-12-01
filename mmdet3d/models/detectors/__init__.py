@@ -10,7 +10,7 @@ from .imvoxelnet import ImVoxelNet
 from .mvx_faster_rcnn import DynamicMVXFasterRCNN, MVXFasterRCNN
 from .mvx_two_stage import MVXTwoStageDetector
 from .parta2 import PartA2
-from .pointrcnn import PointRCNN
+from .point_rcnn import PointRCNN
 from .single_stage_mono3d import SingleStageMono3DDetector
 from .smoke_mono3d import SMOKEMono3D
 from .ssd3dnet import SSD3DNet
