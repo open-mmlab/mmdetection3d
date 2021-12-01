@@ -111,7 +111,7 @@ Next, we will elaborate on the details recorded in these info files.
         - info['annotations'][i]['bbox']: 2D bounding box annotation (exterior rectangle of the projected 3D box), 1x4 list following [x1, y1, x2-x1, y2-y1].
         x1/y1 are minimum coordinates along horizontal/vertical direction of the image.
         - info['annotations'][i]['iscrowd']: Whether the region is crowded. Defaults to 0.
-        - info['annotations'][i]['bbox_cam3d']: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list. 
+        - info['annotations'][i]['bbox_cam3d']: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list.
         - info['annotations'][i]['velo_cam3d']: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), an Nx2 array.
         - info['annotations'][i]['center2d']: Projected 3D-center containing 2.5D information: projected center location on the image (2) and depth (1), 1x3 list.
         - info['annotations'][i]['attribute_name']: Attribute name.
