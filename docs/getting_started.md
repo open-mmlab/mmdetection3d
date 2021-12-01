@@ -169,7 +169,7 @@ We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/maste
 
 ```shell
 # build an image with PyTorch 1.6, CUDA 10.1
-docker build -t mmdetection3d docker/
+docker build -t mmdetection3d -f docker/Dockerfile .
 ```
 
 Run it with
