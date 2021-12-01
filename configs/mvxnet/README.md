@@ -1,5 +1,18 @@
 # MVX-Net: Multimodal VoxelNet for 3D Object Detection
 
+## Abstract
+
+Many recent works on 3D object detection have focused on designing neural network architectures that can consume point cloud data. While these approaches demonstrate encouraging performance, they are typically based on a single modality and are unable to leverage information from other modalities, such as a camera. Although a few approaches fuse data from different modalities, these methods either use a complicated pipeline to process the modalities sequentially, or perform late-fusion and are unable to learn interaction between different modalities at early stages. In this work, we present PointFusion and VoxelFusion: two simple yet effective early-fusion approaches to combine the RGB and point cloud modalities, by leveraging the recently introduced VoxelNet architecture. Evaluation on the KITTI dataset demonstrates significant improvements in performance over approaches which only use point cloud data. Furthermore, the proposed method provides results competitive with the state-of-the-art multimodal algorithms, achieving top-2 ranking in five of the six bird's eye view and 3D detection categories on the KITTI benchmark, by using a simple single stage network.
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/79644370/143880819-560675ca-e7e3-4d77-8808-ea661ff8e6e6.png" width="800"/>
+</div>
+
+<!-- [PAPER_TITLE: MVX-Net: Multimodal VoxelNet for 3D Object Detection] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/1904.01649] -->
+
 ## Introduction
 
 <!-- [ALGORITHM] -->

@@ -1,5 +1,20 @@
 # Group-Free 3D Object Detection via Transformers
 
+## Abstract
+
+<!-- [ABSTRACT] -->
+
+Recently, directly detecting 3D objects from 3D point clouds has received increasing attention. To extract object representation from an irregular point cloud, existing methods usually take a point grouping step to assign the points to an object candidate so that a PointNet-like network could be used to derive object features from the grouped points. However, the inaccurate point assignments caused by the hand-crafted grouping scheme decrease the performance of 3D object detection. In this paper, we present a simple yet effective method for directly detecting 3D objects from the 3D point cloud. Instead of grouping local points to each object candidate, our method computes the feature of an object from all the points in the point cloud with the help of an attention mechanism in the Transformers, where the contribution of each point is automatically learned in the network training. With an improved attention stacking scheme, our method fuses object features in different stages and generates more accurate object detection results. With few bells and whistles, the proposed method achieves state-of-the-art 3D object detection performance on two widely used benchmarks, ScanNet V2 and SUN RGB-D.
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/36950400/143868101-09787c2a-9e0b-4013-8800-b4e315d535f0.png" width="800"/>
+</div>
+
+<!-- [PAPER_TITLE: Group-Free 3D Object Detection via Transformers] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/2104.00678] -->
+
 ## Introduction
 
 <!-- [ALGORITHM] -->

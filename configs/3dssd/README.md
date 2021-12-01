@@ -1,5 +1,20 @@
 # 3DSSD: Point-based 3D Single Stage Object Detector
 
+## Abstract
+
+<!-- [ABSTRACT] -->
+
+Currently, there have been many kinds of voxel-based 3D single stage detectors, while point-based single stage methods are still underexplored. In this paper, we first present a lightweight and effective point-based 3D single stage object detector, named 3DSSD, achieving a good balance between accuracy and efficiency. In this paradigm, all upsampling layers and refinement stage, which are indispensable in all existing point-based methods, are abandoned to reduce the large computation cost. We novelly propose a fusion sampling strategy in downsampling process to make detection on less representative points feasible. A delicate box prediction network including a candidate generation layer, an anchor-free regression head with a 3D center-ness assignment strategy is designed to meet with our demand of accuracy and speed. Our paradigm is an elegant single stage anchor-free framework, showing great superiority to other existing methods. We evaluate 3DSSD on widely used KITTI dataset and more challenging nuScenes dataset. Our method outperforms all state-of-the-art voxel-based single stage methods by a large margin, and has comparable performance to two stage point-based methods as well, with inference speed more than 25 FPS, 2x faster than former state-of-the-art point-based methods.
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/30491025/143854187-54ed1257-a046-4764-81cd-d2c8404137d3.png" width="800"/>
+</div>
+
+<!-- [PAPER_TITLE: 3DSSD: Point-based 3D Single Stage Object Detector] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/2002.10187] -->
+
 ## Introduction
 
 <!-- [ALGORITHM] -->
