@@ -6,7 +6,7 @@ import torch
 from mmdet3d.core import array_converter, draw_heatmap_gaussian, points_img2cam
 from mmdet3d.core.bbox import CameraInstance3DBoxes
 from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
-                                  get_keypoints, handle_trunc_objs)
+                                  get_keypoints, handle_proj_objs)
 
 
 def test_gaussian():
@@ -214,7 +214,7 @@ def test_truncation_hanlde():
     ]
     img_metas = [dict(img_shape=[300, 400])]
     target_centers2d_list, offsets2d_list, trunc_mask_list = \
-        handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas)
+        handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas)
 
     target_centers2d = torch.tensor([[0., 166.30435501], [379.03437877, 299.],
                                      [201.2, 99.86]])

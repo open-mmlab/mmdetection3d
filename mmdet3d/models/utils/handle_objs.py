@@ -83,8 +83,8 @@ def get_target_centers2d(centers2d, centers, img_shape):
     return target_centers2d
 
 
-def handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas):
-    """Function to handle truncated projected object centers2d, generate target
+def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
+    """Function to handle projected object centers2d, generate target
     centers2d.
 
     Args:
@@ -100,7 +100,7 @@ def handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas):
             target_centers2d_list(list[Tensor]): Target centers2d after
                 handling the truncated objects.
             offsets2d_list(list[Tensor]): The offsets between target
-                centers2d and real centers2d.
+                centers2d and round int dtype centers2d.
             trunc_mask_list(list[Tensor]): The truncation mask for each
                 object.
     """
@@ -109,8 +109,8 @@ def handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas):
     target_centers2d_list = []
     trunc_mask_list = []
     offsets2d_list = []
-    # for now, only pad mode that img is padded by right and bottom side
-    # is supported.
+    # for now, only pad mode that img is padded by right and
+    # bottom side is supported.
     for i in range(bs):
         centers2d = centers2d_list[i]
         gt_bbox = gt_bboxes_list[i]
@@ -120,16 +120,17 @@ def handle_trunc_objs(centers2d_list, gt_bboxes_list, img_metas):
             (centers2d[:, 0] < img_shape[1]) & \
             (centers2d[:, 1] > 0) & \
             (centers2d[:, 1] < img_shape[0])
-
         outside_inds = ~inside_inds
-        centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2  # (N, 2)
-        outside_centers2d = centers2d[outside_inds]
-        match_centers = centers[outside_inds]
 
-        target_outside_centers2d = get_target_centers2d(
-            outside_centers2d, match_centers, img_shape)
+        # if there are outside objects
+        if outside_inds.any():
+            centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2  # (N, 2)
+            outside_centers2d = centers2d[outside_inds]
+            match_centers = centers[outside_inds]
+            target_outside_centers2d = get_target_centers2d(
+                outside_centers2d, match_centers, img_shape)
+            target_centers2d[outside_inds] = target_outside_centers2d
 
-        target_centers2d[outside_inds] = target_outside_centers2d
         offsets2d = centers2d - target_centers2d.round().int()
         trunc_mask = outside_inds
 
