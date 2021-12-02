@@ -15,7 +15,7 @@
 - Fix the memory-leak problem when loading checkpoints in [init_model](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/inference.py#L36) (#1045)
 - Fix incorrect velocity indexing when formatting boxes on nuScenes (#1049)
 - Explicitly set cuda device ID in [init_model](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/inference.py#L36) to avoid memory allocation on unexpected devices (#1056)
-- Fix PointPillars FLOPs calculation error (#1075)
+- Fix PointPillars FLOPs calculation error (#1076)
 
 #### Contributors
 
