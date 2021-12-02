@@ -7,7 +7,6 @@
 - Change the default show value to `False` in show_result function to avoid unnecessary errors (#1034)
 - Improve the visualization of detection results with colorized points in [single_gpu_test](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/test.py#L11) (#1050)
 - Clean unnecessary custom_imports in entrypoints (#1068)
-- Add [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd) to the Docker image (#1070)
 
 #### Bug Fixes
 
@@ -19,9 +18,9 @@
 
 #### Contributors
 
-A total of 6 developers contributed to this release.
+A total of 5 developers contributed to this release.
 
-@wHao-Wu, @Tai-Wang, @ZCMax, @Otteri, @MilkClouds, @aldakata
+@wHao-Wu, @Tai-Wang, @ZCMax, @MilkClouds, @aldakata
 
 ### v0.17.2 (1/11/2021)
 
