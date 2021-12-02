@@ -8,7 +8,7 @@ from .two_stage import TwoStage3DDetector
 class PointRCNN(TwoStage3DDetector):
     r"""PointRCNN detector.
 
-    Please refer to the `PointRCNN <https://arxiv.org/abs/1812.04244>`_
+    Please refer to the `PointRCNN https://arxiv.org/abs/1812.04244`_
 
     Args:
         backbone (dict): Config dict of detector's backbone.
@@ -17,6 +17,7 @@ class PointRCNN(TwoStage3DDetector):
         roi_head (dict, optional): Config of ROI head. Defaults to None.
         train_cfg (dict, optional): Train configs. Defaults to None.
         test_cfg (dict, optional): Test configs. Defaults to None.
+        pretrained (str, optional): Model pretrained path. Defaults to None.
         init_cfg (dict, optional): Config of initialization. Defaults to None.
     """
 
@@ -111,6 +112,8 @@ class PointRCNN(TwoStage3DDetector):
         Args:
             points (list[torch.Tensor]): Points of each sample.
             img_metas (list[dict]): Image metas.
+            imgs (list[torch.Tensor], optional): Images of each sample.
+                Defaults to None.
             rescale (bool, optional): Whether to rescale results.
                 Defaults to False.
 

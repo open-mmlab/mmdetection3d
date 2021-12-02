@@ -102,14 +102,14 @@ class PointRPNHead(BaseModule):
     def forward(self, feat_dict):
         point_features = feat_dict['fp_features']
         point_features = point_features.permute(0, 2, 1).contiguous()
-        bs = point_features.shape[0]
-        x_cls = point_features.view(-1, point_features.shape[-1])
-        x_reg = point_features.view(-1, point_features.shape[-1])
+        batch_size = point_features.shape[0]
+        feat_cls = point_features.view(-1, point_features.shape[-1])
+        feat_reg = point_features.view(-1, point_features.shape[-1])
 
-        point_cls_preds = self.cls_layers(x_cls).reshape(
-            bs, -1, self._get_cls_out_channels())
-        point_box_preds = self.reg_layers(x_reg).reshape(
-            bs, -1, self._get_reg_out_channels())
+        point_cls_preds = self.cls_layers(feat_cls).reshape(
+            batch_size, -1, self._get_cls_out_channels())
+        point_box_preds = self.reg_layers(feat_reg).reshape(
+            batch_size, -1, self._get_reg_out_channels())
         return (point_box_preds, point_cls_preds)
 
     @force_fp32(apply_to=('bbox_preds'))
@@ -271,8 +271,18 @@ class PointRPNHead(BaseModule):
         return results
 
     def class_agnostic_nms(self, obj_scores, sem_scores, bbox):
+        """Class agnostic nms.
+
+        Args:
+            obj_scores (torch.Tensor): Objectness score of bounding boxes.
+            sem_scores (torch.Tensor): Semantic class score of bounding boxes.
+            bbox (torch.Tensor): Predicted bounding boxes.
+
+        Returns:
+            tuple[torch.Tensor]: Bounding boxes, scores and labels.
+        """
         nms_cfg = self.test_cfg.nms_cfg if not self.training \
-                            else self.train_cfg.nms_cfg
+            else self.train_cfg.nms_cfg
         if nms_cfg.use_rotate_nms:
             nms_func = nms_gpu
         else:
@@ -306,7 +316,7 @@ class PointRPNHead(BaseModule):
         """Compute assignment by checking whether point is inside bbox.
 
         Args:
-            bboxes_3d (BaseInstance3DBoxes): Instance of bounding boxes.
+            bboxes_3d (:obj:`BaseInstance3DBoxes`): Instance of bounding boxes.
             points (torch.Tensor): Points of a batch.
 
         Returns:
