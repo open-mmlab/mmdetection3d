@@ -55,10 +55,6 @@ def build_data_cfg(config_path, skip_type, cfg_options):
     cfg = Config.fromfile(config_path)
     if cfg_options is not None:
         cfg.merge_from_dict(cfg_options)
-    # import modules from string list.
-    if cfg.get('custom_imports', None):
-        from mmcv.utils import import_modules_from_strings
-        import_modules_from_strings(**cfg['custom_imports'])
     # extract inner dataset of `RepeatDataset` as `cfg.data.train`
     # so we don't need to worry about it later
     if cfg.data.train['type'] == 'RepeatDataset':
