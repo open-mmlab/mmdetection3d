@@ -3,7 +3,24 @@
 
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - '.dev_scripts/**'
+      - '.github/**.md'
+      - 'demo/**'
+      - 'docker/**'
+      - 'tools/**'
+
+  pull_request:
+    paths-ignore:
+      - '.dev_scripts/**'
+      - '.github/**.md'
+      - 'demo/**'
+      - 'docker/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'docs_zh-CN/**'
 
 jobs:
   lint:
