@@ -1,5 +1,27 @@
 ## Changelog
 
+### v0.17.3 (1/12/2021)
+
+#### Improvements
+
+- Change the default show value to `False` in show_result function to avoid unnecessary errors (#1034)
+- Improve the visualization of detection results with colorized points in [single_gpu_test](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/test.py#L11) (#1050)
+- Clean unnecessary custom_imports in entrypoints (#1068)
+
+#### Bug Fixes
+
+- Update mmcv version in the Dockerfile (#1036)
+- Fix the memory-leak problem when loading checkpoints in [init_model](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/inference.py#L36) (#1045)
+- Fix incorrect velocity indexing when formatting boxes on nuScenes (#1049)
+- Explicitly set cuda device ID in [init_model](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/apis/inference.py#L36) to avoid memory allocation on unexpected devices (#1056)
+- Fix PointPillars FLOPs calculation error (#1076)
+
+#### Contributors
+
+A total of 5 developers contributed to this release.
+
+@wHao-Wu, @Tai-Wang, @ZCMax, @MilkClouds, @aldakata
+
 ### v0.17.2 (1/11/2021)
 
 #### Improvements

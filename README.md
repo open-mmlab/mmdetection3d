@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.17.2.
+**News**: We released the codebase v0.17.3.
 
 In addition, we have preliminarily supported several new models on the [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) branch, including [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/dgcnn/README.md), [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/smoke/README.md) and [PGD](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/pgd/README.md).
 
@@ -70,7 +70,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.17.2 was released in 1/11/2021.
+v0.17.3 was released in 1/12/2021.
 Please refer to [changelog.md](docs/changelog.md) for details and release history.
 
 For branch v1.0.0.dev0, please refer to [changelog_v1.0.md](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) for our latest features and more details.
