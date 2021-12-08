@@ -92,7 +92,7 @@ model = dict(
                     neg_iou_thr=0.55,
                     min_pos_iou=0.55,
                     ignore_iof_thr=-1),
-                dict(  # for Pestrian
+                dict(  # for Pedestrian
                     type='MaxIoUAssigner',
                     iou_calculator=dict(
                         type='BboxOverlaps3D', coordinate='lidar'),

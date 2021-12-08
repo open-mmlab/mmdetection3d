@@ -8,7 +8,7 @@ from .two_stage import TwoStage3DDetector
 class PointRCNN(TwoStage3DDetector):
     r"""PointRCNN detector.
 
-    Please refer to the `PointRCNN https://arxiv.org/abs/1812.04244`_
+    Please refer to the `PointRCNN <https://arxiv.org/abs/1812.04244>`_
 
     Args:
         backbone (dict): Config dict of detector's backbone.

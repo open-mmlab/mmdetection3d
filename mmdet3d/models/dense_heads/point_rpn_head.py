@@ -100,6 +100,16 @@ class PointRPNHead(BaseModule):
         return self.bbox_coder.code_size
 
     def forward(self, feat_dict):
+        """Forward pass.
+
+        Args:
+            feat_dict (dict): Feature dict from backbone.
+
+        Returns:
+            tuple:
+                point_box_preds (list[Tensor]): Predicted Boxes.
+                point_cls_preds (list[Tensor]): Predicted Boxes scores.
+        """
         point_features = feat_dict['fp_features']
         point_features = point_features.permute(0, 2, 1).contiguous()
         batch_size = point_features.shape[0]
