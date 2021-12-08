@@ -472,6 +472,35 @@ def test_imvoxelnet():
     assert labels_3d.shape[0] >= 0
 
 
+def test_pointrcnn():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pointrcnn_cfg = _get_detector_cfg(
+        'pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+    self = build_detector(pointrcnn_cfg).cuda()
+    points_0 = torch.rand([1000, 4], device='cuda')
+    points_1 = torch.rand([1000, 4], device='cuda')
+    points = [points_0, points_1]
+
+    img_meta_0 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_meta_1 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_metas = [img_meta_0, img_meta_1]
+    gt_bbox_0 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bbox_1 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bboxes = [gt_bbox_0, gt_bbox_1]
+    gt_labels_0 = torch.randint(0, 3, [10], device='cuda')
+    gt_labels_1 = torch.randint(0, 3, [10], device='cuda')
+    gt_labels = [gt_labels_0, gt_labels_1]
+
+    # test_forward_train
+    losses = self.forward_train(points, img_metas, gt_bboxes, gt_labels)
+    assert losses['bbox_loss'] >= 0
+    assert losses['semantic_loss'] >= 0
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
+    assert losses['loss_corner'] >= 0
+
+
 def test_smoke():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
