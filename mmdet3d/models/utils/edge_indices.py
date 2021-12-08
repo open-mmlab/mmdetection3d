@@ -9,6 +9,10 @@ def get_edge_indices(img_metas,
                      dtype=np.float32,
                      device='cpu'):
     """Function to filter the objects label outside the image.
+    The edge_indices are generated using numpy on cpu, not tensor
+    on CUDA, considering the running time. When batch size = 8,
+    running this function 100 times on numpy consumes 0.02s while
+    0.32s on CUDA tensor.
 
     Args:
         img_metas (list[dict]): Meta information of each image, e.g.,

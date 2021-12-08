@@ -213,20 +213,20 @@ def test_truncation_hanlde():
                       [100.2, 20.1, 300.8, 180.7]])
     ]
     img_metas = [dict(img_shape=[300, 400])]
-    target_centers2d_list, offsets2d_list, trunc_mask_list = \
+    centers2d_target_list, offsets2d_list, trunc_mask_list = \
         handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas)
 
-    target_centers2d = torch.tensor([[0., 166.30435501], [379.03437877, 299.],
+    centers2d_target = torch.tensor([[0., 166.30435501], [379.03437877, 299.],
                                      [201.2, 99.86]])
 
     offsets2d = torch.tensor([[-99.86, 33.45], [120.5, 100.2], [0.2, -0.14]])
     trunc_mask = torch.tensor([True, True, False])
 
-    assert torch.allclose(target_centers2d_list[0], target_centers2d)
+    assert torch.allclose(centers2d_target_list[0], centers2d_target)
     assert torch.allclose(offsets2d_list[0], offsets2d, atol=1e-4)
     assert torch.all(trunc_mask_list[0] == trunc_mask)
     assert torch.allclose(
-        target_centers2d_list[0].round().int() + offsets2d_list[0],
+        centers2d_target_list[0].round().int() + offsets2d_list[0],
         centers2d_list[0])
 
 
