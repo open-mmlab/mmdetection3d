@@ -126,5 +126,3 @@ model = dict(
                 use_rotate_nms=True, iou_thr=0.85, nms_pre=9000, nms_post=512),
             score_thr=None),
         rcnn=dict(use_rotate_nms=True, nms_thr=0.1, score_thr=0.1)))
-
-find_unused_parameters = True

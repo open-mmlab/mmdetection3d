@@ -271,46 +271,42 @@ class PointRCNNBboxHead(BaseModule):
         # calculate regression loss
         code_size = self.bbox_coder.code_size
         pos_inds = (reg_mask > 0)
-        if pos_inds.any() == 0:
-            # fake a part loss
-            losses['loss_bbox'] = loss_cls.new_tensor(0)
-            if self.with_corner_loss:
-                losses['loss_corner'] = loss_cls.new_tensor(0)
+
+        pos_bbox_pred = bbox_pred.view(rcnn_batch_size, -1)[pos_inds].clone()
+        bbox_weights_flat = bbox_weights[pos_inds].view(-1, 1).repeat(
+            1, pos_bbox_pred.shape[-1])
+        loss_bbox = self.loss_bbox(
+            pos_bbox_pred.unsqueeze(dim=0),
+            bbox_targets.unsqueeze(dim=0).detach(),
+            bbox_weights_flat.unsqueeze(dim=0))
+        losses['loss_bbox'] = loss_bbox
+
+        if pos_inds.any() != 0 and self.with_corner_loss:
+            rois = rois.detach()
+            pos_roi_boxes3d = rois[..., 1:].view(-1, code_size)[pos_inds]
+            pos_roi_boxes3d = pos_roi_boxes3d.view(-1, code_size)
+            batch_anchors = pos_roi_boxes3d.clone().detach()
+            pos_rois_rotation = pos_roi_boxes3d[..., 6].view(-1)
+            roi_xyz = pos_roi_boxes3d[..., 0:3].view(-1, 3)
+            batch_anchors[..., 0:3] = 0
+            # decode boxes
+            pred_boxes3d = self.bbox_coder.decode(
+                batch_anchors,
+                pos_bbox_pred.view(-1, code_size)).view(-1, code_size)
+
+            pred_boxes3d[..., 0:3] = rotation_3d_in_axis(
+                pred_boxes3d[..., 0:3].unsqueeze(1), (pos_rois_rotation),
+                axis=2).squeeze(1)
+
+            pred_boxes3d[:, 0:3] += roi_xyz
+
+            # calculate corner loss
+            loss_corner = self.get_corner_loss_lidar(pred_boxes3d,
+                                                     pos_gt_bboxes)
+
+            losses['loss_corner'] = loss_corner
         else:
-            pos_bbox_pred = bbox_pred.view(rcnn_batch_size,
-                                           -1)[pos_inds].clone()
-            bbox_weights_flat = bbox_weights[pos_inds].view(-1, 1).repeat(
-                1, pos_bbox_pred.shape[-1])
-            loss_bbox = self.loss_bbox(
-                pos_bbox_pred.unsqueeze(dim=0),
-                bbox_targets.unsqueeze(dim=0).detach(),
-                bbox_weights_flat.unsqueeze(dim=0))
-            losses['loss_bbox'] = loss_bbox
-
-            if self.with_corner_loss:
-                rois = rois.detach()
-                pos_roi_boxes3d = rois[..., 1:].view(-1, code_size)[pos_inds]
-                pos_roi_boxes3d = pos_roi_boxes3d.view(-1, code_size)
-                batch_anchors = pos_roi_boxes3d.clone().detach()
-                pos_rois_rotation = pos_roi_boxes3d[..., 6].view(-1)
-                roi_xyz = pos_roi_boxes3d[..., 0:3].view(-1, 3)
-                batch_anchors[..., 0:3] = 0
-                # decode boxes
-                pred_boxes3d = self.bbox_coder.decode(
-                    batch_anchors,
-                    pos_bbox_pred.view(-1, code_size)).view(-1, code_size)
-
-                pred_boxes3d[..., 0:3] = rotation_3d_in_axis(
-                    pred_boxes3d[..., 0:3].unsqueeze(1), (pos_rois_rotation),
-                    axis=2).squeeze(1)
-
-                pred_boxes3d[:, 0:3] += roi_xyz
-
-                # calculate corner loss
-                loss_corner = self.get_corner_loss_lidar(
-                    pred_boxes3d, pos_gt_bboxes)
-
-                losses['loss_corner'] = loss_corner
+            losses['loss_corner'] = loss_cls.new_tensor(0)
 
         return losses
 
