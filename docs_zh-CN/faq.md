@@ -19,8 +19,15 @@
 
   **注意**： 我们已经在 0.13.0 及之后的版本中全面支持 pycocotools。
 
-- 如果您遇到下面的问题，并且您的环境包含 numba == 0.48.0 和 numpy >= 1.20.0：
+- 如果您在导入 pycocotools 相关包时遇到下面的问题：
 
-  ``TypeError: expected dtype object, got 'numpy.dtype[bool_]'``
+  ``ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject``
 
-    请将 numpy 的版本降级至 < 1.20.0，或者从源码安装 numba == 0.48，这是由于 numpy == 1.20.0 改变了 API，使得在调用 `np.dtype` 会产生子类。请参考 [这里](https://github.com/numba/numba/issues/6041) 获取更多细节。
+  请将 pycocotools 的版本降级至 2.0.1，这是由于最新版本的 pycocotools 与 numpy < 1.20.0 不兼容。或者通过下面的方式从源码进行编译来安装最新版本的 pycocotools ：
+
+  ``pip install -e "git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+
+  或者
+
+  ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+

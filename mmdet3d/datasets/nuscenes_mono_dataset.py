@@ -540,7 +540,7 @@ class NuScenesMonoDataset(CocoDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
 
-        if show:
+        if show or out_dir:
             self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
@@ -606,13 +606,14 @@ class NuScenesMonoDataset(CocoDataset):
         ]
         return Compose(pipeline)
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self, results, out_dir, show=False, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
+            show (bool): Whether to visualize the results online.
+                Default: False.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
         """
@@ -781,7 +782,7 @@ def nusc_box_to_cam_box3d(boxes):
     dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
     rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
                          for b in boxes]).view(-1, 1)
-    velocity = torch.Tensor([b.velocity[:2] for b in boxes]).view(-1, 2)
+    velocity = torch.Tensor([b.velocity[0::2] for b in boxes]).view(-1, 2)
 
     # convert nusbox to cambox convention
     dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]

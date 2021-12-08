@@ -2,7 +2,6 @@ Import:
   - configs/3dssd/metafile.yml
   - configs/centerpoint/metafile.yml
   - configs/dynamic_voxelization/metafile.yml
-  - configs/fp16/metafile.yml
   - configs/free_anchor/metafile.yml
   - configs/h3dnet/metafile.yml
   - configs/imvotenet/metafile.yml
@@ -17,3 +16,4 @@ Import:
   - configs/votenet/metafile.yml
   - configs/fcos3d/metafile.yml
   - configs/imvoxelnet/metafile.yml
+  - configs/pgd/metafile.yml

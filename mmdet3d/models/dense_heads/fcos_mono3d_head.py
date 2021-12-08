@@ -47,8 +47,6 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     """  # noqa: E501
 
     def __init__(self,
-                 num_classes,
-                 in_channels,
                  regress_ranges=((-1, 48), (48, 96), (96, 192), (192, 384),
                                  (384, INF)),
                  center_sampling=True,
@@ -89,8 +87,6 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.centerness_alpha = centerness_alpha
         self.centerness_branch = centerness_branch
         super().__init__(
-            num_classes,
-            in_channels,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
             loss_dir=loss_dir,
