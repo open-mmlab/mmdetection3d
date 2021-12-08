@@ -21,11 +21,9 @@ def get_keypoints(gt_bboxes_3d_list,
             for keypoints. Default: True.
 
     Returns:
-        tuple:
-            keypoints2d_list (list[Tensor]): Keypoints for each projected
-                2D bbox.
-            keypoints_depth_mask_list (list[Tensor]): The visible mask of
-                depth calculated by keypoints.
+        tuple[list[Tensor]]: It contains two elements, the first is the
+        keypoints for each projected 2D bbox in batch data. The second is
+        the visible mask of depth calculated by keypoints.
     """
 
     assert len(gt_bboxes_3d_list) == len(centers2d_list)

@@ -1,29 +1,29 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import numpy as np
 import torch
 
 
 def get_edge_indices(img_metas,
                      step=1,
                      pad_mode='default',
-                     dtype=torch.float32,
+                     dtype=np.float32,
                      device='cpu'):
     """Function to filter the objects label outside the image.
 
     Args:
         img_metas (list[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
-        step (int): Step size used for generateing edge indices.
-            Default: 1.
-        pad_mode (str): Padding mode during data pipeline.
+        step (int, optional): Step size used for generateing
+            edge indices. Default: 1.
+        pad_mode (str, optional): Padding mode during data pipeline.
             Default: 'default'.
-        dtype (torch.dtype): Dtype of edge indices tensor.
-            Default: torch.float32.
-        device (str): Device of edge indices tensor. Default: 'cpu'.
+        dtype (torch.dtype, optional): Dtype of edge indices tensor.
+            Default: np.float32.
+        device (str, optional): Device of edge indices tensor.
+            Default: 'cpu'.
 
     Returns:
-        tuple:
-            edge_indices_list(list[Tensor]): Edge indices for each
-                image in batch data.
+        list[Tensor]: Edge indices for each image in batch data.
     """
     edge_indices_list = []
     for i in range(len(img_metas)):
@@ -39,50 +39,52 @@ def get_edge_indices(img_metas,
             raise NotImplementedError
 
         # left
-        y = torch.arange(y_min, y_max, step, dtype=dtype, device=device)
-        x = torch.ones(len(y)) * x_min
+        y = np.arange(y_min, y_max, step, dtype=dtype)
+        x = np.ones(len(y)) * x_min
 
-        edge_indices_edge = torch.stack((x, y), dim=1)
-        edge_indices_edge[:, 0] = torch.clamp(edge_indices_edge[:, 0], x_min)
-        edge_indices_edge[:, 1] = torch.clamp(edge_indices_edge[:, 1], y_min)
-        edge_indices_edge = torch.unique(edge_indices_edge, dim=0)
+        edge_indices_edge = np.stack((x, y), axis=1)
+        edge_indices_edge[:, 0] = np.clip(edge_indices_edge[:, 0], x_min,
+                                          x_max)
+        edge_indices_edge[:, 1] = np.clip(edge_indices_edge[:, 1], y_min,
+                                          y_max)
         edge_indices.append(edge_indices_edge)
 
         # bottom
-        x = torch.arange(x_min, x_max, step, dtype=dtype, device=device)
-        y = torch.ones(len(x)) * y_max
+        x = np.arange(x_min, x_max, step, dtype=dtype)
+        y = np.ones(len(x)) * y_max
 
-        edge_indices_edge = torch.stack((x, y), dim=1)
-        edge_indices_edge[:, 0] = torch.clamp(edge_indices_edge[:, 0], x_min)
-        edge_indices_edge[:, 1] = torch.clamp(edge_indices_edge[:, 1], y_min)
-        edge_indices_edge = torch.unique(edge_indices_edge, dim=0)
+        edge_indices_edge = np.stack((x, y), axis=1)
+        edge_indices_edge[:, 0] = np.clip(edge_indices_edge[:, 0], x_min,
+                                          x_max)
+        edge_indices_edge[:, 1] = np.clip(edge_indices_edge[:, 1], y_min,
+                                          y_max)
         edge_indices.append(edge_indices_edge)
 
         # right
-        y = torch.arange(y_max, y_min, -step, dtype=dtype, device=device)
-        x = torch.ones(len(y)) * x_max
+        y = np.arange(y_max, y_min, -step, dtype=dtype)
+        x = np.ones(len(y)) * x_max
 
-        edge_indices_edge = torch.stack((x, y), dim=1)
-        edge_indices_edge[:, 0] = torch.clamp(edge_indices_edge[:, 0], x_min)
-        edge_indices_edge[:, 1] = torch.clamp(edge_indices_edge[:, 1], y_min)
-        edge_indices_edge = \
-            torch.unique(edge_indices_edge, dim=0).flip(dims=[0])
+        edge_indices_edge = np.stack((x, y), axis=1)
+        edge_indices_edge[:, 0] = np.clip(edge_indices_edge[:, 0], x_min,
+                                          x_max)
+        edge_indices_edge[:, 1] = np.clip(edge_indices_edge[:, 1], y_min,
+                                          y_max)
         edge_indices.append(edge_indices_edge)
 
         # top
-        x = torch.arange(x_max, x_min, -step, dtype=dtype, device=device)
-        y = torch.ones(len(x)) * y_min
+        x = np.arange(x_max, x_min, -step, dtype=dtype)
+        y = np.ones(len(x)) * y_min
 
-        edge_indices_edge = torch.stack((x, y), dim=1)
-        edge_indices_edge[:, 0] = torch.clamp(edge_indices_edge[:, 0], x_min)
-        edge_indices_edge[:, 1] = torch.clamp(edge_indices_edge[:, 1], y_min)
-        edge_indices_edge = \
-            torch.unique(edge_indices_edge, dim=0).flip(dims=[0])
+        edge_indices_edge = np.stack((x, y), axis=1)
+        edge_indices_edge[:, 0] = np.clip(edge_indices_edge[:, 0], x_min,
+                                          x_max)
+        edge_indices_edge[:, 1] = np.clip(edge_indices_edge[:, 1], y_min,
+                                          y_max)
         edge_indices.append(edge_indices_edge)
 
-        # concatenate
         edge_indices = \
-            torch.cat([index.long() for index in edge_indices], dim=0)
+            np.concatenate([index for index in edge_indices], axis=0)
+        edge_indices = torch.from_numpy(edge_indices).to(device).long()
         edge_indices_list.append(edge_indices)
 
-    return edge_indices_list
+        return edge_indices_list

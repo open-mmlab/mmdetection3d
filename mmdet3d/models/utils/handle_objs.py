@@ -35,10 +35,8 @@ def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
         gt_bboxes_3d_list[i].tensor = gt_bboxes_3d_list[i].tensor[keep_inds]
         gt_labels_3d_list[i] = gt_labels_3d_list[i][keep_inds]
 
-    return
 
-
-def get_target_centers2d(centers2d, centers, img_shape):
+def get_centers2d_target(centers2d, centers, img_shape):
     """Function to get target centers2d.
     Args:
         centers2d (Tensor): Projected 3D centers onto 2D images.
@@ -78,9 +76,9 @@ def get_target_centers2d(centers2d, centers, img_shape):
     min_idx = torch.argmin(dist, dim=1)  # (n, )
 
     min_idx = min_idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, 2)
-    target_centers2d = valid_intersects.gather(dim=1, index=min_idx).squeeze(1)
+    centers2d_target = valid_intersects.gather(dim=1, index=min_idx).squeeze(1)
 
-    return target_centers2d
+    return centers2d_target
 
 
 def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
@@ -96,17 +94,15 @@ def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
             image size, scaling factor, etc.
 
     Returns:
-       tuple:
-            target_centers2d_list(list[Tensor]): Target centers2d after
-                handling the truncated objects.
-            offsets2d_list(list[Tensor]): The offsets between target
-                centers2d and round int dtype centers2d.
-            trunc_mask_list(list[Tensor]): The truncation mask for each
-                object.
+        tuple[list[Tensor]]: It contains three elements. The first is the
+        target centers2d after handling the truncated objects. The second
+        is the offsets between target centers2d and round int dtype
+        centers2d,and the last is the truncation mask for each object in
+        batch data.
     """
     # h, w, 3
     bs = len(centers2d_list)
-    target_centers2d_list = []
+    centers2d_target_list = []
     trunc_mask_list = []
     offsets2d_list = []
     # for now, only pad mode that img is padded by right and
@@ -115,7 +111,7 @@ def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
         centers2d = centers2d_list[i]
         gt_bbox = gt_bboxes_list[i]
         img_shape = img_metas[i]['img_shape']
-        target_centers2d = centers2d.clone()
+        centers2d_target = centers2d.clone()
         inside_inds = (centers2d[:, 0] > 0) & \
             (centers2d[:, 0] < img_shape[1]) & \
             (centers2d[:, 1] > 0) & \
@@ -127,15 +123,15 @@ def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
             centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2  # (N, 2)
             outside_centers2d = centers2d[outside_inds]
             match_centers = centers[outside_inds]
-            target_outside_centers2d = get_target_centers2d(
+            target_outside_centers2d = get_centers2d_target(
                 outside_centers2d, match_centers, img_shape)
-            target_centers2d[outside_inds] = target_outside_centers2d
+            centers2d_target[outside_inds] = target_outside_centers2d
 
-        offsets2d = centers2d - target_centers2d.round().int()
+        offsets2d = centers2d - centers2d_target.round().int()
         trunc_mask = outside_inds
 
-        target_centers2d_list.append(target_centers2d)
+        centers2d_target_list.append(centers2d_target)
         trunc_mask_list.append(trunc_mask)
         offsets2d_list.append(offsets2d)
 
-    return (target_centers2d_list, offsets2d_list, trunc_mask_list)
+    return (centers2d_target_list, offsets2d_list, trunc_mask_list)
