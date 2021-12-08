@@ -91,4 +91,4 @@ def get_edge_indices(img_metas,
         edge_indices = torch.from_numpy(edge_indices).to(device).long()
         edge_indices_list.append(edge_indices)
 
-        return edge_indices_list
+    return edge_indices_list
