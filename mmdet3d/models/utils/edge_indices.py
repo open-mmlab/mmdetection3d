@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numba
 import numpy as np
 import torch
 
@@ -12,8 +11,8 @@ def get_edge_indices(img_metas,
     """Function to filter the objects label outside the image.
     The edge_indices are generated using numpy on cpu, not tensor
     on CUDA, considering the running time. When batch size = 8,
-    running this function 100 times on numpy with numba acceleration
-    consumes 0.08s while 0.32s on pure numpy, 0.98s on CUDA tensor.
+    running this function 100 times on numpy consumes 0.09s
+    while 0.72s on CUDA tensor.
 
     Args:
         img_metas (list[dict]): Meta information of each image, e.g.,
@@ -47,28 +46,28 @@ def get_edge_indices(img_metas,
         y = np.arange(y_min, y_max, step, dtype=dtype)
         x = np.ones(len(y)) * x_min
 
-        edge_indices_edge = get_one_edge(x, y, x_min, x_max, y_min, y_max)
+        edge_indices_edge = np.stack((x, y), axis=1)
         edge_indices.append(edge_indices_edge)
 
         # bottom
         x = np.arange(x_min, x_max, step, dtype=dtype)
         y = np.ones(len(x)) * y_max
 
-        edge_indices_edge = get_one_edge(x, y, x_min, x_max, y_min, y_max)
+        edge_indices_edge = np.stack((x, y), axis=1)
         edge_indices.append(edge_indices_edge)
 
         # right
         y = np.arange(y_max, y_min, -step, dtype=dtype)
         x = np.ones(len(y)) * x_max
 
-        edge_indices_edge = get_one_edge(x, y, x_min, x_max, y_min, y_max)
+        edge_indices_edge = np.stack((x, y), axis=1)
         edge_indices.append(edge_indices_edge)
 
         # top
         x = np.arange(x_max, x_min, -step, dtype=dtype)
         y = np.ones(len(x)) * y_min
 
-        edge_indices_edge = get_one_edge(x, y, x_min, x_max, y_min, y_max)
+        edge_indices_edge = np.stack((x, y), axis=1)
         edge_indices.append(edge_indices_edge)
 
         edge_indices = \
@@ -77,24 +76,3 @@ def get_edge_indices(img_metas,
         edge_indices_list.append(edge_indices)
 
     return edge_indices_list
-
-
-@numba.njit
-def get_one_edge(x, y, x_min, x_max, y_min, y_max):
-    """Function to generate one edge indices.
-
-    Args:
-        x (float): One edge x coordinates.
-        y (float): One edge y coordinates.
-        x_min (float|int): Minimum x coordinates of image.
-        x_max (float|int): Maximum x coordinates of image.
-        y_min (float|int): Minimum y coordinates of image.
-        y_max (float|int): Maximum y coordinates of image.
-
-    Returns:
-        np.array: Edge indices of one side for input image.
-    """
-    edge_indices_edge = np.stack((x, y), axis=1)
-    edge_indices_edge[:, 0] = np.clip(edge_indices_edge[:, 0], x_min, x_max)
-    edge_indices_edge[:, 1] = np.clip(edge_indices_edge[:, 1], y_min, y_max)
-    return edge_indices_edge
