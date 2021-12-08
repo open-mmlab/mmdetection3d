@@ -38,13 +38,14 @@ def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
 
 def get_centers2d_target(centers2d, centers, img_shape):
     """Function to get target centers2d.
+
     Args:
         centers2d (Tensor): Projected 3D centers onto 2D images.
         centers (Tensor): Centers of 2d gt bboxes.
         img_shape (tuple): Resized image shape.
 
     Returns:
-        torch.Tensor: Target centers2d for real centers2d.
+        torch.Tensor: Projected 3D centers (centers2D) target.
     """
     N = centers2d.shape[0]
     h, w = img_shape[:2]
