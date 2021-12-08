@@ -106,9 +106,8 @@ class PointRPNHead(BaseModule):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            tuple:
-                point_box_preds (list[Tensor]): Predicted Boxes.
-                point_cls_preds (list[Tensor]): Predicted Boxes scores.
+            tuple[list[torch.Tensor]]: Predicted boxes and classification
+                scores.
         """
         point_features = feat_dict['fp_features']
         point_features = point_features.permute(0, 2, 1).contiguous()
