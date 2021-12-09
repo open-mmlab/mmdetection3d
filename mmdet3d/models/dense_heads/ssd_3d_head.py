@@ -441,7 +441,7 @@ class SSD3DHead(VoteHead):
                 negative_mask)
 
     def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
-        """Generate bboxes from sdd3d head predictions.
+        """Generate bboxes from 3DSSD head predictions.
 
         Args:
             points (torch.Tensor): Input points.
@@ -479,7 +479,7 @@ class SSD3DHead(VoteHead):
 
         Args:
             obj_scores (torch.Tensor): Objectness score of bounding boxes.
-            sem_scores (torch.Tensor): semantic class score of bounding boxes.
+            sem_scores (torch.Tensor): Semantic class score of bounding boxes.
             bbox (torch.Tensor): Predicted bounding boxes.
             points (torch.Tensor): Input points.
             input_meta (dict): Point cloud and image's meta info.
@@ -505,20 +505,20 @@ class SSD3DHead(VoteHead):
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
         bbox_classes = torch.argmax(sem_scores, -1)
-        nms_selected = batched_nms(
+        nms_keep = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]],
             obj_scores[nonempty_box_mask], bbox_classes[nonempty_box_mask],
             self.test_cfg.nms_cfg)[1]
 
-        if nms_selected.shape[0] > self.test_cfg.max_output_num:
-            nms_selected = nms_selected[:self.test_cfg.max_output_num]
+        if nms_keep.shape[0] > self.test_cfg.max_output_num:
+            nms_keep = nms_keep[:self.test_cfg.max_output_num]
 
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores >= self.test_cfg.score_thr)
         nonempty_box_inds = torch.nonzero(
             nonempty_box_mask, as_tuple=False).flatten()
         nonempty_mask = torch.zeros_like(bbox_classes).scatter(
-            0, nonempty_box_inds[nms_selected], 1)
+            0, nonempty_box_inds[nms_keep], 1)
         selected = (nonempty_mask.bool() & scores_mask.bool())
 
         if self.test_cfg.per_class_proposal:
