@@ -50,31 +50,29 @@ def get_centers2d_target(centers2d, centers, img_shape):
     N = centers2d.shape[0]
     h, w = img_shape[:2]
     valid_intersects = centers2d.new_zeros((N, 2))
-    a = (centers[:, 1] - centers2d[:, 1]) / (centers[:, 0] - centers2d[:, 0]
-                                             )  # (n, )
-    b = centers[:, 1] - a * centers[:, 0]  # (n, )
-    left_y = b  # (n, )
+    a = (centers[:, 1] - centers2d[:, 1]) / (centers[:, 0] - centers2d[:, 0])
+    b = centers[:, 1] - a * centers[:, 0]
+    left_y = b
     right_y = (w - 1) * a + b
     top_x = -b / a
     bottom_x = (h - 1 - b) / a
 
-    left_coors = torch.stack((left_y.new_zeros(N, ), left_y), dim=1)  # (n, 2)
+    left_coors = torch.stack((left_y.new_zeros(N, ), left_y), dim=1)
     right_coors = torch.stack((right_y.new_full((N, ), w - 1), right_y), dim=1)
     top_coors = torch.stack((top_x, top_x.new_zeros(N, )), dim=1)
     bottom_coors = torch.stack((bottom_x, bottom_x.new_full((N, ), h - 1)),
                                dim=1)
 
     intersects = torch.stack(
-        [left_coors, right_coors, top_coors, bottom_coors], dim=1)  # (n, 4, 2)
+        [left_coors, right_coors, top_coors, bottom_coors], dim=1)
     intersects_x = intersects[:, :, 0]
     intersects_y = intersects[:, :, 1]
     inds = (intersects_x >= 0) & (intersects_x <=
                                   w - 1) & (intersects_y >= 0) & (
                                       intersects_y <= h - 1)
     valid_intersects = intersects[inds].reshape(N, 2, 2)
-    dist = torch.norm(
-        valid_intersects - centers2d.unsqueeze(1), dim=2)  # (n, 4)
-    min_idx = torch.argmin(dist, dim=1)  # (n, )
+    dist = torch.norm(valid_intersects - centers2d.unsqueeze(1), dim=2)
+    min_idx = torch.argmin(dist, dim=1)
 
     min_idx = min_idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, 2)
     centers2d_target = valid_intersects.gather(dim=1, index=min_idx).squeeze(1)
@@ -101,7 +99,6 @@ def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
         centers2d,and the last is the truncation mask for each object in
         batch data.
     """
-    # h, w, 3
     bs = len(centers2d_list)
     centers2d_target_list = []
     trunc_mask_list = []
@@ -121,7 +118,7 @@ def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
 
         # if there are outside objects
         if outside_inds.any():
-            centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2  # (N, 2)
+            centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2
             outside_centers2d = centers2d[outside_inds]
             match_centers = centers[outside_inds]
             target_outside_centers2d = get_centers2d_target(
