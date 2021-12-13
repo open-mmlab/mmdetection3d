@@ -4,6 +4,9 @@ import pytest
 import torch
 
 from mmdet3d.core import array_converter, draw_heatmap_gaussian, points_img2cam
+from mmdet3d.core.bbox import CameraInstance3DBoxes
+from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
+                                  get_keypoints, handle_proj_objs)
 
 
 def test_gaussian():
@@ -188,3 +191,94 @@ def test_points_img2cam():
     expected_xyzs = torch.tensor([[-0.4864, -0.2155, 0.7576],
                                   [-0.6299, -0.2796, 0.9813]])
     assert torch.allclose(xyzs, expected_xyzs, atol=1e-3)
+
+
+def test_generate_edge_indices():
+
+    img_metas = [dict(img_shape=[300, 400]), dict(img_shape=[500, 450])]
+    edge_indices_list = get_edge_indices(img_metas)
+
+    assert edge_indices_list[0].shape[0] == 1396
+    assert edge_indices_list[1].shape[0] == 1896
+
+
+def test_truncation_hanlde():
+
+    centers2d_list = [
+        torch.tensor([[-99.86, 199.45], [499.50, 399.20], [201.20, 99.86]])
+    ]
+
+    gt_bboxes_list = [
+        torch.tensor([[0.25, 99.8, 99.8, 199.6], [300.2, 250.1, 399.8, 299.6],
+                      [100.2, 20.1, 300.8, 180.7]])
+    ]
+    img_metas = [dict(img_shape=[300, 400])]
+    centers2d_target_list, offsets2d_list, trunc_mask_list = \
+        handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas)
+
+    centers2d_target = torch.tensor([[0., 166.30435501], [379.03437877, 299.],
+                                     [201.2, 99.86]])
+
+    offsets2d = torch.tensor([[-99.86, 33.45], [120.5, 100.2], [0.2, -0.14]])
+    trunc_mask = torch.tensor([True, True, False])
+
+    assert torch.allclose(centers2d_target_list[0], centers2d_target)
+    assert torch.allclose(offsets2d_list[0], offsets2d, atol=1e-4)
+    assert torch.all(trunc_mask_list[0] == trunc_mask)
+    assert torch.allclose(
+        centers2d_target_list[0].round().int() + offsets2d_list[0],
+        centers2d_list[0])
+
+
+def test_filter_outside_objs():
+
+    centers2d_list = [
+        torch.tensor([[-99.86, 199.45], [499.50, 399.20], [201.20, 99.86]]),
+        torch.tensor([[-47.86, 199.45], [410.50, 399.20], [401.20, 349.86]])
+    ]
+    gt_bboxes_list = [
+        torch.rand([3, 4], dtype=torch.float32),
+        torch.rand([3, 4], dtype=torch.float32)
+    ]
+    gt_bboxes_3d_list = [
+        CameraInstance3DBoxes(torch.rand([3, 7]), box_dim=7),
+        CameraInstance3DBoxes(torch.rand([3, 7]), box_dim=7)
+    ]
+    gt_labels_list = [torch.tensor([0, 1, 2]), torch.tensor([2, 0, 0])]
+    gt_labels_3d_list = [torch.tensor([0, 1, 2]), torch.tensor([2, 0, 0])]
+    img_metas = [dict(img_shape=[300, 400]), dict(img_shape=[500, 450])]
+    filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
+                        gt_labels_3d_list, centers2d_list, img_metas)
+
+    assert len(centers2d_list[0]) == len(gt_bboxes_3d_list[0]) == \
+        len(gt_bboxes_list[0]) == len(gt_labels_3d_list[0]) == \
+        len(gt_labels_list[0]) == 1
+
+    assert len(centers2d_list[1]) == len(gt_bboxes_3d_list[1]) == \
+        len(gt_bboxes_list[1]) == len(gt_labels_3d_list[1]) == \
+        len(gt_labels_list[1]) == 2
+
+
+def test_generate_keypoints():
+
+    centers2d_list = [
+        torch.tensor([[-99.86, 199.45], [499.50, 399.20], [201.20, 99.86]]),
+        torch.tensor([[-47.86, 199.45], [410.50, 399.20], [401.20, 349.86]])
+    ]
+    gt_bboxes_3d_list = [
+        CameraInstance3DBoxes(torch.rand([3, 7])),
+        CameraInstance3DBoxes(torch.rand([3, 7]))
+    ]
+    img_metas = [
+        dict(
+            cam2img=[[1260.8474446004698, 0.0, 807.968244525554, 40.1111],
+                     [0.0, 1260.8474446004698, 495.3344268742088, 2.34422],
+                     [0.0, 0.0, 1.0, 0.00333333], [0.0, 0.0, 0.0, 1.0]],
+            img_shape=(300, 400)) for i in range(2)
+    ]
+
+    keypoints2d_list, keypoints_depth_mask_list = \
+        get_keypoints(gt_bboxes_3d_list, centers2d_list, img_metas)
+
+    assert keypoints2d_list[0].shape == (3, 10, 3)
+    assert keypoints_depth_mask_list[0].shape == (3, 3)
