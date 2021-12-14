@@ -95,85 +95,29 @@ html_theme_options = {
         },
         {
             'name':
-            '算法库',
-            'children': [{
-                'name': 'MMCV',
-                'url': 'https://mmcv.readthedocs.io/zh_CN/latest/',
-                'description': '计算机视觉基础库'
-            }, {
-                'name': 'MMDetection',
-                'url': 'https://mmdetection.readthedocs.io/zh_CN/latest/',
-                'description': '检测工具箱与测试基准'
-            }, {
-                'name': 'MMAction2',
-                'url': 'https://mmaction2.readthedocs.io/zh_CN/latest/',
-                'description': '视频理解工具箱与测试基准'
-            }, {
-                'name': 'MMClassification',
-                'url': 'https://mmclassification.readthedocs.io/zh_CN/latest/',
-                'description': '图像分类工具箱与测试基准'
-            }, {
-                'name': 'MMSegmentation',
-                'url': 'https://mmsegmentation.readthedocs.io/zh_CN/latest/',
-                'description': '语义分割工具箱与测试基准'
-            }, {
-                'name': 'MMEditing',
-                'url': 'https://mmediting.readthedocs.io/zh_CN/latest/',
-                'description': '图像视频编辑工具箱'
-            }, {
-                'name': 'MMOCR',
-                'url': 'https://mmocr.readthedocs.io/zh_CN/latest/',
-                'description': '全流程文字检测识别理解工具包'
-            }, {
-                'name': 'MMPose',
-                'url': 'https://mmpose.readthedocs.io/zh_CN/latest/',
-                'description': '姿态估计工具箱与测试基准'
-            }, {
-                'name': 'MMTracking',
-                'url': 'https://mmtracking.readthedocs.io/zh_CN/latest/',
-                'description': '一体化视频目标感知平台'
-            }, {
-                'name': 'MMGeneration',
-                'url': 'https://mmgeneration.readthedocs.io/zh_CN/latest/',
-                'description': '生成模型工具箱'
-            }, {
-                'name': 'MMFlow',
-                'url': 'https://mmflow.readthedocs.io/zh_CN/latest/',
-                'description': '光流估计工具箱与测试基准'
-            }, {
-                'name': 'MMFewShot',
-                'url': 'https://mmfewshot.readthedocs.io/zh_CN/latest/',
-                'description': '少样本学习工具箱与测试基准'
-            }, {
-                'name': 'MMHuman3D',
-                'url': 'https://mmhuman3d.readthedocs.io/en/latest/',
-                'description': 'OpenMMLab 人体参数化模型工具箱与测试基准.'
-            }]
-        },
-        {
-            'name':
-            'OpenMMLab',
+            '上游库',
             'children': [
                 {
-                    'name': '官网',
-                    'url': 'https://openmmlab.com/'
+                    'name': 'MMCV',
+                    'url': 'https://github.com/open-mmlab/mmcv',
+                    'description': '基础视觉库'
                 },
                 {
-                    'name': 'GitHub',
-                    'url': 'https://github.com/open-mmlab/'
-                },
-                {
-                    'name': '推特',
-                    'url': 'https://twitter.com/OpenMMLab'
-                },
-                {
-                    'name': '知乎',
-                    'url': 'https://zhihu.com/people/openmmlab'
+                    'name': 'MMDetection',
+                    'url': 'https://github.com/open-mmlab/mmdetection',
+                    'description': '目标检测工具箱'
                 },
             ]
         },
-    ]
+    ],
+    # Specify the language of shared menu
+    'menu_lang':
+    'cn',
 }
+
+language = 'zh_CN'
+
+master_doc = 'index'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
