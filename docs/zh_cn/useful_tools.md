@@ -198,7 +198,7 @@ python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth 
 为了转换 nuImages 数据集为 COCO 格式，请使用下面的指令：
 
 ```shell
-python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERIONS} \
+python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERSIONS} \
                                                     --out-dir ${OUT_DIR} --nproc ${NUM_WORKERS} --extra-tag ${TAG}
 ```
 

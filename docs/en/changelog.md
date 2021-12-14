@@ -77,7 +77,7 @@ A total of 8 developers contributed to this release.
 
 #### Compatibility
 
-- Unify the camera keys for consistent transformation between coodinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
+- Unify the camera keys for consistent transformation between coordinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
 - The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
 
 #### Highlights
@@ -531,7 +531,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 #### Bug Fixes
 
 - Rename CosineAnealing to CosineAnnealing (#57)
-- Fix device inconsistant bug in 3D IoU computation (#69)
+- Fix device inconsistent bug in 3D IoU computation (#69)
 - Fix a minor bug in json2csv of lyft dataset (#78)
 - Add missed test data for pointnet modules (#85)
 - Fix `use_valid_flag` bug in `CustomDataset` (#106)

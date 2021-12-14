@@ -129,7 +129,7 @@ Then you can evaluate your models on Waymo. An example to evaluate PointPillars 
        'submission_prefix=results/waymo-car/kitti_results'
    ```
 
-`pklfile_prefix` should be given in the `--eval-options` if the bin file is needed to be generated. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evalution, the lack of occlusion and truncation in the converted data, different definitions of difficulty and different methods of computing Average Precision.
+`pklfile_prefix` should be given in the `--eval-options` if the bin file is needed to be generated. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evaluation, the lack of occlusion and truncation in the converted data, different definitions of difficulty and different methods of computing Average Precision.
 
 **Notice**:
 
