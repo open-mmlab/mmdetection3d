@@ -95,112 +95,29 @@ html_theme_options = {
         },
         {
             'name':
-            'Projects',
-            'children': [{
-                'name':
-                'MMCV',
-                'url':
-                'https://mmcv.readthedocs.io/en/latest/',
-                'description':
-                'Foundational library for computer vision'
-            }, {
-                'name':
-                'MMDetection',
-                'url':
-                'https://mmdetection.readthedocs.io/en/latest/',
-                'description':
-                'Object detection toolbox and benchmark'
-            }, {
-                'name':
-                'MMAction2',
-                'url':
-                'https://mmaction2.readthedocs.io/en/latest/',
-                'description':
-                'Action understanding toolbox and benchmark'
-            }, {
-                'name':
-                'MMClassification',
-                'url':
-                'https://mmclassification.readthedocs.io/en/latest/',
-                'description':
-                'Image classification toolbox and benchmark'
-            }, {
-                'name':
-                'MMSegmentation',
-                'url':
-                'https://mmsegmentation.readthedocs.io/en/latest/',
-                'description':
-                'Semantic segmentation toolbox and benchmark'
-            }, {
-                'name': 'MMEditing',
-                'url': 'https://mmediting.readthedocs.io/en/latest/',
-                'description': 'Image and video editing toolbox'
-            }, {
-                'name':
-                'MMOCR',
-                'url':
-                'https://mmocr.readthedocs.io/en/latest/',
-                'description':
-                'Text detection, recognition and understanding toolbox'
-            }, {
-                'name': 'MMPose',
-                'url': 'https://mmpose.readthedocs.io/en/latest/',
-                'description': 'Pose estimation toolbox and benchmark'
-            }, {
-                'name':
-                'MMTracking',
-                'url':
-                'https://mmtracking.readthedocs.io/en/latest/',
-                'description':
-                'Video perception toolbox and benchmark'
-            }, {
-                'name': 'MMGeneration',
-                'url': 'https://mmgeneration.readthedocs.io/en/latest/',
-                'description': 'Generative model toolbox'
-            }, {
-                'name': 'MMFlow',
-                'url': 'https://mmflow.readthedocs.io/en/latest/',
-                'description': 'Optical flow toolbox and benchmark'
-            }, {
-                'name':
-                'MMFewShot',
-                'url':
-                'https://mmfewshot.readthedocs.io/en/latest/',
-                'description':
-                'FewShot learning toolbox and benchmark'
-            }, {
-                'name':
-                'MMHuman3D',
-                'url':
-                'https://mmhuman3d.readthedocs.io/en/latest/',
-                'description':
-                '3D human parametric model toolbox and benchmark.'
-            }]
-        },
-        {
-            'name':
-            'OpenMMLab',
+            'Upstream',
             'children': [
                 {
-                    'name': 'Homepage',
-                    'url': 'https://openmmlab.com/'
+                    'name': 'MMCV',
+                    'url': 'https://github.com/open-mmlab/mmcv',
+                    'description': 'Foundational library for computer vision'
                 },
                 {
-                    'name': 'GitHub',
-                    'url': 'https://github.com/open-mmlab/'
-                },
-                {
-                    'name': 'Twitter',
-                    'url': 'https://twitter.com/OpenMMLab'
-                },
-                {
-                    'name': 'Zhihu',
-                    'url': 'https://zhihu.com/people/openmmlab'
+                    'name': 'MMDetection',
+                    'url': 'https://github.com/open-mmlab/mmdetection',
+                    'description': 'Object detection toolbox and benchmark'
                 },
             ]
         },
-    ]
+    ],
+    # Specify the language of shared menu
+    'menu_lang':
+    'en'
 }
+
+language = 'en'
+
+master_doc = 'index'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
