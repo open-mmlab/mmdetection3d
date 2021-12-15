@@ -146,3 +146,50 @@ def test_uncertain_smooth_l1_loss():
     expected_smooth_l1_loss = torch.tensor(3.9795)
     assert torch.allclose(
         mean_smooth_l1_loss, expected_smooth_l1_loss, atol=1e-4)
+
+
+def test_monoflex_iou_loss():
+    from mmdet3d.models.losses import MonoFlexIoULoss
+
+    # reduction should be in ['none', 'mean', 'sum']
+    with pytest.raises(AssertionError):
+        monoflex_iou_loss = MonoFlexIoULoss(reduction='l2')
+
+    pred = torch.tensor([[1.5783, 0.5972, 1.4821, 0.9488],
+                         [2.4144, 2.2312, 1.8922, 3.2222]])
+    target = torch.tensor([[1.0813, 0.3466, 1.1404, 0.9665],
+                           [2.4142, 2.1231, 1.7632, 2.9998]])
+
+    # test monoflex iou loss
+    monoflex_iou_loss_cfg = dict(
+        type='MonoFlexIoULoss', reduction='mean', loss_weight=1.0)
+    monoflex_iou_loss = build_loss(monoflex_iou_loss_cfg)
+    mean_iou_loss = monoflex_iou_loss(pred, target)
+    expected_iou_loss = torch.tensor(0.2432)
+    assert torch.allclose(mean_iou_loss, expected_iou_loss, atol=1e-4)
+
+
+def test_multibin_loss():
+    from mmdet3d.models.losses import MultiBinLoss
+
+    # reduction should be in ['none', 'mean', 'sum']
+    with pytest.raises(AssertionError):
+        multibin_loss = MultiBinLoss(reduction='l2')
+
+    pred = torch.tensor([[
+        0.81, 0.32, 0.78, 0.52, 0.24, 0.12, 0.32, 0.11, 1.20, 1.30, 0.20, 0.11,
+        0.12, 0.11, 0.23, 0.31
+    ],
+                         [
+                             0.02, 0.19, 0.78, 0.22, 0.31, 0.12, 0.22, 0.11,
+                             1.20, 1.30, 0.45, 0.51, 0.12, 0.11, 0.13, 0.61
+                         ]])
+    target = torch.tensor([[1, 1, 0, 0, 2.14, 3.12, 0.68, -2.15],
+                           [1, 1, 0, 0, 3.12, 3.12, 2.34, 1.23]])
+    multibin_loss_cfg = dict(
+        type='MultiBinLoss', reduction='none', loss_weight=1.0)
+    multibin_loss = build_loss(multibin_loss_cfg)
+    output_multibin_loss = multibin_loss(pred, target, num_dir_bins=4)
+    expected_multibin_loss = torch.tensor(2.1120)
+    assert torch.allclose(
+        output_multibin_loss, expected_multibin_loss, atol=1e-4)
