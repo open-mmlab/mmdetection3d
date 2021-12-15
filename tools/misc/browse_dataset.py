@@ -77,8 +77,8 @@ def build_data_cfg(config_path, skip_type, aug, cfg_options):
     else:
         show_pipeline = cfg.eval_pipeline
         for i in range(len(cfg.train_pipeline)):
-            if cfg.train_pipeline[i].pop('type') == 'LoadAnnotations3D':
-                show_pipeline.insert(1, cfg.train_pipeline[i])
+            if cfg.train_pipeline[i]['type'] == 'LoadAnnotations3D':
+                show_pipeline.insert(i, cfg.train_pipeline[i])
 
     train_data_cfg['pipeline'] = [
         x for x in show_pipeline if x['type'] not in skip_type
@@ -98,11 +98,11 @@ def to_depth_mode(points, bboxes):
     return points, bboxes
 
 
-def show_det_data(item, out_dir, show=False):
+def show_det_data(input, out_dir, show=False):
     """Visualize 3D point cloud and 3D bboxes."""
-    img_metas = item['img_metas']._data
-    points = item['points']._data.numpy()
-    gt_bboxes = item['gt_bboxes_3d']._data.tensor
+    img_metas = input['img_metas']._data
+    points = input['points']._data.numpy()
+    gt_bboxes = input['gt_bboxes_3d']._data.tensor
     if img_metas['box_mode_3d'] != Box3DMode.DEPTH:
         points, gt_bboxes = to_depth_mode(points, gt_bboxes)
     filename = osp.splitext(osp.basename(img_metas['pts_filename']))[0]
@@ -116,11 +116,11 @@ def show_det_data(item, out_dir, show=False):
         snapshot=True)
 
 
-def show_seg_data(item, out_dir, show=False):
+def show_seg_data(input, out_dir, show=False):
     """Visualize 3D point cloud and segmentation mask."""
-    img_metas = item['img_metas']._data
-    points = item['points']._data.numpy()
-    gt_seg = item['pts_semantic_mask']._data.numpy()
+    img_metas = input['img_metas']._data
+    points = input['points']._data.numpy()
+    gt_seg = input['pts_semantic_mask']._data.numpy()
     filename = osp.splitext(osp.basename(img_metas['pts_filename']))[0]
     show_seg_result(
         points,
@@ -134,11 +134,11 @@ def show_seg_data(item, out_dir, show=False):
         snapshot=True)
 
 
-def show_proj_bbox_img(item, out_dir, show=False, is_nus_mono=False):
+def show_proj_bbox_img(input, out_dir, show=False, is_nus_mono=False):
     """Visualize 3D bboxes on 2D image by projection."""
-    gt_bboxes = item['gt_bboxes_3d']._data
-    img_metas = item['img_metas']._data
-    img = item['img']._data.numpy()
+    gt_bboxes = input['gt_bboxes_3d']._data
+    img_metas = input['img_metas']._data
+    img = input['img']._data.numpy()
     # need to transpose channel to first dim
     img = img.transpose(1, 2, 0)
     # no 3D gt bboxes, just show img
@@ -199,26 +199,26 @@ def main():
             cfg.data.train, default_args=dict(filter_empty_gt=False))
     except TypeError:  # seg dataset doesn't have `filter_empty_gt` key
         dataset = build_dataset(cfg.data.train)
-    # data_infos = dataset.data_infos
+
     dataset_type = cfg.dataset_type
     # configure visualization mode
     vis_task = args.task  # 'det', 'seg', 'multi_modality-det', 'mono-det'
     progress_bar = mmcv.ProgressBar(len(dataset))
 
-    for item in dataset:
+    for input in dataset:
         if vis_task in ['det', 'multi_modality-det']:
             # show 3D bboxes on 3D point clouds
-            show_det_data(item, args.output_dir, show=args.online)
+            show_det_data(input, args.output_dir, show=args.online)
         if vis_task in ['multi_modality-det', 'mono-det']:
             # project 3D bboxes to 2D image
             show_proj_bbox_img(
-                item,
+                input,
                 args.output_dir,
                 show=args.online,
                 is_nus_mono=(dataset_type == 'NuScenesMonoDataset'))
         elif vis_task in ['seg']:
             # show 3D segmentation mask on 3D point clouds
-            show_seg_data(item, args.output_dir, show=args.online)
+            show_seg_data(input, args.output_dir, show=args.online)
         progress_bar.update()
 
 
