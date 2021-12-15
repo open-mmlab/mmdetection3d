@@ -97,6 +97,12 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 
 **注意**：一旦指定 `--output-dir` ，当按下 open3d 窗口的 `_ESC_`，用户指定的视图图像将被保存。如果您没有显示器，您可以移除 `--online` 标志，从而仅仅保存可视化结果并且进行离线浏览。
 
+此外，为了便于数据增强后数据和真值标签的一致性验证，以及查看数据增强的效果，我们还支持通过简单地添加 `--aug` 标志来可视化增强的数据集。
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR} --online
+```
+
 如果您还想显示 2D 图像以及投影的 3D 边界框，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi_modality-det`。一个例子如下所示
 
 ```shell
