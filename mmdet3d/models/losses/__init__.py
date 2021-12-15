@@ -2,7 +2,7 @@
 from mmdet.models.losses import FocalLoss, SmoothL1Loss, binary_cross_entropy
 from .axis_aligned_iou_loss import AxisAlignedIoULoss, axis_aligned_iou_loss
 from .chamfer_distance import ChamferDistance, chamfer_distance
-from .monoflex_ious_loss import MonoFlexIoULoss
+from .monoflex_iou_loss import MonoFlexIoULoss
 from .multibin_loss import MultiBinLoss
 from .paconv_regularization_loss import PAConvRegularizationLoss
 from .uncertain_smooth_l1_loss import UncertainL1Loss, UncertainSmoothL1Loss

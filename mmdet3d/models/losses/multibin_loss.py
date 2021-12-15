@@ -8,15 +8,15 @@ from mmdet.models.losses.utils import weighted_loss
 
 
 @weighted_loss
-def multibin_loss(vector_orientations, gt_orientations, num_dir_bins=4):
+def multibin_loss(pred_orientations, gt_orientations, num_dir_bins=4):
     """Multi-Bin Loss.
 
     Args:
-        vector_orientations(torch.Tensor): Predicted local vector
+        pred_orientations(torch.Tensor): Predicted local vector
             orientation in [axis_cls, head_cls, sin, cos] format.
             shape (N, num_dir_bins * 4)
         gt_orientations(torch.Tensor): Corresponding gt bboxes,
-            shape (n,  num_dir_bins * 2).
+            shape (N, num_dir_bins * 2).
         num_dir_bins(int, optional): Number of bins to encode
             direction angle.
             Defaults: 4.
@@ -30,16 +30,17 @@ def multibin_loss(vector_orientations, gt_orientations, num_dir_bins=4):
     for i in range(num_dir_bins):
         # bin cls loss
         cls_ce_loss = F.cross_entropy(
-            vector_orientations[:, (i * 2):(i * 2 + 2)],
+            pred_orientations[:, (i * 2):(i * 2 + 2)],
             gt_orientations[:, i].long(),
             reduction='mean')
         # regression loss
         valid_mask_i = (gt_orientations[:, i] == 1)
         cls_losses += cls_ce_loss
         if valid_mask_i.sum() > 0:
-            s = num_dir_bins * 2 + i * 2
-            e = s + 2
-            pred_offset = F.normalize(vector_orientations[valid_mask_i, s:e])
+            start = num_dir_bins * 2 + i * 2
+            end = start + 2
+            pred_offset = F.normalize(pred_orientations[valid_mask_i,
+                                                        start:end])
             gt_offset_sin = torch.sin(gt_orientations[valid_mask_i,
                                                       num_dir_bins + i])
             gt_offset_cos = torch.cos(gt_orientations[valid_mask_i,
