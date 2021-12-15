@@ -35,7 +35,7 @@ class AnchorTrainMixin(object):
             tuple (list, list, list, list, list, list, int, int):
                 Anchor targets, including labels, label weights,
                 bbox targets, bbox weights, direction targets,
-                direction weights, number of postive anchors and
+                direction weights, number of positive anchors and
                 number of negative anchors.
         """
         num_imgs = len(input_metas)

@@ -5,8 +5,13 @@ Collections:
         - AdamW
       Architecture:
         - Hard Voxelization
-    Paper: https://www.mdpi.com/1424-8220/18/10/3337
+    Paper:
+      URL: https://www.mdpi.com/1424-8220/18/10/3337
+      Title: 'SECOND: Sparsely Embedded Convolutional Detection'
     README: configs/second/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/second.py#L11
+      Version: v0.5.0
 
 Models:
   - Name: hv_second_secfpn_6x8_80e_kitti-3d-car
@@ -52,3 +57,41 @@ Models:
           mAPH@L1: 61.7
           mAP@L2: 58.9
           mAPH@L2: 55.7
+
+  - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-car
+    In Collection: SECOND
+    Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Training Data: KITTI
+      Training Memory (GB): 2.9
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 78.72
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car_20200924_211301-1f5ad833.pth
+    Code:
+      Version: v0.7.0
+
+  - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class
+    In Collection: SECOND
+    Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Training Data: KITTI
+      Training Memory (GB): 2.9
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 67.4
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class_20200925_110059-05f67bdf.pth
+    Code:
+      Version: v0.7.0

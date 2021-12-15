@@ -6,8 +6,8 @@ We basically categorize model components into 6 types.
 - backbone: usually an FCN network to extract feature maps, e.g., ResNet, SECOND.
 - neck: the component between backbones and heads, e.g., FPN, SECONDFPN.
 - head: the component for specific tasks, e.g., bbox prediction and mask prediction.
-- roi extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
-- loss: the component in head for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
+- RoI extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
+- loss: the component in heads for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
 
 ## Develop new components
 
@@ -15,7 +15,7 @@ We basically categorize model components into 6 types.
 
 Here we show how to develop new components with an example of HardVFE.
 
-#### 1. Define a new voxel encoder (e.g. HardVFE)
+#### 1. Define a new voxel encoder (e.g. HardVFE: Voxel feature encoder used in DV-SECOND)
 
 Create a new file `mmdet3d/models/voxel_encoders/voxel_encoder.py`.
 
@@ -67,7 +67,7 @@ model = dict(
 
 ### Add a new backbone
 
-Here we show how to develop new components with an example of SECOND (Sparsely Embedded Convolutional Detection).
+Here we show how to develop new components with an example of [SECOND](https://www.mdpi.com/1424-8220/18/10/3337) (Sparsely Embedded Convolutional Detection).
 
 #### 1. Define a new backbone (e.g. SECOND)
 
@@ -457,7 +457,7 @@ model = dict(
 ```
 
 Since MMDetection 2.0, the config system supports to inherit configs such that the users can focus on the modification.
-The second stage of PartA2 Head mainly uses a new PartAggregationROIHead and a new
+The second stage of PartA2 Head mainly uses a new `PartAggregationROIHead` and a new
 `PartA2BboxHead`, the arguments are set according to the `__init__` function of each module.
 
 ### Add new loss

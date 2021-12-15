@@ -183,7 +183,7 @@ class GroupingOperation(Function):
 
         Args:
             features (Tensor): (B, C, N) tensor of features to group.
-            indices (Tensor): (B, npoint, nsample) the indicies of
+            indices (Tensor): (B, npoint, nsample) the indices of
                 features to group with.
 
         Returns:

@@ -25,11 +25,11 @@ GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION fcos3d_
 $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
 2>&1|tee $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py/FULL_LOG.txt &
 
-echo 'configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/fp16/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
+echo 'configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py' &
+mkdir -p $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py \
+$CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
 
 echo 'configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py' &
 mkdir -p $CHECKPOINT_DIR/configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py

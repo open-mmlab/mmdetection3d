@@ -16,7 +16,7 @@ class NoStemRegNet(RegNet):
             - wm (float): Quantization parameter to quantize the width.
             - depth (int): Depth of the backbone.
             - group_w (int): Width of group.
-            - bot_mul (float): Bottleneck ratio, i.e. expansion of bottlneck.
+            - bot_mul (float): Bottleneck ratio, i.e. expansion of bottleneck.
         strides (Sequence[int]): Strides of the first block of each stage.
         base_channels (int): Base channels after stem layer.
         in_channels (int): Number of input image channels. Normally 3.

@@ -493,7 +493,7 @@ def get_2d_boxes(info, occluded, mono3d=True):
 
 
 def generate_record(ann_rec, x1, y1, x2, y2, sample_data_token, filename):
-    """Generate one 2D annotation record given various informations on top of
+    """Generate one 2D annotation record given various information on top of
     the 2D bounding box coordinates.
 
     Args:
@@ -508,7 +508,7 @@ def generate_record(ann_rec, x1, y1, x2, y2, sample_data_token, filename):
 
     Returns:
         dict: A sample 2D annotation record.
-            - file_name (str): flie name
+            - file_name (str): file name
             - image_id (str): sample data token
             - area (float): 2d box area
             - category_name (str): category name

@@ -202,7 +202,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
                  pklfile_prefix=None,
                  submission_prefix=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in KITTI protocol.
 
         Args:
@@ -214,11 +215,13 @@ class KittiMonoDataset(NuScenesMonoDataset):
             pklfile_prefix (str, optional): The prefix of pkl files, including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str, optional): The prefix of submission datas.
+            submission_prefix (str, optional): The prefix of submission data.
                 If not specified, the submission data will not be generated.
             show (bool, optional): Whether to visualize.
                 Default: False.
             out_dir (str, optional): Path to save the visualization results.
+                Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
 
         Returns:
@@ -256,8 +259,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
 
         if tmp_dir is not None:
             tmp_dir.cleanup()
-        if show:
-            self.show(results, out_dir)
+        if show or out_dir:
+            self.show(results, out_dir, show=show, pipeline=pipeline)
         return ap_dict
 
     def bbox2result_kitti(self,

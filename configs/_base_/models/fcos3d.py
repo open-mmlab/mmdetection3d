@@ -1,6 +1,5 @@
 model = dict(
     type='FCOSMono3D',
-    pretrained='open-mmlab://detectron2/resnet101_caffe',
     backbone=dict(
         type='ResNet',
         depth=101,
@@ -9,7 +8,10 @@ model = dict(
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=False),
         norm_eval=True,
-        style='caffe'),
+        style='caffe',
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='open-mmlab://detectron2/resnet101_caffe')),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
@@ -55,6 +57,7 @@ model = dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_centerness=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+        bbox_coder=dict(type='FCOS3DBBoxCoder', code_size=9),
         norm_on_bbox=True,
         centerness_on_reg=True,
         center_sampling=True,

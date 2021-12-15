@@ -29,12 +29,12 @@ jobs:
 
   build:
     env:
-      CUDA: 10.1.105-1
-      CUDA_SHORT: 10.1
-      UBUNTU_VERSION: ubuntu1804
       FORCE_CUDA: 1
       CUDA_ARCH: ${{matrix.cuda_arch}}
     runs-on: ubuntu-18.04
+    container:
+      image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
+
     strategy:
       matrix:
         python-version: [3.6, 3.7]
@@ -43,21 +43,21 @@ jobs:
           - torch: 1.5.0+cu101
             torch_version: torch1.5.0
             torchvision: 0.6.0+cu101
-            mmcv: 1.5.0+cu101
+            mmcv_link: "torch1.5.0"
             cuda_arch: "7.0"
           - torch: 1.6.0+cu101
             torch_version: torch1.6.0
-            mmcv: 1.6.0+cu101
+            mmcv_link: "torch1.6.0"
             torchvision: 0.7.0+cu101
             cuda_arch: "7.0"
           - torch: 1.7.0+cu101
             torch_version: torch1.7.0
-            mmcv: 1.7.0+cu101
+            mmcv_link: "torch1.7.0"
             torchvision: 0.8.1+cu101
             cuda_arch: "7.0"
           - torch: 1.8.0+cu101
             torch_version: torch1.8.0
-            mmcv: 1.8.0+cu101
+            mmcv_link: "torch1.8.0"
             torchvision: 0.9.0+cu101
             cuda_arch: "7.0"
 
@@ -67,33 +67,22 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install CUDA
+      - name: Install system dependencies
         run: |
-          export INSTALLER=cuda-repo-${UBUNTU_VERSION}_${CUDA}_amd64.deb
-          wget http://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/${INSTALLER}
-          sudo dpkg -i ${INSTALLER}
-          wget https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/7fa2af80.pub
-          sudo apt-key add 7fa2af80.pub
-          sudo apt update -qq
-          sudo apt install -y cuda-${CUDA_SHORT/./-} cuda-cufft-dev-${CUDA_SHORT/./-}
-          sudo apt clean
-          sudo cp /usr/local/cuda-10.2/include/* /usr/local/cuda/include
-          sudo cp -r /usr/local/cuda-10.2/lib64/* /usr/local/cuda/lib64/
-          export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
-          export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/include:${LD_LIBRARY_PATH}
-          export PATH=${CUDA_HOME}/bin:${PATH}
-          sudo apt-get install -y ninja-build
+          apt-get update && apt-get install -y ffmpeg libsm6 git ninja-build libglib2.0-0 libsm6 libxrender-dev python${{matrix.python-version}}-dev
+          apt-get clean
+          rm -rf /var/lib/apt/lists/*
       - name: Install Pillow
-        run: pip install Pillow==6.2.2
+        run: python -m pip install Pillow==6.2.2
         if: ${{matrix.torchvision < 0.5}}
       - name: Install PyTorch
-        run: pip install numpy==1.19.5 torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
+        run: python -m pip install numpy==1.19.5 torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
-          pip install mmdet==2.14.0
-          pip install mmsegmentation==0.14.1
-          pip install -r requirements.txt
+          python -m pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
+          python -m pip install mmdet==2.14.0
+          python -m pip install mmsegmentation==0.14.1
+          python -m pip install -r requirements.txt
       - name: Build and install
         run: |
           rm -rf .eggs

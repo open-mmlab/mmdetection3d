@@ -18,7 +18,7 @@ The overall process could be achieved through the following script
 
 ```bash
 python batch_load_scannet_data.py
-python extract_posed_images.py 
+python extract_posed_images.py
 cd ../..
 python tools/create_data.py scannet --root-path ./data/scannet --out-dir ./data/scannet --extra-tag scannet
 ```

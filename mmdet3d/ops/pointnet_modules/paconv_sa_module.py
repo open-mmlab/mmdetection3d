@@ -28,7 +28,7 @@ class PAConvSAModuleMSG(BasePointSAModule):
             - 'w_neighbor': Use xyz coordinates and the difference with center
                 points as input.
             - 'w_neighbor_dist': Use xyz coordinates, the difference with
-                center points and the Euclidian distance as input.
+                center points and the Euclidean distance as input.
 
         scorenet_cfg (dict, optional): Config of the ScoreNet module, which
             may contain the following keys and values:

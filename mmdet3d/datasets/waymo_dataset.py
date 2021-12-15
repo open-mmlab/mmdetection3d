@@ -234,7 +234,7 @@ class WaymoDataset(KittiDataset):
             pklfile_prefix (str, optional): The prefix of pkl files including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str, optional): The prefix of submission datas.
+            submission_prefix (str, optional): The prefix of submission data.
                 If not specified, the submission data will not be generated.
             show (bool, optional): Whether to visualize.
                 Default: False.
@@ -350,8 +350,8 @@ class WaymoDataset(KittiDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
 
-        if show:
-            self.show(results, out_dir, pipeline=pipeline)
+        if show or out_dir:
+            self.show(results, out_dir, show=show, pipeline=pipeline)
         return ap_dict
 
     def bbox2result_kitti(self,

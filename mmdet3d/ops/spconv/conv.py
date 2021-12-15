@@ -143,16 +143,16 @@ class SparseConvolution(SparseModule):
             out_tensor.indice_dict = input.indice_dict
             out_tensor.grid = input.grid
             return out_tensor
-        datas = input.find_indice_pair(self.indice_key)
+        data = input.find_indice_pair(self.indice_key)
         if self.inverse:
-            assert datas is not None and self.indice_key is not None
-            _, outids, indice_pairs, indice_pair_num, out_spatial_shape = datas
+            assert data is not None and self.indice_key is not None
+            _, outids, indice_pairs, indice_pair_num, out_spatial_shape = data
             assert indice_pairs.shape[0] == np.prod(
                 self.kernel_size
             ), 'inverse conv must have same kernel size as its couple conv'
         else:
-            if self.indice_key is not None and datas is not None:
-                outids, _, indice_pairs, indice_pair_num, _ = datas
+            if self.indice_key is not None and data is not None:
+                outids, _, indice_pairs, indice_pair_num, _ = data
             else:
                 outids, indice_pairs, indice_pair_num = ops.get_indice_pairs(
                     indices,

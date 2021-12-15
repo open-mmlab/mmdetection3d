@@ -106,7 +106,7 @@ def bbox_overlaps_nearest_3d(bboxes1,
     Note:
         This function first finds the nearest 2D boxes in bird eye view
         (BEV), and then calculates the 2D IoU using :meth:`bbox_overlaps`.
-        Ths IoU calculator :class:`BboxOverlapsNearest3D` uses this
+        This IoU calculator :class:`BboxOverlapsNearest3D` uses this
         function to calculate IoUs of boxes.
 
         If ``is_aligned`` is ``False``, then it calculates the ious between
@@ -258,7 +258,7 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
     """
 
     assert mode in ['iou', 'giou'], f'Unsupported mode {mode}'
-    # Either the boxes are empty or the length of boxes's last dimenstion is 6
+    # Either the boxes are empty or the length of boxes's last dimension is 6
     assert (bboxes1.size(-1) == 6 or bboxes1.size(0) == 0)
     assert (bboxes2.size(-1) == 6 or bboxes2.size(0) == 0)
 

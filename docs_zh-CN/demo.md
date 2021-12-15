@@ -2,7 +2,7 @@
 
 # 介绍
 
-我们提供了多模态/单模态（基于激光雷达/图像）、室内/室外场景的 3D 检测和 3D 语义分割样例的脚本，预训练模型可以从 [Model Zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/model_zoo.md/) 下载。我们也提供了 KITTI、SUN RGB-D、nuScenes 和 ScanNet 数据集的预处理样本数据，你可以根据我们的预处理步骤使用任何其它数据。
+我们提供了多模态/单模态（基于激光雷达/图像）、室内/室外场景的 3D 检测和 3D 语义分割样例的脚本，预训练模型可以从 [Model Zoo](https://github.com/open-mmlab/mmdetection3d/blob/master/docs_zh-CN/model_zoo.md/) 下载。我们也提供了 KITTI、SUN RGB-D、nuScenes 和 ScanNet 数据集的预处理样本数据，你可以根据我们的预处理步骤使用任何其它数据。
 
 ## 测试
 

@@ -1,5 +1,102 @@
 ## Changelog
 
+### v0.17.2 (1/11/2021)
+
+#### Improvements
+
+- Update Group-Free-3D and FCOS3D bibtex (#985)
+- Update the solutions for incompatibility of pycocotools in the FAQ (#993)
+- Add Chinese documentation for the KITTI (#1003) and Lyft (#1010) dataset tutorial
+- Add the H3DNet checkpoint converter for incompatible keys (#1007)
+
+#### Bug Fixes
+
+- Update mmdetection and mmsegmentation version in the Dockerfile (#992)
+- Fix links in the Chinese documentation (#1015)
+
+#### Contributors
+
+A total of 4 developers contributed to this release.
+
+@Tai-Wang, @wHao-Wu, @ZwwWayne, @ZCMax
+
+### v0.17.1 (1/10/2021)
+
+#### Highlights
+
+- Support a faster but non-deterministic version of hard voxelization
+- Completion of dataset tutorials and the Chinese documentation
+- Improved the aesthetics of the documentation format
+
+#### Improvements
+
+- Add Chinese documentation for training on customized datasets and designing customized models (#729, #820)
+- Support a faster but non-deterministic version of hard voxelization (#904)
+- Update paper titles and code details for metafiles (#917)
+- Add a tutorial for KITTI dataset (#953)
+- Use Pytorch sphinx theme to improve the format of documentation (#958)
+- Use the docker to accelerate CI (#971)
+
+#### Bug Fixes
+
+- Fix the sphinx version used in the documentation (#902)
+- Fix a dynamic scatter bug that discards the first voxel by mistake when all input points are valid (#915)
+- Fix the inconsistent variable names used in the [unit test](https://github.com/open-mmlab/mmdetection3d/blob/master/tests/test_models/test_voxel_encoder/test_voxel_generator.py) for voxel generator (#919)
+- Upgrade to use `build_prior_generator` to replace the legacy `build_anchor_generator` (#941)
+- Fix a minor bug caused by a too small difference set in the FreeAnchor Head (#944)
+
+#### Contributors
+
+A total of 8 developers contributed to this release.
+
+@DCNSW, @zhanggefan, @mickeyouyou, @ZCMax, @wHao-Wu, @tojimahammatov, @xiliu8006, @Tai-Wang
+
+### v0.17.0 (1/9/2021)
+
+#### Compatibility
+
+- Unify the camera keys for consistent transformation between coordinate systems on different datasets. The modification change the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
+- The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
+
+#### Highlights
+
+- Support 3D object detection on the S3DIS dataset
+- Support compilation on Windows
+- Full benchmark for PAConv on S3DIS
+- Further enhancement for documentation, especially on the Chinese documentation
+
+#### New Features
+
+- Support 3D object detection on the S3DIS dataset (#835)
+
+#### Improvements
+
+- Support point sampling based on distance metric (#667, #840)
+- Update PointFusion to support unified camera keys (#791)
+- Add Chinese documentation for customized dataset (#792), data pipeline (#827), customized runtime (#829), 3D Detection on ScanNet (#836), nuScenes (#854) and Waymo (#859)
+- Unify camera keys used in transformation between different systems (#805)
+- Add a script to support benchmark regression (#808)
+- Benchmark PAConvCUDA on S3DIS (#847)
+- Add a tutorial for 3D detection on the Lyft dataset (#849)
+- Support to download pdf and epub documentation (#850)
+- Change the `repeat` setting in Group-Free-3D configs to reduce training epochs (#855)
+
+#### Bug Fixes
+
+- Fix compiling errors on Windows (#766)
+- Fix the deprecated nms setting in the ImVoteNet config (#828)
+- Use the latest `wrap_fp16_model` import from mmcv (#861)
+- Remove 2D annotations generation on Lyft (#867)
+- Update index files for the Chinese documentation to be consistent with the English version (#873)
+- Fix the nested list transpose in the CenterPoint head (#879)
+- Fix deprecated pretrained model loading for RegNet (#889)
+
+#### Contributors
+
+A total of 11 developers contributed to this release.
+
+@THU17cyz, @wHao-Wu, @wangruohui, @Wuziyi616, @filaPro, @ZwwWayne, @Tai-Wang, @DCNSW, @xieenze, @robin-karlsson0, @ZCMax
+
 ### v0.16.0 (1/8/2021)
 
 #### Compatibility
@@ -25,7 +122,7 @@
 - Refactor Group-Free-3D to make it inherit BaseModule from MMCV (#704)
 - Modify the initialization methods of FCOS3D to be consistent with the refactored approach (#705)
 - Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/groupfree3d) on ScanNet (#710)
-- Add Chinese Documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
+- Add Chinese documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
 - Add documentation for semantic segmentation on ScanNet and S3DIS (#743, #747, #806, #807)
 - Add a parameter `max_keep_ckpts` to limit the maximum number of saved Group-Free-3D checkpoints (#765)
 - Add documentation for 3D detection on SUN RGB-D and nuScenes (#770, #793)
@@ -38,7 +135,7 @@
 - Fix the `bev_range` initialization in `ObjectRangeFilter` according to the `gt_bboxes_3d` type (#717)
 - Fix Chinese documentation and incorrect doc format due to the incompatible Sphinx version (#718)
 - Fix a potential bug when setting `interval == 1` in [analyze_logs.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/analysis_tools/analyze_logs.py) (#720)
-- Update the structure of Chinese Documentation (#722)
+- Update the structure of Chinese documentation (#722)
 - Fix FCOS3D FPN BC-Breaking caused by the code refactoring in MMDetection (#739)
 - Fix wrong `in_channels` when `with_distance=True` in the [Dynamic VFE Layers](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/voxel_encoder.py#L87) (#749)
 - Fix the dimension and yaw hack of FCOS3D on nuScenes (#744, #794, #795, #818)
@@ -412,7 +509,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 #### Bug Fixes
 
 - Rename CosineAnealing to CosineAnnealing (#57)
-- Fix device inconsistant bug in 3D IoU computation (#69)
+- Fix device inconsistent bug in 3D IoU computation (#69)
 - Fix a minor bug in json2csv of lyft dataset (#78)
 - Add missed test data for pointnet modules (#85)
 - Fix `use_valid_flag` bug in `CustomDataset` (#106)

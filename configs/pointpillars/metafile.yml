@@ -5,8 +5,13 @@ Collections:
         - AdamW
       Architecture:
         - Feature Pyramid Network
-    Paper: https://arxiv.org/abs/1812.05784
+    Paper:
+      URL: https://arxiv.org/abs/1812.05784
+      Title: 'PointPillars: Fast Encoders for Object Detection from Point Clouds'
     README: configs/pointpillars/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/voxel_encoders/pillar_encoder.py#L13
+      Version: v0.6.0
 
 Models:
   - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car
@@ -162,3 +167,47 @@ Models:
           mAPH@L1: 63.3
           mAP@L2: 62.6
           mAPH@L2: 57.6
+
+  - Name: hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d.py
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Hard Voxelization
+      Training Data: nuScenes
+      Training Memory (GB): 8.37
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 35.19
+          NDS: 50.27
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d_20201020_222626-c3f0483e.pth
+    Code:
+      Version: v0.7.0
+
+  - Name: hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Hard Voxelization
+      Training Data: nuScenes
+      Training Memory (GB): 8.40
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 39.26
+          NDS: 53.26
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth
+    Code:
+      Version: v0.7.0
