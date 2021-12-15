@@ -148,27 +148,6 @@ def test_uncertain_smooth_l1_loss():
         mean_smooth_l1_loss, expected_smooth_l1_loss, atol=1e-4)
 
 
-def test_monoflex_iou_loss():
-    from mmdet3d.models.losses import MonoFlexIoULoss
-
-    # reduction should be in ['none', 'mean', 'sum']
-    with pytest.raises(AssertionError):
-        monoflex_iou_loss = MonoFlexIoULoss(reduction='l2')
-
-    pred = torch.tensor([[1.5783, 0.5972, 1.4821, 0.9488],
-                         [2.4144, 2.2312, 1.8922, 3.2222]])
-    target = torch.tensor([[1.0813, 0.3466, 1.1404, 0.9665],
-                           [2.4142, 2.1231, 1.7632, 2.9998]])
-
-    # test monoflex iou loss
-    monoflex_iou_loss_cfg = dict(
-        type='MonoFlexIoULoss', reduction='mean', loss_weight=1.0)
-    monoflex_iou_loss = build_loss(monoflex_iou_loss_cfg)
-    mean_iou_loss = monoflex_iou_loss(pred, target)
-    expected_iou_loss = torch.tensor(0.2432)
-    assert torch.allclose(mean_iou_loss, expected_iou_loss, atol=1e-4)
-
-
 def test_multibin_loss():
     from mmdet3d.models.losses import MultiBinLoss
 
