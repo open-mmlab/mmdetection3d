@@ -96,6 +96,7 @@ class MonoFlexIoULoss(nn.Module):
                  mode='iou'):
         super(MonoFlexIoULoss, self).__init__()
         assert mode in ['linear_iou', 'iou', 'giou']
+        assert reduction in ['none', 'sum', 'mean']
         self.mode = mode
         self.eps = eps
         self.reduction = reduction
