@@ -1,5 +1,6 @@
 docutils==0.16.0
 m2r
+mistune==0.8.4
 -e git+https://github.com/open-mmlab/pytorch_sphinx_theme.git#egg=pytorch_sphinx_theme
 recommonmark
 sphinx==4.0.2
