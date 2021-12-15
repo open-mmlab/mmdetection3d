@@ -1,5 +1,6 @@
 mmcv
 mmdet
 mmsegmentation>=0.14.1
+numba
 torch
 torchvision
