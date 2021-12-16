@@ -17,7 +17,7 @@ import sys
 from m2r import MdInclude
 from recommonmark.transform import AutoStructify
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
@@ -25,7 +25,7 @@ project = 'MMDetection3D'
 copyright = '2020-2023, OpenMMLab'
 author = 'MMDetection3D Authors'
 
-version_file = '../mmdet3d/version.py'
+version_file = '../../mmdet3d/version.py'
 
 
 def get_version():
