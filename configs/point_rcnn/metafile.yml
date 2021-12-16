@@ -26,4 +26,4 @@ Models:
         Dataset: KITTI
         Metrics:
           mAP: 70.83
-    Weights: TODO
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth
