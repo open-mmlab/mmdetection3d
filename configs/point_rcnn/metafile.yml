@@ -1,0 +1,29 @@
+Collections:
+  - Name: PointRCNN
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x Titan XP GPUs
+      Architecture:
+        - PointNet++
+    Paper:
+      URL: https://arxiv.org/abs/1812.04244
+      Title: 'PointRCNN: 3D Object Proposal Generation and Detection from Point Cloud'
+    README: configs/point_rcnn/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/models/detectors/point_rcnn.py#L8
+      Version: v1.0.0
+
+Models:
+  - Name: point_rcnn_2x8_kitti-3d-3classes.py
+    In Collection: PointRCNN
+    Config: configs/point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py
+    Metadata:
+      Training Memory (GB): 4.6
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 70.83
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth
