@@ -96,7 +96,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 
 **Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window. If you don't have a monitor, you can remove the `--online` flag to only save the visualization results and browse them offline.
 
-Besides, in order to facilitate the verification of the consistency of the data and the ground-truth after data augmentation, and to view the effect of data augmentation, we also support the visualization of augmented input data by simply adding the `--aug` flag.
+To verify the data consistency and the effect of data augmentation, you can also add `--aug` flag to visualize the data after data augmentation using the command as below:
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR} --online

@@ -97,7 +97,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 
 **注意**：一旦指定 `--output-dir` ，当按下 open3d 窗口的 `_ESC_`，用户指定的视图图像将被保存。如果您没有显示器，您可以移除 `--online` 标志，从而仅仅保存可视化结果并且进行离线浏览。
 
-此外，为了便于数据增强后数据和真值标签的一致性验证，以及查看数据增强的效果，我们还支持通过简单地添加 `--aug` 标志来可视化增强的数据集。
+为了验证数据的一致性和数据增强的效果，您还可以使用以下命令添加 `--aug` 标志来可视化数据增强后的数据：
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR} --online
