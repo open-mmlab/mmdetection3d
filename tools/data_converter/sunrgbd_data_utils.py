@@ -42,8 +42,11 @@ class SUNRGBDInstance(object):
         self.ymax = data[2] + data[4]
         self.box2d = np.array([self.xmin, self.ymin, self.xmax, self.ymax])
         self.centroid = np.array([data[5], data[6], data[7]])
-        # data[9] is x_size (l), data[8] is y_size (w), data[10] is z_size (h)
-        # in our depth coordinate system,
+        self.width = data[8]
+        self.length = data[9]
+        self.height = data[10]
+        # data[9] is x_size (length), data[8] is y_size (width), data[10] is
+        # z_size (height) in our depth coordinate system,
         # l corresponds to the size along the x axis
         self.size = np.array([data[9], data[8], data[10]]) * 2
         self.orientation = np.zeros((3, ))
@@ -193,7 +196,7 @@ class SUNRGBDData(object):
                     ],
                                                              axis=0)
                     annotations['dimensions'] = 2 * np.array([
-                        [obj.l, obj.w, obj.h] for obj in obj_list
+                        [obj.length, obj.width, obj.height] for obj in obj_list
                         if obj.classname in self.cat2label.keys()
                     ])  # lwh (depth) format
                     annotations['rotation_y'] = np.array([
