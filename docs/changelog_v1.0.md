@@ -18,25 +18,29 @@
 #### New Features
 
 - Support 3D object detection on the S3DIS dataset (#835)
-- Add RoI pooling cuda ops to support PointRCNN (#843)
-- Support PointXYZWHLR box coder (#856)
+- Support PointRCNN (#842, #843, #856, #974, #1022, #1109)
+- Support DGCNN (#896)
+- Support PGD (#938, #940, #948, #950, #964, #1014, #1065, #1070)
+- Support SMOKE (#939, #955, #959, #975, #988, #999, #1029)
+- Support MonoFlex (#1026, )
 
 #### Improvements
 
 - Support point sampling based on distance metric (#667, #840)
-- Refactor coordinate systems (#677)
-- Add scripts for data update caused by coordinate system changes (#774)
-- Update PointFusion to support unified camera keys (#791)
-- Add Chinese documentation for customized dataset (#792), data pipeline (#827), customized runtime (#829), 3D Detection on ScanNet (#836), nuScenes (#854) and Waymo (#859)
-- Refactor code structures and docstrings (#803)
-- Unify camera keys used in transformation between different systems (#805)
+- Refactor coordinate systems (#677, #774, #803, #899, #906, #912, #968, #1001)
+- Unify camera keys in PointFusion and transformations between different systems (#791, #805)
+- Refine documentation (#792, #827, #829, #836, #849, #854, #859)
 - Add a script to support benchmark regression (#808)
-- Refactor [iou_neg_piecewise_sampler.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/samplers/iou_neg_piecewise_sampler.py) to support PointRCNN (#842)
 - Benchmark PAConvCUDA on S3DIS (#847)
-- Add a tutorial for 3D detection on the Lyft dataset (#849)
 - Support to download pdf and epub documentation (#850)
 - Change the `repeat` setting in Group-Free-3D configs to reduce training epochs (#855)
-- Add coordinate system tutorials (#899)
+- Support KITTI AP40 evaluation metric (#927)
+- Add the mmdet3d2torchserve tool (#977)
+- Add code-spell pre-commit hook and fix typos (#995)
+- Support the latest numba version (#1043)
+- Set a default seed to use when the random seed is not specified (#1072)
+- Distribute mix-precision models to each algorithm folder (#1074)
+- Add abstract and a representative figure for each algorithm (#1086)
 
 #### Bug Fixes
 
@@ -48,12 +52,14 @@
 - Fix the nested list transpose in the CenterPoint head (#879)
 - Fix deprecated pretrained model loading for RegNet (#889)
 - Fix the incorrect dimension indices of rotations and testing config in the CenterPoint test time augmentation (#892)
+- Fix and improve visualization tools (#956, #1066, #1073)
+- Fix PointPillars FLOPs calculation error (#1075)
 
 #### Contributors
 
 A total of 11 developers contributed to this release.
 
-@THU17cyz, @wHao-Wu, @wangruohui, @Wuziyi616, @filaPro, @ZwwWayne, @Tai-Wang, @DCNSW, @xieenze, @robin-karlsson0, @ZCMax
+@THU17cyz, @wHao-Wu, @wangruohui, @Wuziyi616, @filaPro, @ZwwWayne, @Tai-Wang, @DCNSW, @xieenze, @robin-karlsson0, @ZCMax, @Otteri
 
 ### v0.17.2 (1/11/2021)
 
