@@ -1,6 +1,6 @@
 ## Changelog
 
-### v1.0.0.rc0 (1/9/2021)
+### v1.0.0.rc0 (8/12/2021)
 
 #### Compatibility
 
