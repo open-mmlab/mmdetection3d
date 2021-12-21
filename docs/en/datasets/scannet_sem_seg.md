@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-The overall process is similar to ScanNet 3D detection task. Please refer to this [section](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/scannet_det.md#dataset-preparation). Only a few differences and additional information about the 3D semantic segmentation data will be listed below.
+The overall process is similar to ScanNet 3D detection task. Please refer to this [section](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/scannet_det.md#dataset-preparation). Only a few differences and additional information about the 3D semantic segmentation data will be listed below.
 
 ### Export ScanNet data
 
