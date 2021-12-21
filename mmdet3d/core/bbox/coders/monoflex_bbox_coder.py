@@ -16,12 +16,11 @@ class MonoFlexCoder(BaseBBoxCoder):
         depth_range (list): Depth range of predicted depth.
         use_combined_depth (bool): Whether to use combined depth (direct depth
             and depth from keypoints).
-        uncertainty_range(list): Uncertainty range of predicted depth.
-        dims_mean (tuple[tuple[float]]): Dimensions mean of decode bbox
+        uncertainty_range (list): Uncertainty range of predicted depth.
+        base_dims (tuple[tuple[float]]): Dimensions mean and std of decode bbox
             dimensions [l, h, w] for each category.
-        dims_mean (tuple[tuple[float]]): Dimensions std of decode bbox
-            dimensions [l, h, w] for each category.
-        dims_modes (list[str|bool]): Dimensions modes.
+        dims_modes (list[str|bool]): Dimensions modes. It should includes three
+            parts, [linear, log or exp ; use mean or not ; use std or not]
         multibin (bool): Whether to use multi_bin representation.
         alpha_centers (list[float]): Alpha centers while using multi_bin
             representations.
@@ -37,8 +36,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         depth_range,
         use_combined_depth,
         uncertainty_range,
-        dims_mean,
-        dims_std,
+        base_dims,
         dims_modes,
         multibin,
         alpha_centers,
@@ -55,8 +53,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         self.uncertainty_range = uncertainty_range
 
         # dimensions related
-        self.dims_mean = dims_mean
-        self.dims_std = dims_std
+        self.base_dims = base_dims
         self.dims_modes = dims_modes
 
         # orientation related
@@ -73,11 +70,11 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         Args:
             locations (Tensor): Center location for 3D boxes.
-                (N, 3)
+                shape: (N, 3)
             dimensions (Tensor): Dimensions for 3D boxes.
-                shape (N, 3)
+                shape: (N, 3)
             orientations (Tensor): Orientations for 3D boxes.
-                shape (N, 1)
+                shape: (N, 1)
             input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
 
@@ -94,7 +91,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return batch_bboxes
 
-    def decode(self, reg, labels, down_ratio, cam2imgs):
+    def decode(self, reg, labels, downsample_ratio, cam2imgs):
         """Decode regression into 3D predictions.
 
         Args:
@@ -103,7 +100,7 @@ class MonoFlexCoder(BaseBBoxCoder):
             labels (Tensor): Batch predict class label for each predict
                 center2d point.
                 shape: (N, )
-            down_ratio (int): The stride of feature map.
+            downsample_ratio (int): The stride of feature map.
             cam2imgs (Tensor): Batch images' camera intrinsic matrix.
                 shape: kitti (N, 4, 4)  nuscenes (N, 3, 3)
 
@@ -113,6 +110,11 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         # 4 dimensions for FCOS style regression
         pred_bbox2d = reg[:, 0:4]
+
+        # change FCOS style to [x1, y1, x2, y2] format
+        pred_bbox2d = torch.cat(
+            [pred_bbox2d[..., 0:2] * -1, pred_bbox2d[..., 2:]], dim=-1)
+
         # 2 dimensions for projected centers2d offsets
         pred_offsets2d = reg[:, 4:6]
 
@@ -141,7 +143,7 @@ class MonoFlexCoder(BaseBBoxCoder):
                                                 pred_dimensions_offsets3d)
         pred_direct_depth = self.decode_direct_depth(pred_depth_offsets)
         pred_keypoints_depth = self.decode_depth_from_keypoints(
-            pred_keypoints2d, pred_dimensions, cam2imgs, down_ratio)
+            pred_keypoints2d, pred_dimensions, cam2imgs, downsample_ratio)
 
         pred_direct_depth_uncertainty = torch.clamp(
             pred_direct_depth_uncertainty, self.uncertainty_range[0],
@@ -207,26 +209,25 @@ class MonoFlexCoder(BaseBBoxCoder):
         return depth
 
     def decode_location(self,
-                        centers2d_target,
+                        base_centers2d,
                         offsets2d,
                         depths,
                         cam2imgs,
-                        down_ratio,
+                        downsample_ratio,
                         pad_mode='default'):
         """Retrieve object location.
 
         Args:
-            centers2d_target (torch.Tensor): Projected 3D target centers
-                onto 2D images.
+            base_centers2d (torch.Tensor): predicted base centers2d.
                 shape: (N, 2)
             offsets2d (torch.Tensor): The offsets between real centers2d
-                and centers2d_target.
+                and base centers2d.
                 shape: (N , 2)
             depths (torch.Tensor): Depths of objects.
                 shape: (N, )
             cam2imgs (torch.Tensor): Batch images' camera intrinsic matrix.
                 shape: kitti (N, 4, 4)  nuscenes (N, 3, 3)
-            down_ratio (int): The stride of feature map.
+            downsample_ratio (int): The stride of feature map.
             pad_mode (str, optional): Padding mode used in
                 training data augmentation.
 
@@ -238,7 +239,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         # (N, 4, 4)
         cam2imgs_inv = cam2imgs.inverse()
         if pad_mode == 'default':
-            centers2d_img = (centers2d_target + offsets2d) * down_ratio
+            centers2d_img = (base_centers2d + offsets2d) * downsample_ratio
         else:
             raise NotImplementedError
         # (B*max_objs, 3)
@@ -256,7 +257,7 @@ class MonoFlexCoder(BaseBBoxCoder):
                                     keypoints2d,
                                     dimensions,
                                     cam2imgs,
-                                    down_ratio=4,
+                                    downsample_ratio=4,
                                     group0_index=[(7, 3), (0, 4)],
                                     group1_index=[(2, 6), (1, 5)]):
         """Decode depth form three groups of keypoints and geometry projection
@@ -313,7 +314,7 @@ class MonoFlexCoder(BaseBBoxCoder):
                 shape: (N, 3)
             cam2imgs (torch.Tensor): Batch images' camera intrinsic matrix.
                 shape: kitti (N, 4, 4)  nuscenes (N, 3, 3)
-            down_ratio (int, opitonal): The stride of feature map.
+            downsample_ratio (int, opitonal): The stride of feature map.
                 Defaults: 4.
             group0_index(list[tuple[int]], optional): Keypoints group 0
                 of index to calculate the depth.
@@ -336,11 +337,11 @@ class MonoFlexCoder(BaseBBoxCoder):
         corner_group1_height = keypoints2d[:, group1_index[0], 1] \
             - keypoints2d[:, group1_index[1], 1]
         center_depth = f_u * pred_height_3d / (
-            F.relu(center_height) * down_ratio + self.eps)
+            F.relu(center_height) * downsample_ratio + self.eps)
         corner_group0_depth = (f_u * pred_height_3d).unsqueeze(-1) / (
-            F.relu(corner_group0_height) * down_ratio + self.eps)
+            F.relu(corner_group0_height) * downsample_ratio + self.eps)
         corner_group1_depth = (f_u * pred_height_3d).unsqueeze(-1) / (
-            F.relu(corner_group1_height) * down_ratio + self.eps)
+            F.relu(corner_group1_height) * downsample_ratio + self.eps)
 
         corner_group0_depth = corner_group0_depth.mean(dim=1)
         corner_group1_depth = corner_group1_depth.mean(dim=1)
@@ -357,16 +358,17 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         Args:
             labels (torch.Tensor): Each points' category id.
-                shape (N, K)
+                shape: (N, K)
             dims_offset (torch.Tensor): Dimension offsets.
-                shape (N, 3)
+                shape: (N, 3)
 
         Returns:
             torch.Tensor: Shape (N, 3)
         """
         labels = labels.long()
-        dims_std = dims_offset.new_tensor(self.dims_std)
-        dims_mean = dims_offset.new_tensor(self.dims_mean)
+        base_dims = dims_offset.new_tensor(self.base_dims)
+        dims_mean = base_dims[:, :3]
+        dims_std = base_dims[:, 3:6]
         cls_dimension_mean = dims_mean[labels, :]
 
         if self.dims_modes[0] == 'exp':
@@ -384,11 +386,11 @@ class MonoFlexCoder(BaseBBoxCoder):
         """Retrieve object orientation.
 
         Args:
-            vector_ori(torch.Tensor): Local vector orientation
+            vector_ori (torch.Tensor): Local vector orientation
                 in [axis_cls, head_cls, sin, cos] format.
-                shape (N, num_dir_bin * 4)
-            locations(torch.Tensor): Object location.
-                shape (N, 3)
+                shape: (N, num_dir_bin * 4)
+            locations (torch.Tensor): Object location.
+                shape: (N, 3)
 
         Returns:
             tuple[torch.Tensor]: yaws and alphas of 3d bboxes.
@@ -400,9 +402,9 @@ class MonoFlexCoder(BaseBBoxCoder):
             orientations = vector_ori.new_zeros(vector_ori.shape[0])
             for i in range(self.num_dir_bin):
                 mask_i = (pred_bin_cls.argmax(dim=1) == i)
-                s = self.num_dir_bin * 2 + i * 2
-                e = s + 2
-                pred_bin_offset = vector_ori[mask_i, s:e]
+                start_bin = self.num_dir_bin * 2 + i * 2
+                end_bin = start_bin + 2
+                pred_bin_offset = vector_ori[mask_i, start_bin:end_bin]
                 orientations[mask_i] = torch.atan2(
                     pred_bin_offset[:, 0],
                     pred_bin_offset[:, 1]) + self.alpha_centers[i]
