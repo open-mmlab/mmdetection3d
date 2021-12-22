@@ -310,9 +310,9 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
     return img_meta[mapping[coord_type]]
 
 
-def yaw2alpha(yaw, loc):
-    """Transform global yaw to local yaw (alpha) in camera coordinates, ranges
-    from -pi to pi.
+def yaw2local(yaw, loc):
+    """Transform global yaw to local yaw (alpha in kitti) in camera
+    coordinates, ranges from -pi to pi.
 
     Args:
         yaw (torch.Tensor): A vector with local yaw of each box.
@@ -321,11 +321,11 @@ def yaw2alpha(yaw, loc):
             shape: (N, 3)
 
     Returns:
-        torch.Tensor: local yaw (alpha).
+        torch.Tensor: local yaw (alpha in kitti).
     """
-    alpha = yaw - torch.atan2(loc[:, 0], loc[:, 2])
-    while alpha > np.pi:
-        alpha -= np.pi * 2
-    while alpha < -np.pi:
-        alpha += np.pi * 2
-    return alpha
+    local_yaw = yaw - torch.atan2(loc[:, 0], loc[:, 2])
+    while local_yaw > np.pi:
+        local_yaw -= np.pi * 2
+    while local_yaw < -np.pi:
+        local_yaw += np.pi * 2
+    return local_yaw
