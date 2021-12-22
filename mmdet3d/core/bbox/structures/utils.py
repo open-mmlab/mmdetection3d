@@ -311,9 +311,8 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
 
 
 def yaw2local(yaw, loc):
-    """Transform global yaw to local yaw in camera coordinates, ranging.
-
-    [-pi..pi].
+    """Transform global yaw to local yaw in camera coordinates, ranges from -pi
+    to pi.
 
     Args:
         yaw (torch.Tensor): A vector with local yaw of each box.
