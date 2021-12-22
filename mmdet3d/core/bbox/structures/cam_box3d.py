@@ -4,7 +4,7 @@ import torch
 
 from ...points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
-from .utils import rotation_3d_in_axis, yaw2local
+from .utils import rotation_3d_in_axis, yaw2alpha
 
 
 class CameraInstance3DBoxes(BaseInstance3DBoxes):
@@ -91,13 +91,13 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         return self.tensor[:, 1]
 
     @property
-    def local_yaw(self):
+    def alpha(self):
         """torch.Tensor: A vector with local yaw of each box in shape (N, )."""
         yaw = self.yaw
         loc = self.gravity_center
-        local_yaw = yaw2local(yaw, loc)
+        alpha = yaw2alpha(yaw, loc)
 
-        return local_yaw
+        return alpha
 
     @property
     def gravity_center(self):
