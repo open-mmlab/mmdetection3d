@@ -81,7 +81,7 @@ python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} -
 ```
 
 
-![](../../resources/open3d_visual.gif)
+![](../resources/open3d_visual.gif)
 
 或者您可以使用 3D 可视化软件，例如 [MeshLab](http://www.meshlab.net/) 来打开这些在 `${SHOW_DIR}` 目录下的文件，从而查看 3D 检测输出。具体来说，打开 `***_points.obj` 查看输入点云，打开 `***_pred.obj` 查看预测的 3D 边界框。这允许推理和结果生成在远程服务器中完成，用户可以使用 GUI 在他们的主机上打开它们。
 
