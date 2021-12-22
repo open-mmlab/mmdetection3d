@@ -122,11 +122,11 @@ class MonoFlexCoder(BaseBBoxCoder):
         """
 
         # 4 dimensions for FCOS style regression
-        pred_bbox2d = bbox[:, 0:4]
+        pred_bboxes2d = bbox[:, 0:4]
 
         # change FCOS style to [x1, y1, x2, y2] format
-        pred_bbox2d = torch.cat(
-            [pred_bbox2d[..., 0:2] * -1, pred_bbox2d[..., 2:]], dim=-1)
+        pred_bboxes2d = torch.cat(
+            [pred_bboxes2d[..., 0:2] * -1, pred_bboxes2d[..., 2:]], dim=-1)
 
         # 2 dimensions for projected centers2d offsets
         pred_offsets2d = bbox[:, 4:6]
@@ -182,11 +182,11 @@ class MonoFlexCoder(BaseBBoxCoder):
             pred_combined_depth = None
 
         preds = dict(
-            bbox2d=pred_bbox2d,
+            bboxes2d=pred_bboxes2d,
             dimensions=pred_dimensions,
             offsets2d=pred_offsets2d,
             direct_depth=pred_direct_depth,
-            keypoints=pred_keypoints2d,
+            keypoints2d=pred_keypoints2d,
             keypoints_depth=pred_keypoints_depth,
             combined_depth=pred_combined_depth,
             orientations=pred_orientations,
