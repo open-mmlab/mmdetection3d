@@ -93,7 +93,9 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
     @property
     def local_yaw(self):
         """torch.Tensor: A vector with local yaw of each box in shape (N, ).
-            local_yaw equals to alpha in kitti.
+            local_yaw equals to alpha in kitti, which is commonly used in
+            monocular 3D object detection task, so only CameraInstance3DBoxes
+            has the property.
         """
         yaw = self.yaw
         loc = self.gravity_center
