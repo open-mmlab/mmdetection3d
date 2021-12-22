@@ -91,11 +91,12 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return batch_bboxes
 
-    def decode(self, reg, labels, downsample_ratio, cam2imgs):
-        """Decode regression into 3D predictions.
+    def decode(self, bbox, labels, downsample_ratio, cam2imgs):
+        """Decode bounding box regression into 3D predictions.
 
         Args:
-            reg (Tensor): Batch regression for each predict center2d point.
+            bbox (Tensor): Raw bounding box predictions for each
+                predict center2d point.
                 shape: (N, C)
             labels (Tensor): Batch predict class label for each predict
                 center2d point.
@@ -109,34 +110,34 @@ class MonoFlexCoder(BaseBBoxCoder):
         """
 
         # 4 dimensions for FCOS style regression
-        pred_bbox2d = reg[:, 0:4]
+        pred_bbox2d = bbox[:, 0:4]
 
         # change FCOS style to [x1, y1, x2, y2] format
         pred_bbox2d = torch.cat(
             [pred_bbox2d[..., 0:2] * -1, pred_bbox2d[..., 2:]], dim=-1)
 
         # 2 dimensions for projected centers2d offsets
-        pred_offsets2d = reg[:, 4:6]
+        pred_offsets2d = bbox[:, 4:6]
 
         # 3 dimensions for 3D bbox dimensions offsets
-        pred_dimensions_offsets3d = reg[:, 29:32]
+        pred_dimensions_offsets3d = bbox[:, 29:32]
 
         # the first 8 dimensions are for orientation bin classification
         # and the second 8 dimensions are for orientation offsets.
-        pred_orientations = torch.cat((reg[:, 32:40], reg[:, 40:48]), dim=1)
+        pred_orientations = torch.cat((bbox[:, 32:40], bbox[:, 40:48]), dim=1)
 
         # 3 dimensions for the uncertainties of the solved depths from
         # groups of keypoints
-        pred_keypoints_depth_uncertainty = reg[:, 26:29]
+        pred_keypoints_depth_uncertainty = bbox[:, 26:29]
 
         # 1 dimension for the uncertainty of directly regressed depth
-        pred_direct_depth_uncertainty = reg[:, 49:50].squeeze(-1)
+        pred_direct_depth_uncertainty = bbox[:, 49:50].squeeze(-1)
 
         # 2 dimension of offsets x keypoints (8 corners + top/bottom center)
-        pred_keypoints2d = reg[:, 6:26]
+        pred_keypoints2d = bbox[:, 6:26]
 
         # 1 dimension for depth offsets
-        pred_depth_offsets = reg[:, 48:49].squeeze(-1)
+        pred_depth_offsets = bbox[:, 48:49].squeeze(-1)
 
         # decode the pred residual dimensions to real dimensions
         pred_dimensions = self.decode_dimension(labels,
@@ -382,11 +383,11 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return dimensions
 
-    def decode_orientation(self, vector_ori, locations):
+    def decode_orientation(self, ori_vector, locations):
         """Retrieve object orientation.
 
         Args:
-            vector_ori (torch.Tensor): Local vector orientation
+            ori_vector (torch.Tensor): Local orientation vector
                 in [axis_cls, head_cls, sin, cos] format.
                 shape: (N, num_dir_bin * 4)
             locations (torch.Tensor): Object location.
@@ -396,26 +397,26 @@ class MonoFlexCoder(BaseBBoxCoder):
             tuple[torch.Tensor]: yaws and alphas of 3d bboxes.
         """
         if self.multibin:
-            pred_bin_cls = vector_ori[:, :self.num_dir_bin * 2].view(
+            pred_bin_cls = ori_vector[:, :self.num_dir_bin * 2].view(
                 -1, self.num_dir_bin, 2)
             pred_bin_cls = torch.softmax(pred_bin_cls, dim=2)[..., 1]
-            orientations = vector_ori.new_zeros(vector_ori.shape[0])
+            orientations = ori_vector.new_zeros(ori_vector.shape[0])
             for i in range(self.num_dir_bin):
                 mask_i = (pred_bin_cls.argmax(dim=1) == i)
                 start_bin = self.num_dir_bin * 2 + i * 2
                 end_bin = start_bin + 2
-                pred_bin_offset = vector_ori[mask_i, start_bin:end_bin]
+                pred_bin_offset = ori_vector[mask_i, start_bin:end_bin]
                 orientations[mask_i] = torch.atan2(
                     pred_bin_offset[:, 0],
                     pred_bin_offset[:, 1]) + self.alpha_centers[i]
         else:
-            axis_cls = torch.softmax(vector_ori[:, :2], dim=1)
+            axis_cls = torch.softmax(ori_vector[:, :2], dim=1)
             axis_cls = axis_cls[:, 0] < axis_cls[:, 1]
-            head_cls = torch.softmax(vector_ori[:, 2:4], dim=1)
+            head_cls = torch.softmax(ori_vector[:, 2:4], dim=1)
             head_cls = head_cls[:, 0] < head_cls[:, 1]
             # cls axis
             orientations = self.alpha_centers[axis_cls + head_cls * 2]
-            sin_cos_offset = F.normalize(vector_ori[:, 4:])
+            sin_cos_offset = F.normalize(ori_vector[:, 4:])
             orientations += torch.atan(sin_cos_offset[:, 0] /
                                        sin_cos_offset[:, 1])
 
