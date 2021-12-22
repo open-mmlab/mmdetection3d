@@ -78,7 +78,6 @@ class MonoFlexCoder(BaseBBoxCoder):
         Returns:
             tuple: Targets of orientation.
         """
-        # generate center target (N, )
         local_yaw = gt_bboxes_3d.local_yaw
 
         # encode local yaw (-pi ~ pi) to multibin format
@@ -89,7 +88,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         bin_centers = self.bin_centers
         range_size = bin_size / 2 + margin_size
 
-        offsets = local_yaw - bin_centers.unsqueeze(0)  # (N, 4)
+        offsets = local_yaw - bin_centers.unsqueeze(0)
         offsets[offsets > np.pi] = offsets[offsets > np.pi] - 2 * np.pi
         offsets[offsets < -np.pi] = offsets[offsets < -np.pi] + 2 * np.pi
 
