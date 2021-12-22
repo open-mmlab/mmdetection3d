@@ -80,7 +80,7 @@ To visualize the results with `Open3D` backend, you can run the following comman
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
 
-![](../resources/open3d_visual.gif)
+![](../../resources/open3d_visual.*)
 
 Or you can use 3D visualization software such as the [MeshLab](http://www.meshlab.net/) to open these files under `${SHOW_DIR}` to see the 3D detection output. Specifically, open `***_points.obj` to see the input point cloud and open `***_pred.obj` to see the predicted 3D bounding boxes. This allows the inference and results generation to be done in remote server and the users can open them on their host with GUI.
 
