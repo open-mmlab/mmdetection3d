@@ -79,8 +79,15 @@ class BaseInstance3DBoxes(object):
 
     @property
     def yaw(self):
-        """torch.Tensor: A vector with yaw of each box in shape (N, )."""
+        """torch.Tensor: A vector with global yaw of each box
+            in shape (N, )."""
         return self.tensor[:, 6]
+
+    @property
+    def local_yaw(self):
+        """torch.Tensor: A vector with local yaw of each box
+            in shape (N, )."""
+        pass
 
     @property
     def height(self):
