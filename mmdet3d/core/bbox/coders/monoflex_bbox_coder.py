@@ -22,10 +22,11 @@ class MonoFlexCoder(BaseBBoxCoder):
         dims_modes (list[str|bool]): Dimensions modes. It should includes three
             parts, [linear, log or exp ; use mean or not ; use std or not]
         multibin (bool): Whether to use multi_bin representation.
-        alpha_centers (list[float]): Alpha centers while using multi_bin
+        bin_centers (list[float]): Alpha centers while using multi_bin
             representations.
-        num_dir_bin (int): Number of Number of bins to encode
+        num_dir_bins (int): Number of Number of bins to encode
             direction angle.
+        bin_margin (float): Margin of multi_bin representations.
         code_size (int): The dimension of boxes to be encoded.
     """
 
@@ -39,8 +40,9 @@ class MonoFlexCoder(BaseBBoxCoder):
         base_dims,
         dims_modes,
         multibin,
-        alpha_centers,
-        num_dir_bin,
+        bin_centers,
+        num_dir_bins,
+        bin_margin,
         code_size,
     ):
         super(MonoFlexCoder, self).__init__()
@@ -58,38 +60,48 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         # orientation related
         self.multibin = multibin
-        self.alpha_centers = alpha_centers
-        self.num_dir_bin = num_dir_bin
+        self.bin_centers = bin_centers
+        self.num_dir_bins = num_dir_bins
+        self.bin_margin = bin_margin
 
         # output related
         self.bbox_code_size = code_size
         self.eps = 1e-3
 
-    def encode(self, locations, dimensions, orientations, input_metas):
-        """Encode CameraInstance3DBoxes by locations, dimensions, orientations.
+    def encode(self, gt_bboxes_3d):
+        """Encode ground truth to prediction targets.
 
         Args:
-            locations (Tensor): Center location for 3D boxes.
-                shape: (N, 3)
-            dimensions (Tensor): Dimensions for 3D boxes.
-                shape: (N, 3)
-            orientations (Tensor): Orientations for 3D boxes.
-                shape: (N, 1)
-            input_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
+            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth bboxes.
+                shape: (n, 7).
 
-        Return:
-            :obj:`CameraInstance3DBoxes`: 3D bboxes of batch images,
-                shape (N, bbox_code_size).
+        Returns:
+            tuple: Targets of orientation.
         """
+        # generate center target (N, )
+        alpha = gt_bboxes_3d.alpha
 
-        bboxes = torch.cat((locations, dimensions, orientations), dim=1)
-        assert bboxes.shape[1] == self.bbox_code_size, 'bboxes shape dose not'\
-            'match the bbox_code_size.'
-        batch_bboxes = input_metas[0]['box_type_3d'](
-            bboxes, box_dim=self.bbox_code_size)
+        # encode alpha (-pi ~ pi) to multibin format
+        encode_alpha = np.zeros(self.num_dir_bins * 2)
+        bin_size = 2 * np.pi / self.num_dir_bins
+        margin_size = bin_size * self.bin_margin
 
-        return batch_bboxes
+        bin_centers = self.bin_centers
+        range_size = bin_size / 2 + margin_size
+
+        offsets = alpha - bin_centers.unsqueeze(0)  # (N, 4)
+        offsets[offsets > np.pi] = offsets[offsets > np.pi] - 2 * np.pi
+        offsets[offsets < -np.pi] = offsets[offsets < -np.pi] + 2 * np.pi
+
+        for i in range(self.num_dir_bins):
+            offset = offsets[:, i]
+            inds = abs(offset) < range_size
+            encode_alpha[inds, i] = 1
+            encode_alpha[inds, i + self.num_dir_bins] = offset
+
+        orientation_target = encode_alpha
+
+        return orientation_target
 
     def decode(self, bbox, labels, downsample_ratio, cam2imgs):
         """Decode bounding box regression into 3D predictions.
@@ -389,7 +401,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         Args:
             ori_vector (torch.Tensor): Local orientation vector
                 in [axis_cls, head_cls, sin, cos] format.
-                shape: (N, num_dir_bin * 4)
+                shape: (N, num_dir_bins * 4)
             locations (torch.Tensor): Object location.
                 shape: (N, 3)
 
@@ -397,25 +409,25 @@ class MonoFlexCoder(BaseBBoxCoder):
             tuple[torch.Tensor]: yaws and alphas of 3d bboxes.
         """
         if self.multibin:
-            pred_bin_cls = ori_vector[:, :self.num_dir_bin * 2].view(
-                -1, self.num_dir_bin, 2)
+            pred_bin_cls = ori_vector[:, :self.num_dir_bins * 2].view(
+                -1, self.num_dir_bins, 2)
             pred_bin_cls = torch.softmax(pred_bin_cls, dim=2)[..., 1]
             orientations = ori_vector.new_zeros(ori_vector.shape[0])
-            for i in range(self.num_dir_bin):
+            for i in range(self.num_dir_bins):
                 mask_i = (pred_bin_cls.argmax(dim=1) == i)
-                start_bin = self.num_dir_bin * 2 + i * 2
+                start_bin = self.num_dir_bins * 2 + i * 2
                 end_bin = start_bin + 2
                 pred_bin_offset = ori_vector[mask_i, start_bin:end_bin]
                 orientations[mask_i] = torch.atan2(
                     pred_bin_offset[:, 0],
-                    pred_bin_offset[:, 1]) + self.alpha_centers[i]
+                    pred_bin_offset[:, 1]) + self.bin_centers[i]
         else:
             axis_cls = torch.softmax(ori_vector[:, :2], dim=1)
             axis_cls = axis_cls[:, 0] < axis_cls[:, 1]
             head_cls = torch.softmax(ori_vector[:, 2:4], dim=1)
             head_cls = head_cls[:, 0] < head_cls[:, 1]
             # cls axis
-            orientations = self.alpha_centers[axis_cls + head_cls * 2]
+            orientations = self.bin_centers[axis_cls + head_cls * 2]
             sin_cos_offset = F.normalize(ori_vector[:, 4:])
             orientations += torch.atan(sin_cos_offset[:, 0] /
                                        sin_cos_offset[:, 1])
