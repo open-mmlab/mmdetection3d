@@ -4,7 +4,7 @@ We provide lots of useful tools under `tools/` directory.
 
 You can plot loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
 
-![loss curve image](../resources/loss_curve.png)
+![loss curve image](../../resources/loss_curve.png)
 
 ```shell
 python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}] [--mode ${MODE}] [--interval ${INTERVAL}]
@@ -80,7 +80,7 @@ To visualize the results with `Open3D` backend, you can run the following comman
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
 
-![](../resources/open3d_visual.gif)
+![](../../resources/open3d_visual.*)
 
 Or you can use 3D visualization software such as the [MeshLab](http://www.meshlab.net/) to open these files under `${SHOW_DIR}` to see the 3D detection output. Specifically, open `***_points.obj` to see the input point cloud and open `***_pred.obj` to see the predicted 3D bounding boxes. This allows the inference and results generation to be done in remote server and the users can open them on their host with GUI.
 
@@ -102,7 +102,7 @@ If you also want to show 2D images with 3D bounding boxes projected onto them, y
 python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
 ```
 
-![](../resources/browse_dataset_multi_modality.png)
+![](../../resources/browse_dataset_multi_modality.png)
 
 You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
 
@@ -110,7 +110,7 @@ You can simply browse different datasets using different configs, e.g. visualizi
 python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
-![](../resources/browse_dataset_seg.png)
+![](../../resources/browse_dataset_seg.png)
 
 And browsing the nuScenes dataset in monocular 3D detection task
 
@@ -118,7 +118,7 @@ And browsing the nuScenes dataset in monocular 3D detection task
 python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono-det --output-dir ${OUTPUT_DIR} --online
 ```
 
-![](../resources/browse_dataset_mono.png)
+![](../../resources/browse_dataset_mono.png)
 
 &emsp;
 
