@@ -44,4 +44,4 @@ We implement H3DNet and provide the result and checkpoints on ScanNet datasets.
 python ./tools/model_converters/convert_h3dnet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=${NEW_CHECKPOINT_PATH}
 ```
 
-Then you can use the converted checkpoints following [getting_started.md](../../docs/getting_started.md).
+Then you can use the converted checkpoints following [getting_started.md](../../docs/en/getting_started.md).

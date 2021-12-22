@@ -41,7 +41,7 @@ Note that we follow the original folder names for clear organization. Please ren
 ## Dataset Preparation
 
 The way to organize Lyft dataset is similar to nuScenes. We also generate the .pkl and .json files which share almost the same structure.
-Next, we will mainly focus on the difference between these two datasets. For a more detailed explanation of the info structure, please refer to [nuScenes tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/nuscenes_det.md).
+Next, we will mainly focus on the difference between these two datasets. For a more detailed explanation of the info structure, please refer to [nuScenes tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/nuscenes_det.md).
 
 To prepare info files for Lyft, run the following commands:
 
