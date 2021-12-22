@@ -435,14 +435,14 @@ class MonoFlexCoder(BaseBBoxCoder):
         locations = locations.view(-1, 3)
         rays = torch.atan2(locations[:, 0], locations[:, 2])
         local_yaws = orientations
-        rotys = local_yaws + rays
+        yaws = local_yaws + rays
 
-        larger_idx = (rotys > np.pi).nonzero()
-        small_idx = (rotys < -np.pi).nonzero()
+        larger_idx = (yaws > np.pi).nonzero()
+        small_idx = (yaws < -np.pi).nonzero()
         if len(larger_idx) != 0:
-            rotys[larger_idx] -= 2 * np.pi
+            yaws[larger_idx] -= 2 * np.pi
         if len(small_idx) != 0:
-            rotys[small_idx] += 2 * np.pi
+            yaws[small_idx] += 2 * np.pi
 
         larger_idx = (local_yaws > np.pi).nonzero()
         small_idx = (local_yaws < -np.pi).nonzero()
@@ -451,4 +451,4 @@ class MonoFlexCoder(BaseBBoxCoder):
         if len(small_idx) != 0:
             local_yaws[small_idx] += 2 * np.pi
 
-        return rotys, local_yaws
+        return yaws, local_yaws
