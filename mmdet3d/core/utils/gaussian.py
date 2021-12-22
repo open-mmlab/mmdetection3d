@@ -95,7 +95,7 @@ def gen_ellip_gaussian_2D(heatmap, center, radius_x, radius_y, k=1):
         center (list[int]): Coord of gaussian kernel's center.
         radius_x (int): X-axis radius of gaussian kernel.
         radius_y (int): Y-axis radius of gaussian kernel.
-        k (int): Coefficient of gaussian kernel. Default: 1.
+        k (int, optional): Coefficient of gaussian kernel. Default: 1.
     Returns:
         out_heatmap (Tensor): Updated heatmap covered by gaussian kernel.
     """
@@ -135,8 +135,10 @@ def ellip_gaussian2D(radius,
             kernel.
         sigma_x (int): X-axis sigma of gaussian function.
         sigma_y (int): Y-axis sigma of gaussian function.
-        dtype (torch.dtype): Dtype of gaussian tensor. Default: torch.float32.
-        device (str): Device of gaussian tensor. Default: 'cpu'.
+        dtype (torch.dtype, optional): Dtype of gaussian tensor.
+            Default: torch.float32.
+        device (str, optional): Device of gaussian tensor.
+            Default: 'cpu'.
     Returns:
         h (Tensor): Gaussian kernel with a
             ``(2 * radius_y + 1) * (2 * radius_x + 1)`` shape.

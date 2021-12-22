@@ -7,7 +7,7 @@ from mmdet3d.models.utils import (filter_outside_objs, get_keypoints,
                                   handle_proj_objs)
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
-from mmdet.models.builder import HEADS
+from mmdet.models.builder import HEADS, build_loss
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from mmdet.models.utils.gaussian_target import (get_local_maximum,
                                                 get_topk_from_heatmap,
@@ -32,15 +32,34 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             regression heatmap channels.
         bbox_coder (:obj:`CameraInstance3DBoxes`): Bbox coder
             for encoding and decoding boxes.
+        use_edge_fusion (bool): Whether to use edge fusion module while
+            feature extraction.
+        edge_fusion_inds (list): Indices of feature to use edge fusion.
+        edge_heatmap_ratio (float): Ratio of generating target heatmap.
+        filter_outside_objs (bool, optional): Whether to filter the
+            outside objects. Default: True.
         loss_cls (dict, optional): Config of classification loss.
             Default: loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0).
         loss_bbox (dict, optional): Config of localization loss.
-            Default: loss_bbox=dict(type='L1Loss', loss_weight=10.0).
+            Default: loss_bbox=dict(type='IOULoss', loss_weight=10.0).
         loss_dir (dict, optional): Config of direction classification loss.
-            In SMOKE, Default: None.
+            Default: dict(type='MultibinLoss', loss_weight=0.1).
+        loss_keypoints (dict, optional): Config of keypoints loss.
+            Default: dict(type='L1Loss', loss_weight=0.1).
+        loss_dims: (dict, optional): Config of dimensions loss.
+            Default: dict(type='L1Loss', loss_weight=0.1).
+        loss_offsets2d: (dict, optional): Config of offsets2d loss.
+            Default: dict(type='L1Loss', loss_weight=0.1).
+        loss_direct_depth: (dict, optional): Config of directly regression depth loss.
+            Default: dict(type='L1Loss', loss_weight=0.1).
+        loss_keypoints_depth: (dict, optional): Config of keypoints decoded depth loss.
+            Default: dict(type='L1Loss', loss_weight=0.1).
+        loss_combined_depth: (dict, optional): Config of combined depth loss.
+            Default: dict(type='L1Loss', loss_weight=0.1).
         loss_attr (dict, optional): Config of attribute classification loss.
-            In SMOKE, Default: None.
+            In MonoFlex, Default: None.
         loss_centerness (dict): Config of centerness loss.
+            In MonoFlex, Default: None.
         norm_cfg (dict): Dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
         init_cfg (dict): Initialization config dict. Default: None.
@@ -54,12 +73,17 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  bbox_coder,
                  use_edge_fusion,
                  edge_fusion_inds,
-                 enable_edge_fusion,
                  edge_heatmap_ratio,
-                 filter_outside_objs=False,
+                 filter_outside_objs=True,
                  loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
-                 loss_bbox=dict(type='L1Loss', loss_weight=0.1),
-                 loss_dir=None,
+                 loss_bbox=dict(type='IOULoss', loss_weight=0.1),
+                 loss_dir=dict(type='MultibinLoss', loss_weight=0.1),
+                 loss_keypoints=dict(type='L1Loss', loss_weight=0.1),
+                 loss_dims=dict(type='L1Loss', loss_weight=0.1),
+                 loss_offsets2d=dict(type='L1Loss', loss_weight=0.1),
+                 loss_direct_depth=dict(type='L1Loss', loss_weight=0.1),
+                 loss_keypoints_depth=dict(type='L1Loss', loss_weight=0.1),
+                 loss_combined_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_attr=None,
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  init_cfg=None,
@@ -76,7 +100,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             **kwargs)
         self.dim_channel = dim_channel
         self.ori_channel = ori_channel
-        self.enable_edge_fusion = enable_edge_fusion
+        self.use_edge_fusion = use_edge_fusion
         self.bbox_coder = build_bbox_coder(bbox_coder)
         # index like (i, j)  i represents the feature
         # extraction branch, j represents the feature reg branch
@@ -86,9 +110,16 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         self.use_edge_fusion = use_edge_fusion
         self.filter_outside_objs = filter_outside_objs
         self.edge_heatmap_ratio = edge_heatmap_ratio
+        self.loss_dir = build_loss(loss_dir)
+        self.loss_keypoints = build_loss(loss_keypoints)
+        self.loss_dims = build_loss(loss_dims)
+        self.loss_offsets2d = build_loss(loss_offsets2d)
+        self.loss_direct_depth = build_loss(loss_direct_depth)
+        self.loss_keypoints_depth = build_loss(loss_keypoints_depth)
+        self.loss_combined_depth = build_loss(loss_combined_depth)
 
     def _init_edge_module(self):
-
+        """Initialize edge fusion module for feature extraction."""
         self.edge_fusion_module = EdgeFusionModule(self.num_classes,
                                                    self.feat_channels)
 
@@ -120,19 +151,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     reg_list.append(nn.Conv2d(self.feat_channels, reg_dim, 1))
                 self.conv_regs.append(reg_list)
 
-    def forward_train(self,
-                      x,
-                      img_metas,
-                      gt_bboxes,
-                      gt_labels=None,
-                      gt_bboxes_3d=None,
-                      gt_labels_3d=None,
-                      centers2d=None,
-                      depths=None,
-                      attr_labels=None,
-                      gt_bboxes_ignore=None,
-                      proposal_cfg=None,
-                      **kwargs):
+    def forward_train(self, x, img_metas, gt_bboxes, gt_labels, gt_bboxes_3d,
+                      gt_labels_3d, centers2d, depths, attr_labels,
+                      gt_bboxes_ignore, proposal_cfg, **kwargs):
         """
         Args:
             x (list[Tensor]): Features from FPN.
@@ -181,6 +202,8 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         Args:
             feats (tuple[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
+            img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
         Returns:
             tuple:
                 cls_scores (list[Tensor]): Box scores for each scale level,
@@ -190,7 +213,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     level, each is a 4D-tensor, the channel number is
                     num_points * bbox_code_size.
         """
-        img_metas = [img_metas]
         return multi_apply(self.forward_single, feats, img_metas)
 
     def forward_single(self, x, img_metas):
@@ -198,6 +220,8 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         Args:
             x (Tensor): FPN feature maps of the specified stride.
+            img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
         Returns:
             tuple: Scores for each class, bbox predictions, direction class,
                 and attributes, features after classification and regression
@@ -259,7 +283,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         return cls_score, bbox_pred, dir_cls_pred, attr_pred, cls_feat, \
             reg_feat
 
-    def get_bboxes(self, cls_scores, bbox_preds, img_metas, rescale=None):
+    def get_bboxes(self, cls_scores, bbox_preds, img_metas):
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -274,11 +298,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         """
         assert len(cls_scores) == len(bbox_preds) == 1
         cam2imgs = torch.stack([
-            cls_scores[0].new_tensor(img_meta['cam_intrinsic'])
-            for img_meta in img_metas
-        ])
-        trans_mats = torch.stack([
-            cls_scores[0].new_tensor(img_meta['trans_mat'])
+            cls_scores[0].new_tensor(img_meta['cam2img'])
             for img_meta in img_metas
         ])
         batch_bboxes, batch_scores, batch_topk_labels = self.decode_heatmap(
@@ -286,7 +306,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             bbox_preds[0],
             img_metas,
             cam2imgs=cam2imgs,
-            trans_mats=trans_mats,
             topk=100,
             kernel=3)
 
@@ -314,7 +333,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                        reg_pred,
                        img_metas,
                        cam2imgs,
-                       trans_mats,
                        topk=100,
                        kernel=3):
         """Transform outputs into detections raw bbox predictions.
@@ -326,10 +344,11 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             img_metas (List[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
             cam2imgs (Tensor): Camera intrinsic matrix.
-                shape (B, 4, 4)
-            topk (int): Get top k center keypoints from heatmap. Default 100.
-            kernel (int): Max pooling kernel for extract local maximum pixels.
-               Default 3.
+                shape (N, 4, 4)
+            topk (int, optional): Get top k center keypoints from heatmap.
+                Default 100.
+            kernel (int, optional): Max pooling kernel for extract local
+                maximum pixels. Default 3.
         Returns:
             tuple[torch.Tensor]: Decoded output of SMOKEHead, containing
                the following Tensors:
@@ -343,6 +362,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         img_h, img_w = img_metas[0]['pad_shape'][:2]
         bs, _, feat_h, feat_w = cls_score.shape
 
+        downsample_ratio = img_h / feat_h
         center_heatmap_pred = get_local_maximum(cls_score, kernel=kernel)
 
         *batch_dets, topk_ys, topk_xs = get_topk_from_heatmap(
@@ -355,10 +375,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         points = torch.cat([topk_xs.view(-1, 1),
                             topk_ys.view(-1, 1).float()],
                            dim=1)
-        locations, dimensions, orientations = self.bbox_coder.decode(
-            regression, points, batch_topk_labels, cam2imgs, trans_mats)
-
-        batch_bboxes = torch.cat((locations, dimensions, orientations), dim=1)
+        preds = self.bbox_coder.decode(regression, batch_topk_labels,
+                                       downsample_ratio, cam2imgs)
+        batch_bboxes = self.bbox_coder.encode_box3d(points, preds)
         batch_bboxes = batch_bboxes.view(bs, -1, self.bbox_code_size)
         return batch_bboxes, batch_scores, batch_topk_labels
 
@@ -385,8 +404,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         batch, channel = pred_reg.shape[0], pred_reg.shape[1]
         w = pred_reg.shape[3]
         cam2imgs = torch.stack([
-            centers2d.new_tensor(img_meta['cam_intrinsic'])
-            for img_meta in img_metas
+            centers2d.new_tensor(img_meta['cam2img']) for img_meta in img_metas
         ])
         # (bs, 4, 4) -> (N, 4, 4)
         cam2imgs = cam2imgs[batch_idxs, :, :]
@@ -570,7 +588,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             orienations_target=orienations_target,
             offsets2d_target=offsets2d_target,
             dimensions_target=dimensions_target,
-            downsample_ratio=width_ratio)
+            downsample_ratio=1 / width_ratio)
 
         return center_heatmap_target, avg_factor, target_labels
 
