@@ -22,7 +22,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         dims_modes (list[str|bool]): Dimensions modes. It should includes three
             parts, [linear, log or exp ; use mean or not ; use std or not]
         multibin (bool): Whether to use multi_bin representation.
-        bin_centers (list[float]): Alpha centers while using multi_bin
+        bin_centers (list[float]): Local yaw centers while using multi_bin
             representations.
         num_dir_bins (int): Number of Number of bins to encode
             direction angle.
@@ -79,27 +79,27 @@ class MonoFlexCoder(BaseBBoxCoder):
             tuple: Targets of orientation.
         """
         # generate center target (N, )
-        alpha = gt_bboxes_3d.alpha
+        local_yaw = gt_bboxes_3d.local_yaw
 
-        # encode alpha (-pi ~ pi) to multibin format
-        encode_alpha = np.zeros(self.num_dir_bins * 2)
+        # encode local yaw (-pi ~ pi) to multibin format
+        encode_local_yaw = np.zeros(self.num_dir_bins * 2)
         bin_size = 2 * np.pi / self.num_dir_bins
         margin_size = bin_size * self.bin_margin
 
         bin_centers = self.bin_centers
         range_size = bin_size / 2 + margin_size
 
-        offsets = alpha - bin_centers.unsqueeze(0)  # (N, 4)
+        offsets = local_yaw - bin_centers.unsqueeze(0)  # (N, 4)
         offsets[offsets > np.pi] = offsets[offsets > np.pi] - 2 * np.pi
         offsets[offsets < -np.pi] = offsets[offsets < -np.pi] + 2 * np.pi
 
         for i in range(self.num_dir_bins):
             offset = offsets[:, i]
             inds = abs(offset) < range_size
-            encode_alpha[inds, i] = 1
-            encode_alpha[inds, i + self.num_dir_bins] = offset
+            encode_local_yaw[inds, i] = 1
+            encode_local_yaw[inds, i + self.num_dir_bins] = offset
 
-        orientation_target = encode_alpha
+        orientation_target = encode_local_yaw
 
         return orientation_target
 
@@ -406,7 +406,7 @@ class MonoFlexCoder(BaseBBoxCoder):
                 shape: (N, 3)
 
         Returns:
-            tuple[torch.Tensor]: yaws and alphas of 3d bboxes.
+            tuple[torch.Tensor]: yaws and local yaws of 3d bboxes.
         """
         if self.multibin:
             pred_bin_cls = ori_vector[:, :self.num_dir_bins * 2].view(
@@ -434,8 +434,8 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         locations = locations.view(-1, 3)
         rays = torch.atan2(locations[:, 0], locations[:, 2])
-        alphas = orientations
-        rotys = alphas + rays
+        local_yaws = orientations
+        rotys = local_yaws + rays
 
         larger_idx = (rotys > np.pi).nonzero()
         small_idx = (rotys < -np.pi).nonzero()
@@ -444,11 +444,11 @@ class MonoFlexCoder(BaseBBoxCoder):
         if len(small_idx) != 0:
             rotys[small_idx] += 2 * np.pi
 
-        larger_idx = (alphas > np.pi).nonzero()
-        small_idx = (alphas < -np.pi).nonzero()
+        larger_idx = (local_yaws > np.pi).nonzero()
+        small_idx = (local_yaws < -np.pi).nonzero()
         if len(larger_idx) != 0:
-            alphas[larger_idx] -= 2 * np.pi
+            local_yaws[larger_idx] -= 2 * np.pi
         if len(small_idx) != 0:
-            alphas[small_idx] += 2 * np.pi
+            local_yaws[small_idx] += 2 * np.pi
 
-        return rotys, alphas
+        return rotys, local_yaws
