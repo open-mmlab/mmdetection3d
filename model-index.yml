@@ -6,7 +6,6 @@ Import:
   - configs/h3dnet/metafile.yml
   - configs/imvotenet/metafile.yml
   - configs/mvxnet/metafile.yml
-  - configs/nuimages/metafile.yml
   - configs/parta2/metafile.yml
   - configs/pointnet2/metafile.yml
   - configs/pointpillars/metafile.yml

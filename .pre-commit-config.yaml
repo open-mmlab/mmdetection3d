@@ -37,3 +37,7 @@ repos:
     hooks:
       - id: docformatter
         args: ["--in-place", "--wrap-descriptions", "79"]
+  - repo: https://github.com/zhouzaida/pre-commit-hooks
+    rev: master
+    hooks:
+      - id: check-algo-readme
