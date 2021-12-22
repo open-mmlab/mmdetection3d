@@ -243,10 +243,10 @@ class MonoFlexCoder(BaseBBoxCoder):
             centers2d_img = (base_centers2d + offsets2d) * downsample_ratio
         else:
             raise NotImplementedError
-        # (B*max_objs, 3)
+        # (N, 3)
         centers2d_img = \
             torch.cat(centers2d_img, depths.unsqueeze(-1), dim=1)
-        # (B*max_objs, 4, 1)
+        # (N, 4, 1)
         centers2d_extend = \
             torch.cat((centers2d_img, centers2d_img.new_ones(N, 1)),
                       dim=1).unqueeze(-1)
