@@ -12,6 +12,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
     Args:
         depth_mode (str): The depth mode for direct depth calculation.
+            including "linear", "inv_sigmoid" and "exp".
         base_depth (tuple[float]): Depth references for decode box depth.
         depth_range (list): Depth range of predicted depth.
         use_combined_depth (bool): Whether to use combined depth (direct depth
@@ -19,32 +20,33 @@ class MonoFlexCoder(BaseBBoxCoder):
         uncertainty_range (list): Uncertainty range of predicted depth.
         base_dims (tuple[tuple[float]]): Dimensions mean and std of decode bbox
             dimensions [l, h, w] for each category.
-        dims_modes (list[str|bool]): Dimensions modes. It should includes three
-            parts, [linear, log or exp ; use mean or not ; use std or not]
-        multibin (bool): Whether to use multi_bin representation.
-        bin_centers (list[float]): Local yaw centers while using multi_bin
-            representations.
+        dims_mode (str): The dimensions mode for dimension calculation,
+            including "linear" and "exp".
+        multibin (bool): Whether to use multibin representation.
         num_dir_bins (int): Number of Number of bins to encode
             direction angle.
-        bin_margin (float): Margin of multi_bin representations.
+        bin_centers (list[float]): Local yaw centers while using multibin
+            representations.
+        bin_margin (float): Margin of multibin representations.
         code_size (int): The dimension of boxes to be encoded.
+        eps (float, optional): A value added to the denominator for numerical
+            stability. Default 1e-3.
     """
 
-    def __init__(
-        self,
-        depth_mode,
-        base_depth,
-        depth_range,
-        use_combined_depth,
-        uncertainty_range,
-        base_dims,
-        dims_modes,
-        multibin,
-        bin_centers,
-        num_dir_bins,
-        bin_margin,
-        code_size,
-    ):
+    def __init__(self,
+                 depth_mode,
+                 base_depth,
+                 depth_range,
+                 use_combined_depth,
+                 uncertainty_range,
+                 base_dims,
+                 dims_mode,
+                 multibin,
+                 num_dir_bins,
+                 bin_centers,
+                 bin_margin,
+                 code_size,
+                 eps=1e-3):
         super(MonoFlexCoder, self).__init__()
 
         # depth related
@@ -56,27 +58,27 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         # dimensions related
         self.base_dims = base_dims
-        self.dims_modes = dims_modes
+        self.dims_mode = dims_mode
 
         # orientation related
         self.multibin = multibin
-        self.bin_centers = bin_centers
         self.num_dir_bins = num_dir_bins
+        self.bin_centers = bin_centers
         self.bin_margin = bin_margin
 
         # output related
         self.bbox_code_size = code_size
-        self.eps = 1e-3
+        self.eps = eps
 
     def encode(self, gt_bboxes_3d):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth bboxes.
-                shape: (n, 7).
+            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth 3D bboxes.
+                shape: (N, 7).
 
         Returns:
-            tuple: Targets of orientation.
+            torch.Tensor: Targets of orientations.
         """
         local_yaw = gt_bboxes_3d.local_yaw
 
@@ -102,13 +104,15 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return orientation_target
 
-    def decode(self, bbox, labels, downsample_ratio, cam2imgs):
+    def decode(self, bbox, base_centers2d, labels, downsample_ratio, cam2imgs):
         """Decode bounding box regression into 3D predictions.
 
         Args:
             bbox (Tensor): Raw bounding box predictions for each
                 predict center2d point.
                 shape: (N, C)
+            base_centers2d (torch.Tensor): Base centers2d for 3D bboxes.
+                shape: (N, 2).
             labels (Tensor): Batch predict class label for each predict
                 center2d point.
                 shape: (N, )
@@ -118,14 +122,29 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         Return:
             dict: The 3D prediction dict decoded from regression map.
+            the dict has components below:
+                - bboxes2d (torch.Tensor): Decoded [x1, y1, x2, y2] format
+                    2D bboxes.
+                - dimensions (torch.Tensor): Decoded dimensions for each
+                    object.
+                - offsets2d (torch.Tenosr): Offsets between base centers2d
+                    and real centers2d.
+                - direct_depth (torch.Tensor): Decoded directly regressed
+                    depth.
+                - keypoints2d (torch.Tensor): Keypoints of each projected
+                    3D box on image.
+                - keypoints_depth (torch.Tensor): Decoded depth from keypoints.
+                - combined_depth (torch.Tensor): Combined depth using direct
+                    depth and keypoints depth with depth uncertainty.
+                - orientations (torch.Tensor): Multibin format orientations
+                    (local yaw) for each objects.
         """
 
         # 4 dimensions for FCOS style regression
         pred_bboxes2d = bbox[:, 0:4]
 
-        # change FCOS style to [x1, y1, x2, y2] format
-        pred_bboxes2d = torch.cat(
-            [pred_bboxes2d[..., 0:2] * -1, pred_bboxes2d[..., 2:]], dim=-1)
+        # change FCOS style to [x1, y1, x2, y2] format for IOU Loss
+        pred_bboxes2d = self.decode_bboxes2d(pred_bboxes2d, base_centers2d)
 
         # 2 dimensions for projected centers2d offsets
         pred_offsets2d = bbox[:, 4:6]
@@ -148,14 +167,14 @@ class MonoFlexCoder(BaseBBoxCoder):
         pred_keypoints2d = bbox[:, 6:26]
 
         # 1 dimension for depth offsets
-        pred_depth_offsets = bbox[:, 48:49].squeeze(-1)
+        pred_direct_depth_offsets = bbox[:, 48:49].squeeze(-1)
 
         # decode the pred residual dimensions to real dimensions
-        pred_dimensions = self.decode_dimension(labels,
-                                                pred_dimensions_offsets3d)
-        pred_direct_depth = self.decode_direct_depth(pred_depth_offsets)
-        pred_keypoints_depth = self.decode_depth_from_keypoints(
-            pred_keypoints2d, pred_dimensions, cam2imgs, downsample_ratio)
+        pred_dimensions = self.decode_dims(labels, pred_dimensions_offsets3d)
+        pred_direct_depth = self.decode_direct_depth(pred_direct_depth_offsets)
+        pred_keypoints_depth = self.keypoints2depth(pred_keypoints2d,
+                                                    pred_dimensions, cam2imgs,
+                                                    downsample_ratio)
 
         pred_direct_depth_uncertainty = torch.clamp(
             pred_direct_depth_uncertainty, self.uncertainty_range[0],
@@ -165,18 +184,14 @@ class MonoFlexCoder(BaseBBoxCoder):
             self.uncertainty_range[1])
 
         if self.use_combined_depth:
-            pred_combined_uncertainty = torch.cat(
+            pred_depth_uncertainty = torch.cat(
                 (pred_direct_depth_uncertainty.unsqueeze(-1),
                  pred_keypoints_depth_uncertainty),
                 dim=1).exp()
-            pred_combined_depth = torch.cat(
+            pred_depth = torch.cat(
                 (pred_direct_depth.unsqueeze(-1), pred_keypoints_depth), dim=1)
-            pred_uncertainty_weights = 1 / pred_combined_uncertainty
-            pred_uncertainty_weights = \
-                pred_uncertainty_weights / \
-                pred_uncertainty_weights.sum(dim=1, keepdim=True)
-            pred_combined_depth = torch.sum(
-                pred_combined_depth * pred_uncertainty_weights, dim=1)
+            pred_combined_depth = \
+                self.combine_depth(pred_depth, pred_depth_uncertainty)
         else:
             pred_combined_depth = None
 
@@ -194,7 +209,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         return preds
 
     def decode_direct_depth(self, depth_offsets):
-        """Transform depth offset to depth.
+        """Transform depth offset to directly regressed depth.
 
         Args:
             depth_offsets (torch.Tensor): Predicted depth offsets.
@@ -205,20 +220,20 @@ class MonoFlexCoder(BaseBBoxCoder):
                 shape: (N, )
         """
         if self.depth_mode == 'exp':
-            depth = depth_offsets.exp()
+            direct_depth = depth_offsets.exp()
         elif self.depth_mode == 'linear':
             base_depth = depth_offsets.new_tensor(self.base_depth)
-            depth = depth_offsets * base_depth[1] + base_depth[0]
+            direct_depth = depth_offsets * base_depth[1] + base_depth[0]
         elif self.depth_mode == 'inv_sigmoid':
-            depth = 1 / torch.sigmoid(depth_offsets) - 1
+            direct_depth = 1 / torch.sigmoid(depth_offsets) - 1
         else:
             raise ValueError
 
         if self.depth_range is not None:
-            depth = torch.clamp(
-                depth, min=self.depth_range[0], max=self.depth_range[1])
+            direct_depth = torch.clamp(
+                direct_depth, min=self.depth_range[0], max=self.depth_range[1])
 
-        return depth
+        return direct_depth
 
     def decode_location(self,
                         base_centers2d,
@@ -265,13 +280,13 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return locations[:, :3]
 
-    def decode_depth_from_keypoints(self,
-                                    keypoints2d,
-                                    dimensions,
-                                    cam2imgs,
-                                    downsample_ratio=4,
-                                    group0_index=[(7, 3), (0, 4)],
-                                    group1_index=[(2, 6), (1, 5)]):
+    def keypoints2depth(self,
+                        keypoints2d,
+                        dimensions,
+                        cam2imgs,
+                        downsample_ratio=4,
+                        group0_index=[(7, 3), (0, 4)],
+                        group1_index=[(2, 6), (1, 5)]):
         """Decode depth form three groups of keypoints and geometry projection
         model. 2D keypoints inlucding 8 coreners and top/bottom centers will be
         divided into three groups which will be used to calculate three depths
@@ -365,7 +380,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return keypoints_depth
 
-    def decode_dimension(self, labels, dims_offset):
+    def decode_dims(self, labels, dims_offset):
         """Retrieve object dimensions.
 
         Args:
@@ -377,20 +392,19 @@ class MonoFlexCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Shape (N, 3)
         """
-        labels = labels.long()
-        base_dims = dims_offset.new_tensor(self.base_dims)
-        dims_mean = base_dims[:, :3]
-        dims_std = base_dims[:, 3:6]
-        cls_dimension_mean = dims_mean[labels, :]
 
-        if self.dims_modes[0] == 'exp':
+        if self.dims_mode == 'exp':
             dims_offset = dims_offset.exp()
-
-        if self.dims_modes[2]:
+        elif self.dims_mode == 'linear':
+            labels = labels.long()
+            base_dims = dims_offset.new_tensor(self.base_dims)
+            dims_mean = base_dims[:, :3]
+            dims_std = base_dims[:, 3:6]
+            cls_dimension_mean = dims_mean[labels, :]
             cls_dimension_std = dims_std[labels, :]
-            dimensions = dims_offset * cls_dimension_std + cls_dimension_mean
+            dimensions = dims_offset * cls_dimension_mean + cls_dimension_std
         else:
-            dimensions = dims_offset * cls_dimension_mean
+            raise ValueError
 
         return dimensions
 
@@ -451,3 +465,50 @@ class MonoFlexCoder(BaseBBoxCoder):
             local_yaws[small_idx] += 2 * np.pi
 
         return yaws, local_yaws
+
+    def decode_bboxes2d(self, reg_bboxes2d, base_centers2d):
+        """Retrieve [x1, y1, x2, y2] format 2D bboxes.
+
+        Args:
+            reg_bboxes2d (torch.Tensor): Predicted FCOS style
+                2D bboxes.
+                shape: (N, 4)
+            base_centers2d (torch.Tensor): predicted base centers2d.
+                shape: (N, 2)
+
+        Returns:
+            torch.Tenosr: [x1, y1, x2, y2] format 2D bboxes.
+        """
+        centers_x = base_centers2d[:, 0]
+        centers_y = base_centers2d[:, 1]
+
+        xs_min = centers_x - reg_bboxes2d[..., 0]
+        ys_min = centers_y - reg_bboxes2d[..., 1]
+        xs_max = centers_x + reg_bboxes2d[..., 2]
+        ys_max = centers_y + reg_bboxes2d[..., 3]
+
+        bboxes2d = torch.stack([xs_min, ys_min, xs_max, ys_max], dim=-1)
+
+        return bboxes2d
+
+    def combine_depth(depth, depth_uncertainty):
+        """Combine all the prediced depths with depth uncertainty.
+
+        Args:
+            depth (torch.Tensor): Predicted depths of each object.
+                2D bboxes.
+                shape: (N, 4)
+            depth_uncertainty (torch.Tensor): Depth uncertainty for
+                each depth of each object.
+                shape: (N, 4)
+
+        Returns:
+            torch.Tenosr: combined depth.
+        """
+        uncertainty_weights = 1 / depth_uncertainty
+        uncertainty_weights = \
+            uncertainty_weights / \
+            uncertainty_weights.sum(dim=1, keepdim=True)
+        combined_depth = torch.sum(depth * uncertainty_weights, dim=1)
+
+        return combined_depth
