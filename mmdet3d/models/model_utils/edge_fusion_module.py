@@ -26,7 +26,7 @@ class EdgeFusionModule(BaseModule):
                 conv_cfg='conv1d',
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
-                padding_mode='replicate,'),
+                padding_mode='replicate'),
             nn.Conv1d(feat_channels, num_classes, kernel_size=1))
         self.edge_reg_convs = nn.Sequential(
             ConvModule(

@@ -18,10 +18,29 @@ from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 @HEADS.register_module()
 class MonoFlexHead(AnchorFreeMono3DHead):
     r"""MonoFlex head used in `MonoFlex <https://arxiv.org/abs/2104.02323>`_
+
     .. code-block:: none
-                /-----> 3*3 conv -----> 1*1 conv -----> cls
+
+                 / -----> conv ----->  cls
+                /
+                |   -----> conv ----->  2d bbox
+                |
+                |   -----> conv ----->  center offsets
+                |
+                |   -----> conv ----->  keypoints offsets
+                |
+                |   -----> conv -----> keypoints uncertainty
         feature
-                \-----> 3*3 conv -----> 1*1 conv -----> reg
+                |   -----> conv -----> keypoints uncertainty
+                |
+                |   -----> conv -----> 3d dimensions
+                |
+                |   -----> conv -----> orientations
+                |
+                |   -----> conv -----> depth
+                \
+                 \  -----> conv -----> depth uncertainty
+
     Args:
         num_classes (int): Number of categories excluding the background
             category.
@@ -60,7 +79,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             In MonoFlex, Default: None.
         loss_centerness (dict): Config of centerness loss.
             In MonoFlex, Default: None.
-        norm_cfg (dict): Dictionary to construct and config norm layer.
+        norm_cfg (dict, optional): Dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
         init_cfg (dict): Initialization config dict. Default: None.
     """  # noqa: E501
@@ -85,6 +104,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  loss_keypoints_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_combined_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_attr=None,
+                 loss_centerness=None,
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  init_cfg=None,
                  **kwargs):
@@ -95,6 +115,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             loss_bbox=loss_bbox,
             loss_dir=loss_dir,
             loss_attr=loss_attr,
+            loss_centerness=loss_centerness,
             norm_cfg=norm_cfg,
             init_cfg=init_cfg,
             **kwargs)
@@ -151,6 +172,11 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     reg_list.append(nn.Conv2d(self.feat_channels, reg_dim, 1))
                 self.conv_regs.append(reg_list)
 
+    def _init_layers(self):
+        """Initialize layers of the head."""
+        super()._init_layers()
+        self._init_edge_module()
+
     def forward_train(self, x, input_metas, gt_bboxes, gt_labels, gt_bboxes_3d,
                       gt_labels_3d, centers2d, depths, attr_labels,
                       gt_bboxes_ignore, proposal_cfg, **kwargs):
@@ -201,7 +227,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
     def forward(self, feats, input_metas):
         """Forward features from the upstream network.
         Args:
-            feats (tuple[Tensor]): Features from the upstream network, each is
+            feats (list[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
             input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
@@ -214,7 +240,8 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     level, each is a 4D-tensor, the channel number is
                     num_points * bbox_code_size.
         """
-        return multi_apply(self.forward_single, feats, input_metas)
+        mlvl_input_metas = [input_metas for i in range(len(feats))]
+        return multi_apply(self.forward_single, feats, mlvl_input_metas)
 
     def forward_single(self, x, input_metas):
         """Forward features of a single scale level.
@@ -224,9 +251,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
         Returns:
-            tuple: Scores for each class, bbox predictions, direction class,
-                and attributes, features after classification and regression
-                conv layers, some models needs these features like FCOS.
+            tuple: Scores for each class, bbox predictions.
         """
         cls_feat = x
         reg_feat = x
@@ -257,7 +282,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
                     fusion_featues = [clone_reg_feat, cls_feat]
                     fused_features = [out_reg, cls_score]
-                    cls_score, out_reg = EdgeFusionModule(
+                    cls_score, out_reg = self.edge_fusion_module(
                         fusion_featues, fused_features, input_metas)
 
                 bbox_pred.append(out_reg)
@@ -266,23 +291,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         cls_score = cls_score.sigmoid()  # turn to 0-1
         cls_score = cls_score.clamp(min=1e-4, max=1 - 1e-4)
 
-        dir_cls_pred = None
-        if self.use_direction_classifier:
-            clone_reg_feat = reg_feat.clone()
-            for conv_dir_cls_prev_layer in self.conv_dir_cls_prev:
-                clone_reg_feat = conv_dir_cls_prev_layer(clone_reg_feat)
-            dir_cls_pred = self.conv_dir_cls(clone_reg_feat)
-
-        attr_pred = None
-        if self.pred_attrs:
-            # clone the cls_feat for reusing the feature map afterwards
-            clone_cls_feat = cls_feat.clone()
-            for conv_attr_prev_layer in self.conv_attr_prev:
-                clone_cls_feat = conv_attr_prev_layer(clone_cls_feat)
-            attr_pred = self.conv_attr(clone_cls_feat)
-
-        return cls_score, bbox_pred, dir_cls_pred, attr_pred, cls_feat, \
-            reg_feat
+        return cls_score, bbox_pred
 
     def get_bboxes(self, cls_scores, bbox_preds, input_metas):
         """Generate bboxes from bbox head predictions.
