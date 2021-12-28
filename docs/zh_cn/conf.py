@@ -17,7 +17,7 @@ import sys
 from m2r import MdInclude
 from recommonmark.transform import AutoStructify
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
@@ -25,7 +25,7 @@ project = 'MMDetection3D'
 copyright = '2020-2023, OpenMMLab'
 author = 'MMDetection3D Authors'
 
-version_file = '../mmdet3d/version.py'
+version_file = '../../mmdet3d/version.py'
 
 
 def get_version():
@@ -54,7 +54,7 @@ extensions = [
 
 autodoc_mock_imports = [
     'matplotlib', 'nuscenes', 'PIL', 'pycocotools', 'pyquaternion',
-    'terminaltables', 'mmdet3d.version', 'mmdet3d.ops'
+    'terminaltables', 'mmdet3d.version', 'mmdet3d.ops', 'mmcv.ops'
 ]
 autosectionlabel_prefix_document = True
 
@@ -95,74 +95,29 @@ html_theme_options = {
         },
         {
             'name':
-            '算法库',
+            '上游库',
             'children': [
                 {
-                    'name': 'MMAction2',
-                    'url': 'https://github.com/open-mmlab/mmaction2',
-                },
-                {
-                    'name': 'MMClassification',
-                    'url': 'https://github.com/open-mmlab/mmclassification',
-                },
-                {
                     'name': 'MMCV',
-                    'url': 'https://github.com/open-mmlab/mmmmcv',
+                    'url': 'https://github.com/open-mmlab/mmcv',
+                    'description': '基础视觉库'
                 },
                 {
                     'name': 'MMDetection',
                     'url': 'https://github.com/open-mmlab/mmdetection',
-                },
-                {
-                    'name': 'MMEditing',
-                    'url': 'https://github.com/open-mmlab/mmediting',
-                },
-                {
-                    'name': 'MMGeneration',
-                    'url': 'https://github.com/open-mmlab/mmgeneration',
-                },
-                {
-                    'name': 'MMOCR',
-                    'url': 'https://github.com/open-mmlab/mmocr',
-                },
-                {
-                    'name': 'MMPose',
-                    'url': 'https://github.com/open-mmlab/mmpose',
-                },
-                {
-                    'name': 'MMSegmentation',
-                    'url': 'https://github.com/open-mmlab/mmsegmentation',
-                },
-                {
-                    'name': 'MMTracking',
-                    'url': 'https://github.com/open-mmlab/mmtracking',
+                    'description': '目标检测工具箱'
                 },
             ]
         },
-        {
-            'name':
-            'OpenMMLab',
-            'children': [
-                {
-                    'name': '官网',
-                    'url': 'https://openmmlab.com/'
-                },
-                {
-                    'name': 'GitHub',
-                    'url': 'https://github.com/open-mmlab/'
-                },
-                {
-                    'name': '推特',
-                    'url': 'https://twitter.com/OpenMMLab'
-                },
-                {
-                    'name': '知乎',
-                    'url': 'https://zhihu.com/people/openmmlab'
-                },
-            ]
-        },
-    ]
+    ],
+    # Specify the language of shared menu
+    'menu_lang':
+    'cn',
 }
+
+language = 'zh_CN'
+
+master_doc = 'index'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

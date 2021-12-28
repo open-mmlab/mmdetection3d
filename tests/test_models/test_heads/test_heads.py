@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import mmcv
 import numpy as np
 import pytest
 import random
@@ -116,6 +117,23 @@ def _get_pts_bbox_head_cfg(fname):
     return pts_bbox_head
 
 
+def _get_pointrcnn_rpn_head_cfg(fname):
+    """Grab configs necessary to create a rpn_head.
+
+    These are deep copied to allow for safe modification of parameters without
+    influencing other tests.
+    """
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+    train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
+    test_cfg = mmcv.Config(copy.deepcopy(config.model.test_cfg))
+
+    rpn_head = model.rpn_head
+    rpn_head.update(train_cfg=train_cfg.rpn)
+    rpn_head.update(test_cfg=test_cfg.rpn)
+    return rpn_head, train_cfg.rpn.rpn_proposal
+
+
 def _get_vote_head_cfg(fname):
     """Grab configs necessary to create a vote_head.
 
@@ -140,6 +158,14 @@ def _get_parta2_bbox_head_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
+    config = _get_config_module(fname)
+    model = copy.deepcopy(config.model)
+
+    vote_head = model.roi_head.bbox_head
+    return vote_head
+
+
+def _get_pointrcnn_bbox_head_cfg(fname):
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
 
@@ -261,6 +287,39 @@ def test_parta2_rpnhead_getboxes():
     assert result_list[0]['labels_3d'].shape == torch.Size([512])
     assert result_list[0]['cls_preds'].shape == torch.Size([512, 3])
     assert result_list[0]['boxes_3d'].tensor.shape == torch.Size([512, 7])
+
+
+def test_pointrcnn_rpnhead_getboxes():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    rpn_head_cfg, proposal_cfg = _get_pointrcnn_rpn_head_cfg(
+        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+    self = build_head(rpn_head_cfg)
+    self.cuda()
+
+    fp_features = torch.rand([2, 128, 1024], dtype=torch.float32).cuda()
+    feats = {'fp_features': fp_features}
+    # fake input_metas
+    input_metas = [{
+        'sample_idx': 1234,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
+    }, {
+        'sample_idx': 2345,
+        'box_type_3d': LiDARInstance3DBoxes,
+        'box_mode_3d': Box3DMode.LIDAR
+    }]
+    (bbox_preds, cls_preds) = self.forward(feats)
+    assert bbox_preds.shape == (2, 1024, 8)
+    assert cls_preds.shape == (2, 1024, 3)
+    points = torch.rand([2, 1024, 3], dtype=torch.float32).cuda()
+    result_list = self.get_bboxes(points, bbox_preds, cls_preds, input_metas)
+    max_num = proposal_cfg.max_num
+    bbox, score_selected, labels, cls_preds_selected = result_list[0]
+    assert bbox.tensor.shape == (max_num, 7)
+    assert score_selected.shape == (max_num, )
+    assert labels.shape == (max_num, )
+    assert cls_preds_selected.shape == (max_num, 3)
 
 
 def test_vote_head():
@@ -466,6 +525,18 @@ def test_parta2_bbox_head():
     assert bbox_pred.shape == (256, 7)
 
 
+def test_pointrcnn_bbox_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pointrcnn_bbox_head_cfg = _get_pointrcnn_bbox_head_cfg(
+        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+    self = build_head(pointrcnn_bbox_head_cfg).cuda()
+    feats = torch.rand([100, 512, 133]).cuda()
+    rcnn_cls, rcnn_reg = self.forward(feats)
+    assert rcnn_cls.shape == (100, 1)
+    assert rcnn_reg.shape == (100, 7)
+
+
 def test_part_aggregation_ROI_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
@@ -538,6 +609,50 @@ def test_part_aggregation_ROI_head():
     assert boxes_3d.tensor.shape == (12, 7)
     assert scores_3d.shape == (12, )
     assert labels_3d.shape == (12, )
+
+
+def test_pointrcnn_roi_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    roi_head_cfg = _get_roi_head_cfg(
+        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+
+    self = build_head(roi_head_cfg).cuda()
+
+    features = torch.rand([3, 128, 16384]).cuda()
+    points = torch.rand([3, 16384, 3]).cuda()
+    points_cls_preds = torch.rand([3, 16384, 3]).cuda()
+    rcnn_feats = {
+        'features': features,
+        'points': points,
+        'points_cls_preds': points_cls_preds
+    }
+    boxes_3d = LiDARInstance3DBoxes(torch.rand(50, 7).cuda())
+    labels_3d = torch.randint(low=0, high=2, size=[50]).cuda()
+    proposal = {'boxes_3d': boxes_3d, 'labels_3d': labels_3d}
+    proposal_list = [proposal for i in range(3)]
+    gt_bboxes_3d = [
+        LiDARInstance3DBoxes(torch.rand([5, 7], device='cuda'))
+        for i in range(3)
+    ]
+    gt_labels_3d = [torch.randint(0, 2, [5], device='cuda') for i in range(3)]
+    box_type_3d = LiDARInstance3DBoxes
+    img_metas = [dict(box_type_3d=box_type_3d) for i in range(3)]
+
+    losses = self.forward_train(rcnn_feats, img_metas, proposal_list,
+                                gt_bboxes_3d, gt_labels_3d)
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
+    assert losses['loss_corner'] >= 0
+
+    bbox_results = self.simple_test(rcnn_feats, img_metas, proposal_list)
+    boxes_3d = bbox_results[0]['boxes_3d']
+    scores_3d = bbox_results[0]['scores_3d']
+    labels_3d = bbox_results[0]['labels_3d']
+    assert boxes_3d.tensor.shape[1] == 7
+    assert boxes_3d.tensor.shape[0] == scores_3d.shape[0]
+    assert scores_3d.shape[0] == labels_3d.shape[0]
 
 
 def test_free_anchor_3D_head():
@@ -700,7 +815,7 @@ def test_h3d_head():
     h3d_head_cfg.bbox_head.num_proposal = num_proposal
     self = build_head(h3d_head_cfg).cuda()
 
-    # prepare roi outputs
+    # prepare RoI outputs
     fp_xyz = [torch.rand([1, num_point, 3], dtype=torch.float32).cuda()]
     hd_features = torch.rand([1, 256, num_point], dtype=torch.float32).cuda()
     fp_indices = [torch.randint(0, 128, [1, num_point]).cuda()]

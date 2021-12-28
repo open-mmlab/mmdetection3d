@@ -71,7 +71,7 @@ class PointNetFPNeck(BaseModule):
 
                 - fp_xyz (torch.Tensor): The coordinates of fp features.
                 - fp_features (torch.Tensor): The features from the last
-                    feature propogation layers.
+                    feature propagation layers.
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 
