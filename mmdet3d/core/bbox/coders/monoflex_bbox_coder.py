@@ -74,7 +74,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth 3D bboxes.
+            gt_bboxes_3d (`BaseInstance3DBoxes`): Ground truth 3D bboxes.
                 shape: (N, 7).
 
         Returns:
