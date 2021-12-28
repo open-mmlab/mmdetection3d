@@ -80,7 +80,7 @@ jobs:
       - name: Install mmdet3d dependencies
         run: |
           python -m pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
-          python -m pip install mmdet==2.14.0
+          python -m pip install mmdet==2.19.0
           python -m pip install mmsegmentation==0.14.1
           python -m pip install -r requirements.txt
       - name: Build and install
