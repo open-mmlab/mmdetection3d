@@ -199,11 +199,13 @@ class MonoFlexCoder(BaseBBoxCoder):
             bboxes2d=pred_bboxes2d,
             dimensions=pred_dimensions,
             offsets2d=pred_offsets2d,
-            direct_depth=pred_direct_depth,
             keypoints2d=pred_keypoints2d,
+            orientations=pred_orientations,
+            direct_depth=pred_direct_depth,
             keypoints_depth=pred_keypoints_depth,
             combined_depth=pred_combined_depth,
-            orientations=pred_orientations,
+            direct_depth_uncertainty=pred_direct_depth_uncertainty,
+            keypoints_depth_uncertainty=pred_keypoints_depth_uncertainty,
         )
 
         return preds
