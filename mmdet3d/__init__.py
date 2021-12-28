@@ -37,7 +37,7 @@ assert (mmdet_version >= digit_version(mmdet_minimum_version)
     f'Please install mmdet>={mmdet_minimum_version}, ' \
     f'<={mmdet_maximum_version}.'
 
-mmseg_minimum_version = '0.14.1'
+mmseg_minimum_version = '0.20.0'
 mmseg_maximum_version = '1.0.0'
 mmseg_version = digit_version(mmseg.__version__)
 assert (mmseg_version >= digit_version(mmseg_minimum_version)
