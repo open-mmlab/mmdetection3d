@@ -1,5 +1,20 @@
 # Designing Network Design Spaces
 
+## Abstract
+
+<!-- [ABSTRACT] -->
+
+In this work, we present a new network design paradigm. Our goal is to help advance the understanding of network design and discover design principles that generalize across settings. Instead of focusing on designing individual network instances, we design network design spaces that parametrize populations of networks. The overall process is analogous to classic manual design of networks, but elevated to the design space level. Using our methodology we explore the structure aspect of network design and arrive at a low-dimensional design space consisting of simple, regular networks that we call RegNet. The core insight of the RegNet parametrization is surprisingly simple: widths and depths of good networks can be explained by a quantized linear function. We analyze the RegNet design space and arrive at interesting findings that do not match the current practice of network design. The RegNet design space provides simple and fast networks that work well across a wide range of flop regimes. Under comparable training settings and flops, the RegNet models outperform the popular EfficientNet models while being up to 5x faster on GPUs.
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/79644370/144025148-b73002cb-3c82-42e4-8da4-65df97aead9c.png" width="800"/>
+</div>
+
+<!-- [PAPER_TITLE: Designing Network Design Spaces] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/2003.13678] -->
+
 ## Introduction
 
 <!-- [BACKBONE] -->

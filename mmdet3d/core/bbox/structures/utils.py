@@ -308,3 +308,24 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
     mapping = {'LIDAR': 'lidar2img', 'DEPTH': 'depth2img', 'CAMERA': 'cam2img'}
     assert coord_type in mapping.keys()
     return img_meta[mapping[coord_type]]
+
+
+def yaw2local(yaw, loc):
+    """Transform global yaw to local yaw (alpha in kitti) in camera
+    coordinates, ranges from -pi to pi.
+
+    Args:
+        yaw (torch.Tensor): A vector with local yaw of each box.
+            shape: (N, )
+        loc (torch.Tensor): gravity center of each box.
+            shape: (N, 3)
+
+    Returns:
+        torch.Tensor: local yaw (alpha in kitti).
+    """
+    local_yaw = yaw - torch.atan2(loc[:, 0], loc[:, 2])
+    while local_yaw > np.pi:
+        local_yaw -= np.pi * 2
+    while local_yaw < -np.pi:
+        local_yaw += np.pi * 2
+    return local_yaw

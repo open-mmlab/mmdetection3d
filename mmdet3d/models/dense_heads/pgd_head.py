@@ -69,7 +69,6 @@ class PGDHead(FCOSMono3DHead):
                  loss_bbox2d=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
                  loss_consistency=dict(type='GIoULoss', loss_weight=1.0),
-                 pred_velo=False,
                  pred_bbox2d=True,
                  pred_keypoints=False,
                  bbox_coder=dict(
@@ -77,11 +76,7 @@ class PGDHead(FCOSMono3DHead):
                      base_depths=((28.01, 16.32), ),
                      base_dims=((0.8, 1.73, 0.6), (1.76, 1.73, 0.6),
                                 (3.9, 1.56, 1.6)),
-                     code_size=7,
-                     depth_range=(0, 70),
-                     depth_unit=10,
-                     division='uniform',
-                     depth_bins=8),
+                     code_size=7),
                  **kwargs):
         self.use_depth_classifier = use_depth_classifier
         self.use_onlyreg_proj = use_onlyreg_proj
@@ -622,7 +617,9 @@ class PGDHead(FCOSMono3DHead):
                     & (flatten_labels_3d < bg_class_ind)).nonzero().reshape(-1)
         num_pos = len(pos_inds)
 
-        loss_cls = self.loss_cls(
+        loss_dict = dict()
+
+        loss_dict['loss_cls'] = self.loss_cls(
             flatten_cls_scores,
             flatten_labels_3d,
             avg_factor=num_pos + num_imgs)  # avoid num_pos is 0
@@ -631,8 +628,6 @@ class PGDHead(FCOSMono3DHead):
             pos_attr_preds, pos_centerness = self.get_pos_predictions(
                 bbox_preds, dir_cls_preds, depth_cls_preds, weights,
                 attr_preds, centernesses, pos_inds, img_metas)
-
-        loss_dict = dict()
 
         if num_pos > 0:
             pos_bbox_targets_3d = flatten_bbox_targets_3d[pos_inds]
@@ -658,17 +653,17 @@ class PGDHead(FCOSMono3DHead):
                 pos_bbox_preds, pos_bbox_targets_3d = self.add_sin_difference(
                     pos_bbox_preds, pos_bbox_targets_3d)
 
-            loss_offset = self.loss_bbox(
+            loss_dict['loss_offset'] = self.loss_bbox(
                 pos_bbox_preds[:, :2],
                 pos_bbox_targets_3d[:, :2],
                 weight=bbox_weights[:, :2],
                 avg_factor=equal_weights.sum())
-            loss_size = self.loss_bbox(
+            loss_dict['loss_size'] = self.loss_bbox(
                 pos_bbox_preds[:, 3:6],
                 pos_bbox_targets_3d[:, 3:6],
                 weight=bbox_weights[:, 3:6],
                 avg_factor=equal_weights.sum())
-            loss_rotsin = self.loss_bbox(
+            loss_dict['loss_rotsin'] = self.loss_bbox(
                 pos_bbox_preds[:, 6],
                 pos_bbox_targets_3d[:, 6],
                 weight=bbox_weights[:, 6],
@@ -751,8 +746,8 @@ class PGDHead(FCOSMono3DHead):
                     weight=bbox_weights[:, -4:],
                     avg_factor=equal_weights.sum())
 
-            loss_centerness = self.loss_centerness(pos_centerness,
-                                                   pos_centerness_targets)
+            loss_dict['loss_centerness'] = self.loss_centerness(
+                pos_centerness, pos_centerness_targets)
 
             # attribute classification loss
             if self.pred_attrs:
@@ -764,9 +759,9 @@ class PGDHead(FCOSMono3DHead):
 
         else:
             # need absolute due to possible negative delta x/y
-            loss_offset = pos_bbox_preds[:, :2].sum()
-            loss_size = pos_bbox_preds[:, 3:6].sum()
-            loss_rotsin = pos_bbox_preds[:, 6].sum()
+            loss_dict['loss_offset'] = pos_bbox_preds[:, :2].sum()
+            loss_dict['loss_size'] = pos_bbox_preds[:, 3:6].sum()
+            loss_dict['loss_rotsin'] = pos_bbox_preds[:, 6].sum()
             loss_dict['loss_depth'] = pos_bbox_preds[:, 2].sum()
             if self.pred_velo:
                 loss_dict['loss_velo'] = pos_bbox_preds[:, 7:9].sum()
@@ -777,7 +772,7 @@ class PGDHead(FCOSMono3DHead):
             if self.pred_bbox2d:
                 loss_dict['loss_bbox2d'] = pos_bbox_preds[:, -4:].sum()
                 loss_dict['loss_consistency'] = pos_bbox_preds[:, -4:].sum()
-            loss_centerness = pos_centerness.sum()
+            loss_dict['loss_centerness'] = pos_centerness.sum()
             if self.use_direction_classifier:
                 loss_dict['loss_dir'] = pos_dir_cls_preds.sum()
             if self.use_depth_classifier:
@@ -791,14 +786,6 @@ class PGDHead(FCOSMono3DHead):
                 loss_dict['loss_depth'] = loss_fuse_depth
             if self.pred_attrs:
                 loss_dict['loss_attr'] = pos_attr_preds.sum()
-
-        loss_dict.update(
-            dict(
-                loss_cls=loss_cls,
-                loss_offset=loss_offset,
-                loss_size=loss_size,
-                loss_rotsin=loss_rotsin,
-                loss_centerness=loss_centerness))
 
         return loss_dict
 

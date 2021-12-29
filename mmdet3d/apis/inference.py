@@ -57,7 +57,7 @@ def init_model(config, checkpoint=None, device='cuda:0'):
     config.model.train_cfg = None
     model = build_model(config.model, test_cfg=config.get('test_cfg'))
     if checkpoint is not None:
-        checkpoint = load_checkpoint(model, checkpoint)
+        checkpoint = load_checkpoint(model, checkpoint, map_location='cpu')
         if 'CLASSES' in checkpoint['meta']:
             model.CLASSES = checkpoint['meta']['CLASSES']
         else:
@@ -65,6 +65,7 @@ def init_model(config, checkpoint=None, device='cuda:0'):
         if 'PALETTE' in checkpoint['meta']:  # 3D Segmentor
             model.PALETTE = checkpoint['meta']['PALETTE']
     model.cfg = config  # save the config in the model for convenience
+    torch.cuda.set_device(device)
     model.to(device)
     model.eval()
     return model

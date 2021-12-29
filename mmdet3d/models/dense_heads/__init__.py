@@ -10,6 +10,7 @@ from .groupfree3d_head import GroupFree3DHead
 from .monoflex_head import MonoFlexHead
 from .parta2_rpn_head import PartA2RPNHead
 from .pgd_head import PGDHead
+from .point_rpn_head import PointRPNHead
 from .shape_aware_head import ShapeAwareHead
 from .smoke_mono3d_head import SMOKEMono3DHead
 from .ssd_3d_head import SSD3DHead
@@ -19,5 +20,6 @@ __all__ = [
     'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
     'SSD3DHead', 'BaseConvBboxHead', 'CenterHead', 'ShapeAwareHead',
     'BaseMono3DDenseHead', 'AnchorFreeMono3DHead', 'FCOSMono3DHead',
-    'GroupFree3DHead', 'SMOKEMono3DHead', 'PGDHead', 'MonoFlexHead'
+    'GroupFree3DHead', 'PointRPNHead', 'SMOKEMono3DHead', 'PGDHead',
+    'MonoFlexHead'
 ]
