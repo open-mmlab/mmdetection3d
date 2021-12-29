@@ -148,7 +148,7 @@ class RandomFlip3D(RandomFlip):
                 'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added \
                 into result dict.
         """
-        # filp 2D image and its annotations
+        # flip 2D image and its annotations
         super(RandomFlip3D, self).__call__(input_dict)
 
         if self.sync_2d:
@@ -262,12 +262,13 @@ class ObjectSample(object):
             Defaults to False.
     """
 
-    def __init__(self, db_sampler, sample_2d=False):
+    def __init__(self, db_sampler, sample_2d=False, use_ground_plane=False):
         self.sampler_cfg = db_sampler
         self.sample_2d = sample_2d
         if 'type' not in db_sampler.keys():
             db_sampler['type'] = 'DataBaseSampler'
         self.db_sampler = build_from_cfg(db_sampler, OBJECTSAMPLERS)
+        self.use_ground_plane = use_ground_plane
 
     @staticmethod
     def remove_points_in_boxes(points, boxes):
@@ -298,6 +299,11 @@ class ObjectSample(object):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 
+        if self.use_ground_plane and 'plane' in input_dict['ann_info']:
+            ground_plane = input_dict['ann_info']['plane']
+            input_dict['plane'] = ground_plane
+        else:
+            ground_plane = None
         # change to float for blending operation
         points = input_dict['points']
         if self.sample_2d:
@@ -311,7 +317,10 @@ class ObjectSample(object):
                 img=img)
         else:
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d.tensor.numpy(), gt_labels_3d, img=None)
+                gt_bboxes_3d.tensor.numpy(),
+                gt_labels_3d,
+                img=None,
+                ground_plane=ground_plane)
 
         if sampled_dict is not None:
             sampled_gt_bboxes_3d = sampled_dict['gt_bboxes_3d']
@@ -916,11 +925,11 @@ class PointSample(object):
         """
         points = results['points']
         # Points in Camera coord can provide the depth information.
-        # TODO: Need to suport distance-based sampling for other coord system.
+        # TODO: Need to support distance-based sampling for other coord system.
         if self.sample_range is not None:
             from mmdet3d.core.points import CameraPoints
             assert isinstance(points, CameraPoints), \
-                'Sampling based on distance is only appliable for CAMERA coord'
+                'Sampling based on distance is only applicable for CAM coord'
         points, choices = self._points_random_sampling(
             points,
             self.num_points,
@@ -1288,7 +1297,7 @@ class VoxelBasedPointSampler(object):
     Args:
         cur_sweep_cfg (dict): Config for sampling current points.
         prev_sweep_cfg (dict): Config for sampling previous points.
-        time_dim (int): Index that indicate the time dimention
+        time_dim (int): Index that indicate the time dimension
             for input points.
     """
 
@@ -1312,7 +1321,7 @@ class VoxelBasedPointSampler(object):
             points (np.ndarray): Points subset to be sampled.
             sampler (VoxelGenerator): Voxel based sampler for
                 each points subset.
-            point_dim (int): The dimention of each points
+            point_dim (int): The dimension of each points
 
         Returns:
             np.ndarray: Sampled points.
@@ -1393,7 +1402,7 @@ class VoxelBasedPointSampler(object):
             points_numpy = points_numpy.squeeze(1)
         results['points'] = points.new_point(points_numpy[..., :original_dim])
 
-        # Restore the correspoinding seg and mask fields
+        # Restore the corresponding seg and mask fields
         for key, dim_index in map_fields2dim:
             results[key] = points_numpy[..., dim_index]
 
