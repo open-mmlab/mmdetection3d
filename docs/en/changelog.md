@@ -1,5 +1,28 @@
 ## Changelog
 
+### v0.18.0 (1/1/2021)
+
+#### Improvements
+
+- Use the official markdownlint hook and add codespell hook for pre-committing (#1088)
+- Improve CI operation (#1095, #1102, #1103)
+- Uses shared menu content from OpenMMLab's theme and removes duplicated contents from config (#1111)
+- Refactor the structure of documentation (#1113, #1121)
+- Update mmdet and mmseg minimum version limitation (#1147)
+
+#### Bug Fixes
+
+- Fix symlink failure on Windows (#1096)
+- Fix the upper bound of mmcv version in the mminstall requirements (#1104)
+- Fix API documentation compilation and mmcv build errors (#1116)
+- Fix figure links and pdf documentation compilation (#1132)
+
+#### Contributors
+
+A total of 3 developers contributed to this release.
+
+@ZCMax, @Tai-Wang, @wHao-Wu
+
 ### v0.17.3 (1/12/2021)
 
 #### Improvements
