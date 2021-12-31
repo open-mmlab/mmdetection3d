@@ -11,17 +11,17 @@ class MonoFlexCoder(BaseBBoxCoder):
     """Bbox Coder for MonoFlex.
 
     Args:
-        depth_mode (str): The depth mode for direct depth calculation.
-            including "linear", "inv_sigmoid" and "exp".
-        base_depth (tuple[float]): Depth references for decode box depth.
+        depth_mode (str): The mode for depth calculation.
+            Available options are "linear", "inv_sigmoid", and "exp".
+        base_depth (tuple[float]): References for decoding box depth.
         depth_range (list): Depth range of predicted depth.
-        use_combined_depth (bool): Whether to use combined depth (direct depth
-            and depth from keypoints).
+        combine_depth (bool): Whether to use combined depth (direct depth
+            and depth from keypoints) or use direct depth only.
         uncertainty_range (list): Uncertainty range of predicted depth.
         base_dims (tuple[tuple[float]]): Dimensions mean and std of decode bbox
             dimensions [l, h, w] for each category.
-        dims_mode (str): The dimensions mode for dimension calculation,
-            including "linear" and "exp".
+        dims_mode (str): The mode for dimension calculation.
+            Available options are "linear" and "exp".
         multibin (bool): Whether to use multibin representation.
         num_dir_bins (int): Number of Number of bins to encode
             direction angle.
@@ -37,7 +37,7 @@ class MonoFlexCoder(BaseBBoxCoder):
                  depth_mode,
                  base_depth,
                  depth_range,
-                 use_combined_depth,
+                 combine_depth,
                  uncertainty_range,
                  base_dims,
                  dims_mode,
@@ -53,7 +53,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         self.depth_mode = depth_mode
         self.base_depth = base_depth
         self.depth_range = depth_range
-        self.use_combined_depth = use_combined_depth
+        self.combine_depth = combine_depth
         self.uncertainty_range = uncertainty_range
 
         # dimensions related
@@ -183,7 +183,7 @@ class MonoFlexCoder(BaseBBoxCoder):
             pred_keypoints_depth_uncertainty, self.uncertainty_range[0],
             self.uncertainty_range[1])
 
-        if self.use_combined_depth:
+        if self.combine_depth:
             pred_depth_uncertainty = torch.cat(
                 (pred_direct_depth_uncertainty.unsqueeze(-1),
                  pred_keypoints_depth_uncertainty),
@@ -191,7 +191,7 @@ class MonoFlexCoder(BaseBBoxCoder):
             pred_depth = torch.cat(
                 (pred_direct_depth.unsqueeze(-1), pred_keypoints_depth), dim=1)
             pred_combined_depth = \
-                self.combine_depth(pred_depth, pred_depth_uncertainty)
+                self.combine_depths(pred_depth, pred_depth_uncertainty)
         else:
             pred_combined_depth = None
 
@@ -426,29 +426,27 @@ class MonoFlexCoder(BaseBBoxCoder):
         if self.multibin:
             pred_bin_cls = ori_vector[:, :self.num_dir_bins * 2].view(
                 -1, self.num_dir_bins, 2)
-            pred_bin_cls = torch.softmax(pred_bin_cls, dim=2)[..., 1]
+            pred_bin_cls = pred_bin_cls.softmax(dim=2)[..., 1]
             orientations = ori_vector.new_zeros(ori_vector.shape[0])
             for i in range(self.num_dir_bins):
                 mask_i = (pred_bin_cls.argmax(dim=1) == i)
                 start_bin = self.num_dir_bins * 2 + i * 2
                 end_bin = start_bin + 2
                 pred_bin_offset = ori_vector[mask_i, start_bin:end_bin]
-                orientations[mask_i] = torch.atan2(
-                    pred_bin_offset[:, 0],
+                orientations[mask_i] = pred_bin_offset[:, 0].atan2(
                     pred_bin_offset[:, 1]) + self.bin_centers[i]
         else:
-            axis_cls = torch.softmax(ori_vector[:, :2], dim=1)
+            axis_cls = ori_vector[:, :2].softmax(dim=1)
             axis_cls = axis_cls[:, 0] < axis_cls[:, 1]
-            head_cls = torch.softmax(ori_vector[:, 2:4], dim=1)
+            head_cls = ori_vector[:, 2:4].softmax(dim=1)
             head_cls = head_cls[:, 0] < head_cls[:, 1]
             # cls axis
             orientations = self.bin_centers[axis_cls + head_cls * 2]
             sin_cos_offset = F.normalize(ori_vector[:, 4:])
-            orientations += torch.atan(sin_cos_offset[:, 0] /
-                                       sin_cos_offset[:, 1])
+            orientations += sin_cos_offset[:, 0].atan(sin_cos_offset[:, 1])
 
         locations = locations.view(-1, 3)
-        rays = torch.atan2(locations[:, 0], locations[:, 2])
+        rays = locations[:, 0].atan2(locations[:, 2])
         local_yaws = orientations
         yaws = local_yaws + rays
 
@@ -493,7 +491,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return bboxes2d
 
-    def combine_depth(depth, depth_uncertainty):
+    def combine_depths(depth, depth_uncertainty):
         """Combine all the prediced depths with depth uncertainty.
 
         Args:
