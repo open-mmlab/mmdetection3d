@@ -2,13 +2,17 @@
 
 ### v0.18.0 (1/1/2021)
 
+#### Highlights
+
+- Update the required minimum version of mmdet and mmseg
+
 #### Improvements
 
 - Use the official markdownlint hook and add codespell hook for pre-committing (#1088)
 - Improve CI operation (#1095, #1102, #1103)
 - Use shared menu content from OpenMMLab's theme and remove duplicated contents from config (#1111)
 - Refactor the structure of documentation (#1113, #1121)
-- **Update the required minimum version of mmdet and mmseg (#1147)**
+- Update the required minimum version of mmdet and mmseg (#1147)
 
 #### Bug Fixes
 
@@ -21,7 +25,7 @@
 
 A total of 4 developers contributed to this release.
 
-@ZwwWayne @ZCMax, @Tai-Wang, @wHao-Wu
+@ZwwWayne, @ZCMax, @Tai-Wang, @wHao-Wu
 
 ### v0.17.3 (1/12/2021)
 
