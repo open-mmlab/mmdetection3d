@@ -16,6 +16,7 @@ import subprocess
 import sys
 from m2r import MdInclude
 from recommonmark.transform import AutoStructify
+from sphinx.builders.html import StandaloneHTMLBuilder
 
 sys.path.insert(0, os.path.abspath('../../'))
 
@@ -130,6 +131,10 @@ latex_documents = [
      'manual'),
 ]
 
+# set priority when building html
+StandaloneHTMLBuilder.supported_image_types = [
+    'image/svg+xml', 'image/gif', 'image/png', 'image/jpeg'
+]
 # -- Extension configuration -------------------------------------------------
 # Ignore >>> when copying code
 copybutton_prompt_text = r'>>> |\.\.\. '
