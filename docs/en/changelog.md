@@ -8,7 +8,7 @@
 - Improve CI operation (#1095, #1102, #1103)
 - Use shared menu content from OpenMMLab's theme and remove duplicated contents from config (#1111)
 - Refactor the structure of documentation (#1113, #1121)
-- Update the required minimum version of mmdet and mmseg (#1147)
+- **Update the required minimum version of mmdet and mmseg (#1147)**
 
 #### Bug Fixes
 
@@ -19,9 +19,9 @@
 
 #### Contributors
 
-A total of 3 developers contributed to this release.
+A total of 4 developers contributed to this release.
 
-@ZCMax, @Tai-Wang, @wHao-Wu
+@ZwwWayne @ZCMax, @Tai-Wang, @wHao-Wu
 
 ### v0.17.3 (1/12/2021)
 
