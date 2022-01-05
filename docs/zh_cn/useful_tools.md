@@ -4,7 +4,7 @@
 
 给定一个训练的日志文件，您可以绘制出 loss/mAP 曲线。首先需要运行 `pip install seaborn` 安装依赖包。
 
-![loss曲线图](../resources/loss_curve.png)
+![loss曲线图](../../resources/loss_curve.png)
 
 ```shell
 python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}] [--mode ${MODE}] [--interval ${INTERVAL}]
@@ -81,7 +81,7 @@ python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} -
 ```
 
 
-![](../resources/open3d_visual.gif)
+![](../../resources/open3d_visual.*)
 
 或者您可以使用 3D 可视化软件，例如 [MeshLab](http://www.meshlab.net/) 来打开这些在 `${SHOW_DIR}` 目录下的文件，从而查看 3D 检测输出。具体来说，打开 `***_points.obj` 查看输入点云，打开 `***_pred.obj` 查看预测的 3D 边界框。这允许推理和结果生成在远程服务器中完成，用户可以使用 GUI 在他们的主机上打开它们。
 
@@ -109,7 +109,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
 ```
 
-![](../resources/browse_dataset_multi_modality.png)
+![](../../resources/browse_dataset_multi_modality.png)
 
 您可以简单的使用不同的配置文件，浏览不同的数据集，例如：在 3D 语义分割任务中可视化 ScanNet 数据集
 
@@ -117,7 +117,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
-![](../resources/browse_dataset_seg.png)
+![](../../resources/browse_dataset_seg.png)
 
 在单目 3D 检测任务中浏览 nuScenes 数据集
 
@@ -125,7 +125,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20cla
 python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono-det --output-dir ${OUTPUT_DIR} --online
 ```
 
-![](../resources/browse_dataset_mono.png)
+![](../../resources/browse_dataset_mono.png)
 
 &emsp;
 
