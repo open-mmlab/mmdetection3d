@@ -777,12 +777,11 @@ class PGDHead(FCOSMono3DHead):
                 loss_dict['loss_dir'] = pos_dir_cls_preds.sum()
             if self.use_depth_classifier:
                 sig_alpha = torch.sigmoid(self.fuse_lambda)
+                loss_fuse_depth = \
+                    sig_alpha * pos_bbox_preds[:, 2].sum() + \
+                    (1 - sig_alpha) * pos_depth_cls_preds.sum()
                 if self.weight_dim != -1:
                     loss_fuse_depth *= torch.exp(-pos_weights[:, 0].sum())
-                else:
-                    loss_fuse_depth = \
-                        sig_alpha * pos_bbox_preds[:, 2].sum() + \
-                        (1 - sig_alpha) * pos_depth_cls_preds.sum()
                 loss_dict['loss_depth'] = loss_fuse_depth
             if self.pred_attrs:
                 loss_dict['loss_attr'] = pos_attr_preds.sum()
