@@ -96,6 +96,12 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 
 **Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window. If you don't have a monitor, you can remove the `--online` flag to only save the visualization results and browse them offline.
 
+To verify the data consistency and the effect of data augmentation, you can also add `--aug` flag to visualize the data after data augmentation using the command as below:
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR} --online
+```
+
 If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi_modality-det`. An example is showed below
 
 ```shell

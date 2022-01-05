@@ -179,13 +179,20 @@ class SingleStageMono3DDetector(SingleStageDetector):
 
         return [bbox_list]
 
-    def show_results(self, data, result, out_dir):
+    def show_results(self, data, result, out_dir, show=False, score_thr=None):
         """Results visualization.
 
         Args:
             data (list[dict]): Input images and the information of the sample.
             result (list[dict]): Prediction results.
             out_dir (str): Output directory of visualization result.
+            show (bool, optional): Determines whether you are
+                going to show result by open3d.
+                Defaults to False.
+            TODO: implement score_thr of single_stage_mono3d.
+            score_thr (float, optional): Score threshold of bounding boxes.
+                Default to None.
+                Not implemented yet, but it is here for unification.
         """
         for batch_id in range(len(result)):
             if isinstance(data['img_metas'][0], DC):
@@ -216,4 +223,4 @@ class SingleStageMono3DDetector(SingleStageDetector):
                 out_dir,
                 file_name,
                 'camera',
-                show=True)
+                show=show)

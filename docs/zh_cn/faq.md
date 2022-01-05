@@ -30,4 +30,3 @@
   或者
 
   ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
-

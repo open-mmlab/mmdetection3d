@@ -30,4 +30,3 @@ We list some potential troubles encountered by users and developers, along with 
   or
 
   ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
-
