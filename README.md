@@ -102,7 +102,7 @@ Support methods
 - [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
 - [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
-- [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
+- [x] [ImVoxelNet (WACV'2022)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ | HRNet | RegNetX | Res2Net |
