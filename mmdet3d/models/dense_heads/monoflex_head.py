@@ -21,7 +21,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
     .. code-block:: none
 
-                 / -----> conv ----->  cls
+                 /  -----> conv ----->  cls
                 /
                 |   -----> conv ----->  2d bbox
                 |
@@ -29,17 +29,17 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 |
                 |   -----> conv ----->  keypoints offsets
                 |
-                |   -----> conv -----> keypoints uncertainty
+                |   -----> conv ----->  keypoints uncertainty
         feature
-                |   -----> conv -----> keypoints uncertainty
+                |   -----> conv ----->  keypoints uncertainty
                 |
-                |   -----> conv -----> 3d dimensions
+                |   -----> conv ----->  3d dimensions
                 |
-                |   -----> conv -----> orientations
+                |   -----> conv ----->  orientations
                 |
-                |   -----> conv -----> depth
+                |   -----> conv ----->  depth
                 \
-                 \  -----> conv -----> depth uncertainty
+                 \  -----> conv ----->  depth uncertainty
 
     Args:
         num_classes (int): Number of categories excluding the background
@@ -104,7 +104,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  loss_keypoints_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_combined_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_attr=None,
-                 loss_centerness=None,
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  init_cfg=None,
                  **kwargs):
@@ -115,7 +114,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             loss_bbox=loss_bbox,
             loss_dir=loss_dir,
             loss_attr=loss_attr,
-            loss_centerness=loss_centerness,
             norm_cfg=norm_cfg,
             init_cfg=init_cfg,
             **kwargs)
@@ -226,11 +224,13 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
     def forward(self, feats, input_metas):
         """Forward features from the upstream network.
+
         Args:
             feats (list[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
             input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
+
         Returns:
             tuple:
                 cls_scores (list[Tensor]): Box scores for each scale level,
@@ -247,9 +247,10 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         """Forward features of a single scale level.
 
         Args:
-            x (Tensor): FPN feature maps of the specified stride.
+            x (Tensor): Feature maps from a specific FPN feature level.
             input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
+
         Returns:
             tuple: Scores for each class, bbox predictions.
         """

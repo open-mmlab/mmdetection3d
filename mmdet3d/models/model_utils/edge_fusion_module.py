@@ -8,7 +8,19 @@ from mmdet3d.models.utils import get_edge_indices
 
 
 class EdgeFusionModule(BaseModule):
-    """Edge Fusion Module for feature map."""
+    """Edge Fusion Module for feature map.
+
+    Args:
+        num_classes (int): Number of classes.
+        feat_channels (int): Number of channels in feature map
+            during edge feature fusion.
+        kernel_size (int, optional): Kernel size of convolution.
+            Default: 3.
+        act_cfg (dict, optional): Config of activation.
+            Default: dict(type='ReLU').
+        norm_cfg (dict, optional): Config of normalization.
+            Default: dict(type='BN')).
+    """
 
     def __init__(self,
                  num_classes,
@@ -53,7 +65,7 @@ class EdgeFusionModule(BaseModule):
                 image size, scaling factor, etc.
 
         Returns:
-            list[torch.Tensor]
+            list[torch.Tensor]: List of fused feature maps.
         """
         bs = features.shape[0]
         edge_indices_list = get_edge_indices(img_metas, device=features.device)

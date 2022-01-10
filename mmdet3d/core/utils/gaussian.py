@@ -86,7 +86,7 @@ def gaussian_radius(det_size, min_overlap=0.5):
     return min(r1, r2, r3)
 
 
-def gen_ellip_gaussian_2D(heatmap, center, radius_x, radius_y, k=1):
+def get_ellip_gaussian_2D(heatmap, center, radius_x, radius_y, k=1):
     """Generate 2D ellipse gaussian heatmap.
 
     Args:
@@ -96,6 +96,7 @@ def gen_ellip_gaussian_2D(heatmap, center, radius_x, radius_y, k=1):
         radius_x (int): X-axis radius of gaussian kernel.
         radius_y (int): Y-axis radius of gaussian kernel.
         k (int, optional): Coefficient of gaussian kernel. Default: 1.
+
     Returns:
         out_heatmap (Tensor): Updated heatmap covered by gaussian kernel.
     """
@@ -130,6 +131,7 @@ def ellip_gaussian2D(radius,
                      dtype=torch.float32,
                      device='cpu'):
     """Generate 2D ellipse gaussian kernel.
+
     Args:
         radius (tuple(int)): Ellipse radius (radius_x, radius_y) of gaussian
             kernel.
@@ -139,6 +141,7 @@ def ellip_gaussian2D(radius,
             Default: torch.float32.
         device (str, optional): Device of gaussian tensor.
             Default: 'cpu'.
+
     Returns:
         h (Tensor): Gaussian kernel with a
             ``(2 * radius_y + 1) * (2 * radius_x + 1)`` shape.
