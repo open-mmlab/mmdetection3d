@@ -183,6 +183,8 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
             Defaults to dict(type='BN1d', eps=1e-3, momentum=0.01).
         mode (str, optional): The mode to gather point features. Options are
             'max' or 'avg'. Defaults to 'max'.
+        legacy (bool, optional): Whether to use the new behavior or
+            the original behavior. Defaults to True.
     """
 
     def __init__(self,
@@ -194,7 +196,8 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
                  voxel_size=(0.2, 0.2, 4),
                  point_cloud_range=(0, -40, -3, 70.4, 40, 1),
                  norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 mode='max'):
+                 mode='max',
+                 legacy=True):
         super(DynamicPillarFeatureNet, self).__init__(
             in_channels,
             feat_channels,
@@ -204,7 +207,8 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
             voxel_size=voxel_size,
             point_cloud_range=point_cloud_range,
             norm_cfg=norm_cfg,
-            mode=mode)
+            mode=mode,
+            legacy=legacy)
         self.fp16_enabled = False
         feat_channels = [self.in_channels] + list(feat_channels)
         pfn_layers = []
