@@ -3,8 +3,11 @@ from __future__ import division
 
 import argparse
 import copy
+import cv2
 import mmcv
+import multiprocessing as mp
 import os
+import platform
 import time
 import torch
 import warnings
@@ -89,6 +92,40 @@ def parse_args():
         args.cfg_options = args.options
 
     return args
+
+
+def setup_multi_processes(cfg):
+    # set multi-process start method as `fork` to speed up the training
+    if platform.system() != 'Windows':
+        mp.set_start_method('fork')
+
+    # disable opencv multithreading to avoid overwheleming
+    cv2.setNumThreads(0)
+
+    # setup OMP threads
+    # This code is referred from https://github.com/pytorch/pytorch/blob/master/torch/distributed/run.py  # noqa
+    if ('OMP_NUM_THREADS' not in os.environ and cfg.data.workers_per_gpu > 1):
+        omp_num_threads = 1
+        warnings.warn(
+            f'\n*****************************************\n'
+            f'Setting OMP_NUM_THREADS environment variable for each process '
+            f'to be {omp_num_threads} in default, to avoid your system being '
+            f'overloaded, please further tune the variable for optimal '
+            f'performance in your application as needed. \n'
+            f'*****************************************')
+        os.environ['OMP_NUM_THREADS'] = str(omp_num_threads)
+
+    # setup MKL threads
+    if 'MKL_NUM_THREADS' not in os.environ and cfg.data.workers_per_gpu > 1:
+        mkl_num_threads = 1
+        warnings.warn(
+            f'\n*****************************************\n'
+            f'Setting MKL_NUM_THREADS environment variable for each process '
+            f'to be {mkl_num_threads} in default, to avoid your system being '
+            f'overloaded, please further tune the variable for optimal '
+            f'performance in your application as needed. \n'
+            f'*****************************************')
+        os.environ['MKL_NUM_THREADS'] = str(mkl_num_threads)
 
 
 def main():
