@@ -94,9 +94,12 @@ def create_kitti_info_file(data_path,
 
     Args:
         data_path (str): Path of the data root.
-        pkl_prefix (str): Prefix of the info file to be generated.
-        save_path (str): Path to save the info file.
-        relative_path (bool): Whether to use relative path.
+        pkl_prefix (str, optional): Prefix of the info file to be generated.
+            Default: 'kitti'.
+        save_path (str, optional): Path to save the info file.
+            Default: None.
+        relative_path (bool, optional): Whether to use relative path.
+            Default: True.
     """
     imageset_folder = Path(data_path) / 'ImageSets'
     train_img_ids = _read_imageset_file(str(imageset_folder / 'train.txt'))
@@ -113,6 +116,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
+        plane=True,
         image_ids=train_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_train, relative_path)
@@ -124,6 +128,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
+        plane=True,
         image_ids=val_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_val, relative_path)
@@ -140,6 +145,7 @@ def create_kitti_info_file(data_path,
         label_info=False,
         velodyne=True,
         calib=True,
+        plane=False,
         image_ids=test_img_ids,
         relative_path=relative_path)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
@@ -158,10 +164,14 @@ def create_waymo_info_file(data_path,
 
     Args:
         data_path (str): Path of the data root.
-        pkl_prefix (str): Prefix of the info file to be generated.
-        save_path (str): Path to save the info file.
-        relative_path (bool): Whether to use relative path.
-        max_sweeps (int): Max sweeps before the detection frame to be used.
+        pkl_prefix (str, optional): Prefix of the info file to be generated.
+            Default: 'waymo'.
+        save_path (str, optional): Path to save the info file.
+            Default: None.
+        relative_path (bool, optional): Whether to use relative path.
+            Default: True.
+        max_sweeps (int, optional): Max sweeps before the detection frame
+            to be used. Default: 5.
     """
     imageset_folder = Path(data_path) / 'ImageSets'
     train_img_ids = _read_imageset_file(str(imageset_folder / 'train.txt'))
