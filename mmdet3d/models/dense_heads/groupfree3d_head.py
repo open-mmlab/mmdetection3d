@@ -6,13 +6,14 @@ from mmcv import ConfigDict
 from mmcv.cnn import ConvModule, xavier_init
 from mmcv.cnn.bricks.transformer import (build_positional_encoding,
                                          build_transformer_layer)
+from mmcv.ops import PointsSampler as Points_Sampler
+from mmcv.ops import gather_points
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import Points_Sampler, gather_points
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 from .base_conv_bbox_head import BaseConvBboxHead

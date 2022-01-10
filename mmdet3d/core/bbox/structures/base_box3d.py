@@ -3,9 +3,9 @@ import numpy as np
 import torch
 import warnings
 from abc import abstractmethod
+from mmcv.ops import boxes_iou_bev as boxes_overlap_bev_gpu
+from mmcv.ops import points_in_boxes_all, points_in_boxes_part
 
-from mmdet3d.ops import points_in_boxes_all, points_in_boxes_part
-from mmdet3d.ops.iou3d import iou3d_cuda
 from .utils import limit_period, xywhr2xyxyr
 
 
@@ -470,9 +470,8 @@ class BaseInstance3DBoxes(object):
         # bev overlap
         overlaps_bev = boxes1_bev.new_zeros(
             (boxes1_bev.shape[0], boxes2_bev.shape[0])).cuda()  # (N, M)
-        iou3d_cuda.boxes_overlap_bev_gpu(boxes1_bev.contiguous().cuda(),
-                                         boxes2_bev.contiguous().cuda(),
-                                         overlaps_bev)
+        boxes_overlap_bev_gpu(boxes1_bev.contiguous().cuda(),
+                              boxes2_bev.contiguous().cuda(), overlaps_bev)
 
         # 3d overlaps
         overlaps_3d = overlaps_bev.to(boxes1.device) * overlaps_h

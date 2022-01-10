@@ -2,10 +2,10 @@
 import numpy as np
 import pytest
 import torch
+from mmcv.ops import Voxelization
 
 from mmdet3d.core.voxel.voxel_generator import VoxelGenerator
 from mmdet3d.datasets.pipelines import LoadPointsFromFile
-from mmdet3d.ops.voxel.voxelize import Voxelization
 
 
 def _get_voxel_points_indices(points, coors, voxel):

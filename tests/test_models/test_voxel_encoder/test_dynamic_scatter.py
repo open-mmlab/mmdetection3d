@@ -1,9 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
+from mmcv.ops import DynamicScatter
 from torch.autograd import gradcheck
-
-from mmdet3d.ops import DynamicScatter
 
 
 def test_dynamic_scatter():

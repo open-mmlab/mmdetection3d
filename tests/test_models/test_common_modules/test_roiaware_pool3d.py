@@ -2,10 +2,8 @@
 import numpy as np
 import pytest
 import torch
-
-from mmdet3d.ops.roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_all,
-                                         points_in_boxes_cpu,
-                                         points_in_boxes_part)
+from mmcv.ops import (RoIAwarePool3d, points_in_boxes_all, points_in_boxes_cpu,
+                      points_in_boxes_part)
 
 
 def test_RoIAwarePool3d():

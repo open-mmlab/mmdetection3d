@@ -2,8 +2,8 @@
 import numba
 import numpy as np
 import torch
-
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
+from mmcv.ops import nms_bev as nms_gpu
+from mmcv.ops import nms_normal_bev as nms_normal_gpu
 
 
 def box3d_multiclass_nms(mlvl_bboxes,
