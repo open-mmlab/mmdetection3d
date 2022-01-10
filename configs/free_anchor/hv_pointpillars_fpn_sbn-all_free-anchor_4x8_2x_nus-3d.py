@@ -21,8 +21,8 @@ model = dict(
             ranges=[[-50, -50, -1.8, 50, 50, -1.8]],
             scales=[1, 2, 4],
             sizes=[
-                [0.8660, 2.5981, 1.],  # 1.5/sqrt(3)
-                [0.5774, 1.7321, 1.],  # 1/sqrt(3)
+                [2.5981, 0.8660, 1.],  # 1.5 / sqrt(3)
+                [1.7321, 0.5774, 1.],  # 1 / sqrt(3)
                 [1., 1., 1.],
                 [0.4, 0.4, 1],
             ],
@@ -31,8 +31,7 @@ model = dict(
             reshape_out=True),
         assigner_per_size=False,
         diff_rad_by_sin=True,
-        dir_offset=0.7854,  # pi/4
-        dir_limit_offset=0,
+        dir_offset=-0.7854,  # -pi / 4
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=9),
         loss_cls=dict(
             type='FocalLoss',

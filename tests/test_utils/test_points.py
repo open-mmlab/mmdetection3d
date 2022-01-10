@@ -66,6 +66,7 @@ def test_base_points():
                                     ]])
 
     assert torch.allclose(expected_tensor, base_points.tensor)
+    assert torch.allclose(expected_tensor[:, :2], base_points.bev)
     assert torch.allclose(expected_tensor[:, :3], base_points.coord)
     assert torch.allclose(expected_tensor[:, 3:6], base_points.color)
     assert torch.allclose(expected_tensor[:, 6], base_points.height)
@@ -327,6 +328,7 @@ def test_cam_points():
                                     ]])
 
     assert torch.allclose(expected_tensor, cam_points.tensor)
+    assert torch.allclose(expected_tensor[:, [0, 2]], cam_points.bev)
     assert torch.allclose(expected_tensor[:, :3], cam_points.coord)
     assert torch.allclose(expected_tensor[:, 3:6], cam_points.color)
     assert torch.allclose(expected_tensor[:, 6], cam_points.height)
@@ -603,6 +605,7 @@ def test_lidar_points():
                                     ]])
 
     assert torch.allclose(expected_tensor, lidar_points.tensor)
+    assert torch.allclose(expected_tensor[:, :2], lidar_points.bev)
     assert torch.allclose(expected_tensor[:, :3], lidar_points.coord)
     assert torch.allclose(expected_tensor[:, 3:6], lidar_points.color)
     assert torch.allclose(expected_tensor[:, 6], lidar_points.height)
@@ -879,6 +882,7 @@ def test_depth_points():
                                     ]])
 
     assert torch.allclose(expected_tensor, depth_points.tensor)
+    assert torch.allclose(expected_tensor[:, :2], depth_points.bev)
     assert torch.allclose(expected_tensor[:, :3], depth_points.coord)
     assert torch.allclose(expected_tensor[:, 3:6], depth_points.color)
     assert torch.allclose(expected_tensor[:, 6], depth_points.height)

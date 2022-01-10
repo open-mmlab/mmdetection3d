@@ -22,9 +22,9 @@ def single_gpu_test(model,
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
-        show (bool): Whether to save viualization results.
+        show (bool, optional): Whether to save viualization results.
             Default: True.
-        out_dir (str): The path to save visualization results.
+        out_dir (str, optional): The path to save visualization results.
             Default: None.
 
     Returns:

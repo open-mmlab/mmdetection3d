@@ -48,14 +48,15 @@ class SingleStageMono3DDetector(SingleStageDetector):
                 image in [tl_x, tl_y, br_x, br_y] format.
             gt_labels (list[Tensor]): Class indices corresponding to each box
             gt_bboxes_3d (list[Tensor]): Each item are the 3D truth boxes for
-                each image in [x, y, z, w, l, h, theta, vx, vy] format.
+                each image in [x, y, z, x_size, y_size, z_size, yaw, vx, vy]
+                format.
             gt_labels_3d (list[Tensor]): 3D class indices corresponding to
                 each box.
             centers2d (list[Tensor]): Projected 3D centers onto 2D images.
             depths (list[Tensor]): Depth of projected centers on 2D images.
             attr_labels (list[Tensor], optional): Attribute indices
                 corresponding to each box
-            gt_bboxes_ignore (None | list[Tensor]): Specify which bounding
+            gt_bboxes_ignore (list[Tensor]): Specify which bounding
                 boxes can be ignored when computing the loss.
 
         Returns:

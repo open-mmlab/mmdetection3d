@@ -5,7 +5,7 @@ from collections import OrderedDict
 from nuscenes.utils.geometry_utils import view_points
 from pathlib import Path
 
-from mmdet3d.core.bbox import box_np_ops
+from mmdet3d.core.bbox import box_np_ops, points_cam2img
 from .kitti_data_utils import get_kitti_image_info, get_waymo_image_info
 from .nuscenes_converter import post_process_coords
 
@@ -159,7 +159,7 @@ def create_waymo_info_file(data_path,
     Args:
         data_path (str): Path of the data root.
         pkl_prefix (str): Prefix of the info file to be generated.
-        save_path (str | None): Path to save the info file.
+        save_path (str): Path to save the info file.
         relative_path (bool): Whether to use relative path.
         max_sweeps (int): Max sweeps before the detection frame to be used.
     """
@@ -238,11 +238,13 @@ def _create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         info_path (str): Path of data info.
-        save_path (str | None): Path to save reduced point cloud data.
-            Default: None.
-        back (bool): Whether to flip the points to back.
-        num_features (int): Number of point features. Default: 4.
-        front_camera_id (int): The referenced/front camera ID. Default: 2.
+        save_path (str, optional): Path to save reduced point cloud
+            data. Default: None.
+        back (bool, optional): Whether to flip the points to back.
+            Default: False.
+        num_features (int, optional): Number of point features. Default: 4.
+        front_camera_id (int, optional): The referenced/front camera ID.
+            Default: 2.
     """
     kitti_infos = mmcv.load(info_path)
 
@@ -298,14 +300,16 @@ def create_reduced_point_cloud(data_path,
     Args:
         data_path (str): Path of original data.
         pkl_prefix (str): Prefix of info files.
-        train_info_path (str | None): Path of training set info.
+        train_info_path (str, optional): Path of training set info.
             Default: None.
-        val_info_path (str | None): Path of validation set info.
+        val_info_path (str, optional): Path of validation set info.
             Default: None.
-        test_info_path (str | None): Path of test set info.
+        test_info_path (str, optional): Path of test set info.
             Default: None.
-        save_path (str | None): Path to save reduced point cloud data.
-        with_back (bool): Whether to flip the points to back.
+        save_path (str, optional): Path to save reduced point cloud data.
+            Default: None.
+        with_back (bool, optional): Whether to flip the points to back.
+            Default: False.
     """
     if train_info_path is None:
         train_info_path = Path(data_path) / f'{pkl_prefix}_infos_train.pkl'
@@ -335,7 +339,8 @@ def export_2d_annotation(root_path, info_path, mono3d=True):
     Args:
         root_path (str): Root path of the raw data.
         info_path (str): Path of the info file.
-        mono3d (bool): Whether to export mono3d annotation. Default: True.
+        mono3d (bool, optional): Whether to export mono3d annotation.
+            Default: True.
     """
     # get bbox annotations for camera
     kitti_infos = mmcv.load(info_path)
@@ -381,8 +386,8 @@ def get_2d_boxes(info, occluded, mono3d=True):
 
     Args:
         info: Information of the given sample data.
-        occluded: Integer (0, 1, 2, 3) indicating occlusion state: \
-            0 = fully visible, 1 = partly occluded, 2 = largely occluded, \
+        occluded: Integer (0, 1, 2, 3) indicating occlusion state:
+            0 = fully visible, 1 = partly occluded, 2 = largely occluded,
             3 = unknown, -1 = DontCare
         mono3d (bool): Whether to get boxes with mono3d annotation.
 
@@ -471,7 +476,7 @@ def get_2d_boxes(info, occluded, mono3d=True):
             repro_rec['velo_cam3d'] = -1  # no velocity in KITTI
 
             center3d = np.array(loc).reshape([1, 3])
-            center2d = box_np_ops.points_cam2img(
+            center2d = points_cam2img(
                 center3d, camera_intrinsic, with_depth=True)
             repro_rec['center2d'] = center2d.squeeze().tolist()
             # normalized center2D + depth
@@ -488,7 +493,7 @@ def get_2d_boxes(info, occluded, mono3d=True):
 
 
 def generate_record(ann_rec, x1, y1, x2, y2, sample_data_token, filename):
-    """Generate one 2D annotation record given various informations on top of
+    """Generate one 2D annotation record given various information on top of
     the 2D bounding box coordinates.
 
     Args:
@@ -503,12 +508,12 @@ def generate_record(ann_rec, x1, y1, x2, y2, sample_data_token, filename):
 
     Returns:
         dict: A sample 2D annotation record.
-            - file_name (str): flie name
+            - file_name (str): file name
             - image_id (str): sample data token
             - area (float): 2d box area
             - category_name (str): category name
             - category_id (int): category id
-            - bbox (list[float]): left x, top y, dx, dy of 2d box
+            - bbox (list[float]): left x, top y, x_size, y_size of 2d box
             - iscrowd (int): whether the area is crowd
     """
     repro_rec = OrderedDict()

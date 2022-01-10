@@ -17,9 +17,7 @@
 __device__ inline void lidar_to_local_coords(float shift_x, float shift_y,
                                              float rz, float &local_x,
                                              float &local_y) {
-  // should rotate pi/2 + alpha to translate LiDAR to local
-  float rot_angle = rz + M_PI / 2;
-  float cosa = cos(rot_angle), sina = sin(rot_angle);
+  float cosa = cos(-rz), sina = sin(-rz);
   local_x = shift_x * cosa + shift_y * (-sina);
   local_y = shift_x * sina + shift_y * cosa;
 }
@@ -27,17 +25,17 @@ __device__ inline void lidar_to_local_coords(float shift_x, float shift_y,
 __device__ inline int check_pt_in_box3d(const float *pt, const float *box3d,
                                         float &local_x, float &local_y) {
   // param pt: (x, y, z)
-  // param box3d: (cx, cy, cz, w, l, h, rz) in LiDAR coordinate, cz in the
+  // param box3d: (cx, cy, cz, x_size, y_size, z_size, rz) in LiDAR coordinate, cz in the
   // bottom center
   float x = pt[0], y = pt[1], z = pt[2];
   float cx = box3d[0], cy = box3d[1], cz = box3d[2];
-  float w = box3d[3], l = box3d[4], h = box3d[5], rz = box3d[6];
-  cz += h / 2.0;  // shift to the center since cz in box3d is the bottom center
+  float x_size = box3d[3], y_size = box3d[4], z_size = box3d[5], rz = box3d[6];
+  cz += z_size / 2.0;  // shift to the center since cz in box3d is the bottom center
 
-  if (fabsf(z - cz) > h / 2.0) return 0;
+  if (fabsf(z - cz) > z_size / 2.0) return 0;
   lidar_to_local_coords(x - cx, y - cy, rz, local_x, local_y);
-  float in_flag = (local_x > -l / 2.0) & (local_x < l / 2.0) &
-                  (local_y > -w / 2.0) & (local_y < w / 2.0);
+  float in_flag = (local_x > -x_size / 2.0) & (local_x < x_size / 2.0) &
+                  (local_y > -y_size / 2.0) & (local_y < y_size / 2.0);
   return in_flag;
 }
 
@@ -45,9 +43,9 @@ __global__ void generate_pts_mask_for_box3d(int boxes_num, int pts_num,
                                             int out_x, int out_y, int out_z,
                                             const float *rois, const float *pts,
                                             int *pts_mask) {
-  // params rois: (N, 7) [x, y, z, w, l, h, rz] in LiDAR coordinate
+  // params rois: (N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate
   // params pts: (npoints, 3) [x, y, z]
-  // params pts_mask: (N, npoints): -1 means point doesnot in this box,
+  // params pts_mask: (N, npoints): -1 means point does not in this box,
   // otherwise: encode (x_idxs, y_idxs, z_idxs) by binary bit
   int pt_idx = blockIdx.x * blockDim.x + threadIdx.x;
   int box_idx = blockIdx.y;
@@ -63,14 +61,14 @@ __global__ void generate_pts_mask_for_box3d(int boxes_num, int pts_num,
   pts_mask[0] = -1;
   if (cur_in_flag > 0) {
     float local_z = pts[2] - rois[2];
-    float w = rois[3], l = rois[4], h = rois[5];
+    float x_size = rois[3], y_size = rois[4], z_size = rois[5];
 
-    float x_res = l / out_x;
-    float y_res = w / out_y;
-    float z_res = h / out_z;
+    float x_res = x_size / out_x;
+    float y_res = y_size / out_y;
+    float z_res = z_size / out_z;
 
-    unsigned int x_idx = int((local_x + l / 2) / x_res);
-    unsigned int y_idx = int((local_y + w / 2) / y_res);
+    unsigned int x_idx = int((local_x + x_size / 2) / x_res);
+    unsigned int y_idx = int((local_y + y_size / 2) / y_res);
     unsigned int z_idx = int(local_z / z_res);
 
     x_idx = min(max(x_idx, 0), out_x - 1);
@@ -231,7 +229,7 @@ void roiaware_pool3d_launcher(int boxes_num, int pts_num, int channels,
                               const float *pts_feature, int *argmax,
                               int *pts_idx_of_voxels, float *pooled_features,
                               int pool_method) {
-  // params rois: (N, 7) [x, y, z, w, l, h, rz] in LiDAR coordinate
+  // params rois: (N, 7) [x, y, z, x_size, y_size, z_size, rz] in LiDAR coordinate
   // params pts: (npoints, 3) [x, y, z] in LiDAR coordinate
   // params pts_feature: (npoints, C)
   // params argmax: (N, out_x, out_y, out_z, C)

@@ -14,7 +14,7 @@ from os import path as osp
 
 from mmdet import __version__ as mmdet_version
 from mmdet3d import __version__ as mmdet3d_version
-from mmdet3d.apis import train_model
+from mmdet3d.apis import init_random_seed, train_model
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
 from mmdet3d.utils import collect_env, get_root_logger
@@ -165,12 +165,12 @@ def main():
     logger.info(f'Config:\n{cfg.pretty_text}')
 
     # set random seeds
-    if args.seed is not None:
-        logger.info(f'Set random seed to {args.seed}, '
-                    f'deterministic: {args.deterministic}')
-        set_random_seed(args.seed, deterministic=args.deterministic)
-    cfg.seed = args.seed
-    meta['seed'] = args.seed
+    seed = init_random_seed(args.seed)
+    logger.info(f'Set random seed to {seed}, '
+                f'deterministic: {args.deterministic}')
+    set_random_seed(seed, deterministic=args.deterministic)
+    cfg.seed = seed
+    meta['seed'] = seed
     meta['exp_name'] = osp.basename(args.config)
 
     model = build_model(

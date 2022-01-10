@@ -1,5 +1,20 @@
 # SSN: Shape Signature Networks for Multi-class Object Detection from Point Clouds
 
+## Abstract
+
+<!-- [ABSTRACT] -->
+
+Multi-class 3D object detection aims to localize and classify objects of multiple categories from point clouds. Due to the nature of point clouds, i.e. unstructured, sparse and noisy, some features benefit-ting multi-class discrimination are underexploited, such as shape information. In this paper, we propose a novel 3D shape signature to explore the shape information from point clouds. By incorporating operations of symmetry, convex hull and chebyshev fitting, the proposed shape sig-nature is not only compact and effective but also robust to the noise, which serves as a soft constraint to improve the feature capability of multi-class discrimination. Based on the proposed shape signature, we develop the shape signature networks (SSN) for 3D object detection, which consist of pyramid feature encoding part, shape-aware grouping heads and explicit shape encoding objective. Experiments show that the proposed method performs remarkably better than existing methods on two large-scale datasets. Furthermore, our shape signature can act as a plug-and-play component and ablation study shows its effectiveness and good scalability.
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/79644370/144024507-9c1f23c1-5e5a-49c8-b346-ff37e30adc3a.png" width="800"/>
+</div>
+
+<!-- [PAPER_TITLE: SSN: Shape Signature Networks for Multi-class Object Detection from Point Clouds] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/2004.02774] -->
+
 ## Introduction
 
 <!-- [ALGORITHM] -->

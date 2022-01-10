@@ -40,16 +40,16 @@ int roiaware_pool3d_gpu_backward(at::Tensor pts_idx_of_voxels,
 int points_in_boxes_cpu(at::Tensor boxes_tensor, at::Tensor pts_tensor,
                         at::Tensor pts_indices_tensor);
 
-int points_in_boxes_gpu(at::Tensor boxes_tensor, at::Tensor pts_tensor,
-                        at::Tensor box_idx_of_points_tensor);
+int points_in_boxes_part(at::Tensor boxes_tensor, at::Tensor pts_tensor,
+                         at::Tensor box_idx_of_points_tensor);
 
-int points_in_boxes_batch(at::Tensor boxes_tensor, at::Tensor pts_tensor,
-                          at::Tensor box_idx_of_points_tensor);
+int points_in_boxes_all(at::Tensor boxes_tensor, at::Tensor pts_tensor,
+                        at::Tensor box_idx_of_points_tensor);
 
 int roiaware_pool3d_gpu(at::Tensor rois, at::Tensor pts, at::Tensor pts_feature,
                         at::Tensor argmax, at::Tensor pts_idx_of_voxels,
                         at::Tensor pooled_features, int pool_method) {
-  // params rois: (N, 7) [x, y, z, w, l, h, ry] in LiDAR coordinate
+  // params rois: (N, 7) [x, y, z, x_size, y_size, z_size, ry] in LiDAR coordinate
   // params pts: (npoints, 3) [x, y, z] in LiDAR coordinate
   // params pts_feature: (npoints, C)
   // params argmax: (N, out_x, out_y, out_z, C)
@@ -127,10 +127,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("forward", &roiaware_pool3d_gpu, "roiaware pool3d forward (CUDA)");
   m.def("backward", &roiaware_pool3d_gpu_backward,
         "roiaware pool3d backward (CUDA)");
-  m.def("points_in_boxes_gpu", &points_in_boxes_gpu,
-        "points_in_boxes_gpu forward (CUDA)");
-  m.def("points_in_boxes_batch", &points_in_boxes_batch,
-        "points_in_boxes_batch forward (CUDA)");
+  m.def("points_in_boxes_part", &points_in_boxes_part,
+        "points_in_boxes_part forward (CUDA)");
+  m.def("points_in_boxes_all", &points_in_boxes_all,
+        "points_in_boxes_all forward (CUDA)");
   m.def("points_in_boxes_cpu", &points_in_boxes_cpu,
         "points_in_boxes_cpu forward (CPU)");
 }

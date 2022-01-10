@@ -1,5 +1,21 @@
 # FreeAnchor for 3D Object Detection
 
+## Abstract
+
+<!-- [ABSTRACT] -->
+
+Modern CNN-based object detectors assign anchors for ground-truth objects under the restriction of object-anchor Intersection-over-Unit (IoU). In this study, we propose a learning-to-match approach to break IoU restriction, allowing objects to match anchors in a flexible manner. Our approach, referred to as FreeAnchor, updates hand-crafted anchor assignment to “free" anchor matching by formulating detector training as a maximum likelihood estimation (MLE) procedure. FreeAnchor targets at learning features which best explain a class of objects in terms of both classification and localization. FreeAnchor is implemented by optimizing detection customized likelihood and can be fused with CNN-based detectors in a plug-and-play manner. Experiments on COCO demonstrate that FreeAnchor consistently outperforms the counterparts with significant margins.
+
+<!-- [IMAGE] -->
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/36950400/143866685-e3ac08bb-cd0c-4ada-ba8a-18e03cccdd0f.png" width="600"/>
+</div>
+
+<!-- [PAPER_TITLE: FreeAnchor: Learning to Match Anchors for Visual
+Object Detection] -->
+<!-- [PAPER_URL: https://arxiv.org/abs/1909.02466.pdf] -->
+
 ## Introduction
 
 <!-- [ALGORITHM] -->
@@ -49,8 +65,8 @@ model = dict(
             ranges=[[-50, -50, -1.8, 50, 50, -1.8]],
             scales=[1, 2, 4],
             sizes=[
-                [0.8660, 2.5981, 1.],  # 1.5/sqrt(3)
-                [0.5774, 1.7321, 1.],  # 1/sqrt(3)
+                [2.5981, 0.8660, 1.],  # 1.5 / sqrt(3)
+                [1.7321, 0.5774, 1.],  # 1 / sqrt(3)
                 [1., 1., 1.],
                 [0.4, 0.4, 1],
             ],
@@ -59,8 +75,7 @@ model = dict(
             reshape_out=True),
         assigner_per_size=False,
         diff_rad_by_sin=True,
-        dir_offset=0.7854,  # pi/4
-        dir_limit_offset=0,
+        dir_offset=-0.7854,  # -pi / 4
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=9),
         loss_cls=dict(
             type='FocalLoss',

@@ -108,6 +108,20 @@ def test_pointnet_sa_module_msg():
     assert new_features.shape == torch.Size([1, 48, 20])
     assert inds.shape == torch.Size([1, 20])
 
+    # test num_points = None
+    self = PointSAModuleMSG(
+        num_point=None,
+        radii=[0.2, 0.4],
+        sample_nums=[4, 8],
+        mlp_channels=[[12, 16], [12, 32]],
+        norm_cfg=dict(type='BN2d'),
+        use_xyz=False,
+        pool_mod='max').cuda()
+
+    # test forward
+    new_xyz, new_features, inds = self(xyz, features)
+    assert new_features.shape == torch.Size([1, 48, 1])
+
     # length of 'fps_mod' should be same as 'fps_sample_range_list'
     with pytest.raises(AssertionError):
         PointSAModuleMSG(

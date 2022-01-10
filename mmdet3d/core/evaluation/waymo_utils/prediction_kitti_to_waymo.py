@@ -114,7 +114,7 @@ class KITTI2Waymo(object):
                 instance_idx (int): Index of the instance to be converted.
 
             Returns:
-                :obj:`Object`: Predicted instance in waymo dataset \
+                :obj:`Object`: Predicted instance in waymo dataset
                     Object proto.
             """
             cls = kitti_result['name'][instance_idx]
