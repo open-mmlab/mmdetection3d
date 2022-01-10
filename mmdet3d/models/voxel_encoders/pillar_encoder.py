@@ -15,7 +15,6 @@ class PillarFeatureNet(nn.Module):
 
     The network prepares the pillar features and performs forward pass
     through PFNLayers.
-
     Args:
         in_channels (int, optional): Number of input features,
             either x, y, z or x, y, z, r. Defaults to 4.
@@ -54,7 +53,7 @@ class PillarFeatureNet(nn.Module):
         if with_cluster_center:
             in_channels += 3
         if with_voxel_center:
-            in_channels += 2
+            in_channels += 3
         if with_distance:
             in_channels += 1
         self._with_distance = with_distance
@@ -84,8 +83,10 @@ class PillarFeatureNet(nn.Module):
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = voxel_size[0]
         self.vy = voxel_size[1]
+        self.vz = voxel_size[2]
         self.x_offset = self.vx / 2 + point_cloud_range[0]
         self.y_offset = self.vy / 2 + point_cloud_range[1]
+        self.z_offset = self.vz / 2 + point_cloud_range[2]
         self.point_cloud_range = point_cloud_range
 
     @force_fp32(out_fp16=True)
@@ -97,7 +98,6 @@ class PillarFeatureNet(nn.Module):
                 (N, M, C).
             num_points (torch.Tensor): Number of points in each pillar.
             coors (torch.Tensor): Coordinates of each voxel.
-
         Returns:
             torch.Tensor: Features of pillars.
         """
@@ -114,21 +114,27 @@ class PillarFeatureNet(nn.Module):
         dtype = features.dtype
         if self._with_voxel_center:
             if not self.legacy:
-                f_center = torch.zeros_like(features[:, :, :2])
+                f_center = torch.zeros_like(features[:, :, :3])
                 f_center[:, :, 0] = features[:, :, 0] - (
                     coors[:, 3].to(dtype).unsqueeze(1) * self.vx +
                     self.x_offset)
                 f_center[:, :, 1] = features[:, :, 1] - (
                     coors[:, 2].to(dtype).unsqueeze(1) * self.vy +
                     self.y_offset)
+                f_center[:, :, 2] = features[:, :, 2] - (
+                    coors[:, 1].to(dtype).unsqueeze(1) * self.vz +
+                    self.z_offset)
             else:
-                f_center = features[:, :, :2]
+                f_center = features[:, :, :3]
                 f_center[:, :, 0] = f_center[:, :, 0] - (
                     coors[:, 3].type_as(features).unsqueeze(1) * self.vx +
                     self.x_offset)
                 f_center[:, :, 1] = f_center[:, :, 1] - (
                     coors[:, 2].type_as(features).unsqueeze(1) * self.vy +
                     self.y_offset)
+                f_center[:, :, 2] = f_center[:, :, 2] - (
+                    coors[:, 1].type_as(features).unsqueeze(1) * self.vz +
+                    self.z_offset)
             features_ls.append(f_center)
 
         if self._with_distance:
