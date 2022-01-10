@@ -6,7 +6,7 @@ This page provides specific tutorials about the usage of MMDetection3D for KITTI
 
 ## Prepare dataset
 
-You can download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d) and unzip all zip files.
+You can download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d) and unzip all zip files. Besides, the road planes could be downloaded from [HERE](https://drive.google.com/file/d/1d5mq0RXRnvHPVeKx6Q612z0YRO1t2wAp/view?usp=sharing), which are optional for data augmentation in the training for better performance.
 
 Like the general way to prepare dataset, it is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
 
@@ -29,6 +29,7 @@ mmdetection3d
 │   │   │   ├── image_2
 │   │   │   ├── label_2
 │   │   │   ├── velodyne
+│   │   │   ├── planes (optional)
 ```
 
 ### Create KITTI dataset
