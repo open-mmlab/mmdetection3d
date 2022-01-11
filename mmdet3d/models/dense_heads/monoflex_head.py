@@ -1,7 +1,7 @@
 import torch
 from torch import nn as nn
 
-from mmdet3d.core.utils import gen_ellip_gaussian_2D
+from mmdet3d.core.utils import get_ellip_gaussian_2D
 from mmdet3d.models.model_utils import EdgeFusionModule
 from mmdet3d.models.utils import (filter_outside_objs, get_keypoints,
                                   handle_proj_objs)
@@ -537,7 +537,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                         0, int(radius_y))
                     assert min(radius_x, radius_y) == 0
                     ind = gt_labels[j]
-                    gen_ellip_gaussian_2D(
+                    get_ellip_gaussian_2D(
                         center_heatmap_target[batch_id, ind],
                         [base_center2d_x_int, base_center2d_y_int], radius_x,
                         radius_y)
