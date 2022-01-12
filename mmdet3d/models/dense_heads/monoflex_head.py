@@ -25,7 +25,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 /
                 |   -----> conv ----->  2d bbox
                 |
-                |   -----> conv ----->  center offsets
+                |   -----> conv -- edge fusion -->  center offsets
                 |
                 |   -----> conv ----->  keypoints offsets
                 |
@@ -42,15 +42,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  \  -----> conv ----->  depth uncertainty
 
     Args:
-        num_classes (int): Number of categories excluding the background
-            category.
-        in_channels (int): Number of channels in the input feature map.
-        dim_channel (list[int]): indexes of dimension offset preds in
-            regression heatmap channels.
-        ori_channel (list[int]): indexes of orientation offset pred in
-            regression heatmap channels.
-        bbox_coder (:obj:`CameraInstance3DBoxes`): Bbox coder
-            for encoding and decoding boxes.
         use_edge_fusion (bool): Whether to use edge fusion module while
             feature extraction.
         edge_fusion_inds (list): Indices of feature to use edge fusion.
@@ -77,19 +68,14 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             Default: dict(type='L1Loss', loss_weight=0.1).
         loss_attr (dict, optional): Config of attribute classification loss.
             In MonoFlex, Default: None.
-        loss_centerness (dict): Config of centerness loss.
-            In MonoFlex, Default: None.
+        bbox_coder (dict, optional): Bbox coder for encoding and decoding boxes.
+            Default: dict(type='MonoFlexCoder', code_size=7).
         norm_cfg (dict, optional): Dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
         init_cfg (dict): Initialization config dict. Default: None.
     """  # noqa: E501
 
     def __init__(self,
-                 num_classes,
-                 in_channels,
-                 dim_channel,
-                 ori_channel,
-                 bbox_coder,
                  use_edge_fusion,
                  edge_fusion_inds,
                  edge_heatmap_ratio,
@@ -104,12 +90,11 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  loss_keypoints_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_combined_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_attr=None,
+                 bbox_coder=dict(type='MonoFlexCoder', code_size=7),
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  init_cfg=None,
                  **kwargs):
         super().__init__(
-            num_classes,
-            in_channels,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
             loss_dir=loss_dir,
@@ -117,14 +102,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             norm_cfg=norm_cfg,
             init_cfg=init_cfg,
             **kwargs)
-        self.dim_channel = dim_channel
-        self.ori_channel = ori_channel
         self.use_edge_fusion = use_edge_fusion
-        self.bbox_coder = build_bbox_coder(bbox_coder)
-        # index like (i, j)  i represents the feature
-        # extraction branch, j represents the feature reg branch
-        # group_reg_dims: ((4, ), (2, ), (20, ), (3, ), (3, ),
-        # (8, 8), (1, ), (1, ))
         self.edge_fusion_inds = edge_fusion_inds
         self.use_edge_fusion = use_edge_fusion
         self.filter_outside_objs = filter_outside_objs
@@ -136,6 +114,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         self.loss_direct_depth = build_loss(loss_direct_depth)
         self.loss_keypoints_depth = build_loss(loss_keypoints_depth)
         self.loss_combined_depth = build_loss(loss_combined_depth)
+        self.bbox_coder = build_bbox_coder(bbox_coder)
 
     def _init_edge_module(self):
         """Initialize edge fusion module for feature extraction."""
@@ -151,6 +130,11 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                                   1)
         self.conv_reg_prevs = nn.ModuleList()
         self.conv_regs = nn.ModuleList()
+        # group_reg_dims:
+        # ((4, ), (2, ), (20, ), (3, ), (3, ), (8, 8), (1, ), (1, ))
+        # index like (i, j):
+        # i represents the index of feature extraction branch.
+        # j represents the index of feature reg branch.
         for i in range(len(self.group_reg_dims)):
             reg_dims = self.group_reg_dims[i]
             reg_branch_channels = self.reg_branch[i]
@@ -257,6 +241,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         cls_feat = x
         reg_feat = x
 
+        # for monoflex, cls_convs and reg_convs are both empty
         for cls_layer in self.cls_convs:
             cls_feat = cls_layer(cls_feat)
         # clone the cls_feat for reusing the feature map afterwards
