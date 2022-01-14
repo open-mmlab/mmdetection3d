@@ -195,8 +195,12 @@ def test_points_img2cam():
 
 def test_generate_edge_indices():
 
-    img_metas = [dict(img_shape=[300, 400]), dict(img_shape=[500, 450])]
-    edge_indices_list = get_edge_indices(img_metas)
+    input_metas = [
+        dict(img_shape=(110, 110), pad_shape=(128, 128)),
+        dict(img_shape=(98, 110), pad_shape=(128, 128))
+    ]
+    downsample_ratio = 4
+    edge_indices_list = get_edge_indices(input_metas, downsample_ratio)
 
     assert edge_indices_list[0].shape[0] == 1396
     assert edge_indices_list[1].shape[0] == 1896
