@@ -1,10 +1,11 @@
 import torch
+from mmcv.cnn import xavier_init
 from torch import nn as nn
 
 from mmdet3d.core.utils import get_ellip_gaussian_2D
 from mmdet3d.models.model_utils import EdgeFusionModule
-from mmdet3d.models.utils import (filter_outside_objs, get_keypoints,
-                                  handle_proj_objs)
+from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
+                                  get_keypoints, handle_proj_objs)
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.builder import HEADS, build_loss
@@ -21,30 +22,32 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
     .. code-block:: none
 
-                 /  -----> conv ----->  cls
-                /
-                |   -----> conv ----->  2d bbox
+                / --> 3 x 3 conv --> 1 x 1 conv --> [edge fusion] --> cls
                 |
-                |   -----> conv -- edge fusion -->  center offsets
+                | --> 3 x 3 conv --> 1 x 1 conv --> 2d bbox
                 |
-                |   -----> conv ----->  keypoints offsets
+                | --> 3 x 3 conv --> 1 x 1 conv --> [edge fusion] --> 2d offsets
                 |
-                |   -----> conv ----->  keypoints uncertainty
+                | --> 3 x 3 conv --> 1 x 1 conv -->  keypoints offsets
+                |
+                | --> 3 x 3 conv --> 1 x 1 conv -->  keypoints uncertainty
         feature
-                |   -----> conv ----->  keypoints uncertainty
+                | --> 3 x 3 conv --> 1 x 1 conv -->  keypoints uncertainty
                 |
-                |   -----> conv ----->  3d dimensions
+                | --> 3 x 3 conv --> 1 x 1 conv -->   3d dimensions
                 |
-                |   -----> conv ----->  orientations
+                |                  |--- 1 x 1 conv -->  ori cls
+                | --> 3 x 3 conv --|
+                |                  |--- 1 x 1 conv -->  ori offsets
                 |
-                |   -----> conv ----->  depth
-                \
-                 \  -----> conv ----->  depth uncertainty
+                | --> 3 x 3 conv --> 1 x 1 conv -->  depth
+                |
+                \ --> 3 x 3 conv --> 1 x 1 conv -->  depth uncertainty
 
     Args:
         use_edge_fusion (bool): Whether to use edge fusion module while
             feature extraction.
-        edge_fusion_inds (list): Indices of feature to use edge fusion.
+        edge_fusion_inds (list[tuple]): Indices of feature to use edge fusion.
         edge_heatmap_ratio (float): Ratio of generating target heatmap.
         filter_outside_objs (bool, optional): Whether to filter the
             outside objects. Default: True.
@@ -76,13 +79,15 @@ class MonoFlexHead(AnchorFreeMono3DHead):
     """  # noqa: E501
 
     def __init__(self,
+                 num_classes,
+                 in_channels,
                  use_edge_fusion,
                  edge_fusion_inds,
                  edge_heatmap_ratio,
                  filter_outside_objs=True,
-                 loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0),
-                 loss_bbox=dict(type='IOULoss', loss_weight=0.1),
-                 loss_dir=dict(type='MultibinLoss', loss_weight=0.1),
+                 loss_cls=dict(type='GaussianFocalLoss', loss_weight=1.0),
+                 loss_bbox=dict(type='IoULoss', loss_weight=0.1),
+                 loss_dir=dict(type='MultiBinLoss', loss_weight=0.1),
                  loss_keypoints=dict(type='L1Loss', loss_weight=0.1),
                  loss_dims=dict(type='L1Loss', loss_weight=0.1),
                  loss_offsets2d=dict(type='L1Loss', loss_weight=0.1),
@@ -91,10 +96,15 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                  loss_combined_depth=dict(type='L1Loss', loss_weight=0.1),
                  loss_attr=None,
                  bbox_coder=dict(type='MonoFlexCoder', code_size=7),
-                 norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
+                 norm_cfg=dict(type='BN'),
                  init_cfg=None,
+                 init_bias=-2.19,
                  **kwargs):
+        self.use_edge_fusion = use_edge_fusion
+        self.edge_fusion_inds = edge_fusion_inds
         super().__init__(
+            num_classes,
+            in_channels,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
             loss_dir=loss_dir,
@@ -102,11 +112,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             norm_cfg=norm_cfg,
             init_cfg=init_cfg,
             **kwargs)
-        self.use_edge_fusion = use_edge_fusion
-        self.edge_fusion_inds = edge_fusion_inds
-        self.use_edge_fusion = use_edge_fusion
         self.filter_outside_objs = filter_outside_objs
         self.edge_heatmap_ratio = edge_heatmap_ratio
+        self.init_bias = init_bias
         self.loss_dir = build_loss(loss_dir)
         self.loss_keypoints = build_loss(loss_keypoints)
         self.loss_dims = build_loss(loss_dims)
@@ -118,8 +126,25 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
     def _init_edge_module(self):
         """Initialize edge fusion module for feature extraction."""
-        self.edge_fusion_module = EdgeFusionModule(self.num_classes,
-                                                   self.feat_channels)
+        self.edge_fuse_cls = EdgeFusionModule(self.num_classes, 256)
+        print(self.edge_fusion_inds)
+        for i in range(len(self.edge_fusion_inds)):
+            reg_inds, out_inds = self.edge_fusion_inds[i]
+            out_channels = self.group_reg_dims[reg_inds][out_inds]
+            fusion_layer = EdgeFusionModule(out_channels, 256)
+            layer_name = f'edge_fuse_reg_{reg_inds}_{out_inds}'
+            self.add_module(layer_name, fusion_layer)
+
+    def init_weights(self):
+        """Initialize weights."""
+        super().init_weights()
+        self.conv_cls.bias.data.fill_(self.init_bias)
+        xavier_init(self.conv_regs[4][0], gain=0.01)
+        xavier_init(self.conv_regs[7][0], gain=0.01)
+        for m in self.conv_regs.modules():
+            if isinstance(m, nn.Conv2d):
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
     def _init_predictor(self):
         """Initialize predictor layers of the head."""
@@ -128,13 +153,12 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             conv_strides=(1, ) * len(self.cls_branch))
         self.conv_cls = nn.Conv2d(self.cls_branch[-1], self.cls_out_channels,
                                   1)
+        # init regression head
         self.conv_reg_prevs = nn.ModuleList()
+        # init output head
         self.conv_regs = nn.ModuleList()
         # group_reg_dims:
         # ((4, ), (2, ), (20, ), (3, ), (3, ), (8, 8), (1, ), (1, ))
-        # index like (i, j):
-        # i represents the index of feature extraction branch.
-        # j represents the index of feature reg branch.
         for i in range(len(self.group_reg_dims)):
             reg_dims = self.group_reg_dims[i]
             reg_branch_channels = self.reg_branch[i]
@@ -156,8 +180,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
     def _init_layers(self):
         """Initialize layers of the head."""
-        super()._init_layers()
-        self._init_edge_module()
+        self._init_predictor()
+        if self.use_edge_fusion:
+            self._init_edge_module()
 
     def forward_train(self, x, input_metas, gt_bboxes, gt_labels, gt_bboxes_3d,
                       gt_labels_3d, centers2d, depths, attr_labels,
@@ -238,43 +263,50 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         Returns:
             tuple: Scores for each class, bbox predictions.
         """
-        cls_feat = x
-        reg_feat = x
+        img_h, img_w = input_metas[0]['pad_shape'][:2]
+        bs, _, feat_h, feat_w = x.shape
+        downsample_ratio = img_h / feat_h
 
-        # for monoflex, cls_convs and reg_convs are both empty
-        for cls_layer in self.cls_convs:
-            cls_feat = cls_layer(cls_feat)
-        # clone the cls_feat for reusing the feature map afterwards
-        clone_cls_feat = cls_feat.clone()
         for conv_cls_prev_layer in self.conv_cls_prev:
-            clone_cls_feat = conv_cls_prev_layer(clone_cls_feat)
-        cls_score = self.conv_cls(clone_cls_feat)
+            cls_feat = conv_cls_prev_layer(x)
+        out_cls = self.conv_cls(cls_feat)
 
-        for reg_layer in self.reg_convs:
-            reg_feat = reg_layer(reg_feat)
+        if self.use_edge_fusion:
+            # calculate the edge indices for the batch data
+            edge_indices_list = get_edge_indices(
+                input_metas, downsample_ratio, device=x.device)
+            edge_lens = [
+                edge_indices.shape[0] for edge_indices in edge_indices_list
+            ]
+            max_edge_len = max(edge_lens)
+            edge_indices = x.new_zeros((bs, max_edge_len, 2), dtype=torch.long)
+            for i in range(bs):
+                edge_indices[i, :edge_lens[i]] = edge_indices_list[i]
+            # cls feature map edge fusion
+            out_cls = self.edge_fuse_cls(cls_feat, out_cls, edge_indices,
+                                         edge_lens, feat_h, feat_w)
+
         bbox_pred = []
+
         for i in range(len(self.group_reg_dims)):
-            # clone the reg_feat for reusing the feature map afterwards
-            clone_reg_feat = reg_feat.clone()
+            reg_feat = x.clone()
+            # feature regression head
             if len(self.reg_branch[i]) > 0:
                 for conv_reg_prev_layer in self.conv_reg_prevs[i]:
-                    clone_reg_feat = conv_reg_prev_layer(clone_reg_feat)
+                    reg_feat = conv_reg_prev_layer(reg_feat)
 
             for j, conv_reg in enumerate(self.conv_regs[i]):
-                out_reg = conv_reg(clone_reg_feat)
+                out_reg = conv_reg(reg_feat)
                 #  Use Edge Fusion Module
-                if self.use_edge_fusion and i == self.edge_fusion_inds[
-                        0] and j == self.edge_fusion_inds[1]:
-
-                    fusion_featues = [clone_reg_feat, cls_feat]
-                    fused_features = [out_reg, cls_score]
-                    cls_score, out_reg = self.edge_fusion_module(
-                        fusion_featues, fused_features, input_metas)
-
+                if self.use_edge_fusion and (i, j) in self.edge_fusion_inds:
+                    # reg feature map edge fusion
+                    out_reg = getattr(self, 'edge_fuse_reg_{}_{}'.format(
+                        i, j))(reg_feat, out_reg, edge_indices, edge_lens,
+                               feat_h, feat_w)
                 bbox_pred.append(out_reg)
 
         bbox_pred = torch.cat(bbox_pred, dim=1)
-        cls_score = cls_score.sigmoid()  # turn to 0-1
+        cls_score = out_cls.sigmoid()  # turn to 0-1
         cls_score = cls_score.clamp(min=1e-4, max=1 - 1e-4)
 
         return cls_score, bbox_pred
