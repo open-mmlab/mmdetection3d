@@ -202,8 +202,8 @@ def test_generate_edge_indices():
     downsample_ratio = 4
     edge_indices_list = get_edge_indices(input_metas, downsample_ratio)
 
-    assert edge_indices_list[0].shape[0] == 1396
-    assert edge_indices_list[1].shape[0] == 1896
+    assert edge_indices_list[0].shape[0] == 108
+    assert edge_indices_list[1].shape[0] == 102
 
 
 def test_truncation_hanlde():
