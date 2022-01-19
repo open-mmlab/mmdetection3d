@@ -5,6 +5,9 @@ Models:
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 16.4
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -19,6 +22,9 @@ Models:
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 17.3
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -33,6 +39,9 @@ Models:
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 24.0
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -47,6 +56,9 @@ Models:
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 15.9
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
@@ -61,6 +73,9 @@ Models:
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 13.0
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
