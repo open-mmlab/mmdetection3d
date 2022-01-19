@@ -154,7 +154,7 @@ def get_kitti_image_info(path,
                          label_info=True,
                          velodyne=False,
                          calib=False,
-                         plane=False,
+                         with_plane=False,
                          image_ids=7481,
                          extend_matrix=True,
                          num_worker=8,
@@ -263,7 +263,7 @@ def get_kitti_image_info(path,
             calib_info['Tr_imu_to_velo'] = Tr_imu_to_velo
             info['calib'] = calib_info
 
-        if plane:
+        if with_plane:
             plane_path = get_plane_path(idx, path, training, relative_path)
             if relative_path:
                 plane_path = str(root_path / plane_path)

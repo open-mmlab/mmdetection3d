@@ -116,7 +116,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
-        plane=True,
+        with_plane=True,
         image_ids=train_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_train, relative_path)
@@ -128,7 +128,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
-        plane=True,
+        with_plane=True,
         image_ids=val_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_val, relative_path)
@@ -145,7 +145,7 @@ def create_kitti_info_file(data_path,
         label_info=False,
         velodyne=True,
         calib=True,
-        plane=False,
+        with_plane=False,
         image_ids=test_img_ids,
         relative_path=relative_path)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
