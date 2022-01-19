@@ -127,7 +127,6 @@ class MonoFlexHead(AnchorFreeMono3DHead):
     def _init_edge_module(self):
         """Initialize edge fusion module for feature extraction."""
         self.edge_fuse_cls = EdgeFusionModule(self.num_classes, 256)
-        print(self.edge_fusion_inds)
         for i in range(len(self.edge_fusion_inds)):
             reg_inds, out_inds = self.edge_fusion_inds[i]
             out_channels = self.group_reg_dims[reg_inds][out_inds]
@@ -264,7 +263,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             tuple: Scores for each class, bbox predictions.
         """
         img_h, img_w = input_metas[0]['pad_shape'][:2]
-        bs, _, feat_h, feat_w = x.shape
+        batch_size, _, feat_h, feat_w = x.shape
         downsample_ratio = img_h / feat_h
 
         for conv_cls_prev_layer in self.conv_cls_prev:
@@ -279,8 +278,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 edge_indices.shape[0] for edge_indices in edge_indices_list
             ]
             max_edge_len = max(edge_lens)
-            edge_indices = x.new_zeros((bs, max_edge_len, 2), dtype=torch.long)
-            for i in range(bs):
+            edge_indices = x.new_zeros((batch_size, max_edge_len, 2),
+                                       dtype=torch.long)
+            for i in range(batch_size):
                 edge_indices[i, :edge_lens[i]] = edge_indices_list[i]
             # cls feature map edge fusion
             out_cls = self.edge_fuse_cls(cls_feat, out_cls, edge_indices,
@@ -364,6 +364,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                        topk=100,
                        kernel=3):
         """Transform outputs into detections raw bbox predictions.
+
         Args:
             class_score (Tensor): Center predict heatmap,
                 shape (B, num_classes, H, W).
@@ -377,6 +378,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 Default 100.
             kernel (int, optional): Max pooling kernel for extract local
                 maximum pixels. Default 3.
+
         Returns:
             tuple[torch.Tensor]: Decoded output of SMOKEHead, containing
                the following Tensors:
@@ -388,7 +390,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     shape (B, k)
         """
         img_h, img_w = input_metas[0]['pad_shape'][:2]
-        bs, _, feat_h, feat_w = cls_score.shape
+        batch_size, _, feat_h, feat_w = cls_score.shape
 
         downsample_ratio = img_h / feat_h
         center_heatmap_pred = get_local_maximum(cls_score, kernel=kernel)
@@ -412,14 +414,15 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             preds['orientations']).unsqueeze(-1)
         pred_dims = preds['dimensions']
         batch_bboxes = torch.cat((pred_locations, pred_dims, pred_yaws), dim=1)
-        batch_bboxes = batch_bboxes.view(bs, -1, self.bbox_code_size)
+        batch_bboxes = batch_bboxes.view(batch_size, -1, self.bbox_code_size)
         return batch_bboxes, batch_scores, batch_topk_labels
 
     def get_predictions(self, pred_reg, labels3d, centers2d, reg_mask,
-                        batch_idxs, input_metas, downsample_ratio):
+                        batch_indices, input_metas, downsample_ratio):
         """Prepare predictions for computing loss.
+
         Args:
-            pre_reg (Tensor): Box regression map.
+            pred_reg (Tensor): Box regression map.
                 shape (B, channel, H , W).
             labels3d (Tensor): Labels of each 3D box.
                 shape (B * max_objs, )
@@ -427,11 +430,12 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 center on image. shape (N, 2)
             reg_mask (Tensor): Indexes of the existence of the 3D box.
                 shape (B * max_objs, )
-            batch_idxs (Tenosr): Batch indices of the 3D box.
+            batch_indices (Tenosr): Batch indices of the 3D box.
                 shape (N, 3)
             input_metas (list[dict]): Meta information of each image,
                 e.g., image size, scaling factor, etc.
             downsample_ratio (int): The stride of feature map.
+
         Returns:
             dict: The predictions for computing loss.
         """
@@ -441,8 +445,8 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             centers2d.new_tensor(input_meta['cam2img'])
             for input_meta in input_metas
         ])
-        # (bs, 4, 4) -> (N, 4, 4)
-        cam2imgs = cam2imgs[batch_idxs, :, :]
+        # (batch_size, 4, 4) -> (N, 4, 4)
+        cam2imgs = cam2imgs[batch_indices, :, :]
         centers2d_inds = centers2d[:, 1] * w + centers2d[:, 0]
         centers2d_inds = centers2d_inds.view(batch, -1)
         pred_regression = transpose_and_gather_feat(pred_reg, centers2d_inds)
@@ -476,6 +480,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             img_shape (tuple[int]): Image shape in [h, w] format.
             input_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
+
         Returns:
             tuple[Tensor, dict]: The Tensor value is the targets of
                 center heatmap, the dict has components below:
@@ -485,7 +490,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                     shape (N, )
               - reg_mask (Tensor): Mask of the existence of the 3D box.
                     shape (B * max_objs, )
-              - batch_idxs (Tensor): Batch id of the 3D box.
+              - batch_indices (Tensor): Batch id of the 3D box.
                     shape (N, )
               - depth_target (Tensor): Depth target of each 3D box.
                     shape (N, )
@@ -505,7 +510,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         """
 
         img_h, img_w = img_shape[:2]
-        bs, _, feat_h, feat_w = feat_shape
+        batch_size, _, feat_h, feat_w = feat_shape
 
         width_ratio = float(feat_w / img_w)  # 1/4
         height_ratio = float(feat_h / img_h)  # 1/4
@@ -528,9 +533,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             get_keypoints(gt_bboxes_3d_list, centers2d_list, input_metas)
 
         center_heatmap_target = gt_bboxes_list[-1].new_zeros(
-            [bs, self.num_classes, feat_h, feat_w])
+            [batch_size, self.num_classes, feat_h, feat_w])
 
-        for batch_id in range(bs):
+        for batch_id in range(batch_size):
             # project gt_bboxes from input image to feat map
             gt_bboxes = gt_bboxes_list[batch_id] * width_ratio
             gt_labels = gt_labels_list[batch_id]
@@ -574,12 +579,14 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         avg_factor = max(1, center_heatmap_target.eq(1).sum())
         num_ctrs = [centers2d.shape[0] for centers2d in centers2d_list]
         max_objs = max(num_ctrs)
-        batch_idxs = [
-            centers2d_list[0].new_full((num_ctrs[i], ), i) for i in range(bs)
+        batch_indices = [
+            centers2d_list[0].new_full((num_ctrs[i], ), i)
+            for i in range(batch_size)
         ]
-        batch_idxs = torch.cat(batch_idxs, dim=0)
+        batch_indices = torch.cat(batch_indices, dim=0)
         reg_mask = torch.zeros(
-            (bs, max_objs), dtype=torch.bool).to(base_centers2d_list[0].device)
+            (batch_size, max_objs),
+            dtype=torch.bool).to(base_centers2d_list[0].device)
         gt_bboxes_3d = input_metas['box_type_3d'].cat(gt_bboxes_3d_list)
         gt_bboxes_3d = gt_bboxes_3d.to(base_centers2d_list[0].device)
 
@@ -587,9 +594,9 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         orienations_target = self.bbox_coder.encode(gt_bboxes_3d)
 
         batch_base_centers2d = base_centers2d_list[0].new_zeros(
-            (bs, max_objs, 2))
+            (batch_size, max_objs, 2))
 
-        for i in range(bs):
+        for i in range(batch_size):
             reg_mask[i, :num_ctrs[i]] = 1
             batch_base_centers2d[i, :num_ctrs[i]] = base_centers2d_list[i]
 
@@ -615,7 +622,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             base_centers2d_target=batch_base_centers2d.int(),
             labels3d=labels_3d,
             reg_mask=flatten_reg_mask,
-            batch_idxs=batch_idxs,
+            batch_indices=batch_indices,
             bboxes2d_target=bboxes2d_target,
             depth_target=depths,
             keypoints2d_target=keypoints2d_target,
@@ -666,6 +673,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             gt_bboxes_ignore (None | list[Tensor]): Specify which bounding
                 boxes can be ignored when computing the loss.
                 Default: None.
+
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
@@ -687,7 +695,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             labels3d=target_labels['labels3d'],
             centers2d=target_labels['base_centers2d_target'],
             reg_mask=target_labels['reg_mask'],
-            batch_idxs=target_labels['batch_idxs'],
+            batch_indices=target_labels['batch_indices'],
             input_metas=input_metas,
             downsample_ratio=target_labels['downsample_ratio'])
 
