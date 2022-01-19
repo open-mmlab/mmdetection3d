@@ -113,7 +113,7 @@ class RandomFlip3D(RandomFlip):
         """
         assert direction in ['horizontal', 'vertical']
         # for semantic segmentation task, only points will be flipped.
-        if 'box_type_3d' not in input_dict:
+        if 'bbox3d_fields' not in input_dict:
             input_dict['points'].flip(direction)
             return
         if len(input_dict['bbox3d_fields']) == 0:  # test mode
