@@ -8,15 +8,15 @@ class EdgeFusionModule(BaseModule):
     """Edge Fusion Module for feature map.
 
     Args:
-        out_channels (int): Number of channels of output.
-        feat_channels (int): Number of channels in feature map
+        out_channels (int): The number of output channels.
+        feat_channels (int): The number of channels in feature map
             during edge feature fusion.
         kernel_size (int, optional): Kernel size of convolution.
             Default: 3.
         act_cfg (dict, optional): Config of activation.
             Default: dict(type='ReLU').
         norm_cfg (dict, optional): Config of normalization.
-            Default: dict(type='BN')).
+            Default: dict(type='BN1d')).
     """
 
     def __init__(self,
@@ -55,21 +55,20 @@ class EdgeFusionModule(BaseModule):
         Returns:
             torch.Tensor: Fused feature maps.
         """
-        bs = features.shape[0]
+        batch_size = features.shape[0]
         # normalize
-        grid_edge_indices = edge_indices.view(bs, -1, 1, 2).float()
+        grid_edge_indices = edge_indices.view(batch_size, -1, 1, 2).float()
         grid_edge_indices[..., 0] = \
             grid_edge_indices[..., 0] / (output_w - 1) * 2 - 1
         grid_edge_indices[..., 1] = \
             grid_edge_indices[..., 1] / (output_h - 1) * 2 - 1
 
-        # apply edge fusion for both offset and heatmap
+        # apply edge fusion
         edge_features = F.grid_sample(
             features, grid_edge_indices, align_corners=True).squeeze(-1)
-        print(edge_features.shape)
         edge_output = self.edge_convs(edge_features)
 
-        for k in range(bs):
+        for k in range(batch_size):
             edge_indice_k = edge_indices[k, :edge_lens[k]]
             fused_features[k, :, edge_indice_k[:, 1],
                            edge_indice_k[:, 0]] += edge_output[
