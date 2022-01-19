@@ -710,10 +710,10 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         # keypoints loss, the keypoints in predictions and target are all
         # local coordinates. Check the mask dtype should be bool, not int
         # or float to ensure the indexing is bool index
-        keypoitns2d_mask = target_labels['keypoints2d_mask']
+        keypoints2d_mask = target_labels['keypoints2d_mask']
         loss_keypoints = self.loss_keypoints(
-            preds['keypoints2d'][keypoitns2d_mask],
-            target_labels['keypoints2d_target'][keypoitns2d_mask])
+            preds['keypoints2d'][keypoints2d_mask],
+            target_labels['keypoints2d_target'][keypoints2d_mask])
 
         # orientations loss
         loss_dir = self.loss_dir(preds['orientations'],
