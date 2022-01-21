@@ -81,16 +81,16 @@ class MonoFlexCoder(BaseBBoxCoder):
             torch.Tensor: Targets of orientations.
         """
         local_yaw = gt_bboxes_3d.local_yaw
-
         # encode local yaw (-pi ~ pi) to multibin format
-        encode_local_yaw = np.zeros(self.num_dir_bins * 2)
+        encode_local_yaw = local_yaw.new_zeros(
+            [local_yaw.shape[0], self.num_dir_bins * 2])
         bin_size = 2 * np.pi / self.num_dir_bins
         margin_size = bin_size * self.bin_margin
 
-        bin_centers = self.bin_centers
+        bin_centers = local_yaw.new_tensor(self.bin_centers)
         range_size = bin_size / 2 + margin_size
 
-        offsets = local_yaw - bin_centers.unsqueeze(0)
+        offsets = local_yaw.unsqueeze(1) - bin_centers.unsqueeze(0)
         offsets[offsets > np.pi] = offsets[offsets > np.pi] - 2 * np.pi
         offsets[offsets < -np.pi] = offsets[offsets < -np.pi] + 2 * np.pi
 
@@ -98,7 +98,7 @@ class MonoFlexCoder(BaseBBoxCoder):
             offset = offsets[:, i]
             inds = abs(offset) < range_size
             encode_local_yaw[inds, i] = 1
-            encode_local_yaw[inds, i + self.num_dir_bins] = offset
+            encode_local_yaw[inds, i + self.num_dir_bins] = offset[inds]
 
         orientation_target = encode_local_yaw
 
@@ -164,7 +164,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         pred_direct_depth_uncertainty = bbox[:, 49:50].squeeze(-1)
 
         # 2 dimension of offsets x keypoints (8 corners + top/bottom center)
-        pred_keypoints2d = bbox[:, 6:26]
+        pred_keypoints2d = bbox[:, 6:26].reshape(-1, 10, 2)
 
         # 1 dimension for depth offsets
         pred_direct_depth_offsets = bbox[:, 48:49].squeeze(-1)
@@ -273,11 +273,11 @@ class MonoFlexCoder(BaseBBoxCoder):
             raise NotImplementedError
         # (N, 3)
         centers2d_img = \
-            torch.cat(centers2d_img, depths.unsqueeze(-1), dim=1)
+            torch.cat((centers2d_img, depths.unsqueeze(-1)), dim=1)
         # (N, 4, 1)
         centers2d_extend = \
             torch.cat((centers2d_img, centers2d_img.new_ones(N, 1)),
-                      dim=1).unqueeze(-1)
+                      dim=1).unsqueeze(-1)
         locations = torch.matmul(cam2imgs_inv, centers2d_extend).squeeze(-1)
 
         return locations[:, :3]
@@ -450,15 +450,15 @@ class MonoFlexCoder(BaseBBoxCoder):
         local_yaws = orientations
         yaws = local_yaws + rays
 
-        larger_idx = (yaws > np.pi).nonzero()
-        small_idx = (yaws < -np.pi).nonzero()
+        larger_idx = (yaws > np.pi).nonzero(as_tuple=False)
+        small_idx = (yaws < -np.pi).nonzero(as_tuple=False)
         if len(larger_idx) != 0:
             yaws[larger_idx] -= 2 * np.pi
         if len(small_idx) != 0:
             yaws[small_idx] += 2 * np.pi
 
-        larger_idx = (local_yaws > np.pi).nonzero()
-        small_idx = (local_yaws < -np.pi).nonzero()
+        larger_idx = (local_yaws > np.pi).nonzero(as_tuple=False)
+        small_idx = (local_yaws < -np.pi).nonzero(as_tuple=False)
         if len(larger_idx) != 0:
             local_yaws[larger_idx] -= 2 * np.pi
         if len(small_idx) != 0:
@@ -491,7 +491,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return bboxes2d
 
-    def combine_depths(depth, depth_uncertainty):
+    def combine_depths(self, depth, depth_uncertainty):
         """Combine all the prediced depths with depth uncertainty.
 
         Args:
