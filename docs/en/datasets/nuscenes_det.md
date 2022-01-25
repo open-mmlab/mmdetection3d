@@ -77,7 +77,7 @@ Next, we will elaborate on the details recorded in these info files.
         - info['sweeps'][i]['sensor2lidar_translation']: The translation from the current sensor (for collecting the sweep data) to lidar. (1x3 list)
         - info['sweeps'][i]['sensor2lidar_rotation']: The rotation from the current sensor (for collecting the sweep data) to lidar. (1x4 list in the quaternion format)
     - info['cams']: Cameras calibration information. It contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`.
-    Each dictionary contains detailed information following the above way for each sweep data (has the same keys for each information as above).
+    Each dictionary contains detailed information following the above way for each sweep data (has the same keys for each information as above). In addition, each camera has a key `'cam_intrinsic'` for recording the intrinsic parameters when projecting 3D points to each image plane.
     - info['lidar2ego_translation']: The translation from lidar to ego vehicle. (1x3 list)
     - info['lidar2ego_rotation']: The rotation from lidar to ego vehicle. (1x4 list in the quaternion format)
     - info['ego2global_translation']: The translation from the ego vehicle to global coordinates. (1x3 list)
