@@ -21,7 +21,9 @@ Multi-class 3D object detection aims to localize and classify objects of multipl
 
 We implement PointPillars with Shape-aware grouping heads used in the SSN and provide the results and checkpoints on the nuScenes and Lyft dataset.
 
-```
+## Citation
+
+```latex
 @inproceedings{zhu2020ssn,
   title={SSN: Shape Signature Networks for Multi-class Object Detection from Point Clouds},
   author={Zhu, Xinge and Ma, Yuexin and Wang, Tai and Xu, Yan and Shi, Jianping and Lin, Dahua},
@@ -30,7 +32,7 @@ We implement PointPillars with Shape-aware grouping heads used in the SSN and pr
 }
 ```
 
-## Results
+## Results and models
 
 ### NuScenes
 

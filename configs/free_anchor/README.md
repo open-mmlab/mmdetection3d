@@ -24,7 +24,10 @@ We implement FreeAnchor in 3D detection systems and provide their first results 
 With the implemented `FreeAnchor3DHead`, a PointPillar detector with a big backbone (e.g., RegNet-3.2GF) achieves top performance
 on the nuScenes benchmark.
 
-```
+
+## Citation
+
+```latex
 @inproceedings{zhang2019freeanchor,
   title   =  {{FreeAnchor}: Learning to Match Anchors for Visual Object Detection},
   author  =  {Zhang, Xiaosong and Wan, Fang and Liu, Chang and Ji, Rongrong and Ye, Qixiang},
@@ -91,7 +94,7 @@ model = dict(
         pts=dict(code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.25, 0.25])))
 ```
 
-## Results
+## Results and models
 
 ### PointPillars
 

@@ -23,7 +23,9 @@ We implement a monocular 3D detector ImVoxelNet and provide its results and chec
 Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNet authors
 [repo](https://github.com/saic-vul/imvoxelnet) (based on mmdetection3d).
 
-```
+## Citation
+
+```latex
 @article{rukhovich2021imvoxelnet,
   title={ImVoxelNet: Image to Voxels Projection for Monocular and Multi-View General-Purpose 3D Object Detection},
   author={Danila Rukhovich, Anna Vorontsova, Anton Konushin},
@@ -32,7 +34,7 @@ Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNe
 }
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

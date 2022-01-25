@@ -21,7 +21,9 @@ LiDAR-based or RGB-D-based object detection is used in numerous applications, ra
 
 We implement SECOND and provide the results and checkpoints on KITTI dataset.
 
-```
+## Citation
+
+```latex
 @article{yan2018second,
   title={Second: Sparsely embedded convolutional detection},
   author={Yan, Yan and Mao, Yuxing and Li, Bo},
@@ -31,7 +33,7 @@ We implement SECOND and provide the results and checkpoints on KITTI dataset.
 }
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

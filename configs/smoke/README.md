@@ -21,7 +21,9 @@ Estimating 3D orientation and translation of objects is essential for infrastruc
 
 We implement SMOKE and provide the results and checkpoints on KITTI dataset.
 
-```
+## Citation
+
+```latex
 @inproceedings{liu2020smoke,
   title={Smoke: Single-stage monocular 3d object detection via keypoint estimation},
   author={Liu, Zechen and Wu, Zizhang and T{\'o}th, Roland},
@@ -31,7 +33,7 @@ We implement SMOKE and provide the results and checkpoints on KITTI dataset.
 }
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

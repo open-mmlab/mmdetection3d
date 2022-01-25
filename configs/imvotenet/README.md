@@ -21,7 +21,9 @@
 
 We implement ImVoteNet and provide the result and checkpoints on SUNRGBD.
 
-```
+## Citation
+
+```latex
 @inproceedings{qi2020imvotenet,
   title={Imvotenet: Boosting 3D object detection in point clouds with image votes},
   author={Qi, Charles R and Chen, Xinlei and Litany, Or and Guibas, Leonidas J},
@@ -31,7 +33,7 @@ We implement ImVoteNet and provide the result and checkpoints on SUNRGBD.
 }
 ```
 
-## Results
+## Results and models
 
 ### SUNRGBD-2D (Stage 1, image branch pre-train)
 

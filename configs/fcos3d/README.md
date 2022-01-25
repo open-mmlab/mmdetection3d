@@ -24,7 +24,11 @@ It serves as a baseline built on top of mmdetection and mmdetection3d for 3D det
 
 Currently we first support the benchmark on the large-scale nuScenes dataset, which achieved 1st place out of all the vision-only methods in the [nuScenes 3D detecton challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Camera) of NeurIPS 2020.
 
-```
+![demo image](../../resources/browse_dataset_mono.png)
+
+## Citation
+
+```latex
 @inproceedings{wang2021fcos3d,
 	title={{FCOS3D: Fully} Convolutional One-Stage Monocular 3D Object Detection},
 	author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
@@ -39,8 +43,6 @@ Currently we first support the benchmark on the large-scale nuScenes dataset, wh
   year      =  {2019}
 }
 ```
-
-![demo image](../../resources/browse_dataset_mono.png)
 
 ## Usage
 
@@ -67,7 +69,7 @@ Due to the scale and measurements of depth is different from those of other regr
 
 We also provide visualization functions to show the monocular 3D detection results. Simply follow the [documentation](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#test-existing-models-on-standard-datasets) and use the `single-gpu testing` command. You only need to add the `--show` flag and specify `--show-dir` to store the visualization results.
 
-## Results
+## Results and models
 
 ### NuScenes
 

@@ -19,7 +19,9 @@ Many recent works on 3D object detection have focused on designing neural networ
 
 We implement MVX-Net and provide its results and models on KITTI dataset.
 
-```
+## Citation
+
+```latex
 @inproceedings{sindagi2019mvx,
   title={MVX-Net: Multimodal voxelnet for 3D object detection},
   author={Sindagi, Vishwanath A and Zhou, Yin and Tuzel, Oncel},
@@ -31,7 +33,7 @@ We implement MVX-Net and provide its results and models on KITTI dataset.
 
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

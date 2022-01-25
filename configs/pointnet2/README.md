@@ -21,7 +21,9 @@ Few prior works study deep learning on point sets. PointNet by Qi et al. is a pi
 
 We implement PointNet++ and provide the result and checkpoints on ScanNet and S3DIS datasets.
 
-```
+## Citation
+
+```latex
 @inproceedings{qi2017pointnet++,
   title={PointNet++ deep hierarchical feature learning on point sets in a metric space},
   author={Qi, Charles R and Yi, Li and Su, Hao and Guibas, Leonidas J},
@@ -33,7 +35,7 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 
 **Notice**: The original PointNet++ paper used step learning rate schedule. We discovered that cosine schedule achieves much better results and adopt it in our implementations. We also use a larger `weight_decay` factor because we find it consistently improves the performance.
 
-## Results
+## Results and models
 
 ### ScanNet
 

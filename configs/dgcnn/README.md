@@ -21,7 +21,9 @@ Point clouds provide a flexible geometric representation suitable for countless 
 
 We implement DGCNN and provide the results and checkpoints on S3DIS dataset.
 
-```
+## Citation
+
+```latex
 @article{dgcnn,
   title={Dynamic Graph CNN for Learning on Point Clouds},
   author={Wang, Yue and Sun, Yongbin and Liu, Ziwei and Sarma, Sanjay E. and Bronstein, Michael M. and Solomon, Justin M.},
@@ -32,7 +34,7 @@ We implement DGCNN and provide the results and checkpoints on S3DIS dataset.
 
 **Notice**: We follow the implementations in the original DGCNN paper and a PyTorch implementation of DGCNN [code](https://github.com/AnTao97/dgcnn.pytorch).
 
-## Results
+## Results and models
 
 ### S3DIS
 

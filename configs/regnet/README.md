@@ -23,7 +23,9 @@ We implement RegNetX models in 3D detection systems and provide their first resu
 
 The pre-trained modles are converted from [model zoo of pycls](https://github.com/facebookresearch/pycls/blob/master/MODEL_ZOO.md) and maintained in [mmcv](https://github.com/open-mmlab/mmcv).
 
-```
+## Citation
+
+```latex
 @article{radosavovic2020designing,
     title={Designing Network Design Spaces},
     author={Ilija Radosavovic and Raj Prateek Kosaraju and Ross Girshick and Kaiming He and Piotr Dollár},
@@ -62,7 +64,7 @@ For other pre-trained models or self-implemented regnet models, the users are re
 
 **Note**: Although Fig. 15 & 16 also provide `w0`, `wa`, `wm`, `group_w`, and `bot_mul` for `arch`, they are quantized thus inaccurate, using them sometimes produces different backbone that does not match the key in the pre-trained model.
 
-## Results
+## Results and models
 
 ### nuScenes
 

@@ -21,7 +21,9 @@ Recent work on 3D object detection advocates point cloud voxelization in birds-e
 
 We implement Dynamic Voxelization proposed in  and provide its results and models on KITTI dataset.
 
-```
+## Citation
+
+```latex
 @article{zhou2019endtoend,
     title={End-to-End Multi-View Fusion for 3D Object Detection in LiDAR Point Clouds},
     author={Yin Zhou and Pei Sun and Yu Zhang and Dragomir Anguelov and Jiyang Gao and Tom Ouyang and James Guo and Jiquan Ngiam and Vijay Vasudevan},
@@ -33,7 +35,7 @@ We implement Dynamic Voxelization proposed in  and provide its results and model
 
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

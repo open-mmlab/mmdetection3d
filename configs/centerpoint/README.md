@@ -42,7 +42,9 @@ We follow the below style to name config files. Contributors are advised to foll
 
 `{dataset}`: dataset like nus-3d, kitti-3d, lyft-3d, scannet-3d, sunrgbd-3d. We also indicate the number of classes we are using if there exist multiple settings, e.g., kitti-3d-3class and kitti-3d-car means training on KITTI dataset with 3 classes and single class, respectively.
 
-```
+## Citation
+
+```latex
 @article{yin2021center,
   title={Center-based 3D Object Detection and Tracking},
   author={Yin, Tianwei and Zhou, Xingyi and Kr{\"a}henb{\"u}hl, Philipp},
@@ -118,7 +120,7 @@ data = dict(
 
 ```
 
-## Results
+## Results and models
 
 ### CenterPoint
 

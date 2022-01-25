@@ -21,7 +21,9 @@ Recently, directly detecting 3D objects from 3D point clouds has received increa
 
 We implement Group-Free-3D and provide the result and checkpoints on ScanNet datasets.
 
-```
+## Citation
+
+```latex
 @article{liu2021,
   title={Group-Free 3D Object Detection via Transformers},
   author={Liu, Ze and Zhang, Zheng and Cao, Yue and Hu, Han and Tong, Xin},
@@ -30,7 +32,7 @@ We implement Group-Free-3D and provide the result and checkpoints on ScanNet dat
 }
 ```
 
-## Results
+## Results and models
 
 ### ScanNet
 

@@ -21,7 +21,9 @@ In this paper, we propose PointRCNN for 3D object detection from raw point cloud
 
 We implement PointRCNN and provide the result with checkpoints on KITTI dataset.
 
-```
+## Citation
+
+```latex
 @inproceedings{Shi_2019_CVPR,
     title = {PointRCNN: 3D Object Proposal Generation and Detection from Point Cloud},
     author = {Shi, Shaoshuai and Wang, Xiaogang and Li, Hongsheng},
@@ -31,7 +33,7 @@ We implement PointRCNN and provide the result with checkpoints on KITTI dataset.
 }
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

@@ -21,7 +21,15 @@ Currently, there have been many kinds of voxel-based 3D single stage detectors, 
 
 We implement 3DSSD and provide the results and checkpoints on KITTI datasets.
 
-```
+Some settings in our implementation are different from the [official implementation](https://github.com/Jia-Research-Lab/3DSSD), which bring marginal differences to the performance on KITTI datasets in our experiments. To simplify and unify the models of our implementation, we skip them in our models. These differences are listed as below:
+1. We keep the scenes without any object while the official code skips these scenes in training. In the official implementation, only 3229 and 3394 samples are used as training and validation sets, respectively. In our implementation, we keep using 3712 and 3769 samples as training and validation sets, respectively, as those used for all the other models in our implementation on KITTI datasets.
+2. We do not modify the decay of `batch normalization` during training.
+3. While using [`DataBaseSampler`](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/dbsampler.py#L80) for data augmentation, the official code uses road planes as reference to place the sampled objects while we do not.
+4. We perform detection using LIDAR coordinates while the official code uses camera coordinates.
+
+## Citation
+
+```latex
 @inproceedings{yang20203dssd,
     author = {Zetong Yang and Yanan Sun and Shu Liu and Jiaya Jia},
     title = {3DSSD: Point-based 3D Single Stage Object Detector},
@@ -30,15 +38,7 @@ We implement 3DSSD and provide the results and checkpoints on KITTI datasets.
 }
 ```
 
-### Experiment details on KITTI datasets
-
-Some settings in our implementation are different from the [official implementation](https://github.com/Jia-Research-Lab/3DSSD), which bring marginal differences to the performance on KITTI datasets in our experiments. To simplify and unify the models of our implementation, we skip them in our models. These differences are listed as below:
-1. We keep the scenes without any object while the official code skips these scenes in training. In the official implementation, only 3229 and 3394 samples are used as training and validation sets, respectively. In our implementation, we keep using 3712 and 3769 samples as training and validation sets, respectively, as those used for all the other models in our implementation on KITTI datasets.
-2. We do not modify the decay of `batch normalization` during training.
-3. While using [`DataBaseSampler`](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/dbsampler.py#L80) for data augmentation, the official code uses road planes as reference to place the sampled objects while we do not.
-4. We perform detection using LIDAR coordinates while the official code uses camera coordinates.
-
-## Results
+## Results and models
 
 ### KITTI
 

@@ -21,7 +21,9 @@
 
 We implement Part-A^2 and provide its results and checkpoints on KITTI dataset.
 
-```
+## Citation
+
+```latex
 @article{shi2020points,
   title={From points to parts: 3d object detection from point cloud with part-aware and part-aggregation network},
   author={Shi, Shaoshuai and Wang, Zhe and Shi, Jianping and Wang, Xiaogang and Li, Hongsheng},
@@ -31,7 +33,7 @@ We implement Part-A^2 and provide its results and checkpoints on KITTI dataset.
 }
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

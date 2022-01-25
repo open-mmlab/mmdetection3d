@@ -22,7 +22,11 @@ Furthermore, different from the existing point convolution operators whose netwo
 
 We implement PAConv and provide the result and checkpoints on S3DIS dataset.
 
-```
+**Notice**: The original PAConv paper used step learning rate schedule. We discovered that cosine schedule achieves slightly better results and adopt it in our implementations.
+
+## Citation
+
+```latex
 @inproceedings{xu2021paconv,
   title={PAConv: Position Adaptive Convolution with Dynamic Kernel Assembling on Point Clouds},
   author={Xu, Mutian and Ding, Runyu and Zhao, Hengshuang and Qi, Xiaojuan},
@@ -32,9 +36,7 @@ We implement PAConv and provide the result and checkpoints on S3DIS dataset.
 }
 ```
 
-**Notice**: The original PAConv paper used step learning rate schedule. We discovered that cosine schedule achieves slightly better results and adopt it in our implementations.
-
-## Results
+## Results and models
 
 ### S3DIS
 

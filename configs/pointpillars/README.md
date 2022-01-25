@@ -21,7 +21,10 @@ Object detection in point clouds is an important aspect of many robotics applica
 
 We implement PointPillars and provide the results and checkpoints on KITTI, nuScenes, Lyft and Waymo datasets.
 
-```
+
+## Citation
+
+```latex
 @inproceedings{lang2019pointpillars,
   title={Pointpillars: Fast encoders for object detection from point clouds},
   author={Lang, Alex H and Vora, Sourabh and Caesar, Holger and Zhou, Lubing and Yang, Jiong and Beijbom, Oscar},
@@ -29,10 +32,9 @@ We implement PointPillars and provide the results and checkpoints on KITTI, nuSc
   pages={12697--12705},
   year={2019}
 }
-
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

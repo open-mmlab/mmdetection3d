@@ -21,7 +21,9 @@ We introduce H3DNet, which takes a colorless 3D point cloud as input and outputs
 
 We implement H3DNet and provide the result and checkpoints on ScanNet datasets.
 
-```
+## Citation
+
+```latex
 @inproceedings{zhang2020h3dnet,
     author = {Zhang, Zaiwei and Sun, Bo and Yang, Haitao and Huang, Qixing},
     title = {H3DNet: 3D Object Detection Using Hybrid Geometric Primitives},
@@ -30,7 +32,7 @@ We implement H3DNet and provide the result and checkpoints on ScanNet datasets.
 }
 ```
 
-## Results
+## Results and models
 
 ### ScanNet
 

@@ -27,7 +27,9 @@ For clean implementation, our preliminary release supports base models with prop
 
 A more extensive study based on FCOS3D and PGD is on-going. Please stay tuned.
 
-```
+## Citation
+
+```latex
 @inproceedings{wang2021pgd,
     title={{Probabilistic and Geometric Depth: Detecting} Objects in Perspective},
     author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
@@ -43,7 +45,7 @@ A more extensive study based on FCOS3D and PGD is on-going. Please stay tuned.
 }
 ```
 
-## Results
+## Results and models
 
 ### KITTI
 

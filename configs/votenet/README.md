@@ -21,7 +21,9 @@ Current 3D object detection methods are heavily influenced by 2D detectors. In o
 
 We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRGBD datasets.
 
-```
+## Citation
+
+```latex
 @inproceedings{qi2019deep,
     author = {Qi, Charles R and Litany, Or and He, Kaiming and Guibas, Leonidas J},
     title = {Deep Hough Voting for 3D Object Detection in Point Clouds},
@@ -30,7 +32,7 @@ We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRG
 }
 ```
 
-## Results
+## Results and models
 
 ### ScanNet
 
