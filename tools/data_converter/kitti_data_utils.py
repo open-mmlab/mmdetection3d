@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import mmcv
 import numpy as np
 from collections import OrderedDict
 from concurrent import futures as futures
@@ -267,11 +268,7 @@ def get_kitti_image_info(path,
             plane_path = get_plane_path(idx, path, training, relative_path)
             if relative_path:
                 plane_path = str(root_path / plane_path)
-            with open(plane_path, 'r') as f:
-                lines = f.readlines()
-            assert lines[0] == '# Matrix\n'
-            assert lines[1] == 'WIDTH 4\n'
-            assert lines[2] == 'HEIGHT 1\n'
+            lines = mmcv.list_from_file(plane_path)
             info['plane'] = np.array([float(i) for i in lines[3].split()])
 
         if annotations is not None:
