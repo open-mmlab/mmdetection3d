@@ -78,7 +78,7 @@ mmdetection3d
         - info['sweeps'][i]['sensor2lidar_translation']：从当前传感器（用于收集扫描数据）到激光雷达的转换（1x3 列表）。
         - info['sweeps'][i]['sensor2lidar_rotation']：从当前传感器（用于收集扫描数据）到激光雷达的旋转（四元数格式的 1x4 列表）。
     - info['cams']：相机校准信息。它包含与每个摄像头对应的六个键值： `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。
-    每个字典包含每个扫描数据按照上述方式的详细信息（每个信息的关键字与上述相同）。
+    每个字典包含每个扫描数据按照上述方式的详细信息（每个信息的关键字与上述相同）。除此之外，每个相机还包含了一个键值 `'cam_intrinsic'` 用来保存 3D 点投影到图像平面上需要的内参信息。
     - info['lidar2ego_translation']：从激光雷达到自车的转换（1x3 列表）。
     - info['lidar2ego_rotation']：从激光雷达到自车的旋转（四元数格式的 1x4 列表）。
     - info['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
