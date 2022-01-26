@@ -23,7 +23,7 @@ from mmseg import __version__ as mmseg_version
 
 try:
     # If mmdet version > 2.20.0, setup_multi_processes would be imported and
-    # used.
+    # used from mmdet instead of mmdet3d.
     from mmdet.utils import setup_multi_processes
 except ImportError:
     from mmdet3d.utils import setup_multi_processes
