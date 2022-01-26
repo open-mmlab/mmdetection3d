@@ -1,8 +1,8 @@
 # NuImages Results
 
-## Introduction
-
 <!-- [DATASET] -->
+
+## Introduction
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.

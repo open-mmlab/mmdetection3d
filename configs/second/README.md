@@ -1,37 +1,20 @@
 # Second: Sparsely embedded convolutional detection
 
+> [SECOND: Sparsely Embedded Convolutional Detection](https://www.mdpi.com/1424-8220/18/10/3337)
+
+<!-- [ALGORITHM] -->
+
 ## Abstract
 
-<!-- [ABSTRACT] -->
-
 LiDAR-based or RGB-D-based object detection is used in numerous applications, ranging from autonomous driving to robot vision. Voxel-based 3D convolutional networks have been used for some time to enhance the retention of information when processing point cloud LiDAR data. However, problems remain, including a slow inference speed and low orientation estimation performance. We therefore investigate an improved sparse convolution method for such networks, which significantly increases the speed of both training and inference. We also introduce a new form of angle loss regression to improve the orientation estimation performance and a new data augmentation approach that can enhance the convergence speed and performance. The proposed network produces state-of-the-art results on the KITTI 3D object detection benchmarks while maintaining a fast inference speed.
-
-<!-- [IMAGE] -->
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/79644370/143889364-10be11c3-838e-4fc9-9613-184f0cd08907.png" width="800"/>
 </div>
 
-<!-- [PAPER_TITLE: SECOND: Sparsely Embedded Convolutional Detection] -->
-<!-- [PAPER_URL: https://www.mdpi.com/1424-8220/18/10/3337] -->
-
 ## Introduction
 
-<!-- [ALGORITHM] -->
-
 We implement SECOND and provide the results and checkpoints on KITTI dataset.
-
-## Citation
-
-```latex
-@article{yan2018second,
-  title={Second: Sparsely embedded convolutional detection},
-  author={Yan, Yan and Mao, Yuxing and Li, Bo},
-  journal={Sensors},
-  year={2018},
-  publisher={Multidisciplinary Digital Publishing Institute}
-}
-```
 
 ## Results and models
 
@@ -57,3 +40,15 @@ Note:
 
 - See more details about metrics and data split on Waymo [HERE](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars). For implementation details, we basically follow the original settings. All of these results are achieved without bells-and-whistles, e.g. ensemble, multi-scale training and test augmentation.
 - `FP16` means Mixed Precision (FP16) is adopted in training.
+
+## Citation
+
+```latex
+@article{yan2018second,
+  title={Second: Sparsely embedded convolutional detection},
+  author={Yan, Yan and Mao, Yuxing and Li, Bo},
+  journal={Sensors},
+  year={2018},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+```
