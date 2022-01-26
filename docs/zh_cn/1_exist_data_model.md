@@ -18,9 +18,17 @@
 # 单块显卡测试
 python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
 
+# CPU：禁用显卡并运行单块 CPU 测试脚本（实验性）
+export CUDA_VISIBLE_DEVICES=-1
+python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
+
 # 多块显卡测试
 ./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}]
 ```
+
+**注意**:
+
+目前我们只支持 SMOKE 的 CPU 推理测试。
 
 可选参数：
 - `RESULT_FILE`：输出结果（pickle 格式）的文件名，如果未指定，结果不会被保存。
@@ -142,6 +150,20 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 ```
 
 如果你想在命令中指定工作目录，添加参数 `--work-dir ${YOUR_WORK_DIR}`。
+
+### 使用 CPU 进行训练 (实验性)
+
+在 CPU 上训练的过程与单 GPU 训练一致。 我们只需要在训练过程之前禁用显卡。
+
+```shell
+export CUDA_VISIBLE_DEVICES=-1
+```
+
+之后运行单显卡训练脚本即可。
+
+**注意**：
+
+目前，大多数点云相关算法都依赖于 3D CUDA 算子，无法在 CPU 上进行训练。 一些单目 3D 物体检测算法，例如 FCOS3D、SMOKE 可以在 CPU 上进行训练。我们不推荐用户使用 CPU 进行训练，这太过缓慢。我们支持这个功能是为了方便用户在没有显卡的机器上调试某些特定的方法。
 
 ### 使用多块显卡进行训练
 
