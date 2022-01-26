@@ -14,8 +14,7 @@ model = dict(
         feat_channels=[64],
         with_distance=False,
         voxel_size=voxel_size,
-        point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
-        legacy=False),
+        point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1]),
     middle_encoder=dict(
         type='PointPillarsScatter', in_channels=64, output_shape=[496, 432]),
     backbone=dict(
@@ -91,5 +90,5 @@ model = dict(
         nms_thr=0.01,
         score_thr=0.1,
         min_bbox_size=0,
-        nms_pre=4096,
-        max_num=100))
+        nms_pre=100,
+        max_num=50))
