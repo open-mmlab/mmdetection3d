@@ -1,8 +1,8 @@
 # NuImages Results
 
-## Introduction
-
 <!-- [DATASET] -->
+
+## Introduction
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
@@ -25,7 +25,7 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
 - `--nproc`: number of workers for data preparation, defaults to `4`. Larger number could reduce the preparation time as images are processed in parallel.
 - `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
 
-## Results
+## Results and models
 
 ### Instance Segmentation
 
