@@ -13,6 +13,7 @@ from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
 from mmdet3d.apis import single_gpu_test
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_model
+from mmdet3d.utils import setup_multi_processes
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
@@ -117,6 +118,10 @@ def main():
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+
+    # set multi-process settings
+    setup_multi_processes(cfg)
+
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
