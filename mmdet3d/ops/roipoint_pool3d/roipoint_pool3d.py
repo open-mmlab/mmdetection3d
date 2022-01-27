@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from torch import nn as nn
 from torch.autograd import Function
 
