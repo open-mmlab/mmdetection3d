@@ -6,7 +6,7 @@
 
 ## 数据准备
 
-您可以在[这里](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)下载 KITTI 3D 检测数据并解压缩所有 zip 文件。此外，您可以在[这里](https://drive.google.com/file/d/1d5mq0RXRnvHPVeKx6Q612z0YRO1t2wAp/view?usp=sharing)下载道路平面信息，其在训练过程中作为一个可选项，用来提高模型的性能.
+您可以在[这里](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)下载 KITTI 3D 检测数据并解压缩所有 zip 文件。此外，您可以在[这里](https://download.openmmlab.com/mmdetection3d/data/train_planes.zip)下载道路平面信息，其在训练过程中作为一个可选项，用来提高模型的性能。道路平面信息由 [AVOD](https://github.com/kujason/avod) 生成，你可以在[这里](https://github.com/kujason/avod/issues/19)查看更多细节。
 
 像准备数据集的一般方法一样，建议将数据集根目录链接到 `$MMDETECTION3D/data`。
 
