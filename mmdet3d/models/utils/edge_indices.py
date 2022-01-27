@@ -4,6 +4,7 @@ import torch
 
 
 def get_edge_indices(img_metas,
+                     downsample_ratio,
                      step=1,
                      pad_mode='default',
                      dtype=np.float32,
@@ -17,6 +18,7 @@ def get_edge_indices(img_metas,
     Args:
         img_metas (list[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
+        downsample_ratio (int): Downsample ratio of output feature,
         step (int, optional): Step size used for generateing
             edge indices. Default: 1.
         pad_mode (str, optional): Padding mode during data pipeline.
@@ -32,13 +34,21 @@ def get_edge_indices(img_metas,
     edge_indices_list = []
     for i in range(len(img_metas)):
         img_shape = img_metas[i]['img_shape']
+        pad_shape = img_metas[i]['pad_shape']
         h, w = img_shape[:2]
+        pad_h, pad_w = pad_shape
         edge_indices = []
 
         if pad_mode == 'default':
             x_min = 0
             y_min = 0
-            x_max, y_max = w - 1, h - 1
+            x_max = (w - 1) // downsample_ratio
+            y_max = (h - 1) // downsample_ratio
+        elif pad_mode == 'center':
+            x_min = np.ceil((pad_w - w) / 2 * downsample_ratio)
+            y_min = np.ceil((pad_h - h) / 2 * downsample_ratio)
+            x_max = x_min + w // downsample_ratio
+            y_max = y_min + h // downsample_ratio
         else:
             raise NotImplementedError
 
