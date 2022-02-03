@@ -236,6 +236,8 @@ def test_gather_points():
           [-0.7172, 0.0462, -0.6227, -0.7172, -0.7172, -0.7172]]]).cuda()
 
     assert torch.allclose(output, expected_output)
+    output_half = gather_points(features.half(), idx)
+    assert torch.allclose(output_half, expected_output.half())
 
 
 def test_three_interpolate():

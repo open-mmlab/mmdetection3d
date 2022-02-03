@@ -2,7 +2,7 @@ import torch
 from torch import nn as nn
 from torch.autograd import Function
 from typing import Tuple
-
+from mmcv.runner import force_fp32
 from ..ball_query import ball_query
 from ..knn import knn
 from . import group_points_ext
@@ -60,7 +60,9 @@ class QueryAndGroup(nn.Module):
         if self.max_radius is None:
             assert not self.normalize_xyz, \
                 'can not normalize grouped xyz when max_radius is None'
+        self.fp16_enabled = False
 
+    @force_fp32()
     def forward(self, points_xyz, center_xyz, features=None):
         """forward.
 
@@ -141,7 +143,9 @@ class GroupAll(nn.Module):
     def __init__(self, use_xyz: bool = True):
         super().__init__()
         self.use_xyz = use_xyz
+        self.fp16_enabled = False
 
+    @force_fp32()
     def forward(self,
                 xyz: torch.Tensor,
                 new_xyz: torch.Tensor,
