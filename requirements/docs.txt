@@ -1,9 +1,8 @@
 docutils==0.16.0
 m2r
-myst-parser
-opencv-python
+mistune==0.8.4
 -e git+https://github.com/open-mmlab/pytorch_sphinx_theme.git#egg=pytorch_sphinx_theme
+recommonmark
 sphinx==4.0.2
 sphinx-copybutton
 sphinx_markdown_tables
-torch

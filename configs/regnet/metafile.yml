@@ -1,27 +1,13 @@
-Collections:
-  - Name: RegNetX
-    Metadata:
-      Training Techniques:
-        - AdamW
-      Training Resources: 8x V100 GPUs
-      Architecture:
-        - Faster R-CNN
-        - Hard Voxelization
-    Paper:
-      URL: https://arxiv.org/abs/2003.13678
-      Title: 'Designing Network Design Spaces'
-    README: configs/regnet/README.md
-    Code:
-      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/backbones/nostem_regnet.py#L7
-      Version: v0.5.0
-
 Models:
   - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d
-    In Collection: RegNetX
+    In Collection: PointPillars
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 16.4
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -31,11 +17,14 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230334-53044f32.pth
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d
-    In Collection: RegNetX
+    In Collection: PointPillars
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 17.3
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -45,11 +34,14 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d_20200620_230239-c694dce7.pth
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d
-    In Collection: RegNetX
+    In Collection: PointPillars
     Config: configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 24.0
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
@@ -59,11 +51,14 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d_20200629_050311-dcd4e090.pth
 
   - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d
-    In Collection: RegNetX
+    In Collection: PointPillars
     Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 15.9
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
@@ -73,11 +68,14 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d_20210524_092151-42513826.pth
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d
-    In Collection: RegNetX
+    In Collection: PointPillars
     Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 13.0
+      Architecture:
+        - RegNetX
+        - Hard Voxelization
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft

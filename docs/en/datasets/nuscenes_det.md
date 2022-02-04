@@ -77,7 +77,7 @@ Next, we will elaborate on the details recorded in these info files.
         - info['sweeps'][i]['sensor2lidar_translation']: The translation from the current sensor (for collecting the sweep data) to lidar. (1x3 list)
         - info['sweeps'][i]['sensor2lidar_rotation']: The rotation from the current sensor (for collecting the sweep data) to lidar. (1x4 list in the quaternion format)
     - info['cams']: Cameras calibration information. It contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`.
-    Each dictionary contains detailed information following the above way for each sweep data (has the same keys for each information as above).
+    Each dictionary contains detailed information following the above way for each sweep data (has the same keys for each information as above). In addition, each camera has a key `'cam_intrinsic'` for recording the intrinsic parameters when projecting 3D points to each image plane.
     - info['lidar2ego_translation']: The translation from lidar to ego vehicle. (1x3 list)
     - info['lidar2ego_rotation']: The rotation from lidar to ego vehicle. (1x4 list in the quaternion format)
     - info['ego2global_translation']: The translation from the ego vehicle to global coordinates. (1x3 list)
@@ -249,7 +249,7 @@ An example to test PointPillars on nuScenes with 8 GPUs and generate a submissio
 
 Note that the testing info should be changed to that for testing set instead of validation set [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-3d.py#L132).
 
-After generating the `work_dirs/pp-nus/results_eval.json`, you can compress it and submit it to nuScenes benchmark. Please refer to the [nuScenes offical website](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) for more information.
+After generating the `work_dirs/pp-nus/results_eval.json`, you can compress it and submit it to nuScenes benchmark. Please refer to the [nuScenes official website](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) for more information.
 
 We can also visualize the prediction results with our developed visualization tools. Please refer to the [visualization doc](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization) for more details.
 

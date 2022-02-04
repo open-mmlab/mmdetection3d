@@ -12,21 +12,22 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 
 | MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.17.3              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.17.2              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.17.1              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.17.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.16.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
-| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.5.0|
-| 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.5.0|
-| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.5.0|
-| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.5.0|
-| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.5.0|
-| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.5.0|
-| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.5.0|
-| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.5.0|
+| master              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
+| 0.18.0              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.8, <=1.5.0|
+| 0.17.3              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
+| 0.17.2              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
+| 0.17.1              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
+| 0.17.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
+| 0.16.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
+| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
+| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.4.0|
+| 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4.0|
+| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4.0|
+| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
+| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
+| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
+| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.3.0|
+| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.3.0|
 | 0.6.0               | mmdet>=2.4.0, <=2.11.0 | Not required  | mmcv-full>=1.1.3, <=1.2.0|
 | 0.5.0               | 2.3.0                  | Not required  | mmcv-full==1.0.5|
 
@@ -64,7 +65,7 @@ PyTorch 1.3.1., you need to install the prebuilt PyTorch with CUDA 9.2.
 conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 ```
 
-If you build PyTorch from source instead of installing the prebuilt pacakge,
+If you build PyTorch from source instead of installing the prebuilt package,
 you can use more CUDA versions such as 9.0.
 
 **c. Install [MMCV](https://mmcv.readthedocs.io/en/latest/).**

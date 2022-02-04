@@ -215,13 +215,13 @@ train_pipeline = [  # 训练流水线，更多细节请参考 mmdet3d.datasets.p
         rot_range=[-0.027777777777777776, 0.027777777777777776],  # 旋转角范围
         scale_range=None),  # 缩放尺寸范围
     dict(
-        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formating
+        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
     dict(
-        type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formating
+        type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         keys=[
             'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
             'pts_instance_mask'
@@ -236,12 +236,12 @@ test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.pi
     dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(
-        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formating
+        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
-    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formating
+    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         keys=['points'])
 ]
 eval_pipeline = [  # 模型验证或可视化所使用的流水线，更多细节请参考 mmdet3d.datasets.pipelines
@@ -251,13 +251,13 @@ eval_pipeline = [  # 模型验证或可视化所使用的流水线，更多细�
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
     dict(
-        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formating
+        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
         with_label=False),
-    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formating
+    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         keys=['points'])
 ]
 data = dict(

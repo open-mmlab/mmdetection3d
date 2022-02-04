@@ -214,13 +214,13 @@ train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for
         rot_range=[-0.027777777777777776, 0.027777777777777776],  # Range of rotation
         scale_range=None),  # Range of scale
     dict(
-        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formating for more details
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
     dict(
-        type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
+        type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
         keys=[
             'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
             'pts_instance_mask'
@@ -235,12 +235,12 @@ test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for m
     dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
         num_points=40000),  # Number of points to be sampled
     dict(
-        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formating for more details
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
-    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
+    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
         keys=['points'])
 ]
 eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmdet3d.datasets.pipelines for more details
@@ -250,13 +250,13 @@ eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmd
         load_dim=6,  # The dimension of the loaded points
         use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
     dict(
-        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formating for more details
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
         with_label=False),
-    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formating for more details
+    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
         keys=['points'])
 ]
 data = dict(
@@ -384,7 +384,7 @@ evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created befo
 lr = 0.008  # Learning rate of optimizers
 optimizer = dict(  # Config used to build optimizer, support all the optimizers in PyTorch whose arguments are also the same as those in PyTorch
     type='Adam',  # Type of optimizers, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12 for more details
-    lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentaion of PyTorch
+    lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentation of PyTorch
 optimizer_config = dict(  # Config used to build the optimizer hook, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/optimizer.py#L22 for implementation details.
     grad_clip=dict(  # Config used to grad_clip
     max_norm=10,  # max norm of the gradients

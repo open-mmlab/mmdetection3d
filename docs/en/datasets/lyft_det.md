@@ -41,7 +41,7 @@ Note that we follow the original folder names for clear organization. Please ren
 ## Dataset Preparation
 
 The way to organize Lyft dataset is similar to nuScenes. We also generate the .pkl and .json files which share almost the same structure.
-Next, we will mainly focus on the difference between these two datasets. For a more detailed explanation of the info structure, please refer to [nuScenes tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/datasets/nuscenes_det.md).
+Next, we will mainly focus on the difference between these two datasets. For a more detailed explanation of the info structure, please refer to [nuScenes tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/nuscenes_det.md).
 
 To prepare info files for Lyft, run the following commands:
 
@@ -192,6 +192,6 @@ An example to test PointPillars on Lyft with 8 GPUs and generate a submission to
 ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py work_dirs/pp-lyft/latest.pth 8 --out work_dirs/pp-lyft/results_challenge.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-lyft/results_challenge' 'csv_savepath=results/pp-lyft/results_challenge.csv'
 ```
 
-After generating the `work_dirs/pp-lyft/results_challenge.csv`, you can submit it to the Kaggle evaluation server. Please refer to the [offical website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles) for more information.
+After generating the `work_dirs/pp-lyft/results_challenge.csv`, you can submit it to the Kaggle evaluation server. Please refer to the [official website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles) for more information.
 
 We can also visualize the prediction results with our developed visualization tools. Please refer to the [visualization doc](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization) for more details.

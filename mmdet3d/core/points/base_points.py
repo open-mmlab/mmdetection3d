@@ -165,9 +165,9 @@ class BasePoints(object):
                                                  [rot_sin, rot_cos, 0],
                                                  [0, 0, 1]])
             elif axis == 0:
-                rot_mat_T = rotation.new_tensor([[0, rot_cos, -rot_sin],
-                                                 [0, rot_sin, rot_cos],
-                                                 [1, 0, 0]])
+                rot_mat_T = rotation.new_tensor([[1, 0, 0],
+                                                 [0, rot_cos, -rot_sin],
+                                                 [0, rot_sin, rot_cos]])
             else:
                 raise ValueError('axis should in range')
             rot_mat_T = rot_mat_T.T

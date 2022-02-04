@@ -36,3 +36,12 @@
   或者
 
   ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+
+## 如何标注点云？
+
+MMDetection3D 不支持点云标注。我们提供一些开源的标注工具供参考：
+
+- [SUSTechPOINTS](https://github.com/naurril/SUSTechPOINTS)
+- [LATTE](https://github.com/bernwang/latte)
+
+此外，我们改进了 [LATTE](https://github.com/bernwang/latte) 以便更方便的标注。 更多的细节请参考 [这里](https://arxiv.org/abs/2011.10174)。
