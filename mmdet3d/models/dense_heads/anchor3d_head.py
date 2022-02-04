@@ -148,6 +148,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             tuple[torch.Tensor]: Contain score of each class, bbox \
                 regression and direction classification predictions.
         """
+        print('anchor3dhead x.shape {}'.format(x.shape))
         cls_score = self.conv_cls(x)
         bbox_pred = self.conv_reg(x)
         dir_cls_preds = None

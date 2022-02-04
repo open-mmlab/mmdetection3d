@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 from mmdet3d.apis import inference_detector, init_model, show_result_meshlab
 
+# python demo/pcd_demo.py demo/data/nuscenes/nuscenes_sample.bin configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth --show
 
 def main():
     parser = ArgumentParser()
@@ -12,7 +13,7 @@ def main():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--score-thr', type=float, default=0.0, help='bbox score threshold')
+        '--score-thr', type=float, default=0.1, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(

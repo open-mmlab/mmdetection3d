@@ -197,9 +197,16 @@ class MVXTwoStageDetector(Base3DDetector):
                                                 img_feats, img_metas)
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, coors, batch_size)
+        print('mvxTwoStage x.shape {}'.format(x.shape))
         x = self.pts_backbone(x)
+        for xs in x:
+            print('mvxTwoStage pts_backbone(xs).shape {}'.format(xs.shape))
+
         if self.with_pts_neck:
             x = self.pts_neck(x)
+
+        for xs in x:
+            print('mvxTwoStage pts_neck(xs).shape {}'.format(xs.shape))
         return x
 
     def extract_feat(self, points, img, img_metas):

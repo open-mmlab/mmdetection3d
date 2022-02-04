@@ -84,6 +84,7 @@ class SECOND(BaseModule):
             tuple[torch.Tensor]: Multi-scale features.
         """
         outs = []
+        print('x.shape for second bbk {}'.format(x.shape))
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
             outs.append(x)

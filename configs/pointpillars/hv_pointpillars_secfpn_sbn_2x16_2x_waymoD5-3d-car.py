@@ -5,6 +5,7 @@ _base_ = [
     '../_base_/default_runtime.py',
 ]
 
+
 # model settings
 model = dict(
     type='MVXFasterRCNN',
