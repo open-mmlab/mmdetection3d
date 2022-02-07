@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import functools
 import numpy as np
 import torch
