@@ -1,6 +1,5 @@
 import torch
 from torch.autograd import Function
-from mmcv.runner import auto_fp16
 
 from . import gather_points_ext
 
