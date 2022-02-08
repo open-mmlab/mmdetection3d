@@ -477,7 +477,7 @@ def eval_class(gt_annos,
         num_parts = num_examples
     split_parts = get_split_parts(num_examples, num_parts)
 
-    rets = calculate_iou_partly(dt_annos, gt_annos, metric, num_parts)
+    rets = calculate_iou_partly(gt_annos, dt_annos, metric, num_parts)
     overlaps, parted_overlaps, total_dt_num, total_gt_num = rets
     N_SAMPLE_PTS = 41
     num_minoverlap = len(min_overlaps)
