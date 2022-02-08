@@ -69,9 +69,9 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             left y<-------- + ----------- + (x0, y1, z0)
                 (x0, y0, z0)
         """
-        # TODO: rotation_3d_in_axis function do not support
-        #  empty tensor currently.
-        assert len(self.tensor) != 0
+        if self.tensor.numel() == 0:
+            return torch.empty([0, 8, 3], device=self.tensor.device)
+
         dims = self.dims
         corners_norm = torch.from_numpy(
             np.stack(np.unravel_index(np.arange(8), [2] * 3), axis=1)).to(
