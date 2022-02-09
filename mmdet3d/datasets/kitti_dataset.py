@@ -176,7 +176,7 @@ class KittiDataset(Custom3DDataset):
             plane_lidar[:3] = plane_norm_lidar
             plane_lidar[3] = -plane_norm_lidar.T @ plane_off_lidar
         else:
-            plane_l = None
+            plane_lidar = None
 
         difficulty = info['annos']['difficulty']
         annos = info['annos']
@@ -213,7 +213,7 @@ class KittiDataset(Custom3DDataset):
             bboxes=gt_bboxes,
             labels=gt_labels,
             gt_names=gt_names,
-            plane=plane_l,
+            plane=plane_lidar,
             difficulty=difficulty)
         return anns_results
 
