@@ -151,12 +151,14 @@ class KittiDataset(Custom3DDataset):
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
                 - gt_labels (np.ndarray): Labels of ground truths.
                 - gt_names (list[str]): Class names of ground truths.
+                - difficulty (int): kitti difficulty.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
 
+        difficulty = info['annos']['difficulty']
         annos = info['annos']
         # we need other objects to avoid collision when sample
         annos = self.remove_dontcare(annos)
@@ -190,7 +192,8 @@ class KittiDataset(Custom3DDataset):
             gt_labels_3d=gt_labels_3d,
             bboxes=gt_bboxes,
             labels=gt_labels,
-            gt_names=gt_names)
+            gt_names=gt_names,
+            difficulty=difficulty)
         return anns_results
 
     def drop_arrays_by_name(self, gt_names, used_classes):
@@ -314,7 +317,7 @@ class KittiDataset(Custom3DDataset):
             pklfile_prefix (str | None): The prefix of pkl files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str | None): The prefix of submission datas.
+            submission_prefix (str | None): The prefix of submission data.
                 If not specified, the submission data will not be generated.
             show (bool): Whether to visualize.
                 Default: False.
