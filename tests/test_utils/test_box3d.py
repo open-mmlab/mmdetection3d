@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import unittest
+
 import numpy as np
 import pytest
 import torch
-import unittest
 
 from mmdet3d.core.bbox import (BaseInstance3DBoxes, Box3DMode,
                                CameraInstance3DBoxes, Coord3DMode,

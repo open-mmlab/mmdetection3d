@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
 import os
-import pytest
 import tempfile
+from os.path import dirname, exists, join
+
+import numpy as np
+import pytest
 import torch
 from mmcv.parallel import MMDataParallel
-from os.path import dirname, exists, join
 
 from mmdet3d.apis import (convert_SyncBN, inference_detector,
                           inference_mono_3d_detector,

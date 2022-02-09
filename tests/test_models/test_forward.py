@@ -6,9 +6,10 @@ CommandLine:
     xdoctest tests/test_models/test_forward.py zero
 """
 import copy
+from os.path import dirname, exists, join
+
 import numpy as np
 import torch
-from os.path import dirname, exists, join
 
 
 def _get_config_directory():

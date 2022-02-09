@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+
 import numpy as np
 import pytest
 import torch
@@ -200,9 +201,10 @@ def test_evaluate():
 
 
 def test_show():
-    import mmcv
     import tempfile
     from os import path as osp
+
+    import mmcv
 
     from mmdet3d.core.bbox import DepthInstance3DBoxes
     tmp_dir = tempfile.TemporaryDirectory()
@@ -581,9 +583,10 @@ def test_seg_evaluate():
 
 
 def test_seg_show():
-    import mmcv
     import tempfile
     from os import path as osp
+
+    import mmcv
 
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name
@@ -652,8 +655,9 @@ def test_seg_show():
 
 
 def test_seg_format_results():
-    import mmcv
     from os import path as osp
+
+    import mmcv
 
     root_path = './tests/data/scannet'
     ann_file = './tests/data/scannet/scannet_infos.pkl'

@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-import torch
 import warnings
+
+import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn

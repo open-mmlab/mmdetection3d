@@ -1,16 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from __future__ import division
-
 import argparse
 import copy
-import mmcv
 import os
 import time
-import torch
 import warnings
+from os import path as osp
+
+import mmcv
+import torch
 from mmcv import Config, DictAction
 from mmcv.runner import get_dist_info, init_dist
-from os import path as osp
 
 from mmdet import __version__ as mmdet_version
 from mmdet3d import __version__ as mmdet3d_version

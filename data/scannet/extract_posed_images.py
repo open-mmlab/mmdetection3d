@@ -1,12 +1,13 @@
 # Modified from https://github.com/ScanNet/ScanNet/blob/master/SensReader/python/SensorData.py # noqa
-import imageio
-import mmcv
-import numpy as np
 import os
 import struct
 import zlib
 from argparse import ArgumentParser
 from functools import partial
+
+import imageio
+import mmcv
+import numpy as np
 
 COMPRESSION_TYPE_COLOR = {-1: 'unknown', 0: 'raw', 1: 'png', 2: 'jpeg'}
 

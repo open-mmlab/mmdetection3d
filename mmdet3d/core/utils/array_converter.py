@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import functools
+from inspect import getfullargspec
+
 import numpy as np
 import torch
-from inspect import getfullargspec
 
 
 def array_converter(to_torch=True,
