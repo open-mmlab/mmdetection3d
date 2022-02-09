@@ -217,4 +217,7 @@ def circle_nms(dets, thresh, post_max_size=83):
             # ovr = inter / areas[j]
             if dist <= thresh:
                 suppressed[j] = 1
-    return keep[:post_max_size]
+
+    if post_max_size < len(keep):
+        return keep[:post_max_size]
+    return keep
