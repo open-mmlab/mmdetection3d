@@ -35,11 +35,11 @@ model = dict(
         feat_channels=384,
         use_direction_classifier=True,
         anchor_generator=dict(
-            type='Anchor3DRangeGenerator',
+            type='AlignedAnchor3DRangeGenerator',
             ranges=[
-                [0.08, -39.60, -0.6, 68.88, 39.44, -0.6],
-                [0.08, -39.60, -0.6, 68.88, 39.44, -0.6],
-                [0.08, -39.60, -1.78, 68.88, 39.44, -1.78],
+                [0, -39.68, -0.6, 69.12, 39.68, -0.6],
+                [0, -39.68, -0.6, 69.12, 39.68, -0.6],
+                [0, -39.68, -1.78, 69.12, 39.68, -1.78],
             ],
             sizes=[[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]],
             rotations=[0, 1.57],
