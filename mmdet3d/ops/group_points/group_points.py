@@ -1,8 +1,10 @@
+from typing import Tuple
+
 import torch
+from mmcv.runner import force_fp32
 from torch import nn as nn
 from torch.autograd import Function
-from typing import Tuple
-from mmcv.runner import force_fp32
+
 from ..ball_query import ball_query
 from ..knn import knn
 from . import group_points_ext
@@ -187,7 +189,7 @@ class GroupingOperation(Function):
 
         Args:
             features (Tensor): (B, C, N) tensor of features to group.
-            indices (Tensor): (B, npoint, nsample) the indicies of
+            indices (Tensor): (B, npoint, nsample) the indices of
                 features to group with.
 
         Returns:
