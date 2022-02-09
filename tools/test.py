@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import mmcv
 import os
-import torch
 import warnings
+
+import mmcv
+import torch
 from mmcv import Config, DictAction
 from mmcv.cnn import fuse_conv_bn
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel

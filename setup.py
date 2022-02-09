@@ -1,12 +1,12 @@
-from setuptools import find_packages, setup
-
 import os
 import platform
 import shutil
 import sys
-import torch
 import warnings
 from os import path as osp
+from setuptools import find_packages, setup
+
+import torch
 from torch.utils.cpp_extension import (BuildExtension, CppExtension,
                                        CUDAExtension)
 

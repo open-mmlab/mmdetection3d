@@ -27,7 +27,7 @@ Models:
         Metrics:
           mAP: 18.33
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608-8a97533b.pth
-    
+
   - Name: pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d
     In Collection: PGD
     Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d.py

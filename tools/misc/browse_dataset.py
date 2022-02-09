@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import mmcv
-import numpy as np
 import warnings
-from mmcv import Config, DictAction, mkdir_or_exist
 from os import path as osp
 from pathlib import Path
+
+import mmcv
+import numpy as np
+from mmcv import Config, DictAction, mkdir_or_exist
 
 from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
                                DepthInstance3DBoxes, LiDARInstance3DBoxes)

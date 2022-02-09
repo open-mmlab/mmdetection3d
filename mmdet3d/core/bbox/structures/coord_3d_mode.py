@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from enum import IntEnum, unique
+
 import numpy as np
 import torch
-from enum import IntEnum, unique
 
 from ...points import BasePoints, CameraPoints, DepthPoints, LiDARPoints
 from .base_box3d import BaseInstance3DBoxes

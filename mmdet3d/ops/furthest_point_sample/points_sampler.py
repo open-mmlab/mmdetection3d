@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import torch
 from mmcv.runner import force_fp32
 from torch import nn as nn
-from typing import List
 
 from .furthest_point_sample import (furthest_point_sample,
                                     furthest_point_sample_with_dist)

@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from collections import OrderedDict
+from pathlib import Path
+
 import mmcv
 import numpy as np
-from collections import OrderedDict
 from nuscenes.utils.geometry_utils import view_points
-from pathlib import Path
 
 from mmdet3d.core.bbox import box_np_ops, points_cam2img
 from .kitti_data_utils import get_kitti_image_info, get_waymo_image_info
