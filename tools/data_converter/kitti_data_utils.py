@@ -60,6 +60,17 @@ def get_label_path(idx,
                                relative_path, exist_check, use_prefix_id)
 
 
+def get_plane_path(idx,
+                   prefix,
+                   training=True,
+                   relative_path=True,
+                   exist_check=True,
+                   info_type='planes',
+                   use_prefix_id=False):
+    return get_kitti_info_path(idx, prefix, info_type, '.txt', training,
+                               relative_path, exist_check, use_prefix_id)
+
+
 def get_velodyne_path(idx,
                       prefix,
                       training=True,
@@ -144,6 +155,7 @@ def get_kitti_image_info(path,
                          label_info=True,
                          velodyne=False,
                          calib=False,
+                         with_plane=False,
                          image_ids=7481,
                          extend_matrix=True,
                          num_worker=8,
@@ -251,6 +263,13 @@ def get_kitti_image_info(path,
             calib_info['Tr_velo_to_cam'] = Tr_velo_to_cam
             calib_info['Tr_imu_to_velo'] = Tr_imu_to_velo
             info['calib'] = calib_info
+
+        if with_plane:
+            plane_path = get_plane_path(idx, path, training, relative_path)
+            if relative_path:
+                plane_path = str(root_path / plane_path)
+            lines = mmcv.list_from_file(plane_path)
+            info['plane'] = np.array([float(i) for i in lines[3].split()])
 
         if annotations is not None:
             info['annos'] = annotations

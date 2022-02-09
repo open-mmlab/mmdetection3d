@@ -17,6 +17,13 @@ from mmdet3d.models import build_model
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
+try:
+    # If mmdet version > 2.20.0, setup_multi_processes would be imported and
+    # used from mmdet instead of mmdet3d.
+    from mmdet.utils import setup_multi_processes
+except ImportError:
+    from mmdet3d.utils import setup_multi_processes
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -118,6 +125,10 @@ def main():
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+
+    # set multi-process settings
+    setup_multi_processes(cfg)
+
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
