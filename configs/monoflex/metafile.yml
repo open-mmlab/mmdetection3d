@@ -21,10 +21,10 @@ Models:
     In Collection: MonoFlex
     Config: configs/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d.py
     Metadata:
-      Training Memory (GB): 9.6
+      Training Memory (GB): 9.64
     Results:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 13.8
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth
+          mAP: 21.98
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553-d46d9bb0.pth
