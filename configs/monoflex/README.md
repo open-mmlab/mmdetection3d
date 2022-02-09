@@ -32,7 +32,7 @@ Detailed performance on KITTI 3D detection (3D/BEV) is as follows, evaluated by 
 | Car (AP11)  | 28.02 / 36.11 | 21.86 / 29.46  | 19.01 / 24.83 |
 | Car (AP40)  | 23.22 / 32.74 | 17.18 / 24.02  | 15.13 / 20.67 |
 
-Note: mAP represents Car moderate 3D strict AP11 / AP40 results. Because of the limited data for pedestrians and cyclists, the detection performance for these two classes is usually unstable. Therefore, we only list car detection results here. In addition, AP40 is a more recommended metric for reference due to its much better stability, thus the AP11 result may fluctuate ~1 AP.
+Note: mAP represents Car moderate 3D strict AP11 / AP40 results. Because of the limited data for pedestrians and cyclists, the detection performance for these two classes is usually unstable. Therefore, we only list car detection results here. In addition, the AP11 result may fluctuate in a larger range (~1 AP), so AP40 is a more recommended metric for reference due to its much better stability.
 
 ## Citation
 
