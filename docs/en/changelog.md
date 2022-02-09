@@ -1,6 +1,28 @@
 ## Changelog
 
-### v0.18.0 (1/1/2021)
+### v0.18.1 (1/2/2022)
+
+#### Improvements
+
+- Support Flip3D augmentation in semantic segmentation task (#1182)
+- Update regnet metafile (#1184)
+- Add point cloud annotation tools introduction in FAQ (#1185)
+- Add missing explanations of `cam_intrinsic` in the nuScenes dataset doc (#1193)
+
+#### Bug Fixes
+
+- Deprecate the support for "python setup.py test" (#1164)
+- Fix the rotation matrix while rotation axis=0 (#1182)
+- Fix the bug in non-distributed multi-gpu training/testing (#1197)
+- Fix a potential bug when generating corners for empty bounding boxes (#1212)
+
+#### Contributors
+
+A total of 4 developers contributed to this release.
+
+@ZwwWayne, @ZCMax, @Tai-Wang, @wHao-Wu
+
+### v0.18.0 (1/1/2022)
 
 #### Highlights
 
