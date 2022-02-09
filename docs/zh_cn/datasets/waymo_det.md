@@ -104,16 +104,21 @@ mmdetection3d
 为了在 Waymo 数据集上进行检测性能评估，请按照[此处指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建用于计算评估指标的二进制文件 `compute_detection_metrics_main`，并将它置于 `mmdet3d/core/evaluation/waymo_utils/` 下。您基本上可以按照下方命令安装 `bazel`，然后构建二进制文件：
 
    ```shell
+   # download the code and enter the base directory
    git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
    cd waymo-od
    git checkout remotes/origin/master
 
+   # use the Bazel build system
    sudo apt-get install --assume-yes pkg-config zip g++ zlib1g-dev unzip python3 python3-pip
-   wget https://github.com/bazelbuild/bazel/releases/download/0.28.0/bazel-0.28.0-installer-linux-x86_64.sh
-   sudo bash bazel-0.28.0-installer-linux-x86_64.sh
+   BAZEL_VERSION=3.1.0
+   wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+   sudo bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
    sudo apt install build-essential
 
+   # configure .bazelrc
    ./configure.sh
+   # delete previous bazel outputs and reset internal caches
    bazel clean
 
    bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
