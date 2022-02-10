@@ -33,7 +33,7 @@ __global__ void gather_points_kernel(int b, int c, int n, int m,
 }
 
 void gather_points_kernel_launcher(int b, int c, int n, int npoints,
-                                   const at::Tensor& points_tensor, 
+                                   const at::Tensor& points_tensor,
                                    const at::Tensor& idx_tensor,
                                    at::Tensor& out_tensor)
 {
@@ -89,7 +89,7 @@ __global__ void gather_points_grad_kernel(int b, int c, int n, int m,
 }
 
 void gather_points_grad_kernel_launcher(int b, int c, int n, int npoints,
-                                        const at::Tensor& grad_out_tensor, 
+                                        const at::Tensor& grad_out_tensor,
                                         const at::Tensor& idx_tensor,
                                         at::Tensor& grad_points_tensor)
 {
