@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import cv2
 import os
 import platform
 import warnings
+
+import cv2
 from torch import multiprocessing as mp
 
 

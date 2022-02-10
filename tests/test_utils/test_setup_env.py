@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import cv2
 import multiprocessing as mp
 import os
 import platform
+
+import cv2
 from mmcv import Config
 
 from mmdet3d.utils import setup_multi_processes
