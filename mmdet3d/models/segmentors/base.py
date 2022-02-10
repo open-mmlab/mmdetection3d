@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
-from os import path as osp
 
 from mmdet3d.core import show_seg_result
 from mmseg.models.segmentors import BaseSegmentor

@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from logging import warning
+
 import numpy as np
 import torch
-from logging import warning
 
 from mmdet3d.core.utils import array_converter
 

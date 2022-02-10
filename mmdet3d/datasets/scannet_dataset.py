@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
 import tempfile
 import warnings
 from os import path as osp
 
-from mmdet3d.core import instance_seg_eval, show_result, show_seg_result
+import numpy as np
+
+from mmdet3d.core import show_result, show_seg_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from mmseg.datasets import DATASETS as SEG_DATASETS

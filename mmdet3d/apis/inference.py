@@ -1,12 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import re
+from copy import deepcopy
+from os import path as osp
+
 import mmcv
 import numpy as np
-import re
 import torch
-from copy import deepcopy
 from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
-from os import path as osp
 
 from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
                           DepthInstance3DBoxes, LiDARInstance3DBoxes,

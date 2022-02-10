@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sys
-import torch
 from collections import OrderedDict
+
+import torch
 from torch import nn
 
 from .structure import SparseConvTensor

@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import random
+from os.path import dirname, exists, join
+
 import mmcv
 import numpy as np
 import pytest
-import random
 import torch
-from os.path import dirname, exists, join
 
 from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
                                DepthInstance3DBoxes, LiDARInstance3DBoxes)

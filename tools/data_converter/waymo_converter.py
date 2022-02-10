@@ -10,11 +10,12 @@ except ImportError:
         'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
         'to install the official devkit first.')
 
+from glob import glob
+from os.path import join
+
 import mmcv
 import numpy as np
 import tensorflow as tf
-from glob import glob
-from os.path import join
 from waymo_open_dataset.utils import range_image_utils, transform_utils
 from waymo_open_dataset.utils.frame_utils import \
     parse_range_image_and_camera_projection

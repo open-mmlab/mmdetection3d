@@ -18,11 +18,12 @@ into it.
 import argparse
 import glob
 import json
-import mmcv
 import shutil
 import subprocess
-import torch
 from os import path as osp
+
+import mmcv
+import torch
 
 # build schedule look-up table to automatically find the final model
 SCHEDULES_LUT = {

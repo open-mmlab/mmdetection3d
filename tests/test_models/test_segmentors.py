@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from os.path import dirname, exists, join
+
 import numpy as np
 import pytest
 import torch
-from os.path import dirname, exists, join
 
 from mmdet3d.models.builder import build_segmentor
 from mmdet.apis import set_random_seed

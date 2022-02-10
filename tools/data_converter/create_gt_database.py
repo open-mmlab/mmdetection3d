@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import pickle
+from os import path as osp
+
 import mmcv
 import numpy as np
-import pickle
 from mmcv import track_iter_progress
 from mmcv.ops import roi_align
-from os import path as osp
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 

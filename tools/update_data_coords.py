@@ -1,8 +1,9 @@
 import argparse
-import mmcv
-import numpy as np
 import time
 from os import path as osp
+
+import mmcv
+import numpy as np
 
 from mmdet3d.core.bbox import limit_period
 

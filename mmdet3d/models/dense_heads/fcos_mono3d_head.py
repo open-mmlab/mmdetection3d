@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from logging import warning
+
 import numpy as np
 import torch
-from logging import warning
 from mmcv.cnn import Scale, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn

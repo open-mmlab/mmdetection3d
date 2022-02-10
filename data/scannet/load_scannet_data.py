@@ -9,8 +9,9 @@ instance segmentations."""
 import argparse
 import inspect
 import json
-import numpy as np
 import os
+
+import numpy as np
 import scannet_utils
 
 currentdir = os.path.dirname(
