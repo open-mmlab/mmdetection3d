@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
-import torch
 import warnings
 from abc import abstractmethod
+
+import numpy as np
+import torch
 
 from ..bbox.structures.utils import rotation_3d_in_axis
 

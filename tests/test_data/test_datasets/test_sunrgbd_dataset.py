@@ -210,9 +210,10 @@ def test_evaluate():
 
 
 def test_show():
-    import mmcv
     import tempfile
     from os import path as osp
+
+    import mmcv
 
     from mmdet3d.core.bbox import DepthInstance3DBoxes
     tmp_dir = tempfile.TemporaryDirectory()

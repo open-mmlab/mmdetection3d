@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
 import warnings
 from copy import deepcopy
+
+import mmcv
 
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import Compose

@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import tempfile
+from os import path as osp
+
 import mmcv
 import numpy as np
 import pyquaternion
-import tempfile
 from nuscenes.utils.data_classes import Box as NuScenesBox
-from os import path as osp
 
 from mmdet.datasets import DATASETS
 from ..core import show_result

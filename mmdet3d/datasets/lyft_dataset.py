@@ -1,12 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
+import tempfile
+from os import path as osp
+
 import mmcv
 import numpy as np
-import os
 import pandas as pd
-import tempfile
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
 from lyft_dataset_sdk.utils.data_classes import Box as LyftBox
-from os import path as osp
 from pyquaternion import Quaternion
 
 from mmdet3d.core.evaluation.lyft_eval import lyft_eval

@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import torch
 from mmcv.image import tensor2imgs
-from os import path as osp
 
 from mmdet3d.models import (Base3DDetector, Base3DSegmentor,
                             SingleStageMono3DDetector)

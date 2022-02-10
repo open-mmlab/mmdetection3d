@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 import pytest
-from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.points import DepthPoints, LiDARPoints

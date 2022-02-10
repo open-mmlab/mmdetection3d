@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import os
+
 import mmcv
 import numpy as np
-import os
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils

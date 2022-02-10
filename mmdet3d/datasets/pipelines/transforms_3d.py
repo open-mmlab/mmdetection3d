@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import cv2
-import numpy as np
 import random
 import warnings
+
+import cv2
+import numpy as np
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 

@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
-import numpy as np
 import tempfile
 import warnings
 from os import path as osp
+
+import mmcv
+import numpy as np
 from torch.utils.data import Dataset
 
 from mmdet.datasets import DATASETS

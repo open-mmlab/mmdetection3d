@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
-import numpy as np
 import os
 import tempfile
+from os import path as osp
+
+import mmcv
+import numpy as np
 import torch
 from mmcv.utils import print_log
-from os import path as osp
 
 from mmdet.datasets import DATASETS
 from ..core.bbox import Box3DMode, points_cam2img
