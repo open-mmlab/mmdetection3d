@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import torch
 from mmcv.cnn import (ConvModule, build_activation_layer, build_norm_layer,

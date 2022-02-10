@@ -324,8 +324,11 @@ def yaw2local(yaw, loc):
         torch.Tensor: local yaw (alpha in kitti).
     """
     local_yaw = yaw - torch.atan2(loc[:, 0], loc[:, 2])
-    while local_yaw > np.pi:
-        local_yaw -= np.pi * 2
-    while local_yaw < -np.pi:
-        local_yaw += np.pi * 2
+    larger_idx = (local_yaw > np.pi).nonzero(as_tuple=False)
+    small_idx = (local_yaw < -np.pi).nonzero(as_tuple=False)
+    if len(larger_idx) != 0:
+        local_yaw[larger_idx] -= 2 * np.pi
+    if len(small_idx) != 0:
+        local_yaw[small_idx] += 2 * np.pi
+
     return local_yaw

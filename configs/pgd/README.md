@@ -1,23 +1,18 @@
 # Probabilistic and Geometric Depth: Detecting Objects in Perspective
 
+> [Probabilistic and Geometric Depth: Detecting Objects in Perspective](https://arxiv.org/abs/2107.14160)
+
+<!-- [ALGORITHM] -->
+
 ## Abstract
 
-<!-- [ABSTRACT] -->
-
 3D object detection is an important capability needed in various practical applications such as driver assistance systems. Monocular 3D detection, as a representative general setting among image-based approaches, provides a more economical solution than conventional settings relying on LiDARs but still yields unsatisfactory results. This paper first presents a systematic study on this problem. We observe that the current monocular 3D detection can be simplified as an instance depth estimation problem: The inaccurate instance depth blocks all the other 3D attribute predictions from improving the overall detection performance. Moreover, recent methods directly estimate the depth based on isolated instances or pixels while ignoring the geometric relations across different objects. To this end, we construct geometric relation graphs across predicted objects and use the graph to facilitate depth estimation. As the preliminary depth estimation of each instance is usually inaccurate in this ill-posed setting, we incorporate a probabilistic representation to capture the uncertainty. It provides an important indicator to identify confident predictions and further guide the depth propagation. Despite the simplicity of the basic idea, our method, PGD, obtains significant improvements on KITTI and nuScenes benchmarks, achieving 1st place out of all monocular vision-only methods while still maintaining real-time efficiency. Code and models will be released at [this https URL](https://github.com/open-mmlab/mmdetection3d).
-
-<!-- [IMAGE] -->
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/79644370/143884065-d1a19fdf-bcc0-4249-84cf-b7a85fa1eb2f.png" width="800"/>
 </div>
 
-<!-- [PAPER_TITLE: Probabilistic and Geometric Depth: Detecting Objects in Perspective] -->
-<!-- [PAPER_URL: https://arxiv.org/abs/2107.14160] -->
-
 ## Introduction
-
-<!-- [ALGORITHM] -->
 
 PGD, also can be regarded as FCOS3D++, is a simple yet effective monocular 3D detector. It enhances the FCOS3D baseline by involving local geometric constraints and improving instance depth estimation.
 
@@ -27,23 +22,7 @@ For clean implementation, our preliminary release supports base models with prop
 
 A more extensive study based on FCOS3D and PGD is on-going. Please stay tuned.
 
-```
-@inproceedings{wang2021pgd,
-    title={{Probabilistic and Geometric Depth: Detecting} Objects in Perspective},
-    author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
-    booktitle={Conference on Robot Learning (CoRL) 2021},
-    year={2021}
-}
-# For the baseline version
-@inproceedings{wang2021fcos3d,
-    title={{FCOS3D: Fully} Convolutional One-Stage Monocular 3D Object Detection},
-    author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
-    booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops},
-    year={2021}
-}
-```
-
-## Results
+## Results and models
 
 ### KITTI
 
@@ -70,3 +49,21 @@ Note: mAP represents Car moderate 3D strict AP11 / AP40 results. Because of the 
 |[ResNet101 w/ DCN](./pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d.py)|2x|9.20|33.6|40.9|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_20211112_125314-cb677266.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_20211112_125314.log.json)|
 |[above w/ finetune](./pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune.py)|2x|9.20|35.8|42.5|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune_20211114_162135-5ec7c1cd.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune_20211114_162135.log.json)|
 |above w/ tta|2x|9.20|36.8|43.1||
+
+## Citation
+
+```latex
+@inproceedings{wang2021pgd,
+    title={{Probabilistic and Geometric Depth: Detecting} Objects in Perspective},
+    author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
+    booktitle={Conference on Robot Learning (CoRL) 2021},
+    year={2021}
+}
+# For the baseline version
+@inproceedings{wang2021fcos3d,
+    title={{FCOS3D: Fully} Convolutional One-Stage Monocular 3D Object Detection},
+    author={Wang, Tai and Zhu, Xinge and Pang, Jiangmiao and Lin, Dahua},
+    booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops},
+    year={2021}
+}
+```
