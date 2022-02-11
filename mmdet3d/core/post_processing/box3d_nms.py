@@ -220,4 +220,5 @@ def circle_nms(dets, thresh, post_max_size=83):
 
     if post_max_size < len(keep):
         return keep[:post_max_size]
+
     return keep
