@@ -5,7 +5,7 @@
 #### Compatibility
 
 - We refactor our three coordinate systems to make their rotation directions and origins more consistent, and further remove unnecessary hacks in different datasets and models. Therefore, please re-generate data infos or convert the old version to the new one with our provided scripts. We will also provide updated checkpoints in the next version. Please refer to the compatibility documentation for more details.
-- Unify the camera keys for consistent transformation between coordinate systems on different datasets. The modification changes the key names to `lidar2img`, `depth2img`, `cam2img`, etc. for easier understanding. Customized codes using legacy keys may be influenced.
+- Unify the camera keys for consistent transformation between coordinate systems on different datasets. The modification changes the key names to `lidar2img`, `depth2img`, `cam2img`, etc., for easier understanding. Customized codes using legacy keys may be influenced.
 - The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
 
 #### Highlights
@@ -18,18 +18,19 @@
 #### New Features
 
 - Support 3D object detection on the S3DIS dataset (#835)
-- Support PointRCNN (#842, #843, #856, #974, #1022, #1109)
+- Support PointRCNN (#842, #843, #856, #974, #1022, #1109, #1125)
 - Support DGCNN (#896)
-- Support PGD (#938, #940, #948, #950, #964, #1014, #1065, #1070)
+- Support PGD (#938, #940, #948, #950, #964, #1014, #1065, #1070, #1157)
 - Support SMOKE (#939, #955, #959, #975, #988, #999, #1029)
-- Support MonoFlex (#1026, )
+- Support MonoFlex (#1026, #1044, #1114, #1115, #1183)
+- Support CPU Training (#1196)
 
 #### Improvements
 
 - Support point sampling based on distance metric (#667, #840)
 - Refactor coordinate systems (#677, #774, #803, #899, #906, #912, #968, #1001)
 - Unify camera keys in PointFusion and transformations between different systems (#791, #805)
-- Refine documentation (#792, #827, #829, #836, #849, #854, #859)
+- Refine documentation (#792, #827, #829, #836, #849, #854, #859, #1111, #1113, #1116, #1121, #1132, #1135, #1185, #1193, #1226)
 - Add a script to support benchmark regression (#808)
 - Benchmark PAConvCUDA on S3DIS (#847)
 - Support to download pdf and epub documentation (#850)
@@ -41,6 +42,15 @@
 - Set a default seed to use when the random seed is not specified (#1072)
 - Distribute mix-precision models to each algorithm folder (#1074)
 - Add abstract and a representative figure for each algorithm (#1086)
+- Support augmented data and ground truth visualization (#1092)
+- Add local yaw property for `CameraInstance3DBoxes` (#1130)
+- Lock the required numba version to 0.53.0 (#1159)
+- Deprecate the support for "python setup.py test" (#1164)
+- Support 3D flip augmentation for semantic segmentation (#1181)
+- Update README format for each model (#1195)
+- Support the usage of plane information for KITTI dataset (#1162)
+- Reduce the number of multi-process threads to accelerate training (#1168)
+- Upgrade pre-commit hook (#1088, #1217)
 
 #### Bug Fixes
 
@@ -54,6 +64,12 @@
 - Fix the incorrect dimension indices of rotations and testing config in the CenterPoint test time augmentation (#892)
 - Fix and improve visualization tools (#956, #1066, #1073)
 - Fix PointPillars FLOPs calculation error (#1075)
+- Fix missing dimension information in the SUN RGB-D data generation (#1120)
+- Fix incorrect model information in the RegNet metafile (#1184)
+- Fix bugs in non-distributed multi-gpu training and testing (#1197)
+- Fix a potential assertion error when generating corners from an empty box (#1212)
+- Upgrade bazel version according to the requirement of Waymo Devkit (#1223)
+- Fix incorrect anchor range settings in the PointPillars [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py) for KITTI (#1163)
 
 #### Contributors
 
