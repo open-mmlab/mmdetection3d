@@ -116,6 +116,10 @@ class RandomFlip3D(RandomFlip):
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
+        # for semantic segmentation task, only points will be flipped.
+        if 'bbox3d_fields' not in input_dict:
+            input_dict['points'].flip(direction)
+            return
         if len(input_dict['bbox3d_fields']) == 0:  # test mode
             input_dict['bbox3d_fields'].append('empty_box3d')
             input_dict['empty_box3d'] = input_dict['box_type_3d'](
@@ -932,6 +936,12 @@ class PointSample(object):
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
+        # Points in Camera coord can provide the depth information.
+        # TODO: Need to support distance-based sampling for other coord system.
+        if self.sample_range is not None:
+            from mmdet3d.core.points import CameraPoints
+            assert isinstance(points, CameraPoints), \
+                'Sampling based on distance is only applicable for CAM coord'
         points, choices = self._points_random_sampling(
             points,
             self.num_points,

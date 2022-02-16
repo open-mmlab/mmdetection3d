@@ -342,6 +342,7 @@ class KittiDataset(Custom3DDataset):
                 If not specified, a temp file will be created. Default: None.
             submission_prefix (str, optional): The prefix of submission data.
                 If not specified, the submission data will not be generated.
+                Default: None.
             show (bool, optional): Whether to visualize.
                 Default: False.
             out_dir (str, optional): Path to save the visualization results.
