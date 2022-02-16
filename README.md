@@ -1,5 +1,22 @@
 <div align="center">
   <img src="resources/mmdet3d-logo.png" width="600"/>
+  <div>&nbsp;</div>
+  <div align="center">
+    <b><font size="5">OpenMMLab website</font></b>
+    <sup>
+      <a href="https://openmmlab.com">
+        <i><font size="4">HOT</font></i>
+      </a>
+    </sup>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <b><font size="5">OpenMMLab platform</font></b>
+    <sup>
+      <a href="https://platform.openmmlab.com">
+        <i><font size="4">TRY IT OUT</font></i>
+      </a>
+    </sup>
+  </div>
+  <div>&nbsp;</div>
 </div>
 
 [![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection3d.readthedocs.io/en/latest/)
@@ -8,7 +25,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v0.17.3.
+**News**: We released the codebase v0.18.1.
 
 In addition, we have preliminarily supported several new models on the [v1.0.0.dev0](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0) branch, including [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/dgcnn/README.md), [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/smoke/README.md) and [PGD](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/configs/pgd/README.md).
 
@@ -70,7 +87,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v0.17.3 was released in 1/12/2021.
+v0.18.1 was released in 1/2/2022.
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
 For branch v1.0.0.dev0, please refer to [changelog_v1.0.md](https://github.com/Tai-Wang/mmdetection3d/blob/v1.0.0.dev0-changelog/docs/changelog_v1.0.md) for our latest features and more details.
@@ -104,7 +121,7 @@ Support methods
 - [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
 - [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
 - [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
-- [x] [ImVoxelNet (Arxiv'2021)](configs/imvoxelnet/README.md)
+- [x] [ImVoxelNet (WACV'2022)](configs/imvoxelnet/README.md)
 - [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
 - [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
 - [x] [SMOKE (CVPRW'2020)](configs/smoke/README.md)
