@@ -4,6 +4,7 @@ from concurrent import futures as futures
 from os import path as osp
 from pathlib import Path
 
+import mmcv
 import numpy as np
 from skimage import io
 
