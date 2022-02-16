@@ -42,15 +42,15 @@
 - Set a default seed to use when the random seed is not specified (#1072)
 - Distribute mix-precision models to each algorithm folder (#1074)
 - Add abstract and a representative figure for each algorithm (#1086)
+- Upgrade pre-commit hook (#1088, #1217)
 - Support augmented data and ground truth visualization (#1092)
 - Add local yaw property for `CameraInstance3DBoxes` (#1130)
 - Lock the required numba version to 0.53.0 (#1159)
+- Support the usage of plane information for KITTI dataset (#1162)
 - Deprecate the support for "python setup.py test" (#1164)
+- Reduce the number of multi-process threads to accelerate training (#1168)
 - Support 3D flip augmentation for semantic segmentation (#1181)
 - Update README format for each model (#1195)
-- Support the usage of plane information for KITTI dataset (#1162)
-- Reduce the number of multi-process threads to accelerate training (#1168)
-- Upgrade pre-commit hook (#1088, #1217)
 
 #### Bug Fixes
 
@@ -65,11 +65,11 @@
 - Fix and improve visualization tools (#956, #1066, #1073)
 - Fix PointPillars FLOPs calculation error (#1075)
 - Fix missing dimension information in the SUN RGB-D data generation (#1120)
+- Fix incorrect anchor range settings in the PointPillars [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py) for KITTI (#1163)
 - Fix incorrect model information in the RegNet metafile (#1184)
 - Fix bugs in non-distributed multi-gpu training and testing (#1197)
 - Fix a potential assertion error when generating corners from an empty box (#1212)
 - Upgrade bazel version according to the requirement of Waymo Devkit (#1223)
-- Fix incorrect anchor range settings in the PointPillars [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py) for KITTI (#1163)
 
 #### Contributors
 
