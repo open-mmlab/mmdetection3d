@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.ops import nms_bev as nms_gpu
 from mmcv.ops import nms_normal_bev as nms_normal_gpu

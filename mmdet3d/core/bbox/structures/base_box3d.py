@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
-import torch
 import warnings
 from abc import abstractmethod
+
+import numpy as np
+import torch
 from mmcv.ops import boxes_iou_bev as boxes_overlap_bev_gpu
 from mmcv.ops import points_in_boxes_all, points_in_boxes_part
 

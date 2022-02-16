@@ -1,13 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import tempfile
+import warnings
+from os import path as osp
+
 import mmcv
 import numpy as np
 import pyquaternion
-import tempfile
 import torch
-import warnings
 from nuscenes.utils.data_classes import Box as NuScenesBox
-from os import path as osp
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset

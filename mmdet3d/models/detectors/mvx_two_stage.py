@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
+from os import path as osp
+
 import mmcv
 import torch
-import warnings
 from mmcv.ops import Voxelization
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import force_fp32
-from os import path as osp
 from torch.nn import functional as F
 
 from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,

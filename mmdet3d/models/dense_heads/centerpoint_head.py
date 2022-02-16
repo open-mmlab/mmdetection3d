@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
 from mmcv.ops import nms_bev as nms_gpu

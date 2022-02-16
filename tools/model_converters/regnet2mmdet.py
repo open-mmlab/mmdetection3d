@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import torch
 from collections import OrderedDict
+
+import torch
 
 
 def convert_stem(model_key, model_weight, state_dict, converted_names):

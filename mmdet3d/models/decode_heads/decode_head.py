@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
+
 from mmcv.cnn import normal_init
 from mmcv.runner import BaseModule, auto_fp16, force_fp32
 from torch import nn as nn

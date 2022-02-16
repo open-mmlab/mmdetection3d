@@ -1,6 +1,8 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple
+
 import torch
 from torch.autograd import Function
-from typing import Tuple
 
 from . import interpolate_ext
 

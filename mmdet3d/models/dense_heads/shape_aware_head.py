@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
+
 import numpy as np
 import torch
-import warnings
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule
 from torch import nn as nn

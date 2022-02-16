@@ -239,9 +239,10 @@ def test_seg_evaluate():
 
 
 def test_seg_show():
-    import mmcv
     import tempfile
     from os import path as osp
+
+    import mmcv
 
     tmp_dir = tempfile.TemporaryDirectory()
     temp_dir = tmp_dir.name

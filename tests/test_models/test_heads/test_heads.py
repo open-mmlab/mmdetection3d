@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import random
+from os.path import dirname, exists, join
+
 import mmcv
 import numpy as np
 import pytest
-import random
 import torch
-from os.path import dirname, exists, join
 
 from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
                                DepthInstance3DBoxes, LiDARInstance3DBoxes)
@@ -1505,3 +1506,62 @@ def test_pgd_head():
     assert results[0][2].shape == torch.Size([20])
     assert results[0][3] is None
     assert results[0][4].shape == torch.Size([20, 5])
+
+
+def test_monoflex_head():
+
+    head_cfg = dict(
+        type='MonoFlexHead',
+        num_classes=3,
+        in_channels=64,
+        use_edge_fusion=True,
+        edge_fusion_inds=[(1, 0)],
+        edge_heatmap_ratio=1 / 8,
+        stacked_convs=0,
+        feat_channels=64,
+        use_direction_classifier=False,
+        diff_rad_by_sin=False,
+        pred_attrs=False,
+        pred_velo=False,
+        dir_offset=0,
+        strides=None,
+        group_reg_dims=((4, ), (2, ), (20, ), (3, ), (3, ), (8, 8), (1, ),
+                        (1, )),
+        cls_branch=(256, ),
+        reg_branch=((256, ), (256, ), (256, ), (256, ), (256, ), (256, ),
+                    (256, ), (256, )),
+        num_attrs=0,
+        bbox_code_size=7,
+        dir_branch=(),
+        attr_branch=(),
+        bbox_coder=dict(
+            type='MonoFlexCoder',
+            depth_mode='exp',
+            base_depth=(26.494627, 16.05988),
+            depth_range=[0.1, 100],
+            combine_depth=True,
+            uncertainty_range=[-10, 10],
+            base_dims=((3.8840, 1.5261, 1.6286, 0.4259, 0.1367, 0.1022),
+                       (0.8423, 1.7607, 0.6602, 0.2349, 0.1133, 0.1427),
+                       (1.7635, 1.7372, 0.5968, 0.1766, 0.0948, 0.1242)),
+            dims_mode='linear',
+            multibin=True,
+            num_dir_bins=4,
+            bin_centers=[0, np.pi / 2, np.pi, -np.pi / 2],
+            bin_margin=np.pi / 6,
+            code_size=7),
+        conv_bias=True,
+        dcn_on_last_conv=False)
+
+    self = build_head(head_cfg)
+
+    feats = [torch.rand([2, 64, 32, 32], dtype=torch.float32)]
+
+    input_metas = [
+        dict(img_shape=(110, 110), pad_shape=(128, 128)),
+        dict(img_shape=(98, 110), pad_shape=(128, 128))
+    ]
+    cls_score, out_reg = self(feats, input_metas)
+
+    assert cls_score[0].shape == torch.Size([2, 3, 32, 32])
+    assert out_reg[0].shape == torch.Size([2, 50, 32, 32])

@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
 from collections import OrderedDict
 from os import path as osp
+
+import numpy as np
 
 from mmdet3d.core import show_multi_modality_result, show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes

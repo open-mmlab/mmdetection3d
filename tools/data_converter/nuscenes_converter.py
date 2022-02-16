@@ -1,14 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
-import numpy as np
 import os
 from collections import OrderedDict
+from os import path as osp
+from typing import List, Tuple, Union
+
+import mmcv
+import numpy as np
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points
-from os import path as osp
 from pyquaternion import Quaternion
 from shapely.geometry import MultiPoint, box
-from typing import List, Tuple, Union
 
 from mmdet3d.core.bbox import points_cam2img
 from mmdet3d.datasets import NuScenesDataset
