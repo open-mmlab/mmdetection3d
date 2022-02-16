@@ -27,7 +27,7 @@ class GatherPoints(Function):
 
         B, npoint = indices.size()
         _, C, N = features.size()
-        output = torch.cuda.FloatTensor(B, C, npoint)
+        output = features.new_zeros((B, C, npoint))
 
         gather_points_ext.gather_points_wrapper(B, C, N, npoint, features,
                                                 indices, output)
@@ -41,7 +41,7 @@ class GatherPoints(Function):
         idx, C, N = ctx.for_backwards
         B, npoint = idx.size()
 
-        grad_features = torch.cuda.FloatTensor(B, C, N).zero_()
+        grad_features = grad_out.new_zeros((B, C, N))
         grad_out_data = grad_out.data.contiguous()
         gather_points_ext.gather_points_grad_wrapper(B, C, N, npoint,
                                                      grad_out_data, idx,
