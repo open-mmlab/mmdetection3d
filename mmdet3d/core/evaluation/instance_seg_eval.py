@@ -7,6 +7,17 @@ from .scannet_utils.evaluate_semantic_instance import scannet_eval
 
 
 def aggregate_predictions(masks, labels, scores, valid_class_ids):
+    """Maps predictions to ScanNet evaluator format.
+
+    Args:
+        masks (list[torch.Tensor]): Per scene predicted instance masks.
+        labels (list[torch.Tensor]): Per scene predicted instance labels.
+        scores (list[torch.Tensor]): Per scene predicted instance scores.
+        valid_class_ids (tuple[int]): Ids of valid categories.
+
+    Returns:
+        list[dict]: Per scene aggregated predictions.
+    """
     infos = []
     for id, (mask, label, score) in enumerate(zip(masks, labels, scores)):
         mask = mask.clone().numpy()
@@ -26,6 +37,17 @@ def aggregate_predictions(masks, labels, scores, valid_class_ids):
 
 
 def rename_gt(gt_semantic_masks, gt_instance_masks, valid_class_ids):
+    """Maps gt instance and semantic masks to instance masks for ScanNet
+    evaluator.
+
+    Args:
+        gt_semantic_masks (list[torch.Tensor]): Per scene gt semantic masks.
+        gt_instance_masks (list[torch.Tensor]): Per scene gt instance masks.
+        valid_class_ids (tuple[int]): Ids of valid categories.
+
+    Returns:
+        list[np.array]: Per scene instance masks.
+    """
     renamed_instance_masks = []
     for semantic_mask, instance_mask in zip(gt_semantic_masks,
                                             gt_instance_masks):
@@ -66,8 +88,9 @@ def instance_seg_eval(gt_semantic_masks,
         pred_instance_scores (list[torch.Tensor]): Predicted instance labels.
         valid_class_ids (tuple[int]): Ids of valid categories.
         class_labels (tuple[str]): Names of valid categories.
-        options (dict): Additional options. Keys may contain: `overlaps`,
-            `min_region_sizes`, `distance_threshes`, `distance_confs`.
+        options (dict, optional): Additional options. Keys may contain:
+            `overlaps`, `min_region_sizes`, `distance_threshes`,
+            `distance_confs`. Default: None.
         logger (logging.Logger | str, optional): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 

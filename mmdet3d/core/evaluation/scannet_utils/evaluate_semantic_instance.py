@@ -7,6 +7,17 @@ from . import util_3d
 
 
 def evaluate_matches(matches, class_labels, options):
+    """Evaluate instance segmentation from matched gt and predicted instances
+    for all scenes.
+
+    Args:
+        matches (dict): Contains gt2pred and pred2gt infos for every scene.
+        class_labels (tuple[str]): Class names.
+        options (dict): ScanNet evaluator options. See get_options.
+
+    Returns:
+        np.array: Average precision scores for all thresholds and categories.
+    """
     overlaps = options['overlaps']
     min_region_sizes = [options['min_region_sizes'][0]]
     dist_threshes = [options['distance_threshes'][0]]
@@ -20,8 +31,6 @@ def evaluate_matches(matches, class_labels, options):
         for oi, overlap_th in enumerate(overlaps):
             pred_visited = {}
             for m in matches:
-                # (@filaPro:) it is not used
-                # for p in matches[m]['pred']:
                 for label_name in class_labels:
                     for p in matches[m]['pred'][label_name]:
                         if 'filename' in p:
@@ -53,8 +62,6 @@ def evaluate_matches(matches, class_labels, options):
                     # collect matches
                     for (gti, gt) in enumerate(gt_instances):
                         found_match = False
-                        # (@filaPro:) it is not used
-                        # num_pred = len(gt['matched_pred'])
                         for pred in gt['matched_pred']:
                             # greedy assignments
                             if pred_visited[pred['filename']]:
@@ -136,7 +143,7 @@ def evaluate_matches(matches, class_labels, options):
 
                     # prepare precision recall
                     num_examples = len(y_score_sorted)
-                    # (@filaPro:) follow https://github.com/ScanNet/ScanNet/pull/26 ? # noqa
+                    # follow https://github.com/ScanNet/ScanNet/pull/26 ? # noqa
                     num_true_examples = y_true_sorted_cumsum[-1] if len(
                         y_true_sorted_cumsum) > 0 else 0
                     precision = np.zeros(num_prec_recall)
@@ -179,21 +186,30 @@ def evaluate_matches(matches, class_labels, options):
 
 
 def compute_averages(aps, options, class_labels):
+    """Averages AP scores for all categories.
+
+    Args:
+        aps (np.array): AP scores for all thresholds and categories.
+        options (dict): ScanNet evaluator options. See get_options.
+        class_labels (tuple[str]): Class names.
+
+    Returns:
+        dict: Overall and per-category AP scores.
+    """
     d_inf = 0
     o50 = np.where(np.isclose(options['overlaps'], 0.5))
     o25 = np.where(np.isclose(options['overlaps'], 0.25))
-    oAllBut25 = np.where(np.logical_not(np.isclose(options['overlaps'], 0.25)))
+    o_all_but25 = np.where(
+        np.logical_not(np.isclose(options['overlaps'], 0.25)))
     avg_dict = {}
-    # avg_dict['all_ap'] = np.nanmean(aps[ d_inf, :, :])
-    avg_dict['all_ap'] = np.nanmean(aps[d_inf, :, oAllBut25])
+    avg_dict['all_ap'] = np.nanmean(aps[d_inf, :, o_all_but25])
     avg_dict['all_ap_50%'] = np.nanmean(aps[d_inf, :, o50])
     avg_dict['all_ap_25%'] = np.nanmean(aps[d_inf, :, o25])
     avg_dict['classes'] = {}
     for (li, label_name) in enumerate(class_labels):
         avg_dict['classes'][label_name] = {}
-        # avg_dict['classes'][label_name]['ap'] = np.average(aps[d_inf, li, :])
         avg_dict['classes'][label_name]['ap'] = np.average(aps[d_inf, li,
-                                                               oAllBut25])
+                                                               o_all_but25])
         avg_dict['classes'][label_name]['ap50%'] = np.average(aps[d_inf, li,
                                                                   o50])
         avg_dict['classes'][label_name]['ap25%'] = np.average(aps[d_inf, li,
@@ -203,7 +219,7 @@ def compute_averages(aps, options, class_labels):
 
 def assign_instances_for_scan(pred_info, gt_ids, options, valid_class_ids,
                               class_labels, id_to_label):
-    # (@filaPro:) reading gt and pred files is replaced with their data
+    """Assign gt and predicted instances for a single scene."""
     # get gt instances
     gt_instances = util_3d.get_instances(gt_ids, valid_class_ids, class_labels,
                                          id_to_label)
@@ -216,7 +232,7 @@ def assign_instances_for_scan(pred_info, gt_ids, options, valid_class_ids,
     for label in class_labels:
         pred2gt[label] = []
     num_pred_instances = 0
-    # mask of void labels in the groundtruth
+    # mask of void labels in the ground truth
     bool_void = np.logical_not(np.in1d(gt_ids // 1000, valid_class_ids))
     # go through all prediction masks
     for pred_mask_file in pred_info:
@@ -246,7 +262,7 @@ def assign_instances_for_scan(pred_info, gt_ids, options, valid_class_ids,
 
         # matched gt instances
         matched_gt = []
-        # go thru all gt instances with matching label
+        # go through all gt instances with matching label
         for (gt_num, gt_inst) in enumerate(gt2pred[label_name]):
             intersection = np.count_nonzero(
                 np.logical_and(gt_ids == gt_inst['instance_id'], pred_mask))
@@ -266,10 +282,23 @@ def assign_instances_for_scan(pred_info, gt_ids, options, valid_class_ids,
 
 def scannet_eval(preds, gts, options, valid_class_ids, class_labels,
                  id_to_label):
+    """Evaluate instance segmentation in ScanNet protocol.
+
+    Args:
+        preds (list[dict]): Per scene predictions of mask, label and
+            confidence.
+        gts (list[np.array]): Per scene ground truth instance masks.
+        options (dict): ScanNet evaluator options. See get_options.
+        valid_class_ids (tuple[int]): Ids of valid categories.
+        class_labels (tuple[str]): Class names.
+        id_to_label (dict[int, str]): Mapping of valid class id to class label.
+
+    Returns:
+        dict: Overall and per-category AP scores.
+    """
     options = get_options(options)
     matches = {}
     for i, (pred, gt) in enumerate(zip(preds, gts)):
-        # (@filaPro:) replace gt filename with index
         matches_key = i
         # assign gt to predictions
         gt2pred, pred2gt = assign_instances_for_scan(pred, gt, options,
@@ -284,7 +313,15 @@ def scannet_eval(preds, gts, options, valid_class_ids, class_labels,
     return avgs
 
 
-def get_options(options):
+def get_options(options=None):
+    """Set ScanNet evaluator options.
+
+    Args:
+        options (dict, optional): Not default options. Default: None.
+
+    Returns:
+        dict: Updated options with all 4 keys.
+    """
     assert options is None or isinstance(options, dict)
     _options = dict(
         overlaps=np.append(np.arange(0.5, 0.95, 0.05), 0.25),

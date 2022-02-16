@@ -1,11 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import numpy as np
 import tempfile
 import warnings
 from os import path as osp
 
-import numpy as np
-
-from mmdet3d.core import show_result, show_seg_result, instance_seg_eval
+from mmdet3d.core import instance_seg_eval, show_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.datasets import DATASETS
 from mmseg.datasets import DATASETS as SEG_DATASETS
@@ -477,8 +476,10 @@ class ScanNetInstanceSegDataset(Custom3DSegDataset):
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
+
         Args:
             index (int): Index of the annotation data to get.
+
         Returns:
             dict: annotation information consists of the following keys:
                 - pts_semantic_mask_path (str): Path of semantic masks.
@@ -498,9 +499,9 @@ class ScanNetInstanceSegDataset(Custom3DSegDataset):
         return anns_results
 
     def get_classes_and_palette(self, classes=None, palette=None):
-        """Get class names of current dataset.
+        """Get class names of current dataset. Palette is simply ignored for
+        instance segmentation.
 
-        Palette is simply ignored for instance segmentation.
         Args:
             classes (Sequence[str] | str | None): If classes is None, use
                 default CLASSES defined by builtin dataset. If classes is a
@@ -554,9 +555,8 @@ class ScanNetInstanceSegDataset(Custom3DSegDataset):
                  show=False,
                  out_dir=None,
                  pipeline=None):
-        """Evaluate.
+        """Evaluation in instance segmentation protocol.
 
-        Evaluation in semantic segmentation protocol.
         Args:
             results (list[dict]): List of results.
             metric (str | list[str]): Metrics to be evaluated.
@@ -569,6 +569,7 @@ class ScanNetInstanceSegDataset(Custom3DSegDataset):
                 Defaults to None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
+
         Returns:
             dict: Evaluation results.
         """
