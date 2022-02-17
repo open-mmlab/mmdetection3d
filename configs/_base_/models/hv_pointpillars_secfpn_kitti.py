@@ -34,6 +34,7 @@ model = dict(
         in_channels=384,
         feat_channels=384,
         use_direction_classifier=True,
+        assign_per_class=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[

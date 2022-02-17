@@ -153,12 +153,31 @@ class KittiDataset(Custom3DDataset):
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
                 - gt_labels (np.ndarray): Labels of ground truths.
                 - gt_names (list[str]): Class names of ground truths.
-                - difficulty (int): kitti difficulty.
+                - difficulty (int): Difficulty defined by KITTI.
+                    0, 1, 2 represent xxxxx respectively.
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
         rect = info['calib']['R0_rect'].astype(np.float32)
         Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+
+        if 'plane' in info:
+            # convert ground plane to velodyne coordinates
+            reverse = np.linalg.inv(rect @ Trv2c)
+
+            (plane_norm_cam,
+             plane_off_cam) = (info['plane'][:3],
+                               -info['plane'][:3] * info['plane'][3])
+            plane_norm_lidar = \
+                (reverse[:3, :3] @ plane_norm_cam[:, None])[:, 0]
+            plane_off_lidar = (
+                reverse[:3, :3] @ plane_off_cam[:, None][:, 0] +
+                reverse[:3, 3])
+            plane_lidar = np.zeros_like(plane_norm_lidar, shape=(4, ))
+            plane_lidar[:3] = plane_norm_lidar
+            plane_lidar[3] = -plane_norm_lidar.T @ plane_off_lidar
+        else:
+            plane_lidar = None
 
         difficulty = info['annos']['difficulty']
         annos = info['annos']
@@ -195,6 +214,7 @@ class KittiDataset(Custom3DDataset):
             bboxes=gt_bboxes,
             labels=gt_labels,
             gt_names=gt_names,
+            plane=plane_lidar,
             difficulty=difficulty)
         return anns_results
 

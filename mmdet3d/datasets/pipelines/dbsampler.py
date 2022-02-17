@@ -189,7 +189,7 @@ class DataBaseSampler(object):
                 db_infos[name] = filtered_infos
         return db_infos
 
-    def sample_all(self, gt_bboxes, gt_labels, img=None):
+    def sample_all(self, gt_bboxes, gt_labels, img=None, ground_plane=None):
         """Sampling all categories of bboxes.
 
         Args:
@@ -264,6 +264,15 @@ class DataBaseSampler(object):
 
             gt_labels = np.array([self.cat2label[s['name']] for s in sampled],
                                  dtype=np.long)
+
+            if ground_plane is not None:
+                xyz = sampled_gt_bboxes[:, :3]
+                dz = (ground_plane[:3][None, :] *
+                      xyz).sum(-1) + ground_plane[3]
+                sampled_gt_bboxes[:, 2] -= dz
+                for i, s_points in enumerate(s_points_list):
+                    s_points.tensor[:, 2].sub_(dz[i])
+
             ret = {
                 'gt_labels_3d':
                 gt_labels,
