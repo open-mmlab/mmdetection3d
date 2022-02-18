@@ -25,7 +25,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本 v0.18.1.
+**新闻**: 我们发布了版本 v1.0.0rc0.
 
 说明：我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。
 
@@ -83,7 +83,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v1.0.0.rc0 在 2022.2.18 发布。
+最新的版本 v1.0.0rc0 在 2022.2.18 发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
 ## 基准测试和模型库
