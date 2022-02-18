@@ -1,37 +1,22 @@
 # FreeAnchor for 3D Object Detection
 
+> [FreeAnchor: Learning to Match Anchors for Visual Object Detection](https://arxiv.org/abs/1909.02466)
+
+<!-- [ALGORITHM] -->
+
 ## Abstract
 
-<!-- [ABSTRACT] -->
-
 Modern CNN-based object detectors assign anchors for ground-truth objects under the restriction of object-anchor Intersection-over-Unit (IoU). In this study, we propose a learning-to-match approach to break IoU restriction, allowing objects to match anchors in a flexible manner. Our approach, referred to as FreeAnchor, updates hand-crafted anchor assignment to “free" anchor matching by formulating detector training as a maximum likelihood estimation (MLE) procedure. FreeAnchor targets at learning features which best explain a class of objects in terms of both classification and localization. FreeAnchor is implemented by optimizing detection customized likelihood and can be fused with CNN-based detectors in a plug-and-play manner. Experiments on COCO demonstrate that FreeAnchor consistently outperforms the counterparts with significant margins.
-
-<!-- [IMAGE] -->
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/36950400/143866685-e3ac08bb-cd0c-4ada-ba8a-18e03cccdd0f.png" width="600"/>
 </div>
 
-<!-- [PAPER_TITLE: FreeAnchor: Learning to Match Anchors for Visual
-Object Detection] -->
-<!-- [PAPER_URL: https://arxiv.org/abs/1909.02466.pdf] -->
-
 ## Introduction
-
-<!-- [ALGORITHM] -->
 
 We implement FreeAnchor in 3D detection systems and provide their first results with PointPillars on nuScenes dataset.
 With the implemented `FreeAnchor3DHead`, a PointPillar detector with a big backbone (e.g., RegNet-3.2GF) achieves top performance
 on the nuScenes benchmark.
-
-```
-@inproceedings{zhang2019freeanchor,
-  title   =  {{FreeAnchor}: Learning to Match Anchors for Visual Object Detection},
-  author  =  {Zhang, Xiaosong and Wan, Fang and Liu, Chang and Ji, Rongrong and Ye, Qixiang},
-  booktitle =  {Neural Information Processing Systems},
-  year    =  {2019}
-}
-```
 
 ## Usage
 
@@ -91,7 +76,7 @@ model = dict(
         pts=dict(code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.25, 0.25])))
 ```
 
-## Results
+## Results and models
 
 ### PointPillars
 
@@ -107,3 +92,14 @@ model = dict(
 |[RegNetX-3.2GF-FPN](./hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py)*|✓|3x|29.5||55.09|63.5|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20200629_181452-297fdc66.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20200629_181452.log.json)|
 
 **Note**: Models noted by `*` means it is trained using stronger augmentation with vertical flip under bird-eye-view, global translation, and larger range of global rotation.
+
+## Citation
+
+```latex
+@inproceedings{zhang2019freeanchor,
+  title   =  {{FreeAnchor}: Learning to Match Anchors for Visual Object Detection},
+  author  =  {Zhang, Xiaosong and Wan, Fang and Liu, Chang and Ji, Rongrong and Ye, Qixiang},
+  booktitle =  {Neural Information Processing Systems},
+  year    =  {2019}
+}
+```

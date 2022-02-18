@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
@@ -7,7 +9,6 @@ from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
                                                             group_by_key,
                                                             wrap_in_box)
 from mmcv.utils import print_log
-from os import path as osp
 from terminaltables import AsciiTable
 
 

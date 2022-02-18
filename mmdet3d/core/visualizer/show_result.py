@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 import trimesh
-from os import path as osp
 
 from .image_vis import (draw_camera_bbox3d_on_img, draw_depth_bbox3d_on_img,
                         draw_lidar_bbox3d_on_img)
@@ -78,7 +79,8 @@ def show_result(points,
                 out_dir,
                 filename,
                 show=False,
-                snapshot=False):
+                snapshot=False,
+                pred_labels=None):
     """Convert results into format that is directly readable for meshlab.
 
     Args:
@@ -87,10 +89,11 @@ def show_result(points,
         pred_bboxes (np.ndarray): Predicted boxes.
         out_dir (str): Path of output directory
         filename (str): Filename of the current frame.
-        show (bool, optional): Visualize the results online.
-            Defaults to False.
+        show (bool, optional): Visualize the results online. Defaults to False.
         snapshot (bool, optional): Whether to save the online results.
             Defaults to False.
+        pred_labels (np.ndarray, optional): Predicted labels of boxes.
+            Defaults to None.
     """
     result_path = osp.join(out_dir, filename)
     mmcv.mkdir_or_exist(result_path)
@@ -100,7 +103,23 @@ def show_result(points,
 
         vis = Visualizer(points)
         if pred_bboxes is not None:
-            vis.add_bboxes(bbox3d=pred_bboxes)
+            if pred_labels is None:
+                vis.add_bboxes(bbox3d=pred_bboxes)
+            else:
+                palette = np.random.randint(
+                    0, 255, size=(pred_labels.max() + 1, 3)) / 256
+                labelDict = {}
+                for j in range(len(pred_labels)):
+                    i = int(pred_labels[j].numpy())
+                    if labelDict.get(i) is None:
+                        labelDict[i] = []
+                    labelDict[i].append(pred_bboxes[j])
+                for i in labelDict:
+                    vis.add_bboxes(
+                        bbox3d=np.array(labelDict[i]),
+                        bbox_color=palette[i],
+                        points_in_box_color=palette[i])
+
         if gt_bboxes is not None:
             vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
         show_path = osp.join(result_path,

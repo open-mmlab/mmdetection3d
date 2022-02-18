@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import torch
 from mmcv.image import tensor2imgs
-from os import path as osp
 
 from mmdet3d.models import (Base3DDetector, Base3DSegmentor,
                             SingleStageMono3DDetector)
@@ -44,7 +45,12 @@ def single_gpu_test(model,
             models_3d = (Base3DDetector, Base3DSegmentor,
                          SingleStageMono3DDetector)
             if isinstance(model.module, models_3d):
-                model.module.show_results(data, result, out_dir=out_dir)
+                model.module.show_results(
+                    data,
+                    result,
+                    out_dir=out_dir,
+                    show=show,
+                    score_thr=show_score_thr)
             # Visualize the results of MMDetection model
             # 'show_result' is MMdetection visualization API
             else:

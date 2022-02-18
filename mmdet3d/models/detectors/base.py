@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
-from os import path as osp
 
 from mmdet3d.core import Box3DMode, Coord3DMode, show_result
 from mmdet.models.detectors import BaseDetector
@@ -60,13 +61,18 @@ class Base3DDetector(BaseDetector):
         else:
             return self.forward_test(**kwargs)
 
-    def show_results(self, data, result, out_dir):
+    def show_results(self, data, result, out_dir, show=False, score_thr=None):
         """Results visualization.
 
         Args:
             data (list[dict]): Input points and the information of the sample.
             result (list[dict]): Prediction results.
             out_dir (str): Output directory of visualization result.
+            show (bool, optional): Determines whether you are
+                going to show result by open3d.
+                Defaults to False.
+            score_thr (float, optional): Score threshold of bounding boxes.
+                Default to None.
         """
         for batch_id in range(len(result)):
             if isinstance(data['points'][0], DC):
@@ -93,6 +99,12 @@ class Base3DDetector(BaseDetector):
             assert out_dir is not None, 'Expect out_dir, got none.'
 
             pred_bboxes = result[batch_id]['boxes_3d']
+            pred_labels = result[batch_id]['labels_3d']
+
+            if score_thr is not None:
+                mask = result[batch_id]['scores_3d'] > score_thr
+                pred_bboxes = pred_bboxes[mask]
+                pred_labels = pred_labels[mask]
 
             # for now we convert points and bbox into depth mode
             if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
@@ -105,4 +117,11 @@ class Base3DDetector(BaseDetector):
                 ValueError(
                     f'Unsupported box_mode_3d {box_mode_3d} for conversion!')
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
-            show_result(points, None, pred_bboxes, out_dir, file_name)
+            show_result(
+                points,
+                None,
+                pred_bboxes,
+                out_dir,
+                file_name,
+                show=show,
+                pred_labels=pred_labels)

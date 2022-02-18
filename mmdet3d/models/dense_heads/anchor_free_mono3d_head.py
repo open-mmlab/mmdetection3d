@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import torch
 from abc import abstractmethod
+
+import torch
 from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn

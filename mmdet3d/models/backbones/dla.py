@@ -1,5 +1,7 @@
-import torch
+# Copyright (c) OpenMMLab. All rights reserved.
 import warnings
+
+import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmcv.runner import BaseModule
 from torch import nn

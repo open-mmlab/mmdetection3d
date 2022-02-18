@@ -3,30 +3,30 @@
 
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - '.dev_scripts/**'
+      - '.github/**.md'
+      - 'demo/**'
+      - 'docker/**'
+      - 'tools/**'
+
+  pull_request:
+    paths-ignore:
+      - '.dev_scripts/**'
+      - '.github/**.md'
+      - 'demo/**'
+      - 'docker/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'docs_zh-CN/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
-      - name: Install linting dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 isort yapf interrogate
-      - name: Lint with flake8
-        run: flake8 .
-      - name: Lint with isort
-        run: isort --recursive --check-only --diff mmdet3d/ tests/ examples/
-      - name: Format python codes with yapf
-        run: yapf -r -d mmdet3d/ tests/ examples/
-      - name: Check docstring
-        run: interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 95 mmdet3d
-
   build:
     env:
       FORCE_CUDA: 1
@@ -41,22 +41,22 @@ jobs:
         torch: [1.5.0+cu101, 1.6.0+cu101, 1.7.0+cu101, 1.8.0+cu101]
         include:
           - torch: 1.5.0+cu101
-            torch_version: torch1.5.0
+            torch_version: torch1.5
             torchvision: 0.6.0+cu101
             mmcv_link: "torch1.5.0"
             cuda_arch: "7.0"
           - torch: 1.6.0+cu101
-            torch_version: torch1.6.0
+            torch_version: torch1.6
             mmcv_link: "torch1.6.0"
             torchvision: 0.7.0+cu101
             cuda_arch: "7.0"
           - torch: 1.7.0+cu101
-            torch_version: torch1.7.0
+            torch_version: torch1.7
             mmcv_link: "torch1.7.0"
             torchvision: 0.8.1+cu101
             cuda_arch: "7.0"
           - torch: 1.8.0+cu101
-            torch_version: torch1.8.0
+            torch_version: torch1.8
             mmcv_link: "torch1.8.0"
             torchvision: 0.9.0+cu101
             cuda_arch: "7.0"
@@ -80,8 +80,8 @@ jobs:
       - name: Install mmdet3d dependencies
         run: |
           python -m pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
-          python -m pip install mmdet==2.14.0
-          python -m pip install mmsegmentation==0.14.1
+          python -m pip install mmdet==2.19.0
+          python -m pip install mmsegmentation==0.20.0
           python -m pip install -r requirements.txt
       - name: Build and install
         run: |

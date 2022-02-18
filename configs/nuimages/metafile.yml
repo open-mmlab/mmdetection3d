@@ -1,16 +1,3 @@
-Collections:
-  - Name: Mask R-CNN
-    Metadata:
-      Training Data: nuImages
-      Training Techniques:
-        - SGD with Momentum
-      Architecture:
-        - RoI Align
-        - RPN
-    README: configs/nuimages/README.md
-    Code:
-      Version: v0.6.0
-
 Models:
   - Name: mask_rcnn_r50_fpn_1x_nuim
     In Collection: Mask R-CNN

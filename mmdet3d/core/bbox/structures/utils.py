@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from logging import warning
+
 import numpy as np
 import torch
-from logging import warning
 
 from mmdet3d.core.utils import array_converter
 
@@ -308,3 +309,27 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
     mapping = {'LIDAR': 'lidar2img', 'DEPTH': 'depth2img', 'CAMERA': 'cam2img'}
     assert coord_type in mapping.keys()
     return img_meta[mapping[coord_type]]
+
+
+def yaw2local(yaw, loc):
+    """Transform global yaw to local yaw (alpha in kitti) in camera
+    coordinates, ranges from -pi to pi.
+
+    Args:
+        yaw (torch.Tensor): A vector with local yaw of each box.
+            shape: (N, )
+        loc (torch.Tensor): gravity center of each box.
+            shape: (N, 3)
+
+    Returns:
+        torch.Tensor: local yaw (alpha in kitti).
+    """
+    local_yaw = yaw - torch.atan2(loc[:, 0], loc[:, 2])
+    larger_idx = (local_yaw > np.pi).nonzero(as_tuple=False)
+    small_idx = (local_yaw < -np.pi).nonzero(as_tuple=False)
+    if len(larger_idx) != 0:
+        local_yaw[larger_idx] -= 2 * np.pi
+    if len(small_idx) != 0:
+        local_yaw[small_idx] += 2 * np.pi
+
+    return local_yaw

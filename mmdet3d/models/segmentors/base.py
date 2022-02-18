@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
-from os import path as osp
 
 from mmdet3d.core import show_seg_result
 from mmseg.models.segmentors import BaseSegmentor
@@ -72,7 +73,9 @@ class Base3DSegmentor(BaseSegmentor):
                      result,
                      palette=None,
                      out_dir=None,
-                     ignore_index=None):
+                     ignore_index=None,
+                     show=False,
+                     score_thr=None):
         """Results visualization.
 
         Args:
@@ -85,6 +88,13 @@ class Base3DSegmentor(BaseSegmentor):
             ignore_index (int, optional): The label index to be ignored, e.g.
                 unannotated points. If None is given, set to len(self.CLASSES).
                 Defaults to None.
+            show (bool, optional): Determines whether you are
+                going to show result by open3d.
+                Defaults to False.
+            TODO: implement score_thr of Base3DSegmentor.
+            score_thr (float, optional): Score threshold of bounding boxes.
+                Default to None.
+                Not implemented yet, but it is here for unification.
         """
         assert out_dir is not None, 'Expect out_dir, got none.'
         if palette is None:
@@ -123,4 +133,4 @@ class Base3DSegmentor(BaseSegmentor):
                 file_name,
                 palette,
                 ignore_index,
-                show=True)
+                show=show)

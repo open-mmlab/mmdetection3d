@@ -5,6 +5,7 @@
 # Author: yanyan, scrin@foxmail.com
 #####################
 import math
+
 import numba
 import numpy as np
 from numba import cuda
