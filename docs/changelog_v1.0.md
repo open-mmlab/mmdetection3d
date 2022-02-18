@@ -1,6 +1,6 @@
 ## Changelog
 
-### v1.0.0.rc0 (8/12/2021)
+### v1.0.0.rc0 (18/2/2022)
 
 #### Compatibility
 
@@ -73,7 +73,7 @@
 
 #### Contributors
 
-A total of 11 developers contributed to this release.
+A total of 12 developers contributed to this release.
 
 @THU17cyz, @wHao-Wu, @wangruohui, @Wuziyi616, @filaPro, @ZwwWayne, @Tai-Wang, @DCNSW, @xieenze, @robin-karlsson0, @ZCMax, @Otteri
 
