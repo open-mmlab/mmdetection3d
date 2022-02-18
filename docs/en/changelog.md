@@ -36,7 +36,7 @@
 - Support to download pdf and epub documentation (#850)
 - Change the `repeat` setting in Group-Free-3D configs to reduce training epochs (#855)
 - Support KITTI AP40 evaluation metric (#927)
-- Add the mmdet3d2torchserve tool (#977)
+- Add the mmdet3d2torchserve tool for SECOND (#977)
 - Add code-spell pre-commit hook and fix typos (#995)
 - Support the latest numba version (#1043)
 - Set a default seed to use when the random seed is not specified (#1072)
