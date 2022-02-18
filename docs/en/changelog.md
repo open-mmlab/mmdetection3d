@@ -10,6 +10,9 @@
 
 #### Highlights
 
+- Support new monocular 3D detectors: [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd), [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke), [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/monoflex)
+- Support a new LiDAR-based detector: [PointRCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/point_rcnn)
+- Support a new backbone: [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/dgcnn)
 - Support 3D object detection on the S3DIS dataset
 - Support compilation on Windows
 - Full benchmark for PAConv on S3DIS
