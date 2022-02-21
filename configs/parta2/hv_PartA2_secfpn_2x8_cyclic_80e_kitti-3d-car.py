@@ -34,8 +34,8 @@ model = dict(
         rpn_proposal=dict(
             nms_pre=9000,
             nms_post=512,
-            max_num=512,
-            nms_thr=0.8,
+            max_per_img=512,
+            nms=dict(type='nms', iou_threshold=0.8),
             score_thr=0,
             use_rotate_nms=False),
         rcnn=dict(
@@ -61,14 +61,14 @@ model = dict(
         rpn=dict(
             nms_pre=1024,
             nms_post=100,
-            max_num=100,
-            nms_thr=0.7,
+            max_per_img=100,
+            nms=dict(type='nms', iou_threshold=0.7),
             score_thr=0,
             use_rotate_nms=True),
         rcnn=dict(
             use_rotate_nms=True,
             use_raw_score=True,
-            nms_thr=0.01,
+            nms=dict(type='nms', iou_threshold=0.01),
             score_thr=0.1)))
 
 # dataset settings
