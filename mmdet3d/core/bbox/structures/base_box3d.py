@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 import numpy as np
 import torch
-from mmcv.ops import boxes_iou_bev as boxes_overlap_bev_gpu
+from mmcv._ext import iou3d_boxes_iou_bev_forward as boxes_overlap_bev_gpu
 from mmcv.ops import points_in_boxes_all, points_in_boxes_part
 
 from .utils import limit_period, xywhr2xyxyr
