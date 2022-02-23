@@ -14,12 +14,12 @@ class SparseBottleneck(Bottleneck, spconv.SparseModule):
     Args:
         inplanes (int): inplanes of block.
         planes (int): planes of block.
-        stride (int): stride of the first block. Default: 1
-        downsample (None | Module): down sample module for block.
-        conv_cfg (dict): dictionary to construct and config conv layer.
-            Default: None
-        norm_cfg (dict): dictionary to construct and config norm layer.
-            Default: dict(type='BN')
+        stride (int, optional): stride of the first block. Default: 1.
+        downsample (Module, optional): down sample module for block.
+        conv_cfg (dict, optional): dictionary to construct and config conv
+            layer. Default: None.
+        norm_cfg (dict, optional): dictionary to construct and config norm
+            layer. Default: dict(type='BN').
     """
 
     expansion = 4
@@ -73,12 +73,12 @@ class SparseBasicBlock(BasicBlock, spconv.SparseModule):
     Args:
         inplanes (int): inplanes of block.
         planes (int): planes of block.
-        stride (int): stride of the first block. Default: 1
-        downsample (None | Module): down sample module for block.
-        conv_cfg (dict): dictionary to construct and config conv layer.
-            Default: None
-        norm_cfg (dict): dictionary to construct and config norm layer.
-            Default: dict(type='BN')
+        stride (int, optional): stride of the first block. Default: 1.
+        downsample (Module, optional): down sample module for block.
+        conv_cfg (dict, optional): dictionary to construct and config conv
+            layer. Default: None.
+        norm_cfg (dict, optional): dictionary to construct and config norm
+            layer. Default: dict(type='BN').
     """
 
     expansion = 1

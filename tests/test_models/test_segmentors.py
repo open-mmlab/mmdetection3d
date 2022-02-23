@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from os.path import dirname, exists, join
+
 import numpy as np
 import pytest
 import torch
-from os.path import dirname, exists, join
 
 from mmdet3d.models.builder import build_segmentor
 from mmdet.apis import set_random_seed
@@ -304,3 +305,48 @@ def test_paconv_cuda_ssg():
         results = self.forward(return_loss=False, **data_dict)
         assert results[0]['semantic_mask'].shape == torch.Size([200])
         assert results[1]['semantic_mask'].shape == torch.Size([100])
+
+
+def test_dgcnn():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    set_random_seed(0, True)
+    dgcnn_cfg = _get_segmentor_cfg(
+        'dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py')
+    dgcnn_cfg.test_cfg.num_points = 32
+    self = build_segmentor(dgcnn_cfg).cuda()
+    points = [torch.rand(4096, 9).float().cuda() for _ in range(2)]
+    img_metas = [dict(), dict()]
+    gt_masks = [torch.randint(0, 13, (4096, )).long().cuda() for _ in range(2)]
+
+    # test forward_train
+    losses = self.forward_train(points, img_metas, gt_masks)
+    assert losses['decode.loss_sem_seg'].item() >= 0
+
+    # test loss with ignore_index
+    ignore_masks = [torch.ones_like(gt_masks[0]) * 13 for _ in range(2)]
+    losses = self.forward_train(points, img_metas, ignore_masks)
+    assert losses['decode.loss_sem_seg'].item() == 0
+
+    # test simple_test
+    self.eval()
+    with torch.no_grad():
+        scene_points = [
+            torch.randn(500, 6).float().cuda() * 3.0,
+            torch.randn(200, 6).float().cuda() * 2.5
+        ]
+        results = self.simple_test(scene_points, img_metas)
+        assert results[0]['semantic_mask'].shape == torch.Size([500])
+        assert results[1]['semantic_mask'].shape == torch.Size([200])
+
+    # test aug_test
+    with torch.no_grad():
+        scene_points = [
+            torch.randn(2, 500, 6).float().cuda() * 3.0,
+            torch.randn(2, 200, 6).float().cuda() * 2.5
+        ]
+        img_metas = [[dict(), dict()], [dict(), dict()]]
+        results = self.aug_test(scene_points, img_metas)
+        assert results[0]['semantic_mask'].shape == torch.Size([500])
+        assert results[1]['semantic_mask'].shape == torch.Size([200])

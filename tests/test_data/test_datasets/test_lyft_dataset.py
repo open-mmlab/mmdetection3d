@@ -1,9 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import tempfile
+
 import mmcv
 import numpy as np
-import tempfile
 import torch
 
+from mmdet3d.core import limit_period
 from mmdet3d.datasets import LyftDataset
 
 
@@ -11,6 +13,7 @@ def test_getitem():
     np.random.seed(0)
     torch.manual_seed(0)
     root_path = './tests/data/lyft'
+    # in coordinate system refactor, this test file is modified
     ann_file = './tests/data/lyft/lyft_infos.pkl'
     class_names = ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
                    'motorcycle', 'bicycle', 'pedestrian', 'animal')
@@ -49,9 +52,11 @@ def test_getitem():
     pcd_horizontal_flip = data['img_metas']._data['pcd_horizontal_flip']
     pcd_scale_factor = data['img_metas']._data['pcd_scale_factor']
     pcd_rotation = data['img_metas']._data['pcd_rotation']
+    pcd_rotation_angle = data['img_metas']._data['pcd_rotation_angle']
     sample_idx = data['img_metas']._data['sample_idx']
-    pcd_rotation_expected = np.array([[0.99869376, -0.05109515, 0.],
-                                      [0.05109515, 0.99869376, 0.],
+    # coord sys refactor
+    pcd_rotation_expected = np.array([[0.99869376, 0.05109515, 0.],
+                                      [-0.05109515, 0.99869376, 0.],
                                       [0., 0., 1.]])
     assert pts_filename == \
         'tests/data/lyft/lidar/host-a017_lidar1_1236118886901125926.bin'
@@ -82,6 +87,21 @@ def test_getitem():
     expected_gt_labels = np.array([0, 4, 7])
     original_classes = lyft_dataset.CLASSES
 
+    # manually go through pipeline
+    expected_points[:, :3] = (
+        (expected_points[:, :3] * torch.tensor([1, -1, 1]))
+        @ pcd_rotation_expected @ pcd_rotation_expected) * torch.tensor(
+            [1, -1, 1])
+    expected_gt_bboxes_3d[:, :3] = (
+        (expected_gt_bboxes_3d[:, :3] * torch.tensor([1, -1, 1]))
+        @ pcd_rotation_expected @ pcd_rotation_expected) * torch.tensor(
+            [1, -1, 1])
+    expected_gt_bboxes_3d[:, 3:6] = expected_gt_bboxes_3d[:, [4, 3, 5]]
+    expected_gt_bboxes_3d[:, 6:] = -expected_gt_bboxes_3d[:, 6:] \
+        - np.pi / 2 - pcd_rotation_angle * 2
+    expected_gt_bboxes_3d[:, 6:] = limit_period(
+        expected_gt_bboxes_3d[:, 6:], period=np.pi * 2)
+
     assert torch.allclose(points, expected_points, 1e-2)
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.all(gt_labels_3d.numpy() == expected_gt_labels)
@@ -110,8 +130,10 @@ def test_getitem():
 
 def test_evaluate():
     root_path = './tests/data/lyft'
+    # in coordinate system refactor, this test file is modified
     ann_file = './tests/data/lyft/lyft_infos_val.pkl'
     lyft_dataset = LyftDataset(ann_file, None, root_path)
+    # in coordinate system refactor, this test file is modified
     results = mmcv.load('./tests/data/lyft/sample_results.pkl')
     ap_dict = lyft_dataset.evaluate(results, 'bbox')
     car_precision = ap_dict['pts_bbox_Lyft/car_AP']
@@ -119,8 +141,9 @@ def test_evaluate():
 
 
 def test_show():
-    import mmcv
     from os import path as osp
+
+    import mmcv
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
     tmp_dir = tempfile.TemporaryDirectory()
@@ -149,11 +172,11 @@ def test_show():
     kitti_dataset = LyftDataset(ann_file, None, root_path)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
-            [[46.1218, -4.6496, -0.9275, 0.5316, 1.4442, 1.7450, 1.1749],
-             [33.3189, 0.1981, 0.3136, 0.5656, 1.2301, 1.7985, 1.5723],
-             [46.1366, -4.6404, -0.9510, 0.5162, 1.6501, 1.7540, 1.3778],
-             [33.2646, 0.2297, 0.3446, 0.5746, 1.3365, 1.7947, 1.5430],
-             [58.9079, 16.6272, -1.5829, 1.5656, 3.9313, 1.4899, 1.5505]]))
+            [[46.1218, -4.6496, -0.9275, 1.4442, 0.5316, 1.7450, -2.7457],
+             [33.3189, 0.1981, 0.3136, 1.2301, 0.5656, 1.7985, 3.1401],
+             [46.1366, -4.6404, -0.9510, 1.6501, 0.5162, 1.7540, -2.9486],
+             [33.2646, 0.2297, 0.3446, 1.3365, 0.5746, 1.7947, -3.1138],
+             [58.9079, 16.6272, -1.5829, 3.9313, 1.5656, 1.4899, -3.1213]]))
     scores_3d = torch.tensor([0.1815, 0.1663, 0.5792, 0.2194, 0.2780])
     labels_3d = torch.tensor([0, 0, 1, 1, 2])
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)

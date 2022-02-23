@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import base64
+from os import path as osp
+
 import mmcv
 import numpy as np
 from nuimages import NuImages
 from nuimages.utils.utils import mask_decode, name_to_index_mapping
-from os import path as osp
 
 nus_categories = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
                   'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',

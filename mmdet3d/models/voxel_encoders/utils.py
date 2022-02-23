@@ -113,11 +113,12 @@ class PFNLayer(nn.Module):
     Args:
         in_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
-        norm_cfg (dict): Config dict of normalization layers
-        last_layer (bool): If last_layer, there is no concatenation of
-            features.
-        mode (str): Pooling model to gather features inside voxels.
-            Default to 'max'.
+        norm_cfg (dict, optional): Config dict of normalization layers.
+            Defaults to dict(type='BN1d', eps=1e-3, momentum=0.01).
+        last_layer (bool, optional): If last_layer, there is no
+            concatenation of features. Defaults to False.
+        mode (str, optional): Pooling model to gather features inside voxels.
+            Defaults to 'max'.
     """
 
     def __init__(self,

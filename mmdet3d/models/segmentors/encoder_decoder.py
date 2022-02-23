@@ -187,7 +187,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                           use_normalized_coord=False):
         """Generating model input.
 
-        Generate input by subtracting patch center and adding additional \
+        Generate input by subtracting patch center and adding additional
             features. Currently support colors and normalized xyz as features.
 
         Args:
@@ -195,7 +195,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             patch_center (torch.Tensor): Center coordinate of the patch.
             coord_max (torch.Tensor): Max coordinate of all 3D points.
             feats (torch.Tensor): Features of sampled points of shape [S, C].
-            use_normalized_coord (bool, optional): Whether to use normalized \
+            use_normalized_coord (bool, optional): Whether to use normalized
                 xyz as additional features. Defaults to False.
 
         Returns:
@@ -233,17 +233,17 @@ class EncoderDecoder3D(Base3DSegmentor):
             block_size (float, optional): Size of a patch to sample.
             sample_rate (float, optional): Stride used in sliding patch.
                 Defaults to 0.5.
-            use_normalized_coord (bool, optional): Whether to use normalized \
+            use_normalized_coord (bool, optional): Whether to use normalized
                 xyz as additional features. Defaults to False.
             eps (float, optional): A value added to patch boundary to guarantee
-                points coverage. Default 1e-3.
+                points coverage. Defaults to 1e-3.
 
         Returns:
             np.ndarray | np.ndarray:
 
-                - patch_points (torch.Tensor): Points of different patches of \
+                - patch_points (torch.Tensor): Points of different patches of
                     shape [K, N, 3+C].
-                - patch_idxs (torch.Tensor): Index of each point in \
+                - patch_idxs (torch.Tensor): Index of each point in
                     `patch_points`, of shape [K, N].
         """
         device = points.device

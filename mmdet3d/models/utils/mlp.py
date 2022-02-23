@@ -10,15 +10,15 @@ class MLP(BaseModule):
     Pass features (B, C, N) through an MLP.
 
     Args:
-        in_channels (int): Number of channels of input features.
+        in_channels (int, optional): Number of channels of input features.
             Default: 18.
-        conv_channels (tuple[int]): Out channels of the convolution.
+        conv_channels (tuple[int], optional): Out channels of the convolution.
             Default: (256, 256).
-        conv_cfg (dict): Config of convolution.
+        conv_cfg (dict, optional): Config of convolution.
             Default: dict(type='Conv1d').
-        norm_cfg (dict): Config of normalization.
+        norm_cfg (dict, optional): Config of normalization.
             Default: dict(type='BN1d').
-        act_cfg (dict): Config of activation.
+        act_cfg (dict, optional): Config of activation.
             Default: dict(type='ReLU').
     """
 

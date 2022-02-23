@@ -110,8 +110,8 @@ def export(mesh_file,
                 instance_ids[verts] = object_id
                 if object_id not in object_id_to_label_id:
                     object_id_to_label_id[object_id] = label_ids[verts][0]
-        # bbox format is [x, y, z, dx, dy, dz, label_id]
-        # [x, y, z] is gravity center of bbox, [dx, dy, dz] is axis-aligned
+        # bbox format is [x, y, z, x_size, y_size, z_size, label_id]
+        # [x, y, z] is gravity center of bbox, [x_size, y_size, z_size] is axis-aligned
         # [label_id] is semantic label id in 'nyu40id' standard
         # Note: since 3D bbox is axis-aligned, the yaw is 0.
         unaligned_bboxes = extract_bbox(mesh_vertices, object_id_to_segs,

@@ -3,6 +3,8 @@ import pytest
 import torch
 from torch import nn as nn
 
+from mmdet.models import build_loss
+
 
 def test_chamfer_disrance():
     from mmdet3d.models.losses import ChamferDistance, chamfer_distance
@@ -93,7 +95,7 @@ def test_paconv_regularization_loss():
     set_random_seed(0, True)
     model = ToyModel()
 
-    # reduction shoule be in ['none', 'mean', 'sum']
+    # reduction should be in ['none', 'mean', 'sum']
     with pytest.raises(AssertionError):
         paconv_corr_loss = PAConvRegularizationLoss(reduction='l2')
 
@@ -109,3 +111,64 @@ def test_paconv_regularization_loss():
         model.modules(), reduction_override='none')
     assert none_corr_loss.shape[0] == 3
     assert torch.allclose(none_corr_loss.mean(), mean_corr_loss)
+
+
+def test_uncertain_smooth_l1_loss():
+    from mmdet3d.models.losses import UncertainL1Loss, UncertainSmoothL1Loss
+
+    # reduction should be in ['none', 'mean', 'sum']
+    with pytest.raises(AssertionError):
+        uncertain_l1_loss = UncertainL1Loss(reduction='l2')
+    with pytest.raises(AssertionError):
+        uncertain_smooth_l1_loss = UncertainSmoothL1Loss(reduction='l2')
+
+    pred = torch.tensor([1.5783, 0.5972, 1.4821, 0.9488])
+    target = torch.tensor([1.0813, -0.3466, -1.1404, -0.9665])
+    sigma = torch.tensor([-1.0053, 0.4710, -1.7784, -0.8603])
+
+    # test uncertain l1 loss
+    uncertain_l1_loss_cfg = dict(
+        type='UncertainL1Loss', alpha=1.0, reduction='mean', loss_weight=1.0)
+    uncertain_l1_loss = build_loss(uncertain_l1_loss_cfg)
+    mean_l1_loss = uncertain_l1_loss(pred, target, sigma)
+    expected_l1_loss = torch.tensor(4.7069)
+    assert torch.allclose(mean_l1_loss, expected_l1_loss, atol=1e-4)
+
+    # test uncertain smooth l1 loss
+    uncertain_smooth_l1_loss_cfg = dict(
+        type='UncertainSmoothL1Loss',
+        alpha=1.0,
+        beta=0.5,
+        reduction='mean',
+        loss_weight=1.0)
+    uncertain_smooth_l1_loss = build_loss(uncertain_smooth_l1_loss_cfg)
+    mean_smooth_l1_loss = uncertain_smooth_l1_loss(pred, target, sigma)
+    expected_smooth_l1_loss = torch.tensor(3.9795)
+    assert torch.allclose(
+        mean_smooth_l1_loss, expected_smooth_l1_loss, atol=1e-4)
+
+
+def test_multibin_loss():
+    from mmdet3d.models.losses import MultiBinLoss
+
+    # reduction should be in ['none', 'mean', 'sum']
+    with pytest.raises(AssertionError):
+        multibin_loss = MultiBinLoss(reduction='l2')
+
+    pred = torch.tensor([[
+        0.81, 0.32, 0.78, 0.52, 0.24, 0.12, 0.32, 0.11, 1.20, 1.30, 0.20, 0.11,
+        0.12, 0.11, 0.23, 0.31
+    ],
+                         [
+                             0.02, 0.19, 0.78, 0.22, 0.31, 0.12, 0.22, 0.11,
+                             1.20, 1.30, 0.45, 0.51, 0.12, 0.11, 0.13, 0.61
+                         ]])
+    target = torch.tensor([[1, 1, 0, 0, 2.14, 3.12, 0.68, -2.15],
+                           [1, 1, 0, 0, 3.12, 3.12, 2.34, 1.23]])
+    multibin_loss_cfg = dict(
+        type='MultiBinLoss', reduction='none', loss_weight=1.0)
+    multibin_loss = build_loss(multibin_loss_cfg)
+    output_multibin_loss = multibin_loss(pred, target, num_dir_bins=4)
+    expected_multibin_loss = torch.tensor(2.1120)
+    assert torch.allclose(
+        output_multibin_loss, expected_multibin_loss, atol=1e-4)

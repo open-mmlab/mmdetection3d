@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import random
+from os.path import dirname, exists, join
+
 import numpy as np
 import pytest
-import random
 import torch
-from os.path import dirname, exists, join
 
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes)
@@ -437,7 +438,8 @@ def test_imvoxelnet():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
-    imvoxelnet_cfg = _get_detector_cfg('imvoxelnet/imvoxelnet_kitti-3d-car.py')
+    imvoxelnet_cfg = _get_detector_cfg(
+        'imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py')
     self = build_detector(imvoxelnet_cfg).cuda()
     imgs = torch.rand([1, 3, 384, 1280], dtype=torch.float32).cuda()
     gt_bboxes_3d = [LiDARInstance3DBoxes(torch.rand([3, 7], device='cuda'))]
@@ -465,6 +467,103 @@ def test_imvoxelnet():
     boxes_3d = results[0]['boxes_3d']
     scores_3d = results[0]['scores_3d']
     labels_3d = results[0]['labels_3d']
+    assert boxes_3d.tensor.shape[0] >= 0
+    assert boxes_3d.tensor.shape[1] == 7
+    assert scores_3d.shape[0] >= 0
+    assert labels_3d.shape[0] >= 0
+
+
+def test_pointrcnn():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    pointrcnn_cfg = _get_detector_cfg(
+        'pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+    self = build_detector(pointrcnn_cfg).cuda()
+    points_0 = torch.rand([1000, 4], device='cuda')
+    points_1 = torch.rand([1000, 4], device='cuda')
+    points = [points_0, points_1]
+
+    img_meta_0 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_meta_1 = dict(box_type_3d=LiDARInstance3DBoxes)
+    img_metas = [img_meta_0, img_meta_1]
+    gt_bbox_0 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bbox_1 = LiDARInstance3DBoxes(torch.rand([10, 7], device='cuda'))
+    gt_bboxes = [gt_bbox_0, gt_bbox_1]
+    gt_labels_0 = torch.randint(0, 3, [10], device='cuda')
+    gt_labels_1 = torch.randint(0, 3, [10], device='cuda')
+    gt_labels = [gt_labels_0, gt_labels_1]
+
+    # test_forward_train
+    losses = self.forward_train(points, img_metas, gt_bboxes, gt_labels)
+    assert losses['bbox_loss'] >= 0
+    assert losses['semantic_loss'] >= 0
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
+    assert losses['loss_corner'] >= 0
+
+
+def test_smoke():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    _setup_seed(0)
+    smoke_cfg = _get_detector_cfg(
+        'smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d.py')
+    self = build_detector(smoke_cfg).cuda()
+    imgs = torch.rand([1, 3, 384, 1280], dtype=torch.float32).cuda()
+    gt_bboxes = [
+        torch.Tensor([[563.63122442, 175.02195182, 614.81298184, 224.97763099],
+                      [480.89676358, 179.86272635, 511.53017463, 202.54645962],
+                      [541.48322272, 175.73767011, 564.55208966, 193.95009791],
+                      [329.51448848, 176.14566789, 354.24670848,
+                       213.82599081]]).cuda()
+    ]
+    gt_bboxes_3d = [
+        CameraInstance3DBoxes(
+            torch.Tensor([[-0.69, 1.69, 25.01, 3.20, 1.61, 1.66, -1.59],
+                          [-7.43, 1.88, 47.55, 3.70, 1.40, 1.51, 1.55],
+                          [-4.71, 1.71, 60.52, 4.05, 1.46, 1.66, 1.56],
+                          [-12.63, 1.88, 34.09, 1.95, 1.72, 0.50,
+                           1.54]]).cuda(),
+            box_dim=7)
+    ]
+    gt_labels = [torch.tensor([0, 0, 0, 1]).cuda()]
+    gt_labels_3d = gt_labels
+    centers2d = [
+        torch.Tensor([[589.6528477, 198.3862263], [496.8143155, 190.75967182],
+                      [553.40528354, 184.53785991],
+                      [342.23690317, 194.44298819]]).cuda()
+    ]
+    # depths is actually not used in smoke head loss computation
+    depths = [torch.rand([3], dtype=torch.float32).cuda()]
+    attr_labels = None
+    img_metas = [
+        dict(
+            cam_intrinsic=[[721.5377, 0., 609.5593, 0.],
+                           [0., 721.5377, 172.854, 0.], [0., 0., 1., 0.],
+                           [0., 0., 0., 1.]],
+            scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
+            pad_shape=[384, 1280],
+            trans_mat=np.array([[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],
+                               dtype=np.float32),
+            affine_aug=False,
+            box_type_3d=CameraInstance3DBoxes)
+    ]
+
+    # test forward_train
+    losses = self.forward_train(imgs, img_metas, gt_bboxes, gt_labels,
+                                gt_bboxes_3d, gt_labels_3d, centers2d, depths,
+                                attr_labels)
+
+    assert losses['loss_cls'] >= 0
+    assert losses['loss_bbox'] >= 0
+
+    # test simple_test
+    with torch.no_grad():
+        results = self.simple_test(imgs, img_metas)
+    boxes_3d = results[0]['img_bbox']['boxes_3d']
+    scores_3d = results[0]['img_bbox']['scores_3d']
+    labels_3d = results[0]['img_bbox']['labels_3d']
     assert boxes_3d.tensor.shape[0] >= 0
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0

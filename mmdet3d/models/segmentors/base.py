@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
-from os import path as osp
 
 from mmdet3d.core import show_seg_result
 from mmseg.models.segmentors import BaseSegmentor
@@ -80,7 +81,7 @@ class Base3DSegmentor(BaseSegmentor):
         Args:
             data (list[dict]): Input points and the information of the sample.
             result (list[dict]): Prediction results.
-            palette (list[list[int]]] | np.ndarray | None): The palette of
+            palette (list[list[int]]] | np.ndarray): The palette of
                 segmentation map. If None is given, random palette will be
                 generated. Default: None
             out_dir (str): Output directory of visualization result.

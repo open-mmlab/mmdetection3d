@@ -10,11 +10,12 @@ except ImportError:
         'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
         'to install the official devkit first.')
 
+from glob import glob
+from os.path import join
+
 import mmcv
 import numpy as np
 import tensorflow as tf
-from glob import glob
-from os.path import join
 from waymo_open_dataset.utils import range_image_utils, transform_utils
 from waymo_open_dataset.utils.frame_utils import \
     parse_range_image_and_camera_projection
@@ -31,8 +32,8 @@ class Waymo2KITTI(object):
         save_dir (str): Directory to save data in KITTI format.
         prefix (str): Prefix of filename. In general, 0 for training, 1 for
             validation and 2 for testing.
-        workers (str): Number of workers for the parallel process.
-        test_mode (bool): Whether in the test_mode. Default: False.
+        workers (int, optional): Number of workers for the parallel process.
+        test_mode (bool, optional): Whether in the test_mode. Default: False.
     """
 
     def __init__(self,
@@ -402,8 +403,8 @@ class Waymo2KITTI(object):
                 camera projections corresponding with two returns.
             range_image_top_pose (:obj:`Transform`): Range image pixel pose for
                 top lidar.
-            ri_index (int): 0 for the first return, 1 for the second return.
-                Default: 0.
+            ri_index (int, optional): 0 for the first return,
+                1 for the second return. Default: 0.
 
         Returns:
             tuple[list[np.ndarray]]: (List of points with shape [N, 3],

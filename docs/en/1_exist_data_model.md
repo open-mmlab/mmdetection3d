@@ -9,6 +9,7 @@ For high-level apis easier to integrated into other projects and basic demos, pl
 ### Test existing models on standard datasets
 
 - single GPU
+- CPU
 - single node multiple GPU
 - multiple node
 
@@ -18,9 +19,17 @@ You can use the following commands to test a dataset.
 # single-gpu testing
 python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
 
+# CPU: disable GPUs and run single-gpu testing script (experimental)
+export CUDA_VISIBLE_DEVICES=-1
+python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
+
 # multi-gpu testing
 ./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}]
 ```
+
+**Note**:
+
+For now, CPU testing is only supported for SMOKE.
 
 Optional arguments:
 - `RESULT_FILE`: Filename of the output results in pickle format. If not specified, the results will not be saved to a file.
@@ -144,6 +153,20 @@ python tools/train.py ${CONFIG_FILE} [optional arguments]
 ```
 
 If you want to specify the working directory in the command, you can add an argument `--work-dir ${YOUR_WORK_DIR}`.
+
+### Training with CPU (experimental)
+
+The process of training on the CPU is consistent with single GPU training. We just need to disable GPUs before the training process.
+
+```shell
+export CUDA_VISIBLE_DEVICES=-1
+```
+
+And then run the script of train with a single GPU.
+
+**Note**:
+
+For now, most of the point cloud related algorithms rely on 3D CUDA op, which can not be trained on CPU. Some monocular 3D object detection algorithms, like FCOS3D and SMOKE can be trained on CPU. We do not recommend users to use CPU for training because it is too slow. We support this feature to allow users to debug certain models on machines without GPU for convenience.
 
 ### Train with multiple GPUs
 

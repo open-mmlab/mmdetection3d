@@ -1,21 +1,22 @@
 # Deep Hough Voting for 3D Object Detection in Point Clouds
 
-## Introduction
+> [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664)
 
 <!-- [ALGORITHM] -->
 
+## Abstract
+
+Current 3D object detection methods are heavily influenced by 2D detectors. In order to leverage architectures in 2D detectors, they often convert 3D point clouds to regular grids (i.e., to voxel grids or to bird's eye view images), or rely on detection in 2D images to propose 3D boxes. Few works have attempted to directly detect objects in point clouds. In this work, we return to first principles to construct a 3D detection pipeline for point cloud data and as generic as possible. However, due to the sparse nature of the data -- samples from 2D manifolds in 3D space -- we face a major challenge when directly predicting bounding box parameters from scene points: a 3D object centroid can be far from any surface point thus hard to regress accurately in one step. To address the challenge, we propose VoteNet, an end-to-end 3D object detection network based on a synergy of deep point set networks and Hough voting. Our model achieves state-of-the-art 3D detection on two large datasets of real 3D scans, ScanNet and SUN RGB-D with a simple design, compact model size and high efficiency. Remarkably, VoteNet outperforms previous methods by using purely geometric information without relying on color images.
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/79644370/143888295-af7435b4-9f75-4669-b5f8-a19ae24a051c.png" width="800"/>
+</div>
+
+## Introduction
+
 We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRGBD datasets.
 
-```
-@inproceedings{qi2019deep,
-    author = {Qi, Charles R and Litany, Or and He, Kaiming and Guibas, Leonidas J},
-    title = {Deep Hough Voting for 3D Object Detection in Point Clouds},
-    booktitle = {Proceedings of the IEEE International Conference on Computer Vision},
-    year = {2019}
-}
-```
-
-## Results
+## Results and models
 
 ### ScanNet
 
@@ -54,3 +55,14 @@ iou_loss=dict(type='AxisAlignedIoULoss', reduction='sum', loss_weight=10.0 / 3.0
 |    [PointNet++](./votenet_iouloss_8x8_scannet-3d-18class.py)     |  3x    |4.1||63.81|44.21|/|
 
 For now, we only support calculating IoU loss for axis-aligned bounding boxes since the CUDA op of general 3D IoU calculation does not implement the backward method. Therefore, IoU loss can only be used for ScanNet dataset for now.
+
+## Citation
+
+```latex
+@inproceedings{qi2019deep,
+    author = {Qi, Charles R and Litany, Or and He, Kaiming and Guibas, Leonidas J},
+    title = {Deep Hough Voting for 3D Object Detection in Point Clouds},
+    booktitle = {Proceedings of the IEEE International Conference on Computer Vision},
+    year = {2019}
+}
+```

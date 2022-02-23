@@ -1,12 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from logging import warning
+
 import numpy as np
 import torch
-from mmcv.cnn import Scale
+from mmcv.cnn import Scale, normal_init
 from mmcv.runner import force_fp32
 from torch import nn as nn
 
-from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
+from mmdet3d.core import (box3d_multiclass_nms, limit_period, points_img2cam,
+                          xywhr2xyxyr)
 from mmdet.core import multi_apply
+from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
@@ -21,31 +25,29 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        regress_ranges (tuple[tuple[int, int]]): Regress range of multiple
+        regress_ranges (tuple[tuple[int, int]], optional): Regress range of multiple
             level points.
-        center_sampling (bool): If true, use center sampling. Default: True.
-        center_sample_radius (float): Radius of center sampling. Default: 1.5.
-        norm_on_bbox (bool): If true, normalize the regression targets
+        center_sampling (bool, optional): If true, use center sampling. Default: True.
+        center_sample_radius (float, optional): Radius of center sampling. Default: 1.5.
+        norm_on_bbox (bool, optional): If true, normalize the regression targets
             with FPN strides. Default: True.
-        centerness_on_reg (bool): If true, position centerness on the
+        centerness_on_reg (bool, optional): If true, position centerness on the
             regress branch. Please refer to https://github.com/tianzhi0549/FCOS/issues/89#issuecomment-516877042.
             Default: True.
-        centerness_alpha: Parameter used to adjust the intensity attenuation
-            from the center to the periphery. Default: 2.5.
-        loss_cls (dict): Config of classification loss.
-        loss_bbox (dict): Config of localization loss.
-        loss_dir (dict): Config of direction classification loss.
-        loss_attr (dict): Config of attribute classification loss.
-        loss_centerness (dict): Config of centerness loss.
-        norm_cfg (dict): dictionary to construct and config norm layer.
+        centerness_alpha (int, optional): Parameter used to adjust the intensity
+            attenuation from the center to the periphery. Default: 2.5.
+        loss_cls (dict, optional): Config of classification loss.
+        loss_bbox (dict, optional): Config of localization loss.
+        loss_dir (dict, optional): Config of direction classification loss.
+        loss_attr (dict, optional): Config of attribute classification loss.
+        loss_centerness (dict, optional): Config of centerness loss.
+        norm_cfg (dict, optional): dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
-        centerness_branch (tuple[int]): Channels for centerness branch.
+        centerness_branch (tuple[int], optional): Channels for centerness branch.
             Default: (64, ).
     """  # noqa: E501
 
     def __init__(self,
-                 num_classes,
-                 in_channels,
                  regress_ranges=((-1, 48), (48, 96), (96, 192), (192, 384),
                                  (384, INF)),
                  center_sampling=True,
@@ -73,6 +75,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      loss_weight=1.0),
+                 bbox_coder=dict(type='FCOS3DBBoxCoder', code_size=9),
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  centerness_branch=(64, ),
                  init_cfg=None,
@@ -85,8 +88,6 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         self.centerness_alpha = centerness_alpha
         self.centerness_branch = centerness_branch
         super().__init__(
-            num_classes,
-            in_channels,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
             loss_dir=loss_dir,
@@ -95,13 +96,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             init_cfg=init_cfg,
             **kwargs)
         self.loss_centerness = build_loss(loss_centerness)
-        if init_cfg is None:
-            self.init_cfg = dict(
-                type='Normal',
-                layer='Conv2d',
-                std=0.01,
-                override=dict(
-                    type='Normal', name='conv_cls', std=0.01, bias_prob=0.01))
+        bbox_coder['code_size'] = self.bbox_code_size
+        self.bbox_coder = build_bbox_coder(bbox_coder)
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -110,9 +106,24 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             conv_channels=self.centerness_branch,
             conv_strides=(1, ) * len(self.centerness_branch))
         self.conv_centerness = nn.Conv2d(self.centerness_branch[-1], 1, 1)
+        self.scale_dim = 3  # only for offset, depth and size regression
         self.scales = nn.ModuleList([
-            nn.ModuleList([Scale(1.0) for _ in range(3)]) for _ in self.strides
-        ])  # only for offset, depth and size regression
+            nn.ModuleList([Scale(1.0) for _ in range(self.scale_dim)])
+            for _ in self.strides
+        ])
+
+    def init_weights(self):
+        """Initialize weights of the head.
+
+        We currently still use the customized init_weights because the default
+        init of DCN triggered by the init_cfg will init conv_offset.weight,
+        which mistakenly affects the training stability.
+        """
+        super().init_weights()
+        for m in self.conv_centerness_prev:
+            if isinstance(m.conv, nn.Conv2d):
+                normal_init(m.conv, std=0.01)
+        normal_init(self.conv_centerness, std=0.01)
 
     def forward(self, feats):
         """Forward features from the upstream network.
@@ -138,11 +149,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 centernesses (list[Tensor]): Centerness for each scale level,
                     each is a 4D-tensor, the channel number is num_points * 1.
         """
+        # Note: we use [:5] to filter feats and only return predictions
         return multi_apply(self.forward_single, feats, self.scales,
-                           self.strides)
+                           self.strides)[:5]
 
     def forward_single(self, x, scale, stride):
-        """Forward features of a single scale levle.
+        """Forward features of a single scale level.
 
         Args:
             x (Tensor): FPN feature maps of the specified stride.
@@ -153,7 +165,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 is True.
 
         Returns:
-            tuple: scores for each class, bbox and direction class \
+            tuple: scores for each class, bbox and direction class
                 predictions, centerness predictions of input feature maps.
         """
         cls_score, bbox_pred, dir_cls_pred, attr_pred, cls_feat, reg_feat = \
@@ -169,26 +181,12 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             for conv_centerness_prev_layer in self.conv_centerness_prev:
                 clone_cls_feat = conv_centerness_prev_layer(clone_cls_feat)
             centerness = self.conv_centerness(clone_cls_feat)
-        # scale the bbox_pred of different level
-        # only apply to offset, depth and size prediction
-        scale_offset, scale_depth, scale_size = scale[0:3]
 
-        clone_bbox_pred = bbox_pred.clone()
-        bbox_pred[:, :2] = scale_offset(clone_bbox_pred[:, :2]).float()
-        bbox_pred[:, 2] = scale_depth(clone_bbox_pred[:, 2]).float()
-        bbox_pred[:, 3:6] = scale_size(clone_bbox_pred[:, 3:6]).float()
+        bbox_pred = self.bbox_coder.decode(bbox_pred, scale, stride,
+                                           self.training, cls_score)
 
-        bbox_pred[:, 2] = bbox_pred[:, 2].exp()
-        bbox_pred[:, 3:6] = bbox_pred[:, 3:6].exp() + 1e-6  # avoid size=0
-
-        assert self.norm_on_bbox is True, 'Setting norm_on_bbox to False '\
-            'has not been thoroughly tested for FCOS3D.'
-        if self.norm_on_bbox:
-            if not self.training:
-                # Note that this line is conducted only when testing
-                bbox_pred[:, :2] *= stride
-
-        return cls_score, bbox_pred, dir_cls_pred, attr_pred, centerness
+        return cls_score, bbox_pred, dir_cls_pred, attr_pred, centerness, \
+            cls_feat, reg_feat
 
     @staticmethod
     def add_sin_difference(boxes1, boxes2):
@@ -201,7 +199,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 the 7th dimension is rotation dimension.
 
         Returns:
-            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th \
+            tuple[torch.Tensor]: ``boxes1`` and ``boxes2`` whose 7th
                 dimensions are changed.
         """
         rad_pred_encoding = torch.sin(boxes1[..., 6:7]) * torch.cos(
@@ -217,21 +215,27 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     @staticmethod
     def get_direction_target(reg_targets,
                              dir_offset=0,
+                             dir_limit_offset=0.0,
                              num_bins=2,
                              one_hot=True):
         """Encode direction to 0 ~ num_bins-1.
 
         Args:
             reg_targets (torch.Tensor): Bbox regression targets.
-            dir_offset (int): Direction offset.
-            num_bins (int): Number of bins to divide 2*PI.
-            one_hot (bool): Whether to encode as one hot.
+            dir_offset (int, optional): Direction offset. Default to 0.
+            dir_limit_offset (float, optional): Offset to set the direction
+                range. Default to 0.0.
+            num_bins (int, optional): Number of bins to divide 2*PI.
+                Default to 2.
+            one_hot (bool, optional): Whether to encode as one hot.
+                Default to True.
 
         Returns:
             torch.Tensor: Encoded direction targets.
         """
         rot_gt = reg_targets[..., 6]
-        offset_rot = limit_period(rot_gt - dir_offset, 0, 2 * np.pi)
+        offset_rot = limit_period(rot_gt - dir_offset, dir_limit_offset,
+                                  2 * np.pi)
         dir_cls_targets = torch.floor(offset_rot /
                                       (2 * np.pi / num_bins)).long()
         dir_cls_targets = torch.clamp(dir_cls_targets, min=0, max=num_bins - 1)
@@ -293,7 +297,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             attr_labels (list[Tensor]): Attributes indices of each box.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
+            gt_bboxes_ignore (list[Tensor]): specify which bounding
                 boxes can be ignored when computing the loss.
 
         Returns:
@@ -377,7 +381,10 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
             if self.use_direction_classifier:
                 pos_dir_cls_targets = self.get_direction_target(
-                    pos_bbox_targets_3d, self.dir_offset, one_hot=False)
+                    pos_bbox_targets_3d,
+                    self.dir_offset,
+                    self.dir_limit_offset,
+                    one_hot=False)
 
             if self.diff_rad_by_sin:
                 pos_bbox_preds, pos_bbox_targets_3d = self.add_sin_difference(
@@ -502,11 +509,11 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             rescale (bool): If True, return boxes in original image space
 
         Returns:
-            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple. \
-                The first item is an (n, 5) tensor, where the first 4 columns \
-                are bounding box positions (tl_x, tl_y, br_x, br_y) and the \
-                5-th column is a score between 0 and 1. The second item is a \
-                (n,) tensor where each item is the predicted class label of \
+            list[tuple[Tensor, Tensor]]: Each item in result_list is 2-tuple.
+                The first item is an (n, 5) tensor, where the first 4 columns
+                are bounding box positions (tl_x, tl_y, br_x, br_y) and the
+                5-th column is a score between 0 and 1. The second item is a
+                (n,) tensor where each item is the predicted class label of
                 the corresponding box.
         """
         assert len(cls_scores) == len(bbox_preds) == len(dir_cls_preds) == \
@@ -575,7 +582,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             bbox_preds (list[Tensor]): Box energies / deltas for a single scale
                 level with shape (num_points * bbox_code_size, H, W).
             dir_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on a single scale level with shape \
+                predictions on a single scale level with shape
                 (num_points * 2, H, W)
             attr_preds (list[Tensor]): Attribute scores for each scale level
                 Has shape (N, num_points * num_attrs, H, W)
@@ -634,7 +641,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             if rescale:
                 bbox_pred[:, :2] /= bbox_pred[:, :2].new_tensor(scale_factor)
             pred_center2d = bbox_pred[:, :3].clone()
-            bbox_pred[:, :3] = self.pts2Dto3D(bbox_pred[:, :3], view)
+            bbox_pred[:, :3] = points_img2cam(bbox_pred[:, :3], view)
             mlvl_centers2d.append(pred_center2d)
             mlvl_bboxes.append(bbox_pred)
             mlvl_scores.append(scores)
@@ -647,19 +654,13 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
 
         # change local yaw to global yaw for 3D nms
-        if mlvl_bboxes.shape[0] > 0:
-            dir_rot = limit_period(mlvl_bboxes[..., 6] - self.dir_offset, 0,
-                                   np.pi)
-            mlvl_bboxes[..., 6] = (
-                dir_rot + self.dir_offset +
-                np.pi * mlvl_dir_scores.to(mlvl_bboxes.dtype))
-
-        cam_intrinsic = mlvl_centers2d.new_zeros((4, 4))
-        cam_intrinsic[:view.shape[0], :view.shape[1]] = \
+        cam2img = mlvl_centers2d.new_zeros((4, 4))
+        cam2img[:view.shape[0], :view.shape[1]] = \
             mlvl_centers2d.new_tensor(view)
-        mlvl_bboxes[:, 6] = torch.atan2(
-            mlvl_centers2d[:, 0] - cam_intrinsic[0, 2],
-            cam_intrinsic[0, 0]) + mlvl_bboxes[:, 6]
+        mlvl_bboxes = self.bbox_coder.decode_yaw(mlvl_bboxes, mlvl_centers2d,
+                                                 mlvl_dir_scores,
+                                                 self.dir_offset, cam2img)
+
         mlvl_bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
             mlvl_bboxes, box_dim=self.bbox_code_size,
             origin=(0.5, 0.5, 0.5)).bev)
@@ -695,14 +696,18 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     def pts2Dto3D(points, view):
         """
         Args:
-            points (torch.Tensor): points in 2D images, [N, 3], \
+            points (torch.Tensor): points in 2D images, [N, 3],
                 3 corresponds with x, y in the image and depth.
-            view (np.ndarray): camera instrinsic, [3, 3]
+            view (np.ndarray): camera intrinsic, [3, 3]
 
         Returns:
-            torch.Tensor: points in 3D space. [N, 3], \
+            torch.Tensor: points in 3D space. [N, 3],
                 3 corresponds with x, y, z in 3D space.
         """
+        warning.warn('DeprecationWarning: This static method has been moved '
+                     'out of this class to mmdet3d/core. The function '
+                     'pts2Dto3D will be deprecated.')
+
         assert view.shape[0] <= 4
         assert view.shape[1] <= 4
         assert points.shape[1] == 3
@@ -715,7 +720,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         viewpad[:view.shape[0], :view.shape[1]] = points2D.new_tensor(view)
         inv_viewpad = torch.inverse(viewpad).transpose(0, 1)
 
-        # Do operation in homogenous coordinates.
+        # Do operation in homogeneous coordinates.
         nbr_points = unnorm_points2D.shape[0]
         homo_points2D = torch.cat(
             [unnorm_points2D,
@@ -762,8 +767,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
         Returns:
             tuple:
-                concat_lvl_labels (list[Tensor]): Labels of each level. \
-                concat_lvl_bbox_targets (list[Tensor]): BBox targets of each \
+                concat_lvl_labels (list[Tensor]): Labels of each level.
+                concat_lvl_bbox_targets (list[Tensor]): BBox targets of each
                     level.
         """
         assert len(points) == len(self.regress_ranges)
