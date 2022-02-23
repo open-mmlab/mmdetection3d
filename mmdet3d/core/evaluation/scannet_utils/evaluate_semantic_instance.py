@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # adapted from https://github.com/ScanNet/ScanNet/blob/master/BenchmarkScripts/3d_evaluation/evaluate_semantic_instance.py # noqa
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 
 from . import util_3d
 
@@ -219,7 +220,20 @@ def compute_averages(aps, options, class_labels):
 
 def assign_instances_for_scan(pred_info, gt_ids, options, valid_class_ids,
                               class_labels, id_to_label):
-    """Assign gt and predicted instances for a single scene."""
+    """Assign gt and predicted instances for a single scene.
+
+    Args:
+        pred_info (dict): Predicted masks, labels and scores.
+        gt_ids (np.array): Ground truth instance masks.
+        options (dict): ScanNet evaluator options. See get_options.
+        valid_class_ids (tuple[int]): Ids of valid categories.
+        class_labels (tuple[str]): Class names.
+        id_to_label (dict[int, str]): Mapping of valid class id to class label.
+
+    Returns:
+        dict: Per class assigned gt to predicted instances.
+        dict: Per class assigned predicted to gt instances.
+    """
     # get gt instances
     gt_instances = util_3d.get_instances(gt_ids, valid_class_ids, class_labels,
                                          id_to_label)
