@@ -233,7 +233,8 @@ class SUNRGBDDataset(Custom3DDataset):
                  logger=None,
                  show=False,
                  out_dir=None,
-                 pipeline=None):
+                 pipeline=None,
+                 axis_aligned_lw=False):
         """Evaluate.
 
         Evaluation in indoor protocol.
@@ -252,6 +253,9 @@ class SUNRGBDDataset(Custom3DDataset):
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
+            axis_aligned_lw (bool, optional): Whether to use axis-aligned
+                length and width to replace the real length and width.
+                Default: False.
 
         Returns:
             dict: Evaluation results.
@@ -259,7 +263,7 @@ class SUNRGBDDataset(Custom3DDataset):
         # evaluate 3D detection performance
         if isinstance(results[0], dict):
             return super().evaluate(results, metric, iou_thr, logger, show,
-                                    out_dir, pipeline)
+                                    out_dir, pipeline, axis_aligned_lw)
         # evaluate 2D detection performance
         else:
             eval_results = OrderedDict()
