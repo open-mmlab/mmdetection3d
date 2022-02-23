@@ -1,14 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ATen/ATen.h>
+#include <ATen/cuda/CUDAContext.h>
+#include <c10/cuda/CUDAGuard.h>
+#include <torch/types.h>
+
+#include <ATen/cuda/CUDAApplyUtils.cuh>
 
 #define TOTAL_THREADS 1024
 #define THREADS_PER_BLOCK 256
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
+template <typename scalar_t>
 __global__ void gather_points_kernel(int b, int c, int n, int m,
-                                     const float *__restrict__ points,
+                                     const scalar_t *__restrict__ points,
                                      const int *__restrict__ idx,
-                                     float *__restrict__ out) {
+                                     scalar_t *__restrict__ out) {
   // points: (B, C, N)
   // idx: (B, M)
   // output:
@@ -26,8 +33,10 @@ __global__ void gather_points_kernel(int b, int c, int n, int m,
 }
 
 void gather_points_kernel_launcher(int b, int c, int n, int npoints,
-                                   const float *points, const int *idx,
-                                   float *out, cudaStream_t stream) {
+                                   const at::Tensor& points_tensor,
+                                   const at::Tensor& idx_tensor,
+                                   at::Tensor& out_tensor)
+{
   // points: (B, C, N)
   // idx: (B, npoints)
   // output:
@@ -35,23 +44,33 @@ void gather_points_kernel_launcher(int b, int c, int n, int npoints,
 
   cudaError_t err;
   dim3 blocks(DIVUP(npoints, THREADS_PER_BLOCK), c,
-              b);  // blockIdx.x(col), blockIdx.y(row)
+              b); // blockIdx.x(col), blockIdx.y(row)
   dim3 threads(THREADS_PER_BLOCK);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
 
-  gather_points_kernel<<<blocks, threads, 0, stream>>>(b, c, n, npoints, points,
-                                                       idx, out);
-
+  AT_DISPATCH_FLOATING_TYPES_AND_HALF(
+      out_tensor.scalar_type(), "gather_points_kernel",
+      [&]
+       {
+         const scalar_t *points = points_tensor.data_ptr<scalar_t>();
+         const int *idx = idx_tensor.data_ptr<int>();
+         scalar_t *out = out_tensor.data_ptr<scalar_t>();
+         gather_points_kernel<<<blocks, threads, 0, stream>>>(b, c, n, npoints, points,
+                                                              idx, out);
+       });
   err = cudaGetLastError();
-  if (cudaSuccess != err) {
+  if (cudaSuccess != err)
+  {
     fprintf(stderr, "CUDA kernel failed : %s\n", cudaGetErrorString(err));
     exit(-1);
   }
 }
 
+template <typename scalar_t>
 __global__ void gather_points_grad_kernel(int b, int c, int n, int m,
-                                          const float *__restrict__ grad_out,
+                                          const scalar_t *__restrict__ grad_out,
                                           const int *__restrict__ idx,
-                                          float *__restrict__ grad_points) {
+                                          scalar_t *__restrict__ grad_points) {
   // grad_out: (B, C, M)
   // idx: (B, M)
   // output:
@@ -70,9 +89,10 @@ __global__ void gather_points_grad_kernel(int b, int c, int n, int m,
 }
 
 void gather_points_grad_kernel_launcher(int b, int c, int n, int npoints,
-                                        const float *grad_out, const int *idx,
-                                        float *grad_points,
-                                        cudaStream_t stream) {
+                                        const at::Tensor& grad_out_tensor,
+                                        const at::Tensor& idx_tensor,
+                                        at::Tensor& grad_points_tensor)
+{
   // grad_out: (B, C, npoints)
   // idx: (B, npoints)
   // output:
@@ -80,14 +100,24 @@ void gather_points_grad_kernel_launcher(int b, int c, int n, int npoints,
 
   cudaError_t err;
   dim3 blocks(DIVUP(npoints, THREADS_PER_BLOCK), c,
-              b);  // blockIdx.x(col), blockIdx.y(row)
+              b); // blockIdx.x(col), blockIdx.y(row)
   dim3 threads(THREADS_PER_BLOCK);
 
-  gather_points_grad_kernel<<<blocks, threads, 0, stream>>>(
-      b, c, n, npoints, grad_out, idx, grad_points);
+  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
+  AT_DISPATCH_FLOATING_TYPES_AND_HALF(
+      grad_points_tensor.scalar_type(), "gather_points_grad_kernel",
+      [&]
+       {
+         const scalar_t *grad_out = grad_out_tensor.data_ptr<scalar_t>();
+         const int *idx = idx_tensor.data_ptr<int>();
+         scalar_t *grad_points = grad_points_tensor.data_ptr<scalar_t>();
+         gather_points_grad_kernel<scalar_t><<<blocks, threads, 0, stream>>>(
+             b, c, n, npoints, grad_out, idx, grad_points);
+       });
 
   err = cudaGetLastError();
-  if (cudaSuccess != err) {
+  if (cudaSuccess != err)
+  {
     fprintf(stderr, "CUDA kernel failed : %s\n", cudaGetErrorString(err));
     exit(-1);
   }
