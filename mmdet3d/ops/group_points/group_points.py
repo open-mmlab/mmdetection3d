@@ -1,9 +1,8 @@
-from typing import Tuple
-
 import torch
 from mmcv.runner import force_fp32
 from torch import nn as nn
 from torch.autograd import Function
+from typing import Tuple
 
 from ..ball_query import ball_query
 from ..knn import knn
