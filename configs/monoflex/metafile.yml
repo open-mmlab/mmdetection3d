@@ -1,0 +1,30 @@
+Collections:
+  - Name: MonoFlex
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - Adam
+      Training Resources: 2x V100 GPUS
+      Architecture:
+        - MonoFlexHead
+        - DLA
+    Paper:
+      URL: https://arxiv.org/abs/2104.02323
+      Title: 'Objects are Different: Flexible Monocular 3D Object Detection'
+    README: configs/monoflex/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/models/detectors/monoflex.py#L7
+      Version: v1.0.0
+
+Models:
+  - Name: monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d
+    In Collection: MonoFlex
+    Config: configs/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d.py
+    Metadata:
+      Training Memory (GB): 9.64
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 21.98
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553-d46d9bb0.pth

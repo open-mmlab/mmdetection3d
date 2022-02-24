@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import pickle
+from os import path as osp
+
 import mmcv
 import numpy as np
-import pickle
 from mmcv import track_iter_progress
 from mmcv.ops import roi_align
-from os import path as osp
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 
@@ -126,19 +127,19 @@ def create_groundtruth_database(dataset_class_name,
         dataset_class_name （str): Name of the input dataset.
         data_path (str): Path of the data.
         info_prefix (str): Prefix of the info file.
-        info_path (str): Path of the info file.
+        info_path (str, optional): Path of the info file.
             Default: None.
-        mask_anno_path (str): Path of the mask_anno.
+        mask_anno_path (str, optional): Path of the mask_anno.
             Default: None.
-        used_classes (list[str]): Classes have been used.
+        used_classes (list[str], optional): Classes have been used.
             Default: None.
-        database_save_path (str): Path to save database.
+        database_save_path (str, optional): Path to save database.
             Default: None.
-        db_info_save_path (str): Path to save db_info.
+        db_info_save_path (str, optional): Path to save db_info.
             Default: None.
-        relative_path (bool): Whether to use relative path.
+        relative_path (bool, optional): Whether to use relative path.
             Default: True.
-        with_mask (bool): Whether to use mask.
+        with_mask (bool, optional): Whether to use mask.
             Default: False.
     """
     print(f'Create GT Database of {dataset_class_name}')

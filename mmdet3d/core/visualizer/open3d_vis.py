@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+
 import numpy as np
 import torch
 
@@ -22,12 +23,12 @@ def _draw_points(points,
         points (numpy.array | torch.tensor, shape=[N, 3+C]):
             points to visualize.
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
-        points_size (int): the size of points to show on visualizer.
+        points_size (int, optional): the size of points to show on visualizer.
             Default: 2.
-        point_color (tuple[float]): the color of points.
+        point_color (tuple[float], optional): the color of points.
             Default: (0.5, 0.5, 0.5).
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points,
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
 
     Returns:
         tuple: points, color of each point.
@@ -69,19 +70,21 @@ def _draw_bboxes(bbox3d,
 
     Args:
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+            3d bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
         points_colors (numpy.array): color of each points.
-        pcd (:obj:`open3d.geometry.PointCloud`): point cloud. Default: None.
-        bbox_color (tuple[float]): the color of bbox. Default: (0, 1, 0).
-        points_in_box_color (tuple[float]):
+        pcd (:obj:`open3d.geometry.PointCloud`, optional): point cloud.
+            Default: None.
+        bbox_color (tuple[float], optional): the color of bbox.
+            Default: (0, 1, 0).
+        points_in_box_color (tuple[float], optional):
             the color of points inside bbox3d. Default: (1, 0, 0).
-        rot_axis (int): rotation axis of bbox. Default: 2.
-        center_mode (bool): indicate the center of bbox is bottom center
-            or gravity center. avaliable mode
+        rot_axis (int, optional): rotation axis of bbox. Default: 2.
+        center_mode (bool, optional): indicate the center of bbox is
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points,
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     if isinstance(bbox3d, torch.Tensor):
         bbox3d = bbox3d.cpu().numpy()
@@ -135,23 +138,27 @@ def show_pts_boxes(points,
     Args:
         points (numpy.array | torch.tensor, shape=[N, 3+C]):
             points to visualize.
-        bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize. Default: None.
-        show (bool): whether to show the visualization results. Default: True.
-        save_path (str): path to save visualized results. Default: None.
-        points_size (int): the size of points to show on visualizer.
+        bbox3d (numpy.array | torch.tensor, shape=[M, 7], optional):
+            3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            Defaults to None.
+        show (bool, optional): whether to show the visualization results.
+            Default: True.
+        save_path (str, optional): path to save visualized results.
+            Default: None.
+        points_size (int, optional): the size of points to show on visualizer.
             Default: 2.
-        point_color (tuple[float]): the color of points.
+        point_color (tuple[float], optional): the color of points.
             Default: (0.5, 0.5, 0.5).
-        bbox_color (tuple[float]): the color of bbox. Default: (0, 1, 0).
-        points_in_box_color (tuple[float]):
+        bbox_color (tuple[float], optional): the color of bbox.
+            Default: (0, 1, 0).
+        points_in_box_color (tuple[float], optional):
             the color of points which are in bbox3d. Default: (1, 0, 0).
-        rot_axis (int): rotation axis of bbox. Default: 2.
-        center_mode (bool): indicate the center of bbox is bottom center
-            or gravity center. avaliable mode
+        rot_axis (int, optional): rotation axis of bbox. Default: 2.
+        center_mode (bool, optional): indicate the center of bbox is bottom
+            center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points, available
+            mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     # TODO: support score and class info
     assert 0 <= rot_axis <= 2
@@ -196,21 +203,23 @@ def _draw_bboxes_ind(bbox3d,
 
     Args:
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize.
+            3d bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
         vis (:obj:`open3d.visualization.Visualizer`): open3d visualizer.
         indices (numpy.array | torch.tensor, shape=[N, M]):
             indicate which bbox3d that each point lies in.
         points_colors (numpy.array): color of each points.
-        pcd (:obj:`open3d.geometry.PointCloud`): point cloud. Default: None.
-        bbox_color (tuple[float]): the color of bbox. Default: (0, 1, 0).
-        points_in_box_color (tuple[float]):
+        pcd (:obj:`open3d.geometry.PointCloud`, optional): point cloud.
+            Default: None.
+        bbox_color (tuple[float], optional): the color of bbox.
+            Default: (0, 1, 0).
+        points_in_box_color (tuple[float], optional):
             the color of points which are in bbox3d. Default: (1, 0, 0).
-        rot_axis (int): rotation axis of bbox. Default: 2.
-        center_mode (bool): indicate the center of bbox is bottom center
-            or gravity center. avaliable mode
+        rot_axis (int, optional): rotation axis of bbox. Default: 2.
+        center_mode (bool, optional): indicate the center of bbox is
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points,
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     if isinstance(bbox3d, torch.Tensor):
         bbox3d = bbox3d.cpu().numpy()
@@ -270,24 +279,28 @@ def show_pts_index_boxes(points,
         points (numpy.array | torch.tensor, shape=[N, 3+C]):
             points to visualize.
         bbox3d (numpy.array | torch.tensor, shape=[M, 7]):
-            3d bbox (x, y, z, dx, dy, dz, yaw) to visualize. Default: None.
-        show (bool): whether to show the visualization results. Default: True.
-        indices (numpy.array | torch.tensor, shape=[N, M]):
+            3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            Defaults to None.
+        show (bool, optional): whether to show the visualization results.
+            Default: True.
+        indices (numpy.array | torch.tensor, shape=[N, M], optional):
             indicate which bbox3d that each point lies in. Default: None.
-        save_path (str): path to save visualized results. Default: None.
-        points_size (int): the size of points to show on visualizer.
+        save_path (str, optional): path to save visualized results.
+            Default: None.
+        points_size (int, optional): the size of points to show on visualizer.
             Default: 2.
-        point_color (tuple[float]): the color of points.
+        point_color (tuple[float], optional): the color of points.
             Default: (0.5, 0.5, 0.5).
-        bbox_color (tuple[float]): the color of bbox. Default: (0, 1, 0).
-        points_in_box_color (tuple[float]):
+        bbox_color (tuple[float], optional): the color of bbox.
+            Default: (0, 1, 0).
+        points_in_box_color (tuple[float], optional):
             the color of points which are in bbox3d. Default: (1, 0, 0).
-        rot_axis (int): rotation axis of bbox. Default: 2.
-        center_mode (bool): indicate the center of bbox is bottom center
-            or gravity center. avaliable mode
+        rot_axis (int, optional): rotation axis of bbox. Default: 2.
+        center_mode (bool, optional): indicate the center of bbox is
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points,
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
     # TODO: support score and class info
     assert 0 <= rot_axis <= 2
@@ -324,24 +337,27 @@ class Visualizer(object):
         points (numpy.array, shape=[N, 3+C]): Points to visualize. The Points
             cloud is in mode of Coord3DMode.DEPTH (please refer to
             core.structures.coord_3d_mode).
-        bbox3d (numpy.array, shape=[M, 7]): 3d bbox (x, y, z, dx, dy, dz, yaw)
-            to visualize. The 3d bbox is in mode of Box3DMode.DEPTH with
+        bbox3d (numpy.array, shape=[M, 7], optional): 3D bbox
+            (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            The 3D bbox is in mode of Box3DMode.DEPTH with
             gravity_center (please refer to core.structures.box_3d_mode).
             Default: None.
-        save_path (str): path to save visualized results. Default: None.
-        points_size (int): the size of points to show on visualizer.
+        save_path (str, optional): path to save visualized results.
+            Default: None.
+        points_size (int, optional): the size of points to show on visualizer.
             Default: 2.
-        point_color (tuple[float]): the color of points.
+        point_color (tuple[float], optional): the color of points.
             Default: (0.5, 0.5, 0.5).
-        bbox_color (tuple[float]): the color of bbox. Default: (0, 1, 0).
-        points_in_box_color (tuple[float]):
+        bbox_color (tuple[float], optional): the color of bbox.
+            Default: (0, 1, 0).
+        points_in_box_color (tuple[float], optional):
             the color of points which are in bbox3d. Default: (1, 0, 0).
-        rot_axis (int): rotation axis of bbox. Default: 2.
-        center_mode (bool): indicate the center of bbox is bottom center
-            or gravity center. avaliable mode
+        rot_axis (int, optional): rotation axis of bbox. Default: 2.
+        center_mode (bool, optional): indicate the center of bbox is
+            bottom center or gravity center. available mode
             ['lidar_bottom', 'camera_bottom']. Default: 'lidar_bottom'.
-        mode (str):  indicate type of the input points, avaliable mode
-            ['xyz', 'xyzrgb']. Default: 'xyz'.
+        mode (str, optional):  indicate type of the input points,
+            available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
     """
 
     def __init__(self,
@@ -390,12 +406,13 @@ class Visualizer(object):
 
         Args:
             bbox3d (numpy.array, shape=[M, 7]):
-                3D bbox (x, y, z, dx, dy, dz, yaw) to be visualized.
-                The 3d bbox is in mode of Box3DMode.DEPTH with
-                gravity_center (please refer to core.structures.box_3d_mode).
-            bbox_color (tuple[float]): the color of bbox. Defaule: None.
+                3D bbox (x, y, z, x_size, y_size, z_size, yaw)
+                to be visualized. The 3d bbox is in mode of
+                Box3DMode.DEPTH with gravity_center (please refer to
+                core.structures.box_3d_mode).
+            bbox_color (tuple[float]): the color of bbox. Default: None.
             points_in_box_color (tuple[float]): the color of points which
-                are in bbox3d. Defaule: None.
+                are in bbox3d. Default: None.
         """
         if bbox_color is None:
             bbox_color = self.bbox_color
@@ -431,7 +448,7 @@ class Visualizer(object):
         """Visualize the points cloud.
 
         Args:
-            save_path (str): path to save image. Default: None.
+            save_path (str, optional): path to save image. Default: None.
         """
 
         self.o3d_visualizer.run()

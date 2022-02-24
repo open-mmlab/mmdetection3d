@@ -24,7 +24,7 @@ class DefaultFormatBundle(object):
     - gt_bboxes_ignore: (1)to tensor, (2)to DataContainer
     - gt_labels: (1)to tensor, (2)to DataContainer
     - gt_masks: (1)to tensor, (2)to DataContainer (cpu_only=True)
-    - gt_semantic_seg: (1)unsqueeze dim-0 (2)to tensor, \
+    - gt_semantic_seg: (1)unsqueeze dim-0 (2)to tensor,
                        (3)to DataContainer (stack=True)
     """
 
@@ -92,8 +92,8 @@ class Collect3D(object):
     The "img_meta" item is always populated.  The contents of the "img_meta"
     dictionary depends on "meta_keys". By default this includes:
 
-        - 'img_shape': shape of the image input to the network as a tuple \
-            (h, w, c).  Note that images may be zero padded on the \
+        - 'img_shape': shape of the image input to the network as a tuple
+            (h, w, c).  Note that images may be zero padded on the
             bottom/right if the batch tensor is larger than this shape.
         - 'scale_factor': a float indicating the preprocessing scale
         - 'flip': a boolean indicating if image flip transform was used
@@ -103,9 +103,9 @@ class Collect3D(object):
         - 'lidar2img': transform from lidar to image
         - 'depth2img': transform from depth to image
         - 'cam2img': transform from camera to image
-        - 'pcd_horizontal_flip': a boolean indicating if point cloud is \
+        - 'pcd_horizontal_flip': a boolean indicating if point cloud is
             flipped horizontally
-        - 'pcd_vertical_flip': a boolean indicating if point cloud is \
+        - 'pcd_vertical_flip': a boolean indicating if point cloud is
             flipped vertically
         - 'box_mode_3d': 3D box mode
         - 'box_type_3d': 3D box type
@@ -130,15 +130,16 @@ class Collect3D(object):
             'sample_idx', 'pcd_scale_factor', 'pcd_rotation', 'pts_filename')
     """
 
-    def __init__(self,
-                 keys,
-                 meta_keys=('filename', 'ori_shape', 'img_shape', 'lidar2img',
-                            'depth2img', 'cam2img', 'pad_shape',
-                            'scale_factor', 'flip', 'pcd_horizontal_flip',
-                            'pcd_vertical_flip', 'box_mode_3d', 'box_type_3d',
-                            'img_norm_cfg', 'pcd_trans', 'sample_idx',
-                            'pcd_scale_factor', 'pcd_rotation', 'pts_filename',
-                            'transformation_3d_flow')):
+    def __init__(
+        self,
+        keys,
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'lidar2img',
+                   'depth2img', 'cam2img', 'pad_shape', 'scale_factor', 'flip',
+                   'pcd_horizontal_flip', 'pcd_vertical_flip', 'box_mode_3d',
+                   'box_type_3d', 'img_norm_cfg', 'pcd_trans', 'sample_idx',
+                   'pcd_scale_factor', 'pcd_rotation', 'pcd_rotation_angle',
+                   'pts_filename', 'transformation_3d_flow', 'trans_mat',
+                   'affine_aug')):
         self.keys = keys
         self.meta_keys = meta_keys
 

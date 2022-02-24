@@ -1,3 +1,5 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+
 from typing import Tuple
 
 import torch
@@ -16,22 +18,22 @@ class QueryAndGroup(nn.Module):
     Groups with a ball query of radius
 
     Args:
-        max_radius (float | None): The maximum radius of the balls.
+        max_radius (float): The maximum radius of the balls.
             If None is given, we will use kNN sampling instead of ball query.
         sample_num (int): Maximum number of features to gather in the ball.
-        min_radius (float): The minimum radius of the balls.
-        use_xyz (bool): Whether to use xyz.
+        min_radius (float, optional): The minimum radius of the balls.
+            Default: 0.
+        use_xyz (bool, optional): Whether to use xyz.
             Default: True.
-        return_grouped_xyz (bool): Whether to return grouped xyz.
+        return_grouped_xyz (bool, optional): Whether to return grouped xyz.
             Default: False.
-        normalize_xyz (bool): Whether to normalize xyz.
+        normalize_xyz (bool, optional): Whether to normalize xyz.
             Default: False.
-        uniform_sample (bool): Whether to sample uniformly.
+        uniform_sample (bool, optional): Whether to sample uniformly.
             Default: False
-        return_unique_cnt (bool): Whether to return the count of
-            unique samples.
-            Default: False.
-        return_grouped_idx (bool): Whether to return grouped idx.
+        return_unique_cnt (bool, optional): Whether to return the count of
+            unique samples. Default: False.
+        return_grouped_idx (bool, optional): Whether to return grouped idx.
             Default: False.
     """
 

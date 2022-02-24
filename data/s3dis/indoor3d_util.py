@@ -1,6 +1,7 @@
 import glob
-import numpy as np
 from os import path as osp
+
+import numpy as np
 
 # -----------------------------------------------------------------------------
 # CONSTANTS

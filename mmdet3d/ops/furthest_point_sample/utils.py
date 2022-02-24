@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 
@@ -7,7 +8,7 @@ def calc_square_dist(point_feat_a, point_feat_b, norm=True):
     Args:
         point_feat_a (Tensor): (B, N, C) Feature vector of each point.
         point_feat_b (Tensor): (B, M, C) Feature vector of each point.
-        norm (Bool): Whether to normalize the distance.
+        norm (Bool, optional): Whether to normalize the distance.
             Default: True.
 
     Returns:

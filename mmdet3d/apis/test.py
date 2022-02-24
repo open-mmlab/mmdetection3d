@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import torch
 from mmcv.image import tensor2imgs
-from os import path as osp
 
 from mmdet3d.models import (Base3DDetector, Base3DSegmentor,
                             SingleStageMono3DDetector)
@@ -22,9 +23,9 @@ def single_gpu_test(model,
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
-        show (bool): Whether to save viualization results.
+        show (bool, optional): Whether to save viualization results.
             Default: True.
-        out_dir (str): The path to save visualization results.
+        out_dir (str, optional): The path to save visualization results.
             Default: None.
 
     Returns:

@@ -1,13 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import tempfile
+import warnings
+from os import path as osp
+
 import mmcv
 import numpy as np
 import pyquaternion
-import tempfile
 import torch
-import warnings
 from nuscenes.utils.data_classes import Box as NuScenesBox
-from os import path as osp
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
 from mmdet.datasets import DATASETS, CocoDataset
@@ -44,8 +45,9 @@ class NuScenesMonoDataset(CocoDataset):
             - 'Camera': Box in camera coordinates.
         eval_version (str, optional): Configuration version of evaluation.
             Defaults to  'detection_cvpr_2019'.
-        use_valid_flag (bool): Whether to use `use_valid_flag` key in the info
-            file as mask to filter gt_boxes and gt_names. Defaults to False.
+        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
+            in the info file as mask to filter gt_boxes and gt_names.
+            Defaults to False.
         version (str, optional): Dataset version. Defaults to 'v1.0-trainval'.
     """
     CLASSES = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
@@ -140,8 +142,8 @@ class NuScenesMonoDataset(CocoDataset):
             ann_info (list[dict]): Annotation info of an image.
 
         Returns:
-            dict: A dict containing the following keys: bboxes, labels, \
-                gt_bboxes_3d, gt_labels_3d, attr_labels, centers2d, \
+            dict: A dict containing the following keys: bboxes, labels,
+                gt_bboxes_3d, gt_labels_3d, attr_labels, centers2d,
                 depths, bboxes_ignore, masks, seg_map
         """
         gt_bboxes = []
@@ -394,10 +396,11 @@ class NuScenesMonoDataset(CocoDataset):
 
         Args:
             result_path (str): Path of the result file.
-            logger (logging.Logger | str | None): Logger used for printing
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            metric (str): Metric name used for evaluation. Default: 'bbox'.
-            result_name (str): Result name in the metric prefix.
+            metric (str, optional): Metric name used for evaluation.
+                Default: 'bbox'.
+            result_name (str, optional): Result name in the metric prefix.
                 Default: 'img_bbox'.
 
         Returns:
@@ -448,13 +451,13 @@ class NuScenesMonoDataset(CocoDataset):
         Args:
             results (list[tuple | numpy.ndarray]): Testing results of the
                 dataset.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
 
         Returns:
-            tuple: (result_files, tmp_dir), result_files is a dict containing \
-                the json filepaths, tmp_dir is the temporal directory created \
+            tuple: (result_files, tmp_dir), result_files is a dict containing
+                the json filepaths, tmp_dir is the temporal directory created
                 for saving json files when jsonfile_prefix is not specified.
         """
         assert isinstance(results, list), 'results must be a list'
@@ -504,15 +507,18 @@ class NuScenesMonoDataset(CocoDataset):
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            logger (logging.Logger | str | None): Logger used for printing
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Default: 'bbox'.
+            logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
+            jsonfile_prefix (str): The prefix of json files. It includes
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            show (bool): Whether to visualize.
+            result_names (list[str], optional): Result names in the
+                metric prefix. Default: ['img_bbox'].
+            show (bool, optional): Whether to visualize.
                 Default: False.
-            out_dir (str): Path to save the visualization results.
+            out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
@@ -535,7 +541,7 @@ class NuScenesMonoDataset(CocoDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
 
-        if show:
+        if show or out_dir:
             self.show(results, out_dir, pipeline=pipeline)
         return results_dict
 
@@ -576,7 +582,7 @@ class NuScenesMonoDataset(CocoDataset):
         """Get data loading pipeline in self.show/evaluate function.
 
         Args:
-            pipeline (list[dict] | None): Input pipeline. If None is given, \
+            pipeline (list[dict]): Input pipeline. If None is given,
                 get from self.pipeline.
         """
         if pipeline is None:
@@ -601,13 +607,14 @@ class NuScenesMonoDataset(CocoDataset):
         ]
         return Compose(pipeline)
 
-    def show(self, results, out_dir, show=True, pipeline=None):
+    def show(self, results, out_dir, show=False, pipeline=None):
         """Results visualization.
 
         Args:
             results (list[dict]): List of bounding boxes results.
             out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
+            show (bool): Whether to visualize the results online.
+                Default: False.
             pipeline (list[dict], optional): raw data loading for showing.
                 Default: None.
         """
@@ -696,7 +703,7 @@ def cam_nusc_box_to_global(info,
         boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
         classes (list[str]): Mapped classes in the evaluation.
         eval_configs (object): Evaluation configuration object.
-        eval_version (str): Evaluation version.
+        eval_version (str, optional): Evaluation version.
             Default: 'detection_cvpr_2019'
 
     Returns:
@@ -736,7 +743,7 @@ def global_nusc_box_to_cam(info,
         boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
         classes (list[str]): Mapped classes in the evaluation.
         eval_configs (object): Evaluation configuration object.
-        eval_version (str): Evaluation version.
+        eval_version (str, optional): Evaluation version.
             Default: 'detection_cvpr_2019'
 
     Returns:
@@ -769,7 +776,7 @@ def nusc_box_to_cam_box3d(boxes):
         boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
 
     Returns:
-        tuple (:obj:`CameraInstance3DBoxes` | torch.Tensor | torch.Tensor): \
+        tuple (:obj:`CameraInstance3DBoxes` | torch.Tensor | torch.Tensor):
             Converted 3D bounding boxes, scores and labels.
     """
     locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)

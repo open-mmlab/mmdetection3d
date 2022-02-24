@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 import torch
-from os import path as osp
 
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.datasets.pipelines import Compose
@@ -316,10 +317,24 @@ def test_sunrgbd_pipeline():
                                     [0.8636, 1.3511, 0.0504, 0.0304],
                                     [0.8690, 1.3461, 0.1265, 0.1065],
                                     [0.8668, 1.3434, 0.1216, 0.1017]])
+    # Depth coordinate system update: only yaw changes since rotation in depth
+    # is counter-clockwise and yaw angle is clockwise originally
+    # But heading angles in sunrgbd data also reverses the sign
+    # and after horizontal flip the sign reverse again
+    rotation_angle = info['annos']['rotation_y']
     expected_gt_bboxes_3d = torch.tensor(
-        [[-1.2136, 4.0206, -0.2412, 2.2493, 1.8444, 1.9245, 1.3989],
-         [-2.7420, 4.5777, -0.7686, 0.5718, 0.8629, 0.9510, 1.4446],
-         [0.9729, 1.9087, -0.1443, 0.6965, 1.5273, 2.0563, 2.9924]])
+        [[
+            -1.2136, 4.0206, -0.2412, 2.2493, 1.8444, 1.9245,
+            1.3989 + 0.047001579467984445 * 2 - 2 * rotation_angle[0]
+        ],
+         [
+             -2.7420, 4.5777, -0.7686, 0.5718, 0.8629, 0.9510,
+             1.4446 + 0.047001579467984445 * 2 - 2 * rotation_angle[1]
+         ],
+         [
+             0.9729, 1.9087, -0.1443, 0.6965, 1.5273, 2.0563,
+             2.9924 + 0.047001579467984445 * 2 - 2 * rotation_angle[2]
+         ]]).float()
     expected_gt_labels_3d = np.array([0, 7, 6])
     assert torch.allclose(gt_bboxes_3d.tensor, expected_gt_bboxes_3d, 1e-3)
     assert np.allclose(gt_labels_3d.flatten(), expected_gt_labels_3d)

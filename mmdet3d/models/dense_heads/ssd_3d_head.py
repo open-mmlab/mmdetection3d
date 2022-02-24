@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
 import torch
 from mmcv.ops.nms import batched_nms
 from mmcv.runner import force_fp32
@@ -128,15 +127,15 @@ class SSD3DHead(VoteHead):
         Args:
             bbox_preds (dict): Predictions from forward of SSD3DHead.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
+            pts_semantic_mask (list[torch.Tensor]): Point-wise
                 semantic mask.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise
+            pts_instance_mask (list[torch.Tensor]): Point-wise
                 instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
 
         Returns:
@@ -231,12 +230,12 @@ class SSD3DHead(VoteHead):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise semantic
+            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
+            pts_instance_mask (list[torch.Tensor]): Point-wise instance
                 label of each batch.
             bbox_preds (torch.Tensor): Bounding box predictions of ssd3d head.
 
@@ -320,12 +319,12 @@ class SSD3DHead(VoteHead):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (None | torch.Tensor): Point-wise semantic
+            pts_semantic_mask (torch.Tensor): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | torch.Tensor): Point-wise instance
+            pts_instance_mask (torch.Tensor): Point-wise instance
                 label of each batch.
             aggregated_points (torch.Tensor): Aggregated points from
                 candidate points layer.
@@ -392,7 +391,8 @@ class SSD3DHead(VoteHead):
             # LiDARInstance3DBoxes and DepthInstance3DBoxes
             canonical_xyz = rotation_3d_in_axis(
                 canonical_xyz.unsqueeze(0).transpose(0, 1),
-                -gt_bboxes_3d.yaw[assignment], 2).squeeze(1)
+                -gt_bboxes_3d.yaw[assignment],
+                axis=2).squeeze(1)
         distance_front = torch.clamp(
             size_res_targets[:, 0] - canonical_xyz[:, 0], min=0)
         distance_back = torch.clamp(
@@ -441,7 +441,7 @@ class SSD3DHead(VoteHead):
                 negative_mask)
 
     def get_bboxes(self, points, bbox_preds, input_metas, rescale=False):
-        """Generate bboxes from sdd3d head predictions.
+        """Generate bboxes from 3DSSD head predictions.
 
         Args:
             points (torch.Tensor): Input points.
@@ -464,9 +464,7 @@ class SSD3DHead(VoteHead):
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
                 input_metas[b])
-            # fix the wrong direction
-            # To do: remove this ops
-            bbox_selected[..., 6] += np.pi
+
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -481,7 +479,7 @@ class SSD3DHead(VoteHead):
 
         Args:
             obj_scores (torch.Tensor): Objectness score of bounding boxes.
-            sem_scores (torch.Tensor): semantic class score of bounding boxes.
+            sem_scores (torch.Tensor): Semantic class score of bounding boxes.
             bbox (torch.Tensor): Predicted bounding boxes.
             points (torch.Tensor): Input points.
             input_meta (dict): Point cloud and image's meta info.
@@ -489,23 +487,14 @@ class SSD3DHead(VoteHead):
         Returns:
             tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
-        num_bbox = bbox.shape[0]
         bbox = input_meta['box_type_3d'](
             bbox.clone(),
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
             origin=(0.5, 0.5, 0.5))
 
-        if isinstance(bbox, LiDARInstance3DBoxes):
-            box_idx = bbox.points_in_boxes(points)
-            box_indices = box_idx.new_zeros([num_bbox + 1])
-            box_idx[box_idx == -1] = num_bbox
-            box_indices.scatter_add_(0, box_idx.long(),
-                                     box_idx.new_ones(box_idx.shape))
-            box_indices = box_indices[:-1]
-            nonempty_box_mask = box_indices >= 0
-        elif isinstance(bbox, DepthInstance3DBoxes):
-            box_indices = bbox.points_in_boxes(points)
+        if isinstance(bbox, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
+            box_indices = bbox.points_in_boxes_all(points)
             nonempty_box_mask = box_indices.T.sum(1) >= 0
         else:
             raise NotImplementedError('Unsupported bbox type!')
@@ -516,20 +505,20 @@ class SSD3DHead(VoteHead):
         minmax_box3d[:, 3:] = torch.max(corner3d, dim=1)[0]
 
         bbox_classes = torch.argmax(sem_scores, -1)
-        nms_selected = batched_nms(
+        nms_keep = batched_nms(
             minmax_box3d[nonempty_box_mask][:, [0, 1, 3, 4]],
             obj_scores[nonempty_box_mask], bbox_classes[nonempty_box_mask],
             self.test_cfg.nms_cfg)[1]
 
-        if nms_selected.shape[0] > self.test_cfg.max_output_num:
-            nms_selected = nms_selected[:self.test_cfg.max_output_num]
+        if nms_keep.shape[0] > self.test_cfg.max_output_num:
+            nms_keep = nms_keep[:self.test_cfg.max_output_num]
 
         # filter empty boxes and boxes with low score
         scores_mask = (obj_scores >= self.test_cfg.score_thr)
         nonempty_box_inds = torch.nonzero(
             nonempty_box_mask, as_tuple=False).flatten()
         nonempty_mask = torch.zeros_like(bbox_classes).scatter(
-            0, nonempty_box_inds[nms_selected], 1)
+            0, nonempty_box_inds[nms_keep], 1)
         selected = (nonempty_mask.bool() & scores_mask.bool())
 
         if self.test_cfg.per_class_proposal:
@@ -560,18 +549,8 @@ class SSD3DHead(VoteHead):
             tuple[torch.Tensor]: Flags indicating whether each point is
                 inside bbox and the index of box where each point are in.
         """
-        # TODO: align points_in_boxes function in each box_structures
-        num_bbox = bboxes_3d.tensor.shape[0]
-        if isinstance(bboxes_3d, LiDARInstance3DBoxes):
-            assignment = bboxes_3d.points_in_boxes(points).long()
-            points_mask = assignment.new_zeros(
-                [assignment.shape[0], num_bbox + 1])
-            assignment[assignment == -1] = num_bbox
-            points_mask.scatter_(1, assignment.unsqueeze(1), 1)
-            points_mask = points_mask[:, :-1]
-            assignment[assignment == num_bbox] = num_bbox - 1
-        elif isinstance(bboxes_3d, DepthInstance3DBoxes):
-            points_mask = bboxes_3d.points_in_boxes(points)
+        if isinstance(bboxes_3d, (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
+            points_mask = bboxes_3d.points_in_boxes_all(points)
             assignment = points_mask.argmax(dim=-1)
         else:
             raise NotImplementedError('Unsupported bbox type!')

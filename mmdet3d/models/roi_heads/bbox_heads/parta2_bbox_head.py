@@ -285,7 +285,7 @@ class PartA2BboxHead(BaseModule):
 
     def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
              pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
-        """Coumputing losses.
+        """Computing losses.
 
         Args:
             cls_score (torch.Tensor): Scores of each roi.
@@ -344,7 +344,7 @@ class PartA2BboxHead(BaseModule):
 
                 pred_boxes3d[..., 0:3] = rotation_3d_in_axis(
                     pred_boxes3d[..., 0:3].unsqueeze(1),
-                    (pos_rois_rotation + np.pi / 2),
+                    pos_rois_rotation,
                     axis=2).squeeze(1)
 
                 pred_boxes3d[:, 0:3] += roi_xyz
@@ -436,8 +436,7 @@ class PartA2BboxHead(BaseModule):
             pos_gt_bboxes_ct[..., 0:3] -= roi_center
             pos_gt_bboxes_ct[..., 6] -= roi_ry
             pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
-                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1),
-                -(roi_ry + np.pi / 2),
+                pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), -roi_ry,
                 axis=2).squeeze(1)
 
             # flip orientation if rois have opposite orientation
@@ -462,12 +461,13 @@ class PartA2BboxHead(BaseModule):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
 
-    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1):
+    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0):
         """Calculate corner loss of given boxes.
 
         Args:
             pred_bbox3d (torch.FloatTensor): Predicted boxes in shape (N, 7).
             gt_bbox3d (torch.FloatTensor): Ground truth boxes in shape (N, 7).
+            delta (float, optional): huber loss threshold. Defaults to 1.0
 
         Returns:
             torch.FloatTensor: Calculated corner loss in shape (N).
@@ -490,8 +490,8 @@ class PartA2BboxHead(BaseModule):
             torch.norm(pred_box_corners - gt_box_corners_flip,
                        dim=2))  # (N, 8)
         # huber loss
-        abs_error = torch.abs(corner_dist)
-        quadratic = torch.clamp(abs_error, max=delta)
+        abs_error = corner_dist.abs()
+        quadratic = abs_error.clamp(max=delta)
         linear = (abs_error - quadratic)
         corner_loss = 0.5 * quadratic**2 + delta * linear
 
@@ -530,8 +530,7 @@ class PartA2BboxHead(BaseModule):
         local_roi_boxes[..., 0:3] = 0
         rcnn_boxes3d = self.bbox_coder.decode(local_roi_boxes, bbox_pred)
         rcnn_boxes3d[..., 0:3] = rotation_3d_in_axis(
-            rcnn_boxes3d[..., 0:3].unsqueeze(1), (roi_ry + np.pi / 2),
-            axis=2).squeeze(1)
+            rcnn_boxes3d[..., 0:3].unsqueeze(1), roi_ry, axis=2).squeeze(1)
         rcnn_boxes3d[:, 0:3] += roi_xyz
 
         # post processing
@@ -542,13 +541,13 @@ class PartA2BboxHead(BaseModule):
 
             cur_box_prob = class_pred[batch_id]
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
-            selected = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
-                                            cfg.score_thr, cfg.nms_thr,
-                                            img_metas[batch_id],
-                                            cfg.use_rotate_nms)
-            selected_bboxes = cur_rcnn_boxes3d[selected]
-            selected_label_preds = cur_class_labels[selected]
-            selected_scores = cur_cls_score[selected]
+            keep = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
+                                        cfg.score_thr, cfg.nms_thr,
+                                        img_metas[batch_id],
+                                        cfg.use_rotate_nms)
+            selected_bboxes = cur_rcnn_boxes3d[keep]
+            selected_label_preds = cur_class_labels[keep]
+            selected_scores = cur_cls_score[keep]
 
             result_list.append(
                 (img_metas[batch_id]['box_type_3d'](selected_bboxes,
@@ -576,7 +575,7 @@ class PartA2BboxHead(BaseModule):
             box_preds (torch.Tensor): Predicted boxes in shape (N, 7+C).
             score_thr (float): Threshold of scores.
             nms_thr (float): Threshold for NMS.
-            input_meta (dict): Meta informations of the current sample.
+            input_meta (dict): Meta information of the current sample.
             use_rotate_nms (bool, optional): Whether to use rotated nms.
                 Defaults to True.
 
@@ -620,6 +619,6 @@ class PartA2BboxHead(BaseModule):
                                dtype=torch.int64,
                                device=box_preds.device))
 
-        selected = torch.cat(
+        keep = torch.cat(
             selected_list, dim=0) if len(selected_list) > 0 else []
-        return selected
+        return keep

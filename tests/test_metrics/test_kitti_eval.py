@@ -83,31 +83,49 @@ def test_do_eval():
                              [[0.5, 0.5, 0.7], [0.25, 0.25, 0.5],
                               [0.25, 0.25, 0.5]]])
     eval_types = ['bbox', 'bev', '3d', 'aos']
-    mAP_bbox, mAP_bev, mAP_3d, mAP_aos = do_eval([gt_anno], [dt_anno],
+    mAP11_bbox, mAP11_bev, mAP11_3d, mAP11_aos, mAP40_bbox,\
+        mAP40_bev, mAP40_3d, mAP40_aos = do_eval([gt_anno], [dt_anno],
                                                  current_classes, min_overlaps,
                                                  eval_types)
-    expected_mAP_bbox = np.array([[[0., 0.], [9.09090909, 9.09090909],
-                                   [9.09090909, 9.09090909]],
-                                  [[0., 0.], [9.09090909, 9.09090909],
-                                   [9.09090909, 9.09090909]],
-                                  [[0., 0.], [9.09090909, 9.09090909],
-                                   [9.09090909, 9.09090909]]])
-    expected_mAP_bev = np.array([[[0., 0.], [0., 0.], [0., 0.]],
-                                 [[0., 0.], [0., 0.], [0., 0.]],
-                                 [[0., 0.], [0., 0.], [0., 0.]]])
-    expected_mAP_3d = np.array([[[0., 0.], [0., 0.], [0., 0.]],
-                                [[0., 0.], [0., 0.], [0., 0.]],
-                                [[0., 0.], [0., 0.], [0., 0.]]])
-    expected_mAP_aos = np.array([[[0., 0.], [0.55020816, 0.55020816],
-                                  [0.55020816, 0.55020816]],
-                                 [[0., 0.], [8.36633862, 8.36633862],
-                                  [8.36633862, 8.36633862]],
-                                 [[0., 0.], [8.63476893, 8.63476893],
-                                  [8.63476893, 8.63476893]]])
-    assert np.allclose(mAP_bbox, expected_mAP_bbox)
-    assert np.allclose(mAP_bev, expected_mAP_bev)
-    assert np.allclose(mAP_3d, expected_mAP_3d)
-    assert np.allclose(mAP_aos, expected_mAP_aos)
+    expected_mAP11_bbox = np.array([[[0., 0.], [9.09090909, 9.09090909],
+                                     [9.09090909, 9.09090909]],
+                                    [[0., 0.], [9.09090909, 9.09090909],
+                                     [9.09090909, 9.09090909]],
+                                    [[0., 0.], [9.09090909, 9.09090909],
+                                     [9.09090909, 9.09090909]]])
+    expected_mAP40_bbox = np.array([[[0., 0.], [0., 0.], [0., 0.]],
+                                    [[0., 0.], [0., 0.], [0., 0.]],
+                                    [[0., 0.], [2.5, 2.5], [2.5, 2.5]]])
+    expected_mAP11_bev = np.array([[[0., 0.], [0., 0.], [0., 0.]],
+                                   [[0., 0.], [0., 0.], [0., 0.]],
+                                   [[0., 0.], [0., 0.], [0., 0.]]])
+    expected_mAP40_bev = np.array([[[0., 0.], [0., 0.], [0., 0.]],
+                                   [[0., 0.], [0., 0.], [0., 0.]],
+                                   [[0., 0.], [0., 0.], [0., 0.]]])
+    expected_mAP11_3d = np.array([[[0., 0.], [0., 0.], [0., 0.]],
+                                  [[0., 0.], [0., 0.], [0., 0.]],
+                                  [[0., 0.], [0., 0.], [0., 0.]]])
+    expected_mAP40_3d = np.array([[[0., 0.], [0., 0.], [0., 0.]],
+                                  [[0., 0.], [0., 0.], [0., 0.]],
+                                  [[0., 0.], [0., 0.], [0., 0.]]])
+    expected_mAP11_aos = np.array([[[0., 0.], [0.55020816, 0.55020816],
+                                    [0.55020816, 0.55020816]],
+                                   [[0., 0.], [8.36633862, 8.36633862],
+                                    [8.36633862, 8.36633862]],
+                                   [[0., 0.], [8.63476893, 8.63476893],
+                                    [8.63476893, 8.63476893]]])
+    expected_mAP40_aos = np.array([[[0., 0.], [0., 0.], [0., 0.]],
+                                   [[0., 0.], [0., 0.], [0., 0.]],
+                                   [[0., 0.], [1.58140643, 1.58140643],
+                                    [1.58140643, 1.58140643]]])
+    assert np.allclose(mAP11_bbox, expected_mAP11_bbox)
+    assert np.allclose(mAP11_bev, expected_mAP11_bev)
+    assert np.allclose(mAP11_3d, expected_mAP11_3d)
+    assert np.allclose(mAP11_aos, expected_mAP11_aos)
+    assert np.allclose(mAP40_bbox, expected_mAP40_bbox)
+    assert np.allclose(mAP40_bev, expected_mAP40_bev)
+    assert np.allclose(mAP40_3d, expected_mAP40_3d)
+    assert np.allclose(mAP40_aos, expected_mAP40_aos)
 
 
 def test_kitti_eval():
@@ -183,8 +201,14 @@ def test_kitti_eval():
 
     current_classes = [1, 2, 0]
     result, ret_dict = kitti_eval([gt_anno], [dt_anno], current_classes)
-    assert np.isclose(ret_dict['KITTI/Overall_2D_moderate'], 9.090909090909092)
-    assert np.isclose(ret_dict['KITTI/Overall_2D_hard'], 9.090909090909092)
+    assert np.isclose(ret_dict['KITTI/Overall_2D_AP11_moderate'],
+                      9.090909090909092)
+    assert np.isclose(ret_dict['KITTI/Overall_2D_AP11_hard'],
+                      9.090909090909092)
+    assert np.isclose(ret_dict['KITTI/Overall_2D_AP40_moderate'],
+                      0.8333333333333334)
+    assert np.isclose(ret_dict['KITTI/Overall_2D_AP40_hard'],
+                      0.8333333333333334)
 
 
 def test_eval_class():

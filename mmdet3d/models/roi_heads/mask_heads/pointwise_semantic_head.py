@@ -83,15 +83,15 @@ class PointwiseSemanticHead(BaseModule):
         sample.
 
         Args:
-            voxel_centers (torch.Tensor): The center of voxels in shape \
+            voxel_centers (torch.Tensor): The center of voxels in shape
                 (voxel_num, 3).
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in
                 shape (box_num, 7).
-            gt_labels_3d (torch.Tensor): Class labels of ground truths in \
+            gt_labels_3d (torch.Tensor): Class labels of ground truths in
                 shape (box_num).
 
         Returns:
-            tuple[torch.Tensor]: Segmentation targets with shape [voxel_num] \
+            tuple[torch.Tensor]: Segmentation targets with shape [voxel_num]
                 part prediction targets with shape [voxel_num, 3]
         """
         gt_bboxes_3d = gt_bboxes_3d.to(voxel_centers.device)
@@ -99,8 +99,8 @@ class PointwiseSemanticHead(BaseModule):
 
         part_targets = voxel_centers.new_zeros((voxel_centers.shape[0], 3),
                                                dtype=torch.float32)
-        box_idx = gt_bboxes_3d.points_in_boxes(voxel_centers)
-        enlarge_box_idx = enlarged_gt_boxes.points_in_boxes(
+        box_idx = gt_bboxes_3d.points_in_boxes_part(voxel_centers)
+        enlarge_box_idx = enlarged_gt_boxes.points_in_boxes_part(
             voxel_centers).long()
 
         gt_labels_pad = F.pad(
@@ -131,19 +131,19 @@ class PointwiseSemanticHead(BaseModule):
         """generate segmentation and part prediction targets.
 
         Args:
-            voxel_centers (torch.Tensor): The center of voxels in shape \
+            voxel_centers (torch.Tensor): The center of voxels in shape
                 (voxel_num, 3).
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in
                 shape (box_num, 7).
-            gt_labels_3d (torch.Tensor): Class labels of ground truths in \
+            gt_labels_3d (torch.Tensor): Class labels of ground truths in
                 shape (box_num).
 
         Returns:
             dict: Prediction targets
 
-                - seg_targets (torch.Tensor): Segmentation targets \
+                - seg_targets (torch.Tensor): Segmentation targets
                     with shape [voxel_num].
-                - part_targets (torch.Tensor): Part prediction targets \
+                - part_targets (torch.Tensor): Part prediction targets
                     with shape [voxel_num, 3].
         """
         batch_size = len(gt_labels_3d)

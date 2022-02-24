@@ -12,7 +12,7 @@ from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
                                         PointSegClassMapping)
 # yapf: enable
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import LoadImageFromFile
+from mmdet.datasets.pipelines import LoadImageFromFile, MultiScaleFlipAug
 
 
 def is_loading_function(transform):
@@ -25,7 +25,7 @@ def is_loading_function(transform):
         transform (dict | :obj:`Pipeline`): A transform config or a function.
 
     Returns:
-        bool | None: Whether it is a loading function. None means can't judge.
+        bool: Whether it is a loading function. None means can't judge.
             When transform is `MultiScaleFlipAug3D`, we return None.
     """
     # TODO: use more elegant way to distinguish loading modules
@@ -40,12 +40,12 @@ def is_loading_function(transform):
             return False
         if obj_cls in loading_functions:
             return True
-        if obj_cls in (MultiScaleFlipAug3D, ):
+        if obj_cls in (MultiScaleFlipAug3D, MultiScaleFlipAug):
             return None
     elif callable(transform):
         if isinstance(transform, loading_functions):
             return True
-        if isinstance(transform, MultiScaleFlipAug3D):
+        if isinstance(transform, (MultiScaleFlipAug3D, MultiScaleFlipAug)):
             return None
     return False
 
@@ -92,7 +92,7 @@ def get_loading_pipeline(pipeline):
         ...    dict(type='Collect3D',
         ...         keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d'])
         ...    ]
-        >>> assert expected_pipelines ==\
+        >>> assert expected_pipelines == \
         ...        get_loading_pipeline(pipelines)
     """
     loading_pipeline = []
@@ -126,7 +126,7 @@ def extract_result_dict(results, key):
         key (str): Key of the desired data.
 
     Returns:
-        np.ndarray | torch.Tensor | None: Data term.
+        np.ndarray | torch.Tensor: Data term.
     """
     if key not in results.keys():
         return None

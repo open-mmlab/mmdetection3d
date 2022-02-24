@@ -297,3 +297,59 @@ def test_pointnet2_sa_msg():
     assert sa_indices[2].shape == torch.Size([1, 256])
     assert sa_indices[3].shape == torch.Size([1, 64])
     assert sa_indices[4].shape == torch.Size([1, 16])
+
+
+def test_dgcnn_gf():
+    if not torch.cuda.is_available():
+        pytest.skip()
+
+    # DGCNNGF used in segmentation
+    cfg = dict(
+        type='DGCNNBackbone',
+        in_channels=6,
+        num_samples=(20, 20, 20),
+        knn_modes=['D-KNN', 'F-KNN', 'F-KNN'],
+        radius=(None, None, None),
+        gf_channels=((64, 64), (64, 64), (64, )),
+        fa_channels=(1024, ),
+        act_cfg=dict(type='ReLU'))
+
+    self = build_backbone(cfg)
+    self.cuda()
+
+    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+    # test forward
+    ret_dict = self(xyz)
+    gf_points = ret_dict['gf_points']
+    fa_points = ret_dict['fa_points']
+
+    assert len(gf_points) == 4
+    assert gf_points[0].shape == torch.Size([1, 100, 6])
+    assert gf_points[1].shape == torch.Size([1, 100, 64])
+    assert gf_points[2].shape == torch.Size([1, 100, 64])
+    assert gf_points[3].shape == torch.Size([1, 100, 64])
+    assert fa_points.shape == torch.Size([1, 100, 1216])
+
+
+def test_dla_net():
+    # test DLANet used in SMOKE
+    # test list config
+    cfg = dict(
+        type='DLANet',
+        depth=34,
+        in_channels=3,
+        norm_cfg=dict(type='GN', num_groups=32))
+
+    img = torch.randn((4, 3, 32, 32))
+    self = build_backbone(cfg)
+    self.init_weights()
+
+    results = self(img)
+    assert len(results) == 6
+    assert results[0].shape == torch.Size([4, 16, 32, 32])
+    assert results[1].shape == torch.Size([4, 32, 16, 16])
+    assert results[2].shape == torch.Size([4, 64, 8, 8])
+    assert results[3].shape == torch.Size([4, 128, 4, 4])
+    assert results[4].shape == torch.Size([4, 256, 2, 2])
+    assert results[5].shape == torch.Size([4, 512, 1, 1])

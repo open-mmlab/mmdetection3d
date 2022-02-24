@@ -1,24 +1,24 @@
 # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space
 
-## Introduction
+> [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
 
 <!-- [ALGORITHM] -->
 
-We implement PointNet++ and provide the result and checkpoints on ScanNet and S3DIS datasets.
+## Abstract
 
-```
-@inproceedings{qi2017pointnet++,
-  title={PointNet++ deep hierarchical feature learning on point sets in a metric space},
-  author={Qi, Charles R and Yi, Li and Su, Hao and Guibas, Leonidas J},
-  booktitle={Proceedings of the 31st International Conference on Neural Information Processing Systems},
-  pages={5105--5114},
-  year={2017}
-}
-```
+Few prior works study deep learning on point sets. PointNet by Qi et al. is a pioneer in this direction. However, by design PointNet does not capture local structures induced by the metric space points live in, limiting its ability to recognize fine-grained patterns and generalizability to complex scenes. In this work, we introduce a hierarchical neural network that applies PointNet recursively on a nested partitioning of the input point set. By exploiting metric space distances, our network is able to learn local features with increasing contextual scales. With further observation that point sets are usually sampled with varying densities, which results in greatly decreased performance for networks trained on uniform densities, we propose novel set learning layers to adaptively combine features from multiple scales. Experiments show that our network called PointNet++ is able to learn deep point set features efficiently and robustly. In particular, results significantly better than state-of-the-art have been obtained on challenging benchmarks of 3D point clouds.
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/79644370/143885530-ae53ed38-8132-4bb7-85a7-d2577de7de3f.png" width="800"/>
+</div>
+
+## Introduction
+
+We implement PointNet++ and provide the result and checkpoints on ScanNet and S3DIS datasets.
 
 **Notice**: The original PointNet++ paper used step learning rate schedule. We discovered that cosine schedule achieves much better results and adopt it in our implementations. We also use a larger `weight_decay` factor because we find it consistently improves the performance.
 
-## Results
+## Results and models
 
 ### ScanNet
 
@@ -56,3 +56,15 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 ## Indeterminism
 
 Since PointNet++ testing adopts sliding patch inference which involves random point sampling, and the test script uses fixed random seeds while the random seeds of validation in training are not fixed, the test results may be slightly different from the results reported above.
+
+## Citation
+
+```latex
+@inproceedings{qi2017pointnet++,
+  title={PointNet++ deep hierarchical feature learning on point sets in a metric space},
+  author={Qi, Charles R and Yi, Li and Su, Hao and Guibas, Leonidas J},
+  booktitle={Proceedings of the 31st International Conference on Neural Information Processing Systems},
+  pages={5105--5114},
+  year={2017}
+}
+```

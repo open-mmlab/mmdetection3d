@@ -1,5 +1,7 @@
 _base_ = './centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py'
 
+model = dict(test_cfg=dict(pts=dict(use_rotate_nms=True, max_num=500)))
+
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 file_client_args = dict(backend='disk')
 class_names = [

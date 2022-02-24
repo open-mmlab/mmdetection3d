@@ -14,7 +14,7 @@ class PAConvHead(PointNet2Head):
 
     Args:
         fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
-        fp_norm_cfg (dict|None): Config of norm layers used in FP modules.
+        fp_norm_cfg (dict): Config of norm layers used in FP modules.
             Default: dict(type='BN2d').
     """
 

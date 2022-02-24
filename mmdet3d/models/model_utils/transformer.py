@@ -15,15 +15,16 @@ class GroupFree3DMHA(MultiheadAttention):
         embed_dims (int): The embedding dimension.
         num_heads (int): Parallel attention heads. Same as
             `nn.MultiheadAttention`.
-        attn_drop (float): A Dropout layer on attn_output_weights. Default 0.0.
-        proj_drop (float): A Dropout layer. Default 0.0.
-        dropout_layer (obj:`ConfigDict`): The dropout_layer used
+        attn_drop (float, optional): A Dropout layer on attn_output_weights.
+            Defaults to 0.0.
+        proj_drop (float, optional): A Dropout layer. Defaults to 0.0.
+        dropout_layer (obj:`ConfigDict`, optional): The dropout_layer used
             when adding the shortcut.
-        init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
-            Default: None.
-        batch_first (bool): Key, Query and Value are shape of
+        init_cfg (obj:`mmcv.ConfigDict`, optional): The Config for
+            initialization. Default: None.
+        batch_first (bool, optional): Key, Query and Value are shape of
             (batch, n, embed_dim)
-            or (n, batch, embed_dim). Default to False.
+            or (n, batch, embed_dim). Defaults to False.
     """
 
     def __init__(self,
@@ -58,26 +59,26 @@ class GroupFree3DMHA(MultiheadAttention):
                 embed_dims]. Same in `nn.MultiheadAttention.forward`.
             key (Tensor): The key tensor with shape [num_keys, bs,
                 embed_dims]. Same in `nn.MultiheadAttention.forward`.
-                If None, the ``query`` will be used. Defaults to None.
+                If None, the ``query`` will be used.
             value (Tensor): The value tensor with same shape as `key`.
-                Same in `nn.MultiheadAttention.forward`. Defaults to None.
+                Same in `nn.MultiheadAttention.forward`.
                 If None, the `key` will be used.
             identity (Tensor): This tensor, with the same shape as x,
-                will be used for the identity link.
-                If None, `x` will be used. Defaults to None.
-            query_pos (Tensor): The positional encoding for query, with
-                the same shape as `x`. If not None, it will
-                be added to `x` before forward function. Defaults to None.
-            key_pos (Tensor): The positional encoding for `key`, with the
-                same shape as `key`. Defaults to None. If not None, it will
-                be added to `key` before forward function. If None, and
-                `query_pos` has the same shape as `key`, then `query_pos`
+                will be used for the identity link. If None, `x` will be used.
+            query_pos (Tensor, optional): The positional encoding for query,
+                with the same shape as `x`. Defaults to None.
+                If not None, it will be added to `x` before forward function.
+            key_pos (Tensor, optional): The positional encoding for `key`,
+                with the same shape as `key`. Defaults to None. If not None,
+                it will be added to `key` before forward function. If None,
+                and `query_pos` has the same shape as `key`, then `query_pos`
                 will be used for `key_pos`. Defaults to None.
-            attn_mask (Tensor): ByteTensor mask with shape [num_queries,
-                num_keys]. Same in `nn.MultiheadAttention.forward`.
-                Defaults to None.
-            key_padding_mask (Tensor): ByteTensor with shape [bs, num_keys].
+            attn_mask (Tensor, optional): ByteTensor mask with shape
+                [num_queries, num_keys].
                 Same in `nn.MultiheadAttention.forward`. Defaults to None.
+            key_padding_mask (Tensor, optional): ByteTensor with shape
+                [bs, num_keys]. Same in `nn.MultiheadAttention.forward`.
+                Defaults to None.
 
         Returns:
             Tensor: forwarded results with shape [num_queries, bs, embed_dims].
@@ -113,7 +114,7 @@ class ConvBNPositionalEncoding(nn.Module):
 
     Args:
         input_channel (int): input features dim.
-        num_pos_feats (int): output position features dim.
+        num_pos_feats (int, optional): output position features dim.
             Defaults to 288 to be consistent with seed features dim.
     """
 
@@ -131,7 +132,7 @@ class ConvBNPositionalEncoding(nn.Module):
             xyz (Tensor)： (B, N, 3) the coordinates to embed.
 
         Returns:
-            Tensor: (B, num_pos_feats, N) the embeded position features.
+            Tensor: (B, num_pos_feats, N) the embedded position features.
         """
         xyz = xyz.permute(0, 2, 1)
         position_embedding = self.position_embedding_head(xyz)

@@ -1,11 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
+import math
 import os
-import pytest
 import tempfile
+
+import numpy as np
+import pytest
 import torch
 
-from mmdet3d.core.bbox import LiDARInstance3DBoxes
+from mmdet3d.core.bbox import LiDARInstance3DBoxes, limit_period
 from mmdet3d.datasets import KittiDataset
 
 
@@ -113,6 +115,7 @@ def test_getitem():
             type='ObjectSample',
             db_sampler=dict(
                 data_root='tests/data/kitti/',
+                # in coordinate system refactor, this test file is modified
                 info_path='tests/data/kitti/kitti_dbinfos_train.pkl',
                 rate=1.0,
                 prepare=dict(
@@ -151,8 +154,29 @@ def test_getitem():
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
     expected_gt_bboxes_3d = torch.tensor(
-        [[9.5081, -5.2269, -1.1370, 0.4915, 1.2288, 1.9353, -2.7136]])
+        [[9.5081, -5.2269, -1.1370, 1.2288, 0.4915, 1.9353, 1.9988]])
     expected_gt_labels_3d = torch.tensor([0])
+    rot_matrix = data['img_metas']._data['pcd_rotation']
+    rot_angle = data['img_metas']._data['pcd_rotation_angle']
+    horizontal_flip = data['img_metas']._data['pcd_horizontal_flip']
+    vertical_flip = data['img_metas']._data['pcd_vertical_flip']
+    expected_rot_matrix = torch.tensor([[0.8018, 0.5976, 0.0000],
+                                        [-0.5976, 0.8018, 0.0000],
+                                        [0.0000, 0.0000, 1.0000]])
+    expected_rot_angle = 0.6404654291602163
+    noise_angle = 0.20247319
+    assert torch.allclose(expected_rot_matrix, rot_matrix, atol=1e-4)
+    assert math.isclose(expected_rot_angle, rot_angle, abs_tol=1e-4)
+    assert horizontal_flip is True
+    assert vertical_flip is False
+
+    # after coord system refactor
+    expected_gt_bboxes_3d[:, :3] = \
+        expected_gt_bboxes_3d[:, :3] @ rot_matrix @ rot_matrix
+    expected_gt_bboxes_3d[:, -1:] = -np.pi - expected_gt_bboxes_3d[:, -1:] \
+        + 2 * rot_angle - 2 * noise_angle
+    expected_gt_bboxes_3d[:, -1:] = limit_period(
+        expected_gt_bboxes_3d[:, -1:], period=np.pi * 2)
     assert points.shape == (780, 4)
     assert torch.allclose(
         gt_bboxes_3d.tensor, expected_gt_bboxes_3d, atol=1e-4)
@@ -232,8 +256,9 @@ def test_evaluate():
 
 
 def test_show():
-    import mmcv
     from os import path as osp
+
+    import mmcv
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
     tmp_dir = tempfile.TemporaryDirectory()
@@ -346,9 +371,10 @@ def test_format_results():
         pipeline, modality, split = _generate_kitti_dataset_config()
     kitti_dataset = KittiDataset(data_root, ann_file, split, pts_prefix,
                                  pipeline, classes, modality)
+    # coord system refactor
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
-            [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
+            [[8.7314, -1.8559, -1.5997, 1.2000, 0.4800, 1.8900, -1.5808]]))
     labels_3d = torch.tensor([
         0,
     ])
@@ -359,21 +385,23 @@ def test_format_results():
     expected_name = np.array(['Pedestrian'])
     expected_truncated = np.array([0.])
     expected_occluded = np.array([0])
-    expected_alpha = np.array([-3.3410306])
+    # coord sys refactor
+    expected_alpha = np.array(-3.3410306 + np.pi)
     expected_bbox = np.array([[710.443, 144.00221, 820.29114, 307.58667]])
     expected_dimensions = np.array([[1.2, 1.89, 0.48]])
     expected_location = np.array([[1.8399826, 1.4700007, 8.410018]])
-    expected_rotation_y = np.array([-3.1315928])
+    expected_rotation_y = np.array([0.0100])
     expected_score = np.array([0.5])
     expected_sample_idx = np.array([0])
     assert np.all(result_files[0]['name'] == expected_name)
     assert np.allclose(result_files[0]['truncated'], expected_truncated)
     assert np.all(result_files[0]['occluded'] == expected_occluded)
-    assert np.allclose(result_files[0]['alpha'], expected_alpha)
+    assert np.allclose(result_files[0]['alpha'], expected_alpha, 1e-3)
     assert np.allclose(result_files[0]['bbox'], expected_bbox)
     assert np.allclose(result_files[0]['dimensions'], expected_dimensions)
     assert np.allclose(result_files[0]['location'], expected_location)
-    assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y)
+    assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y,
+                       1e-3)
     assert np.allclose(result_files[0]['score'], expected_score)
     assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
     tmp_dir.cleanup()
@@ -386,7 +414,7 @@ def test_bbox2result_kitti():
                                  pipeline, classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
-            [[8.7314, -1.8559, -1.5997, 0.4800, 1.2000, 1.8900, 0.0100]]))
+            [[8.7314, -1.8559, -1.5997, 1.2000, 0.4800, 1.8900, -1.5808]]))
     labels_3d = torch.tensor([
         0,
     ])
@@ -400,10 +428,11 @@ def test_bbox2result_kitti():
     expected_file_path = os.path.join(temp_kitti_result_dir, '000000.txt')
     expected_name = np.array(['Pedestrian'])
     expected_dimensions = np.array([1.2000, 1.8900, 0.4800])
-    expected_rotation_y = np.array([0.0100]) - np.pi
+    # coord system refactor (reverse sign)
+    expected_rotation_y = 0.0100
     expected_score = np.array([0.5])
     assert np.all(det_annos[0]['name'] == expected_name)
-    assert np.allclose(det_annos[0]['rotation_y'], expected_rotation_y)
+    assert np.allclose(det_annos[0]['rotation_y'], expected_rotation_y, 1e-3)
     assert np.allclose(det_annos[0]['score'], expected_score)
     assert np.allclose(det_annos[0]['dimensions'], expected_dimensions)
     assert os.path.exists(expected_file_path)

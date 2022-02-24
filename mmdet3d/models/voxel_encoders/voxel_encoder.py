@@ -17,7 +17,7 @@ class HardSimpleVFE(nn.Module):
     It simply averages the values of points in a voxel.
 
     Args:
-        num_features (int): Number of features to use. Default: 4.
+        num_features (int, optional): Number of features to use. Default: 4.
     """
 
     def __init__(self, num_features=4):
@@ -93,25 +93,27 @@ class DynamicVFE(nn.Module):
     The number of points inside the voxel varies.
 
     Args:
-        in_channels (int): Input channels of VFE. Defaults to 4.
-        feat_channels (list(int)): Channels of features in VFE.
-        with_distance (bool): Whether to use the L2 distance of points to the
-            origin point. Default False.
-        with_cluster_center (bool): Whether to use the distance to cluster
-            center of points inside a voxel. Default to False.
-        with_voxel_center (bool): Whether to use the distance to center of
-            voxel for each points inside a voxel. Default to False.
-        voxel_size (tuple[float]): Size of a single voxel. Default to
-            (0.2, 0.2, 4).
-        point_cloud_range (tuple[float]): The range of points or voxels.
-            Default to (0, -40, -3, 70.4, 40, 1).
-        norm_cfg (dict): Config dict of normalization layers.
-        mode (str): The mode when pooling features of points inside a voxel.
-            Available options include 'max' and 'avg'. Default to 'max'.
-        fusion_layer (dict | None): The config dict of fusion layer used in
-            multi-modal detectors. Default to None.
-        return_point_feats (bool): Whether to return the features of each
-            points. Default to False.
+        in_channels (int, optional): Input channels of VFE. Defaults to 4.
+        feat_channels (list(int), optional): Channels of features in VFE.
+        with_distance (bool, optional): Whether to use the L2 distance of
+            points to the origin point. Defaults to False.
+        with_cluster_center (bool, optional): Whether to use the distance
+            to cluster center of points inside a voxel. Defaults to False.
+        with_voxel_center (bool, optional): Whether to use the distance
+            to center of voxel for each points inside a voxel.
+            Defaults to False.
+        voxel_size (tuple[float], optional): Size of a single voxel.
+            Defaults to (0.2, 0.2, 4).
+        point_cloud_range (tuple[float], optional): The range of points
+            or voxels. Defaults to (0, -40, -3, 70.4, 40, 1).
+        norm_cfg (dict, optional): Config dict of normalization layers.
+        mode (str, optional): The mode when pooling features of points
+            inside a voxel. Available options include 'max' and 'avg'.
+            Defaults to 'max'.
+        fusion_layer (dict, optional): The config dict of fusion
+            layer used in multi-modal detectors. Defaults to None.
+        return_point_feats (bool, optional): Whether to return the features
+            of each points. Defaults to False.
     """
 
     def __init__(self,
@@ -230,7 +232,7 @@ class DynamicVFE(nn.Module):
             coors (torch.Tensor): Coordinates of voxels, shape is  Nx(1+NDim).
             points (list[torch.Tensor], optional): Raw points used to guide the
                 multi-modality fusion. Defaults to None.
-            img_feats (list[torch.Tensor], optional): Image fetures used for
+            img_feats (list[torch.Tensor], optional): Image features used for
                 multi-modality fusion. Defaults to None.
             img_metas (dict, optional): [description]. Defaults to None.
 
@@ -292,25 +294,26 @@ class HardVFE(nn.Module):
     image feature into voxel features in a point-wise manner.
 
     Args:
-        in_channels (int): Input channels of VFE. Defaults to 4.
-        feat_channels (list(int)): Channels of features in VFE.
-        with_distance (bool): Whether to use the L2 distance of points to the
-            origin point. Default False.
-        with_cluster_center (bool): Whether to use the distance to cluster
-            center of points inside a voxel. Default to False.
-        with_voxel_center (bool): Whether to use the distance to center of
-            voxel for each points inside a voxel. Default to False.
-        voxel_size (tuple[float]): Size of a single voxel. Default to
-            (0.2, 0.2, 4).
-        point_cloud_range (tuple[float]): The range of points or voxels.
-            Default to (0, -40, -3, 70.4, 40, 1).
-        norm_cfg (dict): Config dict of normalization layers.
-        mode (str): The mode when pooling features of points inside a voxel.
-            Available options include 'max' and 'avg'. Default to 'max'.
-        fusion_layer (dict | None): The config dict of fusion layer used in
-            multi-modal detectors. Default to None.
-        return_point_feats (bool): Whether to return the features of each
-            points. Default to False.
+        in_channels (int, optional): Input channels of VFE. Defaults to 4.
+        feat_channels (list(int), optional): Channels of features in VFE.
+        with_distance (bool, optional): Whether to use the L2 distance
+            of points to the origin point. Defaults to False.
+        with_cluster_center (bool, optional): Whether to use the distance
+            to cluster center of points inside a voxel. Defaults to False.
+        with_voxel_center (bool, optional): Whether to use the distance to
+            center of voxel for each points inside a voxel. Defaults to False.
+        voxel_size (tuple[float], optional): Size of a single voxel.
+            Defaults to (0.2, 0.2, 4).
+        point_cloud_range (tuple[float], optional): The range of points
+            or voxels. Defaults to (0, -40, -3, 70.4, 40, 1).
+        norm_cfg (dict, optional): Config dict of normalization layers.
+        mode (str, optional): The mode when pooling features of points inside a
+            voxel. Available options include 'max' and 'avg'.
+            Defaults to 'max'.
+        fusion_layer (dict, optional): The config dict of fusion layer
+            used in multi-modal detectors. Defaults to None.
+        return_point_feats (bool, optional): Whether to return the
+            features of each points. Defaults to False.
     """
 
     def __init__(self,
@@ -394,7 +397,7 @@ class HardVFE(nn.Module):
             features (torch.Tensor): Features of voxels, shape is MxNxC.
             num_points (torch.Tensor): Number of points in each voxel.
             coors (torch.Tensor): Coordinates of voxels, shape is Mx(1+NDim).
-            img_feats (list[torch.Tensor], optional): Image fetures used for
+            img_feats (list[torch.Tensor], optional): Image features used for
                 multi-modality fusion. Defaults to None.
             img_metas (dict, optional): [description]. Defaults to None.
 

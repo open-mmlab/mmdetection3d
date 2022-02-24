@@ -57,3 +57,78 @@ def test_imvoxel_neck():
     inputs = torch.rand([1, 64, 216, 248, 12], device='cuda')
     outputs = neck(inputs)
     assert outputs[0].shape == (1, 256, 248, 216)
+
+
+def test_fp_neck():
+    if not torch.cuda.is_available():
+        pytest.skip()
+
+    xyzs = [16384, 4096, 1024, 256, 64]
+    feat_channels = [1, 96, 256, 512, 1024]
+    channel_num = 5
+
+    sa_xyz = [torch.rand(3, xyzs[i], 3) for i in range(channel_num)]
+    sa_features = [
+        torch.rand(3, feat_channels[i], xyzs[i]) for i in range(channel_num)
+    ]
+
+    neck_cfg = dict(
+        type='PointNetFPNeck',
+        fp_channels=((1536, 512, 512), (768, 512, 512), (608, 256, 256),
+                     (257, 128, 128)))
+
+    neck = build_neck(neck_cfg)
+    neck.init_weights()
+
+    if torch.cuda.is_available():
+        sa_xyz = [x.cuda() for x in sa_xyz]
+        sa_features = [x.cuda() for x in sa_features]
+        neck.cuda()
+
+    feats_sa = {'sa_xyz': sa_xyz, 'sa_features': sa_features}
+    outputs = neck(feats_sa)
+    assert outputs['fp_xyz'].cpu().numpy().shape == (3, 16384, 3)
+    assert outputs['fp_features'].detach().cpu().numpy().shape == (3, 128,
+                                                                   16384)
+
+
+def test_dla_neck():
+
+    s = 32
+    in_channels = [16, 32, 64, 128, 256, 512]
+    feat_sizes = [s // 2**i for i in range(6)]  # [32, 16, 8, 4, 2, 1]
+
+    if torch.cuda.is_available():
+        # Test DLA Neck with DCNv2 on GPU
+        neck_cfg = dict(
+            type='DLANeck',
+            in_channels=[16, 32, 64, 128, 256, 512],
+            start_level=2,
+            end_level=5,
+            norm_cfg=dict(type='GN', num_groups=32))
+        neck = build_neck(neck_cfg)
+        neck.init_weights()
+        neck.cuda()
+        feats = [
+            torch.rand(4, in_channels[i], feat_sizes[i], feat_sizes[i]).cuda()
+            for i in range(len(in_channels))
+        ]
+        outputs = neck(feats)
+        assert outputs.shape == (4, 64, 8, 8)
+    else:
+        # Test DLA Neck without DCNv2 on CPU
+        neck_cfg = dict(
+            type='DLANeck',
+            in_channels=[16, 32, 64, 128, 256, 512],
+            start_level=2,
+            end_level=5,
+            norm_cfg=dict(type='GN', num_groups=32),
+            use_dcn=False)
+        neck = build_neck(neck_cfg)
+        neck.init_weights()
+        feats = [
+            torch.rand(4, in_channels[i], feat_sizes[i], feat_sizes[i])
+            for i in range(len(in_channels))
+        ]
+        outputs = neck(feats)
+        assert outputs[0].shape == (4, 64, 8, 8)

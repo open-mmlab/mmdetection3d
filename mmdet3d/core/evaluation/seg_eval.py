@@ -77,7 +77,7 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
         seg_preds  (list[torch.Tensor]): Predictions.
         label2cat (dict): Map from label to category name.
         ignore_index (int): Index that will be ignored in evaluation.
-        logger (logging.Logger | str | None): The way to print the mAP
+        logger (logging.Logger | str, optional): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 
     Returns:

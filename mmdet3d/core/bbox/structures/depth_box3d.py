@@ -3,9 +3,8 @@ import numpy as np
 import torch
 
 from mmdet3d.core.points import BasePoints
-from mmdet3d.ops import points_in_boxes_batch
 from .base_box3d import BaseInstance3DBoxes
-from .utils import limit_period, rotation_3d_in_axis
+from .utils import rotation_3d_in_axis
 
 
 class DepthInstance3DBoxes(BaseInstance3DBoxes):
@@ -38,10 +37,11 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
+    YAW_AXIS = 2
 
     @property
     def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box."""
+        """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
         gravity_center[:, :2] = bottom_center[:, :2]
@@ -85,73 +85,50 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
         # rotate around z axis
-        corners = rotation_3d_in_axis(corners, self.tensor[:, 6], axis=2)
+        corners = rotation_3d_in_axis(
+            corners, self.tensor[:, 6], axis=self.YAW_AXIS)
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
-    @property
-    def bev(self):
-        """torch.Tensor: A n x 5 tensor of 2D BEV box of each box
-        in XYWHR format."""
-        return self.tensor[:, [0, 1, 3, 4, 6]]
-
-    @property
-    def nearest_bev(self):
-        """torch.Tensor: A tensor of 2D BEV box of each box
-        without rotation."""
-        # Obtain BEV boxes with rotation in XYWHR format
-        bev_rotated_boxes = self.bev
-        # convert the rotation to a valid range
-        rotations = bev_rotated_boxes[:, -1]
-        normed_rotations = torch.abs(limit_period(rotations, 0.5, np.pi))
-
-        # find the center of boxes
-        conditions = (normed_rotations > np.pi / 4)[..., None]
-        bboxes_xywh = torch.where(conditions, bev_rotated_boxes[:,
-                                                                [0, 1, 3, 2]],
-                                  bev_rotated_boxes[:, :4])
-
-        centers = bboxes_xywh[:, :2]
-        dims = bboxes_xywh[:, 2:]
-        bev_boxes = torch.cat([centers - dims / 2, centers + dims / 2], dim=-1)
-        return bev_boxes
-
     def rotate(self, angle, points=None):
-        """Rotate boxes with points (optional) with the given angle or \
-        rotation matrix.
+        """Rotate boxes with points (optional) with the given angle or rotation
+        matrix.
 
         Args:
             angle (float | torch.Tensor | np.ndarray):
                 Rotation angle or rotation matrix.
-            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, optional):
+            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns \
-                None, otherwise it returns the rotated points and the \
+            tuple or None: When ``points`` is None, the function returns
+                None, otherwise it returns the rotated points and the
                 rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
+
         assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1, \
             f'invalid rotation angle shape {angle.shape}'
 
         if angle.numel() == 1:
-            rot_sin = torch.sin(angle)
-            rot_cos = torch.cos(angle)
-            rot_mat_T = self.tensor.new_tensor([[rot_cos, -rot_sin, 0],
-                                                [rot_sin, rot_cos, 0],
-                                                [0, 0, 1]]).T
+            self.tensor[:, 0:3], rot_mat_T = rotation_3d_in_axis(
+                self.tensor[:, 0:3],
+                angle,
+                axis=self.YAW_AXIS,
+                return_mat=True)
         else:
-            rot_mat_T = angle.T
+            rot_mat_T = angle
             rot_sin = rot_mat_T[0, 1]
             rot_cos = rot_mat_T[0, 0]
             angle = np.arctan2(rot_sin, rot_cos)
+            self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
 
-        self.tensor[:, 0:3] = self.tensor[:, 0:3] @ rot_mat_T
         if self.with_yaw:
-            self.tensor[:, 6] -= angle
+            self.tensor[:, 6] += angle
         else:
+            # for axis-aligned boxes, we take the new
+            # enclosing axis-aligned boxes after rotation
             corners_rot = self.corners @ rot_mat_T
             new_x_size = corners_rot[..., 0].max(
                 dim=1, keepdim=True)[0] - corners_rot[..., 0].min(
@@ -165,11 +142,10 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             if isinstance(points, torch.Tensor):
                 points[:, :3] = points[:, :3] @ rot_mat_T
             elif isinstance(points, np.ndarray):
-                rot_mat_T = rot_mat_T.numpy()
+                rot_mat_T = rot_mat_T.cpu().numpy()
                 points[:, :3] = np.dot(points[:, :3], rot_mat_T)
             elif isinstance(points, BasePoints):
-                # anti-clockwise
-                points.rotate(angle)
+                points.rotate(rot_mat_T)
             else:
                 raise ValueError
             return points, rot_mat_T
@@ -180,8 +156,9 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         In Depth coordinates, it flips x (horizontal) or y (vertical) axis.
 
         Args:
-            bev_direction (str): Flip direction (horizontal or vertical).
-            points (torch.Tensor, numpy.ndarray, :obj:`BasePoints`, None):
+            bev_direction (str, optional): Flip direction
+                (horizontal or vertical). Defaults to 'horizontal'.
+            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
                 Points to flip. Defaults to None.
 
         Returns:
@@ -208,74 +185,25 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def in_range_bev(self, box_range):
-        """Check whether the boxes are in the given range.
-
-        Args:
-            box_range (list | torch.Tensor): The range of box
-                (x_min, y_min, x_max, y_max).
-
-        Note:
-            In the original implementation of SECOND, checking whether
-            a box in the range checks whether the points are in a convex
-            polygon, we try to reduce the burdun for simpler cases.
-
-        Returns:
-            torch.Tensor: Indicating whether each box is inside \
-                the reference range.
-        """
-        in_range_flags = ((self.tensor[:, 0] > box_range[0])
-                          & (self.tensor[:, 1] > box_range[1])
-                          & (self.tensor[:, 0] < box_range[2])
-                          & (self.tensor[:, 1] < box_range[3]))
-        return in_range_flags
-
     def convert_to(self, dst, rt_mat=None):
         """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`DepthInstance3DBoxes`: \
+            :obj:`DepthInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
             box=self, src=Box3DMode.DEPTH, dst=dst, rt_mat=rt_mat)
-
-    def points_in_boxes(self, points):
-        """Find points that are in boxes (CUDA).
-
-        Args:
-            points (torch.Tensor): Points in shape [1, M, 3] or [M, 3], \
-                3 dimensions are [x, y, z] in LiDAR coordinate.
-
-        Returns:
-            torch.Tensor: The index of boxes each point lies in with shape \
-                of (B, M, T).
-        """
-        from .box_3d_mode import Box3DMode
-
-        # to lidar
-        points_lidar = points.clone()
-        points_lidar = points_lidar[..., [1, 0, 2]]
-        points_lidar[..., 1] *= -1
-        if points.dim() == 2:
-            points_lidar = points_lidar.unsqueeze(0)
-        else:
-            assert points.dim() == 3 and points_lidar.shape[0] == 1
-
-        boxes_lidar = self.convert_to(Box3DMode.LIDAR).tensor
-        boxes_lidar = boxes_lidar.to(points.device).unsqueeze(0)
-        box_idxs_of_pts = points_in_boxes_batch(points_lidar, boxes_lidar)
-
-        return box_idxs_of_pts.squeeze(0)
 
     def enlarged_box(self, extra_width):
         """Enlarge the length, width and height boxes.
@@ -284,7 +212,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             extra_width (float | torch.Tensor): Extra width to enlarge the box.
 
         Returns:
-            :obj:`LiDARInstance3DBoxes`: Enlarged boxes.
+            :obj:`DepthInstance3DBoxes`: Enlarged boxes.
         """
         enlarged_boxes = self.tensor.clone()
         enlarged_boxes[:, 3:6] += extra_width * 2
@@ -331,13 +259,12 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                        -1, 3)
 
         surface_rot = rot_mat_T.repeat(6, 1, 1)
-        surface_3d = torch.matmul(
-            surface_3d.unsqueeze(-2), surface_rot.transpose(2, 1)).squeeze(-2)
+        surface_3d = torch.matmul(surface_3d.unsqueeze(-2),
+                                  surface_rot).squeeze(-2)
         surface_center = center.repeat(1, 6, 1).reshape(-1, 3) + surface_3d
 
         line_rot = rot_mat_T.repeat(12, 1, 1)
-        line_3d = torch.matmul(
-            line_3d.unsqueeze(-2), line_rot.transpose(2, 1)).squeeze(-2)
+        line_3d = torch.matmul(line_3d.unsqueeze(-2), line_rot).squeeze(-2)
         line_center = center.repeat(1, 12, 1).reshape(-1, 3) + line_3d
 
         return surface_center, line_center

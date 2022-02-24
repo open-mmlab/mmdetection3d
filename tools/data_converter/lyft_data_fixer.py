@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import numpy as np
 import os
+
+import numpy as np
 
 
 def fix_lyft(root_folder='./data/lyft', version='v1.01'):

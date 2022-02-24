@@ -1,8 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
-import torch
 import warnings
 from abc import abstractmethod
+
+import numpy as np
+import torch
+
+from ..bbox.structures.utils import rotation_3d_in_axis
 
 
 class BasePoints(object):
@@ -10,17 +13,17 @@ class BasePoints(object):
 
     Args:
         tensor (torch.Tensor | np.ndarray | list): a N x points_dim matrix.
-        points_dim (int): Number of the dimension of a point.
-            Each row is (x, y, z). Default to 3.
-        attribute_dims (dict): Dictionary to indicate the meaning of extra
-            dimension. Default to None.
+        points_dim (int, optional): Number of the dimension of a point.
+            Each row is (x, y, z). Defaults to 3.
+        attribute_dims (dict, optional): Dictionary to indicate the
+            meaning of extra dimension. Defaults to None.
 
     Attributes:
         tensor (torch.Tensor): Float matrix of N x points_dim.
         points_dim (int): Integer indicating the dimension of a point.
             Each row is (x, y, z, ...).
         attribute_dims (bool): Dictionary to indicate the meaning of extra
-            dimension. Default to None.
+            dimension. Defaults to None.
         rotation_axis (int): Default rotation axis for points rotation.
     """
 
@@ -45,7 +48,7 @@ class BasePoints(object):
 
     @property
     def coord(self):
-        """torch.Tensor: Coordinates of each point with size (N, 3)."""
+        """torch.Tensor: Coordinates of each point in shape (N, 3)."""
         return self.tensor[:, :3]
 
     @coord.setter
@@ -61,7 +64,8 @@ class BasePoints(object):
 
     @property
     def height(self):
-        """torch.Tensor: A vector with height of each point."""
+        """torch.Tensor:
+            A vector with height of each point in shape (N, 1), or None."""
         if self.attribute_dims is not None and \
                 'height' in self.attribute_dims.keys():
             return self.tensor[:, self.attribute_dims['height']]
@@ -91,7 +95,8 @@ class BasePoints(object):
 
     @property
     def color(self):
-        """torch.Tensor: A vector with color of each point."""
+        """torch.Tensor:
+            A vector with color of each point in shape (N, 3), or None."""
         if self.attribute_dims is not None and \
                 'color' in self.attribute_dims.keys():
             return self.tensor[:, self.attribute_dims['color']]
@@ -141,9 +146,9 @@ class BasePoints(object):
         """Rotate points with the given rotation matrix or angle.
 
         Args:
-            rotation (float, np.ndarray, torch.Tensor): Rotation matrix
+            rotation (float | np.ndarray | torch.Tensor): Rotation matrix
                 or angle.
-            axis (int): Axis to rotate at. Defaults to None.
+            axis (int, optional): Axis to rotate at. Defaults to None.
         """
         if not isinstance(rotation, torch.Tensor):
             rotation = self.tensor.new_tensor(rotation)
@@ -154,34 +159,24 @@ class BasePoints(object):
             axis = self.rotation_axis
 
         if rotation.numel() == 1:
-            rot_sin = torch.sin(rotation)
-            rot_cos = torch.cos(rotation)
-            if axis == 1:
-                rot_mat_T = rotation.new_tensor([[rot_cos, 0, -rot_sin],
-                                                 [0, 1, 0],
-                                                 [rot_sin, 0, rot_cos]])
-            elif axis == 2 or axis == -1:
-                rot_mat_T = rotation.new_tensor([[rot_cos, -rot_sin, 0],
-                                                 [rot_sin, rot_cos, 0],
-                                                 [0, 0, 1]])
-            elif axis == 0:
-                rot_mat_T = rotation.new_tensor([[1, 0, 0],
-                                                 [0, rot_cos, -rot_sin],
-                                                 [0, rot_sin, rot_cos]])
-            else:
-                raise ValueError('axis should in range')
-            rot_mat_T = rot_mat_T.T
-        elif rotation.numel() == 9:
-            rot_mat_T = rotation
+            rotated_points, rot_mat_T = rotation_3d_in_axis(
+                self.tensor[:, :3][None], rotation, axis=axis, return_mat=True)
+            self.tensor[:, :3] = rotated_points.squeeze(0)
+            rot_mat_T = rot_mat_T.squeeze(0)
         else:
-            raise NotImplementedError
-        self.tensor[:, :3] = self.tensor[:, :3] @ rot_mat_T
+            # rotation.numel() == 9
+            self.tensor[:, :3] = self.tensor[:, :3] @ rotation
+            rot_mat_T = rotation
 
         return rot_mat_T
 
     @abstractmethod
     def flip(self, bev_direction='horizontal'):
-        """Flip the points in BEV along given BEV direction."""
+        """Flip the points along given BEV direction.
+
+        Args:
+            bev_direction (str): Flip direction (horizontal or vertical).
+        """
         pass
 
     def translate(self, trans_vector):
@@ -218,7 +213,7 @@ class BasePoints(object):
             polygon, we try to reduce the burden for simpler cases.
 
         Returns:
-            torch.Tensor: A binary vector indicating whether each point is \
+            torch.Tensor: A binary vector indicating whether each point is
                 inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > point_range[0])
@@ -229,7 +224,11 @@ class BasePoints(object):
                           & (self.tensor[:, 2] < point_range[5]))
         return in_range_flags
 
-    @abstractmethod
+    @property
+    def bev(self):
+        """torch.Tensor: BEV of the points in shape (N, 2)."""
+        return self.tensor[:, [0, 1]]
+
     def in_range_bev(self, point_range):
         """Check whether the points are in the given range.
 
@@ -238,10 +237,14 @@ class BasePoints(object):
                 in order of (x_min, y_min, x_max, y_max).
 
         Returns:
-            torch.Tensor: Indicating whether each point is inside \
+            torch.Tensor: Indicating whether each point is inside
                 the reference range.
         """
-        pass
+        in_range_flags = ((self.bev[:, 0] > point_range[0])
+                          & (self.bev[:, 1] > point_range[1])
+                          & (self.bev[:, 1] < point_range[2])
+                          & (self.bev[:, 1] < point_range[3]))
+        return in_range_flags
 
     @abstractmethod
     def convert_to(self, dst, rt_mat=None):
@@ -249,14 +252,15 @@ class BasePoints(object):
 
         Args:
             dst (:obj:`CoordMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor): The rotation and translation
-                matrix between different coordinates. Defaults to None.
+            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+                translation matrix between different coordinates.
+                Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BasePoints`: The converted box of the same type \
+            :obj:`BasePoints`: The converted box of the same type
                 in the `dst` mode.
         """
         pass
@@ -288,7 +292,7 @@ class BasePoints(object):
             subject to Pytorch's indexing semantics.
 
         Returns:
-            :obj:`BasePoints`: A new object of  \
+            :obj:`BasePoints`: A new object of
                 :class:`BasePoints` after indexing.
         """
         original_type = type(self)
@@ -379,7 +383,7 @@ class BasePoints(object):
             device (str | :obj:`torch.device`): The name of the device.
 
         Returns:
-            :obj:`BasePoints`: A new boxes object on the \
+            :obj:`BasePoints`: A new boxes object on the
                 specific device.
         """
         original_type = type(self)
@@ -392,7 +396,7 @@ class BasePoints(object):
         """Clone the Points.
 
         Returns:
-            :obj:`BasePoints`: Box object with the same properties \
+            :obj:`BasePoints`: Box object with the same properties
                 as self.
         """
         original_type = type(self)
@@ -417,14 +421,14 @@ class BasePoints(object):
     def new_point(self, data):
         """Create a new point object with data.
 
-        The new point and its tensor has the similar properties \
+        The new point and its tensor has the similar properties
             as self and self.tensor, respectively.
 
         Args:
             data (torch.Tensor | numpy.array | list): Data to be copied.
 
         Returns:
-            :obj:`BasePoints`: A new point object with ``data``, \
+            :obj:`BasePoints`: A new point object with ``data``,
                 the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \
