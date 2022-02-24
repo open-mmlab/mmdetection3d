@@ -10,8 +10,6 @@ from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                PAConvSAModule, PAConvSAModuleMSG,
                                PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
-from .sparse_block import (SparseBasicBlock, SparseBottleneck,
-                           make_sparse_convmodule)
 
 __all__ = [
     'nms', 'soft_nms', 'RoIAlign', 'roi_align', 'get_compiler_version',
