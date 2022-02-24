@@ -14,6 +14,8 @@ def _get_voxel_points_indices(points, coors, voxel):
 
 
 def test_voxelization():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
     voxel_size = [0.5, 0.5, 0.5]
     point_cloud_range = [0, -40, -3, 70.4, 40, 1]
     max_num_points = 1000
