@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmcv import ops
 from mmcv.runner import BaseModule
 
-from mmdet3d import ops
 from mmdet.models.builder import ROI_EXTRACTORS
 
 

@@ -3,7 +3,6 @@ from mmcv.ops import (RoIAlign, SigmoidFocalLoss, get_compiler_version,
                       get_compiling_cuda_version, nms, roi_align,
                       sigmoid_focal_loss)
 
-# from .ball_query import ball_query
 from .dgcnn_modules import DGCNNFAModule, DGCNNFPModule, DGCNNGFModule
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
 from .paconv import PAConv, PAConvCUDA

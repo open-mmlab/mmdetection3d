@@ -226,27 +226,5 @@ if __name__ == '__main__':
             'build': parse_requirements('requirements/build.txt'),
             'optional': parse_requirements('requirements/optional.txt'),
         },
-        ext_modules=[
-            make_cuda_ext(
-                name='sparse_conv_ext',
-                module='mmdet3d.ops.spconv',
-                extra_include_path=[
-                    # PyTorch 1.5 uses ninjia, which requires absolute path
-                    # of included files, relative path will cause failure.
-                    os.path.abspath(
-                        os.path.join(*'mmdet3d.ops.spconv'.split('.'),
-                                     'include/'))
-                ],
-                sources=[
-                    'src/all.cc',
-                    'src/reordering.cc',
-                    'src/reordering_cuda.cu',
-                    'src/indice.cc',
-                    'src/indice_cuda.cu',
-                    'src/maxpool.cc',
-                    'src/maxpool_cuda.cu',
-                ],
-                extra_args=['-w', '-std=c++14']),
-        ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
