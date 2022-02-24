@@ -10,7 +10,7 @@ model = dict(
             _delete_=True,
             type='Anchor3DRangeGenerator',
             ranges=[[0, -39.68, -1.78, 69.12, 39.68, -1.78]],
-            sizes=[[1.6, 3.9, 1.56]],
+            sizes=[[3.9, 1.6, 1.56]],
             rotations=[0, 1.57],
             reshape_out=True)),
     # model training and testing settings

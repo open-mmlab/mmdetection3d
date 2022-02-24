@@ -1,0 +1,81 @@
+Collections:
+  - Name: PGD
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - SGD
+      Training Resources: 4x TITAN XP
+      Architecture:
+        - PGDHead
+    Paper:
+      URL: https://arxiv.org/abs/2107.14160
+      Title: 'Probabilistic and Geometric Depth: Detecting Objects in Perspective'
+    README: configs/pgd/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/models/dense_heads/pgd_head.py#17
+      Version: v1.0.0
+
+Models:
+  - Name: pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d
+    In Collection: PGD
+    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py
+    Metadata:
+      Training Memory (GB): 9.1
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 18.33
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608-8a97533b.pth
+
+  - Name: pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d
+    In Collection: PGD
+    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d.py
+    Metadata:
+      Training Memory (GB): 9.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 31.7
+          NDS: 39.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_20211116_195350-f4b5eec2.pth
+
+  - Name: pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_finetune
+    In Collection: PGD
+    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_finetune.py
+    Metadata:
+      Training Memory (GB): 9.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 34.6
+          NDS: 41.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_finetune/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_finetune_20211118_093245-fd419681.pth
+
+  - Name: pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d
+    In Collection: PGD
+    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d.py
+    Metadata:
+      Training Memory (GB): 9.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 33.6
+          NDS: 40.9
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_20211112_125314-cb677266.pth
+
+  - Name: pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune
+    In Collection: PGD
+    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune.py
+    Metadata:
+      Training Memory (GB): 9.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 35.8
+          NDS: 42.5
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune_20211114_162135-5ec7c1cd.pth

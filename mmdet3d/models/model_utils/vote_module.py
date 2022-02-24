@@ -14,22 +14,25 @@ class VoteModule(nn.Module):
 
     Args:
         in_channels (int): Number of channels of seed point features.
-        vote_per_seed (int): Number of votes generated from each seed point.
-        gt_per_seed (int): Number of ground truth votes generated
-            from each seed point.
-        num_points (int): Number of points to be used for voting.
-        conv_channels (tuple[int]): Out channels of vote
-            generating convolution.
-        conv_cfg (dict): Config of convolution.
+        vote_per_seed (int, optional): Number of votes generated from
+            each seed point. Default: 1.
+        gt_per_seed (int, optional): Number of ground truth votes generated
+            from each seed point. Default: 3.
+        num_points (int, optional): Number of points to be used for voting.
+            Default: 1.
+        conv_channels (tuple[int], optional): Out channels of vote
+            generating convolution. Default: (16, 16).
+        conv_cfg (dict, optional): Config of convolution.
             Default: dict(type='Conv1d').
-        norm_cfg (dict): Config of normalization.
+        norm_cfg (dict, optional): Config of normalization.
             Default: dict(type='BN1d').
-        norm_feats (bool): Whether to normalize features.
+        norm_feats (bool, optional): Whether to normalize features.
             Default: True.
-        with_res_feat (bool): Whether to predict residual features.
+        with_res_feat (bool, optional): Whether to predict residual features.
             Default: True.
-        vote_xyz_range (list[float], None): The range of points translation.
-        vote_loss (dict): Config of vote loss.
+        vote_xyz_range (list[float], optional):
+            The range of points translation. Default: None.
+        vote_loss (dict, optional): Config of vote loss. Default: None.
     """
 
     def __init__(self,
@@ -95,10 +98,10 @@ class VoteModule(nn.Module):
         Returns:
             tuple[torch.Tensor]:
 
-                - vote_points: Voted xyz based on the seed points \
+                - vote_points: Voted xyz based on the seed points
                     with shape (B, M, 3), ``M=num_seed*vote_per_seed``.
-                - vote_features: Voted features based on the seed points with \
-                    shape (B, C, M) where ``M=num_seed*vote_per_seed``, \
+                - vote_features: Voted features based on the seed points with
+                    shape (B, C, M) where ``M=num_seed*vote_per_seed``,
                     ``C=vote_feature_dim``.
         """
         if self.num_points != -1:

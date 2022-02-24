@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import NORM_LAYERS
 from mmcv.runner import force_fp32
@@ -26,7 +27,7 @@ class AllReduce(Function):
 
 @NORM_LAYERS.register_module('naiveSyncBN1d')
 class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
-    """Syncronized Batch Normalization for 3D Tensors.
+    """Synchronized Batch Normalization for 3D Tensors.
 
     Note:
         This implementation is modified from
@@ -37,7 +38,7 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         when the batch size on each worker is quite different
         (e.g., when scale augmentation is used).
         In 3D detection, different workers has points of different shapes,
-        whish also cause instability.
+        which also cause instability.
 
         Use this implementation before `nn.SyncBatchNorm` is fixed.
         It is slower than `nn.SyncBatchNorm`.
@@ -80,7 +81,7 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
 
 @NORM_LAYERS.register_module('naiveSyncBN2d')
 class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
-    """Syncronized Batch Normalization for 4D Tensors.
+    """Synchronized Batch Normalization for 4D Tensors.
 
     Note:
         This implementation is modified from

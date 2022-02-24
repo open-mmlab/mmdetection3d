@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+
 import cv2
 import numpy as np
 import torch
@@ -18,7 +19,7 @@ def project_pts_on_img(points,
         raw_img (numpy.array): The numpy array of image.
         lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
             according to the camera intrinsic parameters.
-        max_distance (float): the max distance of the points cloud.
+        max_distance (float, optional): the max distance of the points cloud.
             Default: 70.
         thickness (int, optional): The thickness of 2D points. Default: -1.
     """
@@ -69,7 +70,8 @@ def plot_rect3d_on_img(img,
         num_rects (int): Number of 3D rectangulars.
         rect_corners (numpy.array): Coordinates of the corners of 3D
             rectangulars. Should be in the shape of [num_rect, 8, 2].
-        color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
+        color (tuple[int], optional): The color to draw bboxes.
+            Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
     line_indices = ((0, 1), (0, 3), (0, 4), (1, 2), (1, 5), (3, 2), (3, 7),
@@ -99,7 +101,8 @@ def draw_lidar_bbox3d_on_img(bboxes3d,
         lidar2img_rt (numpy.array, shape=[4, 4]): The projection matrix
             according to the camera intrinsic parameters.
         img_metas (dict): Useless here.
-        color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
+        color (tuple[int], optional): The color to draw bboxes.
+            Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
     img = raw_img.copy()
@@ -136,7 +139,8 @@ def draw_depth_bbox3d_on_img(bboxes3d,
         raw_img (numpy.array): The numpy array of image.
         calibs (dict): Camera calibration information, Rt and K.
         img_metas (dict): Used in coordinates transformation.
-        color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
+        color (tuple[int], optional): The color to draw bboxes.
+            Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
     from mmdet3d.core.bbox import points_cam2img
@@ -176,7 +180,8 @@ def draw_camera_bbox3d_on_img(bboxes3d,
         cam2img (dict): Camera intrinsic matrix,
             denoted as `K` in depth bbox coordinate system.
         img_metas (dict): Useless here.
-        color (tuple[int]): The color to draw bboxes. Default: (0, 255, 0).
+        color (tuple[int], optional): The color to draw bboxes.
+            Default: (0, 255, 0).
         thickness (int, optional): The thickness of bboxes. Default: 1.
     """
     from mmdet3d.core.bbox import points_cam2img
@@ -188,7 +193,10 @@ def draw_camera_bbox3d_on_img(bboxes3d,
     points_3d = corners_3d.reshape(-1, 3)
     if not isinstance(cam2img, torch.Tensor):
         cam2img = torch.from_numpy(np.array(cam2img))
-    cam2img = cam2img.reshape(3, 3).float().cpu()
+
+    assert (cam2img.shape == torch.Size([3, 3])
+            or cam2img.shape == torch.Size([4, 4]))
+    cam2img = cam2img.float().cpu()
 
     # project to 2d to get image coords (uv)
     uv_origin = points_cam2img(points_3d, cam2img)

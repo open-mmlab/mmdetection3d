@@ -206,7 +206,8 @@ class Kitti2DDataset(CustomDataset):
         Args:
             outputs (list[np.ndarray]): List of arrays storing the inferenced
                 bounding boxes and scores.
-            out (str | None): The prefix of output file. Default: None.
+            out (str, optional): The prefix of output file.
+                Default: None.
 
         Returns:
             list[dict]: A list of dictionaries with the kitti 2D format.
@@ -222,7 +223,7 @@ class Kitti2DDataset(CustomDataset):
 
         Args:
             result_files (str): Path of result files.
-            eval_types (str): Types of evaluation. Default: None.
+            eval_types (str, optional): Types of evaluation. Default: None.
                 KITTI dataset only support 'bbox' evaluation type.
 
         Returns:

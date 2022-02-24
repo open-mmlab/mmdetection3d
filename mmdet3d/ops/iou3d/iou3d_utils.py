@@ -1,10 +1,11 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from . import iou3d_cuda
 
 
 def boxes_iou_bev(boxes_a, boxes_b):
-    """Calculate boxes IoU in the bird view.
+    """Calculate boxes IoU in the Bird's Eye View.
 
     Args:
         boxes_a (torch.Tensor): Input boxes a with shape (M, 5).
@@ -22,24 +23,29 @@ def boxes_iou_bev(boxes_a, boxes_b):
     return ans_iou
 
 
-def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
-    """Nms function with gpu implementation.
+def nms_gpu(boxes, scores, thresh, pre_max_size=None, post_max_size=None):
+    """NMS function GPU implementation (for BEV boxes). The overlap of two
+    boxes for IoU calculation is defined as the exact overlapping area of the
+    two boxes. In this function, one can also set `pre_max_size` and
+    `post_max_size`.
 
     Args:
         boxes (torch.Tensor): Input boxes with the shape of [N, 5]
             ([x1, y1, x2, y2, ry]).
         scores (torch.Tensor): Scores of boxes with the shape of [N].
         thresh (int): Threshold.
-        pre_maxsize (int): Max size of boxes before nms. Default: None.
-        post_maxsize (int): Max size of boxes after nms. Default: None.
+        pre_max_size (int, optional): Max size of boxes before NMS.
+            Default: None.
+        post_max_size (int, optional): Max size of boxes after NMS.
+            Default: None.
 
     Returns:
-        torch.Tensor: Indexes after nms.
+        torch.Tensor: Indexes after NMS.
     """
     order = scores.sort(0, descending=True)[1]
 
-    if pre_maxsize is not None:
-        order = order[:pre_maxsize]
+    if pre_max_size is not None:
+        order = order[:pre_max_size]
     boxes = boxes[order].contiguous()
 
     keep = torch.zeros(boxes.size(0), dtype=torch.long)
@@ -51,12 +57,14 @@ def nms_gpu(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
 
 
 def nms_normal_gpu(boxes, scores, thresh):
-    """Normal non maximum suppression on GPU.
+    """Normal NMS function GPU implementation (for BEV boxes). The overlap of
+    two boxes for IoU calculation is defined as the exact overlapping area of
+    the two boxes WITH their yaw angle set to 0.
 
     Args:
         boxes (torch.Tensor): Input boxes with shape (N, 5).
         scores (torch.Tensor): Scores of predicted boxes with shape (N).
-        thresh (torch.Tensor): Threshold of non maximum suppression.
+        thresh (torch.Tensor): Threshold of NMS.
 
     Returns:
         torch.Tensor: Remaining indices with scores in descending order.

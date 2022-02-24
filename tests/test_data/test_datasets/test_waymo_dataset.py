@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import tempfile
+
 import numpy as np
 import pytest
-import tempfile
 import torch
 
 from mmdet3d.datasets import WaymoDataset
@@ -16,6 +17,7 @@ def _generate_waymo_train_dataset_config():
     file_client_args = dict(backend='disk')
     db_sampler = dict(
         data_root=data_root,
+        # in coordinate system refactor, this test file is modified
         info_path=data_root + 'waymo_dbinfos_train.pkl',
         rate=1.0,
         prepare=dict(
@@ -114,7 +116,7 @@ def test_getitem():
     gt_bboxes_3d = data['gt_bboxes_3d']._data
     gt_labels_3d = data['gt_labels_3d']._data
     expected_gt_bboxes_3d = torch.tensor(
-        [[31.4750, -4.5690, 2.1857, 2.3519, 6.0931, 3.1756, -1.2895]])
+        [[31.8048, -0.1002, 2.1857, 6.0931, 2.3519, 3.1756, -0.1403]])
     expected_gt_labels_3d = torch.tensor([0])
     assert points.shape == (765, 5)
     assert torch.allclose(
@@ -132,8 +134,8 @@ def test_evaluate():
                                  pipeline, classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor([[
-            6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
-            1.4600e+00, -9.0000e-02
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 4.3600e+00, 2.0100e+00,
+            1.4600e+00, 9.0000e-02 - np.pi / 2
         ]]))
     labels_3d = torch.tensor([0])
     scores_3d = torch.tensor([0.5])
@@ -150,8 +152,8 @@ def test_evaluate():
     metric = ['waymo']
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor([[
-            6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
-            1.4600e+00, -9.0000e-02
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 4.3600e+00, 2.0100e+00,
+            1.4600e+00, 9.0000e-02 - np.pi / 2
         ]]))
     labels_3d = torch.tensor([0])
     scores_3d = torch.tensor([0.8])
@@ -164,8 +166,9 @@ def test_evaluate():
 
 
 def test_show():
-    import mmcv
     from os import path as osp
+
+    import mmcv
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
 
@@ -178,11 +181,11 @@ def test_show():
         data_root, ann_file, split=split, modality=modality, pipeline=pipeline)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor(
-            [[46.1218, -4.6496, -0.9275, 0.5316, 1.4442, 1.7450, 1.1749],
-             [33.3189, 0.1981, 0.3136, 0.5656, 1.2301, 1.7985, 1.5723],
-             [46.1366, -4.6404, -0.9510, 0.5162, 1.6501, 1.7540, 1.3778],
-             [33.2646, 0.2297, 0.3446, 0.5746, 1.3365, 1.7947, 1.5430],
-             [58.9079, 16.6272, -1.5829, 1.5656, 3.9313, 1.4899, 1.5505]]))
+            [[46.1218, -4.6496, -0.9275, 1.4442, 0.5316, 1.7450, 1.1749],
+             [33.3189, 0.1981, 0.3136, 1.2301, 0.5656, 1.7985, 1.5723],
+             [46.1366, -4.6404, -0.9510, 1.6501, 0.5162, 1.7540, 1.3778],
+             [33.2646, 0.2297, 0.3446, 1.3365, 0.5746, 1.7947, 1.5430],
+             [58.9079, 16.6272, -1.5829, 3.9313, 1.5656, 1.4899, 1.5505]]))
     scores_3d = torch.tensor([0.1815, 0.1663, 0.5792, 0.2194, 0.2780])
     labels_3d = torch.tensor([0, 0, 1, 1, 2])
     result = dict(boxes_3d=boxes_3d, scores_3d=scores_3d, labels_3d=labels_3d)
@@ -231,8 +234,8 @@ def test_format_results():
                                  pipeline, classes, modality)
     boxes_3d = LiDARInstance3DBoxes(
         torch.tensor([[
-            6.9684e+01, 3.3335e+01, 4.1465e-02, 2.0100e+00, 4.3600e+00,
-            1.4600e+00, -9.0000e-02
+            6.9684e+01, 3.3335e+01, 4.1465e-02, 4.3600e+00, 2.0100e+00,
+            1.4600e+00, 9.0000e-02 - np.pi / 2
         ]]))
     labels_3d = torch.tensor([0])
     scores_3d = torch.tensor([0.5])
@@ -252,11 +255,11 @@ def test_format_results():
     assert np.all(result_files[0]['name'] == expected_name)
     assert np.allclose(result_files[0]['truncated'], expected_truncated)
     assert np.all(result_files[0]['occluded'] == expected_occluded)
-    assert np.allclose(result_files[0]['alpha'], expected_alpha)
-    assert np.allclose(result_files[0]['bbox'], expected_bbox)
+    assert np.allclose(result_files[0]['bbox'], expected_bbox, 1e-3)
     assert np.allclose(result_files[0]['dimensions'], expected_dimensions)
     assert np.allclose(result_files[0]['location'], expected_location)
     assert np.allclose(result_files[0]['rotation_y'], expected_rotation_y)
     assert np.allclose(result_files[0]['score'], expected_score)
     assert np.allclose(result_files[0]['sample_idx'], expected_sample_idx)
+    assert np.allclose(result_files[0]['alpha'], expected_alpha)
     tmp_dir.cleanup()

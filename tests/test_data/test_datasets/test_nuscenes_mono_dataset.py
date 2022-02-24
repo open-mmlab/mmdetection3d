@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import tempfile
+from os import path as osp
+
 import mmcv
 import numpy as np
 import pytest
-import tempfile
 import torch
-from os import path as osp
 
 from mmdet3d.datasets import NuScenesMonoDataset
 

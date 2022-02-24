@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import numpy as np
 from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
@@ -7,7 +9,6 @@ from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
                                                             group_by_key,
                                                             wrap_in_box)
 from mmcv.utils import print_log
-from os import path as osp
 from terminaltables import AsciiTable
 
 
@@ -18,7 +19,7 @@ def load_lyft_gts(lyft, data_root, eval_split, logger=None):
         lyft (:obj:`LyftDataset`): Lyft class in the sdk.
         data_root (str): Root of data for reading splits.
         eval_split (str): Name of the split for evaluation.
-        logger (logging.Logger | str | None): Logger used for printing
+        logger (logging.Logger | str, optional): Logger used for printing
         related information during evaluation. Default: None.
 
     Returns:
@@ -96,7 +97,7 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
         res_path (str): Path of result json file recording detections.
         eval_set (str): Name of the split for evaluation.
         output_dir (str): Output directory for output json files.
-        logger (logging.Logger | str | None): Logger used for printing
+        logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
 
     Returns:
@@ -202,9 +203,9 @@ def get_single_class_aps(gt, predictions, iou_thresholds):
 
     Args:
         gt (list[dict]): list of dictionaries in the format described above.
-        predictions (list[dict]): list of dictionaries in the format \
+        predictions (list[dict]): list of dictionaries in the format
             described below.
-        iou_thresholds (list[float]): IOU thresholds used to calculate \
+        iou_thresholds (list[float]): IOU thresholds used to calculate
             TP / FN
 
     Returns:

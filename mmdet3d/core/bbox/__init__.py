@@ -12,7 +12,8 @@ from .samplers import (BaseSampler, CombinedSampler,
 from .structures import (BaseInstance3DBoxes, Box3DMode, CameraInstance3DBoxes,
                          Coord3DMode, DepthInstance3DBoxes,
                          LiDARInstance3DBoxes, get_box_type, limit_period,
-                         mono_cam_box2vis, points_cam2img, xywhr2xyxyr)
+                         mono_cam_box2vis, points_cam2img, points_img2cam,
+                         xywhr2xyxyr)
 from .transforms import bbox3d2result, bbox3d2roi, bbox3d_mapping_back
 
 __all__ = [
@@ -25,5 +26,5 @@ __all__ = [
     'LiDARInstance3DBoxes', 'CameraInstance3DBoxes', 'bbox3d2roi',
     'bbox3d2result', 'DepthInstance3DBoxes', 'BaseInstance3DBoxes',
     'bbox3d_mapping_back', 'xywhr2xyxyr', 'limit_period', 'points_cam2img',
-    'get_box_type', 'Coord3DMode', 'mono_cam_box2vis'
+    'points_img2cam', 'get_box_type', 'Coord3DMode', 'mono_cam_box2vis'
 ]

@@ -1,12 +1,12 @@
-from setuptools import find_packages, setup
-
 import os
 import platform
 import shutil
 import sys
-import torch
 import warnings
 from os import path as osp
+from setuptools import find_packages, setup
+
+import torch
 from torch.utils.cpp_extension import (BuildExtension, CppExtension,
                                        CUDAExtension)
 
@@ -273,6 +273,11 @@ if __name__ == '__main__':
                     'src/roiaware_pool3d_kernel.cu',
                     'src/points_in_boxes_cuda.cu',
                 ]),
+            make_cuda_ext(
+                name='roipoint_pool3d_ext',
+                module='mmdet3d.ops.roipoint_pool3d',
+                sources=['src/roipoint_pool3d.cpp'],
+                sources_cuda=['src/roipoint_pool3d_kernel.cu']),
             make_cuda_ext(
                 name='ball_query_ext',
                 module='mmdet3d.ops.ball_query',

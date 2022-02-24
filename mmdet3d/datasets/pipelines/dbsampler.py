@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import os
+
 import mmcv
 import numpy as np
-import os
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils
@@ -15,10 +16,10 @@ class BatchSampler:
 
     Args:
         sample_list (list[dict]): List of samples.
-        name (str | None): The category of samples. Default: None.
-        epoch (int | None): Sampling epoch. Default: None.
-        shuffle (bool): Whether to shuffle indices. Default: False.
-        drop_reminder (bool): Drop reminder. Default: False.
+        name (str, optional): The category of samples. Default: None.
+        epoch (int, optional): Sampling epoch. Default: None.
+        shuffle (bool, optional): Whether to shuffle indices. Default: False.
+        drop_reminder (bool, optional): Drop reminder. Default: False.
     """
 
     def __init__(self,
@@ -87,9 +88,9 @@ class DataBaseSampler(object):
         rate (float): Rate of actual sampled over maximum sampled number.
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
-        classes (list[str]): List of classes. Default: None.
-        points_loader(dict): Config of points loader. Default: dict(
-            type='LoadPointsFromFile', load_dim=4, use_dim=[0,1,2,3])
+        classes (list[str], optional): List of classes. Default: None.
+        points_loader(dict, optional): Config of points loader. Default:
+            dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0,1,2,3])
     """
 
     def __init__(self,
@@ -188,7 +189,7 @@ class DataBaseSampler(object):
                 db_infos[name] = filtered_infos
         return db_infos
 
-    def sample_all(self, gt_bboxes, gt_labels, img=None):
+    def sample_all(self, gt_bboxes, gt_labels, img=None, ground_plane=None):
         """Sampling all categories of bboxes.
 
         Args:
@@ -198,9 +199,9 @@ class DataBaseSampler(object):
         Returns:
             dict: Dict of sampled 'pseudo ground truths'.
 
-                - gt_labels_3d (np.ndarray): ground truths labels \
+                - gt_labels_3d (np.ndarray): ground truths labels
                     of sampled objects.
-                - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): \
+                - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`):
                     sampled ground truth 3D bounding boxes
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths
@@ -263,6 +264,15 @@ class DataBaseSampler(object):
 
             gt_labels = np.array([self.cat2label[s['name']] for s in sampled],
                                  dtype=np.long)
+
+            if ground_plane is not None:
+                xyz = sampled_gt_bboxes[:, :3]
+                dz = (ground_plane[:3][None, :] *
+                      xyz).sum(-1) + ground_plane[3]
+                sampled_gt_bboxes[:, 2] -= dz
+                for i, s_points in enumerate(s_points_list):
+                    s_points.tensor[:, 2].sub_(dz[i])
+
             ret = {
                 'gt_labels_3d':
                 gt_labels,

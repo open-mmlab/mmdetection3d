@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
+from os import path as osp
+
 import mmcv
 import torch
-import warnings
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import force_fp32
-from os import path as osp
 from torch.nn import functional as F
 
 from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,
@@ -84,21 +85,20 @@ class MVXTwoStageDetector(Base3DDetector):
 
         if self.with_img_backbone:
             if img_pretrained is not None:
-                warnings.warn('DeprecationWarning: pretrained is a deprecated \
-                    key, please consider using init_cfg')
+                warnings.warn('DeprecationWarning: pretrained is a deprecated '
+                              'key, please consider using init_cfg.')
                 self.img_backbone.init_cfg = dict(
                     type='Pretrained', checkpoint=img_pretrained)
         if self.with_img_roi_head:
             if img_pretrained is not None:
-                warnings.warn('DeprecationWarning: pretrained is a deprecated \
-                    key, please consider using init_cfg')
+                warnings.warn('DeprecationWarning: pretrained is a deprecated '
+                              'key, please consider using init_cfg.')
                 self.img_roi_head.init_cfg = dict(
                     type='Pretrained', checkpoint=img_pretrained)
-
         if self.with_pts_backbone:
             if pts_pretrained is not None:
-                warnings.warn('DeprecationWarning: pretrained is a deprecated \
-                    key, please consider using init_cfg')
+                warnings.warn('DeprecationWarning: pretrained is a deprecated '
+                              'key, please consider using init_cfg')
                 self.pts_backbone.init_cfg = dict(
                     type='Pretrained', checkpoint=pts_pretrained)
 
@@ -260,7 +260,7 @@ class MVXTwoStageDetector(Base3DDetector):
                 of 2D boxes in images. Defaults to None.
             gt_bboxes (list[torch.Tensor], optional): Ground truth 2D boxes in
                 images. Defaults to None.
-            img (torch.Tensor optional): Images of each sample with shape
+            img (torch.Tensor, optional): Images of each sample with shape
                 (N, C, H, W). Defaults to None.
             proposals ([list[torch.Tensor], optional): Predicted proposals
                 used for training Fast RCNN. Defaults to None.
@@ -497,7 +497,7 @@ class MVXTwoStageDetector(Base3DDetector):
                                                 Box3DMode.DEPTH)
             elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
-                    f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
+                    f'Unsupported box_mode_3d {box_mode_3d} for conversion!')
 
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
             show_result(points, None, pred_bboxes, out_dir, file_name)

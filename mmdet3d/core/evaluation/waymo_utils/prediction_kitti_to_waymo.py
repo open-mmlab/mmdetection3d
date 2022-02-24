@@ -10,11 +10,12 @@ except ImportError:
         'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
         'to install the official devkit first.')
 
+from glob import glob
+from os.path import join
+
 import mmcv
 import numpy as np
 import tensorflow as tf
-from glob import glob
-from os.path import join
 from waymo_open_dataset import label_pb2
 from waymo_open_dataset.protos import metrics_pb2
 
@@ -114,7 +115,7 @@ class KITTI2Waymo(object):
                 instance_idx (int): Index of the instance to be converted.
 
             Returns:
-                :obj:`Object`: Predicted instance in waymo dataset \
+                :obj:`Object`: Predicted instance in waymo dataset
                     Object proto.
             """
             cls = kitti_result['name'][instance_idx]

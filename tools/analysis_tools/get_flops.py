@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+
 import torch
 from mmcv import Config, DictAction
 
