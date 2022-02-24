@@ -30,3 +30,12 @@ We list some potential troubles encountered by users and developers, along with 
   or
 
   ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+
+## How to annotate point cloud?
+
+MMDetection3D does not support point cloud annotation. Some open-source annotation tool are offered for reference:
+
+- [SUSTechPOINTS](https://github.com/naurril/SUSTechPOINTS)
+- [LATTE](https://github.com/bernwang/latte)
+
+Besides, we improved [LATTE](https://github.com/bernwang/latte) for better use. More details can be found [here](https://arxiv.org/abs/2011.10174).

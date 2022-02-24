@@ -116,6 +116,10 @@ class RandomFlip3D(RandomFlip):
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
+        # for semantic segmentation task, only points will be flipped.
+        if 'bbox3d_fields' not in input_dict:
+            input_dict['points'].flip(direction)
+            return
         if len(input_dict['bbox3d_fields']) == 0:  # test mode
             input_dict['bbox3d_fields'].append('empty_box3d')
             input_dict['empty_box3d'] = input_dict['box_type_3d'](
@@ -264,14 +268,17 @@ class ObjectSample(object):
         sample_2d (bool): Whether to also paste 2D image patch to the images
             This should be true when applying multi-modality cut-and-paste.
             Defaults to False.
+        use_ground_plane (bool): Whether to use gound plane to adjust the
+            3D labels.
     """
 
-    def __init__(self, db_sampler, sample_2d=False):
+    def __init__(self, db_sampler, sample_2d=False, use_ground_plane=False):
         self.sampler_cfg = db_sampler
         self.sample_2d = sample_2d
         if 'type' not in db_sampler.keys():
             db_sampler['type'] = 'DataBaseSampler'
         self.db_sampler = build_from_cfg(db_sampler, OBJECTSAMPLERS)
+        self.use_ground_plane = use_ground_plane
 
     @staticmethod
     def remove_points_in_boxes(points, boxes):
@@ -302,6 +309,11 @@ class ObjectSample(object):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 
+        if self.use_ground_plane and 'plane' in input_dict['ann_info']:
+            ground_plane = input_dict['ann_info']['plane']
+            input_dict['plane'] = ground_plane
+        else:
+            ground_plane = None
         # change to float for blending operation
         points = input_dict['points']
         if self.sample_2d:
@@ -315,7 +327,10 @@ class ObjectSample(object):
                 img=img)
         else:
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d.tensor.numpy(), gt_labels_3d, img=None)
+                gt_bboxes_3d.tensor.numpy(),
+                gt_labels_3d,
+                img=None,
+                ground_plane=ground_plane)
 
         if sampled_dict is not None:
             sampled_gt_bboxes_3d = sampled_dict['gt_bboxes_3d']
@@ -921,6 +936,12 @@ class PointSample(object):
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
+        # Points in Camera coord can provide the depth information.
+        # TODO: Need to support distance-based sampling for other coord system.
+        if self.sample_range is not None:
+            from mmdet3d.core.points import CameraPoints
+            assert isinstance(points, CameraPoints), \
+                'Sampling based on distance is only applicable for CAM coord'
         points, choices = self._points_random_sampling(
             points,
             self.num_points,

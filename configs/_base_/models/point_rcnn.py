@@ -91,7 +91,8 @@ model = dict(
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.55,
                     min_pos_iou=0.55,
-                    ignore_iof_thr=-1),
+                    ignore_iof_thr=-1,
+                    match_low_quality=False),
                 dict(  # for Pedestrian
                     type='MaxIoUAssigner',
                     iou_calculator=dict(
@@ -99,7 +100,8 @@ model = dict(
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.55,
                     min_pos_iou=0.55,
-                    ignore_iof_thr=-1),
+                    ignore_iof_thr=-1,
+                    match_low_quality=False),
                 dict(  # for Cyclist
                     type='MaxIoUAssigner',
                     iou_calculator=dict(
@@ -107,7 +109,8 @@ model = dict(
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.55,
                     min_pos_iou=0.55,
-                    ignore_iof_thr=-1)
+                    ignore_iof_thr=-1,
+                    match_low_quality=False)
             ],
             sampler=dict(
                 type='IoUNegPiecewiseSampler',

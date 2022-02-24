@@ -104,16 +104,21 @@ Considering there are many similar frames in the original dataset, we can basica
 For evaluation on Waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.  Basically, you can follow the commands below to install `bazel` and build the file.
 
    ```shell
+   # download the code and enter the base directory
    git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
    cd waymo-od
    git checkout remotes/origin/master
 
+   # use the Bazel build system
    sudo apt-get install --assume-yes pkg-config zip g++ zlib1g-dev unzip python3 python3-pip
-   wget https://github.com/bazelbuild/bazel/releases/download/0.28.0/bazel-0.28.0-installer-linux-x86_64.sh
-   sudo bash bazel-0.28.0-installer-linux-x86_64.sh
+   BAZEL_VERSION=3.1.0
+   wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+   sudo bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
    sudo apt install build-essential
 
+   # configure .bazelrc
    ./configure.sh
+   # delete previous bazel outputs and reset internal caches
    bazel clean
 
    bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main

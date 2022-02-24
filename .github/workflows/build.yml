@@ -41,22 +41,22 @@ jobs:
         torch: [1.5.0+cu101, 1.6.0+cu101, 1.7.0+cu101, 1.8.0+cu101]
         include:
           - torch: 1.5.0+cu101
-            torch_version: torch1.5.0
+            torch_version: torch1.5
             torchvision: 0.6.0+cu101
             mmcv_link: "torch1.5.0"
             cuda_arch: "7.0"
           - torch: 1.6.0+cu101
-            torch_version: torch1.6.0
+            torch_version: torch1.6
             mmcv_link: "torch1.6.0"
             torchvision: 0.7.0+cu101
             cuda_arch: "7.0"
           - torch: 1.7.0+cu101
-            torch_version: torch1.7.0
+            torch_version: torch1.7
             mmcv_link: "torch1.7.0"
             torchvision: 0.8.1+cu101
             cuda_arch: "7.0"
           - torch: 1.8.0+cu101
-            torch_version: torch1.8.0
+            torch_version: torch1.8
             mmcv_link: "torch1.8.0"
             torchvision: 0.9.0+cu101
             cuda_arch: "7.0"

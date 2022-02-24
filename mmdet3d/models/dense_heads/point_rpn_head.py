@@ -273,7 +273,8 @@ class PointRPNHead(BaseModule):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
             bbox_selected, score_selected, labels, cls_preds_selected = \
-                self.class_agnostic_nms(obj_scores[b], sem_scores[b], bbox3d)
+                self.class_agnostic_nms(obj_scores[b], sem_scores[b], bbox3d,
+                                        points[b, ..., :3], input_metas[b])
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],
@@ -281,7 +282,8 @@ class PointRPNHead(BaseModule):
             results.append((bbox, score_selected, labels, cls_preds_selected))
         return results
 
-    def class_agnostic_nms(self, obj_scores, sem_scores, bbox):
+    def class_agnostic_nms(self, obj_scores, sem_scores, bbox, points,
+                           input_meta):
         """Class agnostic nms.
 
         Args:
@@ -298,6 +300,29 @@ class PointRPNHead(BaseModule):
             nms_func = nms_gpu
         else:
             nms_func = nms_normal_gpu
+
+        num_bbox = bbox.shape[0]
+        bbox = input_meta['box_type_3d'](
+            bbox.clone(),
+            box_dim=bbox.shape[-1],
+            with_yaw=True,
+            origin=(0.5, 0.5, 0.5))
+
+        if isinstance(bbox, LiDARInstance3DBoxes):
+            box_idx = bbox.points_in_boxes(points)
+            box_indices = box_idx.new_zeros([num_bbox + 1])
+            box_idx[box_idx == -1] = num_bbox
+            box_indices.scatter_add_(0, box_idx.long(),
+                                     box_idx.new_ones(box_idx.shape))
+            box_indices = box_indices[:-1]
+            nonempty_box_mask = box_indices >= 0
+        elif isinstance(bbox, DepthInstance3DBoxes):
+            box_indices = bbox.points_in_boxes(points)
+            nonempty_box_mask = box_indices.T.sum(1) >= 0
+        else:
+            raise NotImplementedError('Unsupported bbox type!')
+
+        bbox = bbox.tensor[nonempty_box_mask]
 
         if self.test_cfg.score_thr is not None:
             score_thr = self.test_cfg.score_thr

@@ -60,9 +60,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
         if neg_inds.numel() != 0:
             neg_inds = neg_inds.squeeze(1)
         if len(neg_inds) <= 0:
-            raise NotImplementedError(
-                'Not support sampling the negative samples when the length '
-                'of negative samples is 0')
+            return neg_inds.squeeze(1)
         else:
             neg_inds_choice = neg_inds.new_zeros([0])
             extend_num = 0
