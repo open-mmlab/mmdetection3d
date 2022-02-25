@@ -15,10 +15,9 @@ __all__ = [
     'nms', 'soft_nms', 'RoIAlign', 'roi_align', 'get_compiler_version',
     'get_compiling_cuda_version', 'NaiveSyncBatchNorm1d',
     'NaiveSyncBatchNorm2d', 'batched_nms', 'sigmoid_focal_loss',
-    'SigmoidFocalLoss', 'SparseBasicBlock', 'SparseBottleneck',
-    'make_sparse_convmodule', 'PointSAModule', 'PointSAModuleMSG',
-    'PointFPModule', 'DGCNNFPModule', 'DGCNNGFModule', 'DGCNNFAModule',
-    'get_compiler_version', 'get_compiling_cuda_version', 'build_sa_module',
-    'PAConv', 'PAConvCUDA', 'PAConvSAModuleMSG', 'PAConvSAModule',
-    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG'
+    'SigmoidFocalLoss', 'PointSAModule', 'PointSAModuleMSG', 'PointFPModule',
+    'DGCNNFPModule', 'DGCNNGFModule', 'DGCNNFAModule', 'get_compiler_version',
+    'get_compiling_cuda_version', 'build_sa_module', 'PAConv', 'PAConvCUDA',
+    'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
+    'PAConvCUDASAModuleMSG'
 ]
