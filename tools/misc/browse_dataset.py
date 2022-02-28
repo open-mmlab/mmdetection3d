@@ -104,7 +104,6 @@ def show_det_data(input, out_dir, show=False):
     """Visualize 3D point cloud and 3D bboxes."""
     img_metas = input['img_metas']._data
     points = input['points']._data.numpy()
-    # input_dict['bbox3d_fields']
     gt_bboxes = input['gt_bboxes_3d']._data.tensor
     if img_metas['box_mode_3d'] != Box3DMode.DEPTH:
         points, gt_bboxes = to_depth_mode(points, gt_bboxes)
