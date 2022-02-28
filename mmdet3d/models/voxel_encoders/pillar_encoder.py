@@ -237,7 +237,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         Args:
             pts_coors (torch.Tensor): The coordinates of each points, shape
                 (M, 3), where M is the number of points.
-            voxel_mean (torch.Tensor): The mean or aggreagated features of a
+            voxel_mean (torch.Tensor): The mean or aggregated features of a
                 voxel, shape (N, C), where N is the number of voxels.
             voxel_coors (torch.Tensor): The coordinates of each voxel.
 
