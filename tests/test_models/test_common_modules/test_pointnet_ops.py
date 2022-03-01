@@ -2,16 +2,9 @@
 import pytest
 import torch
 
-from mmdet3d.ops import (
-    ball_query,
-    furthest_point_sample,
-    furthest_point_sample_with_dist,
-    gather_points,
-    grouping_operation,
-    knn,
-    three_interpolate,
-    three_nn,
-)
+from mmdet3d.ops import (ball_query, furthest_point_sample,
+                         furthest_point_sample_with_dist, gather_points,
+                         grouping_operation, knn, three_interpolate, three_nn)
 
 
 def test_fps():
