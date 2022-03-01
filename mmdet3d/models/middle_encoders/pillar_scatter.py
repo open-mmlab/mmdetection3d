@@ -50,7 +50,7 @@ class PointPillarsScatter(nn.Module):
             dtype=voxel_features.dtype,
             device=voxel_features.device)
 
-        indices = coors[:, 1] * self.nx + coors[:, 2]
+        indices = coors[:, 2] * self.nx + coors[:, 3]
         indices = indices.long()
         voxels = voxel_features.t()
         # Now scatter the blob back to the canvas.
