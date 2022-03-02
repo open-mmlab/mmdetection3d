@@ -71,8 +71,8 @@ def init_model(config, checkpoint=None, device='cuda:0'):
         torch.cuda.set_device(device)
     else:
         logger = get_root_logger()
-        logger.warning(
-            'Don\'t suggest using CPU device. Some func can\'t support.')
+        logger.warning('Don\'t suggest using CPU device. '
+                       'Some functions are not supported for now.')
     model.to(device)
     model.eval()
     return model
