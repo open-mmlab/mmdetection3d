@@ -57,9 +57,7 @@ jobs:
           python -m pip install -r requirements/build.txt -r requirements/runtime.txt -r requirements/tests.txt
       - name: Build and install
         run: |
-          rm -rf .eggs
-          python setup.py check -m -s
-          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} python setup.py build_ext --inplace
+          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} python install -e .
       - name: Run unittests and generate coverage report
         run: coverage run --branch --source mmdet3d -m pytest tests/
              coverage xml
