@@ -55,7 +55,6 @@ jobs:
           python -m pip install -r requirements/build.txt -r requirements/runtime.txt -r requirements/tests.txt
       - name: Build and install
         run: |
-          $env:TORCH_CUDA_ARCH_LIST=="7.0"
           python install -e .
       - name: Run unittests and generate coverage report
         run: coverage run --branch --source mmdet3d -m pytest tests/
