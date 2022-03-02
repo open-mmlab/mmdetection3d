@@ -125,15 +125,15 @@ jobs:
       - name: Install mmdet3d dependencies
         run: |
           pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cpu/torch1.8/index.html --only-binary mmcv-full
-          python -m pip install mmdet
-          python -m pip install mmsegmentation
-          python -m pip install -r requirements/tests.txt -r requirements/optional.txt
+          python -m pip install mmdet==2.19.0
+          python -m pip install mmsegmentation==0.20.0
+          python -m pip install -r requirements/build.txt -r requirements/runtime.txt -r requirements/tests.txt
       - name: Show pip list
         run: pip list
       - name: Build and install
         run: pip install -e .
       - name: Run unittests
-        run: coverage run --branch --source mmdet3d -m pytest tests -sv
+        run: coverage run --branch --source mmdet3d -m pytest tests
       - name: Generate coverage report
         run: |
           coverage xml
