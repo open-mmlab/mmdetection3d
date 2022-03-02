@@ -133,7 +133,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 </table>
 
 <div align="center">
-  <b>Methods</b>
+  <b>Architectures</b>
 </div>
 <table align="center">
   <tbody>
