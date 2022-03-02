@@ -37,7 +37,8 @@ jobs:
         os: [windows-2022]
         python: [3.8]
         platform: [cu101]
-        cuda_arch: "7.0"
+        include:
+          - cuda_arch: "7.0"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python }}
