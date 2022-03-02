@@ -88,38 +88,122 @@ Please refer to [changelog.md](docs/en/changelog.md) for details and release his
 
 ## Benchmark and model zoo
 
-Supported methods and backbones are shown in the below table.
 Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
-Support backbones:
+<div align="center">
+  <b>Components</b>
+</div>
+<table align="center">
+  <tbody>
+    <tr align="center" valign="bottom">
+      <td>
+        <b>Backbones</b>
+      </td>
+      <td>
+        <b>Heads</b>
+      </td>
+      <td>
+        <b>Features</b>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td>
+      <ul>
+        <li><a href="configs/pointnet2">PointNet (CVPR'2017)</a></li>
+        <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</a></li>
+        <li><a href="configs/regnet">RegNet (CVPR'2020)</a></li>
+        <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
+        <li>DLA (CVPR'2018)</li>
+      </ul>
+      </td>
+      <td>
+      <ul>
+        <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
+      </ul>
+      </td>
+      <td>
+      <ul>
+        <li><a href="configs/dynamic_voxelization">Dynamic Voxelization (CoRL'2019)</a></li>
+      </ul>
+      </td>
+    </tr>
+</td>
+    </tr>
+  </tbody>
+</table>
 
-- [x] PointNet (CVPR'2017)
-- [x] PointNet++ (NeurIPS'2017)
-- [x] RegNet (CVPR'2020)
-- [x] DGCNN (TOG'2019)
-- [x] DLA (CVPR'2018)
-
-Support methods
-
-- [x] [SECOND (Sensor'2018)](configs/second/README.md)
-- [x] [PointPillars (CVPR'2019)](configs/pointpillars/README.md)
-- [x] [FreeAnchor (NeurIPS'2019)](configs/free_anchor/README.md)
-- [x] [VoteNet (ICCV'2019)](configs/votenet/README.md)
-- [x] [H3DNet (ECCV'2020)](configs/h3dnet/README.md)
-- [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
-- [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
-- [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
-- [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
-- [x] [SSN (ECCV'2020)](configs/ssn/README.md)
-- [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
-- [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
-- [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
-- [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
-- [x] [ImVoxelNet (WACV'2022)](configs/imvoxelnet/README.md)
-- [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
-- [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
-- [x] [SMOKE (CVPRW'2020)](configs/smoke/README.md)
-- [x] [PGD (CoRL'2021)](configs/pgd/README.md)
+<div align="center">
+  <b>Architectures</b>
+</div>
+<table align="center">
+  <tbody>
+    <tr align="center" valign="middle">
+      <td>
+        <b>3D Object Detection</b>
+      </td>
+      <td>
+        <b>Monocular 3D Object Detection</b>
+      </td>
+      <td>
+        <b>Multi-modal 3D Object Detection</b>
+      </td>
+      <td>
+        <b>3D Semantic Segmentation</b>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td>
+        <li><b>Outdoor</b></li>
+        <ul>
+            <li><a href="configs/second">SECOND (Sensor'2018)</a></li>
+            <li><a href="configs/pointpillars">PointPillars (CVPR'2019)</a></li>
+            <li><a href="configs/ssn">SSN (ECCV'2020)</a></li>
+            <li><a href="configs/3dssd">3DSSD (CVPR'2020)</a></li>
+            <li><a href="configs/ point_rcnn">PointRCNN</a></li>
+            <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
+            <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
+        </ul>
+        <li><b>Indoor</b></li>
+        <ul>
+            <li><a href="configs/votenet">VoteNet (ICCV'2019)</a></li>
+            <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
+            <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
+      </ul>
+      </td>
+      <td>
+        <li><b>Outdoor</b></li>
+        <ul>
+          <li><a href="configs/imvoxelnet">ImVoxelNet (WACV'2022)</a></li>
+          <li><a href="configs/smoke">SMOKE (CVPRW'2020)</a></li>
+          <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
+          <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
+          <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
+        </ul>
+      </td>
+      <td>
+        <li><b>Outdoor</b></li>
+        <ul>
+          <li><a href="configs/mvxnet">MVXNet (ICRA'2019)</a></li>
+        </ul>
+        <li><b>Indoor</b></li>
+        <ul>
+          <li><a href="configs/imvotenet">ImVoteNet (CVPR'2020)</a></li>
+        </ul>
+      </td>
+      <td>
+        <li><b>Indoor</b></li>
+        <ul>
+          <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</a></li>
+          <li><a href="configs/paconv">PAConv (CVPR'2021)</a></li>
+          <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
+        </ul>
+      </ul>
+      </td>
+    </tr>
+</td>
+    </tr>
+  </tbody>
+</table>
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLA |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:---:|
@@ -142,9 +226,8 @@ Support methods
 | DGCNN                | ✗        | ✗        | ✗        | ✗         | ✓         | ✗     | ✗        | ✗     | ✗
 | SMOKE                | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
+| MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
-Other features
-- [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 
