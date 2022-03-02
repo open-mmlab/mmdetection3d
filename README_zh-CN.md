@@ -100,6 +100,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
         <b>主干网络</b>
       </td>
       <td>
+        <b>检测头</b>
+      </td>
+      <td>
         <b>特性</b>
       </td>
     </tr>
@@ -111,6 +114,11 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
         <li>RegNet (CVPR'2020)</li>
         <li>DGCNN (TOG'2019)</li>
         <li>DLA (CVPR'2018)</li>
+      </ul>
+      </td>
+      <td>
+      <ul>
+        <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
       </ul>
       </td>
       <td>
@@ -156,7 +164,6 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
             <li><a href="configs/ point_rcnn">PointRCNN</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
-            <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
         </ul>
         </ul>
              <li><b>室内</b></li>

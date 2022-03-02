@@ -100,6 +100,9 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <b>Backbones</b>
       </td>
       <td>
+        <b>Heads</b>
+      </td>
+      <td>
         <b>Features</b>
       </td>
     </tr>
@@ -111,6 +114,11 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>RegNet (CVPR'2020)</li>
         <li>DGCNN (TOG'2019)</li>
         <li>DLA (CVPR'2018)</li>
+      </ul>
+      </td>
+      <td>
+      <ul>
+        <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
       </ul>
       </td>
       <td>
@@ -156,7 +164,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/ point_rcnn">PointRCNN</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
-            <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
         </ul>
         </ul>
              <li><b>Indoor</b></li>
