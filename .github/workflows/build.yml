@@ -31,6 +31,8 @@ jobs:
     env:
       FORCE_CUDA: 1
     runs-on: ${{ matrix.os }}
+    container:
+      image: pytorch/pytorch:1.8.0-cuda10.1-cudnn7-devel
     strategy:
       matrix:
         os: [windows-2022]
