@@ -244,7 +244,7 @@ if __name__ == '__main__':
                     'src/maxpool.cc',
                     'src/maxpool_cuda.cu',
                 ],
-                extra_args=['-w', '-std=c++14']),
+                extra_args=[['-DMS_WIN64', '-MD']]),
             make_cuda_ext(
                 name='iou3d_cuda',
                 module='mmdet3d.ops.iou3d',

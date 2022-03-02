@@ -30,15 +30,12 @@ jobs:
   build_windows:
     env:
       FORCE_CUDA: 1
-      CUDA_ARCH: ${{matrix.cuda_arch}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-2022]
         python: [3.8]
         platform: [cu101]
-        include:
-          - cuda_arch: "7.0"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python }}
@@ -58,7 +55,7 @@ jobs:
           python -m pip install -r requirements/build.txt -r requirements/runtime.txt -r requirements/tests.txt
       - name: Build and install
         run: |
-          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} python install -e .
+          python install -e .
       - name: Run unittests and generate coverage report
         run: coverage run --branch --source mmdet3d -m pytest tests/
              coverage xml
