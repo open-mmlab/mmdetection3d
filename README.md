@@ -109,10 +109,10 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
     <tr valign="top">
       <td>
       <ul>
-        <li>PointNet (CVPR'2017)</li>
-        <li>PointNet++ (NeurIPS'2017)</li>
-        <li>RegNet (CVPR'2020)</li>
-        <li>DGCNN (TOG'2019)</li>
+        <li><a href="configs/pointnet2">PointNet (CVPR'2017)</li>
+        <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</li>
+        <li><a href="configs/regnet">RegNet (CVPR'2020)</li>
+        <li><a href="configs/dgcnn">DGCNN (TOG'2019)</li>
         <li>DLA (CVPR'2018)</li>
       </ul>
       </td>
@@ -137,7 +137,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 </div>
 <table align="center">
   <tbody>
-    <tr align="center" valign="bottom">
+    <tr align="center" valign="middle">
       <td>
         <b>3D Object Detection</b>
       </td>
@@ -153,9 +153,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
     </tr>
     <tr valign="top">
       <td>
-        </ul>
-             <li><b>Outdoor</b></li>
-        <ul>
+        <li><b>Outdoor</b></li>
         <ul>
             <li><a href="configs/second">SECOND (Sensor'2018)</a></li>
             <li><a href="configs/pointpillars">PointPillars (CVPR'2019)</a></li>
@@ -165,9 +163,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
         </ul>
-        </ul>
-             <li><b>Indoor</b></li>
-        <ul>
+        <li><b>Indoor</b></li>
         <ul>
             <li><a href="configs/votenet">VoteNet (ICCV'2019)</a></li>
             <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
@@ -175,9 +171,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
       </ul>
       </td>
       <td>
-        </ul>
-             <li><b>Outdoor</b></li>
-        <ul>
+        <li><b>Outdoor</b></li>
         <ul>
           <li><a href="configs/imvoxelnet">ImVoxelNet (WACV'2022)</a></li>
           <li><a href="configs/smoke">SMOKE (CVPRW'2020)</a></li>
@@ -187,23 +181,17 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         </ul>
       </td>
       <td>
-        </ul>
-             <li><b>Outdoor</b></li>
-        <ul>
+        <li><b>Outdoor</b></li>
         <ul>
           <li><a href="configs/mvxnet">MVXNet (ICRA'2019)</a></li>
         </ul>
-        </ul>
-             <li><b>Indoor</b></li>
-        <ul>
+        <li><b>Indoor</b></li>
         <ul>
           <li><a href="configs/imvotenet">ImVoteNet (CVPR'2020)</a></li>
         </ul>
       </td>
       <td>
-        </ul>
-          <li><b>Indoor</b></li>
-        <ul>
+        <li><b>Indoor</b></li>
         <ul>
           <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</a></li>
           <li><a href="configs/paconv">PAConv (CVPR'2021)</a></li>
