@@ -109,10 +109,10 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
     <tr valign="top">
       <td>
       <ul>
-        <li><a href="configs/pointnet2">PointNet (CVPR'2017)</li>
-        <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</li>
-        <li><a href="configs/regnet">RegNet (CVPR'2020)</li>
-        <li><a href="configs/dgcnn">DGCNN (TOG'2019)</li>
+        <li><a href="configs/pointnet2">PointNet (CVPR'2017)</a></li>
+        <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</a></li>
+        <li><a href="configs/regnet">RegNet (CVPR'2020)</a></li>
+        <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
         <li>DLA (CVPR'2018)</li>
       </ul>
       </td>
