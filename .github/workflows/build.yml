@@ -37,6 +37,7 @@ jobs:
         os: [windows-2022]
         python: [3.8]
         platform: [cu101]
+        cuda_arch: "7.0"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python }}
@@ -55,7 +56,10 @@ jobs:
           python -m pip install mmsegmentation==0.20.0
           python -m pip install -r requirements/build.txt -r requirements/runtime.txt -r requirements/tests.txt
       - name: Build and install
-        run: pip install -e .
+        run: |
+          rm -rf .eggs
+          python setup.py check -m -s
+          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} python setup.py build_ext --inplace
       - name: Run unittests and generate coverage report
         run: coverage run --branch --source mmdet3d -m pytest tests/
              coverage xml
