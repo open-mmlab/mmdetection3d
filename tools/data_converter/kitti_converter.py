@@ -87,6 +87,7 @@ def _calculate_num_points_in_gt(data_path,
 
 def create_kitti_info_file(data_path,
                            pkl_prefix='kitti',
+                           with_plane=False,
                            save_path=None,
                            relative_path=True):
     """Create info file of KITTI dataset.
@@ -97,6 +98,8 @@ def create_kitti_info_file(data_path,
         data_path (str): Path of the data root.
         pkl_prefix (str, optional): Prefix of the info file to be generated.
             Default: 'kitti'.
+        with_plane (bool, optional): Whether to use plane information.
+            Default: False.
         save_path (str, optional): Path to save the info file.
             Default: None.
         relative_path (bool, optional): Whether to use relative path.
@@ -117,7 +120,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
-        with_plane=True,
+        with_plane=with_plane,
         image_ids=train_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_train, relative_path)
@@ -129,7 +132,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
-        with_plane=True,
+        with_plane=with_plane,
         image_ids=val_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_val, relative_path)
