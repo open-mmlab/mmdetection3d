@@ -45,10 +45,12 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
 
-python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
+
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
+
 ```
 
-Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else.
+Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else, and you need to remove the `--with-plane` flag if `planes` are not prepared.
 
 The folder structure after processing should be as below
 
@@ -70,6 +72,7 @@ kitti
 │   ├── label_2
 │   ├── velodyne
 │   ├── velodyne_reduced
+│   ├── planes (optional)
 ├── kitti_gt_database
 │   ├── xxxxx.bin
 ├── kitti_infos_train.pkl

@@ -90,35 +90,120 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 测试结果和模型可以在[模型库](docs/zh_cn/model_zoo.md)中找到。
 
-已支持的骨干网络：
+<div align="center">
+  <b>模块组件</b>
+</div>
+<table align="center">
+  <tbody>
+    <tr align="center" valign="bottom">
+      <td>
+        <b>主干网络</b>
+      </td>
+      <td>
+        <b>检测头</b>
+      </td>
+      <td>
+        <b>特性</b>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td>
+      <ul>
+        <li><a href="configs/pointnet2">PointNet (CVPR'2017)</a></li>
+        <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</a></li>
+        <li><a href="configs/regnet">RegNet (CVPR'2020)</a></li>
+        <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
+        <li>DLA (CVPR'2018)</li>
+      </ul>
+      </td>
+      <td>
+      <ul>
+        <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
+      </ul>
+      </td>
+      <td>
+      <ul>
+        <li><a href="configs/dynamic_voxelization">Dynamic Voxelization (CoRL'2019)</a></li>
+      </ul>
+      </td>
+    </tr>
+</td>
+    </tr>
+  </tbody>
+</table>
 
-- [x] PointNet (CVPR'2017)
-- [x] PointNet++ (NeurIPS'2017)
-- [x] RegNet (CVPR'2020)
-- [x] DGCNN (TOG'2019)
-- [x] DLA (CVPR'2018)
-
-已支持的算法：
-
-- [x] [SECOND (Sensor'2018)](configs/second/README.md)
-- [x] [PointPillars (CVPR'2019)](configs/pointpillars/README.md)
-- [x] [FreeAnchor (NeurIPS'2019)](configs/free_anchor/README.md)
-- [x] [VoteNet (ICCV'2019)](configs/votenet/README.md)
-- [x] [H3DNet (ECCV'2020)](configs/h3dnet/README.md)
-- [x] [3DSSD (CVPR'2020)](configs/3dssd/README.md)
-- [x] [Part-A2 (TPAMI'2020)](configs/parta2/README.md)
-- [x] [MVXNet (ICRA'2019)](configs/mvxnet/README.md)
-- [x] [CenterPoint (CVPR'2021)](configs/centerpoint/README.md)
-- [x] [SSN (ECCV'2020)](configs/ssn/README.md)
-- [x] [ImVoteNet (CVPR'2020)](configs/imvotenet/README.md)
-- [x] [FCOS3D (ICCVW'2021)](configs/fcos3d/README.md)
-- [x] [PointNet++ (NeurIPS'2017)](configs/pointnet2/README.md)
-- [x] [Group-Free-3D (ICCV'2021)](configs/groupfree3d/README.md)
-- [x] [ImVoxelNet (WACV'2022)](configs/imvoxelnet/README.md)
-- [x] [PAConv (CVPR'2021)](configs/paconv/README.md)
-- [x] [DGCNN (TOG'2019)](configs/dgcnn/README.md)
-- [x] [SMOKE (CVPRW'2020)](configs/smoke/README.md)
-- [x] [PGD (CoRL'2021)](configs/pgd/README.md)
+<div align="center">
+  <b>算法模型</b>
+</div>
+<table align="center">
+  <tbody>
+    <tr align="center" valign="middle">
+      <td>
+        <b>3D 目标检测</b>
+      </td>
+      <td>
+        <b>单目 3D 目标检测</b>
+      </td>
+      <td>
+        <b>多模态 3D 目标检测</b>
+      </td>
+      <td>
+        <b>3D 语义分割</b>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td>
+        <li><b>室外</b></li>
+        <ul>
+            <li><a href="configs/second">SECOND (Sensor'2018)</a></li>
+            <li><a href="configs/pointpillars">PointPillars (CVPR'2019)</a></li>
+            <li><a href="configs/ssn">SSN (ECCV'2020)</a></li>
+            <li><a href="configs/3dssd">3DSSD (CVPR'2020)</a></li>
+            <li><a href="configs/ point_rcnn">PointRCNN</a></li>
+            <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
+            <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
+        </ul>
+        <li><b>室内</b></li>
+        <ul>
+            <li><a href="configs/votenet">VoteNet (ICCV'2019)</a></li>
+            <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
+            <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
+      </ul>
+      </td>
+      <td>
+        <li><b>室外</b></li>
+        <ul>
+          <li><a href="configs/imvoxelnet">ImVoxelNet (WACV'2022)</a></li>
+          <li><a href="configs/smoke">SMOKE (CVPRW'2020)</a></li>
+          <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
+          <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
+          <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
+        </ul>
+      </td>
+      <td>
+        <li><b>室外</b></li>
+        <ul>
+          <li><a href="configs/mvxnet">MVXNet (ICRA'2019)</a></li>
+        </ul>
+        <li><b>室内</b></li>
+        <ul>
+          <li><a href="configs/imvotenet">ImVoteNet (CVPR'2020)</a></li>
+        </ul>
+      </td>
+      <td>
+        <li><b>室内</b></li>
+        <ul>
+          <li><a href="configs/pointnet2">PointNet++ (NeurIPS'2017)</a></li>
+          <li><a href="configs/paconv">PAConv (CVPR'2021)</a></li>
+          <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
+        </ul>
+      </ul>
+      </td>
+    </tr>
+</td>
+    </tr>
+  </tbody>
+</table>
 
 |                    | ResNet   | ResNeXt  | SENet    |PointNet++ |DGCNN     | HRNet | RegNetX | Res2Net | DLA |
 |--------------------|:--------:|:--------:|:--------:|:---------:|:---------:|:-----:|:--------:|:-----:|:---:|
@@ -141,9 +226,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | DGCNN                | ✗        | ✗        | ✗        | ✗         | ✓         | ✗     | ✗        | ✗     | ✗
 | SMOKE                | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
+| MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
-其他特性
-- [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
 
 **注意：** [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/zh_cn/model_zoo.md) 支持的基于2D检测的**300+个模型 , 40+的论文算法**在 MMDetection3D 中都可以被训练或使用。
 
@@ -185,18 +269,19 @@ MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与
 - [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab 图像分类工具箱
 - [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab 目标检测工具箱
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab 新一代通用 3D 目标检测平台
+- [MMRotate](https://github.com/open-mmlab/mmrotate): OpenMMLab 旋转框检测工具箱与测试基准
 - [MMSegmentation](https://github.com/open-mmlab/mmsegmentation): OpenMMLab 语义分割工具箱
-- [MMAction2](https://github.com/open-mmlab/mmaction2): OpenMMLab 新一代视频理解工具箱
-- [MMTracking](https://github.com/open-mmlab/mmtracking): OpenMMLab 一体化视频目标感知平台
-- [MMPose](https://github.com/open-mmlab/mmpose): OpenMMLab 姿态估计工具箱
-- [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab 图像视频编辑工具箱
 - [MMOCR](https://github.com/open-mmlab/mmocr): OpenMMLab 全流程文字检测识别理解工具包
-- [MMGeneration](https://github.com/open-mmlab/mmgeneration): OpenMMLab 图片视频生成模型工具箱
-- [MMFlow](https://github.com/open-mmlab/mmflow): OpenMMLab 光流估计工具箱与测试基准
-- [MMFewShot](https://github.com/open-mmlab/mmfewshot): OpenMMLab 少样本学习工具箱与测试基准
+- [MMPose](https://github.com/open-mmlab/mmpose): OpenMMLab 姿态估计工具箱
 - [MMHuman3D](https://github.com/open-mmlab/mmhuman3d): OpenMMLab 人体参数化模型工具箱与测试基准
 - [MMSelfSup](https://github.com/open-mmlab/mmselfsup): OpenMMLab 自监督学习工具箱与测试基准
 - [MMRazor](https://github.com/open-mmlab/mmrazor): OpenMMLab 模型压缩工具箱与测试基准
+- [MMFewShot](https://github.com/open-mmlab/mmfewshot): OpenMMLab 少样本学习工具箱与测试基准
+- [MMAction2](https://github.com/open-mmlab/mmaction2): OpenMMLab 新一代视频理解工具箱
+- [MMTracking](https://github.com/open-mmlab/mmtracking): OpenMMLab 一体化视频目标感知平台
+- [MMFlow](https://github.com/open-mmlab/mmflow): OpenMMLab 光流估计工具箱与测试基准
+- [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab 图像视频编辑工具箱
+- [MMGeneration](https://github.com/open-mmlab/mmgeneration): OpenMMLab 图片视频生成模型工具箱
 - [MMDeploy](https://github.com/open-mmlab/mmdeploy): OpenMMLab 模型部署框架
 
 ## 欢迎加入 OpenMMLab 社区
