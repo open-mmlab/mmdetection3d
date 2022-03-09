@@ -148,6 +148,15 @@ git checkout v0.20.0  # switch to v0.20.0 branch
 pip install -e .  # or "python setup.py develop"
 ```
 
+**f. 克隆 MMDetection3D 代码仓库**
+
+```shell
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+```
+
+
+
 **g. 安装依赖包和 MMDetection3D.**
 
 ```shell
