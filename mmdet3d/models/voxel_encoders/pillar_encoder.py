@@ -237,7 +237,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         Args:
             pts_coors (torch.Tensor): The coordinates of each points, shape
                 (M, 3), where M is the number of points.
-            voxel_mean (torch.Tensor): The mean or aggreagated features of a
+            voxel_mean (torch.Tensor): The mean or aggregated features of a
                 voxel, shape (N, C), where N is the number of voxels.
             voxel_coors (torch.Tensor): The coordinates of each voxel.
 
@@ -294,11 +294,13 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
 
         # Find distance of x, y, and z from pillar center
         if self._with_voxel_center:
-            f_center = features.new_zeros(size=(features.size(0), 2))
+            f_center = features.new_zeros(size=(features.size(0), 3))
             f_center[:, 0] = features[:, 0] - (
                 coors[:, 3].type_as(features) * self.vx + self.x_offset)
             f_center[:, 1] = features[:, 1] - (
                 coors[:, 2].type_as(features) * self.vy + self.y_offset)
+            f_center[:, 2] = features[:, 2] - (
+                coors[:, 1].type_as(features) * self.vz + self.z_offset)
             features_ls.append(f_center)
 
         if self._with_distance:
