@@ -226,14 +226,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | DGCNN                | ✗        | ✗        | ✗        | ✗         | ✓         | ✗     | ✗        | ✗     | ✗
 | SMOKE                | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
-<<<<<<< HEAD
-
-其他特性
-- [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
-=======
 | MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
->>>>>>> dev
 
 **注意：** [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/zh_cn/model_zoo.md) 支持的基于2D检测的**300+个模型 , 40+的论文算法**在 MMDetection3D 中都可以被训练或使用。
 

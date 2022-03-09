@@ -35,6 +35,7 @@ __all__ = [
     'PointShuffle', 'ObjectRangeFilter', 'PointsRangeFilter',
     'LoadPointsFromFile', 'S3DISSegDataset', 'S3DISDataset',
     'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
+    'ScanNetDataset', 'ScanNetSegDataset', 'ScanNetInstanceSegDataset',
     'PointSample', 'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset',
     'SemanticKITTIDataset', 'Custom3DDataset', 'Custom3DSegDataset',
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',

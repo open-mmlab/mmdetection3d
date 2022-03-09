@@ -226,14 +226,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 | DGCNN                | ✗        | ✗        | ✗        | ✗         | ✓         | ✗     | ✗        | ✗     | ✗
 | SMOKE                | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
-<<<<<<< HEAD
-
-Other features
-- [x] [Dynamic Voxelization](configs/dynamic_voxelization/README.md)
-=======
 | MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
->>>>>>> dev
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 

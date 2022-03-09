@@ -120,11 +120,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
-<<<<<<< HEAD
-        with_plane=True,
-=======
         with_plane=with_plane,
->>>>>>> dev
         image_ids=train_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_train, relative_path)
@@ -136,11 +132,7 @@ def create_kitti_info_file(data_path,
         training=True,
         velodyne=True,
         calib=True,
-<<<<<<< HEAD
-        with_plane=True,
-=======
         with_plane=with_plane,
->>>>>>> dev
         image_ids=val_img_ids,
         relative_path=relative_path)
     _calculate_num_points_in_gt(data_path, kitti_infos_val, relative_path)
