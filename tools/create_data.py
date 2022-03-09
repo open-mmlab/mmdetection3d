@@ -9,7 +9,11 @@ from tools.data_converter import nuscenes_converter as nuscenes_converter
 from tools.data_converter.create_gt_database import create_groundtruth_database
 
 
-def kitti_data_prep(root_path, info_prefix, version, out_dir):
+def kitti_data_prep(root_path,
+                    info_prefix,
+                    version,
+                    out_dir,
+                    with_plane=False):
     """Prepare data related to Kitti dataset.
 
     Related data consists of '.pkl' files recording basic infos,
@@ -20,8 +24,10 @@ def kitti_data_prep(root_path, info_prefix, version, out_dir):
         info_prefix (str): The prefix of info filenames.
         version (str): Dataset version.
         out_dir (str): Output directory of the groundtruth database info.
+        with_plane (bool, optional): Whether to use plane information.
+            Default: False.
     """
-    kitti.create_kitti_info_file(root_path, info_prefix)
+    kitti.create_kitti_info_file(root_path, info_prefix, with_plane)
     kitti.create_reduced_point_cloud(root_path, info_prefix)
 
     info_train_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
@@ -205,6 +211,10 @@ parser.add_argument(
     required=False,
     help='specify sweeps of lidar per example')
 parser.add_argument(
+    '--with-plane',
+    action='store_true',
+    help='Whether to use plane information for kitti.')
+parser.add_argument(
     '--out-dir',
     type=str,
     default='./data/kitti',
@@ -221,7 +231,8 @@ if __name__ == '__main__':
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             version=args.version,
-            out_dir=args.out_dir)
+            out_dir=args.out_dir,
+            with_plane=args.with_plane)
     elif args.dataset == 'nuscenes' and args.version != 'v1.0-mini':
         train_version = f'{args.version}-trainval'
         nuscenes_data_prep(

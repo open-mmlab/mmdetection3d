@@ -205,7 +205,7 @@ class SparseConvolution(SparseModule):
         return out_tensor
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseConv2d(SparseConvolution):
 
     def __init__(self,
@@ -231,7 +231,7 @@ class SparseConv2d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseConv3d(SparseConvolution):
 
     def __init__(self,
@@ -257,7 +257,7 @@ class SparseConv3d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseConv4d(SparseConvolution):
 
     def __init__(self,
@@ -283,7 +283,7 @@ class SparseConv4d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseConvTranspose2d(SparseConvolution):
 
     def __init__(self,
@@ -310,7 +310,7 @@ class SparseConvTranspose2d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseConvTranspose3d(SparseConvolution):
 
     def __init__(self,
@@ -337,7 +337,7 @@ class SparseConvTranspose3d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseInverseConv2d(SparseConvolution):
 
     def __init__(self,
@@ -356,7 +356,7 @@ class SparseInverseConv2d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SparseInverseConv3d(SparseConvolution):
 
     def __init__(self,
@@ -375,7 +375,7 @@ class SparseInverseConv3d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SubMConv2d(SparseConvolution):
 
     def __init__(self,
@@ -402,7 +402,7 @@ class SubMConv2d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SubMConv3d(SparseConvolution):
 
     def __init__(self,
@@ -429,7 +429,7 @@ class SubMConv3d(SparseConvolution):
             indice_key=indice_key)
 
 
-@CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module(force=True)
 class SubMConv4d(SparseConvolution):
 
     def __init__(self,
