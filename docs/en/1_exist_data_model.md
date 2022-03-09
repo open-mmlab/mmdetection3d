@@ -201,7 +201,7 @@ GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_16
 
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
 
-You can also use pytorch original DDP, you can use the script `multinode_train.sh`. (This script also supports single machine training.)
+You can also use pytorch original DDP with script `multinode_train.sh`. (This script also supports single machine training.)
 
 For each machine, run
 ```shell
@@ -221,7 +221,7 @@ run in node1:
 ```
 
 
-If you have just multiple machines connected withbu ethernet, you can refer to
+If you have just multiple machines connected within ethernet, you can refer to
 PyTorch [launch utility](https://pytorch.org/docs/stable/distributed.html).
 Usually it is slow if you do not have high speed networking like InfiniBand.
 
