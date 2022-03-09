@@ -346,7 +346,7 @@ class PointRPNHead(BaseModule):
                             nms_cfg.iou_thr)
             keep = keep[:nms_cfg.nms_post]
 
-            bbox_selected = bbox.tensor[keep]
+            bbox_selected = bbox_selected[keep]
             score_selected = obj_scores_nms[keep]
             cls_preds = sem_scores_nms[keep]
             labels = torch.argmax(cls_preds, -1)
