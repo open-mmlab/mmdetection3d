@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import path as osp
+
 import mmcv
 import torch
 from mmcv.parallel import DataContainer as DC
 from mmcv.runner import auto_fp16
-from os import path as osp
 
 from mmdet3d.core import Box3DMode, Coord3DMode, show_result
 from mmdet.models.detectors import BaseDetector
@@ -114,7 +115,7 @@ class Base3DDetector(BaseDetector):
                                                 Box3DMode.DEPTH)
             elif box_mode_3d != Box3DMode.DEPTH:
                 ValueError(
-                    f'Unsupported box_mode_3d {box_mode_3d} for convertion!')
+                    f'Unsupported box_mode_3d {box_mode_3d} for conversion!')
             pred_bboxes = pred_bboxes.tensor.cpu().numpy()
             show_result(
                 points,

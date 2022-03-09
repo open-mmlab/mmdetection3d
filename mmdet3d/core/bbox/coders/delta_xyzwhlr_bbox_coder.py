@@ -19,9 +19,9 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
 
     @staticmethod
     def encode(src_boxes, dst_boxes):
-        """Get box regression transformation deltas (dx, dy, dz, dw, dh, dl,
-        dr, dv*) that can be used to transform the `src_boxes` into the
-        `target_boxes`.
+        """Get box regression transformation deltas (dx, dy, dz, dx_size,
+        dy_size, dz_size, dr, dv*) that can be used to transform the
+        `src_boxes` into the `target_boxes`.
 
         Args:
             src_boxes (torch.Tensor): source boxes, e.g., object proposals.
@@ -56,13 +56,13 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
 
     @staticmethod
     def decode(anchors, deltas):
-        """Apply transformation `deltas` (dx, dy, dz, dw, dh, dl, dr, dv*) to
-        `boxes`.
+        """Apply transformation `deltas` (dx, dy, dz, dx_size, dy_size,
+        dz_size, dr, dv*) to `boxes`.
 
         Args:
             anchors (torch.Tensor): Parameters of anchors with shape (N, 7).
             deltas (torch.Tensor): Encoded boxes with shape
-                (N, 7+n) [x, y, z, w, l, h, r, velo*].
+                (N, 7+n) [x, y, z, x_size, y_size, z_size, r, velo*].
 
         Returns:
             torch.Tensor: Decoded boxes.

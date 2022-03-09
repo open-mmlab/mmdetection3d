@@ -1,5 +1,85 @@
 ## Changelog
 
+### v1.0.0rc0 (18/2/2022)
+
+#### Compatibility
+
+- We refactor our three coordinate systems to make their rotation directions and origins more consistent, and further remove unnecessary hacks in different datasets and models. Therefore, please re-generate data infos or convert the old version to the new one with our provided scripts. We will also provide updated checkpoints in the next version. Please refer to the [compatibility documentation](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/docs/en/compatibility.md) for more details.
+- Unify the camera keys for consistent transformation between coordinate systems on different datasets. The modification changes the key names to `lidar2img`, `depth2img`, `cam2img`, etc., for easier understanding. Customized codes using legacy keys may be influenced.
+- The next release will begin to move files of CUDA ops to [MMCV](https://github.com/open-mmlab/mmcv). It will influence the way to import related functions. We will not break the compatibility but will raise a warning first and please prepare to migrate it.
+
+#### Highlights
+
+- Support new monocular 3D detectors: [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd), [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke), [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/monoflex)
+- Support a new LiDAR-based detector: [PointRCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/point_rcnn)
+- Support a new backbone: [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/dgcnn)
+- Support 3D object detection on the S3DIS dataset
+- Support compilation on Windows
+- Full benchmark for PAConv on S3DIS
+- Further enhancement for documentation, especially on the Chinese documentation
+
+#### New Features
+
+- Support 3D object detection on the S3DIS dataset (#835)
+- Support PointRCNN (#842, #843, #856, #974, #1022, #1109, #1125)
+- Support DGCNN (#896)
+- Support PGD (#938, #940, #948, #950, #964, #1014, #1065, #1070, #1157)
+- Support SMOKE (#939, #955, #959, #975, #988, #999, #1029)
+- Support MonoFlex (#1026, #1044, #1114, #1115, #1183)
+- Support CPU Training (#1196)
+
+#### Improvements
+
+- Support point sampling based on distance metric (#667, #840)
+- Refactor coordinate systems (#677, #774, #803, #899, #906, #912, #968, #1001)
+- Unify camera keys in PointFusion and transformations between different systems (#791, #805)
+- Refine documentation (#792, #827, #829, #836, #849, #854, #859, #1111, #1113, #1116, #1121, #1132, #1135, #1185, #1193, #1226)
+- Add a script to support benchmark regression (#808)
+- Benchmark PAConvCUDA on S3DIS (#847)
+- Support to download pdf and epub documentation (#850)
+- Change the `repeat` setting in Group-Free-3D configs to reduce training epochs (#855)
+- Support KITTI AP40 evaluation metric (#927)
+- Add the mmdet3d2torchserve tool for SECOND (#977)
+- Add code-spell pre-commit hook and fix typos (#995)
+- Support the latest numba version (#1043)
+- Set a default seed to use when the random seed is not specified (#1072)
+- Distribute mix-precision models to each algorithm folder (#1074)
+- Add abstract and a representative figure for each algorithm (#1086)
+- Upgrade pre-commit hook (#1088, #1217)
+- Support augmented data and ground truth visualization (#1092)
+- Add local yaw property for `CameraInstance3DBoxes` (#1130)
+- Lock the required numba version to 0.53.0 (#1159)
+- Support the usage of plane information for KITTI dataset (#1162)
+- Deprecate the support for "python setup.py test" (#1164)
+- Reduce the number of multi-process threads to accelerate training (#1168)
+- Support 3D flip augmentation for semantic segmentation (#1181)
+- Update README format for each model (#1195)
+
+#### Bug Fixes
+
+- Fix compiling errors on Windows (#766)
+- Fix the deprecated nms setting in the ImVoteNet config (#828)
+- Use the latest `wrap_fp16_model` import from mmcv (#861)
+- Remove 2D annotations generation on Lyft (#867)
+- Update index files for the Chinese documentation to be consistent with the English version (#873)
+- Fix the nested list transpose in the CenterPoint head (#879)
+- Fix deprecated pretrained model loading for RegNet (#889)
+- Fix the incorrect dimension indices of rotations and testing config in the CenterPoint test time augmentation (#892)
+- Fix and improve visualization tools (#956, #1066, #1073)
+- Fix PointPillars FLOPs calculation error (#1075)
+- Fix missing dimension information in the SUN RGB-D data generation (#1120)
+- Fix incorrect anchor range settings in the PointPillars [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py) for KITTI (#1163)
+- Fix incorrect model information in the RegNet metafile (#1184)
+- Fix bugs in non-distributed multi-gpu training and testing (#1197)
+- Fix a potential assertion error when generating corners from an empty box (#1212)
+- Upgrade bazel version according to the requirement of Waymo Devkit (#1223)
+
+#### Contributors
+
+A total of 12 developers contributed to this release.
+
+@THU17cyz, @wHao-Wu, @wangruohui, @Wuziyi616, @filaPro, @ZwwWayne, @Tai-Wang, @DCNSW, @xieenze, @robin-karlsson0, @ZCMax, @Otteri
+
 ### v0.18.1 (1/2/2022)
 
 #### Improvements

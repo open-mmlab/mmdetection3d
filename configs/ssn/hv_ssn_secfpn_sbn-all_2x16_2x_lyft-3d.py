@@ -96,15 +96,15 @@ model = dict(
                     [-100, -100, -0.6276341, 100, 100, -0.6276341],
                     [-100, -100, -0.3033737, 100, 100, -0.3033737]],
             sizes=[
-                [0.63, 1.76, 1.44],  # bicycle
-                [0.96, 2.35, 1.59],  # motorcycle
-                [0.76, 0.80, 1.76],  # pedestrian
-                [0.35, 0.73, 0.50],  # animal
-                [1.92, 4.75, 1.71],  # car
-                [2.42, 6.52, 2.34],  # emergency vehicle
-                [2.92, 12.70, 3.42],  # bus
-                [2.75, 8.17, 3.20],  # other vehicle
-                [2.84, 10.24, 3.44]  # truck
+                [1.76, 0.63, 1.44],  # bicycle
+                [2.35, 0.96, 1.59],  # motorcycle
+                [0.80, 0.76, 1.76],  # pedestrian
+                [0.73, 0.35, 0.50],  # animal
+                [4.75, 1.92, 1.71],  # car
+                [6.52, 2.42, 2.34],  # emergency vehicle
+                [12.70, 2.92, 3.42],  # bus
+                [8.17, 2.75, 3.20],  # other vehicle
+                [10.24, 2.84, 3.44]  # truck
             ],
             custom_values=[],
             rotations=[0, 1.57],
@@ -137,7 +137,7 @@ model = dict(
         ],
         assign_per_class=True,
         diff_rad_by_sin=True,
-        dir_offset=0.7854,  # pi/4
+        dir_offset=-0.7854,  # -pi/4
         dir_limit_offset=0,
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=7),
         loss_cls=dict(

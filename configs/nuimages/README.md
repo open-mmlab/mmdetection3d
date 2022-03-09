@@ -1,8 +1,8 @@
 # NuImages Results
 
-## Introduction
-
 <!-- [DATASET] -->
+
+## Introduction
 
 We support and provide some baseline results on [nuImages dataset](https://www.nuscenes.org/nuimages).
 We follow the class mapping in nuScenes dataset, which maps the original categories into 10 foreground categories.
@@ -15,7 +15,7 @@ We will support panoptic segmentation models in the future.
 The dataset converted by the script of v0.6.0 only supports instance segmentation. Since v0.7.0, we also support to produce semantic segmentation mask of each image; thus, we can train HTC or semantic segmentation models using the dataset. To convert the nuImages dataset into COCO format, please use the command below:
 
 ```shell
-python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERIONS} \
+python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --version ${VERSIONS} \
                                                     --out-dir ${OUT_DIR} --nproc ${NUM_WORKERS} --extra-tag ${TAG}
 ```
 
@@ -25,7 +25,7 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
 - `--nproc`: number of workers for data preparation, defaults to `4`. Larger number could reduce the preparation time as images are processed in parallel.
 - `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
 
-## Results
+## Results and models
 
 ### Instance Segmentation
 
@@ -55,4 +55,4 @@ We report Mask R-CNN and Cascade Mask R-CNN results on nuimages.
 1. `IN` means only using ImageNet pre-trained backbone. `IN+COCO-Nx` and `IN+COCO-Ne` means the backbone is first pre-trained on ImageNet, and then the detector is pre-trained on COCO train2017 dataset by `Nx` and `N` epochs schedules, respectively.
 2. All the training hyper-parameters follow the standard schedules on COCO dataset except that the images are resized from
 1280 x 720 to 1920 x 1080 (relative ratio 0.8 to 1.2) since the images are in size 1600 x 900.
-3. The class order in the detectors released in v0.6.0 is different from the order in the configs because the bug in the convertion script. This bug has been fixed since v0.7.0 and the models trained by the correct class order are also released. If you used nuImages since v0.6.0, please re-convert the data through the convertion script using the above-mentioned command.
+3. The class order in the detectors released in v0.6.0 is different from the order in the configs because the bug in the conversion script. This bug has been fixed since v0.7.0 and the models trained by the correct class order are also released. If you used nuImages since v0.6.0, please re-convert the data through the conversion script using the above-mentioned command.

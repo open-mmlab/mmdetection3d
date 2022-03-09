@@ -29,7 +29,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         """Encode ground truth to prediction targets.
 
         Args:
-            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth bboxes \
+            gt_bboxes_3d (BaseInstance3DBoxes): Ground truth bboxes
                 with shape (n, 7).
             gt_labels_3d (torch.Tensor): Ground truth classes.
 

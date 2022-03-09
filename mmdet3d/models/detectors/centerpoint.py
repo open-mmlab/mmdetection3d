@@ -97,7 +97,8 @@ class CenterPoint(MVXTwoStageDetector):
         Args:
             feats (list[torch.Tensor]): Feature of point cloud.
             img_metas (list[dict]): Meta information of samples.
-            rescale (bool): Whether to rescale bboxes. Default: False.
+            rescale (bool, optional): Whether to rescale bboxes.
+                Default: False.
 
         Returns:
             dict: Returned bboxes consists of the following keys:
@@ -121,8 +122,8 @@ class CenterPoint(MVXTwoStageDetector):
                                 task_id][0][key][:, 1, ...]
                         elif key == 'rot':
                             outs[task_id][0][
-                                key][:, 1,
-                                     ...] = -outs[task_id][0][key][:, 1, ...]
+                                key][:, 0,
+                                     ...] = -outs[task_id][0][key][:, 0, ...]
                         elif key == 'vel':
                             outs[task_id][0][
                                 key][:, 1,
@@ -135,8 +136,8 @@ class CenterPoint(MVXTwoStageDetector):
                                 task_id][0][key][:, 0, ...]
                         elif key == 'rot':
                             outs[task_id][0][
-                                key][:, 0,
-                                     ...] = -outs[task_id][0][key][:, 0, ...]
+                                key][:, 1,
+                                     ...] = -outs[task_id][0][key][:, 1, ...]
                         elif key == 'vel':
                             outs[task_id][0][
                                 key][:, 0,

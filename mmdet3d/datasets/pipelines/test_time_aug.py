@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
 import warnings
 from copy import deepcopy
+
+import mmcv
 
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import Compose
@@ -16,18 +17,19 @@ class MultiScaleFlipAug3D(object):
         img_scale (tuple | list[tuple]: Images scales for resizing.
         pts_scale_ratio (float | list[float]): Points scale ratios for
             resizing.
-        flip (bool): Whether apply flip augmentation. Defaults to False.
-        flip_direction (str | list[str]): Flip augmentation directions
-            for images, options are "horizontal" and "vertical".
+        flip (bool, optional): Whether apply flip augmentation.
+            Defaults to False.
+        flip_direction (str | list[str], optional): Flip augmentation
+            directions for images, options are "horizontal" and "vertical".
             If flip_direction is list, multiple flip augmentations will
             be applied. It has no effect when ``flip == False``.
             Defaults to "horizontal".
-        pcd_horizontal_flip (bool): Whether apply horizontal flip augmentation
-            to point cloud. Defaults to True. Note that it works only when
-            'flip' is turned on.
-        pcd_vertical_flip (bool): Whether apply vertical flip augmentation
-            to point cloud. Defaults to True. Note that it works only when
-            'flip' is turned on.
+        pcd_horizontal_flip (bool, optional): Whether apply horizontal
+            flip augmentation to point cloud. Defaults to True.
+            Note that it works only when 'flip' is turned on.
+        pcd_vertical_flip (bool, optional): Whether apply vertical flip
+            augmentation to point cloud. Defaults to True.
+            Note that it works only when 'flip' is turned on.
     """
 
     def __init__(self,
@@ -70,7 +72,7 @@ class MultiScaleFlipAug3D(object):
             results (dict): Result dict contains the data to augment.
 
         Returns:
-            dict: The result dict contains the data that is augmented with \
+            dict: The result dict contains the data that is augmented with
                 different scales and flips.
         """
         aug_data = []

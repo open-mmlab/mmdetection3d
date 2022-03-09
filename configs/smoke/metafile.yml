@@ -1,0 +1,30 @@
+Collections:
+  - Name: SMOKE
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - Adam
+      Training Resources: 4x V100 GPUS
+      Architecture:
+        - SMOKEMono3DHead
+        - DLA
+    Paper:
+      URL: https://arxiv.org/abs/2002.10111
+      Title: 'SMOKE: Single-Stage Monocular 3D Object Detection via Keypoint Estimation'
+    README: configs/smoke/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/models/detectors/smoke_mono3d.py#L7
+      Version: v1.0.0
+
+Models:
+  - Name: smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d
+    In Collection: SMOKE
+    Config: configs/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d.py
+    Metadata:
+      Training Memory (GB): 9.6
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 13.8
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth

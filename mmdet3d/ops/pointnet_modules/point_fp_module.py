@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
-from typing import List
 
 from mmdet3d.ops import three_interpolate, three_nn
 
@@ -15,7 +16,7 @@ class PointFPModule(BaseModule):
 
     Args:
         mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict, optional): Type of normalization method.
             Default: dict(type='BN2d').
     """
 

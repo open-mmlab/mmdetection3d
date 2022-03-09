@@ -1,15 +1,16 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 
 def calc_euclidian_dist(xyz1, xyz2):
-    """Calculate the Euclidian distance between two sets of points.
+    """Calculate the Euclidean distance between two sets of points.
 
     Args:
         xyz1 (torch.Tensor): (N, 3), the first set of points.
         xyz2 (torch.Tensor): (N, 3), the second set of points.
 
     Returns:
-        torch.Tensor: (N, ), the Euclidian distance between each point pair.
+        torch.Tensor: (N, ), the Euclidean distance between each point pair.
     """
     assert xyz1.shape[0] == xyz2.shape[0], 'number of points are not the same'
     assert xyz1.shape[1] == xyz2.shape[1] == 3, \

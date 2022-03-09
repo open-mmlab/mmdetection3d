@@ -1,8 +1,18 @@
 # Center-based 3D Object Detection and Tracking
 
-## Introduction
+> [Center-based 3D Object Detection and Tracking](https://arxiv.org/abs/2006.11275)
 
 <!-- [ALGORITHM] -->
+
+## Abstract
+
+Three-dimensional objects are commonly represented as 3D boxes in a point-cloud. This representation mimics the well-studied image-based 2D bounding-box detection but comes with additional challenges. Objects in a 3D world do not follow any particular orientation, and box-based detectors have difficulties enumerating all orientations or fitting an axis-aligned bounding box to rotated objects. In this paper, we instead propose to represent, detect, and track 3D objects as points. Our framework, CenterPoint, first detects centers of objects using a keypoint detector and regresses to other attributes, including 3D size, 3D orientation, and velocity. In a second stage, it refines these estimates using additional point features on the object. In CenterPoint, 3D object tracking simplifies to greedy closest-point matching. The resulting detection and tracking algorithm is simple, efficient, and effective. CenterPoint achieved state-of-the-art performance on the nuScenes benchmark for both 3D detection and tracking, with 65.5 NDS and 63.8 AMOTA for a single model. On the Waymo Open Dataset, CenterPoint outperforms all previous single model method by a large margin and ranks first among all Lidar-only submissions.
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/30491025/143854976-11af75ae-e828-43ad-835d-ac1146f99925.png" width="800"/>
+</div>
+
+## Introduction
 
 We implement CenterPoint and provide the result and checkpoints on nuScenes dataset.
 
@@ -26,15 +36,6 @@ We follow the below style to name config files. Contributors are advised to foll
 `{schedule}`: training schedule, options are 1x, 2x, 20e, etc. 1x and 2x means 12 epochs and 24 epochs respectively. 20e is adopted in cascade models, which denotes 20 epochs. For 1x/2x, initial learning rate decays by a factor of 10 at the 8/16th and 11/22th epochs. For 20e, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
 
 `{dataset}`: dataset like nus-3d, kitti-3d, lyft-3d, scannet-3d, sunrgbd-3d. We also indicate the number of classes we are using if there exist multiple settings, e.g., kitti-3d-3class and kitti-3d-car means training on KITTI dataset with 3 classes and single class, respectively.
-
-```
-@article{yin2021center,
-  title={Center-based 3D Object Detection and Tracking},
-  author={Yin, Tianwei and Zhou, Xingyi and Kr{\"a}henb{\"u}hl, Philipp},
-  journal={CVPR},
-  year={2021},
-}
-```
 
 ## Usage
 
@@ -103,7 +104,7 @@ data = dict(
 
 ```
 
-## Results
+## Results and models
 
 ### CenterPoint
 
@@ -124,3 +125,14 @@ data = dict(
 |above w/o circle nms|pillar (0.2)|✗|✗| | |49.12|59.66||
 |[SECFPN](./centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py)|pillar (0.2)|✓|✗| 4.6| |48.8 |59.67 |[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20200930_103722-3bb135f2.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20200930_103722.log.json)|
 |above w/ circle nms|pillar (0.2)|✓|✓| | |48.79|59.65||
+
+## Citation
+
+```latex
+@article{yin2021center,
+  title={Center-based 3D Object Detection and Tracking},
+  author={Yin, Tianwei and Zhou, Xingyi and Kr{\"a}henb{\"u}hl, Philipp},
+  journal={CVPR},
+  year={2021},
+}
+```

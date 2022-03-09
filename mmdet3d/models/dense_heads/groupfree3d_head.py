@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+
 import numpy as np
 import torch
 from mmcv import ConfigDict
@@ -25,13 +26,13 @@ class PointsObjClsModule(BaseModule):
 
     Args:
         in_channel (int): number of channels of seed point features.
-        num_convs (int): number of conv layers.
+        num_convs (int, optional): number of conv layers.
             Default: 3.
-        conv_cfg (dict): Config of convolution.
+        conv_cfg (dict, optional): Config of convolution.
             Default: dict(type='Conv1d').
-        norm_cfg (dict): Config of normalization.
+        norm_cfg (dict, optional): Config of normalization.
             Default: dict(type='BN1d').
-        act_cfg (dict): Config of activation.
+        act_cfg (dict, optional): Config of activation.
             Default: dict(type='ReLU').
     """
 
@@ -299,7 +300,7 @@ class GroupFree3DHead(BaseModule):
         """Forward pass.
 
         Note:
-            The forward of GroupFree3DHead is devided into 2 steps:
+            The forward of GroupFree3DHead is divided into 2 steps:
 
                 1. Initial object candidates sampling.
                 2. Iterative object box prediction by transformer decoder.
@@ -405,15 +406,15 @@ class GroupFree3DHead(BaseModule):
         Args:
             bbox_preds (dict): Predictions from forward of vote head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each sample.
             gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise
+            pts_semantic_mask (list[torch.Tensor]): Point-wise
                 semantic mask.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise
+            pts_instance_mask (list[torch.Tensor]): Point-wise
                 instance mask.
             img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (None | list[torch.Tensor]): Specify
+            gt_bboxes_ignore (list[torch.Tensor]): Specify
                 which bounding.
             ret_target (Bool): Return targets or not.
 
@@ -545,12 +546,12 @@ class GroupFree3DHead(BaseModule):
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth \
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (None | list[torch.Tensor]): Point-wise semantic
+            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | list[torch.Tensor]): Point-wise instance
+            pts_instance_mask (list[torch.Tensor]): Point-wise instance
                 label of each batch.
             bbox_preds (torch.Tensor): Bounding box predictions of vote head.
             max_gt_num (int): Max number of GTs for single batch.
@@ -657,12 +658,12 @@ class GroupFree3DHead(BaseModule):
 
         Args:
             points (torch.Tensor): Points of each batch.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth \
+            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (None | torch.Tensor): Point-wise semantic
+            pts_semantic_mask (torch.Tensor): Point-wise semantic
                 label of each batch.
-            pts_instance_mask (None | torch.Tensor): Point-wise instance
+            pts_instance_mask (torch.Tensor): Point-wise instance
                 label of each batch.
             max_gt_nums (int): Max number of GTs for single batch.
             seed_points (torch.Tensor): Coordinates of seed points.
@@ -710,7 +711,7 @@ class GroupFree3DHead(BaseModule):
         if self.bbox_coder.with_rot:
             vote_targets = points.new_zeros([num_points, 4 * self.gt_per_seed])
             vote_target_idx = points.new_zeros([num_points], dtype=torch.long)
-            box_indices_all = gt_bboxes_3d.points_in_boxes(points)
+            box_indices_all = gt_bboxes_3d.points_in_boxes_part(points)
             for i in range(gt_labels_3d.shape[0]):
                 box_indices = box_indices_all[:, i]
                 indices = torch.nonzero(
@@ -880,7 +881,7 @@ class GroupFree3DHead(BaseModule):
         Returns:
             list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
         """
-        # support multi-stage predicitons
+        # support multi-stage predictions
         assert self.test_cfg['prediction_stages'] in \
             ['last', 'all', 'last_three']
 
@@ -951,7 +952,7 @@ class GroupFree3DHead(BaseModule):
             box_dim=bbox.shape[-1],
             with_yaw=self.bbox_coder.with_rot,
             origin=(0.5, 0.5, 0.5))
-        box_indices = bbox.points_in_boxes(points)
+        box_indices = bbox.points_in_boxes_all(points)
 
         corner3d = bbox.corners
         minmax_box3d = corner3d.new(torch.Size((corner3d.shape[0], 6)))

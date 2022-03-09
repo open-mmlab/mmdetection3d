@@ -1,23 +1,24 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 from . import roiaware_pool3d_ext
 
 
-def points_in_boxes_gpu(points, boxes):
-    """Find points that are in boxes (CUDA)
+def points_in_boxes_part(points, boxes):
+    """Find the box in which each point is (CUDA).
 
     Args:
-        points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR coordinate
+        points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR/DEPTH coordinate
         boxes (torch.Tensor): [B, T, 7],
-            num_valid_boxes <= T, [x, y, z, w, l, h, ry] in LiDAR coordinate,
-            (x, y, z) is the bottom center
+            num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz] in
+            LiDAR/DEPTH coordinate, (x, y, z) is the bottom center
 
     Returns:
         box_idxs_of_pts (torch.Tensor): (B, M), default background = -1
     """
-    assert boxes.shape[0] == points.shape[0], \
+    assert points.shape[0] == boxes.shape[0], \
         f'Points and boxes should have the same batch size, ' \
-        f'got {boxes.shape[0]} and {boxes.shape[0]}'
+        f'got {points.shape[0]} and {boxes.shape[0]}'
     assert boxes.shape[2] == 7, \
         f'boxes dimension should be 7, ' \
         f'got unexpected shape {boxes.shape[2]}'
@@ -43,56 +44,61 @@ def points_in_boxes_gpu(points, boxes):
     if torch.cuda.current_device() != points_device:
         torch.cuda.set_device(points_device)
 
-    roiaware_pool3d_ext.points_in_boxes_gpu(boxes.contiguous(),
-                                            points.contiguous(),
-                                            box_idxs_of_pts)
+    roiaware_pool3d_ext.points_in_boxes_part(boxes.contiguous(),
+                                             points.contiguous(),
+                                             box_idxs_of_pts)
 
     return box_idxs_of_pts
 
 
 def points_in_boxes_cpu(points, boxes):
-    """Find points that are in boxes (CPU)
-
-    Note:
-        Currently, the output of this function is different from that of
-        points_in_boxes_gpu.
+    """Find all boxes in which each point is (CPU). The CPU version of
+    :meth:`points_in_boxes_all`.
 
     Args:
-        points (torch.Tensor): [npoints, 3]
-        boxes (torch.Tensor): [N, 7], in LiDAR coordinate,
-            (x, y, z) is the bottom center
+        points (torch.Tensor): [B, M, 3], [x, y, z] in
+            LiDAR/DEPTH coordinate
+        boxes (torch.Tensor): [B, T, 7],
+            num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
+            (x, y, z) is the bottom center.
 
     Returns:
-        point_indices (torch.Tensor): (N, npoints)
+        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0.
     """
-    # TODO: Refactor this function as a CPU version of points_in_boxes_gpu
-    assert boxes.shape[1] == 7, \
+    assert points.shape[0] == boxes.shape[0], \
+        f'Points and boxes should have the same batch size, ' \
+        f'got {points.shape[0]} and {boxes.shape[0]}'
+    assert boxes.shape[2] == 7, \
         f'boxes dimension should be 7, ' \
         f'got unexpected shape {boxes.shape[2]}'
-    assert points.shape[1] == 3, \
+    assert points.shape[2] == 3, \
         f'points dimension should be 3, ' \
         f'got unexpected shape {points.shape[2]}'
+    batch_size, num_points, _ = points.shape
+    num_boxes = boxes.shape[1]
 
-    point_indices = points.new_zeros((boxes.shape[0], points.shape[0]),
+    point_indices = points.new_zeros((batch_size, num_boxes, num_points),
                                      dtype=torch.int)
-    roiaware_pool3d_ext.points_in_boxes_cpu(boxes.float().contiguous(),
-                                            points.float().contiguous(),
-                                            point_indices)
+    for b in range(batch_size):
+        roiaware_pool3d_ext.points_in_boxes_cpu(boxes[b].float().contiguous(),
+                                                points[b].float().contiguous(),
+                                                point_indices[b])
+    point_indices = point_indices.transpose(1, 2)
 
     return point_indices
 
 
-def points_in_boxes_batch(points, boxes):
-    """Find points that are in boxes (CUDA)
+def points_in_boxes_all(points, boxes):
+    """Find all boxes in which each point is (CUDA).
 
     Args:
-        points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR coordinate
+        points (torch.Tensor): [B, M, 3], [x, y, z] in LiDAR/DEPTH coordinate
         boxes (torch.Tensor): [B, T, 7],
-            num_valid_boxes <= T, [x, y, z, w, l, h, ry] in LiDAR coordinate,
+            num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
             (x, y, z) is the bottom center.
 
     Returns:
-        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0
+        box_idxs_of_pts (torch.Tensor): (B, M, T), default background = 0.
     """
     assert boxes.shape[0] == points.shape[0], \
         f'Points and boxes should have the same batch size, ' \
@@ -116,8 +122,8 @@ def points_in_boxes_batch(points, boxes):
     if torch.cuda.current_device() != points_device:
         torch.cuda.set_device(points_device)
 
-    roiaware_pool3d_ext.points_in_boxes_batch(boxes.contiguous(),
-                                              points.contiguous(),
-                                              box_idxs_of_pts)
+    roiaware_pool3d_ext.points_in_boxes_all(boxes.contiguous(),
+                                            points.contiguous(),
+                                            box_idxs_of_pts)
 
     return box_idxs_of_pts

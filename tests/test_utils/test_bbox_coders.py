@@ -1,7 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import numpy as np
 import torch
+from mmcv.cnn import Scale
+from torch import nn as nn
 
-from mmdet3d.core.bbox import DepthInstance3DBoxes, LiDARInstance3DBoxes
+from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                               LiDARInstance3DBoxes)
 from mmdet.core import build_bbox_coder
 
 
@@ -352,3 +356,310 @@ def test_centerpoint_bbox_coder():
         assert temp[i]['bboxes'].shape == torch.Size([500, 9])
         assert temp[i]['scores'].shape == torch.Size([500])
         assert temp[i]['labels'].shape == torch.Size([500])
+
+
+def test_point_xyzwhlr_bbox_coder():
+    bbox_coder_cfg = dict(
+        type='PointXYZWHLRBBoxCoder',
+        use_mean_size=True,
+        mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6, 1.73]])
+    boxcoder = build_bbox_coder(bbox_coder_cfg)
+
+    # test encode
+    gt_bboxes_3d = torch.tensor(
+        [[13.3329, 2.3514, -0.7004, 1.7508, 0.4702, 1.7909, -3.0522],
+         [2.2068, -2.6994, -0.3277, 3.8703, 1.6602, 1.6913, -1.9057],
+         [5.5269, 2.5085, -1.0129, 1.1496, 0.8006, 1.8887, 2.1756]])
+
+    points = torch.tensor([[13.70, 2.40, 0.12], [3.20, -3.00, 0.2],
+                           [5.70, 2.20, -0.4]])
+
+    gt_labels_3d = torch.tensor([2, 0, 1])
+
+    bbox_target = boxcoder.encode(gt_bboxes_3d, points, gt_labels_3d)
+    expected_bbox_target = torch.tensor([[
+        -0.1974, -0.0261, -0.4742, -0.0052, -0.2438, 0.0346, -0.9960, -0.0893
+    ], [-0.2356, 0.0713, -0.3383, -0.0076, 0.0369, 0.0808, -0.3287, -0.9444
+        ], [-0.1731, 0.3085, -0.3543, 0.3626, 0.2884, 0.0878, -0.5686,
+            0.8226]])
+    assert torch.allclose(expected_bbox_target, bbox_target, atol=1e-4)
+    # test decode
+    bbox3d_out = boxcoder.decode(bbox_target, points, gt_labels_3d)
+    assert torch.allclose(bbox3d_out, gt_bboxes_3d, atol=1e-4)
+
+
+def test_fcos3d_bbox_coder():
+    # test a config without priors
+    bbox_coder_cfg = dict(
+        type='FCOS3DBBoxCoder',
+        base_depths=None,
+        base_dims=None,
+        code_size=7,
+        norm_on_bbox=True)
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+
+    # test decode
+    # [2, 7, 1, 1]
+    batch_bbox = torch.tensor([[[[0.3130]], [[0.7094]], [[0.8743]], [[0.0570]],
+                                [[0.5579]], [[0.1593]], [[0.4553]]],
+                               [[[0.7758]], [[0.2298]], [[0.3925]], [[0.6307]],
+                                [[0.4377]], [[0.3339]], [[0.1966]]]])
+    batch_scale = nn.ModuleList([Scale(1.0) for _ in range(3)])
+    stride = 2
+    training = False
+    cls_score = torch.randn([2, 2, 1, 1]).sigmoid()
+    decode_bbox = bbox_coder.decode(batch_bbox, batch_scale, stride, training,
+                                    cls_score)
+
+    expected_bbox = torch.tensor([[[[0.6261]], [[1.4188]], [[2.3971]],
+                                   [[1.0586]], [[1.7470]], [[1.1727]],
+                                   [[0.4553]]],
+                                  [[[1.5516]], [[0.4596]], [[1.4806]],
+                                   [[1.8790]], [[1.5492]], [[1.3965]],
+                                   [[0.1966]]]])
+    assert torch.allclose(decode_bbox, expected_bbox, atol=1e-3)
+
+    # test a config with priors
+    prior_bbox_coder_cfg = dict(
+        type='FCOS3DBBoxCoder',
+        base_depths=((28., 13.), (25., 12.)),
+        base_dims=((2., 3., 1.), (1., 2., 3.)),
+        code_size=7,
+        norm_on_bbox=True)
+    prior_bbox_coder = build_bbox_coder(prior_bbox_coder_cfg)
+
+    # test decode
+    batch_bbox = torch.tensor([[[[0.3130]], [[0.7094]], [[0.8743]], [[0.0570]],
+                                [[0.5579]], [[0.1593]], [[0.4553]]],
+                               [[[0.7758]], [[0.2298]], [[0.3925]], [[0.6307]],
+                                [[0.4377]], [[0.3339]], [[0.1966]]]])
+    batch_scale = nn.ModuleList([Scale(1.0) for _ in range(3)])
+    stride = 2
+    training = False
+    cls_score = torch.tensor([[[[0.5811]], [[0.6198]]], [[[0.4889]],
+                                                         [[0.8142]]]])
+    decode_bbox = prior_bbox_coder.decode(batch_bbox, batch_scale, stride,
+                                          training, cls_score)
+    expected_bbox = torch.tensor([[[[0.6260]], [[1.4188]], [[35.4916]],
+                                   [[1.0587]], [[3.4940]], [[3.5181]],
+                                   [[0.4553]]],
+                                  [[[1.5516]], [[0.4596]], [[29.7100]],
+                                   [[1.8789]], [[3.0983]], [[4.1892]],
+                                   [[0.1966]]]])
+    assert torch.allclose(decode_bbox, expected_bbox, atol=1e-3)
+
+    # test decode_yaw
+    decode_bbox = decode_bbox.permute(0, 2, 3, 1).view(-1, 7)
+    batch_centers2d = torch.tensor([[100., 150.], [200., 100.]])
+    batch_dir_cls = torch.tensor([0., 1.])
+    dir_offset = 0.7854
+    cam2img = torch.tensor([[700., 0., 450., 0.], [0., 700., 200., 0.],
+                            [0., 0., 1., 0.], [0., 0., 0., 1.]])
+    decode_bbox = prior_bbox_coder.decode_yaw(decode_bbox, batch_centers2d,
+                                              batch_dir_cls, dir_offset,
+                                              cam2img)
+    expected_bbox = torch.tensor(
+        [[0.6260, 1.4188, 35.4916, 1.0587, 3.4940, 3.5181, 3.1332],
+         [1.5516, 0.4596, 29.7100, 1.8789, 3.0983, 4.1892, 6.1368]])
+    assert torch.allclose(decode_bbox, expected_bbox, atol=1e-3)
+
+
+def test_pgd_bbox_coder():
+    # test a config without priors
+    bbox_coder_cfg = dict(
+        type='PGDBBoxCoder',
+        base_depths=None,
+        base_dims=None,
+        code_size=7,
+        norm_on_bbox=True)
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+
+    # test decode_2d
+    # [2, 27, 1, 1]
+    batch_bbox = torch.tensor([[[[0.0103]], [[0.7394]], [[0.3296]], [[0.4708]],
+                                [[0.1439]], [[0.0778]], [[0.9399]], [[0.8366]],
+                                [[0.1264]], [[0.3030]], [[0.1898]], [[0.0714]],
+                                [[0.4144]], [[0.4341]], [[0.6442]], [[0.2951]],
+                                [[0.2890]], [[0.4486]], [[0.2848]], [[0.1071]],
+                                [[0.9530]], [[0.9460]], [[0.3822]], [[0.9320]],
+                                [[0.2611]], [[0.5580]], [[0.0397]]],
+                               [[[0.8612]], [[0.1680]], [[0.5167]], [[0.8502]],
+                                [[0.0377]], [[0.3615]], [[0.9550]], [[0.5219]],
+                                [[0.1402]], [[0.6843]], [[0.2121]], [[0.9468]],
+                                [[0.6238]], [[0.7918]], [[0.1646]], [[0.0500]],
+                                [[0.6290]], [[0.3956]], [[0.2901]], [[0.4612]],
+                                [[0.7333]], [[0.1194]], [[0.6999]], [[0.3980]],
+                                [[0.3262]], [[0.7185]], [[0.4474]]]])
+    batch_scale = nn.ModuleList([Scale(1.0) for _ in range(5)])
+    stride = 2
+    training = False
+    cls_score = torch.randn([2, 2, 1, 1]).sigmoid()
+    decode_bbox = bbox_coder.decode(batch_bbox, batch_scale, stride, training,
+                                    cls_score)
+    max_regress_range = 16
+    pred_keypoints = True
+    pred_bbox2d = True
+    decode_bbox_w2d = bbox_coder.decode_2d(decode_bbox, batch_scale, stride,
+                                           max_regress_range, training,
+                                           pred_keypoints, pred_bbox2d)
+    expected_decode_bbox_w2d = torch.tensor(
+        [[[[0.0206]], [[1.4788]],
+          [[1.3904]], [[1.6013]], [[1.1548]], [[1.0809]], [[0.9399]],
+          [[10.9441]], [[2.0117]], [[4.7049]], [[3.0009]], [[1.1405]],
+          [[6.2752]], [[6.5399]], [[9.0840]], [[4.5892]], [[4.4994]],
+          [[6.7320]], [[4.4375]], [[1.7071]], [[11.8582]], [[11.8075]],
+          [[5.8339]], [[1.8640]], [[0.5222]], [[1.1160]], [[0.0794]]],
+         [[[1.7224]], [[0.3360]], [[1.6765]], [[2.3401]], [[1.0384]],
+          [[1.4355]], [[0.9550]], [[7.6666]], [[2.2286]], [[9.5089]],
+          [[3.3436]], [[11.8133]], [[8.8603]], [[10.5508]], [[2.6101]],
+          [[0.7993]], [[8.9178]], [[6.0188]], [[4.5156]], [[6.8970]],
+          [[10.0013]], [[1.9014]], [[9.6689]], [[0.7960]], [[0.6524]],
+          [[1.4370]], [[0.8948]]]])
+    assert torch.allclose(expected_decode_bbox_w2d, decode_bbox_w2d, atol=1e-3)
+
+    # test decode_prob_depth
+    # [10, 8]
+    depth_cls_preds = torch.tensor([
+        [-0.4383, 0.7207, -0.4092, 0.4649, 0.8526, 0.6186, -1.4312, -0.7150],
+        [0.0621, 0.2369, 0.5170, 0.8484, -0.1099, 0.1829, -0.0072, 1.0618],
+        [-1.6114, -0.1057, 0.5721, -0.5986, -2.0471, 0.8140, -0.8385, -0.4822],
+        [0.0742, -0.3261, 0.4607, 1.8155, -0.3571, -0.0234, 0.3787, 2.3251],
+        [1.0492, -0.6881, -0.0136, -1.8291, 0.8460, -1.0171, 2.5691, -0.8114],
+        [0.0968, -0.5601, 1.0458, 0.2560, 1.3018, 0.1635, 0.0680, -1.0263],
+        [-0.0765, 0.1498, -2.7321, 1.0047, -0.2505, 0.0871, -0.4820, -0.3003],
+        [-0.4123, 0.2298, -0.1330, -0.6008, 0.6526, 0.7118, 0.9728, -0.7793],
+        [1.6940, 0.3355, 1.4661, 0.5477, 0.8667, 0.0527, -0.9975, -0.0689],
+        [0.4724, -0.3632, -0.0654, 0.4034, -0.3494, -0.7548, 0.7297, 1.2754]
+    ])
+    depth_range = (0, 70)
+    depth_unit = 10
+    num_depth_cls = 8
+    uniform_prob_depth_preds = bbox_coder.decode_prob_depth(
+        depth_cls_preds, depth_range, depth_unit, 'uniform', num_depth_cls)
+    expected_preds = torch.tensor([
+        32.0441, 38.4689, 36.1831, 48.2096, 46.1560, 32.7973, 33.2155, 39.9822,
+        21.9905, 43.0161
+    ])
+    assert torch.allclose(uniform_prob_depth_preds, expected_preds, atol=1e-3)
+
+    linear_prob_depth_preds = bbox_coder.decode_prob_depth(
+        depth_cls_preds, depth_range, depth_unit, 'linear', num_depth_cls)
+    expected_preds = torch.tensor([
+        21.1431, 30.2421, 25.8964, 41.6116, 38.6234, 21.4582, 23.2993, 30.1111,
+        13.9273, 36.8419
+    ])
+    assert torch.allclose(linear_prob_depth_preds, expected_preds, atol=1e-3)
+
+    log_prob_depth_preds = bbox_coder.decode_prob_depth(
+        depth_cls_preds, depth_range, depth_unit, 'log', num_depth_cls)
+    expected_preds = torch.tensor([
+        12.6458, 24.2487, 17.4015, 36.9375, 27.5982, 12.5510, 15.6635, 19.8408,
+        9.1605, 31.3765
+    ])
+    assert torch.allclose(log_prob_depth_preds, expected_preds, atol=1e-3)
+
+    loguniform_prob_depth_preds = bbox_coder.decode_prob_depth(
+        depth_cls_preds, depth_range, depth_unit, 'loguniform', num_depth_cls)
+    expected_preds = torch.tensor([
+        6.9925, 10.3273, 8.9895, 18.6524, 16.4667, 7.3196, 7.5078, 11.3207,
+        3.7987, 13.6095
+    ])
+    assert torch.allclose(
+        loguniform_prob_depth_preds, expected_preds, atol=1e-3)
+
+
+def test_smoke_bbox_coder():
+    bbox_coder_cfg = dict(
+        type='SMOKECoder',
+        base_depth=(28.01, 16.32),
+        base_dims=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73, 0.67)),
+        code_size=7)
+
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    regression = torch.rand([200, 8])
+    points = torch.rand([200, 2])
+    labels = torch.ones([2, 100])
+    cam2imgs = torch.rand([2, 4, 4])
+    trans_mats = torch.rand([2, 3, 3])
+
+    img_metas = [dict(box_type_3d=CameraInstance3DBoxes) for i in range(2)]
+    locations, dimensions, orientations = bbox_coder.decode(
+        regression, points, labels, cam2imgs, trans_mats)
+    assert locations.shape == torch.Size([200, 3])
+    assert dimensions.shape == torch.Size([200, 3])
+    assert orientations.shape == torch.Size([200, 1])
+    bboxes = bbox_coder.encode(locations, dimensions, orientations, img_metas)
+    assert bboxes.tensor.shape == torch.Size([200, 7])
+
+    # specically designed to test orientation decode function's
+    # special cases.
+    ori_vector = torch.tensor([[-0.9, -0.01], [-0.9, 0.01]])
+    locations = torch.tensor([[15., 2., 1.], [15., 2., -1.]])
+    orientations = bbox_coder._decode_orientation(ori_vector, locations)
+    assert orientations.shape == torch.Size([2, 1])
+
+
+def test_monoflex_bbox_coder():
+    bbox_coder_cfg = dict(
+        type='MonoFlexCoder',
+        depth_mode='exp',
+        base_depth=(26.494627, 16.05988),
+        depth_range=[0.1, 100],
+        combine_depth=True,
+        uncertainty_range=[-10, 10],
+        base_dims=((3.8840, 1.5261, 1.6286, 0.4259, 0.1367,
+                    0.1022), (0.8423, 1.7607, 0.6602, 0.2349, 0.1133, 0.1427),
+                   (1.7635, 1.7372, 0.5968, 0.1766, 0.0948, 0.1242)),
+        dims_mode='linear',
+        multibin=True,
+        num_dir_bins=4,
+        bin_centers=[0, np.pi / 2, np.pi, -np.pi / 2],
+        bin_margin=np.pi / 6,
+        code_size=7)
+    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    gt_bboxes_3d = CameraInstance3DBoxes(torch.rand([6, 7]))
+    orientation_target = bbox_coder.encode(gt_bboxes_3d)
+    assert orientation_target.shape == torch.Size([6, 8])
+
+    regression = torch.rand([100, 50])
+    base_centers2d = torch.rand([100, 2])
+    labels = torch.ones([100])
+    downsample_ratio = 4
+    cam2imgs = torch.rand([100, 4, 4])
+
+    preds = bbox_coder.decode(regression, base_centers2d, labels,
+                              downsample_ratio, cam2imgs)
+
+    assert preds['bboxes2d'].shape == torch.Size([100, 4])
+    assert preds['dimensions'].shape == torch.Size([100, 3])
+    assert preds['offsets2d'].shape == torch.Size([100, 2])
+    assert preds['keypoints2d'].shape == torch.Size([100, 10, 2])
+    assert preds['orientations'].shape == torch.Size([100, 16])
+    assert preds['direct_depth'].shape == torch.Size([
+        100,
+    ])
+    assert preds['keypoints_depth'].shape == torch.Size([100, 3])
+    assert preds['combined_depth'].shape == torch.Size([
+        100,
+    ])
+    assert preds['direct_depth_uncertainty'].shape == torch.Size([
+        100,
+    ])
+    assert preds['keypoints_depth_uncertainty'].shape == torch.Size([100, 3])
+
+    offsets_2d = torch.randn([100, 2])
+    depths = torch.randn([
+        100,
+    ])
+    locations = bbox_coder.decode_location(base_centers2d, offsets_2d, depths,
+                                           cam2imgs, downsample_ratio)
+    assert locations.shape == torch.Size([100, 3])
+
+    orientations = torch.randn([100, 16])
+    yaws, local_yaws = bbox_coder.decode_orientation(orientations, locations)
+    assert yaws.shape == torch.Size([
+        100,
+    ])
+    assert local_yaws.shape == torch.Size([
+        100,
+    ])

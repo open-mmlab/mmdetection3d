@@ -54,7 +54,7 @@ class AxisAlignedIoULoss(nn.Module):
         Args:
             pred (torch.Tensor): Bbox predictions with shape [..., 3].
             target (torch.Tensor): Bbox targets (gt) with shape [..., 3].
-            weight (torch.Tensor|float, optional): Weight of loss. \
+            weight (torch.Tensor | float, optional): Weight of loss.
                 Defaults to None.
             avg_factor (int, optional): Average factor that is used to average
                 the loss. Defaults to None.

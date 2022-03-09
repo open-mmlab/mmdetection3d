@@ -19,20 +19,26 @@ class Anchor3DRangeGenerator(object):
         ranges (list[list[float]]): Ranges of different anchors.
             The ranges are the same across different feature levels. But may
             vary for different anchor sizes if size_per_range is True.
-        sizes (list[list[float]]): 3D sizes of anchors.
-        scales (list[int]): Scales of anchors in different feature levels.
-        rotations (list[float]): Rotations of anchors in a feature grid.
-        custom_values (tuple[float]): Customized values of that anchor. For
-            example, in nuScenes the anchors have velocities.
-        reshape_out (bool): Whether to reshape the output into (N x 4).
-        size_per_range: Whether to use separate ranges for different sizes.
-            If size_per_range is True, the ranges should have the same length
-            as the sizes, if not, it will be duplicated.
+        sizes (list[list[float]], optional): 3D sizes of anchors.
+            Defaults to [[3.9, 1.6, 1.56]].
+        scales (list[int], optional): Scales of anchors in different feature
+            levels. Defaults to [1].
+        rotations (list[float], optional): Rotations of anchors in a feature
+            grid. Defaults to [0, 1.5707963].
+        custom_values (tuple[float], optional): Customized values of that
+            anchor. For example, in nuScenes the anchors have velocities.
+            Defaults to ().
+        reshape_out (bool, optional): Whether to reshape the output into
+            (N x 4). Defaults to True.
+        size_per_range (bool, optional): Whether to use separate ranges for
+            different sizes. If size_per_range is True, the ranges should have
+            the same length as the sizes, if not, it will be duplicated.
+            Defaults to True.
     """
 
     def __init__(self,
                  ranges,
-                 sizes=[[1.6, 3.9, 1.56]],
+                 sizes=[[3.9, 1.6, 1.56]],
                  scales=[1],
                  rotations=[0, 1.5707963],
                  custom_values=(),
@@ -86,13 +92,14 @@ class Anchor3DRangeGenerator(object):
         Args:
             featmap_sizes (list[tuple]): List of feature map sizes in
                 multiple feature levels.
-            device (str): Device where the anchors will be put on.
+            device (str, optional): Device where the anchors will be put on.
+                Defaults to 'cuda'.
 
         Returns:
-            list[torch.Tensor]: Anchors in multiple feature levels. \
-                The sizes of each tensor should be [N, 4], where \
-                N = width * height * num_base_anchors, width and height \
-                are the sizes of the corresponding feature lavel, \
+            list[torch.Tensor]: Anchors in multiple feature levels.
+                The sizes of each tensor should be [N, 4], where
+                N = width * height * num_base_anchors, width and height
+                are the sizes of the corresponding feature level,
                 num_base_anchors is the number of anchors for that level.
         """
         assert self.num_levels == len(featmap_sizes)
@@ -149,7 +156,7 @@ class Anchor3DRangeGenerator(object):
                              feature_size,
                              anchor_range,
                              scale=1,
-                             sizes=[[1.6, 3.9, 1.56]],
+                             sizes=[[3.9, 1.6, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
         """Generate anchors in a single range.
@@ -161,14 +168,18 @@ class Anchor3DRangeGenerator(object):
                 shape [6]. The order is consistent with that of anchors, i.e.,
                 (x_min, y_min, z_min, x_max, y_max, z_max).
             scale (float | int, optional): The scale factor of anchors.
-            sizes (list[list] | np.ndarray | torch.Tensor): Anchor size with
-                shape [N, 3], in order of x, y, z.
-            rotations (list[float] | np.ndarray | torch.Tensor): Rotations of
-                anchors in a single feature grid.
+                Defaults to 1.
+            sizes (list[list] | np.ndarray | torch.Tensor, optional):
+                Anchor size with shape [N, 3], in order of x, y, z.
+                Defaults to [[3.9, 1.6, 1.56]].
+            rotations (list[float] | np.ndarray | torch.Tensor, optional):
+                Rotations of anchors in a single feature grid.
+                Defaults to [0, 1.5707963].
             device (str): Devices that the anchors will be put on.
+                Defaults to 'cuda'.
 
         Returns:
-            torch.Tensor: Anchors with shape \
+            torch.Tensor: Anchors with shape
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
@@ -231,10 +242,10 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         up corner to distribute anchors.
 
     Args:
-        anchor_corner (bool): Whether to align with the corner of the voxel
-            grid. By default it is False and the anchor's center will be
+        anchor_corner (bool, optional): Whether to align with the corner of the
+            voxel grid. By default it is False and the anchor's center will be
             the same as the corresponding voxel's center, which is also the
-            center of the corresponding greature grid.
+            center of the corresponding greature grid. Defaults to False.
     """
 
     def __init__(self, align_corner=False, **kwargs):
@@ -245,7 +256,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
                              feature_size,
                              anchor_range,
                              scale,
-                             sizes=[[1.6, 3.9, 1.56]],
+                             sizes=[[3.9, 1.6, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda'):
         """Generate anchors in a single range.
@@ -256,15 +267,18 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             anchor_range (torch.Tensor | list[float]): Range of anchors with
                 shape [6]. The order is consistent with that of anchors, i.e.,
                 (x_min, y_min, z_min, x_max, y_max, z_max).
-            scale (float | int, optional): The scale factor of anchors.
-            sizes (list[list] | np.ndarray | torch.Tensor): Anchor size with
-                shape [N, 3], in order of x, y, z.
-            rotations (list[float] | np.ndarray | torch.Tensor): Rotations of
-                anchors in a single feature grid.
-            device (str): Devices that the anchors will be put on.
+            scale (float | int): The scale factor of anchors.
+            sizes (list[list] | np.ndarray | torch.Tensor, optional):
+                Anchor size with shape [N, 3], in order of x, y, z.
+                Defaults to [[3.9, 1.6, 1.56]].
+            rotations (list[float] | np.ndarray | torch.Tensor, optional):
+                Rotations of anchors in a single feature grid.
+                Defaults to [0, 1.5707963].
+            device (str, optional): Devices that the anchors will be put on.
+                Defaults to 'cuda'.
 
         Returns:
-            torch.Tensor: Anchors with shape \
+            torch.Tensor: Anchors with shape
                 [*feature_size, num_sizes, num_rots, 7].
         """
         if len(feature_size) == 2:
@@ -334,7 +348,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
     Note that feature maps of different classes may be different.
 
     Args:
-        kwargs (dict): Arguments are the same as those in \
+        kwargs (dict): Arguments are the same as those in
             :class:`AlignedAnchor3DRangeGenerator`.
     """
 
@@ -347,15 +361,16 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         """Generate grid anchors in multiple feature levels.
 
         Args:
-            featmap_sizes (list[tuple]): List of feature map sizes for \
+            featmap_sizes (list[tuple]): List of feature map sizes for
                 different classes in a single feature level.
-            device (str): Device where the anchors will be put on.
+            device (str, optional): Device where the anchors will be put on.
+                Defaults to 'cuda'.
 
         Returns:
-            list[list[torch.Tensor]]: Anchors in multiple feature levels. \
-                Note that in this anchor generator, we currently only \
-                support single feature level. The sizes of each tensor \
-                should be [num_sizes/ranges*num_rots*featmap_size, \
+            list[list[torch.Tensor]]: Anchors in multiple feature levels.
+                Note that in this anchor generator, we currently only
+                support single feature level. The sizes of each tensor
+                should be [num_sizes/ranges*num_rots*featmap_size,
                 box_code_size].
         """
         multi_level_anchors = []
@@ -371,7 +386,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         This function is usually called by method ``self.grid_anchors``.
 
         Args:
-            featmap_sizes (list[tuple]): List of feature map sizes for \
+            featmap_sizes (list[tuple]): List of feature map sizes for
                 different classes in a single feature level.
             scale (float): Scale factor of the anchors in the current level.
             device (str, optional): Device the tensor will be put on.

@@ -18,25 +18,25 @@ class BasePointSAModule(nn.Module):
         sample_nums (list[int]): Number of samples in each ball query.
         mlp_channels (list[list[int]]): Specify of the pointnet before
             the global pooling for each scale.
-        fps_mod (list[str]: Type of FPS method, valid mod
+        fps_mod (list[str], optional): Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
             F-FPS: using feature distances for FPS.
             D-FPS: using Euclidean distances of points for FPS.
             FS: using F-FPS and D-FPS simultaneously.
-        fps_sample_range_list (list[int]): Range of points to apply FPS.
-            Default: [-1].
-        dilated_group (bool): Whether to use dilated ball query.
+        fps_sample_range_list (list[int], optional):
+            Range of points to apply FPS. Default: [-1].
+        dilated_group (bool, optional): Whether to use dilated ball query.
             Default: False.
-        use_xyz (bool): Whether to use xyz.
+        use_xyz (bool, optional): Whether to use xyz.
             Default: True.
-        pool_mod (str): Type of pooling method.
+        pool_mod (str, optional): Type of pooling method.
             Default: 'max_pool'.
-        normalize_xyz (bool): Whether to normalize local XYZ with radius.
-            Default: False.
-        grouper_return_grouped_xyz (bool): Whether to return grouped xyz in
-            `QueryAndGroup`. Defaults to False.
-        grouper_return_grouped_idx (bool): Whether to return grouped idx in
-            `QueryAndGroup`. Defaults to False.
+        normalize_xyz (bool, optional): Whether to normalize local XYZ
+            with radius. Default: False.
+        grouper_return_grouped_xyz (bool, optional): Whether to return
+            grouped xyz in `QueryAndGroup`. Defaults to False.
+        grouper_return_grouped_idx (bool, optional): Whether to return
+            grouped idx in `QueryAndGroup`. Defaults to False.
     """
 
     def __init__(self,
@@ -69,6 +69,8 @@ class BasePointSAModule(nn.Module):
             self.num_point = [num_point]
         elif isinstance(num_point, list) or isinstance(num_point, tuple):
             self.num_point = num_point
+        elif num_point is None:
+            self.num_point = None
         else:
             raise NotImplementedError('Error type of num_point!')
 
@@ -78,8 +80,12 @@ class BasePointSAModule(nn.Module):
         self.fps_mod_list = fps_mod
         self.fps_sample_range_list = fps_sample_range_list
 
-        self.points_sampler = Points_Sampler(self.num_point, self.fps_mod_list,
-                                             self.fps_sample_range_list)
+        if self.num_point is not None:
+            self.points_sampler = Points_Sampler(self.num_point,
+                                                 self.fps_mod_list,
+                                                 self.fps_sample_range_list)
+        else:
+            self.points_sampler = None
 
         for i in range(len(radii)):
             radius = radii[i]
@@ -111,9 +117,7 @@ class BasePointSAModule(nn.Module):
         Args:
             points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
             features (Tensor): (B, C, N) features of each point.
-                Default: None.
             indices (Tensor): (B, num_point) Index of the features.
-                Default: None.
             target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
 
         Returns:
@@ -128,9 +132,12 @@ class BasePointSAModule(nn.Module):
         elif target_xyz is not None:
             new_xyz = target_xyz.contiguous()
         else:
-            indices = self.points_sampler(points_xyz, features)
-            new_xyz = gather_points(xyz_flipped, indices).transpose(
-                1, 2).contiguous() if self.num_point is not None else None
+            if self.num_point is not None:
+                indices = self.points_sampler(points_xyz, features)
+                new_xyz = gather_points(xyz_flipped,
+                                        indices).transpose(1, 2).contiguous()
+            else:
+                new_xyz = None
 
         return new_xyz, indices
 
@@ -169,11 +176,12 @@ class BasePointSAModule(nn.Module):
 
         Args:
             points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
-            features (Tensor): (B, C, N) features of each point.
+            features (Tensor, optional): (B, C, N) features of each point.
                 Default: None.
-            indices (Tensor): (B, num_point) Index of the features.
+            indices (Tensor, optional): (B, num_point) Index of the features.
                 Default: None.
-            target_xyz (Tensor): (B, M, 3) new_xyz coordinates of the outputs.
+            target_xyz (Tensor, optional): (B, M, 3) new coords of the outputs.
+                Default: None.
 
         Returns:
             Tensor: (B, M, 3) where M is the number of points.
@@ -223,26 +231,26 @@ class PointSAModuleMSG(BasePointSAModule):
         sample_nums (list[int]): Number of samples in each ball query.
         mlp_channels (list[list[int]]): Specify of the pointnet before
             the global pooling for each scale.
-        fps_mod (list[str]: Type of FPS method, valid mod
+        fps_mod (list[str], optional): Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
             F-FPS: using feature distances for FPS.
             D-FPS: using Euclidean distances of points for FPS.
             FS: using F-FPS and D-FPS simultaneously.
-        fps_sample_range_list (list[int]): Range of points to apply FPS.
-            Default: [-1].
-        dilated_group (bool): Whether to use dilated ball query.
+        fps_sample_range_list (list[int], optional): Range of points to
+            apply FPS. Default: [-1].
+        dilated_group (bool, optional): Whether to use dilated ball query.
             Default: False.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict, optional): Type of normalization method.
             Default: dict(type='BN2d').
-        use_xyz (bool): Whether to use xyz.
+        use_xyz (bool, optional): Whether to use xyz.
             Default: True.
-        pool_mod (str): Type of pooling method.
+        pool_mod (str, optional): Type of pooling method.
             Default: 'max_pool'.
-        normalize_xyz (bool): Whether to normalize local XYZ with radius.
-            Default: False.
-        bias (bool | str): If specified as `auto`, it will be decided by the
-            norm_cfg. Bias will be set as True if `norm_cfg` is None, otherwise
-            False. Default: "auto".
+        normalize_xyz (bool, optional): Whether to normalize local XYZ
+            with radius. Default: False.
+        bias (bool | str, optional): If specified as `auto`, it will be
+            decided by `norm_cfg`. `bias` will be set as True if
+            `norm_cfg` is None, otherwise False. Default: 'auto'.
     """
 
     def __init__(self,
@@ -298,24 +306,24 @@ class PointSAModule(PointSAModuleMSG):
     Args:
         mlp_channels (list[int]): Specify of the pointnet before
             the global pooling for each scale.
-        num_point (int): Number of points.
+        num_point (int, optional): Number of points.
             Default: None.
-        radius (float): Radius to group with.
+        radius (float, optional): Radius to group with.
             Default: None.
-        num_sample (int): Number of samples in each ball query.
+        num_sample (int, optional): Number of samples in each ball query.
             Default: None.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict, optional): Type of normalization method.
             Default: dict(type='BN2d').
-        use_xyz (bool): Whether to use xyz.
+        use_xyz (bool, optional): Whether to use xyz.
             Default: True.
-        pool_mod (str): Type of pooling method.
+        pool_mod (str, optional): Type of pooling method.
             Default: 'max_pool'.
-        fps_mod (list[str]: Type of FPS method, valid mod
+        fps_mod (list[str], optional): Type of FPS method, valid mod
             ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
-        fps_sample_range_list (list[int]): Range of points to apply FPS.
-            Default: [-1].
-        normalize_xyz (bool): Whether to normalize local XYZ with radius.
-            Default: False.
+        fps_sample_range_list (list[int], optional): Range of points
+            to apply FPS. Default: [-1].
+        normalize_xyz (bool, optional): Whether to normalize local XYZ
+            with radius. Default: False.
     """
 
     def __init__(self,

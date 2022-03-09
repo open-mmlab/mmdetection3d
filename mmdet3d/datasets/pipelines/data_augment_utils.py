@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
+
 import numba
 import numpy as np
-import warnings
-from numba.errors import NumbaPerformanceWarning
+from numba.core.errors import NumbaPerformanceWarning
 
 from mmdet3d.core.bbox import box_np_ops
 
@@ -21,8 +22,8 @@ def _rotation_box2d_jit_(corners, angle, rot_mat_T):
     rot_sin = np.sin(angle)
     rot_cos = np.cos(angle)
     rot_mat_T[0, 0] = rot_cos
-    rot_mat_T[0, 1] = -rot_sin
-    rot_mat_T[1, 0] = rot_sin
+    rot_mat_T[0, 1] = rot_sin
+    rot_mat_T[1, 0] = -rot_sin
     rot_mat_T[1, 1] = rot_cos
     corners[:] = corners @ rot_mat_T
 
@@ -34,8 +35,8 @@ def box_collision_test(boxes, qboxes, clockwise=True):
     Args:
         boxes (np.ndarray): Corners of current boxes.
         qboxes (np.ndarray): Boxes to be avoid colliding.
-        clockwise (bool): Whether the corners are in clockwise order.
-            Default: True.
+        clockwise (bool, optional): Whether the corners are in
+            clockwise order. Default: True.
     """
     N = boxes.shape[0]
     K = qboxes.shape[0]
@@ -211,8 +212,8 @@ def noise_per_box_v2_(boxes, valid_mask, loc_noises, rot_noises,
                 rot_sin = np.sin(current_box[0, -1])
                 rot_cos = np.cos(current_box[0, -1])
                 rot_mat_T[0, 0] = rot_cos
-                rot_mat_T[0, 1] = -rot_sin
-                rot_mat_T[1, 0] = rot_sin
+                rot_mat_T[0, 1] = rot_sin
+                rot_mat_T[1, 0] = -rot_sin
                 rot_mat_T[1, 1] = rot_cos
                 current_corners[:] = current_box[
                     0, 2:4] * corners_norm @ rot_mat_T + current_box[0, :2]
@@ -264,18 +265,18 @@ def _rotation_matrix_3d_(rot_mat_T, angle, axis):
     rot_mat_T[:] = np.eye(3)
     if axis == 1:
         rot_mat_T[0, 0] = rot_cos
-        rot_mat_T[0, 2] = -rot_sin
-        rot_mat_T[2, 0] = rot_sin
+        rot_mat_T[0, 2] = rot_sin
+        rot_mat_T[2, 0] = -rot_sin
         rot_mat_T[2, 2] = rot_cos
     elif axis == 2 or axis == -1:
         rot_mat_T[0, 0] = rot_cos
-        rot_mat_T[0, 1] = -rot_sin
-        rot_mat_T[1, 0] = rot_sin
+        rot_mat_T[0, 1] = rot_sin
+        rot_mat_T[1, 0] = -rot_sin
         rot_mat_T[1, 1] = rot_cos
     elif axis == 0:
         rot_mat_T[1, 1] = rot_cos
-        rot_mat_T[1, 2] = -rot_sin
-        rot_mat_T[2, 1] = rot_sin
+        rot_mat_T[1, 2] = rot_sin
+        rot_mat_T[2, 1] = -rot_sin
         rot_mat_T[2, 2] = rot_cos
 
 
@@ -317,7 +318,7 @@ def box3d_transform_(boxes, loc_transform, rot_transform, valid_mask):
         boxes (np.ndarray): 3D boxes to be transformed.
         loc_transform (np.ndarray): Location transform to be applied.
         rot_transform (np.ndarray): Rotation transform to be applied.
-        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
+        valid_mask (np.ndarray): Mask to indicate which boxes are valid.
     """
     num_box = boxes.shape[0]
     for i in range(num_box):
@@ -338,16 +339,17 @@ def noise_per_object_v3_(gt_boxes,
 
     Args:
         gt_boxes (np.ndarray): Ground truth boxes with shape (N, 7).
-        points (np.ndarray | None): Input point cloud with shape (M, 4).
-            Default: None.
-        valid_mask (np.ndarray | None): Mask to indicate which boxes are valid.
-            Default: None.
-        rotation_perturb (float): Rotation perturbation. Default: pi / 4.
-        center_noise_std (float): Center noise standard deviation.
+        points (np.ndarray, optional): Input point cloud with
+            shape (M, 4). Default: None.
+        valid_mask (np.ndarray, optional): Mask to indicate which
+            boxes are valid. Default: None.
+        rotation_perturb (float, optional): Rotation perturbation.
+            Default: pi / 4.
+        center_noise_std (float, optional): Center noise standard deviation.
             Default: 1.0.
-        global_random_rot_range (float): Global random rotation range.
-            Default: pi/4.
-        num_try (int): Number of try. Default: 100.
+        global_random_rot_range (float, optional): Global random rotation
+            range. Default: pi/4.
+        num_try (int, optional): Number of try. Default: 100.
     """
     num_boxes = gt_boxes.shape[0]
     if not isinstance(rotation_perturb, (list, tuple, np.ndarray)):

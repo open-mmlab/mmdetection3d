@@ -13,12 +13,12 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         pc_range (list[float]): Range of point cloud.
         out_size_factor (int): Downsample factor of the model.
         voxel_size (list[float]): Size of voxel.
-        post_center_range (list[float]): Limit of the center.
+        post_center_range (list[float], optional): Limit of the center.
             Default: None.
-        max_num (int): Max number to be kept. Default: 100.
-        score_threshold (float): Threshold to filter boxes based on score.
-            Default: None.
-        code_size (int): Code size of bboxes. Default: 9
+        max_num (int, optional): Max number to be kept. Default: 100.
+        score_threshold (float, optional): Threshold to filter boxes
+            based on score. Default: None.
+        code_size (int, optional): Code size of bboxes. Default: 9
     """
 
     def __init__(self,
@@ -45,7 +45,8 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             feats (torch.Tensor): Features to be transposed and gathered
                 with the shape of [B, 2, W, H].
             inds (torch.Tensor): Indexes with the shape of [B, N].
-            feat_masks (torch.Tensor): Mask of the feats. Default: None.
+            feat_masks (torch.Tensor, optional): Mask of the feats.
+                Default: None.
 
         Returns:
             torch.Tensor: Gathered feats.
@@ -64,7 +65,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
 
         Args:
             scores (torch.Tensor): scores with the shape of [B, N, W, H].
-            K (int): Number to be kept. Defaults to 80.
+            K (int, optional): Number to be kept. Defaults to 80.
 
         Returns:
             tuple[torch.Tensor]
@@ -135,9 +136,9 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             dim (torch.Tensor): Dim of the boxes with the shape of
                 [B, 1, W, H].
             vel (torch.Tensor): Velocity with the shape of [B, 1, W, H].
-            reg (torch.Tensor): Regression value of the boxes in 2D with
-                the shape of [B, 2, W, H]. Default: None.
-            task_id (int): Index of task. Default: -1.
+            reg (torch.Tensor, optional): Regression value of the boxes in
+                2D with the shape of [B, 2, W, H]. Default: None.
+            task_id (int, optional): Index of task. Default: -1.
 
         Returns:
             list[dict]: Decoded boxes.

@@ -7,8 +7,8 @@ def clip_sigmoid(x, eps=1e-4):
 
     Args:
         x (torch.Tensor): Input feature map with the shape of [B, N, H, W].
-        eps (float): Lower bound of the range to be clamped to. Defaults
-            to 1e-4.
+        eps (float, optional): Lower bound of the range to be clamped to.
+            Defaults to 1e-4.
 
     Returns:
         torch.Tensor: Feature map after sigmoid.
