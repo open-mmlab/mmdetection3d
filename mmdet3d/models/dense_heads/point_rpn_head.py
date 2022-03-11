@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmcv.ops import nms_bev as nms_gpu
+from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS, build_loss
 

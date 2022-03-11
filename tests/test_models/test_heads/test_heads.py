@@ -515,11 +515,13 @@ def test_smoke_mono3d_head():
 
 
 def test_parta2_bbox_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
     parta2_bbox_head_cfg = _get_parta2_bbox_head_cfg(
         './parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
-    self = build_head(parta2_bbox_head_cfg)
-    seg_feats = torch.rand([256, 14, 14, 14, 16])
-    part_feats = torch.rand([256, 14, 14, 14, 4])
+    self = build_head(parta2_bbox_head_cfg).cuda()
+    seg_feats = torch.rand([256, 14, 14, 14, 16]).cuda()
+    part_feats = torch.rand([256, 14, 14, 14, 4]).cuda()
 
     cls_score, bbox_pred = self.forward(seg_feats, part_feats)
     assert cls_score.shape == (256, 1)
