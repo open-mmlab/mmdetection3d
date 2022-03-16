@@ -3,7 +3,6 @@ import torch
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
-from mmdet3d.core import xywhr2xyxyr
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
@@ -322,31 +321,26 @@ class PointRPNHead(BaseModule):
         else:
             raise NotImplementedError('Unsupported bbox type!')
 
-        obj_scores = obj_scores[nonempty_box_mask]
-        sem_scores = sem_scores[nonempty_box_mask]
-        bbox_selected = bbox.tensor[nonempty_box_mask]
-        bbox_for_nms = xywhr2xyxyr(bbox.bev)[nonempty_box_mask]
+        bbox = bbox.tensor[nonempty_box_mask]
 
         if self.test_cfg.score_thr is not None:
             score_thr = self.test_cfg.score_thr
             keep = (obj_scores >= score_thr)
             obj_scores = obj_scores[keep]
             sem_scores = sem_scores[keep]
-            bbox_selected = bbox_selected[keep]
-            bbox_for_nms = bbox_for_nms[keep]
+            bbox = bbox[keep]
 
         if obj_scores.shape[0] > 0:
             topk = min(nms_cfg.nms_pre, obj_scores.shape[0])
             obj_scores_nms, indices = torch.topk(obj_scores, k=topk)
-            bbox_selected = bbox_selected[indices]
-            bbox_for_nms = bbox_for_nms[indices]
+            bbox_for_nms = bbox[indices]
             sem_scores_nms = sem_scores[indices]
 
             keep = nms_func(bbox_for_nms[:, 0:7], obj_scores_nms,
                             nms_cfg.iou_thr)
             keep = keep[:nms_cfg.nms_post]
 
-            bbox_selected = bbox_selected[keep]
+            bbox_selected = bbox_for_nms[keep]
             score_selected = obj_scores_nms[keep]
             cls_preds = sem_scores_nms[keep]
             labels = torch.argmax(cls_preds, -1)
