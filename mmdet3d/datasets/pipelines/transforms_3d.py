@@ -936,12 +936,6 @@ class PointSample(object):
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
-        # Points in Camera coord can provide the depth information.
-        # TODO: Need to support distance-based sampling for other coord system.
-        if self.sample_range is not None:
-            from mmdet3d.core.points import CameraPoints
-            assert isinstance(points, CameraPoints), \
-                'Sampling based on distance is only applicable for CAM coord'
         points, choices = self._points_random_sampling(
             points,
             self.num_points,
