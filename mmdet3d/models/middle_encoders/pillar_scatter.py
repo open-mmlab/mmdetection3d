@@ -57,7 +57,7 @@ class PointPillarsScatter(nn.Module):
         canvas[:, indices] = voxels
         # Undo the column stacking to final 4-dim tensor
         canvas = canvas.view(1, self.in_channels, self.ny, self.nx)
-        return [canvas]
+        return canvas
 
     def forward_batch(self, voxel_features, coors, batch_size):
         """Scatter features of single sample.
