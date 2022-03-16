@@ -1,3 +1,9 @@
+## v1.0.0.rc1
+
+### BC-breaking
+
+- We have adopted CUDA operators compiled from [mmcv](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/__init__.py) and removed all CUDA operator in mmdet3d. We now do not need to compile the CUDA operators in mmdet3d anymore.
+
 ## v1.0.0.dev0
 
 ### Coordinate system refactoring
