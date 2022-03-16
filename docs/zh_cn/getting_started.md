@@ -102,7 +102,7 @@ pip install mmcv-full
 **d. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
 ```shell
-pip install mmdet==2.14.0
+pip install mmdet
 ```
 
 同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMDetection：
@@ -110,7 +110,7 @@ pip install mmdet==2.14.0
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
-git checkout v2.14.0  # 转到 v2.14.0 分支
+git checkout v2.19.0  # 转到 v2.19.0 分支
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
@@ -118,14 +118,14 @@ pip install -v -e .  # or "python setup.py develop"
 **e. 安装 [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
-pip install mmsegmentation==0.14.1
+pip install mmsegmentation
 ```
 同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMSegmentation：
 
 ```shell
 git clone https://github.com/open-mmlab/mmsegmentation.git
 cd mmsegmentation
-git checkout v0.14.1  # switch to v0.14.1 branch
+git checkout v0.20.0  # switch to v0.20.0 branch
 pip install -e .  # or "python setup.py develop"
 ```
 
