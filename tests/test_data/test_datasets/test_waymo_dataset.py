@@ -144,9 +144,12 @@ def test_evaluate():
     # kitti protocol
     metric = ['kitti']
     ap_dict = waymo_dataset.evaluate([result], metric=metric)
-    assert np.isclose(ap_dict['KITTI/Overall_3D_easy'], 3.0303030303030307)
-    assert np.isclose(ap_dict['KITTI/Overall_3D_moderate'], 3.0303030303030307)
-    assert np.isclose(ap_dict['KITTI/Overall_3D_hard'], 3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_AP11_easy'],
+                      3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_AP11_moderate'],
+                      3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_AP11_hard'],
+                      3.0303030303030307)
 
     # waymo protocol
     metric = ['waymo']

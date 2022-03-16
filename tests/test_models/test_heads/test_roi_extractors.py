@@ -37,8 +37,7 @@ def test_single_roipoint_extractor():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
-    roi_layer_cfg = dict(
-        type='RoIPointPool3d', num_sampled_points=512, pool_extra_width=0)
+    roi_layer_cfg = dict(type='RoIPointPool3d', num_sampled_points=512)
 
     self = Single3DRoIPointExtractor(roi_layer=roi_layer_cfg)
 
