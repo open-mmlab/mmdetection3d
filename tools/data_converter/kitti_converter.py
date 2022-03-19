@@ -7,7 +7,7 @@ import numpy as np
 from nuscenes.utils.geometry_utils import view_points
 
 from mmdet3d.core.bbox import box_np_ops, points_cam2img
-from .kitti_data_utils import get_kitti_image_info, get_waymo_image_info
+from .kitti_data_utils import get_kitti_image_info, WaymoImageInfoGatherer
 from .nuscenes_converter import post_process_coords
 
 kitti_categories = ('Pedestrian', 'Cyclist', 'Car')
@@ -42,6 +42,63 @@ def _read_imageset_file(path):
     with open(path, 'r') as f:
         lines = f.readlines()
     return [int(line) for line in lines]
+
+
+class _NumPointsInGTCalculater:
+    def __init__(self,
+                 data_path,
+                 relative_path,
+                 remove_outside=True,
+                 num_features=4,
+                 num_worker=8) -> None:
+        self.data_path = data_path
+        self.relative_path = relative_path
+        self.remove_outside = remove_outside
+        self.num_features = num_features
+        self.num_worker = num_worker
+
+    def calculate_single(self, info):
+        pc_info = info['point_cloud']
+        image_info = info['image']
+        calib = info['calib']
+        if self.relative_path:
+            v_path = str(Path(self.data_path) / pc_info['velodyne_path'])
+        else:
+            v_path = pc_info['velodyne_path']
+        points_v = np.fromfile(
+            v_path, dtype=np.float32, count=-1).reshape(
+                [-1, self.num_features])
+        rect = calib['R0_rect']
+        Trv2c = calib['Tr_velo_to_cam']
+        P2 = calib['P2']
+        if self.remove_outside:
+            points_v = box_np_ops.remove_outside_points(
+                points_v, rect, Trv2c, P2, image_info['image_shape'])
+
+        # points_v = points_v[points_v[:, 0] > 0]
+        annos = info['annos']
+        num_obj = len([n for n in annos['name'] if n != 'DontCare'])
+        # annos = kitti.filter_kitti_anno(annos, ['DontCare'])
+        dims = annos['dimensions'][:num_obj]
+        loc = annos['location'][:num_obj]
+        rots = annos['rotation_y'][:num_obj]
+        gt_boxes_camera = np.concatenate([loc, dims, rots[..., np.newaxis]],
+                                         axis=1)
+        gt_boxes_lidar = box_np_ops.box_camera_to_lidar(
+            gt_boxes_camera, rect, Trv2c)
+        indices = box_np_ops.points_in_rbbox(points_v[:, :3], gt_boxes_lidar)
+        num_points_in_gt = indices.sum(0)
+        num_ignored = len(annos['dimensions']) - num_obj
+        num_points_in_gt = np.concatenate(
+            [num_points_in_gt, -np.ones([num_ignored])])
+        annos['num_points_in_gt'] = num_points_in_gt.astype(np.int32)
+        return info
+
+    def calculate(self, infos):
+        ret_infos = mmcv.track_parallel_progress(
+            self.calculate_single, infos, self.num_worker)
+        for i, ret_info in enumerate(ret_infos):
+            infos[i] = ret_info
 
 
 def _calculate_num_points_in_gt(data_path,
@@ -161,7 +218,8 @@ def create_waymo_info_file(data_path,
                            pkl_prefix='waymo',
                            save_path=None,
                            relative_path=True,
-                           max_sweeps=5):
+                           max_sweeps=5,
+                           workers=8):
     """Create info file of waymo dataset.
 
     Given the raw data, generate its related info file in pkl format.
@@ -187,55 +245,57 @@ def create_waymo_info_file(data_path,
         save_path = Path(data_path)
     else:
         save_path = Path(save_path)
-    waymo_infos_train = get_waymo_image_info(
+    waymo_infos_train = WaymoImageInfoGatherer(
         data_path,
         training=True,
         velodyne=True,
         calib=True,
         pose=True,
-        image_ids=train_img_ids,
         relative_path=relative_path,
-        max_sweeps=max_sweeps)
-    _calculate_num_points_in_gt(
+        max_sweeps=max_sweeps,
+        num_worker=workers).gather(train_img_ids)
+    _NumPointsInGTCalculater(
         data_path,
-        waymo_infos_train,
         relative_path,
         num_features=6,
-        remove_outside=False)
+        remove_outside=False,
+        num_worker=workers
+    ).calculate(waymo_infos_train)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Waymo info train file is saved to {filename}')
     mmcv.dump(waymo_infos_train, filename)
-    waymo_infos_val = get_waymo_image_info(
+    waymo_infos_val = WaymoImageInfoGatherer(
         data_path,
         training=True,
         velodyne=True,
         calib=True,
         pose=True,
-        image_ids=val_img_ids,
         relative_path=relative_path,
-        max_sweeps=max_sweeps)
-    _calculate_num_points_in_gt(
+        max_sweeps=max_sweeps,
+        num_worker=workers).gather(val_img_ids)
+    _NumPointsInGTCalculater(
         data_path,
-        waymo_infos_val,
         relative_path,
         num_features=6,
-        remove_outside=False)
+        remove_outside=False,
+        num_worker=workers
+    ).calculate(waymo_infos_val)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Waymo info val file is saved to {filename}')
     mmcv.dump(waymo_infos_val, filename)
     filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
     print(f'Waymo info trainval file is saved to {filename}')
     mmcv.dump(waymo_infos_train + waymo_infos_val, filename)
-    waymo_infos_test = get_waymo_image_info(
+    waymo_infos_test = WaymoImageInfoGatherer(
         data_path,
         training=False,
         label_info=False,
         velodyne=True,
         calib=True,
         pose=True,
-        image_ids=test_img_ids,
         relative_path=relative_path,
-        max_sweeps=max_sweeps)
+        max_sweeps=max_sweeps,
+        num_worker=workers).gather(test_img_ids)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'Waymo info test file is saved to {filename}')
     mmcv.dump(waymo_infos_test, filename)
