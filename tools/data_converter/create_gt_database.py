@@ -361,7 +361,7 @@ class GTDatabaseCreater:
             Default: True.
         with_mask (bool, optional): Whether to use mask.
             Default: False.
-        num_worker (int): the number of parallel workers to use.
+        num_worker (int, optional): the number of parallel workers to use.
             Default: 8.
     """
 
