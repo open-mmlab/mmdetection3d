@@ -294,7 +294,7 @@ def get_kitti_image_info(path,
     return list(image_infos)
 
 
-class WaymoImageInfoGatherer:
+class WaymoInfoGatherer:
     """
     Parallel version of waymo dataset information gathering.
     Waymo annotation format version like KITTI:

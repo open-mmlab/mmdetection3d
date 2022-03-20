@@ -7,7 +7,7 @@ import numpy as np
 from nuscenes.utils.geometry_utils import view_points
 
 from mmdet3d.core.bbox import box_np_ops, points_cam2img
-from .kitti_data_utils import WaymoImageInfoGatherer, get_kitti_image_info
+from .kitti_data_utils import WaymoInfoGatherer, get_kitti_image_info
 from .nuscenes_converter import post_process_coords
 
 kitti_categories = ('Pedestrian', 'Cyclist', 'Car')
@@ -46,12 +46,12 @@ def _read_imageset_file(path):
 
 class _NumPointsInGTCalculater:
     """Calculate the number of points inside the ground truth box. This is the
-    parallel version.
+    parallel version. For the serialized version, please refer to
+    `_calculate_num_points_in_gt`.
 
     Args:
         data_path (str): Path of the data.
-        relative_path (bool, optional): Whether to use relative path.
-            Default: True.
+        relative_path (bool): Whether to use relative path.
         remove_outside (bool, optional): Whether to remove points which are
             outside of image. Default: True.
         num_features (int, optional): Number of features per point.
@@ -89,11 +89,8 @@ class _NumPointsInGTCalculater:
         if self.remove_outside:
             points_v = box_np_ops.remove_outside_points(
                 points_v, rect, Trv2c, P2, image_info['image_shape'])
-
-        # points_v = points_v[points_v[:, 0] > 0]
         annos = info['annos']
         num_obj = len([n for n in annos['name'] if n != 'DontCare'])
-        # annos = kitti.filter_kitti_anno(annos, ['DontCare'])
         dims = annos['dimensions'][:num_obj]
         loc = annos['location'][:num_obj]
         rots = annos['rotation_y'][:num_obj]
@@ -260,7 +257,7 @@ def create_waymo_info_file(data_path,
         save_path = Path(data_path)
     else:
         save_path = Path(save_path)
-    waymo_infos_train = WaymoImageInfoGatherer(
+    waymo_infos_gatherer_trainval = WaymoInfoGatherer(
         data_path,
         training=True,
         velodyne=True,
@@ -268,38 +265,8 @@ def create_waymo_info_file(data_path,
         pose=True,
         relative_path=relative_path,
         max_sweeps=max_sweeps,
-        num_worker=workers).gather(train_img_ids)
-    _NumPointsInGTCalculater(
-        data_path,
-        relative_path,
-        num_features=6,
-        remove_outside=False,
-        num_worker=workers).calculate(waymo_infos_train)
-    filename = save_path / f'{pkl_prefix}_infos_train.pkl'
-    print(f'Waymo info train file is saved to {filename}')
-    mmcv.dump(waymo_infos_train, filename)
-    waymo_infos_val = WaymoImageInfoGatherer(
-        data_path,
-        training=True,
-        velodyne=True,
-        calib=True,
-        pose=True,
-        relative_path=relative_path,
-        max_sweeps=max_sweeps,
-        num_worker=workers).gather(val_img_ids)
-    _NumPointsInGTCalculater(
-        data_path,
-        relative_path,
-        num_features=6,
-        remove_outside=False,
-        num_worker=workers).calculate(waymo_infos_val)
-    filename = save_path / f'{pkl_prefix}_infos_val.pkl'
-    print(f'Waymo info val file is saved to {filename}')
-    mmcv.dump(waymo_infos_val, filename)
-    filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
-    print(f'Waymo info trainval file is saved to {filename}')
-    mmcv.dump(waymo_infos_train + waymo_infos_val, filename)
-    waymo_infos_test = WaymoImageInfoGatherer(
+        num_worker=workers)
+    waymo_infos_gatherer_test = WaymoInfoGatherer(
         data_path,
         training=False,
         label_info=False,
@@ -308,7 +275,28 @@ def create_waymo_info_file(data_path,
         pose=True,
         relative_path=relative_path,
         max_sweeps=max_sweeps,
-        num_worker=workers).gather(test_img_ids)
+        num_worker=workers)
+    num_points_in_gt_calculater = _NumPointsInGTCalculater(
+        data_path,
+        relative_path,
+        num_features=6,
+        remove_outside=False,
+        num_worker=workers)
+
+    waymo_infos_train = waymo_infos_gatherer_trainval.gather(train_img_ids)
+    num_points_in_gt_calculater.calculate(waymo_infos_train)
+    filename = save_path / f'{pkl_prefix}_infos_train.pkl'
+    print(f'Waymo info train file is saved to {filename}')
+    mmcv.dump(waymo_infos_train, filename)
+    waymo_infos_val = waymo_infos_gatherer_trainval.gather(val_img_ids)
+    num_points_in_gt_calculater.calculate(waymo_infos_val)
+    filename = save_path / f'{pkl_prefix}_infos_val.pkl'
+    print(f'Waymo info val file is saved to {filename}')
+    mmcv.dump(waymo_infos_val, filename)
+    filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
+    print(f'Waymo info trainval file is saved to {filename}')
+    mmcv.dump(waymo_infos_train + waymo_infos_val, filename)
+    waymo_infos_test = waymo_infos_gatherer_test.gather(test_img_ids)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'Waymo info test file is saved to {filename}')
     mmcv.dump(waymo_infos_test, filename)

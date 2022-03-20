@@ -341,7 +341,8 @@ def create_groundtruth_database(dataset_class_name,
 
 class GTDatabaseCreater:
     """Given the raw data, generate the ground truth database. This is the
-    parallel version.
+    parallel version. For serialized version, please refer to
+    `create_groundtruth_database`
 
     Args:
         dataset_class_name (str): Name of the input dataset.
