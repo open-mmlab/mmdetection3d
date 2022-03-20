@@ -340,6 +340,31 @@ def create_groundtruth_database(dataset_class_name,
 
 
 class GTDatabaseCreater:
+    """Given the raw data, generate the ground truth database. This is the
+    parallel version.
+
+    Args:
+        dataset_class_name (str): Name of the input dataset.
+        data_path (str): Path of the data.
+        info_prefix (str): Prefix of the info file.
+        info_path (str, optional): Path of the info file.
+            Default: None.
+        mask_anno_path (str, optional): Path of the mask_anno.
+            Default: None.
+        used_classes (list[str], optional): Classes have been used.
+            Default: None.
+        database_save_path (str, optional): Path to save database.
+            Default: None.
+        db_info_save_path (str, optional): Path to save db_info.
+            Default: None.
+        relative_path (bool, optional): Whether to use relative path.
+            Default: True.
+        with_mask (bool, optional): Whether to use mask.
+            Default: False.
+        num_worker (int): the number of parallel workers to use.
+            Default: 8.
+    """
+
     def __init__(self,
                  dataset_class_name,
                  data_path,
@@ -428,8 +453,8 @@ class GTDatabaseCreater:
         for i in range(num_obj):
             filename = f'{image_idx}_{names[i]}_{i}.bin'
             abs_filepath = osp.join(self.database_save_path, filename)
-            rel_filepath = osp.join(
-                f'{self.info_prefix}_gt_database', filename)
+            rel_filepath = osp.join(f'{self.info_prefix}_gt_database',
+                                    filename)
 
             # save point clouds and image patches for each object
             gt_points = points[point_indices[:, i]]
@@ -477,7 +502,9 @@ class GTDatabaseCreater:
     def create(self):
         print(f'Create GT Database of {self.dataset_class_name}')
         dataset_cfg = dict(
-            type=self.dataset_class_name, data_root=self.data_path, ann_file=self.info_path)
+            type=self.dataset_class_name,
+            data_root=self.data_path,
+            ann_file=self.info_path)
         if self.dataset_class_name == 'KittiDataset':
             file_client_args = dict(backend='disk')
             dataset_cfg.update(
@@ -572,10 +599,10 @@ class GTDatabaseCreater:
             return input_dict
 
         multi_db_infos = mmcv.track_parallel_progress(
-            self.create_single,
-            ((loop_dataset(i) for i in range(len(dataset))), len(dataset)),
+            self.create_single, ((loop_dataset(i)
+                                  for i in range(len(dataset))), len(dataset)),
             self.num_worker)
-        print(f'Make global unique group id')
+        print('Make global unique group id')
         group_counter_offset = 0
         all_db_infos = dict()
         for single_db_infos in track_iter_progress(multi_db_infos):

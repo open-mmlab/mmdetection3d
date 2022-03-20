@@ -7,7 +7,7 @@ import numpy as np
 from nuscenes.utils.geometry_utils import view_points
 
 from mmdet3d.core.bbox import box_np_ops, points_cam2img
-from .kitti_data_utils import get_kitti_image_info, WaymoImageInfoGatherer
+from .kitti_data_utils import WaymoImageInfoGatherer, get_kitti_image_info
 from .nuscenes_converter import post_process_coords
 
 kitti_categories = ('Pedestrian', 'Cyclist', 'Car')
@@ -45,6 +45,21 @@ def _read_imageset_file(path):
 
 
 class _NumPointsInGTCalculater:
+    """Calculate the number of points inside the ground truth box. This is the
+    parallel version.
+
+    Args:
+        data_path (str): Path of the data.
+        relative_path (bool, optional): Whether to use relative path.
+            Default: True.
+        remove_outside (bool, optional): Whether to remove points which are
+            outside of image. Default: True.
+        num_features (int, optional): Number of features per point.
+            Default: False.
+        num_worker (int, optional): the number of parallel workers to use.
+            Default: 8.
+    """
+
     def __init__(self,
                  data_path,
                  relative_path,
@@ -66,8 +81,8 @@ class _NumPointsInGTCalculater:
         else:
             v_path = pc_info['velodyne_path']
         points_v = np.fromfile(
-            v_path, dtype=np.float32, count=-1).reshape(
-                [-1, self.num_features])
+            v_path, dtype=np.float32,
+            count=-1).reshape([-1, self.num_features])
         rect = calib['R0_rect']
         Trv2c = calib['Tr_velo_to_cam']
         P2 = calib['P2']
@@ -95,8 +110,8 @@ class _NumPointsInGTCalculater:
         return info
 
     def calculate(self, infos):
-        ret_infos = mmcv.track_parallel_progress(
-            self.calculate_single, infos, self.num_worker)
+        ret_infos = mmcv.track_parallel_progress(self.calculate_single, infos,
+                                                 self.num_worker)
         for i, ret_info in enumerate(ret_infos):
             infos[i] = ret_info
 
@@ -259,8 +274,7 @@ def create_waymo_info_file(data_path,
         relative_path,
         num_features=6,
         remove_outside=False,
-        num_worker=workers
-    ).calculate(waymo_infos_train)
+        num_worker=workers).calculate(waymo_infos_train)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Waymo info train file is saved to {filename}')
     mmcv.dump(waymo_infos_train, filename)
@@ -278,8 +292,7 @@ def create_waymo_info_file(data_path,
         relative_path,
         num_features=6,
         remove_outside=False,
-        num_worker=workers
-    ).calculate(waymo_infos_val)
+        num_worker=workers).calculate(waymo_infos_val)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Waymo info val file is saved to {filename}')
     mmcv.dump(waymo_infos_val, filename)

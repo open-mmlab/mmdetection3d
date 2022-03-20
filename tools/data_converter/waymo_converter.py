@@ -242,8 +242,7 @@ class Waymo2KITTI(object):
         points = np.concatenate([points_0, points_1], axis=0)
         intensity = np.concatenate([intensity_0, intensity_1], axis=0)
         elongation = np.concatenate([elongation_0, elongation_1], axis=0)
-        mask_indices = np.concatenate([mask_indices_0, mask_indices_1],
-                                      axis=0)
+        mask_indices = np.concatenate([mask_indices_0, mask_indices_1], axis=0)
 
         # timestamp = frame.timestamp_micros * np.ones_like(intensity)
 
@@ -375,11 +374,23 @@ class Waymo2KITTI(object):
             pose)
 
     def save_timestamp(self, frame, file_idx, frame_idx):
+        """Save the timestamp data in a separate file instead of the
+        pointcloud.
+
+        Note that SDC's own pose is not included in the regular training
+        of KITTI dataset. KITTI raw dataset contains ego motion files
+        but are not often used. Pose is important for algorithms that
+        take advantage of the temporal information.
+
+        Args:
+            frame (:obj:`Frame`): Open dataset frame proto.
+            file_idx (int): Current file index.
+            frame_idx (int): Current frame index.
+        """
         with open(
-            join(f'{self.timestamp_save_dir}/{self.prefix}' +
-                 f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'),
-            'w'
-        ) as f:
+                join(f'{self.timestamp_save_dir}/{self.prefix}' +
+                     f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'),
+                'w') as f:
             f.write(str(frame.timestamp_micros))
 
     def create_folder(self):
@@ -425,7 +436,9 @@ class Waymo2KITTI(object):
         Returns:
             tuple[list[np.ndarray]]: (List of points with shape [N, 3],
                 camera projections of points with shape [N, 6], intensity
-                with shape [N, 1], elongation with shape [N, 1]). All the
+                with shape [N, 1], elongation with shape [N, 1], points'
+                position in the depth map (element offset if points come from
+                the main lidar otherwise -1) with shape[N, 1]). All the
                 lists have the length of lidar numbers (5).
         """
         calibrations = sorted(
@@ -493,14 +506,12 @@ class Waymo2KITTI(object):
             mask_index = tf.where(range_image_mask)
 
             range_image_cartesian = tf.squeeze(range_image_cartesian, axis=0)
-            points_tensor = tf.gather_nd(range_image_cartesian,
-                                         mask_index)
+            points_tensor = tf.gather_nd(range_image_cartesian, mask_index)
 
             cp = camera_projections[c.name][ri_index]
             cp_tensor = tf.reshape(
                 tf.convert_to_tensor(value=cp.data), cp.shape.dims)
-            cp_points_tensor = tf.gather_nd(
-                cp_tensor, mask_index)
+            cp_points_tensor = tf.gather_nd(cp_tensor, mask_index)
             points.append(points_tensor.numpy())
             cp_points.append(cp_points_tensor.numpy())
 
@@ -512,9 +523,9 @@ class Waymo2KITTI(object):
                                              mask_index)
             elongation.append(elongation_tensor.numpy())
             if c.name == 1:
-                mask_index = (
-                    ri_index * range_image_mask.shape[0] + mask_index[:, 0]
-                ) * range_image_mask.shape[1] + mask_index[:, 1]
+                mask_index = (ri_index * range_image_mask.shape[0] +
+                              mask_index[:, 0]
+                              ) * range_image_mask.shape[1] + mask_index[:, 1]
                 mask_index = mask_index.numpy().astype(elongation[-1].dtype)
             else:
                 mask_index = np.full_like(elongation[-1], -1)

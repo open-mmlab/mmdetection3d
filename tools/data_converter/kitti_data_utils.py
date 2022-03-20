@@ -6,8 +6,8 @@ from pathlib import Path
 
 import mmcv
 import numpy as np
-from skimage import io
 from PIL import Image
+from skimage import io
 
 
 def get_image_index_str(img_idx, use_prefix_id=False):
@@ -295,6 +295,36 @@ def get_kitti_image_info(path,
 
 
 class WaymoImageInfoGatherer:
+    """
+    Parallel version of waymo dataset information gathering.
+    Waymo annotation format version like KITTI:
+    {
+        [optional]points: [N, 3+] point cloud
+        [optional, for kitti]image: {
+            image_idx: ...
+            image_path: ...
+            image_shape: ...
+        }
+        point_cloud: {
+            num_features: 6
+            velodyne_path: ...
+        }
+        [optional, for kitti]calib: {
+            R0_rect: ...
+            Tr_velo_to_cam0: ...
+            P0: ...
+        }
+        annos: {
+            location: [num_gt, 3] array
+            dimensions: [num_gt, 3] array
+            rotation_y: [num_gt] angle array
+            name: [num_gt] ground truth name array
+            [optional]difficulty: kitti difficulty
+            [optional]group_ids: used for multi-part object
+        }
+    }
+    """
+
     def __init__(self,
                  path,
                  training=True,
@@ -329,10 +359,18 @@ class WaymoImageInfoGatherer:
         annotations = None
         if self.velodyne:
             pc_info['velodyne_path'] = get_velodyne_path(
-                idx, self.path, self.training, self.relative_path, use_prefix_id=True)
-            with open(get_timestamp_path(
-                idx, self.path, self.training, relative_path=False, use_prefix_id=True)
-            ) as f:
+                idx,
+                self.path,
+                self.training,
+                self.relative_path,
+                use_prefix_id=True)
+            with open(
+                    get_timestamp_path(
+                        idx,
+                        self.path,
+                        self.training,
+                        relative_path=False,
+                        use_prefix_id=True)) as f:
                 info['timestamp'] = np.int64(f.read())
         image_info['image_path'] = get_image_path(
             idx,
@@ -363,7 +401,11 @@ class WaymoImageInfoGatherer:
         info['point_cloud'] = pc_info
         if self.calib:
             calib_path = get_calib_path(
-                idx, self.path, self.training, relative_path=False, use_prefix_id=True)
+                idx,
+                self.path,
+                self.training,
+                relative_path=False,
+                use_prefix_id=True)
             with open(calib_path, 'r') as f:
                 lines = f.readlines()
             P0 = np.array([float(info) for info in lines[0].split(' ')[1:13]
@@ -407,7 +449,11 @@ class WaymoImageInfoGatherer:
             info['calib'] = calib_info
         if self.pose:
             pose_path = get_pose_path(
-                idx, self.path, self.training, relative_path=False, use_prefix_id=True)
+                idx,
+                self.path,
+                self.training,
+                relative_path=False,
+                use_prefix_id=True)
             info['pose'] = np.loadtxt(pose_path)
 
         if annotations is not None:
@@ -430,9 +476,13 @@ class WaymoImageInfoGatherer:
             if_prev_exists = osp.exists(
                 Path(self.path) / prev_info['velodyne_path'])
             if if_prev_exists:
-                with open(get_timestamp_path(
-                        prev_idx, self.path, self.training, relative_path=False,
-                        use_prefix_id=True)) as f:
+                with open(
+                        get_timestamp_path(
+                            prev_idx,
+                            self.path,
+                            self.training,
+                            relative_path=False,
+                            use_prefix_id=True)) as f:
                     prev_info['timestamp'] = np.int64(f.read())
                 prev_pose_path = get_pose_path(
                     prev_idx,
@@ -451,8 +501,8 @@ class WaymoImageInfoGatherer:
     def gather(self, image_ids):
         if not isinstance(image_ids, list):
             image_ids = list(range(image_ids))
-        image_infos = mmcv.track_parallel_progress(
-            self.gather_single, image_ids, self.num_worker)
+        image_infos = mmcv.track_parallel_progress(self.gather_single,
+                                                   image_ids, self.num_worker)
         return list(image_infos)
 
 
