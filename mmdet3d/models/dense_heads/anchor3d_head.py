@@ -512,6 +512,6 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
                                    self.dir_limit_offset, np.pi)
             bboxes[..., 6] = (
                 dir_rot + self.dir_offset +
-                np.pi * dir_scores.to(bboxes.dtype))
+                np.pi * (1 - dir_scores.to(bboxes.dtype)))
         bboxes = input_meta['box_type_3d'](bboxes, box_dim=self.box_code_size)
         return bboxes, scores, labels
