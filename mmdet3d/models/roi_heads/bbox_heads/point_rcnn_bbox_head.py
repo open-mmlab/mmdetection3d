@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
 from mmcv.cnn.bricks import build_conv_layer
+from mmcv.ops import nms_bev as nms_gpu
+from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -10,7 +12,6 @@ from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
 from mmdet3d.ops import build_sa_module
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
