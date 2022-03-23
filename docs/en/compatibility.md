@@ -1,4 +1,10 @@
-## v1.0.0.dev0
+## v1.0.0rc1
+
+### Operators Migration
+
+- We have adopted CUDA operators compiled from [mmcv](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/__init__.py) and removed all the CUDA operators in mmdet3d. We now do not need to compile the CUDA operators in mmdet3d anymore.
+
+## v1.0.0rc0
 
 ### Coordinate system refactoring
 
