@@ -27,6 +27,9 @@ from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
 
 from .points_op import pts_in_boxes3d
 
+from .pointnet2_utils import three_nn_2d, three_interpolate_2d
+
+
 __all__ = [
     'nms', 'soft_nms', 'RoIAlign', 'roi_align', 'get_compiler_version',
     'get_compiling_cuda_version', 'NaiveSyncBatchNorm1d',
@@ -42,5 +45,6 @@ __all__ = [
     'get_compiler_version', 'assign_score_withk', 'get_compiling_cuda_version',
     'Points_Sampler', 'build_sa_module', 'PAConv', 'PAConvCUDA',
     'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
-    'PAConvCUDASAModuleMSG', 'RoIPointPool3d', 'pts_in_boxes3d'
+    'PAConvCUDASAModuleMSG', 'RoIPointPool3d', 'pts_in_boxes3d',
+    'three_nn_2d', 'three_interpolate_2d'
 ]

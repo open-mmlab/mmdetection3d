@@ -314,7 +314,21 @@ if __name__ == '__main__':
                 name='gather_points_ext',
                 module='mmdet3d.ops.gather_points',
                 sources=['src/gather_points.cpp'],
-                sources_cuda=['src/gather_points_cuda.cu'])
+                sources_cuda=['src/gather_points_cuda.cu']),
+
+            make_cuda_ext(
+                name='pointnet2_cuda',
+                module='mmdet3d.ops.pointnet2_utils',
+                sources=[
+                    'src/pointnet2_api.cpp',
+                    'src/interpolate.cpp',
+                    'src/interpolate_gpu.cu']),
+
+            make_cuda_ext(
+                name='points_op_cpu',
+                module='mmdet3d.ops.points_op',
+                sources=['src/points_op.cpp'])
+
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)

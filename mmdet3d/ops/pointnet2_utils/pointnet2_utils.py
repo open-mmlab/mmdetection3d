@@ -4,7 +4,7 @@ from torch.autograd import Function
 import torch.nn as nn
 from typing import Tuple
 
-import mmdet3d.ops.pointnet2.pointnet2_cuda as pointnet2
+import mmdet3d.ops.pointnet2_utils.pointnet2_cuda as pointnet2
 
 class ThreeNN(Function):
 
@@ -35,7 +35,7 @@ class ThreeNN(Function):
         return None, None
 
 
-three_nn = ThreeNN.apply
+three_nn_2d = ThreeNN.apply
 
 
 class ThreeInterpolate(Function):
@@ -83,6 +83,6 @@ class ThreeInterpolate(Function):
         return grad_features, None, None
 
 
-three_interpolate = ThreeInterpolate.apply
+three_interpolate_2d = ThreeInterpolate.apply
 
 

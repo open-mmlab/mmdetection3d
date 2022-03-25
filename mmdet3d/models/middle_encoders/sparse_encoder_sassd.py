@@ -5,9 +5,9 @@ import torch
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
-from mmdet3d.ops import three_nn, three_interpolate
+from mmdet3d.ops import three_nn_2d, three_interpolate_2d
 from mmdet3d.ops import pts_in_boxes3d
-from mmdet3d.models.loss import weighted_smoothl1, weighted_sigmoid_focal_loss
+from mmdet3d.models.losses import weighted_smoothl1, weighted_sigmoid_focal_loss
 from ..builder import MIDDLE_ENCODERS
 
 def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
@@ -27,11 +27,11 @@ def nearest_neighbor_interpolate(unknown, known, known_feats):
     :return:
         new_features: (n, C) tensor of the features of the unknown features
     """
-    dist, idx = three_nn(unknown, known)
+    dist, idx = three_nn_2d(unknown, known)
     dist_recip = 1.0 / (dist + 1e-8)
     norm = torch.sum(dist_recip, dim=1, keepdim=True)
     weight = dist_recip / norm
-    interpolated_feats = three_interpolate(known_feats, idx, weight)
+    interpolated_feats = three_interpolate_2d(known_feats, idx, weight)
 
     return interpolated_feats
 
