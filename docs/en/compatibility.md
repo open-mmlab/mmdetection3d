@@ -1,3 +1,50 @@
+## v1.0.0rc1
+
+### Waymo dataset converter refactoring
+
+In this version we did a major code refactoring that boosted the performance of waymo dataset conversion by multiprocessing.
+Meanwhile, we also fixed the imprecise timestamps saving issue in waymo dataset conversion. This change introduces following backward compatibility breaks:
+
+- The point cloud .bin files of waymo dataset need to be regenerated.
+In the .bin files each point occupies 6 `float32` and the meaning of the last `float32` now changed from **imprecise timestamps** to **range frame offset**.
+The **range frame offset** for each point is calculated as`ri * h * w + row * w + col` if the point is from the **TOP** lidar or `-1` otherwise.
+The `h`, `w` denote the height and width of the TOP lidar's range frame.
+The `ri`, `row`, `col` denote the return index, the row and the column of the range frame where each point locates.
+Following tables show the difference across the change:
+
+Before
+
+| Element offset (float32) |  0  |  1  |  2  |     3     |     4      |            5            |
+|--------------------------|:---:|:---:|:---:|:---------:|:----------:|:-----------------------:|
+| Bytes offset             |  0  |  4  |  8  |    12     |     16     |           20            |
+| Meaning                  |  x  |  y  |  z  | intensity | elongation | **imprecise timestamp** |
+
+After
+
+| Element offset (float32) |  0  |  1  |  2  |     3     |     4      |           5            |
+|--------------------------|:---:|:---:|:---:|:---------:|:----------:|:----------------------:|
+| Bytes offset             |  0  |  4  |  8  |    12     |     16     |           20           |
+| Meaning                  |  x  |  y  |  z  | intensity | elongation | **range frame offset** |
+
+- The objects' point cloud .bin files in the GT-database of waymo dataset need to be regenerated because we also dumped the range frame offset for each point into it.
+Following tables show the difference across the change:
+
+Before
+
+| Element offset (float32) |  0  |  1  |  2  |     3     |     4      |
+|--------------------------|:---:|:---:|:---:|:---------:|:----------:|
+| Bytes offset             |  0  |  4  |  8  |    12     |     16     |
+| Meaning                  |  x  |  y  |  z  | intensity | elongation |
+
+After
+
+| Element offset (float32) |  0  |  1  |  2  |     3     |     4      |           5            |
+|--------------------------|:---:|:---:|:---:|:---------:|:----------:|:----------------------:|
+| Bytes offset             |  0  |  4  |  8  |    12     |     16     |           20           |
+| Meaning                  |  x  |  y  |  z  | intensity | elongation | **range frame offset** |
+
+- Any configuration that uses waymo dataset with GT Augmentation should change the `db_sampler.points_loader.load_dim` from `5` to `6`.
+
 ## v1.0.0.dev0
 
 ### Coordinate system refactoring
