@@ -183,14 +183,14 @@ py::array_t<bool> points_in_bbox3d_np(py::array_t<DType> points,
 
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.doc() = "pybind11 example plugin";      // module doc string
-  m.def("points_to_bev_kernel",                              // function name
-        &points_to_bev_kernel<float,3>,                               // function pointer
-        "function of converting points to voxel" //function doc string
+  m.doc() = "pybind11 example plugin";            // module doc string
+  m.def("points_to_bev_kernel",                   // function name
+        &points_to_bev_kernel<float,3>,           // function pointer
+        "function of converting points to voxel"  // function doc string
        );
-  m.def("points_bound_kernel",                              // function name
-        &points_bound_kernel<float>,                               // function pointer
-        "function of filtering points" //function doc string
+  m.def("points_bound_kernel",                    // function name
+        &points_bound_kernel<float>,              // function pointer
+        "function of filtering points"            // function doc string
        );
   m.def("pts_in_boxes3d", &pts_in_boxes3d_cpu, "points in boxes3d (CPU)");
   m.def("points_in_bbox3d_np", &points_in_bbox3d_np<float>, "points in boxes3d using numpy (CPU)");

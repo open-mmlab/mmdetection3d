@@ -1,9 +1,9 @@
 #include <torch/serialize/tensor.h>
 #include <vector>
 #include <THC/THC.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include "interpolate_gpu.h"
