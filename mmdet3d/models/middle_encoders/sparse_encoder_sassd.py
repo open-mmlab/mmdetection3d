@@ -7,8 +7,8 @@ from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
 from mmdet3d.ops import three_nn_2d, three_interpolate_2d
 from mmdet3d.ops import pts_in_boxes3d
-from mmdet3d.models.losses import weighted_smoothl1,
-                                  weighted_sigmoid_focal_loss
+from mmdet3d.models.losses import weighted_smoothl1
+from mmdet3d.models.losses import weighted_sigmoid_focal_loss
 from ..builder import MIDDLE_ENCODERS
 
 

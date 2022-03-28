@@ -1,7 +1,6 @@
 import torch
 from torch.autograd import Variable
 from torch.autograd import Function
-from typing import Tuple
 
 import mmdet3d.ops.pointnet2_utils.pointnet2_cuda as pointnet2
 
