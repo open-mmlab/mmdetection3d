@@ -1,6 +1,7 @@
 import numba
 import numpy as np
-import copy
+
+
 @numba.jit(nopython=True)
 def _points_to_voxel_reverse_kernel(points,
                                     voxel_size,
@@ -49,6 +50,7 @@ def _points_to_voxel_reverse_kernel(points,
             num_points_per_voxel[voxelidx] += 1
     return voxel_num
 
+
 @numba.jit(nopython=True)
 def _points_to_voxel_kernel(points,
                             voxel_size,
@@ -60,7 +62,8 @@ def _points_to_voxel_kernel(points,
                             max_points=35,
                             max_voxels=20000):
     # need mutex if write in cuda, but numba.cuda don't support mutex.
-    # in addition, pytorch don't support cuda in dataloader(tensorflow support this).
+    # in addition, pytorch don't support cuda in dataloader
+    # (tensorflow support this).
     # put all computations to one loop.
     # we shouldn't create large array in main jit code, otherwise
     # decrease performance
@@ -71,8 +74,6 @@ def _points_to_voxel_kernel(points,
     # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
     grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
 
-    lower_bound = coors_range[:3]
-    upper_bound = coors_range[3:]
     coor = np.zeros(shape=(3, ), dtype=np.int32)
     voxel_num = 0
     failed = False
@@ -102,11 +103,11 @@ def _points_to_voxel_kernel(points,
 
 
 def points_to_voxel(points,
-                     voxel_size,
-                     coors_range,
-                     max_points=35,
-                     reverse_index=True,
-                     max_voxels=20000):
+                    voxel_size,
+                    coors_range,
+                    max_points=35,
+                    reverse_index=True,
+                    max_voxels=20000):
     """convert kitti points(N, >=3) to voxels. This version calculate
     everything in one loop. now it takes only 4.2ms(complete point cloud)
     with jit and 3.2ghz cpu.(don't calculate other features)
@@ -159,8 +160,6 @@ def points_to_voxel(points,
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
-    # voxels[:, :, -3:] = voxels[:, :, :3] - \
-    #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
     return voxels, coors, num_points_per_voxel
 
 
@@ -180,4 +179,3 @@ def bound_points_jit(points, upper_bound, lower_bound):
                 break
         keep_indices[i] = success
     return keep_indices
-

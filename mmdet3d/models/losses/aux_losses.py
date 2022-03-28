@@ -95,6 +95,7 @@ def weighted_smoothl1(pred, target, weight, beta=1.0, avg_factor=None):
     loss = smooth_l1_loss(pred, target, beta, reduction='none')
     return torch.sum(loss * weight)[None] / avg_factor
 
+
 def l1_loss(pred, target, reduction='mean'):
     assert pred.size() == target.size() and target.numel() > 0
     loss = torch.abs(pred - target)
@@ -107,11 +108,13 @@ def l1_loss(pred, target, reduction='mean'):
     elif reduction_enum == 2:
         return loss.sum()
 
+
 def weighted_l1(pred, target, weight, avg_factor=None):
     if avg_factor is None:
         avg_factor = torch.sum(weight > 0).float().item() / 4 + 1e-6
     loss = l1_loss(pred, target, reduction='none')
     return torch.sum(loss * weight)[None] / avg_factor
+
 
 def accuracy(pred, target, topk=1):
     if isinstance(topk, int):

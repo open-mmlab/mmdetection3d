@@ -1,15 +1,15 @@
 import torch
 from torch.autograd import Variable
 from torch.autograd import Function
-import torch.nn as nn
 from typing import Tuple
 
 import mmdet3d.ops.pointnet2_utils.pointnet2_cuda as pointnet2
 
+
 class ThreeNN(Function):
 
     @staticmethod
-    def forward(ctx, unknown: torch.Tensor, known: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(ctx, unknown, known):
         """
         Find the three nearest neighbors of unknown in known
         :param ctx:
@@ -41,12 +41,13 @@ three_nn_2d = ThreeNN.apply
 class ThreeInterpolate(Function):
 
     @staticmethod
-    def forward(ctx, features: torch.Tensor, idx: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    def forward(ctx, features, idx, weight):
         """
         Performs weight linear interpolation on 3 features
         :param ctx:
         :param features: (M, C) Features descriptors to be interpolated from
-        :param idx: (n, 3) three nearest neighbors of the target features in features
+        :param idx: (n, 3) three nearest neighbors of the target features in
+                    features
         :param weight: (n, 3) weights
         :return:
             output: (N, C) tensor of the interpolated features
@@ -60,11 +61,12 @@ class ThreeInterpolate(Function):
         ctx.three_interpolate_for_backward = (idx, weight, m)
         output = torch.cuda.FloatTensor(n, c)
 
-        pointnet2.three_interpolate_wrapper(c, m, n, features, idx, weight, output)
+        pointnet2.three_interpolate_wrapper(
+                c, m, n, features, idx, weight, output)
         return output
 
     @staticmethod
-    def backward(ctx, grad_out: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def backward(ctx, grad_out):
         """
         :param ctx:
         :param grad_out: (N, C) tensor with gradients of outputs
@@ -79,10 +81,9 @@ class ThreeInterpolate(Function):
         grad_features = Variable(torch.cuda.FloatTensor(m, c).zero_())
         grad_out_data = grad_out.data.contiguous()
 
-        pointnet2.three_interpolate_grad_wrapper( c, n, m, grad_out_data, idx, weight, grad_features.data)
+        pointnet2.three_interpolate_grad_wrapper(
+                c, n, m, grad_out_data, idx, weight, grad_features.data)
         return grad_features, None, None
 
 
 three_interpolate_2d = ThreeInterpolate.apply
-
-

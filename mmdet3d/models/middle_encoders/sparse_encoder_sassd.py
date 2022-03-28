@@ -7,14 +7,17 @@ from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
 from mmdet3d.ops import three_nn_2d, three_interpolate_2d
 from mmdet3d.ops import pts_in_boxes3d
-from mmdet3d.models.losses import weighted_smoothl1, weighted_sigmoid_focal_loss
+from mmdet3d.models.losses import weighted_smoothl1,
+                                  weighted_sigmoid_focal_loss
 from ..builder import MIDDLE_ENCODERS
+
 
 def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
     indices = tensor.indices.float()
     offset = torch.Tensor(offset).to(indices.device)
     voxel_size = torch.Tensor(voxel_size).to(indices.device)
-    indices[:, 1:] = indices[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size
+    indices[:, 1:] = indices[:, [3, 2, 1]] * voxel_size + offset \
+                     + .5 * voxel_size
     return tensor.features, indices
 
 
@@ -34,6 +37,7 @@ def nearest_neighbor_interpolate(unknown, known, known_feats):
     interpolated_feats = three_interpolate_2d(known_feats, idx, weight)
 
     return interpolated_feats
+
 
 @MIDDLE_ENCODERS.register_module()
 class SparseEncoderSASSD(nn.Module):
@@ -166,13 +170,16 @@ class SparseEncoderSASSD(nn.Module):
             return spatial_features
 
         # auxiliary network
-        vx_feat, vx_nxyz = tensor2points(encode_features[0], (0, -40., -3.), voxel_size=(.1, .1, .2))
+        vx_feat, vx_nxyz = tensor2points(encode_features[0], (0, -40., -3.),
+                                         voxel_size=(.1, .1, .2))
         p0 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
 
-        vx_feat, vx_nxyz = tensor2points(encode_features[1], (0, -40., -3.), voxel_size=(.2, .2, .4))
+        vx_feat, vx_nxyz = tensor2points(encode_features[1], (0, -40., -3.),
+                                         voxel_size=(.2, .2, .4))
         p1 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
 
-        vx_feat, vx_nxyz = tensor2points(encode_features[2], (0, -40., -3.), voxel_size=(.4, .4, .8))
+        vx_feat, vx_nxyz = tensor2points(encode_features[2], (0, -40., -3.),
+                                         voxel_size=(.4, .4, .8))
         p2 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
 
         pointwise = torch.cat([p0, p1, p2], dim=-1)
@@ -180,7 +187,7 @@ class SparseEncoderSASSD(nn.Module):
         point_cls = self.point_cls(pointwise)
         point_reg = self.point_reg(pointwise)
 
-        return spatial_features, (points_mean, point_cls, point_reg)   
+        return spatial_features, (points_mean, point_cls, point_reg)
 
     def build_aux_target(self, nxyz, gt_boxes3d, enlarge=1.0):
         center_offsets = list()
@@ -194,14 +201,6 @@ class SparseEncoderSASSD(nn.Module):
 
             pts_in_flag, center_offset = pts_in_boxes3d(new_xyz, boxes3d)
             pts_label = pts_in_flag.max(0)[0].byte()
-
-            # import mayavi.mlab as mlab
-            # from mmdet.datasets.kitti_utils import draw_lidar, draw_gt_boxes3d
-            # f = draw_lidar((new_xyz).numpy(), show=False)
-            # pts = new_xyz[pts_label].numpy()
-            # mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], color=(1, 1, 1), scale_factor=0.25, figure=f)
-            # f = draw_gt_boxes3d(center_to_corner_box3d(boxes3d.numpy()), f, draw_text=False, show=True)
-
             pts_labels.append(pts_label)
             center_offsets.append(center_offset)
 
@@ -212,7 +211,6 @@ class SparseEncoderSASSD(nn.Module):
 
 
     def aux_loss(self, points, point_cls, point_reg, gt_bboxes):
-
         N = len(gt_bboxes)
 
         pts_labels, center_targets = self.build_aux_target(points, gt_bboxes)
@@ -230,15 +228,22 @@ class SparseEncoderSASSD(nn.Module):
         reg_weights = pos
         reg_weights = reg_weights / pos_normalizer
 
-        aux_loss_cls = weighted_sigmoid_focal_loss(point_cls.view(-1), rpn_cls_target, weight=cls_weights, avg_factor=1.)
+        aux_loss_cls = weighted_sigmoid_focal_loss(point_cls.view(-1),
+                                                   rpn_cls_target,
+                                                   weight=cls_weights,
+                                                   avg_factor=1.)
         aux_loss_cls /= N
 
-        aux_loss_reg = weighted_smoothl1(point_reg, center_targets, beta=1 / 9., weight=reg_weights[..., None], avg_factor=1.)
+        aux_loss_reg = weighted_smoothl1(point_reg,
+                                         center_targets,
+                                         beta=1 / 9.,
+                                         weight=reg_weights[..., None],
+                                         avg_factor=1.)
         aux_loss_reg /= N
 
         return dict(
-            aux_loss_cls = aux_loss_cls,
-            aux_loss_reg = aux_loss_reg,
+            aux_loss_cls=aux_loss_cls,
+            aux_loss_reg=aux_loss_reg
         )
 
     def make_encoder_layers(self,
