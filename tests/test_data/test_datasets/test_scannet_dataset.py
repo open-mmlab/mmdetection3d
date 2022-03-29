@@ -747,7 +747,7 @@ def test_instance_seg_getitem():
                                         4.0392e-01, 3.8039e-01, 4.1961e-01
                                     ]])
     expected_semantic_mask = torch.tensor([11, 18, 18, 0, 4]).int()
-    expected_instance_mask = torch.tensor([6, 56, 10, 9, 35]).int()
+    expected_instance_mask = torch.tensor([6, 56, 10, 9, 35]).long()
 
     data = scannet_dataset[0]
     assert torch.allclose(data['points']._data[:5], expected_points, 1e-2)
