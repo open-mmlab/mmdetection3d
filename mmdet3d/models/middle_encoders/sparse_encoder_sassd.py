@@ -17,7 +17,7 @@ def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
     offset = torch.Tensor(offset).to(indices.device)
     voxel_size = torch.Tensor(voxel_size).to(indices.device)
     indices[:, 1:] = indices[:, [3, 2, 1]] * voxel_size + offset \
-                     + .5 * voxel_size
+                      + .5 * voxel_size
     return tensor.features, indices
 
 
@@ -167,7 +167,7 @@ class SparseEncoderSASSD(nn.Module):
         spatial_features = spatial_features.view(N, C * D, H, W)
 
         if not is_train:
-            return spatial_features
+            return spatial_features, None
 
         # auxiliary network
         vx_feat, vx_nxyz = tensor2points(encode_features[0], (0, -40., -3.),
@@ -208,7 +208,6 @@ class SparseEncoderSASSD(nn.Module):
         pts_labels = torch.cat(pts_labels).cuda()
 
         return pts_labels, center_offsets
-
 
     def aux_loss(self, points, point_cls, point_reg, gt_bboxes):
         N = len(gt_bboxes)

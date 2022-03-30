@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 from torch.autograd import Function
 
-import mmdet3d.ops.pointnet2_utils.pointnet2_cuda as pointnet2
+from . import pointnet2_cuda as pointnet2
 
 
 class ThreeNN(Function):

@@ -1,4 +1,4 @@
-from mmdet3d.ops.points_op import points_op_cpu
+from . import points_op_cpu
 import torch
 
 
