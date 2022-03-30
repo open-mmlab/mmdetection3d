@@ -1,15 +1,15 @@
 # 依赖
 
-- Linux or macOS (Windows is not currently officially supported)
+- Linux 或者 macOS (实验性支持 Windows)
 - Python 3.6+
 - PyTorch 1.3+
-- CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
+- CUDA 9.2+ (如果你从源码编译 PyTorch, CUDA 9.0 也是兼容的。)
 - GCC 5+
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
-| MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
+|  MMDetection3D 版本 |   MMDetection 版本  |  MMSegmentation 版本 |     MMCV 版本       |
 |:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
+| master              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.5.0|
 | v1.0.0rc0           | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
 | 0.18.1              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
 | 0.18.0              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
