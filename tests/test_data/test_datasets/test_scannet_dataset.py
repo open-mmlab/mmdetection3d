@@ -756,8 +756,8 @@ def test_instance_seg_getitem():
     expected_instance_mask = np.array([6, 56, 10, 9, 35])
 
     assert torch.allclose(points, expected_points, 1e-2)
-    assert torch.allclose(pts_semantic_mask.numpy(), expected_semantic_mask)
-    assert torch.allclose(pts_instance_mask.numpy(), expected_instance_mask)
+    assert np.all(pts_semantic_mask.numpy(), expected_semantic_mask)
+    assert np.all(pts_instance_mask.numpy(), expected_instance_mask)
 
 
 def test_instance_seg_evaluate():
