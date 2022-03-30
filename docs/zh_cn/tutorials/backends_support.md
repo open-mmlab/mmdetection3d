@@ -1,5 +1,5 @@
 # Tutorial 7: 后端支持
-我们支持不同的文件客户端后端：磁盘、Ceph 和 IMDB 等。下面是 Ceph 在配置中加载和保存修改的示例。
+我们支持不同的文件客户端后端：磁盘、Ceph 和 LMDB 等。下面是修改配置使之从 Ceph 加载和保存数据的示例。
 
 ## 从 Ceph 读取数据和标注文件
 
@@ -11,9 +11,9 @@ file_client_args = dict(
     backend='petrel',
     path_mapping=dict({
         './data/nuscenes/':
-        's3://openmmlab/datasets/detection3d/nuscenes/', # replace the path to your data path in Ceph
+        's3://openmmlab/datasets/detection3d/nuscenes/', # replace the path with your data path on Ceph
         'data/nuscenes/':
-        's3://openmmlab/datasets/detection3d/nuscenes/' # replace the path to your data path in Ceph
+        's3://openmmlab/datasets/detection3d/nuscenes/' # replace the path with your data path on Ceph
     }))
 
 db_sampler = dict(
@@ -103,13 +103,13 @@ model = dict(
         type='NoStemRegNet',
         arch='regnetx_1.6gf',
         init_cfg=dict(
-            type='Pretrained', checkpoint='s3://openmmlab/checkpoints/mmdetection3d/regnetx_1.6gf'), # replace the path to your pretrained model path in Ceph
+            type='Pretrained', checkpoint='s3://openmmlab/checkpoints/mmdetection3d/regnetx_1.6gf'), # replace the path with your pretrained model path on Ceph
         ...
 ```
 
 ## 从 Ceph 读取模型权重文件
 ```python
-# replace the path to your checkpoint path in Ceph
+# replace the path with your checkpoint path on Ceph
 load_from = 's3://openmmlab/checkpoints/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20200620_230614-77663cd6.pth.pth'
 resume_from = None
 workflow = [('train', 1)]
@@ -119,14 +119,14 @@ workflow = [('train', 1)]
 
 ```python
 # checkpoint saving
-# replace the path to your checkpoint saving path in Ceph
+# replace the path with your checkpoint saving path on Ceph
 checkpoint_config = dict(interval=1, max_keep_ckpts=2, out_dir='s3://openmmlab/mmdetection3d')
 ```
 
 ## EvalHook 保存最优模型权重文件至 Ceph
 
 ```python
-# replace the path to your checkpoint saving path in Ceph
+# replace the path with your checkpoint saving path on Ceph
 evaluation = dict(interval=1, save_best='bbox', out_dir='s3://openmmlab/mmdetection3d')
 ```
 
@@ -138,8 +138,7 @@ log_config = dict(
     interval=50,
     hooks=[
         dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d'),
-        # dict(type='TensorboardLoggerHook')
-    ])# yapf:enable
+    ])
 ```
 您还可以通过设置 `keep_local = False` 备份到指定的 Ceph 路径后删除本地训练日志。
 
@@ -148,6 +147,5 @@ log_config = dict(
     interval=50,
     hooks=[
         dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d'', keep_local=False),
-        # dict(type='TensorboardLoggerHook')
-    ])# yapf:enable
+    ])
 ```

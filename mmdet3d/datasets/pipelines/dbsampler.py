@@ -121,6 +121,7 @@ class DataBaseSampler(object):
         # load data base infos
         if hasattr(self.file_client, 'get_local_path'):
             with self.file_client.get_local_path(info_path) as local_path:
+                # loading data from a file-like object needs file format
                 db_infos = mmcv.load(open(local_path, 'rb'), file_format='pkl')
         else:
             warnings.warn(

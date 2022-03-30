@@ -94,6 +94,7 @@ class Custom3DDataset(Dataset):
         Returns:
             list[dict]: List of annotations.
         """
+        # loading data from a file-like object needs file format
         return mmcv.load(ann_file, file_format='pkl')
 
     def get_data_info(self, index):
