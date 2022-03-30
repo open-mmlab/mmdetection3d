@@ -112,12 +112,13 @@ def test_getitem():
 
     # Test load classes from file
     import tempfile
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, 'w') as f:
-        f.write('cabinet\nbed\n')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = tmpdir + 'classes.txt'
+        with open(path, 'w') as f:
+            f.write('cabinet\nbed\n')
 
     scannet_dataset = ScanNetDataset(
-        root_path, ann_file, pipeline=None, classes=tmp_file.name)
+        root_path, ann_file, pipeline=None, classes=path)
     assert scannet_dataset.CLASSES != original_classes
     assert scannet_dataset.CLASSES == ['cabinet', 'bed']
 
@@ -497,15 +498,16 @@ def test_seg_getitem():
 
     # test load classes from file
     import tempfile
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, 'w') as f:
-        f.write('cabinet\nchair\n')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = tmpdir + 'classes.txt'
+        with open(path, 'w') as f:
+            f.write('cabinet\nchair\n')
 
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
         ann_file=ann_file,
         pipeline=None,
-        classes=tmp_file.name,
+        classes=path,
         scene_idxs=scene_idxs)
     assert scannet_dataset.CLASSES != original_classes
     assert scannet_dataset.CLASSES == ['cabinet', 'chair']
@@ -744,15 +746,18 @@ def test_instance_seg_getitem():
                                         -4.3207e-01, 1.8154e+00, 1.7455e-01,
                                         4.0392e-01, 3.8039e-01, 4.1961e-01
                                     ]])
-    expected_semantic_mask = torch.tensor([11, 18, 18, 0, 4]).long()
-    expected_instance_mask = torch.tensor([6, 56, 10, 9, 35]).long()
 
     data = scannet_dataset[0]
-    assert torch.allclose(data['points']._data[:5], expected_points, 1e-2)
-    assert torch.allclose(data['pts_semantic_mask']._data[:5],
-                          expected_semantic_mask)
-    assert torch.allclose(data['pts_instance_mask']._data[:5],
-                          expected_instance_mask)
+
+    points = data['points']._data[:5]
+    pts_semantic_mask = data['pts_semantic_mask']._data[:5]
+    pts_instance_mask = data['pts_instance_mask']._data[:5]
+    expected_semantic_mask = np.array([11, 18, 18, 0, 4])
+    expected_instance_mask = np.array([6, 56, 10, 9, 35])
+
+    assert torch.allclose(points, expected_points, 1e-2)
+    assert np.all(pts_semantic_mask.numpy() == expected_semantic_mask)
+    assert np.all(pts_instance_mask.numpy() == expected_instance_mask)
 
 
 def test_instance_seg_evaluate():
