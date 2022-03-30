@@ -746,7 +746,7 @@ def test_instance_seg_getitem():
                                         -4.3207e-01, 1.8154e+00, 1.7455e-01,
                                         4.0392e-01, 3.8039e-01, 4.1961e-01
                                     ]])
-    expected_semantic_mask = torch.tensor([11, 18, 18, 0, 4]).int()
+    expected_semantic_mask = torch.tensor([11, 18, 18, 0, 4]).long()
     expected_instance_mask = torch.tensor([6, 56, 10, 9, 35]).long()
 
     data = scannet_dataset[0]

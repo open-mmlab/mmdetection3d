@@ -518,7 +518,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_seg=False,
                  with_bbox_depth=False,
                  poly2mask=True,
-                 seg_3d_dtype='int64',
+                 seg_3d_dtype=np.int64,
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
