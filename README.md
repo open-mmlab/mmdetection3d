@@ -231,6 +231,10 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 
+## Installation
+
+Please refer to [getting_started.md](docs/en/getting_started.md) for installation.
+
 ## Get Started
 
 Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/1_exist_data_model.md) and [with customized dataset](docs/en/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/tutorials/config.md), [adding new dataset](docs/en/tutorials/customize_dataset.md), [designing data pipeline](docs/en/tutorials/data_pipeline.md), [customizing models](docs/en/tutorials/customize_models.md), [customizing runtime settings](docs/en/tutorials/customize_runtime.md) and [Waymo dataset](docs/en/datasets/waymo_det.md).
