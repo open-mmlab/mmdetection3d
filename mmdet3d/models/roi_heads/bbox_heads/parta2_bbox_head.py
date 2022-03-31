@@ -2,6 +2,9 @@
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
+from mmcv.ops import SparseConvTensor, SparseMaxPool3d, SparseSequential
+from mmcv.ops import nms_bev as nms_gpu
+from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -9,8 +12,6 @@ from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.models.builder import build_loss
 from mmdet3d.ops import make_sparse_convmodule
-from mmdet3d.ops import spconv as spconv
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
 from mmdet.models import HEADS
 
@@ -95,7 +96,7 @@ class PartA2BboxHead(BaseModule):
                     indice_key=f'rcnn_part{i}',
                     conv_type='SubMConv3d'))
             part_channel_last = channel
-        self.part_conv = spconv.SparseSequential(*part_conv)
+        self.part_conv = SparseSequential(*part_conv)
 
         seg_channel_last = seg_in_channels
         seg_conv = []
@@ -110,9 +111,9 @@ class PartA2BboxHead(BaseModule):
                     indice_key=f'rcnn_seg{i}',
                     conv_type='SubMConv3d'))
             seg_channel_last = channel
-        self.seg_conv = spconv.SparseSequential(*seg_conv)
+        self.seg_conv = SparseSequential(*seg_conv)
 
-        self.conv_down = spconv.SparseSequential()
+        self.conv_down = SparseSequential()
 
         merge_conv_channel_last = part_channel_last + seg_channel_last
         merge_conv = []
@@ -140,12 +141,10 @@ class PartA2BboxHead(BaseModule):
                     indice_key='rcnn_down1'))
             down_conv_channel_last = channel
 
-        self.conv_down.add_module('merge_conv',
-                                  spconv.SparseSequential(*merge_conv))
-        self.conv_down.add_module(
-            'max_pool3d', spconv.SparseMaxPool3d(kernel_size=2, stride=2))
-        self.conv_down.add_module('down_conv',
-                                  spconv.SparseSequential(*conv_down))
+        self.conv_down.add_module('merge_conv', SparseSequential(*merge_conv))
+        self.conv_down.add_module('max_pool3d',
+                                  SparseMaxPool3d(kernel_size=2, stride=2))
+        self.conv_down.add_module('down_conv', SparseSequential(*conv_down))
 
         shared_fc_list = []
         pool_size = roi_feat_size // 2
@@ -256,10 +255,10 @@ class PartA2BboxHead(BaseModule):
         seg_features = seg_feats[sparse_idx[:, 0], sparse_idx[:, 1],
                                  sparse_idx[:, 2], sparse_idx[:, 3]]
         coords = sparse_idx.int()
-        part_features = spconv.SparseConvTensor(part_features, coords,
-                                                sparse_shape, rcnn_batch_size)
-        seg_features = spconv.SparseConvTensor(seg_features, coords,
-                                               sparse_shape, rcnn_batch_size)
+        part_features = SparseConvTensor(part_features, coords, sparse_shape,
+                                         rcnn_batch_size)
+        seg_features = SparseConvTensor(seg_features, coords, sparse_shape,
+                                        rcnn_batch_size)
 
         # forward rcnn network
         x_part = self.part_conv(part_features)
@@ -267,8 +266,8 @@ class PartA2BboxHead(BaseModule):
 
         merged_feature = torch.cat((x_rpn.features, x_part.features),
                                    dim=1)  # (N, C)
-        shared_feature = spconv.SparseConvTensor(merged_feature, coords,
-                                                 sparse_shape, rcnn_batch_size)
+        shared_feature = SparseConvTensor(merged_feature, coords, sparse_shape,
+                                          rcnn_batch_size)
 
         x = self.conv_down(shared_feature)
 

@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmcv.ops import Voxelization
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from mmdet3d.ops import Voxelization
 from mmdet.models import DETECTORS
 from .. import builder
 from .single_stage import SingleStage3DDetector

@@ -1,5 +1,9 @@
 ## v1.0.0rc1
 
+### Operators Migration
+
+We have adopted CUDA operators compiled from [mmcv](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/__init__.py) and removed all the CUDA operators in mmdet3d. We now do not need to compile the CUDA operators in mmdet3d anymore.
+
 ### Waymo dataset converter refactoring
 
 In this version we did a major code refactoring that boosted the performance of waymo dataset conversion by multiprocessing.
@@ -45,7 +49,8 @@ After
 
 - Any configuration that uses waymo dataset with GT Augmentation should change the `db_sampler.points_loader.load_dim` from `5` to `6`.
 
-## v1.0.0.dev0
+
+## v1.0.0rc0
 
 ### Coordinate system refactoring
 
@@ -64,11 +69,11 @@ Since definitions of box representation have changed, the annotation data of mos
 - nuScenes: For LiDAR boxes in training/validation data and GT databases, (x_size, y_size, z_size, yaw) out of (x, y, z, x_size, y_size, z_size) should be converted.
 - Lyft: Same as nuScenes.
 
-Please regenerate the data annotation/GT database files or use [`update_data_coords.py`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/update_data_coords.py) to update the data.
+Please regenerate the data annotation/GT database files or use [`update_data_coords.py`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/tools/update_data_coords.py) to update the data.
 
-To use boxes under Depth and LiDAR coordinate systems, or to convert boxes between different coordinate systems, users should be aware of the difference between the old and new definitions. For example, the rotation, flipping, and bev functions of [`DepthInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/depth_box3d.py) and [`LiDARInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mdet3d/core/bbox/structures/lidar_box3d.py) and box conversion [functions](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/box_3d_mode.py) have all been reimplemented in the refactoring.
+To use boxes under Depth and LiDAR coordinate systems, or to convert boxes between different coordinate systems, users should be aware of the difference between the old and new definitions. For example, the rotation, flipping, and bev functions of [`DepthInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/depth_box3d.py) and [`LiDARInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mdet3d/core/bbox/structures/lidar_box3d.py) and box conversion [functions](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/box_3d_mode.py) have all been reimplemented in the refactoring.
 
-Consequently, functions like [`output_to_lyft_box`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/lyft_dataset.py) undergo small modification to adapt to the new LiDAR/Depth box.
+Consequently, functions like [`output_to_lyft_box`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/datasets/lyft_dataset.py) undergo small modification to adapt to the new LiDAR/Depth box.
 
 Since the LiDAR system `(x_size, y_size, z_size)` now corresponds to `(l, w, h)` instead of `(w, l, h)`, the anchor sizes for LiDAR boxes are also changed, e.g., from `[1.6, 3.9, 1.56]` to `[3.9, 1.6, 1.56]`.
 
@@ -76,12 +81,12 @@ Functions only involving points are generally unaffected except if they rely on 
 
 #### Other BC-breaking or new features:
 
-- `array_converter`: Please refer to [array_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/utils/array_converter.py). Functions wrapped with `array_converter` can convert array-like input types of `torch.Tensor`, `np.ndarray`, and `list/tuple/float` to `torch.Tensor` to process in an unified PyTorch pipeline. The result may finally be converted back to the input type. Most functions in [utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/utils.py) are wrapped with `array_converter`.
-- [`points_in_boxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/base_box3d.py) and [`points_in_boxes_batch`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/base_box3d.py) will be deprecated soon. They are renamed to `points_in_boxes_part` and `points_in_boxes_all` respectively, with more detailed docstrings. The major difference of the two functions is that if a point is enclosed by multiple boxes, `points_in_boxes_part` will only return the index of the first enclosing box while `points_in_boxes_all` will return all the indices of enclosing boxes.
-- `rotation_3d_in_axis`: Please refer to [utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/utils.py). Now this function supports multiple input types and more options. The function with the same name in [box_np_ops.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/box_np_ops.py) is deleted since we do not need another function to tackle with NumPy data. `rotation_2d`, `points_cam2img`, and `limit_period` in box_np_ops.py are also deleted for the same reason.
-- `bev` method of [`CameraInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/cam_box3d.py): Changed it to be consistent with the definition of bev in Depth and LiDAR coordinate systems.
-- Data augmentation utils in [data_augment_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/pipelines/data_augment_utils.py) now follow the rules of a right-handed system.
-- We do not need the yaw hacking in KITTI anymore after refining [`get_direction_target`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/models/dense_heads/train_mixins.py). Interested users may refer to PR [#677](https://github.com/open-mmlab/mmdetection3d/pull/677) .
+- `array_converter`: Please refer to [array_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/utils/array_converter.py). Functions wrapped with `array_converter` can convert array-like input types of `torch.Tensor`, `np.ndarray`, and `list/tuple/float` to `torch.Tensor` to process in an unified PyTorch pipeline. The result may finally be converted back to the input type. Most functions in [utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/utils.py) are wrapped with `array_converter`.
+- [`points_in_boxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/base_box3d.py) and [`points_in_boxes_batch`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/base_box3d.py) will be deprecated soon. They are renamed to `points_in_boxes_part` and `points_in_boxes_all` respectively, with more detailed docstrings. The major difference of the two functions is that if a point is enclosed by multiple boxes, `points_in_boxes_part` will only return the index of the first enclosing box while `points_in_boxes_all` will return all the indices of enclosing boxes.
+- `rotation_3d_in_axis`: Please refer to [utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/utils.py). Now this function supports multiple input types and more options. The function with the same name in [box_np_ops.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/box_np_ops.py) is deleted since we do not need another function to tackle with NumPy data. `rotation_2d`, `points_cam2img`, and `limit_period` in box_np_ops.py are also deleted for the same reason.
+- `bev` method of [`CameraInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/cam_box3d.py): Changed it to be consistent with the definition of bev in Depth and LiDAR coordinate systems.
+- Data augmentation utils in [data_augment_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/datasets/pipelines/data_augment_utils.py) now follow the rules of a right-handed system.
+- We do not need the yaw hacking in KITTI anymore after refining [`get_direction_target`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/models/dense_heads/train_mixins.py). Interested users may refer to PR [#677](https://github.com/open-mmlab/mmdetection3d/pull/677) .
 
 
 ## 0.16.0

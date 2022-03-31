@@ -89,6 +89,9 @@ def _generate_sunrgbd_multi_modality_dataset_config():
 
 
 def test_getitem():
+
+    from os import path as osp
+
     np.random.seed(0)
     root_path, ann_file, class_names, pipelines, modality = \
         _generate_sunrgbd_dataset_config()
@@ -107,7 +110,8 @@ def test_getitem():
     pcd_rotation_expected = np.array([[0.99889565, 0.04698427, 0.],
                                       [-0.04698427, 0.99889565, 0.],
                                       [0., 0., 1.]])
-    assert file_name == './tests/data/sunrgbd/points/000001.bin'
+    expected_file_name = osp.join('./tests/data/sunrgbd', 'points/000001.bin')
+    assert file_name == expected_file_name
     assert pcd_horizontal_flip is False
     assert abs(pcd_scale_factor - 0.9770964398016714) < 1e-5
     assert np.allclose(pcd_rotation, pcd_rotation_expected, 1e-3)
@@ -142,12 +146,13 @@ def test_getitem():
     assert SUNRGBD_dataset.CLASSES == ('bed', 'table')
 
     import tempfile
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, 'w') as f:
-        f.write('bed\ntable\n')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = tmpdir + 'classes.txt'
+        with open(path, 'w') as f:
+            f.write('bed\ntable\n')
 
     SUNRGBD_dataset = SUNRGBDDataset(
-        root_path, ann_file, pipeline=None, classes=tmp_file.name)
+        root_path, ann_file, pipeline=None, classes=path)
     assert SUNRGBD_dataset.CLASSES != original_classes
     assert SUNRGBD_dataset.CLASSES == ['bed', 'table']
 
