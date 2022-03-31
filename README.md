@@ -231,21 +231,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 
-## Installation
-MMDetection3D depends on [PyTorch](https://pytorch.org/) and [MMCV](https://github.com/open-mmlab/mmcv).
-Below are quick steps for installation.
-Please refer to [getting_started.md](docs/en/getting_started.md) for more details.
-```shell
-conda create -n open-mmlab python=3.7 pytorch=1.9 cudatoolkit=11.0 torchvision -c pytorch -y
-conda activate open-mmlab
-pip3 install openmim
-mim install mmcv-full
-mim install mmdet
-mim install mmsegmentation
-git clone https://github.com/open-mmlab/mmdetection3d.git
-cd mmdetection3d
-pip3 install -e .
-```
 ## Get Started
 
 Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/1_exist_data_model.md) and [with customized dataset](docs/en/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/tutorials/config.md), [adding new dataset](docs/en/tutorials/customize_dataset.md), [designing data pipeline](docs/en/tutorials/data_pipeline.md), [customizing models](docs/en/tutorials/customize_models.md), [customizing runtime settings](docs/en/tutorials/customize_runtime.md) and [Waymo dataset](docs/en/datasets/waymo_det.md).

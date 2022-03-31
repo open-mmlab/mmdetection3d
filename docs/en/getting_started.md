@@ -37,6 +37,25 @@ The required versions of MMCV, MMDetection and MMSegmentation for different vers
 
 ## Install MMDetection3D
 
+### Quick installation instructions script
+
+Assuming that you already have CUDA 11.0 installed, here is a full script for quick installation of MMDetection3D with conda.
+Otherwise, you should refer to the step-by-step installation instructions in the next section.
+
+```shell
+conda create -n open-mmlab python=3.7 pytorch=1.9 cudatoolkit=11.0 torchvision -c pytorch -y
+conda activate open-mmlab
+pip3 install openmim
+mim install mmcv-full
+mim install mmdet
+mim install mmsegmentation
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+pip3 install -e .
+```
+
+### Step-by-step installation instructions
+
 **a. Create a conda virtual environment and activate it.**
 
 ```shell
