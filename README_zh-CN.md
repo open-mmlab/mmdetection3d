@@ -233,8 +233,20 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 安装
 
-请参考[快速入门文档](docs/zh_cn/getting_started.md)进行安装。
-
+MMDetection3D 依赖 [PyTorch](https://pytorch.org/) 与 [MMCV](https://github.com/open-mmlab/mmcv).
+可以根据以下指令快速安装，如遇到问题也可以在
+ [快速入门文档](docs/en/getting_started.md) 查找更多细节.
+```shell
+conda create -n open-mmlab python=3.7 pytorch=1.9 cudatoolkit=11.0 torchvision -c pytorch -y
+conda activate open-mmlab
+pip3 install openmim
+mim install mmcv-full
+mim install mmdet
+mim install mmsegmentation
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+pip3 install -e .
+```
 ## 快速入门
 
 请参考[快速入门文档](docs/zh_cn/getting_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/zh_cn/1_exist_data_model.md)和[新数据集](docs/zh_cn/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/tutorials/config.md), [增加数据集支持](docs/zh_cn/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/zh_cn/tutorials/data_pipeline.md), [增加自定义模型](docs/zh_cn/tutorials/customize_models.md), [增加自定义的运行时配置](docs/zh_cn/tutorials/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/tutorials/waymo.md).
