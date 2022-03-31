@@ -16,8 +16,8 @@ def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
     indices = tensor.indices.float()
     offset = torch.Tensor(offset).to(indices.device)
     voxel_size = torch.Tensor(voxel_size).to(indices.device)
-    indices[:, 1:] = indices[:, [3, 2, 1]] * voxel_size + offset \
-                      + .5 * voxel_size
+    indices[:, 1:] = (indices[:, [3, 2, 1]] * voxel_size + offset
+                      + .5 * voxel_size)
     return tensor.features, indices
 
 
