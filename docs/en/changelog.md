@@ -1,5 +1,53 @@
 ## Changelog
 
+### v1.0.0rc1 (1/4/2022)
+
+#### Compatibility
+
+- We migrate all the mmdet3d ops to mmcv and do not need to compile them when installing mmdet3d.
+- To fix the unprecise timestamp and optimize its saving method, we reformat the point cloud data during Waymo data conversion. The data conversion time is also optimized significantly by supporting parallel processing. Please re-generate KITTI format Waymo data if necessary. See more details in the [compatibility documentation](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/compatibility.md).
+
+#### Highlights
+
+- Migrate all the mmdet3d ops to mmcv
+- Support parallel waymo data converter
+- Add ScanNet instance segmentation dataset with metrics
+- Better compatibility for windows with CI support, op migration and bug fixes
+
+#### New Features
+
+- Add ScanNet instance segmentation dataset with metrics (#1230)
+- Support different random seeds for different ranks (#1321)
+- Support loading annotations from ceph (#1325)
+- Support resuming from the latest checkpoint automatically (#1329)
+- Add windows CI (#1345)
+
+#### Improvements
+
+- Update the table format and OpenMMLab project orders in [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/README.md) (#1272, #1283)
+- Migrate all the mmdet3d ops to mmcv (#1240, #1286, #1290, #1333)
+- Add `with_plane` flag in the KITTI data conversion (#1278)
+- Update instructions and links in the documentation (#1300, 1309, #1319)
+- Support parallel Waymo dataset converter and ground truth database generator (#1327)
+- Add quick installation commands to [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/getting_started.md) (#1355)
+
+#### Bug Fixes
+
+- Update nuimages configs to use new nms config style (#1258)
+- Fix the usage of np.long for windows compatibility (#1270)
+- Fix the incorrect indexing in `BasePoints` (#1274)
+- Fix the incorrect indexing in the [pillar_scatter.forward_single](https://github.com/open-mmlab/mmdetection3d/blob/dev/mmdet3d/models/middle_encoders/pillar_scatter.py#L38) (#1280)
+- Fix unit tests that use GPUs (#1301)
+- Fix incorrect feature dimensions in `DynamicPillarFeatureNet` caused by previous upgrading of `PillarFeatureNet` (#1302)
+- Remove the `CameraPoints` constraint in `PointSample` (#1314)
+- Fix unprecise timestamps saving of Waymo dataset (#1327)
+
+#### Contributors
+
+A total of 9 developers contributed to this release.
+
+@ZCMax, @ZwwWayne, @wHao-Wu, @Tai-Wang, @wangruohui, @zjwzcx, @Xiangxu-0103, @EdAyers, @hongye-dev
+
 ### v1.0.0rc0 (18/2/2022)
 
 #### Compatibility
