@@ -34,6 +34,24 @@
 
 ## MMdetection3D 安装流程
 
+### 快速安装脚本
+
+如果你已经成功安装 CUDA 11.0，那么你可以使用这个快速安装命令进行 MMDetection3D 的安装。 否则，则参考下一小节的详细安装流程。
+
+```shell
+conda create -n open-mmlab python=3.7 pytorch=1.9 cudatoolkit=11.0 torchvision -c pytorch -y
+conda activate open-mmlab
+pip3 install openmim
+mim install mmcv-full
+mim install mmdet
+mim install mmsegmentation
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+pip3 install -e .
+```
+
+### 详细安装流程
+
 **a. 使用 conda 新建虚拟环境，并进入该虚拟环境。**
 
 ```shell
