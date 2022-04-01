@@ -518,7 +518,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_seg=False,
                  with_bbox_depth=False,
                  poly2mask=True,
-                 seg_3d_dtype='int',
+                 seg_3d_dtype=np.int64,
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
@@ -600,7 +600,7 @@ class LoadAnnotations3D(LoadAnnotations):
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_instance_mask_path)
-            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int)
+            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
         except ConnectionError:
             mmcv.check_file_exist(pts_instance_mask_path)
             pts_instance_mask = np.fromfile(
