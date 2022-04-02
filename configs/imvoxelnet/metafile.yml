@@ -25,5 +25,5 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 17.4
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvoxelnet/imvoxelnet_kitti-3d-car_20210610_152323-b9abba85.pth
+          mAP: 17.26
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth

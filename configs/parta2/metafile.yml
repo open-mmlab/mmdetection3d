@@ -25,8 +25,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 67.9
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class_20200620_230724-a2672098.pth
+          mAP: 68.33
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class_20210831_022017-454a5344.pth
 
   - Name: hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car
     In Collection: Part-A^2
@@ -37,5 +37,5 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 79.16
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car_20200620_230755-f2a38b9a.pth
+          mAP: 79.08
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car_20210831_022017-cb7ff621.pth
