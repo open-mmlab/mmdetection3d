@@ -58,7 +58,8 @@ class ScanNetDataset(Custom3DDataset):
                  modality=dict(use_camera=False, use_depth=True),
                  box_type_3d='Depth',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 **kwargs):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -67,7 +68,8 @@ class ScanNetDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            **kwargs)
         assert 'use_camera' in self.modality and \
                'use_depth' in self.modality
         assert self.modality['use_camera'] or self.modality['use_depth']
@@ -322,7 +324,8 @@ class ScanNetSegDataset(Custom3DSegDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None):
+                 scene_idxs=None,
+                 **kwargs):
 
         super().__init__(
             data_root=data_root,
@@ -333,7 +336,8 @@ class ScanNetSegDataset(Custom3DSegDataset):
             modality=modality,
             test_mode=test_mode,
             ignore_index=ignore_index,
-            scene_idxs=scene_idxs)
+            scene_idxs=scene_idxs,
+            **kwargs)
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
