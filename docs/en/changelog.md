@@ -13,12 +13,13 @@
 - Support parallel waymo data converter
 - Add ScanNet instance segmentation dataset with metrics
 - Better compatibility for windows with CI support, op migration and bug fixes
+- Support loading annotations from Ceph
 
 #### New Features
 
 - Add ScanNet instance segmentation dataset with metrics (#1230)
 - Support different random seeds for different ranks (#1321)
-- Support loading annotations from ceph (#1325)
+- Support loading annotations from Ceph (#1325)
 - Support resuming from the latest checkpoint automatically (#1329)
 - Add windows CI (#1345)
 
@@ -29,7 +30,7 @@
 - Add `with_plane` flag in the KITTI data conversion (#1278)
 - Update instructions and links in the documentation (#1300, 1309, #1319)
 - Support parallel Waymo dataset converter and ground truth database generator (#1327)
-- Add quick installation commands to [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/getting_started.md) (#1355)
+- Add quick installation commands to [getting_started.md](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/getting_started.md) (#1366)
 
 #### Bug Fixes
 
