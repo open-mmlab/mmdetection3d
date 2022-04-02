@@ -25,7 +25,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v1.0.0rc0.
+**News**: We released the codebase v1.0.0rc1.
 
 Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
 
@@ -83,7 +83,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc0 was released in 18/2/2022.
+v1.0.0rc1 was released in 1/4/2022.
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
