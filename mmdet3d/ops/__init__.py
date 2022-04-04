@@ -14,21 +14,18 @@ from .interpolate import three_interpolate, three_nn
 from .knn import knn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
 from .paconv import PAConv, PAConvCUDA, assign_score_withk
+from .pointnet2_utils import three_nn_2d, three_interpolate_2d
 from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                PAConvSAModule, PAConvSAModuleMSG,
                                PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
+from .points_op import pts_in_boxes3d
 from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_all,
                               points_in_boxes_cpu, points_in_boxes_part)
 from .roipoint_pool3d import RoIPointPool3d
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
-
-from .points_op import pts_in_boxes3d
-
-from .pointnet2_utils import three_nn_2d, three_interpolate_2d
-
 
 __all__ = [
     'nms', 'soft_nms', 'RoIAlign', 'roi_align', 'get_compiler_version',

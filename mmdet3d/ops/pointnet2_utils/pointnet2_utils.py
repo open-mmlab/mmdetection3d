@@ -1,6 +1,5 @@
 import torch
-from torch.autograd import Variable
-from torch.autograd import Function
+from torch.autograd import Function, Variable
 
 from . import pointnet2_cuda as pointnet2
 

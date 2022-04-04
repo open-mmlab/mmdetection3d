@@ -11,12 +11,12 @@ from .mvx_faster_rcnn import DynamicMVXFasterRCNN, MVXFasterRCNN
 from .mvx_two_stage import MVXTwoStageDetector
 from .parta2 import PartA2
 from .point_rcnn import PointRCNN
+from .sassd import SASSD
 from .single_stage_mono3d import SingleStageMono3DDetector
 from .smoke_mono3d import SMOKEMono3D
 from .ssd3dnet import SSD3DNet
 from .votenet import VoteNet
 from .voxelnet import VoxelNet
-from .sassd import SASSD
 
 __all__ = [
     'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
