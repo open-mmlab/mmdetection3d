@@ -14,7 +14,7 @@ from .interpolate import three_interpolate, three_nn
 from .knn import knn
 from .norm import NaiveSyncBatchNorm1d, NaiveSyncBatchNorm2d
 from .paconv import PAConv, PAConvCUDA, assign_score_withk
-from .pointnet2_utils import three_nn_2d, three_interpolate_2d
+from .pointnet2_utils import three_interpolate_2d, three_nn_2d
 from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                PAConvSAModule, PAConvSAModuleMSG,
                                PointFPModule, PointSAModule, PointSAModuleMSG,
@@ -43,5 +43,5 @@ __all__ = [
     'Points_Sampler', 'build_sa_module', 'PAConv', 'PAConvCUDA',
     'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
     'PAConvCUDASAModuleMSG', 'RoIPointPool3d', 'pts_in_boxes3d',
-    'three_nn_2d', 'three_interpolate_2d'
+    'three_interpolate_2d', 'three_nn_2d'
 ]
