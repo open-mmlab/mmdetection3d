@@ -1,8 +1,8 @@
-# 教程 7: 模型部署
+# 教程 7: 部署MMDet3D模型到推理后端
 
-为了解决在实际使用过程中对算法模型的性能需求，通常我们会将训练好的模型部署到各种推理后端上。 [MMDeploy](https://github.com/open-mmlab/mmdeploy) 是 OpenMMLab 系列算法库的部署框架，现在 MMDeploy 已经支持了MMDet3d，我们可以通过 MMDeploy 将训练好的模型部署到各种推理后端上。
+为了解决在实际使用过程中对算法模型的速度需求，通常我们会将训练好的模型部署到各种推理后端上。 [MMDeploy](https://github.com/open-mmlab/mmdeploy) 是 OpenMMLab 系列算法库的部署框架，现在 MMDeploy 已经支持了MMDet3d，我们可以通过 MMDeploy 将训练好的模型部署到各种推理后端上。
 
-## 1.准备
+## 准备
 
 ### 安装MMDeploy
 
@@ -16,9 +16,9 @@ git submodule update --init --recursive
 
 根据 MMDeploy 的文档选择安装推理后端并编译自定义算子，目前 MMDet3D 模型支持了的推理后端有[OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html)。
 
-## 2.转换模型
+## 模型导出
 
-通过 MMDeploy 将 MMDet3D 训练好的模型转换成 ONNX 模型和推理后端所需要的模型。
+将 MMDet3D 训练好的 Pytorch 模型转换成 ONNX 模型文件和推理后端所需要的模型文件。你可以参考 MMDeploy 的文档 [how_to_convert_model.md](https://github.com/open-mmlab/mmdeploy/blob/master/docs/zh_cn/tutorials/how_to_convert_model.md)。
 
 ```bash
 python ./tools/deploy.py \
@@ -40,7 +40,7 @@ python ./tools/deploy.py \
 * deploy_cfg : MMDeploy 中用于部署的配置文件路径。
 * model_cfg : OpenMMLab 系列代码库中使用的模型配置文件路径。
 * checkpoint : OpenMMLab 系列代码库的模型文件路径。
-* img : 用于模型转换时使用的图像文件路径。
+* img : 用于模型转换时使用的点云文件或图像文件路径。
 * --test-img : 用于测试模型的图像文件路径。默认设置成None。
 * --work-dir : 工作目录，用来保存日志和模型文件。
 * --calib-dataset-cfg : 此参数只有int8模式下生效，用于校准
@@ -51,6 +51,7 @@ python ./tools/deploy.py \
 * --dump-info : 是否输出 SDK 信息。
 
 ### 示例
+
 ```bash
 cd mmdeploy \
 python tools/deploy.py \
@@ -65,9 +66,21 @@ cuda:0 \
 --show
 ```
 
-## 3.测试模型(可选)
+## 模型推理
 
-可以在数据集上测试部署在推理后端上的模型的精度和速度。
+现在你可以使用推理后端提供的 API 进行模型推理。但是，如果你想立即测试模型怎么办？ 我们为您准备了一些推理后端的封装。
+
+```python
+from mmdeploy.apis import inference_model
+
+result = inference_model(model_cfg, deploy_cfg, backend_files, img=img, device=device)
+```
+
+`inference_model` 将创建一个推理后端的模块并为你进行推理。推理结果与模型的 OpenMMLab 代码库具有相同的格式。
+
+## 测试模型(可选)
+
+可以测试部署在推理后端上的模型的精度和速度。你可以参考 [how to measure performance of models](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_measure_performance_of_models.html)。
 
 ```bash
 python tools/test.py \
@@ -103,10 +116,12 @@ cpu
 
 ## 支持模型列表
 
-| Model                     | Codebase         | TorchScript | OnnxRuntime | TensorRT | NCNN | PPLNN | OpenVINO | Model config                                                                                   |
-|---------------------------|------------------|:-----------:|:-----------:|:--------:|:----:|:-----:|:--------:|------------------------------------------------------------------------------------------------|
-| PointPillars              | MMDetection3d    |      ?      |      Y      |    Y     |  N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars)         |
-| CenterPoint (pillar)      | MMDetection3d    |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)          |
+| Model                | Codebase      | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
+| -------------------- | ------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
+| PointPillars         | MMDetection3d |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
+| CenterPoint (pillar) | MMDetection3d |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
 
 ## 注意
-目前 centerpoint 仅支持了 pillar 版本的。
+
+* MMDeploy 的版本需要 >= 0.4.0。
+* 目前 CenterPoint 仅支持了 pillar 版本的。

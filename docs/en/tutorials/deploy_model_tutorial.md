@@ -1,8 +1,8 @@
-# Tutorial 7: Deploy model in backend
+# Tutorial 7: Deploy MMDet3d model in inference backend
 
-To solve the performance requirements of the model in actual use, we usually deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework, Now that MMDeploy supports MMDet3d, we can deploy the trained model to inference backends through MMDeploy.
+To solve the speed requirements of the model in actual use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDet3d model deploy, and you can deploy the trained model to inference backends through MMDeploy.
 
-## 1.Prerequist
+## Prerequist
 
 ### Install MMDeploy
 
@@ -14,11 +14,11 @@ git submodule update --init --recursive
 
 ### Install backend and build custom ops
 
-According to MMDeploy documentation, choose to install the inference backend and build custom ops. Currently, the inference backends supported by the MMDet3D model include [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html)。
+According to MMDeploy documentation, choose to install the inference backend and build custom ops. Now optional inference backend for MMDet3D models include [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html).
 
-## 2.Convert model
+## Export model
 
-Convert the MMDet3D trained model into the ONNX model and the model required by the inference backend through MMDeploy.
+Export the Pytorch model of MMDet3D to the ONNX model file and the model file required by the backend. You coulde refer to MMDeploy docs [how to convert model](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_convert_model.html).
 
 ```bash
 python ./tools/deploy.py \
@@ -35,12 +35,12 @@ python ./tools/deploy.py \
     --dump-info
 ```
 
-### 参数描述
+### Description of all arguments
 
 * `deploy_cfg` : The path of deploy config file in MMDeploy codebase.
 * `model_cfg` : The path of model config file in OpenMMLab codebase.
 * `checkpoint` : The path of model checkpoint file.
-* `img` : The path of image file that used to convert model.
+* `img` : The path of point cloud file or image file that used to convert model.
 * `--test-img` : The path of image file that used to test model. If not specified, it will be set to `None`.
 * `--work-dir` : The path of work directory that used to save logs and models.
 * `--calib-dataset-cfg` : Only valid in int8 mode. Config used for calibration. If not specified, it will be set to `None` and  use "val" dataset in model config for calibration.
@@ -49,7 +49,8 @@ python ./tools/deploy.py \
 * `--show` : Whether to show detection outputs.
 * `--dump-info` : Whether to output information for SDK.
 
-### 示例
+### Example
+
 ```bash
 cd mmdeploy \
 python tools/deploy.py \
@@ -64,9 +65,21 @@ cuda:0 \
 --show
 ```
 
-## 3.测试模型(可选)
+## Inference Model
 
-可以在数据集上测试部署在推理后端上的模型的精度和速度。
+Now you can do model inference with the APIs provided by the backend. But what if you want to test the model instantly? We have some backend wrappers for you.
+
+```python
+from mmdeploy.apis import inference_model
+
+result = inference_model(model_cfg, deploy_cfg, backend_files, img=img, device=device)
+```
+
+The `inference_model` will create a wrapper module and do the inference for you. The result has the same format as the original OpenMMLab repo.
+
+## Evaluate model(Optional)
+
+You can test the accuracy and speed of the model in the inference backend. You could refer to MMDeploy docs [how to measure performance of models](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_measure_performance_of_models.html).
 
 ```bash
 python tools/test.py \
@@ -85,7 +98,7 @@ ${MODEL_CFG} \
 [--log2file work_dirs/output.txt]
 ```
 
-### 示例
+### Example
 
 ```bash
 cd mmdeploy \
@@ -100,12 +113,14 @@ bbox \
 cpu
 ```
 
-## 支持模型列表
+## Supported model
 
-| Model                     | Codebase         | TorchScript | OnnxRuntime | TensorRT | NCNN | PPLNN | OpenVINO | Model config                                                                                   |
-|---------------------------|------------------|:-----------:|:-----------:|:--------:|:----:|:-----:|:--------:|------------------------------------------------------------------------------------------------|
-| PointPillars              | MMDetection3d    |      ?      |      Y      |    Y     |  N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars)         |
-| CenterPoint (pillar)      | MMDetection3d    |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)          |
+| Model                | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
+| -------------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
+| PointPillars         |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
+| CenterPoint (pillar) |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
 
-## 注意
-目前 centerpoint 仅支持了 pillar 版本的。
+## Note
+
+* MMDeploy version >= 0.4.0.
+* Currently CenterPoint only support pillar version.
