@@ -116,10 +116,10 @@ cpu
 
 ## 支持模型列表
 
-| Model                | Codebase      | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
-| -------------------- | ------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
-| PointPillars         | MMDetection3d |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
-| CenterPoint (pillar) | MMDetection3d |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
+| Model                | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
+| -------------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
+| PointPillars         |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
+| CenterPoint (pillar) |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
 
 ## 注意
 

@@ -1,6 +1,6 @@
 # Tutorial 7: Deploy MMDet3d model in inference backend
 
-To solve the speed requirements of the model in actual use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDet3d model deploy, and you can deploy the trained model to inference backends through MMDeploy.
+To solve the speed requirements of the model in actual use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDet3d model deploy, and you can deploy the trained model to inference backends by MMDeploy.
 
 ## Prerequist
 
@@ -18,7 +18,7 @@ According to MMDeploy documentation, choose to install the inference backend and
 
 ## Export model
 
-Export the Pytorch model of MMDet3D to the ONNX model file and the model file required by the backend. You coulde refer to MMDeploy docs [how to convert model](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_convert_model.html).
+Export the Pytorch model of MMDet3D to the ONNX model file and the model file required by the backend. You could refer to MMDeploy docs [how to convert model](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_convert_model.html).
 
 ```bash
 python ./tools/deploy.py \
@@ -123,4 +123,4 @@ cpu
 ## Note
 
 * MMDeploy version >= 0.4.0.
-* Currently CenterPoint only support pillar version.
+* Currently, CenterPoint only has supported the pillar version.
