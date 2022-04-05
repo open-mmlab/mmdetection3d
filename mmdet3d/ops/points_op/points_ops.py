@@ -10,8 +10,7 @@ def pts_in_boxes3d(pts, boxes3d):
     M = len(boxes3d)
     pts_in_flag = torch.IntTensor(M, N).fill_(0)
     reg_target = torch.FloatTensor(N, 3).fill_(0)
-    points_op_cpu.pts_in_boxes3d(pts.contiguous(),
-                                 boxes3d.contiguous(),
+    points_op_cpu.pts_in_boxes3d(pts.contiguous(), boxes3d.contiguous(),
                                  pts_in_flag, reg_target)
     return pts_in_flag, reg_target
 
@@ -167,9 +166,10 @@ def points_to_voxel(points,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
 
     else:
-        voxel_num = _points_to_voxel_kernel(
-            points, voxel_size, coors_range, num_points_per_voxel,
-            coor_to_voxelidx, voxels, coors, max_points, max_voxels)
+        voxel_num = _points_to_voxel_kernel(points, voxel_size, coors_range,
+                                            num_points_per_voxel,
+                                            coor_to_voxelidx, voxels, coors,
+                                            max_points, max_voxels)
 
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
@@ -187,7 +187,7 @@ def bound_points_jit(points, upper_bound, lower_bound):
     success = 0
     for i in range(N):
         success = 1
-        for j in range(ndim-1):
+        for j in range(ndim - 1):
             if points[i, j] < lower_bound[j] or points[i, j] >= upper_bound[j]:
                 success = 0
                 break

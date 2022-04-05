@@ -59,8 +59,8 @@ class ThreeInterpolate(Function):
         ctx.three_interpolate_for_backward = (idx, weight, m)
         output = torch.cuda.FloatTensor(n, c)
 
-        pointnet2.three_interpolate_wrapper(
-                c, m, n, features, idx, weight, output)
+        pointnet2.three_interpolate_wrapper(c, m, n, features, idx, weight,
+                                            output)
         return output
 
     @staticmethod
@@ -79,8 +79,8 @@ class ThreeInterpolate(Function):
         grad_features = Variable(torch.cuda.FloatTensor(m, c).zero_())
         grad_out_data = grad_out.data.contiguous()
 
-        pointnet2.three_interpolate_grad_wrapper(
-                c, n, m, grad_out_data, idx, weight, grad_features.data)
+        pointnet2.three_interpolate_grad_wrapper(c, n, m, grad_out_data, idx,
+                                                 weight, grad_features.data)
         return grad_features, None, None
 
 

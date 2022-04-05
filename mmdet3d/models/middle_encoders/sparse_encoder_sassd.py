@@ -16,8 +16,8 @@ def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
     indices = tensor.indices.float()
     offset = torch.Tensor(offset).to(indices.device)
     voxel_size = torch.Tensor(voxel_size).to(indices.device)
-    indices[:, 1:] = (indices[:, [3, 2, 1]] * voxel_size + offset
-                      + .5 * voxel_size)
+    indices[:, 1:] = (
+        indices[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size)
     return tensor.features, indices
 
 
@@ -170,16 +170,16 @@ class SparseEncoderSASSD(nn.Module):
             return spatial_features, None
 
         # auxiliary network
-        vx_feat, vx_nxyz = tensor2points(encode_features[0], (0, -40., -3.),
-                                         voxel_size=(.1, .1, .2))
+        vx_feat, vx_nxyz = tensor2points(
+            encode_features[0], (0, -40., -3.), voxel_size=(.1, .1, .2))
         p0 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
 
-        vx_feat, vx_nxyz = tensor2points(encode_features[1], (0, -40., -3.),
-                                         voxel_size=(.2, .2, .4))
+        vx_feat, vx_nxyz = tensor2points(
+            encode_features[1], (0, -40., -3.), voxel_size=(.2, .2, .4))
         p1 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
 
-        vx_feat, vx_nxyz = tensor2points(encode_features[2], (0, -40., -3.),
-                                         voxel_size=(.4, .4, .8))
+        vx_feat, vx_nxyz = tensor2points(
+            encode_features[2], (0, -40., -3.), voxel_size=(.4, .4, .8))
         p2 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
 
         pointwise = torch.cat([p0, p1, p2], dim=-1)
@@ -227,23 +227,22 @@ class SparseEncoderSASSD(nn.Module):
         reg_weights = pos
         reg_weights = reg_weights / pos_normalizer
 
-        aux_loss_cls = weighted_sigmoid_focal_loss(point_cls.view(-1),
-                                                   rpn_cls_target,
-                                                   weight=cls_weights,
-                                                   avg_factor=1.)
+        aux_loss_cls = weighted_sigmoid_focal_loss(
+            point_cls.view(-1),
+            rpn_cls_target,
+            weight=cls_weights,
+            avg_factor=1.)
         aux_loss_cls /= N
 
-        aux_loss_reg = weighted_smoothl1(point_reg,
-                                         center_targets,
-                                         beta=1 / 9.,
-                                         weight=reg_weights[..., None],
-                                         avg_factor=1.)
+        aux_loss_reg = weighted_smoothl1(
+            point_reg,
+            center_targets,
+            beta=1 / 9.,
+            weight=reg_weights[..., None],
+            avg_factor=1.)
         aux_loss_reg /= N
 
-        return dict(
-            aux_loss_cls=aux_loss_cls,
-            aux_loss_reg=aux_loss_reg
-        )
+        return dict(aux_loss_cls=aux_loss_cls, aux_loss_reg=aux_loss_reg)
 
     def make_encoder_layers(self,
                             make_block,

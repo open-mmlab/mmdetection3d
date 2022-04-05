@@ -43,9 +43,7 @@ class SASSD(SingleStage3DDetector):
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
-        x, point_misc = self.middle_encoder(voxel_features,
-                                            coors,
-                                            batch_size,
+        x, point_misc = self.middle_encoder(voxel_features, coors, batch_size,
                                             self.is_train)
         x = self.backbone(x)
         if self.with_neck:
