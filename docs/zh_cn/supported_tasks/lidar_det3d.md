@@ -1,6 +1,6 @@
 # 基于 LiDAR 的 3D 检测
 
-基于 LiDAR 的 3D 检测算法是 MMDetection3D 支持的最基础的任务之一。对于给定的算法模型，输入为任意数量的、附有 LiDAR 采集的特征的点，输出为每个感兴趣目标的 3D 外包矩形 (Bounding Box) 和类别标签。接下来，我们将以在 KITTI 数据集上训练 PointPillars 为例，介绍如何准备数据，如何在标准 3D 检测基准数据集上训练和测试模型，以及如何可视化并验证结果。
+基于 LiDAR 的 3D 检测算法是 MMDetection3D 支持的最基础的任务之一。对于给定的算法模型，输入为任意数量的、附有 LiDAR 采集的特征的点，输出为每个感兴趣目标的 3D 矩形框 (Bounding Box) 和类别标签。接下来，我们将以在 KITTI 数据集上训练 PointPillars 为例，介绍如何准备数据，如何在标准 3D 检测基准数据集上训练和测试模型，以及如何可视化并验证结果。
 
 ## 数据预处理
 
@@ -51,7 +51,7 @@ mmdetection3d
 
 ## 定量评估
 
-在训练期间，模型将会根据配置文件中的 `evaluation = dict(interval=xxx)` 设置，被周期性地评估。我们支持不同数据集的官方评估协议。对于 KITTI, 模型的评价指标为平均精度 (mAP, mean average precision)。3 种类型的 mAP 的交并比 (IoU, Intersection over Union) 阈值可以取 0.5/0.7。评估结果将会被打印到终端中，如下所示：
+在训练期间，模型将会根据配置文件中的 `evaluation = dict(interval=xxx)` 设置，被周期性地评估。我们支持不同数据集的官方评估方案。对于 KITTI, 模型的评价指标为平均精度 (mAP, mean average precision)。3 种类型的 mAP 的交并比 (IoU, Intersection over Union) 阈值可以取 0.5/0.7。评估结果将会被打印到终端中，如下所示：
 
 ```
 Car AP@0.70, 0.70, 0.70:
