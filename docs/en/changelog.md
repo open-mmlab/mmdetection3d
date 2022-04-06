@@ -5,7 +5,8 @@
 #### Compatibility
 
 - We migrate all the mmdet3d ops to mmcv and do not need to compile them when installing mmdet3d.
-- To fix the unprecise timestamp and optimize its saving method, we reformat the point cloud data during Waymo data conversion. The data conversion time is also optimized significantly by supporting parallel processing. Please re-generate KITTI format Waymo data if necessary. See more details in the [compatibility documentation](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/compatibility.md).
+- To fix the imprecise timestamp and optimize its saving method, we reformat the point cloud data during Waymo data conversion. The data conversion time is also optimized significantly by supporting parallel processing. Please re-generate KITTI format Waymo data if necessary. See more details in the [compatibility documentation](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/compatibility.md).
+- We update part of model checkpoints after the coordinate systems have been refactored. See more details in the #1369.
 
 #### Highlights
 
@@ -41,7 +42,7 @@
 - Fix unit tests that use GPUs (#1301)
 - Fix incorrect feature dimensions in `DynamicPillarFeatureNet` caused by previous upgrading of `PillarFeatureNet` (#1302)
 - Remove the `CameraPoints` constraint in `PointSample` (#1314)
-- Fix unprecise timestamps saving of Waymo dataset (#1327)
+- Fix imprecise timestamps saving of Waymo dataset (#1327)
 
 #### Contributors
 

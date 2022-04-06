@@ -29,7 +29,7 @@
 
 Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
 
-The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked.
+The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In this version, we update part of model checkpoints after the coordinate systems have been refactored. See more details in the [Changelog](docs/en/changelog.md).
 
 In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
 
