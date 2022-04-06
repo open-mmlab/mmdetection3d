@@ -11,7 +11,7 @@ from .single_stage import SingleStage3DDetector
 
 @DETECTORS.register_module()
 class SASSD(SingleStage3DDetector):
-    r"""`for 3D detection."""
+    r"""`SASSD <https://github.com/skyhehe123/SA-SSD> _ for 3D detection."""
 
     def __init__(self,
                  voxel_layer,
@@ -33,18 +33,17 @@ class SASSD(SingleStage3DDetector):
             init_cfg=init_cfg,
             pretrained=pretrained)
 
-        self.is_train = False
         self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
-    def extract_feat(self, points, img_metas=None):
+    def extract_feat(self, points, img_metas=None, test_mode=False):
         """Extract features from points."""
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
         x, point_misc = self.middle_encoder(voxel_features, coors, batch_size,
-                                            self.is_train)
+                                            test_mode)
         x = self.backbone(x)
         if self.with_neck:
             x = self.neck(x)
@@ -90,9 +89,8 @@ class SASSD(SingleStage3DDetector):
         Returns:
             dict: Losses of each branch.
         """
-        self.is_train = True
 
-        x, point_misc = self.extract_feat(points, img_metas)
+        x, point_misc = self.extract_feat(points, img_metas, test_mode=False)
         aux_loss = self.middle_encoder.aux_loss(*point_misc, gt_bboxes_3d)
 
         outs = self.bbox_head(x)
@@ -104,7 +102,7 @@ class SASSD(SingleStage3DDetector):
 
     def simple_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function without augmentaiton."""
-        x, _ = self.extract_feat(points, img_metas)
+        x, _ = self.extract_feat(points, img_metas, test_mode=True)
         outs = self.bbox_head(x)
         bbox_list = self.bbox_head.get_bboxes(
             *outs, img_metas, rescale=rescale)
@@ -116,7 +114,7 @@ class SASSD(SingleStage3DDetector):
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
-        feats = self.extract_feats(points, img_metas)
+        feats = self.extract_feats(points, img_metas, test_mode=True)
 
         # only support aug_test for one sample
         aug_bboxes = []
