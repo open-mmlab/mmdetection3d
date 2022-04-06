@@ -25,9 +25,9 @@ Models:
       - Task: 3D Object Detection
         Dataset: SUNRGBD
         Metrics:
-          AP@0.25: 59.07
+          AP@0.25: 59.78
           AP@0.5: 35.77
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20200620_230238-4483c0c0.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20210820_162823-bf11f014.pth
 
   - Name: votenet_8x8_scannet-3d-18class.py
     In Collection: VoteNet
@@ -39,9 +39,9 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 62.90
-          AP@0.5: 39.91
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth
+          AP@0.25: 62.34
+          AP@0.5: 40.82
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20210823_234503-cf8134fa.pth
 
   - Name: votenet_iouloss_8x8_scannet-3d-18class
     In Collection: VoteNet
