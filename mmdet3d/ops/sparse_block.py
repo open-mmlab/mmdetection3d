@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn import build_conv_layer, build_norm_layer
+from mmcv.ops import SparseModule, SparseSequential
 from torch import nn
 
-from mmdet3d.ops import spconv
 from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 
 
-class SparseBottleneck(Bottleneck, spconv.SparseModule):
+class SparseBottleneck(Bottleneck, SparseModule):
     """Sparse bottleneck block for PartA^2.
 
     Bottleneck block implemented with submanifold sparse convolution.
@@ -32,7 +32,7 @@ class SparseBottleneck(Bottleneck, spconv.SparseModule):
                  conv_cfg=None,
                  norm_cfg=None):
 
-        spconv.SparseModule.__init__(self)
+        SparseModule.__init__(self)
         Bottleneck.__init__(
             self,
             inplanes,
@@ -65,7 +65,7 @@ class SparseBottleneck(Bottleneck, spconv.SparseModule):
         return out
 
 
-class SparseBasicBlock(BasicBlock, spconv.SparseModule):
+class SparseBasicBlock(BasicBlock, SparseModule):
     """Sparse basic block for PartA^2.
 
     Sparse basic block implemented with submanifold sparse convolution.
@@ -90,7 +90,7 @@ class SparseBasicBlock(BasicBlock, spconv.SparseModule):
                  downsample=None,
                  conv_cfg=None,
                  norm_cfg=None):
-        spconv.SparseModule.__init__(self)
+        SparseModule.__init__(self)
         BasicBlock.__init__(
             self,
             inplanes,
@@ -182,5 +182,5 @@ def make_sparse_convmodule(in_channels,
         elif layer == 'act':
             layers.append(nn.ReLU(inplace=True))
 
-    layers = spconv.SparseSequential(*layers)
+    layers = SparseSequential(*layers)
     return layers

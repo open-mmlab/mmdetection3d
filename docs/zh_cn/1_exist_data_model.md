@@ -9,6 +9,7 @@
 ### 在标准数据集上测试已有模型
 
 - 单显卡
+- CPU
 - 单节点多显卡
 - 多节点
 
@@ -65,7 +66,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
        --eval mAP
    ```
 
-4. 使用8块显卡测试 SECOND，计算 mAP
+4. 使用8块显卡在 KITTI 数据集上测试 SECOND，计算 mAP
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
@@ -83,7 +84,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
    生成的结果会保存在 `./pointpillars_nuscenes_results` 目录。
 
-6. 使用8块显卡在 KITTI 数据集上测试 PointPillars，生成提交给官方评测服务器的 json 文件
+6. 使用8块显卡在 KITTI 数据集上测试 SECOND，生成提交给官方评测服务器的 txt 文件
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \

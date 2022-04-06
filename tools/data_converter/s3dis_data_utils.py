@@ -208,7 +208,7 @@ class S3DISSegData(object):
             if mask.endswith('npy'):
                 mask = np.load(mask)
             else:
-                mask = np.fromfile(mask, dtype=np.long)
+                mask = np.fromfile(mask, dtype=np.int64)
         label = self.cat_id2class[mask]
         return label
 

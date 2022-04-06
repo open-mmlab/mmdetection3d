@@ -1,11 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.ops import GroupAll
+from mmcv.ops import PointsSampler as Points_Sampler
+from mmcv.ops import QueryAndGroup, gather_points
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.ops import (GroupAll, PAConv, Points_Sampler, QueryAndGroup,
-                         gather_points)
+from mmdet3d.ops import PAConv
 from .builder import SA_MODULES
 
 

@@ -6,7 +6,8 @@ from tools.data_converter import indoor_converter as indoor
 from tools.data_converter import kitti_converter as kitti
 from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
-from tools.data_converter.create_gt_database import create_groundtruth_database
+from tools.data_converter.create_gt_database import (
+    create_groundtruth_database, GTDatabaseCreater)
 
 
 def kitti_data_prep(root_path,
@@ -181,14 +182,16 @@ def waymo_data_prep(root_path,
         converter.convert()
     # Generate waymo infos
     out_dir = osp.join(out_dir, 'kitti_format')
-    kitti.create_waymo_info_file(out_dir, info_prefix, max_sweeps=max_sweeps)
-    create_groundtruth_database(
+    kitti.create_waymo_info_file(
+        out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
+    GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
         info_prefix,
         f'{out_dir}/{info_prefix}_infos_train.pkl',
         relative_path=False,
-        with_mask=False)
+        with_mask=False,
+        num_worker=workers).create()
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
