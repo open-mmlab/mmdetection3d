@@ -6,7 +6,31 @@
 
 - We migrate all the mmdet3d ops to mmcv and do not need to compile them when installing mmdet3d.
 - To fix the imprecise timestamp and optimize its saving method, we reformat the point cloud data during Waymo data conversion. The data conversion time is also optimized significantly by supporting parallel processing. Please re-generate KITTI format Waymo data if necessary. See more details in the [compatibility documentation](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/compatibility.md).
-- We update some of the model checkpoints after the refactor of coordinate systems: `SSN`、`VoteNet`、`RegNet`、`PartA2`、`MVXNet`、`ImVoxelNet`、`ImVoteNet`、`H3DNet`、`FreeAnchor` model checkpoints have been fully updated, and `SECOND`、`PointPillars`、`3DSSD` model checkpoints have been partially updated. Please stay tuned for the release of the remaining model checkpoints.
+- We update some of the model checkpoints after the refactor of coordinate systems. Please stay tuned for the release of the remaining model checkpoints.
+
+|        | Fully Updated   | Partially Updated  |  In Progress  | No Influcence |
+|--------------------|:-------------:|:--------:| :-----------: | :-----------: |
+| SECOND                  |          | ✓        |               |               |
+| PointPillars            |          | ✓        |               |               |
+| FreeAnchor              | ✓        |          |               |               |
+| VoteNet                 | ✓        |          |               |               |
+| H3DNet                  | ✓        |          |               |               |
+| 3DSSD                   |          | ✓        |               |               |
+| Part-A2                 | ✓        |          |               |               |
+| MVXNet                  | ✓        |          |               |               |
+| CenterPoint             |          |          |✓              |               |
+| SSN                     | ✓        |          |               |               |
+| ImVoteNet               | ✓        |          |               |               |
+| FCOS3D                  |          |          |               |✓              |
+| PointNet++              |          |          |               |✓              |
+| Group-Free-3D           |          |          |               |✓              |
+| ImVoxelNet              | ✓        |          |               |               |
+| PAConv                  |          |          |               |✓              |
+| DGCNN                   |          |          |               |✓              |
+| SMOKE                   |          |          |               |✓              |
+| PGD                     |          |          |               |✓              |
+| MonoFlex                |          |          |               |✓              |
+
 
 #### Highlights
 
