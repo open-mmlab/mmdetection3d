@@ -84,7 +84,7 @@ def build_data_cfg(config_path, skip_type, aug, cfg_options):
                 if show_pipeline[-1]['type'] == 'Collect3D':
                     show_pipeline[-1] = cfg.train_pipeline[i]
                 else:
-                    show_pipeline.insert(i, cfg.train_pipeline[i])
+                    show_pipeline.append(cfg.train_pipeline[i])
 
     train_data_cfg['pipeline'] = [
         x for x in show_pipeline if x['type'] not in skip_type
