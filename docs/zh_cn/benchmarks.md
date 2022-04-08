@@ -7,25 +7,25 @@
 * 硬件：8 NVIDIA Tesla V100 (32G) GPUs, Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz
 * 软件：Python 3.7, CUDA 10.1, cuDNN 7.6.5, PyTorch 1.3, numba 0.48.0.
 * 模型：由于不同代码库所实现的模型种类有所不同，在基准测试中我们选择了 SECOND、PointPillars、Part-A2 和 VoteNet 几种模型，分别与其他代码库中的相应模型实现进行了对比。
-* 度量方法：我们使用整个训练过程中的平均吞吐量作为度量方法，并跳过每个 epoch 的前 50 次迭代以省略 GPU 的预热时间。
+* 度量方法：我们使用整个训练过程中的平均吞吐量作为度量方法，并跳过每个 epoch 的前 50 次迭代以消除训练预热的影响。
 
 ## 主要结果
 
-对于模型的训练速度（样本/秒），我们将 MMDetection3D 与其他实现了相似模型的代码库进行了对比。结果如下所示，表格内的数字越大，代表模型的训练速度越快。代码库中不支持的模型使用 `×` 进行标识。
+对于模型的训练速度（样本/秒），我们将 MMDetection3D 与其他实现了相同模型的代码库进行了对比。结果如下所示，表格内的数字越大，代表模型的训练速度越快。代码库中不支持的模型使用 `×` 进行标识。
 
-|  模型  | MMDetection3D | OpenPCDet |votenet| Det3D |
-|:-------:|:-------------:|:---------:|:-----:|:-----:|
-| VoteNet | 358           | ×         |   77  | ×     |
-| PointPillars-car| 141           | ×         |   ×  | 140     |
-| PointPillars-3class| 107           |44     |   ×      | ×    |
-| SECOND| 40           |30     |   ×      | ×    |
-| Part-A2| 17           |14     |   ×      | ×    |
+|        模型         | MMDetection3D | OpenPCDet | votenet | Det3D |
+| :-----------------: | :-----------: | :-------: | :-----: | :---: |
+|       VoteNet       |      358      |     ×     |   77    |   ×   |
+|  PointPillars-car   |      141      |     ×     |    ×    |  140  |
+| PointPillars-3class |      107      |    44     |    ×    |   ×   |
+|       SECOND        |      40       |    30     |    ×    |   ×   |
+|       Part-A2       |      17       |    14     |    ×    |   ×   |
 
 ## 测试细节
 
 ### 为了计算速度所做的修改
 
-* __MMDetection3D__：我们尝试使用与其他代码库中尽可能相似的配置，具体配置细节见 [基准测试配置](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark)。
+* __MMDetection3D__：我们尝试使用与其他代码库中尽可能相同的配置，具体配置细节见 [基准测试配置](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark)。
 
 * __Det3D__：为了与 Det3D 进行比较，我们使用了 commit [519251e](https://github.com/poodarchu/Det3D/tree/519251e72a5c1fdd58972eabeac67808676b9bb7) 所对应的代码版本。
 
@@ -134,11 +134,11 @@
   python eval.py --dataset sunrgbd --checkpoint_path log_sunrgbd/checkpoint.tar --batch_size 1 --dump_dir eval_sunrgbd --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal
   ```
 
-  注意，为了计算推理速度，我们对 eval.py 进行了修改。
+  注意，为了计算推理速度，我们对 `eval.py` 进行了修改。
 
   <details>
   <summary>
-  （为了对相似模型进行测试所做的具体修改 - 点击展开）
+  （为了对相同模型进行测试所做的具体修改 - 点击展开）
   </summary>
 
   ```diff
@@ -209,11 +209,11 @@
   ./tools/scripts/train.sh --launcher=slurm --gpus=8
   ```
 
-  注意，为了训练PointPillars，我们对 train.sh 进行了修改。
+  注意，为了训练 PointPillars，我们对 `train.sh` 进行了修改。
 
   <details>
   <summary>
-  （为了对相似模型进行测试所做的具体修改 - 点击展开）
+  （为了对相同模型进行测试所做的具体修改 - 点击展开）
   </summary>
 
   ```diff
@@ -254,7 +254,7 @@
 
 ### SECOND
 
-基准测试中的 SECOND 指在 [second.Pytorch](https://github.com/traveller59/second.pytorch) 首次被实现的 [SECONDv1.5](https://github.com/traveller59/second.pytorch/blob/master/second/configs/all.fhd.config)。在 Det3D 对 SECOND 的实现中，使用了自己实现的 Multi-Group Head，因此无法将它的速度与其他代码库进行对比。
+基准测试中的 SECOND 指在 [second.Pytorch](https://github.com/traveller59/second.pytorch) 首次被实现的 [SECONDv1.5](https://github.com/traveller59/second.pytorch/blob/master/second/configs/all.fhd.config)。Det3D 实现的 SECOND 中，使用了自己实现的 Multi-Group Head，因此无法将它的速度与其他代码库进行对比。
 
 * __MMDetection3D__：在 v0.1.0 版本下, 执行如下命令：
 
