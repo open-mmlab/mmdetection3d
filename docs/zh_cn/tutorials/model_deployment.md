@@ -1,6 +1,6 @@
-# 教程 7: 部署MMDet3D模型到推理后端
+# 教程 7: MMDet3D模型部署
 
-为了解决在实际使用过程中对算法模型的速度需求，通常我们会将训练好的模型部署到各种推理后端上。 [MMDeploy](https://github.com/open-mmlab/mmdeploy) 是 OpenMMLab 系列算法库的部署框架，现在 MMDeploy 已经支持了MMDet3d，我们可以通过 MMDeploy 将训练好的模型部署到各种推理后端上。
+为了解决在实际使用过程中遇到的算法模型的速度需求，通常我们会将训练好的模型部署到各种推理后端上。 [MMDeploy](https://github.com/open-mmlab/mmdeploy) 是 OpenMMLab 系列算法库的部署框架，现在 MMDeploy 已经支持了MMDetection3D，我们可以通过 MMDeploy 将训练好的模型部署到各种推理后端上。
 
 ## 准备
 

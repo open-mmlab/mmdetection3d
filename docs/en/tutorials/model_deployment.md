@@ -1,6 +1,6 @@
-# Tutorial 7: Deploy MMDet3d model in inference backend
+# Tutorial 7: MMDetection3D model deployment
 
-To solve the speed requirements of the model in actual use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDet3d model deploy, and you can deploy the trained model to inference backends by MMDeploy.
+To solve meet the speed requirements of the model in practical use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDetection3D model deployment, and you can deploy the trained model to inference backends by MMDeploy.
 
 ## Prerequist
 
@@ -14,11 +14,11 @@ git submodule update --init --recursive
 
 ### Install backend and build custom ops
 
-According to MMDeploy documentation, choose to install the inference backend and build custom ops. Now optional inference backend for MMDet3D models include [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html).
+According to MMDeploy documentation, choose to install the inference backend and build custom ops. Now optional inference backend for MMDetection3D models include [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html).
 
 ## Export model
 
-Export the Pytorch model of MMDet3D to the ONNX model file and the model file required by the backend. You could refer to MMDeploy docs [how to convert model](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_convert_model.html).
+Export the Pytorch model of MMDetection3D to the ONNX model file and the model file required by the backend. You could refer to MMDeploy docs [how to convert model](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_convert_model.html).
 
 ```bash
 python ./tools/deploy.py \

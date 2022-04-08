@@ -228,7 +228,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
 | MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
-
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
@@ -240,6 +239,10 @@ Please refer to [getting_started.md](docs/en/getting_started.md) for installatio
 Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/1_exist_data_model.md) and [with customized dataset](docs/en/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/tutorials/config.md), [adding new dataset](docs/en/tutorials/customize_dataset.md), [designing data pipeline](docs/en/tutorials/data_pipeline.md), [customizing models](docs/en/tutorials/customize_models.md), [customizing runtime settings](docs/en/tutorials/customize_runtime.md) and [Waymo dataset](docs/en/datasets/waymo_det.md).
 
 Please refer to [FAQ](docs/en/faq.md) for frequently asked questions. When updating the version of MMDetection3D, please also check the [compatibility doc](docs/en/compatibility.md) to be aware of the BC-breaking updates introduced in each version.
+
+## MMDetection3D model deployment
+
+Now MMDeploy has supported some MMDetection3D model deployment, you could refer to [model_deployment.md](docs/en/tutorials/model_deployment.md).
 
 ## Citation
 
