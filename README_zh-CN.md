@@ -241,7 +241,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 请参考 [FAQ](docs/zh_cn/faq.md) 查看一些常见的问题与解答。在升级 MMDetection3D 的版本时，请查看[兼容性文档](docs/zh_cn/compatibility.md)以知晓每个版本引入的不与之前版本兼容的更新。
 
-## MMDetection3D 模型部署
+## 模型部署
 
 现在 MMDeploy 已经支持了一些 MMDetection3D 模型的部署,你可以参考 [model_deployment.md](docs/zh_cn/tutorials/model_deployment.md)。
 
