@@ -1,8 +1,8 @@
 # Tutorial 7: MMDetection3D model deployment
 
-To solve meet the speed requirements of the model in practical use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDetection3D model deployment, and you can deploy the trained model to inference backends by MMDeploy.
+To meet the speed requirement of the model in practical use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDetection3D model deployment, and you can deploy the trained model to inference backends by MMDeploy.
 
-## Prerequist
+## Prerequisite
 
 ### Install MMDeploy
 
@@ -123,4 +123,4 @@ cpu
 ## Note
 
 * MMDeploy version >= 0.4.0.
-* Currently, CenterPoint only has supported the pillar version.
+* Currently, CenterPoint has only supported the pillar version.

@@ -242,8 +242,7 @@ Please refer to [FAQ](docs/en/faq.md) for frequently asked questions. When updat
 
 ## Model deployment
 
-Now MMDeploy has supported some MMDetection3D model deployment, you could refer to [model_deployment.md](docs/en/tutorials/model_deployment.md).
-
+Now MMDeploy has supported some MMDetection3D model deployment. Please refer to [model_deployment.md](docs/en/tutorials/model_deployment.md) for more details.
 ## Citation
 
 If you find this project useful in your research, please consider cite:
