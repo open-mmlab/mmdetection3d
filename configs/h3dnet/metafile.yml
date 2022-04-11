@@ -24,6 +24,6 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 66.43
-          AP@0.5: 48.01
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/h3dnet/h3dnet_scannet-3d-18class/h3dnet_scannet-3d-18class_20200830_000136-02e36246.pth
+          AP@0.25: 66.07
+          AP@0.5: 47.68
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/h3dnet/h3dnet_scannet-3d-18class/h3dnet_3x8_scannet-3d-18class_20210824_003149-414bd304.pth

@@ -54,7 +54,8 @@ class S3DISDataset(Custom3DDataset):
                  modality=None,
                  box_type_3d='Depth',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 *kwargs):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -63,7 +64,8 @@ class S3DISDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            *kwargs)
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
@@ -85,10 +87,10 @@ class S3DISDataset(Custom3DDataset):
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
                 np.float32)  # k, 6
-            gt_labels_3d = info['annos']['class'].astype(np.long)
+            gt_labels_3d = info['annos']['class'].astype(np.int64)
         else:
             gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
-            gt_labels_3d = np.zeros((0, ), dtype=np.long)
+            gt_labels_3d = np.zeros((0, ), dtype=np.int64)
 
         # to target box structure
         gt_bboxes_3d = DepthInstance3DBoxes(
@@ -205,7 +207,8 @@ class _S3DISSegDataset(Custom3DSegDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None):
+                 scene_idxs=None,
+                 **kwargs):
 
         super().__init__(
             data_root=data_root,
@@ -216,7 +219,8 @@ class _S3DISSegDataset(Custom3DSegDataset):
             modality=modality,
             test_mode=test_mode,
             ignore_index=ignore_index,
-            scene_idxs=scene_idxs)
+            scene_idxs=scene_idxs,
+            **kwargs)
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
@@ -347,7 +351,8 @@ class S3DISSegDataset(_S3DISSegDataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None):
+                 scene_idxs=None,
+                 **kwargs):
 
         # make sure that ann_files and scene_idxs have same length
         ann_files = self._check_ann_files(ann_files)
@@ -363,7 +368,8 @@ class S3DISSegDataset(_S3DISSegDataset):
             modality=modality,
             test_mode=test_mode,
             ignore_index=ignore_index,
-            scene_idxs=scene_idxs[0])
+            scene_idxs=scene_idxs[0],
+            **kwargs)
 
         datasets = [
             _S3DISSegDataset(

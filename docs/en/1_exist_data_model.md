@@ -66,7 +66,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        --eval mAP
    ```
 
-4. Test SECOND with 8 GPUs, and evaluate the mAP.
+4. Test SECOND on KITTI with 8 GPUs, and evaluate the mAP.
 
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \

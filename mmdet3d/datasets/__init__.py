@@ -21,7 +21,8 @@ from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                         VoxelBasedPointSampler)
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
-from .scannet_dataset import ScanNetDataset, ScanNetSegDataset
+from .scannet_dataset import (ScanNetDataset, ScanNetInstanceSegDataset,
+                              ScanNetSegDataset)
 from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 from .utils import get_loading_pipeline
@@ -35,10 +36,10 @@ __all__ = [
     'LoadPointsFromFile', 'S3DISSegDataset', 'S3DISDataset',
     'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
     'PointSample', 'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset',
-    'ScanNetDataset', 'ScanNetSegDataset', 'SemanticKITTIDataset',
-    'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
-    'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
-    'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
-    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale',
-    'LoadPointsFromDict'
+    'ScanNetDataset', 'ScanNetSegDataset', 'ScanNetInstanceSegDataset',
+    'SemanticKITTIDataset', 'Custom3DDataset', 'Custom3DSegDataset',
+    'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
+    'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
+    'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
+    'RandomShiftScale', 'LoadPointsFromDict'
 ]

@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.datasets import ScanNetDataset, ScanNetSegDataset
+from mmdet3d.datasets import (ScanNetDataset, ScanNetInstanceSegDataset,
+                              ScanNetSegDataset)
 
 
 def test_getitem():
@@ -111,12 +112,13 @@ def test_getitem():
 
     # Test load classes from file
     import tempfile
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, 'w') as f:
-        f.write('cabinet\nbed\n')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = tmpdir + 'classes.txt'
+        with open(path, 'w') as f:
+            f.write('cabinet\nbed\n')
 
     scannet_dataset = ScanNetDataset(
-        root_path, ann_file, pipeline=None, classes=tmp_file.name)
+        root_path, ann_file, pipeline=None, classes=path)
     assert scannet_dataset.CLASSES != original_classes
     assert scannet_dataset.CLASSES == ['cabinet', 'bed']
 
@@ -496,15 +498,16 @@ def test_seg_getitem():
 
     # test load classes from file
     import tempfile
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, 'w') as f:
-        f.write('cabinet\nchair\n')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = tmpdir + 'classes.txt'
+        with open(path, 'w') as f:
+            f.write('cabinet\nchair\n')
 
     scannet_dataset = ScanNetSegDataset(
         data_root=root_path,
         ann_file=ann_file,
         pipeline=None,
-        classes=tmp_file.name,
+        classes=path,
         scene_idxs=scene_idxs)
     assert scannet_dataset.CLASSES != original_classes
     assert scannet_dataset.CLASSES == ['cabinet', 'chair']
@@ -685,3 +688,155 @@ def test_seg_format_results():
     expected_txt_path = osp.join(tmp_dir.name, 'results', 'scene0000_00.txt')
     assert np.all(result_files[0]['seg_mask'] == expected_label)
     mmcv.check_file_exist(expected_txt_path)
+
+
+def test_instance_seg_getitem():
+    np.random.seed(0)
+    root_path = './tests/data/scannet/'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                   'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'garbagebin')
+    train_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            use_color=True,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=False,
+            with_label_3d=False,
+            with_mask_3d=True,
+            with_seg_3d=True),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                           34, 36, 39),
+            max_cat_id=40),
+        dict(type='NormalizePointsColor', color_mean=None),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D',
+            keys=['points', 'pts_semantic_mask', 'pts_instance_mask'])
+    ]
+    scannet_dataset = ScanNetInstanceSegDataset(
+        data_root=root_path,
+        ann_file=ann_file,
+        pipeline=train_pipeline,
+        classes=class_names,
+        test_mode=False)
+    expected_points = torch.tensor([[
+        -3.4742e+00, 7.8792e-01, 1.7397e+00, 3.3725e-01, 3.5294e-01, 3.0588e-01
+    ], [
+        2.7216e+00, 3.4164e+00, 2.4572e+00, 6.6275e-01, 6.2745e-01, 5.1373e-01
+    ],
+                                    [
+                                        1.3404e+00, -1.4675e+00, -4.4059e-02,
+                                        3.8431e-01, 3.6078e-01, 3.5686e-01
+                                    ],
+                                    [
+                                        -3.0335e+00, 2.7273e+00, 1.5181e+00,
+                                        2.3137e-01, 1.6078e-01, 8.2353e-02
+                                    ],
+                                    [
+                                        -4.3207e-01, 1.8154e+00, 1.7455e-01,
+                                        4.0392e-01, 3.8039e-01, 4.1961e-01
+                                    ]])
+
+    data = scannet_dataset[0]
+
+    points = data['points']._data[:5]
+    pts_semantic_mask = data['pts_semantic_mask']._data[:5]
+    pts_instance_mask = data['pts_instance_mask']._data[:5]
+    expected_semantic_mask = np.array([11, 18, 18, 0, 4])
+    expected_instance_mask = np.array([6, 56, 10, 9, 35])
+
+    assert torch.allclose(points, expected_points, 1e-2)
+    assert np.all(pts_semantic_mask.numpy() == expected_semantic_mask)
+    assert np.all(pts_instance_mask.numpy() == expected_instance_mask)
+
+
+def test_instance_seg_evaluate():
+    root_path = './tests/data/scannet'
+    ann_file = './tests/data/scannet/scannet_infos.pkl'
+    class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                   'window', 'bookshelf', 'picture', 'counter', 'desk',
+                   'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                   'sink', 'bathtub', 'garbagebin')
+    test_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            use_color=True,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(type='NormalizePointsColor', color_mean=None),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(type='Collect3D', keys=['points'])
+    ]
+    scannet_dataset = ScanNetInstanceSegDataset(
+        data_root=root_path,
+        ann_file=ann_file,
+        pipeline=test_pipeline,
+        test_mode=True)
+
+    pred_mask = torch.tensor([
+        1, -1, -1, -1, 7, 11, 2, -1, 1, 10, -1, -1, 5, -1, -1, -1, -1, 1, -1,
+        -1, -1, -1, 0, -1, 1, -1, 12, -1, -1, -1, 8, 5, 1, 5, 2, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 8, -1, -1, -1,
+        0, 4, 3, -1, 9, -1, -1, 6, -1, -1, -1, -1, 13, -1, -1, 5, -1, 5, -1,
+        -1, 9, 0, 5, -1, -1, 2, 3, 4, -1, -1, -1, 2, -1, -1, -1, 5, 9, -1, 1,
+        -1, 4, 10, 4, -1
+    ]).long()
+    pred_labels = torch.tensor(
+        [4, 11, 11, 10, 0, 3, 12, 4, 14, 1, 0, 0, 0, 5, 5]).long()
+    pred_scores = torch.tensor([.99 for _ in range(len(pred_labels))])
+    results = [
+        dict(
+            instance_mask=pred_mask,
+            instance_label=pred_labels,
+            instance_score=torch.tensor(pred_scores))
+    ]
+    eval_pipeline = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=False,
+            use_color=True,
+            load_dim=6,
+            use_dim=[0, 1, 2, 3, 4, 5]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=False,
+            with_label_3d=False,
+            with_mask_3d=True,
+            with_seg_3d=True),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
+                           34, 36, 39),
+            max_cat_id=40),
+        dict(type='NormalizePointsColor', color_mean=None),
+        dict(type='DefaultFormatBundle3D', class_names=class_names),
+        dict(
+            type='Collect3D',
+            keys=['points', 'pts_semantic_mask', 'pts_instance_mask'])
+    ]
+    # We add options here as default min_region_size
+    # is much bigger than test instances.
+    ret_dict = scannet_dataset.evaluate(
+        results,
+        pipeline=eval_pipeline,
+        options=dict(min_region_sizes=np.array([1])))
+    assert abs(ret_dict['all_ap'] - 0.90625) < 0.001
+    assert abs(ret_dict['all_ap_50%'] - 0.90625) < 0.001
+    assert abs(ret_dict['all_ap_25%'] - 0.94444) < 0.001
+    assert abs(ret_dict['classes']['cabinet']['ap25%'] - 1.0) < 0.001
+    assert abs(ret_dict['classes']['cabinet']['ap50%'] - 0.65625) < 0.001
+    assert abs(ret_dict['classes']['door']['ap25%'] - 0.5) < 0.001
+    assert abs(ret_dict['classes']['door']['ap50%'] - 0.5) < 0.001

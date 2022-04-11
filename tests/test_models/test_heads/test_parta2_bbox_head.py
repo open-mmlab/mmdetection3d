@@ -2,13 +2,13 @@
 import pytest
 import torch
 from mmcv import Config
+from mmcv.ops import SubMConv3d
 from torch.nn import BatchNorm1d, ReLU
 
 from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
 from mmdet3d.core.bbox.samplers import IoUNegPiecewiseSampler
 from mmdet3d.models import PartA2BboxHead
 from mmdet3d.ops import make_sparse_convmodule
-from mmdet3d.ops.spconv.conv import SubMConv3d
 
 
 def test_loss():
