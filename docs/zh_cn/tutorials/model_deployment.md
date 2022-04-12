@@ -78,7 +78,7 @@ result = inference_model(model_cfg, deploy_cfg, backend_files, img=img, device=d
 
 `inference_model` 将创建一个推理后端的模块并为你进行推理。推理结果与模型的 OpenMMLab 代码库具有相同的格式。
 
-## 测试模型(可选)
+## 测试模型 (可选)
 
 可以测试部署在推理后端上的模型的精度和速度。你可以参考 [how to measure performance of models](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_measure_performance_of_models.html)。
 

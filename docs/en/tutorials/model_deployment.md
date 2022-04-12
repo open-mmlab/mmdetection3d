@@ -77,7 +77,7 @@ result = inference_model(model_cfg, deploy_cfg, backend_files, img=img, device=d
 
 The `inference_model` will create a wrapper module and do the inference for you. The result has the same format as the original OpenMMLab repo.
 
-## Evaluate model(Optional)
+## Evaluate model (Optional)
 
 You can test the accuracy and speed of the model in the inference backend. You could refer to MMDeploy docs [how to measure performance of models](https://mmdeploy.readthedocs.io/en/latest/tutorials/how_to_measure_performance_of_models.html).
 
@@ -113,7 +113,7 @@ bbox \
 cpu
 ```
 
-## Supported model
+## Supported models
 
 | Model                | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
 | -------------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
