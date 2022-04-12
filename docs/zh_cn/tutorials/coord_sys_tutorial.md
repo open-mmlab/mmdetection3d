@@ -47,7 +47,7 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐
 
 三个坐标系的图示如下：
 
-![](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/v1.0.0.dev0/resources/coord_sys_all.png)
+![](https://raw.githubusercontent.com/open-mmlab/mmdetection3d/master/resources/coord_sys_all.png)
 
 上面三张图是 3D 坐标系，下面三张图是鸟瞰图。
 
@@ -132,7 +132,7 @@ __|____|____|____|_________\ x right
 
 ### KITTI
 
-KITTI 数据集的原始标注是在相机坐标系下的，详见 [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/data_converter/kitti_data_utils.py)。在 MMDetection3D 中，为了在 KITTI 数据集上训练基于激光雷达的模型，首先将数据从相机坐标系转换到激光雷达坐标系，详见 [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/datasets/kitti_dataset.py)。为了训练基于视觉的模型，数据保持在相机坐标系下不变。
+KITTI 数据集的原始标注是在相机坐标系下的，详见 [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/kitti_data_utils.py)。在 MMDetection3D 中，为了在 KITTI 数据集上训练基于激光雷达的模型，首先将数据从相机坐标系转换到激光雷达坐标系，详见 [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py)。为了训练基于视觉的模型，数据保持在相机坐标系下不变。
 
 在 SECOND 中，一个框的激光雷达坐标系定义如下（鸟瞰图）：
 
@@ -151,7 +151,7 @@ KITTI 数据集的原始标注是在相机坐标系下的，详见 [get_label_an
 
 ### NuScenes
 
-NuScenes 为评估提供了一个工具包，其中每个框都被包装成一个 `Box` 实例。`Box` 的坐标系不同于我们的激光雷达坐标系，在 `Box` 坐标系中，前两个表示框尺寸的元素分别对应 ``$$`(dy, dx)`$$`` 或 ``$$`(w, l)`$$``，这和我们的表示相反。更多细节请参考 NuScenes [教程](https://github.com/open-mmlab/mmdetection3d/blob/dev/docs/zh_cn/datasets/nuscenes_det.md#notes)。
+NuScenes 为评估提供了一个工具包，其中每个框都被包装成一个 `Box` 实例。`Box` 的坐标系不同于我们的激光雷达坐标系，在 `Box` 坐标系中，前两个表示框尺寸的元素分别对应 ``$$`(dy, dx)`$$`` 或 ``$$`(w, l)`$$``，这和我们的表示相反。更多细节请参考 NuScenes [教程](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/zh_cn/datasets/nuscenes_det.md#notes)。
 
 读者可以参考 [NuScenes 开发工具](https://github.com/nutonomy/nuscenes-devkit/tree/master/python-sdk/nuscenes/eval/detection)，了解 [NuScenes 框]((https://github.com/nutonomy/nuscenes-devkit/blob/2c6a752319f23910d5f55cc995abc547a9e54142/python-sdk/nuscenes/utils/data_classes.py#L457)) 的定义和 [NuScenes 评估](https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/eval/detection/evaluate.py)的实现。
 
@@ -169,7 +169,7 @@ ScanNet 的原始数据不是点云而是网格。采样的点云数据是在我
 
 SUN RGB-D 的原始数据不是点云，而是 RGB-D 图像。我们通过反投影为每张图像得到对应的点云，其在我们的深度坐标系下。然而，标注并不在我们的坐标系下，因此需要转换。
 
-为了将原始标注转换到我们的深度坐标系，请参考 [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/tools/data_converter/sunrgbd_data_utils.py)。
+为了将原始标注转换到我们的深度坐标系，请参考 [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/sunrgbd_data_utils.py)。
 
 ### S3DIS
 
@@ -197,25 +197,25 @@ SUN RGB-D 的原始数据不是点云，而是 RGB-D 图像。我们通过反投
 
 - ``$$`r_{LiDAR}=-\frac{\pi}{2}-r_{camera}`$$``
 
-详见[此处](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/box_3d_mode.py)代码了解更多细节。
+详见[此处](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/box_3d_mode.py)代码了解更多细节。
 
 ### 鸟瞰图
 
 如果 3D 框是 ``$$`(x, y, z, dx, dy, dz, r)`$$``，相机坐标系下框的鸟瞰图是 ``$$`(x, z, dx, dz, -r)`$$``。转向角符号取反是因为相机坐标系重力轴的正方向指向地面。
 
-详见[此处](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/cam_box3d.py)代码了解更多细节。
+详见[此处](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py)代码了解更多细节。
 
 ### 框的旋转
 
 我们将各种框的旋转设定为绕着重力轴逆时针旋转。因此，为了旋转一个 3D 框，我们首先计算新框的中心，然后将旋转角度添加到转向角。
 
-详见[此处](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/bbox/structures/cam_box3d.py)代码了解更多细节。
+详见[此处](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py)代码了解更多细节。
 
 ## 常见问题
 
 #### Q1: 与框相关的算子是否适用于所有坐标系类型？
 
-否。例如，在该[文件夹](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/ops/roiaware_pool3d)下的算子只适用于深度或激光雷达坐标系。由于如果从上方看，旋转是顺时针的，所以 KITTI 数据集[这里](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0.dev0/mmdet3d/core/evaluation/kitti_utils)的评估函数仅适用于相机坐标系。
+否。例如，[用于 RoI-Aware Pooling 的算子](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/roiaware_pool3d.py)只适用于深度或激光雷达坐标系。由于如果从上方看，旋转是顺时针的，所以 KITTI 数据集[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/kitti_utils)的评估函数仅适用于相机坐标系。
 
 对于每个和框相关的算子，我们注明了该算子所适用的框类型。
 
