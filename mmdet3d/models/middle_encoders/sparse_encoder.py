@@ -1,36 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmcv.ops import SparseConvTensor, SparseSequential
+from mmcv.ops import (SparseConvTensor, SparseSequential,
+                      three_interpolate, three_nn)
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from ..builder import MIDDLE_ENCODERS
-
-
-def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
-    indices = tensor.indices.float()
-    offset = torch.Tensor(offset).to(indices.device)
-    voxel_size = torch.Tensor(voxel_size).to(indices.device)
-    indices[:, 1:] = (
-        indices[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size)
-    return tensor.features, indices
-
-
-def nearest_neighbor_interpolate(unknown, known, known_feats):
-    """
-    :param unknown: (n, 4) tensor of the bxyz positions of the unknown features
-    :param known: (m, 4) tensor of the bxyz positions of the known features
-    :param known_feats: (m, C) tensor of features to be propigated
-    :return:
-        new_features: (n, C) tensor of the features of the unknown features
-    """
-    dist, idx = three_nn_2d(unknown, known)
-    dist_recip = 1.0 / (dist + 1e-8)
-    norm = torch.sum(dist_recip, dim=1, keepdim=True)
-    weight = dist_recip / norm
-    interpolated_feats = three_interpolate_2d(known_feats, idx, weight)
-
-    return interpolated_feats
 
 
 @MIDDLE_ENCODERS.register_module()
@@ -296,7 +271,7 @@ class SparseEncoderSASSD(SparseEncoder):
         Returns:
             dict: Backbone features.
             tuple[torch.Tensor]: Mean feature value of the points,
-                classificaion result of the points, 
+                classificaion result of the points,
                 regression offsets of the points.
 
         """
@@ -306,9 +281,9 @@ class SparseEncoderSASSD(SparseEncoder):
         points_mean[:, 1:] = voxel_features[:, :3]
 
         coors = coors.int()
-        input_sp_tensor = spconv.SparseConvTensor(voxel_features, coors,
-                                                  self.sparse_shape,
-                                                  batch_size)
+        input_sp_tensor = SparseConvTensor(voxel_features, coors,
+                                           self.sparse_shape,
+                                           batch_size)
         x = self.conv_input(input_sp_tensor)
 
         encode_features = []
@@ -328,17 +303,14 @@ class SparseEncoderSASSD(SparseEncoder):
             return spatial_features, None
 
         # auxiliary network
-        vx_feat, vx_nxyz = tensor2points(
-            encode_features[0], (0, -40., -3.), voxel_size=(.1, .1, .2))
-        p0 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
+        p0 = self.make_auxiliary_points(encode_features[0], points_mean,
+          (0, -40., -3.), voxel_size=(.1, .1, .2))
 
-        vx_feat, vx_nxyz = tensor2points(
-            encode_features[1], (0, -40., -3.), voxel_size=(.2, .2, .4))
-        p1 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
+        p1 = self.make_auxiliary_points(encode_features[1], points_mean,
+          (0, -40., -3.), voxel_size=(.2, .2, .4))
 
-        vx_feat, vx_nxyz = tensor2points(
-            encode_features[2], (0, -40., -3.), voxel_size=(.4, .4, .8))
-        p2 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
+        p2 = self.make_auxiliary_points(encode_features[2], points_mean,
+          (0, -40., -3.), voxel_size=(.4, .4, .8))
 
         pointwise = torch.cat([p0, p1, p2], dim=-1)
         pointwise = self.point_fc(pointwise)
@@ -416,10 +388,36 @@ class SparseEncoderSASSD(SparseEncoder):
 
         aux_loss_cls /= N
 
-
         weight = reg_weights[..., None]
         aux_loss_reg = smooth_l1_loss(point_reg, center_targets, beta=1/9.)
         aux_loss_reg = torch.sum(aux_loss_reg * weight)[None]
         aux_loss_reg /= N
 
         return dict(aux_loss_cls=aux_loss_cls, aux_loss_reg=aux_loss_reg)
+
+    def make_auxiliary_points(self, source_tensor, target, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
+        """
+        :param source_tensor (Tensor): (m, C) tensor of features to be propigated
+        :param target (Tensor): (n, 4) tensor of the bxyz positions of the unknown features
+        :param offset (tuple): voxelization offset
+        :param voxel_size (tuple): voxelization size
+        :return:
+            new_features: (n, C) tensor of the features of the target features
+        """
+        # Tansfer tensor to points
+        source = source_tensor.indices.float()
+        offset = torch.Tensor(offset).to(source.device)
+        voxel_size = torch.Tensor(voxel_size).to(source.device)
+        source[:, 1:] = (
+            source[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size)
+
+        source_feats = source_tensor.features
+
+        # Interplate auxiliary points
+        dist, idx = three_nn(target[None, ...], source[None, ...])
+        dist_recip = 1.0 / (dist + 1e-8)
+        norm = torch.sum(dist_recip, dim=2, keepdim=True)
+        weight = dist_recip / norm
+        new_features = three_interpolate(source_feats[None, ...].transpose(1, 2), idx, weight)
+
+        return new_features.squeeze(0).transpose(0, 1)

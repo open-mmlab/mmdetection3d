@@ -4,6 +4,6 @@ from .sparse_encoder import SparseEncoder, SparseEncoderSASSD
 from .sparse_unet import SparseUNet
 
 __all__ = [
-    'PointPillarsScatter', 'SparseEncoder', 'SparseEncoderSASSD', 
+    'PointPillarsScatter', 'SparseEncoder', 'SparseEncoderSASSD',
     'SparseUNet'
 ]

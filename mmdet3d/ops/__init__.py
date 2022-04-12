@@ -44,6 +44,5 @@ __all__ = [
     'get_compiler_version', 'assign_score_withk', 'get_compiling_cuda_version',
     'Points_Sampler', 'build_sa_module', 'PAConv', 'PAConvCUDA',
     'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
-    'PAConvCUDASAModuleMSG', 'RoIPointPool3d', 'pts_in_boxes3d',
-    'three_interpolate_2d', 'three_nn_2d'
+    'PAConvCUDASAModuleMSG', 'RoIPointPool3d'
 ]
