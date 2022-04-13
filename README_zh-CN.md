@@ -35,6 +35,8 @@
 
 最好的纯视觉方法 [FCOS3D](https://arxiv.org/abs/2104.10956) 的代码和模型已经发布。请继续关注我们的多模态检测器 [MoCa](https://arxiv.org/abs/2012.12741)。
 
+MMDeploy 已经支持了部分 MMDetection3D 模型的部署。
+
 文档: https://mmdetection3d.readthedocs.io/
 
 ## 简介

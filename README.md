@@ -35,6 +35,8 @@ In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detecti
 
 Code and models for the best vision-only method, [FCOS3D](https://arxiv.org/abs/2104.10956), have been released. Please stay tuned for [MoCa](https://arxiv.org/abs/2012.12741).
 
+MMDeploy has supported some MMDetection3d model deployment.
+
 Documentation: https://mmdetection3d.readthedocs.io/
 
 ## Introduction
