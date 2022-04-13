@@ -159,7 +159,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/pointpillars">PointPillars (CVPR'2019)</a></li>
             <li><a href="configs/ssn">SSN (ECCV'2020)</a></li>
             <li><a href="configs/3dssd">3DSSD (CVPR'2020)</a></li>
-            <li><a href="configs/ point_rcnn">PointRCNN</a></li>
+            <li><a href="configs/point_rcnn">PointRCNN (CVPR'2019)</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
         </ul>
