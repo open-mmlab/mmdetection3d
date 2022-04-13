@@ -14,7 +14,7 @@ git submodule update --init --recursive
 
 ### Install backend and build custom ops
 
-According to MMDeploy documentation, choose to install the inference backend and build custom ops. Now optional inference backend for MMDetection3D models include [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html).
+According to MMDeploy documentation, choose to install the inference backend and build custom ops. Now supported inference backends for MMDetection3D include [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html), [TensorRT](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html), [OpenVINO](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html).
 
 ## Export model
 

@@ -14,7 +14,7 @@ git submodule update --init --recursive
 
 ### 安装推理后端编译自定义算子
 
-根据 MMDeploy 的文档选择安装推理后端并编译自定义算子，目前 MMDet3D 模型支持了的推理后端有[OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html)，[Tensorrt](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html)，[OpenVino](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html)。
+根据 MMDeploy 的文档选择安装推理后端并编译自定义算子，目前 MMDet3D 模型支持了的推理后端有 [OnnxRuntime](https://mmdeploy.readthedocs.io/en/latest/backends/onnxruntime.html), [TensorRT](https://mmdeploy.readthedocs.io/en/latest/backends/tensorrt.html), [OpenVINO](https://mmdeploy.readthedocs.io/en/latest/backends/openvino.html) 。
 
 ## 模型导出
 
