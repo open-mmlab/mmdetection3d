@@ -39,7 +39,7 @@ We implement PointPillars and provide the results and checkpoints on KITTI, nuSc
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | Private Score | Public Score | Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
 |[SECFPN](./hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d.py)|2x|12.2||13.8|14.1|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d_20210829_100455-82b81c39.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d_20210829_100455.log.json)|
-|[FPN](./hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py)|2x|9.2||14.8|15.0|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210822_095429-0b3d6196.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210822.log.json)|
+|[FPN](./hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py)|2x|9.2||14.8|15.0|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210822_095429-0b3d6196.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210822_095429.log.json)|
 
 ### Waymo
 
