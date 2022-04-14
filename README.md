@@ -35,6 +35,8 @@ In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detecti
 
 Code and models for the best vision-only method, [FCOS3D](https://arxiv.org/abs/2104.10956), have been released. Please stay tuned for [MoCa](https://arxiv.org/abs/2012.12741).
 
+MMDeploy has supported some MMDetection3d model deployment.
+
 Documentation: https://mmdetection3d.readthedocs.io/
 
 ## Introduction
@@ -228,7 +230,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
 | MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
-
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
@@ -241,6 +242,9 @@ Please see [getting_started.md](docs/en/getting_started.md) for the basic usage 
 
 Please refer to [FAQ](docs/en/faq.md) for frequently asked questions. When updating the version of MMDetection3D, please also check the [compatibility doc](docs/en/compatibility.md) to be aware of the BC-breaking updates introduced in each version.
 
+## Model deployment
+
+Now MMDeploy has supported some MMDetection3D model deployment. Please refer to [model_deployment.md](docs/en/tutorials/model_deployment.md) for more details.
 ## Citation
 
 If you find this project useful in your research, please consider cite:
