@@ -11,7 +11,7 @@ from .single_stage import SingleStage3DDetector
 
 @DETECTORS.register_module()
 class SASSD(SingleStage3DDetector):
-    r"""`SASSD <https://github.com/skyhehe123/SA-SSD> _ for 3D detection."""
+    r"""`SASSD <https://github.com/skyhehe123/SA-SSD>` _ for 3D detection."""
 
     def __init__(self,
                  voxel_layer,

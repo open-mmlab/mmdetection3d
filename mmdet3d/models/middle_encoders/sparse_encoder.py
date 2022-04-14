@@ -1,9 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import torch
 from mmcv.ops import (SparseConvTensor, SparseSequential,
-                      three_interpolate, three_nn)
+                      points_in_boxes_all, three_interpolate, three_nn)
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
+from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from ..builder import MIDDLE_ENCODERS
 
@@ -208,7 +210,7 @@ class SparseEncoder(nn.Module):
 
 @MIDDLE_ENCODERS.register_module()
 class SparseEncoderSASSD(SparseEncoder):
-    r"""Sparse encoder for SASSD.
+    r"""Sparse encoder for `SASSD <https://github.com/skyhehe123/SA-SSD>`_
 
     Args:
         in_channels (int): The number of input channels.
@@ -266,13 +268,13 @@ class SparseEncoderSASSD(SparseEncoder):
             coors (torch.int32): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
             batch_size (int): Batch size.
-            test_mode (bool): Whether in test mode.
+            test_mode (bool): Whether in test mode, default = false.
 
         Returns:
             dict: Backbone features.
             tuple[torch.Tensor]: Mean feature value of the points,
-                classificaion result of the points,
-                regression offsets of the points.
+                Classificaion result of the points,
+                Regression offsets of the points.
 
         """
 
@@ -304,20 +306,24 @@ class SparseEncoderSASSD(SparseEncoder):
 
         # auxiliary network
         p0 = self.make_auxiliary_points(encode_features[0], points_mean,
-          (0, -40., -3.), voxel_size=(.1, .1, .2))
+                                        offset=(0, -40., -3.),
+                                        voxel_size=(.1, .1, .2))
 
         p1 = self.make_auxiliary_points(encode_features[1], points_mean,
-          (0, -40., -3.), voxel_size=(.2, .2, .4))
+                                        offset=(0, -40., -3.),
+                                        voxel_size=(.2, .2, .4))
 
         p2 = self.make_auxiliary_points(encode_features[2], points_mean,
-          (0, -40., -3.), voxel_size=(.4, .4, .8))
+                                        offset=(0, -40., -3.),
+                                        voxel_size=(.4, .4, .8))
 
         pointwise = torch.cat([p0, p1, p2], dim=-1)
         pointwise = self.point_fc(pointwise)
         point_cls = self.point_cls(pointwise)
         point_reg = self.point_reg(pointwise)
+        point_misc = (points_mean, point_cls, point_reg)
 
-        return spatial_features, (points_mean, point_cls, point_reg)
+        return spatial_features, point_misc
 
     def build_aux_target(self, nxyz, gt_boxes3d, enlarge=1.0):
         """Build auxiliary target.
@@ -341,7 +347,8 @@ class SparseEncoderSASSD(SparseEncoder):
 
             boxes3d[:, 3:6] *= enlarge
 
-            pts_in_flag, center_offset = pts_in_boxes3d(new_xyz, boxes3d)
+            pts_in_flag, center_offset = self.calculate_pts_offsets(new_xyz,
+                                                                    boxes3d)
             pts_label = pts_in_flag.max(0)[0].byte()
             pts_labels.append(pts_label)
             center_offsets.append(center_offset)
@@ -350,6 +357,41 @@ class SparseEncoderSASSD(SparseEncoder):
         pts_labels = torch.cat(pts_labels).cuda()
 
         return pts_labels, center_offsets
+    
+    def calculate_pts_offsets(self, points, boxes):
+        """Find all boxes in which each point is, as well as the offsets 
+        from the box centers.
+
+        Args:
+            points (torch.Tensor): [M, 3], [x, y, z] in LiDAR/DEPTH coordinate
+            boxes (torch.Tensor): [T, 7],
+                num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
+                (x, y, z) is the bottom center.
+
+        Returns:
+            torch.Tensor: Return the point indices of boxes with the shape of
+            (T, M). Default background = 0.
+            torch.Tensor: Return the offsets from the box centers of points,
+            if it belows to the box, with the shape of (M, 3).
+            Default background = 0.
+        """
+        boxes_num = len(boxes)
+        pts_num = len(points)
+        box_idxs_of_pts = points_in_boxes_all(points[None, ...].cuda(), 
+                                              boxes[None, ...].cuda())
+
+        pts_indices = box_idxs_of_pts.cpu().squeeze(0).transpose(0, 1)
+
+        center_offsets = torch.FloatTensor(pts_num, 3).fill_(0)
+        
+        for i in range(boxes_num):
+            for j in range(pts_num):
+                if pts_indices[i][j] == 1:
+                    center_offsets[j][0] = points[j][0] - boxes[i][0]
+                    center_offsets[j][1] = points[j][1] - boxes[i][1]
+                    center_offsets[j][2] = (points[j][2] - 
+                                            (boxes[i][2] + boxes[i][2] / 2.0))
+        return pts_indices, center_offsets
 
     def aux_loss(self, points, point_cls, point_reg, gt_bboxes):
         """Calculate auxiliary loss.
@@ -364,7 +406,7 @@ class SparseEncoderSASSD(SparseEncoder):
         Returns:
             dict: Backbone features.
         """
-        N = len(gt_bboxes)
+        num_boxes = len(gt_bboxes)
 
         pts_labels, center_targets = self.build_aux_target(points, gt_bboxes)
 
@@ -372,33 +414,32 @@ class SparseEncoderSASSD(SparseEncoder):
         pos = (pts_labels > 0).float()
         neg = (pts_labels == 0).float()
 
-        pos_normalizer = pos.sum()
-        pos_normalizer = torch.clamp(pos_normalizer, min=1.0)
+        pos_normalizer = pos.sum().clamp(min=1.0)
 
         cls_weights = pos + neg
-        cls_weights = cls_weights / pos_normalizer
 
         reg_weights = pos
         reg_weights = reg_weights / pos_normalizer
 
-        aux_loss_cls = sigmoid_focal_loss(
-            point_cls,
-            rpn_cls_target,
-            weight=cls_weights)
+        aux_loss_cls = sigmoid_focal_loss(point_cls,
+                                          rpn_cls_target,
+                                          weight=cls_weights,
+                                          avg_factor=pos_normalizer)
 
-        aux_loss_cls /= N
+        aux_loss_cls /= num_boxes
 
         weight = reg_weights[..., None]
         aux_loss_reg = smooth_l1_loss(point_reg, center_targets, beta=1/9.)
         aux_loss_reg = torch.sum(aux_loss_reg * weight)[None]
-        aux_loss_reg /= N
+        aux_loss_reg /= num_boxes
 
         return dict(aux_loss_cls=aux_loss_cls, aux_loss_reg=aux_loss_reg)
 
-    def make_auxiliary_points(self, source_tensor, target, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
+    def make_auxiliary_points(self, source_tensor, target, 
+                              offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
         """
         :param source_tensor (Tensor): (m, C) tensor of features to be propigated
-        :param target (Tensor): (n, 4) tensor of the bxyz positions of the unknown features
+        :param target (Tensor): (n, 4) bxyz positions of the target features
         :param offset (tuple): voxelization offset
         :param voxel_size (tuple): voxelization size
         :return:
@@ -418,6 +459,7 @@ class SparseEncoderSASSD(SparseEncoder):
         dist_recip = 1.0 / (dist + 1e-8)
         norm = torch.sum(dist_recip, dim=2, keepdim=True)
         weight = dist_recip / norm
-        new_features = three_interpolate(source_feats[None, ...].transpose(1, 2), idx, weight)
+        new_features = three_interpolate(source_feats[None, ...].transpose(1, 2).contiguous(),
+                                         idx, weight)
 
         return new_features.squeeze(0).transpose(0, 1)
