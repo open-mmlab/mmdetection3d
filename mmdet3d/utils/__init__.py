@@ -2,7 +2,7 @@
 from mmcv.utils import Registry, build_from_cfg, print_log
 
 from .collect_env import collect_env
-from .compact_cfg import compat_cfg
+from .compat_cfg import compat_cfg
 from .logger import get_root_logger
 from .setup_env import setup_multi_processes
 
