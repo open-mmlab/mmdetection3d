@@ -16,6 +16,9 @@ from mmdet.models import BACKBONES
 class SparseRegionAttention(BaseModule):
     """Do the Region Attention.
 
+    The code is modified from original implementation
+    https://github.com/TuSimple/SST
+
     Args:
         embed_dim (int): Number of dimension of feature embedding.
         num_heads (int): Number of heads in attention
@@ -268,6 +271,7 @@ class SST(nn.Module):
     """Single-stride Sparse Transformer.
 
     The code is modified from original implementation
+    https://github.com/TuSimple/SST
 
     Args:
         embed_dim (list[int]): the number of filters in first
@@ -362,9 +366,9 @@ class SST(nn.Module):
                 - voxel_feats (tensor): Voxel features in shape (N, C).
                 - voxel_coors (tensor): Coordinates in shape (N, 4),
                   the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
-                - batching_position_embed_list (list[list[tensor]]): The outer list
-                  indicate the attentions. The inner list indicate
-                  the different batching. Each tensor is the position
+                - batching_position_embed_list (list[list[tensor]]):
+                  The outer list indicate the attentions. The inner list
+                  indicate the different batching. Each tensor is the position
                   embedding of corresponding batching.
                   Each tensor has shape (NUM_WINS, NUM_TOKEN, FEAT_DIM).
                 - batching_padding_mask_list (list[list[tensor]]):
@@ -417,7 +421,7 @@ class SST(nn.Module):
                 nn.init.xavier_uniform_(p)
 
     def to_bev_feats(self, voxel_feats, voxel_coors, batch_size):
-        """Conver feature to the BEV format.
+        """Convert feature to the BEV format.
 
         Args:
             voxel_feats (tensor): Voxel features in shape (N, C).

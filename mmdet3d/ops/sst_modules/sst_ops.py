@@ -5,6 +5,9 @@ import torch
 def make_continuous_inds(win_inds):
     """Mapping the windows inds to continuous inds.
 
+    The code is modified from original implementation
+    https://github.com/TuSimple/SST
+
     Args:
         win_inds (torch.int64): Windows index of each voxel.
 
@@ -25,7 +28,7 @@ def make_continuous_inds(win_inds):
 
 def get_seq_to_win_mapping(batch_win_inds, batching_id_per_voxel,
                            region_batching_cfg):
-    """
+    """Get all transformation info between sequence and batching windows.
 
     Args:
         batch_win_inds (Tensor): Windows index of each voxel in a batch.
@@ -38,7 +41,7 @@ def get_seq_to_win_mapping(batch_win_inds, batching_id_per_voxel,
             divisions. The dict has these two keys.
 
             - max_tokens (int): The number of tokens would be
-              padded or cliped to.
+              padded or clip to.
             - batching_interval (int): The number interval of
               tokens.
 
@@ -119,7 +122,7 @@ def seq_to_win(feat, seq_win_mapping_list):
             - The number of token of each window in this batching.
 
     Returns:
-        list(tensor): List of region bacthing feats, each tensor
+        list(tensor): List of region batching feats, each tensor
         has shape (NUM_WINS, NUM_TOKEN, FEAT_DIM).
     """
 
@@ -143,6 +146,9 @@ def seq_to_win(feat, seq_win_mapping_list):
 
 def get_inner_win_inds(win_inds):
     """Calculate the index of each voxel inner windows.
+
+    The code is modified from original implementation
+    https://github.com/TuSimple/SST
 
     Args:
         win_inds (Tensor): The value indicates which windows a voxel

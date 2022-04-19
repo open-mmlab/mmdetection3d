@@ -15,8 +15,11 @@ from ..builder import MIDDLE_ENCODERS
 class SSTInputLayer(nn.Module):
     """Input layer of SST.
 
+    The code is modified from original implementation
+    https://github.com/TuSimple/SST
+
     This layer would do the regional grouping and region
-    grouping for sparse regional attention(SRA) in advance and
+    batching for sparse regional attention(SRA) in advance and
     pass all related information to sst backbone, all related
     information would be used in SRA of
     SST backbone to do the transformation between the sequence
@@ -24,8 +27,7 @@ class SSTInputLayer(nn.Module):
     (NUM_WINS_i, NUM_TOKENS_i, C),
     i =0, 1, 2 ,... K, NUM_WINS_i is the number of windows with
     similar number of tokens. NUM_TOKENS_i is the max number of tokens
-    in corresponding batching. The code is modified from
-    the original implementation xxxxx
+    in corresponding batching.
 
     The forward can be divided to 2 steps:
     1. Region Grouping : Assign window indices to each voxel.
@@ -295,10 +297,6 @@ class SSTInputLayer(nn.Module):
         y = coors_in_win[:, 1] - win_y / 2
         z = coors_in_win[:, 0] - win_z / 2
 
-        # TODO remove this
-        assert (x >= -win_x / 2 - 1e-4).all()
-        assert (x <= win_x / 2 - 1 + 1e-4).all()
-
         if self.normalize_embed:
             x = x / win_x * 2 * math.pi
             y = y / win_y * 2 * math.pi
@@ -326,7 +324,6 @@ class SSTInputLayer(nn.Module):
                 [embed_z[:, ::2].sin(), embed_z[:, 1::2].cos()],
                 dim=-1).flatten(1)
 
-        #
         if ndim == 3:
             position_embed_2d = torch.cat([embed_x, embed_y, embed_z],
                                           dim=-1).to(dtype)
