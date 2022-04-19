@@ -100,4 +100,4 @@ Please refer to [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0
 
 ### Mixed Precision (FP16) Training
 
-Please refer [Mixed Precision (FP16) Training] on PointPillars (https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py) for details.
+Please refer to [Mixed Precision (FP16) Training on PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py) for details.

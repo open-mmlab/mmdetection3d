@@ -134,10 +134,10 @@ class MyDataset(Custom3DDataset):
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
                 np.float32)  # k, 6
-            gt_labels_3d = info['annos']['class'].astype(np.long)
+            gt_labels_3d = info['annos']['class'].astype(np.int64)
         else:
             gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
-            gt_labels_3d = np.zeros((0, ), dtype=np.long)
+            gt_labels_3d = np.zeros((0, ), dtype=np.int64)
 
         # to target box structure
         gt_bboxes_3d = DepthInstance3DBoxes(

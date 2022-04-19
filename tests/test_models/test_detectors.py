@@ -473,11 +473,11 @@ def test_imvoxelnet():
     assert labels_3d.shape[0] >= 0
 
 
-def test_pointrcnn():
+def test_point_rcnn():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     pointrcnn_cfg = _get_detector_cfg(
-        'pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+        'point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py')
     self = build_detector(pointrcnn_cfg).cuda()
     points_0 = torch.rand([1000, 4], device='cuda')
     points_1 = torch.rand([1000, 4], device='cuda')
@@ -539,9 +539,8 @@ def test_smoke():
     attr_labels = None
     img_metas = [
         dict(
-            cam_intrinsic=[[721.5377, 0., 609.5593, 0.],
-                           [0., 721.5377, 172.854, 0.], [0., 0., 1., 0.],
-                           [0., 0., 0., 1.]],
+            cam2img=[[721.5377, 0., 609.5593, 0.], [0., 721.5377, 172.854, 0.],
+                     [0., 0., 1., 0.], [0., 0., 0., 1.]],
             scale_factor=np.array([1., 1., 1., 1.], dtype=np.float32),
             pad_shape=[384, 1280],
             trans_mat=np.array([[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],

@@ -1,10 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.ops.group_points import GroupAll, QueryAndGroup, grouping_operation
 from torch import nn as nn
 from torch.nn import functional as F
-
-from ..group_points import GroupAll, QueryAndGroup, grouping_operation
 
 
 class BaseDGCNNGFModule(nn.Module):
