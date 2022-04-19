@@ -95,7 +95,7 @@ def _draw_bboxes(bbox3d,
         center = bbox3d[i, 0:3]
         dim = bbox3d[i, 3:6]
         yaw = np.zeros(3)
-        yaw[rot_axis] = -bbox3d[i, 6]
+        yaw[rot_axis] = bbox3d[i, 6]
         rot_mat = geometry.get_rotation_matrix_from_xyz(yaw)
 
         if center_mode == 'lidar_bottom':
