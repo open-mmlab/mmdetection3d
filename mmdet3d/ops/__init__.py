@@ -28,6 +28,8 @@ from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                build_sa_module)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
+from .sst_modules import (get_inner_win_inds, get_seq_to_win_mapping,
+                          seq_to_win, win_to_seq)
 
 __all__ = [
     'nms', 'soft_nms', 'RoIAlign', 'roi_align', 'get_compiler_version',
@@ -44,5 +46,6 @@ __all__ = [
     'get_compiler_version', 'assign_score_withk', 'get_compiling_cuda_version',
     'Points_Sampler', 'build_sa_module', 'PAConv', 'PAConvCUDA',
     'PAConvSAModuleMSG', 'PAConvSAModule', 'PAConvCUDASAModule',
-    'PAConvCUDASAModuleMSG', 'RoIPointPool3d'
+    'PAConvCUDASAModuleMSG', 'RoIPointPool3d', 'get_inner_win_inds',
+    'get_seq_to_win_mapping', 'seq_to_win', 'win_to_seq'
 ]

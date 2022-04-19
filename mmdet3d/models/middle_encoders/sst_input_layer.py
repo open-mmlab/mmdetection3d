@@ -1,10 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import math
+
+import numpy as np
 import torch
 from mmcv.runner import auto_fp16
 from torch import nn
-import numpy as np
+
+from mmdet3d.ops.sst_modules import (get_inner_win_inds,
+                                     get_seq_to_win_mapping, seq_to_win)
 from ..builder import MIDDLE_ENCODERS
-from mmdet3d.ops.sst_modules import (get_inner_win_inds, get_flat2win_inds)
 
 
 @MIDDLE_ENCODERS.register_module()
@@ -13,16 +17,18 @@ class SSTInputLayer(nn.Module):
 
     This layer would do the regional grouping and region
     grouping for sparse regional attention(SRA) in advance and
-    save all related information to a dict and pass it
-    to SST backbone. This dict can be used in SRA of
+    pass all related information to sst backbone, all related
+    information would be used in SRA of
     SST backbone to do the transformation between the sequence
-    format (N, C) and region batching format (B_i, N_i, C),
-    i =0, 1, 2 ,... K, B_i is the number of windows with
-    similar number of tokens. The code is modified from
-    the offitial implementation
+    format (N, C) and region batching format
+    (NUM_WINS_i, NUM_TOKENS_i, C),
+    i =0, 1, 2 ,... K, NUM_WINS_i is the number of windows with
+    similar number of tokens. NUM_TOKENS_i is the max number of tokens
+    in corresponding batching. The code is modified from
+    the original implementation xxxxx
 
     The forward can be divided to 2 steps:
-    1. Reginal Grouping : Assign window indices to each voxel.
+    1. Region Grouping : Assign window indices to each voxel.
     2. Region Batching: Batching the regions with similar
         number of tokens for parallel computation.
 
@@ -34,37 +40,44 @@ class SSTInputLayer(nn.Module):
             The dict contains two keys
 
             - max_tokens (int): The number of tokens would be
-              padded or cliped to.
+              padded or clip to.
             - batching_interval (int): The number interval of
               tokens.
 
-        window_shape (tuple[int]): (num_x, num_y). Each window is
-            divided to num_x * num_y pillars (including empty pillars).
+        window_shape (tuple[int]): (num_x, num_y, num_z). Each window is
+            divided to num_x * num_y x num_z pillars
+            (including empty pillars). Usually num_z is 1 in SST.
         sparse_shape (tuple[int]): (num_x, num_y). The shape of
             voxel.
         shuffle_voxels (bool): Whether to shuffle the voxels. Defaults
             to True.
         num_attentions (int): The number of attentions is a single
             layer of sst backbone. Defaults to 2.
+        embed_temperature (int, optional): The temperature used
+            for scaling the position embedding. Defaults to 10000.
+        normalize_embed (bool, optional): Whether to normalize the position
+            embedding. Defaults to False.
     """
 
-    def __init__(
-        self,
-        region_batching_cfg,
-        window_shape,
-        sparse_shape,
-        shifts_list=None,
-        shuffle_voxels=True,
-        num_attentions=2,
-    ):
+    def __init__(self,
+                 region_batching_cfg,
+                 window_shape,
+                 sparse_shape,
+                 shuffle_voxels=True,
+                 num_attentions=2,
+                 embed_temperature=10000,
+                 normalize_embed=False,
+                 **kwargs):
         super().__init__()
         self.fp16_enabled = False
         self.region_batching_cfg = region_batching_cfg
         self.window_shape = window_shape
         self.sparse_shape = sparse_shape
         self.shuffle_voxels = shuffle_voxels
-        self.shifts_list = shifts_list
         self.num_attentions = num_attentions
+
+        self.embed_temperature = embed_temperature
+        self.normalize_embed = normalize_embed
 
     def _get_region_batching_cfg(self):
         """ Get region batching configuration.
@@ -93,57 +106,108 @@ class SSTInputLayer(nn.Module):
         """Forward of SSTInputLayer.
 
         Args:
-            voxel_features (torch.float32): Voxel features in shape (N, C).
-            voxel_coors (torch.float32): Coordinates in shape (N, 4), \
-                the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
+            voxel_feats (tensor): Voxel features in shape (N, C).
+            voxel_coors (tensor): Coordinates in shape (N, 4),
+                the columns in the order of
+                (batch_idx, z_idx, y_idx, x_idx).
 
         Returns:
-            tuple:
+            tuple: A tuple contains four element
 
-                - voxel_feats (torch.float32): Voxel features in shape (N, C).
-                - voxel_coors (torch.int32): Coordinates in shape (N, 4), \
-                    the columns in the order of
-                    (batch_idx, z_idx, y_idx, x_idx).
-                Todo design this filed afte refactor the sst backbone
-                -
-                -
+                - voxel_feats (tensor): Voxel features in shape (N, C).
+                - voxel_coors (tensor): Coordinates in shape (N, 4),
+                  the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
+                - batching_position_embed_list (list[list[tensor]]):
+                  The outer list
+                  indicate the attentions. The inner list indicate
+                  the different batching. Each tensor is the position
+                  embedding of corresponding batching. Has shape
+                  each tensor has shape (NUM_WINS, NUM_TOKEN, FEAT_DIM).
+                - batching_padding_mask_list (list[list[tensor]]):
+                  The outer list indicate the attentions.The inner
+                  list indicate the different batching. The tensor is
+                  the padding mask of corresponding batching, each
+                  tensor has shape (NUM_WINS, NUM_TOKEN).
+                - seq_win_mapping_list: (list[list[tuple]]): The outer
+                  list indicate the attentions.The inner list indicate
+                  the different batching. Each tuple contains 3 important
+                  information of corresponding batching.
+
+                    - A identical index of voxel in corresponding
+                      batching windows
+                    - The index of voxel in original sequence.
+                    - The number of token of each window in this batching.
         """
         if self.shuffle_voxels:
             # shuffle the voxels to make the drop process uniform.
             shuffle_inds = torch.randperm(len(voxel_feats))
             voxel_feats = voxel_feats[shuffle_inds]
             voxel_coors = voxel_coors[shuffle_inds]
-        else:
-            shuffle_inds = None
 
         batch_win_ind_list, coors_in_win_list = self.region_grouping(
             voxel_coors)
 
         batch_win_ind_list, batching_id_per_voxel_list, voxel_keep_inds = \
-            self.region_batching(batch_win_ind_list, coors_in_win_list)
+            self.region_batching(batch_win_ind_list)
 
-        voxel_feats = voxel_feats[voxel_keep_inds]  # after dropping
+        voxel_feats = voxel_feats[voxel_keep_inds]
         voxel_coors = voxel_coors[voxel_keep_inds]
+
         seq_win_mapping_list = []
-        position_embedding_list = []
-        key_mask_list = []
+        batching_padding_mask_list = []
+        batching_position_embed_list = []
+
         region_batching_cfg = self._get_region_batching_cfg()
+
+        feat_dim, feat_dtype = voxel_feats.size(1), voxel_feats.dtype
         for attn_idx in range(self.num_attentions):
-            # TODO refactor the get_flat2win_inds
-            seq_win_mapping = get_flat2win_inds(
-                batch_win_ind_list[attn_idx],
-                batching_id_per_voxel_list[attn_idx], region_batching_cfg)
+            batching_id_per_voxel = batching_id_per_voxel_list[attn_idx]
+            batch_win_ind = batch_win_ind_list[attn_idx]
+            seq_win_mapping = get_seq_to_win_mapping(batch_win_ind,
+                                                     batching_id_per_voxel,
+                                                     region_batching_cfg)
+            batching_position_embed_list.append(
+                self.get_position_embedding(seq_win_mapping,
+                                            coors_in_win_list[attn_idx],
+                                            feat_dim, feat_dtype))
+            batching_padding_mask_list.append(
+                self.get_key_padding_mask(batching_id_per_voxel,
+                                          seq_win_mapping))
+
             seq_win_mapping_list.append(seq_win_mapping)
-            position_embedding = self.get_pos_embed(
-                seq_win_mapping, coors_in_win_list[attn_idx],
-                voxel_feats.size(1), voxel_feats.dtype)
-            position_embedding_list.append(position_embedding)
 
-            key_mask = self.get_key_padding_mask(seq_win_mapping)
-            key_mask_list.append(key_mask)
+        return (voxel_feats, voxel_coors, batching_position_embed_list,
+                batching_padding_mask_list, seq_win_mapping_list)
 
-        return (voxel_feats, voxel_coors, position_embedding_list,
-                key_mask_list, seq_win_mapping_list, shuffle_inds)
+    def get_key_padding_mask(self, batching_id_per_voxel, seq_win_mapping):
+        """Calculated padding mask for Sparse Region Attention.
+
+        Args:
+            batching_id_per_voxel (Tensor): The tensor is the
+                batching index of voxel divided by the token number of
+                belonging windows.
+            seq_win_mapping (list[tuple]): The list indicate the
+                different batching. Each tuple Contains three
+                important information of corresponding batching.
+
+                - A identical index of voxel in corresponding
+                  batching windows
+                - The index of voxel in original sequence.
+                - The number of token of each window in this batching.
+
+        Returns:
+            list(tensor): Key padding mask of each batching.
+        """
+        num_all_voxel = len(batching_id_per_voxel)
+        key_padding = batching_id_per_voxel.new_ones((num_all_voxel, 1),
+                                                     dtype=torch.bool)
+        all_batching_padding_mask = seq_to_win(key_padding, seq_win_mapping)
+
+        # logical not. True means masked
+        all_batching_padding_mask = \
+            [item.logical_not().squeeze(2) for item
+             in all_batching_padding_mask]
+        return all_batching_padding_mask
 
     def region_batching(self, batch_win_ind_list):
         """Batching the regions with similar number of tokens for parallel
@@ -163,7 +227,7 @@ class SSTInputLayer(nn.Module):
                 - batching_id_per_voxel_list (list[tensor]): The outer list
                   indicate the attentions. The tensor is the batching index
                   divided by the  number of tokens.
-                - voxel_keep_inds (torch.int64): The remain voxel index after
+                - voxel_keep_inds (tensor): The remain voxel index after
                   region batching process of all attentions.
         """
         num_voxels = batch_win_ind_list[0].shape[0]
@@ -190,6 +254,101 @@ class SSTInputLayer(nn.Module):
 
         return batch_win_ind_list, batching_id_per_voxel_list, voxel_keep_inds
 
+    def get_position_embedding(self, seq_win_mapping, coors_in_win, feat_dim,
+                               dtype):
+        """Calculate the position embedding for Sparse Region Attention.
+
+        Args:
+            seq_win_mapping (list[tuple]): The list indicate the
+                different batching. Each tuple contains 3 important
+                information of corresponding batching.
+
+                  - A identical index of voxel in corresponding
+                    batching windows
+                  - The index of voxel in original sequence.
+                  - The number of token of each window in this batching.
+            coors_in_win (Tensor): The tensor is the coordinate of voxel
+                  in a windows.
+            feat_dim (int): The dimension of feature.
+            dtype (torch.dtype): The dtype of feature.
+
+        Returns:
+            list[tensor]: List of region bacthing
+            position embedding, each tensor
+            has shape (NUM_WINS, NUM_TOKEN, FEAT_DIM).
+        """
+
+        window_shape = self.window_shape
+        if len(window_shape) == 2:
+            ndim = 2
+            win_x, win_y = window_shape
+            win_z = 0
+        elif window_shape[-1] == 1:
+            ndim = 2
+            win_x, win_y = window_shape[:2]
+            win_z = 0
+        else:
+            win_x, win_y, win_z = window_shape
+            ndim = 3
+
+        x = coors_in_win[:, 2] - win_x / 2
+        y = coors_in_win[:, 1] - win_y / 2
+        z = coors_in_win[:, 0] - win_z / 2
+
+        # TODO remove this
+        assert (x >= -win_x / 2 - 1e-4).all()
+        assert (x <= win_x / 2 - 1 + 1e-4).all()
+
+        if self.normalize_embed:
+            x = x / win_x * 2 * math.pi
+            y = y / win_y * 2 * math.pi
+            z = z / win_z * 2 * math.pi
+
+        pos_length = feat_dim // ndim
+        # [pos_length]
+        inv_freq = torch.arange(
+            pos_length, dtype=torch.float32, device=coors_in_win.device)
+        inv_freq = self.embed_temperature**(2 * (inv_freq // 2) / pos_length)
+
+        # [num_tokens, pos_length]
+        embed_x = x[:, None] / inv_freq[None, :]
+        embed_y = y[:, None] / inv_freq[None, :]
+        if ndim == 3:
+            embed_z = z[:, None] / inv_freq[None, :]
+
+        # [num_tokens, pos_length]
+        embed_x = torch.stack([embed_x[:, ::2].sin(), embed_x[:, 1::2].cos()],
+                              dim=-1).flatten(1)
+        embed_y = torch.stack([embed_y[:, ::2].sin(), embed_y[:, 1::2].cos()],
+                              dim=-1).flatten(1)
+        if ndim == 3:
+            embed_z = torch.stack(
+                [embed_z[:, ::2].sin(), embed_z[:, 1::2].cos()],
+                dim=-1).flatten(1)
+
+        #
+        if ndim == 3:
+            position_embed_2d = torch.cat([embed_x, embed_y, embed_z],
+                                          dim=-1).to(dtype)
+        else:
+            position_embed_2d = torch.cat([embed_x, embed_y], dim=-1).to(dtype)
+
+        gap = feat_dim - position_embed_2d.size(1)
+        assert gap >= 0
+        if gap > 0:
+            assert ndim == 3
+            padding = torch.zeros((position_embed_2d.size(0), gap),
+                                  dtype=dtype,
+                                  device=coors_in_win.device)
+            position_embed_2d = torch.cat([position_embed_2d, padding], dim=1)
+        else:
+            assert ndim == 2
+
+        all_batching_position_embeding = seq_to_win(position_embed_2d,
+                                                    seq_win_mapping)
+
+        return all_batching_position_embeding
+
     def _single_region_batching(self, batch_win_inds):
         """Do the region batching for a single attention.
 
@@ -200,10 +359,11 @@ class SSTInputLayer(nn.Module):
         Returns:
             Tuple[Tensor]:
 
-                - keep_mask (BoolTensor): The mask of remain voxels
+                - keep_mask (Tensor): The mask of remain voxels
                   after drop
-                - batching_id_per_voxel (LongTensor): The level of number
-                  of token belonging to.
+                - batching_id_per_voxel (Tensor): The tensor is the
+                  batching index of voxel divided by the token number of
+                  belonging windows.
         """
         region_batching_cfg = self._get_region_batching_cfg()
         batching_id_per_voxel = -torch.ones_like(batch_win_inds)
@@ -227,11 +387,11 @@ class SSTInputLayer(nn.Module):
         """Divide the voxel to different windows.
 
         Args:
-           voxel_coors (torch.float32): Coordinates in shape (N, 4), \
+           voxel_coors (tensor): Coordinates in shape (N, 4), \
             the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
 
         Returns:
-            tuple (Tensor):
+            tuple[Tensor]:
 
                 - batch_win_ind_list (list[tensor]): The outer list indicate
                     the attentions. The tensor is the window index of each
@@ -254,16 +414,18 @@ class SSTInputLayer(nn.Module):
     def _single_region_grouping(self, coors, do_shift):
         """Do the region grouping for single attentions.
         Args:
-           coors (torch.float32): Coordinates in shape (N, 4), \
+           coors (tensor): Coordinates in shape (N, 4), \
                the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
            do_shift (bool): Whether do the grouping for the shift window
                attention.
 
         Returns:
-            batch_win_inds (torch.int64): The window index of each
-            voxel in a batch.
-            coors_in_win (torch.int64): The coordinate of voxel
-            in a windows.
+            tuple:
+
+                - batch_win_inds (tensor): The window index of each
+                  voxel in a batch.
+                - coors_in_win (tensor): The coordinate of voxel
+                  in a windows.
         """
         sparse_shape = self.sparse_shape
         window_shape = self.window_shape
@@ -286,7 +448,8 @@ class SSTInputLayer(nn.Module):
             shift_x, shift_y, shift_z = \
                 win_shape_x // 2, win_shape_y // 2, win_shape_z // 2
         else:
-            shift_x, shift_y, shift_z = win_shape_x, win_shape_y, win_shape_z
+            shift_x, shift_y, shift_z = \
+                win_shape_x, win_shape_y, win_shape_z
 
         # compatibility between 2D window and 3D window
         if sparse_shape_z == win_shape_z:
@@ -313,11 +476,3 @@ class SSTInputLayer(nn.Module):
             [coors_in_win_z, coors_in_win_y, coors_in_win_x], dim=-1)
 
         return batch_win_inds, coors_in_win
-
-    def get_pos_embed(self, ):
-        # todo waiting for refacor
-        return None
-
-    def get_key_padding_mask(self, ):
-        # todo waiting for refacor
-        return None

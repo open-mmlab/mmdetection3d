@@ -7,7 +7,7 @@ from tools.data_converter import kitti_converter as kitti
 from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
 from tools.data_converter.create_gt_database import (
-    create_groundtruth_database, GTDatabaseCreater)
+    GTDatabaseCreater, create_groundtruth_database)
 
 
 def kitti_data_prep(root_path,
