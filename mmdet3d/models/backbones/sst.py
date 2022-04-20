@@ -119,7 +119,7 @@ class SSTLayer(BaseModule):
 
         super().__init__(init_cfg=init_cfg)
         self.attn = SparseRegionAttention(embed_dims, num_heads, attn_dropout)
-        # Implementation of Feedforward model
+
         self.linear1 = nn.Linear(embed_dims, feedforward_channels)
         self.dropout = nn.Dropout(ffn_dropout)
         self.linear2 = nn.Linear(feedforward_channels, embed_dims)
@@ -211,14 +211,14 @@ class SSTLayerSequence(BaseModule):
     def __init__(self, layer_cfg, init_cfg=None):
         super().__init__(init_cfg=init_cfg)
 
-        encoder_1 = SSTLayer(**layer_cfg)
-        encoder_2 = SSTLayer(**layer_cfg)
-        self.encoder_layers = nn.ModuleList([encoder_1, encoder_2])
+        sst_layer1 = SSTLayer(**layer_cfg)
+        sst_layer2 = SSTLayer(**layer_cfg)
+        self.encoder_layers = nn.ModuleList([sst_layer1, sst_layer2])
 
     def forward(
         self,
         feat,
-        batcing_position_embed_list,
+        batching_position_embed_list,
         batching_padding_mask_list,
         seq_win_mapping_list,
         using_checkpoint=False,
@@ -246,12 +246,13 @@ class SSTLayerSequence(BaseModule):
                   batching windows
                 - The index of voxel in original sequence.
                 - The number of token of each window in this batching.
+
         Returns:
             tensor: Voxel features in shape (N, C).
         """
-        num_attns = len(batcing_position_embed_list)
+        num_attns = len(batching_position_embed_list)
         for attn_index in range(num_attns):
-            batching_position_embed = batcing_position_embed_list[attn_index]
+            batching_position_embed = batching_position_embed_list[attn_index]
             seq_win_mapping = seq_win_mapping_list[attn_index]
             batching_padding_mask = batching_padding_mask_list[attn_index]
 
@@ -274,17 +275,35 @@ class SST(nn.Module):
     https://github.com/TuSimple/SST
 
     Args:
-        embed_dim (list[int]): the number of filters in first
-            linear layer of each transformer encoder
-        feedforward_channels list([int]): the number of filters in
-            first linear layer of each transformer encoder
+        in_channel (int, optional): The number of channels in first
+            lateral_linear. Skip this linear when `in_channel` is
+            None. Defaults to None.
+        layer_cfg (:obj:`ConfigDict`): Config for single SST layer.
+            It has following keys:
+
+            - embed_dims(int): Number of dimension of feature embedding.
+            - num_heads (int): Number of heads in attention
+            - feedforward_channels (int): Number of channels in FFN.
+            - attn_dropout(float): Drop probability when do the attention:
+            - ffn_dropout(float): Drop probability in the FFN:
+            - norm_cfg (:obj:`ConfigDict`): Config for normalization layer.
+            - act_cfg (:obj:`ConfigDict`): Config for activation layer.
+            - post_norm (bool): Whether use post norm. Defaults to True.
+
+        num_layers (int): Number of :obj:`SSTLayerSequences`. Defaults
+            to 6.
         output_shape (tuple[int]): Shape of output bev
-            feature, arranged as (H, W).
-        num_attached_conv: the number of convolutions in the
-            end of SST for filling the "empty hold" in BEV feature map.
-        conv_kwargs: key arguments of each attached convolution.
-        checkpoint_blocks (list[int]): Block IDs (0 to num_blocks - 1)
-            to use checkpoint.
+            feature, arranged as (H, W). Defaults to [468, 468].
+        num_bev_conv (dict): Config for `bev_conv`. Defaults to
+            dict(type='Conv2d').
+        bev_conv_args (list[dict]): The detail arguments for each
+            bev convolution.
+        bev_norm_cfg (dict): Config for the normalization layer.
+            Defaults to
+            dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01)
+        checkpoint_blocks (list[int], optional): Block IDs
+            (0 to num_blocks - 1) to use checkpoint. Defaults
+            to None.
     """
 
     def __init__(self,
@@ -301,7 +320,7 @@ class SST(nn.Module):
                  num_layers=6,
                  output_shape=[468, 468],
                  bev_conv_cfg=dict(type='Conv2d'),
-                 num_bev_conv=3,
+                 num_bev_convs=3,
                  bev_conv_args=[
                      dict(kernel_size=3, dilation=1, padding=1, stride=1),
                      dict(kernel_size=3, dilation=1, padding=1, stride=1),
@@ -339,12 +358,12 @@ class SST(nn.Module):
             layer_sequence_list.append(SSTLayerSequence(layer_cfg))
         self.encoder = nn.ModuleList(layer_sequence_list)
         self.output_shape = output_shape
-        self.num_bev_conv = num_bev_conv
+        self.num_bev_convs = num_bev_convs
 
-        if self.num_bev_conv > 0:
+        if self.num_bev_convs > 0:
             if isinstance(bev_conv_args, dict):
                 bev_conv_args = [bev_conv_args]
-            assert len(bev_conv_args) == self.num_bev_conv
+            assert len(bev_conv_args) == self.num_bev_convs
             conv_list = []
             for bev_conv_arg in bev_conv_args:
                 bev_conv = ConvModule(
@@ -437,10 +456,7 @@ class SST(nn.Module):
 
         bev_feat_list = []
         for batch_index in range(batch_size):
-            # Create the canvas for this sample
             bev_feat = voxel_feats.new_zeros(feat_dim, out_w * out_h)
-
-            # Only include non-empty pillars
             batch_mask = voxel_coors[:, 0] == batch_index
             temp_voxel_coors = voxel_coors[batch_mask, :]
             indices = temp_voxel_coors[:, 2] * out_w + temp_voxel_coors[:, 3]
