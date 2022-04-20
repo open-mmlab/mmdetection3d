@@ -4,8 +4,8 @@ from copy import deepcopy
 
 import mmcv
 
-from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import Compose
+from ..builder import PIPELINES
 
 
 @PIPELINES.register_module()

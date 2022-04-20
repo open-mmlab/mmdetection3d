@@ -4,15 +4,19 @@ import warnings
 from mmcv.cnn import MODELS as MMCV_MODELS
 from mmcv.utils import Registry
 
-from mmdet.models.builder import (BACKBONES, DETECTORS, HEADS, LOSSES, NECKS,
-                                  ROI_EXTRACTORS, SHARED_HEADS)
-from mmseg.models.builder import SEGMENTORS
-
 MODELS = Registry('models', parent=MMCV_MODELS)
 
+BACKBONES = MODELS
+NECKS = MODELS
+ROI_EXTRACTORS = MODELS
+SHARED_HEADS = MODELS
+HEADS = MODELS
+LOSSES = MODELS
+DETECTORS = MODELS
 VOXEL_ENCODERS = MODELS
 MIDDLE_ENCODERS = MODELS
 FUSION_LAYERS = MODELS
+SEGMENTORS = MODELS
 
 
 def build_backbone(cfg):

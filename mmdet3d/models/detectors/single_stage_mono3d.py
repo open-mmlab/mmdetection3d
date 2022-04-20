@@ -8,8 +8,8 @@ from mmcv.parallel import DataContainer as DC
 
 from mmdet3d.core import (CameraInstance3DBoxes, bbox3d2result,
                           show_multi_modality_result)
-from mmdet.models.builder import DETECTORS
 from mmdet.models.detectors.single_stage import SingleStageDetector
+from ..builder import DETECTORS
 
 
 @DETECTORS.register_module()

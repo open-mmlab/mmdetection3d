@@ -10,9 +10,9 @@ from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
                                         LoadPointsFromMultiSweeps,
                                         MultiScaleFlipAug3D,
                                         PointSegClassMapping)
-# yapf: enable
-from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadImageFromFile, MultiScaleFlipAug
+# yapf: enable
+from .builder import PIPELINES
 
 
 def is_loading_function(transform):

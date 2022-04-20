@@ -3,7 +3,6 @@ import platform
 
 from mmcv.utils import Registry, build_from_cfg
 
-from mmdet.datasets import DATASETS
 from mmdet.datasets.builder import _concat_dataset
 
 if platform.system() != 'Windows':
@@ -16,6 +15,8 @@ if platform.system() != 'Windows':
     resource.setrlimit(resource.RLIMIT_NOFILE, (soft_limit, hard_limit))
 
 OBJECTSAMPLERS = Registry('Object sampler')
+DATASETS = Registry('dataset')
+PIPELINES = Registry('pipeline')
 
 
 def build_dataset(cfg, default_args=None):

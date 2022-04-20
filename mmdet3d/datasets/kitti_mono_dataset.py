@@ -8,8 +8,8 @@ import numpy as np
 import torch
 from mmcv.utils import print_log
 
-from mmdet.datasets import DATASETS
 from ..core.bbox import Box3DMode, CameraInstance3DBoxes, points_cam2img
+from .builder import DATASETS
 from .nuscenes_mono_dataset import NuScenesMonoDataset
 
 

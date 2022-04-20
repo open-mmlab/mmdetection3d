@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
 
-from mmdet.datasets import DATASETS
+from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 
 
