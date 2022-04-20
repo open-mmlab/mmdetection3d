@@ -1,8 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.ops import nms_bev as nms_gpu
-from mmcv.ops import nms_normal_bev as nms_normal_gpu
 
+from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
 from ..bbox import bbox3d2result, bbox3d_mapping_back, xywhr2xyxyr
 
 
@@ -52,9 +51,9 @@ def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
 
     # TODO: use a more elegent way to deal with nms
     if test_cfg.use_rotate_nms:
-        nms_func = nms_gpu
+        nms_func = nms_bev
     else:
-        nms_func = nms_normal_gpu
+        nms_func = nms_normal_bev
 
     merged_bboxes = []
     merged_scores = []
