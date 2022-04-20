@@ -27,9 +27,10 @@ class SparseEncoder(nn.Module):
             Defaults to 128.
         encoder_channels (tuple[tuple[int]], optional):
             Convolutional channels of each encode block.
+            Defaults to ((16, ), (32, 32, 32), (64, 64, 64), (64, 64, 64)).
         encoder_paddings (tuple[tuple[int]], optional):
             Paddings of each encode block.
-            Defaults to ((16, ), (32, 32, 32), (64, 64, 64), (64, 64, 64)).
+            Defaults to ((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1, 1)).
         block_type (str, optional): Type of the block to use.
             Defaults to 'conv_module'.
     """
@@ -103,8 +104,8 @@ class SparseEncoder(nn.Module):
         """Forward of SparseEncoder.
 
         Args:
-            voxel_features (torch.float32): Voxel features in shape (N, C).
-            coors (torch.int32): Coordinates in shape (N, 4),
+            voxel_features (torch.Tensor): Voxel features in shape (N, C).
+            coors (torch.Tensor): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
             batch_size (int): Batch size.
 
@@ -225,9 +226,10 @@ class SparseEncoderSASSD(SparseEncoder):
             Defaults to 128.
         encoder_channels (tuple[tuple[int]], optional):
             Convolutional channels of each encode block.
+            Defaults to ((16, ), (32, 32, 32), (64, 64, 64), (64, 64, 64)).
         encoder_paddings (tuple[tuple[int]], optional):
             Paddings of each encode block.
-            Defaults to ((16, ), (32, 32, 32), (64, 64, 64), (64, 64, 64)).
+            Defaults to ((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1, 1)).
         block_type (str, optional): Type of the block to use.
             Defaults to 'conv_module'.
     """
@@ -264,8 +266,8 @@ class SparseEncoderSASSD(SparseEncoder):
         """Forward of SparseEncoder.
 
         Args:
-            voxel_features (torch.float32): Voxel features in shape (N, C).
-            coors (torch.int32): Coordinates in shape (N, 4),
+            voxel_features (torch.Tensor): Voxel features in shape (N, C).
+            coors (torch.Tensor): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
             batch_size (int): Batch size.
             test_mode (bool): Whether in test mode, default = false.
@@ -275,13 +277,7 @@ class SparseEncoderSASSD(SparseEncoder):
             tuple[torch.Tensor]: Mean feature value of the points,
                 Classificaion result of the points,
                 Regression offsets of the points.
-
         """
-
-        points_mean = torch.zeros_like(voxel_features)
-        points_mean[:, 0] = coors[:, 0]
-        points_mean[:, 1:] = voxel_features[:, :3]
-
         coors = coors.int()
         input_sp_tensor = SparseConvTensor(voxel_features, coors,
                                            self.sparse_shape,
@@ -303,6 +299,10 @@ class SparseEncoderSASSD(SparseEncoder):
 
         if test_mode:
             return spatial_features, None
+
+        points_mean = torch.zeros_like(voxel_features)
+        points_mean[:, 0] = coors[:, 0]
+        points_mean[:, 1:] = voxel_features[:, :3]
 
         # auxiliary network
         p0 = self.make_auxiliary_points(encode_features[0], points_mean,
@@ -330,13 +330,13 @@ class SparseEncoderSASSD(SparseEncoder):
 
         Args:
             nxyz (torch.Tensor): Mean features of the points.
-            gt_boxes3d (torch.int32): Coordinates in shape (N, 4),
+            gt_boxes3d (torch.Tensor): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
-            enlarge (int, optional): Enlage scale.
+            enlarge (int, optional): Enlage scale. Defaults to 1.0y.
 
         Returns:
-            torch.Tensor: Label of the poitns.
-            torch.Tensor: Center offsets of the points.
+            tuple[torch.Tensor]: Label of the points and
+                center offsets of the points.
         """
         center_offsets = list()
         pts_labels = list()
@@ -357,10 +357,10 @@ class SparseEncoderSASSD(SparseEncoder):
         pts_labels = torch.cat(pts_labels).cuda()
 
         return pts_labels, center_offsets
-    
+
     def calculate_pts_offsets(self, points, boxes):
-        """Find all boxes in which each point is, as well as the offsets 
-        from the box centers.
+        """Find all boxes in which each point is, as well as the offsets
+            from the box centers.
 
         Args:
             points (torch.Tensor): [M, 3], [x, y, z] in LiDAR/DEPTH coordinate
@@ -369,27 +369,27 @@ class SparseEncoderSASSD(SparseEncoder):
                 (x, y, z) is the bottom center.
 
         Returns:
-            torch.Tensor: Return the point indices of boxes with the shape of
-            (T, M). Default background = 0.
-            torch.Tensor: Return the offsets from the box centers of points,
-            if it belows to the box, with the shape of (M, 3).
-            Default background = 0.
+            tuple[torch.Tensor]: Point indices of boxes with the shape of
+                (T, M). Default background = 0.
+                And offsets from the box centers of points,
+                if it belows to the box, with the shape of (M, 3).
+                Default background = 0.
         """
         boxes_num = len(boxes)
         pts_num = len(points)
-        box_idxs_of_pts = points_in_boxes_all(points[None, ...].cuda(), 
+        box_idxs_of_pts = points_in_boxes_all(points[None, ...].cuda(),
                                               boxes[None, ...].cuda())
 
         pts_indices = box_idxs_of_pts.cpu().squeeze(0).transpose(0, 1)
 
         center_offsets = torch.FloatTensor(pts_num, 3).fill_(0)
-        
+
         for i in range(boxes_num):
             for j in range(pts_num):
                 if pts_indices[i][j] == 1:
                     center_offsets[j][0] = points[j][0] - boxes[i][0]
                     center_offsets[j][1] = points[j][1] - boxes[i][1]
-                    center_offsets[j][2] = (points[j][2] - 
+                    center_offsets[j][2] = (points[j][2] -
                                             (boxes[i][2] + boxes[i][2] / 2.0))
         return pts_indices, center_offsets
 
@@ -435,15 +435,20 @@ class SparseEncoderSASSD(SparseEncoder):
 
         return dict(aux_loss_cls=aux_loss_cls, aux_loss_reg=aux_loss_reg)
 
-    def make_auxiliary_points(self, source_tensor, target, 
-                              offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
-        """
-        :param source_tensor (Tensor): (m, C) tensor of features to be propigated
-        :param target (Tensor): (n, 4) bxyz positions of the target features
-        :param offset (tuple): voxelization offset
-        :param voxel_size (tuple): voxelization size
-        :return:
-            new_features: (n, C) tensor of the features of the target features
+    def make_auxiliary_points(self, source_tensor, target,
+                              offset=(0., -40., -3.),
+                              voxel_size=(.05, .05, .1)):
+        """Make auxiliary points for loss computation.
+
+        Args:
+            source_tensor (torch.Tensor): (M, C) features to be propigated.
+            target (torch.Tensor): (N, 4) bxyz positions of the
+                target features.
+            offset (tuple[float]): voxelization offset.
+            voxel_size (tuple[float]): voxelization size.
+
+        Returns:
+            torch.Tensor: (N, C) tensor of the features of the target features.
         """
         # Tansfer tensor to points
         source = source_tensor.indices.float()
@@ -452,14 +457,14 @@ class SparseEncoderSASSD(SparseEncoder):
         source[:, 1:] = (
             source[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size)
 
-        source_feats = source_tensor.features
+        source_feats = source_tensor.features[None, ...].transpose(1, 2)
 
         # Interplate auxiliary points
         dist, idx = three_nn(target[None, ...], source[None, ...])
         dist_recip = 1.0 / (dist + 1e-8)
         norm = torch.sum(dist_recip, dim=2, keepdim=True)
         weight = dist_recip / norm
-        new_features = three_interpolate(source_feats[None, ...].transpose(1, 2).contiguous(),
+        new_features = three_interpolate(source_feats.contiguous(),
                                          idx, weight)
 
         return new_features.squeeze(0).transpose(0, 1)
