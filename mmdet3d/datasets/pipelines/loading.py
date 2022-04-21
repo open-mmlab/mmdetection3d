@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
+import os.path as osp
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
@@ -236,6 +237,101 @@ class LoadPointsFromMultiSweeps(object):
     def __repr__(self):
         """str: Return a string that describes the module."""
         return f'{self.__class__.__name__}(sweeps_num={self.sweeps_num})'
+
+
+@PIPELINES.register_module()
+class LoadCalibPoseTime(object):
+    """
+        load calib poses and times for SemanticKitti dataset.
+    """
+    def __init__(self, use_calib=True, use_pose=True, use_time=False):
+
+        # self.data_root = data_root
+        self.use_calib = use_calib
+        self.use_pose = use_pose
+        self.use_time = use_time
+
+    def __call__(self, results):
+
+        seq_folder = results['ann_info']['pts_semantic_mask_path'].replace('labels/000000.label', '')
+        calibrations = self.parse_calibration(osp.join(seq_folder, "calib.txt"))
+
+        if self.use_calib:
+            # Read Calib
+            results['calib'] = calibrations
+
+        if self.use_time:
+            # Read times
+            results['times'] = np.loadtxt(osp.join(seq_folder, 'times.txt'), dtype=np.float32)
+
+        if self.use_pose:
+            # Read poses
+            poses_f64 = self.parse_poses(osp.join(seq_folder, 'poses.txt'), calibrations[-1])
+            results['poses'] = [pose.astype(np.float32) for pose in poses_f64]
+
+        return results
+
+    def parse_calibration(self, filename):
+        """ read calibration file with given filename
+            Returns
+            -------
+            dict
+                Calibration matrices as 4x4 numpy arrays.
+        """
+        calib = {}
+
+        calib_file = open(filename)
+        for line in calib_file:
+            key, content = line.strip().split(":")
+            values = [float(v) for v in content.strip().split()]
+
+            pose = np.zeros((4, 4))
+            pose[0, 0:4] = values[0:4]
+            pose[1, 0:4] = values[4:8]
+            pose[2, 0:4] = values[8:12]
+            pose[3, 3] = 1.0
+
+            calib[key] = pose
+
+        calib_file.close()
+
+        return calib
+
+    def parse_poses(self, filename, calibration):
+        """ read poses file with per-scan poses from given filename
+            Returns
+            -------
+            list
+                list of poses as 4x4 numpy arrays.
+        """
+        file = open(filename)
+
+        poses = []
+
+        Tr = calibration["Tr"]
+        Tr_inv = np.linalg.inv(Tr)
+
+        for line in file:
+            values = [float(v) for v in line.strip().split()]
+
+            pose = np.zeros((4, 4))
+            pose[0, 0:4] = values[0:4]
+            pose[1, 0:4] = values[4:8]
+            pose[2, 0:4] = values[8:12]
+            pose[3, 3] = 1.0
+
+            poses.append(np.matmul(Tr_inv, np.matmul(pose, Tr)))
+
+        file.close()
+        return poses
+
+    def parse_times(self, filename):
+
+        time_file = open(filename)
+        times = [line for line in time_file]
+
+        time_file.close()
+        return times
 
 
 @PIPELINES.register_module()
@@ -518,7 +614,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_seg=False,
                  with_bbox_depth=False,
                  poly2mask=True,
-                 seg_3d_dtype=np.int64,
+                 seg_3d_dtype='int',
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
@@ -600,11 +696,11 @@ class LoadAnnotations3D(LoadAnnotations):
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_instance_mask_path)
-            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
+            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int)
         except ConnectionError:
             mmcv.check_file_exist(pts_instance_mask_path)
             pts_instance_mask = np.fromfile(
-                pts_instance_mask_path, dtype=np.int64)
+                pts_instance_mask_path, dtype=np.long)
 
         results['pts_instance_mask'] = pts_instance_mask
         results['pts_mask_fields'].append('pts_instance_mask')
@@ -631,7 +727,7 @@ class LoadAnnotations3D(LoadAnnotations):
         except ConnectionError:
             mmcv.check_file_exist(pts_semantic_mask_path)
             pts_semantic_mask = np.fromfile(
-                pts_semantic_mask_path, dtype=np.int64)
+                pts_semantic_mask_path, dtype=np.long)
 
         results['pts_semantic_mask'] = pts_semantic_mask
         results['pts_seg_fields'].append('pts_semantic_mask')
