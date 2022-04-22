@@ -4,10 +4,9 @@ from abc import abstractmethod
 
 import numpy as np
 import torch
-from mmcv._ext import iou3d_boxes_overlap_bev_forward as boxes_overlap_bev_gpu
-from mmcv.ops import points_in_boxes_all, points_in_boxes_part
+from mmcv.ops import box_iou_rotated, points_in_boxes_all, points_in_boxes_part
 
-from .utils import limit_period, xywhr2xyxyr
+from .utils import limit_period
 
 
 class BaseInstance3DBoxes(object):
@@ -447,7 +446,7 @@ class BaseInstance3DBoxes(object):
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes' heights.
+            torch.Tensor: Calculated 3D overlaps of the boxes.
         """
         assert isinstance(boxes1, BaseInstance3DBoxes)
         assert isinstance(boxes2, BaseInstance3DBoxes)
@@ -464,15 +463,13 @@ class BaseInstance3DBoxes(object):
         # height overlap
         overlaps_h = cls.height_overlaps(boxes1, boxes2)
 
-        # obtain BEV boxes in XYXYR format
-        boxes1_bev = xywhr2xyxyr(boxes1.bev)
-        boxes2_bev = xywhr2xyxyr(boxes2.bev)
-
         # bev overlap
-        overlaps_bev = boxes1_bev.new_zeros(
-            (boxes1_bev.shape[0], boxes2_bev.shape[0])).cuda()  # (N, M)
-        boxes_overlap_bev_gpu(boxes1_bev.contiguous().cuda(),
-                              boxes2_bev.contiguous().cuda(), overlaps_bev)
+        iou2d = box_iou_rotated(boxes1.bev, boxes2.bev)
+        areas1 = (boxes1.bev[:, 2] * boxes1.bev[:, 3]).unsqueeze(1).expand(
+            rows, cols)
+        areas2 = (boxes2.bev[:, 2] * boxes2.bev[:, 3]).unsqueeze(0).expand(
+            rows, cols)
+        overlaps_bev = iou2d * (areas1 + areas2) / (1 + iou2d)
 
         # 3d overlaps
         overlaps_3d = overlaps_bev.to(boxes1.device) * overlaps_h

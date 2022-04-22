@@ -1,12 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.ops import nms_bev as nms_gpu
-from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
+from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
 from mmdet.core import build_bbox_coder, multi_apply
 from ..builder import HEADS, build_loss
 
@@ -19,7 +18,7 @@ class PointRPNHead(BaseModule):
         num_classes (int): Number of classes.
         train_cfg (dict): Train configs.
         test_cfg (dict): Test configs.
-        pred_layer_cfg (dict, optional): Config of classfication and
+        pred_layer_cfg (dict, optional): Config of classification and
             regression prediction layers. Defaults to None.
         enlarge_width (float, optional): Enlarge bbox for each side to ignore
             close points. Defaults to 0.1.
@@ -121,7 +120,7 @@ class PointRPNHead(BaseModule):
             batch_size, -1, self._get_cls_out_channels())
         point_box_preds = self.reg_layers(feat_reg).reshape(
             batch_size, -1, self._get_reg_out_channels())
-        return (point_box_preds, point_cls_preds)
+        return point_box_preds, point_cls_preds
 
     @force_fp32(apply_to=('bbox_preds'))
     def loss(self,
@@ -159,7 +158,7 @@ class PointRPNHead(BaseModule):
         semantic_targets = mask_targets
         semantic_targets[negative_mask] = self.num_classes
         semantic_points_label = semantic_targets
-        # for ignore, but now we do not have ignore label
+        # for ignore, but now we do not have ignored label
         semantic_loss_weight = negative_mask.float() + positive_mask.float()
         semantic_loss = self.cls_loss(semantic_points,
                                       semantic_points_label.reshape(-1),
@@ -220,7 +219,7 @@ class PointRPNHead(BaseModule):
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
 
-        # transform the bbox coordinate to the pointcloud coordinate
+        # transform the bbox coordinate to the point cloud coordinate
         gt_bboxes_3d_tensor = gt_bboxes_3d.tensor.clone()
         gt_bboxes_3d_tensor[..., 2] += gt_bboxes_3d_tensor[..., 5] / 2
 
@@ -233,7 +232,6 @@ class PointRPNHead(BaseModule):
                                               points[..., 0:3], mask_targets)
 
         positive_mask = (points_mask.max(1)[0] > 0)
-        negative_mask = (points_mask.max(1)[0] == 0)
         # add ignore_mask
         extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(self.enlarge_width)
         points_mask, _ = self._assign_targets_by_points_inside(
@@ -297,9 +295,9 @@ class PointRPNHead(BaseModule):
         nms_cfg = self.test_cfg.nms_cfg if not self.training \
             else self.train_cfg.nms_cfg
         if nms_cfg.use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
 
         num_bbox = bbox.shape[0]
         bbox = input_meta['box_type_3d'](
