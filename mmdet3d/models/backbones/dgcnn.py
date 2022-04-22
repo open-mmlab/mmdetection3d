@@ -3,7 +3,7 @@ from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import DGCNNFAModule, DGCNNGFModule
-from mmdet.models import BACKBONES
+from ..builder import BACKBONES
 
 
 @BACKBONES.register_module()

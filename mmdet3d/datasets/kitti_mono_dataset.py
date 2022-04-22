@@ -35,6 +35,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
     def __init__(self,
                  data_root,
                  info_file,
+                 ann_file,
+                 pipeline,
                  load_interval=1,
                  with_velocity=False,
                  eval_version=None,
@@ -42,6 +44,8 @@ class KittiMonoDataset(NuScenesMonoDataset):
                  **kwargs):
         super().__init__(
             data_root=data_root,
+            ann_file=ann_file,
+            pipeline=pipeline,
             load_interval=load_interval,
             with_velocity=with_velocity,
             eval_version=eval_version,

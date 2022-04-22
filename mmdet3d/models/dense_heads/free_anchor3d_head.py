@@ -4,7 +4,7 @@ from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox import bbox_overlaps_nearest_3d
-from mmdet.models import HEADS
+from ..builder import HEADS
 from .anchor3d_head import Anchor3DHead
 from .train_mixins import get_direction_target
 

@@ -8,7 +8,7 @@ from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import force_fp32
 
 from mmdet3d.core import limit_period, xywhr2xyxyr
-from mmdet.models import HEADS
+from ..builder import HEADS
 from .anchor3d_head import Anchor3DHead
 
 

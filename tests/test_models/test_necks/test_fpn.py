@@ -9,7 +9,7 @@ def test_secfpn():
         upsample_strides=[1, 2],
         out_channels=[4, 6],
     )
-    from mmdet.models.builder import build_neck
+    from mmdet3d.models.builder import build_neck
     neck = build_neck(neck_cfg)
     assert neck.deblocks[0][0].in_channels == 2
     assert neck.deblocks[1][0].in_channels == 3

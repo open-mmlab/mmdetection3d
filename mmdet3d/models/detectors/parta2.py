@@ -3,8 +3,8 @@ import torch
 from mmcv.ops import Voxelization
 from torch.nn import functional as F
 
-from mmdet.models import DETECTORS
 from .. import builder
+from ..builder import DETECTORS
 from .two_stage import TwoStage3DDetector
 
 

@@ -21,7 +21,7 @@ class Compose:
         self.transforms = []
         for transform in transforms:
             if isinstance(transform, dict):
-                if list(transform.keys())[0] in PIPELINES._module_dict.keys():
+                if transform['type'] in PIPELINES._module_dict.keys():
                     transform = build_from_cfg(transform, PIPELINES)
                 else:
                     transform = build_from_cfg(transform, MMDET_PIPELINES)

@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn.bricks import ConvModule
 
-from mmdet.models import HEADS
+from ..builder import HEADS
 from .pointnet2_head import PointNet2Head
 
 

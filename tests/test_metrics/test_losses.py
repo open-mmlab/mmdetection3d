@@ -3,7 +3,7 @@ import pytest
 import torch
 from torch import nn as nn
 
-from mmdet.models import build_loss
+from mmdet3d.models.builder import build_loss
 
 
 def test_chamfer_disrance():

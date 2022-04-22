@@ -2,7 +2,7 @@
 import torch
 
 from mmdet3d.core import merge_aug_bboxes_3d
-from mmdet.models import DETECTORS
+from ..builder import DETECTORS
 from .two_stage import TwoStage3DDetector
 
 

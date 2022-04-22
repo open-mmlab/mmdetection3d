@@ -125,8 +125,7 @@ class NuScenesDataset(Custom3DDataset):
                  filter_empty_gt=True,
                  test_mode=False,
                  eval_version='detection_cvpr_2019',
-                 use_valid_flag=False,
-                 **kwargs):
+                 use_valid_flag=False):
         self.load_interval = load_interval
         self.use_valid_flag = use_valid_flag
         super().__init__(
@@ -137,8 +136,7 @@ class NuScenesDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode,
-            **kwargs)
+            test_mode=test_mode)
 
         self.with_velocity = with_velocity
         self.eval_version = eval_version
@@ -186,8 +184,7 @@ class NuScenesDataset(Custom3DDataset):
         Returns:
             list[dict]: List of annotations sorted by timestamps.
         """
-        # loading data from a file-like object needs file format
-        data = mmcv.load(ann_file, file_format='pkl')
+        data = mmcv.load(ann_file)
         data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
         data_infos = data_infos[::self.load_interval]
         self.metadata = data['metadata']

@@ -6,12 +6,11 @@ from mmcv.runner import BaseModule, force_fp32
 from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import build_sa_module
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS
+from ..builder import HEADS, build_loss
 from .base_conv_bbox_head import BaseConvBboxHead
 
 

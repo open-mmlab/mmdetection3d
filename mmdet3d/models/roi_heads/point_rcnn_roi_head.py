@@ -5,8 +5,7 @@ from torch.nn import functional as F
 from mmdet3d.core import AssignResult
 from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
 from mmdet.core import build_assigner, build_sampler
-from mmdet.models import HEADS
-from ..builder import build_head, build_roi_extractor
+from ..builder import HEADS, build_head, build_roi_extractor
 from .base_3droi_head import Base3DRoIHead
 
 

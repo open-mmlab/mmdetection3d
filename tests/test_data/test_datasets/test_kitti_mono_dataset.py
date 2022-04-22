@@ -215,3 +215,6 @@ def test_evaluate():
     assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_AP11_moderate'],
                       6.0606)
     assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_AP11_hard'], 6.0606)
+
+
+test_getitem()

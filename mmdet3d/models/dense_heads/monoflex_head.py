@@ -9,11 +9,11 @@ from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
                                   get_keypoints, handle_proj_objs)
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
-from mmdet.models.builder import HEADS, build_loss
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from mmdet.models.utils.gaussian_target import (get_local_maximum,
                                                 get_topk_from_heatmap,
                                                 transpose_and_gather_feat)
+from ..builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 

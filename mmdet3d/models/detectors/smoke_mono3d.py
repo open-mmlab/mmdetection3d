@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet.models.builder import DETECTORS
+from ..builder import DETECTORS
 from .single_stage_mono3d import SingleStageMono3DDetector
 
 

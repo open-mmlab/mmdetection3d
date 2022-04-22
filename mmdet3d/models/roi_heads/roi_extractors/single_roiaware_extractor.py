@@ -3,7 +3,7 @@ import torch
 from mmcv import ops
 from mmcv.runner import BaseModule
 
-from mmdet.models.builder import ROI_EXTRACTORS
+from mmdet3d.models.builder import ROI_EXTRACTORS
 
 
 @ROI_EXTRACTORS.register_module()

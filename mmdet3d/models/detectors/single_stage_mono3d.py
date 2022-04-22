@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
 from os import path as osp
 
 import mmcv
@@ -8,22 +9,60 @@ from mmcv.parallel import DataContainer as DC
 
 from mmdet3d.core import (CameraInstance3DBoxes, bbox3d2result,
                           show_multi_modality_result)
-from mmdet.models.detectors.single_stage import SingleStageDetector
-from ..builder import DETECTORS
+from mmdet.models.detectors import BaseDetector
+from ..builder import DETECTORS, build_backbone, build_head, build_neck
 
 
 @DETECTORS.register_module()
-class SingleStageMono3DDetector(SingleStageDetector):
+class SingleStageMono3DDetector(BaseDetector):
     """Base class for monocular 3D single-stage detectors.
 
     Single-stage detectors directly and densely predict bounding boxes on the
     output features of the backbone+neck.
     """
 
+    def __init__(self,
+                 backbone,
+                 neck=None,
+                 bbox_head=None,
+                 train_cfg=None,
+                 test_cfg=None,
+                 pretrained=None,
+                 init_cfg=None):
+        super(SingleStageMono3DDetector, self).__init__(init_cfg)
+        if pretrained:
+            warnings.warn('DeprecationWarning: pretrained is deprecated, '
+                          'please use "init_cfg" instead')
+            backbone.pretrained = pretrained
+        self.backbone = build_backbone(backbone)
+        if neck is not None:
+            self.neck = build_neck(neck)
+        bbox_head.update(train_cfg=train_cfg)
+        bbox_head.update(test_cfg=test_cfg)
+        self.bbox_head = build_head(bbox_head)
+        self.train_cfg = train_cfg
+        self.test_cfg = test_cfg
+
+    def extract_feat(self, img):
+        """Directly extract features from the backbone+neck."""
+        x = self.backbone(img)
+        if self.with_neck:
+            x = self.neck(x)
+        return x
+
     def extract_feats(self, imgs):
         """Directly extract features from the backbone+neck."""
         assert isinstance(imgs, list)
         return [self.extract_feat(img) for img in imgs]
+
+    def forward_dummy(self, img):
+        """Used for computing network flops.
+
+        See `mmdetection/tools/analysis_tools/get_flops.py`
+        """
+        x = self.extract_feat(img)
+        outs = self.bbox_head(x)
+        return outs
 
     def forward_train(self,
                       img,
@@ -225,3 +264,35 @@ class SingleStageMono3DDetector(SingleStageDetector):
                 file_name,
                 'camera',
                 show=show)
+
+    def onnx_export(self, img, img_metas, with_nms=True):
+        """Test function without test time augmentation.
+
+        Args:
+            img (torch.Tensor): input images.
+            img_metas (list[dict]): List of image information.
+
+        Returns:
+            tuple[Tensor, Tensor]: dets of shape [N, num_det, 5]
+                and class labels of shape [N, num_det].
+        """
+        x = self.extract_feat(img)
+        outs = self.bbox_head(x)
+        # get origin input shape to support onnx dynamic shape
+
+        # get shape as tensor
+        img_shape = torch._shape_as_tensor(img)[2:]
+        img_metas[0]['img_shape_for_onnx'] = img_shape
+        # get pad input shape to support onnx dynamic shape for exporting
+        # `CornerNet` and `CentripetalNet`, which 'pad_shape' is used
+        # for inference
+        img_metas[0]['pad_shape_for_onnx'] = img_shape
+
+        if len(outs) == 2:
+            # add dummy score_factor
+            outs = (*outs, None)
+        # TODO Can we change to `get_bboxes` when `onnx_export` fail
+        det_bboxes, det_labels = self.bbox_head.onnx_export(
+            *outs, img_metas, with_nms=with_nms)
+
+        return det_bboxes, det_labels

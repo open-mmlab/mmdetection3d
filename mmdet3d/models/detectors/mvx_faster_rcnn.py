@@ -3,7 +3,7 @@ import torch
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
-from mmdet.models import DETECTORS
+from ..builder import DETECTORS
 from .mvx_two_stage import MVXTwoStageDetector
 
 

@@ -6,8 +6,8 @@ import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.models.utils import MLP
-from mmdet.models import DETECTORS
 from .. import builder
+from ..builder import DETECTORS
 from .base import Base3DDetector
 
 
