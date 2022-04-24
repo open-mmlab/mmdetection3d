@@ -343,6 +343,11 @@ class PointRPNHead(BaseModule):
             score_selected = obj_scores_nms[keep]
             cls_preds = sem_scores_nms[keep]
             labels = torch.argmax(cls_preds, -1)
+        else:
+            bbox_selected = bbox.tensor
+            score_selected = obj_scores.new_zeros([0])
+            labels = obj_scores.new_zeros([0])
+            cls_preds = obj_scores.new_zeros([0, sem_scores.shape[-1]])
 
         return bbox_selected, score_selected, labels, cls_preds
 
