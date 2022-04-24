@@ -1,4 +1,4 @@
-# Tutorial 7: MMDetection3D model deployment
+# Tutorial 8: MMDetection3D model deployment
 
 To meet the speed requirement of the model in practical use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDetection3D model deployment, and you can deploy the trained model to inference backends by MMDeploy.
 
