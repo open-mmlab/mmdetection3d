@@ -192,6 +192,15 @@ you can install it before installing MMCV.
 
 4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
 
+   We have supported spconv2.0. If you have installed spconv2.0, the code will use spconv2.0 first, and it has better performance. If necessary please refer to [spconv v2.x](https://github.com/traveller59/spconv) or use pip:
+
+   ```bash
+   pip install cumm-cuxxx
+   pip install spconv-cuxxx
+   ```
+
+   Replace `xxx` with your CUDA version, just like `pip install spconv-cu111`.
+
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
 ## Another option: Docker Image
