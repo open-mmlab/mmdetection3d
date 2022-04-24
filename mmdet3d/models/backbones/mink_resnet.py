@@ -18,14 +18,14 @@ from mmdet.models import BACKBONES
 
 @BACKBONES.register_module()
 class MinkResNet(nn.Module):
-    """Minkowski ResNet backbone. See 4D Spatio-Temporal ConvNets
-    (https://arxiv.org/abs/1904.08755) for more details.
+    r"""Minkowski ResNet backbone. See `4D Spatio-Temporal ConvNets
+    <https://arxiv.org/abs/1904.08755>`_ for more details.
 
     Args:
         depth (int): Depth of resnet, from {18, 34, 50, 101, 152}.
         in_channels (ont): Number of input channels, 3 for RGB.
-        num_stages (int): Resnet stages. Default: 4.
-        pool (bool): Add max pooling after first conv if True.
+        num_stages (int, optional): Resnet stages. Default: 4.
+        pool (bool, optional): Add max pooling after first conv if True.
             Default: True.
     """
     arch_settings = {
