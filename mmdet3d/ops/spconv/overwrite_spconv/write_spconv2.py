@@ -6,31 +6,35 @@ from torch.nn.parameter import Parameter
 
 
 def register_spconv2():
-    from spconv.pytorch import (SparseConv2d, SparseConv3d, SparseConv4d,
-                                SparseConvTranspose2d, SparseConvTranspose3d,
-                                SparseInverseConv2d, SparseInverseConv3d,
-                                SparseModule, SubMConv2d, SubMConv3d,
-                                SubMConv4d)
+    try:
+        from spconv.pytorch import (SparseConv2d, SparseConv3d, SparseConv4d,
+                                    SparseConvTranspose2d,
+                                    SparseConvTranspose3d, SparseInverseConv2d,
+                                    SparseInverseConv3d, SparseModule,
+                                    SubMConv2d, SubMConv3d, SubMConv4d)
+    except ImportError:
+        return False
+    else:
+        CONV_LAYERS._register_module(SparseConv2d, 'SparseConv2d', force=True)
+        CONV_LAYERS._register_module(SparseConv3d, 'SparseConv3d', force=True)
+        CONV_LAYERS._register_module(SparseConv4d, 'SparseConv4d', force=True)
 
-    CONV_LAYERS._register_module(SparseConv2d, 'SparseConv2d', force=True)
-    CONV_LAYERS._register_module(SparseConv3d, 'SparseConv3d', force=True)
-    CONV_LAYERS._register_module(SparseConv4d, 'SparseConv4d', force=True)
+        CONV_LAYERS._register_module(
+            SparseConvTranspose2d, 'SparseConvTranspose2d', force=True)
+        CONV_LAYERS._register_module(
+            SparseConvTranspose3d, 'SparseConvTranspose3d', force=True)
 
-    CONV_LAYERS._register_module(
-        SparseConvTranspose2d, 'SparseConvTranspose2d', force=True)
-    CONV_LAYERS._register_module(
-        SparseConvTranspose3d, 'SparseConvTranspose3d', force=True)
+        CONV_LAYERS._register_module(
+            SparseInverseConv2d, 'SparseInverseConv2d', force=True)
+        CONV_LAYERS._register_module(
+            SparseInverseConv3d, 'SparseInverseConv3d', force=True)
 
-    CONV_LAYERS._register_module(
-        SparseInverseConv2d, 'SparseInverseConv2d', force=True)
-    CONV_LAYERS._register_module(
-        SparseInverseConv3d, 'SparseInverseConv3d', force=True)
-
-    CONV_LAYERS._register_module(SubMConv2d, 'SubMConv2d', force=True)
-    CONV_LAYERS._register_module(SubMConv3d, 'SubMConv3d', force=True)
-    CONV_LAYERS._register_module(SubMConv4d, 'SubMConv4d', force=True)
-    SparseModule._load_from_state_dict = _load_from_state_dict
-    SparseModule._save_to_state_dict = _save_to_state_dict
+        CONV_LAYERS._register_module(SubMConv2d, 'SubMConv2d', force=True)
+        CONV_LAYERS._register_module(SubMConv3d, 'SubMConv3d', force=True)
+        CONV_LAYERS._register_module(SubMConv4d, 'SubMConv4d', force=True)
+        SparseModule._load_from_state_dict = _load_from_state_dict
+        SparseModule._save_to_state_dict = _save_to_state_dict
+        return True
 
 
 def _save_to_state_dict(self, destination, prefix, keep_vars):

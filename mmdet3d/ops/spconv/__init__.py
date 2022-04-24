@@ -7,8 +7,7 @@ except ImportError:
     spconv2_is_avalible = False
 else:
     if hasattr(spconv, '__version__') and spconv.__version__ >= '2.0.0':
-        register_spconv2()
-        spconv2_is_avalible = True
+        spconv2_is_avalible = register_spconv2()
     else:
         spconv2_is_avalible = False
 
