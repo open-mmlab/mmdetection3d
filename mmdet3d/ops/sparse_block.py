@@ -11,6 +11,15 @@ else:
     from mmcv.ops import SparseModule, SparseSequential
 
 
+def replace_feature(out, new_features):
+    if 'replace_feature' in out.__dir__():
+        # spconv 2.x behaviour
+        return out.replace_feature(new_features)
+    else:
+        out.features = new_features
+        return out
+
+
 class SparseBottleneck(Bottleneck, SparseModule):
     """Sparse bottleneck block for PartA^2.
 
@@ -48,44 +57,24 @@ class SparseBottleneck(Bottleneck, SparseModule):
             norm_cfg=norm_cfg)
 
     def forward(self, x):
-        if spconv2_is_avalible:
-            identity = x.features
+        identity = x.features
 
-            out = self.conv1(x)
-            out = out.replace_feature(self.bn1(out.features))
-            out = out.replace_feature(self.relu(out.features))
+        out = self.conv1(x)
+        out = replace_feature(out, self.bn1(out.features))
+        out = replace_feature(out, self.relu(out.features))
 
-            out = self.conv2(out)
-            out = out.replace_feature(self.bn2(out.features))
-            out = out.replace_feature(self.relu(out.features))
+        out = self.conv2(out)
+        out = replace_feature(out, self.bn2(out.features))
+        out = replace_feature(out, self.relu(out.features))
 
-            out = self.conv3(out)
-            out = out.replace_feature(self.bn3(out.features))
+        out = self.conv3(out)
+        out = replace_feature(out, self.bn3(out.features))
 
-            if self.downsample is not None:
-                identity = self.downsample(x)
+        if self.downsample is not None:
+            identity = self.downsample(x)
 
-            out = out.replace_feature(out.features + identity)
-            out = out.replace_feature(self.relu(out.features))
-        else:
-            identity = x.features
-
-            out = self.conv1(x)
-            out.features = self.bn1(out.features)
-            out.features = self.relu(out.features)
-
-            out = self.conv2(out)
-            out.features = self.bn2(out.features)
-            out.features = self.relu(out.features)
-
-            out = self.conv3(out)
-            out.features = self.bn3(out.features)
-
-            if self.downsample is not None:
-                identity = self.downsample(x)
-
-            out.features += identity
-            out.features = self.relu(out.features)
+        out = replace_feature(out, out.features + identity)
+        out = replace_feature(out, self.relu(out.features))
 
         return out
 
@@ -129,32 +118,18 @@ class SparseBasicBlock(BasicBlock, SparseModule):
         identity = x.features
 
         assert x.features.dim() == 2, f'x.features.dim()={x.features.dim()}'
-        if spconv2_is_avalible:
-            out = self.conv1(x)
-            out = out.replace_feature(self.norm1(out.features))
-            out = out.replace_feature(self.relu(out.features))
+        out = self.conv1(x)
+        out = replace_feature(out, self.norm1(out.features))
+        out = replace_feature(out, self.relu(out.features))
 
-            out = self.conv2(out)
-            out = out.replace_feature(self.norm2(out.features))
+        out = self.conv2(out)
+        out = replace_feature(out, self.norm2(out.features))
 
-            if self.downsample is not None:
-                identity = self.downsample(x)
+        if self.downsample is not None:
+            identity = self.downsample(x)
 
-            out = out.replace_feature(out.features + identity)
-            out = out.replace_feature(self.relu(out.features))
-        else:
-            out = self.conv1(x)
-            out.features = self.norm1(out.features)
-            out.features = self.relu(out.features)
-
-            out = self.conv2(out)
-            out.features = self.norm2(out.features)
-
-            if self.downsample is not None:
-                identity = self.downsample(x)
-
-            out.features += identity
-            out.features = self.relu(out.features)
+        out = replace_feature(out, out.features + identity)
+        out = replace_feature(out, self.relu(out.features))
 
         return out
 

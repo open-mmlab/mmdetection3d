@@ -5,7 +5,7 @@ from mmcv.cnn.bricks.registry import CONV_LAYERS
 from torch.nn.parameter import Parameter
 
 
-def write_spconv():
+def register_spconv2():
     from spconv.pytorch import (SparseConv2d, SparseConv3d, SparseConv4d,
                                 SparseConvTranspose2d, SparseConvTranspose3d,
                                 SparseInverseConv2d, SparseInverseConv3d,
