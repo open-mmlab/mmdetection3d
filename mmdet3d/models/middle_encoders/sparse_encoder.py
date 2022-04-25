@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.ops import (SparseConvTensor, SparseSequential,
-                      points_in_boxes_all, three_interpolate, three_nn)
+from mmcv.ops import (SparseConvTensor, SparseSequential, points_in_boxes_all,
+                      three_interpolate, three_nn)
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
-from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
+from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
 from ..builder import MIDDLE_ENCODERS
 
 
