@@ -23,7 +23,7 @@ class SparseRegionAttention(BaseModule):
         embed_dim (int): Number of dimension of feature embedding.
         num_heads (int): Number of heads in attention
         dropout (float): Drop probability when do the attention
-        init_cfg (:obj:`ConfigDict`): Initialization config.
+        init_cfg (:obj:`ConfigDict`, optional): Initialization config.
             Defaults to None.
     """
 
@@ -53,10 +53,10 @@ class SparseRegionAttention(BaseModule):
                 the padding mask of corresponding batching, each
                 tensor has shape (NUM_WINS, NUM_TOKEN).
             seq_win_mappings (list[tuple]): Each tuple contains
-            three important information of corresponding
-            batching.
+                three important information of corresponding
+                batching.
 
-                - A identical index of voxel in corresponding
+                - An identical index of voxel in corresponding
                   batching windows
                 - The index of voxel in original sequence.
                 - The number of token of each window in this batching.
@@ -102,7 +102,7 @@ class SSTLayer(BaseModule):
         norm_cfg (:obj:`ConfigDict`): Config for normalization layer.
         act_cfg (:obj:`ConfigDict`): Config for activation layer.
         post_norm (bool): Whether use post norm. Defaults to True.
-        init_cfg (:obj:`ConfigDict`): Initialization config.
+        init_cfg (:obj:`ConfigDict`, optional): Initialization config.
             Defaults to None.
     """
 
@@ -155,10 +155,10 @@ class SSTLayer(BaseModule):
                 the padding mask of corresponding batching, each
                 tensor has shape (NUM_WINS, NUM_TOKEN).
             seq_win_mappings (list[tuple]): Each tuple contains
-            three important information of corresponding
-            batching.
+                three important information of corresponding
+                batching.
 
-                - A identical index of voxel in corresponding
+                - An identical index of voxel in corresponding
                   batching windows
                 - The index of voxel in original sequence.
                 - The number of token of each window in this batching.
@@ -204,7 +204,7 @@ class SSTLayerSequence(BaseModule):
             - act_cfg (:obj:`ConfigDict`): Config for activation layer.
             - post_norm (bool): Whether use post norm. Defaults to True.
 
-        init_cfg (:obj:`ConfigDict`): Initialization config.
+        init_cfg (:obj:`ConfigDict`, optional): Initialization config.
             Defaults to None.
     """
 
@@ -242,10 +242,13 @@ class SSTLayerSequence(BaseModule):
                 the different batching. Each tuple contains 3 important
                 information of corresponding batching.
 
-                - A identical index of voxel in corresponding
+                - An identical index of voxel in corresponding
                   batching windows
                 - The index of voxel in original sequence.
                 - The number of token of each window in this batching.
+
+            using_checkpoint (bool): Whether checkpoint the layer to
+                save the GPU memory. Defaults to False.
 
         Returns:
             tensor: Voxel features in shape (N, C).
@@ -377,10 +380,10 @@ class SST(nn.Module):
         else:
             self.bev_conv_layers = None
 
-    def forward(self, inputs):
+    def forward(self, input_dict):
         """
         Args:
-            inputs (tuple): Contains 5 part
+            input_dict (dict): Contains 5 part
 
                 - voxel_feats (tensor): Voxel features in shape (N, C).
                 - voxel_coors (tensor): Coordinates in shape (N, 4),
@@ -400,7 +403,7 @@ class SST(nn.Module):
                   the different batching. Each tuple contains 3 important
                   information of corresponding batching.
 
-                    - A identical index of voxel in corresponding
+                    - An identical index of voxel in corresponding
                       batching windows
                     - The index of voxel in original sequence.
                     - The number of token of each window in this batching.
@@ -408,8 +411,13 @@ class SST(nn.Module):
         Returns:
             list(tensor): Bev format feature. Has shape (B, C, out_h, out_w)
         """
-        (voxel_feats, voxel_coors, batching_position_embed_list,
-         batching_padding_mask_list, seq_win_mapping_list) = inputs
+        voxel_feats = input_dict['voxel_feats']
+        voxel_coors = input_dict['voxel_coors']
+        batching_position_embed_list = input_dict[
+            'batching_position_embed_list']
+        batching_padding_mask_list = input_dict['batching_padding_mask_list']
+        seq_win_mapping_list = input_dict['seq_win_mapping_list']
+
         batch_size = voxel_coors[:, 0].max().item() + 1
         batch_size = int(batch_size)
         if self.lateral_linear:

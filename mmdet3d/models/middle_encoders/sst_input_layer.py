@@ -104,7 +104,7 @@ class SSTInputLayer(nn.Module):
         return self._region_batching_cfg
 
     @auto_fp16(apply_to=('voxel_feat', ))
-    def forward(self, voxel_feats, voxel_coors, **kwargs):
+    def forward(self, voxel_feats, voxel_coors, *args, **kwargs):
         """Forward of SSTInputLayer.
 
         Args:
@@ -114,7 +114,7 @@ class SSTInputLayer(nn.Module):
                 (batch_idx, z_idx, y_idx, x_idx).
 
         Returns:
-            tuple: A tuple contains four element
+            Dict: A dict  contains four element
 
                 - voxel_feats (tensor): Voxel features in shape (N, C).
                 - voxel_coors (tensor): Coordinates in shape (N, 4),
@@ -177,9 +177,14 @@ class SSTInputLayer(nn.Module):
                                           seq_win_mapping))
 
             seq_win_mapping_list.append(seq_win_mapping)
+        out_dict = dict()
+        out_dict['voxel_feats'] = voxel_feats
+        out_dict['voxel_coors'] = voxel_coors
+        out_dict['batching_position_embed_list'] = batching_position_embed_list
+        out_dict['batching_padding_mask_list'] = batching_padding_mask_list
+        out_dict['seq_win_mapping_list'] = batching_padding_mask_list
 
-        return (voxel_feats, voxel_coors, batching_position_embed_list,
-                batching_padding_mask_list, seq_win_mapping_list)
+        return out_dict
 
     def get_key_padding_mask(self, batching_id_per_voxel, seq_win_mapping):
         """Calculated padding mask for Sparse Region Attention.
@@ -275,7 +280,7 @@ class SSTInputLayer(nn.Module):
             dtype (torch.dtype): The dtype of feature.
 
         Returns:
-            list[tensor]: List of region bacthing
+            list[tensor]: List of region batching
             position embedding, each tensor
             has shape (NUM_WINS, NUM_TOKEN, FEAT_DIM).
         """
