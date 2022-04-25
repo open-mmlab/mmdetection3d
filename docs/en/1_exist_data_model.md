@@ -105,7 +105,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 
    **Notice**: To generate submissions on Lyft, `csv_savepath` must be given in the `--eval-options`. After generating the csv file, you can make a submission with kaggle commands given on the [website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit).
 
-   Note that in the [config of Lyft dataset](../configs/_base_/datasets/lyft-3d.py), the value of `ann_file` keyword in `test` is `data_root + 'lyft_infos_test.pkl'`, which is the official test set of Lyft without annotation. To test on the validation set, please change this to `data_root + 'lyft_infos_val.pkl'`.
+   Note that in the [config of Lyft dataset](../../configs/_base_/datasets/lyft-3d.py), the value of `ann_file` keyword in `test` is `data_root + 'lyft_infos_test.pkl'`, which is the official test set of Lyft without annotation. To test on the validation set, please change this to `data_root + 'lyft_infos_val.pkl'`.
 
 8. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
 
