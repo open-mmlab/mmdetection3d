@@ -4,9 +4,9 @@
 
 ## 数据准备
 
-最开始，我们需要从 ScanNet [官方网站](http://kaldir.vc.in.tum.de/scannet_benchmark/documentation)下载原始数据。
+首先，我们需要从 ScanNet [官方网站](http://kaldir.vc.in.tum.de/scannet_benchmark/documentation)下载原始数据。
 
-由于不同数据集上的原始数据有不同的组织方式，我们通常需要用 pkl 或 json 文件收集有用的数据信息。
+由于不同数据集的原始数据有不同的组织方式，我们通常需要用 pkl 或 json 文件收集有用的数据信息。
 
 因此，在准备好所有的原始数据之后，我们可以遵循 [ScanNet 文档](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/)中的说明生成数据信息。
 
@@ -48,11 +48,11 @@ mmdetection3d
 ./tools/dist_train.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py 2
 ```
 
-注意，配置文件名中的 `16x2` 是指训练时用了 2 块 GPU，每块 GPU 上有 16 个样本。如果你的自定义设置不同于此，那么有时候你需要相应的调整学习率。基础的规则可以参考[此处](https://arxiv.org/abs/1706.02677)。
+注意，配置文件名中的 `16x2` 是指训练时用了 2 块 GPU，每块 GPU 上有 16 个样本。如果你的自定义设置不同于此，那么有时候你需要相应的调整学习率。基本规则可以参考[此处](https://arxiv.org/abs/1706.02677)。
 
 ## 定量评估
 
-在训练期间，模型权重将会根据配置文件中的 `evaluation = dict(interval=xxx)` 设置被周期性地评估。我们为不同的数据集支持官方评估方案。对于 ScanNet，将使用 20 个类别的平均交并比 (mIoU) 对模型进行评估。评估结果将会被打印到终端中，如下所示：
+在训练期间，模型权重将会根据配置文件中的 `evaluation = dict(interval=xxx)` 设置被周期性地评估。我们支持不同数据集的官方评估方案。对于 ScanNet，将使用 20 个类别的平均交并比 (mIoU) 对模型进行评估。评估结果将会被打印到终端中，如下所示：
 
 ```
 +---------+--------+--------+---------+--------+--------+--------+--------+--------+--------+-----------+---------+---------+--------+---------+--------------+----------------+--------+--------+---------+----------------+--------+--------+---------+
@@ -75,4 +75,4 @@ mmdetection3d
 
 ## 定性评估
 
-MMDetection3D 也为可视化提供了通用的工具，以便于我们可以对训练好的模型预测的分割结果有一个直观的感受。你也可以在评估阶段通过设置 `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` 来在线可视化分割结果，或者使用 `tools/misc/visualize_results.py` 来离线的可视化。此外，我们还提供了脚本 `tools/misc/browse_dataset.py` 用于可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#visualization)。
+MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型预测的分割结果有一个直观的感受。你也可以在评估阶段通过设置 `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` 来在线可视化分割结果，或者使用 `tools/misc/visualize_results.py` 来离线地进行可视化。此外，我们还提供了脚本 `tools/misc/browse_dataset.py` 用于可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#visualization)。
