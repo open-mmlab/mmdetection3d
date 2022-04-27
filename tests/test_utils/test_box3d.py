@@ -1177,8 +1177,9 @@ def test_boxes3d_overlaps():
 
     # same boxes under different coordinates should have the same iou
     assert torch.allclose(
-        expected_iou_tensor, cam_overlaps_3d, rtol=1e-4, atol=1e-7)
-    assert torch.allclose(cam_overlaps_3d, overlaps_3d_iou)
+        expected_iou_tensor, cam_overlaps_3d, rtol=1e-3, atol=1e-4)
+    assert torch.allclose(
+        cam_overlaps_3d, overlaps_3d_iou, rtol=1e-3, atol=1e-4)
 
     with pytest.raises(AssertionError):
         cam_boxes1.overlaps(cam_boxes1, boxes1)
