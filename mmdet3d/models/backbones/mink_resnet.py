@@ -13,7 +13,7 @@ except ImportError:
 
 import torch.nn as nn
 
-from mmdet.models import BACKBONES
+from mmdet3d.models import BACKBONES
 
 
 @BACKBONES.register_module()
