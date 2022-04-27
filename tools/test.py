@@ -19,7 +19,7 @@ from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
 if mmdet.__version__ > '2.23.0':
-    # If mmdet version > 2.24.0, setup_multi_processes would be imported and
+    # If mmdet version > 2.23.0, setup_multi_processes would be imported and
     # used from mmdet instead of mmdet3d.
     from mmdet.utils import setup_multi_processes
 else:
