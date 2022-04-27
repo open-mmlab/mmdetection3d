@@ -4,10 +4,10 @@ from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
-from mmdet3d.ops.spconv import spconv2_is_avalible
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
 from ..builder import MIDDLE_ENCODERS
 
-if spconv2_is_avalible:
+if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
 else:
     from mmcv.ops import SparseConvTensor, SparseSequential

@@ -4,11 +4,11 @@ from .overwrite_spconv.write_spconv2 import register_spconv2
 try:
     import spconv
 except ImportError:
-    spconv2_is_avalible = False
+    IS_SPCONV2_AVAILABLE = False
 else:
     if hasattr(spconv, '__version__') and spconv.__version__ >= '2.0.0':
-        spconv2_is_avalible = register_spconv2()
+        IS_SPCONV2_AVAILABLE = register_spconv2()
     else:
-        spconv2_is_avalible = False
+        IS_SPCONV2_AVAILABLE = False
 
-__all__ = ['spconv2_is_avalible']
+__all__ = ['IS_SPCONV2_AVAILABLE']

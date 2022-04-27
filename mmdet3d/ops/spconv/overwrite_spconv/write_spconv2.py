@@ -6,6 +6,8 @@ from torch.nn.parameter import Parameter
 
 
 def register_spconv2():
+    """This func registers spconv2.0 spconv ops to overwrite the default mmcv
+    spconv ops."""
     try:
         from spconv.pytorch import (SparseConv2d, SparseConv3d, SparseConv4d,
                                     SparseConvTranspose2d,
@@ -38,6 +40,11 @@ def register_spconv2():
 
 
 def _save_to_state_dict(self, destination, prefix, keep_vars):
+    """Rewrite this func to resolve spconv ops kernel weights incompatible.
+
+    MMCV spconv kernel weights is (D,H,W,in_channel,out_channel), spconv2.0
+    spconv kernel weights is (out_channel,D,H,W,in_channel).
+    """
     for name, param in self._parameters.items():
         if param is not None:
             param = param if keep_vars else param.detach()
@@ -52,6 +59,11 @@ def _save_to_state_dict(self, destination, prefix, keep_vars):
 
 def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                           missing_keys, unexpected_keys, error_msgs):
+    """Rewrite this func to resolve spconv ops kernel weights incompatible.
+
+    MMCV spconv kernel weights is (D,H,W,in_channel,out_channel), spconv2.0
+    spconv kernel weights is (out_channel,D,H,W,in_channel).
+    """
     for hook in self._load_state_dict_pre_hooks.values():
         hook(state_dict, prefix, local_metadata, strict, missing_keys,
              unexpected_keys, error_msgs)
@@ -75,10 +87,9 @@ def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
             if input_param.shape != param.shape:
                 # local shape should match the one in checkpoint
                 error_msgs.append(
-                    'size mismatch for {}: copying a param with'
-                    'shape {} from checkpoint, the shape in current'
-                    ' model is {}.'.format(key, input_param.shape,
-                                           param.shape))
+                    f'size mismatch for {key}: copying a param with '
+                    f'shape {key, input_param.shape} from checkpoint,'
+                    f'the shape in current model is {param.shape}.')
                 continue
 
             if isinstance(input_param, Parameter):
@@ -88,10 +99,9 @@ def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                 param.copy_(input_param)
             except Exception:
                 error_msgs.append(
-                    'While copying the parameter named "{}", '
-                    'whose dimensions in the model are {} and '
-                    'whose dimensions in the checkpoint are {}.'.format(
-                        key, param.size(), input_param.size()))
+                    f'While copying the parameter named "{key}", whose '
+                    f'dimensions in the model are {param.size()} and whose '
+                    f'dimensions in the checkpoint are {input_param.size()}.')
         elif strict:
             missing_keys.append(key)
 
@@ -101,6 +111,6 @@ def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                 input_name = key[len(prefix):]
                 input_name = input_name.split(
                     '.', 1)[0]  # get the name of param/buffer/child
-                if input_name not in self._modules\
+                if input_name not in self._modules \
                         and input_name not in local_state:
                     unexpected_keys.append(key)

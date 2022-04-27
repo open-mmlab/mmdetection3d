@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from mmdet3d.ops.spconv import spconv2_is_avalible
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
 
-if spconv2_is_avalible:
+if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
 else:
     from mmcv.ops import SparseConvTensor, SparseSequential

@@ -3,9 +3,9 @@ from mmcv.cnn import build_conv_layer, build_norm_layer
 from torch import nn
 
 from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
-from .spconv import spconv2_is_avalible
+from .spconv import IS_SPCONV2_AVAILABLE
 
-if spconv2_is_avalible:
+if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseModule, SparseSequential
 else:
     from mmcv.ops import SparseModule, SparseSequential
