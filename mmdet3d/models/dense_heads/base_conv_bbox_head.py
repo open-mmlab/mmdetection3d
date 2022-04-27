@@ -4,7 +4,7 @@ from mmcv.cnn.bricks import build_conv_layer
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
-from mmdet.models.builder import HEADS
+from ..builder import HEADS
 
 
 @HEADS.register_module()

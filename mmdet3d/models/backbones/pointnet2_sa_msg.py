@@ -5,7 +5,7 @@ from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import build_sa_module
-from mmdet.models import BACKBONES
+from ..builder import BACKBONES
 from .base_pointnet import BasePointNet
 
 

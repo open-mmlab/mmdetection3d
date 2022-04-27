@@ -7,7 +7,7 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
-from mmdet.models import BACKBONES, build_backbone
+from ..builder import BACKBONES, build_backbone
 
 
 @BACKBONES.register_module()
