@@ -1,4 +1,4 @@
-# Tutorial 7: MMDetection3D model deployment
+# Tutorial 8: MMDetection3D model deployment
 
 To meet the speed requirement of the model in practical use, usually, we deploy the trained model to inference backends. [MMDeploy](https://github.com/open-mmlab/mmdeploy) is OpenMMLab model deployment framework. Now MMDeploy has supported MMDetection3D model deployment, and you can deploy the trained model to inference backends by MMDeploy.
 
@@ -52,17 +52,15 @@ python ./tools/deploy.py \
 ### Example
 
 ```bash
-cd mmdeploy \
+cd mmdeploy
 python tools/deploy.py \
-configs/mmdet3d/voxel-detection/voxel-detection_tensorrt_dynamic-kitti.py \
-${$MMDET3D_DIR}/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py \
-${$MMDET3D_DIR}/checkpoints/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20200620_230421-aa0f3adb.pth \
-${$MMDET3D_DIR}/demo/data/kitti/kitti_000008.bin \
---work-dir
-work-dir \
---device
-cuda:0 \
---show
+    configs/mmdet3d/voxel-detection/voxel-detection_tensorrt_dynamic-kitti.py \
+    ${$MMDET3D_DIR}/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py \
+    ${$MMDET3D_DIR}/checkpoints/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20200620_230421-aa0f3adb.pth \
+    ${$MMDET3D_DIR}/demo/data/kitti/kitti_000008.bin \
+    --work-dir work-dir \
+    --device cuda:0 \
+    --show
 ```
 
 ## Inference Model
@@ -83,34 +81,31 @@ You can test the accuracy and speed of the model in the inference backend. You c
 
 ```bash
 python tools/test.py \
-${DEPLOY_CFG} \
-${MODEL_CFG} \
---model ${BACKEND_MODEL_FILES} \
-[--out ${OUTPUT_PKL_FILE}] \
-[--format-only] \
-[--metrics ${METRICS}] \
-[--show] \
-[--show-dir ${OUTPUT_IMAGE_DIR}] \
-[--show-score-thr ${SHOW_SCORE_THR}] \
---device ${DEVICE} \
-[--cfg-options ${CFG_OPTIONS}] \
-[--metric-options ${METRIC_OPTIONS}]
-[--log2file work_dirs/output.txt]
+    ${DEPLOY_CFG} \
+    ${MODEL_CFG} \
+    --model ${BACKEND_MODEL_FILES} \
+    [--out ${OUTPUT_PKL_FILE}] \
+    [--format-only] \
+    [--metrics ${METRICS}] \
+    [--show] \
+    [--show-dir ${OUTPUT_IMAGE_DIR}] \
+    [--show-score-thr ${SHOW_SCORE_THR}] \
+    --device ${DEVICE} \
+    [--cfg-options ${CFG_OPTIONS}] \
+    [--metric-options ${METRIC_OPTIONS}] \
+    [--log2file work_dirs/output.txt]
 ```
 
 ### Example
 
 ```bash
-cd mmdeploy \
+cd mmdeploy
 python tools/test.py \
-configs/mmdet3d/voxel-detection/voxel-detection_onnxruntime_dynamic.py \
-${MMDET3D_DIR}/configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py \
---model
-work-dir/end2end.onnx \
---metrics
-bbox \
---device
-cpu
+    configs/mmdet3d/voxel-detection/voxel-detection_onnxruntime_dynamic.py \
+    ${MMDET3D_DIR}/configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py \
+    --model work-dir/end2end.onnx \
+    --metrics bbox \
+    --device cpu
 ```
 
 ## Supported models
