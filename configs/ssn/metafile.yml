@@ -20,53 +20,53 @@ Models:
     Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
-      Training Memory (GB): 9.62
+      Training Memory (GB): 3.6
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 41.56
-          NDS: 54.83
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d_20201023_193737-5fda3f00.pth
+          mAP: 40.91
+          NDS: 54.44
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d_20210830_101351-51915986.pth
 
   - Name: hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d
     In Collection: SSN
     Config: configs/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
-      Training Memory (GB): 10.26
+      Training Memory (GB): 5.1
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 46.95
+          mAP: 46.65
           NDS: 58.24
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d_20201024_232447-7af3d8c8.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d_20210829_210615-361e5e04.pth
 
   - Name: hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d
     In Collection: SSN
     Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
-      Training Memory (GB): 8.30
+      Training Memory (GB): 8.5
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 17.4
+          Private Score: 17.5
           Public Score: 17.5
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d_20201016_220844-3058d9fc.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d_20210822_134731-46841b41.pth
 
   - Name: hv_ssn_regnet-400mf_secfpn_sbn-all_1x16_2x_lyft-3d
     In Collection: SSN
     Config: configs/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_1x16_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
-      Training Memory (GB): 9.98
+      Training Memory (GB): 7.4
     Results:
       - Task: 3D Object Detection
         Dataset: Lyft
         Metrics:
-          Private Score: 18.1
-          Public Score: 18.3
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_lyft-3d/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_lyft-3d_20201025_213155-4532096c.pth
+          Private Score: 17.9
+          Public Score: 18.0
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_1x16_2x_lyft-3d/hv_ssn_regnet-400mf_secfpn_sbn-all_1x16_2x_lyft-3d_20210829_122825-d93475a1.pth

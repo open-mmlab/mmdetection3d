@@ -54,7 +54,8 @@ class SUNRGBDDataset(Custom3DDataset):
                  modality=dict(use_camera=True, use_lidar=True),
                  box_type_3d='Depth',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 **kwargs):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -63,7 +64,8 @@ class SUNRGBDDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            **kwargs)
         assert 'use_camera' in self.modality and \
             'use_lidar' in self.modality
         assert self.modality['use_camera'] or self.modality['use_lidar']

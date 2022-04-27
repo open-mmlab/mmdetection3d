@@ -25,11 +25,11 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本 v1.0.0rc0.
+**新闻**: 我们发布了版本 v1.0.0rc1.
 
 说明：我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。
 
-由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。
+由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在这个版本中，我们更新了部分坐标系重构后的模型权重文件。您可以在 [变更日志](docs/en/changelog.md) 中查看更多详细信息。
 
 在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
@@ -83,7 +83,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v1.0.0rc0 在 2022.2.18 发布。
+最新的版本 v1.0.0rc1 在 2022.4.1 发布。
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
 ## 基准测试和模型库
@@ -159,7 +159,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
             <li><a href="configs/pointpillars">PointPillars (CVPR'2019)</a></li>
             <li><a href="configs/ssn">SSN (ECCV'2020)</a></li>
             <li><a href="configs/3dssd">3DSSD (CVPR'2020)</a></li>
-            <li><a href="configs/ point_rcnn">PointRCNN</a></li>
+            <li><a href="configs/point_rcnn">PointRCNN (CVPR'2019)</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
         </ul>

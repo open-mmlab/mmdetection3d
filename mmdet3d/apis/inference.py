@@ -16,6 +16,7 @@ from mmdet3d.core import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
 from mmdet3d.core.bbox import get_box_type
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.models import build_model
+from mmdet3d.utils import get_root_logger
 
 
 def convert_SyncBN(config):
@@ -66,7 +67,12 @@ def init_model(config, checkpoint=None, device='cuda:0'):
         if 'PALETTE' in checkpoint['meta']:  # 3D Segmentor
             model.PALETTE = checkpoint['meta']['PALETTE']
     model.cfg = config  # save the config in the model for convenience
-    torch.cuda.set_device(device)
+    if device != 'cpu':
+        torch.cuda.set_device(device)
+    else:
+        logger = get_root_logger()
+        logger.warning('Don\'t suggest using CPU device. '
+                       'Some functions are not supported for now.')
     model.to(device)
     model.eval()
     return model

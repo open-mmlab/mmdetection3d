@@ -65,7 +65,8 @@ class KittiDataset(Custom3DDataset):
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
                  test_mode=False,
-                 pcd_limit_range=[0, -40, -3, 70.4, 40, 0.0]):
+                 pcd_limit_range=[0, -40, -3, 70.4, 40, 0.0],
+                 **kwargs):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -74,7 +75,8 @@ class KittiDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            **kwargs)
 
         self.split = split
         self.root_split = os.path.join(self.data_root, split)

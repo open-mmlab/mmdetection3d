@@ -51,7 +51,8 @@ class Custom3DDataset(Dataset):
                  modality=None,
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 file_client_args=dict(backend='disk')):
         super().__init__()
         self.data_root = data_root
         self.ann_file = ann_file
@@ -61,13 +62,26 @@ class Custom3DDataset(Dataset):
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
         self.CLASSES = self.get_classes(classes)
+        self.file_client = mmcv.FileClient(**file_client_args)
         self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
-        self.data_infos = self.load_annotations(self.ann_file)
 
+        # load annotations
+        if hasattr(self.file_client, 'get_local_path'):
+            with self.file_client.get_local_path(self.ann_file) as local_path:
+                self.data_infos = self.load_annotations(open(local_path, 'rb'))
+        else:
+            warnings.warn(
+                'The used MMCV version does not have get_local_path. '
+                f'We treat the {self.ann_file} as local paths and it '
+                'might cause errors if the path is not a local path. '
+                'Please use MMCV>= 1.3.16 if you meet errors.')
+            self.data_infos = self.load_annotations(self.ann_file)
+
+        # process pipeline
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
 
-        # set group flag for the sampler
+        # set group flag for the samplers
         if not self.test_mode:
             self._set_group_flag()
 
@@ -80,7 +94,8 @@ class Custom3DDataset(Dataset):
         Returns:
             list[dict]: List of annotations.
         """
-        return mmcv.load(ann_file)
+        # loading data from a file-like object needs file format
+        return mmcv.load(ann_file, file_format='pkl')
 
     def get_data_info(self, index):
         """Get data info according to the given index.

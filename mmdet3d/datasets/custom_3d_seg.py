@@ -62,14 +62,26 @@ class Custom3DSegDataset(Dataset):
                  modality=None,
                  test_mode=False,
                  ignore_index=None,
-                 scene_idxs=None):
+                 scene_idxs=None,
+                 file_client_args=dict(backend='disk')):
         super().__init__()
         self.data_root = data_root
         self.ann_file = ann_file
         self.test_mode = test_mode
         self.modality = modality
+        self.file_client = mmcv.FileClient(**file_client_args)
 
-        self.data_infos = self.load_annotations(self.ann_file)
+        # load annotations
+        if hasattr(self.file_client, 'get_local_path'):
+            with self.file_client.get_local_path(self.ann_file) as local_path:
+                self.data_infos = self.load_annotations(open(local_path, 'rb'))
+        else:
+            warnings.warn(
+                'The used MMCV version does not have get_local_path. '
+                f'We treat the {self.ann_file} as local paths and it '
+                'might cause errors if the path is not a local path. '
+                'Please use MMCV>= 1.3.16 if you meet errors.')
+            self.data_infos = self.load_annotations(self.ann_file)
 
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
@@ -94,7 +106,8 @@ class Custom3DSegDataset(Dataset):
         Returns:
             list[dict]: List of annotations.
         """
-        return mmcv.load(ann_file)
+        # loading data from a file-like object needs file format
+        return mmcv.load(ann_file, file_format='pkl')
 
     def get_data_info(self, index):
         """Get data info according to the given index.

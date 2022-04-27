@@ -105,7 +105,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
    **注意**：为了生成 Lyft 数据集的提交结果，`--eval-options` 必须指定 `csv_savepath`。生成 csv 文件后，你可以使用[网站](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit)上给出的 kaggle 命令提交结果。
 
-   注意在 [Lyft 数据集的配置文件](../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`，是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
+   注意在 [Lyft 数据集的配置文件](../../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`，是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
 
 8. 使用8块显卡在 waymo 数据集上测试 PointPillars，使用 waymo 度量方法计算 mAP
 
@@ -199,7 +199,21 @@ GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_16
 
 你可以查看 [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) 来获取所有的参数和环境变量。
 
-如果你有多个机器连接到以太网，可以参考 PyTorch 的 [launch utility](https://pytorch.org/docs/stable/distributed.html)，如果你没有像 InfiniBand 一样的高速率网络，通常会很慢。
+如果您想使用由 ethernet 连接起来的多台机器， 您可以使用以下命令:
+
+在第一台机器上:
+
+```shell
+NNODES=2 NODE_RANK=0 PORT=$MASTER_PORT MASTER_ADDR=$MASTER_ADDR ./tools/dist_train.sh $CONFIG $GPUS
+```
+
+在第二台机器上:
+
+```shell
+NNODES=2 NODE_RANK=1 PORT=$MASTER_PORT MASTER_ADDR=$MASTER_ADDR ./tools/dist_train.sh $CONFIG $GPUS
+```
+
+但是，如果您不使用高速网路连接这几台机器的话，训练将会非常慢。
 
 ### 在单个机器上启动多个任务
 

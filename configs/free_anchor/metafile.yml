@@ -21,27 +21,27 @@ Models:
     In Collection: FreeAnchor
     Config: free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Memory (GB): 16.2
+      Training Memory (GB): 16.3
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 43.7
-          NDS: 55.3
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20200628_210537-09d359fc.pth
+          mAP: 43.82
+          NDS: 54.86
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210816_163441-ae0897e7.pth
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Memory (GB): 17.7
+      Training Memory (GB): 17.6
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 47.9
-          NDS: 58.6
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20200629_050311-a334765d.pth
+          mAP: 48.3
+          NDS: 58.65
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210827_213939-a2dd3fff.pth
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
@@ -52,45 +52,45 @@ Models:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 51.2
-          NDS: 60.8
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20200629_105446-6ffa59cb.pth
+          mAP: 52.04
+          NDS: 61.49
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210828_025608-bfbd506e.pth
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
     Metadata:
-      Training Memory (GB): 24.3
+      Training Memory (GB): 24.4
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 53.0
-          NDS: 62.2
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20200701_201531-036f7de3.pth
+          mAP: 52.69
+          NDS: 62.45
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20210827_184909-14d2dbd1.pth
 
   - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
     Metadata:
-      Training Memory (GB): 29.5
+      Training Memory (GB): 29.4
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 52.2
-          NDS: 62.0
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20200629_055854-658125b0.pth
+          mAP: 52.4
+          NDS: 61.94
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210827_181237-e385c35a.pth
 
   - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
     In Collection: FreeAnchor
     Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
     Metadata:
-      Training Memory (GB): 29.5
+      Training Memory (GB): 29.2
     Results:
       - Task: 3D Object Detection
         Dataset: nuScenes
         Metrics:
-          mAP: 55.09
-          NDS: 63.5
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20200629_181452-297fdc66.pth
+          mAP: 54.23
+          NDS: 63.41
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20210828_030816-06708918.pth

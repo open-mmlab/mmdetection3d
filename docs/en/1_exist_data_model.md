@@ -105,7 +105,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 
    **Notice**: To generate submissions on Lyft, `csv_savepath` must be given in the `--eval-options`. After generating the csv file, you can make a submission with kaggle commands given on the [website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit).
 
-   Note that in the [config of Lyft dataset](../configs/_base_/datasets/lyft-3d.py), the value of `ann_file` keyword in `test` is `data_root + 'lyft_infos_test.pkl'`, which is the official test set of Lyft without annotation. To test on the validation set, please change this to `data_root + 'lyft_infos_val.pkl'`.
+   Note that in the [config of Lyft dataset](../../configs/_base_/datasets/lyft-3d.py), the value of `ann_file` keyword in `test` is `data_root + 'lyft_infos_test.pkl'`, which is the official test set of Lyft without annotation. To test on the validation set, please change this to `data_root + 'lyft_infos_val.pkl'`.
 
 8. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
 
@@ -201,9 +201,22 @@ GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_16
 
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
 
-If you have just multiple machines connected with ethernet, you can refer to
-PyTorch [launch utility](https://pytorch.org/docs/stable/distributed.html).
+If you launch with multiple machines simply connected with ethernet, you can simply run following commands:
+
+On the first machine:
+
+```shell
+NNODES=2 NODE_RANK=0 PORT=$MASTER_PORT MASTER_ADDR=$MASTER_ADDR ./tools/dist_train.sh $CONFIG $GPUS
+```
+
+On the second machine:
+
+```shell
+NNODES=2 NODE_RANK=1 PORT=$MASTER_PORT MASTER_ADDR=$MASTER_ADDR ./tools/dist_train.sh $CONFIG $GPUS
+```
+
 Usually it is slow if you do not have high speed networking like InfiniBand.
+
 
 ### Launch multiple jobs on a single machine
 
