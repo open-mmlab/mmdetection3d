@@ -194,11 +194,10 @@ you can install it before installing MMCV.
 
    We also support Minkowski Engine as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip`:
 
-   ```shell
-   apt-get install -y python3-dev libopenblas-dev
-   pip install ninja
-   pip install -U git+https://github.com/NVIDIA/MinkowskiEngine --install-option="--blas=openblas" -v --no-deps
-   ```
+    ```shell
+    conda install openblas-devel -c anaconda
+    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
+    ```
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
