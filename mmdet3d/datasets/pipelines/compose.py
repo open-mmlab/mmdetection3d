@@ -9,7 +9,10 @@ from ..builder import PIPELINES
 
 @PIPELINES.register_module()
 class Compose:
-    """Compose multiple transforms sequentially.
+    """Compose multiple transforms sequentially. The pipeline registry of
+    mmdet3d separates with mmdet, however, sometimes we may need to use mmdet's
+    pipeline. So the class is rewritten to be able to use pipelines from both
+    mmdet3d and mmdet.
 
     Args:
         transforms (Sequence[dict | callable]): Sequence of transform object or
