@@ -64,6 +64,7 @@ class SemanticKITTIDataset(Custom3DDataset):
         """Get data info according to the given index.
         Args:
             index (int): Index of the sample data to get.
+
         Returns:
             dict: Data information that will be passed to the data
                 preprocessing pipelines. It includes the following keys:

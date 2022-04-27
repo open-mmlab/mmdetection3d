@@ -4,7 +4,7 @@
 
 ### Convert Point cloud format
 
-Currently we only support bin format point cloud training and inference, before training on your own datasets, you need to transform your point cloud format to bin file. The common point cloud data formats include pcd and las, we provide some open-source tools for reference.
+Currently, we only support bin format point cloud training and inference, before training on your own datasets, you need to transform your point cloud format to bin file. The common point cloud data formats include pcd and las, we provide some open-source tools for reference.
 
 1. Convert pcd to bin: https://github.com/leofansq/Tools_RosBag2KITTI
 2. Convert las to bin: The common conversion path is las -> pcd -> bin, and the conversion from las -> pcd can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
@@ -12,12 +12,12 @@ Currently we only support bin format point cloud training and inference, before 
 
 ### Point cloud annotation
 
-MMDetection3D does not support point cloud annotation. Some open-source annotation tool are offered for reference:
+MMDetection3D does not support point cloud annotation. Some open-source annotation tools are offered for reference:
 
 - [SUSTechPOINTS](https://github.com/naurril/SUSTechPOINTS)
 - [LATTE](https://github.com/bernwang/latte)
 
-Besides, we improved [LATTE](https://github.com/bernwang/latte) for better use. More details can be found [here](https://arxiv.org/abs/2011.10174).
+Besides, we improved [LATTE](https://github.com/bernwang/latte) for better usage. More details can be found [here](https://arxiv.org/abs/2011.10174).
 
 
 ## Support new data format
@@ -27,7 +27,7 @@ To support a new data format, you can either convert them to existing formats or
 
 ### Reorganize new data formats to existing format
 
-Once your datasets only contain point cloud file and 3D Bounding box annotations, without calib file. We recommend to convert it into the basic formats, the annotations files in basic format has the following necessary keys:
+Once your datasets only contain point cloud file and 3D Bounding box annotations, without calib file. We recommend converting it into the basic formats, the annotations files in basic format has the following necessary keys:
 
 ```python
 
@@ -48,8 +48,8 @@ Once your datasets only contain point cloud file and 3D Bounding box annotations
 
 ```
 
-In MMDetection3D, for the data that is inconvenient to read directly online, we recommend to convert it into basic format and above and do the conversion offline, thus you only need to modify the config's data annotation paths and classes after the conversion.
-For data sharing similar format with existing datasets, like Lyft compared to nuScenes, we recommend to directly implement data converter and dataset class. During the procedure, inheritation could be taken into consideration to reduce the implementation workload.
+In MMDetection3D, for the data that is inconvenient to read directly online, we recommend converting it into basic format and above and do the conversion offline, thus you only need to modify the config's data annotation paths and classes after the conversion.
+For data sharing similar format with existing datasets, like Lyft compared to nuScenes, we recommend directly implementing data converter and dataset class. During the procedure, inheritation could be taken into consideration to reduce the implementation workload.
 
 ### Reorganize new data format to middle format
 
@@ -459,6 +459,6 @@ Regarding the setting of `anchor_size`, it is usually necessary to count the ave
 
 **Note** (related to MMDetection):
 
-- Before MMDetection v2.5.0, the dataset will filter out the empty GT images automatically if the classes are set and there is no way to disable that through config. This is an undesirable behavior and introduces confusion because if the classes are not set, the dataset only filter the empty GT images when `filter_empty_gt=True` and `test_mode=False`. After MMDetection v2.5.0, we decouple the image filtering process and the classes modification, i.e., the dataset will only filter empty GT images when `filter_empty_gt=True` and `test_mode=False`, no matter whether the classes are set. Thus, setting the classes only influences the annotations of classes used for training and users could decide whether to filter empty GT images by themselves.
+- Before MMDetection v2.5.0, the dataset will filter out the empty GT images automatically if the classes are set and there is no way to disable that through config. This is an undesirable behavior and introduces confusion because if the classes are not set, the dataset only filters the empty GT images when `filter_empty_gt=True` and `test_mode=False`. After MMDetection v2.5.0, we decouple the image filtering process and the classes modification, i.e., the dataset will only filter empty GT images when `filter_empty_gt=True` and `test_mode=False`, no matter whether the classes are set. Thus, setting the classes only influences the annotations of classes used for training and users could decide whether to filter empty GT images by themselves.
 - Since the middle format only has box labels and does not contain the class names, when using `CustomDataset`, users cannot filter out the empty GT images through configs but only do this offline.
 - The features for setting dataset classes and dataset filtering will be refactored to be more user-friendly in the future (depends on the progress).
