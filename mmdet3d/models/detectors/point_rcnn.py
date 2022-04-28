@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from mmdet.models import DETECTORS
+from ..builder import DETECTORS
 from .two_stage import TwoStage3DDetector
 
 

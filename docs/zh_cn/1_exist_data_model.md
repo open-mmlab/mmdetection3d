@@ -105,7 +105,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 
    **注意**：为了生成 Lyft 数据集的提交结果，`--eval-options` 必须指定 `csv_savepath`。生成 csv 文件后，你可以使用[网站](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/submit)上给出的 kaggle 命令提交结果。
 
-   注意在 [Lyft 数据集的配置文件](../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`，是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
+   注意在 [Lyft 数据集的配置文件](../../configs/_base_/datasets/lyft-3d.py)，`test` 中的 `ann_file` 值为 `data_root + 'lyft_infos_test.pkl'`，是没有标注的 Lyft 官方测试集。要在验证数据集上测试，请把它改为 `data_root + 'lyft_infos_val.pkl'`。
 
 8. 使用8块显卡在 waymo 数据集上测试 PointPillars，使用 waymo 度量方法计算 mAP
 

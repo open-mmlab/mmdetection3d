@@ -8,8 +8,8 @@ import numpy as np
 import torch
 from mmcv.utils import print_log
 
-from mmdet.datasets import DATASETS
 from ..core.bbox import Box3DMode, points_cam2img
+from .builder import DATASETS
 from .kitti_dataset import KittiDataset
 
 

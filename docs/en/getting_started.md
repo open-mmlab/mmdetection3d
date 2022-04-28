@@ -76,14 +76,14 @@ You can check the supported CUDA version for precompiled packages on the [PyTorc
 `E.g. 1` If you have CUDA 10.1 installed under `/usr/local/cuda` and would like to install
 PyTorch 1.5, you need to install the prebuilt PyTorch with CUDA 10.1.
 
-```python
+```shell
 conda install pytorch==1.5.0 cudatoolkit=10.1 torchvision==0.6.0 -c pytorch
 ```
 
 `E.g. 2` If you have CUDA 9.2 installed under `/usr/local/cuda` and would like to install
 PyTorch 1.3.1., you need to install the prebuilt PyTorch with CUDA 9.2.
 
-```python
+```shell
 conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 ```
 
@@ -204,6 +204,13 @@ you can install it before installing MMCV.
    For example, using CUDA 10.2, the command will be `pip install cumm-cu102 && pip install spconv-cu102`.
 
    Supported CUDA versions include 10.2, 11.1, 11.3, and 11.4. Users can also install it by building from the source. For more details please refer to [spconv v2.x](https://github.com/traveller59/spconv).
+
+   We also support Minkowski Engine as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip`:
+
+    ```shell
+    conda install openblas-devel -c anaconda
+    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
+    ```
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 

@@ -5,8 +5,8 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from mmseg.core import add_prefix
-from mmseg.models import SEGMENTORS
-from ..builder import build_backbone, build_head, build_loss, build_neck
+from ..builder import (SEGMENTORS, build_backbone, build_head, build_loss,
+                       build_neck)
 from .base import Base3DSegmentor
 
 

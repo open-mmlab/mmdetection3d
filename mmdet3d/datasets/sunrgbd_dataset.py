@@ -7,7 +7,7 @@ import numpy as np
 from mmdet3d.core import show_multi_modality_result, show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.core import eval_map
-from mmdet.datasets import DATASETS
+from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 from .pipelines import Compose
 
