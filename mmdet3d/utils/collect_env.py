@@ -14,7 +14,7 @@ def collect_env():
     env_info['MMDetection'] = mmdet.__version__
     env_info['MMSegmentation'] = mmseg.__version__
     env_info['MMDetection3D'] = mmdet3d.__version__ + '+' + get_git_hash()[:7]
-    env_info['spconv2.0 is avalible'] = IS_SPCONV2_AVAILABLE
+    env_info['spconv2.0'] = IS_SPCONV2_AVAILABLE
     return env_info
 
 
