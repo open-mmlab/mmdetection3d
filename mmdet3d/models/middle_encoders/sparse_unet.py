@@ -1,6 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.ops import SparseConvTensor, SparseSequential
+
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+
+if IS_SPCONV2_AVAILABLE:
+    from spconv.pytorch import SparseConvTensor, SparseSequential
+else:
+    from mmcv.ops import SparseConvTensor, SparseSequential
+
 from mmcv.runner import BaseModule, auto_fp16
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
