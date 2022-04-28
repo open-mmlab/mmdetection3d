@@ -1,4 +1,4 @@
-# Tutorial 2: Customize Datasets V2
+# Tutorial 8: Use Pure Point Cloud Dataset
 
 ## Data Pre-Processing
 
@@ -9,7 +9,6 @@ Currently, we only support bin format point cloud training and inference, before
 1. Convert pcd to bin: https://github.com/leofansq/Tools_RosBag2KITTI
 2. Convert las to bin: The common conversion path is las -> pcd -> bin, and the conversion from las -> pcd can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
 
-
 ### Point cloud annotation
 
 MMDetection3D does not support point cloud annotation. Some open-source annotation tools are offered for reference:
@@ -19,11 +18,9 @@ MMDetection3D does not support point cloud annotation. Some open-source annotati
 
 Besides, we improved [LATTE](https://github.com/bernwang/latte) for better usage. More details can be found [here](https://arxiv.org/abs/2011.10174).
 
-
 ## Support new data format
 
 To support a new data format, you can either convert them to existing formats or directly convert them to the middle format. You could also choose to convert them offline (before training by a script) or online (implement a new dataset and do the conversion at training).
-
 
 ### Reorganize new data formats to existing format
 
@@ -48,12 +45,12 @@ Once your datasets only contain point cloud file and 3D Bounding box annotations
 
 ```
 
-In MMDetection3D, for the data that is inconvenient to read directly online, we recommend converting it into basic format and above and do the conversion offline, thus you only need to modify the config's data annotation paths and classes after the conversion.
-For data sharing similar format with existing datasets, like Lyft compared to nuScenes, we recommend directly implementing data converter and dataset class. During the procedure, inheritation could be taken into consideration to reduce the implementation workload.
+In MMDetection3D, for the data that is inconvenient to read directly online, we recommend converting it into into basic format as above and do the conversion offline, thus you only need to modify the config's data annotation paths and classes after the conversion.
+To use data that share a similar format as the existing datasets, e.g., Lyft has a similar format as the nuScenes dataset, we recommend directly implementing a new data converter and a dataset class to convert the data and load the data, respectively. In this procedure, the code can inherit from the existing dataset classes to reuse the code.
 
 ### Reorganize new data format to middle format
 
-It is also fine if you do not want to convert the annotation format to existing formats.
+There is also a way if users do not want to convert the annotation format to existing formats.
 Actually, we convert all the supported datasets into pickle files, which summarize useful information for model training and inference.
 
 The annotation of a dataset is a list of dict, each dict corresponds to a frame.
