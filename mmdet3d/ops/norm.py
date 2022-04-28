@@ -72,7 +72,7 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         assert input.shape[0] > 0, 'SyncBN does not support empty inputs'
         is_two_dim = input.dim() == 2
         if is_two_dim:
-            input.unsqueeze_(2)
+            input = input.unsqueeze(2)
 
         C = input.shape[1]
         mean = torch.mean(input, dim=[0, 2])
