@@ -270,7 +270,8 @@ class SparseEncoderSASSD(SparseEncoder):
             coors (torch.Tensor): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
             batch_size (int): Batch size.
-            test_mode (bool): Whether in test mode, default = false.
+            test_mode (bool, optional): Whether in test mode.
+                Defaults to False.
 
         Returns:
             dict: Backbone features.
@@ -330,14 +331,14 @@ class SparseEncoderSASSD(SparseEncoder):
 
         return spatial_features, point_misc
 
-    def build_aux_target(self, nxyz, gt_boxes3d, enlarge=1.0):
-        """Build auxiliary target.
+    def get_auxiliary_targets(self, nxyz, gt_boxes3d, enlarge=1.0):
+        """Get auxiliary target.
 
         Args:
             nxyz (torch.Tensor): Mean features of the points.
             gt_boxes3d (torch.Tensor): Coordinates in shape (N, 4),
                 the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
-            enlarge (int, optional): Enlage scale. Defaults to 1.0y.
+            enlarge (int, optional): Enlaged scale. Defaults to 1.0.
 
         Returns:
             tuple[torch.Tensor]: Label of the points and
@@ -359,7 +360,7 @@ class SparseEncoderSASSD(SparseEncoder):
             center_offsets.append(center_offset)
 
         center_offsets = torch.cat(center_offsets).cuda()
-        pts_labels = torch.cat(pts_labels).cuda()
+        pts_labels = torch.cat(pts_labels).to(center_offsets.device)
 
         return pts_labels, center_offsets
 
@@ -382,12 +383,15 @@ class SparseEncoderSASSD(SparseEncoder):
         """
         boxes_num = len(boxes)
         pts_num = len(points)
-        box_idxs_of_pts = points_in_boxes_all(points[None, ...].cuda(),
-                                              boxes[None, ...].cuda())
+        points = points.cuda()
+        boxes = boxes.to(points.device)
 
-        pts_indices = box_idxs_of_pts.cpu().squeeze(0).transpose(0, 1)
+        box_idxs_of_pts = points_in_boxes_all(points[None, ...],
+                                              boxes[None, ...])
 
-        center_offsets = torch.FloatTensor(pts_num, 3).fill_(0)
+        pts_indices = box_idxs_of_pts.squeeze(0).transpose(0, 1)
+
+        center_offsets = torch.zeros_like(points).to(points.device)
 
         for i in range(boxes_num):
             for j in range(pts_num):
@@ -396,7 +400,7 @@ class SparseEncoderSASSD(SparseEncoder):
                     center_offsets[j][1] = points[j][1] - boxes[i][1]
                     center_offsets[j][2] = (
                         points[j][2] - (boxes[i][2] + boxes[i][2] / 2.0))
-        return pts_indices, center_offsets
+        return pts_indices.cpu(), center_offsets.cpu()
 
     def aux_loss(self, points, point_cls, point_reg, gt_bboxes):
         """Calculate auxiliary loss.
@@ -413,7 +417,8 @@ class SparseEncoderSASSD(SparseEncoder):
         """
         num_boxes = len(gt_bboxes)
 
-        pts_labels, center_targets = self.build_aux_target(points, gt_bboxes)
+        pts_labels, center_targets = self.get_auxiliary_targets(
+            points, gt_bboxes)
 
         rpn_cls_target = pts_labels.long()
         pos = (pts_labels > 0).float()
@@ -452,8 +457,10 @@ class SparseEncoderSASSD(SparseEncoder):
             source_tensor (torch.Tensor): (M, C) features to be propigated.
             target (torch.Tensor): (N, 4) bxyz positions of the
                 target features.
-            offset (tuple[float]): voxelization offset.
-            voxel_size (tuple[float]): voxelization size.
+            offset (tuple[float], optional): Voxelization offset.
+                Defaults to (0., -40., -3.)
+            voxel_size (tuple[float], optional): Voxelization size.
+                Defaults to (.05, .05, .1)
 
         Returns:
             torch.Tensor: (N, C) tensor of the features of the target features.

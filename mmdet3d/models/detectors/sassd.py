@@ -4,7 +4,7 @@ from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from mmdet.models import DETECTORS
+from mmdet.models.builder import DETECTORS
 from .. import builder
 from .single_stage import SingleStage3DDetector
 
