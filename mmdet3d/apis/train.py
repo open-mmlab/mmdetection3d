@@ -12,11 +12,11 @@ from mmcv.utils import build_from_cfg
 from torch import distributed as dist
 
 from mmdet3d.datasets import build_dataset
+from mmdet3d.utils import find_latest_checkpoint
 from mmdet.core import DistEvalHook as MMDET_DistEvalHook
 from mmdet.core import EvalHook as MMDET_EvalHook
 from mmdet.datasets import build_dataloader as build_mmdet_dataloader
 from mmdet.datasets import replace_ImageToTensor
-from mmdet.utils import find_latest_checkpoint
 from mmdet.utils import get_root_logger as get_mmdet_root_logger
 from mmseg.core import DistEvalHook as MMSEG_DistEvalHook
 from mmseg.core import EvalHook as MMSEG_EvalHook
@@ -308,6 +308,7 @@ def train_detector(model,
     resume_from = None
     if cfg.resume_from is None and cfg.get('auto_resume'):
         resume_from = find_latest_checkpoint(cfg.work_dir)
+
     if resume_from is not None:
         cfg.resume_from = resume_from
 
