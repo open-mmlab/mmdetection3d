@@ -10,7 +10,8 @@ from .compose import Compose
 
 @PIPELINES.register_module()
 class MultiScaleFlipAug3D(object):
-    """Test-time augmentation with multiple scales and flipping.
+    """Test-time augmentation with multiple scales and flipping. Different from
+    mmdetection MultiScaleFlipAug.
 
     Args:
         transforms (list[dict]): Transforms to apply in each augmentation.
