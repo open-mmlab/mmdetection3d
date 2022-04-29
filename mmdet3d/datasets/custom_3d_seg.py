@@ -7,8 +7,8 @@ import mmcv
 import numpy as np
 from torch.utils.data import Dataset
 
-from mmdet.datasets import DATASETS
 from mmseg.datasets import DATASETS as SEG_DATASETS
+from .builder import DATASETS
 from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
 

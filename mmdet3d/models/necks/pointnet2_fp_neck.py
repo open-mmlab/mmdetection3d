@@ -3,7 +3,7 @@ from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule
-from mmdet.models import NECKS
+from ..builder import NECKS
 
 
 @NECKS.register_module()

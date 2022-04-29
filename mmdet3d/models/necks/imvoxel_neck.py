@@ -2,7 +2,7 @@
 from mmcv.cnn import ConvModule
 from torch import nn
 
-from mmdet.models import NECKS
+from ..builder import NECKS
 
 
 @NECKS.register_module()

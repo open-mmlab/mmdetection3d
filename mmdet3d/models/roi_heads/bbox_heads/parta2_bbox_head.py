@@ -3,17 +3,15 @@ import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
 from mmcv.ops import SparseConvTensor, SparseMaxPool3d, SparseSequential
-from mmcv.ops import nms_bev as nms_gpu
-from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.models.builder import build_loss
+from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
+from mmdet3d.models.builder import HEADS, build_loss
 from mmdet3d.ops import make_sparse_convmodule
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS
 
 
 @HEADS.register_module()
@@ -582,9 +580,9 @@ class PartA2BboxHead(BaseModule):
             torch.Tensor: Selected indices.
         """
         if use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
 
         assert box_probs.shape[
             1] == self.num_classes, f'box_probs shape: {str(box_probs.shape)}'

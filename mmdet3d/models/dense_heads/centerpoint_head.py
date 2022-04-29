@@ -3,16 +3,16 @@ import copy
 
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
-from mmcv.ops import nms_bev as nms_gpu
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn
 
 from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
                           xywhr2xyxyr)
+from mmdet3d.core.post_processing import nms_bev
 from mmdet3d.models import builder
-from mmdet3d.models.builder import HEADS, build_loss
 from mmdet3d.models.utils import clip_sigmoid
 from mmdet.core import build_bbox_coder, multi_apply
+from ..builder import HEADS, build_loss
 
 
 @HEADS.register_module()
@@ -747,9 +747,9 @@ class CenterHead(BaseModule):
         for i, (box_preds, cls_preds, cls_labels) in enumerate(
                 zip(batch_reg_preds, batch_cls_preds, batch_cls_labels)):
 
-            # Apply NMS in birdeye view
+            # Apply NMS in bird eye view
 
-            # get highest score per prediction, than apply nms
+            # get the highest score per prediction, then apply nms
             # to remove overlapped box.
             if num_class_with_bg == 1:
                 top_scores = cls_preds.squeeze(-1)
@@ -778,7 +778,7 @@ class CenterHead(BaseModule):
                     box_preds[:, :], self.bbox_coder.code_size).bev)
                 # the nms in 3d detection just remove overlap boxes.
 
-                selected = nms_gpu(
+                selected = nms_bev(
                     boxes_for_nms,
                     top_scores,
                     thresh=self.test_cfg['nms_thr'],

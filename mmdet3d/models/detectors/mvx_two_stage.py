@@ -12,8 +12,8 @@ from torch.nn import functional as F
 from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,
                           merge_aug_bboxes_3d, show_result)
 from mmdet.core import multi_apply
-from mmdet.models import DETECTORS
 from .. import builder
+from ..builder import DETECTORS
 from .base import Base3DDetector
 
 

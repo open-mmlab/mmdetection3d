@@ -11,9 +11,10 @@ import torch
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
 from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
-from mmdet.datasets import DATASETS, CocoDataset
+from mmdet.datasets import CocoDataset
 from ..core import show_multi_modality_result
 from ..core.bbox import CameraInstance3DBoxes, get_box_type
+from .builder import DATASETS
 from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
 
@@ -76,6 +77,8 @@ class NuScenesMonoDataset(CocoDataset):
 
     def __init__(self,
                  data_root,
+                 ann_file,
+                 pipeline,
                  load_interval=1,
                  with_velocity=True,
                  modality=None,
@@ -83,9 +86,46 @@ class NuScenesMonoDataset(CocoDataset):
                  eval_version='detection_cvpr_2019',
                  use_valid_flag=False,
                  version='v1.0-trainval',
-                 **kwargs):
-        super().__init__(**kwargs)
+                 classes=None,
+                 img_prefix='',
+                 seg_prefix=None,
+                 proposal_file=None,
+                 test_mode=False,
+                 filter_empty_gt=True,
+                 file_client_args=dict(backend='disk')):
+        self.ann_file = ann_file
         self.data_root = data_root
+        self.img_prefix = img_prefix
+        self.seg_prefix = seg_prefix
+        self.proposal_file = proposal_file
+        self.test_mode = test_mode
+        self.filter_empty_gt = filter_empty_gt
+        self.CLASSES = self.get_classes(classes)
+        self.file_client = mmcv.FileClient(**file_client_args)
+
+        # load annotations (and proposals)
+        with self.file_client.get_local_path(self.ann_file) as local_path:
+            self.data_infos = self.load_annotations(local_path)
+
+        if self.proposal_file is not None:
+            with self.file_client.get_local_path(
+                    self.proposal_file) as local_path:
+                self.proposals = self.load_proposals(local_path)
+        else:
+            self.proposals = None
+
+        # filter images too small and containing no annotations
+        if not test_mode:
+            valid_inds = self._filter_imgs()
+            self.data_infos = [self.data_infos[i] for i in valid_inds]
+            if self.proposals is not None:
+                self.proposals = [self.proposals[i] for i in valid_inds]
+            # set group flag for the sampler
+            self._set_group_flag()
+
+        # processing pipeline
+        self.pipeline = Compose(pipeline)
+
         self.load_interval = load_interval
         self.with_velocity = with_velocity
         self.modality = modality

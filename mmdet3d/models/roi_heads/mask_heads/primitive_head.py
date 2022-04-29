@@ -6,11 +6,10 @@ from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.models.builder import build_loss
+from mmdet3d.models.builder import HEADS, build_loss
 from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import build_sa_module
 from mmdet.core import multi_apply
-from mmdet.models import HEADS
 
 
 @HEADS.register_module()
