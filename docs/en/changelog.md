@@ -111,7 +111,7 @@ A total of 11 developers contributed to this release.
 
 A total of 9 developers contributed to this release.
 
-@ZCMax, @ZwwWayne, @wHao-Wu, @Tai-Wang, @wangruohui, @zjwzcx, @Xiangxu-0103, @EdAyers, @hongye-dev, @
+@ZCMax, @ZwwWayne, @wHao-Wu, @Tai-Wang, @wangruohui, @zjwzcx, @Xiangxu-0103, @EdAyers, @hongye-dev, @zhanggefan
 
 ### v1.0.0rc0 (18/2/2022)
 
