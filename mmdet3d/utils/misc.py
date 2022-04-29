@@ -6,7 +6,7 @@ import warnings
 
 def find_latest_checkpoint(path, suffix='pth'):
     """Find the latest checkpoint from the working directory. This function is
-    directly copied from mmdetection.
+    copied from mmdetection.
 
     Args:
         path(str): The path to find checkpoints.
