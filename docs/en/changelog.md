@@ -18,12 +18,11 @@
 
 #### Improvements
 
-- Finish the update of model checkpoints for new coordinate systems (#1369)
 - Add the documentation for model deployment (#1373, #1436)
 - Add Chinese documentation for speed benchmark (#1379), LiDAR-based 3D detection (#1368), 3D segmentation (#1420) and coordinate system refactoring (#1384)
 - Support training models on custom datasets with only point clouds (#1393)
 - Replace mmcv.iou3d with a set of bird-eye-view (BEV) ops (#1403, #1418)
-- Update Registry to distinguish the scope of built functions (#1412)
+- Update Registry to distinguish the scope of built functions (#1412, #1443)
 - Replace recommonmark with myst_parser for documentation rendering (#1414)
 
 #### Bug Fixes
