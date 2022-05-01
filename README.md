@@ -86,6 +86,13 @@ This project is released under the [Apache 2.0 license](LICENSE).
 ## Changelog
 
 v1.0.0rc2 was released in 1/5/2022.
+
+- Support [spconv 2.0](https://github.com/traveller59/spconv)
+- Support [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) with MinkResNet
+- Support training models on custom datasets with only point clouds
+- Update Registry to distinguish the scope of built functions
+- Replace mmcv.iou3d with a set of bird-eye-view (BEV) operators to unify the operations of rotated boxes
+
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
