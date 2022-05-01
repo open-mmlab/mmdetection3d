@@ -10,29 +10,30 @@
 
 The required versions of MMCV, MMDetection and MMSegmentation for different versions of MMDetection3D are as below. Please install the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
 
-| MMDetection3D version | MMDetection version | MMSegmentation version |    MMCV version     |
-|:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.5.0|
-| v1.0.0rc1           | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.5.0|
-| v1.0.0rc0           | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
-| 0.18.1              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
-| 0.18.0              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
-| 0.17.3              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.17.2              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.17.1              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.17.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.16.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.4.0|
-| 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4.0|
-| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4.0|
-| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
-| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
-| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
-| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.3.0|
-| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.3.0|
-| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | Not required  | mmcv-full>=1.1.3, <=1.2.0|
-| 0.5.0               | 2.3.0                  | Not required  | mmcv-full==1.0.5|
+| MMDetection3D version |   MMDetection version   | MMSegmentation version |        MMCV version        |
+| :-------------------: | :---------------------: | :--------------------: | :------------------------: |
+|        master         | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.7.0  |
+|       v1.0.0rc2       | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.7.0  |
+|       v1.0.0rc1       | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.5.0  |
+|       v1.0.0rc0       | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0 |
+|        0.18.1         | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0 |
+|        0.18.0         | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0 |
+|        0.17.3         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
+|        0.17.2         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
+|        0.17.1         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
+|        0.17.0         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
+|        0.16.0         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
+|        0.15.0         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
+|        0.14.0         | mmdet>=2.10.0, <=2.11.0 |     mmseg==0.14.0      | mmcv-full>=1.3.1, <=1.4.0  |
+|        0.13.0         | mmdet>=2.10.0, <=2.11.0 |      Not required      | mmcv-full>=1.2.4, <=1.4.0  |
+|        0.12.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.4.0  |
+|        0.11.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.3.0  |
+|        0.10.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.3.0  |
+|         0.9.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.3.0  |
+|         0.8.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.1.5, <=1.3.0  |
+|         0.7.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.1.5, <=1.3.0  |
+|         0.6.0         | mmdet>=2.4.0, <=2.11.0  |      Not required      | mmcv-full>=1.1.3, <=1.2.0  |
+|         0.5.0         |          2.3.0          |      Not required      |      mmcv-full==1.0.5      |
 
 # Installation
 
@@ -76,14 +77,14 @@ You can check the supported CUDA version for precompiled packages on the [PyTorc
 `E.g. 1` If you have CUDA 10.1 installed under `/usr/local/cuda` and would like to install
 PyTorch 1.5, you need to install the prebuilt PyTorch with CUDA 10.1.
 
-```python
+```shell
 conda install pytorch==1.5.0 cudatoolkit=10.1 torchvision==0.6.0 -c pytorch
 ```
 
 `E.g. 2` If you have CUDA 9.2 installed under `/usr/local/cuda` and would like to install
 PyTorch 1.3.1., you need to install the prebuilt PyTorch with CUDA 9.2.
 
-```python
+```shell
 conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 ```
 
@@ -191,6 +192,26 @@ It is recommended that you run step d each time you pull some updates from githu
 you can install it before installing MMCV.
 
 4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
+
+   We have supported spconv2.0. If the user has installed spconv2.0, the code will use spconv2.0 first, which will take up less GPU memory than using the default mmcv spconv. Users can use the following commands to install spconv2.0:
+
+   ```bash
+   pip install cumm-cuxxx
+   pip install spconv-cuxxx
+   ```
+
+   Where xxx is the CUDA version in the environment.
+
+   For example, using CUDA 10.2, the command will be `pip install cumm-cu102 && pip install spconv-cu102`.
+
+   Supported CUDA versions include 10.2, 11.1, 11.3, and 11.4. Users can also install it by building from the source. For more details please refer to [spconv v2.x](https://github.com/traveller59/spconv).
+
+   We also support Minkowski Engine as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip`:
+
+    ```shell
+    conda install openblas-devel -c anaconda
+    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
+    ```
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 

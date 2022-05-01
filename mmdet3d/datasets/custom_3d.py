@@ -7,8 +7,8 @@ import mmcv
 import numpy as np
 from torch.utils.data import Dataset
 
-from mmdet.datasets import DATASETS
 from ..core.bbox import get_box_type
+from .builder import DATASETS
 from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
 
@@ -19,6 +19,23 @@ class Custom3DDataset(Dataset):
 
     This is the base dataset of SUNRGB-D, ScanNet, nuScenes, and KITTI
     dataset.
+
+    .. code-block:: none
+
+    [
+        {'sample_idx':
+         'lidar_points': {'lidar_path': velodyne_path,
+                           ....
+                         },
+         'annos': {'box_type_3d':  (str)  'LiDAR/Camera/Depth'
+                   'gt_bboxes_3d':  <np.ndarray> (n, 7)
+                   'gt_names':  [list]
+                   ....
+               }
+         'calib': { .....}
+         'images': { .....}
+        }
+    ]
 
     Args:
         data_root (str): Path of dataset root.
@@ -113,8 +130,9 @@ class Custom3DDataset(Dataset):
                 - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
-        sample_idx = info['point_cloud']['lidar_idx']
-        pts_filename = osp.join(self.data_root, info['pts_path'])
+        sample_idx = info['sample_idx']
+        pts_filename = osp.join(self.data_root,
+                                info['lidar_points']['lidar_path'])
 
         input_dict = dict(
             pts_filename=pts_filename,
@@ -127,6 +145,45 @@ class Custom3DDataset(Dataset):
             if self.filter_empty_gt and ~(annos['gt_labels_3d'] != -1).any():
                 return None
         return input_dict
+
+    def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Annotation information consists of the following keys:
+
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                    3D ground truth bboxes
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - gt_names (list[str]): Class names of ground truths.
+        """
+        info = self.data_infos[index]
+        gt_bboxes_3d = info['annos']['gt_bboxes_3d']
+        gt_names_3d = info['annos']['gt_names']
+        gt_labels_3d = []
+        for cat in gt_names_3d:
+            if cat in self.CLASSES:
+                gt_labels_3d.append(self.CLASSES.index(cat))
+            else:
+                gt_labels_3d.append(-1)
+        gt_labels_3d = np.array(gt_labels_3d)
+
+        # Obtain original box 3d type in info file
+        ori_box_type_3d = info['annos']['box_type_3d']
+        ori_box_type_3d, _ = get_box_type(ori_box_type_3d)
+
+        # turn original box type to target box type
+        gt_bboxes_3d = ori_box_type_3d(
+            gt_bboxes_3d,
+            box_dim=gt_bboxes_3d.shape[-1],
+            origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
+
+        anns_results = dict(
+            gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d)
+        return anns_results
 
     def pre_pipeline(self, results):
         """Initialization before data preparation.

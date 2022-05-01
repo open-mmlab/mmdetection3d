@@ -11,9 +11,9 @@ from lyft_dataset_sdk.utils.data_classes import Box as LyftBox
 from pyquaternion import Quaternion
 
 from mmdet3d.core.evaluation.lyft_eval import lyft_eval
-from mmdet.datasets import DATASETS
 from ..core import show_result
 from ..core.bbox import Box3DMode, Coord3DMode, LiDARInstance3DBoxes
+from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 from .pipelines import Compose
 

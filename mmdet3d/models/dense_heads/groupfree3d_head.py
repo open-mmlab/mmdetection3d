@@ -14,9 +14,8 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
-from mmdet3d.models.builder import build_loss
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS
+from ..builder import HEADS, build_loss
 from .base_conv_bbox_head import BaseConvBboxHead
 
 EPS = 1e-6

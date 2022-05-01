@@ -1,14 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from __future__ import division
-
 import numpy as np
 import torch
-from mmcv.ops import nms_bev as nms_gpu
-from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import force_fp32
 
 from mmdet3d.core import limit_period, xywhr2xyxyr
-from mmdet.models import HEADS
+from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
+from ..builder import HEADS
 from .anchor3d_head import Anchor3DHead
 
 
@@ -261,9 +258,9 @@ class PartA2RPNHead(Anchor3DHead):
         _scores = mlvl_max_scores[score_thr_inds]
         _bboxes_for_nms = mlvl_bboxes_for_nms[score_thr_inds, :]
         if cfg.use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
         selected = nms_func(_bboxes_for_nms, _scores, cfg.nms_thr)
 
         _mlvl_bboxes = mlvl_bboxes[score_thr_inds, :]
@@ -288,7 +285,6 @@ class PartA2RPNHead(Anchor3DHead):
             scores = torch.cat(scores, dim=0)
             cls_scores = torch.cat(cls_scores, dim=0)
             labels = torch.cat(labels, dim=0)
-            dir_scores = torch.cat(dir_scores, dim=0)
             if bboxes.shape[0] > max_num:
                 _, inds = scores.sort(descending=True)
                 inds = inds[:max_num]

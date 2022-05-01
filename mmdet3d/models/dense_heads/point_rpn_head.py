@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.ops import nms_bev as nms_gpu
-from mmcv.ops import nms_normal_bev as nms_normal_gpu
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
+from mmdet3d.core import xywhr2xyxyr
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
+from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS, build_loss
+from ..builder import HEADS, build_loss
 
 
 @HEADS.register_module()
@@ -19,7 +19,7 @@ class PointRPNHead(BaseModule):
         num_classes (int): Number of classes.
         train_cfg (dict): Train configs.
         test_cfg (dict): Test configs.
-        pred_layer_cfg (dict, optional): Config of classfication and
+        pred_layer_cfg (dict, optional): Config of classification and
             regression prediction layers. Defaults to None.
         enlarge_width (float, optional): Enlarge bbox for each side to ignore
             close points. Defaults to 0.1.
@@ -121,7 +121,7 @@ class PointRPNHead(BaseModule):
             batch_size, -1, self._get_cls_out_channels())
         point_box_preds = self.reg_layers(feat_reg).reshape(
             batch_size, -1, self._get_reg_out_channels())
-        return (point_box_preds, point_cls_preds)
+        return point_box_preds, point_cls_preds
 
     @force_fp32(apply_to=('bbox_preds'))
     def loss(self,
@@ -159,7 +159,7 @@ class PointRPNHead(BaseModule):
         semantic_targets = mask_targets
         semantic_targets[negative_mask] = self.num_classes
         semantic_points_label = semantic_targets
-        # for ignore, but now we do not have ignore label
+        # for ignore, but now we do not have ignored label
         semantic_loss_weight = negative_mask.float() + positive_mask.float()
         semantic_loss = self.cls_loss(semantic_points,
                                       semantic_points_label.reshape(-1),
@@ -220,7 +220,7 @@ class PointRPNHead(BaseModule):
         gt_bboxes_3d = gt_bboxes_3d[valid_gt]
         gt_labels_3d = gt_labels_3d[valid_gt]
 
-        # transform the bbox coordinate to the pointcloud coordinate
+        # transform the bbox coordinate to the point cloud coordinate
         gt_bboxes_3d_tensor = gt_bboxes_3d.tensor.clone()
         gt_bboxes_3d_tensor[..., 2] += gt_bboxes_3d_tensor[..., 5] / 2
 
@@ -233,7 +233,6 @@ class PointRPNHead(BaseModule):
                                               points[..., 0:3], mask_targets)
 
         positive_mask = (points_mask.max(1)[0] > 0)
-        negative_mask = (points_mask.max(1)[0] == 0)
         # add ignore_mask
         extend_gt_bboxes_3d = gt_bboxes_3d.enlarged_box(self.enlarge_width)
         points_mask, _ = self._assign_targets_by_points_inside(
@@ -297,9 +296,9 @@ class PointRPNHead(BaseModule):
         nms_cfg = self.test_cfg.nms_cfg if not self.training \
             else self.train_cfg.nms_cfg
         if nms_cfg.use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
 
         num_bbox = bbox.shape[0]
         bbox = input_meta['box_type_3d'](
@@ -322,29 +321,33 @@ class PointRPNHead(BaseModule):
         else:
             raise NotImplementedError('Unsupported bbox type!')
 
-        bbox = bbox.tensor[nonempty_box_mask]
+        bbox = bbox[nonempty_box_mask]
 
         if self.test_cfg.score_thr is not None:
             score_thr = self.test_cfg.score_thr
             keep = (obj_scores >= score_thr)
             obj_scores = obj_scores[keep]
             sem_scores = sem_scores[keep]
-            bbox = bbox[keep]
+            bbox = bbox.tensor[keep]
 
         if obj_scores.shape[0] > 0:
             topk = min(nms_cfg.nms_pre, obj_scores.shape[0])
             obj_scores_nms, indices = torch.topk(obj_scores, k=topk)
-            bbox_for_nms = bbox[indices]
+            bbox_for_nms = xywhr2xyxyr(bbox[indices].bev)
             sem_scores_nms = sem_scores[indices]
 
-            keep = nms_func(bbox_for_nms[:, 0:7], obj_scores_nms,
-                            nms_cfg.iou_thr)
+            keep = nms_func(bbox_for_nms, obj_scores_nms, nms_cfg.iou_thr)
             keep = keep[:nms_cfg.nms_post]
 
-            bbox_selected = bbox_for_nms[keep]
+            bbox_selected = bbox.tensor[indices][keep]
             score_selected = obj_scores_nms[keep]
             cls_preds = sem_scores_nms[keep]
             labels = torch.argmax(cls_preds, -1)
+        else:
+            bbox_selected = bbox.tensor
+            score_selected = obj_scores.new_zeros([0])
+            labels = obj_scores.new_zeros([0])
+            cls_preds = obj_scores.new_zeros([0, sem_scores.shape[-1]])
 
         return bbox_selected, score_selected, labels, cls_preds
 

@@ -5,7 +5,7 @@ import torch
 from mmcv.runner import save_checkpoint
 from torch import nn as nn
 
-from mmdet.apis import init_model
+from mmdet3d.apis import init_model
 
 
 def fuse_conv_bn(conv, bn):
