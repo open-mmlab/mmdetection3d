@@ -86,6 +86,13 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 ## 更新日志
 
 最新的版本 v1.0.0rc2 在 2022.5.1 发布。
+
+- 支持 [spconv 2.0](https://github.com/traveller59/spconv)
+- 支持基于 [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) 的 MinkResNet
+- 支持在自定义的只有点云的数据集上训练模型
+- 更新注册机制以区分不同函数构建的范围
+- 用一系列鸟瞰图的算子替换 mmcv.iou3d 以统一旋转框的相关操作
+
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
 ## 基准测试和模型库
