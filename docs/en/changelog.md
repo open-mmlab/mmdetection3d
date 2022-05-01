@@ -8,21 +8,25 @@
 - Support MinkowskiEngine with MinkResNet
 - Support training models on custom datasets with only point clouds
 - Update Registry to distinguish the scope of built functions
-- Replace mmcv.iou3d with a set of bird-eye-view (BEV) ops
+- Replace mmcv.iou3d with a set of bird-eye-view (BEV) operators to unify the operations of rotated boxes
 
 #### New Features
 
 - Add loader arguments in the configuration files (#1388)
-- Support spconv 2.0 with a solution for compatibility with cuda 9.0 (#1421)
+- Support [spconv 2.0](https://github.com/traveller59/spconv) when the package is installed. Users can still use spconv 1.x in MMCV with CUDA 9.0 (only cost more memory) without losing the compatibility of model weights between two versions (#1421)
 - Support MinkowskiEngine with MinkResNet (#1422)
 
 #### Improvements
 
 - Add the documentation for model deployment (#1373, #1436)
-- Add Chinese documentation for speed benchmark (#1379), LiDAR-based 3D detection (#1368), 3D segmentation (#1420) and coordinate system refactoring (#1384)
+- Add Chinese documentation of
+  - Speed benchmark (#1379)
+  - LiDAR-based 3D detection (#1368)
+  - LiDAR 3D segmentation (#1420)
+  - Coordinate system refactoring (#1384)
 - Support training models on custom datasets with only point clouds (#1393)
-- Replace mmcv.iou3d with a set of bird-eye-view (BEV) ops (#1403, #1418)
-- Update Registry to distinguish the scope of built functions (#1412, #1443)
+- Replace mmcv.iou3d with a set of bird-eye-view (BEV) operators to unify the operations of rotated boxes (#1403, #1418)
+- Update Registry to distinguish the scope of building functions (#1412, #1443)
 - Replace recommonmark with myst_parser for documentation rendering (#1414)
 
 #### Bug Fixes
@@ -30,7 +34,7 @@
 - Fix the show pipeline in the [browse_dataset.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/misc/browse_dataset.py) (#1376)
 - Fix missing __init__ files after coordinate system refactoring (#1383)
 - Fix the incorrect yaw in the visualization caused by coordinate system refactoring (#1407)
-- Fix NaiveSyncBatchNorm1d and NaiveSyncBatchNorm2d to support non-distributed cases and more general inputs (#1435)
+- Fix `NaiveSyncBatchNorm1d` and `NaiveSyncBatchNorm2d` to support non-distributed cases and more general inputs (#1435)
 
 #### Contributors
 
