@@ -13,9 +13,9 @@ class BEVFeatureExtractor(BaseModule):
     backbone.
 
     Args:
-        pc_start (list[float]):
-        voxel_size (list[float]):
-        downsample_stride (int):
+        pc_start (list[float]): Start point of point cloud's range
+        voxel_size (list[float]): Voxel size of first 2 dimensions
+        downsample_stride (int): Downsample factor of the backbone feature map
     """
 
     def __init__(
@@ -44,7 +44,7 @@ class BEVFeatureExtractor(BaseModule):
 
         # NOTE: ONLY surpport the final output of BEV feature maps now
         bev_feature = bev_feature[-1]
-        rois = rois[-1]
+        # rois = rois[-1]
 
         roi_features = []
         batch_size = len(bev_feature)

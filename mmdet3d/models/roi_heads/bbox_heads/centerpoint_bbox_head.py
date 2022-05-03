@@ -6,7 +6,7 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
 from mmdet3d.models.builder import build_loss
-from mmdet.core import build_bbox_coder, multi_apply
+from mmdet.core import multi_apply
 from mmdet.models import HEADS
 
 
@@ -26,16 +26,10 @@ class CenterPointBBoxHead(BaseModule):
                  dp_ratio=0.3,
                  code_size=7,
                  num_classes=1,
-                 bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
-                 loss_reg=dict(
-                     type='SmoothL1Loss',
-                     beta=1.0 / 9.0,
-                     reduction='sum',
-                     loss_weight=1.0),
+                 loss_reg=dict(type='L1', reduction='none', loss_weight=1.0),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
+                     reduction='none',
                      loss_weight=1.0),
                  init_cfg=None):
         super(CenterPointBBoxHead, self).__init__(init_cfg=init_cfg)
@@ -43,7 +37,6 @@ class CenterPointBBoxHead(BaseModule):
         self.input_channels = input_channels
         pre_channel = input_channels
 
-        self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_reg = build_loss(loss_reg)
         self.loss_cls = build_loss(loss_cls)
 

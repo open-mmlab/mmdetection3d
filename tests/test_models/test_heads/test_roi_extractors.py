@@ -3,7 +3,8 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.models.roi_heads.roi_extractors import (Single3DRoIAwareExtractor,
+from mmdet3d.models.roi_heads.roi_extractors import (BEVFeatureExtractor,
+                                                     Single3DRoIAwareExtractor,
                                                      Single3DRoIPointExtractor)
 
 
@@ -54,3 +55,44 @@ def test_single_roipoint_extractor():
                         dtype=torch.float32).cuda()
     pooled_feats = self(feats, points, batch_inds, rois)
     assert pooled_feats.shape == torch.Size([2, 512, 6])
+
+
+def test_bev_feature_extractor():
+    from math import pi
+
+    from mmdet3d.core.bbox import LiDARInstance3DBoxes
+
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    bev_feature_extractor_cfg = dict(
+        pc_start=[-61.2, -61.2],
+        voxel_size=[0.2, 0.2],
+        downsample_stride=1,
+    )
+
+    self = BEVFeatureExtractor(**bev_feature_extractor_cfg)
+
+    # build bev features with shape of [B, C, H, W].
+    H, W = 612, 612
+    x, y = torch.arange(W), torch.arange(H)
+    grid_x, grid_y = torch.meshgrid(y, x)
+    # - bev_feats[..., i, j] = [i, j], with shape of [1, 2, H, W]
+    bev_feats = torch.cat(
+        [grid_x.unsqueeze(0), grid_y.unsqueeze(0)], dim=0).unsqueeze(0)
+    bev_feats = [bev_feats]
+
+    # build rois
+    rois_tensor = torch.tensor([[0, 0, 0, 3.2, 1.6, 1.5, 0],
+                                [0, 0, 0, 3.2, 1.6, 1.5, pi / 2],
+                                [0, 0, 0, 3.2, 1.6, 1.5, pi]])
+    rois = [[LiDARInstance3DBoxes(rois_tensor)]]
+
+    roi_features = self.forward(bev_feats, rois)
+    assert roi_features[0].shape == torch.Size([3, 5 * 2])
+
+    expected_feats = roi_features[0].new_tensor(
+        [[306, 306, 306, 314, 306, 298, 302, 306, 310, 306],
+         [306, 306, 314, 306, 298, 306, 306, 310, 306, 302],
+         [306, 306, 306, 298, 306, 314, 310, 306, 302, 306]])
+    assert torch.all(roi_features[0] == expected_feats).item()
