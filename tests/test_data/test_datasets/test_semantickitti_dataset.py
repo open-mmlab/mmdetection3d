@@ -1,5 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os.path as osp
+
+import mmcv
 import numpy as np
+import pytest
+import torch
 
 from mmdet3d.datasets import SemanticKITTIDataset
 
@@ -19,6 +24,12 @@ def test_getitem():
             shift_height=True,
             load_dim=4,
             use_dim=[0, 1, 2]),
+        dict(
+            type='LoadCalibPoseTime',
+            use_calib=True,
+            use_pose=True,
+            use_time=True,
+        ),
         dict(
             type='LoadAnnotations3D',
             with_bbox_3d=False,
@@ -51,3 +62,82 @@ def test_getitem():
     data = semantickitti_dataset[0]
     assert data['points']._data.shape[0] == data[
         'pts_semantic_mask']._data.shape[0]
+
+
+def test_evaluate():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    data_root = './tests/data/semantickitti/'
+    ann_file = './tests/data/semantickitti/semantickitti_infos.pkl'
+    classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
+               'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
+               'sidewalk', 'other-ground', 'building', 'fence', 'vegetation',
+               'trunck', 'terrian', 'pole', 'traffic-sign')
+    pipelines = [
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            shift_height=True,
+            load_dim=4,
+            use_dim=[0, 1, 2]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=False,
+            with_label_3d=False,
+            with_mask_3d=False,
+            with_seg_3d=True,
+            seg_3d_dtype=np.int32),
+        dict(
+            type='RandomFlip3D',
+            sync_2d=False,
+            flip_ratio_bev_horizontal=1.0,
+            flip_ratio_bev_vertical=1.0),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.087266, 0.087266],
+            scale_ratio_range=[1.0, 1.0],
+            shift_height=True),
+        dict(type='DefaultFormatBundle3D', class_names=classes),
+        dict(
+            type='Collect3D',
+            keys=[
+                'points',
+                'pts_semantic_mask',
+            ],
+            meta_keys=[
+                'file_name', 'sample_idx', 'pcd_rotation', 'calib', 'pose'
+            ]),
+    ]
+
+    ignore = [0]
+    min_points = 1
+    semantic_kitti_dataset = SemanticKITTIDataset(
+        data_root,
+        ann_file,
+        pipeline=pipelines,
+        classes=classes,
+        ignore=ignore,
+        min_points=min_points)
+
+    global_cfg = mmcv.load(osp.join(data_root, 'semantic-kitti.yaml'))
+    class_remap = global_cfg['learning_map']
+    inst_pred_0 = np.fromfile(
+        osp.join(data_root, 'sequences/00/labels/000000.label'),
+        dtype=np.int32).reshape(-1, 1)
+    sem_pred_0 = inst_pred_0 & 0xFFFF
+    sem_pred_0 = np.vectorize(class_remap.__getitem__)(sem_pred_0)
+
+    # sem_pred_0, inst_pred_0, sem_gt_0, inst_gt_0 = gen_psuedo_labels(50)
+    # sem_pred_1, inst_pred_1, sem_gt_1, inst_gt_1 = gen_psuedo_labels(51)
+    result0 = dict(pred_sem=sem_pred_0, pred_inst=inst_pred_0)
+
+    ap_dict = semantic_kitti_dataset.evaluate([result0])
+
+    assert np.isclose(ap_dict[0]['all']['PQ'], 0.21052631578947367)
+    assert np.isclose(ap_dict[0]['all']['SQ'], 0.21052631578947367)
+    assert np.isclose(ap_dict[0]['all']['RQ'], 0.21052631578947367)
+
+
+if __name__ == '__main__':
+    # test_getitem()
+    test_evaluate()
