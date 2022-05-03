@@ -7,7 +7,7 @@ import numpy as np
 from mmdet3d.core import show_multi_modality_result, show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet.core import eval_map
-from mmdet.datasets import DATASETS
+from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 from .pipelines import Compose
 
@@ -54,7 +54,8 @@ class SUNRGBDDataset(Custom3DDataset):
                  modality=dict(use_camera=True, use_lidar=True),
                  box_type_3d='Depth',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 **kwargs):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -63,7 +64,8 @@ class SUNRGBDDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            **kwargs)
         assert 'use_camera' in self.modality and \
             'use_lidar' in self.modality
         assert self.modality['use_camera'] or self.modality['use_lidar']
@@ -137,10 +139,10 @@ class SUNRGBDDataset(Custom3DDataset):
         if info['annos']['gt_num'] != 0:
             gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
                 np.float32)  # k, 6
-            gt_labels_3d = info['annos']['class'].astype(np.long)
+            gt_labels_3d = info['annos']['class'].astype(np.int64)
         else:
             gt_bboxes_3d = np.zeros((0, 7), dtype=np.float32)
-            gt_labels_3d = np.zeros((0, ), dtype=np.long)
+            gt_labels_3d = np.zeros((0, ), dtype=np.int64)
 
         # to target box structure
         gt_bboxes_3d = DepthInstance3DBoxes(

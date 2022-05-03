@@ -61,10 +61,10 @@ def test_scannet_pipeline():
     if info['annos']['gt_num'] != 0:
         scannet_gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
             np.float32)
-        scannet_gt_labels_3d = info['annos']['class'].astype(np.long)
+        scannet_gt_labels_3d = info['annos']['class'].astype(np.int64)
     else:
         scannet_gt_bboxes_3d = np.zeros((1, 6), dtype=np.float32)
-        scannet_gt_labels_3d = np.zeros((1, ), dtype=np.long)
+        scannet_gt_labels_3d = np.zeros((1, ), dtype=np.int64)
     results['ann_info'] = dict()
     results['ann_info']['pts_instance_mask_path'] = osp.join(
         data_path, info['pts_instance_mask_path'])
@@ -294,10 +294,10 @@ def test_sunrgbd_pipeline():
     if info['annos']['gt_num'] != 0:
         gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
             np.float32)
-        gt_labels_3d = info['annos']['class'].astype(np.long)
+        gt_labels_3d = info['annos']['class'].astype(np.int64)
     else:
         gt_bboxes_3d = np.zeros((1, 7), dtype=np.float32)
-        gt_labels_3d = np.zeros((1, ), dtype=np.long)
+        gt_labels_3d = np.zeros((1, ), dtype=np.int64)
 
     # prepare input of pipeline
     results['ann_info'] = dict()

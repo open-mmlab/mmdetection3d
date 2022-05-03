@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import build_norm_layer
+from mmcv.ops import DynamicScatter
 from mmcv.runner import force_fp32
 from torch import nn
 
-from mmdet3d.ops import DynamicScatter
 from ..builder import VOXEL_ENCODERS
 from .utils import PFNLayer, get_paddings_indicator
 
@@ -15,6 +15,7 @@ class PillarFeatureNet(nn.Module):
 
     The network prepares the pillar features and performs forward pass
     through PFNLayers.
+
     Args:
         in_channels (int, optional): Number of input features,
             either x, y, z or x, y, z, r. Defaults to 4.
@@ -98,6 +99,7 @@ class PillarFeatureNet(nn.Module):
                 (N, M, C).
             num_points (torch.Tensor): Number of points in each pillar.
             coors (torch.Tensor): Coordinates of each voxel.
+
         Returns:
             torch.Tensor: Features of pillars.
         """
@@ -237,7 +239,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         Args:
             pts_coors (torch.Tensor): The coordinates of each points, shape
                 (M, 3), where M is the number of points.
-            voxel_mean (torch.Tensor): The mean or aggreagated features of a
+            voxel_mean (torch.Tensor): The mean or aggregated features of a
                 voxel, shape (N, C), where N is the number of voxels.
             voxel_coors (torch.Tensor): The coordinates of each voxel.
 
@@ -294,11 +296,13 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
 
         # Find distance of x, y, and z from pillar center
         if self._with_voxel_center:
-            f_center = features.new_zeros(size=(features.size(0), 2))
+            f_center = features.new_zeros(size=(features.size(0), 3))
             f_center[:, 0] = features[:, 0] - (
                 coors[:, 3].type_as(features) * self.vx + self.x_offset)
             f_center[:, 1] = features[:, 1] - (
                 coors[:, 2].type_as(features) * self.vy + self.y_offset)
+            f_center[:, 2] = features[:, 2] - (
+                coors[:, 1].type_as(features) * self.vz + self.z_offset)
             features_ls.append(f_center)
 
         if self._with_distance:

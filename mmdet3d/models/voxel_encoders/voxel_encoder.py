@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import build_norm_layer
+from mmcv.ops import DynamicScatter
 from mmcv.runner import force_fp32
 from torch import nn
 
-from mmdet3d.ops import DynamicScatter
 from .. import builder
 from ..builder import VOXEL_ENCODERS
 from .utils import VFELayer, get_paddings_indicator

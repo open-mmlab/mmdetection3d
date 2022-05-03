@@ -3,8 +3,8 @@ import mmcv
 import numpy as np
 
 from mmdet3d.core.points import BasePoints, get_points_type
-from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
+from ..builder import PIPELINES
 
 
 @PIPELINES.register_module()
@@ -518,7 +518,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_seg=False,
                  with_bbox_depth=False,
                  poly2mask=True,
-                 seg_3d_dtype='int',
+                 seg_3d_dtype=np.int64,
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
@@ -600,11 +600,11 @@ class LoadAnnotations3D(LoadAnnotations):
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_instance_mask_path)
-            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int)
+            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
         except ConnectionError:
             mmcv.check_file_exist(pts_instance_mask_path)
             pts_instance_mask = np.fromfile(
-                pts_instance_mask_path, dtype=np.long)
+                pts_instance_mask_path, dtype=np.int64)
 
         results['pts_instance_mask'] = pts_instance_mask
         results['pts_mask_fields'].append('pts_instance_mask')
@@ -631,7 +631,7 @@ class LoadAnnotations3D(LoadAnnotations):
         except ConnectionError:
             mmcv.check_file_exist(pts_semantic_mask_path)
             pts_semantic_mask = np.fromfile(
-                pts_semantic_mask_path, dtype=np.long)
+                pts_semantic_mask_path, dtype=np.int64)
 
         results['pts_semantic_mask'] = pts_semantic_mask
         results['pts_seg_fields'].append('pts_semantic_mask')

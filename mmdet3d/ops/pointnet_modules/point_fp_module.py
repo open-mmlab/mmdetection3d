@@ -3,10 +3,9 @@ from typing import List
 
 import torch
 from mmcv.cnn import ConvModule
+from mmcv.ops import three_interpolate, three_nn
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
-
-from mmdet3d.ops import three_interpolate, three_nn
 
 
 class PointFPModule(BaseModule):

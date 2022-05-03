@@ -11,9 +11,9 @@ from lyft_dataset_sdk.utils.data_classes import Box as LyftBox
 from pyquaternion import Quaternion
 
 from mmdet3d.core.evaluation.lyft_eval import lyft_eval
-from mmdet.datasets import DATASETS
 from ..core import show_result
 from ..core.bbox import Box3DMode, Coord3DMode, LiDARInstance3DBoxes
+from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 from .pipelines import Compose
 
@@ -86,7 +86,8 @@ class LyftDataset(Custom3DDataset):
                  modality=None,
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
-                 test_mode=False):
+                 test_mode=False,
+                 **kwargs):
         self.load_interval = load_interval
         super().__init__(
             data_root=data_root,
@@ -96,7 +97,8 @@ class LyftDataset(Custom3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            **kwargs)
 
         if self.modality is None:
             self.modality = dict(
@@ -116,7 +118,8 @@ class LyftDataset(Custom3DDataset):
         Returns:
             list[dict]: List of annotations sorted by timestamps.
         """
-        data = mmcv.load(ann_file)
+        # loading data from a file-like object needs file format
+        data = mmcv.load(ann_file, file_format='pkl')
         data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
         data_infos = data_infos[::self.load_interval]
         self.metadata = data['metadata']

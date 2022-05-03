@@ -4,10 +4,10 @@ import copy
 import torch
 from mmcv.cnn import (ConvModule, build_activation_layer, build_norm_layer,
                       constant_init)
+from mmcv.ops import assign_score_withk as assign_score_cuda
 from torch import nn as nn
 from torch.nn import functional as F
 
-from .assign_score import assign_score_withk as assign_score_cuda
 from .utils import assign_kernel_withoutk, assign_score, calc_euclidian_dist
 
 

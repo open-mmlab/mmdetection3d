@@ -52,7 +52,6 @@ def _get_head_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
     train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
@@ -70,7 +69,6 @@ def _get_rpn_head_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
     train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
@@ -88,7 +86,6 @@ def _get_roi_head_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
     train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
@@ -106,7 +103,6 @@ def _get_pts_bbox_head_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
     train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg.pts))
@@ -132,7 +128,7 @@ def _get_pointrcnn_rpn_head_cfg(fname):
     rpn_head = model.rpn_head
     rpn_head.update(train_cfg=train_cfg.rpn)
     rpn_head.update(test_cfg=test_cfg.rpn)
-    return rpn_head, train_cfg.rpn.rpn_proposal
+    return rpn_head, train_cfg.rpn
 
 
 def _get_vote_head_cfg(fname):
@@ -141,7 +137,6 @@ def _get_vote_head_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
     train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
@@ -290,11 +285,11 @@ def test_parta2_rpnhead_getboxes():
     assert result_list[0]['boxes_3d'].tensor.shape == torch.Size([512, 7])
 
 
-def test_pointrcnn_rpnhead_getboxes():
+def test_point_rcnn_rpnhead_getboxes():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     rpn_head_cfg, proposal_cfg = _get_pointrcnn_rpn_head_cfg(
-        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+        './point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py')
     self = build_head(rpn_head_cfg)
     self.cuda()
 
@@ -315,7 +310,7 @@ def test_pointrcnn_rpnhead_getboxes():
     assert cls_preds.shape == (2, 1024, 3)
     points = torch.rand([2, 1024, 3], dtype=torch.float32).cuda()
     result_list = self.get_bboxes(points, bbox_preds, cls_preds, input_metas)
-    max_num = proposal_cfg.max_num
+    max_num = proposal_cfg.nms_cfg.nms_post
     bbox, score_selected, labels, cls_preds_selected = result_list[0]
     assert bbox.tensor.shape == (max_num, 7)
     assert score_selected.shape == (max_num, )
@@ -515,22 +510,24 @@ def test_smoke_mono3d_head():
 
 
 def test_parta2_bbox_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
     parta2_bbox_head_cfg = _get_parta2_bbox_head_cfg(
         './parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
-    self = build_head(parta2_bbox_head_cfg)
-    seg_feats = torch.rand([256, 14, 14, 14, 16])
-    part_feats = torch.rand([256, 14, 14, 14, 4])
+    self = build_head(parta2_bbox_head_cfg).cuda()
+    seg_feats = torch.rand([256, 14, 14, 14, 16]).cuda()
+    part_feats = torch.rand([256, 14, 14, 14, 4]).cuda()
 
     cls_score, bbox_pred = self.forward(seg_feats, part_feats)
     assert cls_score.shape == (256, 1)
     assert bbox_pred.shape == (256, 7)
 
 
-def test_pointrcnn_bbox_head():
+def test_point_rcnn_bbox_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     pointrcnn_bbox_head_cfg = _get_pointrcnn_bbox_head_cfg(
-        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+        './point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py')
     self = build_head(pointrcnn_bbox_head_cfg).cuda()
     feats = torch.rand([100, 512, 133]).cuda()
     rcnn_cls, rcnn_reg = self.forward(feats)
@@ -612,12 +609,12 @@ def test_part_aggregation_ROI_head():
     assert labels_3d.shape == (12, )
 
 
-def test_pointrcnn_roi_head():
+def test_point_rcnn_roi_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
     roi_head_cfg = _get_roi_head_cfg(
-        './pointrcnn/pointrcnn_2x8_kitti-3d-3classes.py')
+        './point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py')
 
     self = build_head(roi_head_cfg).cuda()
 

@@ -22,13 +22,13 @@ We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRG
 
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | AP@0.25 |AP@0.5| Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [PointNet++](./votenet_8x8_scannet-3d-18class.py)     |  3x    |4.1||62.90|39.91|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20200620_230238.log.json)|
+|    [PointNet++](./votenet_8x8_scannet-3d-18class.py)     |  3x    |4.1||62.34|40.82|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20210823_234503-cf8134fa.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20210823_234503.log.json)|
 
 ### SUNRGBD
 
 |  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | AP@0.25 |AP@0.5| Download |
 | :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [PointNet++](./votenet_16x8_sunrgbd-3d-10class.py)     |  3x    |8.1||59.07|35.77|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20200620_230238-4483c0c0.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20200620_230238.log.json)|
+|    [PointNet++](./votenet_16x8_sunrgbd-3d-10class.py)     |  3x    |8.1||59.78|35.77|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20210820_162823-bf11f014.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20210820_162823.log.json)|
 
 **Notice**: If your current mmdetection3d version >= 0.6.0, and you are using the checkpoints downloaded from the above links or using checkpoints trained with mmdetection3d version < 0.6.0, the checkpoints have to be first converted via [tools/model_converters/convert_votenet_checkpoints.py](../../tools/model_converters/convert_votenet_checkpoints.py):
 

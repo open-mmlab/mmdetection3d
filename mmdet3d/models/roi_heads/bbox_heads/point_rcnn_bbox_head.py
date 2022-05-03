@@ -8,11 +8,10 @@ from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.models.builder import build_loss
+from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
+from mmdet3d.models.builder import HEADS, build_loss
 from mmdet3d.ops import build_sa_module
-from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS
 
 
 @HEADS.register_module()
@@ -238,7 +237,7 @@ class PointRCNNBboxHead(BaseModule):
         rcnn_reg = self.conv_reg(x_reg)
         rcnn_cls = rcnn_cls.transpose(1, 2).contiguous().squeeze(dim=1)
         rcnn_reg = rcnn_reg.transpose(1, 2).contiguous().squeeze(dim=1)
-        return (rcnn_cls, rcnn_reg)
+        return rcnn_cls, rcnn_reg
 
     def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
              pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
@@ -482,7 +481,7 @@ class PointRCNNBboxHead(BaseModule):
         local_roi_boxes[..., 0:3] = 0
         rcnn_boxes3d = self.bbox_coder.decode(local_roi_boxes, bbox_pred)
         rcnn_boxes3d[..., 0:3] = rotation_3d_in_axis(
-            rcnn_boxes3d[..., 0:3].unsqueeze(1), (roi_ry), axis=2).squeeze(1)
+            rcnn_boxes3d[..., 0:3].unsqueeze(1), roi_ry, axis=2).squeeze(1)
         rcnn_boxes3d[:, 0:3] += roi_xyz
 
         # post processing
@@ -491,7 +490,6 @@ class PointRCNNBboxHead(BaseModule):
             cur_class_labels = class_labels[batch_id]
             cur_cls_score = cls_score[roi_batch_id == batch_id].view(-1)
 
-            cur_box_prob = cls_score[batch_id]
             cur_box_prob = cur_cls_score.unsqueeze(1)
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             keep = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
@@ -523,7 +521,7 @@ class PointRCNNBboxHead(BaseModule):
             merging these two functions in the future.
 
         Args:
-            box_probs (torch.Tensor): Predicted boxes probabitilies in
+            box_probs (torch.Tensor): Predicted boxes probabilities in
                 shape (N,).
             box_preds (torch.Tensor): Predicted boxes in shape (N, 7+C).
             score_thr (float): Threshold of scores.
@@ -536,9 +534,9 @@ class PointRCNNBboxHead(BaseModule):
             torch.Tensor: Selected indices.
         """
         if use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
 
         assert box_probs.shape[
             1] == self.num_classes, f'box_probs shape: {str(box_probs.shape)}'

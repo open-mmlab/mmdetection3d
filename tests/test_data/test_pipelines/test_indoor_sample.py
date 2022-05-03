@@ -82,7 +82,7 @@ def test_indoor_seg_sample():
         scannet_points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
 
     scannet_pts_semantic_mask = np.fromfile(
-        './tests/data/scannet/semantic_mask/scene0000_00.bin', dtype=np.long)
+        './tests/data/scannet/semantic_mask/scene0000_00.bin', dtype=np.int64)
     scannet_results['pts_semantic_mask'] = scannet_pts_semantic_mask
 
     scannet_results = scannet_seg_class_mapping(scannet_results)
@@ -174,7 +174,7 @@ def test_indoor_seg_sample():
         s3dis_points, points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
 
     s3dis_pts_semantic_mask = np.fromfile(
-        './tests/data/s3dis/semantic_mask/Area_1_office_2.bin', dtype=np.long)
+        './tests/data/s3dis/semantic_mask/Area_1_office_2.bin', dtype=np.int64)
     s3dis_results['pts_semantic_mask'] = s3dis_pts_semantic_mask
 
     s3dis_results = s3dis_patch_sample_points(s3dis_results)

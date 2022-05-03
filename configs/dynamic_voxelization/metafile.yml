@@ -37,8 +37,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 65.10
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class_20200620_231010-6aa607d3.pth
+          mAP: 65.27
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class_20210831_054106-e742d163.pth
 
   - Name: dv_pointpillars_secfpn_6x8_160e_kitti-3d-car
     In Collection: Dynamic Voxelization

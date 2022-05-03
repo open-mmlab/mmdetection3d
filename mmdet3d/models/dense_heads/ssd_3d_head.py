@@ -7,9 +7,8 @@ from torch.nn import functional as F
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes,
                                           rotation_3d_in_axis)
-from mmdet3d.models.builder import build_loss
 from mmdet.core import multi_apply
-from mmdet.models import HEADS
+from ..builder import HEADS, build_loss
 from .vote_head import VoteHead
 
 

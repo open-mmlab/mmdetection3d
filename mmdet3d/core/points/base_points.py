@@ -242,7 +242,7 @@ class BasePoints(object):
         """
         in_range_flags = ((self.bev[:, 0] > point_range[0])
                           & (self.bev[:, 1] > point_range[1])
-                          & (self.bev[:, 1] < point_range[2])
+                          & (self.bev[:, 0] < point_range[2])
                           & (self.bev[:, 1] < point_range[3]))
         return in_range_flags
 

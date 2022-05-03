@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import os
+import warnings
 
 import mmcv
 import numpy as np
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils
-from mmdet.datasets import PIPELINES
-from ..builder import OBJECTSAMPLERS
+from ..builder import OBJECTSAMPLERS, PIPELINES
 
 
 class BatchSampler:
@@ -104,7 +104,8 @@ class DataBaseSampler(object):
                      type='LoadPointsFromFile',
                      coord_type='LIDAR',
                      load_dim=4,
-                     use_dim=[0, 1, 2, 3])):
+                     use_dim=[0, 1, 2, 3]),
+                 file_client_args=dict(backend='disk')):
         super().__init__()
         self.data_root = data_root
         self.info_path = info_path
@@ -114,8 +115,20 @@ class DataBaseSampler(object):
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
         self.points_loader = mmcv.build_from_cfg(points_loader, PIPELINES)
+        self.file_client = mmcv.FileClient(**file_client_args)
 
-        db_infos = mmcv.load(info_path)
+        # load data base infos
+        if hasattr(self.file_client, 'get_local_path'):
+            with self.file_client.get_local_path(info_path) as local_path:
+                # loading data from a file-like object needs file format
+                db_infos = mmcv.load(open(local_path, 'rb'), file_format='pkl')
+        else:
+            warnings.warn(
+                'The used MMCV version does not have get_local_path. '
+                f'We treat the {info_path} as local paths and it '
+                'might cause errors if the path is not a local path. '
+                'Please use MMCV>= 1.3.16 if you meet errors.')
+            db_infos = mmcv.load(info_path)
 
         # filter database infos
         from mmdet3d.utils import get_root_logger

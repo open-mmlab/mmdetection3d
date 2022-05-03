@@ -8,8 +8,8 @@ import numpy as np
 import torch
 from mmcv.utils import print_log
 
-from mmdet.datasets import DATASETS
 from ..core.bbox import Box3DMode, points_cam2img
+from .builder import DATASETS
 from .kitti_dataset import KittiDataset
 
 
@@ -66,7 +66,8 @@ class WaymoDataset(KittiDataset):
                  filter_empty_gt=True,
                  test_mode=False,
                  load_interval=1,
-                 pcd_limit_range=[-85, -85, -5, 85, 85, 5]):
+                 pcd_limit_range=[-85, -85, -5, 85, 85, 5],
+                 **kwargs):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -78,7 +79,8 @@ class WaymoDataset(KittiDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
-            pcd_limit_range=pcd_limit_range)
+            pcd_limit_range=pcd_limit_range,
+            **kwargs)
 
         # to load a subset, just set the load_interval in the dataset config
         self.data_infos = self.data_infos[::load_interval]

@@ -88,7 +88,7 @@ def test_object_sample():
             gt_labels.append(CLASSES.index(cat))
         else:
             gt_labels.append(-1)
-    gt_labels = np.array(gt_labels, dtype=np.long)
+    gt_labels = np.array(gt_labels, dtype=np.int64)
     points = LiDARPoints(points, points_dim=4)
     input_dict = dict(
         points=points, gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels)
@@ -176,7 +176,7 @@ def test_object_name_filter():
             gt_labels.append(CLASSES.index(cat))
         else:
             gt_labels.append(-1)
-    gt_labels = np.array(gt_labels, dtype=np.long)
+    gt_labels = np.array(gt_labels, dtype=np.int64)
     input_dict = dict(
         gt_bboxes_3d=gt_bboxes_3d.clone(), gt_labels_3d=gt_labels.copy())
 
@@ -200,9 +200,9 @@ def test_point_shuffle():
     points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
                          np.float32).reshape(-1, 6)
     ins_mask = np.fromfile('tests/data/scannet/instance_mask/scene0000_00.bin',
-                           np.long)
+                           np.int64)
     sem_mask = np.fromfile('tests/data/scannet/semantic_mask/scene0000_00.bin',
-                           np.long)
+                           np.int64)
 
     points = DepthPoints(
         points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
@@ -244,9 +244,9 @@ def test_points_range_filter():
     points = np.fromfile('tests/data/scannet/points/scene0000_00.bin',
                          np.float32).reshape(-1, 6)
     ins_mask = np.fromfile('tests/data/scannet/instance_mask/scene0000_00.bin',
-                           np.long)
+                           np.int64)
     sem_mask = np.fromfile('tests/data/scannet/semantic_mask/scene0000_00.bin',
-                           np.long)
+                           np.int64)
 
     points = DepthPoints(
         points.copy(), points_dim=6, attribute_dims=dict(color=[3, 4, 5]))
@@ -286,7 +286,7 @@ def test_object_range_filter():
          [18.7314, -18.559, 20.6547, 6.4800, 8.6000, 3.9200, -1.0100],
          [3.7314, 42.559, -0.6547, 6.4800, 8.6000, 2.9200, 3.0100]])
     gt_bboxes_3d = LiDARInstance3DBoxes(bbox, origin=(0.5, 0.5, 0.5))
-    gt_labels_3d = np.array([0, 2, 1, 1, 2, 0], dtype=np.long)
+    gt_labels_3d = np.array([0, 2, 1, 1, 2, 0], dtype=np.int64)
 
     input_dict = dict(
         gt_bboxes_3d=gt_bboxes_3d.clone(), gt_labels_3d=gt_labels_3d.copy())

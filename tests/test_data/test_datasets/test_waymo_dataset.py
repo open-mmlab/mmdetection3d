@@ -27,7 +27,7 @@ def _generate_waymo_train_dataset_config():
         points_loader=dict(
             type='LoadPointsFromFile',
             coord_type='LIDAR',
-            load_dim=5,
+            load_dim=6,
             use_dim=[0, 1, 2, 3, 4],
             file_client_args=file_client_args))
     pipeline = [
@@ -144,9 +144,12 @@ def test_evaluate():
     # kitti protocol
     metric = ['kitti']
     ap_dict = waymo_dataset.evaluate([result], metric=metric)
-    assert np.isclose(ap_dict['KITTI/Overall_3D_easy'], 3.0303030303030307)
-    assert np.isclose(ap_dict['KITTI/Overall_3D_moderate'], 3.0303030303030307)
-    assert np.isclose(ap_dict['KITTI/Overall_3D_hard'], 3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_AP11_easy'],
+                      3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_AP11_moderate'],
+                      3.0303030303030307)
+    assert np.isclose(ap_dict['KITTI/Overall_3D_AP11_hard'],
+                      3.0303030303030307)
 
     # waymo protocol
     metric = ['waymo']

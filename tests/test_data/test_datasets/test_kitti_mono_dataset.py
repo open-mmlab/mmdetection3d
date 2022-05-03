@@ -207,9 +207,11 @@ def test_evaluate():
 
     metric = ['mAP']
     ap_dict = kitti_dataset.evaluate(results, metric)
-    assert np.isclose(ap_dict['img_bbox/KITTI/Overall_3D_easy'], 3.0303)
-    assert np.isclose(ap_dict['img_bbox/KITTI/Overall_3D_moderate'], 6.0606)
-    assert np.isclose(ap_dict['img_bbox/KITTI/Overall_3D_hard'], 6.0606)
-    assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_easy'], 3.0303)
-    assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_moderate'], 6.0606)
-    assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_hard'], 6.0606)
+    assert np.isclose(ap_dict['img_bbox/KITTI/Overall_3D_AP11_easy'], 3.0303)
+    assert np.isclose(ap_dict['img_bbox/KITTI/Overall_3D_AP11_moderate'],
+                      6.0606)
+    assert np.isclose(ap_dict['img_bbox/KITTI/Overall_3D_AP11_hard'], 6.0606)
+    assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_AP11_easy'], 3.0303)
+    assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_AP11_moderate'],
+                      6.0606)
+    assert np.isclose(ap_dict['img_bbox2d/KITTI/Overall_2D_AP11_hard'], 6.0606)

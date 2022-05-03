@@ -118,12 +118,12 @@ def test_getitem():
     assert lyft_dataset.CLASSES == ('car', 'pedestrian')
 
     import tempfile
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, 'w') as f:
-        f.write('car\npedestrian\n')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = tmpdir + 'classes.txt'
+        with open(path, 'w') as f:
+            f.write('car\npedestrian\n')
 
-    lyft_dataset = LyftDataset(
-        ann_file, None, root_path, classes=tmp_file.name)
+    lyft_dataset = LyftDataset(ann_file, None, root_path, classes=path)
     assert lyft_dataset.CLASSES != original_classes
     assert lyft_dataset.CLASSES == ['car', 'pedestrian']
 

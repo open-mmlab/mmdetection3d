@@ -1,10 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
-from mmdet3d.ops import spconv as spconv
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
 from ..builder import MIDDLE_ENCODERS
+
+if IS_SPCONV2_AVAILABLE:
+    from spconv.pytorch import SparseConvTensor, SparseSequential
+else:
+    from mmcv.ops import SparseConvTensor, SparseSequential
 
 
 @MIDDLE_ENCODERS.register_module()
@@ -109,9 +115,8 @@ class SparseEncoder(nn.Module):
             dict: Backbone features.
         """
         coors = coors.int()
-        input_sp_tensor = spconv.SparseConvTensor(voxel_features, coors,
-                                                  self.sparse_shape,
-                                                  batch_size)
+        input_sp_tensor = SparseConvTensor(voxel_features, coors,
+                                           self.sparse_shape, batch_size)
         x = self.conv_input(input_sp_tensor)
 
         encode_features = []
@@ -150,7 +155,7 @@ class SparseEncoder(nn.Module):
             int: The number of encoder output channels.
         """
         assert block_type in ['conv_module', 'basicblock']
-        self.encoder_layers = spconv.SparseSequential()
+        self.encoder_layers = SparseSequential()
 
         for i, blocks in enumerate(self.encoder_channels):
             blocks_list = []
@@ -201,6 +206,6 @@ class SparseEncoder(nn.Module):
                             conv_type='SubMConv3d'))
                 in_channels = out_channels
             stage_name = f'encoder_layer{i + 1}'
-            stage_layers = spconv.SparseSequential(*blocks_list)
+            stage_layers = SparseSequential(*blocks_list)
             self.encoder_layers.add_module(stage_name, stage_layers)
         return out_channels

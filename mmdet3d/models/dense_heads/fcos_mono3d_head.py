@@ -11,7 +11,7 @@ from mmdet3d.core import (box3d_multiclass_nms, limit_period, points_img2cam,
                           xywhr2xyxyr)
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
-from mmdet.models.builder import HEADS, build_loss
+from ..builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 INF = 1e8

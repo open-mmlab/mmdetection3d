@@ -28,7 +28,7 @@ Models:
         Dataset: SUNRGBD-2D
         Metrics:
           AP@0.5: 62.70
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class_20210323_173222-cad62aeb.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class_20210819_225618-62eba6ce.pth
 
   - Name: imvotenet_stage2_16x8_sunrgbd-3d-10class
     In Collection: ImVoteNet
@@ -39,5 +39,5 @@ Models:
       - Task: 3D Object Detection
         Dataset: SUNRGBD-3D
         Metrics:
-          AP@0.25: 64.04
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class/imvotenet_stage2_16x8_sunrgbd-3d-10class_20210323_184021-d44dcb66.pth
+          AP@0.25: 64.55
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class/imvotenet_stage2_16x8_sunrgbd-3d-10class_20210819_192851-1bcd1b97.pth
