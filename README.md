@@ -25,7 +25,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v1.0.0rc1.
+**News**: We released the codebase v1.0.0rc2.
 
 Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
 
@@ -34,6 +34,8 @@ The compatibilities of models are broken due to the unification and simplificati
 In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
 
 Code and models for the best vision-only method, [FCOS3D](https://arxiv.org/abs/2104.10956), have been released. Please stay tuned for [MoCa](https://arxiv.org/abs/2012.12741).
+
+MMDeploy has supported some MMDetection3d model deployment.
 
 Documentation: https://mmdetection3d.readthedocs.io/
 
@@ -83,7 +85,14 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc1 was released in 1/4/2022.
+v1.0.0rc2 was released in 1/5/2022.
+
+- Support [spconv 2.0](https://github.com/traveller59/spconv)
+- Support [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) with MinkResNet
+- Support training models on custom datasets with only point clouds
+- Update Registry to distinguish the scope of built functions
+- Replace mmcv.iou3d with a set of bird-eye-view (BEV) operators to unify the operations of rotated boxes
+
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
@@ -228,7 +237,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 | PGD                  | ✓        | ☐        | ☐        | ✗         | ✗         | ☐     | ☐        | ☐     | ✗
 | MonoFlex             | ✗        | ✗        | ✗        | ✗         | ✗         | ✗     | ✗        | ✗     | ✓
 
-
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
@@ -241,6 +249,9 @@ Please see [getting_started.md](docs/en/getting_started.md) for the basic usage 
 
 Please refer to [FAQ](docs/en/faq.md) for frequently asked questions. When updating the version of MMDetection3D, please also check the [compatibility doc](docs/en/compatibility.md) to be aware of the BC-breaking updates introduced in each version.
 
+## Model deployment
+
+Now MMDeploy has supported some MMDetection3D model deployment. Please refer to [model_deployment.md](docs/en/tutorials/model_deployment.md) for more details.
 ## Citation
 
 If you find this project useful in your research, please consider cite:

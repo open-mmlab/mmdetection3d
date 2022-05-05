@@ -25,7 +25,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**新闻**: 我们发布了版本 v1.0.0rc1.
+**新闻**: 我们发布了版本 v1.0.0rc2.
 
 说明：我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。
 
@@ -34,6 +34,8 @@
 在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
 
 最好的纯视觉方法 [FCOS3D](https://arxiv.org/abs/2104.10956) 的代码和模型已经发布。请继续关注我们的多模态检测器 [MoCa](https://arxiv.org/abs/2012.12741)。
+
+MMDeploy 已经支持了部分 MMDetection3D 模型的部署。
 
 文档: https://mmdetection3d.readthedocs.io/
 
@@ -83,7 +85,14 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v1.0.0rc1 在 2022.4.1 发布。
+最新的版本 v1.0.0rc2 在 2022.5.1 发布。
+
+- 支持 [spconv 2.0](https://github.com/traveller59/spconv)
+- 支持基于 [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) 的 MinkResNet
+- 支持在自定义的只有点云的数据集上训练模型
+- 更新注册机制以区分不同函数构建的范围
+- 用一系列鸟瞰图的算子替换 mmcv.iou3d 以统一旋转框的相关操作
+
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
 ## 基准测试和模型库
@@ -240,6 +249,10 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 请参考[快速入门文档](docs/zh_cn/getting_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/zh_cn/1_exist_data_model.md)和[新数据集](docs/zh_cn/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/tutorials/config.md), [增加数据集支持](docs/zh_cn/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/zh_cn/tutorials/data_pipeline.md), [增加自定义模型](docs/zh_cn/tutorials/customize_models.md), [增加自定义的运行时配置](docs/zh_cn/tutorials/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/tutorials/waymo.md).
 
 请参考 [FAQ](docs/zh_cn/faq.md) 查看一些常见的问题与解答。在升级 MMDetection3D 的版本时，请查看[兼容性文档](docs/zh_cn/compatibility.md)以知晓每个版本引入的不与之前版本兼容的更新。
+
+## 模型部署
+
+现在 MMDeploy 已经支持了一些 MMDetection3D 模型的部署。请参考 [model_deployment.md](docs/zh_cn/tutorials/model_deployment.md)了解更多细节。
 
 ## 引用
 

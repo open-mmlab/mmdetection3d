@@ -9,10 +9,9 @@ from torch import nn as nn
 from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
                                           rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
-from mmdet3d.models.builder import build_loss
+from mmdet3d.models.builder import HEADS, build_loss
 from mmdet3d.ops import build_sa_module
 from mmdet.core import build_bbox_coder, multi_apply
-from mmdet.models import HEADS
 
 
 @HEADS.register_module()

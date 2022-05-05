@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
 
-from mmdet.datasets import DATASETS
+from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 
 
@@ -59,6 +59,35 @@ class SemanticKITTIDataset(Custom3DDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
+
+    def get_data_info(self, index):
+        """Get data info according to the given index.
+        Args:
+            index (int): Index of the sample data to get.
+
+        Returns:
+            dict: Data information that will be passed to the data
+                preprocessing pipelines. It includes the following keys:
+                - sample_idx (str): Sample index.
+                - pts_filename (str): Filename of point clouds.
+                - file_name (str): Filename of point clouds.
+                - ann_info (dict): Annotation info.
+        """
+        info = self.data_infos[index]
+        sample_idx = info['point_cloud']['lidar_idx']
+        pts_filename = osp.join(self.data_root, info['pts_path'])
+
+        input_dict = dict(
+            pts_filename=pts_filename,
+            sample_idx=sample_idx,
+            file_name=pts_filename)
+
+        if not self.test_mode:
+            annos = self.get_ann_info(index)
+            input_dict['ann_info'] = annos
+            if self.filter_empty_gt and ~(annos['gt_labels_3d'] != -1).any():
+                return None
+        return input_dict
 
     def get_ann_info(self, index):
         """Get annotation info according to the given index.
