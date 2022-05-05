@@ -43,8 +43,7 @@ class CenterPointBBoxHead(BaseModule):
         shared_fc_list = []
         for i in range(len(shared_fc)):
             shared_fc_list.extend([
-                nn.Linear(
-                    pre_channel, shared_fc[i], kernel_size=1, bias=False),
+                nn.Linear(pre_channel, shared_fc[i], bias=False),
                 nn.BatchNorm1d(shared_fc[i]),
                 nn.ReLU()
             ])
@@ -59,6 +58,9 @@ class CenterPointBBoxHead(BaseModule):
                                               dp_ratio)
         self.reg_layers = self.make_fc_layers(pre_channel, code_size, reg_fc,
                                               dp_ratio)
+
+        self.num_classes = num_classes
+        self.code_size = code_size
 
     def forward(self, roi_features):
         """Forward function for CenterPointBBoxHead.
@@ -83,6 +85,7 @@ class CenterPointBBoxHead(BaseModule):
             reg = self.reg_layers(shared_features)
             pred_res_batch.update(cls=cls)
             pred_res_batch.update(reg=reg)
+            pred_res.append(pred_res_batch)
 
         return pred_res
 
@@ -108,17 +111,18 @@ class CenterPointBBoxHead(BaseModule):
 
         cls_pred = torch.cat([pred_batch['cls'] for pred_batch in pred_res],
                              dim=0)
-        label = torch.cat(list(label), dim=0)
-        label_weights = torch.cat(list(label_weights), dim=0)
+        label = torch.cat(list(label), dim=0).reshape(-1, self.num_classes)
+        label_weights = torch.cat(list(label_weights), dim=0).reshape(-1, 1)
         loss_cls = self.loss_cls(cls_pred, label, label_weights)
         losses.update(loss_cls=loss_cls)
 
         bbox_pred = torch.cat([pred_batch['reg'] for pred_batch in pred_res],
                               dim=0)
-        bbox_targets = torch.cat(list(bbox_targets), dim=0)
-        bbox_weights = torch.cat(list(bbox_weights), dim=0)
-        loss_bbox = self.loss_bbox(bbox_pred, bbox_targets, bbox_weights)
-        losses.update(loss_bbox=loss_bbox)
+        bbox_targets = torch.cat(
+            list(bbox_targets), dim=0).reshape(-1, self.code_size)
+        bbox_weights = torch.cat(list(bbox_weights), dim=0).reshape(-1, 1)
+        loss_reg = self.loss_reg(bbox_pred, bbox_targets, bbox_weights)
+        losses.update(loss_reg=loss_reg)
 
         return losses
 
@@ -148,7 +152,7 @@ class CenterPointBBoxHead(BaseModule):
 
         res_lists = []
         batch_size = len(roi_features)
-        for batch_idx in range(len(batch_size)):
+        for batch_idx in range(batch_size):
             # - 计算 cls_head 的得分
             bbox_head = pred_res[batch_idx]
             cls = bbox_head['cls']
@@ -178,15 +182,14 @@ class CenterPointBBoxHead(BaseModule):
         pre_channel = input_channels
         for i in range(0, len(fc_list)):
             fc_layers.extend([
-                nn.Linear(pre_channel, fc_list[i], kernel_size=1, bias=False),
+                nn.Linear(pre_channel, fc_list[i], bias=False),
                 nn.BatchNorm1d(fc_list[i]),
                 nn.ReLU()
             ])
             pre_channel = fc_list[i]
             if dp_ratio >= 0 and i == 0:
                 fc_layers.append(nn.Dropout(dp_ratio))
-        fc_layers.append(
-            nn.Conv1d(pre_channel, output_channels, kernel_size=1, bias=True))
+        fc_layers.append(nn.Linear(pre_channel, output_channels, bias=True))
         fc_layers = nn.Sequential(*fc_layers)
         return fc_layers
 
@@ -245,17 +248,14 @@ class CenterPointBBoxHead(BaseModule):
         # label weights
         label_weights = (label >= 0).float()
         # box regression target
-        reg_mask = pos_bboxes.new_zeros(
-            ious.size(0)).long()  # TODO: Check reg mask
-        reg_mask[0:pos_gt_bboxes.size(0)] = 1
+        reg_mask = ious > cfg.reg_pos_thr
         bbox_weights = (reg_mask > 0).float()
         if reg_mask.bool().any():
             pos_gt_bboxes_ct = pos_gt_bboxes.clone().detach()
-            roi_center = pos_bboxes[..., 0:3]
             roi_ry = pos_bboxes[..., 6] % (2 * np.pi)
 
             # canonical transformation
-            pos_gt_bboxes_ct[..., 0:3] -= roi_center
+            pos_gt_bboxes_ct[..., 0:6] -= pos_bboxes[..., 0:6]
             pos_gt_bboxes_ct[..., 6] -= roi_ry
             pos_gt_bboxes_ct[..., 0:3] = rotation_3d_in_axis(
                 pos_gt_bboxes_ct[..., 0:3].unsqueeze(1), -(roi_ry),
@@ -275,7 +275,7 @@ class CenterPointBBoxHead(BaseModule):
             rois_anchor[:, 0:3] = 0
             rois_anchor[:, 6] = 0
             # Directly encode as (dx, dy, dz, dw, dl, dh, dtheta)
-            bbox_targets = pos_gt_bboxes
+            bbox_targets = pos_gt_bboxes_ct
         else:
             # no fg bbox
             bbox_targets = pos_gt_bboxes.new_empty((0, 7))
