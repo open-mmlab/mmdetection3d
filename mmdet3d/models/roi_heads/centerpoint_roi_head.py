@@ -4,8 +4,7 @@ from torch.nn import functional as F
 from mmdet3d.core import AssignResult
 from mmdet3d.core.bbox import LiDARInstance3DBoxes, bbox3d2result
 from mmdet.core import build_assigner, build_sampler
-from mmdet.models import HEADS
-from ..builder import build_head, build_roi_extractor
+from ..builder import HEADS, build_head, build_roi_extractor
 from .base_3droi_head import Base3DRoIHead
 
 
@@ -119,7 +118,7 @@ class CenterPointRoIHead(Base3DRoIHead):
         Returns:
             list[dict[str, torch.Tensor]]: Bounding box results in cpu mode.
                 - boxes_3d (torch.Tensor): 3D boxes.
-                - scores (torch.Tensor): Prediction scores.
+                - scores_3d (torch.Tensor): Prediction scores.
                 - labels_3d (torch.Tensor): Box labels.
                 - attrs_3d (torch.Tensor, optional): Box attributes.
         """

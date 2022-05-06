@@ -44,7 +44,7 @@ class TestCenterPointBBoxHead:
         torch.zeros(rois_tensor.shape[0])
     ]]
 
-    roi_features = bev_feature_extractor.forward(bev_feats, rois)  # [[3,5*C]]
+    roi_features = bev_feature_extractor(bev_feats, rois)  # [[3,5*C]]
 
     def test_forward(self):
         pred_res = self.bbox_head(self.roi_features)

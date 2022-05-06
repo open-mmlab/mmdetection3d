@@ -24,6 +24,7 @@ class BEVFeatureExtractor(BaseModule):
         voxel_size,
         downsample_stride,
     ):
+        super(BEVFeatureExtractor, self).__init__()
         self.pc_start = pc_start
         self.voxel_size = voxel_size
         self.downsample_stride = downsample_stride
