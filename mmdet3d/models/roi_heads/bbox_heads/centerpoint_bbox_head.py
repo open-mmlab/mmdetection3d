@@ -26,7 +26,8 @@ class CenterPointBBoxHead(BaseModule):
                  dp_ratio=0.3,
                  code_size=7,
                  num_classes=1,
-                 loss_reg=dict(type='L1', reduction='none', loss_weight=1.0),
+                 loss_reg=dict(
+                     type='L1Loss', reduction='none', loss_weight=1.0),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
                      reduction='none',
@@ -112,7 +113,7 @@ class CenterPointBBoxHead(BaseModule):
         cls_pred = torch.cat([pred_batch['cls'] for pred_batch in pred_res],
                              dim=0)
         label = torch.cat(list(label), dim=0).reshape(-1, self.num_classes)
-        label_weights = torch.cat(list(label_weights), dim=0).reshape(-1, 1)
+        label_weights = torch.cat(list(label_weights), dim=0)
         loss_cls = self.loss_cls(cls_pred, label, label_weights)
         losses.update(loss_cls=loss_cls)
 

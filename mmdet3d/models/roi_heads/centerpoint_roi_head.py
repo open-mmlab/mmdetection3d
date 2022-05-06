@@ -93,7 +93,6 @@ class CenterPointRoIHead(Base3DRoIHead):
         sample_results = self._assign_and_sample(rois, gt_bboxes_3d,
                                                  gt_labels_3d)
 
-        # TODO: get sampled roi_features
         sampled_rois = [[LiDARInstance3DBoxes(sample_res.bboxes)]
                         for sample_res in sample_results]
         roi_features_sampled = self.bev_feature_extractor(

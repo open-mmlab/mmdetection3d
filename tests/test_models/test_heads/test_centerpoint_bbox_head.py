@@ -141,5 +141,5 @@ class TestCenterPointBBoxHead:
 
         loss = self.bbox_head.loss(roi_features_sampled, [sampling_result],
                                    train_cfg)
-        assert loss['loss_cls'].shape == torch.Size([3, 3])
+        assert loss['loss_cls'].shape == torch.Size([3])
         assert loss['loss_reg'].shape == torch.Size([3, 7])
