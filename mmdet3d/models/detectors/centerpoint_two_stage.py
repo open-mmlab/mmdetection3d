@@ -11,6 +11,20 @@ from .two_stage import TwoStage3DDetector
 
 @DETECTORS.register_module()
 class CenterPointTwoStage(TwoStage3DDetector):
+    """Two-stage center point.
+
+    Args:
+        voxel_layer (dict): Config of voxelization layer.
+        voxel_encoder (dict): Config of voxelization encoder.
+        middle_encoder (dict): Config of middle encoder.
+        backbone (dict): Config of one-stage backbone.
+        neck (dict): Config of one-stage neck.
+        rpn_head (dict): Config of one-stage head.
+        roi_head (dict): Config of two-stage head.
+        train_cfg (dict): Config of the training.
+        test_cfg (dict): Config of the testing.
+        init_cfg (dict): Initialization config dict.
+    """
 
     def __init__(self,
                  voxel_layer,
@@ -37,8 +51,6 @@ class CenterPointTwoStage(TwoStage3DDetector):
         self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
-
-        self._voxel_size
 
     def extract_feat(self, points):
         """Extract features from images and points.
@@ -88,7 +100,7 @@ class CenterPointTwoStage(TwoStage3DDetector):
         one_stage_losses = self.rpn_head.loss(*ont_stage_loss_inputs)
         losses.update(one_stage_losses)
         # - get one-stage rois
-        rois = self.rpn_head.get_bboxes(one_stage_head_outs)
+        rois = self.rpn_head.get_bboxes(one_stage_head_outs, img_metas)
         # - two-stage loss
         roi_losses = self.roi_head.forward_train(bev_feature, img_metas, rois,
                                                  gt_bboxes_3d, gt_labels_3d)
@@ -97,18 +109,31 @@ class CenterPointTwoStage(TwoStage3DDetector):
         return losses
 
     def simple_test(self, points, img_metas, imgs=None, rescale=False):
-        """Test without augmentation."""
+        """Test without augmentation.
+
+        Args:
+            points (list[torch.Tensor]): Points of each sample. The outer
+                list indicates point cloud in a batch. The shape of inside
+                point cloud is [N, C]
+            imput_metas (list[dict]): Meta info of each input.
+            imgs (list[torch.Tensor]): Images of each sample.
+            rescale (bool): Whether to rescale results.
+
+        Returns:
+            list[dict[str, torch.Tensor]]: Bounding box results in cpu mode.
+                - boxes_3d (torch.Tensor): 3D boxes.
+                - scores_3d (torch.Tensor): Prediction scores.
+                - labels_3d (torch.Tensor): Box labels.
+                - attrs_3d (torch.Tensor, optional): Box attributes.
+        """
 
         assert self.with_bbox, 'Bbox head must be implemented.'
-        # 1. extract feature
+        # extract feature
         bev_feature = self.extract_feat(points)
         one_stage_head_outs = self.rpn_head(bev_feature)
-        # 2. get one-stage rois
-        rois = self.rpn_head.get_bboxes(one_stage_head_outs)
-        # 3. 将 roi 和 feature 输入 roi_head， 输出最终的 proposals
-        #   - roi head forward 输出最终特征 (self.)
-        #   - 根据 roi head 输出的特征及 one-stage roi 输出最终的 proposals
-        # 由 roi_head 的 simple_test() 实现上述功能
+        # get one-stage rois
+        rois = self.rpn_head.get_bboxes(one_stage_head_outs, img_metas)
+        # get two-stage proposals
         bbox_results = self.roi_head.simple_test(bev_feature, img_metas, rois)
         return bbox_results
 
@@ -128,7 +153,7 @@ class CenterPointTwoStage(TwoStage3DDetector):
         """
         voxels, coors, num_points = [], [], []
         for res in points:
-            res_voxels, res_coors, res_num_points = self.pts_voxel_layer(res)
+            res_voxels, res_coors, res_num_points = self.voxel_layer(res)
             voxels.append(res_voxels)
             coors.append(res_coors)
             num_points.append(res_num_points)

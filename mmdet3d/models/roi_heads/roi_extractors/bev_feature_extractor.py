@@ -43,9 +43,8 @@ class BEVFeatureExtractor(BaseModule):
             list[torch.Tensor]: roi features with shape of [N, 5*C]
         """
 
-        # NOTE: ONLY surpport the final output of BEV feature maps now
+        # NOTE: ONLY surpport the latest output of BEV feature maps now
         bev_feature = bev_feature[-1]
-        # rois = rois[-1]
 
         roi_features = []
         batch_size = len(bev_feature)
@@ -53,17 +52,16 @@ class BEVFeatureExtractor(BaseModule):
         for i in range(batch_size):
             bboxes = rois[i][0]
             num_boxes = len(bboxes)
-            # 计算 bbox 的中心点和四边中点
             feature_points = self.get_feature_points(bboxes)  # [5*num_box, 2]
-            # 计算五个点在 bev 中的坐标(float)
+
             xs = (feature_points[..., 0] - self.pc_start[0]
                   ) / self.voxel_size[0] / self.downsample_stride
             ys = (feature_points[..., 1] - self.pc_start[1]
                   ) / self.voxel_size[1] / self.downsample_stride
-            # 双线性插值，得到五个 feature
+
             features = self.bilinear_interpolate(bev_feature[i], xs,
                                                  ys)  # [5*num_box, C]
-            # 将 5 个 feature 拼接起来
+
             roi_feature = torch.cat([
                 features[i * num_boxes:(i + 1) * num_boxes]
                 for i in range(num_points)

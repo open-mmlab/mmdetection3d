@@ -10,15 +10,14 @@ from .base_3droi_head import Base3DRoIHead
 
 @HEADS.register_module()
 class CenterPointRoIHead(Base3DRoIHead):
-    """Two-Stage CenterPoint's RoI Head.
+    """RoI Head of Two-Stage CenterPoint.
 
     Args:
-        bev_feature_extractor_cfg (dict): Config of bev bev_feature_extractor
-        bbox_head_cfg (dict): bev bev_feature_extractor
-            shared_fc=[256, 256],
-            cls_fc=[256, 256],
-            reg_fc=[256, 256],
-            dp_ratio=0.3,
+        bev_feature_extractor_cfg (dict): Config dict of BEV feature extractor.
+        bbox_head (dict): Config dict of bbox head.
+        train_cfg (dict): Config of the training.
+        test_cfg (dict): Config of the testing.
+        init_cfg (dict): Initialization config dict.
     """
 
     def __init__(self,
@@ -92,8 +91,10 @@ class CenterPointRoIHead(Base3DRoIHead):
         sample_results = self._assign_and_sample(rois, gt_bboxes_3d,
                                                  gt_labels_3d)
 
-        sampled_rois = [[LiDARInstance3DBoxes(sample_res.bboxes)]
-                        for sample_res in sample_results]
+        sampled_rois = [[
+            LiDARInstance3DBoxes(
+                sample_res.bboxes, box_dim=sample_res.bboxes.size(-1))
+        ] for sample_res in sample_results]
         roi_features_sampled = self.bev_feature_extractor(
             bev_feature, sampled_rois)  # cat([pos_box, neg_box])
 
@@ -123,10 +124,9 @@ class CenterPointRoIHead(Base3DRoIHead):
                 - attrs_3d (torch.Tensor, optional): Box attributes.
         """
 
-        # 提取 bev 特征
-        roi_features = self.bev_feature_extractor(
-            bev_feature, rois)  # extract feature in roi
-        # 对 roi_features 进行特征提取
+        # extract bev features
+        roi_features = self.bev_feature_extractor(bev_feature, rois)
+        # predict proposals in roi feature
         bbox_list = self.bbox_head.get_bboxes(roi_features, img_metas, rois)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)

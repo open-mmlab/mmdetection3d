@@ -15,7 +15,16 @@ class CenterPointBBoxHead(BaseModule):
     """Box head of the second stage CenterPoint.
 
     Args:
-        TODO: assert the default values
+        input_channels (int): The number of input channels.
+        shared_fc (list[int]): Output channels of the shared head.
+        cls_fc (list[int]): Output channels of the classification head.
+        reg_fc (list[int]): Output channels of the regression head.
+        dp_ratio (float): Ratio of Dropout.
+        code_size (int): Dimension of the encoded bbox.
+        num_classes (int): The number of classes.
+        loss_reg (dict): Config dict of regression loss.
+        loss_cls (dict): Config dict of classification loss.
+        init_cfg (dict): Initialization config dict.
     """
 
     def __init__(self,
@@ -154,23 +163,20 @@ class CenterPointBBoxHead(BaseModule):
         res_lists = []
         batch_size = len(roi_features)
         for batch_idx in range(batch_size):
-            # - 计算 cls_head 的得分
+            # - calculate score
             bbox_head = pred_res[batch_idx]
             cls = bbox_head['cls']
             assert cls.shape[-1] == 1  # NOTE: ONLY surpport class agnostic now
-            # - 与 one-stage 求几何平均数
             scores = torch.sqrt(
                 torch.sigmoid(cls).reshape(-1) * rois[batch_idx][1])
 
             # box refinement
             reg = bbox_head['reg']
-            # - transfer into global coordinates
             dxyz = reg[:, :3].unsqueeze(1)  # [N, 3] -> [N, 1, 3]
             dxyz = rotation_3d_in_axis(
                 dxyz, rois[batch_idx][0].yaw, axis=2).squeeze(1)
             reg[:, :3] = dxyz
 
-            # - 与 one-stage 的 bbox 相加
             bboxes = reg + rois[batch_idx][
                 0].tensor[:, :7]  # TODO: consider velocity
 

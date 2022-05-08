@@ -567,3 +567,62 @@ def test_smoke():
     assert boxes_3d.tensor.shape[1] == 7
     assert scores_3d.shape[0] >= 0
     assert labels_3d.shape[0] >= 0
+
+
+def test_centerpoint_two_stage():
+
+    # build network
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    _setup_seed(0)
+
+    cfg = _get_detector_cfg(
+        '_base_/models/centerpoint_twostage_02pillar_second_secfpn_nus.py')
+    self = build_detector(cfg).cuda()
+
+    # test extract_feat
+    H = cfg.middle_encoder.output_shape[0]
+    W = cfg.middle_encoder.output_shape[1]
+    channels = cfg.voxel_encoder.in_channels
+    points_0 = torch.rand([1000, channels], device='cuda')
+    points_1 = torch.rand([1000, channels], device='cuda')
+    points = [points_0, points_1]
+    feats = self.extract_feat(points)
+    assert len(feats) == 1  # the number of multi-level feature maps
+    assert feats[0].shape == torch.Size([2, 128 + 128 + 128, H // 4, W // 4])
+
+    # test forward_train
+    img_meta = dict(
+        box_type_3d=LiDARInstance3DBoxes,
+        flip=True,
+        pcd_horizontal_flip=True,
+        pcd_vertical_flip=False)
+    bboxes = LiDARInstance3DBoxes(
+        torch.rand([10, 9], device='cuda'), box_dim=9)
+    labels = torch.ones(len(bboxes), dtype=torch.long, device='cuda')
+    img_metas = [img_meta, img_meta]
+    gt_bboxes_3d = [bboxes, bboxes]
+    gt_labels_3d = [labels, labels]
+    losses = self.forward_train(points, img_metas, gt_bboxes_3d, gt_labels_3d)
+
+    for key, value in losses.items():
+        assert value >= 0
+
+    # test_simple_test
+    with torch.no_grad():
+        results = self.simple_test(points, img_metas)
+    boxes_3d_0 = results[0]['boxes_3d']
+    scores_3d_0 = results[0]['scores_3d']
+    labels_3d_0 = results[0]['labels_3d']
+    assert boxes_3d_0.shape[0] >= 0
+    assert boxes_3d_0.shape[1] == 7
+    assert scores_3d_0.shape[0] >= 0
+    assert labels_3d_0.shape[0] >= 0
+    boxes_3d_1 = results[1]['boxes_3d']
+    scores_3d_1 = results[1]['scores_3d']
+    labels_3d_1 = results[1]['labels_3d']
+    assert boxes_3d_1.shape[0] >= 0
+    assert boxes_3d_1.shape[1] == 7
+    assert scores_3d_1.shape[0] >= 0
+    assert labels_3d_1.shape[0] >= 0
