@@ -25,7 +25,7 @@
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
 
-**News**: We released the codebase v1.0.0rc1.
+**News**: We released the codebase v1.0.0rc2.
 
 Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
 
@@ -85,7 +85,14 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc1 was released in 1/4/2022.
+v1.0.0rc2 was released in 1/5/2022.
+
+- Support [spconv 2.0](https://github.com/traveller59/spconv)
+- Support [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) with MinkResNet
+- Support training models on custom datasets with only point clouds
+- Update Registry to distinguish the scope of built functions
+- Replace mmcv.iou3d with a set of bird-eye-view (BEV) operators to unify the operations of rotated boxes
+
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
