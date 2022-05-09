@@ -137,6 +137,8 @@ class LoadPointsFromMultiSweeps(object):
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
+        assert max(use_dim) < load_dim, \
+            f'Expect all used dimensions < {load_dim}, got {use_dim}'
 
     def _load_points(self, pts_filename):
         """Private function to load point clouds data.
@@ -197,7 +199,8 @@ class LoadPointsFromMultiSweeps(object):
                     cloud arrays.
         """
         points = results['points']
-        points.tensor[:, 4] = 0
+        if points.tensor.shape[-1] >= 5:
+            points.tensor[:, 4] = 0
         sweep_points_list = [points]
         ts = results['timestamp']
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
@@ -224,7 +227,9 @@ class LoadPointsFromMultiSweeps(object):
                 points_sweep[:, :3] = points_sweep[:, :3] @ sweep[
                     'sensor2lidar_rotation'].T
                 points_sweep[:, :3] += sweep['sensor2lidar_translation']
-                points_sweep[:, 4] = ts - sweep_ts
+                if points_sweep.shape[-1] >= 5:
+                    points_sweep[:, 4] = ts - sweep_ts
+                points_sweep = points_sweep[:, self.use_dim]
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
 
