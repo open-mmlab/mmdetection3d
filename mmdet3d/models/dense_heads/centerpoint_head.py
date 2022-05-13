@@ -554,12 +554,12 @@ class CenterHead(BaseModule):
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
                     # TODO: support other outdoor dataset
+                    rot = task_boxes[idx][k][6]
+                    box_dim = task_boxes[idx][k][3:6]
+                    if self.norm_bbox:
+                        box_dim = box_dim.log()
                     if self.with_velocity:
                         vx, vy = task_boxes[idx][k][7:]
-                        rot = task_boxes[idx][k][6]
-                        box_dim = task_boxes[idx][k][3:6]
-                        if self.norm_bbox:
-                            box_dim = box_dim.log()
                         anno_box[new_idx] = torch.cat([
                             center - torch.tensor([x, y], device=device),
                             z.unsqueeze(0), box_dim,
@@ -569,10 +569,6 @@ class CenterHead(BaseModule):
                             vy.unsqueeze(0)
                         ])
                     else:
-                        rot = task_boxes[idx][k][6]
-                        box_dim = task_boxes[idx][k][3:6]
-                        if self.norm_bbox:
-                            box_dim = box_dim.log()
                         anno_box[new_idx] = torch.cat([
                             center - torch.tensor([x, y], device=device),
                             z.unsqueeze(0), box_dim,
