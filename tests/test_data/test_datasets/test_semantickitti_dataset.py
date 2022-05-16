@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
 
-import mmcv
 import numpy as np
 import pytest
 import torch
@@ -73,6 +72,42 @@ def test_evaluate():
                'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
                'sidewalk', 'other-ground', 'building', 'fence', 'vegetation',
                'trunck', 'terrian', 'pole', 'traffic-sign')
+    learning_map = {
+        0: 0,  # "unlabeled"
+        1: 0,  # "outlier" mapped to "unlabeled" ---------------mapped
+        10: 1,  # "car"
+        11: 2,  # "bicycle"
+        13: 5,  # "bus" mapped to "other-vehicle" ---------------mapped
+        15: 3,  # "motorcycle"
+        16: 5,  # "on-rails" mapped to "other-vehicle" ----------mapped
+        18: 4,  # "truck"
+        20: 5,  # "other-vehicle"
+        30: 6,  # "person"
+        31: 7,  # "bicyclist"
+        32: 8,  # "motorcyclist"
+        40: 9,  # "road"
+        44: 10,  # "parking"
+        48: 11,  # "sidewalk"
+        49: 12,  # "other-ground"
+        50: 13,  # "building"
+        51: 14,  # "fence"
+        52: 0,  # "other-structure" mapped to "unlabeled" -------mapped
+        60: 9,  # "lane-marking" to "road" ----------------------mapped
+        70: 15,  # "vegetation"
+        71: 16,  # "trunk"
+        72: 17,  # "terrain"
+        80: 18,  # "pole"
+        81: 19,  # "traffic-sign"
+        99: 0,  # "other-object" to "unlabeled" -----------------mapped
+        252: 1,  # "moving-car" to "car" -------------------------mapped
+        253: 7,  # "moving-bicyclist" to "bicyclist" -------------mapped
+        254: 6,  # "moving-person" to "person" -------------------mapped
+        255: 8,  # "moving-motorcyclist" to "motorcyclist" -------mapped
+        256: 5,  # "moving-on-rails" mapped to "other-vehicle" ---mapped
+        257: 5,  # "moving-bus" mapped to "other-vehicle" --------mapped
+        258: 4,  # "moving-truck" to "truck" ---------------------mapped
+        259: 5  # "moving-other"-vehicle to "other-vehicle" -----mapped
+    }
     pipelines = [
         dict(
             type='LoadPointsFromFile',
@@ -119,16 +154,13 @@ def test_evaluate():
         ignore=ignore,
         min_points=min_points)
 
-    global_cfg = mmcv.load(osp.join(data_root, 'semantic-kitti.yaml'))
-    class_remap = global_cfg['learning_map']
+    class_remap = learning_map
     inst_pred_0 = np.fromfile(
         osp.join(data_root, 'sequences/00/labels/000000.label'),
         dtype=np.int32).reshape(-1, 1)
     sem_pred_0 = inst_pred_0 & 0xFFFF
     sem_pred_0 = np.vectorize(class_remap.__getitem__)(sem_pred_0)
 
-    # sem_pred_0, inst_pred_0, sem_gt_0, inst_gt_0 = gen_psuedo_labels(50)
-    # sem_pred_1, inst_pred_1, sem_gt_1, inst_gt_1 = gen_psuedo_labels(51)
     result0 = dict(pred_sem=sem_pred_0, pred_inst=inst_pred_0)
 
     ap_dict = semantic_kitti_dataset.evaluate([result0])
@@ -136,8 +168,3 @@ def test_evaluate():
     assert np.isclose(ap_dict[0]['all']['PQ'], 0.21052631578947367)
     assert np.isclose(ap_dict[0]['all']['SQ'], 0.21052631578947367)
     assert np.isclose(ap_dict[0]['all']['RQ'], 0.21052631578947367)
-
-
-if __name__ == '__main__':
-    # test_getitem()
-    test_evaluate()

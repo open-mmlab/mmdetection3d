@@ -242,19 +242,37 @@ class LoadPointsFromMultiSweeps(object):
 
 @PIPELINES.register_module()
 class LoadCalibPoseTime(object):
-    """load calib poses and times for SemanticKitti dataset."""
+    """Load calibration poses and timestamps.
+
+    This is usually used for SemanticKitti dataset.
+
+    Args:
+        use_calib (bool, optional): Defaults to True.
+        use_pose (bool, optional): Defaults to True.
+        use_time (bool, optional): Defaults to False.
+    """
 
     def __init__(self, use_calib=True, use_pose=True, use_time=False):
 
-        # self.data_root = data_root
         self.use_calib = use_calib
         self.use_pose = use_pose
         self.use_time = use_time
 
     def __call__(self, results):
+        """Call function to load calib, poses and times from files.
 
+        Args:
+            results (dict): Result dict containing calib, poses and times
+                filenames.
+
+        Returns:
+            dict: The result dict containing the calib, poses and times data.
+                Added key and value are described below.
+        """
+
+        sample_idx = results['sample_idx']
         seq_folder = results['ann_info']['pts_semantic_mask_path'].replace(
-            'labels/000000.label', '')
+            f'labels/{sample_idx}.label', '')
         calibrations = self.parse_calibration(
             osp.join(seq_folder, 'calib.txt'))
 
@@ -276,11 +294,13 @@ class LoadCalibPoseTime(object):
         return results
 
     def parse_calibration(self, filename):
-        """ read calibration file with given filename
-            Returns
-            -------
-            dict
-                Calibration matrices as 4x4 numpy arrays.
+        """Read calibration file with given filename.
+
+        Args:
+            filename (str): The calib filenames.
+
+        Returns:
+            dict: Calibration matrices as 4x4 numpy arrays.
         """
         calib = {}
 
@@ -302,11 +322,14 @@ class LoadCalibPoseTime(object):
         return calib
 
     def parse_poses(self, filename, calibration):
-        """ read poses file with per-scan poses from given filename
-            Returns
-            -------
-            list
-                list of poses as 4x4 numpy arrays.
+        """Read poses file with per-scan poses from given filename.
+
+        Args:
+            filename (str): The calib filenames.
+            calibration (dict): Calibration matrices as 4x4 numpy arrays.
+
+        Returns:
+            list: Poses list as 4x4 numpy arrays.
         """
         file = open(filename)
 
@@ -330,10 +353,16 @@ class LoadCalibPoseTime(object):
         return poses
 
     def parse_times(self, filename):
+        """Read timestamps from given filename.
 
+        Args:
+            filename (str): The tims filenames.
+
+        Returns:
+            list: Timestamps list as 4x4 numpy arrays.
+        """
         time_file = open(filename)
         times = [line for line in time_file]
-
         time_file.close()
         return times
 
@@ -618,7 +647,7 @@ class LoadAnnotations3D(LoadAnnotations):
                  with_seg=False,
                  with_bbox_depth=False,
                  poly2mask=True,
-                 seg_3d_dtype='int',
+                 seg_3d_dtype=np.int64,
                  file_client_args=dict(backend='disk')):
         super().__init__(
             with_bbox,
@@ -700,7 +729,7 @@ class LoadAnnotations3D(LoadAnnotations):
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_instance_mask_path)
-            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int)
+            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.long)
         except ConnectionError:
             mmcv.check_file_exist(pts_instance_mask_path)
             pts_instance_mask = np.fromfile(
