@@ -1,8 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-# TODO: will use real PixelData once it is added in mmengine
-from mmengine.data import BaseDataElement
-from mmengine.data import BaseDataElement as PixelData
-from mmengine.data import InstanceData
+from mmengine.data import BaseDataElement, InstanceData, PixelData
 
 
 class Det3DDataSample(BaseDataElement):
@@ -28,91 +25,105 @@ class Det3DDataSample(BaseDataElement):
         - ``pred_pts_panoptic_seg``(PixelData): Predicted of point cloud
             panoptic segmentation.
 
-
     Examples:
-         >>> import torch
-         >>> import numpy as np
-         >>> from mmengine.data import InstanceData
-         # TODO: will use real PixelData once it is added in mmengine
-         >>> from mmengine.data import BaseDataElement as PixelData
-         >>> from mmdet3d.core import Det3DDataSample
+    >>> from mmengine.data import InstanceData, PixelData
 
-         >>> data_sample = Det3DDataSample()
-         >>> img_meta = dict(img_shape=(800, 1196, 3),
-         ...                 pad_shape=(800, 1216, 3))
-         >>> gt_instances_3d = InstanceData(metainfo=img_meta)
-         >>> gt_instances_3d.bboxes = torch.rand((5, 4))
-         >>> gt_instances_3d.labels = torch.rand((5,))
-         >>> data_sample.gt_instances_3d = gt_instances_3d
-         >>> assert 'img_shape' in data_sample.gt_instances_3d.metainfo_keys()
-         >>> len(data_sample.gt_instances_3d)
-         5
-         >>> print(data_sample)
-        <Det3DDataSample(
+    >>> from mmdet3d.core import Det3DDataSample
+    >>> from mmdet3d.core.bbox import BaseInstance3DBoxes
+
+    >>> data_sample = Det3DDataSample()
+    >>> meta_info = dict(img_shape=(800, 1196, 3),
+    ...     pad_shape=(800, 1216, 3))
+    >>> gt_instances_3d = InstanceData(metainfo=meta_info)
+    >>> gt_instances_3d.bboxes = BaseInstance3DBoxes(torch.rand((5, 7)))
+    >>> gt_instances_3d.labels = torch.randint(0,3,(5, ))
+    >>> data_sample.gt_instances_3d = gt_instances_3d
+    >>> assert 'img_shape' in data_sample.gt_instances_3d.metainfo_keys()
+    >>> print(data_sample)
+    <Det3DDataSample(
+
+        META INFORMATION
+
+        DATA FIELDS
+        _gt_instances_3d: <InstanceData(
+
             META INFORMATION
+            pad_shape: (800, 1216, 3)
+            img_shape: (800, 1196, 3)
+
             DATA FIELDS
-            gt_instances_3d: <InstanceData(
+            labels: tensor([0, 0, 1, 0, 2])
+            bboxes: BaseInstance3DBoxes(
+            tensor([[0.2874, 0.3078, 0.8368, 0.2326, 0.9845, 0.6199, 0.9944],
+                    [0.6222, 0.8778, 0.7306, 0.3320, 0.3973, 0.7662, 0.7326],
+                    [0.8547, 0.6082, 0.1660, 0.1676, 0.9810, 0.3092, 0.0917],
+                    [0.4686, 0.7007, 0.4428, 0.0672, 0.3319, 0.3033, 0.8519],
+                    [0.9693, 0.5315, 0.4642, 0.9079, 0.2481, 0.1781, 0.9557]]))
+        ) at 0x7fb0d9354280>
+        gt_instances_3d: <InstanceData(
 
-                    META INFORMATION
-                    pad_shape: (800, 1216, 3)
-                    img_shape: (800, 1196, 3)
-
-                    DATA FIELDS
-                    bboxes: tensor([[0.4247, 0.9994, 0.3259, 0.7683],
-                                [0.4324, 0.6514, 0.9889, 0.7974],
-                                [0.0928, 0.0344, 0.9114, 0.2769],
-                                [0.2408, 0.8446, 0.5631, 0.2750],
-                                [0.5813, 0.9661, 0.6281, 0.9755]])
-                    labels: tensor([0.7416, 0.3896, 0.9580, 0.6292, 0.3588])
-                ) at 0x7f43a23c7460>
-        ) at 0x7f43a23c7fa0>
-         >>> pred_instances_3d = InstanceData(metainfo=img_meta)
-         >>> pred_instances_3d.bboxes = torch.rand((5, 4))
-         >>> pred_instances_3d.scores = torch.rand((5,))
-         >>> data_sample = Det3DDataSample(pred_instances_3d=pred_instances_3d)
-         >>> assert 'pred_instances_3d' in data_sample
-
-         >>> data_sample = Det3DDataSample()
-         >>> gt_instances_3d_data = dict(
-         ...                        bboxes=torch.rand(2, 4),
-         ...                        labels=torch.rand(2),
-         ...                        masks=np.random.rand(2, 2, 2))
-         >>> gt_instances_3d = InstanceData(**gt_instances_3d_data)
-         >>> data_sample.gt_instances_3d = gt_instances_3d
-         >>> assert 'gt_instances_3d' in data_sample
-         >>> assert 'masks' in data_sample.gt_instances_3d
-
-         >>> data_sample = Det3DDataSample()
-         >>> gt_pts_panoptic_seg_data = dict(panoptic_seg=torch.rand(2, 4))
-         >>> gt_pts_panoptic_seg = PixelData(**gt_pts_panoptic_seg_data)
-         >>> data_sample.gt_pts_panoptic_seg = gt_pts_panoptic_seg
-         >>> print(data_sample)
-        <Det3DDataSample(
             META INFORMATION
+            pad_shape: (800, 1216, 3)
+            img_shape: (800, 1196, 3)
+
             DATA FIELDS
-            _gt_pts_panoptic_seg: <BaseDataElement(
+            labels: tensor([0, 0, 1, 0, 2])
+            bboxes: BaseInstance3DBoxes(
+            tensor([[0.2874, 0.3078, 0.8368, 0.2326, 0.9845, 0.6199, 0.9944],
+                    [0.6222, 0.8778, 0.7306, 0.3320, 0.3973, 0.7662, 0.7326],
+                    [0.8547, 0.6082, 0.1660, 0.1676, 0.9810, 0.3092, 0.0917],
+                    [0.4686, 0.7007, 0.4428, 0.0672, 0.3319, 0.3033, 0.8519],
+                    [0.9693, 0.5315, 0.4642, 0.9079, 0.2481, 0.1781, 0.9557]]))
+        ) at 0x7fb0d9354280>
+    ) at 0x7fb0d93543d0>
+    >>> pred_instances_3d = InstanceData(metainfo=meta_info)
+    >>> pred_instances_3d.bboxes = BaseInstance3DBoxes(torch.rand((5, 7)))
+    >>> pred_instances_3d.scores = torch.rand((5, ))
+    >>> data_sample = Det3DDataSample(pred_instances_3d=pred_instances_3d)
+    >>> assert 'pred_instances_3d' in data_sample
 
-                    META INFORMATION
+    >>> data_sample = Det3DDataSample()
+    >>> gt_instances_3d_data = dict(
+    ...    bboxes=BaseInstance3DBoxes(torch.rand((2, 7))),
+    ...    labels=torch.rand(2))
+    >>> gt_instances_3d = InstanceData(**gt_instances_3d_data)
+    >>> data_sample.gt_instances_3d = gt_instances_3d
+    >>> assert 'gt_instances_3d' in data_sample
+    >>> assert 'bboxes' in data_sample.gt_instances_3d
 
-                    DATA FIELDS
-                    panoptic_seg: tensor([[0.4109, 0.1415, 0.8463, 0.9587],
-                                [0.3188, 0.3690, 0.1366, 0.3860]])
-                ) at 0x7f43a23d5700>
-            gt_pts_panoptic_seg: <BaseDataElement(
+    >>> data_sample = Det3DDataSample()
+    >>> gt_pts_panoptic_seg_data = dict(panoptic_seg=torch.rand(1, 2, 4))
+    >>> gt_pts_panoptic_seg = PixelData(**gt_pts_panoptic_seg_data)
+    >>> data_sample.gt_pts_panoptic_seg = gt_pts_panoptic_seg
+    >>> print(data_sample)
+    <Det3DDataSample(
 
-                    META INFORMATION
+        META INFORMATION
 
-                    DATA FIELDS
-                    panoptic_seg: tensor([[0.4109, 0.1415, 0.8463, 0.9587],
-                                [0.3188, 0.3690, 0.1366, 0.3860]])
-                ) at 0x7f43a23d5700>
-        ) at 0x7f44ee39b160>
-        >>> data_sample = Det3DDataSample()
-        >>> gt_pts_sem_seg_data = dict(segm_seg=torch.rand(2, 2, 2))
-        >>> gt_pts_sem_seg = PixelData(**gt_pts_sem_seg_data)
-        >>> data_sample.gt_pts_sem_seg = gt_pts_sem_seg
-        >>> assert 'gt_pts_sem_seg' in data_sample
-        >>> assert 'segm_seg' in data_sample.gt_pts_sem_seg
+        DATA FIELDS
+        _gt_pts_panoptic_seg: <PixelData(
+
+                META INFORMATION
+
+                DATA FIELDS
+                panoptic_seg: tensor([[[0.9875, 0.3012, 0.5534, 0.9593],
+                             [0.1251, 0.1911, 0.8058, 0.2566]]])
+            ) at 0x7fb0d93543d0>
+        gt_pts_panoptic_seg: <PixelData(
+
+                META INFORMATION
+
+                DATA FIELDS
+                panoptic_seg: tensor([[[0.9875, 0.3012, 0.5534, 0.9593],
+                             [0.1251, 0.1911, 0.8058, 0.2566]]])
+            ) at 0x7fb0d93543d0>
+    ) at 0x7fb0d9354280>
+    >>> data_sample = Det3DDataSample()
+    >>> gt_pts_sem_seg_data = dict(segm_seg=torch.rand(2, 2, 2))
+    >>> gt_pts_sem_seg = PixelData(**gt_pts_sem_seg_data)
+    >>> data_sample.gt_pts_sem_seg = gt_pts_sem_seg
+    >>> assert 'gt_pts_sem_seg' in data_sample
+    >>> assert 'segm_seg' in data_sample.gt_pts_sem_seg
     """
 
     @property
