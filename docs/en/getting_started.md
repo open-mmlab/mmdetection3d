@@ -7,33 +7,32 @@
 - GCC 5+
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
-
 The required versions of MMCV, MMDetection and MMSegmentation for different versions of MMDetection3D are as below. Please install the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
 
-| MMDetection3D version |   MMDetection version   | MMSegmentation version |        MMCV version        |
-| :-------------------: | :---------------------: | :--------------------: | :------------------------: |
-|        master         | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.7.0  |
-|       v1.0.0rc2       | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.7.0  |
-|       v1.0.0rc1       | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.5.0  |
-|       v1.0.0rc0       | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0 |
-|        0.18.1         | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0 |
-|        0.18.0         | mmdet>=2.19.0, <=3.0.0  | mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0 |
-|        0.17.3         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
-|        0.17.2         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
-|        0.17.1         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
-|        0.17.0         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
-|        0.16.0         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
-|        0.15.0         | mmdet>=2.14.0, <=3.0.0  | mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0  |
-|        0.14.0         | mmdet>=2.10.0, <=2.11.0 |     mmseg==0.14.0      | mmcv-full>=1.3.1, <=1.4.0  |
-|        0.13.0         | mmdet>=2.10.0, <=2.11.0 |      Not required      | mmcv-full>=1.2.4, <=1.4.0  |
-|        0.12.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.4.0  |
-|        0.11.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.3.0  |
-|        0.10.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.3.0  |
-|         0.9.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.2.4, <=1.3.0  |
-|         0.8.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.1.5, <=1.3.0  |
-|         0.7.0         | mmdet>=2.5.0, <=2.11.0  |      Not required      | mmcv-full>=1.1.5, <=1.3.0  |
-|         0.6.0         | mmdet>=2.4.0, <=2.11.0  |      Not required      | mmcv-full>=1.1.3, <=1.2.0  |
-|         0.5.0         |          2.3.0          |      Not required      |      mmcv-full==1.0.5      |
+| MMDetection3D version |   MMDetection version    | MMSegmentation version  |        MMCV version         |
+| :-------------------: | :----------------------: | :---------------------: | :-------------------------: |
+|        master         | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.7.0  |
+|       v1.0.0rc2       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.7.0  |
+|       v1.0.0rc1       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.5.0  |
+|       v1.0.0rc0       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
+|        0.18.1         | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
+|        0.18.0         | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
+|        0.17.3         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|        0.17.2         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|        0.17.1         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|        0.17.0         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|        0.16.0         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|        0.15.0         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|        0.14.0         | mmdet>=2.10.0, \<=2.11.0 |      mmseg==0.14.0      | mmcv-full>=1.3.1, \<=1.4.0  |
+|        0.13.0         | mmdet>=2.10.0, \<=2.11.0 |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
+|        0.12.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
+|        0.11.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
+|        0.10.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
+|         0.9.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
+|         0.8.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
+|         0.7.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
+|         0.6.0         | mmdet>=2.4.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.3, \<=1.2.0  |
+|         0.5.0         |          2.3.0           |      Not required       |      mmcv-full==1.0.5       |
 
 # Installation
 
@@ -176,20 +175,20 @@ pip install -v -e .  # or "python setup.py develop"
 Note:
 
 1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
-It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
+   It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
 
-    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
+   > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
 
-    ```shell
-    pip uninstall mmdet3d
-    rm -rf ./build
-    find . -name "*.so" | xargs rm
-    ```
+   ```shell
+   pip uninstall mmdet3d
+   rm -rf ./build
+   find . -name "*.so" | xargs rm
+   ```
 
 2. Following the above instructions, MMDetection3D is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
 
 3. If you would like to use `opencv-python-headless` instead of `opencv-python`,
-you can install it before installing MMCV.
+   you can install it before installing MMCV.
 
 4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
 
@@ -208,10 +207,10 @@ you can install it before installing MMCV.
 
    We also support Minkowski Engine as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip`:
 
-    ```shell
-    conda install openblas-devel -c anaconda
-    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
-    ```
+   ```shell
+   conda install openblas-devel -c anaconda
+   pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
+   ```
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
@@ -283,7 +282,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 ```
 
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
-Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training ```ply data```.
+Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training `ply data`.
 
 ```python
 import numpy as np

@@ -20,9 +20,9 @@ We implement MVX-Net and provide its results and models on KITTI dataset.
 
 ### KITTI
 
-|  Backbone   |Class| Lr schd | Mem (GB) | Inf time (fps) | mAP | Download |
-| :---------: | :-----: | :------: | :------------: | :----: |:----: | :------: |
-|    [SECFPN](./dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py)|3 Class|cosine 80e|6.7||63.22|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805-83442923.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805.log.json)|
+|                               Backbone                                |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                                                                                 Download                                                                                                                                                                                                                 |
+| :-------------------------------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [SECFPN](./dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py) | 3 Class | cosine 80e |   6.7    |                | 63.22 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805-83442923.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805.log.json) |
 
 ## Citation
 
