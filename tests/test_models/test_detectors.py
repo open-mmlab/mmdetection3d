@@ -573,8 +573,7 @@ def test_sassd():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     _setup_seed(0)
-    sassd_cfg = _get_detector_cfg(
-        'sassd/sassd_6x8_80e_kitti-3d-3class.py')
+    sassd_cfg = _get_detector_cfg('sassd/sassd_6x8_80e_kitti-3d-3class.py')
 
     self = build_detector(sassd_cfg).cuda()
     points_0 = torch.rand([2010, 4], device='cuda')
