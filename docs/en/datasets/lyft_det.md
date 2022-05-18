@@ -90,21 +90,21 @@ Next, we will elaborate on the difference compared to nuScenes in terms of the d
 
 - without `lyft_database/xxxxx.bin`: This folder and `.bin` files are not extracted on the Lyft dataset due to the negligible effect of ground-truth sampling in the experiments.
 - `lyft_infos_train.pkl`: training dataset infos, each frame info has two keys: `metadata` and `infos`.
-`metadata` contains the basic information for the dataset itself, such as `{'version': 'v1.01-train'}`, while `infos` contains the detailed information the same as nuScenes except for the following details:
-    - info['sweeps']: Sweeps information.
-        - info['sweeps'][i]['type']: The sweep data type, e.g., `'lidar'`.
-          Lyft has different LiDAR settings for some samples, but we always take only the points collected by the top LiDAR for the consistency of data distribution.
-    - info['gt_names']: There are 9 categories on the Lyft dataset, and the imbalance of annotations for different categories is even more significant than nuScenes.
-    - without info['gt_velocity']: There is no velocity measurement on Lyft.
-    - info['num_lidar_pts']: Set to -1 by default.
-    - info['num_radar_pts']: Set to 0 by default.
-    - without info['valid_flag']: This flag does recorded due to invalid `num_lidar_pts` and `num_radar_pts`.
+  `metadata` contains the basic information for the dataset itself, such as `{'version': 'v1.01-train'}`, while `infos` contains the detailed information the same as nuScenes except for the following details:
+  - info\['sweeps'\]: Sweeps information.
+    - info\['sweeps'\]\[i\]\['type'\]: The sweep data type, e.g., `'lidar'`.
+      Lyft has different LiDAR settings for some samples, but we always take only the points collected by the top LiDAR for the consistency of data distribution.
+  - info\['gt_names'\]: There are 9 categories on the Lyft dataset, and the imbalance of annotations for different categories is even more significant than nuScenes.
+  - without info\['gt_velocity'\]: There is no velocity measurement on Lyft.
+  - info\['num_lidar_pts'\]: Set to -1 by default.
+  - info\['num_radar_pts'\]: Set to 0 by default.
+  - without info\['valid_flag'\]: This flag does recorded due to invalid `num_lidar_pts` and `num_radar_pts`.
 - `nuscenes_infos_train_mono3d.coco.json`: training dataset coco-style info. This file only contains 2D information, without the information required by 3D detection, such as camera intrinsics.
-    - info['images']: A list containing all the image info.
-        - only containing `'file_name'`, `'id'`, `'width'`, `'height'`.
-    - info['annotations']: A list containing all the annotation info.
-        - only containing `'file_name'`, `'image_id'`, `'area'`, `'category_name'`, `'category_id'`, `'bbox'`, `'is_crowd'`, `'segmentation'`, `'id'`, where `'is_crowd'`, `'segmentation'` are set to `0` and `[]` by default.
-        There is no attribute annotation on Lyft.
+  - info\['images'\]: A list containing all the image info.
+    - only containing `'file_name'`, `'id'`, `'width'`, `'height'`.
+  - info\['annotations'\]: A list containing all the annotation info.
+    - only containing `'file_name'`, `'image_id'`, `'area'`, `'category_name'`, `'category_id'`, `'bbox'`, `'is_crowd'`, `'segmentation'`, `'id'`, where `'is_crowd'`, `'segmentation'` are set to `0` and `[]` by default.
+      There is no attribute annotation on Lyft.
 
 Here we only explain the data recorded in the training info files. The same applies to the testing set.
 

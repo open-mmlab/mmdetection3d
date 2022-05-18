@@ -20,19 +20,19 @@ We implement PointRCNN and provide the result with checkpoints on KITTI dataset.
 
 ### KITTI
 
-|  Backbone   |Class| Lr schd | Mem (GB) | Inf time (fps) | mAP | Download |
-| :---------: | :-----: |:-----: | :------: | :------------: | :----: |:----: |
-|    [PointNet++](./point_rcnn_2x8_kitti-3d-3classes.py) |3 Class|cyclic 40e|4.6||70.83|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.log.json)|
+|                      Backbone                       |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                   Download                                                                                                                                    |
+| :-------------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [PointNet++](./point_rcnn_2x8_kitti-3d-3classes.py) | 3 Class | cyclic 40e |   4.6    |                | 70.83 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.log.json) |
 
 Note: mAP represents AP11 results on 3 Class under the moderate setting.
 
 Detailed performance on KITTI 3D detection (3D) is as follows, evaluated by AP11 metric:
 
-|             |     Easy      |    Moderate    |     Hard     |
-|-------------|:-------------:|:--------------:|:------------:|
-| Car         | 89.13 | 78.72 | 78.24 |
-| Pedestrian  | 65.81 | 59.57 | 52.75 |
-| Cyclist     | 93.51 | 74.19 | 70.73 |
+|            | Easy  | Moderate | Hard  |
+| ---------- | :---: | :------: | :---: |
+| Car        | 89.13 |  78.72   | 78.24 |
+| Pedestrian | 65.81 |  59.57   | 52.75 |
+| Cyclist    | 93.51 |  74.19   | 70.73 |
 
 ## Citation
 

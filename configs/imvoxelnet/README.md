@@ -22,9 +22,9 @@ Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNe
 
 ### KITTI
 
-|  Backbone   |Class| Lr schd | Mem (GB) | Inf time (fps) | mAP | Download |
-| :---------: | :-----: |:-----: | :------: | :------------: | :----: |:----: |
-| [ResNet-50](./imvoxelnet_kitti-3d-car.py) | Car | 3x | | |17.26|[model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json)|
+|                 Backbone                  | Class | Lr schd | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                               Download                                                                                                                                                               |
+| :---------------------------------------: | :---: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet-50](./imvoxelnet_kitti-3d-car.py) |  Car  |   3x    |          |                | 17.26 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json) |
 
 ## Citation
 

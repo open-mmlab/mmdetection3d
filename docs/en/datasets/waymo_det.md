@@ -103,36 +103,36 @@ Considering there are many similar frames in the original dataset, we can basica
 
 For evaluation on Waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.  Basically, you can follow the commands below to install `bazel` and build the file.
 
-   ```shell
-   # download the code and enter the base directory
-   git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
-   cd waymo-od
-   git checkout remotes/origin/master
+```shell
+# download the code and enter the base directory
+git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
+cd waymo-od
+git checkout remotes/origin/master
 
-   # use the Bazel build system
-   sudo apt-get install --assume-yes pkg-config zip g++ zlib1g-dev unzip python3 python3-pip
-   BAZEL_VERSION=3.1.0
-   wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
-   sudo bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
-   sudo apt install build-essential
+# use the Bazel build system
+sudo apt-get install --assume-yes pkg-config zip g++ zlib1g-dev unzip python3 python3-pip
+BAZEL_VERSION=3.1.0
+wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+sudo bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+sudo apt install build-essential
 
-   # configure .bazelrc
-   ./configure.sh
-   # delete previous bazel outputs and reset internal caches
-   bazel clean
+# configure .bazelrc
+./configure.sh
+# delete previous bazel outputs and reset internal caches
+bazel clean
 
-   bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
-   cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
-   ```
+bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
+cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+```
 
 Then you can evaluate your models on Waymo. An example to evaluate PointPillars on Waymo with 8 GPUs with Waymo metrics is as follows.
 
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-       'submission_prefix=results/waymo-car/kitti_results'
-   ```
+```shell
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
+    --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
+    'submission_prefix=results/waymo-car/kitti_results'
+```
 
 `pklfile_prefix` should be given in the `--eval-options` if the bin file is needed to be generated. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evaluation, the lack of occlusion and truncation in the converted data, different definitions of difficulty and different methods of computing Average Precision.
 
@@ -148,28 +148,28 @@ Then you can evaluate your models on Waymo. An example to evaluate PointPillars 
 
 An example to test PointPillars on Waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-       'submission_prefix=results/waymo-car/kitti_results'
-   ```
+```shell
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
+    --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
+    'submission_prefix=results/waymo-car/kitti_results'
+```
 
 After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/). Basically, here are some example commands.
 
-   ```shell
-   cd ../waymo-od/
-   bazel build waymo_open_dataset/metrics/tools/create_submission
-   cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
-   vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
-   cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+```shell
+cd ../waymo-od/
+bazel build waymo_open_dataset/metrics/tools/create_submission
+cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
+cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
 
-   cd ../mmdetection3d
-   # suppose the result bin is in `results/waymo-car/submission`
-   mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
+cd ../mmdetection3d
+# suppose the result bin is in `results/waymo-car/submission`
+mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
 
-   tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
-   gzip results/waymo-car/submission/my_model.tar
-   ```
+tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
+gzip results/waymo-car/submission/my_model.tar
+```
 
 For evaluation on the validation set with the eval server, you can also use the same way to generate a submission. Make sure you change the fields in `submission.txtpb` before running the command above.
