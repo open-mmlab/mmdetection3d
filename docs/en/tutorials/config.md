@@ -34,14 +34,14 @@ We follow the below style to name config files. Contributors are advised to foll
 - `{backbone}`: backbone type like `regnet-400mf`, `regnet-1.6gf`.
 - `[neck]`: neck type like `fpn`, `secfpn`.
 - `[norm_setting]`: `bn` (Batch Normalization) is used unless specified, other norm layer type could be `gn` (Group Normalization), `sbn` (Synchronized Batch Normalization).
-`gn-head`/`gn-neck` indicates GN is applied in head/neck only, while `gn-all` means GN is applied in the entire model, e.g. backbone, neck, head.
+  `gn-head`/`gn-neck` indicates GN is applied in head/neck only, while `gn-all` means GN is applied in the entire model, e.g. backbone, neck, head.
 - `[misc]`: miscellaneous setting/plugins of model, e.g. `strong-aug` means using stronger augmentation strategies for training.
 - `[batch_per_gpu x gpu]`: samples per GPU and GPUs, `4x8` is used by default.
 - `{schedule}`: training schedule, options are `1x`, `2x`, `20e`, etc.
-`1x` and `2x` means 12 epochs and 24 epochs respectively.
-`20e` is adopted in cascade models, which denotes 20 epochs.
-For `1x`/`2x`, initial learning rate decays by a factor of 10 at the 8/16th and 11/22th epochs.
-For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
+  `1x` and `2x` means 12 epochs and 24 epochs respectively.
+  `20e` is adopted in cascade models, which denotes 20 epochs.
+  For `1x`/`2x`, initial learning rate decays by a factor of 10 at the 8/16th and 11/22th epochs.
+  For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
 - `{dataset}`: dataset like `nus-3d`, `kitti-3d`, `lyft-3d`, `scannet-3d`, `sunrgbd-3d`. We also indicate the number of classes we are using if there exist multiple settings, e.g., `kitti-3d-3class` and `kitti-3d-car` means training on KITTI dataset with 3 classes and single class, respectively.
 
 ## Deprecated train_cfg/test_cfg

@@ -20,17 +20,17 @@ We implement MonoFlex and provide the results and checkpoints on KITTI dataset.
 
 ### KITTI
 
-|  Backbone   | Lr schd | Mem (GB) | Inf time (fps) | mAP | Download |
-| :---------: | :-----: | :------: | :------------: | :----: | :------: |
-|[DLA34](./monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d.py)|6x|9.64||21.86|[model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553-d46d9bb0.pth) &#124; [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553.log.json)
+|                                Backbone                                 | Lr schd | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                               Download                                                                                                                                                               |
+| :---------------------------------------------------------------------: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [DLA34](./monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d.py) |   6x    |   9.64   |                | 21.86 | [model](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553-d46d9bb0.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553.log.json) |
 
 Note: mAP represents Car moderate 3D strict AP11 results.
 Detailed performance on KITTI 3D detection (3D/BEV) is as follows, evaluated by AP11 and AP40 metric:
 
-|             |     Easy      |    Moderate    |     Hard      |
-|-------------|:-------------:|:--------------:|:-------------:|
-| Car (AP11)  | 28.02 / 36.11 | 21.86 / 29.46  | 19.01 / 24.83 |
-| Car (AP40)  | 23.22 / 32.74 | 17.18 / 24.02  | 15.13 / 20.67 |
+|            |     Easy      |   Moderate    |     Hard      |
+| ---------- | :-----------: | :-----------: | :-----------: |
+| Car (AP11) | 28.02 / 36.11 | 21.86 / 29.46 | 19.01 / 24.83 |
+| Car (AP40) | 23.22 / 32.74 | 17.18 / 24.02 | 15.13 / 20.67 |
 
 Note: mAP represents Car moderate 3D strict AP11 / AP40 results. Because of the limited data for pedestrians and cyclists, the detection performance for these two classes is usually unstable. Therefore, we only list car detection results here. In addition, the AP11 result may fluctuate in a larger range (~1 AP), so AP40 is a more recommended metric for reference due to its much better stability.
 

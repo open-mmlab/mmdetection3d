@@ -6,7 +6,7 @@ We list some potential troubles encountered by users and developers, along with 
 
 - If you faced the error shown below when importing open3d:
 
-  ``OSError: /lib/x86_64-linux-gnu/libm.so.6: version 'GLIBC_2.27' not found``
+  `OSError: /lib/x86_64-linux-gnu/libm.so.6: version 'GLIBC_2.27' not found`
 
   please downgrade open3d to 0.9.0.0, because the latest open3d needs the support of file 'GLIBC_2.27', which only exists in Ubuntu 18.04, not in Ubuntu 16.04.
 
@@ -21,15 +21,15 @@ We list some potential troubles encountered by users and developers, along with 
 
 - If you face the error shown below when importing pycocotools:
 
-  ``ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject``
+  `ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject`
 
-  please downgrade pycocotools to 2.0.1 because of the incompatibility between the newest pycocotools and numpy < 1.20.0. Or you can compile and install the latest pycocotools from source as below:
+  please downgrade pycocotools to 2.0.1 because of the incompatibility between the newest pycocotools and numpy \< 1.20.0. Or you can compile and install the latest pycocotools from source as below:
 
-  ``pip install -e "git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+  `pip install -e "git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
 
   or
 
-  ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+  `pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
 
 ## How to annotate point cloud?
 
