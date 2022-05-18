@@ -103,7 +103,7 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 如果你只想在在线基准上进行推理或测试模型性能，你需要将之前评估脚本中的 `--eval mAP` 替换成 `--format-only`，并在需要的情况下指定 `jsonfile_prefix`，例如，添加选项 `--eval-options jsonfile_prefix=work_dirs/fcos3d/test_submission`。请确保配置文件中的[测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-mono3d.py#L93)由验证集相应地改为测试集。
 
-在生成结果后，你基本上可以压缩文件夹并上传至 nuScenes 3D 检测挑战的 evalAI 评估服务器上。
+在生成结果后，你可以压缩文件夹并上传至 nuScenes 3D 检测挑战的 evalAI 评估服务器上。
 
 ## 定性评估
 
