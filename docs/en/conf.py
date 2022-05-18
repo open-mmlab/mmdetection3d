@@ -136,10 +136,11 @@ latex_documents = [
 StandaloneHTMLBuilder.supported_image_types = [
     'image/svg+xml', 'image/gif', 'image/png', 'image/jpeg'
 ]
-# -- Extension configuration -------------------------------------------------
-# Ignore >>> when copying code
-copybutton_prompt_text = r'>>> |\.\.\. '
-copybutton_prompt_is_regexp = True
+# Enable ::: for my_st
+myst_enable_extensions = ['colon_fence']
+myst_heading_anchors = 3
+
+language = 'en'
 
 
 def builder_inited_handler(app):
