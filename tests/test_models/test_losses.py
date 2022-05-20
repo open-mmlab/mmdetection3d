@@ -1,9 +1,31 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import random
+
+import numpy as np
 import pytest
 import torch
 from torch import nn as nn
 
 from mmdet3d.models.builder import build_loss
+
+
+def set_random_seed(seed, deterministic=False):
+    """Set random seed.
+
+    Args:
+        seed (int): Seed to be used.
+        deterministic (bool): Whether to set the deterministic option for
+            CUDNN backend, i.e., set `torch.backends.cudnn.deterministic`
+            to True and `torch.backends.cudnn.benchmark` to False.
+            Default: False.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
 
 def test_chamfer_disrance():
@@ -78,7 +100,6 @@ def test_chamfer_disrance():
 def test_paconv_regularization_loss():
     from mmdet3d.models.losses import PAConvRegularizationLoss
     from mmdet3d.ops import PAConv, PAConvCUDA
-    from mmdet.apis import set_random_seed
 
     class ToyModel(nn.Module):
 
