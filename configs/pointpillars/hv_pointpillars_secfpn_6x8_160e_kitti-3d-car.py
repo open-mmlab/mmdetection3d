@@ -8,7 +8,7 @@ model = dict(
         num_classes=1,
         anchor_generator=dict(
             _delete_=True,
-            type='Anchor3DRangeGenerator',
+            type='AlignedAnchor3DRangeGenerator',
             ranges=[[0, -39.68, -1.78, 69.12, 39.68, -1.78]],
             sizes=[[3.9, 1.6, 1.56]],
             rotations=[0, 1.57],
@@ -42,13 +42,7 @@ db_sampler = dict(
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    dict(type='ObjectSample', db_sampler=db_sampler),
-    dict(
-        type='ObjectNoise',
-        num_try=100,
-        translation_std=[0.25, 0.25, 0.25],
-        global_rot_range=[0.0, 0.0],
-        rot_range=[-0.15707963267, 0.15707963267]),
+    dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
