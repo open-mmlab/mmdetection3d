@@ -12,7 +12,7 @@ from mmcv.runner import BaseModule, auto_fp16
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops.sparse_block import replace_feature
-from ..builder import MIDDLE_ENCODERS
+from mmdet3d.registry import MODELS
 
 
 @MODELS.register_module()
