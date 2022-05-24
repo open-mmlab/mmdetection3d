@@ -3,7 +3,7 @@ import platform
 
 from mmcv.utils import build_from_cfg
 
-from mmdet.datasets import DATASETS as MMDET_DATASETS
+from mmdet3d.registry import DATASETS
 from mmdet.datasets.builder import _concat_dataset
 
 if platform.system() != 'Windows':

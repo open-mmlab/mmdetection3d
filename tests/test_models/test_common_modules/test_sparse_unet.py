@@ -1,10 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
-from mmcv.ops import (SparseConv3d, SparseConvTensor, SparseInverseConv3d,
-                      SubMConv3d)
 
 from mmdet3d.ops import SparseBasicBlock
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+
+if IS_SPCONV2_AVAILABLE:
+    from spconv.pytorch import (SparseConv3d, SparseConvTensor,
+                                SparseInverseConv3d, SubMConv3d)
+else:
+    from mmcv.ops import (SparseConv3d, SparseConvTensor, SparseInverseConv3d,
+                          SubMConv3d)
 
 
 def test_SparseUNet():
