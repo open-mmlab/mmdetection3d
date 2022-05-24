@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .single_stage_mono3d import SingleStageMono3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SMOKEMono3D(SingleStageMono3DDetector):
     r"""SMOKE <https://arxiv.org/abs/2002.10111>`_ for monocular 3D object
         detection.

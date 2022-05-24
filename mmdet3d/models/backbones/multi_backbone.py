@@ -7,10 +7,11 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
-from ..builder import BACKBONES, build_backbone
+from mmdet3d.models.builder import build_backbone
+from mmdet3d.registry import MODELS
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class MultiBackbone(BaseModule):
     """MultiBackbone with different configs.
 

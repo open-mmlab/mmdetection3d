@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
+from mmdet3d.registry import TASK_UTILS
 from mmdet.core.bbox import bbox_overlaps
-from mmdet.core.bbox.iou_calculators.builder import IOU_CALCULATORS
 from ..structures import get_box_type
 
 
-@IOU_CALCULATORS.register_module()
+@TASK_UTILS.register_module()
 class BboxOverlapsNearest3D(object):
     """Nearest 3D IoU Calculator.
 
@@ -54,7 +54,7 @@ class BboxOverlapsNearest3D(object):
         return repr_str
 
 
-@IOU_CALCULATORS.register_module()
+@TASK_UTILS.register_module()
 class BboxOverlaps3D(object):
     """3D IoU Calculator.
 
@@ -176,7 +176,7 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
     return bboxes1.overlaps(bboxes1, bboxes2, mode=mode)
 
 
-@IOU_CALCULATORS.register_module()
+@TASK_UTILS.register_module()
 class AxisAlignedBboxOverlaps3D(object):
     """Axis-aligned 3D Overlaps (IoU) Calculator."""
 

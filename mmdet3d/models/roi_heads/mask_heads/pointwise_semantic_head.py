@@ -5,11 +5,12 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
-from mmdet3d.models.builder import HEADS, build_loss
+from mmdet3d.models.builder import build_loss
+from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PointwiseSemanticHead(BaseModule):
     """Semantic segmentation head for point-wise segmentation.
 

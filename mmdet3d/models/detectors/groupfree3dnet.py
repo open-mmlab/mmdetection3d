@@ -2,11 +2,11 @@
 import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .single_stage import SingleStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class GroupFree3DNet(SingleStage3DDetector):
     """`Group-Free 3D <https://arxiv.org/abs/2104.00678>`_."""
 

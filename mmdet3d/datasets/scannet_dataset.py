@@ -7,8 +7,7 @@ import numpy as np
 
 from mmdet3d.core import instance_seg_eval, show_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmseg.datasets import DATASETS as SEG_DATASETS
-from .builder import DATASETS
+from mmdet3d.registry import DATASETS
 from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
 from .pipelines import Compose
@@ -253,7 +252,6 @@ class ScanNetDataset(Custom3DDataset):
 
 
 @DATASETS.register_module()
-@SEG_DATASETS.register_module()
 class ScanNetSegDataset(Custom3DSegDataset):
     r"""ScanNet Dataset for Semantic Segmentation Task.
 
@@ -467,7 +465,6 @@ class ScanNetSegDataset(Custom3DSegDataset):
 
 
 @DATASETS.register_module()
-@SEG_DATASETS.register_module()
 class ScanNetInstanceSegDataset(Custom3DSegDataset):
     CLASSES = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',

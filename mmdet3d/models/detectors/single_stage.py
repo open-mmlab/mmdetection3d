@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from ..builder import DETECTORS, build_backbone, build_head, build_neck
+from mmdet3d.registry import MODELS
 from .base import Base3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SingleStage3DDetector(Base3DDetector):
     """SingleStage3DDetector.
 
@@ -30,12 +30,12 @@ class SingleStage3DDetector(Base3DDetector):
                  init_cfg=None,
                  pretrained=None):
         super(SingleStage3DDetector, self).__init__(init_cfg)
-        self.backbone = build_backbone(backbone)
+        self.backbone = MODELS.build(backbone)
         if neck is not None:
-            self.neck = build_neck(neck)
+            self.neck = MODELS.build(neck)
         bbox_head.update(train_cfg=train_cfg)
         bbox_head.update(test_cfg=test_cfg)
-        self.bbox_head = build_head(bbox_head)
+        self.bbox_head = MODELS.build(bbox_head)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 

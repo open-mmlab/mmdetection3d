@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from mmdet3d.registry import MODELS
 from mmdet.models.backbones import RegNet
-from ..builder import BACKBONES
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class NoStemRegNet(RegNet):
     """RegNet backbone without Stem for 3D detection.
 

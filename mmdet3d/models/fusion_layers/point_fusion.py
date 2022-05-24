@@ -7,7 +7,7 @@ from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import (get_proj_mat_by_coord_type,
                                           points_cam2img)
-from ..builder import FUSION_LAYERS
+from mmdet3d.registry import MODELS
 from . import apply_3d_transformation
 
 
@@ -91,7 +91,7 @@ def point_sample(img_meta,
     return point_features.squeeze().t()
 
 
-@FUSION_LAYERS.register_module()
+@MODELS.register_module()
 class PointFusion(BaseModule):
     """Fuse image features from multi-scale features.
 

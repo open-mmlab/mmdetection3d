@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmdet3d.core.bbox import bbox3d2result
-from ..builder import HEADS, build_head
+from mmdet3d.registry import MODELS
 from .base_3droi_head import Base3DRoIHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class H3DRoIHead(Base3DRoIHead):
     """H3D roi head for H3DNet.
 
@@ -30,9 +30,9 @@ class H3DRoIHead(Base3DRoIHead):
             init_cfg=init_cfg)
         # Primitive module
         assert len(primitive_list) == 3
-        self.primitive_z = build_head(primitive_list[0])
-        self.primitive_xy = build_head(primitive_list[1])
-        self.primitive_line = build_head(primitive_list[2])
+        self.primitive_z = MODELS.build(primitive_list[0])
+        self.primitive_xy = MODELS.build(primitive_list[1])
+        self.primitive_line = MODELS.build(primitive_list[2])
 
     def init_mask_head(self):
         """Initialize mask head, skip since ``H3DROIHead`` does not have
@@ -43,7 +43,7 @@ class H3DRoIHead(Base3DRoIHead):
         """Initialize box head."""
         bbox_head['train_cfg'] = self.train_cfg
         bbox_head['test_cfg'] = self.test_cfg
-        self.bbox_head = build_head(bbox_head)
+        self.bbox_head = MODELS.build(bbox_head)
 
     def init_assigner_sampler(self):
         """Initialize assigner and sampler."""

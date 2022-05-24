@@ -2,17 +2,17 @@
 import torch
 from torch.nn import functional as F
 
+from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from mmdet.models.utils.gaussian_target import (get_local_maximum,
                                                 get_topk_from_heatmap,
                                                 transpose_and_gather_feat)
-from ..builder import HEADS
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class SMOKEMono3DHead(AnchorFreeMono3DHead):
     r"""Anchor-free head used in `SMOKE <https://arxiv.org/abs/2002.10111>`_
 

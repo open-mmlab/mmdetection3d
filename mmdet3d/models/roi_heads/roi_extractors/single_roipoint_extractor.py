@@ -4,10 +4,10 @@ from mmcv import ops
 from torch import nn as nn
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
-from mmdet3d.models.builder import ROI_EXTRACTORS
+from mmdet3d.registry import MODELS
 
 
-@ROI_EXTRACTORS.register_module()
+@MODELS.register_module()
 class Single3DRoIPointExtractor(nn.Module):
     """Point-wise roi-aware Extractor.
 

@@ -4,11 +4,11 @@ from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule, build_sa_module
-from ..builder import BACKBONES
+from mmdet3d.registry import MODELS
 from .base_pointnet import BasePointNet
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class PointNet2SASSG(BasePointNet):
     """PointNet2 with Single-scale grouping.
 

@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import warnings
 from os import path as osp
 
 import mmcv
@@ -9,39 +8,17 @@ from mmcv.parallel import DataContainer as DC
 
 from mmdet3d.core import (CameraInstance3DBoxes, bbox3d2result,
                           show_multi_modality_result)
-from mmdet.models.detectors import SingleStageDetector
-from ..builder import DETECTORS, build_backbone, build_head, build_neck
+from mmdet3d.registry import MODELS
+from mmdet.models.detectors.single_stage import SingleStageDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SingleStageMono3DDetector(SingleStageDetector):
     """Base class for monocular 3D single-stage detectors.
 
     Single-stage detectors directly and densely predict bounding boxes on the
     output features of the backbone+neck.
     """
-
-    def __init__(self,
-                 backbone,
-                 neck=None,
-                 bbox_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
-        super(SingleStageDetector, self).__init__(init_cfg)
-        if pretrained:
-            warnings.warn('DeprecationWarning: pretrained is deprecated, '
-                          'please use "init_cfg" instead')
-            backbone.pretrained = pretrained
-        self.backbone = build_backbone(backbone)
-        if neck is not None:
-            self.neck = build_neck(neck)
-        bbox_head.update(train_cfg=train_cfg)
-        bbox_head.update(test_cfg=test_cfg)
-        self.bbox_head = build_head(bbox_head)
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
 
     def extract_feats(self, imgs):
         """Directly extract features from the backbone+neck."""

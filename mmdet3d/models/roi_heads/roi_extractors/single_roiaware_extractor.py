@@ -3,10 +3,10 @@ import torch
 from mmcv import ops
 from mmcv.runner import BaseModule
 
-from mmdet3d.models.builder import ROI_EXTRACTORS
+from mmdet3d.registry import MODELS
 
 
-@ROI_EXTRACTORS.register_module()
+@MODELS.register_module()
 class Single3DRoIAwareExtractor(BaseModule):
     """Point-wise roi-aware Extractor.
 

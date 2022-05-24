@@ -6,8 +6,7 @@ import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.models.utils import MLP
-from .. import builder
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .base import Base3DDetector
 
 
@@ -53,7 +52,7 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
     return sample_inds
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class ImVoteNet(Base3DDetector):
     r"""`ImVoteNet <https://arxiv.org/abs/2001.10692>`_ for 3D detection."""
 
@@ -78,9 +77,9 @@ class ImVoteNet(Base3DDetector):
 
         # point branch
         if pts_backbone is not None:
-            self.pts_backbone = builder.build_backbone(pts_backbone)
+            self.pts_backbone = MODELS.build(pts_backbone)
         if pts_neck is not None:
-            self.pts_neck = builder.build_neck(pts_neck)
+            self.pts_neck = MODELS.build(pts_neck)
         if pts_bbox_heads is not None:
             pts_bbox_head_common = pts_bbox_heads.common
             pts_bbox_head_common.update(
@@ -93,9 +92,9 @@ class ImVoteNet(Base3DDetector):
             pts_bbox_head_img = pts_bbox_head_common.copy()
             pts_bbox_head_img.update(pts_bbox_heads.img)
 
-            self.pts_bbox_head_joint = builder.build_head(pts_bbox_head_joint)
-            self.pts_bbox_head_pts = builder.build_head(pts_bbox_head_pts)
-            self.pts_bbox_head_img = builder.build_head(pts_bbox_head_img)
+            self.pts_bbox_head_joint = MODELS.build(pts_bbox_head_joint)
+            self.pts_bbox_head_pts = MODELS.build(pts_bbox_head_pts)
+            self.pts_bbox_head_img = MODELS.build(pts_bbox_head_img)
             self.pts_bbox_heads = [
                 self.pts_bbox_head_joint, self.pts_bbox_head_pts,
                 self.pts_bbox_head_img
@@ -104,26 +103,26 @@ class ImVoteNet(Base3DDetector):
 
         # image branch
         if img_backbone:
-            self.img_backbone = builder.build_backbone(img_backbone)
+            self.img_backbone = MODELS.build(img_backbone)
         if img_neck is not None:
-            self.img_neck = builder.build_neck(img_neck)
+            self.img_neck = MODELS.build(img_neck)
         if img_rpn_head is not None:
             rpn_train_cfg = train_cfg.img_rpn if train_cfg \
                 is not None else None
             img_rpn_head_ = img_rpn_head.copy()
             img_rpn_head_.update(
                 train_cfg=rpn_train_cfg, test_cfg=test_cfg.img_rpn)
-            self.img_rpn_head = builder.build_head(img_rpn_head_)
+            self.img_rpn_head = MODELS.build(img_rpn_head_)
         if img_roi_head is not None:
             rcnn_train_cfg = train_cfg.img_rcnn if train_cfg \
                 is not None else None
             img_roi_head.update(
                 train_cfg=rcnn_train_cfg, test_cfg=test_cfg.img_rcnn)
-            self.img_roi_head = builder.build_head(img_roi_head)
+            self.img_roi_head = MODELS.build(img_roi_head)
 
         # fusion
         if fusion_layer is not None:
-            self.fusion_layer = builder.build_fusion_layer(fusion_layer)
+            self.fusion_layer = MODELS.build(fusion_layer)
             self.max_imvote_per_pixel = fusion_layer.max_imvote_per_pixel
 
         self.freeze_img_branch = freeze_img_branch

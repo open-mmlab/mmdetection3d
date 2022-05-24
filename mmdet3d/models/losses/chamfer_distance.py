@@ -3,7 +3,7 @@ import torch
 from torch import nn as nn
 from torch.nn.functional import l1_loss, mse_loss, smooth_l1_loss
 
-from ..builder import LOSSES
+from mmdet3d.registry import MODELS
 
 
 def chamfer_distance(src,
@@ -72,7 +72,7 @@ def chamfer_distance(src,
     return loss_src, loss_dst, indices1, indices2
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class ChamferDistance(nn.Module):
     """Calculate Chamfer Distance of two sets.
 

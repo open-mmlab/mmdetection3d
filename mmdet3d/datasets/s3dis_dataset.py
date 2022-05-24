@@ -5,8 +5,7 @@ import numpy as np
 
 from mmdet3d.core import show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmseg.datasets import DATASETS as SEG_DATASETS
-from .builder import DATASETS
+from mmdet3d.registry import DATASETS
 from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
 from .pipelines import Compose
@@ -308,7 +307,6 @@ class _S3DISSegDataset(Custom3DSegDataset):
 
 
 @DATASETS.register_module()
-@SEG_DATASETS.register_module()
 class S3DISSegDataset(_S3DISSegDataset):
     r"""S3DIS Dataset for Semantic Segmentation Task.
 

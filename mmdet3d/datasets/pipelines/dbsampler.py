@@ -8,7 +8,7 @@ import numpy as np
 
 from mmdet3d.core.bbox import box_np_ops
 from mmdet3d.datasets.pipelines import data_augment_utils
-from ..builder import OBJECTSAMPLERS, PIPELINES
+from mmdet3d.registry import TRANSFORMS
 
 
 class BatchSampler:
@@ -78,7 +78,7 @@ class BatchSampler:
         return [self._sampled_list[i] for i in indices]
 
 
-@OBJECTSAMPLERS.register_module()
+@TRANSFORMS.register_module()
 class DataBaseSampler(object):
     """Class for sampling data from the ground truth database.
 

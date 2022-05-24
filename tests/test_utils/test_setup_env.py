@@ -12,14 +12,14 @@ from mmdet3d.utils import register_all_modules, setup_multi_processes
 
 
 def test_register_all_modules():
-    from mmdet3d.registry import TRANSFORMS
+    from mmdet3d.registry import DATASETS
 
     sys.modules.pop('mmdet3d.datasets', None)
-    sys.modules.pop('mmdet3d.datasets.pipelines', None)
-    TRANSFORMS._module_dict.pop('PointSample', None)
-    assert 'PointSample' not in TRANSFORMS.module_dict
+    sys.modules.pop('mmdet3d.datasets.kitti_dataset', None)
+    DATASETS._module_dict.pop('KittiDataset', None)
+    assert 'KittiDataset' not in DATASETS.module_dict
     register_all_modules(init_default_scope=True)
-    assert 'PointSample' in TRANSFORMS.module_dict
+    assert 'KittiDataset' in DATASETS.module_dict
     assert DefaultScope.get_current_instance().scope_name == 'mmdet3d'
 
 

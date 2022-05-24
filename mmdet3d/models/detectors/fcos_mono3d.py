@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .single_stage_mono3d import SingleStageMono3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class FCOSMono3D(SingleStageMono3DDetector):
     r"""`FCOS3D <https://arxiv.org/abs/2104.10956>`_ for monocular 3D object detection.
 

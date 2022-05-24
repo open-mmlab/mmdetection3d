@@ -4,10 +4,10 @@ from mmcv.cnn.bricks import build_conv_layer
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
-from ..builder import HEADS
+from mmdet3d.registry import MODELS
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class BaseConvBboxHead(BaseModule):
     r"""More general bbox head, with shared conv layers and two optional
     separated branches.

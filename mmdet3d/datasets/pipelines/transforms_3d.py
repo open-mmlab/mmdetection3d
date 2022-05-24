@@ -12,13 +12,12 @@ from mmengine.registry import build_from_cfg
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
-from mmdet3d.registry import OBJECTSAMPLERS, TRANSFORMS
-from mmdet.datasets.builder import PIPELINES
+from mmdet3d.registry import TRANSFORMS
 from mmdet.datasets.pipelines import RandomFlip
 from .data_augment_utils import noise_per_object_v3_
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class RandomDropPointsColor(object):
     r"""Randomly set the color of points to all zeros.
 
@@ -68,7 +67,7 @@ class RandomDropPointsColor(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
@@ -193,7 +192,7 @@ class RandomFlip3D(RandomFlip):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class RandomJitterPoints(object):
     """Randomly jitter point coordinates.
 
@@ -299,7 +298,7 @@ class ObjectSample(BaseTransform):
         self.sample_2d = sample_2d
         if 'type' not in db_sampler.keys():
             db_sampler['type'] = 'DataBaseSampler'
-        self.db_sampler = build_from_cfg(db_sampler, OBJECTSAMPLERS)
+        self.db_sampler = build_from_cfg(db_sampler, TRANSFORMS)
         self.use_ground_plane = use_ground_plane
 
     @staticmethod
@@ -471,7 +470,7 @@ class ObjectNoise(BaseTransform):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class GlobalAlignment(object):
     """Apply global alignment to 3D scene points by rotation and translation.
 
@@ -558,7 +557,7 @@ class GlobalAlignment(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class GlobalRotScaleTrans(object):
     """Apply global rotation, scaling and translation to a 3D scene.
 
@@ -724,7 +723,7 @@ class GlobalRotScaleTrans(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class PointShuffle(object):
     """Shuffle input points."""
 
@@ -756,7 +755,7 @@ class PointShuffle(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class ObjectRangeFilter(object):
     """Filter objects by the range.
 
@@ -808,7 +807,7 @@ class ObjectRangeFilter(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class PointsRangeFilter(object):
     """Filter points by the range.
 
@@ -853,7 +852,7 @@ class PointsRangeFilter(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class ObjectNameFilter(object):
     """Filter GT objects by their names.
 
@@ -1009,7 +1008,7 @@ class PointSample(BaseTransform):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class IndoorPointSample(PointSample):
     """Indoor point sample.
 
@@ -1026,7 +1025,7 @@ class IndoorPointSample(PointSample):
         super(IndoorPointSample, self).__init__(*args, **kwargs)
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class IndoorPatchPointSample(object):
     r"""Indoor point sample within a patch. Modified from `PointNet++ <https://
     github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py>`_.
@@ -1271,7 +1270,7 @@ class IndoorPatchPointSample(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class BackgroundPointsFilter(object):
     """Filter background points near the bounding box.
 
@@ -1336,7 +1335,7 @@ class BackgroundPointsFilter(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class VoxelBasedPointSampler(object):
     """Voxel based point sampler.
 
@@ -1478,7 +1477,7 @@ class VoxelBasedPointSampler(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class AffineResize(object):
     """Get the affine transform matrices to the target size.
 
@@ -1674,13 +1673,13 @@ class AffineResize(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class RandomShiftScale(object):
     """Random shift scale.
 
     Different from the normal shift and scale function, it doesn't
     directly shift or scale image. It can record the shift and scale
-    infos into loading pipelines. It's designed to be used with
+    infos into loading TRANSFORMS. It's designed to be used with
     AffineResize together.
 
     Args:

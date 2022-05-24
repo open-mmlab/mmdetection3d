@@ -2,10 +2,10 @@
 import mmcv
 import torch
 
-from mmdet.core.anchor import ANCHOR_GENERATORS
+from mmdet3d.registry import TASK_UTILS
 
 
-@ANCHOR_GENERATORS.register_module()
+@TASK_UTILS.register_module()
 class Anchor3DRangeGenerator(object):
     """3D Anchor Generator by range.
 
@@ -221,7 +221,7 @@ class Anchor3DRangeGenerator(object):
         return ret
 
 
-@ANCHOR_GENERATORS.register_module()
+@TASK_UTILS.register_module()
 class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
     """Aligned 3D Anchor Generator by range.
 
@@ -340,7 +340,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         return ret
 
 
-@ANCHOR_GENERATORS.register_module()
+@TASK_UTILS.register_module()
 class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
     """3D Anchor Generator by range for per class.
 

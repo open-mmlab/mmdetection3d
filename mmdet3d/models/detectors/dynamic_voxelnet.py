@@ -3,11 +3,11 @@ import torch
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .voxelnet import VoxelNet
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class DynamicVoxelNet(VoxelNet):
     r"""VoxelNet using `dynamic voxelization <https://arxiv.org/abs/1910.06528>`_.
     """

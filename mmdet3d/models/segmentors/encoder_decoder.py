@@ -4,13 +4,12 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
+from mmdet3d.registry import MODELS
 from mmseg.core import add_prefix
-from ..builder import (SEGMENTORS, build_backbone, build_head, build_loss,
-                       build_neck)
 from .base import Base3DSegmentor
 
 
-@SEGMENTORS.register_module()
+@MODELS.register_module()
 class EncoderDecoder3D(Base3DSegmentor):
     """3D Encoder Decoder segmentors.
 
@@ -30,9 +29,9 @@ class EncoderDecoder3D(Base3DSegmentor):
                  pretrained=None,
                  init_cfg=None):
         super(EncoderDecoder3D, self).__init__(init_cfg=init_cfg)
-        self.backbone = build_backbone(backbone)
+        self.backbone = MODELS.build(backbone)
         if neck is not None:
-            self.neck = build_neck(neck)
+            self.neck = MODELS.build(neck)
         self._init_decode_head(decode_head)
         self._init_auxiliary_head(auxiliary_head)
         self._init_loss_regularization(loss_regularization)
@@ -44,7 +43,7 @@ class EncoderDecoder3D(Base3DSegmentor):
 
     def _init_decode_head(self, decode_head):
         """Initialize ``decode_head``"""
-        self.decode_head = build_head(decode_head)
+        self.decode_head = MODELS.build(decode_head)
         self.num_classes = self.decode_head.num_classes
 
     def _init_auxiliary_head(self, auxiliary_head):
@@ -53,9 +52,9 @@ class EncoderDecoder3D(Base3DSegmentor):
             if isinstance(auxiliary_head, list):
                 self.auxiliary_head = nn.ModuleList()
                 for head_cfg in auxiliary_head:
-                    self.auxiliary_head.append(build_head(head_cfg))
+                    self.auxiliary_head.append(MODELS.build(head_cfg))
             else:
-                self.auxiliary_head = build_head(auxiliary_head)
+                self.auxiliary_head = MODELS.build(auxiliary_head)
 
     def _init_loss_regularization(self, loss_regularization):
         """Initialize ``loss_regularization``"""
@@ -63,9 +62,9 @@ class EncoderDecoder3D(Base3DSegmentor):
             if isinstance(loss_regularization, list):
                 self.loss_regularization = nn.ModuleList()
                 for loss_cfg in loss_regularization:
-                    self.loss_regularization.append(build_loss(loss_cfg))
+                    self.loss_regularization.append(MODELS.build(loss_cfg))
             else:
-                self.loss_regularization = build_loss(loss_regularization)
+                self.loss_regularization = MODELS.build(loss_regularization)
 
     def extract_feat(self, points):
         """Extract features from points."""

@@ -3,11 +3,11 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
+from mmdet3d.registry import TASK_UTILS
 from mmdet.core.bbox import BaseBBoxCoder
-from mmdet.core.bbox.builder import BBOX_CODERS
 
 
-@BBOX_CODERS.register_module()
+@TASK_UTILS.register_module()
 class MonoFlexCoder(BaseBBoxCoder):
     """Bbox Coder for MonoFlex.
 

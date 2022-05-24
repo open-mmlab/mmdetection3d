@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .assigners import AssignResult, BaseAssigner, MaxIoUAssigner
-from .coders import DeltaXYZWLHRBBoxCoder
 # from .bbox_target import bbox_target
+from .builder import build_assigner, build_bbox_coder, build_sampler
+from .coders import DeltaXYZWLHRBBoxCoder
 from .iou_calculators import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
                               BboxOverlapsNearest3D,
                               axis_aligned_bbox_overlaps_3d, bbox_overlaps_3d,
@@ -26,5 +27,6 @@ __all__ = [
     'LiDARInstance3DBoxes', 'CameraInstance3DBoxes', 'bbox3d2roi',
     'bbox3d2result', 'DepthInstance3DBoxes', 'BaseInstance3DBoxes',
     'bbox3d_mapping_back', 'xywhr2xyxyr', 'limit_period', 'points_cam2img',
-    'points_img2cam', 'get_box_type', 'Coord3DMode', 'mono_cam_box2vis'
+    'points_img2cam', 'get_box_type', 'Coord3DMode', 'mono_cam_box2vis',
+    'build_assigner', 'build_bbox_coder', 'build_sampler'
 ]

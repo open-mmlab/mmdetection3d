@@ -2,11 +2,11 @@
 import torch
 
 from mmdet3d.core import merge_aug_bboxes_3d
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .two_stage import TwoStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class H3DNet(TwoStage3DDetector):
     r"""H3DNet model.
 

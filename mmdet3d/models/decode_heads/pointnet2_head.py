@@ -3,11 +3,11 @@ from mmcv.cnn.bricks import ConvModule
 from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule
-from ..builder import HEADS
+from mmdet3d.registry import MODELS
 from .decode_head import Base3DDecodeHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PointNet2Head(Base3DDecodeHead):
     r"""PointNet2 decoder head.
 

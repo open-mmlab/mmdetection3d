@@ -2,9 +2,9 @@
 import torch
 from torch import nn as nn
 
+from mmdet3d.registry import MODELS
 from mmdet.models.losses.utils import weighted_loss
 from ...core.bbox import AxisAlignedBboxOverlaps3D
-from ..builder import LOSSES
 
 
 @weighted_loss
@@ -26,7 +26,7 @@ def axis_aligned_iou_loss(pred, target):
     return iou_loss
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class AxisAlignedIoULoss(nn.Module):
     """Calculate the IoU loss (1-IoU) of axis aligned bounding boxes.
 

@@ -3,11 +3,11 @@ import torch
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .mvx_two_stage import MVXTwoStageDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class MVXFasterRCNN(MVXTwoStageDetector):
     """Multi-modality VoxelNet using Faster R-CNN."""
 
@@ -15,7 +15,7 @@ class MVXFasterRCNN(MVXTwoStageDetector):
         super(MVXFasterRCNN, self).__init__(**kwargs)
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class DynamicMVXFasterRCNN(MVXTwoStageDetector):
     """Multi-modality VoxelNet using Faster R-CNN and dynamic voxelization."""
 

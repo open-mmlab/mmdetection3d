@@ -2,11 +2,11 @@
 import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .mvx_two_stage import MVXTwoStageDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class CenterPoint(MVXTwoStageDetector):
     """Base class of Multi-modality VoxelNet."""
 

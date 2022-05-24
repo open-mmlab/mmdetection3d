@@ -6,8 +6,7 @@ from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
-from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
-from ..builder import MIDDLE_ENCODERS
+from mmdet3d.registry import MODELS
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
@@ -15,7 +14,7 @@ else:
     from mmcv.ops import SparseConvTensor, SparseSequential
 
 
-@MIDDLE_ENCODERS.register_module()
+@MODELS.register_module()
 class SparseEncoder(nn.Module):
     r"""Sparse encoder for SECOND and Part-A2.
 

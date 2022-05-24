@@ -3,14 +3,13 @@ import warnings
 
 from torch.nn import functional as F
 
-from mmdet3d.core import AssignResult
+from mmdet3d.core import AssignResult, build_assigner, build_sampler
 from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
-from mmdet.core import build_assigner, build_sampler
-from ..builder import HEADS, build_head, build_roi_extractor
+from mmdet3d.registry import MODELS
 from .base_3droi_head import Base3DRoIHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PartAggregationROIHead(Base3DRoIHead):
     """Part aggregation roi head for PartA2.
 
@@ -41,12 +40,12 @@ class PartAggregationROIHead(Base3DRoIHead):
             init_cfg=init_cfg)
         self.num_classes = num_classes
         assert semantic_head is not None
-        self.semantic_head = build_head(semantic_head)
+        self.semantic_head = MODELS.build(semantic_head)
 
         if seg_roi_extractor is not None:
-            self.seg_roi_extractor = build_roi_extractor(seg_roi_extractor)
+            self.seg_roi_extractor = MODELS.build(seg_roi_extractor)
         if part_roi_extractor is not None:
-            self.part_roi_extractor = build_roi_extractor(part_roi_extractor)
+            self.part_roi_extractor = MODELS.build(part_roi_extractor)
 
         self.init_assigner_sampler()
 
@@ -64,7 +63,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
     def init_bbox_head(self, bbox_head):
         """Initialize box head."""
-        self.bbox_head = build_head(bbox_head)
+        self.bbox_head = MODELS.build(bbox_head)
 
     def init_assigner_sampler(self):
         """Initialize assigner and sampler."""

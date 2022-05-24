@@ -11,13 +11,12 @@ from torch.nn import functional as F
 
 from mmdet3d.core import (Box3DMode, Coord3DMode, bbox3d2result,
                           merge_aug_bboxes_3d, show_result)
+from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
-from .. import builder
-from ..builder import DETECTORS
 from .base import Base3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class MVXTwoStageDetector(Base3DDetector):
     """Base class of Multi-modality VoxelNet."""
 
@@ -42,33 +41,30 @@ class MVXTwoStageDetector(Base3DDetector):
         if pts_voxel_layer:
             self.pts_voxel_layer = Voxelization(**pts_voxel_layer)
         if pts_voxel_encoder:
-            self.pts_voxel_encoder = builder.build_voxel_encoder(
-                pts_voxel_encoder)
+            self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
         if pts_middle_encoder:
-            self.pts_middle_encoder = builder.build_middle_encoder(
-                pts_middle_encoder)
+            self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         if pts_backbone:
-            self.pts_backbone = builder.build_backbone(pts_backbone)
+            self.pts_backbone = MODELS.build(pts_backbone)
         if pts_fusion_layer:
-            self.pts_fusion_layer = builder.build_fusion_layer(
-                pts_fusion_layer)
+            self.pts_fusion_layer = MODELS.build(pts_fusion_layer)
         if pts_neck is not None:
-            self.pts_neck = builder.build_neck(pts_neck)
+            self.pts_neck = MODELS.build(pts_neck)
         if pts_bbox_head:
             pts_train_cfg = train_cfg.pts if train_cfg else None
             pts_bbox_head.update(train_cfg=pts_train_cfg)
             pts_test_cfg = test_cfg.pts if test_cfg else None
             pts_bbox_head.update(test_cfg=pts_test_cfg)
-            self.pts_bbox_head = builder.build_head(pts_bbox_head)
+            self.pts_bbox_head = MODELS.build(pts_bbox_head)
 
         if img_backbone:
-            self.img_backbone = builder.build_backbone(img_backbone)
+            self.img_backbone = MODELS.build(img_backbone)
         if img_neck is not None:
-            self.img_neck = builder.build_neck(img_neck)
+            self.img_neck = MODELS.build(img_neck)
         if img_rpn_head is not None:
-            self.img_rpn_head = builder.build_head(img_rpn_head)
+            self.img_rpn_head = MODELS.build(img_rpn_head)
         if img_roi_head is not None:
-            self.img_roi_head = builder.build_head(img_roi_head)
+            self.img_roi_head = MODELS.build(img_roi_head)
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg

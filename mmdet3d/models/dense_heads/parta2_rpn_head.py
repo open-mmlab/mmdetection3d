@@ -5,11 +5,11 @@ from mmcv.runner import force_fp32
 
 from mmdet3d.core import limit_period, xywhr2xyxyr
 from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
-from ..builder import HEADS
+from mmdet3d.registry import MODELS
 from .anchor3d_head import Anchor3DHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PartA2RPNHead(Anchor3DHead):
     """RPN head for PartA2.
 

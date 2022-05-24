@@ -3,8 +3,8 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
+from mmdet3d.registry import MODELS
 from mmdet.models.losses.utils import weighted_loss
-from ..builder import LOSSES
 
 
 @weighted_loss
@@ -57,7 +57,7 @@ def multibin_loss(pred_orientations, gt_orientations, num_dir_bins=4):
         return cls_losses / num_dir_bins + reg_losses / reg_cnt
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class MultiBinLoss(nn.Module):
     """Multi-Bin Loss for orientation.
 

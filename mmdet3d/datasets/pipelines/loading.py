@@ -1,13 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
+from mmcv.transforms import LoadImageFromFile
 
 from mmdet3d.core.points import BasePoints, get_points_type
-from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
-from ..builder import PIPELINES
+from mmdet3d.registry import TRANSFORMS
+from mmdet.datasets.pipelines import LoadAnnotations
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadMultiViewImageFromFiles(object):
     """Load multi channel images from a list of separate channel files.
 
@@ -72,7 +73,7 @@ class LoadMultiViewImageFromFiles(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadImageFromFileMono3D(LoadImageFromFile):
     """Load an image from file in monocular 3D object detection. Compared to 2D
     detection, additional camera parameters need to be loaded.
@@ -96,7 +97,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
         return results
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadPointsFromMultiSweeps(object):
     """Load points from multiple sweeps.
 
@@ -238,7 +239,7 @@ class LoadPointsFromMultiSweeps(object):
         return f'{self.__class__.__name__}(sweeps_num={self.sweeps_num})'
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class PointSegClassMapping(object):
     """Map original semantic class to valid category ids.
 
@@ -293,7 +294,7 @@ class PointSegClassMapping(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class NormalizePointsColor(object):
     """Normalize color of points.
 
@@ -334,7 +335,7 @@ class NormalizePointsColor(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadPointsFromFile(object):
     """Load Points From File.
 
@@ -460,7 +461,7 @@ class LoadPointsFromFile(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadPointsFromDict(LoadPointsFromFile):
     """Load Points From Dict."""
 
@@ -469,7 +470,7 @@ class LoadPointsFromDict(LoadPointsFromFile):
         return results
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadAnnotations3D(LoadAnnotations):
     """Load Annotations3D.
 

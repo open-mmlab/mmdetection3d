@@ -7,14 +7,12 @@ import mmcv
 import numpy as np
 from torch.utils.data import Dataset
 
-from mmseg.datasets import DATASETS as SEG_DATASETS
-from .builder import DATASETS
+from mmdet3d.registry import DATASETS
 from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
 
 
 @DATASETS.register_module()
-@SEG_DATASETS.register_module()
 class Custom3DSegDataset(Dataset):
     """Customized 3D dataset for semantic segmentation task.
 

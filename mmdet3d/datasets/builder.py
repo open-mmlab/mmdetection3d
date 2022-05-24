@@ -1,9 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import platform
 
-from mmcv.utils import build_from_cfg
-
-from mmdet3d.registry import DATASETS
+from mmdet3d.registry import DATASETS, TRANSFORMS
 from mmdet.datasets.builder import _concat_dataset
 
 if platform.system() != 'Windows':
@@ -15,9 +13,8 @@ if platform.system() != 'Windows':
     soft_limit = min(max(4096, base_soft_limit), hard_limit)
     resource.setrlimit(resource.RLIMIT_NOFILE, (soft_limit, hard_limit))
 
-OBJECTSAMPLERS = Registry('Object sampler')
-DATASETS = Registry('dataset')
-PIPELINES = Registry('pipeline')
+OBJECTSAMPLERS = TRANSFORMS
+PIPELINES = TRANSFORMS
 
 
 def build_dataset(cfg, default_args=None):
@@ -40,8 +37,7 @@ def build_dataset(cfg, default_args=None):
         dataset = CBGSDataset(build_dataset(cfg['dataset'], default_args))
     elif isinstance(cfg.get('ann_file'), (list, tuple)):
         dataset = _concat_dataset(cfg, default_args)
-    elif cfg['type'] in DATASETS._module_dict.keys():
-        dataset = build_from_cfg(cfg, DATASETS, default_args)
     else:
-        dataset = build_from_cfg(cfg, MMDET_DATASETS, default_args)
+        dataset = DATASETS.build(cfg, default_args=default_args)
+
     return dataset

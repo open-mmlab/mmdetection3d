@@ -3,12 +3,11 @@ import torch
 from mmcv.ops import Voxelization
 from torch.nn import functional as F
 
-from .. import builder
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .two_stage import TwoStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class PartA2(TwoStage3DDetector):
     r"""Part-A2 detector.
 
@@ -37,8 +36,8 @@ class PartA2(TwoStage3DDetector):
             pretrained=pretrained,
             init_cfg=init_cfg)
         self.voxel_layer = Voxelization(**voxel_layer)
-        self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
-        self.middle_encoder = builder.build_middle_encoder(middle_encoder)
+        self.voxel_encoder = MODELS.build(voxel_encoder)
+        self.middle_encoder = MODELS.build(middle_encoder)
 
     def extract_feat(self, points, img_metas):
         """Extract features from points."""

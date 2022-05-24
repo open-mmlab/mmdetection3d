@@ -2,8 +2,8 @@
 import torch
 from torch import nn as nn
 
+from mmdet3d.registry import MODELS
 from mmdet.models.losses.utils import weighted_loss
-from ..builder import LOSSES
 
 
 @weighted_loss
@@ -58,7 +58,7 @@ def uncertain_l1_loss(pred, target, sigma, alpha=1.0):
     return loss
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class UncertainSmoothL1Loss(nn.Module):
     r"""Smooth L1 loss with uncertainty.
 
@@ -122,7 +122,7 @@ class UncertainSmoothL1Loss(nn.Module):
         return loss_bbox
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class UncertainL1Loss(nn.Module):
     """L1 loss with uncertainty.
 

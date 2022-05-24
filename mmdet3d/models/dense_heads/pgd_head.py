@@ -8,12 +8,13 @@ from torch.nn import functional as F
 
 from mmdet3d.core import box3d_multiclass_nms, xywhr2xyxyr
 from mmdet3d.core.bbox import points_cam2img, points_img2cam
+from mmdet3d.models.builder import build_loss
+from mmdet3d.registry import MODELS
 from mmdet.core import distance2bbox, multi_apply
-from ..builder import HEADS, build_loss
 from .fcos_mono3d_head import FCOSMono3DHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PGDHead(FCOSMono3DHead):
     r"""Anchor-free head used in `PGD <https://arxiv.org/abs/2107.14160>`_.
 

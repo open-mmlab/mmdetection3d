@@ -3,8 +3,8 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.ops import PAConv, PAConvCUDA
+from mmdet3d.registry import MODELS
 from mmdet.models.losses.utils import weight_reduce_loss
-from ..builder import LOSSES
 
 
 def weight_correlation(conv):
@@ -68,7 +68,7 @@ def paconv_regularization_loss(modules, reduction):
     return corr_loss
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class PAConvRegularizationLoss(nn.Module):
     """Calculate correlation loss of kernel weights in PAConv's weight bank.
 

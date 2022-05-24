@@ -8,12 +8,13 @@ from mmcv.runner import BaseModule
 from torch import nn as nn
 
 from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
+from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
-from ..builder import HEADS, build_head
+from ..builder import build_head
 from .anchor3d_head import Anchor3DHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class BaseShapeHead(BaseModule):
     """Base Shape-aware Head in Shape Signature Network.
 
@@ -164,7 +165,7 @@ class BaseShapeHead(BaseModule):
         return ret
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class ShapeAwareHead(Anchor3DHead):
     """Shape-aware grouping head for SSN.
 

@@ -3,10 +3,10 @@ from mmcv.runner import BaseModule, auto_fp16
 from torch import nn as nn
 
 from mmdet3d.ops import DGCNNFAModule, DGCNNGFModule
-from ..builder import BACKBONES
+from mmdet3d.registry import MODELS
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class DGCNNBackbone(BaseModule):
     """Backbone network for DGCNN.
 

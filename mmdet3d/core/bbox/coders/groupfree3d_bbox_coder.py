@@ -2,11 +2,11 @@
 import numpy as np
 import torch
 
-from mmdet.core.bbox.builder import BBOX_CODERS
+from mmdet3d.registry import TASK_UTILS
 from .partial_bin_based_bbox_coder import PartialBinBasedBBoxCoder
 
 
-@BBOX_CODERS.register_module()
+@TASK_UTILS.register_module()
 class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
     """Modified partial bin based bbox coder for GroupFree3D.
 

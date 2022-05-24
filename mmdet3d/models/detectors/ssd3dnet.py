@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .votenet import VoteNet
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SSD3DNet(VoteNet):
     """3DSSDNet model.
 

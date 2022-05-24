@@ -9,15 +9,16 @@ from torch import nn as nn
 
 from mmdet3d.core import (box3d_multiclass_nms, limit_period, points_img2cam,
                           xywhr2xyxyr)
+from mmdet3d.models.builder import build_loss
+from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
 from mmdet.core.bbox.builder import build_bbox_coder
-from ..builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 INF = 1e8
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class FCOSMono3DHead(AnchorFreeMono3DHead):
     """Anchor-free head used in FCOS3D.
 

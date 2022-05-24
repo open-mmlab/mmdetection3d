@@ -10,12 +10,13 @@ from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
                           xywhr2xyxyr)
 from mmdet3d.core.post_processing import nms_bev
 from mmdet3d.models import builder
+from mmdet3d.models.builder import build_loss
 from mmdet3d.models.utils import clip_sigmoid
+from mmdet3d.registry import MODELS
 from mmdet.core import build_bbox_coder, multi_apply
-from ..builder import HEADS, build_loss
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class SeparateHead(BaseModule):
     """SeparateHead for CenterHead.
 
@@ -121,7 +122,7 @@ class SeparateHead(BaseModule):
         return ret_dict
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class DCNSeparateHead(BaseModule):
     r"""DCNSeparateHead for CenterHead.
 
@@ -240,7 +241,7 @@ class DCNSeparateHead(BaseModule):
         return ret
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class CenterHead(BaseModule):
     """CenterHead for CenterPoint.
 

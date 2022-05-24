@@ -2,14 +2,13 @@
 import torch
 from torch.nn import functional as F
 
-from mmdet3d.core import AssignResult
+from mmdet3d.core import AssignResult, build_assigner, build_sampler
 from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
-from mmdet.core import build_assigner, build_sampler
-from ..builder import HEADS, build_head, build_roi_extractor
+from mmdet3d.registry import MODELS
 from .base_3droi_head import Base3DRoIHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PointRCNNRoIHead(Base3DRoIHead):
     """RoI head for PointRCNN.
 
@@ -40,7 +39,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
         self.depth_normalizer = depth_normalizer
 
         if point_roi_extractor is not None:
-            self.point_roi_extractor = build_roi_extractor(point_roi_extractor)
+            self.point_roi_extractor = MODELS.build(point_roi_extractor)
 
         self.init_assigner_sampler()
 
@@ -50,7 +49,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
         Args:
             bbox_head (dict): Config dict of RoI Head.
         """
-        self.bbox_head = build_head(bbox_head)
+        self.bbox_head = MODELS.build(bbox_head)
 
     def init_mask_head(self):
         """Initialize maek head."""

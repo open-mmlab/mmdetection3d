@@ -5,11 +5,11 @@ from mmcv.ops import DynamicScatter
 from mmcv.runner import force_fp32
 from torch import nn
 
-from ..builder import VOXEL_ENCODERS
+from mmdet3d.registry import MODELS
 from .utils import PFNLayer, get_paddings_indicator
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class PillarFeatureNet(nn.Module):
     """Pillar Feature Net.
 
@@ -159,7 +159,7 @@ class PillarFeatureNet(nn.Module):
         return features.squeeze(1)
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class DynamicPillarFeatureNet(PillarFeatureNet):
     """Pillar Feature Net using dynamic voxelization.
 

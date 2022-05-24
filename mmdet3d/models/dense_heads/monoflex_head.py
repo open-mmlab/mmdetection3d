@@ -3,21 +3,22 @@ import torch
 from mmcv.cnn import xavier_init
 from torch import nn as nn
 
+from mmdet3d.core.bbox.builder import build_bbox_coder
 from mmdet3d.core.utils import get_ellip_gaussian_2D
+from mmdet3d.models.builder import build_loss
 from mmdet3d.models.model_utils import EdgeFusionModule
 from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
                                   get_keypoints, handle_proj_objs)
+from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
-from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from mmdet.models.utils.gaussian_target import (get_local_maximum,
                                                 get_topk_from_heatmap,
                                                 transpose_and_gather_feat)
-from ..builder import HEADS, build_loss
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class MonoFlexHead(AnchorFreeMono3DHead):
     r"""MonoFlex head used in `MonoFlex <https://arxiv.org/abs/2104.02323>`_
 

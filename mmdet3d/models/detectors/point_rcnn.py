@@ -1,11 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .two_stage import TwoStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class PointRCNN(TwoStage3DDetector):
     r"""PointRCNN detector.
 

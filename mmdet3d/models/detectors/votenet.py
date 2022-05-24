@@ -2,11 +2,11 @@
 import torch
 
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .single_stage import SingleStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class VoteNet(SingleStage3DDetector):
     r"""`VoteNet <https://arxiv.org/pdf/1904.09664.pdf>`_ for 3D detection."""
 

@@ -6,13 +6,14 @@ from torch import nn as nn
 
 from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
                           xywhr2xyxyr)
+from mmdet3d.registry import MODELS
 from mmdet.core import (build_assigner, build_bbox_coder,
                         build_prior_generator, build_sampler, multi_apply)
-from ..builder import HEADS, build_loss
+from ..builder import build_loss
 from .train_mixins import AnchorTrainMixin
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class Anchor3DHead(BaseModule, AnchorTrainMixin):
     """Anchor head for SECOND/PointPillars/MVXNet/PartA2.
 

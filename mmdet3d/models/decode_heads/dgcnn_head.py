@@ -2,11 +2,11 @@
 from mmcv.cnn.bricks import ConvModule
 
 from mmdet3d.ops import DGCNNFPModule
-from ..builder import HEADS
+from mmdet3d.registry import MODELS
 from .decode_head import Base3DDecodeHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class DGCNNHead(Base3DDecodeHead):
     r"""DGCNN decoder head.
 

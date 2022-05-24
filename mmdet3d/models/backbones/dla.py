@@ -6,7 +6,7 @@ from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmcv.runner import BaseModule
 from torch import nn
 
-from ..builder import BACKBONES
+from mmdet3d.registry import MODELS
 
 
 def dla_build_norm_layer(cfg, num_features):
@@ -275,7 +275,7 @@ class Tree(BaseModule):
         return x
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class DLANet(BaseModule):
     r"""`DLA backbone <https://arxiv.org/abs/1707.06484>`_.
 

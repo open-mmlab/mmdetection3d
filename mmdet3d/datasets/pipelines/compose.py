@@ -1,18 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import collections
 
-from mmcv.utils import build_from_cfg
-
-from mmdet.datasets.builder import PIPELINES as MMDET_PIPELINES
-from ..builder import PIPELINES
+from mmdet3d.registry import TRANSFORMS
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class Compose:
-    """Compose multiple transforms sequentially. The pipeline registry of
-    mmdet3d separates with mmdet, however, sometimes we may need to use mmdet's
-    pipeline. So the class is rewritten to be able to use pipelines from both
-    mmdet3d and mmdet.
+    """Compose multiple transforms sequentially.
 
     Args:
         transforms (Sequence[dict | callable]): Sequence of transform object or
@@ -24,11 +18,7 @@ class Compose:
         self.transforms = []
         for transform in transforms:
             if isinstance(transform, dict):
-                _, key = PIPELINES.split_scope_key(transform['type'])
-                if key in PIPELINES._module_dict.keys():
-                    transform = build_from_cfg(transform, PIPELINES)
-                else:
-                    transform = build_from_cfg(transform, MMDET_PIPELINES)
+                transform = TRANSFORMS.build(transform)
                 self.transforms.append(transform)
             elif callable(transform):
                 self.transforms.append(transform)
@@ -54,7 +44,10 @@ class Compose:
     def __repr__(self):
         format_string = self.__class__.__name__ + '('
         for t in self.transforms:
+            str_ = t.__repr__()
+            if 'Compose(' in str_:
+                str_ = str_.replace('\n', '\n    ')
             format_string += '\n'
-            format_string += f'    {t}'
+            format_string += f'    {str_}'
         format_string += '\n)'
         return format_string

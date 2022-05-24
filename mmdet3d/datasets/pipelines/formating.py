@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 from mmcv.parallel import DataContainer as DC
+from mmcv.transforms import to_tensor
 
 from mmdet3d.core.bbox import BaseInstance3DBoxes
 from mmdet3d.core.points import BasePoints
-from mmdet.datasets.pipelines import to_tensor
-from ..builder import PIPELINES
+from mmdet3d.registry import TRANSFORMS
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class DefaultFormatBundle(object):
     """Default formatting bundle.
 
@@ -79,7 +79,7 @@ class DefaultFormatBundle(object):
         return self.__class__.__name__
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class Collect3D(object):
     """Collect data from the loader relevant to the specific task.
 
@@ -170,7 +170,7 @@ class Collect3D(object):
             f'(keys={self.keys}, meta_keys={self.meta_keys})'
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class DefaultFormatBundle3D(DefaultFormatBundle):
     """Default formatting bundle.
 

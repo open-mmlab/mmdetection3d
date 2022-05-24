@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet.datasets.builder import build_dataloader
 from .builder import DATASETS, PIPELINES, build_dataset
 from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
@@ -29,17 +28,17 @@ from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
 __all__ = [
-    'KittiDataset', 'KittiMonoDataset', 'build_dataloader', 'DATASETS',
-    'build_dataset', 'NuScenesDataset', 'NuScenesMonoDataset', 'LyftDataset',
-    'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
-    'PointShuffle', 'ObjectRangeFilter', 'PointsRangeFilter',
-    'LoadPointsFromFile', 'S3DISSegDataset', 'S3DISDataset',
-    'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
-    'PointSample', 'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset',
-    'ScanNetDataset', 'ScanNetSegDataset', 'ScanNetInstanceSegDataset',
-    'SemanticKITTIDataset', 'Custom3DDataset', 'Custom3DSegDataset',
-    'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
-    'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
-    'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES'
+    'KittiDataset', 'KittiMonoDataset', 'DATASETS', 'build_dataset',
+    'NuScenesDataset', 'NuScenesMonoDataset', 'LyftDataset', 'ObjectSample',
+    'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans', 'PointShuffle',
+    'ObjectRangeFilter', 'PointsRangeFilter', 'LoadPointsFromFile',
+    'S3DISSegDataset', 'S3DISDataset', 'NormalizePointsColor',
+    'IndoorPatchPointSample', 'IndoorPointSample', 'PointSample',
+    'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset', 'ScanNetDataset',
+    'ScanNetSegDataset', 'ScanNetInstanceSegDataset', 'SemanticKITTIDataset',
+    'Custom3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
+    'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
+    'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
+    'ObjectNameFilter', 'AffineResize', 'RandomShiftScale',
+    'LoadPointsFromDict', 'PIPELINES'
 ]

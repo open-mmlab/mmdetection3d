@@ -7,11 +7,12 @@ from mmdet3d.core import xywhr2xyxyr
 from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
                                           LiDARInstance3DBoxes)
 from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
+from mmdet3d.models.builder import build_loss
+from mmdet3d.registry import MODELS
 from mmdet.core import build_bbox_coder, multi_apply
-from ..builder import HEADS, build_loss
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PointRPNHead(BaseModule):
     """RPN module for PointRCNN.
 

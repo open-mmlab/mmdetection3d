@@ -15,7 +15,7 @@ from mmdet3d.ops.sparse_block import replace_feature
 from ..builder import MIDDLE_ENCODERS
 
 
-@MIDDLE_ENCODERS.register_module()
+@MODELS.register_module()
 class SparseUNet(BaseModule):
     r"""SparseUNet for PartA^2.
 

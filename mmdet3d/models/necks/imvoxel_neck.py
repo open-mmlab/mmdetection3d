@@ -2,10 +2,10 @@
 from mmcv.cnn import ConvModule
 from torch import nn
 
-from ..builder import NECKS
+from mmdet3d.registry import MODELS
 
 
-@NECKS.register_module()
+@MODELS.register_module()
 class OutdoorImVoxelNeck(nn.Module):
     """Neck for ImVoxelNet outdoor scenario.
 

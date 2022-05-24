@@ -1,19 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 
-from mmcv.cnn import MODELS as MMCV_MODELS
-from mmcv.utils import Registry
-
-from mmdet.models.builder import BACKBONES as MMDET_BACKBONES
-from mmdet.models.builder import DETECTORS as MMDET_DETECTORS
-from mmdet.models.builder import HEADS as MMDET_HEADS
-from mmdet.models.builder import LOSSES as MMDET_LOSSES
-from mmdet.models.builder import NECKS as MMDET_NECKS
-from mmdet.models.builder import ROI_EXTRACTORS as MMDET_ROI_EXTRACTORS
-from mmdet.models.builder import SHARED_HEADS as MMDET_SHARED_HEADS
-from mmseg.models.builder import LOSSES as MMSEG_LOSSES
-
-MODELS = Registry('models', parent=MMCV_MODELS)
+from mmdet3d.registry import MODELS
 
 BACKBONES = MODELS
 NECKS = MODELS
@@ -22,6 +10,7 @@ SHARED_HEADS = MODELS
 HEADS = MODELS
 LOSSES = MODELS
 DETECTORS = MODELS
+SEGMENTORS = MODELS
 VOXEL_ENCODERS = MODELS
 MIDDLE_ENCODERS = MODELS
 FUSION_LAYERS = MODELS
@@ -30,52 +19,47 @@ SEGMENTORS = MODELS
 
 def build_backbone(cfg):
     """Build backbone."""
-    if cfg['type'] in BACKBONES._module_dict.keys():
-        return BACKBONES.build(cfg)
-    else:
-        return MMDET_BACKBONES.build(cfg)
+    warnings.warn('``build_backbone`` would be deprecated soon, please use '
+                  '``mmdet3d.registry.MODELS.build()`` ')
+
+    return BACKBONES.build(cfg)
 
 
 def build_neck(cfg):
     """Build neck."""
-    if cfg['type'] in NECKS._module_dict.keys():
-        return NECKS.build(cfg)
-    else:
-        return MMDET_NECKS.build(cfg)
+    warnings.warn('``build_neck`` would be deprecated soon, please use '
+                  '``mmdet3d.registry.MODELS.build()`` ')
+
+    return NECKS.build(cfg)
 
 
 def build_roi_extractor(cfg):
-    """Build RoI feature extractor."""
-    if cfg['type'] in ROI_EXTRACTORS._module_dict.keys():
-        return ROI_EXTRACTORS.build(cfg)
-    else:
-        return MMDET_ROI_EXTRACTORS.build(cfg)
+    """Build roi extractor."""
+    warnings.warn(
+        '``build_roi_extractor`` would be deprecated soon, please use '
+        '``mmdet3d.registry.MODELS.build()`` ')
+    return ROI_EXTRACTORS.build(cfg)
 
 
 def build_shared_head(cfg):
-    """Build shared head of detector."""
-    if cfg['type'] in SHARED_HEADS._module_dict.keys():
-        return SHARED_HEADS.build(cfg)
-    else:
-        return MMDET_SHARED_HEADS.build(cfg)
+    """Build shared head."""
+    warnings.warn('``build_shared_head`` would be deprecated soon, please use '
+                  '``mmdet3d.registry.MODELS.build()`` ')
+    return SHARED_HEADS.build(cfg)
 
 
 def build_head(cfg):
     """Build head."""
-    if cfg['type'] in HEADS._module_dict.keys():
-        return HEADS.build(cfg)
-    else:
-        return MMDET_HEADS.build(cfg)
+    warnings.warn('``build_head`` would be deprecated soon, please use '
+                  '``mmdet3d.registry.MODELS.build()`` ')
+    return HEADS.build(cfg)
 
 
 def build_loss(cfg):
-    """Build loss function."""
-    if cfg['type'] in LOSSES._module_dict.keys():
-        return LOSSES.build(cfg)
-    elif cfg['type'] in MMDET_LOSSES._module_dict.keys():
-        return MMDET_LOSSES.build(cfg)
-    else:
-        return MMSEG_LOSSES.build(cfg)
+    """Build loss."""
+    warnings.warn('``build_loss`` would be deprecated soon, please use '
+                  '``mmdet3d.registry.MODELS.build()`` ')
+    return LOSSES.build(cfg)
 
 
 def build_detector(cfg, train_cfg=None, test_cfg=None):
@@ -90,9 +74,6 @@ def build_detector(cfg, train_cfg=None, test_cfg=None):
         'test_cfg specified in both outer field and model field '
     if cfg['type'] in DETECTORS._module_dict.keys():
         return DETECTORS.build(
-            cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
-    else:
-        return MMDET_DETECTORS.build(
             cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
 
 
@@ -124,14 +105,20 @@ def build_model(cfg, train_cfg=None, test_cfg=None):
 
 def build_voxel_encoder(cfg):
     """Build voxel encoder."""
+    warnings.warn('``build_voxel_encoder`` would be deprecated soon, please '
+                  'use ``mmdet3d.registry.MODELS.build()`` ')
     return VOXEL_ENCODERS.build(cfg)
 
 
 def build_middle_encoder(cfg):
     """Build middle level encoder."""
+    warnings.warn('``build_middle_encoder`` would be deprecated soon, please '
+                  'use ``mmdet3d.registry.MODELS.build()`` ')
     return MIDDLE_ENCODERS.build(cfg)
 
 
 def build_fusion_layer(cfg):
     """Build fusion layer."""
+    warnings.warn('``build_fusion_layer`` would be deprecated soon, please '
+                  'use ``mmdet3d.registry.MODELS.build()`` ')
     return FUSION_LAYERS.build(cfg)

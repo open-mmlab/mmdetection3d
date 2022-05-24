@@ -4,9 +4,9 @@ import torch
 from mmcv.cnn import Scale
 from torch import nn as nn
 
+from mmdet3d.core import build_bbox_coder
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes)
-from mmdet.core import build_bbox_coder
 
 
 def test_partial_bin_based_box_coder():

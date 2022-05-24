@@ -3,11 +3,11 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-from mmdet.core.bbox.builder import BBOX_CODERS
+from mmdet3d.registry import TASK_UTILS
 from .fcos3d_bbox_coder import FCOS3DBBoxCoder
 
 
-@BBOX_CODERS.register_module()
+@TASK_UTILS.register_module()
 class PGDBBoxCoder(FCOS3DBBoxCoder):
     """Bounding box coder for PGD."""
 

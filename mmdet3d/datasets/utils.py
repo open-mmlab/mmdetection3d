@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
+from mmcv.transforms import LoadImageFromFile
 
 # yapf: disable
 from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
@@ -10,9 +11,9 @@ from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
                                         LoadPointsFromMultiSweeps,
                                         MultiScaleFlipAug3D,
                                         PointSegClassMapping)
-from mmdet.datasets.pipelines import LoadImageFromFile, MultiScaleFlipAug
 # yapf: enable
-from .builder import PIPELINES
+from mmdet3d.registry import TRANSFORMS
+from mmdet.datasets.pipelines import MultiScaleFlipAug
 
 
 def is_loading_function(transform):
@@ -35,7 +36,7 @@ def is_loading_function(transform):
                          Collect3D, LoadImageFromFileMono3D,
                          PointSegClassMapping)
     if isinstance(transform, dict):
-        obj_cls = PIPELINES.get(transform['type'])
+        obj_cls = TRANSFORMS.get(transform['type'])
         if obj_cls is None:
             return False
         if obj_cls in loading_functions:
