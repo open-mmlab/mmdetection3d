@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
+import pytest
 import torch
 
 
@@ -73,3 +74,41 @@ def test_circle_nms():
     keep = circle_nms(boxes.numpy(), 0.175)
     expected_keep = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert np.all(keep == expected_keep)
+
+
+# copied from tests/test_ops/test_iou3d.py from mmcv<=1.5
+@pytest.mark.skipif(
+    not torch.cuda.is_available(), reason='requires CUDA support')
+def test_nms_bev():
+    from mmdet3d.core.post_processing import nms_bev
+
+    np_boxes = np.array(
+        [[6.0, 3.0, 8.0, 7.0, 2.0], [3.0, 6.0, 9.0, 11.0, 1.0],
+         [3.0, 7.0, 10.0, 12.0, 1.0], [1.0, 4.0, 13.0, 7.0, 3.0]],
+        dtype=np.float32)
+    np_scores = np.array([0.6, 0.9, 0.7, 0.2], dtype=np.float32)
+    np_inds = np.array([1, 0, 3])
+    boxes = torch.from_numpy(np_boxes)
+    scores = torch.from_numpy(np_scores)
+    inds = nms_bev(boxes.cuda(), scores.cuda(), thresh=0.3)
+
+    assert np.allclose(inds.cpu().numpy(), np_inds)
+
+
+# copied from tests/test_ops/test_iou3d.py from mmcv<=1.5
+@pytest.mark.skipif(
+    not torch.cuda.is_available(), reason='requires CUDA support')
+def test_nms_normal_bev():
+    from mmdet3d.core.post_processing import nms_normal_bev
+
+    np_boxes = np.array(
+        [[6.0, 3.0, 8.0, 7.0, 2.0], [3.0, 6.0, 9.0, 11.0, 1.0],
+         [3.0, 7.0, 10.0, 12.0, 1.0], [1.0, 4.0, 13.0, 7.0, 3.0]],
+        dtype=np.float32)
+    np_scores = np.array([0.6, 0.9, 0.7, 0.2], dtype=np.float32)
+    np_inds = np.array([1, 0, 3])
+    boxes = torch.from_numpy(np_boxes)
+    scores = torch.from_numpy(np_scores)
+    inds = nms_normal_bev(boxes.cuda(), scores.cuda(), thresh=0.3)
+
+    assert np.allclose(inds.cpu().numpy(), np_inds)
