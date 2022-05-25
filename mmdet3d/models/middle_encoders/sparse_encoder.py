@@ -432,7 +432,6 @@ class SparseEncoderSASSD(SparseEncoder):
         pos_normalizer = pos.sum().clamp(min=1.0)
 
         cls_weights = pos + neg
-
         reg_weights = pos
         reg_weights = reg_weights / pos_normalizer
 
@@ -448,6 +447,8 @@ class SparseEncoderSASSD(SparseEncoder):
         aux_loss_reg = smooth_l1_loss(point_reg, center_targets, beta=1 / 9.)
         aux_loss_reg = torch.sum(aux_loss_reg * weight)[None]
         aux_loss_reg /= num_boxes
+
+        aux_loss_cls, aux_loss_reg = [aux_loss_cls], [aux_loss_reg]
 
         return dict(aux_loss_cls=aux_loss_cls, aux_loss_reg=aux_loss_reg)
 
