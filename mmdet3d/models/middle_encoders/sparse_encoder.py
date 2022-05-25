@@ -370,8 +370,8 @@ class SparseEncoderSASSD(SparseEncoder):
         return pts_labels, center_offsets
 
     def calculate_pts_offsets(self, points, boxes):
-        """Find all boxes in which each point is, as well as the offsets
-            from the box centers.
+        """Find all boxes in which each point is, as well as the offsets from
+        the box centers.
 
         Args:
             points (torch.Tensor): [M, 3], [x, y, z] in LiDAR/DEPTH coordinate
