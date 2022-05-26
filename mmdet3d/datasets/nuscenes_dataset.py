@@ -10,12 +10,12 @@ from nuscenes.utils.data_classes import Box as NuScenesBox
 from mmdet3d.registry import DATASETS
 from ..core import show_result
 from ..core.bbox import Box3DMode, Coord3DMode, LiDARInstance3DBoxes
-from .custom_3d import Custom3DDataset
+from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class NuScenesDataset(Custom3DDataset):
+class NuScenesDataset(Det3DDataset):
     r"""NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.

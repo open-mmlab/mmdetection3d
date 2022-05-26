@@ -2,12 +2,12 @@
 import mmcv
 import numpy as np
 
-from mmdet3d.datasets import CustomDataset
+from mmdet3d.datasets import Det3DDataset
 from mmdet3d.registry import DATASETS
 
 
 @DATASETS.register_module()
-class Kitti2DDataset(CustomDataset):
+class Kitti2DDataset(Det3DDataset):
     r"""KITTI 2D Dataset.
 
     This class serves as the API for experiments on the `KITTI Dataset

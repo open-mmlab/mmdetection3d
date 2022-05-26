@@ -8,13 +8,13 @@ import numpy as np
 from mmdet3d.core import instance_seg_eval, show_result, show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
-from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
+from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class ScanNetDataset(Custom3DDataset):
+class ScanNetDataset(Det3DDataset):
     r"""ScanNet Dataset for Detection Task.
 
     This class serves as the API for experiments on the ScanNet Dataset.

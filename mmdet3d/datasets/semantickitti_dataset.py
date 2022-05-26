@@ -2,11 +2,11 @@
 from os import path as osp
 
 from mmdet3d.registry import DATASETS
-from .custom_3d import Custom3DDataset
+from .det3d_dataset import Det3DDataset
 
 
 @DATASETS.register_module()
-class SemanticKITTIDataset(Custom3DDataset):
+class SemanticKITTIDataset(Det3DDataset):
     r"""SemanticKITTI Dataset.
 
     This class serves as the API for experiments on the SemanticKITTI Dataset

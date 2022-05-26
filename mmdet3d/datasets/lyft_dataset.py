@@ -14,12 +14,12 @@ from mmdet3d.core.evaluation.lyft_eval import lyft_eval
 from mmdet3d.registry import DATASETS
 from ..core import show_result
 from ..core.bbox import Box3DMode, Coord3DMode, LiDARInstance3DBoxes
-from .custom_3d import Custom3DDataset
+from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class LyftDataset(Custom3DDataset):
+class LyftDataset(Det3DDataset):
     r"""Lyft Dataset.
 
     This class serves as the API for experiments on the Lyft Dataset.

@@ -6,13 +6,13 @@ import numpy as np
 from mmdet3d.core import show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
-from .custom_3d import Custom3DDataset
 from .custom_3d_seg import Custom3DSegDataset
+from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class S3DISDataset(Custom3DDataset):
+class S3DISDataset(Det3DDataset):
     r"""S3DIS Dataset for Detection Task.
 
     This class is the inner dataset for S3DIS. Since S3DIS has 6 areas, we

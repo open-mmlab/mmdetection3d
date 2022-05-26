@@ -1,24 +1,24 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-import os
 import tempfile
 from os import path as osp
+from typing import Callable, List, Optional, Union
 
 import mmcv
 import numpy as np
 import torch
 from mmcv.utils import print_log
 
-from mmdet3d.registry import DATASETS
+from mmdet3d.datasets import DATASETS
 from ..core import show_multi_modality_result, show_result
 from ..core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
                          LiDARInstance3DBoxes, points_cam2img)
-from .custom_3d import Custom3DDataset
+from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class KittiDataset(Custom3DDataset):
+class KittiDataset(Det3DDataset):
     r"""KITTI Dataset.
 
     This class serves as the API for experiments on the `KITTI Dataset
@@ -28,11 +28,7 @@ class KittiDataset(Custom3DDataset):
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
         split (str): Split of input data.
-        pts_prefix (str, optional): Prefix of points files.
-            Defaults to 'velodyne'.
         pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to None.
@@ -52,220 +48,107 @@ class KittiDataset(Custom3DDataset):
             filter invalid predicted boxes.
             Default: [0, -40, -3, 70.4, 40, 0.0].
     """
-    CLASSES = ('car', 'pedestrian', 'cyclist')
+    # TODO: use full classes of kitti
+    METAINFO = {'CLASSES': ('Pedestrian', 'Cyclist', 'Car')}
 
     def __init__(self,
-                 data_root,
-                 ann_file,
-                 split,
-                 pts_prefix='velodyne',
-                 pipeline=None,
-                 classes=None,
-                 modality=None,
-                 box_type_3d='LiDAR',
-                 filter_empty_gt=True,
-                 test_mode=False,
-                 pcd_limit_range=[0, -40, -3, 70.4, 40, 0.0],
+                 data_root: str,
+                 ann_file: str,
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: Optional[dict] = None,
+                 box_type_3d: str = 'LiDAR',
+                 filter_empty_gt: bool = True,
+                 test_mode: bool = False,
+                 pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  **kwargs):
+
+        self.pcd_limit_range = pcd_limit_range
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
             pipeline=pipeline,
-            classes=classes,
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
             **kwargs)
-
-        self.split = split
-        self.root_split = os.path.join(self.data_root, split)
         assert self.modality is not None
-        self.pcd_limit_range = pcd_limit_range
-        self.pts_prefix = pts_prefix
+        assert box_type_3d.lower() in ('lidar', 'camera')
 
-    def _get_pts_filename(self, idx):
-        """Get point cloud filename according to the given index.
+    def parse_data_info(self, info: dict) -> dict:
+        """Process the raw data info.
 
-        Args:
-            index (int): Index of the point cloud file to get.
-
-        Returns:
-            str: Name of the point cloud file.
-        """
-        pts_filename = osp.join(self.root_split, self.pts_prefix,
-                                f'{idx:06d}.bin')
-        return pts_filename
-
-    def get_data_info(self, index):
-        """Get data info according to the given index.
+        The only difference with it in `Det3DDataset`
+        is the specific process for `plane`.
 
         Args:
-            index (int): Index of the sample data to get.
+            info (dict): Raw info dict.
 
         Returns:
-            dict: Data information that will be passed to the data
-                preprocessing pipelines. It includes the following keys:
-
-                - sample_idx (str): Sample index.
-                - pts_filename (str): Filename of point clouds.
-                - img_prefix (str): Prefix of image files.
-                - img_info (dict): Image info.
-                - lidar2img (list[np.ndarray], optional): Transformations
-                    from lidar to different cameras.
-                - ann_info (dict): Annotation info.
+            dict: Has `ann_info` in training stage. And
+            all path has been converted to absolute path.
         """
-        info = self.data_infos[index]
-        sample_idx = info['image']['image_idx']
-        img_filename = os.path.join(self.data_root,
-                                    info['image']['image_path'])
+        if self.modality['use_lidar']:
+            if 'plane' in info:
+                # convert ground plane to velodyne coordinates
+                plane = np.array(info['plane'])
+                lidar2cam = np.array(info['lidar_points']['lidar2cam'])
+                reverse = np.linalg.inv(lidar2cam)
 
-        # TODO: consider use torch.Tensor only
-        rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-        P2 = info['calib']['P2'].astype(np.float32)
-        lidar2img = P2 @ rect @ Trv2c
+                (plane_norm_cam, plane_off_cam) = (plane[:3],
+                                                   -plane[:3] * plane[3])
+                plane_norm_lidar = \
+                    (reverse[:3, :3] @ plane_norm_cam[:, None])[:, 0]
+                plane_off_lidar = (
+                    reverse[:3, :3] @ plane_off_cam[:, None][:, 0] +
+                    reverse[:3, 3])
+                plane_lidar = np.zeros_like(plane_norm_lidar, shape=(4, ))
+                plane_lidar[:3] = plane_norm_lidar
+                plane_lidar[3] = -plane_norm_lidar.T @ plane_off_lidar
+            else:
+                plane_lidar = None
 
-        pts_filename = self._get_pts_filename(sample_idx)
-        input_dict = dict(
-            sample_idx=sample_idx,
-            pts_filename=pts_filename,
-            img_prefix=None,
-            img_info=dict(filename=img_filename),
-            lidar2img=lidar2img)
+            info['plane'] = plane_lidar
 
-        if not self.test_mode:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
+        info = super().parse_data_info(info)
 
-        return input_dict
+        return info
 
-    def get_ann_info(self, index):
+    def parse_ann_info(self, info):
         """Get annotation info according to the given index.
 
         Args:
-            index (int): Index of the annotation data to get.
+            info (dict): Data information of single data sample.
 
         Returns:
             dict: annotation information consists of the following keys:
 
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                     3D ground truth bboxes.
-                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - bbox_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
                 - gt_labels (np.ndarray): Labels of ground truths.
-                - gt_names (list[str]): Class names of ground truths.
                 - difficulty (int): Difficulty defined by KITTI.
                     0, 1, 2 represent xxxxx respectively.
         """
-        # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-        rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
 
-        if 'plane' in info:
-            # convert ground plane to velodyne coordinates
-            reverse = np.linalg.inv(rect @ Trv2c)
+        ann_info = super().parse_ann_info(info)
 
-            (plane_norm_cam,
-             plane_off_cam) = (info['plane'][:3],
-                               -info['plane'][:3] * info['plane'][3])
-            plane_norm_lidar = \
-                (reverse[:3, :3] @ plane_norm_cam[:, None])[:, 0]
-            plane_off_lidar = (
-                reverse[:3, :3] @ plane_off_cam[:, None][:, 0] +
-                reverse[:3, 3])
-            plane_lidar = np.zeros_like(plane_norm_lidar, shape=(4, ))
-            plane_lidar[:3] = plane_norm_lidar
-            plane_lidar[3] = -plane_norm_lidar.T @ plane_off_lidar
-        else:
-            plane_lidar = None
+        bbox_labels_3d = ann_info['gt_labels_3d']
+        bbox_labels_3d = np.array(bbox_labels_3d)
+        ann_info['gt_labels_3d'] = bbox_labels_3d
+        ann_info['gt_labels'] = copy.deepcopy(ann_info['gt_labels_3d'])
+        ann_info = self._remove_dontcare(ann_info)
 
-        difficulty = info['annos']['difficulty']
-        annos = info['annos']
-        # we need other objects to avoid collision when sample
-        annos = self.remove_dontcare(annos)
-        loc = annos['location']
-        dims = annos['dimensions']
-        rots = annos['rotation_y']
-        gt_names = annos['name']
-        gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
-                                      axis=1).astype(np.float32)
+        # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
+        lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
+        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+        gt_bboxes_3d = CameraInstance3DBoxes(
+            ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
+                                                 np.linalg.inv(lidar2cam))
+        ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 
-        # convert gt_bboxes_3d to velodyne coordinates
-        gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
-            self.box_mode_3d, np.linalg.inv(rect @ Trv2c))
-        gt_bboxes = annos['bbox']
-
-        selected = self.drop_arrays_by_name(gt_names, ['DontCare'])
-        gt_bboxes = gt_bboxes[selected].astype('float32')
-        gt_names = gt_names[selected]
-
-        gt_labels = []
-        for cat in gt_names:
-            if cat in self.CLASSES:
-                gt_labels.append(self.CLASSES.index(cat))
-            else:
-                gt_labels.append(-1)
-        gt_labels = np.array(gt_labels).astype(np.int64)
-        gt_labels_3d = copy.deepcopy(gt_labels)
-
-        anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            bboxes=gt_bboxes,
-            labels=gt_labels,
-            gt_names=gt_names,
-            plane=plane_lidar,
-            difficulty=difficulty)
-        return anns_results
-
-    def drop_arrays_by_name(self, gt_names, used_classes):
-        """Drop irrelevant ground truths by name.
-
-        Args:
-            gt_names (list[str]): Names of ground truths.
-            used_classes (list[str]): Classes of interest.
-
-        Returns:
-            np.ndarray: Indices of ground truths that will be dropped.
-        """
-        inds = [i for i, x in enumerate(gt_names) if x not in used_classes]
-        inds = np.array(inds, dtype=np.int64)
-        return inds
-
-    def keep_arrays_by_name(self, gt_names, used_classes):
-        """Keep useful ground truths by name.
-
-        Args:
-            gt_names (list[str]): Names of ground truths.
-            used_classes (list[str]): Classes of interest.
-
-        Returns:
-            np.ndarray: Indices of ground truths that will be keeped.
-        """
-        inds = [i for i, x in enumerate(gt_names) if x in used_classes]
-        inds = np.array(inds, dtype=np.int64)
-        return inds
-
-    def remove_dontcare(self, ann_info):
-        """Remove annotations that do not need to be cared.
-
-        Args:
-            ann_info (dict): Dict of annotation infos. The ``'DontCare'``
-                annotations will be removed according to ann_file['name'].
-
-        Returns:
-            dict: Annotations after filtering.
-        """
-        img_filtered_annotations = {}
-        relevant_annotation_indices = [
-            i for i, x in enumerate(ann_info['name']) if x != 'DontCare'
-        ]
-        for key in ann_info.keys():
-            img_filtered_annotations[key] = (
-                ann_info[key][relevant_annotation_indices])
-        return img_filtered_annotations
+        return ann_info
 
     def format_results(self,
                        outputs,

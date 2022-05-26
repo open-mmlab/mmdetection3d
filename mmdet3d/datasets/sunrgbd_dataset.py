@@ -8,12 +8,12 @@ from mmdet3d.core import show_multi_modality_result, show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
 from mmdet.core import eval_map
-from .custom_3d import Custom3DDataset
+from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
 
 
 @DATASETS.register_module()
-class SUNRGBDDataset(Custom3DDataset):
+class SUNRGBDDataset(Det3DDataset):
     r"""SUNRGBD Dataset.
 
     This class serves as the API for experiments on the SUNRGBD Dataset.
