@@ -44,7 +44,7 @@ class SemanticKITTIDataset(Custom3DDataset):
                'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
                'sidewalk', 'other-ground', 'building', 'fence', 'vegetation',
                'trunck', 'terrian', 'pole', 'traffic-sign')
-    learning_map = {
+    labels_map = {
         0: 0,  # "unlabeled"
         1: 0,  # "outlier" mapped to "unlabeled" --------------mapped
         10: 1,  # "car"
@@ -155,7 +155,7 @@ class SemanticKITTIDataset(Custom3DDataset):
         return anns_results
 
     def parse_label(self, filename):
-        class_remap = self.learning_map
+        class_remap = self.labels_map
         gt_annos = []
         for i, seq in enumerate(filename):
 

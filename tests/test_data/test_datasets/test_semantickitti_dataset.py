@@ -72,7 +72,7 @@ def test_evaluate():
                'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
                'sidewalk', 'other-ground', 'building', 'fence', 'vegetation',
                'trunck', 'terrian', 'pole', 'traffic-sign')
-    learning_map = {
+    labels_map = {
         0: 0,  # "unlabeled"
         1: 0,  # "outlier" mapped to "unlabeled" ---------------mapped
         10: 1,  # "car"
@@ -154,7 +154,7 @@ def test_evaluate():
         ignore=ignore,
         min_points=min_points)
 
-    class_remap = learning_map
+    class_remap = labels_map
     inst_pred_0 = np.fromfile(
         osp.join(data_root, 'sequences/00/labels/000000.label'),
         dtype=np.int32).reshape(-1, 1)
