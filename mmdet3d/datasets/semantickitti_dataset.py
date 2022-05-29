@@ -155,6 +155,14 @@ class SemanticKITTIDataset(Custom3DDataset):
         return anns_results
 
     def parse_label(self, filename):
+        """Parse the label files of SemanticKitti dataset.
+
+        Args:
+            filename (string): The label files path.
+
+        Returns:
+            gt_annos:(list [dict]): The semantic and instance labels info.
+        """
         class_remap = self.labels_map
         gt_annos = []
         for i, seq in enumerate(filename):
