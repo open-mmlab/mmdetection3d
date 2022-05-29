@@ -38,13 +38,6 @@ train_pipeline = [
         load_dim=4,
         use_dim=[0, 1, 2]),
     dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=False,
-        with_seg_3d=True,
-        seg_3d_dtype=np.int32),
-    dict(
         type='RandomFlip3D',
         sync_2d=False,
         flip_ratio_bev_horizontal=1.0,
