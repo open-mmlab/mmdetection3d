@@ -58,12 +58,12 @@ def test_single_roipoint_extractor():
 
 
 def test_bev_feature_extractor():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
     from math import pi
 
     from mmdet3d.core.bbox import LiDARInstance3DBoxes
-
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
 
     bev_feature_extractor_cfg = dict(
         pc_start=[-61.2, -61.2],
@@ -80,6 +80,7 @@ def test_bev_feature_extractor():
     # - bev_feats[..., i, j] = [i, j], with shape of [1, 2, H, W]
     bev_feats = torch.cat(
         [grid_x.unsqueeze(0), grid_y.unsqueeze(0)], dim=0).unsqueeze(0)
+    bev_feats = bev_feats.float()
     bev_feats = [bev_feats]
 
     # build rois
@@ -88,7 +89,7 @@ def test_bev_feature_extractor():
                                 [0, 0, 0, 3.2, 1.6, 1.5, pi]])
     rois = [[LiDARInstance3DBoxes(rois_tensor)]]
 
-    roi_features = self.forward(bev_feats, rois)
+    roi_features = self(bev_feats, rois)
     assert roi_features[0].shape == torch.Size([3, 5 * 2])
 
     expected_feats = roi_features[0].new_tensor(

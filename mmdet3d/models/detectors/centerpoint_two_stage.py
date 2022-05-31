@@ -21,9 +21,13 @@ class CenterPointTwoStage(TwoStage3DDetector):
         neck (dict): Config of one-stage neck.
         rpn_head (dict): Config of one-stage head.
         roi_head (dict): Config of two-stage head.
-        train_cfg (dict): Config of the training.
-        test_cfg (dict): Config of the testing.
-        init_cfg (dict): Initialization config dict.
+        train_cfg (dict, optional): Config of the training. Defaults to None.
+            - rpn (dict): Training config for RPN head.
+            - rcnn (dict): Training config for two-stage roi head.
+        test_cfg (dict, optional): Config of the testing. Defaults to None.
+            - rpn (dict): Training config for RPN head.
+            - rcnn (dict): Training config for two-stage roi head.
+        init_cfg (dict, optional): Initialization config dict. Defaults to None
     """
 
     def __init__(self,
@@ -54,6 +58,7 @@ class CenterPointTwoStage(TwoStage3DDetector):
 
     def extract_feat(self, points):
         """Extract features from images and points.
+
         Args:
             points (list[torch.Tensor]): Points of each sample. The outer
                 list indicates point cloud in a batch. The shape of inside
@@ -65,7 +70,7 @@ class CenterPointTwoStage(TwoStage3DDetector):
         """
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
-        batch_size = coors[-1, 0] + 1
+        batch_size = len(points)
         x = self.middle_encoder(voxel_features, coors, batch_size)
         x = self.backbone(x)
         if self.with_neck:
@@ -116,8 +121,10 @@ class CenterPointTwoStage(TwoStage3DDetector):
                 list indicates point cloud in a batch. The shape of inside
                 point cloud is [N, C]
             imput_metas (list[dict]): Meta info of each input.
-            imgs (list[torch.Tensor]): Images of each sample.
-            rescale (bool): Whether to rescale results.
+            imgs (list[torch.Tensor], optional): Images of each sample.
+                Default to None.
+            rescale (bool, optional): Whether to rescale results. Default
+                to False.
 
         Returns:
             list[dict[str, torch.Tensor]]: Bounding box results in cpu mode.

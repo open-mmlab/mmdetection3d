@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.runner import BaseModule
+from torch.nn import functional as F
 
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes)
@@ -107,7 +108,7 @@ class BEVFeatureExtractor(BaseModule):
         return points
 
     @staticmethod
-    def bilinear_interpolate(bev_feature, x, y):
+    def bilinear_interpolate(bev_feats, x, y):
         """Sample features in bev by bilinear interpolation.
 
         Args:
@@ -119,30 +120,16 @@ class BEVFeatureExtractor(BaseModule):
         Returns:
             torch.Tensor: Sampled features with shape of [N, C]
         """
-        bev_feature = bev_feature.permute(
-            1, 2, 0).contiguous()  # [C, H, W] -> [H, W, C]
+        C, H, W = bev_feats.shape[-3:]
+        x_norm = x / (W - 1) * 2 - 1
+        y_norm = y / (H - 1) * 2 - 1
+        grid = torch.cat([x_norm.view(-1, 1), y_norm.view(-1, 1)], dim=1)
+        grid = grid.unsqueeze(0).unsqueeze(0)
 
-        x0 = torch.floor(x).long()
-        x1 = x0 + 1
+        bev_feats = bev_feats.unsqueeze(0)
 
-        y0 = torch.floor(y).long()
-        y1 = y0 + 1
+        feat = F.grid_sample(
+            bev_feats, grid, mode='bilinear', align_corners=True)
 
-        x0 = torch.clamp(x0, 0, bev_feature.shape[1] - 1)
-        x1 = torch.clamp(x1, 0, bev_feature.shape[1] - 1)
-        y0 = torch.clamp(y0, 0, bev_feature.shape[0] - 1)
-        y1 = torch.clamp(y1, 0, bev_feature.shape[0] - 1)
-
-        Ia = bev_feature[y0, x0]
-        Ib = bev_feature[y1, x0]
-        Ic = bev_feature[y0, x1]
-        Id = bev_feature[y1, x1]
-
-        wa = (x1.type_as(x) - x) * (y1.type_as(y) - y)
-        wb = (x1.type_as(x) - x) * (y - y0.type_as(y))
-        wc = (x - x0.type_as(x)) * (y1.type_as(y) - y)
-        wd = (x - x0.type_as(x)) * (y - y0.type_as(y))
-        ans = torch.t(
-            (torch.t(Ia) * wa)) + torch.t(torch.t(Ib) * wb) + torch.t(
-                torch.t(Ic) * wc) + torch.t(torch.t(Id) * wd)
-        return ans
+        feat = feat.view(C, -1).permute(1, 0)
+        return feat

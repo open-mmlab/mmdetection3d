@@ -1565,6 +1565,8 @@ def test_monoflex_head():
 
 
 def test_centerpoint_roi_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
     from math import pi
 
     head_cfg = dict(
@@ -1586,7 +1588,10 @@ def test_centerpoint_roi_head():
             num_classes=1,
             loss_reg=dict(type='L1Loss', reduction='none', loss_weight=1.0),
             loss_cls=dict(
-                type='CrossEntropyLoss', reduction='none', loss_weight=1.0)),
+                type='CrossEntropyLoss',
+                reduction='none',
+                use_sigmoid=True,
+                loss_weight=1.0)),
         train_cfg=dict(
             assigner=dict(
                 type='MaxIoUAssigner',

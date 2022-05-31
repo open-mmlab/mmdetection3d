@@ -19,28 +19,29 @@ class CenterPointBBoxHead(BaseModule):
         shared_fc (list[int]): Output channels of the shared head.
         cls_fc (list[int]): Output channels of the classification head.
         reg_fc (list[int]): Output channels of the regression head.
-        dp_ratio (float): Ratio of Dropout.
-        code_size (int): Dimension of the encoded bbox.
-        num_classes (int): The number of classes.
-        loss_reg (dict): Config dict of regression loss.
-        loss_cls (dict): Config dict of classification loss.
-        init_cfg (dict): Initialization config dict.
+        loss_reg (dict, optional): Config dict of regression loss.
+        loss_cls (dict, optional): Config dict of classification loss.
+        dp_ratio (float, optional): Ratio of Dropout. Default to 0.3.
+        code_size (int, optional): Dimension of the encoded bbox. Default to 7.
+        num_classes (int, optional): The number of classes. Defaults to 1.
+        init_cfg (dict, optional): Initialization config dict. Defaults to None
     """
 
     def __init__(self,
-                 input_channels=128 * 3 * 5,
-                 shared_fc=[256, 256],
-                 cls_fc=[256, 256],
-                 reg_fc=[256, 256],
-                 dp_ratio=0.3,
-                 code_size=7,
-                 num_classes=1,
+                 input_channels,
+                 shared_fc,
+                 cls_fc,
+                 reg_fc,
                  loss_reg=dict(
                      type='L1Loss', reduction='none', loss_weight=1.0),
                  loss_cls=dict(
                      type='CrossEntropyLoss',
                      reduction='none',
+                     use_sigmoid=True,
                      loss_weight=1.0),
+                 dp_ratio=0.3,
+                 code_size=7,
+                 num_classes=1,
                  init_cfg=None):
         super(CenterPointBBoxHead, self).__init__(init_cfg=init_cfg)
 
@@ -120,8 +121,8 @@ class CenterPointBBoxHead(BaseModule):
             bbox_weights = self.get_targets(sample_results, cfg)
 
         cls_pred = torch.cat([pred_batch['cls'] for pred_batch in pred_res],
-                             dim=0)
-        label = torch.cat(list(label), dim=0).reshape(-1, self.num_classes)
+                             dim=0).view(-1)
+        label = torch.cat(list(label), dim=0).view(-1)
         label_weights = torch.cat(list(label_weights), dim=0)
         loss_cls = self.loss_cls(cls_pred, label, label_weights)
         losses.update(loss_cls=loss_cls)
@@ -138,6 +139,7 @@ class CenterPointBBoxHead(BaseModule):
 
     def get_bboxes(self, roi_features, img_metas, rois):
         """Generate bboxes from one-stage rois and bbox head predictions.
+
         Args:
             roi_features list[torch.Tensor]: Extracted features. The shape
                 of each roi feature is [N, 5*C]
@@ -166,7 +168,7 @@ class CenterPointBBoxHead(BaseModule):
             # - calculate score
             bbox_head = pred_res[batch_idx]
             cls = bbox_head['cls']
-            assert cls.shape[-1] == 1  # NOTE: ONLY surpport class agnostic now
+            assert cls.shape[-1] == 1, 'ONLY surpport class agnostic now'
             scores = torch.sqrt(
                 torch.sigmoid(cls).reshape(-1) * rois[batch_idx][1])
 

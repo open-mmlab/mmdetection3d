@@ -81,7 +81,10 @@ model = dict(
             num_classes=1,
             loss_reg=dict(type='L1Loss', reduction='mean', loss_weight=1.0),
             loss_cls=dict(
-                type='CrossEntropyLoss', reduction='mean', loss_weight=1.0)),
+                type='CrossEntropyLoss',
+                reduction='mean',
+                use_sigmoid=True,
+                loss_weight=1.0)),
     ),
     train_cfg=dict(
         rpn=dict(

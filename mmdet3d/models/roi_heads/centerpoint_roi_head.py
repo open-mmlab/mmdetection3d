@@ -15,9 +15,10 @@ class CenterPointRoIHead(Base3DRoIHead):
     Args:
         bev_feature_extractor_cfg (dict): Config dict of BEV feature extractor.
         bbox_head (dict): Config dict of bbox head.
+        # TODO: refine train_cfg
         train_cfg (dict): Config of the training.
-        test_cfg (dict): Config of the testing.
-        init_cfg (dict): Initialization config dict.
+        test_cfg (dict, optional): Config of the testing. Defaults to None.
+        init_cfg (dict, optional): Initialization config dict. Defaults to None
     """
 
     def __init__(self,
@@ -91,6 +92,8 @@ class CenterPointRoIHead(Base3DRoIHead):
         sample_results = self._assign_and_sample(rois, gt_bboxes_3d,
                                                  gt_labels_3d)
 
+        # The rois passed into the BEVFeatureExtractor's forward() function
+        # should be (list[list[:obj:`BaseInstance3DBoxes`, ...]])
         sampled_rois = [[
             LiDARInstance3DBoxes(
                 sample_res.bboxes, box_dim=sample_res.bboxes.size(-1))
@@ -155,8 +158,6 @@ class CenterPointRoIHead(Base3DRoIHead):
         # bbox assign
         for batch_idx in range(len(proposal_list)):
             cur_proposal_list = proposal_list[batch_idx]
-            # cur_boxes = cur_proposal_list['boxes_3d']
-            # cur_labels_3d = cur_proposal_list['labels_3d']
             cur_boxes = cur_proposal_list[0]
             cur_labels_3d = cur_proposal_list[2]
             cur_gt_bboxes = gt_bboxes_3d[batch_idx].to(cur_boxes.device)
