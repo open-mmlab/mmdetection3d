@@ -259,15 +259,9 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
              dir_cls_preds,
              attr_preds,
              centernesses,
-             gt_bboxes,
-             gt_labels,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             centers2d,
-             depths,
-             attr_labels,
-             img_metas,
-             gt_bboxes_ignore=None):
+             batch_gt_instances_3d,
+             batch_img_metas,
+             batch_gt_instances_ignore=None):
         """Compute loss of the head.
 
         Args:
@@ -285,21 +279,16 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 num_points * num_attrs.
             centernesses (list[Tensor]): Centerness for each scale level, each
                 is a 4D-tensor, the channel number is num_points * 1.
-            gt_bboxes (list[Tensor]): Ground truth bboxes for each image with
-                shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
-            gt_labels (list[Tensor]): class indices corresponding to each box
-            gt_bboxes_3d (list[Tensor]): 3D boxes ground truth with shape of
-                (num_gts, code_size).
-            gt_labels_3d (list[Tensor]): same as gt_labels
-            centers2d (list[Tensor]): 2D centers on the image with shape of
-                (num_gts, 2).
-            depths (list[Tensor]): Depth ground truth with shape of
-                (num_gts, ).
-            attr_labels (list[Tensor]): Attributes indices of each box.
-            img_metas (list[dict]): Meta information of each image, e.g.,
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instance_3d.  It usually includes ``bboxes``、``labels``
+                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
+                attributes.
+            batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (list[Tensor]): specify which bounding
-                boxes can be ignored when computing the loss.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
 
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
@@ -310,9 +299,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         all_level_points = self.get_points(featmap_sizes, bbox_preds[0].dtype,
                                            bbox_preds[0].device)
         labels_3d, bbox_targets_3d, centerness_targets, attr_targets = \
-            self.get_targets(
-                all_level_points, gt_bboxes, gt_labels, gt_bboxes_3d,
-                gt_labels_3d, centers2d, depths, attr_labels)
+            self.get_targets(all_level_points, batch_gt_instances_3d)
 
         num_imgs = cls_scores[0].size(0)
         # flatten cls_scores, bbox_preds, dir_cls_preds and centerness
@@ -742,29 +729,17 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                              dim=-1) + stride // 2
         return points
 
-    def get_targets(self, points, gt_bboxes_list, gt_labels_list,
-                    gt_bboxes_3d_list, gt_labels_3d_list, centers2d_list,
-                    depths_list, attr_labels_list):
+    def get_targets(self, points, batch_gt_instances_3d):
         """Compute regression, classification and centerss targets for points
         in multiple images.
 
         Args:
             points (list[Tensor]): Points of each fpn level, each has shape
                 (num_points, 2).
-            gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image,
-                each has shape (num_gt, 4).
-            gt_labels_list (list[Tensor]): Ground truth labels of each box,
-                each has shape (num_gt,).
-            gt_bboxes_3d_list (list[Tensor]): 3D Ground truth bboxes of each
-                image, each has shape (num_gt, bbox_code_size).
-            gt_labels_3d_list (list[Tensor]): 3D Ground truth labels of each
-                box, each has shape (num_gt,).
-            centers2d_list (list[Tensor]): Projected 3D centers onto 2D image,
-                each has shape (num_gt, 2).
-            depths_list (list[Tensor]): Depth of projected 3D centers onto 2D
-                image, each has shape (num_gt, 1).
-            attr_labels_list (list[Tensor]): Attribute labels of each box,
-                each has shape (num_gt,).
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instance_3d.  It usually includes ``bboxes``、``labels``
+                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
+                attributes.
 
         Returns:
             tuple:
@@ -786,23 +761,11 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         # the number of points per img, per lvl
         num_points = [center.size(0) for center in points]
 
-        if attr_labels_list is None:
-            attr_labels_list = [
-                gt_labels.new_full(gt_labels.shape, self.attr_background_label)
-                for gt_labels in gt_labels_list
-            ]
-
         # get labels and bbox_targets of each image
         _, _, labels_3d_list, bbox_targets_3d_list, centerness_targets_list, \
             attr_targets_list = multi_apply(
                 self._get_target_single,
-                gt_bboxes_list,
-                gt_labels_list,
-                gt_bboxes_3d_list,
-                gt_labels_3d_list,
-                centers2d_list,
-                depths_list,
-                attr_labels_list,
+                batch_gt_instances_3d,
                 points=concat_points,
                 regress_ranges=concat_regress_ranges,
                 num_points_per_lvl=num_points)
@@ -850,12 +813,19 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         return concat_lvl_labels_3d, concat_lvl_bbox_targets_3d, \
             concat_lvl_centerness_targets, concat_lvl_attr_targets
 
-    def _get_target_single(self, gt_bboxes, gt_labels, gt_bboxes_3d,
-                           gt_labels_3d, centers2d, depths, attr_labels,
-                           points, regress_ranges, num_points_per_lvl):
+    def _get_target_single(self, gt_instances_3d, points, regress_ranges,
+                           num_points_per_lvl):
         """Compute regression and classification targets for a single image."""
         num_points = points.size(0)
-        num_gts = gt_labels.size(0)
+        num_gts = len(gt_instances_3d)
+        gt_bboxes = gt_instances_3d.bboxes
+        gt_labels = gt_instances_3d.labels
+        gt_bboxes_3d = gt_instances_3d.bboxes_3d
+        gt_labels_3d = gt_instances_3d.labels_3d
+        centers2d = gt_instances_3d.centers2d
+        depths = gt_instances_3d.depths
+        attr_labels = gt_instances_3d.attr_labels
+
         if not isinstance(gt_bboxes_3d, torch.Tensor):
             gt_bboxes_3d = gt_bboxes_3d.tensor.to(gt_bboxes.device)
         if num_gts == 0:

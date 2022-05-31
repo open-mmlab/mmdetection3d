@@ -400,15 +400,9 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
              bbox_preds,
              dir_cls_preds,
              attr_preds,
-             gt_bboxes,
-             gt_labels,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             centers2d,
-             depths,
-             attr_labels,
-             img_metas,
-             gt_bboxes_ignore=None):
+             batch_gt_instances_3d,
+             batch_img_metas,
+             batch_gt_instances_ignore=None):
         """Compute loss of the head.
 
         Args:
@@ -424,20 +418,16 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             attr_preds (list[Tensor]): Box scores for each scale level,
                 each is a 4D-tensor, the channel number is
                 num_points * num_attrs.
-            gt_bboxes (list[Tensor]): Ground truth bboxes for each image with
-                shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
-            gt_labels (list[Tensor]): class indices corresponding to each box
-            gt_bboxes_3d (list[Tensor]): 3D Ground truth bboxes for each
-                image with shape (num_gts, bbox_code_size).
-            gt_labels_3d (list[Tensor]): 3D class indices of each box.
-            centers2d (list[Tensor]): Projected 3D centers onto 2D images.
-            depths (list[Tensor]): Depth of projected centers on 2D images.
-            attr_labels (list[Tensor], optional): Attribute indices
-                corresponding to each box
-            img_metas (list[dict]): Meta information of each image, e.g.,
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instance_3d.  It usually includes ``bboxes``、``labels``
+                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
+                attributes.
+            batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            gt_bboxes_ignore (list[Tensor]): specify which bounding
-                boxes can be ignored when computing the loss.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
         """
 
         raise NotImplementedError
@@ -474,29 +464,17 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         raise NotImplementedError
 
     @abstractmethod
-    def get_targets(self, points, gt_bboxes_list, gt_labels_list,
-                    gt_bboxes_3d_list, gt_labels_3d_list, centers2d_list,
-                    depths_list, attr_labels_list):
+    def get_targets(self, points, batch_gt_instances_3d):
         """Compute regression, classification and centerss targets for points
         in multiple images.
 
         Args:
             points (list[Tensor]): Points of each fpn level, each has shape
                 (num_points, 2).
-            gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image,
-                each has shape (num_gt, 4).
-            gt_labels_list (list[Tensor]): Ground truth labels of each box,
-                each has shape (num_gt,).
-            gt_bboxes_3d_list (list[Tensor]): 3D Ground truth bboxes of each
-                image, each has shape (num_gt, bbox_code_size).
-            gt_labels_3d_list (list[Tensor]): 3D Ground truth labels of each
-                box, each has shape (num_gt,).
-            centers2d_list (list[Tensor]): Projected 3D centers onto 2D image,
-                each has shape (num_gt, 2).
-            depths_list (list[Tensor]): Depth of projected 3D centers onto 2D
-                image, each has shape (num_gt, 1).
-            attr_labels_list (list[Tensor]): Attribute labels of each box,
-                each has shape (num_gt,).
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instance_3d.  It usually includes ``bboxes``、``labels``
+                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
+                attributes.
         """
         raise NotImplementedError
 
