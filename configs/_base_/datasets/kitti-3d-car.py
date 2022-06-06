@@ -99,7 +99,6 @@ train_dataloader = dict(
             data_prefix=dict(pts='training/velodyne_reduced'),
             pipeline=train_pipeline,
             modality=input_modality,
-            classes=class_names,
             test_mode=False,
             metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
@@ -118,7 +117,6 @@ val_dataloader = dict(
         ann_file='kitti_infos_val.pkl',
         pipeline=eval_pipeline,
         modality=input_modality,
-        classes=class_names,
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR'))
