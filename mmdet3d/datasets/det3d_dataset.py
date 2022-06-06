@@ -83,7 +83,7 @@ class Det3DDataset(BaseDataset):
         self.modality = modality
         assert self.modality['use_lidar'] or self.modality['use_camera'], (
             'Please specify the `modality` (`use_lidar` '
-            f' or `use_camera`) for {self.__class__.__name__}')
+            f', `use_camera`) for {self.__class__.__name__}')
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 

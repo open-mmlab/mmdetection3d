@@ -31,7 +31,7 @@ class KittiDataset(Det3DDataset):
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
+            as input. Defaults to `dict(use_lidar=True)`.
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -55,7 +55,7 @@ class KittiDataset(Det3DDataset):
                  data_root: str,
                  ann_file: str,
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality: Optional[dict] = None,
+                 modality: Optional[dict] = dict(use_lidar=True),
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,

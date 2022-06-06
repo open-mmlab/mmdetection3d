@@ -249,6 +249,15 @@ def update_kitti_infos(pkl_path, out_dir):
         Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
         lidar2cam = rect @ Trv2c
         temp_data_info['images']['CAM2']['lidar2cam'] = lidar2cam.tolist()
+        temp_data_info['images']['CAM0']['lidar2img'] = (
+            ori_info_dict['calib']['P0'] @ lidar2cam).tolist()
+        temp_data_info['images']['CAM1']['lidar2img'] = (
+            ori_info_dict['calib']['P1'] @ lidar2cam).tolist()
+        temp_data_info['images']['CAM2']['lidar2img'] = (
+            ori_info_dict['calib']['P2'] @ lidar2cam).tolist()
+        temp_data_info['images']['CAM3']['lidar2img'] = (
+            ori_info_dict['calib']['P3'] @ lidar2cam).tolist()
+
         temp_data_info['lidar_points']['Tr_velo_to_cam'] = Trv2c.tolist()
 
         # for potential usage
@@ -311,6 +320,131 @@ def update_kitti_infos(pkl_path, out_dir):
     mmcv.dump(converted_data_info, out_path, 'pkl')
 
 
+def update_scannet_infos(pkl_path, out_dir):
+    print(f'{pkl_path} will be modified.')
+    if out_dir in pkl_path:
+        print(f'Warning, you may overwriting '
+              f'the original data {pkl_path}.')
+        time.sleep(5)
+    METAINFO = {
+        'CLASSES':
+        ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+         'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
+         'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin')
+    }
+    print(f'Reading from input file: {pkl_path}.')
+    data_list = mmcv.load(pkl_path)
+    print('Start updating:')
+    converted_list = []
+    for ori_info_dict in mmcv.track_iter_progress(data_list):
+        temp_data_info = get_empty_standard_data_info()
+        temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
+            'point_cloud']['num_features']
+        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
+            'pts_path'].split('/')[-1]
+        temp_data_info['pts_semantic_mask_path'] = ori_info_dict[
+            'pts_semantic_mask_path'].split('/')[-1]
+        temp_data_info['pts_instance_mask_path'] = ori_info_dict[
+            'pts_instance_mask_path'].split('/')[-1]
+
+        # TODO support camera
+        # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
+        anns = ori_info_dict['annos']
+        temp_data_info['axis_align_matrix'] = anns['axis_align_matrix'].tolist(
+        )
+
+        num_instances = len(anns['name'])
+        ignore_class_name = set()
+        instance_list = []
+        for instance_id in range(num_instances):
+            empty_instance = get_empty_instance()
+            empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
+                instance_id].tolist()
+
+            if anns['name'][instance_id] in METAINFO['CLASSES']:
+                empty_instance['bbox_label_3d'] = METAINFO['CLASSES'].index(
+                    anns['name'][instance_id])
+            else:
+                ignore_class_name.add(anns['name'][instance_id])
+                empty_instance['bbox_label_3d'] = -1
+
+            empty_instance = clear_instance_unused_keys(empty_instance)
+            instance_list.append(empty_instance)
+        temp_data_info['instances'] = instance_list
+        temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
+        converted_list.append(temp_data_info)
+    pkl_name = pkl_path.split('/')[-1]
+    out_path = osp.join(out_dir, pkl_name)
+    print(f'Writing to output file: {out_path}.')
+    print(f'ignore classes: {ignore_class_name}')
+    converted_data_info = dict(
+        metainfo={'DATASET': 'SCANNET'}, data_list=converted_list)
+
+    mmcv.dump(converted_data_info, out_path, 'pkl')
+
+
+def update_sunrgbd_infos(pkl_path, out_dir):
+    print(f'{pkl_path} will be modified.')
+    if out_dir in pkl_path:
+        print(f'Warning, you may overwriting '
+              f'the original data {pkl_path}.')
+        time.sleep(5)
+    METAINFO = {
+        'CLASSES': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+                    'dresser', 'night_stand', 'bookshelf', 'bathtub')
+    }
+    print(f'Reading from input file: {pkl_path}.')
+    data_list = mmcv.load(pkl_path)
+    print('Start updating:')
+    converted_list = []
+    for ori_info_dict in mmcv.track_iter_progress(data_list):
+        temp_data_info = get_empty_standard_data_info()
+        temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
+            'point_cloud']['num_features']
+        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
+            'pts_path'].split('/')[-1]
+        calib = ori_info_dict['calib']
+        rt_mat = calib['Rt']
+        # follow Coord3DMode.convert_point
+        rt_mat = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]
+                           ]) @ rt_mat.transpose(1, 0)
+        depth2img = calib['K'] @ rt_mat
+        temp_data_info['images']['CAM0']['depth2img'] = depth2img.tolist()
+        temp_data_info['images']['CAM0']['img_path'] = ori_info_dict['image'][
+            'image_path'].split('/')[-1]
+        h, w = ori_info_dict['image']['image_shape']
+        temp_data_info['images']['CAM0']['height'] = h
+        temp_data_info['images']['CAM0']['width'] = w
+
+        anns = ori_info_dict['annos']
+        num_instances = len(anns['name'])
+        ignore_class_name = set()
+        instance_list = []
+        for instance_id in range(num_instances):
+            empty_instance = get_empty_instance()
+            empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
+                instance_id].tolist()
+            if anns['name'][instance_id] in METAINFO['CLASSES']:
+                empty_instance['bbox_label_3d'] = METAINFO['CLASSES'].index(
+                    anns['name'][instance_id])
+            else:
+                ignore_class_name.add(anns['name'][instance_id])
+                empty_instance['bbox_label_3d'] = -1
+            empty_instance = clear_instance_unused_keys(empty_instance)
+            instance_list.append(empty_instance)
+        temp_data_info['instances'] = instance_list
+        temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
+        converted_list.append(temp_data_info)
+    pkl_name = pkl_path.split('/')[-1]
+    out_path = osp.join(out_dir, pkl_name)
+    print(f'Writing to output file: {out_path}.')
+    print(f'ignore classes: {ignore_class_name}')
+    converted_data_info = dict(
+        metainfo={'DATASET': 'SUNRGBD'}, data_list=converted_list)
+
+    mmcv.dump(converted_data_info, out_path, 'pkl')
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Arg parser for data coords '
                                      'update due to coords sys refactor.')
@@ -336,8 +470,15 @@ def main():
     args = parse_args()
     if args.out_dir is None:
         args.out_dir = args.root_dir
-    if args.dataset == 'kitti':
+    if args.dataset.lower() == 'kitti':
         update_kitti_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+    elif args.dataset.lower() == 'scannet':
+        update_scannet_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+    elif args.dataset.lower() == 'sunrgbd':
+        update_sunrgbd_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+    else:
+        raise NotImplementedError(
+            f'Do not support convert {args.dataset} to v2.')
 
 
 if __name__ == '__main__':
