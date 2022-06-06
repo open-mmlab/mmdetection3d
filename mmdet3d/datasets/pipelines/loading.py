@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
+from mmcv import BaseTransform
 from mmcv.transforms import LoadImageFromFile
 
 from mmdet3d.core.points import BasePoints, get_points_type
@@ -336,10 +337,18 @@ class NormalizePointsColor(object):
 
 
 @TRANSFORMS.register_module()
-class LoadPointsFromFile(object):
+class LoadPointsFromFile(BaseTransform):
     """Load Points From File.
 
-    Load points from file.
+    Required Keys:
+
+    - lidar_points (dict)
+
+        - lidar_path (str)
+
+    Added Keys:
+
+    - points (np.float32)
 
     Args:
         coord_type (str): The type of coordinates of points cloud.
@@ -362,13 +371,15 @@ class LoadPointsFromFile(object):
             for more details. Defaults to dict(backend='disk').
     """
 
-    def __init__(self,
-                 coord_type,
-                 load_dim=6,
-                 use_dim=[0, 1, 2],
-                 shift_height=False,
-                 use_color=False,
-                 file_client_args=dict(backend='disk')):
+    def __init__(
+        self,
+        coord_type: str,
+        load_dim: int = 6,
+        use_dim: list = [0, 1, 2],
+        shift_height: bool = False,
+        use_color: bool = False,
+        file_client_args: dict = dict(backend='disk')
+    ) -> None:
         self.shift_height = shift_height
         self.use_color = use_color
         if isinstance(use_dim, int):
@@ -383,7 +394,7 @@ class LoadPointsFromFile(object):
         self.file_client_args = file_client_args.copy()
         self.file_client = None
 
-    def _load_points(self, pts_filename):
+    def _load_points(self, pts_filename: str) -> np.ndarray:
         """Private function to load point clouds data.
 
         Args:
@@ -406,8 +417,8 @@ class LoadPointsFromFile(object):
 
         return points
 
-    def __call__(self, results):
-        """Call function to load points data from file.
+    def transform(self, results: dict) -> dict:
+        """Method to load points data from file.
 
         Args:
             results (dict): Result dict containing point clouds data.
@@ -418,8 +429,8 @@ class LoadPointsFromFile(object):
 
                 - points (:obj:`BasePoints`): Point clouds data.
         """
-        pts_filename = results['pts_filename']
-        points = self._load_points(pts_filename)
+        pts_file_path = results['lidar_points']['lidar_path']
+        points = self._load_points(pts_file_path)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
         attribute_dims = None
@@ -477,6 +488,52 @@ class LoadAnnotations3D(LoadAnnotations):
     Load instance mask and semantic mask of points and
     encapsulate the items into related fields.
 
+    Required Keys:
+
+    - ann_info (dict)
+        - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes` |
+          :obj:`DepthInstance3DBoxes` | :obj:`CameraInstance3DBoxes`):
+          3D ground truth bboxes. Only when `with_bbox_3d` is True
+        - gt_labels_3d (np.int64): Labels of ground truths.
+          Only when `with_label_3d` is True.
+        - gt_bboxes (np.float32): 2D ground truth bboxes.
+          Only when `with_bbox` is True.
+        - gt_labels (np.ndarray): Labels of ground truths.
+          Only when `with_label` is True.
+        - depths (np.ndarray): Only when
+          `with_bbox_depth` is True.
+        - centers_2d (np.ndarray): Only when
+          `with_bbox_depth` is True.
+        - attr_labels (np.ndarray): Attribute labels of instances.
+          Only when `with_attr_label` is True.
+
+    - pts_instance_mask_path (str): Path of instance mask file.
+      Only when `with_mask_3d` is True.
+    - pts_semantic_mask_path (str): Path of semantic mask file.
+      Only when
+
+    Added Keys:
+
+    - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes` |
+      :obj:`DepthInstance3DBoxes` | :obj:`CameraInstance3DBoxes`):
+      3D ground truth bboxes. Only when `with_bbox_3d` is True
+    - gt_labels_3d (np.int64): Labels of ground truths.
+      Only when `with_label_3d` is True.
+    - gt_bboxes (np.float32): 2D ground truth bboxes.
+      Only when `with_bbox` is True.
+    - gt_labels (np.int64): Labels of ground truths.
+      Only when `with_label` is True.
+    - depths (np.float32): Only when
+      `with_bbox_depth` is True.
+    - centers_2d (np.ndarray): Only when
+      `with_bbox_depth` is True.
+    - attr_labels (np.int64): Attribute labels of instances.
+      Only when `with_attr_label` is True.
+    - pts_instance_mask (np.int64): Instance mask of each point.
+      Only when `with_mask_3d` is True.
+    - pts_semantic_mask (np.int64): Semantic mask of each point.
+      Only when `with_seg_3d` is True.
+
     Args:
         with_bbox_3d (bool, optional): Whether to load 3D boxes.
             Defaults to True.
@@ -501,32 +558,34 @@ class LoadAnnotations3D(LoadAnnotations):
         poly2mask (bool, optional): Whether to convert polygon annotations
             to bitmasks. Defaults to True.
         seg_3d_dtype (dtype, optional): Dtype of 3D semantic masks.
-            Defaults to int64
+            Defaults to int64.
         file_client_args (dict): Config dict of file clients, refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details.
     """
 
-    def __init__(self,
-                 with_bbox_3d=True,
-                 with_label_3d=True,
-                 with_attr_label=False,
-                 with_mask_3d=False,
-                 with_seg_3d=False,
-                 with_bbox=False,
-                 with_label=False,
-                 with_mask=False,
-                 with_seg=False,
-                 with_bbox_depth=False,
-                 poly2mask=True,
-                 seg_3d_dtype=np.int64,
-                 file_client_args=dict(backend='disk')):
+    def __init__(
+        self,
+        with_bbox_3d: bool = True,
+        with_label_3d: bool = True,
+        with_attr_label: bool = False,
+        with_mask_3d: bool = False,
+        with_seg_3d: bool = False,
+        with_bbox: bool = False,
+        with_label: bool = False,
+        with_mask: bool = False,
+        with_seg: bool = False,
+        with_bbox_depth: bool = False,
+        poly2mask: bool = True,
+        seg_3d_dtype: np.dtype = np.int64,
+        file_client_args: dict = dict(backend='disk')
+    ) -> None:
         super().__init__(
-            with_bbox,
-            with_label,
-            with_mask,
-            with_seg,
-            poly2mask,
+            with_bbox=with_bbox,
+            with_label=with_label,
+            with_mask=with_mask,
+            with_seg=with_seg,
+            poly2mask=poly2mask,
             file_client_args=file_client_args)
         self.with_bbox_3d = with_bbox_3d
         self.with_bbox_depth = with_bbox_depth
@@ -536,8 +595,9 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
 
-    def _load_bboxes_3d(self, results):
-        """Private function to load 3D bounding box annotations.
+    def _load_bboxes_3d(self, results: dict) -> dict:
+        """Private function to move the 3D bounding box annotation from
+        `ann_info` field to the root of `results`.
 
         Args:
             results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
@@ -545,11 +605,11 @@ class LoadAnnotations3D(LoadAnnotations):
         Returns:
             dict: The dict containing loaded 3D bounding box annotations.
         """
+
         results['gt_bboxes_3d'] = results['ann_info']['gt_bboxes_3d']
-        results['bbox3d_fields'].append('gt_bboxes_3d')
         return results
 
-    def _load_bboxes_depth(self, results):
+    def _load_bboxes_depth(self, results: dict) -> dict:
         """Private function to load 2.5D bounding box annotations.
 
         Args:
@@ -558,11 +618,12 @@ class LoadAnnotations3D(LoadAnnotations):
         Returns:
             dict: The dict containing loaded 2.5D bounding box annotations.
         """
-        results['centers2d'] = results['ann_info']['centers2d']
+
         results['depths'] = results['ann_info']['depths']
+        results['centers_2d'] = results['ann_info']['centers_2d']
         return results
 
-    def _load_labels_3d(self, results):
+    def _load_labels_3d(self, results: dict) -> dict:
         """Private function to load label annotations.
 
         Args:
@@ -571,10 +632,11 @@ class LoadAnnotations3D(LoadAnnotations):
         Returns:
             dict: The dict containing loaded label annotations.
         """
+
         results['gt_labels_3d'] = results['ann_info']['gt_labels_3d']
         return results
 
-    def _load_attr_labels(self, results):
+    def _load_attr_labels(self, results: dict) -> dict:
         """Private function to load label annotations.
 
         Args:
@@ -586,7 +648,7 @@ class LoadAnnotations3D(LoadAnnotations):
         results['attr_labels'] = results['ann_info']['attr_labels']
         return results
 
-    def _load_masks_3d(self, results):
+    def _load_masks_3d(self, results: dict) -> dict:
         """Private function to load 3D mask annotations.
 
         Args:
@@ -595,7 +657,7 @@ class LoadAnnotations3D(LoadAnnotations):
         Returns:
             dict: The dict containing loaded 3D mask annotations.
         """
-        pts_instance_mask_path = results['ann_info']['pts_instance_mask_path']
+        pts_instance_mask_path = results['pts_instance_mask_path']
 
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
@@ -608,10 +670,9 @@ class LoadAnnotations3D(LoadAnnotations):
                 pts_instance_mask_path, dtype=np.int64)
 
         results['pts_instance_mask'] = pts_instance_mask
-        results['pts_mask_fields'].append('pts_instance_mask')
         return results
 
-    def _load_semantic_seg_3d(self, results):
+    def _load_semantic_seg_3d(self, results: dict) -> dict:
         """Private function to load 3D semantic segmentation annotations.
 
         Args:
@@ -620,7 +681,7 @@ class LoadAnnotations3D(LoadAnnotations):
         Returns:
             dict: The dict containing the semantic segmentation annotations.
         """
-        pts_semantic_mask_path = results['ann_info']['pts_semantic_mask_path']
+        pts_semantic_mask_path = results['pts_semantic_mask_path']
 
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
@@ -635,28 +696,23 @@ class LoadAnnotations3D(LoadAnnotations):
                 pts_semantic_mask_path, dtype=np.int64)
 
         results['pts_semantic_mask'] = pts_semantic_mask
-        results['pts_seg_fields'].append('pts_semantic_mask')
         return results
 
-    def __call__(self, results):
-        """Call function to load multiple types annotations.
+    def transform(self, results: dict) -> dict:
+        """Function to load multiple types annotations.
 
         Args:
             results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
 
         Returns:
             dict: The dict containing loaded 3D bounding box, label, mask and
-                semantic segmentation annotations.
+            semantic segmentation annotations.
         """
-        results = super().__call__(results)
+        results = super().transform(results)
         if self.with_bbox_3d:
             results = self._load_bboxes_3d(results)
-            if results is None:
-                return None
         if self.with_bbox_depth:
             results = self._load_bboxes_depth(results)
-            if results is None:
-                return None
         if self.with_label_3d:
             results = self._load_labels_3d(results)
         if self.with_attr_label:

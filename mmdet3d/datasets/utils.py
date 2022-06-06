@@ -3,13 +3,12 @@ import mmcv
 from mmcv.transforms import LoadImageFromFile
 
 # yapf: disable
-from mmdet3d.datasets.pipelines import (Collect3D, DefaultFormatBundle3D,
-                                        LoadAnnotations3D,
+from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
                                         LoadImageFromFileMono3D,
                                         LoadMultiViewImageFromFiles,
                                         LoadPointsFromFile,
                                         LoadPointsFromMultiSweeps,
-                                        MultiScaleFlipAug3D,
+                                        MultiScaleFlipAug3D, Pack3DDetInputs,
                                         PointSegClassMapping)
 # yapf: enable
 from mmdet3d.registry import TRANSFORMS
@@ -32,9 +31,8 @@ def is_loading_function(transform):
     # TODO: use more elegant way to distinguish loading modules
     loading_functions = (LoadImageFromFile, LoadPointsFromFile,
                          LoadAnnotations3D, LoadMultiViewImageFromFiles,
-                         LoadPointsFromMultiSweeps, DefaultFormatBundle3D,
-                         Collect3D, LoadImageFromFileMono3D,
-                         PointSegClassMapping)
+                         LoadPointsFromMultiSweeps, Pack3DDetInputs,
+                         LoadImageFromFileMono3D, PointSegClassMapping)
     if isinstance(transform, dict):
         obj_cls = TRANSFORMS.get(transform['type'])
         if obj_cls is None:

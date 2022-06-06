@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
 import warnings
+from typing import List
 
 import cv2
 import numpy as np
@@ -75,6 +76,25 @@ class RandomFlip3D(RandomFlip):
     otherwise it will be randomly decided by a ratio specified in the init
     method.
 
+
+    Required Keys:
+
+    - points (np.float32)
+    - gt_bboxes_3d (np.float32)
+
+    Modified Keys:
+
+    - points (np.float32)
+    - gt_bboxes_3d (np.float32)
+
+    Added Keys:
+
+    - points (np.float32)
+    - pcd_trans (np.float32)
+    - pcd_rotation (np.float32)
+    - pcd_rotation_angle (np.float32)
+    - pcd_scale_factor (np.float32)
+
     Args:
         sync_2d (bool, optional): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
@@ -87,13 +107,17 @@ class RandomFlip3D(RandomFlip):
     """
 
     def __init__(self,
-                 sync_2d=True,
-                 flip_ratio_bev_horizontal=0.0,
-                 flip_ratio_bev_vertical=0.0,
-                 **kwargs):
+                 sync_2d: bool = True,
+                 flip_ratio_bev_horizontal: float = 0.0,
+                 flip_ratio_bev_vertical: float = 0.0,
+                 **kwargs) -> None:
+        # `flip_ratio_bev_horizontal` is equal to
+        # for flip prob of 2d image when
+        # `sync_2d` is True
         super(RandomFlip3D, self).__init__(
-            flip_ratio=flip_ratio_bev_horizontal, **kwargs)
+            prob=flip_ratio_bev_horizontal, direction='horizontal', **kwargs)
         self.sync_2d = sync_2d
+        self.flip_ratio_bev_horizontal = flip_ratio_bev_horizontal
         self.flip_ratio_bev_vertical = flip_ratio_bev_vertical
         if flip_ratio_bev_horizontal is not None:
             assert isinstance(
@@ -104,8 +128,17 @@ class RandomFlip3D(RandomFlip):
                 flip_ratio_bev_vertical,
                 (int, float)) and 0 <= flip_ratio_bev_vertical <= 1
 
-    def random_flip_data_3d(self, input_dict, direction='horizontal'):
+    def random_flip_data_3d(self,
+                            input_dict: dict,
+                            direction: str = 'horizontal') -> None:
         """Flip 3D data randomly.
+
+        `random_flip_data_3d` should take these situations into consideration:
+
+        - 1. LIDAR-based 3d detection
+        - 2. LIDAR-based 3d segmentation
+        - 3. vision-only detection
+        - 4. multi-modality 3d detection.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
@@ -117,27 +150,25 @@ class RandomFlip3D(RandomFlip):
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
-        # for semantic segmentation task, only points will be flipped.
-        if 'bbox3d_fields' not in input_dict:
-            input_dict['points'].flip(direction)
-            return
-        if len(input_dict['bbox3d_fields']) == 0:  # test mode
-            input_dict['bbox3d_fields'].append('empty_box3d')
-            input_dict['empty_box3d'] = input_dict['box_type_3d'](
-                np.array([], dtype=np.float32))
-        assert len(input_dict['bbox3d_fields']) == 1
-        for key in input_dict['bbox3d_fields']:
+
+        if 'gt_bboxes_3d' in input_dict:
             if 'points' in input_dict:
-                input_dict['points'] = input_dict[key].flip(
+                input_dict['points'] = input_dict['gt_bboxes_3d'].flip(
                     direction, points=input_dict['points'])
             else:
-                input_dict[key].flip(direction)
-        if 'centers2d' in input_dict:
+                # vision-only detection
+                input_dict['gt_bboxes_3d'].flip(direction)
+        else:
+            input_dict['points'].flip(direction)
+
+        if 'centers_2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
                 'Only support sync_2d=True and horizontal flip with images'
+            # TODO fix this ori_shape and other keys in vision based model
+            # TODO ori_shape to img_shape
             w = input_dict['ori_shape'][1]
-            input_dict['centers2d'][..., 0] = \
-                w - input_dict['centers2d'][..., 0]
+            input_dict['centers_2d'][..., 0] = \
+                w - input_dict['centers_2d'][..., 0]
             # need to modify the horizontal position of camera center
             # along u-axis in the image (flip like centers2d)
             # ['cam2img'][0][2] = c_u
@@ -145,7 +176,7 @@ class RandomFlip3D(RandomFlip):
             # https://github.com/open-mmlab/mmdetection3d/pull/744
             input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
 
-    def __call__(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to flip points, values in the ``bbox3d_fields`` and
         also flip 2D image and its annotations.
 
@@ -158,15 +189,16 @@ class RandomFlip3D(RandomFlip):
                 into result dict.
         """
         # flip 2D image and its annotations
-        super(RandomFlip3D, self).__call__(input_dict)
+        if 'img' in input_dict:
+            super(RandomFlip3D, self).transform(input_dict)
 
-        if self.sync_2d:
+        if self.sync_2d and 'img' in input_dict:
             input_dict['pcd_horizontal_flip'] = input_dict['flip']
             input_dict['pcd_vertical_flip'] = False
         else:
             if 'pcd_horizontal_flip' not in input_dict:
                 flip_horizontal = True if np.random.rand(
-                ) < self.flip_ratio else False
+                ) < self.flip_ratio_bev_horizontal else False
                 input_dict['pcd_horizontal_flip'] = flip_horizontal
             if 'pcd_vertical_flip' not in input_dict:
                 flip_vertical = True if np.random.rand(
@@ -563,8 +595,26 @@ class GlobalAlignment(object):
 
 
 @TRANSFORMS.register_module()
-class GlobalRotScaleTrans(object):
+class GlobalRotScaleTrans(BaseTransform):
     """Apply global rotation, scaling and translation to a 3D scene.
+
+    Required Keys:
+
+    - points (np.float32)
+    - gt_bboxes_3d (np.float32)
+
+    Modified Keys:
+
+    - points (np.float32)
+    - gt_bboxes_3d (np.float32)
+
+    Added Keys:
+
+    - points (np.float32)
+    - pcd_trans (np.float32)
+    - pcd_rotation (np.float32)
+    - pcd_rotation_angle (np.float32)
+    - pcd_scale_factor (np.float32)
 
     Args:
         rot_range (list[float], optional): Range of rotation angle.
@@ -581,10 +631,10 @@ class GlobalRotScaleTrans(object):
     """
 
     def __init__(self,
-                 rot_range=[-0.78539816, 0.78539816],
-                 scale_ratio_range=[0.95, 1.05],
-                 translation_std=[0, 0, 0],
-                 shift_height=False):
+                 rot_range: List[float] = [-0.78539816, 0.78539816],
+                 scale_ratio_range: List[float] = [0.95, 1.05],
+                 translation_std: List[int] = [0, 0, 0],
+                 shift_height: bool = False) -> None:
         seq_types = (list, tuple, np.ndarray)
         if not isinstance(rot_range, seq_types):
             assert isinstance(rot_range, (int, float)), \
@@ -594,6 +644,7 @@ class GlobalRotScaleTrans(object):
 
         assert isinstance(scale_ratio_range, seq_types), \
             f'unsupported scale_ratio_range type {type(scale_ratio_range)}'
+
         self.scale_ratio_range = scale_ratio_range
 
         if not isinstance(translation_std, seq_types):
@@ -607,7 +658,7 @@ class GlobalRotScaleTrans(object):
         self.translation_std = translation_std
         self.shift_height = shift_height
 
-    def _trans_bbox_points(self, input_dict):
+    def _trans_bbox_points(self, input_dict: dict) -> None:
         """Private function to translate bounding boxes and points.
 
         Args:
@@ -615,18 +666,18 @@ class GlobalRotScaleTrans(object):
 
         Returns:
             dict: Results after translation, 'points', 'pcd_trans'
-                and keys in input_dict['bbox3d_fields'] are updated
-                in the result dict.
+            and `gt_bboxes_3d` is updated
+            in the result dict.
         """
         translation_std = np.array(self.translation_std, dtype=np.float32)
         trans_factor = np.random.normal(scale=translation_std, size=3).T
 
         input_dict['points'].translate(trans_factor)
         input_dict['pcd_trans'] = trans_factor
-        for key in input_dict['bbox3d_fields']:
-            input_dict[key].translate(trans_factor)
+        if 'gt_bboxes_3d' in input_dict:
+            input_dict['gt_bboxes_3d'].translate(trans_factor)
 
-    def _rot_bbox_points(self, input_dict):
+    def _rot_bbox_points(self, input_dict: dict) -> None:
         """Private function to rotate bounding boxes and points.
 
         Args:
@@ -634,37 +685,35 @@ class GlobalRotScaleTrans(object):
 
         Returns:
             dict: Results after rotation, 'points', 'pcd_rotation'
-                and keys in input_dict['bbox3d_fields'] are updated
-                in the result dict.
+            and `gt_bboxes_3d` is updated
+            in the result dict.
         """
         rotation = self.rot_range
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
 
-        # if no bbox in input_dict, only rotate points
-        if len(input_dict['bbox3d_fields']) == 0:
+        if 'gt_bboxes_3d' in input_dict and \
+                len(input_dict['gt_bboxes_3d'].tensor) != 0:
+            # rotate points with bboxes
+            points, rot_mat_T = input_dict['gt_bboxes_3d'].rotate(
+                noise_rotation, input_dict['points'])
+            input_dict['points'] = points
+        else:
+            # if no bbox in input_dict, only rotate points
             rot_mat_T = input_dict['points'].rotate(noise_rotation)
-            input_dict['pcd_rotation'] = rot_mat_T
-            input_dict['pcd_rotation_angle'] = noise_rotation
-            return
 
-        # rotate points with bboxes
-        for key in input_dict['bbox3d_fields']:
-            if len(input_dict[key].tensor) != 0:
-                points, rot_mat_T = input_dict[key].rotate(
-                    noise_rotation, input_dict['points'])
-                input_dict['points'] = points
-                input_dict['pcd_rotation'] = rot_mat_T
-                input_dict['pcd_rotation_angle'] = noise_rotation
+        input_dict['pcd_rotation'] = rot_mat_T
+        input_dict['pcd_rotation_angle'] = noise_rotation
 
-    def _scale_bbox_points(self, input_dict):
+    def _scale_bbox_points(self, input_dict: dict) -> None:
         """Private function to scale bounding boxes and points.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after scaling, 'points'and keys in
-                input_dict['bbox3d_fields'] are updated in the result dict.
+            dict: Results after scaling, 'points' and
+            `gt_bboxes_3d` is updated
+            in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
         points = input_dict['points']
@@ -675,24 +724,25 @@ class GlobalRotScaleTrans(object):
             points.tensor[:, points.attribute_dims['height']] *= scale
         input_dict['points'] = points
 
-        for key in input_dict['bbox3d_fields']:
-            input_dict[key].scale(scale)
+        if 'gt_bboxes_3d' in input_dict and \
+                len(input_dict['gt_bboxes_3d'].tensor) != 0:
+            input_dict['gt_bboxes_3d'].scale(scale)
 
-    def _random_scale(self, input_dict):
+    def _random_scale(self, input_dict: dict) -> None:
         """Private function to randomly set the scale factor.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after scaling, 'pcd_scale_factor' are updated
-                in the result dict.
+            dict: Results after scaling, 'pcd_scale_factor'
+            are updated in the result dict.
         """
         scale_factor = np.random.uniform(self.scale_ratio_range[0],
                                          self.scale_ratio_range[1])
         input_dict['pcd_scale_factor'] = scale_factor
 
-    def __call__(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Private function to rotate, scale and translate bounding boxes and
         points.
 
@@ -701,8 +751,8 @@ class GlobalRotScaleTrans(object):
 
         Returns:
             dict: Results after scaling, 'points', 'pcd_rotation',
-                'pcd_scale_factor', 'pcd_trans' and keys in
-                input_dict['bbox3d_fields'] are updated in the result dict.
+            'pcd_scale_factor', 'pcd_trans' and `gt_bboxes_3d` is updated
+            in the result dict.
         """
         if 'transformation_3d_flow' not in input_dict:
             input_dict['transformation_3d_flow'] = []
