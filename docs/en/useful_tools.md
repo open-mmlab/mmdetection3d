@@ -14,26 +14,26 @@ python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title
 
 Examples:
 
--   Plot the classification loss of some run.
+- Plot the classification loss of some run.
 
-    ```shell
-    python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
-    ```
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
+  ```
 
--   Plot the classification and regression loss of some run, and save the figure to a pdf.
+- Plot the classification and regression loss of some run, and save the figure to a pdf.
 
-    ```shell
-    python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
-    ```
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
+  ```
 
--   Compare the bbox mAP of two runs in the same figure.
+- Compare the bbox mAP of two runs in the same figure.
 
-    ```shell
-    # evaluate PartA2 and second on KITTI according to Car_3D_moderate_strict
-    python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/PartA2.log.json tools/logs/second.log.json --keys KITTI/Car_3D_moderate_strict --legend PartA2 second --mode eval --interval 1
-    # evaluate PointPillars for car and 3 classes on KITTI according to Car_3D_moderate_strict
-    python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/pp-3class.log.json tools/logs/pp.log.json --keys KITTI/Car_3D_moderate_strict --legend pp-3class pp --mode eval --interval 2
-    ```
+  ```shell
+  # evaluate PartA2 and second on KITTI according to Car_3D_moderate_strict
+  python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/PartA2.log.json tools/logs/second.log.json --keys KITTI/Car_3D_moderate_strict --legend PartA2 second --mode eval --interval 1
+  # evaluate PointPillars for car and 3 classes on KITTI according to Car_3D_moderate_strict
+  python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/pp-3class.log.json tools/logs/pp.log.json --keys KITTI/Car_3D_moderate_strict --legend pp-3class pp --mode eval --interval 2
+  ```
 
 You can also compute the average training speed.
 
@@ -51,7 +51,7 @@ time std over epochs is 0.0028
 average iter time: 1.1959 s/iter
 ```
 
-&emsp;
+&#8195;
 
 # Visualization
 
@@ -126,7 +126,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 ![](../../resources/browse_dataset_mono.png)
 
-&emsp;
+&#8195;
 
 # Model Serving
 
@@ -184,7 +184,7 @@ Example:
 python tools/deployment/test_torchserver.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth second
 ```
 
-&emsp;
+&#8195;
 
 # Model Complexity
 
@@ -213,7 +213,7 @@ comparisons, but double check it before you adopt it in technical reports or pap
 2. Some operators are not counted into FLOPs like GN and custom operators. Refer to [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py) for details.
 3. We currently only support FLOPs calculation of single-stage models with single-modality input (point cloud or image). We will support two-stage and multi-modality models in the future.
 
-&emsp;
+&#8195;
 
 # Model Conversion
 
@@ -258,7 +258,7 @@ python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth 
 
 The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`.
 
-&emsp;
+&#8195;
 
 # Dataset Conversion
 
@@ -271,15 +271,15 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
                                                     --out-dir ${OUT_DIR} --nproc ${NUM_WORKERS} --extra-tag ${TAG}
 ```
 
--   `--data-root`: the root of the dataset, defaults to `./data/nuimages`.
--   `--version`: the version of the dataset, defaults to `v1.0-mini`. To get the full dataset, please use `--version v1.0-train v1.0-val v1.0-mini`
--   `--out-dir`: the output directory of annotations and semantic masks, defaults to `./data/nuimages/annotations/`.
--   `--nproc`: number of workers for data preparation, defaults to `4`. Larger number could reduce the preparation time as images are processed in parallel.
--   `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
+- `--data-root`: the root of the dataset, defaults to `./data/nuimages`.
+- `--version`: the version of the dataset, defaults to `v1.0-mini`. To get the full dataset, please use `--version v1.0-train v1.0-val v1.0-mini`
+- `--out-dir`: the output directory of annotations and semantic masks, defaults to `./data/nuimages/annotations/`.
+- `--nproc`: number of workers for data preparation, defaults to `4`. Larger number could reduce the preparation time as images are processed in parallel.
+- `--extra-tag`: extra tag of the annotations, defaults to `nuimages`. This can be used to separate different annotations processed in different time for study.
 
 More details could be referred to the [doc](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html) for dataset preparation and [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md/) for nuImages dataset.
 
-&emsp;
+&#8195;
 
 # Miscellaneous
 

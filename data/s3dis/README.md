@@ -2,7 +2,7 @@
 
 We follow the procedure in [pointnet](https://github.com/charlesq34/pointnet).
 
-1. Download S3DIS data by filling this [Google form](https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1). Download the ```Stanford3dDataset_v1.2_Aligned_Version.zip``` file and unzip it. Link or move the folder to this level of directory.
+1. Download S3DIS data by filling this [Google form](https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1). Download the `Stanford3dDataset_v1.2_Aligned_Version.zip` file and unzip it. Link or move the folder to this level of directory.
 
 2. In this directory, extract point clouds and annotations by running `python collect_indoor3d_data.py`.
 

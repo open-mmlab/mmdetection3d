@@ -50,29 +50,28 @@ A total of 11 developers contributed to this release.
 - To fix the imprecise timestamp and optimize its saving method, we reformat the point cloud data during Waymo data conversion. The data conversion time is also optimized significantly by supporting parallel processing. Please re-generate KITTI format Waymo data if necessary. See more details in the [compatibility documentation](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/compatibility.md).
 - We update some of the model checkpoints after the refactor of coordinate systems. Please stay tuned for the release of the remaining model checkpoints.
 
-|        | Fully Updated   | Partially Updated  |  In Progress  | No Influcence |
-|--------------------|:-------------:|:--------:| :-----------: | :-----------: |
-| SECOND                  |          | ✓        |               |               |
-| PointPillars            |          | ✓        |               |               |
-| FreeAnchor              | ✓        |          |               |               |
-| VoteNet                 | ✓        |          |               |               |
-| H3DNet                  | ✓        |          |               |               |
-| 3DSSD                   |          | ✓        |               |               |
-| Part-A2                 | ✓        |          |               |               |
-| MVXNet                  | ✓        |          |               |               |
-| CenterPoint             |          |          |✓              |               |
-| SSN                     | ✓        |          |               |               |
-| ImVoteNet               | ✓        |          |               |               |
-| FCOS3D                  |          |          |               |✓              |
-| PointNet++              |          |          |               |✓              |
-| Group-Free-3D           |          |          |               |✓              |
-| ImVoxelNet              | ✓        |          |               |               |
-| PAConv                  |          |          |               |✓              |
-| DGCNN                   |          |          |               |✓              |
-| SMOKE                   |          |          |               |✓              |
-| PGD                     |          |          |               |✓              |
-| MonoFlex                |          |          |               |✓              |
-
+|               | Fully Updated | Partially Updated | In Progress | No Influcence |
+| ------------- | :-----------: | :---------------: | :---------: | :-----------: |
+| SECOND        |               |         ✓         |             |               |
+| PointPillars  |               |         ✓         |             |               |
+| FreeAnchor    |       ✓       |                   |             |               |
+| VoteNet       |       ✓       |                   |             |               |
+| H3DNet        |       ✓       |                   |             |               |
+| 3DSSD         |               |         ✓         |             |               |
+| Part-A2       |       ✓       |                   |             |               |
+| MVXNet        |       ✓       |                   |             |               |
+| CenterPoint   |               |                   |      ✓      |               |
+| SSN           |       ✓       |                   |             |               |
+| ImVoteNet     |       ✓       |                   |             |               |
+| FCOS3D        |               |                   |             |       ✓       |
+| PointNet++    |               |                   |             |       ✓       |
+| Group-Free-3D |               |                   |             |       ✓       |
+| ImVoxelNet    |       ✓       |                   |             |               |
+| PAConv        |               |                   |             |       ✓       |
+| DGCNN         |               |                   |             |       ✓       |
+| SMOKE         |               |                   |             |       ✓       |
+| PGD           |               |                   |             |       ✓       |
+| MonoFlex      |               |                   |             |       ✓       |
 
 #### Highlights
 
@@ -414,7 +413,6 @@ A total of 12 developers contributed to this release.
 
 @yinchimaoliang, @gopi231091, @filaPro, @ZwwWayne, @ZCMax, @hjin2902, @wHao-Wu, @Wuziyi616, @xiliu8006, @THU17cyz, @DCNSW, @Tai-Wang
 
-
 ### v0.15.0 (1/7/2021)
 
 #### Compatibility
@@ -449,7 +447,6 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Add documentation for vision-only 3D detection (#669)
 - Refine docs for Quick Run and Useful Tools (#686)
 
-
 #### Bug Fixes
 
 - Fix the bug of [BackgroundPointsFilter](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/pipelines/transforms_3d.py) using the bottom center of ground truth (#609)
@@ -458,10 +455,10 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Fix test commands in docs and make some refinements (#635)
 - Fix wrong config paths in unit tests (#641)
 
-
 ### v0.14.0 (1/6/2021)
 
 #### Highlights
+
 - Support the point cloud segmentation method [PointNet++](https://arxiv.org/abs/1706.02413)
 
 #### New Features
@@ -482,16 +479,17 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Remove a useless parameter `label_weight` from segmentation datasets including `Custom3DSegDataset`, `ScanNetSegDataset` and `S3DISSegDataset` (#607)
 
 #### Bug Fixes
+
 - Fix a corrupted lidar data file in Lyft dataset in [data_preparation](https://github.com/open-mmlab/mmdetection3d/tree/master/docs/data_preparation.md) (#546)
 - Fix evaluation bugs in nuScenes and Lyft dataset (#549)
 - Fix converting points between coordinates with specific transformation matrix in the [coord_3d_mode.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/coord_3d_mode.py) (#556)
 - Support PointPillars models on Lyft dataset (#578)
 - Fix the bug of demo with pre-trained VoteNet model on ScanNet (#600)
 
-
 ### v0.13.0 (1/5/2021)
 
 #### Highlights
+
 - Support a monocular 3D detection method [FCOS3D](https://arxiv.org/abs/2104.10956)
 - Support ScanNet and S3DIS semantic segmentation dataset
 - Enhancement of visualization tools for dataset browsing and demos, including support of visualization for multi-modality data and point cloud segmentation.
@@ -746,7 +744,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 - Support Batch Inference (#95, #103, #116): MMDetection3D v0.6.0 migrates to support batch inference based on MMDetection >= v2.4.0. This change influences all the test APIs in MMDetection3D and downstream codebases.
 - Start to use collect environment function from MMCV (#113): MMDetection3D v0.6.0 migrates to use `collect_env` function in MMCV.
-`get_compiler_version` and `get_compiling_cuda_version` compiled in `mmdet3d.ops.utils` are removed. Please import these two functions from `mmcv.ops`.
+  `get_compiler_version` and `get_compiling_cuda_version` compiled in `mmdet3d.ops.utils` are removed. Please import these two functions from `mmcv.ops`.
 
 #### New Features
 

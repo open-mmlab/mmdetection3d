@@ -37,17 +37,17 @@ python ./tools/deploy.py \
 
 ### 参数描述
 
-* `deploy_cfg` : MMDeploy 代码库中用于部署的配置文件路径。
-* `model_cfg` : OpenMMLab 系列代码库中使用的模型配置文件路径。
-* `checkpoint` : OpenMMLab 系列代码库的模型文件路径。
-* `img` : 用于模型转换时使用的点云文件或图像文件路径。
-* `--test-img` : 用于测试模型的图像文件路径。如果没有指定，将设置成 `None`。
-* `--work-dir` : 工作目录，用来保存日志和模型文件。
-* `--calib-dataset-cfg` : 此参数只在 int8 模式下生效，用于校准数据集配置文件。如果没有指定，将被设置成 `None`，并使用模型配置文件中的 'val' 数据集进行校准。
-* `--device` : 用于模型转换的设备。如果没有指定，将被设置成 cpu。
-* `--log-level` : 设置日记的等级，选项包括 `'CRITICAL'，'FATAL'，'ERROR'，'WARN'，'WARNING'，'INFO'，'DEBUG'，'NOTSET'`。如果没有指定，将被设置成 INFO。
-* `--show` : 是否显示检测的结果。
-* `--dump-info` : 是否输出 SDK 信息。
+- `deploy_cfg` : MMDeploy 代码库中用于部署的配置文件路径。
+- `model_cfg` : OpenMMLab 系列代码库中使用的模型配置文件路径。
+- `checkpoint` : OpenMMLab 系列代码库的模型文件路径。
+- `img` : 用于模型转换时使用的点云文件或图像文件路径。
+- `--test-img` : 用于测试模型的图像文件路径。如果没有指定，将设置成 `None`。
+- `--work-dir` : 工作目录，用来保存日志和模型文件。
+- `--calib-dataset-cfg` : 此参数只在 int8 模式下生效，用于校准数据集配置文件。如果没有指定，将被设置成 `None`，并使用模型配置文件中的 'val' 数据集进行校准。
+- `--device` : 用于模型转换的设备。如果没有指定，将被设置成 cpu。
+- `--log-level` : 设置日记的等级，选项包括 `'CRITICAL'，'FATAL'，'ERROR'，'WARN'，'WARNING'，'INFO'，'DEBUG'，'NOTSET'`。如果没有指定，将被设置成 INFO。
+- `--show` : 是否显示检测的结果。
+- `--dump-info` : 是否输出 SDK 信息。
 
 ### 示例
 
@@ -110,12 +110,12 @@ python tools/test.py \
 
 ## 支持模型列表
 
-| Model                | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
-| -------------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
-| PointPillars         |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
-| CenterPoint (pillar) |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
+| Model                | TorchScript | OnnxRuntime | TensorRT | NCNN | PPLNN | OpenVINO | Model config                                                                           |
+| -------------------- | :---------: | :---------: | :------: | :--: | :---: | :------: | -------------------------------------------------------------------------------------- |
+| PointPillars         |      ?      |      Y      |    Y     |  N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
+| CenterPoint (pillar) |      ?      |      Y      |    Y     |  N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
 
 ## 注意
 
-* MMDeploy 的版本需要 >= 0.4.0。
-* 目前 CenterPoint 仅支持了 pillar 版本的。
+- MMDeploy 的版本需要 >= 0.4.0。
+- 目前 CenterPoint 仅支持了 pillar 版本的。
