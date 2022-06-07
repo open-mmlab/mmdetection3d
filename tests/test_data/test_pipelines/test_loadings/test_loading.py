@@ -310,7 +310,8 @@ def test_load_image_from_file_mono_3d():
 
     repr_str = repr(load_image_from_file_mono_3d)
     expected_repr_str = 'LoadImageFromFileMono3D(to_float32=False, ' \
-        "color_type='color', file_client_args={'backend': 'disk'})"
+        "color_type='color', channel_order='bgr', " \
+        "file_client_args={'backend': 'disk'})"
     assert repr_str == expected_repr_str
 
 
