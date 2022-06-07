@@ -121,7 +121,7 @@ val_dataloader = dict(
         metainfo=metainfo,
         box_type_3d='LiDAR'))
 test_dataloader = val_dataloader
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader['dataset']['pipeline'] = test_pipeline
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
