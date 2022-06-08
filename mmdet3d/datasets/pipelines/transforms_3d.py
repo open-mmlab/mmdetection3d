@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 from mmcv import is_tuple_of
 from mmcv.transforms import BaseTransform
-from mmengine.registry import build_from_cfg
 
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
@@ -334,7 +333,7 @@ class ObjectSample(BaseTransform):
         self.sample_2d = sample_2d
         if 'type' not in db_sampler.keys():
             db_sampler['type'] = 'DataBaseSampler'
-        self.db_sampler = build_from_cfg(db_sampler, TRANSFORMS)
+        self.db_sampler = TRANSFORMS.build(db_sampler)
         self.use_ground_plane = use_ground_plane
 
     @staticmethod

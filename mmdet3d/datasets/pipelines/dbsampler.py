@@ -114,7 +114,7 @@ class DataBaseSampler(object):
         self.classes = classes
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
-        self.points_loader = mmcv.build_from_cfg(points_loader, PIPELINES)
+        self.points_loader = TRANSFORMS.build(points_loader)
         self.file_client = mmcv.FileClient(**file_client_args)
 
         # load data base infos
@@ -267,7 +267,7 @@ class DataBaseSampler(object):
                 file_path = os.path.join(
                     self.data_root,
                     info['path']) if self.data_root else info['path']
-                results = dict(pts_filename=file_path)
+                results = dict(lidar_points=dict(lidar_path=file_path))
                 s_points = self.points_loader(results)['points']
                 s_points.translate(info['box3d_lidar'][:3])
 
