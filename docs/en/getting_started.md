@@ -44,8 +44,6 @@ Assuming that you already have CUDA 11.0 installed, here is a full script for qu
 Otherwise, you should refer to the step-by-step installation instructions in the next section.
 
 ```shell
-conda create -n open-mmlab python=3.7 pytorch=1.9 cudatoolkit=11.0 torchvision -c pytorch -y
-conda activate open-mmlab
 pip3 install openmim
 mim install mmcv-full
 mim install mmdet
@@ -69,7 +67,7 @@ Optionally, you could also build MMDetection from source in case you want to mod
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
-git checkout v2.19.0  # switch to v2.19.0 branch
+git checkout v2.24.0  # switch to v2.24.0 branch
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
