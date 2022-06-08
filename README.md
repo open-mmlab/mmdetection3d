@@ -24,7 +24,7 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**News**: We released the codebase v1.0.0rc2.
+**News**: We released the codebase v1.0.0rc3.
 
 Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
 
@@ -84,7 +84,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc2 was released in 1/5/2022.
+v1.0.0rc3 was released in 8/6/2022.
 
 - Support [spconv 2.0](https://github.com/traveller59/spconv)
 - Support [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) with MinkResNet
