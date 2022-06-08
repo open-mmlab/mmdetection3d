@@ -3,14 +3,18 @@ dataset_type = 'S3DISSegDataset'
 data_root = './data/s3dis/'
 class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
                'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/s3dis/':
-        's3://openmmlab/datasets/detection3d/s3dis_processed/',
-        'data/s3dis/':
-        's3://openmmlab/datasets/detection3d/s3dis_processed/'
-    }))
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/s3dis/':
+#         's3://openmmlab/datasets/detection3d/s3dis_processed/',
+#         'data/s3dis/':
+#         's3://openmmlab/datasets/detection3d/s3dis_processed/'
+#     }))
 num_points = 4096
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
