@@ -2,7 +2,15 @@
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
-from mmcv.ops import SparseConvTensor, SparseMaxPool3d, SparseSequential
+
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+
+if IS_SPCONV2_AVAILABLE:
+    from spconv.pytorch import (SparseConvTensor, SparseMaxPool3d,
+                                SparseSequential)
+else:
+    from mmcv.ops import SparseConvTensor, SparseMaxPool3d, SparseSequential
+
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
@@ -252,7 +260,7 @@ class PartA2BboxHead(BaseModule):
                                    sparse_idx[:, 2], sparse_idx[:, 3]]
         seg_features = seg_feats[sparse_idx[:, 0], sparse_idx[:, 1],
                                  sparse_idx[:, 2], sparse_idx[:, 3]]
-        coords = sparse_idx.int()
+        coords = sparse_idx.int().contiguous()
         part_features = SparseConvTensor(part_features, coords, sparse_shape,
                                          rcnn_batch_size)
         seg_features = SparseConvTensor(seg_features, coords, sparse_shape,
