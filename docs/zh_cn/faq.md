@@ -6,7 +6,7 @@
 
 - 如果您在 `import open3d` 时遇到下面的问题：
 
-  ``OSError: /lib/x86_64-linux-gnu/libm.so.6: version 'GLIBC_2.27' not found``
+  `OSError: /lib/x86_64-linux-gnu/libm.so.6: version 'GLIBC_2.27' not found`
 
   请将 open3d 的版本降级至 0.9.0.0，因为最新版 open3d 需要 'GLIBC_2.27' 文件的支持， Ubuntu 16.04 系统中缺失该文件，且该文件仅存在于 Ubuntu 18.04 及之后的系统中。
 
@@ -21,15 +21,15 @@
 
 - 如果您在导入 pycocotools 相关包时遇到下面的问题：
 
-  ``ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject``
+  `ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject`
 
-  请将 pycocotools 的版本降级至 2.0.1，这是由于最新版本的 pycocotools 与 numpy < 1.20.0 不兼容。或者通过下面的方式从源码进行编译来安装最新版本的 pycocotools ：
+  请将 pycocotools 的版本降级至 2.0.1，这是由于最新版本的 pycocotools 与 numpy \< 1.20.0 不兼容。或者通过下面的方式从源码进行编译来安装最新版本的 pycocotools ：
 
-  ``pip install -e "git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+  `pip install -e "git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
 
   或者
 
-  ``pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"``
+  `pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
 
 ## 如何标注点云？
 

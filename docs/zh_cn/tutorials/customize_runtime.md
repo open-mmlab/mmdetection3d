@@ -40,7 +40,7 @@ class MyOptimizer(Optimizer):
 
 - 新建 `mmdet3d/core/optimizer/__init__.py` 文件用于引入。
 
-    新定义的模块应该在 `mmdet3d/core/optimizer/__init__.py` 中被引入，使得注册器可以找到新模块并注册之：
+  新定义的模块应该在 `mmdet3d/core/optimizer/__init__.py` 中被引入，使得注册器可以找到新模块并注册之：
 
 ```python
 from .my_optimizer import MyOptimizer
@@ -114,35 +114,35 @@ class MyOptimizerConstructor(object):
 
 - __使用梯度裁剪 (gradient clip) 来稳定训练过程__：
 
-    一些模型依赖梯度裁剪技术来裁剪训练中的梯度，以稳定训练过程。举例如下：
+  一些模型依赖梯度裁剪技术来裁剪训练中的梯度，以稳定训练过程。举例如下：
 
-    ```python
-    optimizer_config = dict(
-        _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
-    ```
+  ```python
+  optimizer_config = dict(
+      _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
+  ```
 
-    如果您的配置继承了一个已经设置了 `optimizer_config` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection.readthedocs.io/zh_CN/latest/tutorials/config.html)。
+  如果您的配置继承了一个已经设置了 `optimizer_config` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection.readthedocs.io/zh_CN/latest/tutorials/config.html)。
 
 - __使用动量规划器 (momentum scheduler) 来加速模型收敛__：
 
-    我们支持用动量规划器来根据学习率更改模型的动量，这样可以使模型更快地收敛。
-    动量规划器通常和学习率规划器一起使用，比如说，如下配置文件在 3D 检测中被用于加速模型收敛。
-    更多细节详见 [CyclicLrUpdater](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L358) 和 [CyclicMomentumUpdater](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/momentum_updater.py#L225) 的实现。
+  我们支持用动量规划器来根据学习率更改模型的动量，这样可以使模型更快地收敛。
+  动量规划器通常和学习率规划器一起使用，比如说，如下配置文件在 3D 检测中被用于加速模型收敛。
+  更多细节详见 [CyclicLrUpdater](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L358) 和 [CyclicMomentumUpdater](https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/momentum_updater.py#L225) 的实现。
 
-    ```python
-    lr_config = dict(
-        policy='cyclic',
-        target_ratio=(10, 1e-4),
-        cyclic_times=1,
-        step_ratio_up=0.4,
-    )
-    momentum_config = dict(
-        policy='cyclic',
-        target_ratio=(0.85 / 0.95, 1),
-        cyclic_times=1,
-        step_ratio_up=0.4,
-    )
-    ```
+  ```python
+  lr_config = dict(
+      policy='cyclic',
+      target_ratio=(10, 1e-4),
+      cyclic_times=1,
+      step_ratio_up=0.4,
+  )
+  momentum_config = dict(
+      policy='cyclic',
+      target_ratio=(0.85 / 0.95, 1),
+      cyclic_times=1,
+      step_ratio_up=0.4,
+  )
+  ```
 
 ## 自定义训练规程
 
@@ -151,20 +151,20 @@ class MyOptimizerConstructor(object):
 
 - 多项式衰减规程:
 
-    ```python
-    lr_config = dict(policy='poly', power=0.9, min_lr=1e-4, by_epoch=False)
-    ```
+  ```python
+  lr_config = dict(policy='poly', power=0.9, min_lr=1e-4, by_epoch=False)
+  ```
 
 - 余弦退火规程:
 
-    ```python
-    lr_config = dict(
-        policy='CosineAnnealing',
-        warmup='linear',
-        warmup_iters=1000,
-        warmup_ratio=1.0 / 10,
-        min_lr_ratio=1e-5)
-    ```
+  ```python
+  lr_config = dict(
+      policy='CosineAnnealing',
+      warmup='linear',
+      warmup_iters=1000,
+      warmup_ratio=1.0 / 10,
+      min_lr_ratio=1e-5)
+  ```
 
 ## 自定义工作流
 
@@ -238,7 +238,7 @@ class MyHook(Hook):
 
 - 更改 `mmdet3d/core/utils/__init__.py` 来引入之：
 
-    新定义的模块应在 `mmdet3d/core/utils/__init__.py` 中引入，以使得注册器可以找到新模块并注册之：
+  新定义的模块应在 `mmdet3d/core/utils/__init__.py` 中引入，以使得注册器可以找到新模块并注册之：
 
 ```python
 from .my_hook import MyHook
