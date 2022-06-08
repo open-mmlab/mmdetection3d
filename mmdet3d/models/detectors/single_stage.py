@@ -1,4 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional
+
+import torch
+
 from mmdet3d.registry import MODELS
 from .base import Base3DDetector
 
@@ -23,13 +27,15 @@ class SingleStage3DDetector(Base3DDetector):
 
     def __init__(self,
                  backbone,
-                 neck=None,
-                 bbox_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None,
-                 pretrained=None):
-        super(SingleStage3DDetector, self).__init__(init_cfg)
+                 neck: Optional[dict] = None,
+                 bbox_head: Optional[dict] = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 preprocess_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None,
+                 pretrained: Optional[str] = None) -> None:
+        super(SingleStage3DDetector, self).__init__(
+            preprocess_cfg=preprocess_cfg, init_cfg=init_cfg)
         self.backbone = MODELS.build(backbone)
         if neck is not None:
             self.neck = MODELS.build(neck)
@@ -39,12 +45,12 @@ class SingleStage3DDetector(Base3DDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-    def forward_dummy(self, points):
+    def forward_dummy(self, batch_inputs: dict) -> tuple:
         """Used for computing network flops.
 
         See `mmdetection/tools/analysis_tools/get_flops.py`
         """
-        x = self.extract_feat(points)
+        x = self.extract_feat(batch_inputs['points'])
         try:
             sample_mod = self.train_cfg.sample_mod
             outs = self.bbox_head(x, sample_mod)
@@ -52,20 +58,20 @@ class SingleStage3DDetector(Base3DDetector):
             outs = self.bbox_head(x)
         return outs
 
-    def extract_feat(self, points, img_metas=None):
+    def extract_feat(self, points: List[torch.Tensor]) -> list:
         """Directly extract features from the backbone+neck.
 
         Args:
-            points (torch.Tensor): Input points.
+            points (List[torch.Tensor]): Input points.
         """
-        x = self.backbone(points)
+        x = self.backbone(points[0])
         if self.with_neck:
             x = self.neck(x)
         return x
 
-    def extract_feats(self, points, img_metas):
+    def extract_feats(self, batch_inputs_dict: dict) -> list:
         """Extract features of multiple samples."""
         return [
-            self.extract_feat(pts, img_meta)
-            for pts, img_meta in zip(points, img_metas)
+            self.extract_feat([points])
+            for points in batch_inputs_dict['points']
         ]

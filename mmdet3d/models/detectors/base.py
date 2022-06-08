@@ -1,127 +1,206 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from os import path as osp
+from typing import Dict, List, Optional, Union
 
-import mmcv
 import torch
-from mmcv.parallel import DataContainer as DC
-from mmcv.runner import auto_fp16
+from mmengine.data import InstanceData
+from torch.optim import Optimizer
 
-from mmdet3d.core import Box3DMode, Coord3DMode, show_result
+from mmdet3d.core import Det3DDataSample
+from mmdet3d.registry import MODELS
+from mmdet.core.utils import stack_batch
 from mmdet.models.detectors import BaseDetector
 
 
+@MODELS.register_module()
 class Base3DDetector(BaseDetector):
-    """Base class for detectors."""
+    """Base class for 3D detectors.
 
-    def forward_test(self, points, img_metas, img=None, **kwargs):
+    Args:
+        preprocess_cfg (dict, optional): Model preprocessing config
+            for processing the input data. it usually includes
+            ``to_rgb``, ``pad_size_divisor``, ``pad_value``,
+            ``mean`` and ``std``. Default to None.
+       init_cfg (dict, optional): the config to control the
+           initialization. Default to None.
+    """
+
+    def __init__(self,
+                 preprocess_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None) -> None:
+        super(Base3DDetector, self).__init__(
+            preprocess_cfg=preprocess_cfg, init_cfg=init_cfg)
+
+    def forward_simple_test(self, batch_inputs_dict: Dict[List, torch.Tensor],
+                            batch_data_samples: List[Det3DDataSample],
+                            **kwargs) -> List[Det3DDataSample]:
         """
         Args:
-            points (list[torch.Tensor]): the outer list indicates test-time
-                augmentations and inner torch.Tensor should have a shape NxC,
-                which contains all points in the batch.
-            img_metas (list[list[dict]]): the outer list indicates test-time
-                augs (multiscale, flip, etc.) and the inner list indicates
-                images in a batch
-            img (list[torch.Tensor], optional): the outer
-                list indicates test-time augmentations and inner
-                torch.Tensor should have a shape NxCxHxW, which contains
-                all images in the batch. Defaults to None.
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'img' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`DetDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            list(obj:`Det3DDataSample`): Detection results of the
+            input images. Each DetDataSample usually contains
+            ``pred_instances_3d`` or ``pred_panoptic_seg_3d`` or
+            ``pred_sem_seg_3d``.
         """
-        for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
+        batch_size = len(batch_data_samples)
+        batch_input_metas = []
+        if batch_size != len(batch_inputs_dict['points']):
+            raise ValueError(
+                'num of augmentations ({}) != num of image meta ({})'.format(
+                    len(batch_inputs_dict['points']), len(batch_input_metas)))
+
+        for batch_index in range(batch_size):
+            metainfo = batch_data_samples[batch_index].metainfo
+            batch_input_metas.append(metainfo)
+        for var, name in [(batch_inputs_dict['points'], 'points'),
+                          (batch_input_metas, 'img_metas')]:
             if not isinstance(var, list):
                 raise TypeError('{} must be a list, but got {}'.format(
                     name, type(var)))
 
-        num_augs = len(points)
-        if num_augs != len(img_metas):
-            raise ValueError(
-                'num of augmentations ({}) != num of image meta ({})'.format(
-                    len(points), len(img_metas)))
-
-        if num_augs == 1:
-            img = [img] if img is None else img
-            return self.simple_test(points[0], img_metas[0], img[0], **kwargs)
+        if batch_size == 1:
+            return self.simple_test(
+                batch_inputs_dict, batch_input_metas, rescale=True, **kwargs)
         else:
-            return self.aug_test(points, img_metas, img, **kwargs)
+            return self.aug_test(
+                batch_inputs_dict, batch_input_metas, rescale=True, **kwargs)
 
-    @auto_fp16(apply_to=('img', 'points'))
-    def forward(self, return_loss=True, **kwargs):
-        """Calls either forward_train or forward_test depending on whether
-        return_loss=True.
-
-        Note this setting will change the expected inputs. When
-        `return_loss=True`, img and img_metas are single-nested (i.e.
-        torch.Tensor and list[dict]), and when `resturn_loss=False`, img and
-        img_metas should be double nested (i.e.  list[torch.Tensor],
-        list[list[dict]]), with the outer list indicating test time
-        augmentations.
-        """
-        if return_loss:
-            return self.forward_train(**kwargs)
-        else:
-            return self.forward_test(**kwargs)
-
-    def show_results(self, data, result, out_dir, show=False, score_thr=None):
-        """Results visualization.
+    def forward(self,
+                data: List[dict],
+                optimizer: Optional[Union[Optimizer, dict]] = None,
+                return_loss: bool = False,
+                **kwargs):
+        """The iteration step during training and testing. This method defines
+        an iteration step during training and testing, except for the back
+        propagation and optimizer updating during training, which are done in
+        an optimizer scheduler.
 
         Args:
-            data (list[dict]): Input points and the information of the sample.
-            result (list[dict]): Prediction results.
-            out_dir (str): Output directory of visualization result.
-            show (bool, optional): Determines whether you are
-                going to show result by open3d.
-                Defaults to False.
-            score_thr (float, optional): Score threshold of bounding boxes.
+            data (list[dict]): The output of dataloader.
+            optimizer (:obj:`torch.optim.Optimizer`, dict, Optional): The
+                optimizer of runner. This argument is unused and reserved.
                 Default to None.
+            return_loss (bool): Whether to return loss. In general,
+                it will be set to True during training and False
+                during testing. Default to False.
+
+        Returns:
+            during training
+                dict: It should contain at least 3 keys: ``loss``,
+                ``log_vars``, ``num_samples``.
+
+                    - ``loss`` is a tensor for back propagation, which can be a
+                      weighted sum of multiple losses.
+                    - ``log_vars`` contains all the variables to be sent to the
+                        logger.
+                    - ``num_samples`` indicates the batch size (when the model
+                        is DDP, it means the batch size on each GPU), which is
+                        used for averaging the logs.
+
+            during testing
+                list(obj:`Det3DDataSample`): Detection results of the
+                input samples. Each DetDataSample usually contains
+                ``pred_instances_3d`` or ``pred_panoptic_seg_3d`` or
+                ``pred_sem_seg_3d``.
         """
-        for batch_id in range(len(result)):
-            if isinstance(data['points'][0], DC):
-                points = data['points'][0]._data[0][batch_id].numpy()
-            elif mmcv.is_list_of(data['points'][0], torch.Tensor):
-                points = data['points'][0][batch_id]
-            else:
-                ValueError(f"Unsupported data type {type(data['points'][0])} "
-                           f'for visualization!')
-            if isinstance(data['img_metas'][0], DC):
-                pts_filename = data['img_metas'][0]._data[0][batch_id][
-                    'pts_filename']
-                box_mode_3d = data['img_metas'][0]._data[0][batch_id][
-                    'box_mode_3d']
-            elif mmcv.is_list_of(data['img_metas'][0], dict):
-                pts_filename = data['img_metas'][0][batch_id]['pts_filename']
-                box_mode_3d = data['img_metas'][0][batch_id]['box_mode_3d']
-            else:
-                ValueError(
-                    f"Unsupported data type {type(data['img_metas'][0])} "
-                    f'for visualization!')
-            file_name = osp.split(pts_filename)[-1].split('.')[0]
 
-            assert out_dir is not None, 'Expect out_dir, got none.'
+        batch_inputs_dict, batch_data_samples = self.preprocess_data(data)
+        if return_loss:
+            losses = self.forward_train(batch_inputs_dict, batch_data_samples,
+                                        **kwargs)
+            loss, log_vars = self._parse_losses(losses)
 
-            pred_bboxes = result[batch_id]['boxes_3d']
-            pred_labels = result[batch_id]['labels_3d']
+            outputs = dict(
+                loss=loss,
+                log_vars=log_vars,
+                num_samples=len(batch_data_samples))
+            return outputs
+        else:
+            return self.forward_simple_test(batch_inputs_dict,
+                                            batch_data_samples, **kwargs)
 
-            if score_thr is not None:
-                mask = result[batch_id]['scores_3d'] > score_thr
-                pred_bboxes = pred_bboxes[mask]
-                pred_labels = pred_labels[mask]
+    def preprocess_data(self, data: List[dict]) -> tuple:
+        """ Process input data during training and simple testing phases.
+        Args:
+            data (list[dict]): The data to be processed, which
+                comes from dataloader.
 
-            # for now we convert points and bbox into depth mode
-            if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
-                                                  == Box3DMode.LIDAR):
-                points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
-                                                   Coord3DMode.DEPTH)
-                pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
-                                                Box3DMode.DEPTH)
-            elif box_mode_3d != Box3DMode.DEPTH:
-                ValueError(
-                    f'Unsupported box_mode_3d {box_mode_3d} for conversion!')
-            pred_bboxes = pred_bboxes.tensor.cpu().numpy()
-            show_result(
-                points,
-                None,
-                pred_bboxes,
-                out_dir,
-                file_name,
-                show=show,
-                pred_labels=pred_labels)
+        Returns:
+            tuple:  It should contain 2 item.
+
+                 - batch_inputs_dict (dict): The model input dict which include
+                    'points', 'img' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+                 - batch_data_samples (list[:obj:`Det3DDataSample`]): The Data
+                     Samples. It usually includes information such as
+                    `gt_instance_3d` , `gt_instances`.
+        """
+        batch_data_samples = [
+            data_['data_sample'].to(self.device) for data_ in data
+        ]
+        if 'points' in data[0]['inputs'].keys():
+            points = [
+                data_['inputs']['points'].to(self.device) for data_ in data
+            ]
+        else:
+            raise KeyError(
+                "Model input dict needs to include the 'points' key.")
+        if 'img' in data[0]['inputs'].keys():
+            imgs = [data_['inputs']['img'].to(self.device) for data_ in data]
+        else:
+            imgs = None
+        if self.preprocess_cfg is None:
+            batch_inputs_dict = {
+                'points': points,
+                'imgs': stack_batch(imgs).float() if imgs is not None else None
+            }
+            return batch_inputs_dict, batch_data_samples
+
+        if self.to_rgb and imgs[0].size(0) == 3:
+            imgs = [_img[[2, 1, 0], ...] for _img in imgs]
+        imgs = [(_img - self.pixel_mean) / self.pixel_std for _img in imgs]
+        batch_img = stack_batch(imgs, self.pad_size_divisor, self.pad_value)
+        batch_inputs_dict = {'points': points, 'imgs': batch_img}
+        return batch_inputs_dict, batch_data_samples
+
+    def postprocess_result(self, results_list: List[InstanceData]) \
+            -> List[Det3DDataSample]:
+        """ Convert results list to `Det3DDataSample`.
+        Args:
+            results_list (list[:obj:`InstanceData`]): Detection results of
+                each sample.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input sample. Each Det3DDataSample usually contain
+            'pred_instances_3d'. And the ``pred_instances_3dd`` usually
+            contains following keys.
+
+                - scores_3d (Tensor): Classification scores, has a shape
+                    (num_instances, )
+                - labels_3d (Tensor): Labels of bboxes, has a shape
+                    (num_instances, ).
+                - bboxes_3d (:obj:`BaseInstance3DBoxes`): Prediction of bboxes,
+                    contains a tensor with shape (num_instances, 7).
+            """
+        for i in range(len(results_list)):
+            result = Det3DDataSample()
+            result.pred_instances_3d = results_list[i]
+            results_list[i] = result
+        return results_list
+
+    def show_results(self, data, result, out_dir, show=False, score_thr=None):
+        # TODO
+        pass

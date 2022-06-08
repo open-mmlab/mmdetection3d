@@ -5,14 +5,14 @@ from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
 from ..bbox import bbox3d2result, bbox3d_mapping_back, xywhr2xyxyr
 
 
-def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
+def merge_aug_bboxes_3d(aug_results, aug_batch_input_metas, test_cfg):
     """Merge augmented detection 3D bboxes and scores.
 
     Args:
         aug_results (list[dict]): The dict of detection results.
             The dict contains the following keys
 
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
+            - bboxes_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
             - scores_3d (torch.Tensor): Detection scores.
             - labels_3d (torch.Tensor): Predicted box labels.
         img_metas (list[dict]): Meta information of each sample.
@@ -21,26 +21,27 @@ def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
     Returns:
         dict: Bounding boxes results in cpu mode, containing merged results.
 
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): Merged detection bbox.
+            - bboxes_3d (:obj:`BaseInstance3DBoxes`): Merged detection bbox.
             - scores_3d (torch.Tensor): Merged detection scores.
             - labels_3d (torch.Tensor): Merged predicted box labels.
     """
 
-    assert len(aug_results) == len(img_metas), \
+    assert len(aug_results) == len(aug_batch_input_metas), \
         '"aug_results" should have the same length as "img_metas", got len(' \
-        f'aug_results)={len(aug_results)} and len(img_metas)={len(img_metas)}'
+        f'aug_results)={len(aug_results)} and ' \
+        f'len(img_metas)={len(aug_batch_input_metas)}'
 
     recovered_bboxes = []
     recovered_scores = []
     recovered_labels = []
 
-    for bboxes, img_info in zip(aug_results, img_metas):
-        scale_factor = img_info[0]['pcd_scale_factor']
-        pcd_horizontal_flip = img_info[0]['pcd_horizontal_flip']
-        pcd_vertical_flip = img_info[0]['pcd_vertical_flip']
+    for bboxes, input_info in zip(aug_results, aug_batch_input_metas):
+        scale_factor = input_info['pcd_scale_factor']
+        pcd_horizontal_flip = input_info['pcd_horizontal_flip']
+        pcd_vertical_flip = input_info['pcd_vertical_flip']
         recovered_scores.append(bboxes['scores_3d'])
         recovered_labels.append(bboxes['labels_3d'])
-        bboxes = bbox3d_mapping_back(bboxes['boxes_3d'], scale_factor,
+        bboxes = bbox3d_mapping_back(bboxes['bboxes_3d'], scale_factor,
                                      pcd_horizontal_flip, pcd_vertical_flip)
         recovered_bboxes.append(bboxes)
 
