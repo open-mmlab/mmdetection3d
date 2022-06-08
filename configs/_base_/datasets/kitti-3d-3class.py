@@ -87,8 +87,8 @@ eval_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points']),
 ]
 train_dataloader = dict(
-    batch_size=2,
-    num_workers=2,
+    batch_size=6,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
