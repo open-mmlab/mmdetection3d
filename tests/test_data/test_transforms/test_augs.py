@@ -2,11 +2,12 @@
 import copy
 import unittest
 
+import numpy as np
 import torch
 from mmengine.testing import assert_allclose
 from utils import create_data_info_after_loading
 
-from mmdet3d.datasets import RandomFlip3D
+from mmdet3d.datasets import GlobalAlignment, RandomFlip3D
 from mmdet3d.datasets.pipelines import GlobalRotScaleTrans
 
 
@@ -77,3 +78,24 @@ class TestRandomFlip3D(unittest.TestCase):
                         -ori_data_info['gt_bboxes_3d'].tensor[:, 1])
         assert_allclose(data_info['gt_bboxes_3d'].tensor[:, 2],
                         ori_data_info['gt_bboxes_3d'].tensor[:, 2])
+
+
+class TestGlobalAlignment(unittest.TestCase):
+
+    def test_global_alignment(self):
+        data_info = create_data_info_after_loading()
+        global_align_transform = GlobalAlignment(rotation_axis=2)
+        data_info['axis_align_matrix'] = np.array(
+            [[0.945519, 0.325568, 0., -5.38439],
+             [-0.325568, 0.945519, 0., -2.87178], [0., 0., 1., -0.06435],
+             [0., 0., 0., 1.]],
+            dtype=np.float32)
+        global_align_transform(data_info)
+
+        data_info['axis_align_matrix'] = np.array(
+            [[0.945519, 0.325568, 0., -5.38439], [0, 2, 0., -2.87178],
+             [0., 0., 1., -0.06435], [0., 0., 0., 1.]],
+            dtype=np.float32)
+        # assert the rot metric
+        with self.assertRaises(AssertionError):
+            global_align_transform(data_info)

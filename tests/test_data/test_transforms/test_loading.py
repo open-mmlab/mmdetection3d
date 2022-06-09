@@ -1,11 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import unittest
 
+import numpy as np
 import torch
 from mmengine.testing import assert_allclose
 from utils import create_dummy_data_info
 
 from mmdet3d.core import DepthPoints, LiDARPoints
+from mmdet3d.datasets.pipelines import PointSegClassMapping
 from mmdet3d.datasets.pipelines.loading import (LoadAnnotations3D,
                                                 LoadPointsFromFile)
 
@@ -71,3 +73,17 @@ class TestLoadAnnotations3D(unittest.TestCase):
         self.assertIn('with_bbox_3d=True', repr_str)
         self.assertIn('with_label_3d=True', repr_str)
         self.assertIn('with_bbox_depth=False', repr_str)
+
+
+class TestPointSegClassMapping(unittest.TestCase):
+
+    def test_point_seg_class_mapping(self):
+        results = dict()
+        results['pts_semantic_mask'] = np.array([1, 2, 3, 4, 5])
+
+        point_seg_mapping_transform = PointSegClassMapping(
+            valid_cat_ids=[1, 2, 3],
+            max_cat_id=results['pts_semantic_mask'].max())
+        results = point_seg_mapping_transform(results)
+        assert_allclose(results['pts_semantic_mask'], np.array([0, 1, 2, 3,
+                                                                3]))

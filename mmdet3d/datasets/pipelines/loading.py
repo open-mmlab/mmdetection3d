@@ -1,8 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Sequence
+
 import mmcv
 import numpy as np
-from mmcv import BaseTransform
 from mmcv.transforms import LoadImageFromFile
+from mmcv.transforms.base import BaseTransform
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet3d.registry import TRANSFORMS
@@ -241,8 +243,18 @@ class LoadPointsFromMultiSweeps(object):
 
 
 @TRANSFORMS.register_module()
-class PointSegClassMapping(object):
+class PointSegClassMapping(BaseTransform):
     """Map original semantic class to valid category ids.
+
+    Required Keys:
+
+    - lidar_points (dict)
+
+        - lidar_path (str)
+
+    Added Keys:
+
+    - points (np.float32)
 
     Map valid classes as 0~len(valid_cat_ids)-1 and
     others as len(valid_cat_ids).
@@ -253,7 +265,9 @@ class PointSegClassMapping(object):
             segmentation mask. Defaults to 40.
     """
 
-    def __init__(self, valid_cat_ids, max_cat_id=40):
+    def __init__(self,
+                 valid_cat_ids: Sequence[int],
+                 max_cat_id: int = 40) -> None:
         assert max_cat_id >= np.max(valid_cat_ids), \
             'max_cat_id should be greater than maximum id in valid_cat_ids'
 
@@ -267,7 +281,7 @@ class PointSegClassMapping(object):
         for cls_idx, cat_id in enumerate(valid_cat_ids):
             self.cat_id2class[cat_id] = cls_idx
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> None:
         """Call function to map original semantic class to valid category ids.
 
         Args:
@@ -320,11 +334,11 @@ class NormalizePointsColor(object):
         """
         points = results['points']
         assert points.attribute_dims is not None and \
-            'color' in points.attribute_dims.keys(), \
-            'Expect points have color attribute'
+               'color' in points.attribute_dims.keys(), \
+               'Expect points have color attribute'
         if self.color_mean is not None:
             points.color = points.color - \
-                points.color.new_tensor(self.color_mean)
+                           points.color.new_tensor(self.color_mean)
         points.color = points.color / 255.0
         results['points'] = points
         return results

@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
 import warnings
-from typing import List
+from typing import Dict, List
 
 import cv2
 import numpy as np
@@ -507,7 +507,7 @@ class ObjectNoise(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class GlobalAlignment(object):
+class GlobalAlignment(BaseTransform):
     """Apply global alignment to 3D scene points by rotation and translation.
 
     Args:
@@ -521,10 +521,10 @@ class GlobalAlignment(object):
             bounding boxes for evaluation.
     """
 
-    def __init__(self, rotation_axis):
+    def __init__(self, rotation_axis: int) -> None:
         self.rotation_axis = rotation_axis
 
-    def _trans_points(self, input_dict, trans_factor):
+    def _trans_points(self, results: Dict, trans_factor: np.ndarray) -> None:
         """Private function to translate points.
 
         Args:
@@ -534,9 +534,9 @@ class GlobalAlignment(object):
         Returns:
             dict: Results after translation, 'points' is updated in the dict.
         """
-        input_dict['points'].translate(trans_factor)
+        results['points'].translate(trans_factor)
 
-    def _rot_points(self, input_dict, rot_mat):
+    def _rot_points(self, results: Dict, rot_mat: np.ndarray) -> None:
         """Private function to rotate bounding boxes and points.
 
         Args:
@@ -547,9 +547,9 @@ class GlobalAlignment(object):
             dict: Results after rotation, 'points' is updated in the dict.
         """
         # input should be rot_mat_T so I transpose it here
-        input_dict['points'].rotate(rot_mat.T)
+        results['points'].rotate(rot_mat.T)
 
-    def _check_rot_mat(self, rot_mat):
+    def _check_rot_mat(self, rot_mat: np.ndarray) -> None:
         """Check if rotation matrix is valid for self.rotation_axis.
 
         Args:
@@ -562,7 +562,7 @@ class GlobalAlignment(object):
         is_valid &= (rot_mat[:, self.rotation_axis] == valid_array).all()
         assert is_valid, f'invalid rotation matrix {rot_mat}'
 
-    def __call__(self, input_dict):
+    def transform(self, results: Dict) -> Dict:
         """Call function to shuffle points.
 
         Args:
@@ -572,20 +572,20 @@ class GlobalAlignment(object):
             dict: Results after global alignment, 'points' and keys in
                 input_dict['bbox3d_fields'] are updated in the result dict.
         """
-        assert 'axis_align_matrix' in input_dict['ann_info'].keys(), \
+        assert 'axis_align_matrix' in results, \
             'axis_align_matrix is not provided in GlobalAlignment'
 
-        axis_align_matrix = input_dict['ann_info']['axis_align_matrix']
+        axis_align_matrix = results['axis_align_matrix']
         assert axis_align_matrix.shape == (4, 4), \
             f'invalid shape {axis_align_matrix.shape} for axis_align_matrix'
         rot_mat = axis_align_matrix[:3, :3]
         trans_vec = axis_align_matrix[:3, -1]
 
         self._check_rot_mat(rot_mat)
-        self._rot_points(input_dict, rot_mat)
-        self._trans_points(input_dict, trans_vec)
+        self._rot_points(results, rot_mat)
+        self._trans_points(results, trans_vec)
 
-        return input_dict
+        return results
 
     def __repr__(self):
         repr_str = self.__class__.__name__
