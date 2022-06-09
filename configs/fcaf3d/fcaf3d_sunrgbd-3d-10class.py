@@ -3,9 +3,7 @@ n_points = 100000
 
 model = dict(
     neck_with_head=dict(
-        n_classes=10,
-        n_reg_outs=8,
-        bbox_loss=dict(type='RotatedIoU3DLoss')))
+        n_classes=10, n_reg_outs=8, bbox_loss=dict(type='RotatedIoU3DLoss')))
 
 dataset_type = 'SUNRGBDDataset'
 data_root = 'data/sunrgbd/'
@@ -20,10 +18,7 @@ train_pipeline = [
         use_dim=[0, 1, 2, 3, 4, 5]),
     dict(type='LoadAnnotations3D'),
     dict(type='PointSample', num_points=n_points),
-    dict(
-        type='RandomFlip3D',
-        sync_2d=False,
-        flip_ratio_bev_horizontal=0.5),
+    dict(type='RandomFlip3D', sync_2d=False, flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.523599, 0.523599],
@@ -31,9 +26,7 @@ train_pipeline = [
         translation_std=[.1, .1, .1],
         shift_height=False),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(
-        type='Collect3D',
-        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(

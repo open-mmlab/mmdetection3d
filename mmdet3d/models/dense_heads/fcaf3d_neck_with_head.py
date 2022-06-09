@@ -8,14 +8,14 @@ except ImportError:
         'Please follow `getting_started.md` to install MinkowskiEngine.`')
 
 import torch
-from torch import nn
-
-from mmdet3d.models import HEADS, build_loss
-from mmdet.core import reduce_mean
 from mmcv.cnn import Scale, bias_init_with_prob
 from mmcv.ops import nms3d, nms3d_normal
 from mmcv.runner.base_module import BaseModule
+from torch import nn
+
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
+from mmdet3d.models import HEADS, build_loss
+from mmdet.core import reduce_mean
 
 
 @HEADS.register_module()
@@ -27,7 +27,7 @@ class FCAF3DNeckWithHead(BaseModule):
         in_channels (tuple[int]): Number of channels in input tensors.
         out_channels (int): Number of channels in the neck output tensors.
         n_reg_outs (int): Number of regression layer channels.
-        voxel_size (int): Voxel size in meters.
+        voxel_size (float): Voxel size in meters.
         pts_prune_threshold (int): Pruning threshold on each feature level.
         pts_assign_threshold (int): Min number of location per box to
             be assigned with.
@@ -40,6 +40,7 @@ class FCAF3DNeckWithHead(BaseModule):
         test_cfg (dict): Config for test stage. Defaults to None.
         init_cfg (dict): Config for weight initialization. Defaults to None.
     """
+
     def __init__(self,
                  n_classes,
                  in_channels,
@@ -49,8 +50,7 @@ class FCAF3DNeckWithHead(BaseModule):
                  pts_prune_threshold,
                  pts_assign_threshold,
                  pts_center_threshold,
-                 center_loss=dict(type='CrossEntropyLoss',
-                                  use_sigmoid=True),
+                 center_loss=dict(type='CrossEntropyLoss', use_sigmoid=True),
                  bbox_loss=dict(type='AxisAlignedIoULoss'),
                  cls_loss=dict(type='FocalLoss'),
                  train_cfg=None,
@@ -82,8 +82,7 @@ class FCAF3DNeckWithHead(BaseModule):
         return nn.Sequential(
             ME.MinkowskiConvolution(
                 in_channels, out_channels, kernel_size=3, dimension=3),
-            ME.MinkowskiBatchNorm(out_channels),
-            ME.MinkowskiELU())
+            ME.MinkowskiBatchNorm(out_channels), ME.MinkowskiELU())
 
     @staticmethod
     def _make_up_block(in_channels, out_channels):
@@ -102,13 +101,11 @@ class FCAF3DNeckWithHead(BaseModule):
                 out_channels,
                 kernel_size=2,
                 stride=2,
-                dimension=3),
-            ME.MinkowskiBatchNorm(out_channels),
+                dimension=3), ME.MinkowskiBatchNorm(out_channels),
             ME.MinkowskiELU(),
             ME.MinkowskiConvolution(
                 out_channels, out_channels, kernel_size=3, dimension=3),
-            ME.MinkowskiBatchNorm(out_channels),
-            ME.MinkowskiELU())
+            ME.MinkowskiBatchNorm(out_channels), ME.MinkowskiELU())
 
     def _init_layers(self, in_channels, out_channels, n_reg_outs, n_classes):
         """Initialize layers.
@@ -123,12 +120,11 @@ class FCAF3DNeckWithHead(BaseModule):
         self.pruning = ME.MinkowskiPruning()
         for i in range(len(in_channels)):
             if i > 0:
-                self.__setattr__(f'up_block_{i}',
-                                 self._make_up_block(in_channels[i],
-                                                     in_channels[i - 1]))
+                self.__setattr__(
+                    f'up_block_{i}',
+                    self._make_up_block(in_channels[i], in_channels[i - 1]))
             self.__setattr__(f'out_block_{i}',
-                             self._make_block(in_channels[i],
-                                              out_channels))
+                             self._make_block(in_channels[i], out_channels))
 
         # head layers
         self.center_conv = ME.MinkowskiConvolution(
@@ -137,8 +133,8 @@ class FCAF3DNeckWithHead(BaseModule):
             out_channels, n_reg_outs, kernel_size=1, dimension=3)
         self.cls_conv = ME.MinkowskiConvolution(
             out_channels, n_classes, kernel_size=1, bias=True, dimension=3)
-        self.scales = nn.ModuleList([Scale(1.)
-                                     for _ in range(len(in_channels))])
+        self.scales = nn.ModuleList(
+            [Scale(1.) for _ in range(len(in_channels))])
 
     def init_weights(self):
         """Initialize weights."""
@@ -159,6 +155,7 @@ class FCAF3DNeckWithHead(BaseModule):
         outs = []
         inputs = x
         x = inputs[-1]
+        scores = None
         for i in range(len(inputs) - 1, -1, -1):
             if i < len(inputs) - 1:
                 x = self.__getattr__(f'up_block_{i + 1}')(x)
@@ -182,7 +179,7 @@ class FCAF3DNeckWithHead(BaseModule):
             img_metas (list[dict]): Contains scene meta info for each sample.
 
         Returns:
-            dict: centerness, bbox and classification loss values.
+            dict: Centerness, bbox and classification loss values.
         """
         center_preds, bbox_preds, cls_preds, points = self(x)
         return self._loss(center_preds, bbox_preds, cls_preds, points,
@@ -199,8 +196,8 @@ class FCAF3DNeckWithHead(BaseModule):
             list[list[Tensor]]: bboxes, scores and labels for each sample.
         """
         center_preds, bbox_preds, cls_preds, points = self(x)
-        return self._get_bboxes(center_preds, bbox_preds, cls_preds,
-                                points, img_metas)
+        return self._get_bboxes(center_preds, bbox_preds, cls_preds, points,
+                                img_metas)
 
     def _prune(self, x, scores):
         """Prunes the tensor by score thresholding.
@@ -215,7 +212,8 @@ class FCAF3DNeckWithHead(BaseModule):
         with torch.no_grad():
             coordinates = x.C.float()
             interpolated_scores = scores.features_at_coordinates(coordinates)
-            prune_mask = interpolated_scores.new_zeros((len(interpolated_scores)), dtype=torch.bool)
+            prune_mask = interpolated_scores.new_zeros(
+                (len(interpolated_scores)), dtype=torch.bool)
             for permutation in x.decomposition_permutations:
                 score = interpolated_scores[permutation]
                 mask = score.new_zeros((len(score)), dtype=torch.bool)
@@ -260,14 +258,8 @@ class FCAF3DNeckWithHead(BaseModule):
 
         return center_preds, bbox_preds, cls_preds, points, prune_scores
 
-    def _loss_single(self,
-                     center_preds,
-                     bbox_preds,
-                     cls_preds,
-                     points,
-                     gt_bboxes,
-                     gt_labels,
-                     img_meta):
+    def _loss_single(self, center_preds, bbox_preds, cls_preds, points,
+                     gt_bboxes, gt_labels, img_meta):
         """Per scene loss function.
 
         Args:
@@ -320,14 +312,8 @@ class FCAF3DNeckWithHead(BaseModule):
             bbox_loss = pos_bbox_preds.sum()
         return center_loss, bbox_loss, cls_loss
 
-    def _loss(self,
-              center_preds,
-              bbox_preds,
-              cls_preds,
-              points,
-              gt_bboxes,
-              gt_labels,
-              img_metas):
+    def _loss(self, center_preds, bbox_preds, cls_preds, points, gt_bboxes,
+              gt_labels, img_metas):
         """Per scene loss function.
 
         Args:
@@ -364,11 +350,7 @@ class FCAF3DNeckWithHead(BaseModule):
             bbox_loss=torch.mean(torch.stack(bbox_losses)),
             cls_loss=torch.mean(torch.stack(cls_losses)))
 
-    def _get_bboxes_single(self,
-                           center_preds,
-                           bbox_preds,
-                           cls_preds,
-                           points,
+    def _get_bboxes_single(self, center_preds, bbox_preds, cls_preds, points,
                            img_meta):
         """Generate boxes for a single scene.
 
@@ -387,7 +369,7 @@ class FCAF3DNeckWithHead(BaseModule):
         """
         mlvl_bboxes, mlvl_scores = [], []
         for center_pred, bbox_pred, cls_pred, point in zip(
-            center_preds, bbox_preds, cls_preds, points):
+                center_preds, bbox_preds, cls_preds, points):
             scores = cls_pred.sigmoid() * center_pred.sigmoid()
             max_scores, _ = scores.max(dim=1)
 
@@ -406,11 +388,7 @@ class FCAF3DNeckWithHead(BaseModule):
         bboxes, scores, labels = self._nms(bboxes, scores, img_meta)
         return bboxes, scores, labels
 
-    def _get_bboxes(self,
-                    center_preds,
-                    bbox_preds,
-                    cls_preds,
-                    points,
+    def _get_bboxes(self, center_preds, bbox_preds, cls_preds, points,
                     img_metas):
         """Generate boxes for all scenes.
 
@@ -454,14 +432,11 @@ class FCAF3DNeckWithHead(BaseModule):
             return bbox
 
         # axis-aligned case: x, y, z, w, h, l -> x1, y1, z1, x2, y2, z2
-        return torch.stack((
-            bbox[..., 0] - bbox[..., 3] / 2,
-            bbox[..., 1] - bbox[..., 4] / 2,
-            bbox[..., 2] - bbox[..., 5] / 2,
-            bbox[..., 0] + bbox[..., 3] / 2,
-            bbox[..., 1] + bbox[..., 4] / 2,
-            bbox[..., 2] + bbox[..., 5] / 2
-        ), dim=-1)
+        return torch.stack(
+            (bbox[..., 0] - bbox[..., 3] / 2, bbox[..., 1] - bbox[..., 4] / 2,
+             bbox[..., 2] - bbox[..., 5] / 2, bbox[..., 0] + bbox[..., 3] / 2,
+             bbox[..., 1] + bbox[..., 4] / 2, bbox[..., 2] + bbox[..., 5] / 2),
+            dim=-1)
 
     @staticmethod
     def _bbox_pred_to_bbox(points, bbox_pred):
@@ -497,18 +472,16 @@ class FCAF3DNeckWithHead(BaseModule):
             return base_bbox
 
         # rotated case: ..., sin(2a)ln(q), cos(2a)ln(q)
-        scale = bbox_pred[:, 0] + bbox_pred[:, 1] + bbox_pred[:, 2] + bbox_pred[:, 3]
-        q = torch.exp(torch.sqrt(torch.pow(bbox_pred[:, 6], 2) + torch.pow(bbox_pred[:, 7], 2)))
+        scale = bbox_pred[:, 0] + bbox_pred[:, 1] + \
+            bbox_pred[:, 2] + bbox_pred[:, 3]
+        q = torch.exp(
+            torch.sqrt(
+                torch.pow(bbox_pred[:, 6], 2) + torch.pow(bbox_pred[:, 7], 2)))
         alpha = 0.5 * torch.atan2(bbox_pred[:, 6], bbox_pred[:, 7])
-        return torch.stack((
-            x_center,
-            y_center,
-            z_center,
-            scale / (1 + q),
-            scale / (1 + q) * q,
-            bbox_pred[:, 5] + bbox_pred[:, 4],
-            alpha
-        ), dim=-1)
+        return torch.stack(
+            (x_center, y_center, z_center, scale / (1 + q), scale /
+             (1 + q) * q, bbox_pred[:, 5] + bbox_pred[:, 4], alpha),
+            dim=-1)
 
     @staticmethod
     def _get_face_distances(points, boxes):
@@ -522,11 +495,12 @@ class FCAF3DNeckWithHead(BaseModule):
             Tensor: Face distances of shape (N_points, N_boxes, 6),
                 (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
         """
-        shift = torch.stack((
-            points[..., 0] - boxes[..., 0],
-            points[..., 1] - boxes[..., 1],
-            points[..., 2] - boxes[..., 2]), dim=-1).permute(1, 0, 2)
-        shift = rotation_3d_in_axis(shift, -boxes[0, :, 6], axis=2).permute(1, 0, 2)
+        shift = torch.stack(
+            (points[..., 0] - boxes[..., 0], points[..., 1] - boxes[..., 1],
+             points[..., 2] - boxes[..., 2]),
+            dim=-1).permute(1, 0, 2)
+        shift = rotation_3d_in_axis(
+            shift, -boxes[0, :, 6], axis=2).permute(1, 0, 2)
         centers = boxes[..., :3] + shift
         dx_min = centers[..., 0] - boxes[..., 0] + boxes[..., 3] / 2
         dx_max = boxes[..., 0] + boxes[..., 3] / 2 - centers[..., 0]
@@ -534,7 +508,8 @@ class FCAF3DNeckWithHead(BaseModule):
         dy_max = boxes[..., 1] + boxes[..., 4] / 2 - centers[..., 1]
         dz_min = centers[..., 2] - boxes[..., 2] + boxes[..., 5] / 2
         dz_max = boxes[..., 2] + boxes[..., 5] / 2 - centers[..., 2]
-        return torch.stack((dx_min, dx_max, dy_min, dy_max, dz_min, dz_max), dim=-1)
+        return torch.stack((dx_min, dx_max, dy_min, dy_max, dz_min, dz_max),
+                           dim=-1)
 
     @staticmethod
     def _get_centerness(face_distances):
@@ -553,8 +528,8 @@ class FCAF3DNeckWithHead(BaseModule):
         y_dims = face_distances[..., [2, 3]]
         z_dims = face_distances[..., [4, 5]]
         centerness_targets = x_dims.min(dim=-1)[0] / x_dims.max(dim=-1)[0] * \
-                             y_dims.min(dim=-1)[0] / y_dims.max(dim=-1)[0] * \
-                             z_dims.min(dim=-1)[0] / z_dims.max(dim=-1)[0]
+            y_dims.min(dim=-1)[0] / y_dims.max(dim=-1)[0] * \
+            z_dims.min(dim=-1)[0] / z_dims.max(dim=-1)[0]
         return torch.sqrt(centerness_targets)
 
     @torch.no_grad()
@@ -573,8 +548,10 @@ class FCAF3DNeckWithHead(BaseModule):
         """
         float_max = points[0].new_tensor(1e8)
         n_levels = len(points)
-        levels = torch.cat([points[i].new_tensor(i).expand(len(points[i]))
-                            for i in range(len(points))])
+        levels = torch.cat([
+            points[i].new_tensor(i).expand(len(points[i]))
+            for i in range(len(points))
+        ])
         points = torch.cat(points)
         gt_bboxes = gt_bboxes.to(points.device)
         n_points = len(points)
@@ -582,7 +559,8 @@ class FCAF3DNeckWithHead(BaseModule):
         volumes = gt_bboxes.volume.unsqueeze(0).expand(n_points, n_boxes)
 
         # condition 1: point inside box
-        boxes = torch.cat((gt_bboxes.gravity_center, gt_bboxes.tensor[:, 3:]), dim=1)
+        boxes = torch.cat((gt_bboxes.gravity_center, gt_bboxes.tensor[:, 3:]),
+                          dim=1)
         boxes = boxes.expand(n_points, n_boxes, 7)
         points = points.unsqueeze(1).expand(n_points, n_boxes, 3)
         face_distances = self._get_face_distances(points, boxes)
@@ -599,8 +577,10 @@ class FCAF3DNeckWithHead(BaseModule):
         lower_limit_mask = n_pos_points_per_level < self.pts_assign_threshold
         lower_index = torch.argmax(lower_limit_mask.int(), dim=0) - 1
         lower_index = torch.where(lower_index < 0, 0, lower_index)
-        all_upper_limit_mask = torch.all(torch.logical_not(lower_limit_mask), dim=0)
-        best_level = torch.where(all_upper_limit_mask, n_levels - 1, lower_index)
+        all_upper_limit_mask = torch.all(
+            torch.logical_not(lower_limit_mask), dim=0)
+        best_level = torch.where(all_upper_limit_mask, n_levels - 1,
+                                 lower_index)
         # keep only points with best level
         best_level = best_level.expand(n_points, n_boxes)
         levels = torch.unsqueeze(levels, 1).expand(n_points, n_boxes)
@@ -608,9 +588,14 @@ class FCAF3DNeckWithHead(BaseModule):
 
         # condition 3: limit topk points per box by centerness
         centerness = self._get_centerness(face_distances)
-        centerness = torch.where(inside_box_condition, centerness, torch.ones_like(centerness) * -1)
-        centerness = torch.where(level_condition, centerness, torch.ones_like(centerness) * -1)
-        top_centerness = torch.topk(centerness, min(self.pts_center_threshold + 1, len(centerness)), dim=0).values[-1]
+        centerness = torch.where(inside_box_condition, centerness,
+                                 torch.ones_like(centerness) * -1)
+        centerness = torch.where(level_condition, centerness,
+                                 torch.ones_like(centerness) * -1)
+        top_centerness = torch.topk(
+            centerness,
+            min(self.pts_center_threshold + 1, len(centerness)),
+            dim=0).values[-1]
         topk_condition = centerness > top_centerness.unsqueeze(0)
 
         # condition 4: min volume box per point
@@ -654,14 +639,18 @@ class FCAF3DNeckWithHead(BaseModule):
             if yaw_flag:
                 nms_function = nms3d
             else:
-                class_bboxes = torch.cat((
-                    class_bboxes, torch.zeros_like(class_bboxes[:, :1])), dim=1)
+                class_bboxes = torch.cat(
+                    (class_bboxes, torch.zeros_like(class_bboxes[:, :1])),
+                    dim=1)
                 nms_function = nms3d_normal
 
-            nms_ids = nms_function(class_bboxes, class_scores, self.test_cfg.iou_thr)
+            nms_ids = nms_function(class_bboxes, class_scores,
+                                   self.test_cfg.iou_thr)
             nms_bboxes.append(class_bboxes[nms_ids])
             nms_scores.append(class_scores[nms_ids])
-            nms_labels.append(bboxes.new_full(class_scores[nms_ids].shape, i, dtype=torch.long))
+            nms_labels.append(
+                bboxes.new_full(
+                    class_scores[nms_ids].shape, i, dtype=torch.long))
 
         if len(nms_bboxes):
             nms_bboxes = torch.cat(nms_bboxes, dim=0)
@@ -669,8 +658,8 @@ class FCAF3DNeckWithHead(BaseModule):
             nms_labels = torch.cat(nms_labels, dim=0)
         else:
             nms_bboxes = bboxes.new_zeros((0, bboxes.shape[1]))
-            nms_scores = bboxes.new_zeros((0,))
-            nms_labels = bboxes.new_zeros((0,))
+            nms_scores = bboxes.new_zeros((0, ))
+            nms_labels = bboxes.new_zeros((0, ))
 
         if yaw_flag:
             box_dim = 7
@@ -680,6 +669,9 @@ class FCAF3DNeckWithHead(BaseModule):
             with_yaw = False
             nms_bboxes = nms_bboxes[:, :6]
         nms_bboxes = img_meta['box_type_3d'](
-            nms_bboxes, box_dim=box_dim, with_yaw=with_yaw, origin=(.5, .5, .5))
+            nms_bboxes,
+            box_dim=box_dim,
+            with_yaw=with_yaw,
+            origin=(.5, .5, .5))
 
         return nms_bboxes, nms_scores, nms_labels

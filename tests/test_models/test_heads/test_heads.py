@@ -1615,28 +1615,28 @@ def test_fcaf3d_neck_with_head():
         pts_center_threshold=18,
         n_classes=18,
         n_reg_outs=6)
-    test_cfg = mmcv.Config(dict(
-        nms_pre=1000,
-        iou_thr=.5,
-        score_thr=.01))
+    test_cfg = mmcv.Config(dict(nms_pre=1000, iou_thr=.5, score_thr=.01))
     cfg.update(test_cfg=test_cfg)
     head = build_head(cfg).cuda()
 
     # test forward train
     gt_bboxes = [
-        DepthInstance3DBoxes(torch.tensor([
-            [10., 10., 10., 10., 10., 10.],
-            [30., 30., 30., 30., 30., 30.]
-        ]), box_dim=6, with_yaw=False),
-        DepthInstance3DBoxes(torch.tensor([
-            [20., 20., 20., 20., 20., 20.],
-            [40., 40., 40., 40., 40., 40.]
-        ]), box_dim=6, with_yaw=False)]
-    gt_labels = [
-        torch.tensor([2, 4]).cuda(),
-        torch.tensor([3, 5]).cuda()]
-    img_metas = [dict(box_type_3d=DepthInstance3DBoxes),
-                 dict(box_type_3d=DepthInstance3DBoxes)]
+        DepthInstance3DBoxes(
+            torch.tensor([[10., 10., 10., 10., 10., 10.],
+                          [30., 30., 30., 30., 30., 30.]]),
+            box_dim=6,
+            with_yaw=False),
+        DepthInstance3DBoxes(
+            torch.tensor([[20., 20., 20., 20., 20., 20.],
+                          [40., 40., 40., 40., 40., 40.]]),
+            box_dim=6,
+            with_yaw=False)
+    ]
+    gt_labels = [torch.tensor([2, 4]).cuda(), torch.tensor([3, 5]).cuda()]
+    img_metas = [
+        dict(box_type_3d=DepthInstance3DBoxes),
+        dict(box_type_3d=DepthInstance3DBoxes)
+    ]
 
     losses = head.forward_train(x, gt_bboxes, gt_labels, img_metas)
     assert losses['center_loss'].shape == torch.Size([])

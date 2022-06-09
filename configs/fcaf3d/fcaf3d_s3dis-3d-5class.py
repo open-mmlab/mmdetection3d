@@ -1,9 +1,7 @@
 _base_ = ['fcaf3d.py']
 n_points = 100000
 
-model = dict(
-    neck_with_head=dict(
-        n_classes=5))
+model = dict(neck_with_head=dict(n_classes=5))
 
 dataset_type = 'S3DISDataset'
 data_root = './data/s3dis/'
@@ -34,9 +32,7 @@ train_pipeline = [
         shift_height=False),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(
-        type='Collect3D',
-        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(

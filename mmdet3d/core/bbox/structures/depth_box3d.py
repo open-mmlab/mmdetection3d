@@ -288,10 +288,14 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         # We flip yaw angle here as mmcv.ops.box_iou_rotated accepts
         # it in anti-clockwise direction.
         if boxes1.with_yaw:
-            tensor1 = torch.cat((boxes1.tensor[:, :-1], -boxes1.tensor[:, -1:]), dim=-1)
-            boxes1 = DepthInstance3DBoxes(tensor1, box_dim=boxes1.box_dim, with_yaw=boxes1.with_yaw)
+            tensor1 = torch.cat(
+                (boxes1.tensor[:, :-1], -boxes1.tensor[:, -1:]), dim=-1)
+            boxes1 = DepthInstance3DBoxes(
+                tensor1, box_dim=boxes1.box_dim, with_yaw=boxes1.with_yaw)
         if boxes2.with_yaw:
-            tensor2 = torch.cat((boxes2.tensor[:, :-1], -boxes2.tensor[:, -1:]), dim=-1)
-            boxes2 = DepthInstance3DBoxes(tensor2, box_dim=boxes2.box_dim, with_yaw=boxes2.with_yaw)
+            tensor2 = torch.cat(
+                (boxes2.tensor[:, :-1], -boxes2.tensor[:, -1:]), dim=-1)
+            boxes2 = DepthInstance3DBoxes(
+                tensor2, box_dim=boxes2.box_dim, with_yaw=boxes2.with_yaw)
 
         return super().overlaps(boxes1, boxes2)

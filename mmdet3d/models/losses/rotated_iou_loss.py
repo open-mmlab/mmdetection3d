@@ -1,16 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmcv.ops import diff_iou_rotated_3d
 from torch import nn as nn
 
-from mmcv.ops import diff_iou_rotated_3d
 from mmdet.models.losses.utils import weighted_loss
 from ..builder import LOSSES
 
 
 @weighted_loss
 def axis_aligned_iou_loss(pred, target):
-    """Calculate the IoU loss (1-IoU) of two sets of rotated bounding
-    boxes. Note that predictions and targets are one-to-one corresponded.
+    """Calculate the IoU loss (1-IoU) of two sets of rotated bounding boxes.
+    Note that predictions and targets are one-to-one corresponded.
 
     Args:
         pred (torch.Tensor): Bbox predictions with shape [..., 7]
