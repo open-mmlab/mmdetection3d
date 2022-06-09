@@ -1562,3 +1562,93 @@ def test_monoflex_head():
 
     assert cls_score[0].shape == torch.Size([2, 3, 32, 32])
     assert out_reg[0].shape == torch.Size([2, 50, 32, 32])
+
+
+def test_fcaf3d_neck_with_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    try:
+        import MinkowskiEngine as ME
+    except ImportError:
+        pytest.skip('test requires MinkowskiEngine installation')
+
+    _setup_seed(0)
+
+    coordinates, features = [], []
+    # batch of 2 point clouds
+    for i in range(2):
+        c = torch.from_numpy(np.random.rand(500, 3) * 100)
+        coordinates.append(c.float().cuda())
+        f = torch.from_numpy(np.random.rand(500, 3))
+        features.append(f.float().cuda())
+    tensor_coordinates, tensor_features = ME.utils.sparse_collate(
+        coordinates, features)
+    x = ME.SparseTensor(
+        features=tensor_features, coordinates=tensor_coordinates)
+
+    # backbone
+    conv1 = ME.MinkowskiConvolution(
+        3, 64, kernel_size=3, stride=2, dimension=3).cuda()
+    conv2 = ME.MinkowskiConvolution(
+        64, 128, kernel_size=3, stride=2, dimension=3).cuda()
+    conv3 = ME.MinkowskiConvolution(
+        128, 256, kernel_size=3, stride=2, dimension=3).cuda()
+    conv4 = ME.MinkowskiConvolution(
+        256, 512, kernel_size=3, stride=2, dimension=3).cuda()
+
+    # backbone outputs of 4 levels
+    x1 = conv1(x)
+    x2 = conv2(x1)
+    x3 = conv3(x2)
+    x4 = conv4(x3)
+    x = (x1, x2, x3, x4)
+
+    # build head
+    cfg = dict(
+        type='FCAF3DNeckWithHead',
+        in_channels=(64, 128, 256, 512),
+        out_channels=128,
+        voxel_size=1.,
+        pts_prune_threshold=1000,
+        pts_assign_threshold=27,
+        pts_center_threshold=18,
+        n_classes=18,
+        n_reg_outs=6)
+    test_cfg = mmcv.Config(dict(
+        nms_pre=1000,
+        iou_thr=.5,
+        score_thr=.01))
+    cfg.update(test_cfg=test_cfg)
+    head = build_head(cfg).cuda()
+
+    # test forward train
+    gt_bboxes = [
+        DepthInstance3DBoxes(torch.tensor([
+            [10., 10., 10., 10., 10., 10.],
+            [30., 30., 30., 30., 30., 30.]
+        ]), box_dim=6, with_yaw=False),
+        DepthInstance3DBoxes(torch.tensor([
+            [20., 20., 20., 20., 20., 20.],
+            [40., 40., 40., 40., 40., 40.]
+        ]), box_dim=6, with_yaw=False)]
+    gt_labels = [
+        torch.tensor([2, 4]).cuda(),
+        torch.tensor([3, 5]).cuda()]
+    img_metas = [dict(box_type_3d=DepthInstance3DBoxes),
+                 dict(box_type_3d=DepthInstance3DBoxes)]
+
+    losses = head.forward_train(x, gt_bboxes, gt_labels, img_metas)
+    assert losses['center_loss'].shape == torch.Size([])
+    assert losses['bbox_loss'].shape == torch.Size([])
+    assert losses['cls_loss'].shape == torch.Size([])
+
+    # test forward test
+    bbox_list = head.forward_test(x, img_metas)
+    assert len(bbox_list) == 2
+    for bboxes, scores, labels in bbox_list:
+        n, dim = bboxes.tensor.shape
+        assert n > 0
+        assert dim == 7
+        assert scores.shape == torch.Size([n])
+        assert labels.shape == torch.Size([n])
