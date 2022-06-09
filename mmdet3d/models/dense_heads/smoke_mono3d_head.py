@@ -4,12 +4,12 @@ from typing import List, Optional, Tuple, Union
 import torch
 from mmcv.runner import force_fp32
 from mmengine.config import ConfigDict
+from mmengine.data import InstanceData
 from torch import Tensor
 from torch.nn import functional as F
 
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.core import multi_apply
-from mmdet.core.bbox.builder import build_bbox_coder
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from mmdet.models.utils.gaussian_target import (get_local_maximum,
                                                 get_topk_from_heatmap,
@@ -77,7 +77,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             **kwargs)
         self.dim_channel = dim_channel
         self.ori_channel = ori_channel
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
 
     def forward(self, feats: Tuple[Tensor]):
         """Forward features from the upstream network.
@@ -139,12 +139,12 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         """
         assert len(cls_scores) == len(bbox_preds) == 1
         cam2imgs = torch.stack([
-            cls_scores[0].new_tensor(img_metas['cam2img'])
-            for img_metas in batch_img_metas
+            cls_scores[0].new_tensor(img_meta['cam2img'])
+            for img_meta in batch_img_metas
         ])
         trans_mats = torch.stack([
-            cls_scores[0].new_tensor(img_metas['trans_mat'])
-            for img_metas in batch_img_metas
+            cls_scores[0].new_tensor(img_meta['trans_mat'])
+            for img_meta in batch_img_metas
         ])
         batch_bboxes, batch_scores, batch_topk_labels = self.decode_heatmap(
             cls_scores[0],
@@ -170,7 +170,16 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             bboxes = batch_img_metas[img_id]['box_type_3d'](
                 bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
             attrs = None
-            result_list.append((bboxes, scores, labels, attrs))
+
+            results = InstanceData()
+            results.bboxes_3d = bboxes
+            results.labels_3d = labels
+            results.scores_3d = scores
+
+            if attrs is not None:
+                results.attr_labels = attrs
+
+            result_list.append(results)
 
         return result_list
 
@@ -267,12 +276,12 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         batch, channel = pred_reg.shape[0], pred_reg.shape[1]
         w = pred_reg.shape[3]
         cam2imgs = torch.stack([
-            gt_locations.new_tensor(img_metas['cam2img'])
-            for img_metas in batch_img_metas
+            gt_locations.new_tensor(img_meta['cam2img'])
+            for img_meta in batch_img_metas
         ])
         trans_mats = torch.stack([
-            gt_locations.new_tensor(img_metas['trans_mat'])
-            for img_metas in batch_img_metas
+            gt_locations.new_tensor(img_meta['trans_mat'])
+            for img_meta in batch_img_metas
         ])
         centers_2d_inds = centers_2d[:, 1] * w + centers_2d[:, 0]
         centers_2d_inds = centers_2d_inds.view(batch, -1)
@@ -359,8 +368,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         reg_mask = torch.stack([
             gt_bboxes[0].new_tensor(
-                not img_metas['affine_aug'], dtype=torch.bool)
-            for img_metas in batch_img_metas
+                not img_meta['affine_aug'], dtype=torch.bool)
+            for img_meta in batch_img_metas
         ])
 
         img_h, img_w = img_shape[:2]

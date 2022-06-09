@@ -434,14 +434,14 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
 
     @abstractmethod
     @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
-    def get_bboxes(self,
-                   cls_scores,
-                   bbox_preds,
-                   dir_cls_preds,
-                   attr_preds,
-                   img_metas,
-                   cfg=None,
-                   rescale=None):
+    def get_results(self,
+                    cls_scores,
+                    bbox_preds,
+                    dir_cls_preds,
+                    attr_preds,
+                    batch_img_metas,
+                    cfg=None,
+                    rescale=None):
         """Transform network output for a batch into bbox predictions.
 
         Args:
@@ -454,7 +454,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 the channel number is num_points * 2. (bin = 2)
             attr_preds (list[Tensor]): Attribute scores for each scale level
                 Has shape (N, num_points * num_attrs, H, W)
-            img_metas (list[dict]): Meta information of each image, e.g.,
+            batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
             cfg (mmcv.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used
