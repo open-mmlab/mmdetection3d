@@ -44,13 +44,13 @@ Assuming that you already have CUDA 11.0 installed, here is a full script for qu
 Otherwise, you should refer to the step-by-step installation instructions in the next section.
 
 ```shell
-pip3 install openmim
+pip install openmim
 mim install mmcv-full
 mim install mmdet
 mim install mmsegmentation
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
-pip3 install -e .
+pip install -e .
 ```
 
 **Step 0.** Install [MMCV](https://github.com/open-mmlab/mmcv) using [MIM](https://github.com/open-mmlab/mim).
