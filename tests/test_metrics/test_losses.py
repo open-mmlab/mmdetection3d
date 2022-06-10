@@ -178,7 +178,8 @@ def test_multibin_loss():
 def test_axis_aligned_iou_loss():
     from mmdet3d.models.losses import AxisAlignedIoULoss
 
-    boxes1 = torch.tensor([[0., 0., 0., 1., 1., 1.]])
+    boxes1 = torch.tensor([[0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.],
+                           [0., 0., 0., 1., 1., 1.]])
     boxes2 = torch.tensor([[0., 0., 0., 1., 1.,
                             1.], [.5, .5, .5, 1.5, 1.5, 1.5],
                            [1., 1., 1., 2., 2., 2.]])
