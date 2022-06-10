@@ -276,12 +276,10 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         Note:
             This function calculates the overlaps between ``boxes1`` and
             ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
-
         Args:
             boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
             boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
             mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
-
         Returns:
             torch.Tensor: Calculated 3D overlaps of the boxes.
         """

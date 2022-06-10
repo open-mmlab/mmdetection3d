@@ -182,7 +182,9 @@ class Custom3DDataset(Dataset):
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
         anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d, gt_labels_3d=gt_labels_3d)
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=gt_labels_3d,
+            gt_names=gt_names_3d)
         return anns_results
 
     def pre_pipeline(self, results):

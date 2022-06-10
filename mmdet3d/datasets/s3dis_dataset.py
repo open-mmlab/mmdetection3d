@@ -381,7 +381,8 @@ class S3DISSegDataset(_S3DISSegDataset):
                 modality=modality,
                 test_mode=test_mode,
                 ignore_index=ignore_index,
-                scene_idxs=scene_idxs[i]) for i in range(len(ann_files))
+                scene_idxs=scene_idxs[i],
+                **kwargs) for i in range(len(ann_files))
         ]
 
         # data_infos and scene_idxs need to be concat
