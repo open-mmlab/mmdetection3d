@@ -8,20 +8,21 @@ from ..builder import LOSSES
 
 
 @weighted_loss
-def axis_aligned_iou_loss(pred, target):
+def rotated_iou_3d_loss(pred, target):
     """Calculate the IoU loss (1-IoU) of two sets of rotated bounding boxes.
     Note that predictions and targets are one-to-one corresponded.
 
     Args:
-        pred (torch.Tensor): Bbox predictions with shape [..., 7]
+        pred (torch.Tensor): Bbox predictions with shape [N, 7]
             (x, y, z, w, l, h, alpha).
-        target (torch.Tensor): Bbox targets (gt) with shape [..., 7]
+        target (torch.Tensor): Bbox targets (gt) with shape [N, 7]
             (x, y, z, w, l, h, alpha).
 
     Returns:
         torch.Tensor: IoU loss between predictions and targets.
     """
-    iou_loss = 1 - diff_iou_rotated_3d(pred, target)
+    iou_loss = 1 - diff_iou_rotated_3d(pred.unsqueeze(0),
+                                       target.unsqueeze(0))[0]
     return iou_loss
 
 
@@ -72,7 +73,7 @@ class RotatedIoU3DLoss(nn.Module):
             reduction_override if reduction_override else self.reduction)
         if weight is not None and weight.dim() > 1:
             weight = weight.mean(-1)
-        loss = self.loss_weight * self.loss_function(
+        loss = self.loss_weight * rotated_iou_3d_loss(
             pred,
             target,
             weight,
