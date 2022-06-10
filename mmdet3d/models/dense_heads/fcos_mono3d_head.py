@@ -5,14 +5,13 @@ import numpy as np
 import torch
 from mmcv.cnn import Scale, normal_init
 from mmcv.runner import force_fp32
+from mmengine.data import InstanceData
 from torch import nn as nn
 
 from mmdet3d.core import (box3d_multiclass_nms, limit_period, points_img2cam,
                           xywhr2xyxyr)
-from mmdet3d.models.builder import build_loss
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.core import multi_apply
-from mmdet.core.bbox.builder import build_bbox_coder
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 INF = 1e8
@@ -96,9 +95,9 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             norm_cfg=norm_cfg,
             init_cfg=init_cfg,
             **kwargs)
-        self.loss_centerness = build_loss(loss_centerness)
+        self.loss_centerness = MODELS.build(loss_centerness)
         bbox_coder['code_size'] = self.bbox_code_size
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -281,7 +280,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 is a 4D-tensor, the channel number is num_points * 1.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
                 gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
+                、``bboxes_3d``、``labels3d``、``depths``、``centers_2d`` and
                 attributes.
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
@@ -467,15 +466,15 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
     @force_fp32(
         apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds', 'attr_preds',
                   'centernesses'))
-    def get_bboxes(self,
-                   cls_scores,
-                   bbox_preds,
-                   dir_cls_preds,
-                   attr_preds,
-                   centernesses,
-                   img_metas,
-                   cfg=None,
-                   rescale=None):
+    def get_results(self,
+                    cls_scores,
+                    bbox_preds,
+                    dir_cls_preds,
+                    attr_preds,
+                    centernesses,
+                    batch_img_metas,
+                    cfg=None,
+                    rescale=None):
         """Transform network output for a batch into bbox predictions.
 
         Args:
@@ -490,7 +489,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 Has shape (N, num_points * num_attrs, H, W)
             centernesses (list[Tensor]): Centerness for each scale level with
                 shape (N, num_points * 1, H, W)
-            img_metas (list[dict]): Meta information of each image, e.g.,
+            batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
             cfg (mmcv.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used
@@ -512,7 +511,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         mlvl_points = self.get_points(featmap_sizes, bbox_preds[0].dtype,
                                       bbox_preds[0].device)
         result_list = []
-        for img_id in range(len(img_metas)):
+        for img_id in range(len(batch_img_metas)):
             cls_score_list = [
                 cls_scores[i][img_id].detach() for i in range(num_levels)
             ]
@@ -544,24 +543,26 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             centerness_pred_list = [
                 centernesses[i][img_id].detach() for i in range(num_levels)
             ]
-            input_meta = img_metas[img_id]
-            det_bboxes = self._get_bboxes_single(
-                cls_score_list, bbox_pred_list, dir_cls_pred_list,
-                attr_pred_list, centerness_pred_list, mlvl_points, input_meta,
-                cfg, rescale)
-            result_list.append(det_bboxes)
+            img_meta = batch_img_metas[img_id]
+            results = self._get_results_single(cls_score_list, bbox_pred_list,
+                                               dir_cls_pred_list,
+                                               attr_pred_list,
+                                               centerness_pred_list,
+                                               mlvl_points, img_meta, cfg,
+                                               rescale)
+            result_list.append(results)
         return result_list
 
-    def _get_bboxes_single(self,
-                           cls_scores,
-                           bbox_preds,
-                           dir_cls_preds,
-                           attr_preds,
-                           centernesses,
-                           mlvl_points,
-                           input_meta,
-                           cfg,
-                           rescale=False):
+    def _get_results_single(self,
+                            cls_scores,
+                            bbox_preds,
+                            dir_cls_preds,
+                            attr_preds,
+                            centernesses,
+                            mlvl_points,
+                            img_meta,
+                            cfg,
+                            rescale=False):
         """Transform outputs for a single batch item into bbox predictions.
 
         Args:
@@ -578,7 +579,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 with shape (num_points, H, W).
             mlvl_points (list[Tensor]): Box reference for a single scale level
                 with shape (num_total_points, 2).
-            input_meta (dict): Metadata of input image.
+            img_meta (dict): Metadata of input image.
             cfg (mmcv.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used.
             rescale (bool): If True, return boxes in original image space.
@@ -586,11 +587,11 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         Returns:
             tuples[Tensor]: Predicted 3D boxes, scores, labels and attributes.
         """
-        view = np.array(input_meta['cam2img'])
-        scale_factor = input_meta['scale_factor']
+        view = np.array(img_meta['cam2img'])
+        scale_factor = img_meta['scale_factor']
         cfg = self.test_cfg if cfg is None else cfg
         assert len(cls_scores) == len(bbox_preds) == len(mlvl_points)
-        mlvl_centers2d = []
+        mlvl_centers_2d = []
         mlvl_bboxes = []
         mlvl_scores = []
         mlvl_dir_scores = []
@@ -630,26 +631,26 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 bbox_pred[:, :2] /= bbox_pred[:, :2].new_tensor(scale_factor)
             pred_center2d = bbox_pred[:, :3].clone()
             bbox_pred[:, :3] = points_img2cam(bbox_pred[:, :3], view)
-            mlvl_centers2d.append(pred_center2d)
+            mlvl_centers_2d.append(pred_center2d)
             mlvl_bboxes.append(bbox_pred)
             mlvl_scores.append(scores)
             mlvl_dir_scores.append(dir_cls_score)
             mlvl_attr_scores.append(attr_score)
             mlvl_centerness.append(centerness)
 
-        mlvl_centers2d = torch.cat(mlvl_centers2d)
+        mlvl_centers_2d = torch.cat(mlvl_centers_2d)
         mlvl_bboxes = torch.cat(mlvl_bboxes)
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
 
         # change local yaw to global yaw for 3D nms
-        cam2img = mlvl_centers2d.new_zeros((4, 4))
+        cam2img = mlvl_centers_2d.new_zeros((4, 4))
         cam2img[:view.shape[0], :view.shape[1]] = \
-            mlvl_centers2d.new_tensor(view)
-        mlvl_bboxes = self.bbox_coder.decode_yaw(mlvl_bboxes, mlvl_centers2d,
+            mlvl_centers_2d.new_tensor(view)
+        mlvl_bboxes = self.bbox_coder.decode_yaw(mlvl_bboxes, mlvl_centers_2d,
                                                  mlvl_dir_scores,
                                                  self.dir_offset, cam2img)
 
-        mlvl_bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
+        mlvl_bboxes_for_nms = xywhr2xyxyr(img_meta['box_type_3d'](
             mlvl_bboxes, box_dim=self.bbox_code_size,
             origin=(0.5, 0.5, 0.5)).bev)
 
@@ -669,16 +670,22 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                                        mlvl_attr_scores)
         bboxes, scores, labels, dir_scores, attrs = results
         attrs = attrs.to(labels.dtype)  # change data type to int
-        bboxes = input_meta['box_type_3d'](
+        bboxes = img_meta['box_type_3d'](
             bboxes, box_dim=self.bbox_code_size, origin=(0.5, 0.5, 0.5))
         # Note that the predictions use origin (0.5, 0.5, 0.5)
-        # Due to the ground truth centers2d are the gravity center of objects
+        # Due to the ground truth centers_2d are the gravity center of objects
         # v0.10.0 fix inplace operation to the input tensor of cam_box3d
         # So here we also need to add origin=(0.5, 0.5, 0.5)
         if not self.pred_attrs:
             attrs = None
 
-        return bboxes, scores, labels, attrs
+        results = InstanceData()
+        results.bboxes_3d = bboxes
+        results.scores_3d = scores
+        results.labels_3d = labels
+        results.attr_labels = attrs
+
+        return results
 
     @staticmethod
     def pts2Dto3D(points, view):
@@ -738,7 +745,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 (num_points, 2).
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
                 gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
+                、``bboxes_3d``、``labels3d``、``depths``、``centers_2d`` and
                 attributes.
 
         Returns:
@@ -760,6 +767,11 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
 
         # the number of points per img, per lvl
         num_points = [center.size(0) for center in points]
+
+        if 'attr_labels' not in batch_gt_instances_3d[0]:
+            for gt_instances_3d in batch_gt_instances_3d:
+                gt_instances_3d.attr_labels = gt_instances_3d.labels.new_full(
+                    gt_instances_3d.labels.shape, self.attr_background_label)
 
         # get labels and bbox_targets of each image
         _, _, labels_3d_list, bbox_targets_3d_list, centerness_targets_list, \
@@ -822,7 +834,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         gt_labels = gt_instances_3d.labels
         gt_bboxes_3d = gt_instances_3d.bboxes_3d
         gt_labels_3d = gt_instances_3d.labels_3d
-        centers2d = gt_instances_3d.centers2d
+        centers_2d = gt_instances_3d.centers_2d
         depths = gt_instances_3d.depths
         attr_labels = gt_instances_3d.attr_labels
 
@@ -848,7 +860,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         regress_ranges = regress_ranges[:, None, :].expand(
             num_points, num_gts, 2)
         gt_bboxes = gt_bboxes[None].expand(num_points, num_gts, 4)
-        centers2d = centers2d[None].expand(num_points, num_gts, 2)
+        centers_2d = centers_2d[None].expand(num_points, num_gts, 2)
         gt_bboxes_3d = gt_bboxes_3d[None].expand(num_points, num_gts,
                                                  self.bbox_code_size)
         depths = depths[None, :, None].expand(num_points, num_gts, 1)
@@ -856,8 +868,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         xs = xs[:, None].expand(num_points, num_gts)
         ys = ys[:, None].expand(num_points, num_gts)
 
-        delta_xs = (xs - centers2d[..., 0])[..., None]
-        delta_ys = (ys - centers2d[..., 1])[..., None]
+        delta_xs = (xs - centers_2d[..., 0])[..., None]
+        delta_ys = (ys - centers_2d[..., 1])[..., None]
         bbox_targets_3d = torch.cat(
             (delta_xs, delta_ys, depths, gt_bboxes_3d[..., 3:]), dim=-1)
 
@@ -871,8 +883,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             'False has not been implemented for FCOS3D.'
         # condition1: inside a `center bbox`
         radius = self.center_sample_radius
-        center_xs = centers2d[..., 0]
-        center_ys = centers2d[..., 1]
+        center_xs = centers_2d[..., 0]
+        center_ys = centers_2d[..., 1]
         center_gts = torch.zeros_like(gt_bboxes)
         stride = center_xs.new_zeros(center_xs.shape)
 
