@@ -1,4 +1,4 @@
-# Tutorial 8: Use Pure Point Cloud Dataset
+# Tutorial 9: Use Pure Point Cloud Dataset
 
 ## Data Pre-Processing
 
