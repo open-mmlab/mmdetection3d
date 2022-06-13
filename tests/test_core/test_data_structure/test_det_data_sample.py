@@ -5,7 +5,7 @@ import pytest
 import torch
 from mmengine.data import InstanceData, PixelData
 
-from mmdet3d.core import Det3DDataSample
+from mmdet3d.core.data_structures import Det3DDataSample
 
 
 def _equal(a, b):
@@ -15,7 +15,7 @@ def _equal(a, b):
         return a == b
 
 
-class TestDetDataSample(TestCase):
+class TestDet3DataSample(TestCase):
 
     def test_init(self):
         meta_info = dict(
@@ -32,54 +32,59 @@ class TestDetDataSample(TestCase):
         det3d_data_sample = Det3DDataSample()
         # test gt_instances_3d
         gt_instances_3d_data = dict(
-            bboxes=torch.rand(4, 4),
-            labels=torch.rand(4),
-            masks=np.random.rand(4, 2, 2))
+            bboxes_3d=torch.rand(4, 4), labels_3d=torch.rand(4))
         gt_instances_3d = InstanceData(**gt_instances_3d_data)
         det3d_data_sample.gt_instances_3d = gt_instances_3d
         assert 'gt_instances_3d' in det3d_data_sample
-        assert _equal(det3d_data_sample.gt_instances_3d.bboxes,
-                      gt_instances_3d_data['bboxes'])
-        assert _equal(det3d_data_sample.gt_instances_3d.labels,
-                      gt_instances_3d_data['labels'])
-        assert _equal(det3d_data_sample.gt_instances_3d.masks,
-                      gt_instances_3d_data['masks'])
+        assert _equal(det3d_data_sample.gt_instances_3d.bboxes_3d,
+                      gt_instances_3d_data['bboxes_3d'])
+        assert _equal(det3d_data_sample.gt_instances_3d.labels_3d,
+                      gt_instances_3d_data['labels_3d'])
 
-        # test pred_instances
+        # test pred_instances_3d
         pred_instances_3d_data = dict(
-            bboxes=torch.rand(2, 4),
-            labels=torch.rand(2),
-            masks=np.random.rand(2, 2, 2))
+            bboxes_3d=torch.rand(2, 4),
+            labels_3d=torch.rand(2),
+            scores_3d=torch.rand(2))
         pred_instances_3d = InstanceData(**pred_instances_3d_data)
         det3d_data_sample.pred_instances_3d = pred_instances_3d
         assert 'pred_instances_3d' in det3d_data_sample
-        assert _equal(det3d_data_sample.pred_instances_3d.bboxes,
-                      pred_instances_3d_data['bboxes'])
-        assert _equal(det3d_data_sample.pred_instances_3d.labels,
-                      pred_instances_3d_data['labels'])
-        assert _equal(det3d_data_sample.pred_instances_3d.masks,
-                      pred_instances_3d_data['masks'])
+        assert _equal(det3d_data_sample.pred_instances_3d.bboxes_3d,
+                      pred_instances_3d_data['bboxes_3d'])
+        assert _equal(det3d_data_sample.pred_instances_3d.labels_3d,
+                      pred_instances_3d_data['labels_3d'])
+        assert _equal(det3d_data_sample.pred_instances_3d.scores_3d,
+                      pred_instances_3d_data['scores_3d'])
 
-        # test proposals
-        proposals_data = dict(bboxes=torch.rand(4, 4), labels=torch.rand(4))
-        proposals = InstanceData(**proposals_data)
-        det3d_data_sample.proposals = proposals
-        assert 'proposals' in det3d_data_sample
-        assert _equal(det3d_data_sample.proposals.bboxes,
-                      proposals_data['bboxes'])
-        assert _equal(det3d_data_sample.proposals.labels,
-                      proposals_data['labels'])
+        # test pts_pred_instances_3d
+        pts_pred_instances_3d_data = dict(
+            bboxes_3d=torch.rand(2, 4),
+            labels_3d=torch.rand(2),
+            scores_3d=torch.rand(2))
+        pts_pred_instances_3d = InstanceData(**pts_pred_instances_3d_data)
+        det3d_data_sample.pts_pred_instances_3d = pts_pred_instances_3d
+        assert 'pts_pred_instances_3d' in det3d_data_sample
+        assert _equal(det3d_data_sample.pts_pred_instances_3d.bboxes_3d,
+                      pts_pred_instances_3d_data['bboxes_3d'])
+        assert _equal(det3d_data_sample.pts_pred_instances_3d.labels_3d,
+                      pts_pred_instances_3d_data['labels_3d'])
+        assert _equal(det3d_data_sample.pts_pred_instances_3d.scores_3d,
+                      pts_pred_instances_3d_data['scores_3d'])
 
-        # test ignored_instances
-        ignored_instances_data = dict(
-            bboxes=torch.rand(4, 4), labels=torch.rand(4))
-        ignored_instances = InstanceData(**ignored_instances_data)
-        det3d_data_sample.ignored_instances = ignored_instances
-        assert 'ignored_instances' in det3d_data_sample
-        assert _equal(det3d_data_sample.ignored_instances.bboxes,
-                      ignored_instances_data['bboxes'])
-        assert _equal(det3d_data_sample.ignored_instances.labels,
-                      ignored_instances_data['labels'])
+        # test img_pred_instances_3d
+        img_pred_instances_3d_data = dict(
+            bboxes_3d=torch.rand(2, 4),
+            labels_3d=torch.rand(2),
+            scores_3d=torch.rand(2))
+        img_pred_instances_3d = InstanceData(**img_pred_instances_3d_data)
+        det3d_data_sample.img_pred_instances_3d = img_pred_instances_3d
+        assert 'img_pred_instances_3d' in det3d_data_sample
+        assert _equal(det3d_data_sample.img_pred_instances_3d.bboxes_3d,
+                      img_pred_instances_3d_data['bboxes_3d'])
+        assert _equal(det3d_data_sample.img_pred_instances_3d.labels_3d,
+                      img_pred_instances_3d_data['labels_3d'])
+        assert _equal(det3d_data_sample.img_pred_instances_3d.scores_3d,
+                      img_pred_instances_3d_data['scores_3d'])
 
         # test gt_panoptic_seg
         gt_pts_panoptic_seg_data = dict(panoptic_seg=torch.rand(5, 4))
@@ -124,17 +129,33 @@ class TestDetDataSample(TestCase):
             det3d_data_sample.pred_pts_sem_seg = torch.rand(2, 4)
 
     def test_deleter(self):
-        gt_instances_3d_data = dict(
-            bboxes=torch.rand(4, 4),
-            labels=torch.rand(4),
-            masks=np.random.rand(4, 2, 2))
+        tmp_instances_3d_data = dict(
+            bboxes_3d=torch.rand(4, 4), labels_3d=torch.rand(4))
 
         det3d_data_sample = Det3DDataSample()
-        gt_instances_3d = InstanceData(data=gt_instances_3d_data)
+        gt_instances_3d = InstanceData(data=tmp_instances_3d_data)
         det3d_data_sample.gt_instances_3d = gt_instances_3d
         assert 'gt_instances_3d' in det3d_data_sample
         del det3d_data_sample.gt_instances_3d
         assert 'gt_instances_3d' not in det3d_data_sample
+
+        pred_instances_3d = InstanceData(data=tmp_instances_3d_data)
+        det3d_data_sample.pred_instances_3d = pred_instances_3d
+        assert 'pred_instances_3d' in det3d_data_sample
+        del det3d_data_sample.pred_instances_3d
+        assert 'pred_instances_3d' not in det3d_data_sample
+
+        pts_pred_instances_3d = InstanceData(data=tmp_instances_3d_data)
+        det3d_data_sample.pts_pred_instances_3d = pts_pred_instances_3d
+        assert 'pts_pred_instances_3d' in det3d_data_sample
+        del det3d_data_sample.pts_pred_instances_3d
+        assert 'pts_pred_instances_3d' not in det3d_data_sample
+
+        img_pred_instances_3d = InstanceData(data=tmp_instances_3d_data)
+        det3d_data_sample.img_pred_instances_3d = img_pred_instances_3d
+        assert 'img_pred_instances_3d' in det3d_data_sample
+        del det3d_data_sample.img_pred_instances_3d
+        assert 'img_pred_instances_3d' not in det3d_data_sample
 
         pred_pts_panoptic_seg_data = torch.rand(5, 4)
         pred_pts_panoptic_seg_data = PixelData(data=pred_pts_panoptic_seg_data)
