@@ -39,10 +39,12 @@ mmdetection3d
 例如，在 `Area_1/office_1` 目录下的文件如下所示：
 
 - `office_1.txt`：一个 txt 文件存储着原始点云数据每个点的坐标和颜色信息。
-- `Annotations/`：这个文件夹里包含有此房间中实例物体的信息 (以 txt 文件的形式存储)。每个 txt 文件表示一个实例，例如：
-    - `chair_1.txt`：存储有该房间中一把椅子的点云数据。
 
-    如果我们将 `Annotations/` 下的所有 txt 文件合并起来，得到的点云就和 `office_1.txt` 中的点云是一致的。
+- `Annotations/`：这个文件夹里包含有此房间中实例物体的信息 (以 txt 文件的形式存储)。每个 txt 文件表示一个实例，例如：
+
+  - `chair_1.txt`：存储有该房间中一把椅子的点云数据。
+
+  如果我们将 `Annotations/` 下的所有 txt 文件合并起来，得到的点云就和 `office_1.txt` 中的点云是一致的。
 
 你可以通过 `python collect_indoor3d_data.py` 指令进行 S3DIS 数据的提取。
 主要步骤包括：
@@ -143,16 +145,16 @@ s3dis
 ```
 
 - `points/xxxxx.bin`：提取的点云数据。
-- `instance_mask/xxxxx.bin`：每个点云的实例标签，取值范围为 [0, ${实例个数}]，其中 0 代表未标注的点。
-- `semantic_mask/xxxxx.bin`：每个点云的语义标签，取值范围为 [0, 12]。
+- `instance_mask/xxxxx.bin`：每个点云的实例标签，取值范围为 \[0, ${实例个数}\]，其中 0 代表未标注的点。
+- `semantic_mask/xxxxx.bin`：每个点云的语义标签，取值范围为 \[0, 12\]。
 - `s3dis_infos_Area_1.pkl`：区域 1 的数据信息，每个房间的详细信息如下：
-    - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
-    - info['pts_path']: `points/xxxxx.bin` 点云的路径。
-    - info['pts_instance_mask_path']: `instance_mask/xxxxx.bin` 实例标签的路径。
-    - info['pts_semantic_mask_path']: `semantic_mask/xxxxx.bin` 语义标签的路径。
+  - info\['point_cloud'\]: {'num_features': 6, 'lidar_idx': sample_idx}.
+  - info\['pts_path'\]: `points/xxxxx.bin` 点云的路径。
+  - info\['pts_instance_mask_path'\]: `instance_mask/xxxxx.bin` 实例标签的路径。
+  - info\['pts_semantic_mask_path'\]: `semantic_mask/xxxxx.bin` 语义标签的路径。
 - `seg_info`：为支持语义分割任务所生成的信息文件。
-    - `Area_1_label_weight.npy`：每一语义类别的权重系数。因为 S3DIS 中属于不同类的点的数量相差很大，一个常见的操作是在计算损失时对不同类别进行加权 (label re-weighting) 以得到更好的分割性能。
-    - `Area_1_resampled_scene_idxs.npy`：每一个场景 (房间) 的重采样标签。在训练过程中，我们依据每个场景的点的数量，会对其进行不同次数的重采样，以保证训练数据均衡。
+  - `Area_1_label_weight.npy`：每一语义类别的权重系数。因为 S3DIS 中属于不同类的点的数量相差很大，一个常见的操作是在计算损失时对不同类别进行加权 (label re-weighting) 以得到更好的分割性能。
+  - `Area_1_resampled_scene_idxs.npy`：每一个场景 (房间) 的重采样标签。在训练过程中，我们依据每个场景的点的数量，会对其进行不同次数的重采样，以保证训练数据均衡。
 
 ## 训练流程
 
@@ -205,13 +207,13 @@ train_pipeline = [
 ]
 ```
 
-- `PointSegClassMapping`：在训练过程中，只有被使用的类别的序号会被映射到类似 [0, 13) 范围内的类别标签。其余的类别序号会被转换为 `ignore_index` 所制定的忽略标签，在本例中是 `13`。
+- `PointSegClassMapping`：在训练过程中，只有被使用的类别的序号会被映射到类似 \[0, 13) 范围内的类别标签。其余的类别序号会被转换为 `ignore_index` 所制定的忽略标签，在本例中是 `13`。
 - `IndoorPatchPointSample`：从输入点云中裁剪一个含有固定数量点的小块 (patch)。`block_size` 指定了裁剪块的边长，在 S3DIS 上这个数值一般设置为 `1.0`。
 - `NormalizePointsColor`：将输入点的颜色信息归一化，通过将 RGB 值除以 `255` 来实现。
 - 数据增广：
-    - `GlobalRotScaleTrans`：对输入点云进行随机旋转和放缩变换。
-    - `RandomJitterPoints`：通过对每一个点施加不同的噪声向量以实现对点云的随机扰动。
-    - `RandomDropPointsColor`：以 `drop_ratio` 的概率随机将点云的颜色值全部置零。
+  - `GlobalRotScaleTrans`：对输入点云进行随机旋转和放缩变换。
+  - `RandomJitterPoints`：通过对每一个点施加不同的噪声向量以实现对点云的随机扰动。
+  - `RandomDropPointsColor`：以 `drop_ratio` 的概率随机将点云的颜色值全部置零。
 
 ## 度量指标
 

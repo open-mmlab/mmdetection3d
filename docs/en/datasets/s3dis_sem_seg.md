@@ -36,10 +36,12 @@ mmdetection3d
 Under folder `Stanford3dDataset_v1.2_Aligned_Version`, the rooms are spilted into 6 areas. We use 5 areas for training and 1 for evaluation (typically `Area_5`). Under the directory of each area, there are folders in which raw point cloud data and relevant annotations are saved. For instance, under folder `Area_1/office_1` the files are as below:
 
 - `office_1.txt`: A txt file storing coordinates and colors of each point in the raw point cloud data.
-- `Annotations/`: This folder contains txt files for different object instances. Each txt file represents one instance, e.g.
-    - `chair_1.txt`: A txt file storing raw point cloud data of one chair in this room.
 
-    If we concat all the txt files under `Annotations/`, we will get the same point cloud as denoted by `office_1.txt`.
+- `Annotations/`: This folder contains txt files for different object instances. Each txt file represents one instance, e.g.
+
+  - `chair_1.txt`: A txt file storing raw point cloud data of one chair in this room.
+
+  If we concat all the txt files under `Annotations/`, we will get the same point cloud as denoted by `office_1.txt`.
 
 Export S3DIS data by running `python collect_indoor3d_data.py`. The main steps include:
 
@@ -138,16 +140,16 @@ s3dis
 ```
 
 - `points/xxxxx.bin`: The exported point cloud data.
-- `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, ${NUM_INSTANCES}], 0: unannotated.
-- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [0, 12].
+- `instance_mask/xxxxx.bin`: The instance label for each point, value range: \[0, ${NUM_INSTANCES}\], 0: unannotated.
+- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: \[0, 12\].
 - `s3dis_infos_Area_1.pkl`: Area 1 data infos, the detailed info of each room is as follows:
-    - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
-    - info['pts_path']: The path of `points/xxxxx.bin`.
-    - info['pts_instance_mask_path']: The path of `instance_mask/xxxxx.bin`.
-    - info['pts_semantic_mask_path']: The path of `semantic_mask/xxxxx.bin`.
+  - info\['point_cloud'\]: {'num_features': 6, 'lidar_idx': sample_idx}.
+  - info\['pts_path'\]: The path of `points/xxxxx.bin`.
+  - info\['pts_instance_mask_path'\]: The path of `instance_mask/xxxxx.bin`.
+  - info\['pts_semantic_mask_path'\]: The path of `semantic_mask/xxxxx.bin`.
 - `seg_info`: The generated infos to support semantic segmentation model training.
-    - `Area_1_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
-    - `Area_1_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
+  - `Area_1_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
+  - `Area_1_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
 
 ## Training pipeline
 
@@ -200,13 +202,13 @@ train_pipeline = [
 ]
 ```
 
-- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 13) during training. Other class ids will be converted to `ignore_index` which equals to `13`.
+- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like \[0, 13) during training. Other class ids will be converted to `ignore_index` which equals to `13`.
 - `IndoorPatchPointSample`: Crop a patch containing a fixed number of points from input point cloud. `block_size` indicates the size of the cropped block, typically `1.0` for S3DIS.
 - `NormalizePointsColor`: Normalize the RGB color values of input point cloud by dividing `255`.
 - Data augmentation:
-    - `GlobalRotScaleTrans`: randomly rotate and scale input point cloud.
-    - `RandomJitterPoints`: randomly jitter point cloud by adding different noise vector to each point.
-    - `RandomDropPointsColor`: set the colors of point cloud to all zeros by a probability `drop_ratio`.
+  - `GlobalRotScaleTrans`: randomly rotate and scale input point cloud.
+  - `RandomJitterPoints`: randomly jitter point cloud by adding different noise vector to each point.
+  - `RandomDropPointsColor`: set the colors of point cloud to all zeros by a probability `drop_ratio`.
 
 ## Metrics
 

@@ -14,26 +14,26 @@ python tools/analysis_tools/analyze_logs.py plot_curve [--keys ${KEYS}] [--title
 
 示例：
 
--   绘制出某次运行的分类 loss。
+- 绘制出某次运行的分类 loss。
 
-    ```shell
-    python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
-    ```
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
+  ```
 
--   绘制出某次运行的分类和回归 loss，并且保存图片为 pdf 格式。
+- 绘制出某次运行的分类和回归 loss，并且保存图片为 pdf 格式。
 
-    ```shell
-    python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
-    ```
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
+  ```
 
--   在同一张图片中比较两次运行的 bbox mAP。
+- 在同一张图片中比较两次运行的 bbox mAP。
 
-    ```shell
-    # 根据 Car_3D_moderate_strict 在 KITTI 上评估 PartA2 和 second。
-    python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/PartA2.log.json tools/logs/second.log.json --keys KITTI/Car_3D_moderate_strict --legend PartA2 second --mode eval --interval 1
-    # 根据 Car_3D_moderate_strict 在 KITTI 上分别对车和 3 类评估 PointPillars。
-    python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/pp-3class.log.json tools/logs/pp.log.json --keys KITTI/Car_3D_moderate_strict --legend pp-3class pp --mode eval --interval 2
-    ```
+  ```shell
+  # 根据 Car_3D_moderate_strict 在 KITTI 上评估 PartA2 和 second。
+  python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/PartA2.log.json tools/logs/second.log.json --keys KITTI/Car_3D_moderate_strict --legend PartA2 second --mode eval --interval 1
+  # 根据 Car_3D_moderate_strict 在 KITTI 上分别对车和 3 类评估 PointPillars。
+  python tools/analysis_tools/analyze_logs.py plot_curve tools/logs/pp-3class.log.json tools/logs/pp.log.json --keys KITTI/Car_3D_moderate_strict --legend pp-3class pp --mode eval --interval 2
+  ```
 
 您也能计算平均训练速度。
 
@@ -51,7 +51,7 @@ time std over epochs is 0.0028
 average iter time: 1.1959 s/iter
 ```
 
-&emsp;
+&#8195;
 
 # 可视化
 
@@ -79,7 +79,6 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --eval 'mAP' --eval-options 'sh
 ```bash
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
 ```
-
 
 ![](../../resources/open3d_visual.*)
 
@@ -127,7 +126,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 ![](../../resources/browse_dataset_mono.png)
 
-&emsp;
+&#8195;
 
 # 模型部署
 
@@ -185,7 +184,7 @@ python tools/deployment/test_torchserver.py ${IMAGE_FILE} ${CONFIG_FILE} ${CHECK
 python tools/deployment/test_torchserver.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth second
 ```
 
-&emsp;
+&#8195;
 
 # 模型复杂度
 
@@ -211,7 +210,7 @@ Params: 953.83 k
 2. 一些运算操作不计入计算量 (FLOPs)，比如说像GN和定制的运算操作，详细细节请参考 [`mmcv.cnn.get_model_complexity_info()`](https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/utils/flops_counter.py)。
 3. 我们现在仅仅支持单模态输入（点云或者图片）的单阶段模型的计算量 (FLOPs) 计算，我们将会在未来支持两阶段和多模态模型的计算。
 
-&emsp;
+&#8195;
 
 # 模型转换
 
@@ -253,7 +252,7 @@ python tools/model_converters/publish_model.py work_dirs/faster_rcnn/latest.pth 
 
 最终的输出文件名将会是 `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth`。
 
-&emsp;
+&#8195;
 
 # 数据集转换
 
@@ -266,15 +265,15 @@ python -u tools/data_converter/nuimage_converter.py --data-root ${DATA_ROOT} --v
                                                     --out-dir ${OUT_DIR} --nproc ${NUM_WORKERS} --extra-tag ${TAG}
 ```
 
--   `--data-root`: 数据集的根目录，默认为 `./data/nuimages`。
--   `--version`: 数据集的版本，默认为 `v1.0-mini`。要获取完整数据集，请使用 `--version v1.0-train v1.0-val v1.0-mini`。
--   `--out-dir`: 注释和语义掩码的输出目录，默认为 `./data/nuimages/annotations/`。
--   `--nproc`: 数据准备的进程数，默认为 `4`。由于图片是并行处理的，更大的进程数目能够减少准备时间。
--   `--extra-tag`: 注释的额外标签，默认为 `nuimages`。这可用于将不同时间处理的不同注释分开以供研究。
+- `--data-root`: 数据集的根目录，默认为 `./data/nuimages`。
+- `--version`: 数据集的版本，默认为 `v1.0-mini`。要获取完整数据集，请使用 `--version v1.0-train v1.0-val v1.0-mini`。
+- `--out-dir`: 注释和语义掩码的输出目录，默认为 `./data/nuimages/annotations/`。
+- `--nproc`: 数据准备的进程数，默认为 `4`。由于图片是并行处理的，更大的进程数目能够减少准备时间。
+- `--extra-tag`: 注释的额外标签，默认为 `nuimages`。这可用于将不同时间处理的不同注释分开以供研究。
 
 更多的数据准备细节参考 [doc](https://mmdetection3d.readthedocs.io/zh_CN/latest/data_preparation.html)，nuImages 数据集的细节参考 [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages/README.md/)。
 
-&emsp;
+&#8195;
 
 # 其他内容
 

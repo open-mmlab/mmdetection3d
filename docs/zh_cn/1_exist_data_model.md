@@ -32,6 +32,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 目前我们只支持 SMOKE 的 CPU 推理测试。
 
 可选参数：
+
 - `RESULT_FILE`：输出结果（pickle 格式）的文件名，如果未指定，结果不会被保存。
 - `EVAL_METRICS`：在结果上评测的项，不同的数据集有不同的合法值。具体来说，我们默认对不同的数据集都使用各自的官方度量方法进行评测，所以对 nuScenes、Lyft、ScanNet 和 SUNRGBD 这些数据集来说在检测任务上可以简单设置为 `mAP`；对 KITTI 数据集来说，如果我们只想评测 2D 检测效果，可以将度量方法设置为 `img_bbox`；对于 Waymo 数据集，我们提供了 KITTI 风格（不稳定）和 Waymo 官方风格这两种评测方法，分别对应 `kitti` 和 `waymo`，我们推荐使用默认的官方度量方法，它的性能稳定而且可以与其它算法公平比较；同样地，对 S3DIS、ScanNet 这些数据集来说，在分割任务上的度量方法可以设置为 `mIoU`。
 - `--show`：如果被指定，检测结果会在静默模式下被保存，用于调试和可视化，但只在单块GPU测试的情况下生效，和 `--show-dir` 搭配使用。
@@ -180,6 +181,7 @@ export CUDA_VISIBLE_DEVICES=-1
 - `--options 'Key=value'`：覆盖使用的配置中的一些设定。
 
 `resume-from` 和 `load-from` 的不同点：
+
 - `resume-from` 加载模型权重和优化器状态，同时周期数也从特定的模型权重文件中继承，通常用于恢复偶然中断的训练过程。
 - `load-from` 仅加载模型权重，训练周期从0开始，通常用于微调。
 

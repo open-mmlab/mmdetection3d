@@ -276,7 +276,8 @@ class Custom3DSegDataset(Dataset):
         if scene_idxs is None:
             scene_idxs = np.arange(len(self.data_infos))
         if isinstance(scene_idxs, str):
-            scene_idxs = np.load(scene_idxs)
+            with self.file_client.get_local_path(scene_idxs) as local_path:
+                scene_idxs = np.load(local_path)
         else:
             scene_idxs = np.array(scene_idxs)
 

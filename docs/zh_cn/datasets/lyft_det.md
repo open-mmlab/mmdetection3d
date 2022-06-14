@@ -89,21 +89,21 @@ mmdetection3d
 
 - `lyft_database/xxxxx.bin` 文件不存在：由于真实标注框的采样对实验的影响可以忽略不计，在 Lyft 数据集中不会提取该目录和相关的 `.bin` 文件。
 - `lyft_infos_train.pkl`：包含训练数据集信息，每一帧包含两个关键字：`metadata` 和 `infos`。
-`metadata` 包含数据集自身的基础信息，如 `{'version': 'v1.01-train'}`，然而 `infos` 包含和 nuScenes 数据集相似的数据集详细信息，但是并不包含一下几点：
-    - info['sweeps']：扫描信息.
-        - info['sweeps'][i]['type']：扫描信息的数据类型，如 `'lidar'`。
-          Lyft 数据集中的一些样例具有不同的 LiDAR 设置，然而为了数据分布的一致性，这里将一直采用顶部的 LiDAR 设备所采集的数据点信息。
-    - info['gt_names']：在 Lyft 数据集中有 9 个类别，相比于 nuScenes 数据集，不同类别的标注不平衡问题更加突出。
-    - info['gt_velocity'] 不存在：Lyft 数据集中不存在速度评估信息。
-    - info['num_lidar_pts']：默认值设置为 -1。
-    - info['num_radar_pts']：默认值设置为 0。
-    - info['valid_flag'] 不存在：这个标志信息因无效的 `num_lidar_pts` 和 `num_radar_pts` 的存在而存在。
+  `metadata` 包含数据集自身的基础信息，如 `{'version': 'v1.01-train'}`，然而 `infos` 包含和 nuScenes 数据集相似的数据集详细信息，但是并不包含一下几点：
+  - info\['sweeps'\]：扫描信息.
+    - info\['sweeps'\]\[i\]\['type'\]：扫描信息的数据类型，如 `'lidar'`。
+      Lyft 数据集中的一些样例具有不同的 LiDAR 设置，然而为了数据分布的一致性，这里将一直采用顶部的 LiDAR 设备所采集的数据点信息。
+  - info\['gt_names'\]：在 Lyft 数据集中有 9 个类别，相比于 nuScenes 数据集，不同类别的标注不平衡问题更加突出。
+  - info\['gt_velocity'\] 不存在：Lyft 数据集中不存在速度评估信息。
+  - info\['num_lidar_pts'\]：默认值设置为 -1。
+  - info\['num_radar_pts'\]：默认值设置为 0。
+  - info\['valid_flag'\] 不存在：这个标志信息因无效的 `num_lidar_pts` 和 `num_radar_pts` 的存在而存在。
 - `nuscenes_infos_train_mono3d.coco.json`：包含 coco 类型的训练数据集相关的信息。这个文件仅包含 2D 相关的信息，不包含 3D 目标检测所需要的信息，如相机内参。
-    - info['images']：包含所有图像信息的列表。
-        - 仅包含 `'file_name'`, `'id'`, `'width'`, `'height'`。
-    - info['annotations']：包含所有标注信息的列表。
-        - 仅包含 `'file_name'`，`'image_id'`，`'area'`，`'category_name'`，`'category_id'`，`'bbox'`，`'is_crowd'`，`'segmentation'`，`'id'`，其中 `'is_crowd'` 和 `'segmentation'` 默认设置为 `0` 和 `[]`。
-        Lyft 数据集中不包含属性标注信息。
+  - info\['images'\]：包含所有图像信息的列表。
+    - 仅包含 `'file_name'`, `'id'`, `'width'`, `'height'`。
+  - info\['annotations'\]：包含所有标注信息的列表。
+    - 仅包含 `'file_name'`，`'image_id'`，`'area'`，`'category_name'`，`'category_id'`，`'bbox'`，`'is_crowd'`，`'segmentation'`，`'id'`，其中 `'is_crowd'` 和 `'segmentation'` 默认设置为 `0` 和 `[]`。
+      Lyft 数据集中不包含属性标注信息。
 
 这里仅介绍存储在训练数据文件的数据记录信息，在测试数据集也采用上述的数据记录方式。
 

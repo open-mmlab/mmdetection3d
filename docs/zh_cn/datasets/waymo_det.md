@@ -103,36 +103,36 @@ mmdetection3d
 
 为了在 Waymo 数据集上进行检测性能评估，请按照[此处指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建用于计算评估指标的二进制文件 `compute_detection_metrics_main`，并将它置于 `mmdet3d/core/evaluation/waymo_utils/` 下。您基本上可以按照下方命令安装 `bazel`，然后构建二进制文件：
 
-   ```shell
-   # download the code and enter the base directory
-   git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
-   cd waymo-od
-   git checkout remotes/origin/master
+```shell
+# download the code and enter the base directory
+git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
+cd waymo-od
+git checkout remotes/origin/master
 
-   # use the Bazel build system
-   sudo apt-get install --assume-yes pkg-config zip g++ zlib1g-dev unzip python3 python3-pip
-   BAZEL_VERSION=3.1.0
-   wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
-   sudo bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
-   sudo apt install build-essential
+# use the Bazel build system
+sudo apt-get install --assume-yes pkg-config zip g++ zlib1g-dev unzip python3 python3-pip
+BAZEL_VERSION=3.1.0
+wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+sudo bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+sudo apt install build-essential
 
-   # configure .bazelrc
-   ./configure.sh
-   # delete previous bazel outputs and reset internal caches
-   bazel clean
+# configure .bazelrc
+./configure.sh
+# delete previous bazel outputs and reset internal caches
+bazel clean
 
-   bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
-   cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
-   ```
+bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
+cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+```
 
 接下来，您就可以在 Waymo 上评估您的模型了。如下示例是使用 8 个图形处理器 (GPU) 在 Waymo 上用 Waymo 评价指标评估 PointPillars 模型的情景：
 
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-       'submission_prefix=results/waymo-car/kitti_results'
-   ```
+```shell
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
+    --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
+    'submission_prefix=results/waymo-car/kitti_results'
+```
 
 如果需要生成 bin 文件，应在 `--eval-options` 中给出 `pklfile_prefix`。对于评价指标， `waymo` 是我们推荐的官方评估原型。目前，`kitti` 这一评估选项是从 KITTI 迁移而来的，且每个难度下的评估结果和 KITTI 数据集中定义得到的不尽相同——目前大多数物体被标记为难度 0（日后会修复）。`kitti` 评估选项的不稳定来源于很大的计算量，转换的数据中遮挡 (occlusion) 和截断 (truncation) 的缺失，难度的不同定义方式，以及不同的平均精度 (Average Precision) 计算方式。
 
@@ -148,28 +148,28 @@ mmdetection3d
 
 如下是一个使用 8 个图形处理器在 Waymo 上测试 PointPillars，生成 bin 文件并提交结果到官方榜单的例子：
 
-   ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-       checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-       --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-       'submission_prefix=results/waymo-car/kitti_results'
-   ```
+```shell
+./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
+    --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
+    'submission_prefix=results/waymo-car/kitti_results'
+```
 
 在生成 bin 文件后，您可以简单地构建二进制文件 `create_submission`，并按照[指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) 创建一个提交文件。下面是一些示例：
 
-   ```shell
-   cd ../waymo-od/
-   bazel build waymo_open_dataset/metrics/tools/create_submission
-   cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
-   vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
-   cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+```shell
+cd ../waymo-od/
+bazel build waymo_open_dataset/metrics/tools/create_submission
+cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
+cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
 
-   cd ../mmdetection3d
-   # suppose the result bin is in `results/waymo-car/submission`
-   mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
+cd ../mmdetection3d
+# suppose the result bin is in `results/waymo-car/submission`
+mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
 
-   tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
-   gzip results/waymo-car/submission/my_model.tar
-   ```
+tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
+gzip results/waymo-car/submission/my_model.tar
+```
 
 如果想用官方评估服务器评估您在验证集上的结果，您可以使用同样的方法生成提交文件，只需确保您在运行如上指令前更改 `submission.txtpb` 中的字段值即可。

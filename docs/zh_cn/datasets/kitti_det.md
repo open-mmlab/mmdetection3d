@@ -88,27 +88,27 @@ kitti
 
 - `kitti_gt_database/xxxxx.bin`： 训练数据集中包含在 3D 标注框中的点云数据
 - `kitti_infos_train.pkl`：训练数据集的信息，其中每一帧的信息包含下面的内容：
-    - info['point_cloud']: {'num_features': 4, 'velodyne_path': velodyne_path}.
-    - info['annos']: {
-        - 位置：其中 x,y,z 为相机参考坐标系下的目标的底部中心（单位为米），是一个尺寸为 Nx3 的数组
-        - 维度: 目标的高、宽、长（单位为米），是一个尺寸为 Nx3 的数组
-        - 旋转角：相机坐标系下目标绕着 Y 轴的旋转角 ry，其取值范围为 [-pi..pi] ，是一个尺寸为 N 的数组
-        - 名称：标准框所包含的目标的名称，是一个尺寸为 N 的数组
-        - 困难度：kitti 官方所定义的困难度，包括 简单，适中，困难
-        - 组别标识符：用于多部件的目标
-        }
-    - (optional) info['calib']: {
-        - P0：校对后的 camera0 投影矩阵，是一个 3x4 数组
-        - P1：校对后的 camera1 投影矩阵，是一个 3x4 数组
-        - P2：校对后的 camera2 投影矩阵，是一个 3x4 数组
-        - P3：校对后的 camera3 投影矩阵，是一个 3x4 数组
-        - R0_rect：校准旋转矩阵，是一个 4x4 数组
-        - Tr_velo_to_cam：从 Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组
-        - Tr_imu_to_velo：从 IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组
-    }
-    - (optional) info['image']:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
+  - info\['point_cloud'\]: {'num_features': 4, 'velodyne_path': velodyne_path}.
+  - info\['annos'\]: {
+    - 位置：其中 x,y,z 为相机参考坐标系下的目标的底部中心（单位为米），是一个尺寸为 Nx3 的数组
+    - 维度: 目标的高、宽、长（单位为米），是一个尺寸为 Nx3 的数组
+    - 旋转角：相机坐标系下目标绕着 Y 轴的旋转角 ry，其取值范围为 \[-pi..pi\] ，是一个尺寸为 N 的数组
+    - 名称：标准框所包含的目标的名称，是一个尺寸为 N 的数组
+    - 困难度：kitti 官方所定义的困难度，包括 简单，适中，困难
+    - 组别标识符：用于多部件的目标
+      }
+  - (optional) info\['calib'\]: {
+    - P0：校对后的 camera0 投影矩阵，是一个 3x4 数组
+    - P1：校对后的 camera1 投影矩阵，是一个 3x4 数组
+    - P2：校对后的 camera2 投影矩阵，是一个 3x4 数组
+    - P3：校对后的 camera3 投影矩阵，是一个 3x4 数组
+    - R0_rect：校准旋转矩阵，是一个 4x4 数组
+    - Tr_velo_to_cam：从 Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组
+    - Tr_imu_to_velo：从 IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组
+      }
+  - (optional) info\['image'\]:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
 
-**注意**：其中的 info['annos'] 中的数据均位于相机参考坐标系中，更多的细节请参考[此处](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)。
+**注意**：其中的 info\['annos'\] 中的数据均位于相机参考坐标系中，更多的细节请参考[此处](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)。
 
 获取 kitti_infos_xxx.pkl 和 kitti_infos_xxx_mono3d.coco.json 的核心函数分别为 [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378).
 
@@ -150,9 +150,9 @@ train_pipeline = [
 ```
 
 - 数据增强：
-    - `ObjectNoise`：对场景中的每个真实标注框目标添加噪音。
-    - `RandomFlip3D`：对输入点云数据进行随机地水平翻转或者垂直翻转。
-    - `GlobalRotScaleTrans`：对输入点云数据进行旋转。
+  - `ObjectNoise`：对场景中的每个真实标注框目标添加噪音。
+  - `RandomFlip3D`：对输入点云数据进行随机地水平翻转或者垂直翻转。
+  - `GlobalRotScaleTrans`：对输入点云数据进行旋转。
 
 ## 评估
 
@@ -191,4 +191,4 @@ mkdir -p results/kitti-3class
 ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --out results/kitti-3class/results_eval.pkl --format-only --eval-options 'pklfile_prefix=results/kitti-3class/kitti_results' 'submission_prefix=results/kitti-3class/kitti_results'
 ```
 
-在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站]((http://www.cvlibs.net/datasets/kitti/index.php))获取更多细节。
+在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](<(http://www.cvlibs.net/datasets/kitti/index.php)>)获取更多细节。

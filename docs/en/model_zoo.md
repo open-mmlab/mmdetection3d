@@ -33,9 +33,11 @@ Please refer to [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection
 Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/mvxnet) for details.
 
 ### RegNetX
+
 Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
 
 ### nuImages
+
 We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN, Cascade Mask R-CNN and HTC results currently.
 
 ### H3DNet
@@ -97,6 +99,10 @@ Please refer to [PointRCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.
 ### MonoFlex
 
 Please refer to [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/monoflex) for details. We provide MonoFlex baselines on KITTI dataset.
+
+### SA-SSD
+
+Please refer to [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/sassd) for details. We provide SA-SSD baselines on the KITTI dataset.
 
 ### Mixed Precision (FP16) Training
 

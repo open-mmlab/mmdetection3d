@@ -4,8 +4,6 @@ import numpy as np
 import torch
 from mmcv.ops import nms, nms_rotated
 
-from ..bbox import xywhr2xyxyr
-
 
 def box3d_multiclass_nms(mlvl_bboxes,
                          mlvl_bboxes_for_nms,
@@ -254,6 +252,8 @@ def nms_bev(boxes, scores, thresh, pre_max_size=None, post_max_size=None):
     if pre_max_size is not None:
         order = order[:pre_max_size]
     boxes = boxes[order].contiguous()
+    scores = scores[order]
+
     # xyxyr -> back to xywhr
     # note: better skip this step before nms_bev call in the future
     boxes = torch.stack(
@@ -262,6 +262,7 @@ def nms_bev(boxes, scores, thresh, pre_max_size=None, post_max_size=None):
         dim=-1)
 
     keep = nms_rotated(boxes, scores, thresh)[1]
+    keep = order[keep]
     if post_max_size is not None:
         keep = keep[:post_max_size]
     return keep
@@ -284,4 +285,4 @@ def nms_normal_bev(boxes, scores, thresh):
         torch.Tensor: Remaining indices with scores in descending order.
     """
     assert boxes.shape[1] == 5, 'Input boxes shape should be [N, 5]'
-    return nms(xywhr2xyxyr(boxes)[:, :-1], scores, thresh)[1]
+    return nms(boxes[:, :-1], scores, thresh)[1]

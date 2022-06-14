@@ -30,7 +30,8 @@ class TwoStage3DDetector(Base3DDetector, TwoStageDetector):
                           'please use "init_cfg" instead')
             backbone.pretrained = pretrained
         self.backbone = build_backbone(backbone)
-
+        self.train_cfg = train_cfg
+        self.test_cfg = test_cfg
         if neck is not None:
             self.neck = build_neck(neck)
 

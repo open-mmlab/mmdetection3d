@@ -29,11 +29,17 @@ def test_merge_aug_bboxes_3d():
              [2.5831, 4.8117, -1.2733, 0.5852, 0.8832, 0.9733, 1.6500],
              [-1.0864, 1.9045, -1.2000, 0.7128, 1.5631, 2.1045, 0.1022]],
             device='cuda'))
-    labels_3d = torch.tensor([0, 7, 6])
-    scores_3d = torch.tensor([0.5, 1.0, 1.0])
-    aug_result = dict(
-        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d)
-    aug_results = [aug_result, aug_result, aug_result]
+    labels_3d = torch.tensor([0, 7, 6], device='cuda')
+    scores_3d_1 = torch.tensor([0.3, 0.6, 0.9], device='cuda')
+    scores_3d_2 = torch.tensor([0.2, 0.5, 0.8], device='cuda')
+    scores_3d_3 = torch.tensor([0.1, 0.4, 0.7], device='cuda')
+    aug_result_1 = dict(
+        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d_1)
+    aug_result_2 = dict(
+        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d_2)
+    aug_result_3 = dict(
+        boxes_3d=boxes_3d, labels_3d=labels_3d, scores_3d=scores_3d_3)
+    aug_results = [aug_result_1, aug_result_2, aug_result_3]
     test_cfg = mmcv.ConfigDict(
         use_rotate_nms=True,
         nms_across_levels=False,
@@ -53,9 +59,8 @@ def test_merge_aug_bboxes_3d():
          [1.0473, -4.1687, -1.2317, 2.3021, 1.8876, 1.9696, -1.6956],
          [-1.0473, 4.1687, -1.2317, 2.3021, 1.8876, 1.9696, 1.4460],
          [2.0946, 8.3374, -2.4634, 4.6042, 3.7752, 3.9392, 1.6956]])
-    expected_scores_3d = torch.tensor([
-        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 0.5000, 0.5000, 0.5000
-    ])
+    expected_scores_3d = torch.tensor(
+        [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1])
     expected_labels_3d = torch.tensor([6, 6, 6, 7, 7, 7, 0, 0, 0])
     assert torch.allclose(results['boxes_3d'].tensor, expected_boxes_3d)
     assert torch.allclose(results['scores_3d'], expected_scores_3d)
