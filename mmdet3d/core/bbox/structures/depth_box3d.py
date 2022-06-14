@@ -268,32 +268,3 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         line_center = center.repeat(1, 12, 1).reshape(-1, 3) + line_3d
 
         return surface_center, line_center
-
-    @classmethod
-    def overlaps(cls, boxes1, boxes2, mode='iou'):
-        """Calculate 3D overlaps of two boxes.
-
-        Note:
-            This function calculates the overlaps between ``boxes1`` and
-            ``boxes2``, ``boxes1`` and ``boxes2`` should be in the same type.
-        Args:
-            boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
-            boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
-            mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
-        Returns:
-            torch.Tensor: Calculated 3D overlaps of the boxes.
-        """
-        # We flip yaw angle here as mmcv.ops.box_iou_rotated accepts
-        # it in anti-clockwise direction.
-        if boxes1.with_yaw:
-            tensor1 = torch.cat(
-                (boxes1.tensor[:, :-1], -boxes1.tensor[:, -1:]), dim=-1)
-            boxes1 = DepthInstance3DBoxes(
-                tensor1, box_dim=boxes1.box_dim, with_yaw=boxes1.with_yaw)
-        if boxes2.with_yaw:
-            tensor2 = torch.cat(
-                (boxes2.tensor[:, :-1], -boxes2.tensor[:, -1:]), dim=-1)
-            boxes2 = DepthInstance3DBoxes(
-                tensor2, box_dim=boxes2.box_dim, with_yaw=boxes2.with_yaw)
-
-        return super().overlaps(boxes1, boxes2)
