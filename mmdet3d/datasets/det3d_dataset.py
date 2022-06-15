@@ -253,7 +253,8 @@ class Det3DDataset(BaseDataset):
         if not self.test_mode and self.filter_empty_gt:
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
-            if example is None or len(example['gt_labels_3d']) == 0:
+            if example is None or len(
+                    example['data_sample'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
 

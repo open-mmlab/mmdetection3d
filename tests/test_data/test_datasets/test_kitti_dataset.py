@@ -3,9 +3,11 @@
 import numpy as np
 import torch
 from mmcv.transforms.base import BaseTransform
+from mmengine.data import InstanceData
 from mmengine.registry import TRANSFORMS
 
 from mmdet3d.core import LiDARInstance3DBoxes
+from mmdet3d.core.data_structures import Det3DDataSample
 from mmdet3d.datasets import KittiDataset
 
 
@@ -23,6 +25,11 @@ def _generate_kitti_dataset_config():
             def transform(self, info):
                 if 'ann_info' in info:
                     info['gt_labels_3d'] = info['ann_info']['gt_labels_3d']
+                data_sample = Det3DDataSample()
+                gt_instances_3d = InstanceData()
+                gt_instances_3d.labels_3d = info['gt_labels_3d']
+                data_sample.gt_instances_3d = gt_instances_3d
+                info['data_sample'] = data_sample
                 return info
 
     pipeline = [

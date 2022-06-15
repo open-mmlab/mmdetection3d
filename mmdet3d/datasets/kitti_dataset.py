@@ -27,7 +27,6 @@ class KittiDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        split (str): Split of input data.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
