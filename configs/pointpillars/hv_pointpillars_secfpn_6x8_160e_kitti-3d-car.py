@@ -31,6 +31,7 @@ model = dict(
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Car']
+metainfo = dict(CLASSES=class_names)
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -52,7 +53,9 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_labels_3d', 'gt_bboxes_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -70,18 +73,13 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
+            dict(type='Pack3DDetInputs', keys=['points'])
         ])
 ]
 
-data = dict(
-    train=dict(
+train_dataloader = dict(
+    dataset=dict(
         type='RepeatDataset',
         times=2,
-        dataset=dict(pipeline=train_pipeline, classes=class_names)),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
+        dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
