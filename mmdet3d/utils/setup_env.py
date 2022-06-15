@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import datetime
 import os
 import platform
 import warnings
@@ -58,7 +59,7 @@ def register_all_modules(init_default_scope: bool = True) -> None:
     """Register all modules in mmdet3d into the registries.
 
     Args:
-        init_default_scope (bool): Whether initialize the mmdet3d default scope.
+        init_default_scope (bool): Whether initialize the mmdet default scope.
             When `init_default_scope=True`, the global default scope will be
             set to `mmdet3d`, and all registries will build modules from mmdet3d's
             registry node. To understand more about the registry, please refer
@@ -67,7 +68,23 @@ def register_all_modules(init_default_scope: bool = True) -> None:
     """  # noqa
     import mmdet3d.core  # noqa: F401,F403
     import mmdet3d.datasets  # noqa: F401,F403
+    import mmdet3d.metrics  # noqa: F401,F403
     import mmdet3d.models  # noqa: F401,F403
     import mmdet3d.ops  # noqa: F401,F403
+    import mmdet3d.scheduler  # noqa: F401,F403
     if init_default_scope:
-        DefaultScope.get_instance('mmdet3d', scope_name='mmdet3d')
+        never_created = DefaultScope.get_current_instance() is None \
+                        or not DefaultScope.check_instance_created('mmdet3d')
+        if never_created:
+            DefaultScope.get_instance('mmdet3d', scope_name='mmdet3d')
+            return
+        current_scope = DefaultScope.get_current_instance()
+        if current_scope.scope_name != 'mmdet3d':
+            warnings.warn('The current default scope '
+                          f'"{current_scope.scope_name}" is not "mmdet3d", '
+                          '`register_all_modules` will force the current'
+                          'default scope to be "mmdet3d". If this is not '
+                          'expected, please set `init_default_scope=False`.')
+            # avoid name conflict
+            new_instance_name = f'mmdet3d-{datetime.datetime.now()}'
+            DefaultScope.get_instance(new_instance_name, scope_name='mmdet3d')
