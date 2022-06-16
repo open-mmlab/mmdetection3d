@@ -1,5 +1,43 @@
 ## Changelog
 
+### v1.0.0rc3 (8/6/2022)
+
+#### Highlights
+
+- Support [SA-SSD](https://openaccess.thecvf.com/content_CVPR_2020/papers/He_Structure_Aware_Single-Stage_3D_Object_Detection_From_Point_Cloud_CVPR_2020_paper.pdf)
+
+#### New Features
+
+- Support [SA-SSD](https://openaccess.thecvf.com/content_CVPR_2020/papers/He_Structure_Aware_Single-Stage_3D_Object_Detection_From_Point_Cloud_CVPR_2020_paper.pdf) (#1337)
+
+#### Improvements
+
+- Add Chinese documentation for vision-only 3D detection (#1438)
+- Update CenterPoint pretrained models that are compatible with refactored coordinate systems (#1450)
+- Configure myst-parser to parse anchor tag in the documentation (#1488)
+- Replace markdownlint with mdformat for avoiding installing ruby (#1489)
+- Add missing `gt_names` when getting annotation info in Custom3DDataset (#1519)
+- Support S3DIS full ceph training (#1542)
+- Rewrite the installation and FAQ documentation (#1545)
+
+#### Bug Fixes
+
+- Fix the incorrect registry name when building RoI extractors (#1460)
+- Fix the potential problems caused by the registry scope update when composing pipelines (#1466) and using CocoDataset (#1536)
+- Fix the missing selection with `order` in the [box3d_nms](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/post_processing/box3d_nms.py) introduced by [#1403](https://github.com/open-mmlab/mmdetection3d/pull/1403) (#1479)
+- Update the [PointPillars config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py) to make it consistent with the log (#1486)
+- Fix heading anchor in documentation (#1490)
+- Fix the compatibility of mmcv in the dockerfile (#1508)
+- Make overwrite_spconv packaged when building whl (#1516)
+- Fix the requirement of mmcv and mmdet (#1537)
+- Update configs of PartA2 and support its compatibility with spconv 2.0 (#1538)
+
+#### Contributors
+
+A total of 13 developers contributed to this release.
+
+@Xiangxu-0103, @ZCMax, @jshilong, @filaPro, @atinfinity, @Tai-Wang, @wenbo-yu, @yi-chen-isuzu, @ZwwWayne, @wchen61, @VVsssssk, @AlexPasqua, @lianqing11
+
 ### v1.0.0rc2 (1/5/2022)
 
 #### Highlights
