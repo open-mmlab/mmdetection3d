@@ -1,8 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional
+from typing import List, Tuple, Union
 
 import torch
 
+from mmdet3d.core.utils import (ConfigType, OptConfigType, OptMultiConfig,
+                                OptSampleList, SampleList)
 from mmdet3d.registry import MODELS
 from .base import Base3DDetector
 
@@ -11,7 +13,10 @@ from .base import Base3DDetector
 class SingleStage3DDetector(Base3DDetector):
     """SingleStage3DDetector.
 
-    This class serves as a base class for single-stage 3D detectors.
+    This class serves as a base class for single-stage 3D detectors which
+    directly and densely predict 3D bounding boxes on the output features
+    of the backbone+neck.
+
 
     Args:
         backbone (dict): Config dict of detector's backbone.
@@ -21,21 +26,22 @@ class SingleStage3DDetector(Base3DDetector):
             Defaults to None.
         test_cfg (dict, optional): Config dict of test hyper-parameters.
             Defaults to None.
-        pretrained (str, optional): Path of pretrained models.
-            Defaults to None.
+        data_preprocessor (dict or ConfigDict, optional): The pre-process
+            config of :class:`BaseDataPreprocessor`.  it usually includes,
+                ``pad_size_divisor``, ``pad_value``, ``mean`` and ``std``.
+        init_cfg (dict or ConfigDict, optional): the config to control the
+            initialization. Defaults to None.
     """
 
     def __init__(self,
-                 backbone,
-                 neck: Optional[dict] = None,
-                 bbox_head: Optional[dict] = None,
-                 train_cfg: Optional[dict] = None,
-                 test_cfg: Optional[dict] = None,
-                 preprocess_cfg: Optional[dict] = None,
-                 init_cfg: Optional[dict] = None,
-                 pretrained: Optional[str] = None) -> None:
-        super(SingleStage3DDetector, self).__init__(
-            preprocess_cfg=preprocess_cfg, init_cfg=init_cfg)
+                 backbone: ConfigType,
+                 neck: OptConfigType = None,
+                 bbox_head: OptConfigType = None,
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None) -> None:
+        super().__init__(data_processor=data_preprocessor, init_cfg=init_cfg)
         self.backbone = MODELS.build(backbone)
         if neck is not None:
             self.neck = MODELS.build(neck)
@@ -45,33 +51,99 @@ class SingleStage3DDetector(Base3DDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-    def forward_dummy(self, batch_inputs: dict) -> tuple:
-        """Used for computing network flops.
+    def loss(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
+             **kwargs) -> Union[dict, list]:
+        """Calculate losses from a batch of inputs dict and data samples.
 
-        See `mmdetection/tools/analysis_tools/get_flops.py`
+        Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'img' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            dict: A dictionary of loss components.
         """
-        x = self.extract_feat(batch_inputs['points'])
-        try:
-            sample_mod = self.train_cfg.sample_mod
-            outs = self.bbox_head(x, sample_mod)
-        except AttributeError:
-            outs = self.bbox_head(x)
-        return outs
+        x = self.extract_feat(batch_inputs_dict)
+        losses = self.bbox_head.loss(x, batch_data_samples, **kwargs)
+        return losses
 
-    def extract_feat(self, points: List[torch.Tensor]) -> list:
+    def predict(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
+                **kwargs) -> SampleList:
+        """Predict results from a batch of inputs and data samples with post-
+        processing.
+
+        Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'img' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+            rescale (bool): Whether to rescale the results.
+                Defaults to True.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input images. Each Det3DDataSample usually contain
+            'pred_instances_3d'. And the ``pred_instances_3d`` usually
+            contains following keys.
+
+                - scores_3d (Tensor): Classification scores, has a shape
+                    (num_instance, )
+                - labels_3d (Tensor): Labels of bboxes, has a shape
+                    (num_instances, ).
+                - bboxes_3d (Tensor): Contains a tensor with shape
+                    (num_instances, C) where C >=7.
+        """
+        x = self.extract_feat(batch_inputs_dict)
+        results_list = self.bbox_head.predict(x, batch_data_samples, **kwargs)
+        predictions = self.convert_to_datasample(results_list)
+        return predictions
+
+    def _forward(self,
+                 batch_inputs_dict: dict,
+                 data_samples: OptSampleList = None,
+                 **kwargs) -> Tuple[List[torch.Tensor]]:
+        """Network forward process. Usually includes backbone, neck and head
+        forward without any post-processing.
+
+         Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'img' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            tuple[list]: A tuple of features from ``bbox_head`` forward.
+        """
+        x = self.extract_feat(batch_inputs_dict)
+        results = self.bbox_head.forward(x)
+        return results
+
+    def extract_feat(self,
+                     batch_inputs_dict: torch.Tensor) -> Tuple[torch.Tensor]:
         """Directly extract features from the backbone+neck.
 
         Args:
-            points (List[torch.Tensor]): Input points.
+            points (torch.Tensor): Input points.
         """
-        x = self.backbone(points[0])
+        points = batch_inputs_dict['points']
+        stack_points = torch.stack(points)
+        x = self.backbone(stack_points)
         if self.with_neck:
             x = self.neck(x)
         return x
-
-    def extract_feats(self, batch_inputs_dict: dict) -> list:
-        """Extract features of multiple samples."""
-        return [
-            self.extract_feat([points])
-            for points in batch_inputs_dict['points']
-        ]
