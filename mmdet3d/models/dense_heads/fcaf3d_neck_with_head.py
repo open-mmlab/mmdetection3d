@@ -292,13 +292,13 @@ class FCAF3DNeckWithHead(BaseModule):
         # bbox and centerness losses
         pos_center_preds = center_preds[pos_inds]
         pos_bbox_preds = bbox_preds[pos_inds]
+        pos_center_targets = center_targets[pos_inds].unsqueeze(1)
+        pos_bbox_targets = bbox_targets[pos_inds]
+        # reduce_mean is outside if / else block to prevent deadlock
+        center_denorm = max(
+            reduce_mean(pos_center_targets.sum().detach()), 1e-6)
         if len(pos_inds) > 0:
-            pos_center_targets = center_targets[pos_inds].unsqueeze(1)
-            pos_bbox_targets = bbox_targets[pos_inds]
             pos_points = points[pos_inds]
-            # for centerness weighted iou loss
-            centerness_denorm = max(
-                reduce_mean(pos_center_targets.sum().detach()), 1e-6)
             center_loss = self.center_loss(
                 pos_center_preds, pos_center_targets, avg_factor=n_pos)
             bbox_loss = self.bbox_loss(
@@ -306,7 +306,7 @@ class FCAF3DNeckWithHead(BaseModule):
                     self._bbox_pred_to_bbox(pos_points, pos_bbox_preds)),
                 self._bbox_to_loss(pos_bbox_targets),
                 weight=pos_center_targets.squeeze(1),
-                avg_factor=centerness_denorm)
+                avg_factor=center_denorm)
         else:
             center_loss = pos_center_preds.sum()
             bbox_loss = pos_bbox_preds.sum()
