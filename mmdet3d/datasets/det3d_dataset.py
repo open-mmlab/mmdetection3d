@@ -1,7 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-import tempfile
-import warnings
 from os import path as osp
 from typing import Callable, List, Optional, Union
 
@@ -11,8 +9,6 @@ from mmengine.dataset import BaseDataset
 
 from mmdet3d.datasets import DATASETS
 from ..core.bbox import get_box_type
-from .pipelines import Compose
-from .utils import extract_result_dict, get_loading_pipeline
 
 
 @DATASETS.register_module()
@@ -153,7 +149,7 @@ class Det3DDataset(BaseDataset):
 
         return ann_info
 
-    def parse_ann_info(self, info: dict) -> dict:
+    def parse_ann_info(self, info: dict) -> Optional[dict]:
         """Process the `instances` in data info to `ann_info`
 
         In `Custom3DDataset`, we simply concatenate all the field
@@ -165,7 +161,7 @@ class Det3DDataset(BaseDataset):
             info (dict): Info dict.
 
         Returns:
-            dict: Processed `ann_info`
+            dict | None: Processed `ann_info`
         """
         # add s or gt prefix for most keys after concat
         name_mapping = {
@@ -179,16 +175,22 @@ class Det3DDataset(BaseDataset):
         }
 
         instances = info['instances']
-        keys = list(instances[0].keys())
-        ann_info = dict()
-        for ann_name in keys:
-            temp_anns = [item[ann_name] for item in instances]
-            if 'label' in ann_name:
-                temp_anns = [self.label_mapping[item] for item in temp_anns]
-            temp_anns = np.array(temp_anns)
-            if ann_name in name_mapping:
-                ann_name = name_mapping[ann_name]
-            ann_info[ann_name] = temp_anns
+        # empty gt
+        if len(instances) == 0:
+            return None
+        else:
+            keys = list(instances[0].keys())
+            ann_info = dict()
+            for ann_name in keys:
+                temp_anns = [item[ann_name] for item in instances]
+                if 'label' in ann_name:
+                    temp_anns = [
+                        self.label_mapping[item] for item in temp_anns
+                    ]
+                temp_anns = np.array(temp_anns)
+                if ann_name in name_mapping:
+                    ann_name = name_mapping[ann_name]
+                ann_info[ann_name] = temp_anns
         return ann_info
 
     def parse_data_info(self, info: dict) -> dict:
@@ -257,138 +259,3 @@ class Det3DDataset(BaseDataset):
                     example['data_sample'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
-
-    def format_results(self,
-                       outputs,
-                       pklfile_prefix=None,
-                       submission_prefix=None):
-        """Format the results to pkl file.
-
-        Args:
-            outputs (list[dict]): Testing results of the dataset.
-            pklfile_prefix (str): The prefix of pkl files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-
-        Returns:
-            tuple: (outputs, tmp_dir), outputs is the detection results,
-                tmp_dir is the temporal directory created for saving json
-                files when ``jsonfile_prefix`` is not specified.
-        """
-        if pklfile_prefix is None:
-            tmp_dir = tempfile.TemporaryDirectory()
-            pklfile_prefix = osp.join(tmp_dir.name, 'results')
-            out = f'{pklfile_prefix}.pkl'
-        mmcv.dump(outputs, out)
-        return outputs, tmp_dir
-
-    def evaluate(self,
-                 results,
-                 metric=None,
-                 iou_thr=(0.25, 0.5),
-                 logger=None,
-                 show=False,
-                 out_dir=None,
-                 pipeline=None):
-        """Evaluate.
-
-        Evaluation in indoor protocol.
-
-        Args:
-            results (list[dict]): List of results.
-            metric (str | list[str], optional): Metrics to be evaluated.
-                Defaults to None.
-            iou_thr (list[float]): AP IoU thresholds. Defaults to (0.25, 0.5).
-            logger (logging.Logger | str, optional): Logger used for printing
-                related information during evaluation. Defaults to None.
-            show (bool, optional): Whether to visualize.
-                Default: False.
-            out_dir (str, optional): Path to save the visualization results.
-                Default: None.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
-
-        Returns:
-            dict: Evaluation results.
-        """
-        from mmdet3d.core.evaluation import indoor_eval
-        assert isinstance(
-            results, list), f'Expect results to be list, got {type(results)}.'
-        assert len(results) > 0, 'Expect length of results > 0.'
-        assert len(results) == len(self.data_infos)
-        assert isinstance(
-            results[0], dict
-        ), f'Expect elements in results to be dict, got {type(results[0])}.'
-        gt_annos = [info['annos'] for info in self.data_infos]
-        label2cat = {i: cat_id for i, cat_id in enumerate(self.CLASSES)}
-        ret_dict = indoor_eval(
-            gt_annos,
-            results,
-            iou_thr,
-            label2cat,
-            logger=logger,
-            box_type_3d=self.box_type_3d,
-            box_mode_3d=self.box_mode_3d)
-        if show:
-            self.show(results, out_dir, pipeline=pipeline)
-
-        return ret_dict
-
-    # TODO check this where does this method is used
-    def _build_default_pipeline(self):
-        """Build the default pipeline for this dataset."""
-        raise NotImplementedError('_build_default_pipeline is not implemented '
-                                  f'for dataset {self.__class__.__name__}')
-
-    # TODO check this where does this method is used
-    def _get_pipeline(self, pipeline):
-        """Get data loading pipeline in self.show/evaluate function.
-
-        Args:
-            pipeline (list[dict]): Input pipeline. If None is given,
-                get from self.pipeline.
-        """
-        if pipeline is None:
-            if not hasattr(self, 'pipeline') or self.pipeline is None:
-                warnings.warn(
-                    'Use default pipeline for data loading, this may cause '
-                    'errors when data is on ceph')
-                return self._build_default_pipeline()
-            loading_pipeline = get_loading_pipeline(self.pipeline.transforms)
-            return Compose(loading_pipeline)
-        return Compose(pipeline)
-
-    # TODO check this where does this method is used
-    def _extract_data(self, index, pipeline, key, load_annos=False):
-        """Load data using input pipeline and extract data according to key.
-
-        Args:
-            index (int): Index for accessing the target data.
-            pipeline (:obj:`Compose`): Composed data loading pipeline.
-            key (str | list[str]): One single or a list of data key.
-            load_annos (bool): Whether to load data annotations.
-                If True, need to set self.test_mode as False before loading.
-
-        Returns:
-            np.ndarray | torch.Tensor | list[np.ndarray | torch.Tensor]:
-                A single or a list of loaded data.
-        """
-        assert pipeline is not None, 'data loading pipeline is not provided'
-        # when we want to load ground-truth via pipeline (e.g. bbox, seg mask)
-        # we need to set self.test_mode as False so that we have 'annos'
-        if load_annos:
-            original_test_mode = self.test_mode
-            self.test_mode = False
-        input_dict = self.get_data_info(index)
-        self.pre_pipeline(input_dict)
-        example = pipeline(input_dict)
-
-        # extract data items according to keys
-        if isinstance(key, str):
-            data = extract_result_dict(example, key)
-        else:
-            data = [extract_result_dict(example, k) for k in key]
-        if load_annos:
-            self.test_mode = original_test_mode
-
-        return data

@@ -367,7 +367,9 @@ class ObjectSample(BaseTransform):
         gt_labels_3d = input_dict['gt_labels_3d']
 
         if self.use_ground_plane and 'plane' in input_dict['ann_info']:
-            ground_plane = input_dict['ann_info']['plane']
+            ground_plane = input_dict['plane']
+            assert ground_plane is not None, '`use_ground_plane` is True ' \
+                                             'but find plane is None'
             input_dict['plane'] = ground_plane
         else:
             ground_plane = None

@@ -62,7 +62,7 @@ class ScanNetDataset(Det3DDataset):
                  metainfo: dict = None,
                  data_prefix: dict = dict(
                      pts='points',
-                     pts_isntance_mask='instance_mask',
+                     pts_instance_mask='instance_mask',
                      pts_semantic_mask='semantic_mask'),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality=dict(use_camera=False, use_lidar=True),
@@ -116,12 +116,6 @@ class ScanNetDataset(Det3DDataset):
             dict: Data information that will be passed to the data
             preprocessing pipelines. It includes the following keys:
         """
-        # TODO: whether all depth modality is pts ?
-        if self.modality['use_lidar']:
-            info['lidar_points']['lidar_path'] = \
-                osp.join(
-                    self.data_prefix.get('pts', ''),
-                    info['lidar_points']['lidar_path'])
         info['axis_align_matrix'] = self._get_axis_align_matrix(info)
         info['pts_instance_mask_path'] = osp.join(
             self.data_prefix.get('pts_instance_mask', ''),
@@ -143,7 +137,12 @@ class ScanNetDataset(Det3DDataset):
             dict: Processed `ann_info`
         """
         ann_info = super().parse_ann_info(info)
+        # empty gt
+        if ann_info is None:
+            ann_info['gt_bboxes_3d'] = np.zeros((0, 6), dtype=np.float32)
+            ann_info['gt_labels_3d'] = np.zeros((0, ), dtype=np.int64)
         # to target box structure
+
         ann_info['gt_bboxes_3d'] = DepthInstance3DBoxes(
             ann_info['gt_bboxes_3d'],
             box_dim=ann_info['gt_bboxes_3d'].shape[-1],
