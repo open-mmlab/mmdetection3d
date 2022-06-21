@@ -233,7 +233,6 @@ class LoadPointsFromMultiSweeps(object):
                     'sensor2lidar_rotation'].T
                 points_sweep[:, :3] += sweep['sensor2lidar_translation']
                 points_sweep[:, self.time_dim] = ts - sweep_ts
-                points_sweep = points_sweep[:, self.use_dim]
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
 
