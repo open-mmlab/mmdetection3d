@@ -1,8 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple
+
 import torch
 from mmcv.runner import force_fp32
+from torch import Tensor
 from torch.nn import functional as F
 
+from mmdet3d.core.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmdet3d.registry import MODELS
 from .voxelnet import VoxelNet
 
@@ -13,17 +17,17 @@ class DynamicVoxelNet(VoxelNet):
     """
 
     def __init__(self,
-                 voxel_layer,
-                 voxel_encoder,
-                 middle_encoder,
-                 backbone,
-                 neck=None,
-                 bbox_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
-        super(DynamicVoxelNet, self).__init__(
+                 voxel_layer: ConfigType,
+                 voxel_encoder: ConfigType,
+                 middle_encoder: ConfigType,
+                 backbone: ConfigType,
+                 neck: OptConfigType = None,
+                 bbox_head: OptConfigType = None,
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None) -> None:
+        super().__init__(
             voxel_layer=voxel_layer,
             voxel_encoder=voxel_encoder,
             middle_encoder=middle_encoder,
@@ -32,30 +36,19 @@ class DynamicVoxelNet(VoxelNet):
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
+            data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
-
-    def extract_feat(self, points, img_metas):
-        """Extract features from points."""
-        voxels, coors = self.voxelize(points)
-        voxel_features, feature_coors = self.voxel_encoder(voxels, coors)
-        batch_size = coors[-1, 0].item() + 1
-        x = self.middle_encoder(voxel_features, feature_coors, batch_size)
-        x = self.backbone(x)
-        if self.with_neck:
-            x = self.neck(x)
-        return x
 
     @torch.no_grad()
     @force_fp32()
-    def voxelize(self, points):
+    def voxelize(self, points: List[torch.Tensor]) -> tuple:
         """Apply dynamic voxelization to points.
 
         Args:
-            points (list[torch.Tensor]): Points of each sample.
+            points (list[Tensor]): Points of each sample.
 
         Returns:
-            tuple[torch.Tensor]: Concatenated points and coordinates.
+            tuple[Tensor]: Concatenated points and coordinates.
         """
         coors = []
         # dynamic voxelization only provide a coors mapping
@@ -69,3 +62,16 @@ class DynamicVoxelNet(VoxelNet):
             coors_batch.append(coor_pad)
         coors_batch = torch.cat(coors_batch, dim=0)
         return points, coors_batch
+
+    def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
+        """Extract features from points."""
+        # TODO: Remove voxelization to datapreprocessor
+        points = batch_inputs_dict['points']
+        voxels, coors = self.voxelize(points)
+        voxel_features, feature_coors = self.voxel_encoder(voxels, coors)
+        batch_size = coors[-1, 0].item() + 1
+        x = self.middle_encoder(voxel_features, feature_coors, batch_size)
+        x = self.backbone(x)
+        if self.with_neck:
+            x = self.neck(x)
+        return x

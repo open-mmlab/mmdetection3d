@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import torch
+from torch import Tensor
 
 from mmdet3d.core.utils import (ConfigType, OptConfigType, OptMultiConfig,
                                 OptSampleList, SampleList)
@@ -134,12 +135,19 @@ class SingleStage3DDetector(Base3DDetector):
         results = self.bbox_head.forward(x)
         return results
 
-    def extract_feat(self,
-                     batch_inputs_dict: torch.Tensor) -> Tuple[torch.Tensor]:
+    def extract_feat(
+        self, batch_inputs_dict: torch.Tensor
+    ) -> Union[Tuple[torch.Tensor], Dict[str, Tensor]]:
         """Directly extract features from the backbone+neck.
 
         Args:
             points (torch.Tensor): Input points.
+
+        Returns:
+            tuple[Tensor] | dict:  For outside 3D object detection, we
+                typically obtain a tuple of features from the backbone + neck,
+                and for inside 3D object detection, usually a dict containing
+                features will be obtained.
         """
         points = batch_inputs_dict['points']
         stack_points = torch.stack(points)

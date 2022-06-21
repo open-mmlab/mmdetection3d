@@ -7,6 +7,7 @@ from .builder import (BACKBONES, DETECTORS, FUSION_LAYERS, HEADS, LOSSES,
                       build_loss, build_middle_encoder, build_model,
                       build_neck, build_roi_extractor, build_shared_head,
                       build_voxel_encoder)
+from .data_preprocessors import *  # noqa: F401,F403
 from .decode_heads import *  # noqa: F401,F403
 from .dense_heads import *  # noqa: F401,F403
 from .detectors import *  # noqa: F401,F403
