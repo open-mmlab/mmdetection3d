@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from numbers import Number
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from mmengine.data import BaseDataElement
@@ -66,19 +66,41 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             batch_augments=batch_augments)
 
     def forward(self,
-                data: Sequence[dict],
-                training: bool = False) -> Tuple[Dict, Optional[list]]:
+                data: List[Union[dict, List[dict]]],
+                training: bool = False
+                ) -> Tuple[Union[dict, List[dict]], Optional[list]]:
         """Perform normalization、padding and bgr2rgb conversion based on
         ``BaseDataPreprocessor``.
 
         Args:
-            data (Sequence[dict]): data sampled from dataloader.
+            data (List[dict] | List[List[dict]]): data from dataloader.
+                The outer list always represent the batch size, when it is
+                a list[list[dict]], the inter list indicate test time
+                augmentation.
             training (bool): Whether to enable training time augmentation.
 
         Returns:
-            Tuple[Dict, Optional[list]]: Data in the same format as the
-            model input.
+            Tuple[Dict, Optional[list]] |
+            Tuple[List[Dict], Optional[list[list]]]:
+            Data in the same format as the model input.
         """
+        if isinstance(data[0], list):
+            num_augs = len(data[0])
+            aug_batch_data = []
+            aug_batch_data_sample = []
+            for aug_id in range(num_augs):
+                single_aug_batch_data, \
+                    single_aug_batch_data_sample = self.simple_process(
+                        [item[aug_id] for item in data], training)
+                aug_batch_data.append(single_aug_batch_data)
+                aug_batch_data_sample.append(single_aug_batch_data_sample)
+
+            return aug_batch_data, aug_batch_data_sample
+
+        else:
+            return self.simple_process(data, training)
+
+    def simple_process(self, data: Sequence[dict], training: bool = False):
         inputs_dict, batch_data_samples = self.collate_data(data)
 
         if 'points' in inputs_dict[0].keys():

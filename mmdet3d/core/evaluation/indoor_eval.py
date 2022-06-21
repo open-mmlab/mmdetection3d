@@ -205,7 +205,6 @@ def indoor_eval(gt_annos,
                 metric,
                 label2cat,
                 logger=None,
-                box_type_3d=None,
                 box_mode_3d=None):
     """Indoor Evaluation.
 
@@ -217,11 +216,11 @@ def indoor_eval(gt_annos,
             includes the following keys
 
             - labels_3d (torch.Tensor): Labels of boxes.
-            - boxes_3d (:obj:`BaseInstance3DBoxes`):
+            - bboxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bounding boxes in Depth coordinate.
             - scores_3d (torch.Tensor): Scores of boxes.
         metric (list[float]): IoU thresholds for computing average precisions.
-        label2cat (dict): Map from label to category.
+        label2cat (tuple): Map from label to category.
         logger (logging.Logger | str, optional): The way to print the mAP
             summary. See `mmdet.utils.print_log()` for details. Default: None.
 
@@ -236,7 +235,7 @@ def indoor_eval(gt_annos,
         det_anno = dt_annos[img_id]
         for i in range(len(det_anno['labels_3d'])):
             label = det_anno['labels_3d'].numpy()[i]
-            bbox = det_anno['boxes_3d'].convert_to(box_mode_3d)[i]
+            bbox = det_anno['bboxes_3d'].convert_to(box_mode_3d)[i]
             score = det_anno['scores_3d'].numpy()[i]
             if label not in pred:
                 pred[int(label)] = {}
@@ -250,15 +249,9 @@ def indoor_eval(gt_annos,
 
         # parse gt annotations
         gt_anno = gt_annos[img_id]
-        if gt_anno['gt_num'] != 0:
-            gt_boxes = box_type_3d(
-                gt_anno['gt_boxes_upright_depth'],
-                box_dim=gt_anno['gt_boxes_upright_depth'].shape[-1],
-                origin=(0.5, 0.5, 0.5)).convert_to(box_mode_3d)
-            labels_3d = gt_anno['class']
-        else:
-            gt_boxes = box_type_3d(np.array([], dtype=np.float32))
-            labels_3d = np.array([], dtype=np.int64)
+
+        gt_boxes = gt_anno['gt_bboxes_3d']
+        labels_3d = gt_anno['gt_labels_3d']
 
         for i in range(len(labels_3d)):
             label = labels_3d[i]

@@ -51,7 +51,7 @@ def merge_aug_bboxes_3d(aug_results, aug_batch_input_metas, test_cfg):
     aug_labels = torch.cat(recovered_labels, dim=0)
 
     # TODO: use a more elegent way to deal with nms
-    if test_cfg.use_rotate_nms:
+    if test_cfg.get('use_rotate_nms', False):
         nms_func = nms_bev
     else:
         nms_func = nms_normal_bev
@@ -83,7 +83,7 @@ def merge_aug_bboxes_3d(aug_results, aug_batch_input_metas, test_cfg):
     merged_labels = torch.cat(merged_labels, dim=0)
 
     _, order = merged_scores.sort(0, descending=True)
-    num = min(test_cfg.max_num, len(aug_bboxes))
+    num = min(test_cfg.get('max_num', 500), len(aug_bboxes))
     order = order[:num]
 
     merged_bboxes = merged_bboxes[order]

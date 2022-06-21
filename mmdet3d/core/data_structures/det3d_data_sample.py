@@ -51,6 +51,8 @@ class Det3DDataSample(DetDataSample):
             panoptic segmentation.
         - ``pred_pts_panoptic_seg``(PixelData): Predicted of point cloud
             panoptic segmentation.
+        - ``eval_ann_info``(dict): Raw annotation, which will be passed to
+            evaluator and do the online evaluation.
 
     Examples:
     >>> from mmengine.data import InstanceData, PixelData

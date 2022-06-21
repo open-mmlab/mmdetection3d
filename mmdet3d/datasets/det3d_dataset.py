@@ -47,10 +47,15 @@ class Det3DDataset(BaseDataset):
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
 
-        filter_empty_gt (bool, optional): Whether to filter the data with
+        filter_empty_gt (bool): Whether to filter the data with
             empty GT. Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
+        load_eval_anns (bool): Whether to load annotations
+            in test_mode, the annotation will be save in
+            `eval_ann_infos`, which can be use in Evaluator.
+        file_client_args (dict): Configuration of file client.
+            Defaults to `dict(backend='disk')`.
     """
 
     def __init__(self,
@@ -63,11 +68,13 @@ class Det3DDataset(BaseDataset):
                  box_type_3d: dict = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
+                 load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs):
         # init file client
         self.file_client = mmcv.FileClient(**file_client_args)
         self.filter_empty_gt = filter_empty_gt
+        self.load_eval_anns = load_eval_anns
         _default_modality_keys = ('use_lidar', 'use_camera')
         if modality is None:
             modality = dict()
@@ -82,7 +89,6 @@ class Det3DDataset(BaseDataset):
             f', `use_camera`) for {self.__class__.__name__}')
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
-
         if metainfo is not None and 'CLASSES' in metainfo:
             # we allow to train on subset of self.METAINFO['CLASSES']
             # map unselected labels to -1
@@ -100,6 +106,10 @@ class Det3DDataset(BaseDataset):
                 for i in range(len(self.METAINFO['CLASSES']))
             }
             self.label_mapping[-1] = -1
+
+        # can be accessed by other component in runner
+        metainfo['box_type_3d'] = box_type_3d
+        metainfo['label_mapping'] = self.label_mapping
 
         super().__init__(
             ann_file=ann_file,
@@ -221,7 +231,10 @@ class Det3DDataset(BaseDataset):
                         self.data_prefix.get('img', ''), img_info['img_path'])
 
         if not self.test_mode:
+            # used in traing
             info['ann_info'] = self.parse_ann_info(info)
+        if self.test_mode and self.load_eval_anns:
+            info['eval_ann_info'] = self.parse_ann_info(info)
 
         return info
 

@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Union
+
 import numpy as np
 from mmcv import BaseTransform
 from mmcv.transforms import to_tensor
@@ -45,14 +47,16 @@ class Pack3DDetInputs(BaseTransform):
             key = key[3:]
         return key
 
-    def transform(self, results: dict) -> dict:
-        """Method to pack the input data.
+    def transform(self, results: Union[dict,
+                                       List[dict]]) -> Union[dict, List[dict]]:
+        """Method to pack the input data. when the value in this dict is a
+        list, it usually is in Augmentations Testing.
 
         Args:
-            results (dict): Result dict from the data pipeline.
+            results (dict | list[dict]): Result dict from the data pipeline.
 
         Returns:
-            dict:
+            dict | List[dict]:
 
             - 'inputs' (dict): The forward data of models. It usually contains
               following keys:
@@ -63,12 +67,41 @@ class Pack3DDetInputs(BaseTransform):
             - 'data_sample' (obj:`Det3DDataSample`): The annotation info of the
               sample.
         """
-        packed_results = dict()
+        # augtest
+        if isinstance(results, list):
+            pack_results = []
+            for single_result in results:
+                pack_results.append(self.pack_single_results(single_result))
+            return pack_results
+        # norm training and simple testing
+        elif isinstance(results, dict):
+            return self.pack_single_results(results)
+        else:
+            raise NotImplementedError
 
+    def pack_single_results(self, results):
+        """Method to pack the single input data. when the value in this dict is
+        a list, it usually is in Augmentations Testing.
+
+        Args:
+            results (dict): Result dict from the data pipeline.
+
+        Returns:
+            dict: A dict contains
+
+            - 'inputs' (dict): The forward data of models. It usually contains
+              following keys:
+
+                - points
+                - img
+
+            - 'data_sample' (obj:`Det3DDataSample`): The annotation info of the
+              sample.
+        """
         # Format 3D data
         if 'points' in results:
-            assert isinstance(results['points'], BasePoints)
-            results['points'] = results['points'].tensor
+            if isinstance(results['points'], BasePoints):
+                results['points'] = results['points'].tensor
 
         if 'img' in results:
             if isinstance(results['img'], list):
@@ -134,6 +167,12 @@ class Pack3DDetInputs(BaseTransform):
         data_sample.gt_instances_3d = gt_instances_3d
         data_sample.gt_instances = gt_instances
         data_sample.seg_data = seg_data
+        if 'eval_ann_info' in results:
+            data_sample.eval_ann_info = results['eval_ann_info']
+        else:
+            data_sample.eval_ann_info = None
+
+        packed_results = dict()
         packed_results['data_sample'] = data_sample
         packed_results['inputs'] = inputs
 

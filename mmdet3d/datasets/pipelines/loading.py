@@ -684,6 +684,9 @@ class LoadAnnotations3D(LoadAnnotations):
                 pts_instance_mask_path, dtype=np.int64)
 
         results['pts_instance_mask'] = pts_instance_mask
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['pts_instance_mask'] = pts_instance_mask
         return results
 
     def _load_semantic_seg_3d(self, results: dict) -> dict:
@@ -710,6 +713,9 @@ class LoadAnnotations3D(LoadAnnotations):
                 pts_semantic_mask_path, dtype=np.int64)
 
         results['pts_semantic_mask'] = pts_semantic_mask
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['pts_semantic_mask'] = pts_semantic_mask
         return results
 
     def transform(self, results: dict) -> dict:

@@ -1,15 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 from copy import deepcopy
+from typing import Dict, List, Optional, Tuple, Union
 
 import mmcv
+from mmcv import BaseTransform
+from mmengine.dataset import Compose
 
 from mmdet3d.registry import TRANSFORMS
-from .compose import Compose
 
 
 @TRANSFORMS.register_module()
-class MultiScaleFlipAug3D(object):
+class MultiScaleFlipAug3D(BaseTransform):
     """Test-time augmentation with multiple scales and flipping.
 
     Args:
@@ -33,13 +35,13 @@ class MultiScaleFlipAug3D(object):
     """
 
     def __init__(self,
-                 transforms,
-                 img_scale,
-                 pts_scale_ratio,
-                 flip=False,
-                 flip_direction='horizontal',
-                 pcd_horizontal_flip=False,
-                 pcd_vertical_flip=False):
+                 transforms: List[dict],
+                 img_scale: Optional[Union[Tuple[int], List[Tuple[int]]]],
+                 pts_scale_ratio: Union[float, List[float]],
+                 flip: bool = False,
+                 flip_direction: str = 'horizontal',
+                 pcd_horizontal_flip: bool = False,
+                 pcd_vertical_flip: bool = False) -> None:
         self.transforms = Compose(transforms)
         self.img_scale = img_scale if isinstance(img_scale,
                                                  list) else [img_scale]
@@ -65,17 +67,17 @@ class MultiScaleFlipAug3D(object):
             warnings.warn(
                 'flip has no effect when RandomFlip is not in transforms')
 
-    def __call__(self, results):
+    def transform(self, results: Dict) -> List[Dict]:
         """Call function to augment common fields in results.
 
         Args:
             results (dict): Result dict contains the data to augment.
 
         Returns:
-            dict: The result dict contains the data that is augmented with
+            List[dict]: The list contains the data that is augmented with
                 different scales and flips.
         """
-        aug_data = []
+        aug_data_list = []
 
         # modified from `flip_aug = [False, True] if self.flip else [False]`
         # to reduce unnecessary scenes when using double flip augmentation
@@ -104,13 +106,9 @@ class MultiScaleFlipAug3D(object):
                                 _results['pcd_vertical_flip'] = \
                                     pcd_vertical_flip
                                 data = self.transforms(_results)
-                                aug_data.append(data)
-        # list of dict to dict of list
-        aug_data_dict = {key: [] for key in aug_data[0]}
-        for data in aug_data:
-            for key, val in data.items():
-                aug_data_dict[key].append(val)
-        return aug_data_dict
+                                aug_data_list.append(data)
+
+        return aug_data_list
 
     def __repr__(self):
         """str: Return a string that describes the module."""

@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Union
+
 from mmdet3d.core import Det3DDataSample
 from mmdet3d.core.utils import (ForwardResults, InstanceList, OptConfigType,
                                 OptMultiConfig, OptSampleList, SampleList)
@@ -24,8 +26,8 @@ class Base3DDetector(BaseDetector):
         super().__init__(data_preprocessor=data_processor, init_cfg=init_cfg)
 
     def forward(self,
-                batch_inputs_dict: dict,
-                batch_data_samples: OptSampleList = None,
+                inputs: Union[dict, List[dict]],
+                data_samples: OptSampleList = None,
                 mode: str = 'tensor',
                 **kwargs) -> ForwardResults:
         """The unified entry for a forward process in both training and test.
@@ -43,10 +45,19 @@ class Base3DDetector(BaseDetector):
         optimizer updating, which are done in the :meth:`train_step`.
 
         Args:
-            batch_inputs (torch.Tensor): The input tensor with shape
-                (N, C, ...) in general.
-            batch_data_samples (list[:obj:`DetDataSample`], optional): The
-                annotation data of every samples. Defaults to None.
+            inputs  (dict | list[dict]): When it is a list[dict], the
+                outer list indicate the test time augmentation. Each
+                dict contains batch inputs
+                which include 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
+            data_samples (list[:obj:`DetDataSample`],
+                list[list[:obj:`DetDataSample`]], optional): The
+                annotation data of every samples. When it is a list[list], the
+                outer list indicate the test time augmentation, and the
+                inter list indicate the batch. Otherwise, the list simply
+                indicate the batch. Defaults to None.
             mode (str): Return what kind of value. Defaults to 'tensor'.
 
         Returns:
@@ -57,13 +68,20 @@ class Base3DDetector(BaseDetector):
             - If ``mode="loss"``, return a dict of tensor.
         """
         if mode == 'loss':
-            return self.loss(batch_inputs_dict, batch_data_samples, **kwargs)
+            return self.loss(inputs, data_samples, **kwargs)
         elif mode == 'predict':
-            return self.predict(batch_inputs_dict, batch_data_samples,
-                                **kwargs)
+            if isinstance(data_samples[0], list):
+                # aug test
+                assert len(data_samples[0]) == 1, 'Only support ' \
+                                                  'batch_size 1 ' \
+                                                  'in mmdet3d when ' \
+                                                  'do the test' \
+                                                  'time augmentation.'
+                return self.aug_test(inputs, data_samples, **kwargs)
+            else:
+                return self.predict(inputs, data_samples, **kwargs)
         elif mode == 'tensor':
-            return self._forward(batch_inputs_dict, batch_data_samples,
-                                 **kwargs)
+            return self._forward(inputs, data_samples, **kwargs)
         else:
             raise RuntimeError(f'Invalid mode "{mode}". '
                                'Only supports loss, predict and tensor mode')

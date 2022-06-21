@@ -1,17 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Union
+
 import numpy as np
 import torch
 from mmcv.ops import furthest_point_sample
 from mmcv.runner import BaseModule, force_fp32
+from mmengine import ConfigDict, InstanceData
 from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.models.model_utils import VoteModule
 from mmdet3d.ops import build_sa_module
-from mmdet3d.registry import MODELS
-from mmdet.core import build_bbox_coder, multi_apply
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet.core.utils import multi_apply
+from ...core import Det3DDataSample
 from .base_conv_bbox_head import BaseConvBboxHead
 
 
@@ -21,66 +24,76 @@ class VoteHead(BaseModule):
 
     Args:
         num_classes (int): The number of class.
-        bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
-            decoding boxes.
-        train_cfg (dict): Config for training.
-        test_cfg (dict): Config for testing.
-        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
-        vote_aggregation_cfg (dict): Config of vote aggregation layer.
-        pred_layer_cfg (dict): Config of classfication and regression
-            prediction layers.
-        conv_cfg (dict): Config of convolution in prediction layer.
-        norm_cfg (dict): Config of BN in prediction layer.
-        objectness_loss (dict): Config of objectness loss.
-        center_loss (dict): Config of center loss.
-        dir_class_loss (dict): Config of direction classification loss.
-        dir_res_loss (dict): Config of direction residual regression loss.
-        size_class_loss (dict): Config of size classification loss.
-        size_res_loss (dict): Config of size residual regression loss.
-        semantic_loss (dict): Config of point-wise semantic segmentation loss.
+        bbox_coder (ConfigDict, dict): Bbox coder for encoding and
+            decoding boxes. Defaults to None.
+        train_cfg (dict, optional): Config for training. Defaults to None.
+        test_cfg (dict, optional): Config for testing. Defaults to None.
+        vote_module_cfg (dict, optional): Config of VoteModule for
+            point-wise votes. Defaults to None.
+        vote_aggregation_cfg (dict, optional): Config of vote
+            aggregation layer. Defaults to None.
+        pred_layer_cfg (dict, optional): Config of classification
+            and regression prediction layers. Defaults to None.
+        objectness_loss (dict, optional): Config of objectness loss.
+            Defaults to None.
+        center_loss (dict, optional): Config of center loss.
+            Defaults to None.
+        dir_class_loss (dict, optional): Config of direction
+            classification loss. Defaults to None.
+        dir_res_loss (dict, optional): Config of direction
+            residual regression loss. Defaults to None.
+        size_class_loss (dict, optional): Config of size
+            classification loss. Defaults to None.
+        size_res_loss (dict, optional): Config of size
+            residual regression loss. Defaults to None.
+        semantic_loss (dict, optional): Config of point-wise
+            semantic segmentation loss. Defaults to None.
+        iou_loss (dict, optional): Config of IOU loss for
+            regression. Defaults to None.
+        init_cfg (dict, optional): Config of model weight
+            initialization. Defaults to None.
     """
 
     def __init__(self,
-                 num_classes,
-                 bbox_coder,
-                 train_cfg=None,
-                 test_cfg=None,
-                 vote_module_cfg=None,
-                 vote_aggregation_cfg=None,
-                 pred_layer_cfg=None,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 objectness_loss=None,
-                 center_loss=None,
-                 dir_class_loss=None,
-                 dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 semantic_loss=None,
-                 iou_loss=None,
-                 init_cfg=None):
+                 num_classes: int,
+                 bbox_coder: Union[ConfigDict, dict],
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 vote_module_cfg: Optional[dict] = None,
+                 vote_aggregation_cfg: Optional[dict] = None,
+                 pred_layer_cfg: Optional[dict] = None,
+                 objectness_loss: Optional[dict] = None,
+                 center_loss: Optional[dict] = None,
+                 dir_class_loss: Optional[dict] = None,
+                 dir_res_loss: Optional[dict] = None,
+                 size_class_loss: Optional[dict] = None,
+                 size_res_loss: Optional[dict] = None,
+                 semantic_loss: Optional[dict] = None,
+                 iou_loss: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(VoteHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+
         self.gt_per_seed = vote_module_cfg['gt_per_seed']
         self.num_proposal = vote_aggregation_cfg['num_point']
 
-        self.objectness_loss = build_loss(objectness_loss)
-        self.center_loss = build_loss(center_loss)
-        self.dir_res_loss = build_loss(dir_res_loss)
-        self.dir_class_loss = build_loss(dir_class_loss)
-        self.size_res_loss = build_loss(size_res_loss)
+        self.loss_objectness = MODELS.build(objectness_loss)
+        self.loss_center = MODELS.build(center_loss)
+        self.loss_dir_res = MODELS.build(dir_res_loss)
+        self.loss_dir_class = MODELS.build(dir_class_loss)
+        self.loss_size_res = MODELS.build(size_res_loss)
         if size_class_loss is not None:
-            self.size_class_loss = build_loss(size_class_loss)
+            self.size_class_loss = MODELS.build(size_class_loss)
         if semantic_loss is not None:
-            self.semantic_loss = build_loss(semantic_loss)
+            self.semantic_loss = MODELS.build(semantic_loss)
         if iou_loss is not None:
-            self.iou_loss = build_loss(iou_loss)
+            self.iou_loss = MODELS.build(iou_loss)
         else:
             self.iou_loss = None
 
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
@@ -94,6 +107,15 @@ class VoteHead(BaseModule):
             num_cls_out_channels=self._get_cls_out_channels(),
             num_reg_out_channels=self._get_reg_out_channels())
 
+    @property
+    def sample_mode(self):
+        if self.training:
+            sample_mode = self.train_cfg.sample_mode
+        else:
+            sample_mode = self.test_cfg.sample_mode
+        assert sample_mode in ['vote', 'seed', 'random', 'spec']
+        return sample_mode
+
     def _get_cls_out_channels(self):
         """Return the channel number of classification outputs."""
         # Class numbers (k) + objectness (2)
@@ -106,16 +128,18 @@ class VoteHead(BaseModule):
         # size class+residual(num_sizes*4)
         return 3 + self.num_dir_bins * 2 + self.num_sizes * 4
 
-    def _extract_input(self, feat_dict):
+    def _extract_input(self, feat_dict: dict) -> tuple:
         """Extract inputs from features dictionary.
 
         Args:
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: Coordinates of input points.
-            torch.Tensor: Features of input points.
-            torch.Tensor: Indices of input points.
+            tuple[Tensor]: Arrage as following three tensor.
+
+                - Coordinates of input points.
+                - Features of input points.
+                - Indices of input points.
         """
 
         # for imvotenet
@@ -133,7 +157,77 @@ class VoteHead(BaseModule):
 
         return seed_points, seed_features, seed_indices
 
-    def forward(self, feat_dict, sample_mod):
+    def predict(self,
+                points: List[torch.Tensor],
+                feats_dict: Dict[str, torch.Tensor],
+                batch_data_samples: List[Det3DDataSample],
+                rescale=True,
+                **kwargs) -> List[InstanceData]:
+        """
+        Args:
+            points (list[tensor]): Point clouds of multiple samples.
+            feats_dict (dict): Features from FPN or backbone..
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes meta information of data.
+            rescale (bool): Whether rescale the resutls to
+                the original scale.
+
+        Returns:
+            list[:obj:`InstanceData`]: List of processed predictions. Each
+            InstanceData contains 3d Bounding boxes and corresponding
+            scores and labels.
+        """
+        preds_dict = self(feats_dict)
+        batch_size = len(batch_data_samples)
+        batch_input_metas = []
+        for batch_index in range(batch_size):
+            metainfo = batch_data_samples[batch_index].metainfo
+            batch_input_metas.append(metainfo)
+
+        results_list = self.predict_by_feat(
+            points, preds_dict, batch_input_metas, rescale=rescale, **kwargs)
+        return results_list
+
+    def loss(self, points: List[torch.Tensor], feats_dict: Dict[str,
+                                                                torch.Tensor],
+             batch_data_samples: List[Det3DDataSample], **kwargs) -> dict:
+        """
+        Args:
+            points (list[tensor]): Points cloud of multiple samples.
+            feats_dict (dict): Predictions from backbone or FPN.
+            batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
+                contains the meta information of each sample and
+                corresponding annotations.
+
+        Returns:
+            dict:  A dictionary of loss components.
+        """
+        preds_dict = self.forward(feats_dict)
+        batch_gt_instance_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        batch_pts_semantic_mask = []
+        batch_pts_instance_mask = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+            batch_pts_semantic_mask.append(
+                data_sample.seg_data.get('pts_semantic_mask', None))
+            batch_pts_instance_mask.append(
+                data_sample.seg_data.get('pts_instance_mask', None))
+
+        loss_inputs = (points, preds_dict, batch_gt_instance_3d)
+        losses = self.loss_by_feat(
+            *loss_inputs,
+            batch_pts_semantic_mask=batch_pts_semantic_mask,
+            batch_pts_instance_mask=batch_pts_instance_mask,
+            batch_input_metas=batch_input_metas,
+            batch_gt_instances_ignore=batch_gt_instances_ignore)
+        return losses
+
+    def forward(self, feat_dict: dict) -> dict:
         """Forward pass.
 
         Note:
@@ -146,13 +240,10 @@ class VoteHead(BaseModule):
 
         Args:
             feat_dict (dict): Feature dict from backbone.
-            sample_mod (str): Sample mode for vote aggregation layer.
-                valid modes are "vote", "seed", "random" and "spec".
 
         Returns:
             dict: Predictions of vote head.
         """
-        assert sample_mod in ['vote', 'seed', 'random', 'spec']
 
         seed_points, seed_features, seed_indices = self._extract_input(
             feat_dict)
@@ -168,11 +259,11 @@ class VoteHead(BaseModule):
             vote_offset=vote_offset)
 
         # 2. aggregate vote_points
-        if sample_mod == 'vote':
+        if self.sample_mode == 'vote':
             # use fps in vote_aggregation
             aggregation_inputs = dict(
                 points_xyz=vote_points, features=vote_features)
-        elif sample_mod == 'seed':
+        elif self.sample_mode == 'seed':
             # FPS on seed and choose the votes corresponding to the seeds
             sample_indices = furthest_point_sample(seed_points,
                                                    self.num_proposal)
@@ -180,7 +271,7 @@ class VoteHead(BaseModule):
                 points_xyz=vote_points,
                 features=vote_features,
                 indices=sample_indices)
-        elif sample_mod == 'random':
+        elif self.sample_mode == 'random':
             # Random sampling from the votes
             batch_size, num_seed = seed_points.shape[:2]
             sample_indices = seed_points.new_tensor(
@@ -190,7 +281,7 @@ class VoteHead(BaseModule):
                 points_xyz=vote_points,
                 features=vote_features,
                 indices=sample_indices)
-        elif sample_mod == 'spec':
+        elif self.sample_mode == 'spec':
             # Specify the new center in vote_aggregation
             aggregation_inputs = dict(
                 points_xyz=seed_points,
@@ -198,7 +289,7 @@ class VoteHead(BaseModule):
                 target_xyz=vote_points)
         else:
             raise NotImplementedError(
-                f'Sample mode {sample_mod} is not supported!')
+                f'Sample mode {self.sample_mode} is not supported!')
 
         vote_aggregation_ret = self.vote_aggregation(**aggregation_inputs)
         aggregated_points, features, aggregated_indices = vote_aggregation_ret
@@ -214,45 +305,42 @@ class VoteHead(BaseModule):
         decode_res = self.bbox_coder.split_pred(cls_predictions,
                                                 reg_predictions,
                                                 aggregated_points)
-
         results.update(decode_res)
-
         return results
 
     @force_fp32(apply_to=('bbox_preds', ))
-    def loss(self,
-             bbox_preds,
-             points,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             pts_semantic_mask=None,
-             pts_instance_mask=None,
-             img_metas=None,
-             gt_bboxes_ignore=None,
-             ret_target=False):
+    def loss_by_feat(
+            self,
+            points: List[torch.Tensor],
+            bbox_preds_dict: dict,
+            batch_gt_instances_3d: List[InstanceData],
+            batch_pts_semantic_mask: Optional[List[torch.Tensor]] = None,
+            batch_pts_instance_mask: Optional[List[torch.Tensor]] = None,
+            ret_target: bool = False,
+            **kwargs) -> dict:
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of vote head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each sample.
-            gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise
-                semantic mask.
-            pts_instance_mask (list[torch.Tensor]): Point-wise
-                instance mask.
-            img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding.
-            ret_target (Bool): Return targets or not.
+            bbox_preds_dict (dict): Predictions from forward of vote head.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes`` and ``labels``
+                attributes.
+            batch_pts_semantic_mask (list[tensor]): Semantic mask
+                of points cloud. Defaults to None.
+            batch_pts_semantic_mask (list[tensor]): Instance mask
+                of points cloud. Defaults to None.
+            batch_input_metas (list[dict]): Contain pcd and img's meta info.
+            ret_target (bool): Return targets or not.
 
         Returns:
             dict: Losses of Votenet.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   pts_semantic_mask, pts_instance_mask,
-                                   bbox_preds)
+
+        targets = self.get_targets(points, bbox_preds_dict,
+                                   batch_gt_instances_3d,
+                                   batch_pts_semantic_mask,
+                                   batch_pts_instance_mask)
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
          dir_class_targets, dir_res_targets, center_targets,
          assigned_center_targets, mask_targets, valid_gt_masks,
@@ -260,28 +348,28 @@ class VoteHead(BaseModule):
          valid_gt_weights) = targets
 
         # calculate vote loss
-        vote_loss = self.vote_module.get_loss(bbox_preds['seed_points'],
-                                              bbox_preds['vote_points'],
-                                              bbox_preds['seed_indices'],
+        vote_loss = self.vote_module.get_loss(bbox_preds_dict['seed_points'],
+                                              bbox_preds_dict['vote_points'],
+                                              bbox_preds_dict['seed_indices'],
                                               vote_target_masks, vote_targets)
 
         # calculate objectness loss
-        objectness_loss = self.objectness_loss(
-            bbox_preds['obj_scores'].transpose(2, 1),
+        objectness_loss = self.loss_objectness(
+            bbox_preds_dict['obj_scores'].transpose(2, 1),
             objectness_targets,
             weight=objectness_weights)
 
         # calculate center loss
-        source2target_loss, target2source_loss = self.center_loss(
-            bbox_preds['center'],
+        source2target_loss, target2source_loss = self.loss_center(
+            bbox_preds_dict['center'],
             center_targets,
             src_weight=box_loss_weights,
             dst_weight=valid_gt_weights)
         center_loss = source2target_loss + target2source_loss
 
         # calculate direction class loss
-        dir_class_loss = self.dir_class_loss(
-            bbox_preds['dir_class'].transpose(2, 1),
+        dir_class_loss = self.loss_dir_class(
+            bbox_preds_dict['dir_class'].transpose(2, 1),
             dir_class_targets,
             weight=box_loss_weights)
 
@@ -291,13 +379,13 @@ class VoteHead(BaseModule):
             (batch_size, proposal_num, self.num_dir_bins))
         heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1), 1)
         dir_res_norm = torch.sum(
-            bbox_preds['dir_res_norm'] * heading_label_one_hot, -1)
-        dir_res_loss = self.dir_res_loss(
+            bbox_preds_dict['dir_res_norm'] * heading_label_one_hot, -1)
+        dir_res_loss = self.loss_dir_res(
             dir_res_norm, dir_res_targets, weight=box_loss_weights)
 
         # calculate size class loss
         size_class_loss = self.size_class_loss(
-            bbox_preds['size_class'].transpose(2, 1),
+            bbox_preds_dict['size_class'].transpose(2, 1),
             size_class_targets,
             weight=box_loss_weights)
 
@@ -308,17 +396,17 @@ class VoteHead(BaseModule):
         one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
             -1).repeat(1, 1, 1, 3).contiguous()
         size_residual_norm = torch.sum(
-            bbox_preds['size_res_norm'] * one_hot_size_targets_expand, 2)
+            bbox_preds_dict['size_res_norm'] * one_hot_size_targets_expand, 2)
         box_loss_weights_expand = box_loss_weights.unsqueeze(-1).repeat(
             1, 1, 3)
-        size_res_loss = self.size_res_loss(
+        size_res_loss = self.loss_size_res(
             size_residual_norm,
             size_res_targets,
             weight=box_loss_weights_expand)
 
         # calculate semantic loss
         semantic_loss = self.semantic_loss(
-            bbox_preds['sem_scores'].transpose(2, 1),
+            bbox_preds_dict['sem_scores'].transpose(2, 1),
             mask_targets,
             weight=box_loss_weights)
 
@@ -334,7 +422,7 @@ class VoteHead(BaseModule):
 
         if self.iou_loss:
             corners_pred = self.bbox_coder.decode_corners(
-                bbox_preds['center'], size_residual_norm,
+                bbox_preds_dict['center'], size_residual_norm,
                 one_hot_size_targets_expand)
             corners_target = self.bbox_coder.decode_corners(
                 assigned_center_targets, size_res_targets,
@@ -348,25 +436,26 @@ class VoteHead(BaseModule):
 
         return losses
 
-    def get_targets(self,
-                    points,
-                    gt_bboxes_3d,
-                    gt_labels_3d,
-                    pts_semantic_mask=None,
-                    pts_instance_mask=None,
-                    bbox_preds=None):
+    def get_targets(
+        self,
+        points,
+        bbox_preds: dict = None,
+        batch_gt_instances_3d: List[InstanceData] = None,
+        batch_pts_semantic_mask: List[torch.Tensor] = None,
+        batch_pts_instance_mask: List[torch.Tensor] = None,
+    ):
         """Generate targets of vote head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (list[torch.Tensor]): Point-wise instance
-                label of each batch.
             bbox_preds (torch.Tensor): Bounding box predictions of vote head.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes`` and ``labels``
+                attributes.
+            batch_pts_semantic_mask (list[tensor]): Semantic gt mask for
+                multiple images.
+            batch_pts_instance_mask (list[tensor]): Instance gt mask for
+                multiple images.
 
         Returns:
             tuple[torch.Tensor]: Targets of vote head.
@@ -374,40 +463,46 @@ class VoteHead(BaseModule):
         # find empty example
         valid_gt_masks = list()
         gt_num = list()
-        for index in range(len(gt_labels_3d)):
-            if len(gt_labels_3d[index]) == 0:
-                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
-                    1, gt_bboxes_3d[index].tensor.shape[-1])
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
-                gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
-                valid_gt_masks.append(gt_labels_3d[index].new_zeros(1))
+        batch_gt_labels_3d = [
+            gt_instances_3d.labels_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        batch_gt_bboxes_3d = [
+            gt_instances_3d.bboxes_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        for index in range(len(batch_gt_labels_3d)):
+            if len(batch_gt_labels_3d[index]) == 0:
+                fake_box = batch_gt_bboxes_3d[index].tensor.new_zeros(
+                    1, batch_gt_bboxes_3d[index].tensor.shape[-1])
+                batch_gt_bboxes_3d[index] = batch_gt_bboxes_3d[index].new_box(
+                    fake_box)
+                batch_gt_labels_3d[index] = batch_gt_labels_3d[
+                    index].new_zeros(1)
+                valid_gt_masks.append(batch_gt_labels_3d[index].new_zeros(1))
                 gt_num.append(1)
             else:
-                valid_gt_masks.append(gt_labels_3d[index].new_ones(
-                    gt_labels_3d[index].shape))
-                gt_num.append(gt_labels_3d[index].shape[0])
+                valid_gt_masks.append(batch_gt_labels_3d[index].new_ones(
+                    batch_gt_labels_3d[index].shape))
+                gt_num.append(batch_gt_labels_3d[index].shape[0])
         max_gt_num = max(gt_num)
-
-        if pts_semantic_mask is None:
-            pts_semantic_mask = [None for i in range(len(gt_labels_3d))]
-            pts_instance_mask = [None for i in range(len(gt_labels_3d))]
 
         aggregated_points = [
             bbox_preds['aggregated_points'][i]
-            for i in range(len(gt_labels_3d))
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
          dir_class_targets, dir_res_targets, center_targets,
-         assigned_center_targets, mask_targets, objectness_targets,
-         objectness_masks) = multi_apply(self.get_targets_single, points,
-                                         gt_bboxes_3d, gt_labels_3d,
-                                         pts_semantic_mask, pts_instance_mask,
-                                         aggregated_points)
+         assigned_center_targets, mask_targets,
+         objectness_targets, objectness_masks) = multi_apply(
+             self._get_targets_single, points, batch_gt_bboxes_3d,
+             batch_gt_labels_3d, batch_pts_semantic_mask,
+             batch_pts_instance_mask, aggregated_points)
 
         # pad targets as original code of votenet.
-        for index in range(len(gt_labels_3d)):
-            pad_num = max_gt_num - gt_labels_3d[index].shape[0]
+        for index in range(len(batch_gt_labels_3d)):
+            pad_num = max_gt_num - batch_gt_labels_3d[index].shape[0]
             center_targets[index] = F.pad(center_targets[index],
                                           (0, 0, 0, pad_num))
             valid_gt_masks[index] = F.pad(valid_gt_masks[index], (0, pad_num))
@@ -437,13 +532,13 @@ class VoteHead(BaseModule):
                 valid_gt_masks, objectness_targets, objectness_weights,
                 box_loss_weights, valid_gt_weights)
 
-    def get_targets_single(self,
-                           points,
-                           gt_bboxes_3d,
-                           gt_labels_3d,
-                           pts_semantic_mask=None,
-                           pts_instance_mask=None,
-                           aggregated_points=None):
+    def _get_targets_single(self,
+                            points,
+                            gt_bboxes_3d,
+                            gt_labels_3d,
+                            pts_semantic_mask=None,
+                            pts_instance_mask=None,
+                            aggregated_points=None):
         """Generate targets of vote head for single batch.
 
         Args:
@@ -501,7 +596,6 @@ class VoteHead(BaseModule):
             vote_targets = points.new_zeros([num_points, 3])
             vote_target_masks = points.new_zeros([num_points],
                                                  dtype=torch.long)
-
             for i in torch.unique(pts_instance_mask):
                 indices = torch.nonzero(
                     pts_instance_mask == i, as_tuple=False).squeeze(-1)
@@ -561,47 +655,63 @@ class VoteHead(BaseModule):
                 dir_res_targets, center_targets, assigned_center_targets,
                 mask_targets.long(), objectness_targets, objectness_masks)
 
-    def get_bboxes(self,
-                   points,
-                   bbox_preds,
-                   input_metas,
-                   rescale=False,
-                   use_nms=True):
+    def predict_by_feat(self,
+                        points: List[torch.Tensor],
+                        bbox_preds_dict: dict,
+                        batch_input_metas: List[dict],
+                        use_nms: bool = True,
+                        **kwargs) -> List[InstanceData]:
         """Generate bboxes from vote head predictions.
 
         Args:
-            points (torch.Tensor): Input points.
-            bbox_preds (dict): Predictions from vote head.
-            input_metas (list[dict]): Point cloud and image's meta info.
-            rescale (bool): Whether to rescale bboxes.
+            points (List[torch.Tensor]): Input points of multiple samples.
+            bbox_preds_dict (dict): Predictions from vote head.
+            batch_input_metas (list[dict]): Each item
+                contains the meta information of each sample.
             use_nms (bool): Whether to apply NMS, skip nms postprocessing
                 while using vote head in rpn stage.
 
         Returns:
-            list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
+            list[:obj:`InstanceData`]: List of processed predictions. Each
+            InstanceData cantains 3d Bounding boxes and corresponding
+            scores and labels.
         """
         # decode boxes
-        obj_scores = F.softmax(bbox_preds['obj_scores'], dim=-1)[..., -1]
-        sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
-        bbox3d = self.bbox_coder.decode(bbox_preds)
+        stack_points = torch.stack(points)
+        obj_scores = F.softmax(bbox_preds_dict['obj_scores'], dim=-1)[..., -1]
+        sem_scores = F.softmax(bbox_preds_dict['sem_scores'], dim=-1)
+        bbox3d = self.bbox_coder.decode(bbox_preds_dict)
 
-        if use_nms:
-            batch_size = bbox3d.shape[0]
-            results = list()
-            for b in range(batch_size):
+        batch_size = bbox3d.shape[0]
+        results_list = list()
+        for b in range(batch_size):
+            temp_results = InstanceData()
+            if use_nms:
                 bbox_selected, score_selected, labels = \
-                    self.multiclass_nms_single(obj_scores[b], sem_scores[b],
-                                               bbox3d[b], points[b, ..., :3],
-                                               input_metas[b])
-                bbox = input_metas[b]['box_type_3d'](
+                    self.multiclass_nms_single(obj_scores[b],
+                                               sem_scores[b],
+                                               bbox3d[b],
+                                               stack_points[b, ..., :3],
+                                               batch_input_metas[b])
+                bbox = batch_input_metas[b]['box_type_3d'](
                     bbox_selected,
                     box_dim=bbox_selected.shape[-1],
                     with_yaw=self.bbox_coder.with_rot)
-                results.append((bbox, score_selected, labels))
+                temp_results.bboxes_3d = bbox
+                temp_results.scores_3d = score_selected
+                temp_results.labels_3d = labels
+                results_list.append(temp_results)
+            else:
+                bbox = batch_input_metas[b]['box_type_3d'](
+                    bbox_selected,
+                    box_dim=bbox_selected.shape[-1],
+                    with_yaw=self.bbox_coder.with_rot)
+                temp_results.bboxes_3d = bbox
+                temp_results.obj_scores_3d = obj_scores[b]
+                temp_results.sem_scores_3d = obj_scores[b]
+                results_list.append(temp_results)
 
-            return results
-        else:
-            return bbox3d
+        return results_list
 
     def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
                               input_meta):
