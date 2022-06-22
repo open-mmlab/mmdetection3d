@@ -64,13 +64,21 @@ class KittiMetric(BaseMetric):
                 raise KeyError("metric should be one of 'bbox', 'img_bbox', "
                                'but got {metric}.')
 
-    def convert_annos_to_kitti_annos(self, data_annos: list,
-                                     classes: list) -> list:
+    def convert_annos_to_kitti_annos(
+        self,
+        data_annos: list,
+        classes: list = [
+            'Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck', 'Person_sitting',
+            'Tram', 'Misc'
+        ]
+    ) -> list:
         """Convert loading annotations to Kitti annotations.
 
         Args:
             data_annos (list[dict]): Annotations loaded from ann_file.
-            classes (list[str]): Classes used in the dataset.
+            classes (list[str]): Classes used in the dataset. Default used
+                ['Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+                'Person_sitting', 'Tram', 'Misc'].
 
         Returns:
             List[dict]: List of Kitti annotations.
@@ -102,7 +110,10 @@ class KittiMetric(BaseMetric):
                     'score': []
                 }
                 for instance in annos['instances']:
-                    kitti_annos['name'].append(classes[instance['bbox_label']])
+                    labels = instance['bbox_label']
+                    if labels == -1:
+                        continue
+                    kitti_annos['name'].append(classes[labels])
                     kitti_annos['truncated'].append(instance['truncated'])
                     kitti_annos['occluded'].append(instance['occluded'])
                     kitti_annos['alpha'].append(instance['alpha'])
@@ -148,7 +159,7 @@ class KittiMetric(BaseMetric):
             for pred_result in pred:
                 for attr_name in pred[pred_result]:
                     pred[pred_result][attr_name] = pred[pred_result][
-                        attr_name].to(self.collect_device)
+                        attr_name].to('cpu')
                 result[pred_result] = pred[pred_result]
                 sample_idx = data['data_sample']['sample_idx']
                 result['sample_idx'] = sample_idx
@@ -165,14 +176,11 @@ class KittiMetric(BaseMetric):
             the metrics, and the values are corresponding results.
         """
         logger: MMLogger = MMLogger.get_current_instance()
-
         self.classes = self.dataset_meta['CLASSES']
 
         # load annotations
         pkl_annos = self.load_annotations(self.ann_file)['data_list']
-        self.data_infos = self.convert_annos_to_kitti_annos(
-            pkl_annos, self.classes)
-
+        self.data_infos = self.convert_annos_to_kitti_annos(pkl_annos)
         result_dict, tmp_dir = self.format_results(
             results,
             pklfile_prefix=self.pklfile_prefix,
@@ -200,7 +208,7 @@ class KittiMetric(BaseMetric):
         return metric_dict
 
     def kitti_evaluate(self,
-                       result_dict: List[dict],
+                       results_dict: List[dict],
                        gt_annos: List[dict],
                        metric: str = None,
                        classes: List[str] = None,
@@ -221,13 +229,13 @@ class KittiMetric(BaseMetric):
             dict[str, float]: Results of each evaluation metric.
         """
         ap_dict = dict()
-        for name in result_dict:
+        for name in results_dict:
             if name == 'pred_instances' or metric == 'img_bbox':
                 eval_types = ['bbox']
             else:
                 eval_types = ['bbox', 'bev', '3d']
             ap_result_str, ap_dict_ = kitti_eval(
-                gt_annos, result_dict[name], classes, eval_types=eval_types)
+                gt_annos, results_dict[name], classes, eval_types=eval_types)
             for ap_type, ap in ap_dict_.items():
                 ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
 

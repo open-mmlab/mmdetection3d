@@ -39,7 +39,10 @@ class KittiDataset(Det3DDataset):
             Default: [0, -40, -3, 70.4, 40, 0.0].
     """
     # TODO: use full classes of kitti
-    METAINFO = {'CLASSES': ('Pedestrian', 'Cyclist', 'Car')}
+    METAINFO = {
+        'CLASSES': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+                    'Person_sitting', 'Tram', 'Misc')
+    }
 
     def __init__(self,
                  data_root: str,

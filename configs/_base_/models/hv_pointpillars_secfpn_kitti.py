@@ -2,6 +2,7 @@ voxel_size = [0.16, 0.16, 4]
 
 model = dict(
     type='VoxelNet',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     voxel_layer=dict(
         max_num_points=32,  # max_points_per_voxel
         point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],

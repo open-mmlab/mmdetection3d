@@ -212,7 +212,8 @@ def update_kitti_infos(pkl_path, out_dir):
     # TODO update to full label
     # TODO discuss how to process 'Van', 'DontCare'
     METAINFO = {
-        'CLASSES': ('Pedestrian', 'Cyclist', 'Car'),
+        'CLASSES': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+                    'Person_sitting', 'Tram', 'Misc'),
     }
     print(f'Reading from input file: {pkl_path}.')
     data_list = mmcv.load(pkl_path)

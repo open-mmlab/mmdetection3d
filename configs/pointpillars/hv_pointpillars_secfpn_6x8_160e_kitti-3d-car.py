@@ -26,7 +26,6 @@ model = dict(
         allowed_border=0,
         pos_weight=-1,
         debug=False))
-
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
@@ -52,7 +51,6 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_labels_3d', 'gt_bboxes_3d'])
@@ -82,4 +80,5 @@ train_dataloader = dict(
         type='RepeatDataset',
         times=2,
         dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+test_dataloader = dict(dataset=dict(metainfo=metainfo))
+val_dataloader = dict(dataset=dict(metainfo=metainfo))
