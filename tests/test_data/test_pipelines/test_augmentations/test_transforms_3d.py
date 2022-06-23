@@ -11,10 +11,11 @@ from mmdet3d.core.points import DepthPoints, LiDARPoints
 # yapf: disable
 from mmdet3d.datasets import (AffineResize, BackgroundPointsFilter,
                               GlobalAlignment, GlobalRotScaleTrans,
-                              ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
-                              ObjectSample, PointSample, PointShuffle,
-                              PointsRangeFilter, RandomDropPointsColor,
-                              RandomFlip3D, RandomJitterPoints,
+                              MultiViewWrapper, ObjectNameFilter, ObjectNoise,
+                              ObjectRangeFilter, ObjectSample, PointSample,
+                              PointShuffle, PointsRangeFilter, RandomCrop,
+                              RandomDropPointsColor, RandomFlip3D,
+                              RandomJitterPoints, RandomRotate,
                               RandomShiftScale, VoxelBasedPointSampler)
 
 
@@ -850,3 +851,48 @@ def test_random_shift_scale():
     assert results['center'].dtype == np.float32
     assert results['size'].dtype == np.float32
     assert 'affine_aug' in results
+
+
+def test_random_crop():
+    random_crop = RandomCrop(range=(0.3, 1.0, 0.5, 0.7), crop_size=(256, 704))
+    results = dict()
+    img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
+                      'color')
+    results['img'] = img
+    results = random_crop(results)
+    assert results['img'].shape == (256, 704, 3)
+    assert 'crop' in results
+
+
+def test_random_rotate():
+    random_rotate = RandomRotate(range=(-5.4, 5.4),
+                                 img_fill_val=0, level=1, prob=1.0)
+    results = dict()
+    img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
+                      'color')
+    results['img'] = img
+    angle_origin = random_rotate.angle
+    results = random_rotate(results)
+    assert random_rotate.angle != angle_origin
+    assert 'rotate' in results
+
+
+def test_multiview_wrapper():
+    random_rotate_mv = \
+        MultiViewWrapper(transform=dict(type='RandomRotate',
+                                        range=(-5.4, 5.4),
+                                        img_fill_val=0,
+                                        level=1,
+                                        prob=1.0),
+                         collected_keys=['rotate'])
+    results = dict()
+    img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
+                      'color')
+    results['img'] = [img, img]
+    num_imgs = len(results['img'])
+    results = random_rotate_mv(results)
+    assert len(results['img']) == num_imgs
+    assert 'rotate' in results
+    assert len(results['rotate']) == num_imgs
+    assert isinstance(results['rotate'], list)
+    assert isinstance(results['rotate'][0], float)
