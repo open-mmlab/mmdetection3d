@@ -194,6 +194,14 @@ class RandomFlip3D(RandomFlip):
 
 @PIPELINES.register_module()
 class MultiViewWrapper():
+    """Wrap transformation from single-view into multi-view.
+
+    Args:
+        transform (dict): A dict for specifying the transformation for
+        single-view situation.
+        collected_keys(list[str]): Collect information in transformation
+        like rotate angles, crop roi, and flip state.
+    """
 
     def __init__(self, transform, collected_keys=[]):
         _, key = PIPELINES.split_scope_key(transform['type'])
