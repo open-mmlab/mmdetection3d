@@ -6,6 +6,7 @@ from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
 from ..builder import PIPELINES
 
+from pypcd import pypcd
 
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
@@ -137,7 +138,7 @@ class LoadPointsFromMultiSweeps(object):
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
-
+    
     def _load_points(self, pts_filename):
         """Private function to load point clouds data.
 
@@ -382,6 +383,16 @@ class LoadPointsFromFile(object):
         self.file_client_args = file_client_args.copy()
         self.file_client = None
 
+
+    def read_pcd_data(self, pcd_path):
+        points_pcd = pypcd.PointCloud.from_path(pcd_path)
+        pcd_x = points_pcd.pc_data["x"].copy()
+        pcd_y = points_pcd.pc_data["y"].copy()
+        pcd_z = points_pcd.pc_data["z"].copy()
+        pcd_intensity = points_pcd.pc_data["intensity"].copy().astype(np.float32)/256
+        pcd_tensor = np.array([pcd_x, pcd_y, pcd_z, pcd_intensity], dtype=np.float32).T
+        return pcd_tensor   
+
     def _load_points(self, pts_filename):
         """Private function to load point clouds data.
 
@@ -391,6 +402,9 @@ class LoadPointsFromFile(object):
         Returns:
             np.ndarray: An array containing point clouds data.
         """
+        if pts_filename.endswith('.pcd'):
+            # if lidar format is pcd
+            return self.read_pcd_data(pts_filename)
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
