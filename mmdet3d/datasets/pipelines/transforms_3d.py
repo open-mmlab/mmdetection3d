@@ -11,7 +11,7 @@ from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
 from mmdet.datasets.builder import PIPELINES as MMDET_PIPELINES
-from mmdet.datasets.pipelines import RandomCrop as MMDET_RandomCrop
+from mmdet.datasets.pipelines import RandomCrop as MMDetRandomCrop
 from mmdet.datasets.pipelines import RandomFlip, Rotate
 from ..builder import OBJECTSAMPLERS, PIPELINES
 from .data_augment_utils import noise_per_object_v3_
@@ -198,9 +198,9 @@ class MultiViewWrapper():
 
     Args:
         transform (dict): A dict for specifying the transformation for
-        single-view situation.
+            single-view situation.
         collected_keys(list[str]): Collect information in transformation
-        like rotate angles, crop roi, and flip state.
+            like rotate angles, crop roi, and flip state.
     """
 
     def __init__(self, transform, collected_keys=[]):
@@ -223,22 +223,25 @@ class MultiViewWrapper():
 
 
 @PIPELINES.register_module()
-class RandomCrop(MMDET_RandomCrop):
+class RandomCrop(MMDetRandomCrop):
     """Randomly crop image-view objects under a limitation of range.
 
     Args:
-        range (tuple[float]): Range of random crop in proportion. (y_min,
-        y_max, x_min, x_max) in [0, 1.0]. Default to (0.0, 1.0, 0.0, 1.0),
-        which is the default setting in RandomCrop. (0.0, 1.0, 0.0, 1.0),
+        relative_x_offset_range (tuple[float]): Relative range of random crop
+            in x direction. (x_min, x_max) in [0, 1.0]. Default to (0.0, 1.0).
+        relative_y_offset_range (tuple[float]): Relative range of random crop
+            in y direction. (y_min, y_max) in [0, 1.0]. Default to (0.0, 1.0).
     """
 
-    def __init__(self, range=(0.0, 1.0, 0.0, 1.0), **kwargs):
+    def __init__(self,
+                 relative_x_offset_range=(0.0, 1.0),
+                 relative_y_offset_range=(0.0, 1.0),
+                 **kwargs):
         super(RandomCrop, self).__init__(**kwargs)
-        self.range = range
-        assert range[1] >= range[0] and range[3] >= range[2]
-        for r in range:
-            assert 0.0 <= r <= 1.0
-        assert self.crop_type == 'absolute'
+        for range in [relative_x_offset_range, relative_y_offset_range]:
+            assert 0 <= range[0] <= range[1] <= 1
+        self.relative_x_offset_range = relative_x_offset_range
+        self.relative_y_offset_range = relative_y_offset_range
 
     def _crop_data(self, results, crop_size, allow_negative_crop):
         """Function to randomly crop images.
@@ -258,10 +261,12 @@ class RandomCrop(MMDET_RandomCrop):
             img = results[key]
             margin_h = max(img.shape[0] - crop_size[0], 0)
             margin_w = max(img.shape[1] - crop_size[1], 0)
-            offset_h = np.random.randint(margin_h * self.range[0],
-                                         margin_h * self.range[1] + 1)
-            offset_w = np.random.randint(margin_w * self.range[2],
-                                         margin_w * self.range[3] + 1)
+            offset_range_h = (margin_h * self.relative_y_offset_range[0],
+                              margin_h * self.relative_y_offset_range[1] + 1)
+            offset_h = np.random.randint(*offset_range_h)
+            offset_range_w = (margin_w * self.relative_x_offset_range[0],
+                              margin_w * self.relative_x_offset_range[1] + 1)
+            offset_w = np.random.randint(*offset_range_w)
             crop_y1, crop_y2 = offset_h, offset_h + crop_size[0]
             crop_x1, crop_x2 = offset_w, offset_w + crop_size[1]
 
@@ -316,7 +321,7 @@ class RandomRotate(Rotate):
 
     Args:
         range (tuple[float]): Define the range of random rotation.
-        (angle_min, angle_max) in angle.
+            (angle_min, angle_max) in angle.
     """
 
     def __init__(self, range, **kwargs):

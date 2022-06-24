@@ -854,7 +854,9 @@ def test_random_shift_scale():
 
 
 def test_random_crop():
-    random_crop = RandomCrop(range=(0.3, 1.0, 0.5, 0.7), crop_size=(256, 704))
+    random_crop = RandomCrop(relative_y_offset_range=(0.3, 1.0),
+                             relative_x_offset_range=(0.5, 0.7),
+                             crop_size=(256, 704))
     results = dict()
     img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
                       'color')
