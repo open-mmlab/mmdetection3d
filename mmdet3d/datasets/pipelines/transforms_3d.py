@@ -10,7 +10,7 @@ from mmcv.utils import build_from_cfg
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
-from mmdet.datasets.builder import PIPELINES as MMDET_PIPELINES
+from mmdet3d.datasets.pipelines.compose import Compose
 from mmdet.datasets.pipelines import RandomCrop as MMDetRandomCrop
 from mmdet.datasets.pipelines import RandomFlip, Rotate
 from ..builder import OBJECTSAMPLERS, PIPELINES
@@ -197,17 +197,14 @@ class MultiViewWrapper():
     """Wrap transformation from single-view into multi-view.
 
     Args:
-        transform (dict): A dict for specifying the transformation for
-            single-view situation.
+        transforms (list[dict]): A list of dict specifying the transformations
+            for the monocular situation.
         collected_keys(list[str]): Collect information in transformation
             like rotate angles, crop roi, and flip state.
     """
 
-    def __init__(self, transform, collected_keys=[]):
-        _, key = PIPELINES.split_scope_key(transform['type'])
-        library = PIPELINES if key in PIPELINES._module_dict.keys() \
-            else MMDET_PIPELINES
-        self.t = build_from_cfg(transform, library)
+    def __init__(self, transforms, collected_keys=[]):
+        self.t = Compose(transforms)
         self.collected_keys = collected_keys
 
     def __call__(self, input_dict):

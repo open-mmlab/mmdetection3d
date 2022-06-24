@@ -880,21 +880,31 @@ def test_random_rotate():
 
 
 def test_multiview_wrapper():
-    random_rotate_mv = \
-        MultiViewWrapper(transform=dict(type='RandomRotate',
-                                        range=(-5.4, 5.4),
-                                        img_fill_val=0,
-                                        level=1,
-                                        prob=1.0),
-                         collected_keys=['rotate'])
+    img_norm_cfg = dict(mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375], to_rgb=True)
+    collected_keys = ['scale_factor', 'crop', 'pad_shape', 'flip', 'rotate']
+    multiview_transform_pipeline = \
+        MultiViewWrapper(transforms=[dict(type='Resize',
+                                          ratio_range=(0.94, 1.11),
+                                          img_scale=(396, 704)),
+                                     dict(type='RandomCrop',
+                                          relative_x_offset_range=(0.0, 1.0),
+                                          relative_y_offset_range=(1.0, 1.0),
+                                          crop_size=(256, 704)),
+                                     dict(type='Pad', size=(256, 704)),
+                                     dict(type='RandomFlip', flip_ratio=0.5),
+                                     dict(type='RandomRotate',
+                                          range=(-5.4, 5.4), img_fill_val=0,
+                                          level=1, prob=1.0),
+                                     dict(type='Normalize', **img_norm_cfg)],
+                         collected_keys=collected_keys)
     results = dict()
     img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
                       'color')
     results['img'] = [img, img]
     num_imgs = len(results['img'])
-    results = random_rotate_mv(results)
+    results = multiview_transform_pipeline(results)
     assert len(results['img']) == num_imgs
-    assert 'rotate' in results
-    assert len(results['rotate']) == num_imgs
-    assert isinstance(results['rotate'], list)
-    assert isinstance(results['rotate'][0], float)
+    for key in collected_keys:
+        assert key in results
+        assert len(results[key]) == num_imgs
