@@ -199,7 +199,7 @@ class MultiViewWrapper():
     Args:
         transforms (list[dict]): A list of dict specifying the transformations
             for the monocular situation.
-        collected_keys(list[str]): Collect information in transformation
+        collected_keys (list[str]): Collect information in transformation
             like rotate angles, crop roi, and flip state.
     """
 
