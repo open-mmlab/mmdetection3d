@@ -14,23 +14,24 @@ from .base import Base3DDetector
 
 @DETECTORS.register_module()
 class MinkSingleStage3DDetector(Base3DDetector):
-    """Single stage detector based on MinkowskiEngine `GSDN
+    r"""Single stage detector based on MinkowskiEngine `GSDN
     <https://arxiv.org/abs/2006.12356>`_.
 
     Args:
-        backbone (dict): Config od backbone.
-        neck_with_head (dict): Config of head.
+        backbone (dict): Config of the backbone.
+        head (dict): Config of the head.
         voxel_size (float): Voxel size in meters.
-        train_cfg (dict): Config for train stage. Defaults to None.
-        test_cfg (dict): Config for test stage. Defaults to None.
-        init_cfg (dict): Config for weight initialization. Defaults to None.
-        pretrained (str): Deprecated initialization parameter.
+        train_cfg (dict, optional): Config for train stage. Defaults to None.
+        test_cfg (dict, optional): Config for test stage. Defaults to None.
+        init_cfg (dict, optional): Config for weight initialization.
+            Defaults to None.
+        pretrained (str, optional): Deprecated initialization parameter.
             Defaults to None.
     """
 
     def __init__(self,
                  backbone,
-                 neck_with_head,
+                 head,
                  voxel_size,
                  train_cfg=None,
                  test_cfg=None,
@@ -38,9 +39,9 @@ class MinkSingleStage3DDetector(Base3DDetector):
                  pretrained=None):
         super(MinkSingleStage3DDetector, self).__init__(init_cfg)
         self.backbone = build_backbone(backbone)
-        neck_with_head.update(train_cfg=train_cfg)
-        neck_with_head.update(test_cfg=test_cfg)
-        self.neck_with_head = build_head(neck_with_head)
+        head.update(train_cfg=train_cfg)
+        head.update(test_cfg=test_cfg)
+        self.head = build_head(head)
         self.voxel_size = voxel_size
         self.init_weights()
 
@@ -77,7 +78,7 @@ class MinkSingleStage3DDetector(Base3DDetector):
             dict: Centerness, bbox and classification loss values.
         """
         x = self.extract_feats(points)
-        losses = self.neck_with_head.forward_train(x, gt_bboxes_3d,
+        losses = self.head.forward_train(x, gt_bboxes_3d,
                                                    gt_labels_3d, img_metas)
         return losses
 
@@ -92,7 +93,7 @@ class MinkSingleStage3DDetector(Base3DDetector):
             list[dict]: Predicted 3d boxes.
         """
         x = self.extract_feats(points)
-        bbox_list = self.neck_with_head.forward_test(x, img_metas)
+        bbox_list = self.head.forward_test(x, img_metas)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)
             for bboxes, scores, labels in bbox_list

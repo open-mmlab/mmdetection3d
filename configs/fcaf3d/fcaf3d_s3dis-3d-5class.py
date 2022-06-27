@@ -1,7 +1,7 @@
 _base_ = ['fcaf3d.py']
 n_points = 100000
 
-model = dict(neck_with_head=dict(n_classes=5))
+model = dict(head=dict(n_classes=5))
 
 dataset_type = 'S3DISDataset'
 data_root = './data/s3dis/'

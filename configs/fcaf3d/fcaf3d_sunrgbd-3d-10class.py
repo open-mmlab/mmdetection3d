@@ -2,7 +2,7 @@ _base_ = ['fcaf3d.py']
 n_points = 100000
 
 model = dict(
-    neck_with_head=dict(
+    head=dict(
         n_classes=10, n_reg_outs=8, bbox_loss=dict(type='RotatedIoU3DLoss')))
 
 dataset_type = 'SUNRGBDDataset'

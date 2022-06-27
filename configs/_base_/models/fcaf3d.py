@@ -2,8 +2,8 @@ model = dict(
     type='MinkSingleStage3DDetector',
     voxel_size=.01,
     backbone=dict(type='MinkResNet', in_channels=3, depth=34),
-    neck_with_head=dict(
-        type='FCAF3DNeckWithHead',
+    head=dict(
+        type='FCAF3DHead',
         in_channels=(64, 128, 256, 512),
         out_channels=128,
         voxel_size=.01,
