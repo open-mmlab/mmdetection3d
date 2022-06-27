@@ -78,8 +78,8 @@ class MinkSingleStage3DDetector(Base3DDetector):
             dict: Centerness, bbox and classification loss values.
         """
         x = self.extract_feats(points)
-        losses = self.head.forward_train(x, gt_bboxes_3d,
-                                                   gt_labels_3d, img_metas)
+        losses = self.head.forward_train(x, gt_bboxes_3d, gt_labels_3d,
+                                         img_metas)
         return losses
 
     def simple_test(self, points, img_metas, *args, **kwargs):

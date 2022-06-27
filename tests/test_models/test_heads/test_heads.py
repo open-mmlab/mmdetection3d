@@ -1564,7 +1564,7 @@ def test_monoflex_head():
     assert out_reg[0].shape == torch.Size([2, 50, 32, 32])
 
 
-def test_fcaf3d_neck_with_head():
+def test_fcaf3d_head():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
@@ -1606,7 +1606,7 @@ def test_fcaf3d_neck_with_head():
 
     # build head
     cfg = dict(
-        type='FCAF3DNeckWithHead',
+        type='FCAF3DHead',
         in_channels=(64, 128, 256, 512),
         out_channels=128,
         voxel_size=1.,

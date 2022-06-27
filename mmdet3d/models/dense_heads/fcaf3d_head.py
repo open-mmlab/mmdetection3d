@@ -20,11 +20,10 @@ from mmdet.core import reduce_mean
 
 @HEADS.register_module()
 class FCAF3DHead(BaseModule):
-    """Bbox head of `FCAF3D <https://arxiv.org/abs/2112.00322>`_.
-    Actually here we store both the sparse 3D FPN and a head.
-    The neck and the head can not be simply separated as pruning score
-    on the i-th level of FPN requires classification scores from i+1-th
-    level of the head.
+    """Bbox head of `FCAF3D <https://arxiv.org/abs/2112.00322>`_. Actually here
+    we store both the sparse 3D FPN and a head. The neck and the head can not
+    be simply separated as pruning score on the i-th level of FPN requires
+    classification scores from i+1-th level of the head.
 
     Args:
         n_classes (int): Number of classes.
