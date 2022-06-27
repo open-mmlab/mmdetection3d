@@ -39,6 +39,8 @@ jobs:
         if: ${{matrix.torchvision == '0.4.2'}}
       - name: Install PyTorch
         run: pip install torch==${{matrix.torch}}+cpu torchvision==${{matrix.torchvision}}+cpu -f https://download.pytorch.org/whl/torch_stable.html
+      - name: Install wheel
+        run: pip install wheel
       - name: Install openmim
         run: pip install openmim
       - name: Build and install
