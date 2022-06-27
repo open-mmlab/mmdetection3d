@@ -1,3 +1,11 @@
+## v1.0.0rc4
+
+### Number of points in SUN RGB-D preprocessing
+
+Before mmdet3d version 1.0.0rc4 we sampled 50000 points following VoteNet preprocessing. Since 1.0.0v4 version we do not limit the maximum number of points during preprocessing, giving the users more flexibility with `PointSample`. The SUN RGB-D annotations should be updated in case the user wants to achieve best metrics for models supporting more than 50000 input points.
+
+Please refer to the SUN RGB-D [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) for more details.
+
 ## v1.0.0rc1
 
 ### Operators Migration
@@ -10,45 +18,44 @@ In this version we did a major code refactoring that boosted the performance of 
 Meanwhile, we also fixed the imprecise timestamps saving issue in waymo dataset conversion. This change introduces following backward compatibility breaks:
 
 - The point cloud .bin files of waymo dataset need to be regenerated.
-In the .bin files each point occupies 6 `float32` and the meaning of the last `float32` now changed from **imprecise timestamps** to **range frame offset**.
-The **range frame offset** for each point is calculated as`ri * h * w + row * w + col` if the point is from the **TOP** lidar or `-1` otherwise.
-The `h`, `w` denote the height and width of the TOP lidar's range frame.
-The `ri`, `row`, `col` denote the return index, the row and the column of the range frame where each point locates.
-Following tables show the difference across the change:
+  In the .bin files each point occupies 6 `float32` and the meaning of the last `float32` now changed from **imprecise timestamps** to **range frame offset**.
+  The **range frame offset** for each point is calculated as`ri * h * w + row * w + col` if the point is from the **TOP** lidar or `-1` otherwise.
+  The `h`, `w` denote the height and width of the TOP lidar's range frame.
+  The `ri`, `row`, `col` denote the return index, the row and the column of the range frame where each point locates.
+  Following tables show the difference across the change:
 
 Before
 
 | Element offset (float32) |  0  |  1  |  2  |     3     |     4      |            5            |
-|--------------------------|:---:|:---:|:---:|:---------:|:----------:|:-----------------------:|
+| ------------------------ | :-: | :-: | :-: | :-------: | :--------: | :---------------------: |
 | Bytes offset             |  0  |  4  |  8  |    12     |     16     |           20            |
 | Meaning                  |  x  |  y  |  z  | intensity | elongation | **imprecise timestamp** |
 
 After
 
 | Element offset (float32) |  0  |  1  |  2  |     3     |     4      |           5            |
-|--------------------------|:---:|:---:|:---:|:---------:|:----------:|:----------------------:|
+| ------------------------ | :-: | :-: | :-: | :-------: | :--------: | :--------------------: |
 | Bytes offset             |  0  |  4  |  8  |    12     |     16     |           20           |
 | Meaning                  |  x  |  y  |  z  | intensity | elongation | **range frame offset** |
 
 - The objects' point cloud .bin files in the GT-database of waymo dataset need to be regenerated because we also dumped the range frame offset for each point into it.
-Following tables show the difference across the change:
+  Following tables show the difference across the change:
 
 Before
 
 | Element offset (float32) |  0  |  1  |  2  |     3     |     4      |
-|--------------------------|:---:|:---:|:---:|:---------:|:----------:|
+| ------------------------ | :-: | :-: | :-: | :-------: | :--------: |
 | Bytes offset             |  0  |  4  |  8  |    12     |     16     |
 | Meaning                  |  x  |  y  |  z  | intensity | elongation |
 
 After
 
 | Element offset (float32) |  0  |  1  |  2  |     3     |     4      |           5            |
-|--------------------------|:---:|:---:|:---:|:---------:|:----------:|:----------------------:|
+| ------------------------ | :-: | :-: | :-: | :-------: | :--------: | :--------------------: |
 | Bytes offset             |  0  |  4  |  8  |    12     |     16     |           20           |
 | Meaning                  |  x  |  y  |  z  | intensity | elongation | **range frame offset** |
 
 - Any configuration that uses waymo dataset with GT Augmentation should change the `db_sampler.points_loader.load_dim` from `5` to `6`.
-
 
 ## v1.0.0rc0
 
@@ -63,6 +70,7 @@ In this version, we did a major code refactoring which improved the consistency 
 #### ***NOTICE!!***
 
 Since definitions of box representation have changed, the annotation data of most datasets require updating:
+
 - SUN RGB-D: Yaw angles in the annotation should be reversed.
 - KITTI: For LiDAR boxes in GT databases, (x_size, y_size, z_size, yaw) out of (x, y, z, x_size, y_size, z_size) should be converted from the old LiDAR coordinate system to the new one. The training/validation data annotations should be left unchanged since they are under the Camera coordinate system, which is unmodified after the refactoring.
 - Waymo: Same as KITTI.
@@ -87,7 +95,6 @@ Functions only involving points are generally unaffected except if they rely on 
 - `bev` method of [`CameraInstance3DBoxes`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/core/bbox/structures/cam_box3d.py): Changed it to be consistent with the definition of bev in Depth and LiDAR coordinate systems.
 - Data augmentation utils in [data_augment_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/datasets/pipelines/data_augment_utils.py) now follow the rules of a right-handed system.
 - We do not need the yaw hacking in KITTI anymore after refining [`get_direction_target`](https://github.com/open-mmlab/mmdetection3d/blob/v1.0.0rc0/mmdet3d/models/dense_heads/train_mixins.py). Interested users may refer to PR [#677](https://github.com/open-mmlab/mmdetection3d/pull/677) .
-
 
 ## 0.16.0
 
@@ -168,4 +175,4 @@ Please refer to the SUNRGBD [README.md](https://github.com/open-mmlab/mmdetectio
 
 ### VoteNet and H3DNet model structure update
 
-In MMDetection 0.6.0, we updated the model structures of VoteNet and H3DNet, therefore model checkpoints generated by MMDetection < 0.6.0 should be first converted to a format compatible with the latest structures via [convert_votenet_checkpoints.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/model_converters/convert_votenet_checkpoints.py) and [convert_h3dnet_checkpoints.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/model_converters/convert_h3dnet_checkpoints.py) . For more details, please refer to the VoteNet [README.md](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/votenet/README.md/) and H3DNet [README.md](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/h3dnet/README.md/).
+In MMDetection 0.6.0, we updated the model structures of VoteNet and H3DNet, therefore model checkpoints generated by MMDetection \< 0.6.0 should be first converted to a format compatible with the latest structures via [convert_votenet_checkpoints.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/model_converters/convert_votenet_checkpoints.py) and [convert_h3dnet_checkpoints.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/model_converters/convert_h3dnet_checkpoints.py) . For more details, please refer to the VoteNet [README.md](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/votenet/README.md/) and H3DNet [README.md](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/h3dnet/README.md/).

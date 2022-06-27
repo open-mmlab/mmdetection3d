@@ -135,7 +135,7 @@ By exporting ScanNet RGB data, for each scene we load a set of RGB images with c
 python extract_posed_images.py
 ```
 
-Each of 1201 train, 312 validation and 100 test scenes contains a single `.sens` file. For instance, for scene `0001_01` we have `data/scannet/scans/scene0001_01/0001_01.sens`. For this scene all images and poses are extracted to `data/scannet/posed_images/scene0001_01`. Specifically, there will be 300 image files xxxxx.jpg, 300 camera pose files xxxxx.txt and a single `intrinsic.txt` file. Typically, single scene contains several thousand images. By default, we extract only 300 of them with resulting space occupation of <100 Gb. To extract more images, use `--max-images-per-scene` parameter.
+Each of 1201 train, 312 validation and 100 test scenes contains a single `.sens` file. For instance, for scene `0001_01` we have `data/scannet/scans/scene0001_01/0001_01.sens`. For this scene all images and poses are extracted to `data/scannet/posed_images/scene0001_01`. Specifically, there will be 300 image files xxxxx.jpg, 300 camera pose files xxxxx.txt and a single `intrinsic.txt` file. Typically, single scene contains several thousand images. By default, we extract only 300 of them with resulting space occupation of \<100 Gb. To extract more images, use `--max-images-per-scene` parameter.
 
 ### Create dataset
 
@@ -222,28 +222,27 @@ scannet
 ```
 
 - `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Since ScanNet 3D detection task takes axis-aligned point clouds as input, while ScanNet 3D semantic segmentation task takes unaligned points, we choose to store unaligned points and their axis-align transform matrix. Note: the points would be axis-aligned in pre-processing pipeline [`GlobalAlignment`](https://github.com/open-mmlab/mmdetection3d/blob/9f0b01caf6aefed861ef4c3eb197c09362d26b32/mmdet3d/datasets/pipelines/transforms_3d.py#L423) of 3D detection task.
-- `instance_mask/xxxxx.bin`: The instance label for each point, value range: [0, NUM_INSTANCES], 0: unannotated.
-- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: [1, 40], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
+- `instance_mask/xxxxx.bin`: The instance label for each point, value range: \[0, NUM_INSTANCES\], 0: unannotated.
+- `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: \[1, 40\], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
 - `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
-    - info['point_cloud']: {'num_features': 6, 'lidar_idx': sample_idx}.
-    - info['pts_path']: The path of `points/xxxxx.bin`.
-    - info['pts_instance_mask_path']: The path of `instance_mask/xxxxx.bin`.
-    - info['pts_semantic_mask_path']: The path of `semantic_mask/xxxxx.bin`.
-    - info['annos']: The annotations of each scan.
-        - annotations['gt_num']: The number of ground truths.
-        - annotations['name']： The semantic name of all ground truths, e.g. `chair`.
-        - annotations['location']: The gravity center of the axis-aligned 3D bounding boxes in depth coordinate system. Shape: [K, 3], K is the number of ground truths.
-        - annotations['dimensions']: The dimensions of the axis-aligned 3D bounding boxes in depth coordinate system, i.e. (x_size, y_size, z_size), shape: [K, 3].
-        - annotations['gt_boxes_upright_depth']: The axis-aligned 3D bounding boxes in depth coordinate system, each bounding box is (x, y, z, x_size, y_size, z_size), shape: [K, 6].
-        - annotations['unaligned_location']: The gravity center of the axis-unaligned 3D bounding boxes in depth coordinate system.
-        - annotations['unaligned_dimensions']: The dimensions of the axis-unaligned 3D bounding boxes in depth coordinate system.
-        - annotations['unaligned_gt_boxes_upright_depth']: The axis-unaligned 3D bounding boxes in depth coordinate system.
-        - annotations['index']: The index of all ground truths, i.e. [0, K).
-        - annotations['class']: The train class ID of the bounding boxes, value range: [0, 18), shape: [K, ].
+  - info\['point_cloud'\]: {'num_features': 6, 'lidar_idx': sample_idx}.
+  - info\['pts_path'\]: The path of `points/xxxxx.bin`.
+  - info\['pts_instance_mask_path'\]: The path of `instance_mask/xxxxx.bin`.
+  - info\['pts_semantic_mask_path'\]: The path of `semantic_mask/xxxxx.bin`.
+  - info\['annos'\]: The annotations of each scan.
+    - annotations\['gt_num'\]: The number of ground truths.
+    - annotations\['name'\]： The semantic name of all ground truths, e.g. `chair`.
+    - annotations\['location'\]: The gravity center of the axis-aligned 3D bounding boxes in depth coordinate system. Shape: \[K, 3\], K is the number of ground truths.
+    - annotations\['dimensions'\]: The dimensions of the axis-aligned 3D bounding boxes in depth coordinate system, i.e. (x_size, y_size, z_size), shape: \[K, 3\].
+    - annotations\['gt_boxes_upright_depth'\]: The axis-aligned 3D bounding boxes in depth coordinate system, each bounding box is (x, y, z, x_size, y_size, z_size), shape: \[K, 6\].
+    - annotations\['unaligned_location'\]: The gravity center of the axis-unaligned 3D bounding boxes in depth coordinate system.
+    - annotations\['unaligned_dimensions'\]: The dimensions of the axis-unaligned 3D bounding boxes in depth coordinate system.
+    - annotations\['unaligned_gt_boxes_upright_depth'\]: The axis-unaligned 3D bounding boxes in depth coordinate system.
+    - annotations\['index'\]: The index of all ground truths, i.e. \[0, K).
+    - annotations\['class'\]: The train class ID of the bounding boxes, value range: \[0, 18), shape: \[K, \].
 - `scannet_infos_val.pkl`: The val data infos, which shares the same format as `scannet_infos_train.pkl`.
 - `scannet_infos_test.pkl`: The test data infos, which almost shares the same format as `scannet_infos_train.pkl` except for the lack of annotation.
-
 
 ## Training pipeline
 
@@ -291,11 +290,11 @@ train_pipeline = [
 ```
 
 - `GlobalAlignment`: The previous point cloud would be axis-aligned using the axis-aligned matrix.
-- `PointSegClassMapping`: Only the valid category IDs will be mapped to class label IDs like [0, 18) during training.
+- `PointSegClassMapping`: Only the valid category IDs will be mapped to class label IDs like \[0, 18) during training.
 - Data augmentation:
-    - `PointSample`: downsample the input point cloud.
-    - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-5, 5] (degrees) for ScanNet; then scale the input point cloud, usually by 1.0 for ScanNet (which means no scaling); finally translate the input point cloud, usually by 0 for ScanNet  (which means no translation).
+  - `PointSample`: downsample the input point cloud.
+  - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
+  - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of \[-5, 5\] (degrees) for ScanNet; then scale the input point cloud, usually by 1.0 for ScanNet (which means no scaling); finally translate the input point cloud, usually by 0 for ScanNet  (which means no translation).
 
 ## Metrics
 

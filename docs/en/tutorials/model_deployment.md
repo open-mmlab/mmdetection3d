@@ -37,17 +37,17 @@ python ./tools/deploy.py \
 
 ### Description of all arguments
 
-* `deploy_cfg` : The path of deploy config file in MMDeploy codebase.
-* `model_cfg` : The path of model config file in OpenMMLab codebase.
-* `checkpoint` : The path of model checkpoint file.
-* `img` : The path of point cloud file or image file that used to convert model.
-* `--test-img` : The path of image file that used to test model. If not specified, it will be set to `None`.
-* `--work-dir` : The path of work directory that used to save logs and models.
-* `--calib-dataset-cfg` : Only valid in int8 mode. Config used for calibration. If not specified, it will be set to `None` and  use "val" dataset in model config for calibration.
-* `--device` : The device used for conversion. If not specified, it will be set to `cpu`.
-* `--log-level` : To set log level which in `'CRITICAL', 'FATAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'`. If not specified, it will be set to `INFO`.
-* `--show` : Whether to show detection outputs.
-* `--dump-info` : Whether to output information for SDK.
+- `deploy_cfg` : The path of deploy config file in MMDeploy codebase.
+- `model_cfg` : The path of model config file in OpenMMLab codebase.
+- `checkpoint` : The path of model checkpoint file.
+- `img` : The path of point cloud file or image file that used to convert model.
+- `--test-img` : The path of image file that used to test model. If not specified, it will be set to `None`.
+- `--work-dir` : The path of work directory that used to save logs and models.
+- `--calib-dataset-cfg` : Only valid in int8 mode. Config used for calibration. If not specified, it will be set to `None` and  use "val" dataset in model config for calibration.
+- `--device` : The device used for conversion. If not specified, it will be set to `cpu`.
+- `--log-level` : To set log level which in `'CRITICAL', 'FATAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'`. If not specified, it will be set to `INFO`.
+- `--show` : Whether to show detection outputs.
+- `--dump-info` : Whether to output information for SDK.
 
 ### Example
 
@@ -110,12 +110,12 @@ python tools/test.py \
 
 ## Supported models
 
-| Model                | TorchScript | OnnxRuntime | TensorRT | NCNN  | PPLNN | OpenVINO | Model config                                                                           |
-| -------------------- | :---------: | :---------: | :------: | :---: | :---: | :------: | -------------------------------------------------------------------------------------- |
-| PointPillars         |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
-| CenterPoint (pillar) |      ?      |      Y      |    Y     |   N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
+| Model                | TorchScript | OnnxRuntime | TensorRT | NCNN | PPLNN | OpenVINO | Model config                                                                           |
+| -------------------- | :---------: | :---------: | :------: | :--: | :---: | :------: | -------------------------------------------------------------------------------------- |
+| PointPillars         |      ?      |      Y      |    Y     |  N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) |
+| CenterPoint (pillar) |      ?      |      Y      |    Y     |  N   |   N   |    Y     | [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint)  |
 
 ## Note
 
-* MMDeploy version >= 0.4.0.
-* Currently, CenterPoint has only supported the pillar version.
+- MMDeploy version >= 0.4.0.
+- Currently, CenterPoint has only supported the pillar version.

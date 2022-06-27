@@ -316,7 +316,7 @@ class NuScenesDataset(Custom3DDataset):
         print('Start to convert detection format...')
         for sample_id, det in enumerate(mmcv.track_iter_progress(results)):
             annos = []
-            boxes = output_to_nusc_box(det)
+            boxes = output_to_nusc_box(det, self.with_velocity)
             sample_token = self.data_infos[sample_id]['token']
             boxes = lidar_nusc_box_to_global(self.data_infos[sample_id], boxes,
                                              mapped_class_names,
@@ -573,7 +573,7 @@ class NuScenesDataset(Custom3DDataset):
                         file_name, show)
 
 
-def output_to_nusc_box(detection):
+def output_to_nusc_box(detection, with_velocity=True):
     """Convert the output to the box class in the nuScenes.
 
     Args:
@@ -600,7 +600,10 @@ def output_to_nusc_box(detection):
     box_list = []
     for i in range(len(box3d)):
         quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
-        velocity = (*box3d.tensor[i, 7:9], 0.0)
+        if with_velocity:
+            velocity = (*box3d.tensor[i, 7:9], 0.0)
+        else:
+            velocity = (0, 0, 0)
         # velo_val = np.linalg.norm(box3d[i, 7:9])
         # velo_ori = box3d[i, 6]
         # velocity = (

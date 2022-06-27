@@ -64,60 +64,60 @@ mmdetection3d
 
 - `nuscenes_database/xxxxx.bin`：训练数据集的每个 3D 包围框中包含的点云数据。
 - `nuscenes_infos_train.pkl`：训练数据集信息，每帧信息有两个键值： `metadata` 和 `infos`。 `metadata` 包含数据集本身的基本信息，例如 `{'version': 'v1.0-trainval'}`，而 `infos` 包含详细信息如下：
-    - info['lidar_path']：激光雷达点云数据的文件路径。
-    - info['token']：样本数据标记。
-    - info['sweeps']：扫描信息（nuScenes 中的 `sweeps` 是指没有标注的中间帧，而 `samples` 是指那些带有标注的关键帧）。
-        - info['sweeps'][i]['data_path']：第 i 次扫描的数据路径。
-        - info['sweeps'][i]['type']：扫描数据类型，例如“激光雷达”。
-        - info['sweeps'][i]['sample_data_token']：扫描样本数据标记。
-        - info['sweeps'][i]['sensor2ego_translation']：从当前传感器（用于收集扫描数据）到自车（包含感知周围环境传感器的车辆，车辆坐标系固连在自车上）的转换（1x3 列表）。
-        - info['sweeps'][i]['sensor2ego_rotation']：从当前传感器（用于收集扫描数据）到自车的旋转（四元数格式的 1x4 列表）。
-        - info['sweeps'][i]['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
-        - info['sweeps'][i]['ego2global_rotation']：从自车到全局坐标的旋转（四元数格式的 1x4 列表）。
-        - info['sweeps'][i]['timestamp']：扫描数据的时间戳。
-        - info['sweeps'][i]['sensor2lidar_translation']：从当前传感器（用于收集扫描数据）到激光雷达的转换（1x3 列表）。
-        - info['sweeps'][i]['sensor2lidar_rotation']：从当前传感器（用于收集扫描数据）到激光雷达的旋转（四元数格式的 1x4 列表）。
-    - info['cams']：相机校准信息。它包含与每个摄像头对应的六个键值： `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。
+  - info\['lidar_path'\]：激光雷达点云数据的文件路径。
+  - info\['token'\]：样本数据标记。
+  - info\['sweeps'\]：扫描信息（nuScenes 中的 `sweeps` 是指没有标注的中间帧，而 `samples` 是指那些带有标注的关键帧）。
+    - info\['sweeps'\]\[i\]\['data_path'\]：第 i 次扫描的数据路径。
+    - info\['sweeps'\]\[i\]\['type'\]：扫描数据类型，例如“激光雷达”。
+    - info\['sweeps'\]\[i\]\['sample_data_token'\]：扫描样本数据标记。
+    - info\['sweeps'\]\[i\]\['sensor2ego_translation'\]：从当前传感器（用于收集扫描数据）到自车（包含感知周围环境传感器的车辆，车辆坐标系固连在自车上）的转换（1x3 列表）。
+    - info\['sweeps'\]\[i\]\['sensor2ego_rotation'\]：从当前传感器（用于收集扫描数据）到自车的旋转（四元数格式的 1x4 列表）。
+    - info\['sweeps'\]\[i\]\['ego2global_translation'\]：从自车到全局坐标的转换（1x3 列表）。
+    - info\['sweeps'\]\[i\]\['ego2global_rotation'\]：从自车到全局坐标的旋转（四元数格式的 1x4 列表）。
+    - info\['sweeps'\]\[i\]\['timestamp'\]：扫描数据的时间戳。
+    - info\['sweeps'\]\[i\]\['sensor2lidar_translation'\]：从当前传感器（用于收集扫描数据）到激光雷达的转换（1x3 列表）。
+    - info\['sweeps'\]\[i\]\['sensor2lidar_rotation'\]：从当前传感器（用于收集扫描数据）到激光雷达的旋转（四元数格式的 1x4 列表）。
+  - info\['cams'\]：相机校准信息。它包含与每个摄像头对应的六个键值： `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。
     每个字典包含每个扫描数据按照上述方式的详细信息（每个信息的关键字与上述相同）。除此之外，每个相机还包含了一个键值 `'cam_intrinsic'` 用来保存 3D 点投影到图像平面上需要的内参信息。
-    - info['lidar2ego_translation']：从激光雷达到自车的转换（1x3 列表）。
-    - info['lidar2ego_rotation']：从激光雷达到自车的旋转（四元数格式的 1x4 列表）。
-    - info['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
-    - info['ego2global_rotation']：从自我车辆到全局坐标的旋转（四元数格式的 1x4 列表）。
-    - info['timestamp']：样本数据的时间戳。
-    - info['gt_boxes']：7 个自由度的 3D 包围框，一个 Nx7 数组。
-    - info['gt_names']：3D 包围框的类别，一个 1xN 数组。
-    - info['gt_velocity']：3D 包围框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
-    - info['num_lidar_pts']：每个 3D 包围框中包含的激光雷达点数。
-    - info['num_radar_pts']：每个 3D 包围框中包含的雷达点数。
-    - info['valid_flag']：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
+  - info\['lidar2ego_translation'\]：从激光雷达到自车的转换（1x3 列表）。
+  - info\['lidar2ego_rotation'\]：从激光雷达到自车的旋转（四元数格式的 1x4 列表）。
+  - info\['ego2global_translation'\]：从自车到全局坐标的转换（1x3 列表）。
+  - info\['ego2global_rotation'\]：从自我车辆到全局坐标的旋转（四元数格式的 1x4 列表）。
+  - info\['timestamp'\]：样本数据的时间戳。
+  - info\['gt_boxes'\]：7 个自由度的 3D 包围框，一个 Nx7 数组。
+  - info\['gt_names'\]：3D 包围框的类别，一个 1xN 数组。
+  - info\['gt_velocity'\]：3D 包围框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
+  - info\['num_lidar_pts'\]：每个 3D 包围框中包含的激光雷达点数。
+  - info\['num_radar_pts'\]：每个 3D 包围框中包含的雷达点数。
+  - info\['valid_flag'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
 - `nuscenes_infos_train_mono3d.coco.json`：训练数据集 coco 风格的信息。该文件将基于图像的数据组织为三类（键值）：`'categories'`, `'images'`, `'annotations'`。
-    - info['categories']：包含所有类别名称的列表。每个元素都遵循字典格式并由两个键值组成：`'id'` 和 `'name'`。
-    - info['images']：包含所有图像信息的列表。
-        - info['images'][i]['file_name']：第 i 张图像的文件名。
-        - info['images'][i]['id']：第 i 张图像的样本数据标记。
-        - info['images'][i]['token']：与该帧对应的样本标记。
-        - info['images'][i]['cam2ego_rotation']：从相机到自车的旋转（四元数格式的 1x4 列表）。
-        - info['images'][i]['cam2ego_translation']：从相机到自车的转换（1x3 列表）。
-        - info['images'][i]['ego2global_rotation'']：从自车到全局坐标的旋转（四元数格式的 1x4 列表）。
-        - info['images'][i]['ego2global_translation']：从自车到全局坐标的转换（1x3 列表）。
-        - info['images'][i]['cam_intrinsic']: 相机内参矩阵（3x3 列表）。
-        - info['images'][i]['width']：图片宽度， nuScenes 中默认为 1600。
-        - info['images'][i]['height']：图像高度， nuScenes 中默认为 900。
-    - info['annotations']: 包含所有标注信息的列表。
-        - info['annotations'][i]['file_name']：对应图像的文件名。
-        - info['annotations'][i]['image_id']：对应图像的图像 ID （标记）。
-        - info['annotations'][i]['area']：2D 包围框的面积。
-        - info['annotations'][i]['category_name']：类别名称。
-        - info['annotations'][i]['category_id']：类别 id。
-        - info['annotations'][i]['bbox']：2D 包围框标注（3D 投影框的外部矩形），1x4 列表跟随 [x1, y1, x2-x1, y2-y1]。x1/y1 是沿图像水平/垂直方向的最小坐标。
-        - info['annotations'][i]['iscrowd']：该区域是否拥挤。默认为 0。
-        - info['annotations'][i]['bbox_cam3d']：3D 包围框（重力）中心位置（3）、大小（3）、（全局）偏航角（1）、1x7 列表。
-        - info['annotations'][i]['velo_cam3d']：3D 包围框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
-        - info['annotations'][i]['center2d']：包含 2.5D 信息的投影 3D 中心：图像上的投影中心位置（2）和深度（1），1x3 列表。
-        - info['annotations'][i]['attribute_name']：属性名称。
-        - info['annotations'][i]['attribute_id']：属性 ID。
-        我们为属性分类维护了一个属性集合和映射。更多的细节请参考[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L53)。
-        - info['annotations'][i]['id']：标注 ID。默认为 `i`。
+  - info\['categories'\]：包含所有类别名称的列表。每个元素都遵循字典格式并由两个键值组成：`'id'` 和 `'name'`。
+  - info\['images'\]：包含所有图像信息的列表。
+    - info\['images'\]\[i\]\['file_name'\]：第 i 张图像的文件名。
+    - info\['images'\]\[i\]\['id'\]：第 i 张图像的样本数据标记。
+    - info\['images'\]\[i\]\['token'\]：与该帧对应的样本标记。
+    - info\['images'\]\[i\]\['cam2ego_rotation'\]：从相机到自车的旋转（四元数格式的 1x4 列表）。
+    - info\['images'\]\[i\]\['cam2ego_translation'\]：从相机到自车的转换（1x3 列表）。
+    - info\['images'\]\[i\]\['ego2global_rotation''\]：从自车到全局坐标的旋转（四元数格式的 1x4 列表）。
+    - info\['images'\]\[i\]\['ego2global_translation'\]：从自车到全局坐标的转换（1x3 列表）。
+    - info\['images'\]\[i\]\['cam_intrinsic'\]: 相机内参矩阵（3x3 列表）。
+    - info\['images'\]\[i\]\['width'\]：图片宽度， nuScenes 中默认为 1600。
+    - info\['images'\]\[i\]\['height'\]：图像高度， nuScenes 中默认为 900。
+  - info\['annotations'\]: 包含所有标注信息的列表。
+    - info\['annotations'\]\[i\]\['file_name'\]：对应图像的文件名。
+    - info\['annotations'\]\[i\]\['image_id'\]：对应图像的图像 ID （标记）。
+    - info\['annotations'\]\[i\]\['area'\]：2D 包围框的面积。
+    - info\['annotations'\]\[i\]\['category_name'\]：类别名称。
+    - info\['annotations'\]\[i\]\['category_id'\]：类别 id。
+    - info\['annotations'\]\[i\]\['bbox'\]：2D 包围框标注（3D 投影框的外部矩形），1x4 列表跟随 \[x1, y1, x2-x1, y2-y1\]。x1/y1 是沿图像水平/垂直方向的最小坐标。
+    - info\['annotations'\]\[i\]\['iscrowd'\]：该区域是否拥挤。默认为 0。
+    - info\['annotations'\]\[i\]\['bbox_cam3d'\]：3D 包围框（重力）中心位置（3）、大小（3）、（全局）偏航角（1）、1x7 列表。
+    - info\['annotations'\]\[i\]\['velo_cam3d'\]：3D 包围框的速度（由于不准确，没有垂直测量），一个 Nx2 数组。
+    - info\['annotations'\]\[i\]\['center2d'\]：包含 2.5D 信息的投影 3D 中心：图像上的投影中心位置（2）和深度（1），1x3 列表。
+    - info\['annotations'\]\[i\]\['attribute_name'\]：属性名称。
+    - info\['annotations'\]\[i\]\['attribute_id'\]：属性 ID。
+      我们为属性分类维护了一个属性集合和映射。更多的细节请参考[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/nuscenes_mono_dataset.py#L53)。
+    - info\['annotations'\]\[i\]\['id'\]：标注 ID。默认为 `i`。
 
 这里我们只解释训练信息文件中记录的数据。这同样适用于验证和测试集。
 获取 `nuscenes_infos_xxx.pkl` 和 `nuscenes_infos_xxx_mono3d.coco.json` 的核心函数分别为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L143) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py)。
@@ -191,10 +191,11 @@ train_pipeline = [
 ```
 
 它遵循 2D 检测的一般流水线，但在一些细节上有所不同：
+
 - 它使用单目流水线加载图像，其中包括额外的必需信息，如相机内参矩阵。
 - 它需要加载 3D 标注。
 - 一些数据增强技术需要调整，例如`RandomFlip3D`。
-目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
+  目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
 
 ## 评估
 
