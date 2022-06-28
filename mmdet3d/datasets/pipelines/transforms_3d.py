@@ -11,8 +11,7 @@ from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
 from mmdet3d.datasets.pipelines.compose import Compose
-from mmdet.datasets.pipelines import RandomCrop as MMDetRandomCrop
-from mmdet.datasets.pipelines import RandomFlip, Rotate
+from mmdet.datasets.pipelines import RandomCrop, RandomFlip, Rotate
 from ..builder import OBJECTSAMPLERS, PIPELINES
 from .data_augment_utils import noise_per_object_v3_
 
@@ -193,34 +192,53 @@ class RandomFlip3D(RandomFlip):
 
 
 @PIPELINES.register_module()
-class MultiViewWrapper():
+class MultiViewWrapper(object):
     """Wrap transformation from single-view into multi-view.
+
+    The wrapper processes the images from multi-view one by one. For each
+    image, it constructs a pseudo dict according to the keys specified by the
+    'process_fields' parameter. After the transformation is finished, desired
+    information can be collected by specifying the keys in the 'collected_keys'
+    parameter. Multi-view images share the same transformation parameters
+    but do not share the same magnitude when a random transformation is
+    conducted.
 
     Args:
         transforms (list[dict]): A list of dict specifying the transformations
             for the monocular situation.
+        process_fields (dict): Desired keys that the transformations should
+            be conducted on. Default to dict(img_fields=['img']).
         collected_keys (list[str]): Collect information in transformation
             like rotate angles, crop roi, and flip state.
     """
 
-    def __init__(self, transforms, collected_keys=[]):
-        self.t = Compose(transforms)
+    def __init__(self,
+                 transforms,
+                 process_fields=dict(img_fields=['img']),
+                 collected_keys=[]):
+        self.transform = Compose(transforms)
         self.collected_keys = collected_keys
+        self.process_fields = process_fields
 
     def __call__(self, input_dict):
         for key in self.collected_keys:
             input_dict[key] = []
         for img_id in range(len(input_dict['img'])):
-            process_dict = dict(img=input_dict['img'][img_id])
-            process_dict = self.t(process_dict)
-            input_dict['img'][img_id] = process_dict['img']
+            process_dict = self.process_fields.copy()
+            for field in self.process_fields:
+                for key in self.process_fields[field]:
+                    process_dict[key] = input_dict[key][img_id]
+            process_dict = self.transform(process_dict)
+            for field in self.process_fields:
+                for key in self.process_fields[field]:
+                    input_dict[key][img_id] = process_dict[key]
             for key in self.collected_keys:
                 input_dict[key].append(process_dict[key])
         return input_dict
 
 
 @PIPELINES.register_module()
-class RandomCrop(MMDetRandomCrop):
+class RangeLimitedRandomCrop(RandomCrop):
     """Randomly crop image-view objects under a limitation of range.
 
     Args:
@@ -234,7 +252,7 @@ class RandomCrop(MMDetRandomCrop):
                  relative_x_offset_range=(0.0, 1.0),
                  relative_y_offset_range=(0.0, 1.0),
                  **kwargs):
-        super(RandomCrop, self).__init__(**kwargs)
+        super(RangeLimitedRandomCrop, self).__init__(**kwargs)
         for range in [relative_x_offset_range, relative_y_offset_range]:
             assert 0 <= range[0] <= range[1] <= 1
         self.relative_x_offset_range = relative_x_offset_range
@@ -315,6 +333,9 @@ class RandomCrop(MMDetRandomCrop):
 @PIPELINES.register_module()
 class RandomRotate(Rotate):
     """Randomly rotate images.
+
+    The ratation angle is selected uniformly within the interval specified by
+    the 'range'  parameter.
 
     Args:
         range (tuple[float]): Define the range of random rotation.

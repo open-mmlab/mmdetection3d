@@ -13,10 +13,11 @@ from mmdet3d.datasets import (AffineResize, BackgroundPointsFilter,
                               GlobalAlignment, GlobalRotScaleTrans,
                               MultiViewWrapper, ObjectNameFilter, ObjectNoise,
                               ObjectRangeFilter, ObjectSample, PointSample,
-                              PointShuffle, PointsRangeFilter, RandomCrop,
+                              PointShuffle, PointsRangeFilter,
                               RandomDropPointsColor, RandomFlip3D,
                               RandomJitterPoints, RandomRotate,
-                              RandomShiftScale, VoxelBasedPointSampler)
+                              RandomShiftScale, RangeLimitedRandomCrop,
+                              VoxelBasedPointSampler)
 
 
 def test_remove_points_in_boxes():
@@ -853,10 +854,10 @@ def test_random_shift_scale():
     assert 'affine_aug' in results
 
 
-def test_random_crop():
-    random_crop = RandomCrop(relative_y_offset_range=(0.3, 1.0),
-                             relative_x_offset_range=(0.5, 0.7),
-                             crop_size=(256, 704))
+def test_range_limited_random_crop():
+    random_crop = RangeLimitedRandomCrop(relative_y_offset_range=(0.3, 1.0),
+                                         relative_x_offset_range=(0.5, 0.7),
+                                         crop_size=(256, 704))
     results = dict()
     img = mmcv.imread('./tests/data/kitti/training/image_2/000000.png',
                       'color')
@@ -887,7 +888,7 @@ def test_multiview_wrapper():
         MultiViewWrapper(transforms=[dict(type='Resize',
                                           ratio_range=(0.94, 1.11),
                                           img_scale=(396, 704)),
-                                     dict(type='RandomCrop',
+                                     dict(type='RangeLimitedRandomCrop',
                                           relative_x_offset_range=(0.0, 1.0),
                                           relative_y_offset_range=(1.0, 1.0),
                                           crop_size=(256, 704)),

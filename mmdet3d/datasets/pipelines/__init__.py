@@ -13,10 +13,10 @@ from .transforms_3d import (AffineResize, BackgroundPointsFilter,
                             IndoorPatchPointSample, IndoorPointSample,
                             MultiViewWrapper, ObjectNameFilter, ObjectNoise,
                             ObjectRangeFilter, ObjectSample, PointSample,
-                            PointShuffle, PointsRangeFilter, RandomCrop,
+                            PointShuffle, PointsRangeFilter,
                             RandomDropPointsColor, RandomFlip3D,
                             RandomJitterPoints, RandomRotate, RandomShiftScale,
-                            VoxelBasedPointSampler)
+                            RangeLimitedRandomCrop, VoxelBasedPointSampler)
 
 __all__ = [
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
@@ -30,5 +30,5 @@ __all__ = [
     'LoadImageFromFileMono3D', 'ObjectNameFilter', 'RandomDropPointsColor',
     'RandomJitterPoints', 'AffineResize', 'RandomShiftScale',
     'LoadPointsFromDict', 'MultiViewWrapper', 'RandomRotate',
-    'RandomCrop'
+    'RangeLimitedRandomCrop'
 ]
