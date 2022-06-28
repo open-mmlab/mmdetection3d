@@ -1,0 +1,150 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: build
+
+on:
+  push:
+    paths-ignore:
+      - ".dev_scripts/**"
+      - ".github/**.md"
+      - "demo/**"
+      - "docker/**"
+      - "tools/**"
+
+  pull_request:
+    paths-ignore:
+      - ".dev_scripts/**"
+      - ".github/**.md"
+      - "demo/**"
+      - "docker/**"
+      - "tools/**"
+      - "docs/**"
+      - "docs_zh-CN/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    env:
+      FORCE_CUDA: 1
+      CUDA_ARCH: ${{matrix.cuda_arch}}
+    runs-on: ubuntu-18.04
+    container:
+      image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
+
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7]
+        torch: [1.5.0+cu101, 1.6.0+cu101, 1.7.0+cu101, 1.8.0+cu101]
+        include:
+          - torch: 1.5.0+cu101
+            torch_version: torch1.5
+            torchvision: 0.6.0+cu101
+            mmcv_link: "torch1.5.0"
+            cuda_arch: "7.0"
+          - torch: 1.6.0+cu101
+            torch_version: torch1.6
+            mmcv_link: "torch1.6.0"
+            torchvision: 0.7.0+cu101
+            cuda_arch: "7.0"
+          - torch: 1.7.0+cu101
+            torch_version: torch1.7
+            mmcv_link: "torch1.7.0"
+            torchvision: 0.8.1+cu101
+            cuda_arch: "7.0"
+          - torch: 1.8.0+cu101
+            torch_version: torch1.8
+            mmcv_link: "torch1.8.0"
+            torchvision: 0.9.0+cu101
+            cuda_arch: "7.0"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Fetch GPG keys
+        run: |
+          apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+          apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+      - name: Install system dependencies
+        run: |
+          apt-get update && apt-get install -y ffmpeg libsm6 git ninja-build libglib2.0-0 libsm6 libxrender-dev python${{matrix.python-version}}-dev
+          apt-get clean
+          rm -rf /var/lib/apt/lists/*
+      - name: Install Pillow
+        run: python -m pip install Pillow==6.2.2
+        if: ${{matrix.torchvision < 0.5}}
+      - name: Install PyTorch
+        run: python -m pip install numpy==1.19.5 torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
+      - name: Install mmdet3d dependencies
+        run: |
+          python -m pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
+          python -m pip install mmdet
+          python -m pip install mmsegmentation
+          python -m pip install -r requirements.txt
+      - name: Build and install
+        run: |
+          rm -rf .eggs
+          python setup.py check -m -s
+          TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} python setup.py build_ext --inplace
+      - name: Run unittests and generate coverage report
+        run: |
+          coverage run --branch --source mmdet3d -m pytest tests/
+          coverage xml
+          coverage report -m
+      # Only upload coverage report for python3.7 && pytorch1.5
+      - name: Upload coverage to Codecov
+        if: ${{matrix.torch == '1.5.0+cu101' && matrix.python-version == '3.7'}}
+        uses: codecov/codecov-action@v1.0.10
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: OS,PYTHON
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  build_windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2022]
+        python: [3.8]
+        platform: [cpu]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Upgrade pip
+        run: python -m pip install pip --upgrade --user
+      - name: Install PyTorch
+        # As a complement to Linux CI, we test on PyTorch LTS version
+        run: pip install torch==1.8.2+${{ matrix.platform }} torchvision==0.9.2+${{ matrix.platform }} -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
+      - name: Install mmdet3d dependencies
+        run: |
+          pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cpu/torch1.8/index.html --only-binary mmcv-full
+          python -m pip install mmdet
+          python -m pip install mmsegmentation
+          python -m pip install -r requirements/build.txt -r requirements/runtime.txt -r requirements/tests.txt
+      - name: Build and install
+        run: pip install -e .
+      - name: Run unittests and generate coverage report
+        run: coverage run --branch --source mmdet3d -m pytest tests/
+      - name: Generate coverage report
+        run: |
+          coverage xml
+          coverage report -m
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: OS,PYTHON
+          name: codecov-umbrella
+          fail_ci_if_error: false
