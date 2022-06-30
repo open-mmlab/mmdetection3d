@@ -45,10 +45,7 @@ class MinkSingleStage3DDetector(Base3DDetector):
         self.voxel_size = voxel_size
         self.init_weights()
 
-    def extract_feat(self, *args):
-        """Just implement @abstractmethod of BaseModule."""
-
-    def extract_feats(self, points):
+    def extract_feat(self, points):
         """Extract features from points.
 
         Args:
@@ -77,7 +74,7 @@ class MinkSingleStage3DDetector(Base3DDetector):
         Returns:
             dict: Centerness, bbox and classification loss values.
         """
-        x = self.extract_feats(points)
+        x = self.extract_feat(points)
         losses = self.head.forward_train(x, gt_bboxes_3d, gt_labels_3d,
                                          img_metas)
         return losses
@@ -92,7 +89,7 @@ class MinkSingleStage3DDetector(Base3DDetector):
         Returns:
             list[dict]: Predicted 3d boxes.
         """
-        x = self.extract_feats(points)
+        x = self.extract_feat(points)
         bbox_list = self.head.forward_test(x, img_metas)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels)

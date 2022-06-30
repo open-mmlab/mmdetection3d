@@ -1,4 +1,4 @@
-_base_ = ['fcaf3d.py']
+_base_ = ['fcaf3d_8x2_scannet-3d-18class.py']
 n_points = 100000
 
 model = dict(

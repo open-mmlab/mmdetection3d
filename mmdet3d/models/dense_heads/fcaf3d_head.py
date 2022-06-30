@@ -32,10 +32,12 @@ class FCAF3DHead(BaseModule):
         n_reg_outs (int): Number of regression layer channels.
         voxel_size (float): Voxel size in meters.
         pts_prune_threshold (int): Pruning threshold on each feature level.
-        pts_assign_threshold (int): Min number of location per box to
-            be assigned with.
-        pts_center_threshold (int): Max number of locations per box to
-            be assigned with.
+        pts_assign_threshold (int): Box to location assigner parameter.
+            Assigner selects the maximum feature level with more locations
+            inside the box than pts_assign_threshold.
+        pts_center_threshold (int): Box to location assigner parameter.
+            After feature level for the box is determined, assigner selects
+            pts_center_threshold locations closest to the box center.
         center_loss (dict, optional): Config of centerness loss.
         bbox_loss (dict, optional): Config of bbox loss.
         cls_loss (dict, optional): Config of classification loss.
@@ -131,21 +133,21 @@ class FCAF3DHead(BaseModule):
                              self._make_block(in_channels[i], out_channels))
 
         # head layers
-        self.center_conv = ME.MinkowskiConvolution(
+        self.conv_center = ME.MinkowskiConvolution(
             out_channels, 1, kernel_size=1, dimension=3)
-        self.reg_conv = ME.MinkowskiConvolution(
+        self.conv_reg = ME.MinkowskiConvolution(
             out_channels, n_reg_outs, kernel_size=1, dimension=3)
-        self.cls_conv = ME.MinkowskiConvolution(
+        self.conv_cls = ME.MinkowskiConvolution(
             out_channels, n_classes, kernel_size=1, bias=True, dimension=3)
         self.scales = nn.ModuleList(
             [Scale(1.) for _ in range(len(in_channels))])
 
     def init_weights(self):
         """Initialize weights."""
-        nn.init.normal_(self.center_conv.kernel, std=.01)
-        nn.init.normal_(self.reg_conv.kernel, std=.01)
-        nn.init.normal_(self.cls_conv.kernel, std=.01)
-        nn.init.constant_(self.cls_conv.bias, bias_init_with_prob(.01))
+        nn.init.normal_(self.conv_center.kernel, std=.01)
+        nn.init.normal_(self.conv_reg.kernel, std=.01)
+        nn.init.normal_(self.conv_cls.kernel, std=.01)
+        nn.init.constant_(self.conv_cls.bias, bias_init_with_prob(.01))
 
     def forward(self, x):
         """Forward pass.
@@ -242,14 +244,14 @@ class FCAF3DHead(BaseModule):
         Returns:
             tuple[Tensor]: Per level head predictions.
         """
-        center_pred = self.center_conv(x).features
-        scores = self.cls_conv(x)
+        center_pred = self.conv_center(x).features
+        scores = self.conv_cls(x)
         cls_pred = scores.features
         prune_scores = ME.SparseTensor(
             scores.features.max(dim=1, keepdim=True).values,
             coordinate_map_key=scores.coordinate_map_key,
             coordinate_manager=scores.coordinate_manager)
-        reg_final = self.reg_conv(x).features
+        reg_final = self.conv_reg(x).features
         reg_distance = torch.exp(scale(reg_final[:, :6]))
         reg_angle = reg_final[:, 6:]
         bbox_pred = torch.cat((reg_distance, reg_angle), dim=1)
@@ -547,9 +549,8 @@ class FCAF3DHead(BaseModule):
             gt_labels (Tensor): Ground truth labels.
 
         Returns:
-            Tensor: Centerness targets for all locations.
-            Tensor: Bbox targets for all locations.
-            Tensor: Classification targets for all locations.
+            tuple[Tensor]: Centerness, bbox and classification
+                targets for all locations.
         """
         float_max = points[0].new_tensor(1e8)
         n_levels = len(points)
@@ -632,7 +633,7 @@ class FCAF3DHead(BaseModule):
             Tensor: Predicted labels.
         """
         n_classes = scores.shape[1]
-        yaw_flag = bboxes.shape[1] == 7
+        with_yaw = bboxes.shape[1] == 7
         nms_bboxes, nms_scores, nms_labels = [], [], []
         for i in range(n_classes):
             ids = scores[:, i] > self.test_cfg.score_thr
@@ -641,7 +642,7 @@ class FCAF3DHead(BaseModule):
 
             class_scores = scores[ids, i]
             class_bboxes = bboxes[ids]
-            if yaw_flag:
+            if with_yaw:
                 nms_function = nms3d
             else:
                 class_bboxes = torch.cat(
@@ -666,12 +667,10 @@ class FCAF3DHead(BaseModule):
             nms_scores = bboxes.new_zeros((0, ))
             nms_labels = bboxes.new_zeros((0, ))
 
-        if yaw_flag:
+        if with_yaw:
             box_dim = 7
-            with_yaw = True
         else:
             box_dim = 6
-            with_yaw = False
             nms_bboxes = nms_bboxes[:, :6]
         nms_bboxes = img_meta['box_type_3d'](
             nms_bboxes,

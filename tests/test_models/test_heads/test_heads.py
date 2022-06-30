@@ -1639,9 +1639,12 @@ def test_fcaf3d_head():
     ]
 
     losses = head.forward_train(x, gt_bboxes, gt_labels, img_metas)
-    assert losses['center_loss'].shape == torch.Size([])
-    assert losses['bbox_loss'].shape == torch.Size([])
-    assert losses['cls_loss'].shape == torch.Size([])
+    assert torch.allclose(
+        losses['center_loss'].detach().cpu(), torch.tensor(0.7079), atol=1e-4)
+    assert torch.allclose(
+        losses['bbox_loss'].detach().cpu(), torch.tensor(0.9995), atol=1e-4)
+    assert torch.allclose(
+        losses['cls_loss'].detach().cpu(), torch.tensor(592.8), atol=1e-1)
 
     # test forward test
     bbox_list = head.forward_test(x, img_metas)
