@@ -202,14 +202,14 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                 self.post_center_range, device=heat.device)
             mask = (final_box_preds[..., :3] >=
                     self.post_center_range[:3]).all(2)
-            mask &= (final_box_preds[..., :3] <=
-                     self.post_center_range[3:]).all(2)
+            mask = mask & (final_box_preds[..., :3] <=
+                           self.post_center_range[3:]).all(2)
 
             predictions_dicts = []
             for i in range(batch):
                 cmask = mask[i, :]
                 if self.score_threshold:
-                    cmask &= thresh_mask[i]
+                    cmask = cmask & thresh_mask[i]
 
                 boxes3d = final_box_preds[i, cmask]
                 scores = final_scores[i, cmask]

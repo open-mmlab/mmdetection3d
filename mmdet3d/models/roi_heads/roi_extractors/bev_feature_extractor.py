@@ -38,6 +38,7 @@ class BEVFeatureExtractor(BaseModule):
                  shape of each feature map is [B, C_i, H_i, W_i]
             rois (list[list[bboxes, ...]]): Decoded bbox, scores and labels
                 The out list indicates the rois in a batch.
+
                 - bboxes (:obj:`BaseInstance3DBoxes`): Prediction bboxes
 
         Returns:

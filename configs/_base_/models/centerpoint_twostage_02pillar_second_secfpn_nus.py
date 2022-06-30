@@ -1,19 +1,19 @@
-voxel_size = [0.2, 0.2, 8]
-point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+voxel_size_ = [0.2, 0.2, 8]
+point_cloud_range_ = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 model = dict(
     type='CenterPointTwoStage',
     voxel_layer=dict(
         max_num_points=20,
-        voxel_size=voxel_size,
+        voxel_size=voxel_size_,
         max_voxels=(30000, 40000),
-        point_cloud_range=point_cloud_range),
+        point_cloud_range=point_cloud_range_),
     voxel_encoder=dict(
         type='PillarFeatureNet',
         in_channels=5,
         feat_channels=[64],
         with_distance=False,
-        voxel_size=voxel_size,
-        point_cloud_range=point_cloud_range,
+        voxel_size=voxel_size_,
+        point_cloud_range=point_cloud_range_,
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
         legacy=False),
     middle_encoder=dict(
@@ -45,18 +45,17 @@ model = dict(
             dict(num_class=2, class_names=['motorcycle', 'bicycle']),
             dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
         ],
-        common_heads=dict(
-            reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), vel=(2, 2)),
+        common_heads=dict(reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2)),
         share_conv_channel=64,
         bbox_coder=dict(
             type='CenterPointBBoxCoder',
-            pc_range=point_cloud_range[:2],
+            pc_range=point_cloud_range_[:2],
             post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
             max_num=500,
             score_threshold=0.1,
             out_size_factor=4,
-            voxel_size=voxel_size[:2],
-            code_size=9),
+            voxel_size=voxel_size_[:2],
+            code_size=7),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
@@ -66,8 +65,8 @@ model = dict(
         type='CenterPointRoIHead',
         bev_feature_extractor_cfg=dict(
             type='BEVFeatureExtractor',
-            pc_start=point_cloud_range[:2],
-            voxel_size=voxel_size[:2],
+            pc_start=point_cloud_range_[:2],
+            voxel_size=voxel_size_[:2],
             downsample_stride=1,
         ),
         bbox_head=dict(
@@ -91,12 +90,12 @@ model = dict(
             max_objs=500,
             dense_reg=1,
             grid_size=[512, 512, 1],
-            point_cloud_range=point_cloud_range,
-            voxel_size=voxel_size,
+            point_cloud_range=point_cloud_range_,
+            voxel_size=voxel_size_,
             out_size_factor=4,
             gaussian_overlap=0.1,
             min_radius=2,
-            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2]),
+            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]),
         rcnn=dict(
             assigner=dict(
                 type='MaxIoUAssigner',
@@ -125,9 +124,9 @@ model = dict(
             max_pool_nms=False,
             min_radius=[4, 12, 10, 1, 0.85, 0.175],
             score_threshold=0.1,
-            pc_range=point_cloud_range[:2],
+            pc_range=point_cloud_range_[:2],
             out_size_factor=4,
-            voxel_size=voxel_size[:2],
+            voxel_size=voxel_size_[:2],
             nms_type='rotate',
             pre_max_size=1000,
             post_max_size=83,

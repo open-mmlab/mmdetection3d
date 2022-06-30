@@ -15,10 +15,14 @@ class CenterPointBBoxHead(BaseModule):
     """Box head of the second stage CenterPoint.
 
     Args:
-        input_channels (int): The number of input channels.
-        shared_fc (list[int]): Output channels of the shared head.
-        cls_fc (list[int]): Output channels of the classification head.
-        reg_fc (list[int]): Output channels of the regression head.
+        input_channels (int, optional): The number of input channels. Default
+            to 1920=128*3*5
+        shared_fc (list[int], optional): Output channels of the shared head.
+            Default to [256, 256].
+        cls_fc (list[int]): Output channels of the classification head. Default
+             to [256, 256].
+        reg_fc (list[int]): Output channels of the regression head. Default to
+            [256, 256].
         loss_reg (dict, optional): Config dict of regression loss.
         loss_cls (dict, optional): Config dict of classification loss.
         dp_ratio (float, optional): Ratio of Dropout. Default to 0.3.
@@ -28,10 +32,10 @@ class CenterPointBBoxHead(BaseModule):
     """
 
     def __init__(self,
-                 input_channels,
-                 shared_fc,
-                 cls_fc,
-                 reg_fc,
+                 input_channels=128 * 3 * 5,
+                 shared_fc=[256, 256],
+                 cls_fc=[256, 256],
+                 reg_fc=[256, 256],
                  loss_reg=dict(
                      type='L1Loss', reduction='none', loss_weight=1.0),
                  loss_cls=dict(
@@ -71,7 +75,9 @@ class CenterPointBBoxHead(BaseModule):
                                               dp_ratio)
 
         self.num_classes = num_classes
+
         self.code_size = code_size
+        assert self.code_size == 7, 'ONLY surpport code_size == 7 now.'
 
     def forward(self, roi_features):
         """Forward function for CenterPointBBoxHead.
@@ -84,6 +90,7 @@ class CenterPointBBoxHead(BaseModule):
             list[dict[str, torch.Tensor]]: Contains predictions of bbox
                 refinement head and classification head. The outer list
                 indicates the prediction result in each batch.
+
                 - cls (torch.Tensor): [N, num_class]
                 - reg (torch.Tensor): [N, code_size]
         """
@@ -105,7 +112,7 @@ class CenterPointBBoxHead(BaseModule):
 
         Args:
             roi_features_sampled list[torch.Tensor]: roi features after
-                sampling with shape of [N, 5*C]. cat([pos_box, neg_box])
+                sampling with shape of [N, 5*C].
             sample_results list[(:obj:`SamplingResult`)]: Sampled results used
                 for training.
             cfg (:obj:`ConfigDict`): Training config.
@@ -128,10 +135,17 @@ class CenterPointBBoxHead(BaseModule):
         losses.update(loss_cls=loss_cls)
 
         bbox_pred = torch.cat([pred_batch['reg'] for pred_batch in pred_res],
-                              dim=0)
+                              dim=0)  # 0 向量
         bbox_targets = torch.cat(
             list(bbox_targets), dim=0).reshape(-1, self.code_size)
         bbox_weights = torch.cat(list(bbox_weights), dim=0).reshape(-1, 1)
+
+        print('label.shape: ', label.shape)
+        print('bbox_pred.shape: ', bbox_pred.shape)
+        print('bbox_targets.shape: ', bbox_targets.shape)
+        print('label_weights.shape: ', label_weights.shape)
+        print('bbox_weights.shape: ', bbox_weights.shape)
+
         loss_reg = self.loss_reg(bbox_pred, bbox_targets, bbox_weights)
         losses.update(loss_reg=loss_reg)
 
@@ -146,6 +160,7 @@ class CenterPointBBoxHead(BaseModule):
             imput_metas (list[dict]): Meta info of each input.
             rois (list[list[bboxes, scores, labels]]): Decoded bbox, scores
                  and labels.
+
                 - bboxes (:obj:`BaseInstance3DBoxes`): Prediction bboxes
                     after nms
                 - scores (torch.Tensor): Prediction scores after nms with the
@@ -154,10 +169,13 @@ class CenterPointBBoxHead(BaseModule):
                     shape of [N].
 
         Returns:
-            list[list[boxes, scores, labels]]: final predicted bboxes
-                    bboxes (:obj:`BaseInstance3DBoxes`): finale bboxes
-                    scores (torch.Tensor): finale scores
-                    labels (torch.Tensor): finale labels
+            list[list[boxes, scores, labels]]: Final predicted results, the
+                outer list indicates different images, and the internal list
+                contains three tensors, arrange as the following.
+
+                - bboxes (:obj:`BaseInstance3DBoxes`): finale bboxes
+                - scores (torch.Tensor): finale scores
+                - labels (torch.Tensor): finale labels
         """
 
         pred_res = self(roi_features)
@@ -179,8 +197,8 @@ class CenterPointBBoxHead(BaseModule):
                 dxyz, rois[batch_idx][0].yaw, axis=2).squeeze(1)
             reg[:, :3] = dxyz
 
-            bboxes = reg + rois[batch_idx][
-                0].tensor[:, :7]  # TODO: consider velocity
+            # NOTE: Two-stage centerpoint do not consider velocity.
+            bboxes = reg + rois[batch_idx][0].tensor[:, :7]
 
             res_lists.append([bboxes, scores, rois[batch_idx][2]])
         return res_lists
@@ -235,11 +253,11 @@ class CenterPointBBoxHead(BaseModule):
 
         Args:
             pos_bboxes (torch.Tensor): Positive boxes with shape
-                (N, 7).
+                (N, one_stage_code_size).
             pos_gt_bboxes (torch.Tensor): Ground truth boxes with shape
-                (M, 7).
+                (N, one_stage_code_size).
             ious (torch.Tensor): IoU between `pos_bboxes` and `pos_gt_bboxes`
-                in shape (N, M).
+                in shape (N, ).
             cfg (dict): Training configs.
 
         Returns:
@@ -260,7 +278,8 @@ class CenterPointBBoxHead(BaseModule):
         reg_mask = ious > cfg.reg_pos_thr
         bbox_weights = (reg_mask > 0).float()
         if reg_mask.bool().any():
-            pos_gt_bboxes_ct = pos_gt_bboxes.clone().detach()
+            pos_gt_bboxes_ct = pos_gt_bboxes[:, :self.code_size].clone(
+            ).detach()
             roi_ry = pos_bboxes[..., 6] % (2 * np.pi)
 
             # canonical transformation
@@ -280,14 +299,11 @@ class CenterPointBBoxHead(BaseModule):
             ry_label = torch.clamp(ry_label, min=-np.pi / 2, max=np.pi / 2)
             pos_gt_bboxes_ct[..., 6] = ry_label
 
-            rois_anchor = pos_bboxes.clone().detach()
-            rois_anchor[:, 0:3] = 0
-            rois_anchor[:, 6] = 0
             # Directly encode as (dx, dy, dz, dw, dl, dh, dtheta)
             bbox_targets = pos_gt_bboxes_ct
         else:
             # no fg bbox
-            bbox_targets = pos_gt_bboxes.new_empty((0, 7))
+            bbox_targets = pos_gt_bboxes.new_empty((0, self.code_size))
 
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)

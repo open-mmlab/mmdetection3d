@@ -22,9 +22,11 @@ class CenterPointTwoStage(TwoStage3DDetector):
         rpn_head (dict): Config of one-stage head.
         roi_head (dict): Config of two-stage head.
         train_cfg (dict, optional): Config of the training. Defaults to None.
+
             - rpn (dict): Training config for RPN head.
             - rcnn (dict): Training config for two-stage roi head.
         test_cfg (dict, optional): Config of the testing. Defaults to None.
+
             - rpn (dict): Training config for RPN head.
             - rcnn (dict): Training config for two-stage roi head.
         init_cfg (dict, optional): Initialization config dict. Defaults to None
@@ -92,7 +94,9 @@ class CenterPointTwoStage(TwoStage3DDetector):
 
         Returns:
             dict: Losses from CenterPoint Two-Stage head.
+
                 - loss_bbox (torch.Tensor): Loss of bboxes.
+                - loss ...
         """
         losses = dict()
         # - extract feature
@@ -123,11 +127,12 @@ class CenterPointTwoStage(TwoStage3DDetector):
             imput_metas (list[dict]): Meta info of each input.
             imgs (list[torch.Tensor], optional): Images of each sample.
                 Default to None.
-            rescale (bool, optional): Whether to rescale results. Default
-                to False.
+            rescale (bool, optional, optional): Whether to rescale results.
+                Default to False.
 
         Returns:
             list[dict[str, torch.Tensor]]: Bounding box results in cpu mode.
+
                 - boxes_3d (torch.Tensor): 3D boxes.
                 - scores_3d (torch.Tensor): Prediction scores.
                 - labels_3d (torch.Tensor): Box labels.

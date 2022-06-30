@@ -598,8 +598,9 @@ def test_centerpoint_two_stage():
         flip=True,
         pcd_horizontal_flip=True,
         pcd_vertical_flip=False)
+    code_size = cfg.rpn_head.bbox_coder.code_size
     bboxes = LiDARInstance3DBoxes(
-        torch.rand([10, 9], device='cuda'), box_dim=9)
+        torch.rand([10, code_size], device='cuda'), box_dim=code_size)
     labels = torch.ones(len(bboxes), dtype=torch.long, device='cuda')
     img_metas = [img_meta, img_meta]
     gt_bboxes_3d = [bboxes, bboxes]
