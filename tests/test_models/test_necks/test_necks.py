@@ -132,3 +132,58 @@ def test_dla_neck():
         ]
         outputs = neck(feats)
         assert outputs[0].shape == (4, 64, 8, 8)
+
+
+def test_lss_view_transformer():
+    grid_config = {
+        'x': [-51.2, 51.2, 0.8],
+        'y': [-51.2, 51.2, 0.8],
+        'z': [-10.0, 10.0, 20.0],
+        'depth': [1.0, 60.0, 1.0],
+    }
+    neck_cfg = dict(
+        type='ViewTransformerLiftSplatShoot',
+        grid_config=grid_config,
+        input_size=(256, 704),
+        downsample=16,
+        in_channels=512,
+        tran_channels=64,
+        accelerate=False)
+    neck = build_neck(neck_cfg)
+    neck.init_weights()
+    neck = neck.cuda()
+
+    iv_feats = torch.rand(1, 2, 512, 44, 16).cuda()
+    rots = torch.tensor([[[1.0000, 0.0067, 0.0017], [-0.0019, 0.0194, 0.9998],
+                          [0.0067, -0.9998, 0.0194]],
+                         [[0.5480, -0.0104, 0.8364], [-0.8360, 0.0250, 0.5481],
+                          [-0.0266, -0.9996, 0.0050]]]).cuda().unsqueeze(0)
+    trans = torch.tensor([[-0.0097, 0.4028, -0.3244],
+                          [0.4984, 0.3233, -0.3376]]).cuda().unsqueeze(0)
+
+    intrins = torch.tensor([[[1.2664e+03, 0.0000e+00, 8.1627e+02],
+                             [0.0000e+00, 1.2664e+03, 4.9151e+02],
+                             [0.0000e+00, 0.0000e+00,
+                              1.0000e+00]]]).cuda().expand(1, 2, 3, 3)
+
+    post_rots = torch.tensor([[[0.4800, 0.0000, 0.0000],
+                               [0.0000, 0.4800, 0.0000],
+                               [0.0000, 0.0000, 1.0000]],
+                              [[0.4800, 0.0000, 0.0000],
+                               [0.0000, 0.4800, 0.0000],
+                               [0.0000, 0.0000, 1.0000]]]).cuda().unsqueeze(0)
+
+    post_trans = torch.tensor([[-32., -176., 0.], [-32., -176.,
+                                                   0.]]).cuda().unsqueeze(0)
+
+    inputs = (iv_feats, rots, trans, intrins, post_rots, post_trans)
+    bev_feats = neck(inputs)
+    assert bev_feats.shape == (1, 64, 128, 128)
+
+    neck.accelerate = True
+    neck.max_voxel_points = 300
+    bev_feats_acc = neck(inputs)
+    assert bev_feats_acc.shape == (1, 64, 128, 128)
+    assert torch.sum(
+        (bev_feats - bev_feats_acc).abs() < 0.0001).float() / (64 * 128 *
+                                                               128) > 0.99
