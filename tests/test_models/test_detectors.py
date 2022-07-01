@@ -613,14 +613,14 @@ def test_centerpoint_two_stage():
     # test_simple_test
     with torch.no_grad():
         results = self.simple_test(points, img_metas)
-    boxes_3d_0 = results[0]['boxes_3d']
+    boxes_3d_0 = results[0]['boxes_3d'].tensor
     scores_3d_0 = results[0]['scores_3d']
     labels_3d_0 = results[0]['labels_3d']
     assert boxes_3d_0.shape[0] >= 0
     assert boxes_3d_0.shape[1] == 7
     assert scores_3d_0.shape[0] >= 0
     assert labels_3d_0.shape[0] >= 0
-    boxes_3d_1 = results[1]['boxes_3d']
+    boxes_3d_1 = results[1]['boxes_3d'].tensor
     scores_3d_1 = results[1]['scores_3d']
     labels_3d_1 = results[1]['labels_3d']
     assert boxes_3d_1.shape[0] >= 0

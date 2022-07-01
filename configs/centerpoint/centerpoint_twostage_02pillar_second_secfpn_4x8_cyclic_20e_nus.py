@@ -172,8 +172,19 @@ data = dict(
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')),
-    val=dict(pipeline=test_pipeline, classes=class_names, with_velocity=False),
+    val=dict(
+        pipeline=test_pipeline,
+        classes=class_names,
+        with_velocity=False,
+        data_root=data_root + '/v1.0-mini/',
+        ann_file=data_root + '/v1.0-mini/' + 'nuscenes_infos_val.pkl',
+    ),
     test=dict(
-        pipeline=test_pipeline, classes=class_names, with_velocity=False))
+        pipeline=test_pipeline,
+        classes=class_names,
+        with_velocity=False,
+        data_root=data_root + '/v1.0-mini/',
+        ann_file=data_root + '/v1.0-mini/' + 'nuscenes_infos_val.pkl',
+    ))
 
 evaluation = dict(interval=20, pipeline=eval_pipeline)

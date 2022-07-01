@@ -70,7 +70,6 @@ class BEVFeatureExtractor(BaseModule):
             ],
                                     dim=1)  # [num_box, 5*C]
             roi_features.append(roi_feature)
-
         return roi_features
 
     @staticmethod
@@ -105,7 +104,6 @@ class BEVFeatureExtractor(BaseModule):
         right = (front_right + back_right) / 2.0
         points = torch.cat([center, front, back, left, right],
                            dim=0)  # [5*num_box, 2]
-
         return points
 
     @staticmethod

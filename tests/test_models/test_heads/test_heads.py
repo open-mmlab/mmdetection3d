@@ -1626,7 +1626,7 @@ def test_centerpoint_roi_head():
     bev_feats = torch.rand((1, C, H, W))
     bev_feats = [bev_feats]
 
-    img_metas = [{}]
+    img_metas = [{'box_type_3d': LiDARInstance3DBoxes}]
 
     bboxes = torch.tensor([[0, 0, 0, 3.2, 1.6, 1.5, 0],
                            [0, 0, 0, 3.2, 1.6, 1.5, pi / 2],
@@ -1637,7 +1637,7 @@ def test_centerpoint_roi_head():
     rois = [[LiDARInstance3DBoxes(bboxes), scores, labels]]
     bbox_results = self.simple_test(bev_feats, img_metas, rois)
     assert len(bbox_results) == 1
-    assert bbox_results[0]['boxes_3d'].shape == torch.Size([3, 7])
+    assert bbox_results[0]['boxes_3d'].tensor.shape == torch.Size([3, 7])
     assert bbox_results[0]['scores_3d'].shape == torch.Size([3])
     assert bbox_results[0]['labels_3d'].shape == torch.Size([3])
 

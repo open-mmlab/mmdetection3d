@@ -95,8 +95,15 @@ class CenterPointTwoStage(TwoStage3DDetector):
         Returns:
             dict: Losses from CenterPoint Two-Stage head.
 
-                - loss_bbox (torch.Tensor): Loss of bboxes.
-                - loss ...
+                - taskn.loss_heatmap (torch.Tensor): Heatmap loss from taskn
+                    in the first stage.
+                - taskn.loss_bbox (torch.Tensor): Bbox loss from the taskn in
+                     the first stage.
+                - loss_cls (torch.Tensor): Classification loss from the second
+                     stage.
+                - loss_reg (torch.Tensor): Regression loss from the second
+                    stage.
+                - loss (torch.Tensor): Total loss.
         """
         losses = dict()
         # - extract feature
@@ -114,7 +121,6 @@ class CenterPointTwoStage(TwoStage3DDetector):
         roi_losses = self.roi_head.forward_train(bev_feature, img_metas, rois,
                                                  gt_bboxes_3d, gt_labels_3d)
         losses.update(roi_losses)
-
         return losses
 
     def simple_test(self, points, img_metas, imgs=None, rescale=False):
@@ -133,7 +139,7 @@ class CenterPointTwoStage(TwoStage3DDetector):
         Returns:
             list[dict[str, torch.Tensor]]: Bounding box results in cpu mode.
 
-                - boxes_3d (torch.Tensor): 3D boxes.
+                - boxes_3d (:obj:`BaseInstance3DBoxes`): 3D boxes.
                 - scores_3d (torch.Tensor): Prediction scores.
                 - labels_3d (torch.Tensor): Box labels.
                 - attrs_3d (torch.Tensor, optional): Box attributes.

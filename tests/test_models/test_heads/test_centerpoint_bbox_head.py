@@ -49,8 +49,8 @@ def test_centerpoint_bbox_head():
         torch.ones(rois_tensor.shape[0]),
         torch.zeros(rois_tensor.shape[0])
     ]]
-
     roi_features = bev_feature_extractor(bev_feats, rois)  # [[3,5*C]]
+    img_metas = [{'box_type_3d': LiDARInstance3DBoxes}]
 
     # test forward
     pred_res = bbox_head(roi_features)
@@ -61,7 +61,7 @@ def test_centerpoint_bbox_head():
     assert pred_res[0]['reg'].shape == torch.Size([3, bbox_head.code_size])
 
     # test get_bboxes
-    final_bboxes = bbox_head.get_bboxes(roi_features, None, rois)
+    final_bboxes = bbox_head.get_bboxes(roi_features, img_metas, rois)
     # - assert batch size
     assert len(final_bboxes) == len(rois) == len(roi_features)
     # - assert the number of bboxes
