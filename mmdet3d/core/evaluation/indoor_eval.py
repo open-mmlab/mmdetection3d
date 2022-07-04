@@ -231,7 +231,8 @@ def indoor_eval(gt_annos,
     assert len(dt_annos) == len(gt_annos)
     pred = {}  # map {class_id: pred}
     gt = {}  # map {class_id: gt}
-    for img_id in range(len(dt_annos)):
+
+    for img_id in range(len(dt_annos)): ## gt = ground truth ## dt = d
         # parse detected annotations
         det_anno = dt_annos[img_id]['pts_bbox']
         for i in range(len(det_anno['labels_3d'])):
@@ -260,8 +261,9 @@ def indoor_eval(gt_annos,
             gt_boxes = box_type_3d(np.array([], dtype=np.float32))
             labels_3d = np.array([], dtype=np.int64)
 
+
         for i in range(len(labels_3d)):
-            label = labels_3d[i]
+            # label = 0 if labels_3d[i]=='Car' else 1
             bbox = gt_boxes[i]
             if label not in gt:
                 gt[label] = {}
@@ -269,6 +271,8 @@ def indoor_eval(gt_annos,
                 gt[label][img_id] = []
             gt[label][img_id].append(bbox)
 
+
+    print(gt)
     rec, prec, ap = eval_map_recall(pred, gt, metric)
     ret_dict = dict()
     header = ['classes']
