@@ -64,8 +64,9 @@ class QuickCumsum(torch.autograd.Function):
 
 @NECKS.register_module()
 class ViewTransformerLSS(BaseModule):
-    """Lift-Splat-Shoot view transformer for transform image-view feature into
-    bird-eye-view feature.
+    r"""Lift-Splat-Shoot view transformer.
+
+    Please refer to the `paper <https://arxiv.org/abs/2008.05711>`_
 
     Args:
         grid_config (dict): Config of grid alone each axis in format of
@@ -250,7 +251,7 @@ class ViewTransformerLSS(BaseModule):
 
         return final
 
-    def acceleration_initialize(self, coor, x):
+    def init_acceleration(self, coor, x):
         """Pre-compute the necessary information in acceleration including the
         index of points in the final feature.
 
@@ -338,7 +339,7 @@ class ViewTransformerLSS(BaseModule):
         if self.accelerate:
             if self.initial_flag:
                 coor = self.get_lidar_coor(*input[1:])
-                self.acceleration_initialize(coor, volume)
+                self.init_acceleration(coor, volume)
             bev_feat = self.voxel_pooling_accelerated(volume)
         else:
             coor = self.get_lidar_coor(*input[1:])
