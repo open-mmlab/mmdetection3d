@@ -4,9 +4,9 @@ from .dla_neck import DLANeck
 from .imvoxel_neck import OutdoorImVoxelNeck
 from .pointnet2_fp_neck import PointNetFPNeck
 from .second_fpn import SECONDFPN
-from .view_transformer import ViewTransformerLiftSplatShoot
+from .view_transformer import ViewTransformerLSS
 
 __all__ = [
     'FPN', 'SECONDFPN', 'OutdoorImVoxelNeck', 'PointNetFPNeck', 'DLANeck',
-    'ViewTransformerLiftSplatShoot'
+    'ViewTransformerLSS'
 ]

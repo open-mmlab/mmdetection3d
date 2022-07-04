@@ -135,6 +135,9 @@ def test_dla_neck():
 
 
 def test_lss_view_transformer():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
     grid_config = {
         'x': [-51.2, 51.2, 0.8],
         'y': [-51.2, 51.2, 0.8],
@@ -142,18 +145,18 @@ def test_lss_view_transformer():
         'depth': [1.0, 60.0, 1.0],
     }
     neck_cfg = dict(
-        type='ViewTransformerLiftSplatShoot',
+        type='ViewTransformerLSS',
         grid_config=grid_config,
         input_size=(256, 704),
         downsample=16,
         in_channels=512,
-        tran_channels=64,
+        out_channels=64,
         accelerate=False)
     neck = build_neck(neck_cfg)
     neck.init_weights()
     neck = neck.cuda()
 
-    iv_feats = torch.rand(1, 2, 512, 44, 16).cuda()
+    feats_image_view = torch.rand(1, 2, 512, 44, 16).cuda()
     rots = torch.tensor([[[1.0000, 0.0067, 0.0017], [-0.0019, 0.0194, 0.9998],
                           [0.0067, -0.9998, 0.0194]],
                          [[0.5480, -0.0104, 0.8364], [-0.8360, 0.0250, 0.5481],
@@ -176,14 +179,14 @@ def test_lss_view_transformer():
     post_trans = torch.tensor([[-32., -176., 0.], [-32., -176.,
                                                    0.]]).cuda().unsqueeze(0)
 
-    inputs = (iv_feats, rots, trans, intrins, post_rots, post_trans)
-    bev_feats = neck(inputs)
-    assert bev_feats.shape == (1, 64, 128, 128)
+    inputs = (feats_image_view, rots, trans, intrins, post_rots, post_trans)
+    feats_bev = neck(inputs)
+    assert feats_bev.shape == (1, 64, 128, 128)
 
     neck.accelerate = True
     neck.max_voxel_points = 300
-    bev_feats_acc = neck(inputs)
-    assert bev_feats_acc.shape == (1, 64, 128, 128)
+    feats_bev_acc = neck(inputs)
+    assert feats_bev_acc.shape == (1, 64, 128, 128)
     assert torch.sum(
-        (bev_feats - bev_feats_acc).abs() < 0.0001).float() / (64 * 128 *
+        (feats_bev - feats_bev_acc).abs() < 0.0001).float() / (64 * 128 *
                                                                128) > 0.99

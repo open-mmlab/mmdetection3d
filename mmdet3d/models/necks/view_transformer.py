@@ -7,7 +7,32 @@ from ..builder import NECKS
 
 
 class QuickCumsum(torch.autograd.Function):
-    """Back propagation accelerated cumulative sum operator."""
+    """Sum up the features of all points within the same voxel through
+    cumulative sum operator.
+
+    All inputs should be sorted by the rank of voxels.
+
+    The function implementation process is as follows:
+
+        - step 1: Cumulatively sum the point-wise feature alone the point
+            queue.
+        - step 2: Remove the duplicated points with the same voxel rank and
+            only retain the last one in the point queue.
+        - step 3: Subtract each point feature with the previous one to obtain
+            the cumulative sum of the points in the same voxel.
+
+    Args:
+        x (torch.tensor): Point-wise features in shape (N_Points, C).
+        coor (torch.tensor): of shape (N_Points, D). The coordinate of points
+            in the feature coordinate system.
+        ranks (torch.tensor): of shape (N_Points). The rank of voxel that a
+            point is belong to.
+
+    Returns:
+        torch.tensor: Voxel-wise features in shape (N_Voxels, C).
+        torch.tensor: of shape (N_Voxels,3). The coordinate of voxels in the
+            feature coordinate system.
+    """
 
     @staticmethod
     def forward(ctx, x, coor, ranks):
@@ -27,7 +52,7 @@ class QuickCumsum(torch.autograd.Function):
         return x, coor
 
     @staticmethod
-    def backward(ctx, gradx, gradgeom):
+    def backward(ctx, gradx, gradcoor):
         kept, = ctx.saved_tensors
         back = torch.cumsum(kept, 0)
         back[kept] -= 1
@@ -38,18 +63,17 @@ class QuickCumsum(torch.autograd.Function):
 
 
 @NECKS.register_module()
-class ViewTransformerLiftSplatShoot(BaseModule):
+class ViewTransformerLSS(BaseModule):
     """Lift-Splat-Shoot view transformer for transform image-view feature into
     bird-eye-view feature.
 
     Args:
-        grid_config (dict(axis:list(float,float,float))): Config of grid alone
-            each axis in format of (lower_bound, upper_bound, interval). axis
-            in {x,y,z,depth}.
+        grid_config (dict): Config of grid alone each axis in format of
+            (lower_bound, upper_bound, interval). axis in {x,y,z,depth}.
         input_size (tuple(int)): Size of input images in format of (height,
             width).
         in_channels (int): Channels of input feature.
-        tran_channels (int): Channels of transformed feature.
+        out_channels (int): Channels of transformed feature.
         accelerate (bool): Whether the view transformation is conducted with
             acceleration. Note: the intrinsic and extrinsic of cameras should
             be constant when 'accelerate' is set true.
@@ -62,20 +86,19 @@ class ViewTransformerLiftSplatShoot(BaseModule):
                  input_size,
                  downsample,
                  in_channels,
-                 tran_channels,
+                 out_channels,
                  accelerate=False,
                  max_voxel_points=300):
-        super(ViewTransformerLiftSplatShoot, self).__init__()
-        self.grid_config = grid_config
-        self.gen_grid_infos(**self.grid_config)
+        super(ViewTransformerLSS, self).__init__()
+        self.gen_grid_infos(**grid_config)
 
         self.input_size = input_size
         self.downsample = downsample
 
-        self.create_frustum()
-        self.tran_channels = tran_channels
-        self.depthnet = nn.Conv2d(
-            in_channels, self.D + self.tran_channels, kernel_size=1, padding=0)
+        self.create_frustum(grid_config['depth'])
+        self.out_channels = out_channels
+        self.depth_net = nn.Conv2d(
+            in_channels, self.D + self.out_channels, kernel_size=1, padding=0)
         self.accelerate = accelerate
         self.max_voxel_points = max_voxel_points
         self.initial_flag = True
@@ -85,32 +108,29 @@ class ViewTransformerLiftSplatShoot(BaseModule):
         and size.
 
         Args:
-            x: Config of grid alone x axis in format of (lower_bound,
-                upper_bound, interval).
-            y: Config of grid alone y axis in format of (lower_bound,
-                upper_bound, interval).
-            z: Config of grid alone z axis in format of (lower_bound,
-                upper_bound, interval).
+            x (tuple(float)): Config of grid alone x axis in format of
+                (lower_bound, upper_bound, interval).
+            y (tuple(float)): Config of grid alone y axis in format of
+                (lower_bound, upper_bound, interval).
+            z (tuple(float)): Config of grid alone z axis in format of
+                (lower_bound, upper_bound, interval).
             **kwargs: Container for other potential parameters
         """
-        self.grid_lower_bound = \
-            nn.Parameter(torch.Tensor([cfg[0] + cfg[2]/2.0
-                                       for cfg in [x, y, z]]),
-                         requires_grad=False)
-        self.grid_interval = \
-            nn.Parameter(torch.Tensor([cfg[2] for
-                                       cfg in [x, y, z]]),
-                         requires_grad=False)
-        self.grid_size = \
-            nn.Parameter(torch.Tensor([(cfg[1] - cfg[0]) / cfg[2]
-                                       for cfg in [x, y, z]]),
-                         requires_grad=False)
+        self.grid_lower_bound = torch.Tensor([cfg[0] for cfg in [x, y, z]])
+        self.grid_interval = torch.Tensor([cfg[2] for cfg in [x, y, z]])
+        self.grid_size = torch.Tensor([(cfg[1] - cfg[0]) / cfg[2]
+                                       for cfg in [x, y, z]])
 
-    def create_frustum(self):
-        """Generate the frustum template for each image."""
+    def create_frustum(self, depth_cfg):
+        """Generate the frustum template for each image.
+
+        Args:
+            depth_cfg (tuple(float)): Config of grid alone depth axis in format
+                of (lower_bound, upper_bound, interval).
+        """
         H_in, W_in = self.input_size
         H_feat, W_feat = H_in // self.downsample, W_in // self.downsample
-        d = torch.arange(*self.grid_config['depth'], dtype=torch.float)\
+        d = torch.arange(*depth_cfg, dtype=torch.float)\
             .view(-1, 1, 1).expand(-1, H_feat, W_feat)
         self.D = d.shape[0]
         x = torch.linspace(0, W_in - 1, W_feat,  dtype=torch.float)\
@@ -122,8 +142,8 @@ class ViewTransformerLiftSplatShoot(BaseModule):
         frustum = torch.stack((x, y, d), -1)
         self.frustum = nn.Parameter(frustum, requires_grad=False)
 
-    def get_lidar_coor(self, rots, trans, intrins, post_rots, post_trans):
-        """Calculate the locations of the frustum points in the lidar(ego)
+    def get_lidar_coor(self, rots, trans, cam2imgs, post_rots, post_trans):
+        """Calculate the locations of the frustum points in the lidar
         coordinate system.
 
         Args:
@@ -131,14 +151,16 @@ class ViewTransformerLiftSplatShoot(BaseModule):
                 camera coordinate system to lidar coordinate system.
             trans (torch.Tensor): of shape (N, N_cams, 3). Translation from
                 camera coordinate system to lidar coordinate system.
-            intrins (torch.Tensor): of shape (N, N_cams, 3, 3). Camera
+            cam2imgs (torch.Tensor): of shape (N, N_cams, 3, 3). Camera
                 intrinsic matrixes.
             post_rots (torch.Tensor): of shape (N, N_cams, 3, 3). Rotation in
                 camera coordinate system derived from image view augmentation.
             post_trans (torch.Tensor): of shape (N, N_cams, 3). Translation in
                 camera coordinate system derived from image view augmentation.
 
-        Returns: Points with size B x N x D x H/downsample x W/downsample x 3
+        Returns:
+            torch.tensor: Point coordinates in shape (B, N, D, H/downsample,
+                W/downsample, 3)
         """
         B, N, _ = trans.shape
 
@@ -151,30 +173,41 @@ class ViewTransformerLiftSplatShoot(BaseModule):
         # cam_to_ego
         points = torch.cat(
             (points[..., :2, :] * points[..., 2:3, :], points[..., 2:3, :]), 5)
-        combine = rots.matmul(torch.inverse(intrins))
+        combine = rots.matmul(torch.inverse(cam2imgs))
         points = combine.view(B, N, 1, 1, 1, 3, 3).matmul(points).squeeze(-1)
         points += trans.view(B, N, 1, 1, 1, 3)
 
         return points
 
     def voxel_pooling_prepare(self, coor, x):
-        """Data preparation for voxel pooling."""
+        """Data preparation for voxel pooling.
+
+        Args:
+            coor (torch.tensor): of shape (B, N, D, H, W, 3). Coordinate
+                of points in the lidar space.
+            x (torch.tensor): of shape (B, N, D, H, W, C). Feature of points.
+
+        Returns:
+            torch.tensor: of shape (N_Points, C). Feature of points.
+            torch.tensor: of shape (N_Points, 3). Coordinate of points in the
+                voxel space.
+            torch.tensor: of shape (N_Points). Rank of the voxel that a point
+                is belong to.
+            torch.tensor: of shape (N_Points). Reserved index of points in the
+                input point queue.
+        """
         B, N, D, H, W, C = x.shape
         num_points = B * N * D * H * W
         # flatten x
         x = x.reshape(num_points, C)
         # record the index of selected points for acceleration purpose
         point_idx = torch.range(0, num_points - 1, dtype=torch.long)
-        # flatten indices
-        coor = ((coor - (self.grid_lower_bound - self.grid_interval / 2.)) /
-                self.grid_interval).long()
-        coor = coor.view(num_points, 3)
-        batch_idx = torch.cat([
-            torch.full([num_points // B, 1],
-                       idx,
-                       device=x.device,
-                       dtype=torch.long) for idx in range(B)
-        ])
+        # convert coordinate into the voxel space
+        coor = ((coor - self.grid_lower_bound.to(coor)) /
+                self.grid_interval.to(coor))
+        coor = coor.long().view(num_points, 3)
+        batch_idx = torch.range(0, B-1).reshape(B, 1).\
+            expand(B, num_points // B).view(num_points, 1).to(coor)
         coor = torch.cat((coor, batch_idx), 1)
 
         # filter out points that are outside box
@@ -187,20 +220,21 @@ class ViewTransformerLiftSplatShoot(BaseModule):
         ranks = coor[:, 0] * (self.grid_size[1] * self.grid_size[2] * B)
         ranks += coor[:, 1] * (self.grid_size[2] * B)
         ranks += coor[:, 2] * B + coor[:, 3]
-        sorts = ranks.argsort()
-        return x[sorts], coor[sorts], ranks[sorts], point_idx[sorts]
+        order = ranks.argsort()
+        return x[order], coor[order], ranks[order], point_idx[order]
 
     def voxel_pooling(self, coor, x):
         """Generate bird-eye-view features with the pseudo point cloud.
 
         Args:
-            coor (torch.tensor): of shape (B, N, D,  H, W, 3). Coordinate
-                of points.
-            x (torch.tensor): of shape (B, N, D,  H, W, C). Feature of points.
+            coor (torch.tensor): of shape (B, N, D, H, W, 3). Coordinate
+                of points in the lidar space.
+            x (torch.tensor): of shape (B, N, D, H, W, C). Feature of points.
 
-        Returns: Bird-eye-view features of shape (B, C, H_BEV, W_BEV).
+        Returns:
+            torch.tensor: Bird-eye-view features in shape (B, C, H_BEV, W_BEV).
         """
-        B, N, D, H, W, C = x.shape
+        B, _, _, _, _, C = x.shape
         x, coor, ranks, _ = self.voxel_pooling_prepare(coor, x)
 
         # cumsum trick
@@ -221,12 +255,12 @@ class ViewTransformerLiftSplatShoot(BaseModule):
         index of points in the final feature.
 
         Args:
-            coor (torch.tensor): of shape (B, N, D,  H, W, 3). Coordinate
-                of points.
-            x (torch.tensor): of shape (B, N, D,  H, W, C). Feature of points.
+            coor (torch.tensor): of shape (B, N, D, H, W, 3). Coordinate
+                of points in lidar space.
+            x (torch.tensor): of shape (B, N, D, H, W, C). Feature of points.
         """
         x, coor, ranks, point_idx = self.voxel_pooling_prepare(coor, x)
-
+        # count for the repeat times of the same voxel rank in the point queue.
         repeat_times = torch.ones(
             coor.shape[0], device=coor.device, dtype=coor.dtype)
         times = 0
@@ -241,6 +275,7 @@ class ViewTransformerLiftSplatShoot(BaseModule):
                 curr_rank = ranks[i]
                 times = 0
                 repeat_times[i] = times
+        # remove the point whose repeat time is exceed the threshold.
         kept = repeat_times < self.max_voxel_points
         repeat_times, coor = repeat_times[kept], coor[kept]
         x, point_idx = x[kept], point_idx[kept]
@@ -257,7 +292,8 @@ class ViewTransformerLiftSplatShoot(BaseModule):
             x (torch.tensor): of shape (B, N, D, H, W, C). The feature of the
                 volumes.
 
-        Returns: Bird-eye-view features of shape (B, C, H_BEV, W_BEV).
+        Returns:
+            torch.tensor: Bird-eye-view features in shape (B, C, H_BEV, W_BEV).
         """
         B, N, D, H, W, C = x.shape
         Nprime = B * N * D * H * W
@@ -283,19 +319,19 @@ class ViewTransformerLiftSplatShoot(BaseModule):
             input (list(torch.tensor)): of (image-view feature, rots, trans,
                 intrins, post_rots, post_trans)
 
-        Returns: bird-eye-view feature of shape (B, C, H_BEV, W_BEV)
+        Returns:
+            torch.tensor: Bird-eye-view feature in shape (B, C, H_BEV, W_BEV)
         """
         x = input[0]
         B, N, C, H, W = x.shape
         x = x.view(B * N, C, H, W)
-        x = self.depthnet(x)
-        depth = x[:, :self.D]
-        depth = depth.softmax(dim=1)
-        tran_feat = x[:, self.D:(self.D + self.tran_channels)]
+        x = self.depth_net(x)
+        depth = x[:, :self.D].softmax(dim=1)
+        tran_feat = x[:, self.D:(self.D + self.out_channels)]
 
         # Lift
         volume = depth.unsqueeze(1) * tran_feat.unsqueeze(2)
-        volume = volume.view(B, N, self.tran_channels, self.D, H, W)
+        volume = volume.view(B, N, self.out_channels, self.D, H, W)
         volume = volume.permute(0, 1, 3, 4, 5, 2)
 
         # Splat
