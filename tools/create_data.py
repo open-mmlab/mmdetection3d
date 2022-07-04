@@ -149,7 +149,7 @@ def rf2021_data_prep(root_path,
                 annot = np.array([])
                 if osp.exists(veh_label_file_path):
                     annot = np.loadtxt(veh_label_file_path, dtype=np.unicode_).reshape(-1, 8)
-                    annot[:, [1,2,3,4,5,6]] = annot[:, [4,5,6,1,2,3]]
+                    annot[:, [1,2,3,4,5,6]] = annot[:, [4,5,6,2,1,3]]
                     annot[:, 7] = math.pi/2 - annot[:, 7].astype(np.float32)
                 if osp.exists(ped_label_file_path):
                     annot_ped = np.loadtxt(ped_label_file_path, dtype=np.unicode_).reshape(-1, 6)
