@@ -3,12 +3,12 @@
 # Usually voxel size is changed consistently with the point cloud range
 # If point cloud range is modified, do remember to change all related
 # keys in the config.
-voxel_size = [0.4, 0.3, 5]
+voxel_size = [0.3, 0.4, 5]
 model = dict(
     type='MVXFasterRCNN',
     pts_voxel_layer=dict(
         max_num_points=20,
-        point_cloud_range=[-60, -60, -3, 100, 60, 2],
+        point_cloud_range=[-60, -60, -3, 60, 100, 2],
         voxel_size=voxel_size,
         max_voxels=(30000, 30000)),
     pts_voxel_encoder=dict(
@@ -19,10 +19,10 @@ model = dict(
         voxel_size=voxel_size,
         with_cluster_center=True,
         with_voxel_center=True,
-        point_cloud_range=[-60, -60, -3, 100, 60, 2],
+        point_cloud_range=[-60, -60, -3, 60, 100, 2],
         norm_cfg=dict(type='naiveSyncBN1d', eps=1e-3, momentum=0.01)),
     pts_middle_encoder=dict(
-        type='PointPillarsScatter', in_channels=64, output_shape=[468, 468]),
+        type='PointPillarsScatter', in_channels=64, output_shape=[400, 400]),
     pts_backbone=dict(
         type='SECOND',
         in_channels=64,
@@ -92,7 +92,7 @@ model = dict(
             use_rotate_nms=True,
             nms_across_levels=False,
             nms_pre=4096,
-            nms_thr=0.25,
+            nms_thr=0.01,
             score_thr=0.1,
             min_bbox_size=0,
             max_num=500)))
