@@ -6,6 +6,7 @@
 voxel_size = [0.25, 0.25, 8]
 model = dict(
     type='MVXFasterRCNN',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     pts_voxel_layer=dict(
         max_num_points=64,
         point_cloud_range=[-50, -50, -5, 50, 50, 3],
@@ -62,19 +63,21 @@ model = dict(
         dir_offset=-0.7854,  # -pi / 4
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=9),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False,
+            loss_weight=0.2)),
     # model training and testing settings
     train_cfg=dict(
         pts=dict(
             assigner=dict(
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.3,

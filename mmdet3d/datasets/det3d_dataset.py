@@ -227,8 +227,12 @@ class Det3DDataset(BaseDataset):
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():
                 if 'img_path' in img_info:
-                    img_info['img_path'] = osp.join(
-                        self.data_prefix.get('img', ''), img_info['img_path'])
+                    if cam_id in self.data_prefix:
+                        cam_prefix = self.data_prefix[cam_id]
+                    else:
+                        cam_prefix = self.data_prefix.get('img', '')
+                    img_info['img_path'] = osp.join(cam_prefix,
+                                                    img_info['img_path'])
 
         if not self.test_mode:
             # used in traing

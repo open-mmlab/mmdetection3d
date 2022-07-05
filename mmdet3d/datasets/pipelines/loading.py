@@ -101,7 +101,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
 
 
 @TRANSFORMS.register_module()
-class LoadPointsFromMultiSweeps(object):
+class LoadPointsFromMultiSweeps(BaseTransform):
     """Load points from multiple sweeps.
 
     This is usually used for nuScenes dataset to utilize previous sweeps.
@@ -186,7 +186,7 @@ class LoadPointsFromMultiSweeps(object):
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
         return points[not_close]
 
-    def __call__(self, results):
+    def transform(self, results):
         """Call function to load multi-sweep point clouds from files.
 
         Args:
@@ -204,30 +204,35 @@ class LoadPointsFromMultiSweeps(object):
         points.tensor[:, 4] = 0
         sweep_points_list = [points]
         ts = results['timestamp']
-        if self.pad_empty_sweeps and len(results['sweeps']) == 0:
-            for i in range(self.sweeps_num):
-                if self.remove_close:
-                    sweep_points_list.append(self._remove_close(points))
-                else:
-                    sweep_points_list.append(points)
+        if 'lidar_sweeps' not in results:
+            if self.pad_empty_sweeps:
+                for i in range(self.sweeps_num):
+                    if self.remove_close:
+                        sweep_points_list.append(self._remove_close(points))
+                    else:
+                        sweep_points_list.append(points)
         else:
-            if len(results['sweeps']) <= self.sweeps_num:
-                choices = np.arange(len(results['sweeps']))
+            if len(results['lidar_sweeps']) <= self.sweeps_num:
+                choices = np.arange(len(results['lidar_sweeps']))
             elif self.test_mode:
                 choices = np.arange(self.sweeps_num)
             else:
                 choices = np.random.choice(
-                    len(results['sweeps']), self.sweeps_num, replace=False)
+                    len(results['lidar_sweeps']),
+                    self.sweeps_num,
+                    replace=False)
             for idx in choices:
-                sweep = results['sweeps'][idx]
-                points_sweep = self._load_points(sweep['data_path'])
+                sweep = results['lidar_sweeps'][idx]
+                points_sweep = self._load_points(
+                    sweep['lidar_points']['lidar_path'])
                 points_sweep = np.copy(points_sweep).reshape(-1, self.load_dim)
                 if self.remove_close:
                     points_sweep = self._remove_close(points_sweep)
-                sweep_ts = sweep['timestamp'] / 1e6
-                points_sweep[:, :3] = points_sweep[:, :3] @ sweep[
-                    'sensor2lidar_rotation'].T
-                points_sweep[:, :3] += sweep['sensor2lidar_translation']
+                # bc-breaking: Timestamp has divided 1e6 in pkl infos.
+                sweep_ts = sweep['timestamp']
+                lidar2cam = np.array(sweep['lidar_points']['lidar2sensor'])
+                points_sweep[:, :3] = points_sweep[:, :3] @ lidar2cam[:3, :3]
+                points_sweep[:, :3] -= lidar2cam[:3, 3]
                 points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)

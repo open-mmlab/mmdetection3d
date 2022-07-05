@@ -15,6 +15,8 @@ from os import path as osp
 import mmcv
 import numpy as np
 
+from mmdet3d.datasets.utils import convert_quaternion_to_matrix
+
 
 def get_empty_instance():
     """Empty annotation for single instance."""
@@ -156,6 +158,7 @@ def get_empty_standard_data_info():
         radar_points=get_empty_radar_points(),
         # (list[dict], optional): Image sweeps data.
         image_sweeps=[],
+        lidar_sweeps=[],
         instances=[],
         # (list[dict], optional): Required by object
         # detection, instance  to be ignored during training.
@@ -201,6 +204,116 @@ def clear_data_info_unused_keys(data_info):
             empty_flag = False
 
     return data_info, empty_flag
+
+
+def update_nuscenes_infos(pkl_path, out_dir):
+    print(f'{pkl_path} will be modified.')
+    if out_dir in pkl_path:
+        print(f'Warning, you may overwriting '
+              f'the original data {pkl_path}.')
+    print(f'Reading from input file: {pkl_path}.')
+    data_list = mmcv.load(pkl_path)
+    METAINFO = {
+        'CLASSES':
+        ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
+         'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
+        'DATASET':
+        'Nuscenes',
+        'version':
+        data_list['metadata']['version']
+    }
+    print('Start updating:')
+    converted_list = []
+    for i, ori_info_dict in enumerate(
+            mmcv.track_iter_progress(data_list['infos'])):
+        temp_data_info = get_empty_standard_data_info()
+        temp_data_info['sample_idx'] = i
+        temp_data_info['token'] = ori_info_dict['token']
+        temp_data_info['ego2global'] = convert_quaternion_to_matrix(
+            ori_info_dict['ego2global_rotation'],
+            ori_info_dict['ego2global_translation'])
+        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
+            'lidar_path'].split('/')[-1]
+        temp_data_info['lidar_points'][
+            'lidar2ego'] = convert_quaternion_to_matrix(
+                ori_info_dict['lidar2ego_rotation'],
+                ori_info_dict['lidar2ego_translation'])
+        # bc-breaking: Timestamp has divided 1e6 in pkl infos.
+        temp_data_info['timestamp'] = ori_info_dict['timestamp'] / 1e6
+        for ori_sweep in ori_info_dict['sweeps']:
+            temp_lidar_sweep = get_single_lidar_sweep()
+            temp_lidar_sweep['lidar_points'][
+                'lidar2ego'] = convert_quaternion_to_matrix(
+                    ori_sweep['sensor2ego_rotation'],
+                    ori_sweep['sensor2ego_translation'])
+            temp_lidar_sweep['ego2global'] = convert_quaternion_to_matrix(
+                ori_sweep['ego2global_rotation'],
+                ori_sweep['ego2global_translation'])
+            lidar2sensor = np.eye(4)
+            lidar2sensor[:3, :3] = ori_sweep['sensor2lidar_rotation'].T
+            lidar2sensor[:3, 3] = -ori_sweep['sensor2lidar_translation']
+            temp_lidar_sweep['lidar_points'][
+                'lidar2sensor'] = lidar2sensor.astype(np.float32).tolist()
+            temp_lidar_sweep['timestamp'] = ori_sweep['timestamp'] / 1e6
+            temp_lidar_sweep['lidar_points']['lidar_path'] = ori_sweep[
+                'data_path']
+            temp_lidar_sweep['sample_data_token'] = ori_sweep[
+                'sample_data_token']
+            temp_data_info['lidar_sweeps'].append(temp_lidar_sweep)
+        temp_data_info['images'] = {}
+        for cam in ori_info_dict['cams']:
+            empty_img_info = get_empty_img_info()
+            empty_img_info['img_path'] = ori_info_dict['cams'][cam][
+                'data_path'].split('/')[-1]
+            empty_img_info['cam2img'] = ori_info_dict['cams'][cam][
+                'cam_intrinsic'].tolist()
+            empty_img_info['sample_data_token'] = ori_info_dict['cams'][cam][
+                'sample_data_token']
+            # bc-breaking: Timestamp has divided 1e6 in pkl infos.
+            empty_img_info[
+                'timestamp'] = ori_info_dict['cams'][cam]['timestamp'] / 1e6
+            empty_img_info['cam2ego'] = convert_quaternion_to_matrix(
+                ori_info_dict['cams'][cam]['sensor2ego_rotation'],
+                ori_info_dict['cams'][cam]['sensor2ego_translation'])
+            lidar2sensor = np.eye(4)
+            lidar2sensor[:3, :3] = ori_info_dict['cams'][cam][
+                'sensor2lidar_rotation'].T
+            lidar2sensor[:3, 3] = -ori_info_dict['cams'][cam][
+                'sensor2lidar_translation']
+            empty_img_info['lidar2cam'] = lidar2sensor.astype(
+                np.float32).tolist()
+            temp_data_info['images'][cam] = empty_img_info
+        num_instances = ori_info_dict['gt_boxes'].shape[0]
+        ignore_class_name = set()
+        for i in range(num_instances):
+            empty_instance = get_empty_instance()
+            empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
+                i, :].tolist()
+            if ori_info_dict['gt_names'][i] in METAINFO['CLASSES']:
+                empty_instance['bbox_label'] = METAINFO['CLASSES'].index(
+                    ori_info_dict['gt_names'][i])
+            else:
+                ignore_class_name.add(ori_info_dict['gt_names'][i])
+                empty_instance['bbox_label'] = -1
+            empty_instance['bbox_label_3d'] = copy.deepcopy(
+                empty_instance['bbox_label'])
+            empty_instance['velocity'] = ori_info_dict['gt_velocity'][
+                i, :].tolist()
+            empty_instance['num_lidar_pts'] = ori_info_dict['num_lidar_pts'][i]
+            empty_instance['num_radar_pts'] = ori_info_dict['num_radar_pts'][i]
+            empty_instance['bbox_3d_isvalid'] = ori_info_dict['valid_flag'][i]
+            empty_instance = clear_instance_unused_keys(empty_instance)
+            temp_data_info['instances'].append(empty_instance)
+        temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
+        converted_list.append(temp_data_info)
+    pkl_name = pkl_path.split('/')[-1]
+    out_path = osp.join(out_dir, pkl_name)
+    print(f'Writing to output file: {out_path}.')
+    print(f'ignore classes: {ignore_class_name}')
+    converted_data_info = dict(metainfo=METAINFO, data_list=converted_list)
+
+    mmcv.dump(converted_data_info, out_path, 'pkl')
+    return temp_lidar_sweep
 
 
 def update_kitti_infos(pkl_path, out_dir):
@@ -479,6 +592,8 @@ def main():
         update_scannet_infos(pkl_path=args.pkl, out_dir=args.out_dir)
     elif args.dataset.lower() == 'sunrgbd':
         update_sunrgbd_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+    elif args.dataset.lower() == 'nuscenes':
+        update_nuscenes_infos(pkl_path=args.pkl, out_dir=args.out_dir)
     else:
         raise NotImplementedError(
             f'Do not support convert {args.dataset} to v2.')

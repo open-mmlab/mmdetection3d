@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
+import numpy as np
 from mmcv.transforms import LoadImageFromFile
+from pyquaternion import Quaternion
 
 # yapf: disable
 from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
@@ -137,3 +139,14 @@ def extract_result_dict(results, key):
     if isinstance(data, mmcv.parallel.DataContainer):
         data = data._data
     return data
+
+
+def convert_quaternion_to_matrix(quaternion: list,
+                                 translation: list = None) -> list:
+    """Compute a transform matrix by given quaternion and translation
+    vector."""
+    result = np.eye(4)
+    result[:3, :3] = Quaternion(quaternion).rotation_matrix
+    if translation is not None:
+        result[:3, 3] = np.array(translation)
+    return result.astype(np.float32).tolist()
