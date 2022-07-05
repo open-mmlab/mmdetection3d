@@ -19,7 +19,7 @@ model = dict(
         feat_channels=[64],
         with_distance=False,
         voxel_size=voxel_size,
-        point_cloud_range=[-60, -60, -3, 60, 100, 1]),
+        point_cloud_range=[-60, -60, -3, 62.88, 103.84, 1]),
     middle_encoder=dict(
         type='PointPillarsScatter', in_channels=64, output_shape=[512, 384]),
     backbone=dict(
@@ -43,8 +43,8 @@ model = dict(
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[
-                [-60, -60, -0.6, 60, 100, -0.6],
-                [-60, -60, -1.78, 60, 100, -1.78],
+                [-60, -60, -0.6, 62.88, 103.84, -0.6],
+                [-60, -60, -1.78, 62.88, 103.84, -1.78],
             ],
             sizes=[[0.8, 0.6, 1.73], [5.0, 2.0, 1.56]],
             rotations=[0, 1.57],
