@@ -21,9 +21,10 @@ class Base3DDetector(BaseDetector):
     """
 
     def __init__(self,
-                 data_processor: OptConfigType = None,
+                 data_preprocessor: OptConfigType = None,
                  init_cfg: OptMultiConfig = None) -> None:
-        super().__init__(data_preprocessor=data_processor, init_cfg=init_cfg)
+        super().__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
 
     def forward(self,
                 inputs: Union[dict, List[dict]],

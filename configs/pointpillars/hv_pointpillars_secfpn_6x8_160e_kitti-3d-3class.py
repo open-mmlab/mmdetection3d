@@ -52,51 +52,53 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='Pack3DDetInputs', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
     dataset=dict(dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(metainfo=metainfo))
-val_dataloader = dict(dataset=dict(metainfo=metainfo))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 # In practice PointPillars also uses a different schedule
 # optimizer
 lr = 0.001
 epoch_num = 80
-iter_num_in_epoch = 3712
 optim_wrapper = dict(
     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
 param_scheduler = [
     dict(
         type='CosineAnnealingLR',
-        T_max=epoch_num * 0.4 * iter_num_in_epoch,
+        T_max=epoch_num * 0.4,
         eta_min=lr * 10,
-        by_epoch=False,
         begin=0,
-        end=epoch_num * 0.4 * iter_num_in_epoch),
+        end=epoch_num * 0.4,
+        by_epoch=True,
+        convert_to_iter_based=True),
     dict(
         type='CosineAnnealingLR',
-        T_max=epoch_num * 0.6 * iter_num_in_epoch,
+        T_max=epoch_num * 0.6,
         eta_min=lr * 1e-4,
-        by_epoch=False,
-        begin=epoch_num * 0.4 * iter_num_in_epoch,
-        end=epoch_num * 1 * iter_num_in_epoch),
+        begin=epoch_num * 0.4,
+        end=epoch_num * 1,
+        by_epoch=True,
+        convert_to_iter_based=True),
     dict(
         type='CosineAnnealingBetas',
-        T_max=epoch_num * 0.4 * iter_num_in_epoch,
+        T_max=epoch_num * 0.4,
         eta_min=0.85 / 0.95,
-        by_epoch=False,
         begin=0,
-        end=epoch_num * 0.4 * iter_num_in_epoch),
+        end=epoch_num * 0.4,
+        by_epoch=True,
+        convert_to_iter_based=True),
     dict(
         type='CosineAnnealingBetas',
-        T_max=epoch_num * 0.6 * iter_num_in_epoch,
+        T_max=epoch_num * 0.6,
         eta_min=1,
-        by_epoch=False,
-        begin=epoch_num * 0.4 * iter_num_in_epoch,
-        end=epoch_num * 1 * iter_num_in_epoch)
+        begin=epoch_num * 0.4,
+        end=epoch_num * 1,
+        convert_to_iter_based=True)
 ]
 # max_norm=35 is slightly better than 10 for PointPillars in the earlier
 # development of the codebase thus we keep the setting. But we does not
@@ -104,6 +106,6 @@ param_scheduler = [
 # PointPillars usually need longer schedule than second, we simply double
 # the training schedule. Do remind that since we use RepeatDataset and
 # repeat factor is 2, so we actually train 160 epochs.
-train_cfg = dict(by_epoch=True, max_epochs=epoch_num)
-val_cfg = dict(interval=2)
+train_cfg = dict(by_epoch=True, max_epochs=epoch_num, val_interval=2)
+val_cfg = dict()
 test_cfg = dict()

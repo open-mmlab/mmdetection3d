@@ -88,6 +88,8 @@ class MultiScaleFlipAug3D(BaseTransform):
         pcd_vertical_flip_aug = [False, True] \
             if self.flip and self.pcd_vertical_flip else [False]
         for scale in self.img_scale:
+            # TODO refactor according to augtest docs
+            self.transforms.transforms[0].scale = scale
             for pts_scale_ratio in self.pts_scale_ratio:
                 for flip in flip_aug:
                     for pcd_horizontal_flip in pcd_horizontal_flip_aug:

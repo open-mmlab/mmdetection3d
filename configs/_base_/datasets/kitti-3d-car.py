@@ -115,13 +115,27 @@ val_dataloader = dict(
         data_root=data_root,
         data_prefix=dict(pts='training/velodyne_reduced'),
         ann_file='kitti_infos_val.pkl',
-        pipeline=eval_pipeline,
+        pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR'))
-test_dataloader = val_dataloader
-test_dataloader['dataset']['pipeline'] = test_pipeline
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(pts='training/velodyne_reduced'),
+        ann_file='kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        modality=input_modality,
+        test_mode=True,
+        metainfo=metainfo,
+        box_type_3d='LiDAR'))
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',

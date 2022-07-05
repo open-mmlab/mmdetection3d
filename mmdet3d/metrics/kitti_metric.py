@@ -159,7 +159,7 @@ class KittiMetric(BaseMetric):
             for pred_result in pred:
                 for attr_name in pred[pred_result]:
                     pred[pred_result][attr_name] = pred[pred_result][
-                        attr_name].to('cpu')
+                        attr_name].to(self.collect_device)
                 result[pred_result] = pred[pred_result]
                 sample_idx = data['data_sample']['sample_idx']
                 result['sample_idx'] = sample_idx

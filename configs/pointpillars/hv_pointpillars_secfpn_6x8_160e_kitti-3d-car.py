@@ -1,7 +1,13 @@
 # model settings
 _base_ = './hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py'
+# dataset settings
+dataset_type = 'KittiDataset'
+data_root = 'data/kitti/'
+class_names = ['Car']
+metainfo = dict(CLASSES=class_names)
 
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
+
 model = dict(
     bbox_head=dict(
         type='Anchor3DHead',
@@ -26,11 +32,7 @@ model = dict(
         allowed_border=0,
         pos_weight=-1,
         debug=False))
-# dataset settings
-dataset_type = 'KittiDataset'
-data_root = 'data/kitti/'
-class_names = ['Car']
-metainfo = dict(CLASSES=class_names)
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -70,15 +72,12 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='Pack3DDetInputs', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
-    dataset=dict(
-        type='RepeatDataset',
-        times=2,
-        dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(metainfo=metainfo))
-val_dataloader = dict(dataset=dict(metainfo=metainfo))
+    dataset=dict(dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))

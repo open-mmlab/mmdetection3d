@@ -69,6 +69,9 @@ class Pack3DDetInputs(BaseTransform):
         """
         # augtest
         if isinstance(results, list):
+            if len(results) == 1:
+                # simple test
+                return self.pack_single_results(results[0])
             pack_results = []
             for single_result in results:
                 pack_results.append(self.pack_single_results(single_result))
@@ -113,7 +116,8 @@ class Pack3DDetInputs(BaseTransform):
                 img = results['img']
                 if len(img.shape) < 3:
                     img = np.expand_dims(img, -1)
-                results['img'] = np.ascontiguousarray(img.transpose(2, 0, 1))
+                results['img'] = to_tensor(
+                    np.ascontiguousarray(img.transpose(2, 0, 1)))
 
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
