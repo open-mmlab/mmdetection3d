@@ -11,7 +11,7 @@ model = dict(
         max_num_points=32,  # max_points_per_voxel
         point_cloud_range=[-60, -60, -3, 62.88, 103.84, 1],
         voxel_size=voxel_size,
-        max_voxels=(40000, 40000)  # (training, testing) max_voxels
+        max_voxels=(32000, 40000)  # (training, testing) max_voxels
     ),
     voxel_encoder=dict(
         type='PillarFeatureNet',
@@ -43,10 +43,13 @@ model = dict(
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[
-                [-60, -60, -0.6, 62.88, 103.84, -0.6],
                 [-60, -60, -1.78, 62.88, 103.84, -1.78],
+                [-60, -60, -0.6, 62.88, 103.84, -0.6]
             ],
-            sizes=[[0.8, 0.6, 1.73], [5.0, 2.0, 1.56]],
+            sizes=[
+                [5.0, 2.0, 1.56],
+                [0.8, 0.6, 1.73] 
+            ],
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,
@@ -63,19 +66,19 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(
         assigner=[
-            dict(  # for Pedestrian
-                type='MaxIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
-                ignore_iof_thr=-1),
             dict(  # for Car
                 type='MaxIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
                 min_pos_iou=0.45,
+                ignore_iof_thr=-1),
+            dict(  # for Pedestrian
+                type='MaxIoUAssigner',
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                pos_iou_thr=0.5,
+                neg_iou_thr=0.35,
+                min_pos_iou=0.35,
                 ignore_iof_thr=-1),
         ],
         allowed_border=0,
