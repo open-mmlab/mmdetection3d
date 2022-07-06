@@ -106,11 +106,13 @@ def show_result(points,
             if pred_labels is None:
                 vis.add_bboxes(bbox3d=pred_bboxes)
             else:
-                palette = np.random.randint(
-                    0, 255, size=(pred_labels.max() + 1, 3)) / 256
+                palette=[[0,1,0],[1,0,0]]
+                # palette = np.random.randint(
+                #     0, 255, size=(pred_labels.max() + 1, 3)) / 256
                 labelDict = {}
                 for j in range(len(pred_labels)):
-                    i = int(pred_labels[j].numpy())
+                    i=pred_labels[j]
+                    #i = int(pred_labels[j].numpy())
                     if labelDict.get(i) is None:
                         labelDict[i] = []
                     labelDict[i].append(pred_bboxes[j])
@@ -118,10 +120,11 @@ def show_result(points,
                     vis.add_bboxes(
                         bbox3d=np.array(labelDict[i]),
                         bbox_color=palette[i],
-                        points_in_box_color=palette[i])
+                        points_in_box_color=[0,0,1])
+                        #points_in_box_color=palette[i])
 
         if gt_bboxes is not None:
-            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=(0, 0, 1))
+            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=[0,1,0], points_in_box_color=[0,0,1])
         show_path = osp.join(result_path,
                              f'{filename}_online.png') if snapshot else None
         vis.show(show_path)
