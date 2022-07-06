@@ -2,12 +2,205 @@
 import argparse
 from os import path as osp
 
+
 from tools.data_converter import indoor_converter as indoor
 from tools.data_converter import kitti_converter as kitti
 from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
 from tools.data_converter.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
+
+from pypcd import pypcd
+import numpy as np
+
+def read_PC(pcd_file):
+    """
+        parameter
+            .pcd format file.
+
+        return
+            np.array, nx3, xyz coordinates of given pointcloud points.
+    """
+    points_pcd = pypcd.PointCloud.from_path(pcd_file)
+    x = points_pcd.pc_data["x"].copy()
+    y = points_pcd.pc_data["y"].copy()
+    z = points_pcd.pc_data["z"].copy()
+    return np.array([x,y,z]).T
+
+def cross(a, b):
+    """
+        Cross product of 2d points.
+
+        parameter
+            a: np.array, size nx2, point vectors to check 
+            b: np.array, size 1x2, line vectors  
+        
+        return
+            c: np.array, size nx2, 
+            if c[i] is positive, a[i] is to the right of b, 
+            elif c[i] is negative, a[i] is to the left of b. 
+    """
+    c = a[:,0]*b[1] - a[:,1]*b[0]
+    return c 
+
+def check_inside_convex_polygon(points, vertices):
+    """
+        The function to check indices of points which are inside of a given convex polygon.
+        
+        parameter
+            points: np.array, size nx2, 2d points vectors.
+            vertices: np.array, size mx2, vertices of convex polygon, assume that the order of vertices is unknown. 
+        
+        return 
+            indices of the points that are inside of the given convex polygon.
+    """
+    roi1, roi2 = True, True
+    vertex_num = len(vertices)
+    for i, v in enumerate(vertices):
+        roi1 &= (cross(points - v, vertices[(i + 1)%vertex_num] - v) > 0)
+        roi2 &= (cross(points - v, vertices[(i + 1)%vertex_num] - v) < 0)
+    return roi1 | roi2
+
+def get_original_box_xy_coords(box_info):
+    cx,cy,cz,w,l,h,theta = box_info
+    rotation_mtx_T = np.array([[np.cos(theta),np.sin(theta)],
+                                [-np.sin(theta),np.cos(theta)]])
+    xys = np.array([[-w/2, -l/2],[w/2, -l/2],[w/2, l/2],[-w/2, l/2]])
+    rotated_xys = xys @ rotation_mtx_T
+    rotated_xys[:,0] += cx
+    rotated_xys[:,1] += cy
+    return rotated_xys
+
+def get_estimated_z_h(roi_path, box_annot):
+    points_xyz = read_PC(roi_path)
+    cz_list,h_list = [], []
+    Z_MIN_DEFALUT = -1
+    H_DEFAULT = 2.5
+    PED_H_DEFAULT = 1.7
+    for single_annot in box_annot:
+        label_cls = single_annot[0]
+        box_coor = single_annot[1:].astype(np.float32)
+        rotated_xys = get_original_box_xy_coords(box_coor)
+        roi_points = points_xyz[check_inside_convex_polygon(points_xyz[:, :2], rotated_xys)]
+        try:
+            q75, q25 = np.percentile(roi_points[:, 2], [75,25])
+            iqr = q75 - q25
+            upper_valid = roi_points[:, 2] <= q75 + 1.5 * iqr
+            lower_valid = roi_points[:, 2] >= q25 - 1.5 * iqr
+            roi_points = roi_points[upper_valid & lower_valid]
+            q95, q5 = np.percentile(roi_points[:, 2], [95,5])
+            z1, z2 = q5-0.3, q95+0.3
+            h = H_DEFAULT if label_cls != 'ped' else PED_H_DEFAULT
+            # 이 부분을 object class에 따라 구분
+            if abs(z2 - z1) < 1.5:
+                z1 = z2 - h
+            elif abs(z2 - z1) > 4.2:
+                z2 = z1 + h
+            # z1, z2 = min(roi_points[:,2]), max(roi_points[:,2])
+            cz, h = int((z1+z2)/2 * 100)/100, int(abs(z2-z1)*100)/100
+        except:
+            # edge case, if xy-plane labeling is invalid, roi_buf could be empty.
+            # then just set z, h as default value
+            cz, h = Z_MIN_DEFALUT, H_DEFAULT
+            if label_cls == "ped":
+                h = PED_H_DEFAULT
+        cz_list.append(cz)
+        h_list.append(h)
+    return np.array(cz_list), np.array(h_list)
+
+def rf2021_data_prep(root_path,
+                     info_prefix):
+    """ Prepare data related to RF2021 dataset.
+
+    1. loop pcd file directory.
+    2. vehicle (car) 과 ped의 label의 형태를 (cls, x, y, z, dx, dy, dz, theta)로 통일
+        * 각도를 바꾸는 이유는 우리 데이터셋의 좌표계와 mmdetection3d의 좌표계가 갖는 각도에 대한 기준이 달라서 이를 맞춰줌
+    3. z값이 제대로 안만들어져 있는 경우에는 해당 box내에 포인트들을 적절히 봐서 임의로 z 값 채움
+    4. custom3DDataset의 형태로 저장. train,val,test 나눠서 pickle 파일로 저장. 
+
+    """
+    import os
+    from pathlib import Path
+    import numpy as np
+    import mmcv
+    from collections import deque
+    from tqdm import tqdm
+    import math
+
+    root_path = Path(root_path)
+    info_train_path = osp.join(root_path, f'{info_prefix}_info_train.pkl')
+    info_val_path = osp.join(root_path, f'{info_prefix}_info_val.pkl')
+    info_test_path = osp.join(root_path, f'{info_prefix}_info_test.pkl')
+
+    pcd_dir = osp.join(root_path, "NIA_tracking_data", "data")
+    label_dir = osp.join(root_path, "NIA_2021_label", "label")
+    sample_idx = 0
+    annot_deque = deque([])
+    if osp.isdir(pcd_dir):
+        folder_list = sorted(os.listdir(pcd_dir), key=lambda x:int(x))
+        for fol in tqdm(folder_list):
+            pcd_data_dir = osp.join(pcd_dir, fol, "lidar_half_filtered")
+            veh_label_dir = osp.join(label_dir, fol, "car_label")
+            ped_label_dir = osp.join(label_dir, fol, "ped_label")
+            for pcd_file in sorted(os.listdir(pcd_data_dir)):
+                pcd_file_path = osp.join(pcd_data_dir, pcd_file)
+                veh_label_file_path = osp.join(veh_label_dir, pcd_file[:-4] + ".txt")
+                ped_label_file_path = osp.join(ped_label_dir, pcd_file[:-4] + ".txt")
+                annot = np.array([])
+                if osp.exists(veh_label_file_path):
+                    annot = np.loadtxt(veh_label_file_path, dtype=np.unicode_).reshape(-1, 8)
+                    annot[:, [1,2,3,4,5,6]] = annot[:, [4,5,6,2,1,3]]
+                    annot[:, 7] = math.pi/2 - annot[:, 7].astype(np.float32)
+                if osp.exists(ped_label_file_path):
+                    annot_ped = np.loadtxt(ped_label_file_path, dtype=np.unicode_).reshape(-1, 6)
+                    if len(annot_ped) > 0:
+                        annot_ped[annot_ped == 'nan'] = '-1.00'
+                        annot_ped[annot_ped[:, 3] == '-1.00', 0] = '0.7'
+                        annot_ped[annot_ped[:, 4] ==  '-1.00', 1] = '0.7'  
+                        annot_cls = np.array([["ped"] for _ in range(len(annot_ped))])
+                        annot_angle = np.array([[0] for _ in range(len(annot_ped))])
+                        annot_ped = np.hstack((annot_cls, annot_ped, annot_angle))
+                        annot = np.vstack((annot, annot_ped))
+                
+                if len(annot):
+                    invalid_cond = (annot[:, 3] == '-1.00') & (annot[:, 6] == '-1.00')
+                    cz, h = get_estimated_z_h(pcd_file_path, annot[invalid_cond])
+                    annot[invalid_cond, 3] = cz
+                    annot[invalid_cond, 6] = h
+                    pcd_file_path = "/".join(pcd_file_path.split("/")[2:])
+                    annot_dict = dict(
+                        sample_idx= sample_idx,
+                        lidar_points= {'lidar_path': pcd_file_path},
+                        annos= {'box_type_3d': 'LiDAR',
+                                'gt_bboxes_3d': annot[:, 1:].astype(np.float32),
+                                'gt_names': annot[:, 0]
+                                }
+                    )
+                    annot_deque.append(annot_dict)
+                    sample_idx += 1
+    else:
+        print("no data dir")
+        print("Please check data dir path")
+        exit()
+
+    annot_list = list(annot_deque)
+    total_len = len(annot_list)
+    train_len = int(total_len * 0.8)
+    val_len = int(total_len * 0.1)
+    rf_infos_train = annot_list[:train_len]
+    filename = root_path / f'{info_prefix}_infos_train.pkl'
+    print(f'RF2021 info train file is saved to {filename}')
+    mmcv.dump(rf_infos_train, filename)
+
+    rf_infos_val = annot_list[train_len:train_len + val_len]
+    filename = root_path / f'{info_prefix}_infos_val.pkl'
+    print(f'RF2021 info val file is saved to {filename}')
+    mmcv.dump(rf_infos_val, filename)
+
+    rf_infos_test = annot_list[train_len + val_len:]
+    filename = root_path / f'{info_prefix}_infos_test.pkl'
+    print(f'RF2021 info test file is saved to {filename}')
+    mmcv.dump(rf_infos_test, filename)
 
 
 def kitti_data_prep(root_path,
@@ -236,6 +429,11 @@ if __name__ == '__main__':
             version=args.version,
             out_dir=args.out_dir,
             with_plane=args.with_plane)
+    elif args.dataset == 'rf2021':
+        rf2021_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag
+        )
     elif args.dataset == 'nuscenes' and args.version != 'v1.0-mini':
         train_version = f'{args.version}-trainval'
         nuscenes_data_prep(

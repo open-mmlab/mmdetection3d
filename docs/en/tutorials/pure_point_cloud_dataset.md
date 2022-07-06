@@ -109,7 +109,7 @@ The bounding boxes annotations are stored in `annotation.pkl` as the following
 ```
 {'sample_idx': 120,
  'lidar_points': {'lidar_path': 'training/000004.bin'},
- 'annos': {'bbox_type_3d': 'LiDAR',
+ 'annos': {'box_type_3d': 'LiDAR',
            'gt_bboxes_3d': array([[1.48129511,  3.52074146,  1.85652947, 1.74445975, 0.23195696, 0.57235193, -0.25525],
            [ 2.90395617, -3.48033905,  1.52682471,[0.66077662, 0.17072392, 0.67153597, 2.23145]]),
            'gt_names': ['car', 'pedestrian']

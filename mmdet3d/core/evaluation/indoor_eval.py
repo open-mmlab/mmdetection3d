@@ -231,7 +231,8 @@ def indoor_eval(gt_annos,
     assert len(dt_annos) == len(gt_annos)
     pred = {}  # map {class_id: pred}
     gt = {}  # map {class_id: gt}
-    for img_id in range(len(dt_annos)):
+
+    for img_id in range(len(dt_annos)): ## gt = ground truth ## dt = d
         # parse detected annotations
         det_anno = dt_annos[img_id]
         for i in range(len(det_anno['labels_3d'])):
@@ -250,18 +251,19 @@ def indoor_eval(gt_annos,
 
         # parse gt annotations
         gt_anno = gt_annos[img_id]
-        if gt_anno['gt_num'] != 0:
+        if len(gt_anno['gt_bboxes_3d']) != 0:
             gt_boxes = box_type_3d(
-                gt_anno['gt_boxes_upright_depth'],
-                box_dim=gt_anno['gt_boxes_upright_depth'].shape[-1],
+                gt_anno['gt_bboxes_3d'],
+                box_dim=gt_anno['gt_bboxes_3d'].shape[-1],
                 origin=(0.5, 0.5, 0.5)).convert_to(box_mode_3d)
-            labels_3d = gt_anno['class']
+            labels_3d = gt_anno['gt_names']
         else:
             gt_boxes = box_type_3d(np.array([], dtype=np.float32))
             labels_3d = np.array([], dtype=np.int64)
 
+
         for i in range(len(labels_3d)):
-            label = labels_3d[i]
+            label = 0 if labels_3d[i]=='Car' else 1
             bbox = gt_boxes[i]
             if label not in gt:
                 gt[label] = {}
@@ -269,10 +271,11 @@ def indoor_eval(gt_annos,
                 gt[label][img_id] = []
             gt[label][img_id].append(bbox)
 
+
     rec, prec, ap = eval_map_recall(pred, gt, metric)
     ret_dict = dict()
     header = ['classes']
-    table_columns = [[label2cat[label]
+    table_columns = [['Car' if label == 0 else 'ped'
                       for label in ap[0].keys()] + ['Overall']]
 
     for i, iou_thresh in enumerate(metric):
@@ -280,7 +283,8 @@ def indoor_eval(gt_annos,
         header.append(f'AR_{iou_thresh:.2f}')
         rec_list = []
         for label in ap[i].keys():
-            ret_dict[f'{label2cat[label]}_AP_{iou_thresh:.2f}'] = float(
+            label_cls = 'Car' if label == 0 else 'ped'
+            ret_dict[f'{label_cls}_AP_{iou_thresh:.2f}'] = float(
                 ap[i][label][0])
         ret_dict[f'mAP_{iou_thresh:.2f}'] = float(
             np.mean(list(ap[i].values())))
@@ -288,9 +292,10 @@ def indoor_eval(gt_annos,
         table_columns.append(list(map(float, list(ap[i].values()))))
         table_columns[-1] += [ret_dict[f'mAP_{iou_thresh:.2f}']]
         table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
-
+        
         for label in rec[i].keys():
-            ret_dict[f'{label2cat[label]}_rec_{iou_thresh:.2f}'] = float(
+            label_cls = 'Car' if label == 0 else 'ped'
+            ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
                 rec[i][label][-1])
             rec_list.append(rec[i][label][-1])
         ret_dict[f'mAR_{iou_thresh:.2f}'] = float(np.mean(rec_list))

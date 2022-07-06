@@ -367,6 +367,51 @@ def show_det_result_meshlab(data,
 
     return file_name
 
+def show_det_result_meshlab_multiclass(data,
+                            result,
+                            out_dir,
+                            score_thr=0.0,
+                            show=False,
+                            snapshot=False):
+    """Show 3D detection result by meshlab."""
+    points = data['points'][0][0].cpu().numpy()
+    pts_filename = data['img_metas'][0][0]['pts_filename']
+    file_name = osp.split(pts_filename)[-1].split('.')[0]
+
+    if 'pts_bbox' in result[0].keys():
+        pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
+        pred_scores = result[0]['pts_bbox']['scores_3d'].numpy()
+    else:
+        pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
+        pred_scores = result[0]['scores_3d'].numpy()
+
+    # filter out low score bboxes for visualization
+    if score_thr > 0:
+        inds = pred_scores > score_thr
+        pred_bboxes = pred_bboxes[inds]
+
+    # for now we convert points into depth mode
+    box_mode = data['img_metas'][0][0]['box_mode_3d']
+    if box_mode != Box3DMode.DEPTH:
+        points = Coord3DMode.convert(points, box_mode, Coord3DMode.DEPTH)
+        show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
+    else:
+        show_bboxes = deepcopy(pred_bboxes)
+
+    pred_labels=result[0]['pts_bbox']['labels_3d'].numpy()
+
+    show_result(
+        points,
+        None,
+        show_bboxes,
+        out_dir,
+        file_name,
+        show=show,
+        snapshot=snapshot,
+        pred_labels=pred_labels)
+
+    return file_name
+
 
 def show_seg_result_meshlab(data,
                             result,
@@ -512,8 +557,10 @@ def show_result_meshlab(data,
     assert out_dir is not None, 'Expect out_dir, got none.'
 
     if task in ['det', 'multi_modality-det']:
-        file_name = show_det_result_meshlab(data, result, out_dir, score_thr,
+        file_name = show_det_result_meshlab_multiclass(data, result, out_dir, score_thr,
                                             show, snapshot)
+        # file_name = show_det_result_meshlab_multiclass(data, result, out_dir, score_thr,
+        #                                    show, snapshot)                        
 
     if task in ['seg']:
         file_name = show_seg_result_meshlab(data, result, out_dir, palette,

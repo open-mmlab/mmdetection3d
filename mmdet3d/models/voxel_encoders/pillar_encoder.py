@@ -79,8 +79,9 @@ class PillarFeatureNet(nn.Module):
                     norm_cfg=norm_cfg,
                     last_layer=last_layer,
                     mode=mode))
-        self.pfn_layers = nn.ModuleList(pfn_layers)
 
+        
+        self.pfn_layers = nn.ModuleList(pfn_layers)
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = voxel_size[0]
         self.vy = voxel_size[1]
@@ -139,6 +140,7 @@ class PillarFeatureNet(nn.Module):
                     self.z_offset)
             features_ls.append(f_center)
 
+
         if self._with_distance:
             points_dist = torch.norm(features[:, :, :3], 2, 2, keepdim=True)
             features_ls.append(points_dist)
@@ -155,7 +157,6 @@ class PillarFeatureNet(nn.Module):
 
         for pfn in self.pfn_layers:
             features = pfn(features, num_points)
-
         return features.squeeze(1)
 
 
@@ -319,5 +320,4 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
                 feat_per_point = self.map_voxel_center_to_point(
                     coors, voxel_feats, voxel_coors)
                 features = torch.cat([point_feats, feat_per_point], dim=1)
-
         return voxel_feats, voxel_coors

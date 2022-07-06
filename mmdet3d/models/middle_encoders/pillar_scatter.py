@@ -98,5 +98,4 @@ class PointPillarsScatter(nn.Module):
         # Undo the column stacking to final 4-dim tensor
         batch_canvas = batch_canvas.view(batch_size, self.in_channels, self.ny,
                                          self.nx)
-
         return batch_canvas
