@@ -10,12 +10,8 @@ dataset_type = 'LyftDataset'
 data_root = 'data/lyft/'
 # Input modality for Lyft dataset, this is consistent with the submission
 # format which requires the information in input_modality.
-input_modality = dict(
-    use_lidar=True,
-    use_camera=False,
-    use_radar=False,
-    use_map=False,
-    use_external=False)
+input_modality = dict(use_lidar=True, use_camera=False)
+data_prefix = dict(pts='samples/LIDAR_TOP', img='')
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
@@ -47,8 +43,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -74,13 +71,9 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -95,42 +88,61 @@ eval_pipeline = [
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
         file_client_args=file_client_args),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
-    train=dict(
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'lyft_infos_train.pkl',
+        ann_file='lyft_infos_train.pkl',
         pipeline=train_pipeline,
-        classes=class_names,
+        metainfo=dict(CLASSES=class_names),
         modality=input_modality,
-        test_mode=False),
-    val=dict(
+        data_prefix=data_prefix,
+        test_mode=False,
+        box_type_3d='LiDAR'))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'lyft_infos_val.pkl',
+        ann_file='lyft_infos_val.pkl',
         pipeline=test_pipeline,
-        classes=class_names,
+        metainfo=dict(CLASSES=class_names),
         modality=input_modality,
-        test_mode=True),
-    test=dict(
+        data_prefix=data_prefix,
+        test_mode=True,
+        box_type_3d='LiDAR'))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'lyft_infos_test.pkl',
+        ann_file='lyft_infos_val.pkl',
         pipeline=test_pipeline,
-        classes=class_names,
+        metainfo=dict(CLASSES=class_names),
         modality=input_modality,
-        test_mode=True))
-# For Lyft dataset, we usually evaluate the model at the end of training.
-# Since the models are trained by 24 epochs by default, we set evaluation
-# interval to be 24. Please change the interval accordingly if you do not
-# use a default schedule.
-evaluation = dict(interval=24, pipeline=eval_pipeline)
+        test_mode=True,
+        data_prefix=data_prefix,
+        box_type_3d='LiDAR'))
+
+val_evaluator = dict(
+    type='LyftMetric',
+    ann_file=data_root + 'lyft_infos_val.pkl',
+    metric='bbox')
+test_evaluator = dict(
+    type='LyftMetric',
+    ann_file=data_root + 'lyft_infos_val.pkl',
+    metric='bbox')
