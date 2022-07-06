@@ -8,34 +8,35 @@ from ..builder import NECKS
 
 class QuickCumsum(torch.autograd.Function):
     """Sum up the features of all points within the same voxel through
-    cumulative sum operator.
-
-    All inputs should be sorted by the rank of voxels.
-
-    The function implementation process is as follows:
-
-        - step 1: Cumulatively sum the point-wise feature alone the point
-            queue.
-        - step 2: Remove the duplicated points with the same voxel rank and
-            only retain the last one in the point queue.
-        - step 3: Subtract each point feature with the previous one to obtain
-            the cumulative sum of the points in the same voxel.
-
-    Args:
-        x (torch.tensor): Point-wise features in shape (N_Points, C).
-        coor (torch.tensor): of shape (N_Points, D). The coordinate of points
-            in the feature coordinate system.
-        ranks (torch.tensor): of shape (N_Points). The rank of voxel that a
-            point is belong to.
-
-    Returns:
-        torch.tensor: Voxel-wise features in shape (N_Voxels, C).
-        torch.tensor: of shape (N_Voxels,3). The coordinate of voxels in the
-            feature coordinate system.
-    """
+    cumulative sum operator."""
 
     @staticmethod
     def forward(ctx, x, coor, ranks):
+        """Forward function.
+
+        All inputs should be sorted by the rank of voxels.
+
+        The function implementation process is as follows:
+
+            - step 1: Cumulatively sum the point-wise feature alone the point
+                queue.
+            - step 2: Remove the duplicated points with the same voxel rank and
+                only retain the last one in the point queue.
+            - step 3: Subtract each point feature with the previous one to
+                obtain the cumulative sum of the points in the same voxel.
+
+        Args:
+            x (torch.tensor): Point-wise features in shape (N_Points, C).
+            coor (torch.tensor): The coordinate of points in the feature
+                coordinate system in shape (N_Points, D).
+            ranks (torch.tensor): The rank of voxel that a point is belong to.
+                The shape should be (N_Points).
+
+        Returns:
+            tuple[torch.tensor]: Voxel-wise features in shape (N_Voxels, C);
+                The coordinate of voxels in the feature coordinate system in
+                shape (N_Voxels,3).
+        """
         x = x.cumsum(0)
         kept = torch.ones(x.shape[0], device=x.device, dtype=torch.bool)
         kept[:-1] = (ranks[1:] != ranks[:-1])
@@ -53,6 +54,18 @@ class QuickCumsum(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, gradx, gradcoor):
+        """Backward propagation function.
+
+        Args:
+            gradx (torch.tensor): Gradient of the output parameter 'x' in the
+                forword function.
+            gradcoor (torch.tensor): Gradient of the output parameter 'coor' in
+                the forword function.
+
+        Returns:
+            torch.tensor: Gradient of the input parameter 'x' in the forword
+                function.
+        """
         kept, = ctx.saved_tensors
         back = torch.cumsum(kept, 0)
         back[kept] -= 1
@@ -63,7 +76,7 @@ class QuickCumsum(torch.autograd.Function):
 
 
 @NECKS.register_module()
-class ViewTransformerLSS(BaseModule):
+class LSSViewTransformer(BaseModule):
     r"""Lift-Splat-Shoot view transformer.
 
     Please refer to the `paper <https://arxiv.org/abs/2008.05711>`_
@@ -73,6 +86,8 @@ class ViewTransformerLSS(BaseModule):
             (lower_bound, upper_bound, interval). axis in {x,y,z,depth}.
         input_size (tuple(int)): Size of input images in format of (height,
             width).
+        downsample (int): Down sample factor from the input size to the feature
+            size.
         in_channels (int): Channels of input feature.
         out_channels (int): Channels of transformed feature.
         accelerate (bool): Whether the view transformation is conducted with
@@ -90,13 +105,9 @@ class ViewTransformerLSS(BaseModule):
                  out_channels,
                  accelerate=False,
                  max_voxel_points=300):
-        super(ViewTransformerLSS, self).__init__()
-        self.gen_grid_infos(**grid_config)
-
-        self.input_size = input_size
-        self.downsample = downsample
-
-        self.create_frustum(grid_config['depth'])
+        super(LSSViewTransformer, self).__init__()
+        self.create_grid_infos(**grid_config)
+        self.create_frustum(grid_config['depth'], input_size, downsample)
         self.out_channels = out_channels
         self.depth_net = nn.Conv2d(
             in_channels, self.D + self.out_channels, kernel_size=1, padding=0)
@@ -104,7 +115,7 @@ class ViewTransformerLSS(BaseModule):
         self.max_voxel_points = max_voxel_points
         self.initial_flag = True
 
-    def gen_grid_infos(self, x, y, z, **kwargs):
+    def create_grid_infos(self, x, y, z, **kwargs):
         """Generate the grid information including the lower bound, interval,
         and size.
 
@@ -122,15 +133,19 @@ class ViewTransformerLSS(BaseModule):
         self.grid_size = torch.Tensor([(cfg[1] - cfg[0]) / cfg[2]
                                        for cfg in [x, y, z]])
 
-    def create_frustum(self, depth_cfg):
+    def create_frustum(self, depth_cfg, input_size, downsample):
         """Generate the frustum template for each image.
 
         Args:
             depth_cfg (tuple(float)): Config of grid alone depth axis in format
                 of (lower_bound, upper_bound, interval).
+            input_size (tuple(int)): Size of input images in format of (height,
+                width).
+            downsample (int): Down sample scale factor from the input size to
+                the feature size.
         """
-        H_in, W_in = self.input_size
-        H_feat, W_feat = H_in // self.downsample, W_in // self.downsample
+        H_in, W_in = input_size
+        H_feat, W_feat = H_in // downsample, W_in // downsample
         d = torch.arange(*depth_cfg, dtype=torch.float)\
             .view(-1, 1, 1).expand(-1, H_feat, W_feat)
         self.D = d.shape[0]
@@ -140,34 +155,34 @@ class ViewTransformerLSS(BaseModule):
             .view(1, H_feat, 1).expand(self.D, H_feat, W_feat)
 
         # D x H x W x 3
-        frustum = torch.stack((x, y, d), -1)
-        self.frustum = nn.Parameter(frustum, requires_grad=False)
+        self.frustum = torch.stack((x, y, d), -1)
 
     def get_lidar_coor(self, rots, trans, cam2imgs, post_rots, post_trans):
         """Calculate the locations of the frustum points in the lidar
         coordinate system.
 
         Args:
-            rots (torch.Tensor): of shape (N, N_cams, 3, 3). Rotation from
-                camera coordinate system to lidar coordinate system.
-            trans (torch.Tensor): of shape (N, N_cams, 3). Translation from
-                camera coordinate system to lidar coordinate system.
-            cam2imgs (torch.Tensor): of shape (N, N_cams, 3, 3). Camera
-                intrinsic matrixes.
-            post_rots (torch.Tensor): of shape (N, N_cams, 3, 3). Rotation in
-                camera coordinate system derived from image view augmentation.
-            post_trans (torch.Tensor): of shape (N, N_cams, 3). Translation in
-                camera coordinate system derived from image view augmentation.
+            rots (torch.Tensor): Rotation from camera coordinate system to
+                lidar coordinate system in shape (B, N_cams, 3, 3).
+            trans (torch.Tensor): Translation from camera coordinate system to
+                lidar coordinate system in shape (B, N_cams, 3).
+            cam2imgs (torch.Tensor): Camera intrinsic matrixes in shape
+                (B, N_cams, 3, 3).
+            post_rots (torch.Tensor): Rotation in camera coordinate system in
+                shape (B, N_cams, 3, 3). It is derived from the image view
+                augmentation.
+            post_trans (torch.Tensor): Translation in camera coordinate system
+                derived from image view augmentation in shape (B, N_cams, 3).
 
         Returns:
-            torch.tensor: Point coordinates in shape (B, N, D, H/downsample,
-                W/downsample, 3)
+            torch.tensor: Point coordinates in shape
+                (B, N_cams, D, ownsample, 3)
         """
         B, N, _ = trans.shape
 
         # post-transformation
         # B x N x D x H x W x 3
-        points = self.frustum - post_trans.view(B, N, 1, 1, 1, 3)
+        points = self.frustum.to(rots) - post_trans.view(B, N, 1, 1, 1, 3)
         points = torch.inverse(post_rots).view(B, N, 1, 1, 1, 3, 3)\
             .matmul(points.unsqueeze(-1))
 
@@ -184,18 +199,17 @@ class ViewTransformerLSS(BaseModule):
         """Data preparation for voxel pooling.
 
         Args:
-            coor (torch.tensor): of shape (B, N, D, H, W, 3). Coordinate
-                of points in the lidar space.
-            x (torch.tensor): of shape (B, N, D, H, W, C). Feature of points.
+            coor (torch.tensor): Coordinate of points in the lidar space in
+                shape (B, N, D, H, W, 3).
+            x (torch.tensor): Feature of points in shape
+                (B, N_cams, D, H, W, C).
 
         Returns:
-            torch.tensor: of shape (N_Points, C). Feature of points.
-            torch.tensor: of shape (N_Points, 3). Coordinate of points in the
-                voxel space.
-            torch.tensor: of shape (N_Points). Rank of the voxel that a point
-                is belong to.
-            torch.tensor: of shape (N_Points). Reserved index of points in the
-                input point queue.
+            tuple[torch.tensor]: Feature of points in shape (N_Points, C);
+                Coordinate of points in the voxel space in shape (N_Points, 3);
+                Rank of the voxel that a point is belong to in shape
+                (N_Points); Reserved index of points in the input point queue
+                in shape (N_Points).
         """
         B, N, D, H, W, C = x.shape
         num_points = B * N * D * H * W
@@ -228,9 +242,10 @@ class ViewTransformerLSS(BaseModule):
         """Generate bird-eye-view features with the pseudo point cloud.
 
         Args:
-            coor (torch.tensor): of shape (B, N, D, H, W, 3). Coordinate
-                of points in the lidar space.
-            x (torch.tensor): of shape (B, N, D, H, W, C). Feature of points.
+            coor (torch.tensor): Coordinate of points in the lidar space in
+                shape (B, N_cams, D, H, W, 3).
+            x (torch.tensor): Feature of points in shape
+                (B, N_cams, D, H, W, C).
 
         Returns:
             torch.tensor: Bird-eye-view features in shape (B, C, H_BEV, W_BEV).
@@ -256,9 +271,10 @@ class ViewTransformerLSS(BaseModule):
         index of points in the final feature.
 
         Args:
-            coor (torch.tensor): of shape (B, N, D, H, W, 3). Coordinate
-                of points in lidar space.
-            x (torch.tensor): of shape (B, N, D, H, W, C). Feature of points.
+            coor (torch.tensor): Coordinate of points in lidar space in shape
+                (B, N_cams, D, H, W, 3).
+            x (torch.tensor): Feature of points in shape
+                (B, N_cams, D, H, W, C).
         """
         x, coor, ranks, point_idx = self.voxel_pooling_prepare(coor, x)
         # count for the repeat times of the same voxel rank in the point queue.
@@ -266,14 +282,14 @@ class ViewTransformerLSS(BaseModule):
             coor.shape[0], device=coor.device, dtype=coor.dtype)
         times = 0
         repeat_times[0] = 0
-        curr_rank = ranks[0]
+        cur_rank = ranks[0]
 
         for i in range(1, ranks.shape[0]):
-            if curr_rank == ranks[i]:
+            if cur_rank == ranks[i]:
                 times += 1
                 repeat_times[i] = times
             else:
-                curr_rank = ranks[i]
+                cur_rank = ranks[i]
                 times = 0
                 repeat_times[i] = times
         # remove the point whose repeat time is exceed the threshold.
@@ -290,8 +306,8 @@ class ViewTransformerLSS(BaseModule):
         """Conducting voxel pooling in accelerated mode.
 
         Args:
-            x (torch.tensor): of shape (B, N, D, H, W, C). The feature of the
-                volumes.
+            x (torch.tensor): The feature of the volumes in shape
+                (B, N_cams, D, H, W, C).
 
         Returns:
             torch.tensor: Bird-eye-view features in shape (B, C, H_BEV, W_BEV).

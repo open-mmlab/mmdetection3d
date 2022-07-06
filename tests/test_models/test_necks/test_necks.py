@@ -145,7 +145,7 @@ def test_lss_view_transformer():
         'depth': [1.0, 60.0, 1.0],
     }
     neck_cfg = dict(
-        type='ViewTransformerLSS',
+        type='LSSViewTransformer',
         grid_config=grid_config,
         input_size=(256, 704),
         downsample=16,
