@@ -3,12 +3,12 @@
 # Usually voxel size is changed consistently with the point cloud range
 # If point cloud range is modified, do remember to change all related
 # keys in the config.
-voxel_size = [0.3, 0.4, 5]
+voxel_size = [0.32, 0.32, 4]
 model = dict(
     type='MVXFasterRCNN',
     pts_voxel_layer=dict(
         max_num_points=20,
-        point_cloud_range=[-60, -60, -3, 60, 100, 2],
+        point_cloud_range=[-60, -60, -3, 62.88, 103.84, 1],
         voxel_size=voxel_size,
         max_voxels=(30000, 30000)),
     pts_voxel_encoder=dict(
@@ -19,10 +19,10 @@ model = dict(
         voxel_size=voxel_size,
         with_cluster_center=True,
         with_voxel_center=True,
-        point_cloud_range=[-60, -60, -3, 60, 100, 2],
+        point_cloud_range=[-60, -60, -3, 62.88, 103.84, 1],
         norm_cfg=dict(type='naiveSyncBN1d', eps=1e-3, momentum=0.01)),
     pts_middle_encoder=dict(
-        type='PointPillarsScatter', in_channels=64, output_shape=[400, 400]),
+        type='PointPillarsScatter', in_channels=64, output_shape=[512, 384]),
     pts_backbone=dict(
         type='SECOND',
         in_channels=64,
@@ -44,8 +44,8 @@ model = dict(
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
-            ranges=[[-60, -60, -0.0345, 100, 60, -0.0345],
-                    [-60, -60, 0, 100, 60, 0]],
+            ranges=[[-60, -60, -1.78, 62.88, 103.84, -1.78],
+                    [-60, -60, -0.6, 62.88, 103.84, -0.6]],
             sizes=[
                 [4.73, 2.08, 1.77],  # car
                 [0.91, 0.84, 1.74]  # pedestrian

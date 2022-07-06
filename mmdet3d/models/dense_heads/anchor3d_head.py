@@ -183,6 +183,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             list[list[torch.Tensor]]: Anchors of each image, valid flags
                 of each image.
         """
+        
         num_imgs = len(input_metas)
         # since feature map sizes of all images are the same, we only compute
         # anchors for one time
@@ -213,6 +214,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             tuple[torch.Tensor]: Losses of class, bbox
                 and direction, respectively.
         """
+
         # classification loss
         if num_total_samples is None:
             num_total_samples = int(cls_score.shape[0])
@@ -495,7 +497,6 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             mlvl_bboxes, box_dim=self.box_code_size).bev)
         mlvl_scores = torch.cat(mlvl_scores)
         mlvl_dir_scores = torch.cat(mlvl_dir_scores)
-
         if self.use_sigmoid_cls:
             # Add a dummy background class to the front when using sigmoid
             padding = mlvl_scores.new_zeros(mlvl_scores.shape[0], 1)

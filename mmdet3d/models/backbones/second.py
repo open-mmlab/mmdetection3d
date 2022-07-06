@@ -60,7 +60,6 @@ class SECOND(BaseModule):
                         padding=1))
                 block.append(build_norm_layer(norm_cfg, out_channels[i])[1])
                 block.append(nn.ReLU(inplace=True))
-
             block = nn.Sequential(*block)
             blocks.append(block)
 
