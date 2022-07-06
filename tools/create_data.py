@@ -90,7 +90,7 @@ def get_estimated_z_h(roi_path, box_annot):
             roi_points = roi_points[upper_valid & lower_valid]
             q95, q5 = np.percentile(roi_points[:, 2], [95,5])
             z1, z2 = q5-0.3, q95+0.3
-            h = H_DEFAULT if label_cls != 'ped' else PED_H_DEFAULT
+            h = H_DEFAULT if label_cls != 'Pedestrian' else PED_H_DEFAULT
             # 이 부분을 object class에 따라 구분
             if abs(z2 - z1) < 1.5:
                 z1 = z2 - h
@@ -102,7 +102,7 @@ def get_estimated_z_h(roi_path, box_annot):
             # edge case, if xy-plane labeling is invalid, roi_buf could be empty.
             # then just set z, h as default value
             cz, h = Z_MIN_DEFALUT, H_DEFAULT
-            if label_cls == "ped":
+            if label_cls == "Pedestrian":
                 h = PED_H_DEFAULT
         cz_list.append(cz)
         h_list.append(h)
@@ -113,7 +113,7 @@ def rf2021_data_prep(root_path,
     """ Prepare data related to RF2021 dataset.
 
     1. loop pcd file directory.
-    2. vehicle (car) 과 ped의 label의 형태를 (cls, x, y, z, dx, dy, dz, theta)로 통일
+    2. vehicle (car) 과 Pedestrian의 label의 형태를 (cls, x, y, z, dx, dy, dz, theta)로 통일
         * 각도를 바꾸는 이유는 우리 데이터셋의 좌표계와 mmdetection3d의 좌표계가 갖는 각도에 대한 기준이 달라서 이를 맞춰줌
     3. z값이 제대로 안만들어져 있는 경우에는 해당 box내에 포인트들을 적절히 봐서 임의로 z 값 채움
     4. custom3DDataset의 형태로 저장. train,val,test 나눠서 pickle 파일로 저장. 
@@ -157,7 +157,7 @@ def rf2021_data_prep(root_path,
                         annot_ped[annot_ped == 'nan'] = '-1.00'
                         annot_ped[annot_ped[:, 3] == '-1.00', 0] = '0.7'
                         annot_ped[annot_ped[:, 4] ==  '-1.00', 1] = '0.7'  
-                        annot_cls = np.array([["ped"] for _ in range(len(annot_ped))])
+                        annot_cls = np.array([["Pedestrian"] for _ in range(len(annot_ped))])
                         annot_angle = np.array([[0] for _ in range(len(annot_ped))])
                         annot_ped = np.hstack((annot_cls, annot_ped, annot_angle))
                         annot = np.vstack((annot, annot_ped))
