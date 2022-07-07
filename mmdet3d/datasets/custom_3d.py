@@ -11,7 +11,9 @@ from ..core.bbox import get_box_type
 from .builder import DATASETS
 from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
-
+from ..core import show_result
+from ..core.bbox import (Box3DMode, Coord3DMode,
+                         LiDARInstance3DBoxes)
 
 @DATASETS.register_module()
 class Custom3DDataset(Dataset):
@@ -447,3 +449,32 @@ class Custom3DDataset(Dataset):
         zeros.
         """
         self.flag = np.zeros(len(self), dtype=np.uint8)
+
+    def show(self, results, out_dir, show=True, pipeline=None):
+        """Results visualization.
+
+        Args:
+            results (list[dict]): List of bounding boxes results.
+            out_dir (str): Output directory of visualization result.
+            show (bool): Whether to visualize the results online.
+                Default: False.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
+        """
+        assert out_dir is not None, 'Expect out_dir, got none.'
+        pipeline = self._get_pipeline(pipeline)
+        for i, result in enumerate(results):
+            if 'pts_bbox' in result.keys():
+                result = result['pts_bbox']
+            data_info = self.data_infos[i]
+            pts_path = data_info['lidar_points']['lidar_path']
+            file_name = osp.split(pts_path)[-1].split('.')[0]
+            points = self._extract_data(i, pipeline, 'points')
+            points = points.numpy()
+            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
+            pred_bboxes = result['boxes_3d'].tensor.numpy()
+            pred_labels = result['labels_3d'].numpy()
+            show_result(points, gt_bboxes, pred_bboxes, out_dir,
+                        file_name, show, pred_labels=pred_labels)
+
+           

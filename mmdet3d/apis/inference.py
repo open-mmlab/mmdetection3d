@@ -385,7 +385,7 @@ def show_det_result_meshlab_multiclass(data,
     else:
         pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
         pred_scores = result[0]['scores_3d'].numpy()
-        pred_labels = None
+        pred_labels = result[0]['labels_3d'].numpy()
 
     # filter out low score bboxes for visualization
     if score_thr > 0:

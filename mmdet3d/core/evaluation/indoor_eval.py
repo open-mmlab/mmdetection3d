@@ -235,6 +235,8 @@ def indoor_eval(gt_annos,
     for img_id in range(len(dt_annos)): ## gt = ground truth ## dt = d
         # parse detected annotations
         det_anno = dt_annos[img_id]
+        if 'pts_bbox' in det_anno.keys():
+            det_anno = det_anno['pts_bbox']
         for i in range(len(det_anno['labels_3d'])):
             label = det_anno['labels_3d'].numpy()[i]
             bbox = det_anno['boxes_3d'].convert_to(box_mode_3d)[i]

@@ -7,7 +7,7 @@ _base_ = [
 ]
 
 
-point_cloud_range = [-60, -60, -3, 62.88, 103.84, 1]
+point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]
 # dataset settings
 data_root = 'data/rf2021/'
 class_names = ['Car', 'Pedestrian']
