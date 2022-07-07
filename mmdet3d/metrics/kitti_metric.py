@@ -138,7 +138,7 @@ class KittiMetric(BaseMetric):
         Returns:
             list[dict]: List of annotations.
         """
-        # loading data from a file-like object needs file format
+        # loading data from a pkl file
         return mmcv.load(ann_file, file_format='pkl')
 
     def process(self, data_batch: Sequence[dict],
