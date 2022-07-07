@@ -10,7 +10,8 @@ from mmcv.utils import print_log
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 
-from mmdet3d.core.bbox import Box3DMode, points_cam2img
+from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes,
+                               LiDARInstance3DBoxes, points_cam2img)
 from mmdet3d.core.evaluation import kitti_eval
 from mmdet3d.registry import METRICS
 
@@ -112,8 +113,9 @@ class KittiMetric(BaseMetric):
                 for instance in annos['instances']:
                     labels = instance['bbox_label']
                     if labels == -1:
-                        continue
-                    kitti_annos['name'].append(classes[labels])
+                        kitti_annos['name'].append('DontCare')
+                    else:
+                        kitti_annos['name'].append(classes[labels])
                     kitti_annos['truncated'].append(instance['truncated'])
                     kitti_annos['occluded'].append(instance['occluded'])
                     kitti_annos['alpha'].append(instance['alpha'])
@@ -161,8 +163,8 @@ class KittiMetric(BaseMetric):
                     pred[pred_result][attr_name] = pred[pred_result][
                         attr_name].to(self.collect_device)
                 result[pred_result] = pred[pred_result]
-                sample_idx = data['data_sample']['sample_idx']
-                result['sample_idx'] = sample_idx
+            sample_idx = data['data_sample']['sample_idx']
+            result['sample_idx'] = sample_idx
         self.results.append(result)
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
@@ -356,6 +358,7 @@ class KittiMetric(BaseMetric):
                 scores = box_dict['scores']
                 box_preds_lidar = box_dict['box3d_lidar']
                 label_preds = box_dict['label_preds']
+                pred_box_type_3d = box_dict['pred_box_type_3d']
 
                 for box, box_lidar, bbox, score, label in zip(
                         box_preds, box_preds_lidar, box_2d_preds, scores,
@@ -365,8 +368,12 @@ class KittiMetric(BaseMetric):
                     anno['name'].append(class_names[int(label)])
                     anno['truncated'].append(0.0)
                     anno['occluded'].append(0)
-                    anno['alpha'].append(
-                        -np.arctan2(-box_lidar[1], box_lidar[0]) + box[6])
+                    if pred_box_type_3d == CameraInstance3DBoxes:
+                        anno['alpha'].append(-np.arctan2(box[0], box[2]) +
+                                             box[6])
+                    elif pred_box_type_3d == LiDARInstance3DBoxes:
+                        anno['alpha'].append(
+                            -np.arctan2(-box_lidar[1], box_lidar[0]) + box[6])
                     anno['bbox'].append(bbox)
                     anno['dimensions'].append(box[3:6])
                     anno['location'].append(box[:3])
@@ -588,7 +595,13 @@ class KittiMetric(BaseMetric):
                      info['images']['CAM2']['width'])
         P2 = box_preds.tensor.new_tensor(P2)
 
-        box_preds_camera = box_preds.convert_to(Box3DMode.CAM, lidar2cam)
+        if isinstance(box_preds, LiDARInstance3DBoxes):
+            box_preds_camera = box_preds.convert_to(Box3DMode.CAM, lidar2cam)
+            box_preds_lidar = box_preds
+        elif isinstance(box_preds, CameraInstance3DBoxes):
+            box_preds_camera = box_preds
+            box_preds_lidar = box_preds.convert_to(Box3DMode.LIDAR,
+                                                   np.linalg.inv(lidar2cam))
 
         box_corners = box_preds_camera.corners
         box_corners_in_image = points_cam2img(box_corners, P2)
@@ -602,23 +615,28 @@ class KittiMetric(BaseMetric):
         valid_cam_inds = ((box_2d_preds[:, 0] < image_shape[1]) &
                           (box_2d_preds[:, 1] < image_shape[0]) &
                           (box_2d_preds[:, 2] > 0) & (box_2d_preds[:, 3] > 0))
-        # check box_preds
-        limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
-        valid_pcd_inds = ((box_preds.center > limit_range[:3]) &
-                          (box_preds.center < limit_range[3:]))
-        valid_inds = valid_cam_inds & valid_pcd_inds.all(-1)
+        # check box_preds_lidar
+        if isinstance(box_preds, LiDARInstance3DBoxes):
+            limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
+            valid_pcd_inds = ((box_preds_lidar.center > limit_range[:3]) &
+                              (box_preds_lidar.center < limit_range[3:]))
+            valid_inds = valid_cam_inds & valid_pcd_inds.all(-1)
+        else:
+            valid_inds = valid_cam_inds
 
         if valid_inds.sum() > 0:
             return dict(
                 bbox=box_2d_preds[valid_inds, :].numpy(),
+                pred_box_type_3d=type(box_preds),
                 box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
-                box3d_lidar=box_preds[valid_inds].tensor.numpy(),
+                box3d_lidar=box_preds_lidar[valid_inds].tensor.numpy(),
                 scores=scores[valid_inds].numpy(),
                 label_preds=labels[valid_inds].numpy(),
                 sample_idx=sample_idx)
         else:
             return dict(
                 bbox=np.zeros([0, 4]),
+                pred_box_type_3d=type(box_preds),
                 box3d_camera=np.zeros([0, 7]),
                 box3d_lidar=np.zeros([0, 7]),
                 scores=np.zeros([0]),

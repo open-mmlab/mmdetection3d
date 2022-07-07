@@ -401,14 +401,13 @@ def update_kitti_infos(pkl_path, out_dir):
             loc = anns['location'][instance_id]
             dims = anns['dimensions'][instance_id]
             rots = anns['rotation_y'][:, None][instance_id]
-            gt_bboxes_3d = np.concatenate([loc, dims,
-                                           rots]).astype(np.float32).tolist()
+            gt_bboxes_3d = np.concatenate([loc, dims, rots]).tolist()
             empty_instance['bbox_3d'] = gt_bboxes_3d
             empty_instance['bbox_label_3d'] = copy.deepcopy(
                 empty_instance['bbox_label'])
             empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
-            empty_instance['truncated'] = int(
-                anns['truncated'][instance_id].tolist())
+            empty_instance['truncated'] = anns['truncated'][
+                instance_id].tolist()
             empty_instance['occluded'] = anns['occluded'][instance_id].tolist()
             empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
             empty_instance['score'] = anns['score'][instance_id].tolist()
