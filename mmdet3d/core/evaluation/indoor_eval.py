@@ -275,7 +275,7 @@ def indoor_eval(gt_annos,
     rec, prec, ap = eval_map_recall(pred, gt, metric)
     ret_dict = dict()
     header = ['classes']
-    table_columns = [['Car' if label == 0 else 'ped'
+    table_columns = [['Car' if label == 0 else 'Pedestrian'
                       for label in ap[0].keys()] + ['Overall']]
 
     for i, iou_thresh in enumerate(metric):
@@ -283,7 +283,7 @@ def indoor_eval(gt_annos,
         header.append(f'AR_{iou_thresh:.2f}')
         rec_list = []
         for label in ap[i].keys():
-            label_cls = 'Car' if label == 0 else 'ped'
+            label_cls = 'Car' if label == 0 else 'Pedestrian'
             ret_dict[f'{label_cls}_AP_{iou_thresh:.2f}'] = float(
                 ap[i][label][0])
         ret_dict[f'mAP_{iou_thresh:.2f}'] = float(
@@ -294,7 +294,7 @@ def indoor_eval(gt_annos,
         table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
         
         for label in rec[i].keys():
-            label_cls = 'Car' if label == 0 else 'ped'
+            label_cls = 'Car' if label == 0 else 'Pedestrian'
             ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
                 rec[i][label][-1])
             rec_list.append(rec[i][label][-1])

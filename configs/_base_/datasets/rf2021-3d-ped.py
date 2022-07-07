@@ -1,7 +1,7 @@
 # dataset settings
 dataset_type = 'Custom3DDataset'
 data_root = 'data/rf2021/'
-class_names = ['ped']
+class_names = ['Pedestrian']
 point_cloud_range = [-60, -60, -3, 60, 100, 2]
 
 file_client_args = dict(backend='disk')
