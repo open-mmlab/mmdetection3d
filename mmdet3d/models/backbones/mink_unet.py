@@ -54,7 +54,7 @@ class MinkUNetBase(nn.Module):
         self.block, self.layers = self.arch_settings[depth]
         self.D = D
 
-        self.network_initialization(in_channels, out_channels, D)
+        self.network_initialization(in_channels, D)
         self.weight_initialization()
 
     def weight_initialization(self):
@@ -70,7 +70,7 @@ class MinkUNetBase(nn.Module):
                 nn.init.constant_(m.bn.weight, 1)
                 nn.init.constant_(m.bn.bias, 0)
 
-    def network_initialization(self, in_channels, out_channels, D):
+    def network_initialization(self, in_channels, D):
         # Output of the first conv concated to conv6
         self.inplanes = self.INIT_DIM
         self.conv0p1s1 = ME.MinkowskiConvolution(
@@ -134,13 +134,6 @@ class MinkUNetBase(nn.Module):
         self.block8 = self._make_layer(self.block, self.PLANES[7],
                                        self.layers[7])
 
-        self.final = ME.MinkowskiConvolution(
-            self.PLANES[7] * self.block.expansion,
-            out_channels,
-            kernel_size=1,
-            bias=True,
-            dimension=D,
-        )
         self.relu = ME.MinkowskiReLU(inplace=True)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1, ):
@@ -235,4 +228,8 @@ class MinkUNetBase(nn.Module):
         out = ME.cat(out, out_p1)
         out = self.block8(out)
 
-        return self.final(out)
+        ret = dict(
+            features=out
+        )
+
+        return ret
