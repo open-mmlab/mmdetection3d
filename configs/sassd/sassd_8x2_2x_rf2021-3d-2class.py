@@ -3,7 +3,7 @@ _base_ = [
     '../_base_/schedules/cyclic_40e.py', '../_base_/default_runtime.py'
 ]
 
-voxel_size = [0.8, 0.8, 0.1]
+voxel_size = [0.16, 0.16, 0.1]
 
 model = dict(
     type='SASSD',
@@ -16,7 +16,7 @@ model = dict(
     middle_encoder=dict(
         type='SparseEncoderSASSD',
         in_channels=4,
-        sparse_shape=[41, 2048, 1536],
+        sparse_shape=[41, 1024, 768],
         order=('conv', 'norm', 'act')),
     backbone=dict(
         type='SECOND',

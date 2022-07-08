@@ -1,5 +1,5 @@
 from .points_ops import *
-from mmdet3d.ops.points_op import *
+from mmdet3d.ops.points_op import points_op_cpu
 import torch
 
 def pts_in_boxes3d(pts, boxes3d):

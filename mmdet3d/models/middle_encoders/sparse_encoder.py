@@ -4,7 +4,7 @@ from mmcv.ops import points_in_boxes_all, three_interpolate, three_nn
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
-from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
+from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule, pts_in_boxes3d
 from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
 from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
 from ..builder import MIDDLE_ENCODERS
@@ -358,8 +358,10 @@ class SparseEncoderSASSD(SparseEncoder):
 
             boxes3d[:, 3:6] *= enlarge
 
-            pts_in_flag, center_offset = self.calculate_pts_offsets(
-                new_xyz, boxes3d)
+            # change code due to slow training speed
+            pts_in_flag, center_offset = pts_in_boxes3d(new_xyz, boxes3d)
+            # pts_in_flag, center_offset = self.calculate_pts_offsets(
+            #     new_xyz, boxes3d)
             pts_label = pts_in_flag.max(0)[0].byte()
             pts_labels.append(pts_label)
             center_offsets.append(center_offset)
