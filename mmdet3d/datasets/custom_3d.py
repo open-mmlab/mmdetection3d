@@ -71,6 +71,7 @@ class Custom3DDataset(Dataset):
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
                  test_mode=False,
+                 load_interval=1,
                  file_client_args=dict(backend='disk')):
         super().__init__()
         self.data_root = data_root
@@ -95,6 +96,8 @@ class Custom3DDataset(Dataset):
                 'might cause errors if the path is not a local path. '
                 'Please use MMCV>= 1.3.16 if you meet errors.')
             self.data_infos = self.load_annotations(self.ann_file)
+        
+        self.data_infos = self.data_infos[::load_interval]
 
         # process pipeline
         if pipeline is not None:
