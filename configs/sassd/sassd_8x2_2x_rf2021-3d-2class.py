@@ -3,13 +3,13 @@ _base_ = [
     '../_base_/schedules/cyclic_40e.py', '../_base_/default_runtime.py'
 ]
 
-voxel_size = [0.08, 0.08, 0.1]
+voxel_size = [0.8, 0.8, 0.1]
 
 model = dict(
     type='SASSD',
     voxel_layer=dict(
         max_num_points=5,
-        point_cloud_range=[-60, -60, -3, 62.88, 103.84, 1],
+        point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
         voxel_size=voxel_size,
         max_voxels=(16000, 40000)),
     voxel_encoder=dict(type='HardSimpleVFE'),
@@ -38,8 +38,8 @@ model = dict(
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[
-                [0, -40.0, -1.78, 70.4, 40.0, -1.78],
-                [0, -40.0, -0.6, 70.4, 40.0, -0.6]                
+                [-60, -103.84, -1.78, 62.88, 60, -1.78],
+                [-60, -103.84, -0.6, 62.88, 60, -0.6]          
             ],
             sizes=[[1.6, 3.9, 1.56], [0.6, 0.8, 1.73]],
             rotations=[0, 1.57],
