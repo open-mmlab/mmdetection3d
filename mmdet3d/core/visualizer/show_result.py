@@ -106,7 +106,7 @@ def show_result(points,
             if pred_labels is None:
                 vis.add_bboxes(bbox3d=pred_bboxes)
             else:
-                palette=[[0,1,0],[1,0,0]]
+                palette=[[0,1,0],[0,1,1]]
                 # palette = np.random.randint(
                 #     0, 255, size=(pred_labels.max() + 1, 3)) / 256
                 labelDict = {}
@@ -124,27 +124,27 @@ def show_result(points,
                         #points_in_box_color=palette[i])
 
         if gt_bboxes is not None:
-            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=[0,1,0], points_in_box_color=[0,0,1])
+            vis.add_bboxes(bbox3d=gt_bboxes, bbox_color=[1,0,1], points_in_box_color=[0,0,1])
         show_path = osp.join(result_path,
                              f'{filename}_online.png') if snapshot else None
         vis.show(show_path)
 
-    if points is not None:
-        _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
+    # if points is not None:
+    #     _write_obj(points, osp.join(result_path, f'{filename}_points.obj'))
 
-    if gt_bboxes is not None:
-        # bottom center to gravity center
-        gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
+    # if gt_bboxes is not None:
+    #     # bottom center to gravity center
+    #     gt_bboxes[..., 2] += gt_bboxes[..., 5] / 2
 
-        _write_oriented_bbox(gt_bboxes,
-                             osp.join(result_path, f'{filename}_gt.obj'))
+    #     _write_oriented_bbox(gt_bboxes,
+    #                          osp.join(result_path, f'{filename}_gt.obj'))
 
-    if pred_bboxes is not None:
-        # bottom center to gravity center
-        pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
+    # if pred_bboxes is not None:
+    #     # bottom center to gravity center
+    #     pred_bboxes[..., 2] += pred_bboxes[..., 5] / 2
 
-        _write_oriented_bbox(pred_bboxes,
-                             osp.join(result_path, f'{filename}_pred.obj'))
+    #     _write_oriented_bbox(pred_bboxes,
+    #                          osp.join(result_path, f'{filename}_pred.obj'))
 
 
 def show_seg_result(points,
