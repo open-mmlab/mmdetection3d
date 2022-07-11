@@ -9,11 +9,7 @@ model = dict(
     type='VoxelNet',
     voxel_layer=dict(
         max_num_points=32,  # max_points_per_voxel
-<<<<<<< HEAD
-        point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
-=======
         point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1],
->>>>>>> 5dcff6f86f4d700dd34bd284c2d8f515e800e396
         voxel_size=voxel_size,
         max_voxels=(32000, 40000)  # (training, testing) max_voxels
     ),
@@ -23,11 +19,7 @@ model = dict(
         feat_channels=[64],
         with_distance=False,
         voxel_size=voxel_size,
-<<<<<<< HEAD
-        point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1]),
-=======
         point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]),
->>>>>>> 5dcff6f86f4d700dd34bd284c2d8f515e800e396
     middle_encoder=dict(
         type='PointPillarsScatter', in_channels=64, output_shape=[512, 384]),
     backbone=dict(
