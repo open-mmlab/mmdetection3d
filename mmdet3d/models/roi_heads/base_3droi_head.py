@@ -1,98 +1,54 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from abc import ABCMeta, abstractmethod
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet.models.roi_heads import BaseRoIHead
 
-from mmcv.runner import BaseModule
 
-
-class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
+class Base3DRoIHead(BaseRoIHead):
     """Base class for 3d RoIHeads."""
 
     def __init__(self,
                  bbox_head=None,
-                 mask_roi_extractor=None,
+                 bbox_roi_extractor=None,
                  mask_head=None,
+                 mask_roi_extractor=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None,
                  init_cfg=None):
-        super(Base3DRoIHead, self).__init__(init_cfg=init_cfg)
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
+        super(Base3DRoIHead, self).__init__(
+            bbox_head=bbox_head,
+            bbox_roi_extractor=bbox_roi_extractor,
+            mask_head=mask_head,
+            mask_roi_extractor=mask_roi_extractor,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
 
-        if bbox_head is not None:
-            self.init_bbox_head(bbox_head)
-
-        if mask_head is not None:
-            self.init_mask_head(mask_roi_extractor, mask_head)
-
-        self.init_assigner_sampler()
-
-    @property
-    def with_bbox(self):
-        """bool: whether the RoIHead has box head"""
-        return hasattr(self, 'bbox_head') and self.bbox_head is not None
-
-    @property
-    def with_mask(self):
-        """bool: whether the RoIHead has mask head"""
-        return hasattr(self, 'mask_head') and self.mask_head is not None
-
-    @abstractmethod
-    def init_bbox_head(self):
-        """Initialize the box head."""
-        pass
-
-    @abstractmethod
-    def init_mask_head(self):
-        """Initialize maek head."""
-        pass
-
-    @abstractmethod
-    def init_assigner_sampler(self):
-        """Initialize assigner and sampler."""
-        pass
-
-    @abstractmethod
-    def forward_train(self,
-                      x,
-                      img_metas,
-                      proposal_list,
-                      gt_bboxes,
-                      gt_labels,
-                      gt_bboxes_ignore=None,
-                      **kwargs):
-        """Forward function during training.
+    def init_bbox_head(self, bbox_roi_extractor: dict,
+                       bbox_head: dict) -> None:
+        """Initialize box head and box roi extractor.
 
         Args:
-            x (dict): Contains features from the first stage.
-            img_metas (list[dict]): Meta info of each image.
-            proposal_list (list[dict]): Proposal information from rpn.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]):
-                GT bboxes of each sample. The bboxes are encapsulated
-                by 3D box structures.
-            gt_labels (list[torch.LongTensor]): GT labels of each sample.
-            gt_bboxes_ignore (list[torch.Tensor], optional):
-                Ground truth boxes to be ignored.
-
-        Returns:
-            dict[str, torch.Tensor]: Losses from each head.
+            bbox_roi_extractor (dict or ConfigDict): Config of box
+                roi extractor.
+            bbox_head (dict or ConfigDict): Config of box in box head.
         """
-        pass
+        self.bbox_roi_extractor = MODELS.build(bbox_roi_extractor)
+        self.bbox_head = MODELS.build(bbox_head)
 
-    def simple_test(self,
-                    x,
-                    proposal_list,
-                    img_metas,
-                    proposals=None,
-                    rescale=False,
-                    **kwargs):
-        """Test without augmentation."""
-        pass
+    def init_assigner_sampler(self):
+        """Initialize assigner and sampler."""
+        self.bbox_assigner = None
+        self.bbox_sampler = None
+        if self.train_cfg:
+            if isinstance(self.train_cfg.assigner, dict):
+                self.bbox_assigner = TASK_UTILS.build(self.train_cfg.assigner)
+            elif isinstance(self.train_cfg.assigner, list):
+                self.bbox_assigner = [
+                    TASK_UTILS.build(res) for res in self.train_cfg.assigner
+                ]
+            self.bbox_sampler = TASK_UTILS.build(self.train_cfg.sampler)
 
-    def aug_test(self, x, proposal_list, img_metas, rescale=False, **kwargs):
-        """Test with augmentations.
-
-        If rescale is False, then returned bboxes and masks will fit the scale
-        of imgs[0].
-        """
+    def init_mask_head(self):
+        """Initialize mask head, skip since ``PartAggregationROIHead`` does not
+        have one."""
         pass

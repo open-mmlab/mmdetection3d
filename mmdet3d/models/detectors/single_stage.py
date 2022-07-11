@@ -95,7 +95,7 @@ class SingleStage3DDetector(Base3DDetector):
 
         Returns:
             list[:obj:`Det3DDataSample`]: Detection results of the
-            input images. Each Det3DDataSample usually contain
+            input samples. Each Det3DDataSample usually contain
             'pred_instances_3d'. And the ``pred_instances_3d`` usually
             contains following keys.
 

@@ -22,7 +22,7 @@ model = dict(
         _delete_=True,
         rpn=dict(
             assigner=dict(
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
@@ -40,7 +40,7 @@ model = dict(
             use_rotate_nms=False),
         rcnn=dict(
             assigner=dict(  # for Car
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
                 pos_iou_thr=0.55,
                 neg_iou_thr=0.55,
@@ -102,8 +102,9 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -129,9 +130,11 @@ test_pipeline = [
         ])
 ]
 
-data = dict(
-    train=dict(dataset=dict(pipeline=train_pipeline, classes=class_names)),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
-
+train_dataloader = dict(
+    dataset=dict(
+        dataset=dict(
+            pipeline=train_pipeline, metainfo=dict(CLASSES=class_names))))
+test_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+val_dataloader = dict(dataset=dict(metainfo=dict(CLASSES=class_names)))
 find_unused_parameters = True

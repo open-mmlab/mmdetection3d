@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv import ops
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
 
 from mmdet3d.registry import MODELS
 

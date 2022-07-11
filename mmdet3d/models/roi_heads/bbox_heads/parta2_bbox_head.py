@@ -1,7 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule, normal_init
+from mmengine.data import InstanceData
+from torch import Tensor
 
 from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
 
@@ -308,9 +312,9 @@ class PartA2BboxHead(BaseModule):
         Returns:
             dict: Computed losses.
 
-                - loss_cls (torch.Tensor): Loss of classes.
-                - loss_bbox (torch.Tensor): Loss of bboxes.
-                - loss_corner (torch.Tensor): Loss of corners.
+            - loss_cls (torch.Tensor): Loss of classes.
+            - loss_bbox (torch.Tensor): Loss of bboxes.
+            - loss_corner (torch.Tensor): Loss of corners.
         """
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
@@ -504,14 +508,14 @@ class PartA2BboxHead(BaseModule):
 
         return corner_loss.mean(dim=1)
 
-    def get_bboxes(self,
-                   rois,
-                   cls_score,
-                   bbox_pred,
-                   class_labels,
-                   class_pred,
-                   img_metas,
-                   cfg=None):
+    def get_results(self,
+                    rois: Tensor,
+                    cls_score: Tensor,
+                    bbox_pred: Tensor,
+                    class_labels: Tensor,
+                    class_pred: Tensor,
+                    input_metas: List[dict],
+                    cfg: dict = None) -> List:
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -520,7 +524,7 @@ class PartA2BboxHead(BaseModule):
             bbox_pred (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
             class_pred (torch.Tensor): Score for nms.
-            img_metas (list[dict]): Point cloud and image's meta info.
+            input_metas (list[dict]): Point cloud and image's meta info.
             cfg (:obj:`ConfigDict`): Testing config.
 
         Returns:
@@ -550,16 +554,19 @@ class PartA2BboxHead(BaseModule):
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             keep = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
                                         cfg.score_thr, cfg.nms_thr,
-                                        img_metas[batch_id],
+                                        input_metas[batch_id],
                                         cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[keep]
             selected_label_preds = cur_class_labels[keep]
             selected_scores = cur_cls_score[keep]
 
-            result_list.append(
-                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
-                                                    self.bbox_coder.code_size),
-                 selected_scores, selected_label_preds))
+            results = InstanceData()
+            results.bboxes_3d = input_metas[batch_id]['box_type_3d'](
+                selected_bboxes, self.bbox_coder.code_size)
+            results.scores_3d = selected_scores
+            results.labels_3d = selected_label_preds
+
+            result_list.append(results)
         return result_list
 
     def multi_class_nms(self,

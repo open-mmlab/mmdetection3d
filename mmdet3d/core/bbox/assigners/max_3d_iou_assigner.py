@@ -115,7 +115,10 @@ class Max3DIoUAssigner(MaxIoUAssigner):
             >>> assert torch.all(assign_result.gt_inds == expected_gt_inds)
         """
         gt_bboxes = gt_instances.bboxes_3d
-        priors = pred_instances.priors
+        if 'priors' in pred_instances:
+            priors = pred_instances.priors
+        else:
+            priors = pred_instances.bboxes_3d.tensor
         gt_labels = gt_instances.labels_3d
         if gt_instances_ignore is not None:
             gt_bboxes_ignore = gt_instances_ignore.bboxes_3d

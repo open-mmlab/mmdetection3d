@@ -5,6 +5,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
+from mmdet3d.core.utils import InstanceList
 from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
@@ -61,9 +62,9 @@ class PointwiseSemanticHead(BaseModule):
         Returns:
             dict: Part features, segmentation and part predictions.
 
-                - seg_preds (torch.Tensor): Segment predictions.
-                - part_preds (torch.Tensor): Part predictions.
-                - part_feats (torch.Tensor): Feature predictions.
+            - seg_preds (torch.Tensor): Segment predictions.
+            - part_preds (torch.Tensor): Part predictions.
+            - part_feats (torch.Tensor): Feature predictions.
         """
         seg_preds = self.seg_cls_layer(x)  # (N, 1)
         part_preds = self.seg_reg_layer(x)  # (N, 3)
@@ -127,31 +128,33 @@ class PointwiseSemanticHead(BaseModule):
         part_targets = torch.clamp(part_targets, min=0)
         return seg_targets, part_targets
 
-    def get_targets(self, voxels_dict, gt_bboxes_3d, gt_labels_3d):
+    def get_targets(self, voxel_dict: dict,
+                    batch_gt_instances_3d: InstanceList) -> dict:
         """generate segmentation and part prediction targets.
 
         Args:
-            voxel_centers (torch.Tensor): The center of voxels in shape
-                (voxel_num, 3).
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth boxes in
-                shape (box_num, 7).
-            gt_labels_3d (torch.Tensor): Class labels of ground truths in
-                shape (box_num).
+            voxel_dict (dict): Contains information of voxels.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
 
         Returns:
             dict: Prediction targets
 
-                - seg_targets (torch.Tensor): Segmentation targets
-                    with shape [voxel_num].
-                - part_targets (torch.Tensor): Part prediction targets
-                    with shape [voxel_num, 3].
+            - seg_targets (torch.Tensor): Segmentation targets
+                with shape [voxel_num].
+            - part_targets (torch.Tensor): Part prediction targets
+                with shape [voxel_num, 3].
         """
-        batch_size = len(gt_labels_3d)
+        batch_size = len(batch_gt_instances_3d)
         voxel_center_list = []
+        gt_bboxes_3d = []
+        gt_labels_3d = []
         for idx in range(batch_size):
-            coords_idx = voxels_dict['coors'][:, 0] == idx
-            voxel_center_list.append(voxels_dict['voxel_centers'][coords_idx])
-
+            coords_idx = voxel_dict['coors'][:, 0] == idx
+            voxel_center_list.append(voxel_dict['voxel_centers'][coords_idx])
+            gt_bboxes_3d.append(batch_gt_instances_3d[idx].bboxes_3d)
+            gt_labels_3d.append(batch_gt_instances_3d[idx].labels_3d)
         seg_targets, part_targets = multi_apply(self.get_targets_single,
                                                 voxel_center_list,
                                                 gt_bboxes_3d, gt_labels_3d)
@@ -176,8 +179,8 @@ class PointwiseSemanticHead(BaseModule):
         Returns:
             dict: Loss of segmentation and part prediction.
 
-                - loss_seg (torch.Tensor): Segmentation prediction loss.
-                - loss_part (torch.Tensor): Part prediction loss.
+            - loss_seg (torch.Tensor): Segmentation prediction loss.
+            - loss_part (torch.Tensor): Part prediction loss.
         """
         seg_preds = semantic_results['seg_preds']
         part_preds = semantic_results['part_preds']

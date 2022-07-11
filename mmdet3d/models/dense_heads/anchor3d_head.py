@@ -369,8 +369,8 @@ class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instances. It usually includes ``bboxes`` and ``labels``
-                attributes.
+                gt_instances. It usually includes ``bboxes_3d``
+                and ``labels_3d`` attributes.
             batch_input_metas (list[dict]): Contain pcd and img's meta info.
             batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
                 Batch of gt_instances_ignore. It includes ``bboxes`` attribute

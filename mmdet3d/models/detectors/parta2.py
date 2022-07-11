@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional
+
 import torch
 from mmcv.ops import Voxelization
 from torch.nn import functional as F
@@ -15,17 +17,17 @@ class PartA2(TwoStage3DDetector):
     """
 
     def __init__(self,
-                 voxel_layer,
-                 voxel_encoder,
-                 middle_encoder,
-                 backbone,
-                 neck=None,
-                 rpn_head=None,
-                 roi_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
+                 voxel_layer: dict,
+                 voxel_encoder: dict,
+                 middle_encoder: dict,
+                 backbone: dict,
+                 neck: dict = None,
+                 rpn_head: dict = None,
+                 roi_head: dict = None,
+                 train_cfg: dict = None,
+                 test_cfg: dict = None,
+                 init_cfg: dict = None,
+                 data_preprocessor: Optional[dict] = None):
         super(PartA2, self).__init__(
             backbone=backbone,
             neck=neck,
@@ -33,14 +35,29 @@ class PartA2(TwoStage3DDetector):
             roi_head=roi_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
-            init_cfg=init_cfg)
+            init_cfg=init_cfg,
+            data_preprocessor=data_preprocessor)
         self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = MODELS.build(voxel_encoder)
         self.middle_encoder = MODELS.build(middle_encoder)
 
-    def extract_feat(self, points, img_metas):
-        """Extract features from points."""
+    def extract_feat(self, batch_inputs_dict: Dict) -> Dict:
+        """Directly extract features from the backbone+neck.
+
+        Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor, optional): Image of each sample.
+
+        Returns:
+            tuple[Tensor] | dict:  For outside 3D object detection, we
+                typically obtain a tuple of features from the backbone + neck,
+                and for inside 3D object detection, usually a dict containing
+                features will be obtained.
+        """
+        points = batch_inputs_dict['points']
         voxel_dict = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
@@ -52,10 +69,11 @@ class PartA2(TwoStage3DDetector):
         if self.with_neck:
             neck_feats = self.neck(x)
             feats_dict.update({'neck_feats': neck_feats})
-        return feats_dict, voxel_dict
+        feats_dict['voxels_dict'] = voxel_dict
+        return feats_dict
 
     @torch.no_grad()
-    def voxelize(self, points):
+    def voxelize(self, points: List[torch.Tensor]) -> Dict:
         """Apply hard voxelization to points."""
         voxels, coors, num_points, voxel_centers = [], [], [], []
         for res in points:
@@ -84,67 +102,3 @@ class PartA2(TwoStage3DDetector):
             coors=coors_batch,
             voxel_centers=voxel_centers)
         return voxel_dict
-
-    def forward_train(self,
-                      points,
-                      img_metas,
-                      gt_bboxes_3d,
-                      gt_labels_3d,
-                      gt_bboxes_ignore=None,
-                      proposals=None):
-        """Training forward function.
-
-        Args:
-            points (list[torch.Tensor]): Point cloud of each sample.
-            img_metas (list[dict]): Meta information of each sample
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                boxes for each sample.
-            gt_labels_3d (list[torch.Tensor]): Ground truth labels for
-                boxes of each sampole
-            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
-                boxes to be ignored. Defaults to None.
-
-        Returns:
-            dict: Losses of each branch.
-        """
-        feats_dict, voxels_dict = self.extract_feat(points, img_metas)
-
-        losses = dict()
-
-        if self.with_rpn:
-            rpn_outs = self.rpn_head(feats_dict['neck_feats'])
-            rpn_loss_inputs = rpn_outs + (gt_bboxes_3d, gt_labels_3d,
-                                          img_metas)
-            rpn_losses = self.rpn_head.loss(
-                *rpn_loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
-            losses.update(rpn_losses)
-
-            proposal_cfg = self.train_cfg.get('rpn_proposal',
-                                              self.test_cfg.rpn)
-            proposal_inputs = rpn_outs + (img_metas, proposal_cfg)
-            proposal_list = self.rpn_head.get_bboxes(*proposal_inputs)
-        else:
-            proposal_list = proposals
-
-        roi_losses = self.roi_head.forward_train(feats_dict, voxels_dict,
-                                                 img_metas, proposal_list,
-                                                 gt_bboxes_3d, gt_labels_3d)
-
-        losses.update(roi_losses)
-
-        return losses
-
-    def simple_test(self, points, img_metas, proposals=None, rescale=False):
-        """Test function without augmentaiton."""
-        feats_dict, voxels_dict = self.extract_feat(points, img_metas)
-
-        if self.with_rpn:
-            rpn_outs = self.rpn_head(feats_dict['neck_feats'])
-            proposal_cfg = self.test_cfg.rpn
-            bbox_inputs = rpn_outs + (img_metas, proposal_cfg)
-            proposal_list = self.rpn_head.get_bboxes(*bbox_inputs)
-        else:
-            proposal_list = proposals
-
-        return self.roi_head.simple_test(feats_dict, voxels_dict, img_metas,
-                                         proposal_list)
