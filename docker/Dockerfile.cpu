@@ -1,15 +1,12 @@
 ARG PYTORCH="1.9.0"
-ARG CUDA="11.1"
-ARG CUDNN="8"
 # Version dependencies https://mmcv.readthedocs.io/en/latest/get_started/installation.html
 ARG MMCV="1.5.3"
 ARG MMDET="2.25.0"
 ARG MMSEG="0.26.0"
-FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
 
-ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
-ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
-ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install \
@@ -26,19 +23,26 @@ RUN apt-get update && \
             libsm6 \
             libxrender-dev \
             libxext6 \
-            python3-dev \
             libopenblas-dev \
+            python3-dev \
+            python3-pip \
+            python3-numpy \
+            python3-setuptools \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Minkowski Engine
-RUN pip install ninja
-ENV MAX_JOBS=4
+ARG PYTORCH
 RUN pip install \
-    --upgrade git+https://github.com/NVIDIA/MinkowskiEngine \
-    --install-option="--blas=openblas" \
-    --verbose \
-    --no-deps
+    --no-cache-dir \
+    --upgrade \
+        pip \
+        wheel \
+        setuptools \
+        packaging \
+        ninja
+RUN pip install install \
+    torch==${PYTORCH}+cpu \
+    --find-links https://download.pytorch.org/whl/torch_stable.html
 
 # Install MMCV, MMDetection and MMSegmentation
 ARG PYTORCH
@@ -53,7 +57,6 @@ RUN pip install \
         mmsegmentation==${MMSEG}
 
 # Install MMDetection3D
-RUN conda clean --all
 COPY . /mmdetection3d
 WORKDIR /mmdetection3d
 ENV FORCE_CUDA="0"
@@ -62,3 +65,11 @@ RUN pip install \
 RUN pip install \
     --no-cache-dir \
     --editable .
+
+# Install Minkowski Engine
+ENV MAX_JOBS=1
+RUN pip install \
+    git+https://github.com/NVIDIA/MinkowskiEngine \
+    --install-option="--blas=openblas" \
+    --verbose \
+    --no-deps
