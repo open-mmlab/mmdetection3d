@@ -40,7 +40,7 @@ model = dict(
             ranges=[
                 [-60, -103.84, -1.78, 62.88, 60, -1.78]    
             ],
-            sizes=[[4.73, 2.08, 1.77]],
+            sizes=[[2.08, 4.73, 1.77]],
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,
