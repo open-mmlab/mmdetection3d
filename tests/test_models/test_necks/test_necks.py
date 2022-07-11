@@ -180,21 +180,14 @@ def test_lss_view_transformer():
     if torch.cuda.is_available():
         inputs = tuple([item.cuda() for item in inputs])
         neck = neck.cuda()
-        # for naive lift-splat-shoot view transformer
-        feats_bev = neck(inputs)
 
-        # for accelerated lift-splat-shoot view transformer
-        neck.accelerate = True
-        neck.max_voxel_points = 300
-        feats_bev_acc = neck(inputs)
-    else:
-        # for naive lift-splat-shoot view transformer
-        feats_bev = neck(inputs)
+    # for naive lift-splat-shoot view transformer
+    feats_bev = neck(inputs)
 
-        # for accelerated lift-splat-shoot view transformer
-        neck.accelerate = True
-        neck.max_voxel_points = 300
-        feats_bev_acc = neck(inputs)
+    # for accelerated lift-splat-shoot view transformer
+    neck.accelerate = True
+    neck.max_voxel_points = 300
+    feats_bev_acc = neck(inputs)
     assert feats_bev.shape == (1, 64, 128, 128)
     assert feats_bev_acc.shape == (1, 64, 128, 128)
     assert torch.sum(
