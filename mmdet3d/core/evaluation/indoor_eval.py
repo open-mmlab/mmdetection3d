@@ -235,6 +235,8 @@ def indoor_eval(gt_annos,
     for img_id in range(len(dt_annos)): ## gt = ground truth ## dt = d
         # parse detected annotations
         det_anno = dt_annos[img_id]
+        if 'pts_bbox' in det_anno.keys():
+            det_anno = det_anno['pts_bbox']
         for i in range(len(det_anno['labels_3d'])):
             label = det_anno['labels_3d'].numpy()[i]
             bbox = det_anno['boxes_3d'].convert_to(box_mode_3d)[i]
@@ -275,7 +277,7 @@ def indoor_eval(gt_annos,
     rec, prec, ap = eval_map_recall(pred, gt, metric)
     ret_dict = dict()
     header = ['classes']
-    table_columns = [['Car' if label == 0 else 'ped'
+    table_columns = [['Car' if label == 0 else 'Pedestrian'
                       for label in ap[0].keys()] + ['Overall']]
 
     for i, iou_thresh in enumerate(metric):
@@ -283,7 +285,7 @@ def indoor_eval(gt_annos,
         header.append(f'AR_{iou_thresh:.2f}')
         rec_list = []
         for label in ap[i].keys():
-            label_cls = 'Car' if label == 0 else 'ped'
+            label_cls = 'Car' if label == 0 else 'Pedestrian'
             ret_dict[f'{label_cls}_AP_{iou_thresh:.2f}'] = float(
                 ap[i][label][0])
         ret_dict[f'mAP_{iou_thresh:.2f}'] = float(
@@ -294,7 +296,7 @@ def indoor_eval(gt_annos,
         table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
         
         for label in rec[i].keys():
-            label_cls = 'Car' if label == 0 else 'ped'
+            label_cls = 'Car' if label == 0 else 'Pedestrian'
             ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
                 rec[i][label][-1])
             rec_list.append(rec[i][label][-1])
