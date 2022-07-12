@@ -433,7 +433,7 @@ class BaseInstance3DBoxes(object):
         return overlaps_h
 
     @classmethod
-    def overlaps(cls, boxes1, boxes2, mode='iou'):
+    def overlaps(cls, boxes1, boxes2, mode='iou', ioumode='3d'):
         """Calculate 3D overlaps of two boxes.
 
         Note:
@@ -465,6 +465,10 @@ class BaseInstance3DBoxes(object):
 
         # bev overlap
         iou2d = box_iou_rotated(boxes1.bev, boxes2.bev)
+
+        if ioumode == '2d':
+            return iou2d
+
         areas1 = (boxes1.bev[:, 2] * boxes1.bev[:, 3]).unsqueeze(1).expand(
             rows, cols)
         areas2 = (boxes2.bev[:, 2] * boxes2.bev[:, 3]).unsqueeze(0).expand(
