@@ -45,7 +45,7 @@ model = dict(
         type='CenterHead',
         in_channels=sum([256, 256]),
         tasks=[
-            dict(num_class=2, class_names=['Car', 'ped']),
+            dict(num_class=2, class_names=['Car', 'Pedestrian'])
         ],
         common_heads=dict(
             reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2)),  
@@ -62,7 +62,7 @@ model = dict(
             out_size_factor=8,
             voxel_size=voxel_size[:2],
             code_size=7,
-			pc_range=[-60, -103.84],
+			pc_range=[-60, -103.84]
             ),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
